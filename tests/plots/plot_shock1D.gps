@@ -1,0 +1,24 @@
+
+set multiplot layout 2,2 rowsfirst
+set logscale
+set autoscale
+set format x "%L"
+set format y "%L"
+set xlabel "log(R/cm)"
+set key t r
+set grid
+
+set ylabel "log(T/K)"
+plot './fort.24' u 3:7 w l t "Tgas"
+
+set ylabel "log(rho[g/cm3])"
+plot './fort.24' u 3:4 w l t "density"
+
+set ylabel "log(H2)"
+plot './fort.34' u 3:11 w l t "H2"
+
+set ylabel "log(HD)"
+plot './fort.34' u 3:15 w l t "HD"
+
+
+unset multiplot

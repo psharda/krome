@@ -1,0 +1,55 @@
+program test_krome
+
+  use krome_main
+  use krome_user
+  use krome_user_commons
+  use krome_dust
+
+  integer,parameter::nx=14,nd=20*2
+  real*8::x(nx),Tgas,t,dt,spy,xH
+  real*8::xdust(nd),adust(nd),ndust(2)
+
+  spy = 365.*24.*3600. !seconds per year
+  Tgas = 1d1 !gas temperature (K)
+  xH = 2d4 !Hydrogen density
+
+  ndust(:) = (/1d-3, 1d-4/)
+  call krome_init()
+  call krome_init_dust(xdust(:), adust(:), ndust(:))
+
+  x(:) = 1.d-20
+
+  x(KROME_idx_H)     = 0.9225d0  !H
+  x(KROME_idx_E)     = 1.0d-4    !E
+  x(KROME_idx_Hj)    = 1.0d-4    !H+
+  x(KROME_idx_D)     = 1.0d-20   !D
+  x(KROME_idx_Dj)    = 1.0d-20   !D+
+  x(KROME_idx_HE)    = 0.0972d0  !He
+  x(KROME_idx_HEj)   = 1.0d-20   !He+
+  x(KROME_idx_H2j)   = 1.0d-20   !H2+
+  x(KROME_idx_H2)    = 1.0d-5    !H2
+  x(KROME_idx_HD)    = 1.0d-8    !HD
+  x(KROME_idx_Hk)    = 1.0d-20   !H-
+  x(KROME_idx_HEjj)  = 1.0d-20   !He++
+
+  x(KROME_idx_e) = x(KROME_idx_Hj) + x(KROME_idx_Dj) + x(KROME_idx_Hej) &
+       + x(KROME_idx_H2j) + 2.d0*x(KROME_idx_Hejj) - x(KROME_idx_Hk)
+
+  dt = 1d2*spy !time-step (s)
+  t = 0.d0 !initial time (s)
+  write(66,'(999E12.3e3)') t/spy,x(:)
+  do
+     print '(a10,E11.3,a3)',"time:",t/spy,"yr"
+     call krome(x(:),Tgas,dt,xdust(:)) !call KROME
+     t = t + dt !increase time
+     dt = max(1d2,t/3.d0) !increase time-step
+     write(66,'(999E12.3e3)') t/spy,x(:)
+     if(t>1d8*spy) exit !exit when overshoot 1d8 years
+  end do
+
+  print *,"Output dump in fort.66"
+ ! print *,"Default gnuplot: load 'plot.gps'"
+
+  print *,"That's all! have a nice day!"
+
+end program test_krome

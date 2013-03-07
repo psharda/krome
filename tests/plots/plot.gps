@@ -1,0 +1,8 @@
+set logscale
+set autoscale
+set key l b
+plot './out' u 2:3 w l t "CH",\
+'' u 2:4 w l t "H",\
+'' u 2:5 w l t "CH2",\
+'' u 2:6 w l t "C",\
+'' u 2:7 w l t "H2"
