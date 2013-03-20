@@ -52,6 +52,7 @@ for arg in sys.argv:
 			[sys.argv.append(x) for x in ["-useN","-cooling=ALL"]]
 			filename = "networks/react_enzo"
 		elif(test_name=="shock1Dcool"):
+			test_name = "shock1D"
 			[sys.argv.append(x) for x in ["-cooling=CEN,H2,HD,Z"]]
 			filename = "networks/react_enzo"
 		elif(test_name=="shock1D"):

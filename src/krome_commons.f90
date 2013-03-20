@@ -25,5 +25,5 @@ module krome_commons
   real*8::krome_dust_partner_ratio(ndust), krome_dust_partner_ratio_inv(ndust)
   real*8::krome_dust_partner_idx(ndustTypes)
   real*8::krome_dust_partner_mass(ndustTypes)
-
+  real*8::krome_dust_asize(ndust),krome_dust_T(ndust)
 end module krome_commons

@@ -11,6 +11,7 @@ contains
     implicit none
     real*8::coe(nrea),k(nrea),Tgas,t,t3,n(nspec)
     real*8::logT,lnT,Te,lnTe,T32,invT,invTe,sqrTgas,invsqrT32,sqrT32
+    integer::i
     !Tgas is in K
     Tgas = max(2.73d0, n(idx_Tgas))
     t = Tgas !alias for Tgas (K)
@@ -29,6 +30,11 @@ contains
     k(:) = 0.d0 !inizialize coefficients
 
 #KROME_krates
+
+    !set a minumum value for the rates
+    do i=1,nrea
+       k(i) = max(k(i),1d-30) 
+    end do
 
     coe(:) = k(:)!set coefficients to return variable
   end function coe

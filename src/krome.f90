@@ -37,8 +37,8 @@ contains
     iwork(:) = 0
     rwork(:) = 0.d0
     itol = 2 !both tolerances are scalar
-    rtol = 1d-2 !relative tolerance (default: 1d-4)
-    atol(:) = 1d-6 !absolute tolerance (default: 1d-40)
+    rtol = 1d-6 !relative tolerance (default: 1d-4)
+    atol(:) = 1d-40 !absolute tolerance (default: 1d-40)
     itask = 1
     iopt = 0
     !MF=
@@ -65,9 +65,13 @@ contains
 #ELSEKROME
     n(1:nmols) = x(:)
 #ENDIFKROME
+    
+#IFKROME_useDust
+    n(nmols+1:nmols+ndust) = xdust(:)
+#ENDIFKROME
 
     n(idx_Tgas) = Tgas !put temperature in the input array
-    nold(:) = n(:) !store initial densities (needed for Jacobian)
+    nold(:) = n(:) !store initial densities (finite difference for Jacobian)
     icount = 0 !count solver iterations
     istate = 1 !init solver state
     tloc = 0.d0 !set starting time
@@ -129,6 +133,12 @@ contains
 #ELSEKROME
     x(:) = n(1:nmols)
 #ENDIFKROME
+
+#IFKROME_useDust
+    xdust(:) = n(nmols+1:nmols+ndust)
+#ENDIFKROME
+
+
 
     Tgas = n(idx_Tgas) !get new temperature
   end subroutine krome

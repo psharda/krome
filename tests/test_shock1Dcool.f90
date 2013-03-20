@@ -50,6 +50,10 @@ contains
        x(ix,KROME_idx_HD)    = 1.0d-8    !HD
        x(ix,KROME_idx_Hk)    = 1.0d-20   !H-
        x(ix,KROME_idx_HEjj)  = 1.0d-20   !He++
+       x(ix,KROME_idx_Cj)    = 1.d-5     !C+
+       x(ix,KROME_idx_Sij)   = 1.d-6     !Si+
+       x(ix,KROME_idx_O)     = 1.d-6     !O
+       x(ix,KROME_idx_Fej)   = 1.d-8     !Fe+
 
        x(ix,:) = x(ix,:) / sum(x(ix,:))
     end do
@@ -295,7 +299,7 @@ program sedov
      end do
 
      do ix = 1, nx-1
-        if(u(ix+1) > u(ix)) w(ix) = 0.d0 !no viscosity for postive velocity divergence
+        if(u(ix+1) > u(ix)) w(ix) = 0.d0 !no viscosity if vel divergence>0
      end do
 
      !update internal energies and pressures (6.43)
@@ -368,8 +372,8 @@ program sedov
 
      if (mod(istep,ndump).eq.0) then
         do ix = 1, nx
-           write(23,'(I8,99E11.3)') ix, t, r(ix), rho(ix), abs(u(ix)), &
-                p(ix), Tgas(ix)
+           write(23,'(I8,99E11.3)') ix, t, r(ix), rho(ix), abs(u(ix)), p(ix), Tgas(ix)
+
         end do
         write(23,*)
      end if

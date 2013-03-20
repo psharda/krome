@@ -5,7 +5,7 @@ program test_krome
   use krome_user
   use krome_cooling
 
-  integer,parameter::nspec=12
+  integer,parameter::nspec=24
   integer::i
   real*8::x(nspec),Tgas,rhogas
 
@@ -25,7 +25,12 @@ program test_krome
   x(KROME_idx_HD)    = 1.0e-8*rhogas    !HD
   x(KROME_idx_Hk)    = 1.0e-20*rhogas   !H-
   x(KROME_idx_HEjj)  = 1.0e-20*rhogas   !He++
+  x(KROME_idx_Cj)    = 1.0e-6*rhogas    !C+
+  x(KROME_idx_Sij)   = 1.0e-7*rhogas    !Si+
+  x(KROME_idx_O)     = 1.0e-4*rhogas    !O
+  x(KROME_idx_Fej)   = 1.0e-8*rhogas    !Fe+
 
+  
   Tgas = 1d2 !default gas temperature (K)
 
   !list initial conditions in a table

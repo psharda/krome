@@ -9,15 +9,24 @@ contains
     use krome_subs
     use krome_cooling
     use krome_tabs
+#IFKROME_useDust
+    use krome_dust
+#ENDIFKROME
     implicit none
     integer::neq
     real*8::tt,dn(neq),n(neq),k(nrea)
-    real*8::gamma,Tgas
+    real*8::gamma,Tgas,vgas,ntot
+#KROME_dustSumVariables
 #KROME_implicit_variables
 
     dn(:) = 0.d0 !initialize differentials
     Tgas = max(n(idx_Tgas), 2.73d0) !get temperature
     k(:) = coe_tab(n(:)) !compute coefficients
+
+#IFKROME_useDust
+    vgas = sqrt(8.d0*boltzmann_erg*Tgas/pi/p_mass)
+    ntot = sum(n(1:nmols))
+#ENDIFKROME
 
 #KROME_ODE
     

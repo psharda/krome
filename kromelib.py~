@@ -335,7 +335,6 @@ def parser(name, mass_dic, atoms):
 				if(namecp==""): break
 		if(a!="+" and a!="-"): founds += imult
 	if(founds>1): is_atom = False
-
 	mymol.name = name	
 	mymol.mass = mass
 	mymol.ename = sorted(ename)

@@ -204,17 +204,16 @@ program sedov
   !open the file in which the final model will be stored 
   open(16,file='lh1.out',form='formatted',status='replace')
 
-  !open the file in which values of thermal, kinetic and 
-  ! energy will be stored at 10th time-step
+  !open the file in which values of thermal, kinetic and energy will be stored at 10th time-step
   open(17,file='lh2.out',form='formatted',status='replace')
 
   call krome_init()
 
   gamma = 5.d0/3.d0
-  nsteps = int(1e4) !maximum number of time-steps
+  nsteps = int(1e3) !maximum number of time-steps
   ndump = 10 !dump interval
   Tgas(:) = 1d3 !default gas temp (K)  
-  tmax = spy * 5d3 !maximum integration time (s)
+  tmax = spy * 1d5 !maximum integration time (s)
   q = 2d0 !artificial viscosity parameter
   radius = 3.08568025d18 * 1d0 !radius of the box (cm)
   rhogas = 1d-24 !gas density (g/cm3)
@@ -226,9 +225,9 @@ program sedov
   write(*,222) "tmax (s):", tmax   !maximum time
   write(*,222) "Tgas (K):", sum(Tgas)/dble(nx)   !gas Temp
   write(*,222) "q:", q      !artificial viscosity parameter
-  write(*,222) "radius (cm):", radius !radius of the object
-  write(*,222) "density (g/cm3):", rhogas !density of the object
-  write(*,222) "density (1/cm3):", rhogas/p_mass !number density of the object
+  write(*,222) "radius (cm):", radius      !radius of the object
+  write(*,222) "density (g/cm3):", rhogas      !density of the object
+  write(*,222) "density (1/cm3):", rhogas/p_mass      !number density of the object
 
 221 format(a20,I11)
 222 format(a20,E11.3)
@@ -368,8 +367,8 @@ program sedov
 
      if (mod(istep,ndump).eq.0) then
         do ix = 1, nx
-           write(23,'(I8,99E11.3)') ix, t, r(ix), rho(ix), abs(u(ix)), &
-                p(ix), Tgas(ix)
+           write(23,'(I8,99E11.3)') ix, t, r(ix), rho(ix), abs(u(ix)), p(ix), Tgas(ix)
+
         end do
         write(23,*)
      end if
