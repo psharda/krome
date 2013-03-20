@@ -18,6 +18,9 @@ contains
     real*8::gamma,Tgas,vgas,ntot
 #KROME_dustSumVariables
 #KROME_implicit_variables
+    n(idx_CR) = 1.d0
+    n(idx_g)  = 1.d0
+    n(idx_dummy) = 1.d0
 
     dn(:) = 0.d0 !initialize differentials
     Tgas = max(n(idx_Tgas), 2.73d0) !get temperature
