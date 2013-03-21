@@ -1,0 +1,16 @@
+1	H	idx_H
+2	E	idx_E
+3	H+	idx_Hj
+4	HE	idx_HE
+5	HE+	idx_HEj
+6	HE++	idx_HEjj
+7	H-	idx_Hk
+8	H2	idx_H2
+9	H2+	idx_H2j
+10	D	idx_D
+11	D+	idx_Dj
+12	HD	idx_HD
+13	CR	idx_CR
+14	g	idx_g
+15	Tgas	idx_Tgas
+16	dummy	idx_dummy

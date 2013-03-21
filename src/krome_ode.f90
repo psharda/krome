@@ -30,8 +30,9 @@ contains
     vgas = sqrt(8.d0*boltzmann_erg*Tgas/pi/p_mass)
     ntot = sum(n(1:nmols))
 #ENDIFKROME
-
+    !$OMP PARALLEL DO
 #KROME_ODE
+    !$OMP END PARALLEL DO
     
 #IFKROME_use_cooling
     gamma = 5.d0/3.d0

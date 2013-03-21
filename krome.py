@@ -808,16 +808,14 @@ if(not(file_exists(buildFolder+"krome_user_commons.f90"))):
 	print "- writing krome_user_commons.f90...",
 
 	fh = open("src/krome_user_commons.f90")
-	if(not(buildCompact)):
-		fout = open(buildFolder+"krome_user_commons.f90","w")
+	fouta = open(buildFolder+"krome_user_commons.f90","w")
 
 	for row in fh:
 		if(row.strip() == "#KROME_header"):
-			fout.write(get_licence_header())
+			fouta.write(get_licence_header())
 		else:
-			if(row[0]!="#"): fout.write(row)
-	if(not(buildCompact)):
-		fout.close()
+			if(row[0]!="#"): fouta.write(row)
+	fouta.close()
 	print "done!"
 
 

@@ -3,7 +3,6 @@ contains
 
 #KROME_header
 
-
 #IFKROME_useCooling
   !*******************************
   function cooling(n, Tgas)
@@ -28,7 +27,6 @@ contains
 #IFKROME_useCoolingZ
     cooling = cooling + cooling_Z(n(:), Tgas)
 #ENDIFKROME
-
 
   end function cooling
 #ENDIFKROME
@@ -329,7 +327,6 @@ contains
     real*8::g10Fep_e,g21Fep_e,g32Fep_e
     real*8::g43Fep_e,g20Fep_e,g30Fep_e
     real*8::g40Fep_e,g31Fep_e,g41Fep_e,g42Fep_e
-
 
     real*8::g01C_H2o,g02C_H2o,g12C_H2o
     real*8::g01C_H2p,g02C_H2p,g12C_H2p
