@@ -22,7 +22,7 @@ contains
     integer,parameter::meth=2 !1=adam, 2=BDF
     integer::neq(1),itol,itask,istate,iopt,lrw,liw,mf
 #KROME_iwork_array
-    real*8::atol(nspec),rtol(1)
+    real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
     logical::got_error
 
@@ -36,9 +36,11 @@ contains
     lrw = size(rwork)
     iwork(:) = 0
     rwork(:) = 0.d0
-    itol = 2 !both tolerances are scalar
-    rtol = 1d-6 !relative tolerance (default: 1d-4)
+    itol = 4 !both tolerances are scalar
+    rtol(:) = 1d-6 !relative tolerance (default: 1d-4)
     atol(:) = 1d-40 !absolute tolerance (default: 1d-40)
+    rtol(idx_Tgas) = 1d0 !realtive tolerance for temperature
+    atol(idx_Tgas) = 1d-2 !absolute tolerance for temperature
     itask = 1
     iopt = 0
     !MF=

@@ -3,7 +3,7 @@ contains
 
 #KROME_header
 
-#IFKROME_useCooling
+
   !*******************************
   function cooling(n, Tgas)
     implicit none
@@ -29,7 +29,6 @@ contains
 #ENDIFKROME
 
   end function cooling
-#ENDIFKROME
 
   !*******************************
   function heating(n, Tgas)
@@ -38,9 +37,18 @@ contains
     real*8::heating 
     !total heating erg/cm3/s
     heating = 0.d0
-#IFKROME_useHeating
-    heating = heatingA(n(:), Tgas) + heat_compress(n(:), Tgas)
+#IFKROME_useHeatingA
+    heating = heating + heatingA(n(:), Tgas)
 #ENDIFKROME
+
+#IFKROME_useHeatingCompress
+    heating = heating + heat_compress(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useHeatingPhoto
+    heating = heating + photo_heating(n(:))
+#ENDIFKROME
+    
   end function heating
 
 #IFKROME_useCoolingH2GP
@@ -286,11 +294,10 @@ contains
 
 
   end function cooling_HD
-
 #ENDIFKROME
 
-
 #IFKROME_useCoolingZ
+  !metal cooling (as in Maio et al. 2007)
   function cooling_Z(n,inTgas)
     !//coefficients written as gijCOOLANT_COLLIDER
     !//e.g. g10C_H2o means Carbon colliding with H2-ortho cooling through 
@@ -396,8 +403,8 @@ contains
        end do
     end if
 
-    tot_metals=n(idx_C)+n(idx_Cj)+n(idx_Si)+n(idx_Sij)+n(idx_Fe)&
-         +n(idx_Fej)+n(idx_O)+n(idx_Oj)
+    tot_metals = n(idx_C) + n(idx_Cj) + n(idx_Si) + n(idx_Sij) + n(idx_Fe)&
+         + n(idx_Fej) + n(idx_O) + n(idx_Oj)
     ratio_para_ortho = 1.d0/3.d0
     kb = boltzmann_erg
     Tgas = max(inTgas,1.d1)
@@ -876,7 +883,17 @@ contains
 
 #ENDIFKROME
 
-#IFKROME_useHeating
+#IFKROME_useHeatingPhoto
+  !**************************
+  function photo_heating(n)
+    use krome_commons
+    real*8::photo_heating,n(:)
+    photo_heating = 0.d0
+#KROME_photo_heating
+  end function photo_heating
+#ENDIFKROME
+
+#IFKROME_useHeatingA
   !H2 FORMATION HEATING
   !OMUKAI 2000
   !UNITS=erg/cm3/s
@@ -935,7 +952,9 @@ contains
     endif
 
   end function heatingA
+#ENDIFKROME
 
+#IFKROME_useHeatingCompress
   !***********************
   function heat_compress(n, Tgas)
     use krome_user_commons

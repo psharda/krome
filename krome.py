@@ -16,7 +16,8 @@ solver_MF = 222
 force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = False
 use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = False
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = False
-createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = False
+createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
+usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = False
 useX = has_plot = True
 test_name = "default"
 is_test = False
@@ -56,6 +57,9 @@ for arg in sys.argv:
 			filename = "networks/react_enzo"
 		elif(test_name=="shock1D"):
 			filename = "networks/react_enzo"
+		elif(test_name=="shock1Dphoto"):
+			[sys.argv.append(x) for x in ["-usePhIoniz"]]
+			filename = "networks/react_enzo_photo"
 		elif(test_name=="dust"):
 			has_plot= False
 			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN"]]
@@ -132,6 +136,10 @@ if("-clean" in sys.argv):
 if("-usePlainIsotopes" in sys.argv):
 	usePlainIsotopes = True
 	print "Reading option -usePlainIsotopes"
+#use photoionization from Verner et al. 1996
+if("-usePhIoniz" in sys.argv):
+	usePhIoniz = True
+	print "Reading option -usePhIoniz"
 #determine reverse function to reverse reactions
 for arg in sys.argv:
 	if("reverse=" in arg):
@@ -166,9 +174,26 @@ for arg in sys.argv:
 		if("H2GP98" in myCools): useCoolingH2GP98 = True
 		if("HD" in myCools): useCoolingHD = True
 		if("HD" in myCools): useCoolingZ = True
-		use_cooling = True
+		use_thermo = True
 
 		print "Reading option -cooling ("+(",".join(myCools))+")"
+		break
+#determine heating types
+for arg in sys.argv:
+	if("heating=" in arg):
+		myHeat = arg.strip().replace("-heating=","").upper().split(",")
+		allHeats = ["COMPRESS","PHOTO","A","ALL"]
+		for hea in myHeat: 
+			if(not(hea in allHeats)): 
+				die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
+
+		if("ALL" in myHeat): myHeat = allHeat
+		if("COMPRESS" in myHeat): useHeatingCompress = True
+		if("PHOTO" in myHeat): useHeatingPhoto = True
+		if("A" in myHeat): useHeatingA = True
+		use_thermo = True
+
+		print "Reading option -heating ("+(",".join(myHeat))+")"
 		break
 
 #force rwork size
@@ -381,6 +406,7 @@ for row in fh:
 	myrea.check() #check mass and charge conservation
 	reacts.append(myrea)
 
+
 #check file format
 if(not(found_one)):
 	die("ERROR: no reactions found in file \""+filename+"\"")
@@ -461,7 +487,7 @@ if(useCoolingZ):
 			mymol.idx = len(specs)+1
 			specs.append(mymol)	
 			
-	
+
 
 #add dust to problem
 if(useDust):
@@ -741,6 +767,7 @@ if(force_rwork):
 
 print "LWM:",lwm,"LRW:",lrw
 
+
 #create build folder if not exists
 if(not(os.path.exists(buildFolder))): 
 	os.mkdir(buildFolder)
@@ -758,8 +785,6 @@ else:
 	for dfile in delFiles:
 		print "deleting "+dfile
 
-
-
 print
 print "Prepearing files in /build..."
 
@@ -773,6 +798,16 @@ print "- writing krome_commons.f90...",
 fh = open("src/krome_commons.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_commons.f90","w")
+
+#photoionization variables and fucntions
+phvars = []
+pheatvars = []
+if(usePhIoniz):
+	for mol in specs:
+		if(mol.is_atom and mol.charge>=0):
+			phvars.append("krome_kph_"+mol.phname)
+			pheatvars.append("krome_pheat_"+mol.phname)
+
 skip = False
 for row in fh:
 
@@ -787,6 +822,11 @@ for row in fh:
 			fout.write("\tinteger,parameter::ndustTypes=" + str(dustTypesSize) + "\n")
 	elif(row.strip() == "#KROME_header"):
 		fout.write(get_licence_header())
+	elif(row.strip() == "#KROME_photo_variables"):
+		fout.write("real*8::"+(",".join(phvars))+"\n")
+	elif(row.strip() == "#KROME_photoheating_variables"):
+		fout.write("real*8::"+(",".join(pheatvars))+"\n")
+
 	else:
 		if(row[0]!="#"): fout.write(row)
 if(not(buildCompact)):
@@ -811,10 +851,10 @@ if(not(file_exists(buildFolder+"krome_user_commons.f90"))):
 	fouta = open(buildFolder+"krome_user_commons.f90","w")
 
 	for row in fh:
-		if(row.strip() == "#KROME_header"):
-			fouta.write(get_licence_header())
-		else:
-			if(row[0]!="#"): fouta.write(row)
+		row = row.replace("#KROME_header", get_licence_header())
+
+		if(row[0]!="#"): fouta.write(row)
+
 	fouta.close()
 	print "done!"
 
@@ -853,6 +893,62 @@ for row in fh:
 		fout.write(get_licence_header())
 	else:
 		fout.write(row)
+if(not(buildCompact)):
+	fout.close()
+print "done!"
+
+#********* PHOTO ****************
+print "- writing krome_photo.f90...",
+fh = open("src/krome_photo.f90")
+if(not(buildCompact)):
+	fout = open(buildFolder+"krome_photo.f90","w")
+
+
+
+pheatvars = []
+phvars = []
+ph_func = ph_qromos = ph_heat = ph_heat_qromos = ph_heat_zero = ""
+for mol in specs:
+	if(mol.is_atom and mol.charge>=0):
+		phvars.append("krome_kph_"+mol.phname)
+		pheatvars.append("krome_pheat_"+mol.phname)
+
+		ph_func += "!************************\n"
+		ph_func += "function sigma_"+mol.phname+"(energy_eV)\n"
+		ph_func += "\t real*8::sigma_"+mol.phname+",energy_eV\n"
+		ph_func += "\t" + get_photo_cross(mol.phname) + "\n"
+		ph_func += "end function sigma_"+mol.phname+"\n"
+		ph_func += "\n"
+
+		ph_heat += "!************************\n"
+		ph_heat += "function heat_"+mol.phname+"(energy_eV)\n"
+		ph_heat += "\t real*8::heat_"+mol.phname+",energy_eV\n"
+		ph_heat += "\t" + get_photo_heat(mol.phname) + "\n"
+		ph_heat += "end function heat_"+mol.phname+"\n"
+		ph_heat += "\n"
+
+		ph_qromos += "\t" + get_photo_qromos(mol.phname) + "\n"
+
+		ph_heat_qromos += "\t" + get_photo_qromos(mol.phname).replace("sigma_", "heat_").replace("krome_kph_","krome_pheat_") + "\n"
+
+#initialize photo heating variables to zero
+for ph in pheatvars:
+	ph_heat_zero += ph+" = 0.d0\n"
+
+skip = False
+for row in fh:
+	#if(row.strip() == "#IFKROME_" and not(usePhIoniz)): skip = True
+	#if(row.strip() == "#ENDIFKROME"): skip = False
+
+	if(skip): continue
+	row = row.replace("#KROME_photo_functions", ph_func +"\n")
+	row = row.replace("#KROME_photo_qromos", ph_qromos +"\n")
+	row = row.replace("#KROME_photo_heating_qromos", ph_heat_zero + "\n" + ph_heat_qromos +"\n")
+	row = row.replace("#KROME_photo_heating_functions", ph_heat +"\n")
+
+ 
+	if(row[0]!="#"): fout.write(row)
+
 if(not(buildCompact)):
 	fout.close()
 print "done!"
@@ -921,6 +1017,13 @@ fh = open("src/krome_cooling.f90")
 
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_cooling.f90","w")
+
+pheatvars = []
+if(usePhIoniz):
+	for mol in specs:
+		if(mol.is_atom and mol.charge>=0):
+			pheatvars.append("krome_pheat_"+mol.phname + " * n(" + mol.fidx + ")")
+
 skip = False
 for row in fh:
 	if(row.strip() == "#KROME_header"):
@@ -944,7 +1047,19 @@ for row in fh:
 		if(row.strip() == "#IFKROME_useCoolingHD" and not(useCoolingHD)): skip = True
 		if(row.strip() == "#ENDIFKROME"): skip = False
 
+		if(row.strip() == "#IFKROME_useHeatingCompress" and not(useHeatingCompress)): skip = True
+		if(row.strip() == "#ENDIFKROME"): skip = False
+
+		if(row.strip() == "#IFKROME_useHeatingPhoto" and not(useHeatingPhoto)): skip = True
+		if(row.strip() == "#ENDIFKROME"): skip = False
+
+		if(row.strip() == "#IFKROME_useHeatingA" and not(useHeatingA)): skip = True
+		if(row.strip() == "#ENDIFKROME"): skip = False
+
 		if(skip): continue
+
+		row = row.replace("#KROME_photo_heating", "photo_heating = " + (" + ".join(pheatvars)))
+
 		if(row[0]!="#"): fout.write(row)
 
 if(not(buildCompact)):
@@ -961,7 +1076,7 @@ if(not(buildCompact)):
 	fout = open(buildFolder+"krome_ode.f90","w")
 skip = False
 for row in fh:
-	if(row.strip() == "#IFKROME_use_cooling" and not(use_cooling)): skip = True
+	if(row.strip() == "#IFKROME_use_thermo" and not(use_thermo)): skip = True
 	if(row.strip() == "#ENDIFKROME"): skip = False
 
 	if(row.strip() == "#IFKROME_report" and not(doReport)): skip = True
