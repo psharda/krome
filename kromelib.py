@@ -155,8 +155,16 @@ DESCRIPTION
 		ALL	enable all together
 		example: -cooling=CEN,H2,HD
 
+	-heating=HEATING
+		activate cooling listed in HEATING:
+		COMPRESS compressional ????
+		A	recombination heating (Omukai????)
+		PHOTO	photoionization heating (Grassi+2012)
+		ALL	enable all together
+		example: -heating=A,PHOTO
+
 	-useHeating
-		heating toggle
+		heating toggle (obsolete)
 
 	-usePhot
 		use photons indicated in the reaction file
@@ -1085,7 +1093,9 @@ def get_quote():
 	["Programmers are in a race with the Universe to create bigger and better idiot-proof programs, while the Universe is trying to create bigger and better idiots.  So far the Universe is winning.","Rich Cook"],
 	["To iterate is human, to recurse divine.","L. Peter Deutsch"],
 	["Should array indices start at 0 or 1?  My compromise of 0.5 was rejected without, I thought, proper consideration.","Stan Kelly-Bootle"],
-	["Any code of your own that you haven't looked at for six or more months might as well have been written by someone else.","Eagleson's Law"]
+	["Any code of your own that you haven't looked at for six or more months might as well have been written by someone else.","Eagleson's Law"],
+	["All science is either physics or stamp collecting", "Ernest Rutherford"],
+	["AAAAAAAAAA",""]
 	]
 	qtup = quotes[int(random.random()*(len(quotes)-1))]
 	myqt = trunc(qtup[0],40," ").upper().strip()

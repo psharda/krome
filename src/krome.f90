@@ -39,8 +39,9 @@ contains
     itol = 4 !both tolerances are scalar
     rtol(:) = 1d-6 !relative tolerance (default: 1d-4)
     atol(:) = 1d-40 !absolute tolerance (default: 1d-40)
-    rtol(idx_Tgas) = 1d0 !realtive tolerance for temperature
-    atol(idx_Tgas) = 1d-2 !absolute tolerance for temperature
+    !example to introduce specific tolerances (warning: instability!)
+    !rtol(idx_Tgas) = 1d0 !realtive tolerance for temperature
+    !atol(idx_Tgas) = 1d-2 !absolute tolerance for temperature
     itask = 1
     iopt = 0
     !MF=

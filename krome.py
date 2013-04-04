@@ -18,7 +18,7 @@ use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux =
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = False
 createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = False
-useX = has_plot = True
+useX = has_plot = useFakeOpacity = True
 test_name = "default"
 is_test = False
 TlimitOpLow = "GE"
@@ -58,7 +58,7 @@ for arg in sys.argv:
 		elif(test_name=="shock1D"):
 			filename = "networks/react_enzo"
 		elif(test_name=="shock1Dphoto"):
-			[sys.argv.append(x) for x in ["-usePhIoniz"]]
+			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO"]]
 			filename = "networks/react_enzo_photo"
 		elif(test_name=="dust"):
 			has_plot= False
@@ -782,8 +782,8 @@ else:
 	delFiles = [buildFolder+"krome_"+x+".f90" for x in underFiles] + [buildFolder+x for x in ["krome.f90","opkda1.f","opkda2.f"]]
 	delFiles += glob.glob(buildFolder+"*~") + glob.glob(buildFolder+"*.mod") 
 	delFiles += glob.glob(buildFolder+"*_genmod.f90") + glob.glob(buildFolder+"*.i90")
-	for dfile in delFiles:
-		print "deleting "+dfile
+	#for dfile in delFiles:
+		#print "deleting "+dfile
 
 print
 print "Prepearing files in /build..."
@@ -904,15 +904,20 @@ if(not(buildCompact)):
 	fout = open(buildFolder+"krome_photo.f90","w")
 
 
-
-pheatvars = []
-phvars = []
-ph_func = ph_qromos = ph_heat = ph_heat_qromos = ph_heat_zero = ""
+#photoheating and photoionization have quite complex schemes
+pheatvars = [] #photoheating variables list (e.g. krome_pheat_He)
+phvars = [] #photoionization variables list (e.g. krome_kph_H)
+#init strings 
+ph_func = ph_qromos = ph_heat = ph_heat_qromos = ph_heat_zero = ph_heat_print = ""
+#loop on species to find suitable species for photoionization processes
 for mol in specs:
+	#only available for neutral and positive atoms
 	if(mol.is_atom and mol.charge>=0):
+		#append variables to lists
 		phvars.append("krome_kph_"+mol.phname)
 		pheatvars.append("krome_pheat_"+mol.phname)
 
+		#creates cross section function, e.g. sigma_H(energy_eV)
 		ph_func += "!************************\n"
 		ph_func += "function sigma_"+mol.phname+"(energy_eV)\n"
 		ph_func += "\t real*8::sigma_"+mol.phname+",energy_eV\n"
@@ -920,6 +925,7 @@ for mol in specs:
 		ph_func += "end function sigma_"+mol.phname+"\n"
 		ph_func += "\n"
 
+		#creates photoheating function, e.g. heat_H(energy_eV)
 		ph_heat += "!************************\n"
 		ph_heat += "function heat_"+mol.phname+"(energy_eV)\n"
 		ph_heat += "\t real*8::heat_"+mol.phname+",energy_eV\n"
@@ -927,8 +933,13 @@ for mol in specs:
 		ph_heat += "end function heat_"+mol.phname+"\n"
 		ph_heat += "\n"
 
+		#string to print computed photoheating values
+		ph_heat_print += "print '(a10,E11.3,a1,a6)',\"" + mol.name + "\", " + "krome_pheat_"+mol.phname + ",\"\",\"erg/s\"\n"
+
+		#string containing cross section computations (integrals)
 		ph_qromos += "\t" + get_photo_qromos(mol.phname) + "\n"
 
+		#string containing photoheating computations (integrals)
 		ph_heat_qromos += "\t" + get_photo_qromos(mol.phname).replace("sigma_", "heat_").replace("krome_kph_","krome_pheat_") + "\n"
 
 #initialize photo heating variables to zero
@@ -941,10 +952,12 @@ for row in fh:
 	#if(row.strip() == "#ENDIFKROME"): skip = False
 
 	if(skip): continue
+	#replace krome variables
 	row = row.replace("#KROME_photo_functions", ph_func +"\n")
 	row = row.replace("#KROME_photo_qromos", ph_qromos +"\n")
 	row = row.replace("#KROME_photo_heating_qromos", ph_heat_zero + "\n" + ph_heat_qromos +"\n")
 	row = row.replace("#KROME_photo_heating_functions", ph_heat +"\n")
+	row = row.replace("#KROME_photo_heating_print", ph_heat_print +"\n")
 
  
 	if(row[0]!="#"): fout.write(row)
@@ -1018,11 +1031,14 @@ fh = open("src/krome_cooling.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_cooling.f90","w")
 
+#build heating terms
 pheatvars = []
 if(usePhIoniz):
 	for mol in specs:
 		if(mol.is_atom and mol.charge>=0):
-			pheatvars.append("krome_pheat_"+mol.phname + " * n(" + mol.fidx + ")")
+			fake_opacity = ""
+			if(useFakeOpacity): fake_opacity = " * exp(-n(" + mol.fidx + ") / n0)" 
+			pheatvars.append("krome_pheat_"+mol.phname + " * n(" + mol.fidx + ")" + fake_opacity)
 
 skip = False
 for row in fh:
@@ -1058,7 +1074,7 @@ for row in fh:
 
 		if(skip): continue
 
-		row = row.replace("#KROME_photo_heating", "photo_heating = " + (" + ".join(pheatvars)))
+		row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
 
 		if(row[0]!="#"): fout.write(row)
 

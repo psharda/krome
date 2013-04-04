@@ -3,20 +3,22 @@ contains
   subroutine krome_init_photo()
     use krome_commons
 
+    print *,"Initializaing photoreactions..."
 #KROME_photo_qromos
 #KROME_photo_heating_qromos
 
-    print *,krome_pheat_H
+#KROME_photo_heating_print
+    print *,"done!"
 
   end subroutine krome_init_photo
 
 #KROME_photo_functions
 #KROME_photo_heating_functions
 
+
   !********************
   function Jflux(nrg)
     !UV flux in eV/s/cm2/sr/Hz as a function of energy in eV
-    !use krome_constants
     implicit none
     real*8::Jflux,nrg
     Jflux = 6.2415d-10 * (13.6d0/nrg) / 4.d1 !6.241d-10eV = 1d-21erg
@@ -44,12 +46,14 @@ contains
   function heat_v96(energy_eV,Eth,E0,sigma_0,ya,P,yw,y0,y1)
     use krome_constants
     real*8::heat_v96,energy_eV,sigma_0,Fy,yw,x,y,E0,Eth
-    real*8::y0,y1,ya,P
+    real*8::y0,y1,ya,P,efficiency
     x = energy_eV/E0 - y0
     y = sqrt(x**2 + y1**2)
     Fy = ((x - 1.d0)**2 + yw**2) *  y**(0.5*P-5.5) &
          * (1.d0+sqrt(y/ya))**(-P)
-    heat_v96 = 1d-18 * sigma_0 * Fy * (energy_eV - Eth) * eV_to_erg !cm2*erg
+    efficiency = 1d-1
+    heat_v96 = 1d-18 * sigma_0 * Fy * (energy_eV - Eth) &
+         * efficiency *  eV_to_erg !cm2*erg
   end function heat_v96
 
   !********************************
