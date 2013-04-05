@@ -1370,6 +1370,27 @@ else:
 	shutil.copyfile("solver/opkda1.f", buildFolder+"opkda1.f")
 	shutil.copyfile("solver/opkda2.f", buildFolder+"opkda2.f")
 print " done!"
+
+print
+print "indent...",
+if(buildCompact):
+	indentF90(buildFolder+"krome_all.f90")
+else:
+	indentF90(buildFolder+"krome_commons.f90")
+	indentF90(buildFolder+"krome_constants.f90")
+	indentF90(buildFolder+"krome_cooling.f90")
+	indentF90(buildFolder+"krome_dust.f90")
+	indentF90(buildFolder+"krome.f90")
+	indentF90(buildFolder+"krome_ode.f90")
+	indentF90(buildFolder+"krome_photo.f90")
+	indentF90(buildFolder+"krome_reduction.f90")
+	indentF90(buildFolder+"krome_subs.f90")
+	indentF90(buildFolder+"krome_tabs.f90")
+	indentF90(buildFolder+"krome_tabs.f90")
+	indentF90(buildFolder+"krome_user.f90")
+
+print "done!"
+
 print
 print "You'll find the necessary files in "+buildFolder
 print "Example call to the solver in "+buildFolder+"test.f90"

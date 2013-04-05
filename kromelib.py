@@ -1098,6 +1098,37 @@ end do
 """
 	return s
 
+###########################
+def lbeg(aarg,line):
+	for arg in aarg:
+		if(line[:len(arg)]==arg): return True
+	return False
+###############################
+#this function indent f90 file and remove multiple blank lines
+def indentF90(filename):
+
+	fh = open(filename,"rb")
+	arow = []
+	is_blank = False
+	nind = 0
+	nspace = 2 #number of space for indent
+	tokenclose = ["end do","end if","end function","end subroutine","else if","elseif","else","enddo","end module","endif"]
+	tokenopen = ["do","function","subroutine","contains","else","else if","elseif"]
+	for row in fh:
+		srow = row.strip()
+		if(lbeg(tokenclose, srow)): nind -= 1
+		#remove double blank lines
+		if(not(srow=="" and is_blank)): arow.append((" "*(nind*nspace))+srow+"\n")
+		is_blank = (srow=="") #flag blank line mode
+		if(lbeg(tokenopen, srow)): nind += 1
+		if(lbeg(["if"],srow) and "then" in srow): nind += 1
+	fh.close()
+
+	fh = open(filename,"w")
+	for x in arow:
+		fh.write(x)
+	fh.close()
+
 #################################
 def die(msg):
 	import sys
