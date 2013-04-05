@@ -1,0 +1,19 @@
+reset 
+set multiplot layout 1,2 rowsfirst
+set logscale
+set autoscale
+set format x "%L"
+set format y "%L"
+set xlabel "log(R/cm)"
+set key t r
+set grid
+
+set ylabel "log(T/K)"
+plot '../tests/shock1Dphoto/shock1D.dat' u 3:7 w l t "Tgas_org",\
+ './fort.24' u 3:7 w l t "Tgas_heat+cool"
+
+set ylabel "log(rho[g/cm3])"
+plot '../tests/shock1Dphoto/shock1D.dat' u 3:4 w l t "rho_org",\
+ './fort.24' u 3:4 w l t "rho_heat+cool"
+
+unset multiplot

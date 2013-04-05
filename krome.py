@@ -27,6 +27,8 @@ customCoeFunction = "[CUSTOM COE FUNCTION NOT SET!]"
 buildFolder = "build/"
 TminAuto = 1e99
 TmaxAuto = -1e99
+RTOL = 1e-4
+ATOL = 1e-10
 dustArraySize = dustTypesSize = 0
 #select test name
 for arg in sys.argv:
@@ -61,7 +63,6 @@ for arg in sys.argv:
 			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO"]]
 			filename = "networks/react_enzo_photo"
 		elif(test_name=="dust"):
-			has_plot= False
 			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN"]]
 			filename = "networks/react_enzo"
 		else:
@@ -173,7 +174,7 @@ for arg in sys.argv:
 		if("H2" in myCools): useCoolingH2 = True
 		if("H2GP98" in myCools): useCoolingH2GP98 = True
 		if("HD" in myCools): useCoolingHD = True
-		if("HD" in myCools): useCoolingZ = True
+		if("Z" in myCools): useCoolingZ = True
 		use_thermo = True
 
 		print "Reading option -cooling ("+(",".join(myCools))+")"
@@ -226,7 +227,7 @@ for arg in sys.argv:
 		useODEConstant = True
 		print "Reading option -useODEConstant (Constant="+str(ODEConstant)+")"
 		break
-#use function to append after each ODE
+#dust
 for arg in sys.argv:
 	if("dust=" in arg):
 		dustopt = (arg.strip().replace("-dust=",""))
@@ -239,7 +240,7 @@ for arg in sys.argv:
 		dustTypesSize = len(dustTypes)
 		print "Reading option -dust (size="+str(dustArraySize)+", type(s)="+(",".join(dustTypes))+")"
 		break
-#use function to append after each ODE
+#project name folder
 for arg in sys.argv:
 	if("project=" in arg):
 		projectName = (arg.strip().replace("-project=",""))
@@ -248,6 +249,19 @@ for arg in sys.argv:
 		fout = open(projectName+".kpj","w")
 		fout.write((" ".join(sys.argv)))
 		fout.close()
+		break
+#ATOL
+for arg in sys.argv:
+	if("ATOL=" in arg):
+		ATOL = (arg.strip().replace("-ATOL=",""))
+		print "Reading option -ATOL (ATOL="+str(ATOL)+")"
+		break
+
+#RTOL
+for arg in sys.argv:
+	if("RTOL=" in arg):
+		RTOL = (arg.strip().replace("-RTOL=",""))
+		print "Reading option -RTOL (RTOL="+str(RTOL)+")"
 		break
 
 #show help
@@ -822,9 +836,9 @@ for row in fh:
 			fout.write("\tinteger,parameter::ndustTypes=" + str(dustTypesSize) + "\n")
 	elif(row.strip() == "#KROME_header"):
 		fout.write(get_licence_header())
-	elif(row.strip() == "#KROME_photo_variables"):
+	elif(row.strip() == "#KROME_photo_variables" and usePhIoniz):
 		fout.write("real*8::"+(",".join(phvars))+"\n")
-	elif(row.strip() == "#KROME_photoheating_variables"):
+	elif(row.strip() == "#KROME_photoheating_variables" and useHeatingPhoto):
 		fout.write("real*8::"+(",".join(pheatvars))+"\n")
 
 	else:
@@ -953,11 +967,13 @@ for row in fh:
 
 	if(skip): continue
 	#replace krome variables
-	row = row.replace("#KROME_photo_functions", ph_func +"\n")
-	row = row.replace("#KROME_photo_qromos", ph_qromos +"\n")
-	row = row.replace("#KROME_photo_heating_qromos", ph_heat_zero + "\n" + ph_heat_qromos +"\n")
-	row = row.replace("#KROME_photo_heating_functions", ph_heat +"\n")
-	row = row.replace("#KROME_photo_heating_print", ph_heat_print +"\n")
+	if(usePhIoniz):
+		row = row.replace("#KROME_photo_functions", ph_func +"\n")
+		row = row.replace("#KROME_photo_qromos", ph_qromos +"\n")
+	if(useHeatingPhoto):
+		row = row.replace("#KROME_photo_heating_qromos", ph_heat_zero + "\n" + ph_heat_qromos +"\n")
+		row = row.replace("#KROME_photo_heating_functions", ph_heat +"\n")
+		row = row.replace("#KROME_photo_heating_print", ph_heat_print +"\n")
 
  
 	if(row[0]!="#"): fout.write(row)
@@ -1241,6 +1257,11 @@ if(useDvodeF90):
 else:
 	fh = open("src/krome.f90")
 
+if(is_number(ATOL)): ATOL = '%e' % ATOL
+if(is_number(RTOL)): RTOL = '%e' % RTOL
+ATOL = ATOL.replace("e","d")
+RTOL = RTOL.replace("e","d")
+
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome.f90","w")
 skip = False
@@ -1272,6 +1293,9 @@ for row in fh:
 		row = row.replace("#KROME_dust_arguments",",xdust")
 	else:
 		row = row.replace("#KROME_dust_arguments","")
+	
+	row = row.replace("#KROME_ATOL",str(ATOL))
+	row = row.replace("#KROME_RTOL",str(RTOL))
 
 	if(skip): continue
 
@@ -1322,14 +1346,14 @@ print "- copying others...",
 if(is_test):
 	print "- copying test to /build...",
 	if(useDvodeF90):
-		shutil.copyfile("tests/MakefileF90", buildFolder+"Makefile")
+		shutil.copyfile("tests/"+test_name+"/MakefileF90", buildFolder+"Makefile")
 	elif(buildCompact):
-		shutil.copyfile("tests/MakefileCompact", buildFolder+"Makefile")
+		shutil.copyfile("tests/"+test_name+"/MakefileCompact", buildFolder+"Makefile")
 	else:
-		shutil.copyfile("tests/Makefile", buildFolder+"Makefile")
+		shutil.copyfile("tests/"+test_name+"/Makefile", buildFolder+"Makefile")
 
-	test_file = "tests/test_"+test_name+".f90"
-	plot_file = "tests/plots/plot_"+test_name+".gps"
+	test_file = "tests/"+test_name+"/test.f90"
+	plot_file = "tests/"+test_name+"/plot.gps"
 	#chech if test file exists
 	try:
 		with open(test_file) as f: pass

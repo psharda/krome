@@ -1,0 +1,15 @@
+
+reset
+set logscale
+set autoscale
+set format x "%L"
+set format y "%L"
+set format z "%L"
+set xlabel "log(t/yr)"
+set ylabel "log(a/cm)"
+set zlabel "log(n/cm-3)"
+set zrange[1e-20:]
+
+splot './fort.77' w l t "dust C", './fort.78' w l t "dust Si"
+
+

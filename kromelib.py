@@ -1070,8 +1070,6 @@ def get_quote():
 	["Testing can only prove the presence of bugs, not their absence.","Edsger W. Dijkstra"],
 	["If debugging is the process of removing bugs, then programming must be the process of putting them in.","Edsger W. Dijkstra"],
 	["God is Real, unless declared Integer.","J. Allan Toogood"],
-	["At night astronomers agree.","Matthew Prior"],
-	["My lord, they say five moons were seen tonight:/Four fixed, and the fifth did whirl about/The other four in wondrous motion.","William Shakespeare"],
 	["Curiously enough, the only thing that went through the mind of the bowl of petunias as it fell was Oh no, not again.","The Hitchhiker's Guide to the Galaxy"],
 	["Computer science differs from physics in that it is not actually a science.","Richard Feynman"],
 	["The purpose of computing is insight, not numbers.","Richard Hamming"],
@@ -1094,8 +1092,9 @@ def get_quote():
 	["To iterate is human, to recurse divine.","L. Peter Deutsch"],
 	["Should array indices start at 0 or 1?  My compromise of 0.5 was rejected without, I thought, proper consideration.","Stan Kelly-Bootle"],
 	["Any code of your own that you haven't looked at for six or more months might as well have been written by someone else.","Eagleson's Law"],
-	["All science is either physics or stamp collecting", "Ernest Rutherford"],
-	["AAAAAAAAAA",""]
+	["All science is either physics or stamp collecting.", "Ernest Rutherford"],
+	["Done is better than perfect.", ""],
+	["AAAAAAAAAA!",""]
 	]
 	qtup = quotes[int(random.random()*(len(quotes)-1))]
 	myqt = trunc(qtup[0],40," ").upper().strip()

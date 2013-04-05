@@ -1,22 +1,28 @@
+#random network generator
+
 from random import randint,random
 import sys
 
-nrea = 2000 #numero di reazioni da generare
-nspec = 10 #numero di specie FK1,FK2,...
-emin = -11. #esponenziale minimo rate coefficient (10**emin)
-emax = -8. #esponenziale massimo rate coefficient (10**emax)
-kmax = 1000000 #numero massimo di tentativi per generare una reazione 
+nrea = 2000 #number of reactions to generate
+nspec = 10 #number of random species (names=FK1,FK2,...)
+emin = -11. #max rate coefficient, log (kmin=10**emin)
+emax = -8. #max rate coefficient, log (kmax=10**emax)
+kmax = 1000000 #maximum number of attempts to generate a reacion 
+step = 1.5 #decreasing step of species distribution (step=1 equiprobable species)
 
 
 ints = []
-passo = 1.5
+passo = step
+if(step<1.): 
+	print "ERROR: step must be equal or larger than 1!"
+	sys.exit()
 mult = 100*passo
 for i in range(nspec):
 	mult /= passo
 	if(mult<1.):
-		print "ERRORE: mult<1, dimunusici passo"
+		print "ERROR: mult<1, decrease step"
 		sys.exit()
-	print i,int(mult)
+	#print i,int(mult)
 	for j in range(int(mult)):
 		ints.append(i+1)
 
@@ -33,7 +39,7 @@ for i in range(nrea):
 		if(not(fs in fsrea)):
 			break
 		if(k>=kmax-1):
-			print "numero di tentativi superato!",kmax
+			print "max number of attempts reached!",kmax
 			sys.exit()
 	fsrea.append(fs)
 		

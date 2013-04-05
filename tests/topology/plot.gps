@@ -1,0 +1,23 @@
+
+set multiplot layout 2,2 rowsfirst
+set logscale
+set autoscale
+set format x "%L"
+set format y "%L"
+set xlabel "log(t/yr)"
+set ylabel "log(x)"
+set key t r
+set grid
+set xrange[1e2:1e8]
+
+plot 'fort.66' u 1:($6/2e4) w l t "topology", '../tests/topology/WH2008.dat' u 1:($6/2e4) t "C"
+
+plot 'fort.66' u 1:($25/2e4) w l t "topology", '../tests/topology/WH2008.dat' u 1:($25/2e4) t "H3+"
+
+set key b l
+plot 'fort.66' u 1:($363/2e4) w l t "topology", '../tests/topology/WH2008.dat' u 1:($363/2e4) t "H3O+"
+
+set key b r
+plot 'fort.66' u 1:($54/2e4) w l t "topology", '../tests/topology/WH2008.dat' u 1:($54/2e4) t "O2"
+
+unset multiplot
