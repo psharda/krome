@@ -27,8 +27,8 @@ customCoeFunction = "[CUSTOM COE FUNCTION NOT SET!]"
 buildFolder = "build/"
 TminAuto = 1e99
 TmaxAuto = -1e99
-RTOL = 1e-4
-ATOL = 1e-10
+RTOL = 1e-6 #default relative tolerance
+ATOL = 1e-40 #default absolute tolerance
 dustArraySize = dustTypesSize = 0
 #select test name
 for arg in sys.argv:
@@ -64,6 +64,9 @@ for arg in sys.argv:
 			filename = "networks/react_enzo_photo"
 		elif(test_name=="dust"):
 			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN"]]
+			filename = "networks/react_enzo"
+		elif(test_name=="compact"):
+			[sys.argv.append(x) for x in ["-compact"]]
 			filename = "networks/react_enzo"
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
@@ -109,10 +112,6 @@ if("-useTopology" in sys.argv):
 if("-useFlux" in sys.argv):
 	useFlux = True
 	print "Reading option -useFlux"
-#use heating
-if("-useHeating" in sys.argv):
-	useHeating = True
-	print "Reading option -useHeating"
 #do report
 if("-report" in sys.argv):
 	doReport = True
@@ -266,7 +265,7 @@ for arg in sys.argv:
 
 #show help
 if("-help" in sys.argv or "-h" in sys.argv or "--help" in sys.argv):
-	die(get_usage())
+	get_usage()
 print
 
 use_RHS_variable = False
@@ -1061,9 +1060,6 @@ for row in fh:
 	if(row.strip() == "#KROME_header"):
 		fout.write(get_licence_header())
 	else:
-		if(row.strip() == "#IFKROME_useHeating" and not(useHeating)): skip = True
-		if(row.strip() == "#ENDIFKROME"): skip = False
-
 		if(row.strip() == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
 		if(row.strip() == "#ENDIFKROME"): skip = False
 

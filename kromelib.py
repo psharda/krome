@@ -110,8 +110,32 @@ def restore_file(fname,fle):
 	fout.close()
 
 ##################################
+def get_terminal_size(fd=1):
+    """
+    Returns height and width of current terminal. First tries to get
+    size via termios.TIOCGWINSZ, then from environment. Defaults to 25
+    lines x 80 columns if both methods fail.
+ 
+    :param fd: file descriptor (default: 1=stdout)
+    """
+    try:
+        import fcntl, termios, struct
+        hw = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+    except:
+        try:
+            hw = (os.environ['LINES'], os.environ['COLUMNS'])
+        except:  
+            hw = (25, 80)
+ 
+    return hw
+
+
+##################################
 def get_usage():
-	return """
+
+	tsze =  get_terminal_size()
+	th = tsze[0]
+	msg = """
 
 NAME
 	KROME - a tool for creating chemical kinetics
@@ -141,6 +165,16 @@ DESCRIPTION
 	
 	-forceRWORK=N
 		force the size of RWORK to N
+
+	-ATOL=N
+		set solver absolute tolerance to the float
+		or double value N, e.g. -ATOL=1d-40
+		Default is N=1d-40
+
+	-RTOL=N
+		set solver relative tolerance to the float
+		double value N, e.g. -RTOL=1e-5
+		Default is N=1d-6
 	
 	-useN
 		use number densities (1/cm3) as input/ouput 
@@ -163,8 +197,12 @@ DESCRIPTION
 		ALL	enable all together
 		example: -heating=A,PHOTO
 
-	-useHeating
-		heating toggle (obsolete)
+	-dust=N,TYPE1,TYPE2,...
+		include dust ODE using N bins for each TYPE,
+		e.g. -dust=10,C,Si set 10 dust carbon bins and
+		10 dust silicon dust bins. Require a call to 
+		the krome_init_dust subroutine. See test=dust
+		for an example.
 
 	-usePhot
 		use photons indicated in the reaction file
@@ -181,6 +219,7 @@ DESCRIPTION
 		shock1D		1D shock without cooling
 		shock1Dphoto	1D shock with photoionization, cooling, heating
 		dust		One-zone: dust growth and thermal sputtering
+		compact		1D shock using compact source file
 
 	-useDvodeF90
 		use Dvode implementation in F90 (slower)
@@ -206,7 +245,9 @@ DESCRIPTION
 
 	-useFileIdx
 		use the reaction index in the reaction file instead 
-		of using a default progressive index starting from 1
+		of using the automatic progressive index starting 
+		from 1. Useful with rate coefficients that depends
+		on other coefficients, e.g. k(10) = 1d-2*k(3)
 
 	-compact
 		creates a single fortran file with all the modules
@@ -218,8 +259,8 @@ DESCRIPTION
 		set the operators for all the reaction temperature 
 		limits where opLow is the operator for the first 
 		temperature value in the reaction file, and opHigh 
-		is for the second one. e.g. if the limits for a 
-		given reaction are ...,10.,1d4,... using Tlmit=[GE,LE] 
+		is for the second one. e.g. if the T limits for a 
+		given reaction are 10. and 1d4 the option -Tlmit=[GE,LE] 
 		will provide (Tgas>=10. AND Tgas<=1d4) as the reaction
 		range of validity. Operators opLow and opHigh must 
 		be one of the following: LE, GE, LT, GT.
@@ -239,10 +280,11 @@ DESCRIPTION
 		included in krome_user_commons.
 
 	-useCustomCoe="FUNCTION"
-		use a custom function that returns a real*8 array of size 
-		NREA = number of reactions, that replaces the standard 
-		rate coefficient calculation function. Note that FUNCTION
-		must be explicitely included in krome_user_commons module.
+		use a user-defined custom function that returns a real*8 
+		array of size NREA = number of reactions, that replaces 
+		the standard rate coefficient calculation function. 
+		Note that FUNCTION must be explicitely included in 
+		krome_user_commons module.
 
 	-useODEConstant="EXPRESSION"
 		postpone an expression to each ODE. EXPRESSION must be
@@ -271,6 +313,16 @@ CREDITS
 	thanks to F.A. Gianturco, D.R.G. Schleicher
 
 """
+	c = 0	
+	msgs = msg.split("\n")
+	for a in msgs:
+		c += 1
+		print a
+		if(c%(th-2)==0):
+			print 
+			a = raw_input("Press Enter for more... (" + str(c*100/len(msgs)) + "%)")
+	sys.exit()
+
 ##################################
 def truncF90(mystr, sublen, sep):
 	#split (&\n) the string mystr in parts smaller tha sublen using sep as separator

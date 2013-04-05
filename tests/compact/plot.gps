@@ -9,11 +9,11 @@ set key t r
 set grid
 
 set ylabel "log(T/K)"
-plot '../tests/plots/shock1D.dat' u 3:7 w l t "Tgas_org",\
+plot '../tests/shock1Dcool/shock1D.dat' u 3:7 w l t "Tgas_org",\
  './fort.24' u 3:7 w l t "Tgas_cool"
 
 set ylabel "log(rho[g/cm3])"
-plot '../tests/plots/shock1D.dat' u 3:4 w l t "rho_org",\
+plot '../tests/shock1Dcool/shock1D.dat' u 3:4 w l t "rho_org",\
  './fort.24' u 3:4 w l t "rho_cool"
 
 unset multiplot
