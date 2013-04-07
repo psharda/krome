@@ -1099,31 +1099,51 @@ end do
 	return s
 
 ###########################
+#this function returns if the string line
+# starts with one of the items in the array 
+# of string aarg
 def lbeg(aarg,line):
 	for arg in aarg:
 		if(line[:len(arg)]==arg): return True
 	return False
+###########################
+#this function returns if the string line
+# ends with one of the items in the array 
+# of string aarg
+def lend(aarg,line):
+	for arg in aarg:
+		if(line[len(line)-len(arg):]==arg): return True
+	return False
 ###############################
 #this function indent f90 file and remove multiple blank lines
 def indentF90(filename):
-
+	import os
+	#check if the file exists else return
+	if(not(os.path.isfile(filename))): return
+	
+	#open file for indent
 	fh = open(filename,"rb")
-	arow = []
-	is_blank = False
-	nind = 0
+	arow = [] #array of the lines of the indented file
+	is_blank = is_amper = False #flags
+	nind = 0 #number indent level
 	nspace = 2 #number of space for indent
 	tokenclose = ["end do","end if","end function","end subroutine","else if","elseif","else","enddo","end module","endif"]
-	tokenopen = ["do","function","subroutine","contains","else","else if","elseif"]
+	tokenclose += ["contains","endfunction","endsubroutine","endmodule"]
+	tokenopen = ["do","function","subroutine","contains","else","else if","elseif","module"]
 	for row in fh:
-		srow = row.strip()
-		if(lbeg(tokenclose, srow)): nind -= 1
-		#remove double blank lines
-		if(not(srow=="" and is_blank)): arow.append((" "*(nind*nspace))+srow+"\n")
-		is_blank = (srow=="") #flag blank line mode
-		if(lbeg(tokenopen, srow)): nind += 1
-		if(lbeg(["if"],srow) and "then" in srow): nind += 1
+		srow = row.strip() #trim the row
+		if(lbeg(tokenclose, srow)): nind -= 1 #check if the line ends with one of tokenclose
+		indent = (" "*(nind*nspace)) #compute number of spaces for indent
+		if(is_amper): indent = (" "*(2*nspace)) + indent #increas indent in case of previous &
+		if(not(srow=="" and is_blank)): arow.append(indent+srow+"\n") #append indented line to array of rows
+		is_amper = False #is a line after ampersend flag
+		if(lend(["&"], srow)): is_amper = True #check if the line ends with &
+		is_blank = (srow=="") #flag for blank line mode
+		if(lbeg(tokenopen, srow)): nind += 1 #check if the line ends with one of tokenclose
+		if(lbeg(["if"],srow) and "then" in srow): nind += 1 #check if line stats with if and has then
 	fh.close()
 
+	#write the new file
 	fh = open(filename,"w")
 	for x in arow:
 		fh.write(x)

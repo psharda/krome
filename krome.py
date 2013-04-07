@@ -274,11 +274,7 @@ separator = "," #separator character
 krome = "" #krome global variable prefix
 
 #chech if reactions file exists
-try:
-	with open(filename) as f: pass
-except IOError as e:
-	print "ERROR: Reaction file \""+filename+"\" doesn't exist!"
-	sys.exit()
+if(not(os.path.isfile(filename))): die("ERROR: Reaction file \""+filename+"\" doesn't exist!")
 
 
 solver_moss = int(solver_MF/100)
@@ -1351,12 +1347,9 @@ if(is_test):
 	test_file = "tests/"+test_name+"/test.f90"
 	plot_file = "tests/"+test_name+"/plot.gps"
 	#chech if test file exists
-	try:
-		with open(test_file) as f: pass
-	except IOError as e:
-		print
-		print "ERROR: Test file \""+test_file+"\" doesn't exist!"
-		sys.exit()
+
+	if(not(os.path.isfile(filename))): die("ERROR: Test file \""+test_file+"\" doesn't exist!")
+
 	shutil.copyfile(test_file, buildFolder+"test.f90")
 	if(has_plot): shutil.copyfile(plot_file, buildFolder+"plot.gps")
 	print " done!"
