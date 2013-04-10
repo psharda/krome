@@ -8,6 +8,7 @@ contains
     use krome_constants
     use krome_subs
     use krome_cooling
+    use krome_heating
     use krome_tabs
 #IFKROME_useDust
     use krome_dust

@@ -4,7 +4,10 @@
 	implemented get_index function in krome_subs
 	added function aliases in krome_user for the useful 
 	  functions in krome_subs
-
+	included decoupled test (and krome_decoupled file)
+	krome_heating file included
+	modified Makefile accordingly
+	
 *************************************************
 *************************************************
 *************************************************

@@ -65,6 +65,9 @@ for arg in sys.argv:
 		elif(test_name=="dust"):
 			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN"]]
 			filename = "networks/react_enzo"
+		elif(test_name=="shock1Ddecoupled"):
+			[sys.argv.append(x) for x in ["-cooling=CEN,H2,HD,Z"]]
+			filename = "networks/react_enzo"
 		elif(test_name=="compact"):
 			[sys.argv.append(x) for x in ["-compact"]]
 			filename = "networks/react_enzo"
@@ -1049,15 +1052,6 @@ fh = open("src/krome_cooling.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_cooling.f90","w")
 
-#build heating terms
-pheatvars = []
-if(usePhIoniz):
-	for mol in specs:
-		if(mol.is_atom and mol.charge>=0):
-			fake_opacity = ""
-			if(useFakeOpacity): fake_opacity = " * exp(-n(" + mol.fidx + ") / n0)" 
-			pheatvars.append("krome_pheat_"+mol.phname + " * n(" + mol.fidx + ")" + fake_opacity)
-
 skip = False
 for row in fh:
 	if(row.strip() == "#KROME_header"):
@@ -1077,6 +1071,39 @@ for row in fh:
 
 		if(row.strip() == "#IFKROME_useCoolingHD" and not(useCoolingHD)): skip = True
 		if(row.strip() == "#ENDIFKROME"): skip = False
+
+		if(skip): continue
+
+		if(row[0]!="#"): fout.write(row)
+
+if(not(buildCompact)):
+	fout.close()
+print "done!"
+
+
+#*********HEATING****************
+#write header in krome_heating.f90
+print "- writing krome_heating.f90...",
+fh = open("src/krome_heating.f90")
+
+if(not(buildCompact)):
+	fout = open(buildFolder+"krome_heating.f90","w")
+
+#build heating terms
+pheatvars = []
+if(usePhIoniz):
+	for mol in specs:
+		if(mol.is_atom and mol.charge>=0):
+			fake_opacity = ""
+			if(useFakeOpacity): fake_opacity = " * exp(-n(" + mol.fidx + ") / n0)" 
+			pheatvars.append("krome_pheat_"+mol.phname + " * n(" + mol.fidx + ")" + fake_opacity)
+
+skip = False
+for row in fh:
+	if(row.strip() == "#KROME_header"):
+
+		fout.write(get_licence_header())
+	else:
 
 		if(row.strip() == "#IFKROME_useHeatingCompress" and not(useHeatingCompress)): skip = True
 		if(row.strip() == "#ENDIFKROME"): skip = False
@@ -1236,7 +1263,20 @@ if(not(buildCompact)):
 	fout.close()
 print "done!"
 
+#********* DECOUPLED ****************
+print "- writing krome_decoupled.f90...",
+fh = open("src/krome_decoupled.f90")
+if(not(buildCompact)):
+	fout = open(buildFolder+"krome_decoupled.f90","w")
+for row in fh:
+	if(row[0]!="#"): fout.write(row)
+if(not(buildCompact)):
+	fout.close()
+
+print "done!"
+
 #********* REDUCTION ****************
+print "- writing krome_reduction.f90...",
 fh = open("src/krome_reduction.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_reduction.f90","w")
@@ -1379,6 +1419,7 @@ else:
 	indentF90(buildFolder+"krome_commons.f90")
 	indentF90(buildFolder+"krome_constants.f90")
 	indentF90(buildFolder+"krome_cooling.f90")
+	indentF90(buildFolder+"krome_heating.f90")
 	indentF90(buildFolder+"krome_dust.f90")
 	indentF90(buildFolder+"krome.f90")
 	indentF90(buildFolder+"krome_ode.f90")
@@ -1386,7 +1427,7 @@ else:
 	indentF90(buildFolder+"krome_reduction.f90")
 	indentF90(buildFolder+"krome_subs.f90")
 	indentF90(buildFolder+"krome_tabs.f90")
-	indentF90(buildFolder+"krome_tabs.f90")
+	indentF90(buildFolder+"krome_decoupled.f90")
 	indentF90(buildFolder+"krome_user.f90")
 
 print "done!"

@@ -1,6 +1,7 @@
 fc = ifort
 #fc = gfortran
 
+lib = -llapack
 ifeq ($(fc),ifort)
 	std = -check all -traceback -fpe0  -ftz -ftrapuv -warn all -u
 	nowarn = -nowarn
@@ -9,7 +10,7 @@ ifeq ($(fc),ifort)
 	hswitch =  -O3 -ipo -ip -unroll
 	pswitch = $(hswitch) -pg
 	nswitch = $(std) -O0
-	switch =  -O3
+	switch =  $(hswitch)
 else
 	switch += -ffpe-trap=invalid,zero,overflow -g
 	switch += -fbacktrace -O3
@@ -31,10 +32,12 @@ all:
 	$(fc) -c krome_photo.f90 $(switch)
 	$(fc) -c krome_tabs.f90 $(switch)
 	$(fc) -c krome_dust.f90 $(switch)	
-	$(fc) -c krome_cooling.f90 $(switch) 
+	$(fc) -c krome_cooling.f90 $(switch)
+	$(fc) -c krome_heating.f90 $(switch)	
 	$(fc) -c krome_ode.f90 $(switch) 
 	$(fc) -c krome_user.f90 $(switch)
 	$(fc) -c krome_reduction.f90 $(switch)
+	$(fc) -c krome_decoupled.f90 $(switch)
 	$(fc) -c krome.f90 $(switch) 
 	$(fc) -c test.f90 $(switch) 
 
