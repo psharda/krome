@@ -37,7 +37,7 @@ for arg in sys.argv:
 		test_name = (arg.strip().replace("-test=",""))
 		print "Reading option -test (test="+test_name+")"
 		if(test_name=="planet"):
-			[sys.argv.append(x) for x in ["-useN"]]
+			[sys.argv.append(x) for x in ["-useN","-reverse=\"*1d-2*(@nR1/(@nR1+@nR2+@nR3))\""]]
 			filename = "networks/react_planet"
 		elif(test_name=="WH2008"):
 			[sys.argv.append(x) for x in ["-useN","-iRHS"]]
@@ -145,7 +145,7 @@ for arg in sys.argv:
 	if("reverse=" in arg):
 		reverse_function = (arg.strip().replace("-reverse=",""))
 		createReverse = True
-		print "Reading option -reverse (function="+reverse_function+")"
+		print "Reading option -reverse [function="+reverse_function+"]"
 		break
 #determine Tgas limit operators
 for arg in sys.argv:
@@ -449,29 +449,36 @@ if(createReverse):
 			myrev.verbatim += " (REV)" #append REV label to reaction string
 			myreactants = myrev.reactants #get list of reactants
 			myproducts = myrev.products #get list of products
-			myrev_function = reverse_function #make a copy of the function
+			myrev_function = reverse_function.replace(" ","").replace("\"","").strip() #make a trimmed copy of the function
 			#loop over reactants and replace template name nRi with local name [e.g. nR1->n(idx_H)]
 			for i in range(1,10):
 				ops = ["*","/","+","-"]
 				#replace reactants token (remove dummy)
 				if(i<len(myreactants)+1):
 					myr = myreactants[i-1]
-					myrev_function = myrev_function.replace("nR"+str(i),"n("+myr.fidx+")")
+					myrev_function = myrev_function.replace("@nR"+str(i),"n("+myr.fidx+")")
+					myrev_function = myrev_function.replace("@iR"+str(i),myr.fidx)
 				else:
-					#loop on operators to remove token properly
+					#loop on operators to remove dummy token properly
 					for op in ops:
-						myrev_function = myrev_function.replace(op+"nR"+str(i),"")
+						myrev_function = myrev_function.replace(op+"@nR"+str(i),"")
+						myrev_function = myrev_function.replace(op+"@iR"+str(i),"")
+				
+				myrev_function = myrev_function.replace("@NR",str(len(myreactants)))
 				
 				#replace products token (remove dummy)
 				if(i<len(myproducts)+1):
 					myp = myproducts[i-1]
-					myrev_function = myrev_function.replace("nP"+str(i),"n("+myp.fidx+")")
+					myrev_function = myrev_function.replace("@nP"+str(i),"n("+myp.fidx+")")
+					myrev_function = myrev_function.replace("@iP"+str(i),myp.fidx)
 				else:
-					#loop on operators to remove token properly
+					#loop on operators to remove dummy token properly
 					for op in ops:
-						myrev_function = myrev_function.replace(op+"nP"+str(i),"")
+						myrev_function = myrev_function.replace(op+"@nP"+str(i),"")
+						myrev_function = myrev_function.replace(op+"@iP"+str(i),"")
+				myrev_function = myrev_function.replace("@NP",str(len(myproducts)))
 
-			myrev.krate = myrea.krate + myrev_function #get reaction rate written in F90 style
+			myrev.krate = "(" + myrea.krate + ") " + myrev_function #get reaction rate written in F90 style
 			myrev.build_RHS() #build RHS in F90 format (e.g. k(2)*n(10)*n(8) )
 			myrev.check() #check mass and charge conservation
 			reacts.append(myrev)

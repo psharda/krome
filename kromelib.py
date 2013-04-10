@@ -268,13 +268,19 @@ DESCRIPTION
 	-reverse="EXPRESSION"
 		create reverse reaction from the given set. Inverse rate
 		coefficient are built as k_reverse = k_forward EXPRESSION.
-		EXPRESSION allows to use nRi and nPi as i-th reactant and 
-		product	rispectively, while Tgas is the temperature. 
+		EXPRESSION allows to use @nRi and @nPi as i-th reactant and 
+		product	respectively, while Tgas is the temperature.
+		It also allows to use the indexes of products and reactants
+		by using @iRi and @iPi, e.g. @iR1 or @iP2.
+		The number of non-dummy products and reactants is @NR and @NP
+		respectively. 
 		Dummies are removed automatically.
-		e.g. using -reverse="*nP2/(nR1+nR2+nR3)" the reaction 
+		e.g. using -reverse="*@nP2/(@nR1+@nR2+@nR3) * A(@iR1)" 
+		the reaction 
 		H+HO -> H2+O with rate k_forward is reversed as
 		H2+O -> H+HO with a rate k_reverse of
 		k_reverse = k_forward * n(idx_HO) / (n(idx_H2) + n(idx_O))
+		 * A(idx_H2)
 		as indicate in EXPRESSION (note that nR3 has removed).
 		EXPRESSION also allows functions that (if used) must be 
 		included in krome_user_commons.
@@ -283,7 +289,7 @@ DESCRIPTION
 		use a user-defined custom function that returns a real*8 
 		array of size NREA = number of reactions, that replaces 
 		the standard rate coefficient calculation function. 
-		Note that FUNCTION must be explicitely included in 
+		Note that FUNCTION must be explicitly included in 
 		krome_user_commons module.
 
 	-useODEConstant="EXPRESSION"
@@ -293,7 +299,12 @@ DESCRIPTION
 	-usePlainIsotopes
 		use kA format for isotopes instead of [k]A format, where
 		k is the isotopic number and A is the atom name, e.g. krome
-		looks for 14C instead of [14]C in the rections file.
+		looks for 14C instead of [14]C in the reactions file.
+
+	-project=NAME
+		build everything in a folder called build_NAME instead
+		of building all in the default build folder. It also
+		creates a NAME.kpj file with the krome input used.
 
 	-clean
 		clean all in /build (including krome_user_commons.f90

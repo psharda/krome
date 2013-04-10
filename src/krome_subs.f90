@@ -61,6 +61,32 @@ contains
 
   end function get_names
 
+  !***************************
+  !get the index of the specie name
+  function get_index(name)
+    use krome_commons
+    integer::get_index,i
+    character*16::names(nspec)
+    character*(*)::name
+    names(:) = get_names()
+    get_index = -1 !default index
+    !loop on species to found the specie named name
+    do i=1,nspec
+       !when found store and break loop
+       if(trim(names(i))== trim(name)) then
+          get_index = i !store index
+          exit
+       end if
+    end do
+    
+    !error if species not found
+    if(get_index<0) then
+       print *,"ERROR: can't find the index of ",name
+       stop
+    end if
+
+  end function get_index
+
   !************************
   !get species charges
   function get_charges()

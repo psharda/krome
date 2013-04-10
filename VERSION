@@ -1,3 +1,13 @@
+10apr2013 (push master):
+	modified planet test
+	corrected reverse issue
+	implemented get_index function in krome_subs
+	added function aliases in krome_user for the useful 
+	  functions in krome_subs
+
+*************************************************
+*************************************************
+*************************************************
 07mar2013:
 	limite inferiore per le rates (1d-30)
 

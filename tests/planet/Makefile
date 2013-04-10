@@ -9,7 +9,7 @@ ifeq ($(fc),ifort)
 	hswitch =  -O3 -ipo -ip -unroll
 	pswitch = $(hswitch) -pg
 	nswitch = $(std) -O0
-	switch =  $(nswitch)
+	switch =  $(hswitch)
 else
 	switch += -ffpe-trap=invalid,zero,overflow -g
 	switch += -fbacktrace -O3
