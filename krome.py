@@ -365,6 +365,7 @@ unmatch_idx = False #controls if the reaction index in the file match the sequen
 for row in fh:
 	srow = row.strip()
 	arow = srow.split(separator,10) #split only 10 elements
+	if(srow.strip()==""): continue #looks for blank line
 	if(srow[0]=="#"): continue #looks for comment line
 	if(len(arow)!=11): continue #check line format
 	found_one = True
@@ -415,6 +416,7 @@ for row in fh:
 	myrea.reactants = sorted(myrea.reactants, key=lambda r:r.idx) #sort reactants
 	myrea.products = sorted(myrea.products, key=lambda p:p.idx) #sort products
 	myrea.build_RHS() #build RHS in F90 format (e.g. k(2)*n(10)*n(8) )
+	myrea.build_phrate()
 	myrea.check() #check mass and charge conservation
 	reacts.append(myrea)
 
@@ -628,7 +630,7 @@ print
 
 print "Temperature range found min/max (K):", TminAuto, "/",TmaxAuto
 
-#create explicit differnetials
+#create explicit differentials
 dns = ["dn("+str(sp.idx)+") = 0.d0" for sp in specs] #initialize
 for rea in reacts:
 	for r in rea.reactants:
@@ -822,10 +824,10 @@ if(not(buildCompact)):
 phvars = []
 pheatvars = []
 if(usePhIoniz):
-	for mol in specs:
-		if(mol.is_atom and mol.charge>=0):
-			phvars.append("krome_kph_"+mol.phname)
-			pheatvars.append("krome_pheat_"+mol.phname)
+	for react in reacts:
+		if("krome_kph_" in react.krate):
+			phvars.append(react.krate)
+			pheatvars.append(react.krate.replace("krome_kph_","krome_pheat_"))
 
 skip = False
 for row in fh:
@@ -921,9 +923,32 @@ print "- writing krome_photo.f90...",
 fh = open("src/krome_photo.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_photo.f90","w")
+phvars = []
+pheatvars= []
+ph_func = ph_qromos = ph_heat = ph_heat_qromos = ph_zero = ph_heat_print = ""
+for react in reacts:
+	phstuff = get_ph_stuff(react)
+	if(phstuff==None): continue
+	ph_func += phstuff["ph_func"]+"\n"
+	ph_qromos += phstuff["qromos"]+"\n"
+	ph_heat += phstuff["ph_heat"]+"\n"
+	ph_name = phstuff["reaname"]
 
+	phvars.append("krome_kph_"+ph_name)
+	pheatvars.append("krome_pheat_"+ph_name)
 
-#photoheating and photoionization have quite complex schemes
+	#string to print computed photoheating values
+	ph_heat_print += "print '(a20,E11.3,a1,a6)',\"" + react.verbatim + "\", " + "krome_pheat_"+ ph_name + ",\"\",\"erg/s\"\n"
+
+	#string containing photoheating computations (integrals)
+	ph_heat_qromos += "\t" + phstuff["qromos"].replace("sigma_", "heat_").replace("krome_kph_","krome_pheat_") + "\n"
+
+for x in phvars:
+	ph_zero += x + " = 0.d0\n"
+for x in pheatvars:
+	ph_zero += x + " = 0.d0\n"
+
+"""#photoheating and photoionization have quite complex schemes
 pheatvars = [] #photoheating variables list (e.g. krome_pheat_He)
 phvars = [] #photoionization variables list (e.g. krome_kph_H)
 #init strings 
@@ -964,7 +989,7 @@ for mol in specs:
 #initialize photo heating variables to zero
 for ph in pheatvars:
 	ph_heat_zero += ph+" = 0.d0\n"
-
+"""
 skip = False
 for row in fh:
 	#if(row.strip() == "#IFKROME_" and not(usePhIoniz)): skip = True
@@ -975,8 +1000,9 @@ for row in fh:
 	if(usePhIoniz):
 		row = row.replace("#KROME_photo_functions", ph_func +"\n")
 		row = row.replace("#KROME_photo_qromos", ph_qromos +"\n")
+		row = row.replace("#KROME_photo_init_zero", ph_zero +"\n")
 	if(useHeatingPhoto):
-		row = row.replace("#KROME_photo_heating_qromos", ph_heat_zero + "\n" + ph_heat_qromos +"\n")
+		row = row.replace("#KROME_photo_heating_qromos", ph_heat_qromos +"\n")
 		row = row.replace("#KROME_photo_heating_functions", ph_heat +"\n")
 		row = row.replace("#KROME_photo_heating_print", ph_heat_print +"\n")
 

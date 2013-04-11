@@ -30,7 +30,7 @@ contains
   function photo_heating(n)
     use krome_commons
     real*8::photo_heating,n(:),n0
-    n0 = 1d-2 !density for fake opacity (see KROME paper)
+    n0 = 1d-1 !density for fake opacity (see KROME paper)
     photo_heating = 0.d0
 #KROME_photo_heating
   end function photo_heating

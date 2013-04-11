@@ -32,7 +32,11 @@
 32,D,H-,,HD,E,,,10,1e8,1.5d-9*(T32)**(-0.1d0)
 33,H,H,H,H2,H,,,10,3e2,1.3d-32*(T32)**(-0.38d0)
 34,H,H,H,H2,H,,,3e2,1e8,1.3d-32*(T32)**(-1.00d0)
-35,H,,,H+,E,,,0.d0,1.d20,krome_kph_H
-36,D,,,D+,E,,,0.d0,1.d20,krome_kph_H
-37,HE,,,HE+,E,,,0.d0,1.d20,krome_kph_He
-38,HE+,,,HE++,E,,,0.d0,1.d20,krome_kph_Hej
+35,H,,,H+,E,,,0.d0,1.d20,krome_kph_auto
+36,D,,,D+,E,,,0.d0,1.d20,krome_kph_auto
+37,HE,,,HE+,E,,,0.d0,1.d20,krome_kph_auto
+38,HE+,,,HE++,E,,,0.d0,1.d20,krome_kph_auto
+39,H2,,,H2+,E,,,15.4d0,16.5d0,krome_kph_auto=9.56d-17*(energy_eV/15.4d0)-9.4d-17
+40,H2,,,H2+,E,,,16.5d0,17.7d0,krome_kph_auto=2.16d-17*(energy_eV/15.4d0)-1.48d-17
+41,H2,,,H2+,E,,,17.7d0,3d1,krome_kph_auto=1.51d-17*(energy_eV/15.4d0)**(-2.71)
+42,H-,,,H,E,,,.755,3d1,krome_kph_auto=2.11d-16*(energy_eV-.755)**(1.5)*energy_eV**(-3)

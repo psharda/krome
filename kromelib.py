@@ -37,6 +37,13 @@ class reaction():
 			if(p.name!="dummy"):
 				myp.append(p.name)
 		self.verbatim = " + ".join(myr)+" -> "+" + ".join(myp)
+	#method: build phrate
+	def build_phrate(self):
+		if(not("krome_kph_auto" in self.krate)): return
+		myr = self.reactants
+		self.kphrate = self.krate.replace("krome_kph_auto=","")
+		if(self.krate.strip()=="krome_kph_auto"): self.krate = "krome_kph_"+myr[0].phname
+		else: self.krate = "krome_kph_" + myr[0].phname.capitalize() + "R" + str(self.idx)
 	#method: build RHS
 	def build_RHS(self):
 		if(self.idx<=0):
@@ -116,7 +123,8 @@ def get_terminal_size(fd=1):
     size via termios.TIOCGWINSZ, then from environment. Defaults to 25
     lines x 80 columns if both methods fail.
  
-    :param fd: file descriptor (default: 1=stdout)
+    :param fd: file descriptor (default: 1=stdout) 
+	from bit.ly/HteEcQ
     """
     try:
         import fcntl, termios, struct
@@ -215,9 +223,10 @@ DESCRIPTION
 		topology	Topology reduction (authority/hub)
 		flux		Flux method (Grassi et al. 2012)
 		cooling		Plot cooling functions
+		shock1D		1D shock without cooling and heating
 		shock1Dcool	1D shock with cooling
-		shock1D		1D shock without cooling
 		shock1Dphoto	1D shock with photoionization, cooling, heating
+		shock1Ddecoupled 1D shock with cooling but dT/dt is computed outside the solver
 		dust		One-zone: dust growth and thermal sputtering
 		compact		1D shock using compact source file
 
@@ -439,10 +448,12 @@ def parser(name, mass_dic, atoms):
 	if("+" in name): mymol.charge = name.count("+")
 	if("-" in name): mymol.charge = -name.count("-")
 
-	jj = ""
+	jj = kk = ""
 	if(mymol.charge==1): jj = "j"
 	if(mymol.charge>1): jj = "j"+str(mymol.charge)
-	mymol.phname = name.replace("+","").replace("-","") + jj
+	if(mymol.charge==-1): kk = "k"
+	if(mymol.charge<-1): kk = "k"+str(mymol.charge)
+	mymol.phname = name.replace("+","").replace("-","") + jj + kk
 
 	if(mymol.name=="E"): mymol.charge = -1
 	if(len(namecp)>0): 
@@ -468,7 +479,7 @@ def clear_dir(folder):
 		print e
 
 #################################
-def get_photo_qromos(atom):
+def get_photo_qromosV96(atom):
 	myatom = atom.lower()
 	qromos = {"h" : "call qromos(intf, sigma_h, 1.360d+01, 5.000d+04, krome_kph_h, midsqls)",
 		"he" : "call qromos(intf, sigma_he, 2.459d+01, 5.000d+04, krome_kph_he, midsqls)",
@@ -660,7 +671,7 @@ def get_photo_qromos(atom):
 	return "!REMARK: photoionization of "+myatom+" is not present in Verner et al. 1996." 
 
 #################################
-def get_photo_heat(atom):
+def get_photo_heatV96(atom):
 	myatom = atom.lower()
 	heat = {"h" : "heat_h = heat_v96(energy_eV,1.360d+01,4.298d-01,5.475d+04,3.288d+01,2.963d+00,0.000d+00,0.000d+00,0.000d+00)",
 		"he" : "heat_he = heat_v96(energy_eV,2.459d+01,1.361d+01,9.492d+02,1.469d+00,3.188d+00,2.039d+00,4.434d-01,2.136d+00)",
@@ -853,7 +864,7 @@ def get_photo_heat(atom):
 	return "heat_" + myatom + " = 0.d0"
 
 #################################
-def get_photo_cross(atom):
+def get_photo_crossV96(atom):
 	myatom = atom.lower()
 	cross = {"h" : "sigma_h = sigma_v96(energy_eV,4.298d-01,5.475d+04,3.288d+01,2.963d+00,0.000d+00,0.000d+00,0.000d+00)",
 		"he" : "sigma_he = sigma_v96(energy_eV,1.361d+01,9.492d+02,1.469d+00,3.188d+00,2.039d+00,4.434d-01,2.136d+00)",
@@ -1043,6 +1054,55 @@ def get_photo_cross(atom):
 	}
 	if(myatom in cross): return cross[myatom]
 	return "sigma_" + myatom + " = 0.d0"
+
+#################################
+def get_ph_reactname(react):
+	if(not("krome_kph_auto" in react.krate)): return None
+	myreag = react.reactants
+	mol = myreag[0]
+	if(react.krate.strip()=="krome_kph_auto"):
+		reaname = mol.phname.capitalize()
+	else:
+		reaname = mol.phname.capitalize() + "R" + str(react.idx)
+	return reaname
+	
+################################
+def get_ph_stuff(react):
+	if(len(react.reactants)>1): return None #die("ERROR:too much reactants for a photoreaction!", react.verbatim)
+	myreag = react.reactants
+	mol = myreag[0]
+	if(mol.charge>=0 and mol.is_atom):
+		reaname = mol.phname.capitalize()
+		qromos = get_photo_qromosV96(mol.phname)
+		heat = get_photo_heatV96(mol.phname)
+		cross = get_photo_crossV96(mol.phname)
+	else:
+		reaname = mol.phname.capitalize() + "R" + str(react.idx)
+		Emin = react.Tmin
+		Emax = react.Tmax
+		qromos = "call qromos(intf, sigma_"+reaname+", "+str(Emin)+", "+str(Emax)+", krome_kph_"+reaname+", midsqls)"
+		heat = "heat_"+reaname+" = ("+react.kphrate+") * (energy_eV - "+str(Emin)+")"
+		cross = "sigma_"+reaname+" = "+react.kphrate
+	#creates cross section function, e.g. sigma_H(energy_eV)
+	ph_func = ""
+	ph_func += "!************************\n"
+	ph_func += "function sigma_"+reaname+"(energy_eV)\n"
+	ph_func += "\treal*8::sigma_"+reaname+",energy_eV\n"
+	ph_func += "\t" + cross + "\n"
+	ph_func += "end function sigma_"+reaname+"\n"
+	ph_func += "\n"
+	
+	#creates photoheating function, e.g. heat_H(energy_eV)
+	ph_heat = ""
+	ph_heat += "!************************\n"
+	ph_heat += "function heat_"+reaname+"(energy_eV)\n"
+	ph_heat += "\treal*8::heat_"+reaname+",energy_eV\n"
+	ph_heat += "\t" + heat + "\n"
+	ph_heat += "end function heat_"+reaname+"\n"
+	ph_heat += "\n"
+
+	return {"reaname":reaname, "ph_func":ph_func, "ph_heat":ph_heat, "qromos":qromos}
+
 
 #################################
 def get_licence_header():

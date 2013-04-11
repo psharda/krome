@@ -4,6 +4,7 @@ contains
     use krome_commons
 
     print *,"Initializaing photoreactions..."
+#KROME_photo_init_zero
 #KROME_photo_qromos
 #KROME_photo_heating_qromos
 
