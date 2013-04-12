@@ -1118,11 +1118,21 @@ if(not(buildCompact)):
 #build heating terms
 pheatvars = []
 if(usePhIoniz):
-	for mol in specs:
-		if(mol.is_atom and mol.charge>=0):
-			fake_opacity = ""
-			if(useFakeOpacity): fake_opacity = " * exp(-n(" + mol.fidx + ") / n0)" 
-			pheatvars.append("krome_pheat_"+mol.phname + " * n(" + mol.fidx + ")" + fake_opacity)
+	for react in reacts:
+		phstuff = get_ph_stuff(react)
+		if(phstuff==None): continue
+		reaname = phstuff["reaname"]
+		reag = react.reactants
+		fake_opacity = ""
+		if(useFakeOpacity): fake_opacity = " * exp(-n(" + reag[0].fidx + ") / n0)" 
+		pheatvars.append("krome_pheat_"+reaname + " * n(" + reag[0].fidx + ")" + fake_opacity)
+		
+
+#	for mol in specs:
+#		if(mol.is_atom and mol.charge>=0):
+#			fake_opacity = ""
+#			if(useFakeOpacity): fake_opacity = " * exp(-n(" + mol.fidx + ") / n0)" 
+#			pheatvars.append("krome_pheat_"+mol.phname + " * n(" + mol.fidx + ")" + fake_opacity)
 
 skip = False
 for row in fh:

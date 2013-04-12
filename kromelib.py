@@ -1055,16 +1055,6 @@ def get_photo_crossV96(atom):
 	if(myatom in cross): return cross[myatom]
 	return "sigma_" + myatom + " = 0.d0"
 
-#################################
-def get_ph_reactname(react):
-	if(not("krome_kph_auto" in react.krate)): return None
-	myreag = react.reactants
-	mol = myreag[0]
-	if(react.krate.strip()=="krome_kph_auto"):
-		reaname = mol.phname.capitalize()
-	else:
-		reaname = mol.phname.capitalize() + "R" + str(react.idx)
-	return reaname
 	
 ################################
 def get_ph_stuff(react):
