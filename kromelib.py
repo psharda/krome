@@ -22,6 +22,7 @@ class reaction():
 	idx = 0 #reaction index
 	RHS = "" #ODE RHS in F90 style k(1)*n(2)*n(3)
 	RHSvar = "" #ODE RHS as variable k1n2n3
+	kphrate = None
 	#method: constructor to initialize lists
 	def __init__(self):
 		self.reactants = []
@@ -1064,6 +1065,7 @@ def get_photo_crossV96(atom):
 ################################
 def get_ph_stuff(react):
 	if(len(react.reactants)>1): return None #die("ERROR:too much reactants for a photoreaction!", react.verbatim)
+	if(react.kphrate==None): return None
 	myreag = react.reactants
 	mol = myreag[0]
 	if(mol.charge>=0 and mol.is_atom):
