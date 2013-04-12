@@ -1,3 +1,8 @@
+12apr2013 (origin master):
+	introduced molecular photoheating
+	add equilibrium check to break solver's loop earlier
+	minor corrections
+
 10apr2013 (push master):
 	modified planet test
 	corrected reverse issue

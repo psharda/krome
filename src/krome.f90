@@ -15,7 +15,7 @@ contains
     use krome_ode
     use krome_reduction
     real*8::dt,x(nmols),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin
-    real*8::rrmax,totmass,xdust(ndust)
+    real*8::rrmax,totmass,xdust(ndust),n_old(nspec)
     integer::icount,i
     
     !DLSODES variables
@@ -24,7 +24,7 @@ contains
 #KROME_iwork_array
     real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
-    logical::got_error
+    logical::got_error,equil
 
 
     !****************************
@@ -89,6 +89,7 @@ contains
     totmass = sum(n(:) * mass(:)) !calculate total mass
 #ENDIFKROME 
 
+    n_old(:) = -1d99
     do
        icount = icount + 1
        !solve ODE
@@ -116,6 +117,22 @@ contains
           got_error = .true.
           istate = 1
        end if
+#IFKROME_useEquilibrium
+       !try to determine if the system has reached a steady equilibrium
+       equil = .true.
+       do i=1,nspec
+          if(n(i)>1d-40) then
+             if(abs(n(i)-n_old(i))/n(i)>1d-6) then
+                equil = .false.
+                exit
+             end if
+          end if
+       end do
+       
+       if(equil) exit
+       n_old(:) = n(:)
+#ENDIFKROME
+
     end do
 
 #IFKROME_check_mass_conservation

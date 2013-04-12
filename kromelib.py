@@ -251,6 +251,11 @@ DESCRIPTION
 	-checkConserv
 		check mass conservation during integration (slower)
 
+	-useEquilibrium
+		check if the solver has reached the equilbirum. If so
+		break the solver's loop and return the values found.
+		It is useful when the system oscillates around a
+		solution (as in some photoheating cases).
 
 	-useFileIdx
 		use the reaction index in the reaction file instead 

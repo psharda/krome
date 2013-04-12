@@ -39,17 +39,17 @@ contains
     !   INITIALIZATION IN MASS FRACTION
     do ix = 1, nx
        x(ix,KROME_idx_H)     = 0.9225d0  !H
-       x(ix,KROME_idx_E)     = 0.d0 !1.0d-4    !E
-       x(ix,KROME_idx_Hj)    = 0.d0 !1.0d-4    !H+
+       x(ix,KROME_idx_E)     = 1.0d-4    !E
+       x(ix,KROME_idx_Hj)    = 1.0d-4    !H+
        x(ix,KROME_idx_D)     = 1.0d-20   !D
-       x(ix,KROME_idx_Dj)    = 0.d0 !1.0d-20   !D+
+       x(ix,KROME_idx_Dj)    = 1.0d-20   !D+
        x(ix,KROME_idx_HE)    = 0.0972d0  !He
-       x(ix,KROME_idx_HEj)   = 0.d0 !1.0d-20   !He+
-       x(ix,KROME_idx_H2j)   = 0.d0 !1.0d-20   !H2+
+       x(ix,KROME_idx_HEj)   = 1.0d-20   !He+
+       x(ix,KROME_idx_H2j)   = 1.0d-20   !H2+
        x(ix,KROME_idx_H2)    = 1.0d-5    !H2
        x(ix,KROME_idx_HD)    = 1.0d-8    !HD
-       x(ix,KROME_idx_Hk)    = 0.d0 !1.0d-20   !H-
-       x(ix,KROME_idx_HEjj)  = 0.d0 !1.0d-20   !He++
+       x(ix,KROME_idx_Hk)    = 1.0d-20   !H-
+       x(ix,KROME_idx_HEjj)  = 1.0d-20   !He++
 
        x(ix,:) = x(ix,:) / sum(x(ix,:))
     end do

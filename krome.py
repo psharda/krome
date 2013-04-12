@@ -13,7 +13,7 @@ print
 
 #set defaults
 solver_MF = 222
-force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = False
+force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = False
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = False
 createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
@@ -60,7 +60,7 @@ for arg in sys.argv:
 		elif(test_name=="shock1D"):
 			filename = "networks/react_enzo"
 		elif(test_name=="shock1Dphoto"):
-			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO"]]
+			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO","-cooling=CEN,H2,HD,Z","-useEquilibrium"]]
 			filename = "networks/react_enzo_photo"
 		elif(test_name=="dust"):
 			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN"]]
@@ -143,6 +143,10 @@ if("-usePlainIsotopes" in sys.argv):
 if("-usePhIoniz" in sys.argv):
 	usePhIoniz = True
 	print "Reading option -usePhIoniz"
+#use equilibrium check to break loops earlier
+if("-useEquilibrium" in sys.argv):
+	useEquilibrium = True
+	print "Reading option -useEquilibrium"
 #determine reverse function to reverse reactions
 for arg in sys.argv:
 	if("reverse=" in arg):
@@ -1362,6 +1366,9 @@ for row in fh:
 	if(row.strip() == "#ENDIFKROME"): skip = False
 
 	if(row.strip() == "#IFKROME_useDust" and not(useDust)): skip = True
+	if(row.strip() == "#ENDIFKROME"): skip = False
+
+	if(row.strip() == "#IFKROME_useEquilibrium" and not(useEquilibrium)): skip = True
 	if(row.strip() == "#ENDIFKROME"): skip = False
 
 	if(useDust):
