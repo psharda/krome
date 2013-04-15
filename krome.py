@@ -199,6 +199,8 @@ for arg in sys.argv:
 		if("PHOTO" in myHeat): useHeatingPhoto = True
 		if("A" in myHeat): useHeatingA = True
 		use_thermo = True
+		if(not(usePhIoniz) and useHeatingPhoto): 
+			die("ERROR: if you use photoheating you have to include potoionization via -usePhIoniz")
 
 		print "Reading option -heating ("+(",".join(myHeat))+")"
 		break
@@ -893,7 +895,8 @@ if(not(buildCompact)):
 for row in fh:
 	if(row.strip() == "#KROME_krates"):
 		for x in reacts:
-			sTlimit = "if(Tgas."+TlimitOpLow+"."+x.Tmin+" .and. Tgas."+TlimitOpHigh+"."+x.Tmax+")"
+			sTlimit = ""
+			if(x.kphrate==None): sTlimit = "if(Tgas."+TlimitOpLow+"."+x.Tmin+" .and. Tgas."+TlimitOpHigh+"."+x.Tmax+")"
 			kstr = "\t" + sTlimit + " k("+str(x.idx)+") = " + x.krate + " !" + x.verbatim
 			kstr = truncF90(kstr, 60,"*")
 			fout.write(truncF90(kstr, 60,"/")+"\n")
