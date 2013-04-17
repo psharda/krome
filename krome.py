@@ -950,53 +950,13 @@ for react in reacts:
 	#string containing photoheating computations (integrals)
 	ph_heat_qromos += "\t" + phstuff["qromos"].replace("sigma_", "heat_").replace("krome_kph_","krome_pheat_") + "\n"
 
+#inizialization of photoionization and photoheating common variables to zero
 for x in phvars:
 	ph_zero += x + " = 0.d0\n"
 for x in pheatvars:
 	ph_zero += x + " = 0.d0\n"
 
-"""#photoheating and photoionization have quite complex schemes
-pheatvars = [] #photoheating variables list (e.g. krome_pheat_He)
-phvars = [] #photoionization variables list (e.g. krome_kph_H)
-#init strings 
-ph_func = ph_qromos = ph_heat = ph_heat_qromos = ph_heat_zero = ph_heat_print = ""
-#loop on species to find suitable species for photoionization processes
-for mol in specs:
-	#only available for neutral and positive atoms
-	if(mol.is_atom and mol.charge>=0):
-		#append variables to lists
-		phvars.append("krome_kph_"+mol.phname)
-		pheatvars.append("krome_pheat_"+mol.phname)
 
-		#creates cross section function, e.g. sigma_H(energy_eV)
-		ph_func += "!************************\n"
-		ph_func += "function sigma_"+mol.phname+"(energy_eV)\n"
-		ph_func += "\t real*8::sigma_"+mol.phname+",energy_eV\n"
-		ph_func += "\t" + get_photo_cross(mol.phname) + "\n"
-		ph_func += "end function sigma_"+mol.phname+"\n"
-		ph_func += "\n"
-
-		#creates photoheating function, e.g. heat_H(energy_eV)
-		ph_heat += "!************************\n"
-		ph_heat += "function heat_"+mol.phname+"(energy_eV)\n"
-		ph_heat += "\t real*8::heat_"+mol.phname+",energy_eV\n"
-		ph_heat += "\t" + get_photo_heat(mol.phname) + "\n"
-		ph_heat += "end function heat_"+mol.phname+"\n"
-		ph_heat += "\n"
-
-		#string to print computed photoheating values
-		ph_heat_print += "print '(a10,E11.3,a1,a6)',\"" + mol.name + "\", " + "krome_pheat_"+mol.phname + ",\"\",\"erg/s\"\n"
-
-		#string containing cross section computations (integrals)
-		ph_qromos += "\t" + get_photo_qromos(mol.phname) + "\n"
-
-		#string containing photoheating computations (integrals)
-		ph_heat_qromos += "\t" + get_photo_qromos(mol.phname).replace("sigma_", "heat_").replace("krome_kph_","krome_pheat_") + "\n"
-
-#initialize photo heating variables to zero
-for ph in pheatvars:
-	ph_heat_zero += ph+" = 0.d0\n"
-"""
 skip = False
 for row in fh:
 	#if(row.strip() == "#IFKROME_" and not(usePhIoniz)): skip = True
@@ -1134,12 +1094,6 @@ if(usePhIoniz):
 		if(useFakeOpacity): fake_opacity = " * exp(-n(" + reag[0].fidx + ") / n0)" 
 		pheatvars.append("krome_pheat_"+reaname + " * n(" + reag[0].fidx + ")" + fake_opacity)
 		
-
-#	for mol in specs:
-#		if(mol.is_atom and mol.charge>=0):
-#			fake_opacity = ""
-#			if(useFakeOpacity): fake_opacity = " * exp(-n(" + mol.fidx + ") / n0)" 
-#			pheatvars.append("krome_pheat_"+mol.phname + " * n(" + mol.fidx + ")" + fake_opacity)
 
 skip = False
 for row in fh:

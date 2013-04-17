@@ -1,3 +1,5 @@
+17apr2013 (origin master):
+	solved photoheating bug
 12apr2013 (origin master):
 	introduced molecular photoheating
 	add equilibrium check to break solver's loop earlier

@@ -29,7 +29,7 @@ contains
   function intf(nrg)
     use krome_constants
     real*8::intf,nrg
-    intf = 4.d0 * pi * Jflux(nrg) / nrg / planck_eV !* exp(-tau) 
+    intf = 4.d0 * pi * Jflux(nrg) / nrg / planck_eV * eV_to_erg !* exp(-tau) 
   end function intf
 
   !********************
@@ -47,14 +47,13 @@ contains
   function heat_v96(energy_eV,Eth,E0,sigma_0,ya,P,yw,y0,y1)
     use krome_constants
     real*8::heat_v96,energy_eV,sigma_0,Fy,yw,x,y,E0,Eth
-    real*8::y0,y1,ya,P,efficiency
+    real*8::y0,y1,ya,P
     x = energy_eV/E0 - y0
     y = sqrt(x**2 + y1**2)
     Fy = ((x - 1.d0)**2 + yw**2) *  y**(0.5*P-5.5) &
          * (1.d0+sqrt(y/ya))**(-P)
     efficiency = 1d-1
-    heat_v96 = 1d-18 * sigma_0 * Fy * (energy_eV - Eth) &
-         * efficiency *  eV_to_erg !cm2*erg
+    heat_v96 = 1d-18 * sigma_0 * Fy * (energy_eV - Eth) !cm2*eV
   end function heat_v96
 
   !********************************
