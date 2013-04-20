@@ -36,7 +36,7 @@ contains
     real*8:: xx(nsp)
     x(:,:) = 0.d0
 
-    !   INITIALIZATION IN MASS FRACTION
+    !INITIALIZATION IN MASS FRACTION
     do ix = 1, nx
        x(ix,KROME_idx_H)     = 0.9225d0  !H
        x(ix,KROME_idx_E)     = 1.0d-4    !E
@@ -50,13 +50,13 @@ contains
        x(ix,KROME_idx_HD)    = 1.0d-8    !HD
        x(ix,KROME_idx_Hk)    = 1.0d-20   !H-
        x(ix,KROME_idx_HEjj)  = 1.0d-20   !He++
-
+       !normalize
        x(ix,:) = x(ix,:) / sum(x(ix,:))
     end do
 
+    !copy inital conditions to all the shells
     do ix = 1, nx
-       xx(:) = x(ix,:) 
-       !write(32,'(99E11.3)') xx(:)
+       xx(:) = x(ix,:)
     end do
 
   end subroutine initchem
@@ -99,7 +99,6 @@ contains
 
     !Courant factor, must be smaller than 1
     cflfactor = .1d0
-
     fmratio = .1d0
 
     !diffusion factor, must be greater that 1
@@ -108,15 +107,16 @@ contains
 
     rSN = radius !cm
 
-    !high pressure ejecta
+    !inner: high pressure ejecta
     rhoej  =  ((dble(nx)/dble(il))**3 - 1.d0) * fmratio * rhogas
     dmej   =  pi43 * (dble(il)/dble(nx) * rSN)**3 * rhoej / dble(il)
     efac = 1d6 * boltzmann_erg / p_mass
 
     print *,"***********************"
-    print *,"rhoej (g/cm3):",rhoej
-    print *,"dmej (g):",dmej
-    print *,"epsej (erg/g):",efac
+    print *,"inner: high pressure ejecta"
+    print *,"rho (g/cm3):",rhoej
+    print *,"dm (g):",dmej
+    print *,"eps (erg/g):",efac
 
     do ix = 1, il
        dm12(ix) = dmej
@@ -127,14 +127,15 @@ contains
     end do
 
     print *,"***********************"
-    !low pressure ambient medium
+    !outer: low pressure ambient medium
     rhoamb = rhogas
     dmamb  = pi43 * rSN**3 * (1.d0-(dble(il)/dble(nx))**3) / dble(nx-il) &
          * rhoamb
     efac = 1d1 * boltzmann_erg / p_mass
-    print *,"rhoamb (g/cm3):",rhoamb
-    print *,"dmamb (g):",dmamb
-    print *,"epsamb (erg/g):",efac
+    print *,"outer: low pressure ambient medium"
+    print *,"rho (g/cm3):",rhoamb
+    print *,"dm (g):",dmamb
+    print *,"eps (erg/g):",efac
 
     do ix = il + 1, nx
        dm12(ix) = dmamb
@@ -144,15 +145,17 @@ contains
        u   (ix) = 0.d0
     end do
 
+    !initialize integral mass
     fm(1) = dm12(1) 
     do ix = 2, nx
        fm (ix) = fm(ix-1) + dm12(ix)
     end do
+    !initliaze shell masses
     do ix = 2, nx
        dm(ix) = 0.5d0 * (dm12(ix) + dm12(ix-1))
     end do
 
-
+    !initialize shell radius, volume, surface
     r(1) = 0.d0
     v(1) = 0.d0
     do ix = 2, nx
@@ -160,10 +163,12 @@ contains
        r(ix) = (v(ix)/pi43)**(1./3.)
        a(ix) = 4.d0 * pi * r(ix)**2
     end do
+    !initialize shell sizes
     do ix = 1, nx-1
        dr12(ix) = r(ix+1) - r(ix)
     end do
 
+    !dump data
     print *,"***********************"
     print *,"Rtot:",r(nx)
     print *,"Vtot:",v(nx)
@@ -201,16 +206,9 @@ program sedov
   !     It includes primordial chemistry evolution
   !     and H2/HD/CEN cooling
 
-  !open the file in which the final model will be stored 
-  open(16,file='lh1.out',form='formatted',status='replace')
+  call krome_init() !###initialize KROME###
 
-  !open the file in which values of thermal, kinetic and 
-  ! energy will be stored at 10th time-step
-  open(17,file='lh2.out',form='formatted',status='replace')
-
-  call krome_init()
-
-  gamma = 5.d0/3.d0
+  gamma = 5.d0/3.d0 !adiabatic index
   nsteps = int(1e4) !maximum number of time-steps
   ndump = 10 !dump interval
   Tgas(:) = 1d3 !default gas temp (K)  
@@ -219,7 +217,7 @@ program sedov
   radius = 3.08568025d18 * 1d0 !radius of the box (cm)
   rhogas = 1d-24 !gas density (g/cm3)
 
-  xx(:) = 0.d0
+  xx(:) = 0.d0 !initialize tmp array
 
   !write input to check
   write(*,221) "nsteps:", nsteps !number of time steps
@@ -237,7 +235,7 @@ program sedov
   call inicond()  !set initial conditions
   call initchem() !init chemistry, abundances in mass fraction
 
-  !begin loop over time steps
+  !begin loop over time steps MAIN LOOP
   do istep = 1, nsteps
 
      !determine time step
@@ -252,26 +250,29 @@ program sedov
         u(ix) = u(ix) - gravity * massr(ix) / r(ix)**2 * dt
      end do
 
-     u(1) = 0.d0
+     u(1) = 0.d0 !velocity of the first shell
 
      !update radii, surfaces and volumes (eqn 6.41_2)
      rold(:) = r(:)
      r(:) = rold(:) + u(:) * dt12
 
+     !control shell position
      if(minval(r)<0.d0) then
         print *,"r(ix)<0"
         stop
      end if
-
+     
+     !update shell radius
      do ix = 1, nx-1
         dr12(ix) = r(ix+1) - r(ix)
      end do
-
+     
+     !update surface and volume
      at12(:) = 4.d0 * pi * (.5d0 * (r(:)+rold(:)))**2
      a(:) = 4.d0 * pi * r(:)**2 
      v(:) = pi43 * r(:)**3
-
-     do ix= 1, nx-1
+     
+     do ix = 1, nx-1
         ak12(ix) = .5d0 * (at12(ix+1) + at12(ix))
      end do
 
@@ -279,7 +280,7 @@ program sedov
      do ix = 1, nx-1
         rho(ix)  = dm12(ix) / (v(ix+1)-v(ix))
      end do
-     rho(nx)  = rho(nx-1)
+     rho(nx) = rho(nx-1)
 
      !update shells integral mass 
      massr(1) = 0.d0
@@ -294,8 +295,9 @@ program sedov
              - u(ix) * (1.d0 - at12(ix)/3.d0/ak12(ix))) 
      end do
 
+     !no viscosity for postive velocity divergence
      do ix = 1, nx-1
-        if(u(ix+1) > u(ix)) w(ix) = 0.d0 !no viscosity for postive velocity divergence
+        if(u(ix+1) > u(ix)) w(ix) = 0.d0 
      end do
 
      !update internal energies and pressures (6.43)
@@ -306,6 +308,7 @@ program sedov
         p(ix) = .5d0 * (p(ix) + (gamma-1.d0) * rho(ix) * aux)
      end do
 
+     !internal energies
      do ix = 1, nx-1
         eps(ix) = eps(ix) - p(ix) &
              * (at12(ix+1) * u(ix+1) &
@@ -321,110 +324,55 @@ program sedov
      end do
 
      !DO CHEMISTRY: CALL KROME PACKAGE
-     !REMEMBER xx in fraction, density in g/cm-3
+     !REMEMBER xx in fraction, density in g/cm3
      do ix = 1, nx
-        xx(:) = x(ix,:)
-        !do i = 1, nsp
-        !   xx(i) = x(ix,i)
-        !end do
-        rhogas = rho(ix)
-        call krome(xx(:),rhogas,Tgas(ix),dt)
-        x(ix,:) = xx(:)
-        !do i=1,nsp
-        !   x(ix,i) = xx(i)
-        !end do
+        xx(:) = x(ix,:) !use local array
+        rhogas = rho(ix) !get density
+        call krome(xx(:),rhogas,Tgas(ix),dt) !####KROME####
+        x(ix,:) = xx(:) !get the updated value back
      enddo
+
      !update internal energy with new temperature
      eps(:) = Tgas(:) / (gamma - 1.d0) / p_mass * boltzmann_erg
-     !*********END******************************!
 
      !update pressure
      do ix = 1, nx-1
         p(ix) = (gamma-1.d0) * rho(ix) * eps(ix)
      end do
+
      !update last shell
      p(nx) = p(nx-1)
      eps(nx) = eps(nx-1)
 
-     !end time step
+     t = t + dt12 !update time
 
-     t = t + dt12  
-
-     !check energy conservation
-     ethe = 0.d0
-     ekin = 0.d0
-     do ix = 2, nx-1
-        ethe = ethe + (eps(ix)) * dm(ix)
-        ekin = ekin + .5d0 * (.5d0 * (u(ix+1)+u(ix)))**2 * dm(ix)
-     end do
-     etot = ethe + ekin
-     if (istep == 1) etot0 = etot
-     etot = etot / etot0
-     ethe = ethe / etot0
-     ekin = ekin / etot0
-
-     if (mod(istep,10).eq.0)  write(17,200) istep, t, etot, ethe, ekin
-     if (mod(istep,ndump).eq.0) write(* ,100) istep, t/spy, etot, ethe, ekin
-
+     !dump hydrodinamics and chemistry
      if (mod(istep,ndump).eq.0) then
+        write(*,100) istep,t/spy,t/tmax*100
         do ix = 1, nx
            write(23,'(I8,99E11.3)') ix, t, r(ix), rho(ix), abs(u(ix)), &
                 p(ix), Tgas(ix)
+           xx(:) = x(ix,:) !copy shell chemistry to local array
+           write(33,'(I8,999E12.3e3)') ix, t, xx(:)
         end do
         write(23,*)
+        write(33,*)
      end if
 
-     !end loop over time steps
+     !end loop over time steps when overshoot tmax
      if (t.ge.tmax) exit
   end do
 
-  !dump final conditions
-  !dump chemistry
-  do ix = 1, nx
+  !dump final conditions and chemistry
+  do ix = 1, nx-1
      !get number density from mass fraction
      xx(1:nsp) = x(ix,:)!*rho(ix)/spec_mass(:)
      write(24,'(I8,99E11.3)') ix, t, r(ix), rho(ix), abs(u(ix)), p(ix), Tgas(ix)
      write(34,'(I8,999E11.3)') ix, t, r(ix), xx(1:nsp)
   end do
-  write(24,*)
 
-
-  !final printout
-
-  umax = 0.d0
-  rhomax = 0.d0
-  pmax = 0.d0
-  emax = 0.d0
-  wmax = 0.d0
-
-  do ix = 1, nx
-     if (u(ix) > 0) umax  = max(u(ix),umax)
-     rhomax = max(rho(ix),rhomax)
-     pmax   = max(p(ix),pmax)
-     emax   = max(eps(ix),emax)
-     wmax   = max(w(ix),wmax)
-  end do
-
-  epsi = 1.e-20
-
-  do ix=1,nx
-     u(ix)   = u(ix) / (epsi+umax)
-     rho(ix) = rho(ix) / (epsi+rhomax)
-     p(ix)   = p(ix) / (epsi+pmax)
-     eps(ix) = eps(ix) / (epsi+emax)
-     w(ix)   = w(ix) / (epsi+wmax)
-  end do
-
-  do ix = 1, nx
-     write(16,101) ix,fm(ix),r(ix)/r(nx),u(ix),rho(ix),p(ix),eps(ix),w(ix)
-  end do
-
-100 format(1x,i8,'; t:',1pe10.2,';  etot:',1pe10.2,';  eth:',1pe10.2,';  ekin:',1pe10.2)
-101 format(1x,i8,1p7e12.4) 
-200 format(1x,i8,1p5e11.3)
-  close(16)
-  close(17)
-
+!format
+100 format('step:',i6,'; t:',1pe10.2,'; ',0pf6.1,'%')
 
   write(*,*) "finish!"
 end program sedov

@@ -1,7 +1,7 @@
 fc = ifort
 #fc = gfortran
 
-lib = -llapack
+lib = #-llapack
 ifeq ($(fc),ifort)
 	std = -check all -traceback -fpe0  -ftz -ftrapuv -warn all -u
 	nowarn = -nowarn
@@ -28,7 +28,7 @@ all:
 	$(fc) -c krome_commons.f90 $(switch) 
 	$(fc) -c krome_constants.f90 $(switch)
 	$(fc) -c krome_user_commons.f90 $(switch)
-	$(fc) -c krome_subs.f90 $(switch)
+	$(fc) -c krome_subs.f90 -O0 #$(switch)
 	$(fc) -c krome_photo.f90 $(switch)
 	$(fc) -c krome_tabs.f90 $(switch)
 	$(fc) -c krome_dust.f90 $(switch)	

@@ -62,6 +62,9 @@ for arg in sys.argv:
 		elif(test_name=="shock1Dphoto"):
 			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO","-cooling=CEN,H2,HD,Z","-useEquilibrium"]]
 			filename = "networks/react_enzo_photo"
+		elif(test_name=="shock1Dlarge"):
+			#[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO","-cooling=CEN,H2,HD,Z","-useEquilibrium"]]
+			filename = "networks/react_WH2008"
 		elif(test_name=="dust"):
 			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN"]]
 			filename = "networks/react_enzo"

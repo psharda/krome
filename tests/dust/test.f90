@@ -18,7 +18,7 @@ program test_krome
   ndust(:) = (/1d-3, 1d-4/) !cm-3
   
   !initialize krome
-  call krome_init() 
+  call krome_init()
   !initialize dust (xdust=amount per bin, adust=bin size,
   ! ndust=total dust abundance)
   call krome_init_dust(xdust(:), adust(:), ndust(:))
@@ -41,7 +41,7 @@ program test_krome
   x(KROME_idx_C)     = 1.d-5     !C
   x(KROME_idx_Si)    = 1.d-6     !Si
 
-  !compute electrons (globalli neutral)
+  !compute electrons (globally neutral)
   x(KROME_idx_e) = x(KROME_idx_Hj) + x(KROME_idx_Dj) + x(KROME_idx_Hej) &
        + x(KROME_idx_H2j) + 2.d0*x(KROME_idx_Hejj) - x(KROME_idx_Hk)
 
@@ -49,19 +49,19 @@ program test_krome
   t = 0.d0 !initial time (s)
   tend = 1d8*spy !end time (s)
   !write inital values
-  write(66,'(999E12.3e3)') t/spy,x(:)
+  write(66,'(999E12.3e3)') t/spy,Tgas,x(:)
   !loop over time-steps
   do
-     Tgas = (1d6-1d1) * (t/tend) + 1d1 !gas heats
+     Tgas = (1d6-1d1) * (t/tend) + 1d1 !Tgas increas with time
      print '(a10,E11.3,a10,E11.3,a3)',"time:",t/spy,"yr, Tgas:",Tgas,"K"
 
-     call krome(x(:),Tgas,dt,xdust(:)) !call KROME
+     call krome(x(:),Tgas,dt,xdust(:)) !###call KROME###
 
      t = t + dt !increase time
      dt = max(1d2,t/3.d0) !increase time-step
-     write(66,'(999E12.3e3)') t/spy,x(:) !dump species
+     write(66,'(999E12.3e3)') t/spy,Tgas,x(:) !dump species
      !dump dust
-     do i=1,nd/2
+     do i=1,nd/2 !half C + half Si
         write(77,'(999E12.3e3)') t/spy,adust(i),xdust(i)
         write(78,'(999E12.3e3)') t/spy,adust(nd/2+i),xdust(nd/2+i)
      end do

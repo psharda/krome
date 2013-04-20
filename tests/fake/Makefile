@@ -1,7 +1,7 @@
 fc = ifort
 #fc = gfortran
 
-lib = -llapack
+lib = #-llapack
 ifeq ($(fc),ifort)
 	std = -check all -traceback -fpe0  -ftz -ftrapuv -warn all -u
 	nowarn = -nowarn

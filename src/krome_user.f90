@@ -26,8 +26,9 @@ contains
     use krome_subs
     use krome_commons
     implicit none
-    real*8::krome_get_mass(nspec)
-    krome_get_mass = get_mass()
+    real*8::tmp(nspec), krome_get_mass(nmols)
+    tmp(:) = get_mass()
+    krome_get_mass = tmp(1:nmols)
   end function krome_get_mass
 
   !*****************
@@ -36,8 +37,9 @@ contains
     use krome_subs
     use krome_commons
     implicit none
-    real*8::krome_get_charges(nspec)
-    krome_get_charges = get_charges()
+    real*8::tmp(nspec),krome_get_charges(nmols)
+    tmp(:) = get_charges()
+    krome_get_charges = tmp(1:nmols)
   end function krome_get_charges
 
   !*****************
@@ -46,8 +48,9 @@ contains
     use krome_subs
     use krome_commons
     implicit none
-    character*16::krome_get_names(nspec)
-    krome_get_names = get_names()
+    character*16::krome_get_names(nmols),tmp(nspec)
+    tmp(:) = get_names()
+    krome_get_names = tmp(1:nmols)
   end function krome_get_names
 
   !*****************

@@ -29,27 +29,32 @@ module subs
 contains
   !*****INITIALIZATION OF THE CHEMICAL ABUNDANCES*******!
   subroutine initchem()
+    use krome_main
     use commons
     use krome_user
 
-    integer::ix
-    real*8:: xx(nsp)
+    integer::ix,i
+    real*8:: xx(nsp),mx(nsp),cx(nsp)
     x(:,:) = 0.d0
-
+    mx(:) = krome_get_mass()
+    cx(:) = krome_get_charges()
     !INITIALIZATION IN MASS FRACTION
     do ix = 1, nx
-       x(ix,KROME_idx_H)     = 0.9225d0  !H
-       x(ix,KROME_idx_E)     = 1.0d-4    !E
-       x(ix,KROME_idx_Hj)    = 1.0d-4    !H+
-       x(ix,KROME_idx_D)     = 1.0d-20   !D
-       x(ix,KROME_idx_Dj)    = 1.0d-20   !D+
-       x(ix,KROME_idx_HE)    = 0.0972d0  !He
-       x(ix,KROME_idx_HEj)   = 1.0d-20   !He+
-       x(ix,KROME_idx_H2j)   = 1.0d-20   !H2+
-       x(ix,KROME_idx_H2)    = 1.0d-5    !H2
-       x(ix,KROME_idx_HD)    = 1.0d-8    !HD
-       x(ix,KROME_idx_Hk)    = 1.0d-20   !H-
-       x(ix,KROME_idx_HEjj)  = 1.0d-20   !He++
+       x(ix,KROME_idx_HE)  = 9d-2 / mx(KROME_idx_HE)
+       x(ix,KROME_idx_N)   = 7.6d-5 / mx(KROME_idx_N)
+       x(ix,KROME_idx_O)   = 2.56d-4 / mx(KROME_idx_O)
+       x(ix,KROME_idx_Cj)  = 1.2d-4 / mx(KROME_idx_Cj)
+       x(ix,KROME_idx_Sj)  = 1.5d-5 / mx(KROME_idx_Sj)
+       x(ix,KROME_idx_Sij) = 1.7d-6 / mx(KROME_idx_Sij)
+       x(ix,KROME_idx_Fej) = 2d-7 / mx(KROME_idx_Fej)
+       x(ix,KROME_idx_Naj) = 2d-7 / mx(KROME_idx_Naj)
+       x(ix,KROME_idx_Mgj) = 2.4d-6 / mx(KROME_idx_Mgj)
+       x(ix,KROME_idx_Clj) = 1.8d-7 / mx(KROME_idx_Clj)
+       x(ix,KROME_idx_Pj)  = 1.17d-7 / mx(KROME_idx_Pj)
+       x(ix,KROME_idx_Fj)  = 1.8d-8 / mx(KROME_idx_Fj)
+       do i=1,nsp
+          x(ix,KROME_idx_E) = x(ix,KROME_idx_E) + cx(i) * x(ix,i)
+       end do
        !normalize
        x(ix,:) = x(ix,:) / sum(x(ix,:))
     end do
@@ -187,9 +192,9 @@ end module subs
 
 !*****************START PROGRAM SEDOV****************************!
 program sedov
-
   use krome_main
   use krome_user
+  use krome_user_commons
   use krome_constants
   use krome_subs
   use commons
@@ -210,13 +215,16 @@ program sedov
 
   gamma = 5.d0/3.d0 !adiabatic index
   nsteps = int(1e4) !maximum number of time-steps
-  ndump = 10 !dump interval
+  ndump = 1 !dump interval
   Tgas(:) = 1d3 !default gas temp (K)  
   tmax = spy * 5d3 !maximum integration time (s)
   q = 2d0 !artificial viscosity parameter
   radius = 3.08568025d18 * 1d0 !radius of the box (cm)
   rhogas = 1d-24 !gas density (g/cm3)
 
+  tau = 1d1 !optical depth
+  zrate = 1.3d-17 !cosmic rate flux
+  
   xx(:) = 0.d0 !initialize tmp array
 
   !write input to check
@@ -325,12 +333,17 @@ program sedov
 
      !DO CHEMISTRY: CALL KROME PACKAGE
      !REMEMBER xx in fraction, density in g/cm3
+     !$OMP PARALLEL
+     !$OMP DO
      do ix = 1, nx
+        print *,istep,ix
         xx(:) = x(ix,:) !use local array
         rhogas = rho(ix) !get density
         call krome(xx(:),rhogas,Tgas(ix),dt) !####KROME####
         x(ix,:) = xx(:) !get the updated value back
      enddo
+     !$OMP END DO
+     !$OMP END PARALLEL
 
      !update internal energy with new temperature
      eps(:) = Tgas(:) / (gamma - 1.d0) / p_mass * boltzmann_erg
