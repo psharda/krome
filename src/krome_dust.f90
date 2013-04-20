@@ -1,6 +1,7 @@
 module krome_dust
-contains
+
 #IFKROME_useDust
+contains
   subroutine krome_init_dust(xdust,adust,ntot,alow_arg,aup_arg,phi_arg)
     !krome_init_dust: initialize the dust ditribution (xdust)
     ! and the dust bin mean sizes (adust). Arguments are

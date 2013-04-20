@@ -49,6 +49,12 @@ contains
     !low density limit in erg/s
     LDL = 1.d1**(-103.d0+97.59d0*logT-48.05d0*logT**2&
          +10.8d0*logT**3-0.9032d0*logT**4)*n(idx_H)
+    
+    !this will avoid a division by zero and useless calculations
+    if(LDL==0d0) then
+       cooling_H2GP = 0.d0
+       return
+    end if
 
     !high density limit
     HDLR = ((9.5e-22*t3**3.76)/(1.+0.12*t3**2.1)*exp(-(0.13/t3)**3)+&
@@ -57,13 +63,9 @@ contains
     HDL  = HDLR + HDLV !erg/s
 
     !TO AVOID DIVISION BY ZERO
-    if(LDL.eq.0.d0)then
-       fact = 0.0d0
-    else
-       fact = HDL/LDL !dimensionless
-    endif
-
-    cooling_H2GP = HDL*n(idx_H2)/(1.d0+(fact))!erg/cm3/s
+    fact = HDL/LDL !dimensionless
+    
+    cooling_H2GP = HDL*n(idx_H2)/(1.d0+(fact)) !erg/cm3/s
 
   end function cooling_H2GP
 #ENDIFKROME
@@ -149,6 +151,12 @@ contains
 
     cool = max(cool,0.d0)
 
+    !this will avoid a division by zero and useless calculations
+    if(cool==0.d0) then
+       cooling_H2 = 0.d0
+       return
+    end if
+
     !high density limit from HM79, GP98 
     !IN THE HIGH DENSITY REGIME LAMBDA_H2 = LAMBDA_H2(LTE) = HDL 
     HDLR = ((9.5e-22*t3**3.76)/(1.+0.12*t3**2.1)*exp(-(0.13/t3)**3)+&
@@ -157,13 +165,7 @@ contains
     HDL  = HDLR + HDLV
 
     LDL = cool !erg/s
-
-    !TO AVOID DIVISION BY ZERO
-    if(LDL.eq.0.d0)then
-       fact = 0.0d0
-    else
-       fact = HDL/LDL 
-    endif
+    fact = HDL/LDL 
 
     cooling_H2 = HDL*n(idx_H2)/(1.d0+(fact)) !erg/cm3/s
 

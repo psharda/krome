@@ -33,7 +33,7 @@ contains
 
     !set a minumum value for the rates
     do i=1,nrea
-       k(i) = max(k(i),1d-30) 
+       k(i) = max(k(i),1d-40) 
     end do
 
     coe(:) = k(:)!set coefficients to return variable

@@ -398,12 +398,14 @@ def is_number(s):
 ##################################
 def parser(name, mass_dic, atoms):
 	#parse molecule name using dictionary and atoms list
-	mymol = molec()
+	mymol = molec() #oggetto molec
 	namecp = name.upper()
-	ename = []
-	mass = 0.
-	is_atom = True
-	founds = 0
+	if(namecp=="E-"): namecp = "E" #avoid double negative charge
+	ename = [] #exploded name
+	mass = 0. #init mass
+	is_atom = True #atom flag
+	founds = 0 #atoms found
+	#atomic number dictionary
 	zdic = {1:"H",
 		2:"He",
 		3:"Li",
@@ -422,14 +424,16 @@ def parser(name, mass_dic, atoms):
 		18:"Ar",
 		20:"Ca",
 		26:"Fe"}
-	zatom = 0
+	zatom = 0 #atomic number init
+	#loop over charcters
 	for a in atoms:
-		if(not(a) in namecp): continue
+		if(not(a) in namecp): continue #skip
+		#loop to up to _30 subscript
 		for j in range(30):
 			if(a in namecp):
-				idx = namecp.find(a)
+				idx = namecp.find(a) #find position
 				subs = a
-				mult = "0"
+				mult = "0" #multiplicator
 				for i in range(idx+len(a),len(namecp)):
 					if(not(is_number(namecp[i]))): break
 					mult += namecp[i]
@@ -443,17 +447,18 @@ def parser(name, mass_dic, atoms):
 		if(a!="+" and a!="-"): founds += imult
 	if(founds>1): is_atom = False
 
-	mymol.name = name	
-	mymol.mass = mass
-	mymol.ename = sorted(ename)
-	mymol.charge = 0
-	mymol.zatom = zatom
-	mymol.fname = name.replace("+","j").replace("-","k")
-	mymol.is_atom = is_atom
-	mymol.fidx = "idx_"+name.replace("+","j").replace("-","k").replace("(","_").replace(")","")
-	if("+" in name): mymol.charge = name.count("+")
-	if("-" in name): mymol.charge = -name.count("-")
+	mymol.name = name #name
+	mymol.mass = mass #mass (g)
+	mymol.ename = sorted(ename) #exploded name
+	mymol.charge = 0 #charge
+	mymol.zatom = zatom #atomic number
+	mymol.fname = name.replace("+","j").replace("-","k") #f90 name
+	mymol.is_atom = is_atom #atom flag
+	mymol.fidx = "idx_"+name.replace("+","j").replace("-","k").replace("(","_").replace(")","") #f90 index
+	if("+" in name): mymol.charge = name.count("+") #get + charge
+	if("-" in name): mymol.charge = -name.count("-") #get - charge
 
+	#name for photoionization reactions (e.g. Sijjj = Sij3)
 	jj = kk = ""
 	if(mymol.charge==1): jj = "j"
 	if(mymol.charge>1): jj = "j"+str(mymol.charge)
@@ -461,14 +466,17 @@ def parser(name, mass_dic, atoms):
 	if(mymol.charge<-1): kk = "k"+str(mymol.charge)
 	mymol.phname = name.replace("+","").replace("-","") + jj + kk
 
+	#electron has negative charge
 	if(mymol.name=="E"): mymol.charge = -1
+	
 	if(len(namecp)>0): 
 		print "************************************************"
 		print "ERROR: Parsing problem for", name
 		print "Unknown subelements in substring \"" + namecp +"\"."
 		print "Probably you have to add some subelements to the dictionary mass_dic."
-		print "Dictionary now contains the following subelements:"
-		print atoms
+		if(len(atoms)<30):
+			print "Dictionary now contains the following subelements:"
+			print atoms
 		print "************************************************"
 		sys.exit()
 	return mymol
