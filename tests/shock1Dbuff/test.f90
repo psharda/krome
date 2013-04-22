@@ -40,21 +40,18 @@ contains
     cx(:) = krome_get_charges()
     !INITIALIZATION IN MASS FRACTION
     do ix = 1, nx
-       x(ix,KROME_idx_HE)  = 9d-2 / mx(KROME_idx_HE)
-       x(ix,KROME_idx_N)   = 7.6d-5 / mx(KROME_idx_N)
-       x(ix,KROME_idx_O)   = 2.56d-4 / mx(KROME_idx_O)
-       x(ix,KROME_idx_Cj)  = 1.2d-4 / mx(KROME_idx_Cj)
-       x(ix,KROME_idx_Sj)  = 1.5d-5 / mx(KROME_idx_Sj)
-       x(ix,KROME_idx_Sij) = 1.7d-6 / mx(KROME_idx_Sij)
-       x(ix,KROME_idx_Fej) = 2d-7 / mx(KROME_idx_Fej)
-       x(ix,KROME_idx_Naj) = 2d-7 / mx(KROME_idx_Naj)
-       x(ix,KROME_idx_Mgj) = 2.4d-6 / mx(KROME_idx_Mgj)
-       x(ix,KROME_idx_Clj) = 1.8d-7 / mx(KROME_idx_Clj)
-       x(ix,KROME_idx_Pj)  = 1.17d-7 / mx(KROME_idx_Pj)
-       x(ix,KROME_idx_Fj)  = 1.8d-8 / mx(KROME_idx_Fj)
-       do i=1,nsp
-          x(ix,KROME_idx_E) = x(ix,KROME_idx_E) + cx(i) * x(ix,i)
-       end do
+       x(ix,KROME_idx_H)     = 0.9225d0  !H
+       x(ix,KROME_idx_E)     = 1.0d-4    !E
+       x(ix,KROME_idx_Hj)    = 1.0d-4    !H+
+       x(ix,KROME_idx_D)     = 1.0d-20   !D
+       x(ix,KROME_idx_Dj)    = 1.0d-20   !D+
+       x(ix,KROME_idx_HE)    = 0.0972d0  !He
+       x(ix,KROME_idx_HEj)   = 1.0d-20   !He+
+       x(ix,KROME_idx_H2j)   = 1.0d-20   !H2+
+       x(ix,KROME_idx_H2)    = 1.0d-5    !H2
+       x(ix,KROME_idx_HD)    = 1.0d-8    !HD
+       x(ix,KROME_idx_Hk)    = 1.0d-20   !H-
+       x(ix,KROME_idx_HEjj)  = 1.0d-20   !He++
        !normalize
        x(ix,:) = x(ix,:) / sum(x(ix,:))
     end do
@@ -197,6 +194,7 @@ program sedov
   use krome_user_commons
   use krome_constants
   use krome_subs
+  use krome_photo
   use commons
   use subs
   implicit none
@@ -215,13 +213,14 @@ program sedov
   !     and H2/HD/CEN cooling
 
   call krome_init() !###initialize KROME###
+  call krome_init_photo()  !###init photoheating/ionization###
   ibuf = 0
   tfex = 0
   cfex = 0
 
   gamma = 5.d0/3.d0 !adiabatic index
   nsteps = int(1e4) !maximum number of time-steps
-  ndump = 1 !dump interval
+  ndump = 10 !dump interval
   Tgas(:) = 1d3 !default gas temp (K)  
   tmax = spy * 5d3 !maximum integration time (s)
   q = 2d0 !artificial viscosity parameter
@@ -352,7 +351,7 @@ program sedov
            !loop on x
            do i=1,nsp
               if(xx(i)<1d-30) cycle
-              if(abs(xibuf(j,i)-xx(i))/xx(i)>1d-2) then
+              if(abs(xibuf(j,i)-xx(i))/xx(i)>1d-3) then
                  xfound = .false.
                  exit
               end if

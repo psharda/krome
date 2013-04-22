@@ -52,7 +52,6 @@ contains
     y = sqrt(x**2 + y1**2)
     Fy = ((x - 1.d0)**2 + yw**2) *  y**(0.5*P-5.5) &
          * (1.d0+sqrt(y/ya))**(-P)
-    efficiency = 1d-1
     heat_v96 = 1d-18 * sigma_0 * Fy * (energy_eV - Eth) !cm2*eV
   end function heat_v96
 

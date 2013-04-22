@@ -228,6 +228,8 @@ DESCRIPTION
 		shock1Dcool	1D shock with cooling
 		shock1Dphoto	1D shock with photoionization, cooling, heating
 		shock1Ddecoupled 1D shock with cooling but dT/dt is computed outside the solver
+		shock1Dbuff 	1D shock with cooling and photoheating but using buffer
+		shock1Dlarge 	1D shock using WH2008 network (very slow!)
 		dust		One-zone: dust growth and thermal sputtering
 		compact		1D shock using compact source file
 
