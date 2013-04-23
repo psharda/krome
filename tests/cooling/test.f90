@@ -10,7 +10,7 @@ program test_krome
   real*8::x(nspec),Tgas,rhogas
 
 
-  rhogas = 1.d0 !dummy value
+  rhogas = 1.d3 !dummy value
 
   !initialize densities
   x(KROME_idx_H)     = 0.9225*rhogas    !H

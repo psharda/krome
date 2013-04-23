@@ -195,6 +195,7 @@ DESCRIPTION
 		H2	H2 Glover&Savin????
 		H2GP	H2 Galli&Palla 1998
 		HD 	HD Lipovka????
+		Z	Metals C,O,Si,Fe (Maio2007,Grassi2012)
 		ALL	enable all together
 		example: -cooling=CEN,H2,HD
 
