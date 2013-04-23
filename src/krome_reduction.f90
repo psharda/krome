@@ -1,5 +1,8 @@
 module krome_reduction
 contains
+
+
+#IFKROME_useTopology
   subroutine krome_authub(threshold)
     use krome_commons
     use krome_subs
@@ -103,7 +106,7 @@ contains
     print *,"Reaction totl:",nrea
 
   end subroutine krome_authub
-
+#ENDIFKROME
 
   !**************************
   function fex_check(n,Tgas)
@@ -129,6 +132,7 @@ contains
     
   end function fex_check
 
+#IFKROME_useFlux
   !*************************
   subroutine flux_reduction(rrmax,threshold)
     use krome_commons
@@ -149,5 +153,6 @@ contains
     end do
  
   end subroutine flux_reduction
+#ENDIFKROME
 
 end module krome_reduction

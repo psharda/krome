@@ -66,6 +66,7 @@ contains
     
     return
   end subroutine jes
+#IFKROME_report
 
   !****************************
   !*******************************
@@ -130,5 +131,6 @@ contains
     write(fnum,*)
     close(fnum)
   end subroutine krome_ode_dump
+#ENDIFKROME
 
 end module krome_ode

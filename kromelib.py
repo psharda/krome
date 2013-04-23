@@ -86,7 +86,8 @@ class reaction():
 			print "products:", [p.name for p in self.products], mass_products
 			print "mass ratio:",mass_products/mass_reactants, "(should be 1.0)"
 			print "************************************************"
-			print sys.exit()
+			a = raw_input("Ant key to continue q to quit... ")
+			if(a=="q"): print sys.exit()
 		if(abs(charge_products - charge_reactants)!=0):
 			print "************************************************"
 			print "ERROR: problem with charge conservation in reaction", self.idx
@@ -94,7 +95,8 @@ class reaction():
 			print "reactants:", [r.name for r in self.reactants], charge_reactants
 			print "products:", [p.name for p in self.products], charge_products
 			print "************************************************"
-			print sys.exit()
+			a = raw_input("Ant key to continue q to quit... ")
+			if(a=="q"): print sys.exit()
 
 
 ##################################
@@ -1211,6 +1213,10 @@ def indentF90(filename):
 	tokenopen = ["do","function","subroutine","contains","else","else if","elseif","module"]
 	for row in fh:
 		srow = row.strip() #trim the row
+		#check module begin
+		if(lbeg(["module"], srow)): 
+			arow.append("\n") #blank line
+			arow.append("!############### MODULE ##############\n") #comment
 		if(lbeg(tokenclose, srow)): nind -= 1 #check if the line ends with one of tokenclose
 		indent = (" "*(nind*nspace)) #compute number of spaces for indent
 		if(is_amper): indent = (" "*(2*nspace)) + indent #increas indent in case of previous &

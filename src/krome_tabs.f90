@@ -1,5 +1,7 @@
 module krome_tabs
 contains
+
+#IFKROME_useTabs
   subroutine make_ktab()
     use krome_commons
     use krome_subs
@@ -80,6 +82,7 @@ contains
     print *,"KROME: tabs are ok!"
     
   end subroutine check_tabs
+#ENDIFKROME
 
   !***********************+
   function coe_tab(n)

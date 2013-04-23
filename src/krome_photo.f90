@@ -1,4 +1,5 @@
 module krome_photo
+#IFKROME_usePhIoniz
 contains
   subroutine krome_init_photo()
     use krome_commons
@@ -483,5 +484,7 @@ contains
 
     return
   end subroutine midsqu
+
+#ENDIFKROME
 
 end module krome_photo

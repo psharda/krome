@@ -17,7 +17,7 @@ force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact =
 use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = False
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = False
 createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
-usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = False
+usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = useDecoupled = False
 useX = has_plot = useFakeOpacity = True
 test_name = "default"
 is_test = False
@@ -72,7 +72,7 @@ for arg in sys.argv:
 			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN"]]
 			filename = "networks/react_enzo"
 		elif(test_name=="shock1Ddecoupled"):
-			[sys.argv.append(x) for x in ["-cooling=CEN,H2,HD,Z"]]
+			[sys.argv.append(x) for x in ["-cooling=CEN,H2,HD,Z","-useDecoupled"]]
 			filename = "networks/react_enzo"
 		elif(test_name=="compact"):
 			[sys.argv.append(x) for x in ["-compact"]]
@@ -153,6 +153,10 @@ if("-usePhIoniz" in sys.argv):
 if("-useEquilibrium" in sys.argv):
 	useEquilibrium = True
 	print "Reading option -useEquilibrium"
+#use decoupled cooling
+if("-useDecoupled" in sys.argv):
+	useDecoupled = True
+	print "Reading option -useDecoupled"
 #determine reverse function to reverse reactions
 for arg in sys.argv:
 	if("reverse=" in arg):
@@ -832,7 +836,7 @@ fh = open("src/krome_commons.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_commons.f90","w")
 
-#photoionization variables and fucntions
+#photoionization variables and functions
 phvars = []
 pheatvars = []
 if(usePhIoniz):
@@ -965,8 +969,8 @@ for x in pheatvars:
 
 skip = False
 for row in fh:
-	#if(row.strip() == "#IFKROME_" and not(usePhIoniz)): skip = True
-	#if(row.strip() == "#ENDIFKROME"): skip = False
+	if(row.strip() == "#IFKROME_usePhIoniz" and not(usePhIoniz)): skip = True
+	if(row.strip() == "#ENDIFKROME"): skip = False
 
 	if(skip): continue
 	#replace krome variables
@@ -1245,6 +1249,7 @@ print "- writing krome_user.f90...",
 fh = open("src/krome_user.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_user.f90","w")
+skip = False
 for row in fh:
 
 	if(row.strip() == "#IFKROME_use_cooling" and not(use_cooling)): skip = True
@@ -1271,8 +1276,14 @@ print "- writing krome_decoupled.f90...",
 fh = open("src/krome_decoupled.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_decoupled.f90","w")
+skip = False
 for row in fh:
+	if(row.strip() == "#IFKROME_useDecoupled" and not(useDecoupled)): skip = True
+	if(row.strip() == "#ENDIFKROME"): skip = False
+	if(skip): continue
+
 	if(row[0]!="#"): fout.write(row)
+
 if(not(buildCompact)):
 	fout.close()
 
@@ -1283,7 +1294,16 @@ print "- writing krome_reduction.f90...",
 fh = open("src/krome_reduction.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_reduction.f90","w")
+skip = False
 for row in fh:
+	if(row.strip() == "#IFKROME_useTopology" and not(useTopology)): skip = True
+	if(row.strip() == "#ENDIFKROME"): skip = False
+	if(row.strip() == "#IFKROME_useFlux" and not(useFlux)): skip = True
+	if(row.strip() == "#ENDIFKROME"): skip = False
+	if(row.strip() == "#IFKROME_useReduction" and not(useTopology) and not(useFlux)): skip = True
+	if(row.strip() == "#ENDIFKROME"): skip = False
+
+	if(skip): continue
 	if(row[0]!="#"): fout.write(row)
 if(not(buildCompact)):
 	fout.close()

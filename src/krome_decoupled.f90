@@ -1,4 +1,5 @@
 module krome_decoupled
+#IFKROME_useDecoupled
 contains
 
   !**********************************************************
@@ -58,5 +59,5 @@ contains
 
   end subroutine krome_timestep_exit
   !**********************************************************
-
+#ENDIFKROME
 end module krome_decoupled
