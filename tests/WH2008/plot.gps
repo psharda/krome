@@ -1,4 +1,4 @@
-
+reset
 set multiplot layout 2,2 rowsfirst
 set logscale
 set autoscale
@@ -10,15 +10,19 @@ set key t r
 set grid
 set xrange[1e2:1e8]
 
+set yrange[1e-10:1e-3]
 plot 'fort.66' u 1:($6/2e4) w l t "C"
 
-plot 'fort.66' u 1:($25/2e4) w l t "H3+"
+set yrange[1e-12:1e-7]
+plot 'fort.66' u 1:($57/2e4) w l t "OH"
 
-set key b l
-plot 'fort.66' u 1:($363/2e4) w l t "H3O+"
+set yrange[1e-13:1e-7]
+set key t l
+plot 'fort.66' u 1:($146/2e4) w l t " HC3N"
 
+set yrange[1e-11:1e-4]
 set key b r
-plot 'fort.66' u 1:($54/2e4) w l t "O2"
+plot 'fort.66' u 1:($55/2e4) w l t "O2"
 
 
 unset multiplot

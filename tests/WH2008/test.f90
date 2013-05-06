@@ -6,7 +6,7 @@ program test_krome
   use krome_user_commons
   use krome_constants
 
-  integer,parameter::nx=449
+  integer,parameter::nx=452
   real*8::x(nx),Tgas,t,dt,spy,xH
 
   spy = seconds_per_year
@@ -23,7 +23,7 @@ program test_krome
 
   x(:) = 1.d-20
   !initial densities (model EA2 Wakelam+Herbst 2008)
-  x(KROME_idx_H2)  = 2.d0    * xH 
+  x(KROME_idx_H2)  = 0.5d0   * xH 
   x(KROME_idx_He)  = 9.d-2   * xH 
   x(KROME_idx_N)   = 7.6d-5  * xH 
   x(KROME_idx_O)   = 2.56d-4 * xH 
