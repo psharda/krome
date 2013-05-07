@@ -153,8 +153,8 @@ NAME
 	subroutines for astrophysical simulations (F90)
 
 SYNOPSYS
-	python krome.py reaction_list_file [OPTIONS]
-	python krome.py -test=TEST
+	./krome reaction_list_file [OPTIONS]
+	./krome -test=TEST
 
 DESCRIPTION 
 
