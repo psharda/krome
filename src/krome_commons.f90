@@ -14,8 +14,8 @@ module krome_commons
   real*8::inv_ktab_T(ktab_n-1), inv_ktab_idx
   
   !commons for implicit RHS
-  integer::arr_p1(nrea), arr_p2(nrea), arr_p3(nrea), arr_p4(nrea)
-  integer::arr_r1(nrea), arr_r2(nrea), arr_r3(nrea)
+#KROME_implicit_arr_r
+#KROME_implicit_arr_p
 
   !commons for reduction
   integer::arr_u(nrea)

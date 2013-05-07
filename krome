@@ -20,7 +20,7 @@ use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux =
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = False
 createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = useDecoupled = False
-useX = has_plot = useFakeOpacity = True
+useX = has_plot = useFakeOpacity = doIndent = True
 test_name = "default"
 is_test = False
 TlimitOpLow = "GE"
@@ -394,7 +394,7 @@ for row in fh:
 	if(srow.strip()==""): continue #looks for blank line
 	if(srow[0]=="#"): continue #looks for comment line
 	#search for format string
-	if("@format:" in srow and rcount==0):
+	if("@format:" in srow):
 		hasFormat = True
 		srow = srow.replace("@format:","") #remove 
 		print "Using custom format:"
@@ -690,6 +690,14 @@ for mol in specs:
 	fout.write(str(idx)+"\t"+mol.name+"\t"+mol.fidx+"\n")
 fout.close()
 
+#dump reactions to log file
+fout = open("reactions.log","w")
+idx = 0
+for rea in reacts:
+	idx += 1
+	fout.write(str(rea.idx)+"\t"+rea.verbatim+"\n")
+fout.close()
+
 print
 #include dust in ODE array partition
 sdust = ""
@@ -742,14 +750,23 @@ if(useDust):
 			#dns[nmols+j-1] += str(zdust)+",(/"+(",".join(ncoll))+"/),n("+str(nmols+j)+"),krome_dust_asize("+str(j)+"),Tgas)"
 			dns[nmols+j-1] += " - krome_dust_sput_DS79(Tgas,krome_dust_asize("+str(j)+"),ntot,n("+str(nmols+j)+"))"
 
-#create implicit RHS arrays
-arr_rr = [[] for i in range(3)]
-arr_pp = [[] for i in range(4)]
+#find the maximum number of products and reactants
+maxnprod = maxnreag = 0
 for rea in reacts:
-	for i in range(3):
+	maxnprod = max(maxnprod, len(rea.products))
+	maxnreag = max(maxnreag, len(rea.reactants))
+
+print "Max number of reactants:", maxnreag
+print "Max number of products:", maxnprod
+
+#create implicit RHS arrays
+arr_rr = [[] for i in range(maxnreag)]
+arr_pp = [[] for i in range(maxnprod)]
+for rea in reacts:
+	for i in range(maxnreag):
 		if(i<len(rea.reactants)): arr_rr[i].append(rea.reactants[i].idx)
 		else: arr_rr[i].append(dummy.idx)
-	for i in range(4):
+	for i in range(maxnprod):
 		if(i<len(rea.products)): arr_pp[i].append(rea.products[i].idx)
 		else: arr_pp[i].append(dummy.idx)
 implicit_arrays = ""
@@ -883,6 +900,7 @@ else:
 	#for dfile in delFiles:
 		#print "deleting "+dfile
 
+
 print
 print "Prepearing files in /build..."
 
@@ -920,6 +938,12 @@ for row in fh:
 			fout.write("\tinteger,parameter::ndustTypes=" + str(dustTypesSize) + "\n")
 	elif(row.strip() == "#KROME_header"):
 		fout.write(get_licence_header())
+	elif(row.strip() == "#KROME_implicit_arr_r"):
+		for j in range(maxnreag):
+			fout.write("integer::arr_r"+str(j+1)+"(nrea)\n")
+	elif(row.strip() == "#KROME_implicit_arr_p"):
+		for j in range(maxnprod):
+			fout.write("integer::arr_p"+str(j+1)+"(nrea)\n")
 	elif(row.strip() == "#KROME_photo_variables" and usePhIoniz):
 		fout.write("real*8::"+(",".join(phvars))+"\n")
 	elif(row.strip() == "#KROME_photoheating_variables" and useHeatingPhoto):
@@ -1215,7 +1239,7 @@ for row in fh:
 
 	if(row.strip() == "#KROME_ODE"):
 		if(use_implicit_RHS):
-			fout.write(get_implicit_ode(useTopology or useFlux)+"\n")
+			fout.write(get_implicit_ode(maxnreag, maxnprod, useTopology or useFlux)+"\n")
 		else:
 			#add dust ODE and partner specie RHS terms
 			if(useDust):
@@ -1262,7 +1286,9 @@ for row in fh:
 		fout.write(get_licence_header())
 	elif(row.strip() == "#KROME_implicit_variables"):
 		fout.write("real*8::rr\n")
-		fout.write("integer::i,r1,r2,r3,p1,p2,p3,p4\n")
+		ris = (",".join(["r"+str(i+1) for i in range(maxnreag)]))
+		pis = (",".join(["p"+str(i+1) for i in range(maxnprod)]))
+		fout.write("integer::i,"+ris+","+pis+"\n")
 	elif(row.strip() == "#KROME_odeConstant" and useODEConstant):
 		fout.write("dn(:) = dn(:) "+ODEConstant+" \n")
 	elif(row.strip() == "#KROME_odeDust" and useODEConstant):
@@ -1357,14 +1383,23 @@ if(not(buildCompact)):
 	fout = open(buildFolder+"krome_reduction.f90","w")
 skip = False
 for row in fh:
-	if(row.strip() == "#IFKROME_useTopology" and not(useTopology)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
-	if(row.strip() == "#IFKROME_useFlux" and not(useFlux)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
-	if(row.strip() == "#IFKROME_useReduction" and not(useTopology) and not(useFlux)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
+	srow = row.strip()
+	if(srow == "#IFKROME_useTopology" and not(useTopology)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
+	if(srow == "#IFKROME_useFlux" and not(useFlux)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
+	if(srow == "#IFKROME_useReduction" and not(useTopology) and not(useFlux)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
 
 	if(skip): continue
+	if(srow == "#KROME_rvars"):
+		fout.write("integer::"+(",".join(["r"+str(j+1) for j in range(maxnreag)]))+"\n")
+	if(srow == "#KROME_arrs"):
+		for j in range(maxnreag):
+			fout.write("r"+str(j+1)+" = arr_r"+str(j+1)+"(i)\n")
+	if(srow == "#KROME_arr_flux"):
+		fout.write("arr_flux(i) = k(i)*"+("*".join(["n(r"+str(j+1)+")" for j in range(maxnreag)]))+"\n")
+
 	if(row[0]!="#"): fout.write(row)
 if(not(buildCompact)):
 	fout.close()
@@ -1500,22 +1535,23 @@ print " done!"
 
 print
 print "indent...",
-if(buildCompact):
-	indentF90(buildFolder+"krome_all.f90")
-else:
-	indentF90(buildFolder+"krome_commons.f90")
-	indentF90(buildFolder+"krome_constants.f90")
-	indentF90(buildFolder+"krome_cooling.f90")
-	indentF90(buildFolder+"krome_heating.f90")
-	indentF90(buildFolder+"krome_dust.f90")
-	indentF90(buildFolder+"krome.f90")
-	indentF90(buildFolder+"krome_ode.f90")
-	indentF90(buildFolder+"krome_photo.f90")
-	indentF90(buildFolder+"krome_reduction.f90")
-	indentF90(buildFolder+"krome_subs.f90")
-	indentF90(buildFolder+"krome_tabs.f90")
-	indentF90(buildFolder+"krome_decoupled.f90")
-	indentF90(buildFolder+"krome_user.f90")
+if(doIndent):
+	if(buildCompact):
+		indentF90(buildFolder+"krome_all.f90")
+	else:
+		indentF90(buildFolder+"krome_commons.f90")
+		indentF90(buildFolder+"krome_constants.f90")
+		indentF90(buildFolder+"krome_cooling.f90")
+		indentF90(buildFolder+"krome_heating.f90")
+		indentF90(buildFolder+"krome_dust.f90")
+		indentF90(buildFolder+"krome.f90")
+		indentF90(buildFolder+"krome_ode.f90")
+		indentF90(buildFolder+"krome_photo.f90")
+		indentF90(buildFolder+"krome_reduction.f90")
+		indentF90(buildFolder+"krome_subs.f90")
+		indentF90(buildFolder+"krome_tabs.f90")
+		indentF90(buildFolder+"krome_decoupled.f90")
+		indentF90(buildFolder+"krome_user.f90")
 
 print "done!"
 
@@ -1533,10 +1569,15 @@ if(len(reacts)>500 and not(use_implicit_RHS)):
 print
 if(not(is_test)):
 	print "Call KROME in your code as:"
-	print "    call krome(x(:), gas_density, gas_temperature, time_step)"
-	print "where x(:) is a real*8 array of size "+str(len(specs)-4)+(" of the mass fractions" if useX else " of number densities [1/cm3]")
-	print "gas_density " + ("is the gas density in [g/cm3]" if useX else "is a dummy argument")
-	print "time_step is the integration time-step in [s]"
+	if(useX):
+		print "    call krome(x(:), gas_density, gas_temperature, time_step)"
+	else:
+		print "    call krome(x(:), gas_temperature, time_step)"
+	print "where:" 
+	print " x(:) is a real*8 array of size "+str(len(specs)-4)+(" of the mass fractions" if useX else " of number densities [1/cm3]")
+	if(useX): print " gas_density  is the gas density in [g/cm3]"
+	print " gas_temperature is the gas temperature in [K]"
+	print " time_step is the integration time-step in [s]"
 else:
 	print "This is a test. To run it just type:"
 	print "> cd build/"

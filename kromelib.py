@@ -161,6 +161,10 @@ DESCRIPTION
 	reaction_list_file must be in the CSV format:
 	index,r1,r2,r3,p1,p2,p3,p4,Tmin,Tmax,rate
 
+	or custom format, e.g.
+	R,R,P,P,P,Tmin,Tmax,rate
+	
+
 	available OPTIONS are:
 	
 	-iRHS
@@ -1150,7 +1154,7 @@ def trunc(mystr,sublen,sep):
 			s+="\n"
 	return s
 #################################
-def get_implicit_ode(use_reduction = False):
+def get_implicit_ode(nr=3,np=4,use_reduction = False):
 	s = """
 n(idx_dummy) = 1.d0
 n(idx_g) = 1.d0
@@ -1159,24 +1163,23 @@ n(idx_CR) = 1.d0
 
 	s += "do i=1,nrea\n"
 	if(use_reduction): s += "if(arr_u(i)==0) cycle\n"
-       	s += """
-       r1 = arr_r1(i)
-       r2 = arr_r2(i)
-       r3 = arr_r3(i)
-       p1 = arr_p1(i)
-       p2 = arr_p2(i)
-       p3 = arr_p3(i)
-       p4 = arr_p4(i)
-       rr = k(i)*n(r1)*n(r2)*n(r3)
-       dn(r1) = dn(r1) - rr
-       dn(r2) = dn(r2) - rr
-       dn(r3) = dn(r3) - rr
-       dn(p1) = dn(p1) + rr
-       dn(p2) = dn(p2) + rr
-       dn(p3) = dn(p3) + rr
-       dn(p4) = dn(p4) + rr
-end do
-"""
+
+	#r1=arr_r1(i)
+	for i in range(nr):
+		s += "r"+str(i+1)+" = arr_r"+str(i+1)+"(i)\n"
+	#p1=arr_rp(i)
+	for i in range(np):
+		s += "p"+str(i+1)+" = arr_p"+str(i+1)+"(i)\n"
+	s += "rr = k(i)*"+("*".join(["n(r"+str(i+1)+")" for i in range(nr)]))+"\n"
+
+	#dn(r1)=dn(r1)-rr
+	for i in range(nr):
+		s += "dn(r"+str(i+1)+") = dn(r"+str(i+1)+") - rr\n"
+	#dn(p1)=dn(p1)+rr
+	for i in range(np):
+		s += "dn(p"+str(i+1)+") = dn(p"+str(i+1)+") + rr\n"
+
+	s += "end do\n"
 	return s
 
 ###########################
