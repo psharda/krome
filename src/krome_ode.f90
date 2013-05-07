@@ -122,7 +122,7 @@ contains
     n(idx_g) = 1.d0
     n(idx_CR) = 1.d0
     do i=1,nrea
-       write(fnum,'(I5,E12.3e3,a2,a50)') i,k(i)*n(arr_r1(i))*n(arr_r2(i))*n(arr_r3(i)),"",rnames(i)
+#KROME_report_flux
     end do
     write(fnum,*) "**********************"
     write(fnum,*)

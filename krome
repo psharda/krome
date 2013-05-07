@@ -1289,6 +1289,10 @@ for row in fh:
 		ris = (",".join(["r"+str(i+1) for i in range(maxnreag)]))
 		pis = (",".join(["p"+str(i+1) for i in range(maxnprod)]))
 		fout.write("integer::i,"+ris+","+pis+"\n")
+	elif(row.strip() == "#KROME_report_flux"):
+		report_flux = ("*".join(["n(arr_r"+str(j+1)+"(i))" for j in range(maxnreag)]))
+ 		fout.write("write(fnum,'(I5,E12.3e3,a2,a50)') i,k(i)*"+report_flux+",'',rnames(i)\n")
+
 	elif(row.strip() == "#KROME_odeConstant" and useODEConstant):
 		fout.write("dn(:) = dn(:) "+ODEConstant+" \n")
 	elif(row.strip() == "#KROME_odeDust" and useODEConstant):
