@@ -79,6 +79,9 @@ for arg in sys.argv:
 		elif(test_name=="compact"):
 			[sys.argv.append(x) for x in ["-compact"]]
 			filename = "networks/react_enzo"
+		elif(test_name=="map"):
+			[sys.argv.append(x) for x in ["-cooling=CEN,H2,HD", "-heating=PHOTO","-usePhIoniz"]]
+			filename = "networks/react_enzo_photo"
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
 			sys.exit()
@@ -583,6 +586,10 @@ if(useCoolingZ):
 			mymol = parser(zcool,mass_dic,atoms)
 			mymol.idx = len(specs)+1
 			specs.append(mymol)
+
+#add minimum value to rates
+for rea in reacts:
+	if(not("krome_" in rea.krate)): rea.krate = "1d-40 + ("+rea.krate+")"
 
 
 
@@ -1312,7 +1319,7 @@ for row in fh:
 						if(jsparse[j][i]==1):
 							has_pdj = True
 							spdj += ("\t" + jac[j][i] + "\n")
-					if(has_pdj): fout.write("k(:) = coe_tab(Tgas)\n")
+					if(has_pdj): fout.write("k(:) = coe_tab(n(:))\n")
 					fout.write(spdj)
 				else:
 					jacT = """!rough estimate for dT/dx_i

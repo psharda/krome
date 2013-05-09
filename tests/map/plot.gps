@@ -1,0 +1,8 @@
+reset
+set logscale
+set autoscale
+set pm3d map
+set xlabel "T[K]"
+set ylabel "rho[K]"
+
+splot 'fort.66' u 1:2:3 t "final T[K]"

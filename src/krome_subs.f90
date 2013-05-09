@@ -27,14 +27,14 @@ contains
     invsqrT32 = 1.d0/sqrt(T32)
     sqrT32 = sqrt(T32)
 
-    k(:) = 0.d0 !inizialize coefficients
+    k(:) = 1.d-40 !inizialize coefficients
 
 #KROME_krates
 
     !set a minumum value for the rates
-    do i=1,nrea
-       k(i) = max(k(i),1d-40) 
-    end do
+    !do i=1,nrea
+    !   k(i) = max(k(i),1d-40) 
+    !end do
 
     coe(:) = k(:)!set coefficients to return variable
   end function coe

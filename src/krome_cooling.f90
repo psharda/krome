@@ -82,6 +82,7 @@ contains
     real*8::n(:),Tgas
     real*8::temp,logt3,logt,cool,cooling_H2,T3
     real*8::LDL,HDLR,HDLV,HDL,fact
+    real*8::logt32,logt33,logt34,logt35
     integer::i
     character*16::names(nspec)
     temp = max(Tgas, 1d1)
@@ -91,51 +92,56 @@ contains
     logt = log10(temp)
     cool = 0.d0
 
+    logt32 = logt3 * logt3
+    logt33 = logt32 * logt3
+    logt34 = logt33 * logt3
+    logt35 = logt34 * logt3
+
     !//H2-H
     if(temp>1d1 .and. temp<=1d2) then
        cool = cool +1.d1**(-16.818342D0 +3.7383713D1*logt3 &
-            +5.8145166D1*logt3**2 +4.8656103D1*logt3**3 &
-            +2.0159831D1*logt3**4 +3.8479610D0*logt3**5 )*n(idx_H)
+            +5.8145166D1*logt32 +4.8656103D1*logt33 &
+            +2.0159831D1*logt34 +3.8479610D0*logt35 )*n(idx_H)
     elseif(temp>1d2 .and. temp<=1d3) then
        cool = cool +1.d1**(-2.4311209D1 +3.5692468D0*logt3 &
-            -1.1332860D1*logt3**2 -2.7850082D1*logt3**3 &
-            -2.1328264D1*logt3**4 -4.2519023D0*logt3**5)*n(idx_H)
+            -1.1332860D1*logt32 -2.7850082D1*logt33 &
+            -2.1328264D1*logt34 -4.2519023D0*logt35)*n(idx_H)
     elseif(temp>1.d3 .and. temp<=6.d3) then
        cool = cool +1d1**(-2.4311209D1 +4.6450521D0*logt3 &
-            -3.7209846D0*logt3**2 +5.9369081D0*logt3**3 &
-            -5.5108049D0*logt3**4 +1.5538288D0*logt3**5)*n(idx_H)
+            -3.7209846D0*logt32 +5.9369081D0*logt33 &
+            -5.5108049D0*logt34 +1.5538288D0*logt35)*n(idx_H)
     end if
 
     !//H2-Hp
     if(temp>1.d1 .and. temp<=1.d4)  then
        cool = cool + 1d1**(-2.1716699D1 +1.3865783D0*logt3 &
-            -0.37915285D0*logt3**2 +0.11453688D0*logt3**3 &
-            -0.23214154D0*logt3**4 +0.058538864D0*logt3**5)*n(idx_Hj)
+            -0.37915285D0*logt32 +0.11453688D0*logt33 &
+            -0.23214154D0*logt34 +0.058538864D0*logt35)*n(idx_Hj)
     end if
 
     !//H2-H2
     if(temp>1.d2 .or. temp<=6.d3) then
        cool = cool + 1d1**(-2.3962112D1 +2.09433740D0*logt3 &
-            -.77151436D0*logt3**2 +.43693353D0*logt3**3 &
-            -.14913216D0*logt3**4 -.033638326D0*logt3**5)*n(idx_H2)
+            -.77151436D0*logt32 +.43693353D0*logt33 &
+            -.14913216D0*logt34 -.033638326D0*logt35)*n(idx_H2)
     end if
 
     !//H2-e
     if(temp>1d1 .and. temp<=2d2) then
        cool =  cool +1d1**(-3.4286155D1 -4.8537163D1*logt3 &
-            -7.7121176D1*logt3**2 -5.1352459D1*logt3**3 &
-            -1.5169150D1*logt3**4 -.98120322D0*logt3**5)*n(idx_e)
+            -7.7121176D1*logt32 -5.1352459D1*logt33 &
+            -1.5169150D1*logt34 -.98120322D0*logt35)*n(idx_e)
     elseif(temp>2d2 .and. temp<1d4)  then
        cool = cool + 1d1**(-2.2190316D1 +1.5728955D0*logt3 &
-            -.213351D0*logt3**2 +.96149759D0*logt3**3 &
-            -.91023195D0*logt3**4 +.13749749D0*logt3**5)*n(idx_e)
+            -.213351D0*logt32 +.96149759D0*logt33 &
+            -.91023195D0*logt34 +.13749749D0*logt35)*n(idx_e)
     end if
 
     !//H2-He
     if(temp>1.d1 .and. temp<=6.d3) then
        cool =  cool + 1d1**(-2.3689237d1 +2.1892372d0*logt3&
-            -.81520438d0*logt3**2 +.29036281d0*logt3**3 -.16596184d0*logt3**4 &
-            +.19191375d0*logt3**5)*n(idx_He)
+            -.81520438d0*logt32 +.29036281d0*logt33 -.16596184d0*logt34 &
+            +.19191375d0*logt35)*n(idx_He)
     end if
 
     !check error
