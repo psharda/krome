@@ -913,7 +913,8 @@ contains
   !************************************
   subroutine plot_cool(n)
     real*8::n(:),Tgas,Tmin,Tmax
-    real*8::cool_CEN,cool_H2,cool_HD,cool_tot, cool_totGP,cool_H2GP,cool_Z
+    real*8::cool_CEN,cool_H2,cool_HD,cool_tot, cool_totGP,cool_H2GP
+    real*8::cool_dH,cool_Z
     integer::i,imax
     imax = 1000
     Tmin = log10(1d1)
@@ -927,6 +928,7 @@ contains
        cool_HD = 0.d0
        cool_CEN = 0.d0
        cool_Z = 0.d0
+       cool_dH = 0.d0
 #IFKROME_useCoolingH2
        cool_H2 = cooling_H2(n(:),Tgas)
 #ENDIFKROME
@@ -942,10 +944,13 @@ contains
 #IFKROME_useCoolingZ
        cool_Z = cooling_Z(n(:),Tgas)
 #ENDIFKROME
-       cool_tot = cool_H2 + cool_CEN + cool_HD + cool_Z
-       cool_totGP = cool_H2GP + cool_CEN + cool_HD + cool_Z
+#IFKROME_useCoolingdH
+       cool_dH = cooling_dH(n(:),Tgas)
+#ENDIFKROME
+       cool_tot = cool_H2 + cool_CEN + cool_HD + cool_Z + cool_dH
+       cool_totGP = cool_H2GP + cool_CEN + cool_HD + cool_Z + cool_dH
        write(33,'(99E12.3e3)') Tgas, cool_tot, cool_totGP, cool_H2, cool_CEN, &
-            cool_HD, cool_H2GP, cool_Z
+            cool_HD, cool_H2GP, cool_Z, cool_dH
     end do
     close(33)
     print *,"done!"
