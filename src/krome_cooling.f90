@@ -15,20 +15,60 @@ contains
 #IFKROME_useCoolingH2
     cooling = cooling + cooling_H2(n(:), Tgas)
 #ENDIFKROME
+
 #IFKROME_useCoolingH2GP
     cooling = cooling + cooling_H2GP(n(:), Tgas)
 #ENDIFKROME
+
 #IFKROME_useCoolingCEN
     cooling = cooling + cooling_CEN(n(:), Tgas)
 #ENDIFKROME
+
 #IFKROME_useCoolingHD
     cooling = cooling + cooling_HD(n(:), Tgas)
 #ENDIFKROME
+
 #IFKROME_useCoolingZ
     cooling = cooling + cooling_Z(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingdH
+    cooling = cooling + cooling_dH(n(:), Tgas)
+#ENDIFKROME
+
   end function cooling
+
+
+#IFKROME_useCoolingdH
+  function cooling_dH(n,Tgas)
+    !cooling from reaction enthalpy erg/s/cm3
+    use krome_commons
+    implicit none
+    real*8::cooling_dH,cool,n(:),Tgas
+    real*8::logT,lnT,Te,lnTe,T32,t3,invT,invTe,sqrTgas,invsqrT32,sqrT32
+#KROME_vars
+    
+    logT = log10(Tgas) !log10 of Tgas (#)
+    lnT = log(Tgas) !ln of Tgas (#)
+    Te = Tgas*8.617343d-5 !Tgas in eV (eV)
+    lnTe = log(Te) !ln of Te (#)
+    T32 = Tgas/3.d2 !Tgas/(300 K) (#)
+    t3 = T32 !alias for T32 (#)
+    invT = 1.d0/Tgas !inverse of T (1/K)
+    invTe = 1.d0/Te !inverse of T (1/eV)
+    sqrTgas = sqrt(Tgas) !Tgas rootsquare (K**0.5)
+    invsqrT32 = 1.d0/sqrt(T32)
+    sqrT32 = sqrt(T32)
+
+    cool = 0.d0
+
+#KROME_rates
+#KROME_dH_cooling
+
+    cooling_dH = cool    
+
+  end function cooling_dH
+#ENDIFKROME
   
 #IFKROME_useCoolingH2GP
   !H2 COOLING GALLI&PALLA 1998 

@@ -19,7 +19,7 @@ force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact =
 use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = False
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = False
 createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
-usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = useDecoupled = False
+usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = useDecoupled = useCoolingdH = useHeatingdH = False
 useX = has_plot = useFakeOpacity = doIndent = True
 test_name = "default"
 is_test = False
@@ -185,7 +185,7 @@ for arg in sys.argv:
 for arg in sys.argv:
 	if("cooling=" in arg):
 		myCools = arg.strip().replace("-cooling=","").upper().split(",")
-		allCools = ["CEN","H2","H2GP98","HD","Z","ALL"]
+		allCools = ["CEN","H2","H2GP98","HD","Z","ALL","DH"]
 		for coo in myCools:
 			if(not(coo in allCools)):
 				die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
@@ -196,6 +196,7 @@ for arg in sys.argv:
 		if("H2GP98" in myCools): useCoolingH2GP98 = True
 		if("HD" in myCools): useCoolingHD = True
 		if("Z" in myCools): useCoolingZ = True
+		if("DH" in myCools): useCoolingdH = True
 		use_thermo = True
 
 		print "Reading option -cooling ("+(",".join(myCools))+")"
@@ -204,7 +205,7 @@ for arg in sys.argv:
 for arg in sys.argv:
 	if("heating=" in arg):
 		myHeat = arg.strip().replace("-heating=","").upper().split(",")
-		allHeats = ["COMPRESS","PHOTO","A","ALL"]
+		allHeats = ["COMPRESS","PHOTO","A","ALL","DH"]
 		for hea in myHeat:
 			if(not(hea in allHeats)):
 				die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
@@ -213,6 +214,8 @@ for arg in sys.argv:
 		if("COMPRESS" in myHeat): useHeatingCompress = True
 		if("PHOTO" in myHeat): useHeatingPhoto = True
 		if("A" in myHeat): useHeatingA = True
+		if("DH" in myHeat): useHeatingdH = True
+
 		use_thermo = True
 		if(not(usePhIoniz) and useHeatingPhoto):
 			die("ERROR: if you use photoheating you have to include potoionization via -usePhIoniz")
@@ -587,11 +590,16 @@ if(useCoolingZ):
 			mymol.idx = len(specs)+1
 			specs.append(mymol)
 
-#add minimum value to rates
+#add minimum value to rates and computes reaction enthalpy
 for rea in reacts:
 	if(not("krome_" in rea.krate)): rea.krate = "1d-40 + ("+rea.krate+")"
 
-
+if(useCoolingdH or useHeatingdH):
+	for i in range(len(reacts)):
+		reacts[i].enthalpy()
+		vrb = reacts[i].verbatim.strip()
+		avrb = vrb.split("->")
+		print avrb[0]+" "*(15-len(avrb[0])),"->",avrb[1]+" "*(15-len(avrb[1])),reacts[i].dH,"erg"
 
 #add dust to problem
 if(useDust):
@@ -1147,11 +1155,32 @@ fh = open("src/krome_cooling.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_cooling.f90","w")
 
+#create coefficients, flux, and cooling functions for dH cooling
+i = 0
+dH_varsa = []
+dH_coe = dH_cool = ""
+if(useCoolingdH):
+	for rea in reacts:
+		if(rea.dH!=None and rea.dH<0.e0):
+			i += 1 #count cooling reactions
+			kvar = "k"+str(i) #local variable for coefficient
+			dH_varsa.append(kvar) #variables array
+			dH_coe += "!"+rea.verbatim+"\n" #reaction comment
+			dH_coe += kvar+" = 0.d0\n"
+			dH_coe += "if(Tgas."+TlimitOpLow+"."+rea.Tmin+" .and. Tgas."+TlimitOpHigh+"."+rea.Tmax+") then\n"
+			dH_coe += kvar+" = "+rea.krate+"\n" #evaluate reation coefficient
+			dH_coe += "end if\n\n" #evaluate reation coefficient
+			dH_cool += "cool = cool + "+kvar+"*"+("*".join(["n("+x.fidx+")" for x in rea.reactants])) #evautate cooling
+			dH_cool += "*"+(str(abs(rea.dH))).replace("e","d")+"\n"			
+
 skip = False
 for row in fh:
 	if(row.strip() == "#KROME_header"):
 		fout.write(get_licence_header())
 	else:
+		if(row.strip() == "#IFKROME_useCoolingdH" and (not(useCoolingdH) or len(dH_varsa)==0)): skip = True
+		if(row.strip() == "#ENDIFKROME"): skip = False
+
 		if(row.strip() == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
 		if(row.strip() == "#ENDIFKROME"): skip = False
 
@@ -1168,6 +1197,12 @@ for row in fh:
 		if(row.strip() == "#ENDIFKROME"): skip = False
 
 		if(skip): continue
+		
+		#replace pragma for dH_cooling
+		if(useCoolingdH):
+			row = row.replace("#KROME_vars","real*8::"+(",".join(dH_varsa))+"\n")
+			row = row.replace("#KROME_rates",dH_coe)
+			row = row.replace("#KROME_dH_cooling",dH_cool)
 
 		if(row[0]!="#"): fout.write(row)
 
@@ -1183,6 +1218,23 @@ fh = open("src/krome_heating.f90")
 
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_heating.f90","w")
+
+#create coefficients, flux, and cooling functions for dH cooling
+i = 0
+dH_varsa = []
+dH_coe = dH_heat = ""
+if(useHeatingdH):
+	for rea in reacts:
+		if(rea.dH!=None and rea.dH>0.e0):
+			i += 1 #count heating reactions
+			kvar = "k"+str(i) #local variable for coefficient
+			dH_varsa.append(kvar) #variables array
+			dH_coe += kvar+" = 0.d0\n"
+			dH_coe += "if(Tgas."+TlimitOpLow+"."+rea.Tmin+" .and. Tgas."+TlimitOpHigh+"."+rea.Tmax+") then\n"
+			dH_coe += kvar+" = "+rea.krate+"\n" #evaluate reation coefficient
+			dH_coe += "end if\n\n" #evaluate reation coefficient
+			dH_heat += "heat = heat + "+kvar+"*"+("*".join(["n("+x.fidx+")" for x in rea.reactants])) #evautate heating
+			dH_heat += "*"+(str(abs(rea.dH))).replace("e","d")+"\n"	
 
 #build heating terms
 pheatvars = []
@@ -1203,6 +1255,8 @@ for row in fh:
 
 		fout.write(get_licence_header())
 	else:
+		if(row.strip() == "#IFKROME_useHeatingdH" and (not(useHeatingdH) or len(dH_varsa)==0)): skip = True
+		if(row.strip() == "#ENDIFKROME"): skip = False
 
 		if(row.strip() == "#IFKROME_useHeatingCompress" and not(useHeatingCompress)): skip = True
 		if(row.strip() == "#ENDIFKROME"): skip = False
@@ -1216,6 +1270,12 @@ for row in fh:
 		if(skip): continue
 
 		row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
+
+		#replace pragma for dH_heating
+		if(useHeatingdH):
+			row = row.replace("#KROME_vars","real*8::"+(",".join(dH_varsa))+"\n")
+			row = row.replace("#KROME_rates",dH_coe)
+			row = row.replace("#KROME_dH_heating",dH_heat)
 
 		if(row[0]!="#"): fout.write(row)
 

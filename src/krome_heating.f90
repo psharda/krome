@@ -21,9 +21,44 @@ contains
 #IFKROME_useHeatingPhoto
     heating = heating + photo_heating(n(:))
 #ENDIFKROME
-    
+
+#IFKROME_useHeatingdH
+    heating = heating + heat_dH(n(:),Tgas)
+#ENDIFKROME
   end function heating
   
+
+#IFKROME_useHeatingdH
+  !*************************
+  function heat_dH(n,Tgas)
+    !heating from reaction enthalpy erg/s/cm3
+    use krome_commons
+    implicit none
+    real*8::heat_dH,heat,n(:),Tgas
+    real*8::logT,lnT,Te,lnTe,T32,t3,invT,invTe,sqrTgas,invsqrT32,sqrT32
+#KROME_vars
+    
+    logT = log10(Tgas) !log10 of Tgas (#)
+    lnT = log(Tgas) !ln of Tgas (#)
+    Te = Tgas*8.617343d-5 !Tgas in eV (eV)
+    lnTe = log(Te) !ln of Te (#)
+    T32 = Tgas/3.d2 !Tgas/(300 K) (#)
+    t3 = T32 !alias for T32 (#)
+    invT = 1.d0/Tgas !inverse of T (1/K)
+    invTe = 1.d0/Te !inverse of T (1/eV)
+    sqrTgas = sqrt(Tgas) !Tgas rootsquare (K**0.5)
+    invsqrT32 = 1.d0/sqrt(T32)
+    sqrT32 = sqrt(T32)
+
+    heat = 0.d0
+
+#KROME_rates
+#KROME_dH_heating
+
+    heat_dH = heat    
+
+  end function heat_dH
+#ENDIFKROME
   
 #IFKROME_useHeatingPhoto
   !**************************

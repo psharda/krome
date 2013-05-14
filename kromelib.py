@@ -23,6 +23,7 @@ class reaction():
 	RHS = "" #ODE RHS in F90 style k(1)*n(2)*n(3)
 	RHSvar = "" #ODE RHS as variable k1n2n3
 	kphrate = None
+	dH = None
 	#method: constructor to initialize lists
 	def __init__(self):
 		self.reactants = []
@@ -97,8 +98,36 @@ class reaction():
 			print "************************************************"
 			a = raw_input("Ant key to continue q to quit... ")
 			if(a=="q"): print sys.exit()
+	def enthalpy(self):
+		if("krome_kph" in self.krate): return
+		#enthalpy of formation dictionary (add for more species)
+		deltaH ={"H":2.25129, "H+":15.84969,"H-":0.750000,"He":0.e0,"He+":24.58675,"He++":54.41671,"H2":0.e0,"H2+":15.42590,
+				"D":2.29793,"D+":15.89633,"HD":0.00330, "E":0.e0}
+		if(len(self.reactants)==0 or len(self.products)==0):
+			print "ERROR: you have called enthalpy calculation"
+			print " with empty reactants and/or products!"
+			sys.exit()
+		reag = self.reactants #copy reactants
+		prod = self.products #copy products
+		available = True #flag for species availablity in the enthalpy dictionary
+		rH = pH = 0.e0 #init reactants and prodcuts enthalpy eV
+		#loop on reactants
+		for xr in reag:
+			#print xr.name
+			if(not(xr.name in deltaH)):
+				available = False
+				break
+			rH += deltaH[xr.name] 
 
-
+		#loop on products
+		for xp in prod:
+			#print xp.name
+			if(not(xp.name in deltaH)):
+				available = False
+				break	
+			pH += deltaH[xp.name] 
+		self.dH = None
+		if(available): self.dH = (rH-pH)*1.60217657e-12 #eV->erg (cooling<0)
 ##################################
 def file_exists(fname):
 	import os
@@ -202,6 +231,7 @@ DESCRIPTION
 		H2GP	H2 Galli&Palla 1998
 		HD 	HD Lipovka????
 		Z	Metals C,O,Si,Fe (Maio2007,Grassi2012)
+		DH	enthalpic
 		ALL	enable all together
 		example: -cooling=CEN,H2,HD
 
@@ -210,6 +240,7 @@ DESCRIPTION
 		COMPRESS compressional ????
 		A	recombination heating (Omukai????)
 		PHOTO	photoionization heating (Grassi+2012)
+		DH	enthalpic	
 		ALL	enable all together
 		example: -heating=A,PHOTO
 
