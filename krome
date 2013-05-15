@@ -1649,6 +1649,16 @@ if(not(is_test)):
 	if(useX): print " gas_density  is the gas density in [g/cm3]"
 	print " gas_temperature is the gas temperature in [K]"
 	print " time_step is the integration time-step in [s]"
+
+	fout = open(buildFolder+"test.f90","w")
+	fout.write(get_example(len(specs)-4,useX))
+	fout.close()
+	indentF90(buildFolder+"test.f90")
+	if(buildCompact):
+		shutil.copyfile("tests/MakefileCompact", buildFolder+"Makefile")
+	else:
+		shutil.copyfile("tests/Makefile", buildFolder+"Makefile")
+
 else:
 	print "This is a test. To run it just type:"
 	print "> cd build/"
