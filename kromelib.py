@@ -101,8 +101,9 @@ class reaction():
 	def enthalpy(self):
 		if("krome_kph" in self.krate): return
 		#enthalpy of formation dictionary (add for more species)
-		deltaH ={"H":2.25129, "H+":15.84969,"H-":0.750000,"He":0.e0,"He+":24.58675,"He++":54.41671,"H2":0.e0,"H2+":15.42590,
-				"D":2.29793,"D+":15.89633,"HD":0.00330, "E":0.e0}
+		deltaH ={"H":2.25129, "H+":15.84969,"H-":0.750000,"HE":0.e0,"HE+":24.58675,"HE++":54.41671,"H2":0.e0,"H2+":15.42590,
+				"D":2.29793,"D+":15.89633,"HD":0.00330, "E":0.e0, "C":7.42764, "C+":18.6882, "SI":3.81606, 
+				"SI+":11.9674, "O":2.5807, "O+":161981}
 		if(len(self.reactants)==0 or len(self.products)==0):
 			print "ERROR: you have called enthalpy calculation"
 			print " with empty reactants and/or products!"
@@ -113,6 +114,7 @@ class reaction():
 		rH = pH = 0.e0 #init reactants and prodcuts enthalpy eV
 		#loop on reactants
 		for xr in reag:
+			xr.name = xr.name.upper()
 			#print xr.name
 			if(not(xr.name in deltaH)):
 				available = False
@@ -121,6 +123,7 @@ class reaction():
 
 		#loop on products
 		for xp in prod:
+			xp.name = xp.name.upper()
 			#print xp.name
 			if(not(xp.name in deltaH)):
 				available = False
