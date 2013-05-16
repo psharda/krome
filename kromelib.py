@@ -333,6 +333,9 @@ DESCRIPTION
 	-useFlux
 		use flux reduction (Grassi et al. 2012)
 
+	-useTabs
+		use tabulated rate coefficients (free parameter: temperature)
+
 	-report
 		generate report file in the main call to krome as 
 		KROME_ERROR_REPORT and when calling the fex as 
