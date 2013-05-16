@@ -19,13 +19,20 @@ contains
     real*8::gamma,Tgas,vgas,ntot
 #KROME_dustSumVariables
 #KROME_implicit_variables
+
     n(idx_CR) = 1.d0
     n(idx_g)  = 1.d0
     n(idx_dummy) = 1.d0
 
     dn(:) = 0.d0 !initialize differentials
     Tgas = max(n(idx_Tgas), 2.73d0) !get temperature
-    k(:) = coe_tab(n(:)) !compute coefficients
+    if(abs(krome_buf_Tgas-Tgas)>1.d0) then
+       k(:) = coe_tab(n(:)) !compute coefficients
+       krome_buf_k(:) = k(:)
+       krome_buf_Tgas = Tgas
+    else
+       k(:) = krome_buf_k(:)
+    end if
 
 #IFKROME_useDust
     vgas = sqrt(8.d0*boltzmann_erg*Tgas/pi/p_mass)
@@ -48,6 +55,10 @@ contains
        write(98,'(999E12.3e3)') tt,n(:)
        write(97,'(999E12.3e3)') tt,dn(:)
 #ENDIFKROME
+       
+       jac_dnold(:) = jac_dn(:) !store previous dn for explicit jacobian
+       jac_nold(:) = n(:) !store previous n for explicit jacobian
+       jac_dn(:) = dn(:) !store current n
 
   end subroutine fex
 
@@ -62,12 +73,20 @@ contains
     
     Tgas = n(idx_Tgas)
     
+    if(abs(krome_buf_Tgas-Tgas)>1.d0) then
+       k(:) = coe_tab(n(:)) !compute coefficients
+       krome_buf_k(:) = k(:)
+       krome_buf_Tgas = Tgas
+    else
+       k(:) = krome_buf_k(:)
+    end if
+    
 #KROME_JAC_PD
     
     return
   end subroutine jes
-#IFKROME_report
 
+#IFKROME_report
   !****************************
   !*******************************
   subroutine krome_ode_dump(n,k)

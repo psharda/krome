@@ -74,7 +74,10 @@ contains
 #ENDIFKROME
 
     n(idx_Tgas) = Tgas !put temperature in the input array
-    nold(:) = n(:) !store initial densities (finite difference for Jacobian)
+    jac_nold(:) = n(:) !store initial densities (finite difference for Jacobian)
+    jac_dn(:) = 0.d0
+    jac_dnold(:) = 0.d0
+    krome_buf_Tgas = -1d99
     icount = 0 !count solver iterations
     istate = 1 !init solver state
     tloc = 0.d0 !set starting time

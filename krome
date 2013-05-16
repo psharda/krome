@@ -492,7 +492,7 @@ for row in fh:
 	myrea.reactants = sorted(myrea.reactants, key=lambda r:r.idx) #sort reactants
 	myrea.products = sorted(myrea.products, key=lambda p:p.idx) #sort products
 	myrea.build_RHS() #build RHS in F90 format (e.g. k(2)*n(10)*n(8) )
-	myrea.build_phrate()
+	myrea.build_phrate() #build photoionization rate
 	myrea.check() #check mass and charge conservation
 	if(myrea.krate.count("(")!=myrea.krate.count(")")):
 		print "ERROR: unbalanced brakets in reaction "+str(myrea.idx)
@@ -831,7 +831,11 @@ for rea in reacts:
 			jsparse[pp.idx-1][r1.idx-1] = 1
 
 for i in range(neq):
-	jsparse[i][Tgas_species.idx-1] = 1
+	if(not(use_thermo)): break
+	jsparse[i][Tgas_species.idx-1] = jsparse[Tgas_species.idx-1][i] = 1
+	s = str(i+1)
+	if(specs[i].name!="dummy" and specs[i].name!="CR" and specs[i].name!="g"):
+		jac[Tgas_species.idx-1][i] = "if(abs(n("+s+") - jac_nold("+s+"))>1d-10) pdj(idx_Tgas) = (jac_dn(idx_Tgas) - jac_dnold(idx_Tgas)) / (n("+s+") - jac_nold("+s+"))"
 
 #create IAC/JAC (see DLSODES manual)
 isum = 1
@@ -1379,15 +1383,16 @@ for row in fh:
 						if(jsparse[j][i]==1):
 							has_pdj = True
 							spdj += ("\t" + jac[j][i] + "\n")
-					if(has_pdj): fout.write("k(:) = coe_tab(n(:))\n")
+					#if(has_pdj): fout.write("k(:) = coe_tab(n(:))\n")
 					fout.write(spdj)
 				else:
-					jacT = """!rough estimate for dT/dx_i
-						do i=1,neq-2
-							if(n(i)-nold(i).ne.0.d0) then
-								pdj(i) = (n(idx_Tgas) - nold(idx_Tgas))/(n(i) - nold(i))
+					jacT = """!rough estimate for d^2T/dt/dx_i
+						do i=1,neq-1
+							if(n(idx_Tgas)-jac_nold(idx_Tgas).ne.0.d0) then
+								pdj(i) = (jac_dnold(i) - jac_dn(i))/(jac_nold(idx_Tgas) - n(idx_Tgas))
 							end if
 						end do"""
+					if(not(use_thermo)): jacT = ""
 					fout.write("\t" + jacT.replace("\t","") + "\n")
 			fout.write("end if\n")
 	else:

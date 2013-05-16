@@ -6,7 +6,8 @@ module krome_commons
 #KROME_parameters
 
   real*8::arr_k(nrea)
-  real*8::nold(nspec)
+  real*8::jac_nold(nspec),jac_dnold(nspec),jac_dn(nspec)
+  real*8::krome_buf_k(nrea), krome_buf_Tgas
 
   !commons for rate tables
   integer,parameter::ktab_n=int(1e4)
