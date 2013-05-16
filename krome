@@ -55,33 +55,33 @@ for arg in sys.argv:
 			filename = "networks/react_WH2008"
 		elif(test_name=="cooling"):
 			[sys.argv.append(x) for x in ["-useN","-cooling=ALL"]]
-			filename = "networks/react_enzo"
+			filename = "networks/react_primordial"
 		elif(test_name=="shock1Dcool"):
-			[sys.argv.append(x) for x in ["-cooling=CEN,H2,HD,Z,DH"]]
-			filename = "networks/react_enzo"
+			[sys.argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
+			filename = "networks/react_primordial"
 		elif(test_name=="shock1D"):
-			filename = "networks/react_enzo"
+			filename = "networks/react_primordial"
 		elif(test_name=="shock1Dphoto"):
 			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO","-cooling=CEN,H2,HD,Z","-useEquilibrium"]]
-			filename = "networks/react_enzo_photo"
+			filename = "networks/react_primordial_photo"
 		elif(test_name=="shock1Dlarge"):
 			[sys.argv.append(x) for x in ["-iRHS"]]
 			filename = "networks/react_WH2008"
 		elif(test_name=="shock1Dbuff"):
 			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO","-cooling=CEN,H2,HD,Z","-useEquilibrium"]]
-			filename = "networks/react_enzo_photo"
+			filename = "networks/react_primordial_photo"
 		elif(test_name=="dust"):
 			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN"]]
-			filename = "networks/react_enzo"
+			filename = "networks/react_primordial"
 		elif(test_name=="shock1Ddecoupled"):
 			[sys.argv.append(x) for x in ["-cooling=CEN,H2,HD,Z","-useDecoupled"]]
-			filename = "networks/react_enzo"
+			filename = "networks/react_primordial"
 		elif(test_name=="compact"):
 			[sys.argv.append(x) for x in ["-compact"]]
-			filename = "networks/react_enzo"
+			filename = "networks/react_primordial"
 		elif(test_name=="map"):
 			[sys.argv.append(x) for x in ["-cooling=CEN,H2,HD", "-heating=PHOTO","-usePhIoniz"]]
-			filename = "networks/react_enzo_photo"
+			filename = "networks/react_primordial_photo"
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
 			sys.exit()
