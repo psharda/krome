@@ -3,10 +3,10 @@
 from random import randint,random
 import sys
 
-nrea = 2000 #number of reactions to generate
-nspec = 10 #number of random species (names=FK1,FK2,...)
+nrea = 36 #number of reactions to generate
+nspec = 3 #number of random species (names=FK1,FK2,...)
 emin = -11. #max rate coefficient, log (kmin=10**emin)
-emax = -8. #max rate coefficient, log (kmax=10**emax)
+emax = -6. #max rate coefficient, log (kmax=10**emax)
 kmax = 1000000 #maximum number of attempts to generate a reacion 
 step = 1.5 #decreasing step of species distribution (step=1 equiprobable species)
 

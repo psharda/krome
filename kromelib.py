@@ -18,6 +18,8 @@ class reaction():
 	products = [] #list of products (molec objects)
 	Tmin = "0.d0" #min value of temperature range
 	Tmax = "0.d0" #max value of temperature range
+	TminOp = "" #min operator
+	TmaxOp = "" #max operator
 	krate = "" #reaction rate written in F90 style
 	idx = 0 #reaction index
 	RHS = "" #ODE RHS in F90 style k(1)*n(2)*n(3)
@@ -280,9 +282,9 @@ DESCRIPTION
 	-cooling=COOLING
 		activate cooling listed in COOLING:
 		CEN	Cen 1992
-		H2	H2 Glover&Savin????
+		H2	H2 Glover&Abel 2008
 		H2GP	H2 Galli&Palla 1998
-		HD 	HD Lipovka????
+		HD 	HD Lipovka2005
 		Z	Metals C,O,Si,Fe (Maio2007,Grassi2012)
 		DH	enthalpic
 		ALL	enable all together
@@ -290,8 +292,8 @@ DESCRIPTION
 
 	-heating=HEATING
 		activate cooling listed in HEATING:
-		COMPRESS compressional ????
-		A	recombination heating (Omukai????)
+		COMPRESS compressional Omukai 2000
+		A	recombination H2 heating (Omukai2000)
 		PHOTO	photoionization heating (Grassi+2012)
 		DH	enthalpic	
 		ALL	enable all together
@@ -1208,25 +1210,40 @@ def get_ph_stuff(react):
 #################################
 def get_licence_header():
 	header =  """!!*************************************************************
-	!!KROME is a code aimed at bla bla
+	!!KROME is a nice and friendly chemistry package for a wide range of 
+	!! astrophysical simulations. Given a chemical network (in CSV format) 
+	!! it automatically generates all the routines needed to solve the kinetic 
+	!! of the system, modelled as system of coupled Ordinary Differential 
+	!! Equations. 
+	!! It provides different options which make it unique and very flexible. 
+	!! Any suggestions and comments are welcomed. KROME is an open-source 
+	!! package, GNU-licensed, and any improvements provided by 
+	!! the users is well accepted. See disclaimer below and GNU License 
+	!! in gpl-3.0.txt.
 	!!
-	!!Written and developed by Tommaso Grassi 
-	!!tommasograssi@gmail.com, 
-	!!University of Rome \"Sapienza\".
+	!!Written and developed by >Tommaso Grassi< 
+	!! tommasograssi@gmail.com, 
+	!! University of Rome \"Sapienza\".
 	!!
-	!!Massively tested by Stefano Bovino
-	!!Institut fuer Astrophysik, Goettingen.
+	!!Co-developer Stefano Bovino
+	!! sbovino@astro.physik.uni-goettingen.de
+	!! Institut fuer Astrophysik, Goettingen.
+	!!
+	!!
+	!!Collaborators: F.A. Gianturco, Eugenio Simoncini, Dominik Schlicher, 
+	!! and Emanuele Tognelli.
+	!!
 	!!
 	!!KROME is provided \"as it is\", without any warranty. 
-	!!The Author assumes no liability for any damages of any kind 
-	!!(direct or indirect damages, contractual or non-contractual 
-	!!damages, pecuniary or non-pecuniary damages), directly or 
-	!!indirectly derived or arising from the correct or incorrect 
-	!!usage of KROME, in any possible environment, or arising from 
-	!!the impossibility to use, fully or partially, the software, 
-	!!or any bug or malefunction. 
-	!!Such exclusion of liability expressly includes any damages 
-	!!including the loss of data of any kind (including personal data)
+	!! The Author assumes no liability for any damages of any kind 
+	!! (direct or indirect damages, contractual or non-contractual 
+	!! damages, pecuniary or non-pecuniary damages), directly or 
+	!! indirectly derived or arising from the correct or incorrect 
+	!! usage of KROME, in any possible environment, or arising from 
+	!! the impossibility to use, fully or partially, the software, 
+	!! or any bug or malefunction. 
+	!! Such exclusion of liability expressly includes any damages 
+	!! including the loss of data of any kind (including personal data)
 	!!*************************************************************\n"""
 	return header.replace("\t","").replace("!!","   ! ")
 #################################

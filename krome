@@ -460,6 +460,21 @@ for row in fh:
 	reactants = [arow[x] for x in ireact]
 	products = [arow[x] for x in iprod]
 
+	opTlist = ["<",">",".LE.",".GE.",".LT.",".GT."]
+	myrea.TminOp = TlimitOpLow
+	myrea.TmaxOp = TlimitOpHigh
+	for op in opTlist:
+		if(op in arow[iTmin]):
+			arow[iTmin] = arow[iTmin].replace(op,"")
+			myrea.TminOp = op.replace(">","GT").replace("<","LT").replace(".","")
+			break
+	for op in opTlist:
+		if(op in arow[iTmax]):
+			arow[iTmax] = arow[iTmax].replace(op,"")		
+			myrea.TmaxOp = op.replace(">","GT").replace("<","LT").replace(".","")
+			break
+
+
 	myrea.Tmin = format_double(arow[iTmin]) #get Tmin
 	myrea.Tmax = format_double(arow[iTmax]) #get Tmax
 	TminAuto = min(float(arow[iTmin].lower().replace("d","e")), TminAuto)
@@ -1010,7 +1025,7 @@ for row in fh:
 	if(row.strip() == "#KROME_krates"):
 		for x in reacts:
 			sTlimit = ""
-			if(x.kphrate==None): sTlimit = "if(Tgas."+TlimitOpLow+"."+x.Tmin+" .and. Tgas."+TlimitOpHigh+"."+x.Tmax+")"
+			if(x.kphrate==None): sTlimit = "if(Tgas."+x.TminOp+"."+x.Tmin+" .and. Tgas."+x.TmaxOp+"."+x.Tmax+")"
 			kstr = "\t" + sTlimit + " k("+str(x.idx)+") = " + x.krate + " !" + x.verbatim
 			kstr = truncF90(kstr, 60,"*")
 			fout.write(truncF90(kstr, 60,"/")+"\n")
