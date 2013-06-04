@@ -20,6 +20,7 @@ class reaction():
 	Tmax = "0.d0" #max value of temperature range
 	TminOp = "" #min operator
 	TmaxOp = "" #max operator
+	pseudo_hash = "" #pseudo hash
 	krate = "" #reaction rate written in F90 style
 	idx = 0 #reaction index
 	RHS = "" #ODE RHS in F90 style k(1)*n(2)*n(3)
@@ -68,7 +69,17 @@ class reaction():
 				print "************************************************************"
 				sys.exit()
 		if(len(ns)>0): self.RHS += "*" + ("*".join(ns))
+	#method:build pseudo hash (for unique reactions to avoid duplicates)
+	def build_pseudo_hash(self):
+		rname = []
+		pname = []
+		for r in self.reactants:
+			rname.append(r.name)
 		
+		for p in self.products:
+			pname.append(p.name)
+		self.pseudo_hash = ("_".join(sorted(rname)))+"|"+("_".join(sorted(pname))) 
+
 	#method: check reaction (mass and charge conservation)
 	def check(self):
 		mass_reactants = mass_products = 0.e0
@@ -377,6 +388,9 @@ DESCRIPTION
 		will provide (Tgas>=10. AND Tgas<=1d4) as the reaction
 		range of validity. Operators opLow and opHigh must 
 		be one of the following: LE, GE, LT, GT.
+
+	-noTlimits
+		ignore rate coefficient temperature limits.
 
 	-reverse="EXPRESSION"
 		create reverse reaction from the given set. Inverse rate

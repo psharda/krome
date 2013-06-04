@@ -16,11 +16,11 @@ print
 #set defaults
 solver_MF = 222
 force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
-use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = False
+use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = False
 createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = useDecoupled = useCoolingdH = useHeatingdH = False
-useX = has_plot = useFakeOpacity = doIndent = True
+useX = has_plot = useFakeOpacity = doIndent = useTlimits = True
 test_name = "default"
 is_test = False
 TlimitOpLow = "GE"
@@ -162,6 +162,15 @@ if("-useEquilibrium" in sys.argv):
 if("-useDecoupled" in sys.argv):
 	useDecoupled = True
 	print "Reading option -useDecoupled"
+#do not use temperature limits
+if("-noTlimits" in sys.argv):
+	useTlimits = False
+	print "Reading option -noTlimits"
+#skip duplicated reactions
+if("-skipDup" in sys.argv):
+	skipDup = True
+	print "Reading option -skipDup"
+
 #determine reverse function to reverse reactions
 for arg in sys.argv:
 	if("reverse=" in arg):
@@ -382,12 +391,14 @@ spec_names = [] #string
 specs = []
 reacts = []
 idx_list = [] #store reaction index in case of -useFileIdx
+pseudo_hash_list = []
 fh = open(filename,"rb")
 rcount = 0 #count reactions
 found_one = False #flag to control if at least one reaction has been found
 unmatch_idx = False #controls if the reaction index in the file match the sequential index
 #default position in input array line
 iidx = 0 #position of the index
+skipped_dupl = 0 #number of duplicated reaction skipped
 ireact = range(1,4) #positions of the reactants
 iprod = range(4,8) #position of the products
 iTmin = 8 #position of tmin
@@ -395,6 +406,7 @@ iTmax = 9 #position of tmax
 irate = 10 #position of the rate in F90 style
 hasFormat = False
 format_items = 4+len(ireact)+len(iprod)
+if(skipDup): fdup = open("duplicates.log","w")
 for row in fh:
 	srow = row.strip() #stripped row
 	if(srow.strip()==""): continue #looks for blank line
@@ -515,8 +527,19 @@ for row in fh:
 		print " rate = "+myrea.krate
 		sys.exit()
 
-	reacts.append(myrea)
+	skip_append = False
+	if(skipDup):
+		myrea.build_pseudo_hash() #build pseudo_hash
+		if(myrea.pseudo_hash in pseudo_hash_list): 
+			skip_append = True
+			skipped_dupl += 1
+			fdup.write(str(myrea.idx)+" "+myrea.verbatim+"\n")
+			rcount -= 1
+		else:
+			pseudo_hash_list.append(myrea.pseudo_hash)
+	if(not(skip_append)): reacts.append(myrea)
 
+if(skipDup): fdup.close()
 
 #check file format
 if(not(found_one)):
@@ -547,6 +570,8 @@ if(createReverse):
 			myrev.Tmax = myrea.Tmax #get Tmax
 			myrev.reactants = myrea.products
 			myrev.products = myrea.reactants
+			myrev.TminOp = myrea.TminOp #get Tmin operator
+			myrev.TmaxOp = myrea.TmaxOp #get Tmax operator
 			myrev.build_verbatim() #build reaction as string (e.g. A+B->C)
 			myrev.verbatim += " (REV)" #append REV label to reaction string
 			myreactants = myrev.reactants #get list of reactants
@@ -585,6 +610,9 @@ if(createReverse):
 			myrev.check() #check mass and charge conservation
 			reacts.append(myrev)
 	print "Inverse reaction added: "+str(count_reverse)
+
+
+if(skipDup): print "Skipped duplicated reactions:",skipped_dupl
 
 
 #add all the metals to cooling
@@ -1025,7 +1053,7 @@ for row in fh:
 	if(row.strip() == "#KROME_krates"):
 		for x in reacts:
 			sTlimit = ""
-			if(x.kphrate==None): sTlimit = "if(Tgas."+x.TminOp+"."+x.Tmin+" .and. Tgas."+x.TmaxOp+"."+x.Tmax+")"
+			if(x.kphrate==None and useTlimits): sTlimit = "if(Tgas."+x.TminOp+"."+x.Tmin+" .and. Tgas."+x.TmaxOp+"."+x.Tmax+")"
 			kstr = "\t" + sTlimit + " k("+str(x.idx)+") = " + x.krate + " !" + x.verbatim
 			kstr = truncF90(kstr, 60,"*")
 			fout.write(truncF90(kstr, 60,"/")+"\n")
