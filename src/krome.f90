@@ -106,8 +106,8 @@ contains
           exit !sucsessful integration
        elseif(istate==-1) then
           istate = 1 !exceeded internal max iterations
-       elseif(istate==-5) then
-          istate = 3 !wrong sparsity
+       elseif(istate==-5 .or. istate==-4) then
+          istate = 3 !wrong sparsity recompute
        else
           call XSETF(1)!turn on verbosity
           if(got_error) then
