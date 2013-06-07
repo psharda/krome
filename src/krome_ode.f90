@@ -26,13 +26,8 @@ contains
 
     dn(:) = 0.d0 !initialize differentials
     Tgas = max(n(idx_Tgas), 2.73d0) !get temperature
-    if(abs(krome_buf_Tgas-Tgas)>1.d0) then
-       k(:) = coe_tab(n(:)) !compute coefficients
-       krome_buf_k(:) = k(:)
-       krome_buf_Tgas = Tgas
-    else
-       k(:) = krome_buf_k(:)
-    end if
+    
+    k(:) = coe_tab(n(:)) !compute coefficients
 
 #IFKROME_useDust
     vgas = sqrt(8.d0*boltzmann_erg*Tgas/pi/p_mass)
@@ -73,13 +68,7 @@ contains
     
     Tgas = n(idx_Tgas)
     
-    if(abs(krome_buf_Tgas-Tgas)>1.d0) then
-       k(:) = coe_tab(n(:)) !compute coefficients
-       krome_buf_k(:) = k(:)
-       krome_buf_Tgas = Tgas
-    else
-       k(:) = krome_buf_k(:)
-    end if
+    k(:) = coe_tab(n(:)) !compute coefficients
     
 #KROME_JAC_PD
     
