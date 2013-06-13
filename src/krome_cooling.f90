@@ -36,7 +36,42 @@ contains
     cooling = cooling + cooling_dH(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingDust
+    cooling = cooling + cooling_dust(n(:), Tgas)
+#ENDIFKROME
+
   end function cooling
+
+#IFKROME_useCoolingDust
+  function cooling_dust(n,Tgas)
+    !cooling from dust in erg/cm3/s
+    use krome_dust
+    use krome_commons
+    use krome_constants
+    implicit none
+    real*8::cooling_dust,n(:),Tgas,cool,vgas,fact,ntot
+    integer::i,idust
+    
+    !factor of contribution for species other than protons
+    ! mean value, see Hollenbach and McKee 1979 for a
+    ! more accurate value
+    fact = 0.5d0 
+
+    vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
+    ntot = sum(n(1:nmols))
+
+    cool = 0.d0 !cooling in erg/s/cm3
+    !loop on dust to evaluate cooling following Hollenbach and McKee 1979
+    do i=nmols+1,nmols+ndust
+       idust = i - nmols !index of dust
+       cool = cool + 2.d0 * boltzmann_erg * n(i) * krome_dust_asize2(idust) * &
+            fact * vgas * (Tgas - krome_dust_T(idust))
+    end do
+
+    cooling_dust = cool
+
+  end function cooling_dust
+#ENDIFKROME
 
 
 #IFKROME_useCoolingdH

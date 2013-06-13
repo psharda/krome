@@ -50,6 +50,7 @@ contains
        xdust(ilow:iup) = c*adust(ilow:iup)**phi
        xdust(ilow:iup) = xdust(ilow:iup)/sum(xdust(ilow:iup)) * ntot(j)
        krome_dust_asize(ilow:iup) = adust(:)
+       krome_dust_asize2(ilow:iup) = adust(:)**2
        !evaluate dust-parnter ratio (e.g. 1dust=1e2 C atoms)
        krome_dust_partner_ratio(ilow:iup) = adust(ilow:iup)**3 &
             * 2.3d0  / mass(krome_dust_partner_idx(j))
@@ -90,6 +91,8 @@ contains
          * exp(-7.d-3 * Tgas)
     
   end function krome_dust_stick
+
+  
 
   !***************
   function yield(energy_erg,mdust,matom,zidust,ziatom,kfree,U0_eV)

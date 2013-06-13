@@ -18,4 +18,6 @@ module krome_constants
   real*8,parameter:: eV_to_erg = 1.60217646d-12 !eV -> erg
   real*8,parameter:: seconds_per_year = 365d0*24d0*3600d0 
 
+  real*8,parameter:: kvgas_erg = 8.d0*boltzmann_erg/pi/p_mass
+
 end module krome_constants

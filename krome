@@ -17,7 +17,7 @@ print
 solver_MF = 222
 force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
-useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = False
+useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = False
 createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = useDecoupled = useCoolingdH = useHeatingdH = False
 useX = has_plot = useFakeOpacity = doIndent = useTlimits = True
@@ -194,7 +194,7 @@ for arg in sys.argv:
 for arg in sys.argv:
 	if("cooling=" in arg):
 		myCools = arg.strip().replace("-cooling=","").upper().split(",")
-		allCools = ["CEN","H2","H2GP98","HD","Z","ALL","DH"]
+		allCools = ["CEN","H2","HD","Z","ALL","DH","DUST","H2GP98"]
 		for coo in myCools:
 			if(not(coo in allCools)):
 				die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
@@ -206,6 +206,14 @@ for arg in sys.argv:
 		if("HD" in myCools): useCoolingHD = True
 		if("Z" in myCools): useCoolingZ = True
 		if("DH" in myCools): useCoolingdH = True
+		if("DUST" in myCools): useCoolingDust = True
+		
+		hasDust = False
+		for aa in sys.argv:
+			if("dust=" in aa): hasDust = True
+		if(useCoolingDust and not(hasDust)):
+			die("ERROR: to include dust cooling you need dust (use -dust=[see help]).")
+
 		use_thermo = True
 
 		print "Reading option -cooling ("+(",".join(myCools))+")"
@@ -1226,6 +1234,9 @@ for row in fh:
 		fout.write(get_licence_header())
 	else:
 		if(row.strip() == "#IFKROME_useCoolingdH" and (not(useCoolingdH) or len(dH_varsa)==0)): skip = True
+		if(row.strip() == "#ENDIFKROME"): skip = False
+
+		if(row.strip() == "#IFKROME_useCoolingDust" and not(useCoolingDust)): skip = True
 		if(row.strip() == "#ENDIFKROME"): skip = False
 
 		if(row.strip() == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
