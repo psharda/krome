@@ -262,7 +262,7 @@ contains
     use krome_commons
     use krome_subs
     real*8::Tgas,cooling_CEN,n(:)
-    real*8::temp,gaunt_factor,T5,cool
+    real*8::temp,gaunt_factor,T5,cool,bms_ions
 
 
     gaunt_factor = 1.5d0
@@ -300,8 +300,9 @@ contains
          *exp(-4.73638d5/temp)*n(idx_e)*n(idx_Hej)
 
     !BREMSSTRAHLUNG: all ions
+#KROME_brem_ions
     cool = cool+ 1.42d-27*gaunt_factor*sqrt(temp)&
-         *(n(idx_Hj)+n(idx_H2j)+n(idx_Hej))*n(idx_e)
+         *bms_ions*n(idx_e)
 
     cooling_CEN = max(cool, 0.d0)  !erg/cm3/s
   end function cooling_CEN

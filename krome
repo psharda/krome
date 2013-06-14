@@ -54,7 +54,7 @@ for arg in sys.argv:
 			[sys.argv.append(x) for x in ["-useN","-iRHS","-useFlux"]]
 			filename = "networks/react_WH2008"
 		elif(test_name=="cooling"):
-			[sys.argv.append(x) for x in ["-useN","-cooling=ALL"]]
+			[sys.argv.append(x) for x in ["-useN","-cooling=CEN,H2,HD,Z,DH,H2GP98"]]
 			filename = "networks/react_primordial"
 		elif(test_name=="shock1Dcool"):
 			[sys.argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
@@ -1229,6 +1229,14 @@ if(useCoolingdH):
 			dH_cool += "*"+(str(abs(rea.dH))).replace("e","d")+"\n"			
 
 skip = False
+bms_ions = "bms_ions ="
+for x in specs:
+	charge = x.charge
+	if(charge>0):
+		mult = ""
+		if(charge>1): mult = str(charge*charge)+".d0*"
+		bms_ions += " +"+mult+"n("+x.fidx+")"
+
 for row in fh:
 	if(row.strip() == "#KROME_header"):
 		fout.write(get_licence_header())
@@ -1261,6 +1269,8 @@ for row in fh:
 			row = row.replace("#KROME_vars","real*8::"+(",".join(dH_varsa))+"\n")
 			row = row.replace("#KROME_rates",dH_coe)
 			row = row.replace("#KROME_dH_cooling",dH_cool)
+		#replace pragma of bremsstrahlung ions
+		row = row.replace("#KROME_brem_ions",bms_ions)
 
 		if(row[0]!="#"): fout.write(row)
 
