@@ -1110,7 +1110,7 @@ for react in reacts:
 	pheatvars.append("krome_pheat_"+ph_name)
 
 	#string to print computed photoheating values
-	ph_heat_print += "print '(a20,E11.3,a1,a6)',\"" + react.verbatim + "\", " + "krome_pheat_"+ ph_name + ",\"\",\"erg/s\"\n"
+	ph_heat_print += "print '(a20,E11.3,a1,a6)',\"" + react.verbatim + "\", " + "krome_pheat_"+ ph_name + ",\"\",\"eV/s\"\n"
 
 	#string containing photoheating computations (integrals)
 	ph_heat_qromos += "\t" + phstuff["qromos"].replace("sigma_", "heat_").replace("krome_kph_","krome_pheat_") + "\n"

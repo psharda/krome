@@ -14,9 +14,6 @@ contains
 
   end subroutine krome_init_photo
 
-#KROME_photo_functions
-#KROME_photo_heating_functions
-
 
   !********************
   function Jflux(nrg)
@@ -30,7 +27,7 @@ contains
   function intf(nrg)
     use krome_constants
     real*8::intf,nrg
-    intf = 4.d0 * pi * Jflux(nrg) / nrg / planck_eV * eV_to_erg !* exp(-tau) 
+    intf = 4.d0 * pi * Jflux(nrg) / nrg / planck_eV
   end function intf
 
   !********************
@@ -55,6 +52,9 @@ contains
          * (1.d0+sqrt(y/ya))**(-P)
     heat_v96 = 1d-18 * sigma_0 * Fy * (energy_eV - Eth) !cm2*eV
   end function heat_v96
+
+#KROME_photo_functions
+#KROME_photo_heating_functions
 
   !********************************
   subroutine qromos(func, sigma, a, b, ss, choose)

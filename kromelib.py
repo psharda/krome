@@ -1188,6 +1188,7 @@ def get_ph_stuff(react):
 	if(react.kphrate==None): return None
 	myreag = react.reactants
 	mol = myreag[0]
+	if(mol.charge<0): return None #negative species do not partecipate to photoheating
 	if(mol.charge>=0 and mol.is_atom):
 		reaname = mol.phname.capitalize()
 		qromos = get_photo_qromosV96(mol.phname)
