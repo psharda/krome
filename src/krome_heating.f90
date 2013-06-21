@@ -64,6 +64,7 @@ contains
   !**************************
   function photo_heating(n)
     use krome_commons
+    use krome_constants
     real*8::photo_heating,n(:),n0
     n0 = 1d99 !density for fake opacity (see KROME paper)
     photo_heating = 0.d0

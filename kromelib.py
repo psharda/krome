@@ -438,6 +438,9 @@ DESCRIPTION
 		that is normally kept by default) before creating new
 		f90 files.
 
+	-pedantic
+		uses a pedantic Makefile (debug purposes)
+
  	-help -h --help
 		show this help message
 

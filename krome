@@ -20,6 +20,7 @@ use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux =
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = False
 createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = useDecoupled = useCoolingdH = useHeatingdH = False
+pedanticMakefile = False
 useX = has_plot = useFakeOpacity = doIndent = useTlimits = True
 test_name = "default"
 is_test = False
@@ -170,6 +171,11 @@ if("-noTlimits" in sys.argv):
 if("-skipDup" in sys.argv):
 	skipDup = True
 	print "Reading option -skipDup"
+#skip duplicated reactions
+if("-pedantic" in sys.argv):
+	pedanticMakefile = True
+	print "Reading option -pedantic"
+
 
 #determine reverse function to reverse reactions
 for arg in sys.argv:
@@ -1651,7 +1657,10 @@ if(is_test):
 	elif(buildCompact):
 		shutil.copyfile("tests/"+test_name+"/MakefileCompact", buildFolder+"Makefile")
 	else:
-		shutil.copyfile("tests/"+test_name+"/Makefile", buildFolder+"Makefile")
+		if(pedanticMakefile):
+			shutil.copyfile("tests/Makefile_pedantic", buildFolder+"Makefile")
+		else:
+			shutil.copyfile("tests/"+test_name+"/Makefile", buildFolder+"Makefile")
 
 	test_file = "tests/"+test_name+"/test.f90"
 	plot_file = "tests/"+test_name+"/plot.gps"
