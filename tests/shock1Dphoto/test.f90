@@ -214,7 +214,7 @@ program sedov
   nsteps = int(1e4) !maximum number of time-steps
   ndump = 10 !dump interval
   Tgas(:) = 1d3 !default gas temp (K)  
-  tmax = spy * 5d3 !maximum integration time (s)
+  tmax = spy * 1d4 !maximum integration time (s)
   q = 2d0 !artificial viscosity parameter
   radius = 3.08568025d18 * 1d0 !radius of the box (cm)
   rhogas = 1d-24 !gas density (g/cm3)

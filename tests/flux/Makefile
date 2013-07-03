@@ -37,7 +37,6 @@ all:
 	$(fc) -c krome_ode.f90 $(switch) 
 	$(fc) -c krome_user.f90 $(switch)
 	$(fc) -c krome_reduction.f90 $(switch)
-	$(fc) -c krome_decoupled.f90 $(switch)
 	$(fc) -c krome.f90 $(switch) 
 	$(fc) -c test.f90 $(switch) 
 

@@ -74,9 +74,6 @@ for arg in sys.argv:
 		elif(test_name=="dust"):
 			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN"]]
 			filename = "networks/react_primordial"
-		elif(test_name=="shock1Ddecoupled"):
-			[sys.argv.append(x) for x in ["-cooling=CEN,H2,HD,Z","-useDecoupled"]]
-			filename = "networks/react_primordial"
 		elif(test_name=="compact"):
 			[sys.argv.append(x) for x in ["-compact"]]
 			filename = "networks/react_primordial"
@@ -159,10 +156,6 @@ if("-usePhIoniz" in sys.argv):
 if("-useEquilibrium" in sys.argv):
 	useEquilibrium = True
 	print "Reading option -useEquilibrium"
-#use decoupled cooling
-if("-useDecoupled" in sys.argv):
-	useDecoupled = True
-	print "Reading option -useDecoupled"
 #do not use temperature limits
 if("-noTlimits" in sys.argv):
 	useTlimits = False
@@ -1504,23 +1497,6 @@ if(not(buildCompact)):
 	fout.close()
 print "done!"
 
-#********* DECOUPLED ****************
-print "- writing krome_decoupled.f90...",
-fh = open("src/krome_decoupled.f90")
-if(not(buildCompact)):
-	fout = open(buildFolder+"krome_decoupled.f90","w")
-skip = False
-for row in fh:
-	if(row.strip() == "#IFKROME_useDecoupled" and not(useDecoupled)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
-	if(skip): continue
-
-	if(row[0]!="#"): fout.write(row)
-
-if(not(buildCompact)):
-	fout.close()
-
-print "done!"
 
 #********* REDUCTION ****************
 print "- writing krome_reduction.f90...",
@@ -1699,7 +1675,6 @@ if(doIndent):
 		indentF90(buildFolder+"krome_reduction.f90")
 		indentF90(buildFolder+"krome_subs.f90")
 		indentF90(buildFolder+"krome_tabs.f90")
-		indentF90(buildFolder+"krome_decoupled.f90")
 		indentF90(buildFolder+"krome_user.f90")
 
 print "done!"
