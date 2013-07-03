@@ -1,4 +1,6 @@
 module krome_main
+
+  integer::krome_call_to_fex
 contains
 
 #KROME_header
@@ -62,7 +64,7 @@ contains
     mass(:) = get_mass() !get masses
     xin = sum(x) !store initial fractions
     !compute densities from fractions
-    do i = 1,nspec
+    do i = 1,nmols
        if(mass(i)>0.d0) n(i) = rhogas * x(i) / mass(i)
     end do
 #ELSEKROME
@@ -92,6 +94,7 @@ contains
 #ENDIFKROME 
 
     n_old(:) = -1d99
+    krome_call_to_fex = 0
     do
        icount = icount + 1
        !solve ODE
@@ -100,6 +103,7 @@ contains
 #IFKROME_report
        call krome_dump(n(:), rwork(:), iwork(:))
 #ENDIFKROME
+       krome_call_to_fex = krome_call_to_fex + IWORK(12)
        !check DLSODES exit status
        if(istate==2) then
           exit !sucsessful integration

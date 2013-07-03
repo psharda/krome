@@ -34,35 +34,39 @@ contains
     use krome_user
 
     integer::ix,i
-    real*8:: xx(nsp),mx(nsp),cx(nsp)
+    real*8:: xx(nsp),mx(nsp),cx(nsp),xH
     x(:,:) = 0.d0
     mx(:) = krome_get_mass()
     cx(:) = krome_get_charges()
+    xH = 1d4
     !INITIALIZATION IN MASS FRACTION
     do ix = 1, nx
-       x(ix,KROME_idx_HE)  = 9d-2 / mx(KROME_idx_HE)
-       x(ix,KROME_idx_N)   = 7.6d-5 / mx(KROME_idx_N)
-       x(ix,KROME_idx_O)   = 2.56d-4 / mx(KROME_idx_O)
-       x(ix,KROME_idx_Cj)  = 1.2d-4 / mx(KROME_idx_Cj)
-       x(ix,KROME_idx_Sj)  = 1.5d-5 / mx(KROME_idx_Sj)
-       x(ix,KROME_idx_Sij) = 1.7d-6 / mx(KROME_idx_Sij)
-       x(ix,KROME_idx_Fej) = 2d-7 / mx(KROME_idx_Fej)
-       x(ix,KROME_idx_Naj) = 2d-7 / mx(KROME_idx_Naj)
-       x(ix,KROME_idx_Mgj) = 2.4d-6 / mx(KROME_idx_Mgj)
-       x(ix,KROME_idx_Clj) = 1.8d-7 / mx(KROME_idx_Clj)
-       x(ix,KROME_idx_Pj)  = 1.17d-7 / mx(KROME_idx_Pj)
-       x(ix,KROME_idx_Fj)  = 1.8d-8 / mx(KROME_idx_Fj)
+       x(ix,KROME_idx_H2)  = 0.5d0 * xH * mx(KROME_idx_H)
+       x(ix,KROME_idx_HE)  = 9d-2 * xH * mx(KROME_idx_HE)
+       x(ix,KROME_idx_N)   = 7.6d-5 * xH * mx(KROME_idx_N)
+       x(ix,KROME_idx_O)   = 2.56d-4 * xH * mx(KROME_idx_O)
+       x(ix,KROME_idx_Cj)  = 1.2d-4 * xH * mx(KROME_idx_Cj)
+       x(ix,KROME_idx_Sj)  = 1.5d-5 * xH * mx(KROME_idx_Sj)
+       x(ix,KROME_idx_Sij) = 1.7d-6 * xH * mx(KROME_idx_Sij)
+       x(ix,KROME_idx_Fej) = 2d-7 * xH * mx(KROME_idx_Fej)
+       x(ix,KROME_idx_Naj) = 2d-7 * xH * mx(KROME_idx_Naj)
+       x(ix,KROME_idx_Mgj) = 2.4d-6 * xH * mx(KROME_idx_Mgj)
+       x(ix,KROME_idx_Clj) = 1.8d-7 * xH * mx(KROME_idx_Clj)
+       x(ix,KROME_idx_Pj)  = 1.17d-7 * xH * mx(KROME_idx_Pj)
+       x(ix,KROME_idx_Fj)  = 1.8d-8 * xH * mx(KROME_idx_Fj)
+       
+       !compute electrons to have neutrality
        do i=1,nsp
-          x(ix,KROME_idx_E) = x(ix,KROME_idx_E) + cx(i) * x(ix,i)
+          if(mx(i)>0.d0) x(ix,KROME_idx_E) = x(ix,KROME_idx_E) + &
+               cx(i) * x(ix,i) / mx(i) * mx(krome_idx_E)
        end do
-       !normalize
-       x(ix,:) = x(ix,:) / sum(x(ix,:))
+
+       !convert to mass fraction
+       x(ix,:) = x(ix,:) / rho(ix) 
+       
     end do
 
-    !copy inital conditions to all the shells
-    do ix = 1, nx
-       xx(:) = x(ix,:)
-    end do
+
 
   end subroutine initchem
 
@@ -205,7 +209,7 @@ program sedov
   real*8::q,aux,ethe,ekin,etot,etot0
   real*8::umax, rhomax, pmax, emax, wmax, epsi
   real*8::xx(nsp),xibuf(nbuf,nsp),xfbuf(nbuf,nsp),dtbuf(nbuf)
-  real*8::Tibuf(nbuf),Tfbuf(nbuf)
+  real*8::Tibuf(nbuf),Tfbuf(nbuf),rhobuf(nbuf)
   logical::bfound,xfound
 
   !     This Lagrangian code follows the adiabatic expansion 
@@ -339,8 +343,6 @@ program sedov
 
      !DO CHEMISTRY: CALL KROME PACKAGE
      !REMEMBER xx in fraction, density in g/cm3
-     !$OMP PARALLEL
-     !$OMP DO
      do ix = 1, nx
         xx(:) = x(ix,:) !use local array
         bfound = .false. !found in buffer
@@ -348,6 +350,7 @@ program sedov
         do j=ibuf,1,-1
            if(abs(dtbuf(j)-dt)/dt>1d-1) cycle !check dt
            if(abs(Tibuf(j)-Tgas(ix))>1d0) cycle !check Tgas
+           if(abs(rhobuf(j)-rho(ix))/rho(ix)>1d-2) cycle !check rho
            xfound = .true. !found in x
            !loop on x
            do i=1,nsp
@@ -357,7 +360,7 @@ program sedov
                  exit
               end if
            end do
-           if(not(xfound)) cycle
+           if(not(xfound)) cycle !check n
            bfound = .true.
            jbuf = j
            exit
@@ -372,8 +375,10 @@ program sedov
            xibuf(ibuf,:) = xx(:)
            Tibuf(ibuf) = Tgas(ix)
            dtbuf(ibuf) = dt
+           rhobuf(ibuf) = rho(ix)
            rhogas = rho(ix) !get density
            call krome(xx(:),rhogas,Tgas(ix),dt) !####KROME####
+           print '(4I5,F12.3)',ix,krome_call_to_fex,cfex,tfex,cfex*1d2/tfex
            xfbuf(ibuf,:) = xx(:)
            Tfbuf(ibuf) = Tgas(ix)
            if(ibuf==nbuf) then
@@ -387,8 +392,6 @@ program sedov
         end if
         x(ix,:) = xx(:) !get the updated value back
      enddo
-     !$OMP END DO
-     !$OMP END PARALLEL
 
      !update internal energy with new temperature
      eps(:) = Tgas(:) / (gamma - 1.d0) / p_mass * boltzmann_erg
