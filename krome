@@ -1188,10 +1188,11 @@ if(useDust):
 		dustQabs += "call init_Qabs(\"opt"+dType+".dat\",dust_opt_Qabs_"+dType
 		dustQabs += ",dust_opt_asize_"+dType+",dust_opt_nu_"+dType+")\n"
 		dustOptInt += "call dustOptIntegral(dust_opt_Em_"+dType+",dust_opt_Tbb_"+dType+","
-		dustOptInt += "dust_opt_asize_"+dType+", dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
+		dustOptInt += "dust_opt_asize_"+dType+",&\n dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
 		getTdust += "call getTdust(krome_dust_T(nd*("+str(itype-1)+")+1:nd*"+str(itype)
-		getTdust += "),  dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+","
+		getTdust += "), dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+",&\n"
 		getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
+		getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")
 
 skip = False
 for row in fh:

@@ -68,12 +68,12 @@ contains
 
     !init optical properties
 #KROME_init_Qabs
+
+    !init integral Qabs(nu)*B(nu)*dnu
 #KROME_opt_integral
     
     !set dust temperature
 #KROME_getTdust
-
-    print *,krome_dust_T(:)
 
     print *,"Dust initialized!"
 
