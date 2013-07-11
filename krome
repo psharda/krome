@@ -18,7 +18,7 @@ solver_MF = 222
 force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = False
-createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
+createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useTdust = False
 usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = useDecoupled = useCoolingdH = useHeatingdH = False
 pedanticMakefile = False
 useX = has_plot = useFakeOpacity = doIndent = useTlimits = True
@@ -168,7 +168,10 @@ if("-skipDup" in sys.argv):
 if("-pedantic" in sys.argv):
 	pedanticMakefile = True
 	print "Reading option -pedantic"
-
+#computes Tdust with energy balance
+if("-useTdust" in sys.argv):
+	useTdust = True
+	print "Reading option -useTdust"
 
 #determine reverse function to reverse reactions
 for arg in sys.argv:
@@ -309,6 +312,10 @@ for arg in sys.argv:
 #show help
 if("-help" in sys.argv or "-h" in sys.argv or "--help" in sys.argv):
 	get_usage()
+
+if(useTdust and useDust!=useTdust):
+	die("ERROR: you cannot use -useTdust without -dust=[see help] !")
+
 print
 
 use_RHS_variable = False
@@ -796,23 +803,9 @@ if(useDust):
 	for dType in dustTypes:
 		for i in range(dustArraySize):
 			j += 1
-			#******grow******
+			#******growth******
 			dns[nmols+j-1] += " + krome_dust_grow(n("+str(nmols+j)+"),n(idx_"+dType+"),Tgas"
-			dns[nmols+j-1] += ",krome_dust_T("+str(j)+"),vgas,krome_dust_asize("+str(j)+"))"#!dust"+dType+str(i+1)
-			#******sputtering Nozawa2006*******
-			#if(dType=="C"): zdust = 12
-			#elif(dType=="Si"): zdust = 28
-			#elif(dType=="Fe"): zdust = 56
-			#else: die("ERROR: dust type "+dType+" unknown for sputtering model!")
-			##find colliders (ions)
-			#zcoll = []
-			#ncoll = []
-			#for mol in specs:
-			#	if(mol.charge==1 and mol.is_atom):
-			#		zcoll.append(str(mol.zatom))
-			#		ncoll.append("n("+mol.fidx+")")
-			#dns[nmols+j-1] += " - krome_dust_sputtering(vgas,(/"+(",".join(zcoll))+"/),"
-			#dns[nmols+j-1] += str(zdust)+",(/"+(",".join(ncoll))+"/),n("+str(nmols+j)+"),krome_dust_asize("+str(j)+"),Tgas)"
+			dns[nmols+j-1] += ",krome_dust_T("+str(j)+"),vgas,krome_dust_asize("+str(j)+"))"
 			dns[nmols+j-1] += " - krome_dust_sput_DS79(Tgas,krome_dust_asize("+str(j)+"),ntot,n("+str(nmols+j)+"))"
 
 #find the maximum number of products and reactants
@@ -993,6 +986,11 @@ if(usePhIoniz):
 			phvars.append(react.krate)
 			pheatvars.append(react.krate.replace("krome_kph_","krome_pheat_"))
 
+optVariables = ""
+for dType in dustTypes:
+	optVariables += "real*8,allocatable::dust_opt_asize_"+dType+"(:), dust_opt_nu_"+dType+"(:),dust_opt_Qabs_"+dType+"(:,:)\n"
+	optVariables += "real*8,allocatable::dust_opt_Em_"+dType+"(:,:),dust_opt_Tbb_"+dType+"(:)\n"
+
 skip = False
 for row in fh:
 
@@ -1013,13 +1011,15 @@ for row in fh:
 	elif(row.strip() == "#KROME_implicit_arr_p"):
 		for j in range(maxnprod):
 			fout.write("integer::arr_p"+str(j+1)+"(nrea)\n")
-	elif(row.strip() == "#KROME_photo_variables" and usePhIoniz):
+	elif(row.strip() == "#KROME_photo_variables" and usePhIoniz and len(phvars)>0):
 		fout.write("real*8::"+(",".join(phvars))+"\n")
 	elif(row.strip() == "#KROME_photoheating_variables" and useHeatingPhoto):
 		fout.write("real*8::"+(",".join(pheatvars))+"\n")
-
+	elif(row.strip() == "#KROME_opt_variables"):
+		fout.write(optVariables)
 	else:
 		if(row[0]!="#"): fout.write(row)
+
 if(not(buildCompact)):
 	fout.close()
 print "done!"
@@ -1178,6 +1178,21 @@ fh = open("src/krome_dust.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_dust.f90","w")
 
+dustPartnerIdx = dustQabs = dustOptInt = getTdust = ""
+if(useDust):
+	itype = 0 #dust type index
+	#loop in dust types
+	for dType in dustTypes:
+		itype += 1 #increase index
+		dustPartnerIdx += "krome_dust_partner_idx("+str(itype)+") = idx_"+dType+"\n"
+		dustQabs += "call init_Qabs(\"opt"+dType+".dat\",dust_opt_Qabs_"+dType
+		dustQabs += ",dust_opt_asize_"+dType+",dust_opt_nu_"+dType+")\n"
+		dustOptInt += "call dustOptIntegral(dust_opt_Em_"+dType+",dust_opt_Tbb_"+dType+","
+		dustOptInt += "dust_opt_asize_"+dType+", dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
+		getTdust += "call getTdust(krome_dust_T(nd*("+str(itype-1)+")+1:nd*"+str(itype)
+		getTdust += "),  dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+","
+		getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
+
 skip = False
 for row in fh:
 	if(row.strip() == "#IFKROME_useDust" and not(useDust)): skip = True
@@ -1185,16 +1200,11 @@ for row in fh:
 
 	if(skip): continue
 
-	dustPartnerIdx = ""
-
-	if(useDust):
-		itype = 0 #dust type index
-		#loop in dust types
-		for dType in dustTypes:
-			itype += 1 #increase index
-			dustPartnerIdx += "krome_dust_partner_idx("+str(itype)+") = idx_"+dType+"\n"
 	row = row.replace("#KROME_dustPartnerIndex", dustPartnerIdx)
-
+	row = row.replace("#KROME_init_Qabs", dustQabs)
+	row = row.replace("#KROME_opt_integral", dustOptInt)
+	row = row.replace("#KROME_getTdust", getTdust)
+ 
 	if(row[0]!="#"): fout.write(row)
 
 if(not(buildCompact)):
@@ -1657,6 +1667,12 @@ else:
 	shutil.copyfile("solver/opkda1.f", buildFolder+"opkda1.f")
 	shutil.copyfile("solver/opkda2.f", buildFolder+"opkda2.f")
 print " done!"
+
+#copy dust optical properties to build/
+if(useTdust):
+	for dType in dustTypes:
+		shutil.copyfile("data/opt"+dType+".dat", buildFolder+"opt"+dType+".dat")
+	
 
 print
 print "indent...",

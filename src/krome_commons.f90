@@ -26,10 +26,13 @@ module krome_commons
   real*8::krome_dust_partner_idx(ndustTypes)
   real*8::krome_dust_partner_mass(ndustTypes)
   real*8::krome_dust_asize(ndust),krome_dust_T(ndust)
-  real*8::krome_dust_asize2(ndust)
+  real*8::krome_dust_asize2(ndust),krome_dust_aspan(ndust)
 
   !commons for photoionization
 #KROME_photo_variables
 #KROME_photoheating_variables
+
+  !commons for dust optical properties
+#KROME_opt_variables
 
 end module krome_commons

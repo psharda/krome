@@ -6,7 +6,7 @@ module krome_user_commons
   !user can add here the common variables needed
   !for rate calculation (e.g. optical depth, CR rate, 
   !pressure, density, ...)
-  real*8::tau,zrate,pah_size,gas_dust_ratio
+  real*8::tau,zrate,pah_size,gas_dust_ratio,redshift,user_tff
 
 contains 
 

@@ -7,11 +7,12 @@ module krome_constants
 
   real*8,parameter:: planck_eV   =  4.135667516d-15! eV s 
   real*8,parameter:: planck_J    = 6.62606957d-34   ! J s    
-  real*8,parameter:: planck_erg  = 6.62606957d-27   ! erg / K     
+  real*8,parameter:: planck_erg  = 6.62606957d-27   ! erg s    
 
   real*8,parameter:: gravity  = 6.674d-8 ! cm3 / g / s2       
   real*8,parameter:: e_mass   = 9.10938188d-28  ! g
   real*8,parameter:: p_mass   = 1.67262158d-24  ! g
+  real*8,parameter:: clight = 2.99792458e10 !cm/s
 
   real*8,parameter:: pi = 3.14159 !PI
   
@@ -19,5 +20,8 @@ module krome_constants
   real*8,parameter:: seconds_per_year = 365d0*24d0*3600d0 
 
   real*8,parameter:: kvgas_erg = 8.d0*boltzmann_erg/pi/p_mass
-
+  
+  real*8,parameter:: pre_planck = 2.d0*planck_erg/clight**2 !erg/cm2*s3
+  real*8,parameter:: exp_planck =  planck_erg / boltzmann_erg !s*K
+  
 end module krome_constants

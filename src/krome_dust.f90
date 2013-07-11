@@ -13,60 +13,144 @@ contains
     use krome_subs
     implicit none
     real*8,optional::alow_arg,aup_arg,phi_arg
-    real*8::iphi1,c,phi1,abin(ndust+1),mass(nspec),xdust(ndust)
-    real*8::alow,aup,phi,ntot(ndustTypes),adust(ndust),nd
-    integer::i,j,ilow,iup
+    real*8::iphi1,c,phi1,abin(ndust+1),mass(nspec),xdust(ndust),myc
+    real*8::alow,aup,phi,ntot(ndustTypes),adust(ndust),Tbb,myx,a0,a1
+    integer::i,j,ilow,iup,imax,nd
 
 #KROME_dustPartnerIndex
 
     !default values
-    alow = 5d-8 !lower size (cm)
+    alow = 5d-7 !lower size (cm)
     aup = 2.5d-5 !upper size (cm)
     phi = -3.5d0 !MNR distribution exponent (with its sign)
+    phi1 = phi + 1.d0
+    iphi1 = 1.d0/phi1
     if(present(alow_arg)) alow = alow_arg
-    if(present(aup_arg)) aup = alow_arg
+    if(present(aup_arg)) aup = aup_arg
     if(present(phi_arg)) phi = phi_arg
     mass(:) = get_mass()
     nd = ndust/ndustTypes
-    !loop on dust types
+
     do j=1,ndustTypes
        ilow = nd * (j - 1) + 1 !lower index
        iup = nd * j !upper index
-       phi1 = phi + 1.d0 !phi+1
-       iphi1 = 1.d0/phi1 !1/phi
-       
-       !estimate normalization constant
-       c = (phi1)/(aup**(phi1)-alow**(phi1))
-       abin(1) = alow !set lower limit for the first bin
-       !evaluates bin limits
-       do i=2,nd+1
-          abin(i) = (phi1/nd/c + abin(i-1)**phi1)**iphi1
+
+       abin(1) = alow !lower limit size
+       abin(nd+1) = aup !upper limit
+       myc = (aup**phi1-alow**phi1) / phi1 !distribution total integral
+
+       !loop to find limits (analitically)
+       do i=2,nd
+          abin(i) = (myc*phi1/nd + abin(i-1)**phi1)**iphi1
        end do
-       !evaluate means size of dust in each bin
+
+       !loop to find mean size 
        do i=1,nd
-          adust(i+ilow-1) = abs(abin(i)-abin(i+1))*0.5d0
+          adust(i+ilow-1) = (abin(i)+abin(i+1)) * 0.5d0 !mean bin size
+          krome_dust_aspan(i+ilow-1) = abin(i+1) - abin(i) !bin span
        end do
-       !compute and normalize bin distribution
-       xdust(ilow:iup) = c*adust(ilow:iup)**phi
-       xdust(ilow:iup) = xdust(ilow:iup)/sum(xdust(ilow:iup)) * ntot(j)
-       krome_dust_asize(ilow:iup) = adust(:)
-       krome_dust_asize2(ilow:iup) = adust(:)**2
+       krome_dust_asize(ilow:iup) = adust(:) !store mean size
+       krome_dust_asize2(ilow:iup) = adust(:)**2 !store mean size squared
+       xdust(ilow:iup) = ntot(j) / nd !amount of dust per bin
+
        !evaluate dust-parnter ratio (e.g. 1dust=1e2 C atoms)
        krome_dust_partner_ratio(ilow:iup) = adust(ilow:iup)**3 &
             * 2.3d0  / mass(krome_dust_partner_idx(j))
        krome_dust_partner_ratio_inv(ilow:iup) = 1.d0 &
             / krome_dust_partner_ratio(ilow:iup)
     end do
-
-    krome_dust_T(:) = 25.d0 !K
+    
 
     !compute the mass of the dust partner
     do j=1,ndustTypes
        krome_dust_partner_mass(j) =  mass(krome_dust_partner_idx(j))
     end do
+
+    !init optical properties
+#KROME_init_Qabs
+#KROME_opt_integral
+    
+    !set dust temperature
+#KROME_getTdust
+
+    print *,krome_dust_T(:)
+
     print *,"Dust initialized!"
 
   end subroutine krome_init_dust
+
+
+  !***********************
+  subroutine dustOptIntegral(dust_opt_Em, dust_opt_Tbb, dust_opt_asize, &
+       dust_opt_nu, dust_opt_Qabs)
+    use krome_commons
+    integer::i,imax,j,nd
+    real*8,allocatable::dust_opt_Em(:,:), dust_opt_Tbb(:)
+    real*8::dust_opt_asize(:), dust_opt_nu(:), dust_opt_Qabs(:,:),Tbb
+
+    nd = size(krome_dust_asize)
+    !computes and stores Qabs(nu)*B(nu)*dnu integral for each dust bin
+    imax = int(1e3) !number of Tbb values
+    allocate(dust_opt_Em(nd,imax), dust_opt_Tbb(imax))
+    do j=1,nd !loop on bins
+       do i=1,imax !loop on Tbb
+          Tbb = (i-1) * (1d2-1d0) / (imax-1) + 1d0 !BB temperature
+          dust_opt_Tbb(i) = Tbb !store Tbb values
+          dust_opt_Em(j,i) = dustEm(krome_dust_asize(j),Tbb,&
+               dust_opt_asize, dust_opt_nu, dust_opt_Qabs) !store and compute integrals
+       end do
+    end do
+  end subroutine dustOptIntegral
+
+  !**********************
+  subroutine getTdust(Tdust, dust_opt_Tbb, dust_opt_Em, &
+       dust_opt_asize, dust_opt_nu, dust_opt_Qabs)
+    !Tdust evaluation from eqn.6 Schneider+2006 MNRAS_369
+    use krome_commons
+    use krome_constants
+    integer::i,nd,j,nT
+    real*8::asize,eAbs,T0,T1,mysgn,de0,de1,Tdust(:)
+    real*8::dust_opt_Em(:,:),dust_opt_Tbb(:),dust_opt_asize(:)
+    real*8::dust_opt_nu(:), dust_opt_Qabs(:,:)
+    logical::found
+    nd = ndust/ndustTypes !dust bins
+    nT = size(dust_opt_Tbb) !number of temperature values
+    !loop on bins
+    do i=1,nd
+       asize = krome_dust_asize(i) !mean bin size
+       eAbs = dustAbs(asize, dust_opt_asize, dust_opt_nu, dust_opt_Qabs) !absorbed erg/cm2/s
+       found = .false. !flag interpolation
+       mysgn = sgn(eAbs - dust_opt_Em(i,1)) !first sign
+       !loop on temperatures (discrete root-finding) 
+       do j=2,nT
+          de0 = dust_opt_Em(i,j-1) - eAbs !left function
+          de1 = dust_opt_Em(i,j) - eAbs !right function
+          !get change of sign
+          if(mysgn * de1 > 0.d0) then
+             !interpolate Tdust value
+             Tdust(i) = (0.d0 - de0) / (de1 - de0) * (dust_opt_Tbb(j) - dust_opt_Tbb(j-1)) &
+                  + dust_opt_Tbb(j-1)
+             found = .true. !found flag
+             exit
+          end if
+       end do
+       
+       !check found flag
+       if(not(found)) then
+          print *,"ERROR: dustEm not found!!!"
+          stop
+       end if
+    end do
+  end subroutine getTdust
+
+  !******************
+  function sgn(arg)
+    real*8::sgn,arg
+    sgn = 1.d0
+    if(arg>=0.d0) return
+    sgn = -1.d0
+  end function sgn
+
 
   !*********************
   function krome_dust_grow(ndust,natom,Tgas,Tdust,vgas,adust)
@@ -89,79 +173,9 @@ contains
     
     krome_dust_stick = 1.9d-2 * Tgas * (1.7d-3 * Tdust + .4d0) &
          * exp(-7.d-3 * Tgas)
-    
+        
   end function krome_dust_stick
-
   
-
-  !***************
-  function yield(energy_erg,mdust,matom,zidust,ziatom,kfree,U0_eV)
-    !yield: dust sputtering from Nozawa2006.
-    ! energy: impact energy (erg)
-    ! matom: mass projectile atom (amu) e.g. H=1
-    ! mdust: mass target dust (amu) e.g. C-dust=6
-    ! zdust: atomic number dust, e.g. C-dust=12
-    ! zatom: atomic number projectile, e.g. H=1
-    ! kfree: free parameter see Nozawa2006
-    ! U0_eV: see Nozawa (eV)
-    implicit none
-    real*8::yield,U0,kfree,mui,eth,gi,energy_erg
-    real*8::mdust,matom,U0_eV,energy,zdust,zatom
-    integer::zidust,ziatom
-    mui = mdust/matom !mass ratio
-    zdust = zidust
-    zatom = ziatom
-    U0 = U0_eV * 1.60217646d-12 !eV->erg
-    energy = energy_erg !/ 1.60217646d-12 !erg->eV
-
-    if(matom.le.0.3*mdust) then
-       gi = 4.d0*matom*mdust/(matom+mdust)**2 !max transfer energy head-on
-       eth = U0/gi*(1.d0-gi) !threshold energy
-    else
-       eth = 8.d0*U0*(matom/mdust)**(1./3.)
-    end if
-    if(eth/energy>1.) then
-       print *,eth,energy,U0
-       stop
-    end if
-    yield = 4.2d14 * nuclear_stop(energy,mdust,matom,zdust,zatom) / U0 *&
-         alpha(mui)/(kfree*mui+1.d0) *&
-         (1.d0-(eth/energy)**(2./3.)) *&
-         (1.d0-eth/energy)**2
-
-  end function yield
-
-  !******************
-  function alpha(mui)
-    real*8::alpha,mui
-    if(mui.le.0.5d0) then
-       alpha = 0.2d0
-    elseif(mui>1.d0) then
-       alpha = 0.3d0*(mui-0.6)**(2./3.)
-    else
-       alpha = 0.1d0/mui + 0.25d0*(mui-0.5d0)**2
-    end if
-  end function alpha
-
-  !******************
-  function nuclear_stop(energy,mdust,matom,zdust,zatom)
-    real*8::nuclear_stop,energy,eps,asc,pi,a0,ecgs
-    real*8::mdust,matom,zdust,zatom
-    a0 = 0.529d-8 !bohr raidus cm
-    pi = 3.14159d0 
-    ecgs = 4.80320425d-10 !electron charge (statC)
-    asc = 0.855*a0/sqrt(zdust**(2./3.) + zatom**(2./3.)) !screening length
-    eps = mdust/(matom+mdust)*asc/zdust/zatom/ecgs**2*energy !reduced energy
-    nuclear_stop = 4.d0*pi*asc*zatom*zdust*ecgs**2*matom/(matom+mdust)*&
-         columb_screen(eps) !nuclear stopping cross-section
-  end function nuclear_stop
-
-  !*******************
-  function columb_screen(eps)
-    real*8::columb_screen,eps
-    columb_screen = (3.441d0*sqrt(eps)*log(eps+2.718d0)) / &
-         (1.d0 + 6.35d0*sqrt(eps)+eps*(-1.708d0+6.882d0*sqrt(eps)))
-  end function columb_screen
 
   !***************
   function krome_dust_sput_DS79(Tgas,adust,natom,ndust)
@@ -182,65 +196,173 @@ contains
     !print *,natom,Tgas,T6,adust,krome_dust_sput_DS79
   end function krome_dust_sput_DS79
 
-
-  !******************
-  function krome_dust_sputtering(vgas,zatom,zdust,natom,ndust,adust,Tgas)
-    !krome_dust_sputtering: compute dust sputtering in cm3/s
-    ! from Nozawa2006
+ !*****************+
+  function dustAbs(asize, dust_opt_asize, dust_opt_nu, dust_opt_Qabs)
+    !find dust Absorption for a given size grain
+    ! i.e. integrates J(nu)*Qabs(nu)*dnu with trapezoidal method
+    use krome_commons
     use krome_constants
-    real*8::krome_dust_sputtering,vgas,adust,Tgas,y,energy_1d4,y_1d4
-    real*8::matom,mdust,kfree,U0_eV,ndust,natom(:),sput,energy
-    integer::i,zdust,zatom(:)
-        
-    !sputtering is efficient only for Tgas>1d5
-    if(Tgas<1d6) then
-       krome_dust_sputtering = 0.d0
-       return
-    end if
+    use krome_photo
+    use krome_user_commons
+    real*8::dustAbs,asize,int0,int1,dnu,kera,kerb
+    real*8::dust_opt_asize(:),dust_opt_nu(:), dust_opt_Qabs(:,:)
+    integer::i,ival
 
-    energy = Tgas * boltzmann_erg !energy at Tgas K
-    energy_1d4 = 1d4 * boltzmann_erg !energy at 1d4 K
+    !find the nearest (larger) size value to asize
+    do i=1,size(dust_opt_asize)
+       if(asize<dust_opt_asize(i)) then
+          ival = i !store larger index (right)
+          exit
+       end if
+    end do
 
-    if(zdust==12) then
-       mdust = 12.d0
-       U0_eV = 4.d0
-       kfree = 0.61d0
-    elseif(zdust==28) then
-       mdust = 28.d0
-       U0_eV = 4.66d0
-       kfree = 0.43d0
-    elseif(zdust==56) then
-       mdust = 56.d0
-       U0_eV = 4.31d0
-       kfree = 0.23d0
-    else
-       print *,"ERROR: dust atomic number unknown!"
-       print *,"Z number:",zdust
+
+    !intgrate for the two size values (left, right) close to asize
+    ! then interpolate the two results
+    int0 = 0.d0 !init left integral 
+    int1 = 0.d0 !init right integral
+    !computes integral by using trapezoidal method
+    do i=2,size(dust_opt_nu)
+       kera =  Jflux(dust_opt_nu(i-1)*planck_eV) * eV_to_erg + &
+            fplanck(dust_opt_nu(i-1), 2.73d0*(1.d0+redshift)) !flux is the kernel
+       kerb = Jflux(dust_opt_nu(i)*planck_eV) * eV_to_erg + &
+            fplanck(dust_opt_nu(i), 2.73d0*(1.d0+redshift)) !flux is the kernel
+       dnu = dust_opt_nu(ival) - dust_opt_nu(ival-1) !stepsize
+       !calculates integrals
+       int0 = int0 + 0.5d0 * (kera * dust_opt_Qabs(ival-1,i-1) &
+            + kerb * dust_opt_Qabs(ival-1,i)) * dnu
+       int1 = int1 + 0.5d0 * (kera * dust_opt_Qabs(ival,i-1) &
+            + kerb * dust_opt_Qabs(ival,i)) * dnu
+    end do
+
+    !absorption: interpolates values depending on asize: erg/cm2/s
+    dustAbs = (int1 - int0) * (asize - dust_opt_asize(ival-1)) &
+         / (dust_opt_asize(ival) - dust_opt_asize(ival-1)) + int0
+    
+    
+  end function dustAbs
+
+  
+  !*****************+
+  function dustEm(asize, Tbb, dust_opt_asize, dust_opt_nu, dust_opt_Qabs)
+    !find dust emittivity for a given size and black body temperature
+    ! i.e. integrates B(nu)*Qabs(nu)*dnu with trapezoidal method
+    use krome_commons
+    real*8::dustEm,asize,int0,int1,dnu,Tbb,kera,kerb
+    real*8::dust_opt_asize(:), dust_opt_nu(:), dust_opt_Qabs(:,:)
+    integer::i,ival
+
+    !find the nearest size value to asize
+    do i=1,size(dust_opt_asize)
+       if(asize<dust_opt_asize(i)) then
+          ival = i !store index
+          exit
+       end if
+    end do
+
+    !intgrate for the two size values (left, right) close to asize
+    ! then interpolate the two results
+    int0 = 0.d0 !init left integral 
+    int1 = 0.d0 !init right integral
+    !computes integral by using trapezoidal method
+    do i=2,size(dust_opt_nu)
+       kera = fplanck(dust_opt_nu(i-1), Tbb) !Planck function is the kernel
+       kerb = fplanck(dust_opt_nu(i), Tbb) !Planck function is the kernel
+       dnu = dust_opt_nu(ival) - dust_opt_nu(ival-1) !stepsize
+       !calculates integrals
+       int0 = int0 + 0.5d0 * (kera * dust_opt_Qabs(ival-1,i-1) &
+            + kerb * dust_opt_Qabs(ival-1,i)) * dnu
+       int1 = int1 + 0.5d0 * (kera * dust_opt_Qabs(ival,i-1) &
+            + kerb * dust_opt_Qabs(ival,i)) * dnu
+    end do
+
+    !emission: interpolates values depending on asize: erg/cm2/s
+    dustEm = (int1 - int0) * (asize - dust_opt_asize(ival-1)) &
+         / (dust_opt_asize(ival) - dust_opt_asize(ival-1)) + int0
+    
+    
+  end function dustEm
+
+  !***************
+  subroutine init_Qabs(fname,opt_Qabs,opt_asize,opt_nu)
+    use krome_commons
+    integer::ios,icount,acount,nucount,i
+    real*8::x(5),xold(size(x))
+    real*8,allocatable::opt_Qabs(:,:),opt_asize(:),opt_nu(:)
+    character(*)::fname
+    print *,fname
+    !open file to count data lines
+    open(71,file=fname,status="old",iostat=ios)
+    if(ios.ne.0) then
+       print *,"ERROR: problems with file gra.dat"
        stop
     end if
 
-    sput = 0.d0
-    do i=1,size(zatom)
-       if(ndust.le.0.d0) cycle
-       if(natom(i).le.0.d0) cycle
-       matom = zatom(i)  !WARNING: rough approx. for atom mass
-       y = yield(energy, mdust, matom, zdust, zatom(i), kfree, U0_eV)
-       y_1d4 = yield(energy_1d4, mdust, matom, zdust, zatom(i), kfree, U0_eV)
-       if(y<0.d0 .or. y>1.d0) then
-          print *,"yield @ Tgas <0 or >1"
-          print *,y
-          stop
+    icount = 0
+    acount = 0
+    nucount = 0
+    x(:) = 0.d0
+    do
+       read(71,*,iostat=ios) x(:)
+       if(ios<0) exit !eof
+       if(ios.ne.0) then
+          cycle !blank line
        end if
-       if(y_1d4<0.d0 .or. y_1d4>1.d0) then
-          print *,"yield @ 1d4 K <0 or >1"
-          print *,y_1d4
-          stop
+       if(xold(1).ne.x(1)) then
+          acount = acount + 1
+          if(nucount==0 .and. icount>1) nucount = icount
        end if
-       sput = sput + 1d-10 * ndust / adust * y / y_1d4
+       icount = icount + 1
+       xold(:) = x(:)
     end do
-    print *,sput
-    krome_dust_sputtering = sput
-  end function krome_dust_sputtering
+    close(71)
+    
+    !allocate Qabs array
+    allocate(opt_Qabs(acount,nucount),opt_nu(nucount),&
+         opt_asize(acount))
+    
+    !load file data into Qabs array
+    open(71,file=fname,status="old",iostat=ios)
+    icount = 0
+    acount = 0
+    xold(:) = 0
+    do
+       read(71,*,iostat=ios) x(:)
+       if(ios<0) exit !eof
+       if(ios.ne.0) then
+          cycle !blank line
+       end if
+       icount = icount + 1
+       if(xold(1).ne.x(1)) then
+          acount = acount + 1
+          opt_asize(acount) = x(1)
+       end if
+       if(icount.le.size(opt_nu)) opt_nu(icount) = x(2)
+       opt_Qabs(acount,mod(icount-1,nucount)+1) = x(3)
+       xold(:) = x(:)
+    end do
+    close(71)
 
+    print *,"Dust optical properties loaded from: ", fname
+        
+  end subroutine init_Qabs
+
+  !**********************
+  function fplanck(nu,Tbb)
+    !Planck law
+    use krome_constants
+    real*8::fplanck,nu,Tbb
+    !nu: Hz
+    !Tbb: K
+    !fplanck: erg/cm2
+
+    if(exp_planck*nu>1d2) then
+       fplanck = 0.d0
+       return
+    end if
+    fplanck = pre_planck * nu**3 / (exp(exp_planck*nu/Tbb) - 1d0) !erg/cm2
+  end function fplanck
+
+  
 #ENDIFKROME
 end module krome_dust

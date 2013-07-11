@@ -1,6 +1,20 @@
 module krome_photo
-#IFKROME_usePhIoniz
 contains
+
+  !********************
+  function Jflux(nrg)
+    !UV flux in eV/s/cm2/sr/Hz as a function of energy in eV
+    implicit none
+    real*8::Jflux,nrg
+    Jflux = 0.d0
+#IFKROME_usePhIoniz
+    Jflux = 6.2415d-10 * (13.6d0/nrg) / 4.d1 !6.241d-10eV = 1d-21erg
+#ENDIFKROME
+  end function Jflux
+  
+
+#IFKROME_usePhIoniz
+  !****************************
   subroutine krome_init_photo()
     use krome_commons
 
@@ -13,15 +27,6 @@ contains
     print *,"done!"
 
   end subroutine krome_init_photo
-
-
-  !********************
-  function Jflux(nrg)
-    !UV flux in eV/s/cm2/sr/Hz as a function of energy in eV
-    implicit none
-    real*8::Jflux,nrg
-    Jflux = 6.2415d-10 * (13.6d0/nrg) / 4.d1 !6.241d-10eV = 1d-21erg
-  end function Jflux
 
   !*******************************
   function intf(nrg)

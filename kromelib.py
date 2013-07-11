@@ -298,6 +298,7 @@ DESCRIPTION
 		HD 	HD Lipovka2005
 		Z	Metals C,O,Si,Fe (Maio2007,Grassi2012)
 		DH	enthalpic
+		DUST 	dust cooling
 		ALL	enable all together
 		example: -cooling=CEN,H2,HD
 
