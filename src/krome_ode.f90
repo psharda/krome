@@ -16,7 +16,7 @@ contains
     implicit none
     integer::neq
     real*8::tt,dn(neq),n(neq),k(nrea)
-    real*8::gamma,Tgas,vgas,ntot
+    real*8::gamma,Tgas,vgas,ntot,nH2dust
 #KROME_dustSumVariables
 #KROME_implicit_variables
 
@@ -30,8 +30,10 @@ contains
     k(:) = coe_tab(n(:)) !compute coefficients
 
 #IFKROME_useDust
-    vgas = sqrt(8.d0*boltzmann_erg*Tgas/pi/p_mass)
+    vgas = sqrt(kvgas_erg*Tgas)
     ntot = sum(n(1:nmols))
+
+    #KROME_dust_H2
 #ENDIFKROME
 
 #KROME_ODE

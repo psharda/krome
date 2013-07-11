@@ -66,6 +66,8 @@ contains
        krome_dust_partner_mass(j) =  mass(krome_dust_partner_idx(j))
     end do
 
+    krome_dust_T(:) = 5.d0 !defualt dust temperature
+
     !init optical properties
 #KROME_init_Qabs
 
@@ -158,9 +160,10 @@ contains
     ! (Grassi2012, eqn.25)
     use krome_constants
     implicit none
-    real*8::krome_dust_grow,ndust,natom,Tgas,Tdust,vgas,adust
+    real*8::krome_dust_grow,ndust,natom,Tgas,Tdust,vgas,adust,seed
     
-    krome_dust_grow = pi * adust**2 * max(ndust,0.d0) * max(natom,0.d0) &
+    seed = 1d-12 !1/cm3
+    krome_dust_grow = pi * adust**2 * (max(ndust,0.d0) + seed) * max(natom,0.d0) &
          * krome_dust_stick(Tgas,Tdust) * vgas
         
   end function krome_dust_grow
@@ -176,7 +179,6 @@ contains
         
   end function krome_dust_stick
   
-
   !***************
   function krome_dust_sput_DS79(Tgas,adust,natom,ndust)
     !krome_dust_sput_D97: sputtering following (Draine et al. 79)
@@ -320,7 +322,11 @@ contains
     !allocate Qabs array
     allocate(opt_Qabs(acount,nucount),opt_nu(nucount),&
          opt_asize(acount))
-    
+
+    print *,"acount:",acount
+    print *,"nucount:",nucount
+    print *,"totcount:",acount*nucount
+
     !load file data into Qabs array
     open(71,file=fname,status="old",iostat=ios)
     icount = 0
@@ -362,6 +368,78 @@ contains
     end if
     fplanck = pre_planck * nu**3 / (exp(exp_planck*nu/Tbb) - 1d0) !erg/cm2
   end function fplanck
+
+
+  !*******************************
+  function krome_H2_dust(ndust,Tdust,n,H2_eps_f,myvgas)
+    !H2 formed on dust (1/cm3/s)
+    use krome_constants
+    use krome_commons
+    real*8::H2_dust, krome_H2_dust,Tgas,Tdust(:)
+    real*8::myvgas,H2_eps,ndust(:),n(:),H2_eps_f
+    integer::i
+
+    Tgas = n(idx_Tgas)
+    
+    H2_dust = 0.d0 
+    do i = 1,size(Tdust)
+       H2_eps = H2_eps_f(Tgas, Tdust(i))
+       H2_dust = H2_dust + 0.5d0 * n(idx_H) * myvgas * ndust(i) * krome_dust_asize(i)**2 &
+            * pi * H2_eps * stick(Tgas, Tdust(i))
+    end do
+
+    krome_H2_dust = H2_dust
+
+  end function krome_H2_dust
+
+  !*************************
+  function H2_eps_Si(myTgas, myTdust)
+    !restituisce l'epsilon del Si
+    real*8::H2_eps_Si,Ec,Es,Ep,apc,func
+    real*8::myTgas,myTdust
+    Ec = 1.5d4 !K
+    Es = -1d3 !K
+    Ep = 7d2 !K
+    apc = 1.7d0 * 1d-10 !m (must be in m even if in CS2009 it's in \AA!!, Cazaux2012 private comm.)
+    func = 2.d0 * exp(-(Ep-Es)/(Ep+myTgas)) / (1.d0+sqrt((Ec-Es)/(Ep-Es)))**2
+    H2_eps_Si = 1.d0/(1.+16.*myTdust/(Ec-Es)) * exp(-Ep/myTdust)&
+          * exp(-4d9*apc*sqrt(Ep-Es)) + func
+
+    if(H2_eps_Si>1.d0 .or. H2_eps_Si<0.d0) then
+       print *,"problem on H2_eps_Si"
+       stop
+    end if
+  end function H2_eps_Si
+
+
+  !*************************
+  function H2_eps_C(myTgas, myTdust)
+    !resituisce l'epsilon per il C
+    real*8::H2_eps_C,myTgas,myTdust
+    real*8::Ep,Ec,Es,Th
+    Ep = 8d2 !K
+    Ec = 7d3 !K
+    Es = 2d2 !K
+    TH = 4.d0*(1.d0+sqrt((Ec-Es)/(Ep-Es)))**(-2) * exp(-(Ep-Es)/(Ep+myTgas))
+    H2_eps_C = (1.d0-TH) / (1.d0+0.25*(1.d0+sqrt((Ec-Es)/(Ep-Es)))**2 * exp(-Es/myTdust))
+    if(H2_eps_C>1.d0 .or. H2_eps_C<0.d0) then
+       print *,"problem on H2_eps_C"
+       stop
+    end if
+  end function H2_eps_C
+
+  !***************************
+  function stick(myTgas,myTdust)
+    !sticking coefficient per la formazione di H2
+    real*8::stick,myTgas,myTdust
+    stick = 1.d0 / (1.d0 + 0.4*sqrt((myTgas+myTdust)/1d2) + 0.2*myTgas/1d2 + 0.08*(myTgas/1d2)**2)
+    if(stick>1.d0 .or. stick<0.d0) then
+       print *,"problem on stick coefficient"
+       stop
+    end if
+  end function stick
+
+
 
   
 #ENDIFKROME

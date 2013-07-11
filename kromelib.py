@@ -317,6 +317,13 @@ DESCRIPTION
 		10 dust silicon dust bins. Require a call to 
 		the krome_init_dust subroutine. See test=dust
 		for an example.
+	-dustOptions=OPTIONS
+		activate dust options where OPTIONS is
+		GROWTH	dust growth
+		SPUTTER sputtering
+		H2 	molecular hydrogen formation on dust
+		TDUST	computes dust T with photon flux + CMB radiation
+		
 
 	-usePhot
 		use photons indicated in the reaction file

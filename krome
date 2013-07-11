@@ -18,10 +18,11 @@ solver_MF = 222
 force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = False
-createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useTdust = False
+createReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = useDecoupled = useCoolingdH = useHeatingdH = False
 pedanticMakefile = False
 useX = has_plot = useFakeOpacity = doIndent = useTlimits = True
+useDustGrowth = useDustSputter = useDustH2 = useDustT = False
 test_name = "default"
 is_test = False
 TlimitOpLow = "GE"
@@ -168,10 +169,6 @@ if("-skipDup" in sys.argv):
 if("-pedantic" in sys.argv):
 	pedanticMakefile = True
 	print "Reading option -pedantic"
-#computes Tdust with energy balance
-if("-useTdust" in sys.argv):
-	useTdust = True
-	print "Reading option -useTdust"
 
 #determine reverse function to reverse reactions
 for arg in sys.argv:
@@ -273,6 +270,9 @@ for arg in sys.argv:
 		print "Reading option -useODEConstant (Constant="+str(ODEConstant)+")"
 		break
 #dust
+hasDustOptions = False
+for arg in sys.argv:
+	if("dustOptions=" in arg): hasDustOptions = True
 for arg in sys.argv:
 	if("dust=" in arg):
 		dustopt = (arg.strip().replace("-dust=",""))
@@ -284,7 +284,24 @@ for arg in sys.argv:
 		dustTypes = adust[1:]
 		dustTypesSize = len(dustTypes)
 		print "Reading option -dust (size="+str(dustArraySize)+", type(s)="+(",".join(dustTypes))+")"
+		if(not(hasDustOptions)):
+			useDustH2 = True
+			print "Using default dust options (modify with -dustOptions=[see help])"
+
 		break
+#dust options
+for arg in sys.argv:
+	if("dustOptions=" in arg):
+		if(not(useDust)): die("ERROR: you need -dust=[see help] to activate dust options!")
+		dustopt = (arg.strip().replace("-dustOptions=",""))
+		dustOptions = dustopt.split(",")
+		if("growth" in dustOptions): useDustGrowth = True
+		if("sputter" in dustOptions): useDustSputter = True
+		if("H2" in dustOptions): useDustH2 = True
+		if("Tdust" in dustOptions): useDustT = True
+		print "Reading option -dustOptions (options="+(",".join(dustOptions))+")"
+		break
+
 #project name folder
 for arg in sys.argv:
 	if("project=" in arg):
@@ -313,8 +330,6 @@ for arg in sys.argv:
 if("-help" in sys.argv or "-h" in sys.argv or "--help" in sys.argv):
 	get_usage()
 
-if(useTdust and useDust!=useTdust):
-	die("ERROR: you cannot use -useTdust without -dust=[see help] !")
 
 print
 
@@ -803,10 +818,12 @@ if(useDust):
 	for dType in dustTypes:
 		for i in range(dustArraySize):
 			j += 1
-			#******growth******
-			dns[nmols+j-1] += " + krome_dust_grow(n("+str(nmols+j)+"),n(idx_"+dType+"),Tgas"
-			dns[nmols+j-1] += ",krome_dust_T("+str(j)+"),vgas,krome_dust_asize("+str(j)+"))"
-			dns[nmols+j-1] += " - krome_dust_sput_DS79(Tgas,krome_dust_asize("+str(j)+"),ntot,n("+str(nmols+j)+"))"
+			#******growth / sputtering******
+			if(useDustGrowth):
+				dns[nmols+j-1] += " + krome_dust_grow(n("+str(nmols+j)+"),n(idx_"+dType+"),Tgas"
+				dns[nmols+j-1] += ",krome_dust_T("+str(j)+"),vgas,krome_dust_asize("+str(j)+"))"
+			if(useDustSputter):
+				dns[nmols+j-1] += " - krome_dust_sput_DS79(Tgas,krome_dust_asize("+str(j)+"),ntot,n("+str(nmols+j)+"))"
 
 #find the maximum number of products and reactants
 maxnprod = maxnreag = 0
@@ -1185,14 +1202,15 @@ if(useDust):
 	for dType in dustTypes:
 		itype += 1 #increase index
 		dustPartnerIdx += "krome_dust_partner_idx("+str(itype)+") = idx_"+dType+"\n"
-		dustQabs += "call init_Qabs(\"opt"+dType+".dat\",dust_opt_Qabs_"+dType
-		dustQabs += ",dust_opt_asize_"+dType+",dust_opt_nu_"+dType+")\n"
-		dustOptInt += "call dustOptIntegral(dust_opt_Em_"+dType+",dust_opt_Tbb_"+dType+","
-		dustOptInt += "dust_opt_asize_"+dType+",&\n dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
-		getTdust += "call getTdust(krome_dust_T(nd*("+str(itype-1)+")+1:nd*"+str(itype)
-		getTdust += "), dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+",&\n"
-		getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
-		getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")
+		if(useDustT):
+			dustQabs += "call init_Qabs(\"opt"+dType+".dat\",dust_opt_Qabs_"+dType
+			dustQabs += ",dust_opt_asize_"+dType+",dust_opt_nu_"+dType+")\n"
+			dustOptInt += "call dustOptIntegral(dust_opt_Em_"+dType+",dust_opt_Tbb_"+dType+","
+			dustOptInt += "dust_opt_asize_"+dType+",&\n dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
+			getTdust += "call getTdust(krome_dust_T(nd*("+str(itype-1)+")+1:nd*"+str(itype)
+			getTdust += "), dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+",&\n"
+			getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
+			getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")
 
 skip = False
 for row in fh:
@@ -1369,6 +1387,18 @@ print "- writing krome_ode.f90...",
 fh = open("src/krome_ode.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_ode.f90","w")
+
+
+dustH2 = "nH2dust = 0.d0\n"
+if(useDustH2):
+	iType = 0
+	for dType in dustTypes:
+		ilow = nmols + iType * dustArraySize + 1
+		iup = nmols + (iType + 1) * dustArraySize
+		dustH2 += "nH2dust = nH2dust + krome_H2_dust(n(" + str(ilow) + ":" + str(iup) + ")," 
+		dustH2 += " krome_dust_T(" + str(ilow-nmols) + ":" + str(iup-nmols) + "), n(:), H2_eps_"+dType+", vgas)\n"
+		iType += 1
+
 skip = False
 for row in fh:
 	if(row.strip() == "#IFKROME_use_thermo" and not(use_thermo)): skip = True
@@ -1407,10 +1437,14 @@ for row in fh:
 				fout.write("\n") #print a blank line
 
 				#print mols ODEs and look for dust partners to add summations
+				# and H2 formation on dust and H depletion
 				idnw = 0
 				for x in dnw[:nmols]:
 					for dType in dustTypes:
 						if(dType==specs[idnw].name): x += " - dSumDust"+dType
+					if(useDustH2):
+						if("H"==specs[idnw].name): x += " - 2d0*nH2dust"
+						if("H2"==specs[idnw].name): x += " + nH2dust"
 					fout.write("\t" + x + "\n")
 					idnw += 1
 				#print other species (CR, PHOTONS, Tgas, dummy)
@@ -1440,8 +1474,10 @@ for row in fh:
 
 	elif(row.strip() == "#KROME_odeConstant" and useODEConstant):
 		fout.write("dn(:) = dn(:) "+ODEConstant+" \n")
-	elif(row.strip() == "#KROME_odeDust" and useODEConstant):
+	elif(row.strip() == "#KROME_odeDust"):
 		fout.write("dn(:) =  krome_dust \n")
+	elif(row.strip() == "#KROME_dust_H2"):
+		fout.write(dustH2+"\n")
 	elif(row.strip() == "#KROME_JAC_PD"):
 		if(solver_MF==222):
 			fout.write("\n")
@@ -1670,7 +1706,7 @@ else:
 print " done!"
 
 #copy dust optical properties to build/
-if(useTdust):
+if(useDustT):
 	for dType in dustTypes:
 		shutil.copyfile("data/opt"+dType+".dat", buildFolder+"opt"+dType+".dat")
 	
