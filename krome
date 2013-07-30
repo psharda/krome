@@ -295,10 +295,10 @@ for arg in sys.argv:
 		if(not(useDust)): die("ERROR: you need -dust=[see help] to activate dust options!")
 		dustopt = (arg.strip().replace("-dustOptions=",""))
 		dustOptions = dustopt.split(",")
-		if("growth" in dustOptions): useDustGrowth = True
-		if("sputter" in dustOptions): useDustSputter = True
+		if("GROWTH" in dustOptions): useDustGrowth = True
+		if("SPUTTER" in dustOptions): useDustSputter = True
 		if("H2" in dustOptions): useDustH2 = True
-		if("Tdust" in dustOptions): useDustT = True
+		if("TDUST" in dustOptions): useDustT = True
 		print "Reading option -dustOptions (options="+(",".join(dustOptions))+")"
 		break
 
