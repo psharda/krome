@@ -11,6 +11,7 @@ contains
     implicit none
     real*8::coe(nrea),k(nrea),Tgas,t,t3,n(nspec)
     real*8::logT,lnT,Te,lnTe,T32,invT,invTe,sqrTgas,invsqrT32,sqrT32
+    real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv
     integer::i
     !Tgas is in K
     Tgas = max(2.73d0, n(idx_Tgas))
@@ -26,6 +27,15 @@ contains
     sqrTgas = sqrt(Tgas) !Tgas rootsquare (K**0.5)
     invsqrT32 = 1.d0/sqrt(T32)
     sqrT32 = sqrt(T32)
+    Tgas2 = Tgas*Tgas
+    Tgas3 = Tgas2*Tgas
+    Tgas4 = Tgas3*Tgas
+    T0 = 288d0 !standard temperature (K)
+    T02 = T0*T0
+    T03 = T02*T0
+    T04 = T03*T0
+    T0inv = 1.d0/T0
+    
 
     k(:) = 1.d-40 !inizialize coefficients
 
