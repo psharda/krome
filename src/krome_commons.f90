@@ -7,7 +7,8 @@ module krome_commons
 
   real*8::arr_k(nrea)
   real*8::jac_nold(nspec),jac_dnold(nspec),jac_dn(nspec)
-  
+  real*8::krome_gamma !adiabatic index
+
   !commons for rate tables
   integer,parameter::ktab_n=int(1e4)
   real*8::ktab(nrea,ktab_n),ktab_logTlow, ktab_logTup, ktab_T(ktab_n)
@@ -29,6 +30,7 @@ module krome_commons
   real*8::krome_dust_asize2(ndust),krome_dust_aspan(ndust)
 
   !commons for photoionization
+  real*8::krome_J21
 #KROME_photo_variables
 #KROME_photoheating_variables
 

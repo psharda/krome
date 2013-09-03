@@ -65,7 +65,7 @@ contains
     do i=nmols+1,nmols+ndust
        idust = i - nmols !index of dust
        cool = cool + 2.d0 * boltzmann_erg * n(i) * krome_dust_asize2(idust) * &
-            fact * vgas * (Tgas - krome_dust_T(idust))
+            fact * vgas * (Tgas - krome_dust_T(idust)) * ntot
     end do
 
     cooling_dust = cool
@@ -195,7 +195,7 @@ contains
     end if
 
     !//H2-H2
-    if(temp>1.d2 .or. temp<=6.d3) then
+    if(temp>1.d2 .and. temp<=6.d3) then
        cool = cool + 1d1**(-2.3962112D1 +2.09433740D0*logt3 &
             -.77151436D0*logt32 +.43693353D0*logt33 &
             -.14913216D0*logt34 -.033638326D0*logt35)*n(idx_H2)

@@ -265,6 +265,70 @@ def get_example(nsp,useX):
 		sys.exit()
 	return sfile
 
+
+#########################################
+def parsevar(arg):
+	arg = arg.lower()
+	tks = ["+","-","*","/","(",")"]
+	for tk in tks:
+		arg = arg.replace(tk,"@")
+	while "@@" in arg:
+		arg = arg.replace("@@","@")
+	#tks2 = ["exp","sqrt","log","log10"]
+	return arg.split("@")
+##################################
+def get_Tshortcut(rea,slist):
+	shcut = ["Tgas = max(2.73d0, n(idx_Tgas))",
+	"t = Tgas !alias for Tgas (K)",
+	"logT = log10(Tgas) !log10 of Tgas (#)",
+	"lnT = log(Tgas) !ln of Tgas (#)",
+	"Te = Tgas*8.617343d-5 !Tgas in eV (eV)",
+	"lnTe = log(Te) !ln of Te (#)",
+	"T32 = Tgas/3.d2 !Tgas/(300 K) (#)",
+	"t3 = T32 !alias for T32 (#)",
+	"invT = 1.d0/Tgas !inverse of T (1/K)",
+	"invTe = 1.d0/Te !inverse of T (1/eV)",
+	"sqrTgas = sqrt(Tgas) !Tgas rootsquare (K**0.5)",
+	"invsqrT32 = 1.d0/sqrt(T32)",
+	"sqrT32 = sqrt(T32)",
+	"Tgas2 = Tgas*Tgas",
+	"Tgas3 = Tgas2*Tgas",
+	"Tgas4 = Tgas3*Tgas",
+	"T0 = 288d0 !standard temperature (K)",
+	"T02 = T0*T0",
+	"T03 = T02*T0",
+	"T04 = T03*T0",
+	"T0inv = 1.d0/T0"]
+
+	#split the first part of the shortcut and uses it as a key (e.g. t = Tgas -> t)
+	sckey = [(x.split("="))[0].strip().lower() for x in shcut]
+	shcut = sorted(shcut, key=lambda x:len(x.split("=")[0].strip()), reverse=True)
+
+	#loop on the shortcuts to find if the rate coefficient employs them
+	krea = rea.krate
+	for x in shcut:
+		ax = x.split("=") #split the shortcut
+		xvar = parsevar(krea) #parse the variable in the rate coefficient
+		krea = krea.replace(ax[0].strip(),"")
+		if((ax[0].strip().lower() in xvar) and not(x in slist)):
+			#search for dependencies between shortcuts
+			xtmp = x
+			for xx in shcut:
+				axx = xx.split("=") #split the shortcut
+				xxvar = parsevar(xtmp)  #parse the variables in the rate coeffcient found
+				xtmp = xtmp.replace(axx[0].strip(),"")
+				if((axx[0].strip().lower() in xxvar) and not(xx in slist)):
+					slist.append(xx) #append the dependent shortcut
+			slist.append(x) #append the main shortcut
+
+	#sort the shortcuts by using the index in the list sckey to follow the hierarchy
+	slist = sorted(slist, key=lambda x:sckey.index((x.split("="))[0].strip().lower()))
+	ulist = []
+	for x in slist:
+		if(not(x in ulist)): ulist.append(x)
+
+	return ulist
+
 ##################################
 def get_usage():
 
@@ -328,16 +392,14 @@ DESCRIPTION
 		Z	Metals C,O,Si,Fe (Maio2007,Grassi2012)
 		DH	enthalpic
 		DUST 	dust cooling
-		ALL	enable all together
 		example: -cooling=CEN,H2,HD
 
 	-heating=HEATING
 		activate cooling listed in HEATING:
 		COMPRESS compressional Omukai 2000
-		A	recombination H2 heating (Omukai2000)
+		CHEM	recombination H2 heating (Omukai2000)
 		PHOTO	photoionization heating (Grassi+2012)
 		DH	enthalpic	
-		ALL	enable all together
 		example: -heating=A,PHOTO
 
 	-dust=N,TYPE1,TYPE2,...
@@ -428,6 +490,11 @@ DESCRIPTION
 
 	-noTlimits
 		ignore rate coefficient temperature limits.
+
+        -gamma="OPTION"
+               define the adiabatic index according to OPTION that can be
+               "FULL" for employing Grassi et al. 2011, or a custom F90 
+               expression e.g. -gamma="5.d0/3.d0"
 
 	-reverse="EXPRESSION"
 		create reverse reaction from the given set. Inverse rate

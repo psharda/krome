@@ -19,10 +19,11 @@ force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact =
 use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = False
 useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
-usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingA = useDecoupled = useCoolingdH = useHeatingdH = False
+usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = False
 pedanticMakefile = False
 useX = has_plot = useFakeOpacity = doIndent = useTlimits = True
 useDustGrowth = useDustSputter = useDustH2 = useDustT = False
+typeGamma = "DEFAULT"
 test_name = "default"
 is_test = False
 TlimitOpLow = "GE"
@@ -190,12 +191,11 @@ for arg in sys.argv:
 for arg in sys.argv:
 	if("cooling=" in arg):
 		myCools = arg.strip().replace("-cooling=","").upper().split(",")
-		allCools = ["CEN","H2","HD","Z","ALL","DH","DUST","H2GP98"]
+		allCools = ["CEN","H2","HD","Z","DH","DUST","H2GP98"]
 		for coo in myCools:
 			if(not(coo in allCools)):
 				die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
 
-		if("ALL" in myCools): myCools = allCools
 		if("CEN" in myCools): useCoolingCEN = True
 		if("H2" in myCools): useCoolingH2 = True
 		if("H2GP98" in myCools): useCoolingH2GP98 = True
@@ -218,15 +218,14 @@ for arg in sys.argv:
 for arg in sys.argv:
 	if("heating=" in arg):
 		myHeat = arg.strip().replace("-heating=","").upper().split(",")
-		allHeats = ["COMPRESS","PHOTO","A","ALL","DH"]
+		allHeats = ["COMPRESS","PHOTO","CHEM","DH"]
 		for hea in myHeat:
 			if(not(hea in allHeats)):
 				die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
 
-		if("ALL" in myHeat): myHeat = allHeat
 		if("COMPRESS" in myHeat): useHeatingCompress = True
 		if("PHOTO" in myHeat): useHeatingPhoto = True
-		if("A" in myHeat): useHeatingA = True
+		if("CHEM" in myHeat): useHeatingChem = True
 		if("DH" in myHeat): useHeatingdH = True
 
 		use_thermo = True
@@ -282,9 +281,8 @@ for arg in sys.argv:
 		dustTypesSize = len(dustTypes)
 		print "Reading option -dust (size="+str(dustArraySize)+", type(s)="+(",".join(dustTypes))+")"
 		if(not(hasDustOptions)):
-			useDustH2 = True
-			print "Using default dust options (modify with -dustOptions=[see help])"
-
+			print "ERROR: -dust flag needs to define -dustOptions=[see help])"
+			sys.exit()
 		break
 #dust options
 for arg in sys.argv:
@@ -309,6 +307,14 @@ for arg in sys.argv:
 		fout.write((" ".join(sys.argv)))
 		fout.close()
 		break
+#typeGamma
+for arg in sys.argv:
+	if("gamma=" in arg):
+		typeGamma = (arg.strip().replace("-gamma=",""))
+		typeGamma = typeGamma.replace("\"","")
+		print "Reading option -gamma (gamma="+str(typeGamma)+")"
+		break
+
 #ATOL
 for arg in sys.argv:
 	if("ATOL=" in arg):
@@ -1043,6 +1049,11 @@ print "- writing krome_subs.f90...",
 fh = open("src/krome_subs.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_subs.f90","w")
+
+sclist = []
+for rea in reacts:
+	sclist = get_Tshortcut(rea,sclist)
+
 for row in fh:
 	if(row.strip() == "#KROME_krates"):
 		for x in reacts:
@@ -1067,7 +1078,10 @@ for row in fh:
 		for x in reacts:
 			kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
 			fout.write(kstr+"\n")
-
+	elif(row.strip() == "#KROME_Tshortcuts"):
+		print [x.split("=")[0] for x in sclist]
+		for shortcut in sclist:
+			fout.write(shortcut+"\n")
 	elif(row.strip() == "#KROME_header"):
 		fout.write(get_licence_header())
 	else:
@@ -1300,7 +1314,43 @@ if(useHeatingdH):
 			dH_coe += kvar+" = "+rea.krate+"\n" #evaluate reation coefficient
 			dH_coe += "end if\n\n" #evaluate reation coefficient
 			dH_heat += "heat = heat + "+kvar+"*"+("*".join(["n("+x.fidx+")" for x in rea.reactants])) #evautate heating
-			dH_heat += "*"+(str(abs(rea.dH))).replace("e","d")+"\n"	
+			dH_heat += "*"+(str(abs(rea.dH))).replace("e","d")+"\n"
+
+
+#build H2 heating according to the rates
+HChem = ""
+sclist = []
+if(useHeatingChem):
+	Rref = []
+	Pref = []
+	kref = []
+	Rref.append(sorted(["H","H","H"]))
+	Pref.append(sorted(["H2"]))
+	kref.append("4.48d0*n(idx_H)**3")
+	Rref.append(sorted(["H2","H","H"]))
+	Pref.append(sorted(["H2","H2"]))
+	kref.append("4.48d0*n(idx_H)**2*n(idx_H2)")
+	Rref.append(sorted(["H-","H"]))
+	Pref.append(sorted(["H2","E"]))
+	kref.append("3.53d0*n(idx_H)*n(idx_Hk)")
+	Rref.append(sorted(["H2+","H"]))
+	Pref.append(sorted(["H2","H+"]))
+	kref.append("1.83d0*n(idx_H)*n(idx_H2j)")
+	Rref.append(sorted(["H2","H"]))
+	Pref.append(sorted(["H","H","H"]))
+	kref.append("-4.48d0*n(idx_H)*n(idx_H2)")
+	for rea in reacts:
+		R = sorted([x.name for x in rea.reactants])
+		P = sorted([x.name for x in rea.products])
+		for i in range(len(Rref)):
+			if(Rref[i]==R and Pref[i]==P):
+				sclist = get_Tshortcut(rea,sclist) #get the shortcuts for temperature
+				headchem = "!"+rea.verbatim + "\n"
+				tklim = headchem + "if(Tgas." + rea.TminOp + "."  + rea.Tmin + " .and. Tgas." + rea.TmaxOp + "." + rea.Tmax + ") then\n"
+				HChem += tklim + "HChem = HChem + ("+rea.krate+") * ("+kref[i] + ")\n end if\n\n"
+				break
+			
+
 
 #build heating terms
 pheatvars = []
@@ -1330,19 +1380,27 @@ for row in fh:
 		if(row.strip() == "#IFKROME_useHeatingPhoto" and not(useHeatingPhoto)): skip = True
 		if(row.strip() == "#ENDIFKROME"): skip = False
 
-		if(row.strip() == "#IFKROME_useHeatingA" and not(useHeatingA)): skip = True
+		if(row.strip() == "#IFKROME_useHeatingChem" and not(useHeatingChem)): skip = True
 		if(row.strip() == "#ENDIFKROME"): skip = False
 
 		if(skip): continue
 
 		row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
-
+		row = row.replace("#KROME_HChem_terms", HChem) #replace chemical heating terms
+		
+		#replace shortcuts for temperature
+		if(row.strip() == "#KROME_Tshortcuts"):
+			ssc = ""
+			for shortcut in sclist:
+				ssc += shortcut + "\n"
+			row = ssc
 		#replace pragma for dH_heating
 		if(useHeatingdH):
 			row = row.replace("#KROME_vars","real*8::"+(",".join(dH_varsa))+"\n")
 			row = row.replace("#KROME_rates",dH_coe)
 			row = row.replace("#KROME_dH_heating",dH_heat)
-
+			
+		if(len(row)==0): continue
 		if(row[0]!="#"): fout.write(row)
 
 if(not(buildCompact)):
@@ -1475,6 +1533,33 @@ for row in fh:
 					if(not(use_thermo)): jacT = ""
 					fout.write("\t" + jacT.replace("\t","") + "\n")
 			fout.write("end if\n")
+	elif(row.strip() == "#KROME_gamma"):
+
+		if(typeGamma=="DEFAULT"):
+			gamma = "1.66666666667d0"
+		elif(typeGamma=="FULL"):
+			specsGamma = ["H","HE","E","H2"]
+			gammaNm = []
+			gammaDm = []
+			gammaNb = []
+			gammaDb = []
+			for mol in specs:
+				if(mol.name.upper() in specsGamma):
+					nfidx = "n("+mol.fidx+")"
+					if(mol.is_atom): 
+						gammaNm.append(nfidx)
+						gammaDm.append(nfidx)
+					else:
+						gammaNb.append(nfidx)
+						gammaDb.append(nfidx)
+					
+			gammaN = "(5.d0*("+(" + ".join(gammaNm)) + ") + 7.d0*("+(" + ".join(gammaNb)) + ")"
+			gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + ")"
+			gamma = gammaN + " / &\n" +gammaD
+		else: 
+			gamma = typeGamma
+		fout.write("krome_gamma = " + gamma + "\n")
+			
 	else:
 		srow = row.strip()
 		if(len(srow)>0):

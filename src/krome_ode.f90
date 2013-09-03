@@ -38,11 +38,14 @@ contains
 
 #KROME_ODE
 
+
     
 #IFKROME_use_thermo
-    gamma = 5.d0/3.d0
+    
+#KROME_gamma
+
     dn(idx_Tgas) = (heating(n(:), Tgas) - cooling(n(:), Tgas)) &
-         * (gamma - 1.d0) / boltzmann_erg / sum(n(1:nmols))
+         * (krome_gamma - 1.d0) / boltzmann_erg / sum(n(1:nmols))
 #ENDIFKROME
 
 #KROME_odeConstant

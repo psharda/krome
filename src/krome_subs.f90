@@ -14,28 +14,8 @@ contains
     real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv
     integer::i
     !Tgas is in K
-    Tgas = max(2.73d0, n(idx_Tgas))
-    t = Tgas !alias for Tgas (K)
-    logT = log10(Tgas) !log10 of Tgas (#)
-    lnT = log(Tgas) !ln of Tgas (#)
-    Te = Tgas*8.617343d-5 !Tgas in eV (eV)
-    lnTe = log(Te) !ln of Te (#)
-    T32 = Tgas/3.d2 !Tgas/(300 K) (#)
-    t3 = T32 !alias for T32 (#)
-    invT = 1.d0/Tgas !inverse of T (1/K)
-    invTe = 1.d0/Te !inverse of T (1/eV)
-    sqrTgas = sqrt(Tgas) !Tgas rootsquare (K**0.5)
-    invsqrT32 = 1.d0/sqrt(T32)
-    sqrT32 = sqrt(T32)
-    Tgas2 = Tgas*Tgas
-    Tgas3 = Tgas2*Tgas
-    Tgas4 = Tgas3*Tgas
-    T0 = 288d0 !standard temperature (K)
-    T02 = T0*T0
-    T03 = T02*T0
-    T04 = T03*T0
-    T0inv = 1.d0/T0
     
+#KROME_Tshortcuts
 
     k(:) = 1.d-40 !inizialize coefficients
 
