@@ -112,7 +112,7 @@ class reaction():
 			print "products:", [p.name for p in self.products], mass_products
 			print "mass ratio:",mass_products/mass_reactants, "(should be 1.0)"
 			print "************************************************"
-			a = raw_input("Ant key to continue q to quit... ")
+			a = raw_input("Any key to continue q to quit... ")
 			if(a=="q"): print sys.exit()
 		if(abs(charge_products - charge_reactants)!=0):
 			print "************************************************"
@@ -121,7 +121,7 @@ class reaction():
 			print "reactants:", [r.name for r in self.reactants], charge_reactants
 			print "products:", [p.name for p in self.products], charge_products
 			print "************************************************"
-			a = raw_input("Ant key to continue q to quit... ")
+			a = raw_input("Any key to continue q to quit... ")
 			if(a=="q"): print sys.exit()
 	#calcluate enthalpy of formation
 	def enthalpy(self):
@@ -392,6 +392,7 @@ DESCRIPTION
 		Z	Metals C,O,Si,Fe (Maio2007,Grassi2012)
 		DH	enthalpic
 		DUST 	dust cooling
+                COMPTON compton cooling (Cen1992, Glover&Jappsen2007)
 		example: -cooling=CEN,H2,HD
 
 	-heating=HEATING
@@ -427,10 +428,10 @@ DESCRIPTION
 		topology	Topology reduction (authority/hub)
 		flux		Flux method (Grassi et al. 2012)
 		cooling		Plot cooling functions
+                collapse        One-zone primordial collapse
 		shock1D		1D shock without cooling and heating
 		shock1Dcool	1D shock with cooling
 		shock1Dphoto	1D shock with photoionization, cooling, heating
-		shock1Ddecoupled 1D shock with cooling but dT/dt is computed outside the solver
 		shock1Dbuff 	1D shock with cooling and photoheating but using buffer
 		shock1Dlarge 	1D shock using WH2008 network (very slow!)
 		dust		One-zone: dust growth and thermal sputtering

@@ -17,7 +17,7 @@ print
 solver_MF = 222
 force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
-useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = False
+useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCompton = useH2opacity = useCoolingCIE = False
 useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = False
 pedanticMakefile = False
@@ -82,6 +82,9 @@ for arg in sys.argv:
 		elif(test_name=="map"):
 			[sys.argv.append(x) for x in ["-cooling=CEN,H2,HD", "-heating=PHOTO","-usePhIoniz"]]
 			filename = "networks/react_primordial_photo"
+		elif(test_name=="collapse"):
+			[sys.argv.append(x) for x in ["-cooling=CEN,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
+			filename = "networks/react_primordial"
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
 			sys.exit()
@@ -174,6 +177,10 @@ if("-pedantic" in sys.argv):
 if("-reverse" in sys.argv):
 	useReverse = True
 	print "Reading option -reverse"
+#use H2opacity following 
+if("-useH2opacity" in sys.argv):
+	useH2opacity = True
+	print "Reading option -useH2opacity"
 
 #determine Tgas limit operators
 for arg in sys.argv:
@@ -191,7 +198,7 @@ for arg in sys.argv:
 for arg in sys.argv:
 	if("cooling=" in arg):
 		myCools = arg.strip().replace("-cooling=","").upper().split(",")
-		allCools = ["CEN","H2","HD","Z","DH","DUST","H2GP98"]
+		allCools = ["CEN","H2","HD","Z","DH","DUST","H2GP98","COMPTON","CIE"]
 		for coo in myCools:
 			if(not(coo in allCools)):
 				die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
@@ -203,6 +210,9 @@ for arg in sys.argv:
 		if("Z" in myCools): useCoolingZ = True
 		if("DH" in myCools): useCoolingdH = True
 		if("DUST" in myCools): useCoolingDust = True
+		if("COMPTON" in myCools): useCoolingCompton = True
+		if("CIE" in myCools): useCoolingCIE = True
+
 		
 		hasDust = False
 		for aa in sys.argv:
@@ -483,7 +493,12 @@ for row in fh:
 			sys.exit()
 		continue #skip format line (it is not a reaction line)
 	arow = srow.split(separator,format_items-1) #split only N+1 elements with N seprations
-	if(len(arow)!=format_items): continue #check line format (N elements, 4=idx+Tmin+Tmax+rate)
+	if(len(arow)!=format_items): 
+		print "WARNING: wrong format for reaction "+str(rcount+1)
+		print srow
+		a = raw_input("Any key to continue q to quit... ")
+		if(a=="q"): print sys.exit()
+		continue #check line format (N elements, 4=idx+Tmin+Tmax+rate)
 	found_one = True
 	rcount += 1
 	myrea = reaction() #create object reaction
@@ -1079,7 +1094,7 @@ for row in fh:
 			kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
 			fout.write(kstr+"\n")
 	elif(row.strip() == "#KROME_Tshortcuts"):
-		print [x.split("=")[0] for x in sclist]
+		#print [x.split("=")[0] for x in sclist]
 		for shortcut in sclist:
 			fout.write(shortcut+"\n")
 	elif(row.strip() == "#KROME_header"):
@@ -1238,8 +1253,10 @@ if(useCoolingdH):
 			dH_coe += kvar+" = "+rea.krate+"\n" #evaluate reation coefficient
 			dH_coe += "end if\n\n" #evaluate reation coefficient
 			dH_cool += "cool = cool + "+kvar+"*"+("*".join(["n("+x.fidx+")" for x in rea.reactants])) #evautate cooling
-			dH_cool += "*"+(str(abs(rea.dH))).replace("e","d")+"\n"			
+			dH_cool += "*"+(str(abs(rea.dH))).replace("e","d")+"\n"
 
+
+#bremsstrahlung for all the ions as charge**2*n_ion
 skip = False
 bms_ions = "bms_ions ="
 for x in specs:
@@ -1253,29 +1270,41 @@ for row in fh:
 	if(row.strip() == "#KROME_header"):
 		fout.write(get_licence_header())
 	else:
-		if(row.strip() == "#IFKROME_useCoolingdH" and (not(useCoolingdH) or len(dH_varsa)==0)): skip = True
-		if(row.strip() == "#ENDIFKROME"): skip = False
+		srow = row.strip()
+		if(srow == "#IFKROME_useCoolingdH" and (not(useCoolingdH) or len(dH_varsa)==0)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
 
-		if(row.strip() == "#IFKROME_useCoolingDust" and not(useCoolingDust)): skip = True
-		if(row.strip() == "#ENDIFKROME"): skip = False
+		if(srow == "#IFKROME_useCoolingDust" and not(useCoolingDust)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
 
-		if(row.strip() == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
-		if(row.strip() == "#ENDIFKROME"): skip = False
+		if(srow == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
 
-		if(row.strip() == "#IFKROME_useCoolingCEN" and not(useCoolingCEN)): skip = True
-		if(row.strip() == "#ENDIFKROME"): skip = False
+		if(srow == "#IFKROME_useCoolingCEN" and not(useCoolingCEN)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
 
-		if(row.strip() == "#IFKROME_useCoolingH2" and not(useCoolingH2)): skip = True
-		if(row.strip() == "#ENDIFKROME"): skip = False
+		if(srow == "#IFKROME_useCoolingH2" and not(useCoolingH2)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
 
-		if(row.strip() == "#IFKROME_useCoolingH2GP" and not(useCoolingH2GP98)): skip = True
-		if(row.strip() == "#ENDIFKROME"): skip = False
+		if(srow == "#IFKROME_useCoolingH2GP" and not(useCoolingH2GP98)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
 
-		if(row.strip() == "#IFKROME_useCoolingHD" and not(useCoolingHD)): skip = True
-		if(row.strip() == "#ENDIFKROME"): skip = False
+		if(srow == "#IFKROME_useCoolingHD" and not(useCoolingHD)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
+
+		if(srow == "#IFKROME_useCoolingCompton" and not(useCoolingCompton)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
+
+		if(srow == "#IFKROME_useCoolingCIE" and not(useCoolingCIE)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
 
 		if(skip): continue
 		
+		if(useH2opacity):
+			row = row.replace("#KROME_H2opacity", "* min(1.d0, (1.25d-10 * sum(n(1:nmols)))**(-.45))") #thick case (note that 1.25d-10 = 1/8e9)
+		else:
+			row = row.replace("#KROME_H2opacity", "") #thin case
+
 		#replace pragma for dH_cooling
 		if(useCoolingdH):
 			row = row.replace("#KROME_vars","real*8::"+(",".join(dH_varsa))+"\n")
@@ -1325,7 +1354,7 @@ if(useHeatingChem):
 	Pref = []
 	kref = []
 	Rref.append(sorted(["H","H","H"]))
-	Pref.append(sorted(["H2"]))
+	Pref.append(sorted(["H2","H"]))
 	kref.append("4.48d0*n(idx_H)**3")
 	Rref.append(sorted(["H2","H","H"]))
 	Pref.append(sorted(["H2","H2"]))
@@ -1534,30 +1563,33 @@ for row in fh:
 					fout.write("\t" + jacT.replace("\t","") + "\n")
 			fout.write("end if\n")
 	elif(row.strip() == "#KROME_gamma"):
-
+		#computes the adiabatic index if needed or uses a user-defined expression 
 		if(typeGamma=="DEFAULT"):
-			gamma = "1.66666666667d0"
+			gamma = "1.66666666667d0" #default gamma is 5/3
 		elif(typeGamma=="FULL"):
-			specsGamma = ["H","HE","E","H2"]
+			specsGamma = ["H","HE","E","H2"] #species used in the gamma
 			gammaNm = []
 			gammaDm = []
 			gammaNb = []
 			gammaDb = []
+			#loop on species
 			for mol in specs:
 				if(mol.name.upper() in specsGamma):
-					nfidx = "n("+mol.fidx+")"
-					if(mol.is_atom): 
+					nfidx = "n("+mol.fidx+")" #number density
+					if(mol.is_atom): #monoatomic
 						gammaNm.append(nfidx)
 						gammaDm.append(nfidx)
-					else:
+					else: #diatomic
 						gammaNb.append(nfidx)
 						gammaDb.append(nfidx)
-					
-			gammaN = "(5.d0*("+(" + ".join(gammaNm)) + ") + 7.d0*("+(" + ".join(gammaNb)) + ")"
-			gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + ")"
+			#build fortran expression for gamma (see Grassi et al. 2011)
+			gammaN = "(5.d0*("+(" + ".join(gammaNm)) + ") + 7.d0*("+(" + ".join(gammaNb)) + "))"
+			gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + "))"
 			gamma = gammaN + " / &\n" +gammaD
 		else: 
+			#user-defined gamma
 			gamma = typeGamma
+		#write gamma
 		fout.write("krome_gamma = " + gamma + "\n")
 			
 	else:

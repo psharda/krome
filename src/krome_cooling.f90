@@ -40,9 +40,79 @@ contains
     cooling = cooling + cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingCompton
+    cooling = cooling + cooling_compton(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingCIE
+    cooling = cooling + cooling_CIE(n(:), Tgas)
+#ENDIFKROME
+
   end function cooling
 
+
+#IFKROME_useCoolingCIE
+  !*******************************
+  function cooling_CIE(n, Tgas)
+    use krome_commons
+    use krome_constants
+    real*8::cooling_CIE,n(:),Tgas
+    real*8::x,x2,x3,x4,x5
+    real*8::a0,a1,a2,a3,a4,a5
+    real*8::b0,b1,b2,b3,b4,b5
+    real*8::cool,tauCIE
+
+    x = log10(Tgas)
+    x2 = x*x
+    x3 = x2*x
+    x4 = x3*x
+    x5 = x4*x
+
+    cool = 0.d0
+
+    if(x>2.d0 .and. x<2.95d0) then
+       a0 = -30.3314216559651d0
+       a1 = 19.0004016698518d0
+       a2 = -17.1507937874082d0 
+       a3 = 9.49499574218739d0 
+       a4 = -2.54768404538229d0 
+       a5 = 0.265382965410969d0
+       cool = a0 + a1*x + a2*x2 + a3*x3 +a4*x4 +a5*x5
+    else
+       b0 = -180.992524120965d0 
+       b1 = 168.471004362887d0 
+       b2 = -67.499549702687d0 
+       b3 = 13.5075841245848d0 
+       b4 = -1.31983368963974d0 
+       b5 = 0.0500087685129987d0
+       cool = b0 + b1*x + b2*x2 + b3*x3 +b4*x4 +b5*x5
+    end if
+
+    tauCIE = (n(idx_H2) * 1.4285714e-16)**2.8 !note: 1/7e15 = 1.4285714e-16
+    cooling_CIE = p_mass * 1d1**cool * min(1.d0, (1.d0-exp(-tauCIE))/tauCIE) * n(idx_H2) * sum(n(1:nmols))
+
+  end function cooling_CIE
+#ENDIFKROME
+
+
+#IFKROME_useCoolingCompton
+  !*******************************
+  function cooling_compton(n, Tgas)
+    !compton cooling erg/cm3/s from Cen1992
+    use krome_user_commons
+    use krome_commons
+    real*8::cooling_compton,n(:),Tgas
+    
+    !note that redhsift is defined in krome_user_commons and 
+    ! must be provided by the user
+    cooling_compton = 5.65d-36 * (1.d0 + redshift)**4 &
+         * (Tgas - 2.73d0 * (1.d0 + redshift)) * n(idx_e) !erg/s/cm3
+    
+  end function cooling_compton
+#ENDIFKROME
+
 #IFKROME_useCoolingDust
+  !*******************************
   function cooling_dust(n,Tgas)
     !cooling from dust in erg/cm3/s
     use krome_dust
@@ -75,6 +145,7 @@ contains
 
 
 #IFKROME_useCoolingdH
+  !*******************************
   function cooling_dH(n,Tgas)
     !cooling from reaction enthalpy erg/s/cm3
     use krome_commons
@@ -140,8 +211,9 @@ contains
     !TO AVOID DIVISION BY ZERO
     fact = HDL/LDL !dimensionless
     
-    cooling_H2GP = HDL*n(idx_H2)/(1.d0+(fact)) !erg/cm3/s
+    cooling_H2GP = HDL*n(idx_H2)/(1.d0+(fact)) #KROME_H2opacity !erg/cm3/s
 
+  
   end function cooling_H2GP
 #ENDIFKROME
 
@@ -248,7 +320,7 @@ contains
     LDL = cool !erg/s
     fact = HDL/LDL 
 
-    cooling_H2 = HDL*n(idx_H2)/(1.d0+(fact)) !erg/cm3/s
+    cooling_H2 = HDL*n(idx_H2)/(1.d0+(fact))  #KROME_H2opacity !erg/cm3/s
 
   end function cooling_H2
 #ENDIFKROME

@@ -62,6 +62,15 @@ contains
     character*(*)::name
     krome_get_index = get_index(name)
   end function krome_get_index
+
+  !*******************
+  function krome_get_rho(n)
+    use krome_commons
+    real*8::krome_get_rho,n(:)
+    real*8::m(nmols)
+    m(:) = krome_get_mass()
+    krome_get_rho = sum(m(:)*n(:))
+  end function krome_get_rho
   
   
 end module krome_user
