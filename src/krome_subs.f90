@@ -11,7 +11,7 @@ contains
     implicit none
     real*8::coe(nrea),k(nrea),Tgas,t,t3,n(nspec)
     real*8::logT,lnT,Te,lnTe,T32,invT,invTe,sqrTgas,invsqrT32,sqrT32
-    real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv
+    real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv,T4
     integer::i
     !Tgas is in K
     
@@ -100,26 +100,7 @@ contains
   end function get_rnames
 
 
-  !************************
-  !print species informations
-  subroutine get_infos(x, Tgas)
-    use krome_commons
-    integer::i,charges(nspec)
-    real*8::x(:),Tgas,masses(nspec)
-    character*16::names(nspec)
 
-    names(:) = get_names()
-    charges(:) = get_charges()
-    masses(:) = get_mass()
-
-    print '(a4,a10,a11,a5,a11)',"#","Name","m (g)","Chrg","x"
-    do i=1,size(x)
-       print '(I4,a10,E11.3,I5,E11.3)',i," "//names(i),masses(i),charges(i),x(i)
-    end do
-    print '(a30,E11.3)'," sum",sum(x)
-
-    print '(a14,E11.3)',"Tgas",Tgas
-  end subroutine get_infos
 
   !*****************************
   subroutine load_arrays()

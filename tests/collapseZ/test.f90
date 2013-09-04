@@ -5,7 +5,8 @@ program test_krome
   use krome_main
   use krome_user
   use krome_user_commons
-  
+  use krome_cooling
+
 
   integer,parameter::rstep = 500000
   integer::i
@@ -30,6 +31,17 @@ program test_krome
   x(KROME_idx_E)         = 1.0e-4*ntot    !E
   x(KROME_idx_Hj)        = 1.0e-4*ntot    !H+
   x(KROME_idx_HE)        = 0.0775*ntot    !He
+
+  call krome_scale_Z(x(:), -2.d0)
+
+  x(krome_idx_Fe) = 1d-40
+  x(krome_idx_Si) = 1d-40
+
+  call krome_plot_cooling(x)
+  
+  call krome_get_info(x(:),Tgas)
+
+  
   
   dd = ntot
 
@@ -59,9 +71,24 @@ program test_krome
      x(KROME_idx_Hk)       = x(KROME_idx_Hk)*dd/dd1
      x(KROME_idx_HEjj)     = x(KROME_idx_HEjj)*dd/dd1
 
+     x(KROME_idx_C)     = x(KROME_idx_C)*dd/dd1
+     x(KROME_idx_Cj)     = x(KROME_idx_Cj)*dd/dd1
+     x(KROME_idx_Si)     = x(KROME_idx_Si)*dd/dd1
+     x(KROME_idx_Sij)     = x(KROME_idx_Sij)*dd/dd1
+     x(KROME_idx_O)     = x(KROME_idx_O)*dd/dd1
+     x(KROME_idx_Oj)     = x(KROME_idx_Oj)*dd/dd1
+     x(KROME_idx_Fe)     = x(KROME_idx_Fe)*dd/dd1
+     x(KROME_idx_Fej)     = x(KROME_idx_Fej)*dd/dd1
+     x(KROME_idx_D)     = x(KROME_idx_D)*dd/dd1
+     x(KROME_idx_Dj)     = x(KROME_idx_Dj)*dd/dd1
+     x(KROME_idx_HD)     = x(KROME_idx_HD)*dd/dd1
+
      dt = dtH 
-     
+
      if(dd.gt.1d18) exit
+
+     write(55,'(99E16.5)') dd,cooling_H2(x(:),Tgas),cooling_CEN(x(:),Tgas),&
+          cooling_Z(x(:),Tgas),cooling_compton(x(:),Tgas),cooling_CIE(x(:),Tgas)
 
      !solve the chemistry
      call krome(x(:),Tgas,dt)

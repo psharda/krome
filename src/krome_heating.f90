@@ -34,7 +34,7 @@ contains
     !heating from reaction enthalpy erg/s/cm3
     use krome_commons
     implicit none
-    real*8::heat_dH,heat,n(:),Tgas
+    real*8::heat_dH,heat,n(:),Tgas,T4
     real*8::logT,lnT,Te,lnTe,T32,t3,invT,invTe,sqrTgas,invsqrT32,sqrT32
 #KROME_vars
     

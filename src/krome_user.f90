@@ -10,14 +10,14 @@ contains
 #IFKROME_use_cooling
   !******************
   !alias of plot_cool
-  subroutine plot_cooling(n)
+  subroutine krome_plot_cooling(n)
     use KROME_cooling
     implicit none
     real*8::n(:)
 
     call plot_cool(n(:))
 
-  end subroutine plot_cooling
+  end subroutine krome_plot_cooling
 #ENDIFKROME
 
   !*****************
@@ -72,5 +72,36 @@ contains
     krome_get_rho = sum(m(:)*n(:))
   end function krome_get_rho
   
+  !*************************
+  subroutine krome_scale_Z(n,Z)
+    !scale metallicity according to Arnett(1996)
+    use krome_commons
+    real*8::n(:),Z
+
+#KROME_scaleZ
+    
+  end subroutine krome_scale_Z
+
+  !************************
+  !print species informations
+  subroutine krome_get_info(x, Tgas)
+    use krome_commons
+    use krome_subs
+    integer::i,charges(nspec)
+    real*8::x(:),Tgas,masses(nspec)
+    character*16::names(nspec)
+
+    names(:) = get_names()
+    charges(:) = get_charges()
+    masses(:) = get_mass()
+
+    print '(a4,a10,a11,a5,a11)',"#","Name","m (g)","Chrg","x"
+    do i=1,size(x)
+       print '(I4,a10,E11.3,I5,E11.3)',i," "//names(i),masses(i),charges(i),x(i)
+    end do
+    print '(a30,E11.3)'," sum",sum(x)
+
+    print '(a14,E11.3)',"Tgas",Tgas
+  end subroutine krome_get_info
   
 end module krome_user

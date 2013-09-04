@@ -286,6 +286,7 @@ def get_Tshortcut(rea,slist):
 	"lnTe = log(Te) !ln of Te (#)",
 	"T32 = Tgas/3.d2 !Tgas/(300 K) (#)",
 	"t3 = T32 !alias for T32 (#)",
+	"t4 = Tgas*1d-4 !Tgas/1d4 (#)",
 	"invT = 1.d0/Tgas !inverse of T (1/K)",
 	"invTe = 1.d0/Te !inverse of T (1/eV)",
 	"sqrTgas = sqrt(Tgas) !Tgas rootsquare (K**0.5)",

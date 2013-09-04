@@ -85,6 +85,9 @@ for arg in sys.argv:
 		elif(test_name=="collapse"):
 			[sys.argv.append(x) for x in ["-cooling=CEN,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial"
+		elif(test_name=="collapseZ"):
+			[sys.argv.append(x) for x in ["-cooling=CEN,H2,COMPTON,CIE,Z", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
+			filename = "networks/react_primordial_Z"
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
 			sys.exit()
@@ -212,6 +215,7 @@ for arg in sys.argv:
 		if("DUST" in myCools): useCoolingDust = True
 		if("COMPTON" in myCools): useCoolingCompton = True
 		if("CIE" in myCools): useCoolingCIE = True
+		use_cooling = True
 
 		
 		hasDust = False
@@ -1610,19 +1614,43 @@ fh = open("src/krome_user.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_user.f90","w")
 skip = False
+
+solar = {
+	#"He":"9.749177d-2",
+	"O":"5.241966d-4",
+	"C":"3.582559d-4",
+	"N":"1.120923d-4",
+	"Ne":"1.098945d-4",
+	"Si":"3.296834d-5",
+	"Mg":"3.077045d-5",
+	"Fe":"2.967150d-5",
+	"Si":"1.758311d-5",
+	"Ne":"1.648417d-5",
+	#"D":"1.648417d-5",
+	"Ca":"2.197889d-6"
+	}
+
+scaleZ = []
+for (k,v) in solar.iteritems():
+	for mols in specs:
+		if(k.upper()==mols.name.upper()):
+			scaleZ.append("n("+mols.fidx+") = n(idx_H) * 1d1**(Z+log10("+str(v)+"))")
+
 for row in fh:
 
-	if(row.strip() == "#IFKROME_use_cooling" and not(use_cooling)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
+	srow = row.strip()
+	if(srow == "#IFKROME_use_cooling" and not(use_cooling)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
 	if(skip): continue
 
-	if(row.strip() == "#KROME_species"):
+	if(srow == "#KROME_species"):
 		for x in specs:
 			fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
-	elif(row.strip() == "#KROME_header"):
+	elif(srow == "#KROME_header"):
 		fout.write(get_licence_header())
+	elif(srow == "#KROME_scaleZ"):
+		fout.write(("\n".join(scaleZ))+"\n")
 	else:
-		srow = row.strip()
 		if(len(srow)>0):
 			if(srow[0]!="#"): fout.write(row)
 		else:

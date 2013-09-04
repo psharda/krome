@@ -54,13 +54,21 @@ contains
 #IFKROME_useCoolingCIE
   !*******************************
   function cooling_CIE(n, Tgas)
+    !CIE cooling: fit from Ripamponti&Abel2004 (RA04) data
+    ! The fit is valid from 100K-1e6K.
+    ! Original data are from 400K to 7000K.
+    ! We extrapolated data under 400K and fitted from 100K to 10**2.95 K.
+    ! Data from 10**2.95 K to 1e5K are fitted analogously.
+    ! Above 1e5 we employ a cubic extrapolation.
     use krome_commons
     use krome_constants
     real*8::cooling_CIE,n(:),Tgas
     real*8::x,x2,x3,x4,x5
     real*8::a0,a1,a2,a3,a4,a5
     real*8::b0,b1,b2,b3,b4,b5
-    real*8::cool,tauCIE
+    real*8::cool,tauCIE,logcool
+
+    Tgas = max(Tgas, 2.73d0)
 
     x = log10(Tgas)
     x2 = x*x
@@ -69,7 +77,9 @@ contains
     x5 = x4*x
 
     cool = 0.d0
+    logcool = -1d99
 
+    !evaluates fitting functions
     if(x>2.d0 .and. x<2.95d0) then
        a0 = -30.3314216559651d0
        a1 = 19.0004016698518d0
@@ -77,19 +87,24 @@ contains
        a3 = 9.49499574218739d0 
        a4 = -2.54768404538229d0 
        a5 = 0.265382965410969d0
-       cool = a0 + a1*x + a2*x2 + a3*x3 +a4*x4 +a5*x5
-    else
+       logcool = a0 + a1*x + a2*x2 + a3*x3 +a4*x4 +a5*x5 
+    elseif(x.GE.2.95d0 .and. x<5.d0) then
        b0 = -180.992524120965d0 
        b1 = 168.471004362887d0 
        b2 = -67.499549702687d0 
        b3 = 13.5075841245848d0 
        b4 = -1.31983368963974d0 
        b5 = 0.0500087685129987d0
-       cool = b0 + b1*x + b2*x2 + b3*x3 +b4*x4 +b5*x5
+       logcool = b0 + b1*x + b2*x2 + b3*x3 +b4*x4 +b5*x5
+    elseif(x.GE.5.d0) then
+       logcool = 3.d0 * x - 21.2968837223113 !cubic extrapolation
     end if
 
+    !opacity according to RA04
     tauCIE = (n(idx_H2) * 1.4285714e-16)**2.8 !note: 1/7e15 = 1.4285714e-16
-    cooling_CIE = p_mass * 1d1**cool * min(1.d0, (1.d0-exp(-tauCIE))/tauCIE) * n(idx_H2) * sum(n(1:nmols))
+    cool = p_mass * 1d1**logcool !erg*cm3/s
+    !lambda_thick = lambda_thin * opacity
+    cooling_CIE = cool * min(1.d0, (1.d0-exp(-tauCIE))/tauCIE) * n(idx_H2) * sum(n(1:nmols)) !erg/cm3/s
 
   end function cooling_CIE
 #ENDIFKROME
@@ -416,7 +431,7 @@ contains
     lognH   = log10(dd)
 
     !loop to compute coefficients
-    logW = 0.0d0
+    logW = 0.d0
     do j = 0, ns
        lHj = lognH**j
        do i = 0, ns
@@ -432,6 +447,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
+  !**************************************
   !metal cooling (as in Maio et al. 2007)
   function cooling_Z(n,inTgas)
     !//coefficients written as gijCOOLANT_COLLIDER
@@ -531,6 +547,12 @@ contains
     real*8::AFep(5,5),BFep(5)
 
     real*8::tot_metals,invTgas,ratio_para_ortho
+    real*8::T2
+    
+    !rate coefficients (gijA_B) are in cm3/s
+    ! GJ07 = Glover&Jappsen2007
+    ! HM89 = Hollenbach&McKee1989
+    ! M07  = Maio et al. 2007
 
     if(minval(n)<0.d0)then
        do i=1,size(n)
@@ -545,25 +567,26 @@ contains
     Tgas = max(inTgas,1.d1)
     invTgas = 1.d0/Tgas
     lnT = log(Tgas)
+    T2 = Tgas * 1d-2
     cool = 0.d0
     if(Tgas.le.1d4 .and. tot_metals.ge.1.d-20) then
        !(1)------------------------------------------------------------------
-       !//C-H2_ortho
+       !//C-H2_ortho GJ07 
        g10C_H2o = 8.7d-11 -6.6d-11*exp(-Tgas/218.3)+6.6d-11*exp(-2.*Tgas/218.3)
        g20C_H2o = 1.2d-10 -6.1d-11*exp(-Tgas/387.3)
        g21C_H2o = 2.9d-10 -1.9d-10*exp(-Tgas/348.9)
 
-       !//C-H2_para
+       !//C-H2_para GJ07
        g10C_H2p = 7.9D-11 -8.7D-11*EXP(-Tgas/126.4) +1.3D-10*EXP(-2.*Tgas/126.4)
-       g20C_H2p = 1.1D-10 -8.6D-11*EXP(-Tgas/233.) +8.7D-11*EXP(-2.*Tgas/233.)
+       g20C_H2p = 1.1D-10 -8.6D-11*EXP(-Tgas/223.) +8.7D-11*EXP(-2.*Tgas/223.)
        g21C_H2P = 2.7D-10 -2.6D-10*EXP(-Tgas/250.7) +1.8D-10*EXP(-2.*Tgas/250.7)
 
-       !//C-H
-       g10C_H = 1.6D-10*(Tgas/100.)**(.14)
-       g20C_H = 9.2D-11*(Tgas/100.)**(.26)
-       g21C_H = 2.9D-10*(Tgas/100.)**(.26)
+       !//C-H GJ07
+       g10C_H = 1.6D-10*(T2)**(.14)
+       g20C_H = 9.2D-11*(T2)**(.26)
+       g21C_H = 2.9D-10*(T2)**(.26)
 
-       !//C-Hp
+       !//C-H+ GJ07
        g10C_Hp = (9.6D-11 -1.8D-14*Tgas +1.9D-18*Tgas**2) *Tgas**(.45)
        IF(Tgas > 5d3)  g10C_Hp = 8.9D-10*Tgas**(.117)
        g20C_Hp = (3.1D-12 -6.D-16*Tgas +3.9d-20*Tgas**2) *Tgas
@@ -571,11 +594,11 @@ contains
        g21C_Hp = (1.D-10 -2.2D-14*Tgas +1.7D-18*Tgas**2) *Tgas**(.70)
        IF(Tgas > 5.d3)  g21C_Hp = 9.2D-9*Tgas**(.0535)
 
-       !//C-e
+       !//C-e GJ07
        g10C_e = 2.88D-6*Tgas**(-.5)*EXP(-9.25141 -7.73782D-1*lnT &
             +3.61184D-1*lnT**2 &
             -1.50892D-2*lnT**3 -6.56325D-4*lnT**4)
-       IF(Tgas > 1D3)  g10C_e = 2.88D-6*Tgas**(-.5) *EXP(4.446D2 &
+       IF(Tgas > 1D3)  g10C_e = 2.88D-6*Tgas**(-.5) *EXP(-4.446D2 &
             -2.27913D2*lnT +4.2595D1*lnT**2 -3.4762*lnT**3 +1.0508D-1*lnT**4)
        g20C_e = 1.73D-6*Tgas**(-.5)*EXP(-7.69735 -1.30743*lnT +.697638*lnT**2 &
             -.111338*lnT**3 +.705277D-2*lnT**4)
@@ -586,47 +609,47 @@ contains
        IF(Tgas > 1D3)  g21C_e = 1.73D-6*Tgas**(-.5)*EXP(3.86186D2 &
             -2.02192D2*lnT +3.85049D1*lnT**2 -3.19268*lnT**3 +9.78573D-2*lnT**4)
 
-       !//Si-H
-       g10Si_H = 3.5D-10*(Tgas/1D2)**(-.03)
-       g20Si_H = 1.7D-11*(Tgas/1D2)**(.17)
-       g21Si_H = 5.D-10*(Tgas/1.D2)**(.17)
+       !//Si-H GJ07
+       g10Si_H = 3.5D-10*(T2)**(-.03)
+       g20Si_H = 1.7D-11*(T2)**(.17)
+       g21Si_H = 5.D-10*(T2)**(.17)
 
-       !//Si-H+
+       !//Si-H+ GJ07
        g10Si_Hp = 7.2D-9
        g20Si_Hp = 7.2D-9
        g21Si_Hp = 2.2D-8
 
-       !//Fe-H
-       g10Fe_H = 8.D-10*(Tgas/1.D2)**(.17)
-       g20Fe_H = 6.9D-10*(Tgas/1.D2)**(.17)
-       g21Fe_H = 5.3D-10*(Tgas/1.D2)**(.17)
+       !//Fe-H HM89
+       g10Fe_H = 8.D-10*(T2)**(.17)
+       g20Fe_H = 6.9D-10*(T2)**(.17)
+       g21Fe_H = 5.3D-10*(T2)**(.17)
 
-       !//Fe-e
+       !//Fe-e HM89 (including forbidden)
        g10Fe_e = 1.2D-7
        g20Fe_e = 1.2D-7
        g21Fe_e = 9.3D-8
        g30Fe_e = 2.D-7*(Tgas/1.D4)**(.57)
-       IF(Tgas > 1.D4) g30Fe_e = 2.D-7*(Tgas/1.D4)**(-.13)
+       !if(Tgas > 1.D4) g30Fe_e = 2.D-7*(Tgas/1.D4)**(-.13)
        g40Fe_e = 1.D-7*(Tgas/1.D4)**(.57)
-       IF(Tgas > 1.D4) g40Fe_e = 1.D-7
+       !if(Tgas > 1.D4) g40Fe_e = 1.D-7
        g43Fe_e = 1.5D-7
 
-       !//O-H2o
+       !//O-H2o GJ07
        g10O_H2o = 2.7D-11*Tgas**(.362)
        g20O_H2o = 5.49D-11*Tgas**(.317)
        g21O_H2o = 2.74D-14*Tgas**(1.06)
 
-       !//O-H2p
+       !//O-H2p GJ07
        g10O_H2p = 3.46D-11*Tgas**(.316)
        g20O_H2p = 7.07D-11*Tgas**(.268)
        g21O_H2p = 3.33D-15*Tgas**(1.36)
 
-       !//O-H
-       g10O_H = 9.2D-11*(Tgas/100.)**(.67)
-       g20O_H = 4.3D-11*(Tgas/100.)**(.80)
-       g21O_H = 1.1D-10*(Tgas/100.)**(.44)
+       !//O-H GJ07
+       g10O_H = 9.2D-11*(T2)**(.67)
+       g20O_H = 4.3D-11*(T2)**(.80)
+       g21O_H = 1.1D-10*(T2)**(.44)
 
-       !//O-Hp
+       !//O-H+ GJ07
        g10O_Hp = 6.38D-11*Tgas**(.4)
        IF(Tgas > 194.)  g10O_Hp = 7.75D-12*Tgas**(.8)
        IF(Tgas > 3686.)  g10O_Hp = 2.65D-10*Tgas**(.37)
@@ -636,27 +659,27 @@ contains
        g21O_Hp = 2.03D-11*Tgas**(.56)
        IF(Tgas > 2090.) g21O_Hp = 3.43D-10*Tgas**(.19)
 
-       !//O-e
+       !//O-e GJ07
        g10O_e = 5.12D-10*Tgas**(-.075)
        g20O_e = 4.86D-10*Tgas**(-.026)
        g21O_e = 1.08D-14*Tgas**(.926)
 
-       !//Cp-H
-       g10Cp_H = 8D-10*(Tgas/100.)**(.07)
-       !//Cp-e
-       g10Cp_e = 2.8D-7*(Tgas/100.)**(-.5)
+       !//Cp-H M07
+       g10Cp_H = 8D-10*(T2)**(.07)
+       !//Cp-e M07
+       g10Cp_e = 2.8D-7*(T2)**(-.5)
 
-       !//Op-e
+       !//Op-e HM89
        g10Op_e = 1.3D-8*(Tgas/1.D4)**(-.5)
        g20Op_e = 1.3D-8*(Tgas/1.D4)**(-.5)
        g21Op_e = 2.5D-8*(Tgas/1.D4)**(-.5)
 
-       !//Sip-e
-       g10Sip_e = 1.2D-6*(Tgas/100.)**(-.5)
-       !//Sip-H
-       g10Sip_H = 4.95D-10*(Tgas/100.)**(.24)
+       !//Sip-e M07
+       g10Sip_e = 1.7D-6*(T2)**(-.5)
+       !//Sip-H M07
+       g10Sip_H = 8D-10*(T2)**(-.07)
 
-       !//Fep-H
+       !//Fep-H M07
        g10Fep_H = 9.5D-10
        g21Fep_H = 4.7D-10
        g32Fep_H = 5.D-10
@@ -668,12 +691,12 @@ contains
        g41Fep_H = 5.D-10
        g42Fep_H = 5.D-10
 
-       !//Fep-e
-       g10Fep_e = 1.8D-6*(Tgas/100.)**(-.5)
-       g21Fep_e = 8.7D-7*(Tgas/100.)**(-.5)
+       !//Fep-e M07
+       g10Fep_e = 1.8D-6*(T2)**(-.5)
+       g21Fep_e = 8.7D-7*(T2)**(-.5)
        g32Fep_e = 1.D-5*Tgas**(-.5)
        g43Fep_e = 1.D-5*Tgas**(-.5)
-       g20Fep_e = 1.8D-6*(Tgas/100.)**(-.5)
+       g20Fep_e = 1.8D-6*(T2)**(-.5)
        g30Fep_e = 1.D-5*Tgas**(-.5)
        g40Fep_e = 1.D-5*Tgas**(-.5)
        g31Fep_e = 1.D-5*Tgas**(-.5)
@@ -682,6 +705,8 @@ contains
 
 
        !(2)-----------------------------------------------------------------
+       ! computing gamma_ij using  Eqn.(56) from Grassi et al. 2011
+       ! Eij/k from HM89
        !C:10->01
        C_g10to01 = 3./1.*EXP(-24.*invTgas)
        g01C_H2o = g10C_H2o*C_g10to01
@@ -766,7 +791,7 @@ contains
        g12O_e = g21O_e*O_g21to12
 
        !//Cp:10->01
-       Cp_g10to01 = 4./2.*EXP(-91.2*invTgas)
+       Cp_g10to01 = 4./2.*EXP(-92.*invTgas)
        g01Cp_e = g10Cp_e*Cp_g10to01
        g01Cp_H = g10Cp_H*Cp_g10to01
 
@@ -780,7 +805,7 @@ contains
        g01Sip_e = g10Sip_e*Sip_g10to01
        g01Sip_H = g10Sip_H*Sip_g10to01
 
-       !//Fep-H ij->ji
+       !//Fep: ij->ji
        g01Fep_H = g10Fep_H*10./8.*EXP(-553.58*invTgas)
        g12Fep_H = g21Fep_H*6./8.*EXP(-407.01*invTgas)
        g23Fep_H = g32Fep_H*6./4.*EXP(-280.57*invTgas)
@@ -800,15 +825,15 @@ contains
        g02Fep_e = g20Fep_e*10./6.*EXP(-960.59*invTgas)
        g03Fep_e = g30Fep_e*10./4.*EXP(-1241.16*invTgas)
        g04Fep_e = g40Fep_e*10./2.*EXP(-1405.76*invTgas)
-       g13Fep_e = g31Fep_e*8./4.*EXP(-687.58*invTgas)
+       g13Fep_e = g31Fep_e*8./4.*EXP(-687.47*invTgas)
        g14Fep_e = g41Fep_e*8./2.*EXP(-852.18*invTgas)
        g24Fep_e = g42Fep_e*8./6.*EXP(-445.17*invTgas)
 
 
        !(3)-------------------------------------------------------------------
        !//calculates Mij=sum_k(n_k*g_ij**k)
-       nH2p=n(idx_H2)/(ratio_para_ortho+1.) !para-H2
-       nH2o=nH2p*ratio_para_ortho !orto-H2
+       nH2o = n(idx_H2)/(ratio_para_ortho+1.) !ortho-H2
+       nH2p = nH2o*ratio_para_ortho !para-H2
        !//Carbon
        M01C = g01C_H2o*nH2o +g01C_H2p*nH2p +g01C_H*n(idx_H) +g01C_Hp*n(idx_Hj) &
             +g01C_e*n(idx_e)
@@ -859,22 +884,22 @@ contains
        M24Fep= g24Fep_e*n(idx_e) +g24Fep_H*n(idx_H)
 
        !//calculates Mji=sum_k(n_k*g_ji**k)+Ajk
-       !//Carbon
+       !//Carbon Ajk from HM89
        M10C = g10C_H2o*nH2o +g10C_H2p*nH2p +g10C_H*n(idx_H) +g10C_Hp*n(idx_Hj) &
             +g10C_e*n(idx_e) +7.9D-8
        M21C = g21C_H2o*nH2o +g21C_H2p*nH2p +g21C_H*n(idx_H) +g21C_Hp*n(idx_Hj) &
-            +g21C_e*n(idx_e) +2.1D-14
+            +g21C_e*n(idx_e) +2.D-14
        M20C = g20C_H2o*nH2o +g20C_H2p*nH2p +g20C_H*n(idx_H) +g20C_Hp*n(idx_Hj) &
             +g20C_e*n(idx_e) +2.7D-7
 
-       !//Si
+       !//Si Ajk from HM89
        M10Si = g10Si_H*n(idx_H) +g10Si_Hp*n(idx_Hj) +8.4D-6
        M21Si = g21Si_H*n(idx_H) +g21Si_Hp*n(idx_Hj) +2.4D-10
        M20Si = g20Si_H*n(idx_H) +g20Si_Hp*n(idx_Hj) +4.2D-5
 
        !//Fe
        M10Fe = g10Fe_H*n(idx_H) +g10Fe_e*n(idx_e) +2.5D-3
-       M21Fe = g21Fe_H*n(idx_H) +g21Fe_e*n(idx_e) +1.6D-3
+       M21Fe = g21Fe_H*n(idx_H) +g21Fe_e*n(idx_e) +1.6D-3 !CHECK Aij
        M20Fe = g20Fe_H*n(idx_H) +g20Fe_e*n(idx_e) +1.D-9
        M30Fe = g30Fe_e*n(idx_e) +2.D-3
        M40Fe = g40Fe_e*n(idx_e) +1.5D-3
@@ -894,18 +919,18 @@ contains
        M20Op= g20Op_e*n(idx_e) +1.7D-4
        M21Op= g21Op_e*n(idx_e) +1.3D-7
        !//Sip
-       M10Sip= g10Sip_e*n(idx_e) +g10Sip_H*n(idx_H) +2.2D-4
+       M10Sip= g10Sip_e*n(idx_e) +g10Sip_H*n(idx_H) +2.1D-4
        !//Fep
-       M10Fep= g10Fep_e*n(idx_e) +g10Fep_H*n(idx_H) +2.13D-3
-       M21Fep= g21Fep_e*n(idx_e) +g21Fep_H*n(idx_H) +1.57D-3
-       M32Fep= g32Fep_e*n(idx_e) +g32Fep_H*n(idx_H) +7.18D-4
-       M43Fep= g43Fep_e*n(idx_e) +g43Fep_H*n(idx_H) +1.88D-4
-       M20Fep= g20Fep_e*n(idx_e) +g20Fep_H*n(idx_H) +1.50D-9
-       M30Fep= g30Fep_e*n(idx_e) +g30Fep_H*n(idx_H) +1.12D-3
-       M40Fep= g40Fep_e*n(idx_e) +g40Fep_H*n(idx_H) +1.12D-3
-       M31Fep= g31Fep_e*n(idx_e) +g31Fep_H*n(idx_H) +1.12D-3
-       M41Fep= g41Fep_e*n(idx_e) +g41Fep_H*n(idx_H) +1.12D-3
-       M42Fep= g42Fep_e*n(idx_e) +g42Fep_H*n(idx_H) +1.12D-3
+       M10Fep= g10Fep_e*n(idx_e) +g10Fep_H*n(idx_H) +2.13D-3 
+       M21Fep= g21Fep_e*n(idx_e) +g21Fep_H*n(idx_H) +1.57D-3 
+       M32Fep= g32Fep_e*n(idx_e) +g32Fep_H*n(idx_H) +7.18D-4 
+       M43Fep= g43Fep_e*n(idx_e) +g43Fep_H*n(idx_H) +1.88D-4 
+       M20Fep= g20Fep_e*n(idx_e) +g20Fep_H*n(idx_H) +1.50D-9 
+       M30Fep= g30Fep_e*n(idx_e) +g30Fep_H*n(idx_H) +1.12D-3 !!CHECK
+       M40Fep= g40Fep_e*n(idx_e) +g40Fep_H*n(idx_H) +1.12D-3 !!CHECK
+       M31Fep= g31Fep_e*n(idx_e) +g31Fep_H*n(idx_H) +1.12D-3 !!CHECK
+       M41Fep= g41Fep_e*n(idx_e) +g41Fep_H*n(idx_H) +1.12D-3 !!CHECK
+       M42Fep= g42Fep_e*n(idx_e) +g42Fep_H*n(idx_H) +1.12D-3 !!CHECK
 
 
        !(4)-----------------------------------------------------------------
@@ -963,6 +988,7 @@ contains
        call mydgesv(AFep,BFep)
        call mydgesv(AOp,BOp)
 
+
        !(6)------------------------------------------------------------------
        cool = cool + (BC(2)*7.9D-8*24. +BC(3)*2.1D-14*63. +BC(3)*2.7D-7*39.)*kb
        cool = cool + (BSi(2)*8.4D-6*110. +BSi(3)*2.4D-10*320. &
@@ -1004,7 +1030,7 @@ contains
     allocate(ipiv(n))
     call dgesv(n,1,A,n,ipiv,B,n,info)
     if(info .ne. 0) then
-       print *,"ERRORE!!! problemi con dgesv, info: ",info
+       print *,"ERROR: problem with dgesv, info: ",info
        do i=1,n
           tmp(:)=A(i,:)
           write(*,*) tmp(:)
