@@ -18,6 +18,7 @@ solver_MF = 222
 force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCompton = useH2opacity = useCoolingCIE = False
+useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = False
 pedanticMakefile = False
@@ -86,7 +87,7 @@ for arg in sys.argv:
 			[sys.argv.append(x) for x in ["-cooling=CEN,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial"
 		elif(test_name=="collapseZ"):
-			[sys.argv.append(x) for x in ["-cooling=CEN,H2,COMPTON,CIE,Z", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
+			[sys.argv.append(x) for x in ["-cooling=CEN,H2,COMPTON,CIE,HD", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial_Z"
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
@@ -200,8 +201,8 @@ for arg in sys.argv:
 #determine cooling types
 for arg in sys.argv:
 	if("cooling=" in arg):
-		myCools = arg.strip().replace("-cooling=","").upper().split(",")
-		allCools = ["CEN","H2","HD","Z","DH","DUST","H2GP98","COMPTON","CIE"]
+		myCools = arg.strip().replace("-cooling=","").split(",")
+		allCools = ["CEN","H2","HD","Z","DH","DUST","H2GP98","COMPTON","CIE","ZCI","ZCII","ZSiI","ZSiII","ZOI","ZOII","ZFeI","ZFeII"]
 		for coo in myCools:
 			if(not(coo in allCools)):
 				die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
@@ -210,13 +211,21 @@ for arg in sys.argv:
 		if("H2" in myCools): useCoolingH2 = True
 		if("H2GP98" in myCools): useCoolingH2GP98 = True
 		if("HD" in myCools): useCoolingHD = True
-		if("Z" in myCools): useCoolingZ = True
 		if("DH" in myCools): useCoolingdH = True
 		if("DUST" in myCools): useCoolingDust = True
 		if("COMPTON" in myCools): useCoolingCompton = True
 		if("CIE" in myCools): useCoolingCIE = True
+		if("Z" in myCools): useCoolingZ = useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = True
+		if("ZCI" in myCools): useCoolingZ = useCoolingZC = True
+		if("ZCII" in myCools): useCoolingZ = useCoolingZCp = True
+		if("ZSiI" in myCools): useCoolingZ = useCoolingZSi = True
+		if("ZSiII" in myCools): useCoolingZ = useCoolingZSip = True
+		if("ZOI" in myCools): useCoolingZ = useCoolingZO = True
+		if("ZOII" in myCools): useCoolingZ = useCoolingZOp = True
+		if("ZFeI" in myCools): useCoolingZ = useCoolingZFe = True
+		if("ZFeII" in myCools): useCoolingZ = useCoolingZFep = True
+					
 		use_cooling = True
-
 		
 		hasDust = False
 		for aa in sys.argv:
@@ -227,7 +236,7 @@ for arg in sys.argv:
 		use_thermo = True
 
 		print "Reading option -cooling ("+(",".join(myCools))+")"
-		break
+		
 #determine heating types
 for arg in sys.argv:
 	if("heating=" in arg):
@@ -247,7 +256,7 @@ for arg in sys.argv:
 			die("ERROR: if you use photoheating you have to include potoionization via -usePhIoniz")
 
 		print "Reading option -heating ("+(",".join(myHeat))+")"
-		break
+	
 
 #force rwork size
 for arg in sys.argv:
@@ -1275,30 +1284,65 @@ for row in fh:
 		fout.write(get_licence_header())
 	else:
 		srow = row.strip()
+		#enthalpic
 		if(srow == "#IFKROME_useCoolingdH" and (not(useCoolingdH) or len(dH_varsa)==0)): skip = True
 		if(srow == "#ENDIFKROME"): skip = False
 
+		#dust
 		if(srow == "#IFKROME_useCoolingDust" and not(useCoolingDust)): skip = True
 		if(srow == "#ENDIFKROME"): skip = False
 
+		#metals
 		if(srow == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
+		if(srow == "#ENDIFKROME_useCoolingZ"): skip = False
+
+		#individual metals
+		if(srow == "#IFKROME_useCoolingZC" and not(useCoolingZC)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
+		
+		if(srow == "#IFKROME_useCoolingZCp" and not(useCoolingZCp)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
+		
+		if(srow == "#IFKROME_useCoolingZSi" and not(useCoolingZSi)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
+		
+		if(srow == "#IFKROME_useCoolingZSip" and not(useCoolingZSip)): skip = True
 		if(srow == "#ENDIFKROME"): skip = False
 
+		if(srow == "#IFKROME_useCoolingZO" and not(useCoolingZO)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
+		
+		if(srow == "#IFKROME_useCoolingZOp" and not(useCoolingZOp)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
+		
+		if(srow == "#IFKROME_useCoolingZFe" and not(useCoolingZFe)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
+		
+		if(srow == "#IFKROME_useCoolingZFep" and not(useCoolingZFep)): skip = True
+		if(srow == "#ENDIFKROME"): skip = False
+
+
+		#CEN
 		if(srow == "#IFKROME_useCoolingCEN" and not(useCoolingCEN)): skip = True
 		if(srow == "#ENDIFKROME"): skip = False
 
+		#H2
 		if(srow == "#IFKROME_useCoolingH2" and not(useCoolingH2)): skip = True
 		if(srow == "#ENDIFKROME"): skip = False
 
+		#H2GP92
 		if(srow == "#IFKROME_useCoolingH2GP" and not(useCoolingH2GP98)): skip = True
 		if(srow == "#ENDIFKROME"): skip = False
-
+		
+		#HD
 		if(srow == "#IFKROME_useCoolingHD" and not(useCoolingHD)): skip = True
 		if(srow == "#ENDIFKROME"): skip = False
-
+		
+		#COMPTON
 		if(srow == "#IFKROME_useCoolingCompton" and not(useCoolingCompton)): skip = True
 		if(srow == "#ENDIFKROME"): skip = False
 
+		#CIE
 		if(srow == "#IFKROME_useCoolingCIE" and not(useCoolingCIE)): skip = True
 		if(srow == "#ENDIFKROME"): skip = False
 
