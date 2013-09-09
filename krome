@@ -88,7 +88,7 @@ for arg in sys.argv:
 			filename = "networks/react_primordial"
 		elif(test_name=="collapseZ"):
 			[sys.argv.append(x) for x in ["-cooling=CEN,H2,COMPTON,CIE,HD", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
-			filename = "networks/react_primordial_Z"
+			filename = "networks/react_omukaiZ"
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
 			sys.exit()

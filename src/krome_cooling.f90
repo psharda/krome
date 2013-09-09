@@ -709,11 +709,6 @@ contains
        g32Fep_H = 5.D-10
        g43Fep_H = 5.D-10
        g20Fep_H = 5.7D-10
-       g30Fep_H = 5.D-10
-       g40Fep_H = 5.D-10
-       g31Fep_H = 5.D-10
-       g41Fep_H = 5.D-10
-       g42Fep_H = 5.D-10
 
        !//Fep-e M07
        g10Fep_e = 1.8D-6*(T2)**(-.5)
@@ -721,11 +716,6 @@ contains
        g32Fep_e = 1.D-5*Tgas**(-.5)
        g43Fep_e = 1.D-5*Tgas**(-.5)
        g20Fep_e = 1.8D-6*(T2)**(-.5)
-       g30Fep_e = 1.D-5*Tgas**(-.5)
-       g40Fep_e = 1.D-5*Tgas**(-.5)
-       g31Fep_e = 1.D-5*Tgas**(-.5)
-       g41Fep_e = 1.D-5*Tgas**(-.5)
-       g42Fep_e = 1.D-5*Tgas**(-.5)
 #ENDIFKROME
 
        !(2)-----------------------------------------------------------------
@@ -733,7 +723,7 @@ contains
        ! Eij/k from HM89
 
 #IFKROME_useCoolingZC
-       !C:10->01
+       !C:10->01 GJ07
        C_g10to01 = 3./1.*EXP(-24.*invTgas)
        g01C_H2o = g10C_H2o*C_g10to01
        g01C_H2p = g10C_H2p*C_g10to01
@@ -741,7 +731,7 @@ contains
        g01C_Hp = g10C_Hp*C_g10to01
        g01C_e = g10C_e*C_g10to01
 
-       !//C:20->02
+       !//C:20->02 GJ07
        C_g20to02 = 5./1.*EXP(-63.*invTgas)
        g02C_H2o = g20C_H2o*C_g20to02
        g02C_H2p = g20C_H2p*C_g20to02
@@ -749,7 +739,7 @@ contains
        g02C_Hp = g20C_Hp*C_g20to02
        g02C_e = g20C_e*C_g20to02
 
-       !//C:21->12
+       !//C:21->12 GJ07
        C_g21to12 = 5./3.*EXP(-39.*invTgas)
        g12C_H2o = g21C_H2o*C_g21to12
        g12C_H2p = g21C_H2p*C_g21to12
@@ -759,46 +749,46 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZSi
-       !//Si:10->01
+       !//Si:10->01 GJ07
        Si_g10to01 = 3./1.*EXP(-110.*invTgas)
        g01Si_H = g10Si_H*Si_g10to01
        g01Si_Hp = g10Si_Hp*Si_g10to01
 
-       !//Si:20->02
+       !//Si:20->02 GJ07
        Si_g20to02 = 5./1.*EXP(-320.*invTgas)
        g02Si_H = g20Si_H*Si_g20to02
        g02Si_Hp = g20Si_Hp*Si_g20to02
 
-       !//Si:21->12
+       !//Si:21->12 GJ07
        Si_g21to12 = 5./3.*EXP(-210.*invTgas)
        g12Si_H = g21Si_H*Si_g21to12
        g12Si_Hp = g21Si_Hp*Si_g21to12
 #ENDIFKROME
 
 #IFKROME_useCoolingZFe
-       !//Fe:10->01
-       Fe_g10to01 = 9./7.*EXP(-600.*invTgas)
+       !//Fe:10->01 NIST Level
+       Fe_g10to01 = 9./7.*EXP(-598.43*invTgas)
        g01Fe_H = g10Fe_H*Fe_g10to01
        g01Fe_e = g10Fe_e*Fe_g10to01
 
-       !//Fe:20->02
-       Fe_g20to02 = 9./5.*EXP(-1000.*invTgas)
+       !//Fe:20->02 NIST Level
+       Fe_g20to02 = 9./5.*EXP(-1012.9*invTgas)
        g02Fe_H = g20Fe_H*Fe_g20to02
        g02Fe_e = g20Fe_e*Fe_g20to02
 
-       !//Fe:21->12
-       Fe_g21to12 = 7./5.*EXP(-420.*invTgas)
+       !//Fe:21->12 NIST Level
+       Fe_g21to12 = 7./5.*EXP(-414.47*invTgas)
        g12Fe_H = g21Fe_H*Fe_g21to12
        g12Fe_e = g21Fe_H*Fe_g21to12
 
-       !//Fe:ij->jk
-       g03Fe_e = g30Fe_e*9./11.*EXP(-9900.*invTgas)
-       g04Fe_e = g40Fe_e*9./8.*EXP(-11000.*invTgas)
-       g34Fe_e = g43Fe_e*11./8.*EXP(-640.*invTgas)
+       !//Fe:ij->jk NIST Level
+       g03Fe_e = g30Fe_e*9./11.*EXP(-9968.2*invTgas)
+       g04Fe_e = g40Fe_e*9./8.*EXP(-10613.5*invTgas)
+       g34Fe_e = g43Fe_e*11./8.*EXP(-645.3*invTgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingZO
-       !//O:10->01
+       !//O:10->01 GJ07
        O_g10to01 = 3./5.*EXP(-230.*invTgas)
        g01O_H2o = g10O_H2o*O_g10to01
        g01O_H2p = g10O_H2p*O_g10to01
@@ -806,7 +796,7 @@ contains
        g01O_Hp = g10O_Hp*O_g10to01
        g01O_e = g10O_e*O_g10to01
 
-       !//O:20->02
+       !//O:20->02 GJ07
        O_g20to02 = 1./5.*EXP(-330.*invTgas)
        g02O_H2o = g20O_H2o*O_g20to02
        g02O_H2p = g20O_H2p*O_g20to02
@@ -814,7 +804,7 @@ contains
        g02O_Hp = g20O_Hp*O_g20to02
        g02O_e = g20O_e*O_g20to02
 
-       !//O:21->12
+       !//O:21->12 GJ07
        O_g21to12 = 1./3.*EXP(-98.*invTgas)
        g12O_H2o = g21O_H2o*O_g21to12
        g12O_H2p = g21O_H2p*O_g21to12
@@ -824,50 +814,40 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZCp
-       !//Cp:10->01
-       Cp_g10to01 = 4./2.*EXP(-92.*invTgas)
+       !//Cp:10->01 M07
+       Cp_g10to01 = 4./2.*EXP(-91.2*invTgas)
        g01Cp_e = g10Cp_e*Cp_g10to01
        g01Cp_H = g10Cp_H*Cp_g10to01
 #ENDIFKROME
 
 #IFKROME_useCoolingZOp
-       !//Op:ij->ji
-       g01Op_e = g10Op_e*11./7.*EXP(-39000.*invTgas)
-       g02Op_e = g20Op_e*7./7.*EXP(-39000.*invTgas)
-       g12Op_e = g21Op_e*7./11.*EXP(-30.*invTgas)
+       !//Op:ij->ji NIST Level
+       g01Op_e = g10Op_e*11./7.*EXP(-38574.4*invTgas)
+       g02Op_e = g20Op_e*7./7.*EXP(-38603.2*invTgas)
+       g12Op_e = g21Op_e*7./11.*EXP(-28.8*invTgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingZSip
-       !//Sip:10->01
-       Sip_g10to01 = 2./4.*EXP(-410.*invTgas)
+       !//Sip:10->01 M07
+       Sip_g10to01 = 4./2.*EXP(-413.6*invTgas)
        g01Sip_e = g10Sip_e*Sip_g10to01
        g01Sip_H = g10Sip_H*Sip_g10to01
 #ENDIFKROME
 
 #IFKROME_useCoolingZFep
-       !//Fep: ij->ji
+       !//Fep: ij->ji M07
        g01Fep_H = g10Fep_H*10./8.*EXP(-553.58*invTgas)
        g12Fep_H = g21Fep_H*6./8.*EXP(-407.01*invTgas)
        g23Fep_H = g32Fep_H*6./4.*EXP(-280.57*invTgas)
        g34Fep_H = g43Fep_H*4./2.*EXP(-164.6*invTgas)
        g02Fep_H = g20Fep_H*10./6.*EXP(-960.59*invTgas)
-       g03Fep_H = g30Fep_H*10./4.*EXP(-1241.16*invTgas)
-       g04Fep_H = g40Fep_H*10./2.*EXP(-1405.76*invTgas)
-       g13Fep_H = g31Fep_H*8./4.*EXP(-687.58*invTgas)
-       g14Fep_H = g41Fep_H*8./2.*EXP(-852.18*invTgas)
-       g24Fep_H = g42Fep_H*8./6.*EXP(-445.17*invTgas)
 
-       !//Fep-e ij->ji
+       !//Fep-e ij->ji M07
        g01Fep_e = g10Fep_e*10./8.*EXP(-553.58*invTgas)
        g12Fep_e = g21Fep_e*6./8.*EXP(-407.01*invTgas)
        g23Fep_e = g32Fep_e*6./4.*EXP(-280.57*invTgas)
        g34Fep_e = g43Fep_e*4./2.*EXP(-164.6*invTgas)
        g02Fep_e = g20Fep_e*10./6.*EXP(-960.59*invTgas)
-       g03Fep_e = g30Fep_e*10./4.*EXP(-1241.16*invTgas)
-       g04Fep_e = g40Fep_e*10./2.*EXP(-1405.76*invTgas)
-       g13Fep_e = g31Fep_e*8./4.*EXP(-687.47*invTgas)
-       g14Fep_e = g41Fep_e*8./2.*EXP(-852.18*invTgas)
-       g24Fep_e = g42Fep_e*8./6.*EXP(-445.17*invTgas)
 #ENDIFKROME
 
        !(3)-------------------------------------------------------------------
@@ -936,11 +916,6 @@ contains
        M23Fep= g23Fep_e*n(idx_e) +g23Fep_H*n(idx_H)
        M34Fep= g34Fep_e*n(idx_e) +g34Fep_H*n(idx_H)
        M02Fep= g02Fep_e*n(idx_e) +g02Fep_H*n(idx_H)
-       M03Fep= g03Fep_e*n(idx_e) +g03Fep_H*n(idx_H)
-       M04Fep= g04Fep_e*n(idx_e) +g04Fep_H*n(idx_H)
-       M13Fep= g13Fep_e*n(idx_e) +g13Fep_H*n(idx_H)
-       M14Fep= g14Fep_e*n(idx_e) +g14Fep_H*n(idx_H)
-       M24Fep= g24Fep_e*n(idx_e) +g24Fep_H*n(idx_H)
 #ENDIFKROME
 
 #IFKROME_useCoolingZC
@@ -962,9 +937,9 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZFe
-       !//Fe
+       !//Fe HM89 (2->1 fixed according to NIST Lines)
        M10Fe = g10Fe_H*n(idx_H) +g10Fe_e*n(idx_e) +2.5D-3
-       M21Fe = g21Fe_H*n(idx_H) +g21Fe_e*n(idx_e) +1.6D-3 !CHECK Aij
+       M21Fe = g21Fe_H*n(idx_H) +g21Fe_e*n(idx_e) +1.6D-3 
        M20Fe = g20Fe_H*n(idx_H) +g20Fe_e*n(idx_e) +1.D-9
        M30Fe = g30Fe_e*n(idx_e) +2.D-3
        M40Fe = g40Fe_e*n(idx_e) +1.5D-3
@@ -972,7 +947,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZO
-       !//O
+       !//O GJ07
        M10O = g10O_H2o*nH2o +g10O_H2p*nH2p +g10O_H*n(idx_H) +g10O_Hp*n(idx_Hj) &
             +g10O_e*n(idx_e) +8.9D-5
        M21O = g21O_H2o*nH2o +g21O_H2p*nH2p +g21O_H*n(idx_H) +g21O_Hp*n(idx_Hj) &
@@ -982,34 +957,29 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZCp
-       !//Cp
+       !//Cp M07
        M10Cp= g10Cp_H*n(idx_H) +g10Cp_e*n(idx_e) +2.4D-6
 #ENDIFKROME
 
 #IFKROME_useCoolingZOp
-       !//Op
+       !//Op HM89
        M10Op= g10Op_e*n(idx_e) +5.1D-5
        M20Op= g20Op_e*n(idx_e) +1.7D-4
        M21Op= g21Op_e*n(idx_e) +1.3D-7
 #ENDIFKROME
 
 #IFKROME_useCoolingZSip
-       !//Sip
-       M10Sip= g10Sip_e*n(idx_e) +g10Sip_H*n(idx_H) +2.1D-4
+       !//Sip M07
+       M10Sip= g10Sip_e*n(idx_e) +g10Sip_H*n(idx_H) +2.1d-4
 #ENDIFKROME
 
 #IFKROME_useCoolingZFep
-       !//Fep
+       !//Fep M07
        M10Fep= g10Fep_e*n(idx_e) +g10Fep_H*n(idx_H) +2.13D-3 
        M21Fep= g21Fep_e*n(idx_e) +g21Fep_H*n(idx_H) +1.57D-3 
        M32Fep= g32Fep_e*n(idx_e) +g32Fep_H*n(idx_H) +7.18D-4 
        M43Fep= g43Fep_e*n(idx_e) +g43Fep_H*n(idx_H) +1.88D-4 
        M20Fep= g20Fep_e*n(idx_e) +g20Fep_H*n(idx_H) +1.50D-9 
-       M30Fep= g30Fep_e*n(idx_e) +g30Fep_H*n(idx_H) +1.12D-3 !!CHECK
-       M40Fep= g40Fep_e*n(idx_e) +g40Fep_H*n(idx_H) +1.12D-3 !!CHECK
-       M31Fep= g31Fep_e*n(idx_e) +g31Fep_H*n(idx_H) +1.12D-3 !!CHECK
-       M41Fep= g41Fep_e*n(idx_e) +g41Fep_H*n(idx_H) +1.12D-3 !!CHECK
-       M42Fep= g42Fep_e*n(idx_e) +g42Fep_H*n(idx_H) +1.12D-3 !!CHECK
 #ENDIFKROME
 
        !(4)-----------------------------------------------------------------
@@ -1033,7 +1003,7 @@ contains
 #IFKROME_useCoolingZFe
        AFe(1,:)=(/1.d0, 1.d0, 1.d0, 1.d0, 1.d0/)
        AFe(2,:)=(/M01Fe+M02Fe+M03Fe+M04Fe,-M10Fe,-M20Fe,-M30Fe,-M40Fe/)
-       AFe(3,:)=(/-M01Fe,M10Fe+M20Fe,-M21Fe,0.d0,0.d0/)
+       AFe(3,:)=(/-M01Fe,M10Fe+M12Fe,-M21Fe,0.d0,0.d0/)
        AFe(4,:)=(/-M02Fe, -M12Fe, M20Fe+M21Fe,0.d0,0.d0/)
        AFe(5,:)=(/-M03Fe,0.d0,0.d0,M30Fe+M34Fe,-M43Fe/)
        BFe(:) = (/n(idx_Fe), 0.d0, 0.d0, 0.d0, 0.d0/)
@@ -1067,10 +1037,10 @@ contains
 
 #IFKROME_useCoolingZFep
        AFep(1,:)=(/1.d0, 1.d0, 1.d0, 1.d0, 1.d0/)
-       AFep(2,:)=(/M01Fep+M02Fep+M03Fep+M04Fep,-M10Fep,-M20Fep,-M30Fep,-M40Fep/)
-       AFep(3,:)=(/-M01Fep,M10Fep+M20Fep,-M21Fep, 0.d0, 0.d0/)
-       AFep(4,:)=(/-M02Fep, -M12Fep, M20Fep+M21Fep,0.d0,0.d0/)
-       AFep(5,:)=(/-M03Fep,0.d0,0.d0,M30Fep+M34Fep,-M43Fep/)
+       AFep(2,:)=(/M01Fep+M02Fep,-M10Fep,-M20Fep,0.d0,0.d0/)
+       AFep(3,:)=(/-M01Fep,M10Fep+M12Fep,-M21Fep, 0.d0, 0.d0/)
+       AFep(4,:)=(/-M02Fep, -M12Fep, M20Fep+M21Fep+M23Fep,-M32Fep,0.d0/)
+       AFep(5,:)=(/0.d0,0.d0,-M23Fep,M32Fep+M34Fep,-M43Fep/)
        BFep(:) = (/n(idx_Fej),0.d0,0.d0,0.d0,0.d0/)
 #ENDIFKROME
 
@@ -1122,8 +1092,8 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZFe
-       cool = cool + (BFe(2)*2.5D-3*600.+BFe(3)*(1.D-9*1000.+1.6D-3*420.)&
-            +BFe(4)*2.D-3*9900. +BFe(5)*(1.5D-3*11000.+3.6D-3*640.))*kb
+       cool = cool + (BFe(2)*2.5D-3*598.43+BFe(3)*(1.D-9*1012.9+1.6D-3*414.47)& 
+            +BFe(4)*2.D-3*9968.2 +BFe(5)*(1.5D-3*10613.5+3.6D-3*645.3))*kb
 #ENDIFKROME
 
 #IFKROME_useCoolingZO
@@ -1131,23 +1101,22 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZCp
-       cool = cool + (BCp(2)*2.4D-6*1.259D-14)*kb
+       cool = cool + (BCp(2)*2.4D-6*91.2d0)*kb
 #ENDIFKROME
 
 #IFKROME_useCoolingZOp
-       cool = cool + (BOp(2)*5.1D-5*3.9D4 +BOp(3)*(1.7D-4*3.9D4+1.3D-7*30.))*kb
+       cool = cool + (BOp(2)*5.1D-5*38574.4 +BOp(3)*(1.7D-4*38603.2+1.3D-7*28.2))*kb
 #ENDIFKROME
 
 #IFKROME_useCoolingZSip
-       cool = cool + (BSip(2)*2.2D-4*410.)*kb
+       cool = cool + (BSip(2)*2.1d-4*413.6)*kb
 #ENDIFKROME
 
 #IFKROME_useCoolingZFep
        cool = cool + (BFep(2)*2.13D-3*553.58 +BFep(3)*(1.5D-9*960.59&
             +1.57D-3*407.01) + &
-            BFep(4)*(1.12D-3*1241.16 +1.12D-3*687.58 +1.12D-3*280.57) + &
-            BFep(5)*(1.12D-3*1405.76 +1.12D-3*852.18 +1.12D-3*445.17 &
-            +1.88D-4*164.6))*kb
+            BFep(4)*7.18d-4*280.57 + &
+            BFep(5)*1.88D-4*164.6)*kb
 #ENDIFKROME
 
     !check errore
