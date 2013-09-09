@@ -33,8 +33,8 @@ customCoeFunction = "[CUSTOM COE FUNCTION NOT SET!]"
 buildFolder = "build/"
 TminAuto = 1e99
 TmaxAuto = -1e99
-RTOL = 1e-6 #default relative tolerance
-ATOL = 1e-40 #default absolute tolerance
+RTOL = 1e-4 #default relative tolerance
+ATOL = 1e-20 #default absolute tolerance
 dustArraySize = dustTypesSize = 0
 #select test name
 for arg in sys.argv:
@@ -45,7 +45,7 @@ for arg in sys.argv:
 		if(test_name=="planet"):
 			[sys.argv.append(x) for x in ["-useN","-reverse"]]
 			filename = "networks/react_planet"
-		elif(test_name=="WH2008"):
+		elif(test_name=="CLOUD"):
 			[sys.argv.append(x) for x in ["-useN","-iRHS"]]
 			filename = "networks/react_WH2008"
 		elif(test_name=="fake"):
@@ -58,7 +58,7 @@ for arg in sys.argv:
 			[sys.argv.append(x) for x in ["-useN","-iRHS","-useFlux"]]
 			filename = "networks/react_WH2008"
 		elif(test_name=="cooling"):
-			[sys.argv.append(x) for x in ["-useN","-cooling=CEN,H2,HD,Z,DH,H2GP98"]]
+			[sys.argv.append(x) for x in ["-useN","-cooling=ATOMIC,H2,HD,Z,DH,H2GP98"]]
 			filename = "networks/react_primordial"
 		elif(test_name=="shock1Dcool"):
 			[sys.argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
@@ -66,13 +66,13 @@ for arg in sys.argv:
 		elif(test_name=="shock1D"):
 			filename = "networks/react_primordial"
 		elif(test_name=="shock1Dphoto"):
-			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO","-cooling=CEN,H2,HD,Z","-useEquilibrium"]]
+			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium"]]
 			filename = "networks/react_primordial_photo"
 		elif(test_name=="shock1Dlarge"):
 			[sys.argv.append(x) for x in ["-iRHS"]]
 			filename = "networks/react_WH2008"
 		elif(test_name=="shock1Dbuff"):
-			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO","-cooling=CEN,H2,HD,Z","-useEquilibrium"]]
+			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium"]]
 			filename = "networks/react_primordial_photo"
 		elif(test_name=="dust"):
 			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN"]]
@@ -81,14 +81,17 @@ for arg in sys.argv:
 			[sys.argv.append(x) for x in ["-compact"]]
 			filename = "networks/react_primordial"
 		elif(test_name=="map"):
-			[sys.argv.append(x) for x in ["-cooling=CEN,H2,HD", "-heating=PHOTO","-usePhIoniz"]]
+			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,HD", "-heating=PHOTO","-usePhIoniz"]]
 			filename = "networks/react_primordial_photo"
 		elif(test_name=="collapse"):
-			[sys.argv.append(x) for x in ["-cooling=CEN,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
+			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial"
 		elif(test_name=="collapseZ"):
-			[sys.argv.append(x) for x in ["-cooling=CEN,H2,COMPTON,CIE,HD", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
-			filename = "networks/react_omukaiZ"
+			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,CII,OI", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL","-ATOL=1d-40"]]
+			filename = "networks/react_primordialZ"
+		elif(test_name=="collapseUV"):
+			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
+			filename = "networks/react_primordial_UV"
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
 			sys.exit()
@@ -202,12 +205,12 @@ for arg in sys.argv:
 for arg in sys.argv:
 	if("cooling=" in arg):
 		myCools = arg.strip().replace("-cooling=","").split(",")
-		allCools = ["CEN","H2","HD","Z","DH","DUST","H2GP98","COMPTON","CIE","ZCI","ZCII","ZSiI","ZSiII","ZOI","ZOII","ZFeI","ZFeII"]
+		allCools = ["ATOMIC","H2","HD","Z","DH","DUST","H2GP98","COMPTON","CIE","CI","CII","SiI","SiII","OI","OII","FeI","FeII"]
 		for coo in myCools:
 			if(not(coo in allCools)):
 				die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
 
-		if("CEN" in myCools): useCoolingCEN = True
+		if("ATOMIC" in myCools): useCoolingCEN = True
 		if("H2" in myCools): useCoolingH2 = True
 		if("H2GP98" in myCools): useCoolingH2GP98 = True
 		if("HD" in myCools): useCoolingHD = True
@@ -216,14 +219,14 @@ for arg in sys.argv:
 		if("COMPTON" in myCools): useCoolingCompton = True
 		if("CIE" in myCools): useCoolingCIE = True
 		if("Z" in myCools): useCoolingZ = useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = True
-		if("ZCI" in myCools): useCoolingZ = useCoolingZC = True
-		if("ZCII" in myCools): useCoolingZ = useCoolingZCp = True
-		if("ZSiI" in myCools): useCoolingZ = useCoolingZSi = True
-		if("ZSiII" in myCools): useCoolingZ = useCoolingZSip = True
-		if("ZOI" in myCools): useCoolingZ = useCoolingZO = True
-		if("ZOII" in myCools): useCoolingZ = useCoolingZOp = True
-		if("ZFeI" in myCools): useCoolingZ = useCoolingZFe = True
-		if("ZFeII" in myCools): useCoolingZ = useCoolingZFep = True
+		if("CI" in myCools): useCoolingZ = useCoolingZC = True
+		if("CII" in myCools): useCoolingZ = useCoolingZCp = True
+		if("SiI" in myCools): useCoolingZ = useCoolingZSi = True
+		if("SiII" in myCools): useCoolingZ = useCoolingZSip = True
+		if("OI" in myCools): useCoolingZ = useCoolingZO = True
+		if("OII" in myCools): useCoolingZ = useCoolingZOp = True
+		if("FeI" in myCools): useCoolingZ = useCoolingZFe = True
+		if("FeII" in myCools): useCoolingZ = useCoolingZFep = True
 					
 		use_cooling = True
 		
@@ -1069,8 +1072,8 @@ if(not(file_exists(buildFolder+"krome_user_commons.f90"))):
 
 	fouta.close()
 	print "done!"
-
-
+else:
+	print "WARNING: krome_user_commons.f90 not replaced!"
 #*********SUBS****************
 #write parameters in krome_subs.f90
 print "- writing krome_subs.f90...",
@@ -1298,28 +1301,28 @@ for row in fh:
 
 		#individual metals
 		if(srow == "#IFKROME_useCoolingZC" and not(useCoolingZC)): skip = True
-		if(srow == "#ENDIFKROME"): skip = False
+		if(srow == "#ENDIFKROME_useCoolingZC" and useCoolingZ): skip = False
 		
 		if(srow == "#IFKROME_useCoolingZCp" and not(useCoolingZCp)): skip = True
-		if(srow == "#ENDIFKROME"): skip = False
+		if(srow == "#ENDIFKROME_useCoolingZCp" and useCoolingZ): skip = False
 		
 		if(srow == "#IFKROME_useCoolingZSi" and not(useCoolingZSi)): skip = True
-		if(srow == "#ENDIFKROME"): skip = False
+		if(srow == "#ENDIFKROME_useCoolingZSi" and useCoolingZ): skip = False
 		
 		if(srow == "#IFKROME_useCoolingZSip" and not(useCoolingZSip)): skip = True
-		if(srow == "#ENDIFKROME"): skip = False
+		if(srow == "#ENDIFKROME_useCoolingZSip" and useCoolingZ): skip = False
 
 		if(srow == "#IFKROME_useCoolingZO" and not(useCoolingZO)): skip = True
-		if(srow == "#ENDIFKROME"): skip = False
+		if(srow == "#ENDIFKROME_useCoolingZO" and useCoolingZ): skip = False
 		
 		if(srow == "#IFKROME_useCoolingZOp" and not(useCoolingZOp)): skip = True
-		if(srow == "#ENDIFKROME"): skip = False
+		if(srow == "#ENDIFKROME_useCoolingZOp" and useCoolingZ): skip = False
 		
 		if(srow == "#IFKROME_useCoolingZFe" and not(useCoolingZFe)): skip = True
-		if(srow == "#ENDIFKROME"): skip = False
+		if(srow == "#ENDIFKROME_useCoolingZFe" and useCoolingZ): skip = False
 		
 		if(srow == "#IFKROME_useCoolingZFep" and not(useCoolingZFep)): skip = True
-		if(srow == "#ENDIFKROME"): skip = False
+		if(srow == "#ENDIFKROME_useCoolingZFep" and useCoolingZ): skip = False
 
 
 		#CEN
@@ -1678,7 +1681,7 @@ scaleZ = []
 for (k,v) in solar.iteritems():
 	for mols in specs:
 		if(k.upper()==mols.name.upper()):
-			scaleZ.append("n("+mols.fidx+") = n(idx_H) * 1d1**(Z+log10("+str(v)+"))")
+			scaleZ.append("n("+mols.fidx+") = max(n(idx_H) * 1d1**(Z+log10("+str(v)+")), 1d-40)")
 
 for row in fh:
 

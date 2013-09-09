@@ -1,0 +1,33 @@
+reset
+set multiplot layout 2,1
+set logscale
+set autoscale
+set format y "%L"
+set format x "%L"
+
+set bmargin 0
+set lmargin 6
+
+set key b r
+set xtics format " " 
+set ylabel "log(T/K)"
+plot './fort.22' u 2:($1==0.e0?$3:1/0) t "J21=0.0" w l,\
+'' u 2:($1==1.e0?$3:1/0) t "J21=1.0" w l,\
+'' u 2:($1==1.e2?$3:1/0) t "J21=1e2" w l,\
+'' u 2:($1==1.e5?$3:1/0) t "J21=1e5" w l
+
+unset key
+set bmargin 3.5
+set lmargin 6.15
+set xlabel "log(n/cm-3)"
+set format x "%L"
+set ylabel "xH2"
+set xlabel "log(n/cm^-3)"
+set yrange [1e-8:]
+plot './fort.22' u 2:($1==0.e0?$4:1/0) t "J21=0.0" w l,\
+'' u 2:($1==1.e0?$4:1/0) t "J21=1.0" w l,\
+'' u 2:($1==1.e2?$4:1/0) t "J21=1e2" w l,\
+'' u 2:($1==1.e5?$4:1/0) t "J21=1e5" w l
+
+
+unset multiplot

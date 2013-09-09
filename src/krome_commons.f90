@@ -30,7 +30,6 @@ module krome_commons
   real*8::krome_dust_asize2(ndust),krome_dust_aspan(ndust)
 
   !commons for photoionization
-  real*8::krome_J21
 #KROME_photo_variables
 #KROME_photoheating_variables
 

@@ -5,8 +5,9 @@ contains
   function Jflux(nrg)
     !UV flux in eV/s/cm2/sr/Hz as a function of energy in eV
     use krome_commons
+    use krome_user_commons
     implicit none
-    real*8::Jflux,nrg,J21
+    real*8::Jflux,nrg
     Jflux = 0.d0
 #IFKROME_usePhIoniz
     Jflux = 6.2415d-10 * krome_J21 * (13.6d0/nrg) !6.241d-10eV = 1d-21erg
@@ -20,8 +21,6 @@ contains
     use krome_commons
 
     print *,"Initializaing photoreactions..."
-
-    krome_J21 = 1.d0
 
 #KROME_photo_init_zero
 #KROME_photo_qromos

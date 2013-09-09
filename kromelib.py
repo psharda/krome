@@ -373,12 +373,12 @@ DESCRIPTION
 	-ATOL=N
 		set solver absolute tolerance to the float
 		or double value N, e.g. -ATOL=1d-40
-		Default is N=1d-40
+		Default is ATOL=1d-20
 
 	-RTOL=N
 		set solver relative tolerance to the float
 		double value N, e.g. -RTOL=1e-5
-		Default is N=1d-6
+		Default is RTOL=1d-4
 	
 	-useN
 		use number densities (1/cm3) as input/ouput 
@@ -386,14 +386,23 @@ DESCRIPTION
 
 	-cooling=COOLING
 		activate cooling listed in COOLING:
-		CEN	Cen 1992
+		ATOMIC	Cen 1992
 		H2	H2 Glover&Abel 2008
 		H2GP	H2 Galli&Palla 1998
 		HD 	HD Lipovka2005
-		Z	Metals C,O,Si,Fe (Maio2007,Grassi2012)
+                CI      Carbon cooling
+                CII     Carbon ion cooling
+                OI      Oxygen cooling
+                OII     Oxygen ion cooling
+                FeI     Iron cooling
+                FeII    Iron ion cooling
+                SiI     Silicon cooling
+                SiII    Silicon  ion cooling
+	        Z	All metals
 		DH	enthalpic
 		DUST 	dust cooling
                 COMPTON compton cooling (Cen1992, Glover&Jappsen2007)
+                CIE     collisional induced emission
 		example: -cooling=CEN,H2,HD
 
 	-heating=HEATING
@@ -425,11 +434,13 @@ DESCRIPTION
 		select a test model within TEST:
 		planetary	Simple planet atmosphere
 		fake		Fake reactions (slow manifold)
-		WH2008		Wakelam&Herbst (2008) one-zone
+		cloud		Molecular cloud one-zone
 		topology	Topology reduction (authority/hub)
 		flux		Flux method (Grassi et al. 2012)
 		cooling		Plot cooling functions
                 collapse        One-zone primordial collapse
+                collapseZ       One-zone collapse with metals
+                collapseUV      One-zone collapse with UV background
 		shock1D		1D shock without cooling and heating
 		shock1Dcool	1D shock with cooling
 		shock1Dphoto	1D shock with photoionization, cooling, heating
