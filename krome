@@ -92,6 +92,9 @@ for arg in sys.argv:
 		elif(test_name=="collapseUV"):
 			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial_UV"
+		elif(test_name=="collapseDUST"):
+			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST"]]
+			filename = "networks/react_primordial"
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
 			sys.exit()

@@ -553,12 +553,14 @@ contains
 
     real*8::tot_metals,invTgas,ratio_para_ortho
     real*8::T2
-    
+    !real*8::Tgasb41, Tgasb42, Tgasb43, Tgasb44, Tgasb45, Tgasb46, Tgasb47, Tgasb48
+    !real*8::Tgasb31, Tgasb32, Tgasb33, Tgasb34, Tgasb35, Tgasb36, Tgasb37, Tgasb38
+
     !rate coefficients (gijA_B) are in cm3/s
     ! GJ07 = Glover&Jappsen2007
     ! HM89 = Hollenbach&McKee1989
     ! M07  = Maio et al. 2007
-
+    ! G10  = Glover+2010
     if(minval(n)<0.d0)then
        do i=1,size(n)
           if(n(i)<0.d0) n(i)=0.d0
@@ -569,7 +571,7 @@ contains
          + n(idx_Fej) + n(idx_O) + n(idx_Oj)
     ratio_para_ortho = 1.d0/3.d0
     kb = boltzmann_erg
-    Tgas = max(inTgas,1.d1)
+    Tgas = max(inTgas,0d0)
     invTgas = 1.d0/Tgas
     lnT = log(Tgas)
     T2 = Tgas * 1d-2
@@ -590,10 +592,31 @@ contains
        g20C_H2p = 1.1D-10 -8.6D-11*EXP(-Tgas/223.) +8.7D-11*EXP(-2.*Tgas/223.)
        g21C_H2P = 2.7D-10 -2.6D-10*EXP(-Tgas/250.7) +1.8D-10*EXP(-2.*Tgas/250.7)
 
-       !//C-H GJ07
+       !//C-H GJ07 
        g10C_H = 1.6D-10*(T2)**(.14)
        g20C_H = 9.2D-11*(T2)**(.26)
        g21C_H = 2.9D-10*(T2)**(.26)
+
+       !//C-H G10 ****WARNING::these are excitation!!!!!****
+       !Tgasb41 = Tgas**(-0.25)
+       !Tgasb42 = Tgasb41 * Tgasb41
+       !Tgasb43 = Tgasb42 * Tgasb41
+       !Tgasb44 = Tgasb43 * Tgasb41
+       !Tgasb45 = Tgasb44 * Tgasb41
+       !Tgasb46 = Tgasb45 * Tgasb41
+       !Tgasb47 = Tgasb46 * Tgasb41
+       !Tgasb48 = Tgasb47 * Tgasb41
+       !Tgasb31 = Tgas**(-0.33333333d0)
+       !Tgasb32 = Tgasb31 * Tgasb31
+       !Tgasb33 = Tgasb32 * Tgasb31
+       !Tgasb34 = Tgasb33 * Tgasb31
+       !Tgasb35 = Tgasb34 * Tgasb31
+       !Tgasb36 = Tgasb35 * Tgasb31
+       !Tgasb37 = Tgasb36 * Tgasb31
+       !Tgasb38 = Tgasb37 * Tgasb31
+       !g01C_H = 1d-11 * exp(3.6593d0 + 56.6023d0*Tgas41 -802.9765d0*Tgas42 +5025.1882d0*Tgas43 -17874.4255d0*Tgas44 +38343.665d0*Tgas45 -49249.4895d0*Tgas46 +34789.3941d0*Tgas47 -10390.9809*Tgas48)
+       !g02C_H = 1d-11 * exp(10.8377d0 -173.4153d0*Tgas31 +2024.0272d0*Tgas32 -13391.6549d0*Tgas33 +52198.5522d0*Tgas34 -124518.3586d0*Tgas35 +178182.5823d0*Tgas36 -140970.6106d0*Tgas37 +47504.5861d0*Tgas38)
+       !g12C_H = 1d-11 * exp(15.8996d0 -201.3030d0*Tgas41 +1533.6164d0*Tgas42 -6491.00830d0*Tgas43 +15921.9239d0*Tgas44 -22691.1632d0*Tgas45 +17334.7529d0*Tgas46 -5517.9360d0*Tgas47)
 
        !//C-H+ GJ07
        g10C_Hp = (9.6D-11 -1.8D-14*Tgas +1.9D-18*Tgas**2) *Tgas**(.45)

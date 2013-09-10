@@ -2,19 +2,21 @@ module krome_dust
 
 #IFKROME_useDust
 contains
-  subroutine krome_init_dust(xdust,adust,ntot,alow_arg,aup_arg,phi_arg)
+  subroutine krome_init_dust(xdust,adust,dtg,ngas,alow_arg,aup_arg,phi_arg)
     !krome_init_dust: initialize the dust ditribution (xdust)
     ! and the dust bin mean sizes (adust). Arguments are
-    ! ntot(number_of_dust_types) the total abundance per 
+    ! dtg(dust_gas_ratio__types) the total abundance per 
     ! each bin size, alow_arg the size of the smallest
     ! bin size, aup_arg the largest, phi_arg the exponent
-    ! of the MRN power law.
+    ! of the MRN power law. The last three parameters
+    ! are optional and can be omitted during the call.
     use krome_commons
     use krome_subs
     implicit none
     real*8,optional::alow_arg,aup_arg,phi_arg
+    real*8::rhogas,dmass,ngas(nmols)
     real*8::iphi1,c,phi1,abin(ndust+1),mass(nspec),xdust(ndust),myc
-    real*8::alow,aup,phi,ntot(ndustTypes),adust(ndust),Tbb,myx,a0,a1
+    real*8::alow,aup,phi,dtg(ndustTypes),adust(ndust),Tbb,myx,a0,a1
     integer::i,j,ilow,iup,imax,nd
 
 #KROME_dustPartnerIndex
@@ -30,6 +32,9 @@ contains
     if(present(phi_arg)) phi = phi_arg
     mass(:) = get_mass()
     nd = ndust/ndustTypes
+    dmass = 2.3d0 !dust grain density g/cm3 (graphite fits all)
+
+    rhogas = sum(mass(1:nmols)*ngas(:)) !total gas density g/cm3
 
     do j=1,ndustTypes
        ilow = nd * (j - 1) + 1 !lower index
@@ -51,11 +56,13 @@ contains
        end do
        krome_dust_asize(ilow:iup) = adust(:) !store mean size
        krome_dust_asize2(ilow:iup) = adust(:)**2 !store mean size squared
-       xdust(ilow:iup) = ntot(j) / nd !amount of dust per bin
+       !amount of dust per bin computed using the dust to gas ratio (dtg)
+       ! of the jth dust type.
+       xdust(ilow:iup) = rhogas * dtg(j) / adust(:)**3 / dmass / nd 
 
        !evaluate dust-parnter ratio (e.g. 1dust=1e2 C atoms)
        krome_dust_partner_ratio(ilow:iup) = adust(ilow:iup)**3 &
-            * 2.3d0  / mass(krome_dust_partner_idx(j))
+            * dmass  / mass(krome_dust_partner_idx(j))
        krome_dust_partner_ratio_inv(ilow:iup) = 1.d0 &
             / krome_dust_partner_ratio(ilow:iup)
     end do
