@@ -95,6 +95,9 @@ for arg in sys.argv:
 		elif(test_name=="collapseDUST"):
 			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST"]]
 			filename = "networks/react_primordial"
+		elif(test_name=="kasting"):
+			[sys.argv.append(x) for x in ["-useN"]]
+			filename = "networks/react_planet2"
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
 			sys.exit()
@@ -1869,6 +1872,11 @@ else:
 	shutil.copyfile("solver/opkda1.f", buildFolder+"opkda1.f")
 	shutil.copyfile("solver/opkda2.f", buildFolder+"opkda2.f")
 print " done!"
+
+if(test_name=="kasting"):
+	shutil.copyfile("tests/kasting/init_specs", buildFolder+"init_specs")
+	shutil.copyfile("tests/kasting/layers_data", buildFolder+"layers_data")
+
 
 #copy dust optical properties to build/
 if(useDustT):
