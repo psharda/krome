@@ -3,7 +3,6 @@ contains
 
 #KROME_header
 
-
   !*******************************
   function cooling(n, Tgas)
     implicit none
@@ -139,23 +138,18 @@ contains
     use krome_commons
     use krome_constants
     implicit none
-    real*8::cooling_dust,n(:),Tgas,cool,vgas,fact,ntot
+    real*8::cooling_dust,n(:),Tgas,cool,ntot
     integer::i,idust
     
-    !factor of contribution for species other than protons
-    ! mean value, see Hollenbach and McKee 1979 for a
-    ! more accurate value
-    fact = 0.5d0 
-
-    vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
+    !total gas density
     ntot = sum(n(1:nmols))
 
     cool = 0.d0 !cooling in erg/s/cm3
     !loop on dust to evaluate cooling following Hollenbach and McKee 1979
     do i=nmols+1,nmols+ndust
        idust = i - nmols !index of dust
-       cool = cool + 2.d0 * boltzmann_erg * n(i) * krome_dust_asize2(idust) * &
-            fact * vgas * (Tgas - krome_dust_T(idust)) * ntot
+       cool = cool + dustCool(krome_dust_asize2(idust), n(i), Tgas,&
+            krome_dust_T(idust), ntot)
     end do
 
     cooling_dust = cool

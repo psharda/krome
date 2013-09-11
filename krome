@@ -1228,10 +1228,6 @@ if(useDust):
 			dustQabs += ",dust_opt_asize_"+dType+",dust_opt_nu_"+dType+")\n"
 			dustOptInt += "call dustOptIntegral(dust_opt_Em_"+dType+",dust_opt_Tbb_"+dType+","
 			dustOptInt += "dust_opt_asize_"+dType+",&\n dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
-			getTdust += "call getTdust(krome_dust_T(nd*("+str(itype-1)+")+1:nd*"+str(itype)
-			getTdust += "), dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+",&\n"
-			getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
-			getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")
 
 skip = False
 for row in fh:
@@ -1243,7 +1239,6 @@ for row in fh:
 	row = row.replace("#KROME_dustPartnerIndex", dustPartnerIdx)
 	row = row.replace("#KROME_init_Qabs", dustQabs)
 	row = row.replace("#KROME_opt_integral", dustOptInt)
-	row = row.replace("#KROME_getTdust", getTdust)
  
 	if(row[0]!="#"): fout.write(row)
 
@@ -1502,6 +1497,13 @@ fh = open("src/krome_ode.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_ode.f90","w")
 
+getTdust = ""
+if(useDustT):
+	getTdust += "call getTdust(krome_dust_T(ndust*("+str(itype-1)+")+1:ndust*"+str(itype)
+	getTdust += "), dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+",&\n"
+	getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+", n(:))\n"
+	getTdust = getTdust.replace("ndust*(0)+1","1").replace("ndust*1","ndust").replace("ndust*(1)","ndust")
+
 
 dustH2 = "nH2dust = 0.d0\n"
 if(useDustH2):
@@ -1569,6 +1571,8 @@ for row in fh:
 			else:
 				for x in dnw:
 					fout.write("\t" + x + "\n")
+	elif(row.strip() == "#KROME_getTdust" and useDustT):
+		fout.write(getTdust);
 	elif(row.strip() == "#KROME_dustSumVariables" and useDust):
 		#add partner sum dust variable declarations
 		dustSumVar = []

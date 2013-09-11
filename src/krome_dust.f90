@@ -14,7 +14,7 @@ contains
     use krome_subs
     implicit none
     real*8,optional::alow_arg,aup_arg,phi_arg
-    real*8::rhogas,dmass,ngas(nmols)
+    real*8::rhogas,dmass,ngas(nmols),n(nspec)
     real*8::iphi1,c,phi1,abin(ndust+1),mass(nspec),xdust(ndust),myc
     real*8::alow,aup,phi,dtg(ndustTypes),adust(ndust),Tbb,myx,a0,a1
     integer::i,j,ilow,iup,imax,nd
@@ -32,7 +32,7 @@ contains
     if(present(phi_arg)) phi = phi_arg
     mass(:) = get_mass()
     nd = ndust/ndustTypes
-    dmass = 2.3d0 !dust grain density g/cm3 (graphite fits all)
+    krome_grain_rho = 2.3d0 !dust grain density g/cm3 (graphite fits all)
 
     rhogas = sum(mass(1:nmols)*ngas(:)) !total gas density g/cm3
 
@@ -58,22 +58,21 @@ contains
        krome_dust_asize2(ilow:iup) = adust(:)**2 !store mean size squared
        !amount of dust per bin computed using the dust to gas ratio (dtg)
        ! of the jth dust type.
-       xdust(ilow:iup) = rhogas * dtg(j) / adust(:)**3 / dmass / nd 
+       xdust(ilow:iup) = rhogas * dtg(j) / adust(:)**3 / krome_grain_rho / nd 
 
        !evaluate dust-parnter ratio (e.g. 1dust=1e2 C atoms)
        krome_dust_partner_ratio(ilow:iup) = adust(ilow:iup)**3 &
-            * dmass  / mass(krome_dust_partner_idx(j))
+            * krome_grain_rho  / mass(krome_dust_partner_idx(j))
        krome_dust_partner_ratio_inv(ilow:iup) = 1.d0 &
             / krome_dust_partner_ratio(ilow:iup)
     end do
     
-
     !compute the mass of the dust partner
     do j=1,ndustTypes
        krome_dust_partner_mass(j) =  mass(krome_dust_partner_idx(j))
     end do
 
-    krome_dust_T(:) = 5.d0 !defualt dust temperature
+    krome_dust_T(:) = 2.73d0 !defualt dust temperature
 
     !init optical properties
 #KROME_init_Qabs
@@ -81,12 +80,26 @@ contains
     !init integral Qabs(nu)*B(nu)*dnu
 #KROME_opt_integral
     
-    !set dust temperature
-#KROME_getTdust
-
     print *,"Dust initialized!"
 
   end subroutine krome_init_dust
+
+
+  !*****************************
+  function dustCool(adust2,ndust,Tgas,Tdust,ntot)
+    use krome_constants
+    real*8::dustCool,adust2,Tgas,ndust,ntot,fact,vgas,Tdust
+
+    !factor of contribution for species other than protons
+    ! mean value, see Hollenbach and McKee 1979 for a
+    ! more accurate value
+    fact = 0.5d0
+    vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
+
+    dustCool = 2.d0 * boltzmann_erg * ndust * adust2 * &
+         fact * vgas * (Tgas - Tdust) * ntot
+
+  end function dustCool
 
 
   !***********************
@@ -96,54 +109,69 @@ contains
     integer::i,imax,j,nd
     real*8,allocatable::dust_opt_Em(:,:), dust_opt_Tbb(:)
     real*8::dust_opt_asize(:), dust_opt_nu(:), dust_opt_Qabs(:,:),Tbb
-
+    if(allocated(dust_opt_Em)) return !skip evaluation if already done
     nd = size(krome_dust_asize)
     !computes and stores Qabs(nu)*B(nu)*dnu integral for each dust bin
-    imax = int(1e3) !number of Tbb values
+    imax = int(1e4) !number of Tbb values
     allocate(dust_opt_Em(nd,imax), dust_opt_Tbb(imax))
     do j=1,nd !loop on bins
        do i=1,imax !loop on Tbb
-          Tbb = (i-1) * (1d2-1d0) / (imax-1) + 1d0 !BB temperature
+          Tbb = (i-1) * (1d4-1d0) / (imax-1) + 1d0 !BB temperature
           dust_opt_Tbb(i) = Tbb !store Tbb values
+          !store and compute integrals
           dust_opt_Em(j,i) = dustEm(krome_dust_asize(j),Tbb,&
-               dust_opt_asize, dust_opt_nu, dust_opt_Qabs) !store and compute integrals
+               dust_opt_asize, dust_opt_nu, dust_opt_Qabs) 
        end do
     end do
   end subroutine dustOptIntegral
 
   !**********************
   subroutine getTdust(Tdust, dust_opt_Tbb, dust_opt_Em, &
-       dust_opt_asize, dust_opt_nu, dust_opt_Qabs)
+       dust_opt_asize, dust_opt_nu, dust_opt_Qabs,n)
     !Tdust evaluation from eqn.6 Schneider+2006 MNRAS_369
     use krome_commons
     use krome_constants
     integer::i,nd,j,nT
-    real*8::asize,eAbs,T0,T1,mysgn,de0,de1,Tdust(:)
+    real*8::asize,eAbs,T0,T1,mysgn,dleft,dright,Tdust(:)
+    real*8::dustHl,dustHr,dustH,rhogr
     real*8::dust_opt_Em(:,:),dust_opt_Tbb(:),dust_opt_asize(:)
-    real*8::dust_opt_nu(:), dust_opt_Qabs(:,:)
+    real*8::dust_opt_nu(:), dust_opt_Qabs(:,:),ntot,n(:)
     logical::found
     nd = ndust/ndustTypes !dust bins
     nT = size(dust_opt_Tbb) !number of temperature values
+    ntot = sum(n(1:nmols))
     !loop on bins
     do i=1,nd
+       if(n(nmols+i)<1d-19) cycle !note that this limit depends on ATOL
        asize = krome_dust_asize(i) !mean bin size
-       eAbs = dustAbs(asize, dust_opt_asize, dust_opt_nu, dust_opt_Qabs) !absorbed erg/cm2/s
+       rhogr = n(nmols+i) * asize**3 * krome_grain_rho
+       !absorbed erg/cm3/s (rhogr g/cm3)
+       eAbs = dustAbs(asize, dust_opt_asize, dust_opt_nu, dust_opt_Qabs) * rhogr
        found = .false. !flag interpolation
-       mysgn = sgn(eAbs - dust_opt_Em(i,1)) !first sign
+       dustH = dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+            dust_opt_Tbb(1), ntot)
+       
+       mysgn = sgn(eAbs - dust_opt_Em(i,1) * rhogr + dustH) !first sign
        !loop on temperatures (discrete root-finding) 
        do j=2,nT
-          de0 = dust_opt_Em(i,j-1) - eAbs !left function
-          de1 = dust_opt_Em(i,j) - eAbs !right function
+          dustHl = dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+               dust_opt_Tbb(j-1), ntot)
+          dustHr = dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+               dust_opt_Tbb(j), ntot)
+          
+          dleft = eAbs - dust_opt_Em(i,j-1) * rhogr + dustHl !left function
+          dright = eAbs - dust_opt_Em(i,j) * rhogr + dustHr   !right function
           !get change of sign
-          if(mysgn * de1 > 0.d0) then
+          if((mysgn * dright) .le. 0.d0) then
              !interpolate Tdust value
-             Tdust(i) = (0.d0 - de0) / (de1 - de0) * (dust_opt_Tbb(j) - dust_opt_Tbb(j-1)) &
+             Tdust(i) = (0.d0 - dleft) / (dright - dleft) &
+                  * (dust_opt_Tbb(j) - dust_opt_Tbb(j-1)) &
                   + dust_opt_Tbb(j-1)
              found = .true. !found flag
              exit
           end if
        end do
-       
+       write(52,*) Tdust(i)
        !check found flag
        if(not(found)) then
           print *,"ERROR: dustEm not found!!!"
@@ -225,7 +253,6 @@ contains
        end if
     end do
 
-
     !intgrate for the two size values (left, right) close to asize
     ! then interpolate the two results
     int0 = 0.d0 !init left integral 
@@ -233,9 +260,9 @@ contains
     !computes integral by using trapezoidal method
     do i=2,size(dust_opt_nu)
        kera =  Jflux(dust_opt_nu(i-1)*planck_eV) * eV_to_erg + &
-            fplanck(dust_opt_nu(i-1), 2.73d0*(1.d0+redshift)) !flux is the kernel
+            fplanck(dust_opt_nu(i-1), 2.73d0*(1.d0+redshift)) !flux is the kernel (J(nu)+Planck)
        kerb = Jflux(dust_opt_nu(i)*planck_eV) * eV_to_erg + &
-            fplanck(dust_opt_nu(i), 2.73d0*(1.d0+redshift)) !flux is the kernel
+            fplanck(dust_opt_nu(i), 2.73d0*(1.d0+redshift)) !flux is the kernel (J(nu)+Planck)
        dnu = dust_opt_nu(ival) - dust_opt_nu(ival-1) !stepsize
        !calculates integrals
        int0 = int0 + 0.5d0 * (kera * dust_opt_Qabs(ival-1,i-1) &
@@ -244,10 +271,9 @@ contains
             + kerb * dust_opt_Qabs(ival,i)) * dnu
     end do
 
-    !absorption: interpolates values depending on asize: erg/cm2/s
+    !absorption: interpolates values depending on asize: erg/g/s
     dustAbs = (int1 - int0) * (asize - dust_opt_asize(ival-1)) &
          / (dust_opt_asize(ival) - dust_opt_asize(ival-1)) + int0
-    
     
   end function dustAbs
 
@@ -285,7 +311,7 @@ contains
             + kerb * dust_opt_Qabs(ival,i)) * dnu
     end do
 
-    !emission: interpolates values depending on asize: erg/cm2/s
+    !emission: interpolates values depending on asize: erg/g/s
     dustEm = (int1 - int0) * (asize - dust_opt_asize(ival-1)) &
          / (dust_opt_asize(ival) - dust_opt_asize(ival-1)) + int0
     
@@ -300,6 +326,10 @@ contains
     real*8,allocatable::opt_Qabs(:,:),opt_asize(:),opt_nu(:)
     character(*)::fname
     print *,fname
+
+    !skip reading file if already allocated
+    if(allocated(opt_Qabs)) return
+    
     !open file to count data lines
     open(71,file=fname,status="old",iostat=ios)
     if(ios.ne.0) then
@@ -355,6 +385,11 @@ contains
        xold(:) = x(:)
     end do
     close(71)
+
+    !convert the Qabs to cm2/g
+    do i=1,size(opt_Qabs,1)
+       opt_Qabs(i,:) = opt_Qabs(i,:) / opt_asize(i) / krome_grain_rho 
+    end do
 
     print *,"Dust optical properties loaded from: ", fname
         

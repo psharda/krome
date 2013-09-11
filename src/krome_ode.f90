@@ -24,6 +24,8 @@ contains
     n(idx_g)  = 1.d0
     n(idx_dummy) = 1.d0
 
+#KROME_getTdust
+
     dn(:) = 0.d0 !initialize differentials
     Tgas = max(n(idx_Tgas), 2.73d0) !get temperature
     
