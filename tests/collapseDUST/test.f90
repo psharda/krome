@@ -8,19 +8,19 @@ program test_krome
   use krome_dust
 
 
-  integer,parameter::rstep = 500000,nd=1,ndtype=1
+  integer,parameter::rstep = 500000,nd=2*5,ndtype=2
   integer::i,j
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(nmols),Tgas,dt
   real*8::ntot,rho, dust_gas_ratio(ndtype)
-  real*8::xdust(nd),adust(nd),js(4)
+  real*8::xdust(nd),adust(nd),js(5)
 
-  js(:) = (/0.d0, 1d-6, 1d-4, 1d-2/)
+  js(:) = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2/) 
   do j=1,size(js)
      !INITIAL CONDITIONS
      redshift = 0d0    !redshift
-     ntot = 1.d0           !total density in 1/cm3
+     ntot = 1.d-1           !total density in 1/cm3
      Tgas = 3d2              !temperature in kelvin
 
      !species initialization in 1/cm3
@@ -31,18 +31,25 @@ program test_krome
      x(KROME_idx_E)         = 1.0e-4*ntot    !E
      x(KROME_idx_Hj)        = 1.0e-4*ntot    !H+
      x(KROME_idx_HE)        = 0.0775*ntot    !He
+     call krome_scale_Z(x(:), log10(js(j)))
 
-     dust_gas_ratio(:) = js(j)
+     dust_gas_ratio(:) = js(j)**(1./.85)
 
      !INITIALIZE KROME PARAMETERS AND DUST 
      call krome_init()
      call krome_init_dust(xdust(:),adust(:),dust_gas_ratio(:),x(:))
 
      dd = ntot
-
-     print *,xdust(:),dust_gas_ratio(:)
+     print *,"dust to gas:",dust_gas_ratio(:)
+     print '(a5,2a11)',"type","a(cm)","n(cm-3)"
+     do i=1,nd/2
+        print '(a5,99E11.3)',"C",adust(i),xdust(i)
+     end do
+     do i=nd/2+1,nd
+        print '(a5,99E11.3)',"Si",adust(i),xdust(i)
+     end do
      print *,"solving..."
-     print '(a5,3a11)',"step","n(cm-3)","Tgas(K)","Tdust(K)"
+     print '(a5,3a11)',"step","n(cm-3)","Tgas(K)","<Tdust(K)>"
 
      !loop over the hydro time-step
      do i = 1,rstep
@@ -69,7 +76,7 @@ program test_krome
         write(22,'(I5,99E12.3e3)') j,js(j),dd,Tgas,krome_dust_T(:),&
              x(:)/dd,xdust(:)/dd
 
-        if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas,krome_dust_T(:)
+        if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas,sum(krome_dust_T(:))/nd
         
      end do
      write(22,*)

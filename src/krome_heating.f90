@@ -4,14 +4,14 @@ contains
 #KROME_header
 
   !*******************************
-  function heating(n, Tgas)
+  function heating(n, Tgas, k, nH2dust)
     implicit none
-    real*8::n(:), Tgas
+    real*8::n(:), Tgas, k(:), nH2dust
     real*8::heating 
     !total heating erg/cm3/s
     heating = 0.d0
 #IFKROME_useHeatingChem
-    heating = heating + heatingChem(n(:), Tgas)
+    heating = heating + heatingChem(n(:), Tgas, k(:), nH2dust)
 #ENDIFKROME
 
 #IFKROME_useHeatingCompress
@@ -83,15 +83,16 @@ contains
   !1.83*(1+ncr/n)^−1 eV for H2 formation by H2+ process
   !4.48*(1+ncr/n)^−1 eV for H2 formation by the three-body 
     !*******************************
-  function heatingChem(n, Tgas)
+  function heatingChem(n, Tgas, k, nH2dust)
     use krome_constants
     use krome_commons
+    use krome_dust
     implicit none
-    real*8::heatingChem, n(:), Tgas
+    real*8::heatingChem, n(:), Tgas,k(:),nH2dust
     real*8::h2heatfac,HChem,yH,yH2
-    real*8::ncr,ncrn,ncrd1,ncrd2,dd
+    real*8::ncr,ncrn,ncrd1,ncrd2,dd,n2H
     real*8::logT,lnT,Te,lnTe,T32,invT,invTe,sqrTgas,invsqrT32,sqrT32
-    real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv, t
+    real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv,t,vgas
     dd = sum(n(1:nmols))
 
 #KROME_Tshortcuts
@@ -109,8 +110,10 @@ contains
     h2heatfac = 1.0d0/(1.0d0+ncr/dd)     !dimensionless
 
     HChem = 0.d0 !inits chemical heating
-    
+    n2H = n(idx_H) * n(idx_H)
+
 #KROME_HChem_terms
+#KROME_HChem_dust
 
     HChem = HChem * h2heatfac
     

@@ -131,9 +131,9 @@ contains
     !Tdust evaluation from eqn.6 Schneider+2006 MNRAS_369
     use krome_commons
     use krome_constants
-    integer::i,nd,j,nT
+    integer::i,nd,j,nT,j2,jr,jl,iter
     real*8::asize,eAbs,T0,T1,mysgn,dleft,dright,Tdust(:)
-    real*8::dustHl,dustHr,dustH,rhogr
+    real*8::dustHl,dustHr,dustH,rhogr,sgnr,sgnl,dust2H
     real*8::dust_opt_Em(:,:),dust_opt_Tbb(:),dust_opt_asize(:)
     real*8::dust_opt_nu(:), dust_opt_Qabs(:,:),ntot,n(:)
     logical::found
@@ -147,36 +147,48 @@ contains
        rhogr = n(nmols+i) * asize**3 * krome_grain_rho
        !absorbed erg/cm3/s (rhogr g/cm3)
        eAbs = dustAbs(asize, dust_opt_asize, dust_opt_nu, dust_opt_Qabs) * rhogr
-       found = .false. !flag interpolation
-       dustH = dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+
+       dustHl = eAbs - dust_opt_Em(i,1) *rhogr &
+            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
             dust_opt_Tbb(1), ntot)
-       
-       mysgn = sgn(eAbs - dust_opt_Em(i,1) * rhogr + dustH) !first sign
-       !loop on temperatures (discrete root-finding) 
-       do j=2,nT
-          dustHl = dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-               dust_opt_Tbb(j-1), ntot)
-          dustHr = dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-               dust_opt_Tbb(j), ntot)
-          
-          dleft = eAbs - dust_opt_Em(i,j-1) * rhogr + dustHl !left function
-          dright = eAbs - dust_opt_Em(i,j) * rhogr + dustHr   !right function
-          !get change of sign
-          if((mysgn * dright) .le. 0.d0) then
-             !interpolate Tdust value
-             Tdust(i) = (0.d0 - dleft) / (dright - dleft) &
-                  * (dust_opt_Tbb(j) - dust_opt_Tbb(j-1)) &
-                  + dust_opt_Tbb(j-1)
-             found = .true. !found flag
-             exit
-          end if
-       end do
-       write(52,*) Tdust(i)
-       !check found flag
-       if(not(found)) then
-          print *,"ERROR: dustEm not found!!!"
+       dustHr = eAbs - dust_opt_Em(i,nT) *rhogr &
+            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+            dust_opt_Tbb(nT), ntot)
+
+       sgnr = sgn(dustHr) !stores right bound sign
+       sgnl = sgn(dustHl) !stores left bound sign
+
+       !checks for bound signs
+       if(sgnr==sgnl) then
+          print *,"ERROR: probably the opacity-temperature curve has no roots!"
           stop
        end if
+       
+       jl = 1
+       jr = nT
+       iter = 0
+       !root-finding
+       do
+          iter = iter + 1
+          j2 = .5d0 * (jr + jl)
+          dust2H = eAbs - dust_opt_Em(i,j2) *rhogr &
+               + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+               dust_opt_Tbb(j2), ntot)
+          if(sgn(dust2H)==sgnr) then
+             jr = j2
+          else
+             jl = j2
+          end if
+          if(abs(jr-jl).le.1) exit
+       end do
+       dustHr = eAbs - dust_opt_Em(i,jr) *rhogr &
+            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+            dust_opt_Tbb(jr), ntot)
+       dustHl = eAbs - dust_opt_Em(i,jl) *rhogr &
+            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+            dust_opt_Tbb(jl), ntot)
+       Tdust(i) = (0.d0 - dustHr)/(dustHl-dustHr)&
+            *(dust_opt_Tbb(jl)-dust_opt_Tbb(jr)) + dust_opt_Tbb(jr)  
     end do
   end subroutine getTdust
 
@@ -198,8 +210,8 @@ contains
     real*8::krome_dust_grow,ndust,natom,Tgas,Tdust,vgas,adust,seed
     
     seed = 1d-12 !1/cm3
-    krome_dust_grow = pi * adust**2 * (max(ndust,0.d0) + seed) * max(natom,0.d0) &
-         * krome_dust_stick(Tgas,Tdust) * vgas
+    krome_dust_grow = pi * adust**2 * (max(ndust,0.d0) + seed) &
+         * max(natom,0.d0) * krome_dust_stick(Tgas,Tdust) * vgas
         
   end function krome_dust_grow
 
@@ -426,7 +438,8 @@ contains
     H2_dust = 0.d0 
     do i = 1,size(Tdust)
        H2_eps = H2_eps_f(Tgas, Tdust(i))
-       H2_dust = H2_dust + 0.5d0 * n(idx_H) * myvgas * ndust(i) * krome_dust_asize(i)**2 &
+       H2_dust = H2_dust + 0.5d0 * n(idx_H) * myvgas * ndust(i) &
+            * krome_dust_asize2(i) &
             * pi * H2_eps * stick(Tgas, Tdust(i))
     end do
 
@@ -442,13 +455,16 @@ contains
     Ec = 1.5d4 !K
     Es = -1d3 !K
     Ep = 7d2 !K
-    apc = 1.7d0 * 1d-10 !m (must be in m even if in CS2009 it's in \AA!!, Cazaux2012 private comm.)
+    !m (must be in m even if in CS2009 it's in \AA!!, Cazaux2012 private comm.)
+    apc = 1.7d-10 
     func = 2.d0 * exp(-(Ep-Es)/(Ep+myTgas)) / (1.d0+sqrt((Ec-Es)/(Ep-Es)))**2
-    H2_eps_Si = 1.d0/(1.+16.*myTdust/(Ec-Es)) * exp(-Ep/myTdust)&
-          * exp(-4d9*apc*sqrt(Ep-Es)) + func
-
-    if(H2_eps_Si>1.d0 .or. H2_eps_Si<0.d0) then
+    H2_eps_Si = 1.d0/(1.+16.*myTdust/(Ec-Es) * exp(-Ep/myTdust)&
+          * exp(4d9*apc*sqrt(Ep-Es))) + func
+    
+    H2_eps_Si = min(H2_eps_Si,1d0)
+    if(H2_eps_Si<0.d0) then
        print *,"problem on H2_eps_Si"
+       print *,H2_eps_Si
        stop
     end if
   end function H2_eps_Si
@@ -463,7 +479,8 @@ contains
     Ec = 7d3 !K
     Es = 2d2 !K
     TH = 4.d0*(1.d0+sqrt((Ec-Es)/(Ep-Es)))**(-2) * exp(-(Ep-Es)/(Ep+myTgas))
-    H2_eps_C = (1.d0-TH) / (1.d0+0.25*(1.d0+sqrt((Ec-Es)/(Ep-Es)))**2 * exp(-Es/myTdust))
+    H2_eps_C = (1.d0-TH) / (1.d0+0.25*(1.d0+sqrt((Ec-Es)/(Ep-Es)))**2 &
+         * exp(-Es/myTdust))
     if(H2_eps_C>1.d0 .or. H2_eps_C<0.d0) then
        print *,"problem on H2_eps_C"
        stop
@@ -474,7 +491,8 @@ contains
   function stick(myTgas,myTdust)
     !sticking coefficient per la formazione di H2
     real*8::stick,myTgas,myTdust
-    stick = 1.d0 / (1.d0 + 0.4*sqrt((myTgas+myTdust)/1d2) + 0.2*myTgas/1d2 + 0.08*(myTgas/1d2)**2)
+    stick = 1.d0 / (1.d0 + 0.4*sqrt((myTgas+myTdust)/1d2) &
+         + 0.2*myTgas/1d2 + 0.08*(myTgas/1d2)**2)
     if(stick>1.d0 .or. stick<0.d0) then
        print *,"problem on stick coefficient"
        stop

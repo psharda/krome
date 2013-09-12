@@ -93,7 +93,7 @@ for arg in sys.argv:
 			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial_UV"
 		elif(test_name=="collapseDUST"):
-			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST"]]
+			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL","-dust=5,C,Si","-dustOptions=TDUST,H2"]]
 			filename = "networks/react_primordial"
 		elif(test_name=="kasting"):
 			[sys.argv.append(x) for x in ["-useN"]]
@@ -1399,7 +1399,7 @@ if(useHeatingdH):
 
 
 #build H2 heating according to the rates
-HChem = ""
+HChem = HChemDust = ""
 sclist = []
 if(useHeatingChem):
 	Rref = []
@@ -1407,10 +1407,10 @@ if(useHeatingChem):
 	kref = []
 	Rref.append(sorted(["H","H","H"]))
 	Pref.append(sorted(["H2","H"]))
-	kref.append("4.48d0*n(idx_H)**3")
+	kref.append("4.48d0*n(idx_H)*n2H")
 	Rref.append(sorted(["H2","H","H"]))
 	Pref.append(sorted(["H2","H2"]))
-	kref.append("4.48d0*n(idx_H)**2*n(idx_H2)")
+	kref.append("4.48d0*n2H*n(idx_H2)")
 	Rref.append(sorted(["H-","H"]))
 	Pref.append(sorted(["H2","E"]))
 	kref.append("3.53d0*n(idx_H)*n(idx_Hk)")
@@ -1427,10 +1427,12 @@ if(useHeatingChem):
 			if(Rref[i]==R and Pref[i]==P):
 				sclist = get_Tshortcut(rea,sclist) #get the shortcuts for temperature
 				headchem = "!"+rea.verbatim + "\n"
-				tklim = headchem + "if(Tgas." + rea.TminOp + "."  + rea.Tmin + " .and. Tgas." + rea.TmaxOp + "." + rea.Tmax + ") then\n"
-				HChem += tklim + "HChem = HChem + ("+rea.krate+") * ("+kref[i] + ")\n end if\n\n"
+				tklim = headchem + "if(Tgas." + rea.TminOp + "."  + rea.Tmin
+				tklim += " .and. Tgas." + rea.TmaxOp + "." + rea.Tmax + ") then\n"
+				HChem += tklim + "HChem = HChem + k("+str(rea.idx)+") * ("+kref[i] + ")\n end if\n\n"
 				break
-			
+	if(useDustH2):
+		HChemDust += "HChem = HChem + nH2dust * (0.2d0/h2heatfac + 4.2d0)\n"
 
 
 #build heating terms
@@ -1468,6 +1470,7 @@ for row in fh:
 
 		row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
 		row = row.replace("#KROME_HChem_terms", HChem) #replace chemical heating terms
+		row = row.replace("#KROME_HChem_dust", HChemDust) #replace chemical heating for dust
 		
 		#replace shortcuts for temperature
 		if(row.strip() == "#KROME_Tshortcuts"):
@@ -1499,13 +1502,16 @@ if(not(buildCompact)):
 
 getTdust = ""
 if(useDustT):
-	getTdust += "call getTdust(krome_dust_T(ndust*("+str(itype-1)+")+1:ndust*"+str(itype)
-	getTdust += "), dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+",&\n"
-	getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+", n(:))\n"
-	getTdust = getTdust.replace("ndust*(0)+1","1").replace("ndust*1","ndust").replace("ndust*(1)","ndust")
+	iType = 0
+	getTdust = "nd = "+str(dustArraySize)+" !number dust bins per types\n"
+	for dType in dustTypes:
+		getTdust += "call getTdust(krome_dust_T(nd*("+str(iType)+")+1:nd*"+str(iType+1)
+		getTdust += "), dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+",&\n"
+		getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+", n(:))\n"
+		getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")
+		iType += 1
 
-
-dustH2 = "nH2dust = 0.d0\n"
+dustH2 = "\n"
 if(useDustH2):
 	iType = 0
 	for dType in dustTypes:
