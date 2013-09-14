@@ -1,0 +1,24 @@
+reset
+set multiplot layout 1,2 #rowsfirst
+set autoscale
+set key t r
+set grid
+set size square
+
+set xlabel "H2O"
+set ylabel "  H2"
+set zlabel "O"
+plot 'fort.66' u 6:2 w l t "trajectories",\
+ 'fort.77' u 6:2 t "inital conditions" pt 2 ps .7
+
+set ticslevel .1
+set yrange [] reverse
+set xrange [] reverse
+set view 70,20
+set xtics .2
+set ytics .5
+set ztics .1
+unset key
+splot 'fort.66' u 6:2:($1>3e-4?$5:1/0) t "trajectories" ps .03
+
+unset multiplot

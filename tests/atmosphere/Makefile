@@ -22,9 +22,9 @@ endif
 prj = test
 
 all:
-	$(fc) -c mods.f90 $(switch) 
-	$(fc) -c heatlib.f90 $(switch) 
-	$(fc) -c test.f90 $(switch) 
+#	$(fc) -c mods.f90 $(switch) 
+#	$(fc) -c heatlib.f90 $(switch) 
+	$(fc) -c testf.f90 $(switch) 
 
 	$(fc) -o $(prj) *.o $(switch) $(lib)
 

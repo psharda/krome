@@ -45,12 +45,12 @@ for arg in sys.argv:
 		if(test_name=="planet"):
 			[sys.argv.append(x) for x in ["-useN","-reverse"]]
 			filename = "networks/react_planet"
-		elif(test_name=="CLOUD"):
+		elif(test_name=="cloud"):
 			[sys.argv.append(x) for x in ["-useN","-iRHS"]]
 			filename = "networks/react_WH2008"
-		elif(test_name=="fake"):
-			[sys.argv.append(x) for x in ["-forceRWORK=200"]]
-			filename = "networks/react_fake"
+		elif(test_name=="slowmanifold"):
+			[sys.argv.append(x) for x in ["-useN"]]
+			filename = "networks/react_SM"
 		elif(test_name=="topology"):
 			[sys.argv.append(x) for x in ["-useN","-iRHS","-useTopology"]]
 			filename = "networks/react_WH2008"
@@ -510,9 +510,10 @@ for row in fh:
 				irate = ipos #rate in F90 style position
 				rateFound = True
 			ipos += 1 #increase position
-		if(not(tminFound) or not(tmaxFound) or not(rateFound)):
-			print "ERROR: format must contain tmin, tmax, and rate"
+		if(not(rateFound)):
+			print "ERROR: format must contain rate token"
 			sys.exit()
+			
 		continue #skip format line (it is not a reaction line)
 	arow = srow.split(separator,format_items-1) #split only N+1 elements with N seprations
 	if(len(arow)!=format_items): 
@@ -545,21 +546,24 @@ for row in fh:
 	myrea.TminOp = TlimitOpLow
 	myrea.TmaxOp = TlimitOpHigh
 	for op in opTlist:
+		if(not(tminFound)): break
 		if(op in arow[iTmin]):
 			arow[iTmin] = arow[iTmin].replace(op,"")
 			myrea.TminOp = op.replace(">","GT").replace("<","LT").replace(".","")
 			break
 	for op in opTlist:
+		if(not(tmaxFound)): break
 		if(op in arow[iTmax]):
 			arow[iTmax] = arow[iTmax].replace(op,"")		
 			myrea.TmaxOp = op.replace(">","GT").replace("<","LT").replace(".","")
 			break
 
-
-	myrea.Tmin = format_double(arow[iTmin]) #get Tmin
-	myrea.Tmax = format_double(arow[iTmax]) #get Tmax
-	TminAuto = min(float(arow[iTmin].lower().replace("d","e")), TminAuto)
-	TmaxAuto = max(float(arow[iTmax].lower().replace("d","e")), TmaxAuto)
+	myrea.Tmin = TminAuto = "2.73d0" #default min temperature
+	myrea.Tmax = TmaxAuto = "1.d8" #default max temperature
+	if(tminFound): myrea.Tmin = format_double(arow[iTmin]) #get Tmin
+	if(tmaxFound): myrea.Tmax = format_double(arow[iTmax]) #get Tmax
+	if(tminFound): TminAuto = min(float(arow[iTmin].lower().replace("d","e")), TminAuto)
+	if(tmaxFound): TmaxAuto = max(float(arow[iTmax].lower().replace("d","e")), TmaxAuto)
 
 	myrea.krate = arow[irate] #get reaction rate written in F90 style
 	if(useCustomCoe): myrea.krate = "0.d0" #when custom function is used standard coefficient are set to zero

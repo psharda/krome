@@ -14,7 +14,8 @@ contains
     real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv,T4
     integer::i
     !Tgas is in K
-    
+    Tgas = max(n(idx_Tgas), 2.73d0)
+
 #KROME_Tshortcuts
 
     k(:) = 1.d-40 !inizialize coefficients

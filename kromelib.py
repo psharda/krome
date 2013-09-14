@@ -14,6 +14,7 @@ class molec():
 	poly1 = [0.e0]*7 #nasa polynomials (200-1000K)
 	poly2 = [0.e0]*7 #nasa polynomials (1000-5000K)
 	idx = 0 #species index
+	enthalpy = 0.e0 #enthalpy of formation
 	
 	#get chempot using nasa polynomials
 	#def doChempot(self):
@@ -160,6 +161,11 @@ class reaction():
 	#calculate reverse reaction
 	def doReverse(self):
 		krev = ""
+		termH = ["", "*0.5d0*Tgas", "*Tgas2/3.d0", "*Tgas3*0.25d0", "*Tgas4*0.2d0", "*invT"]
+		termS = ["*lnT", "*Tgas", "*Tgas2*0.5d0", "*Tgas3/3.d0", "*Tgas4*0.25d0", ""]
+		Rgas = 8.314472e-3 #gas constant in kJ/mol
+		#polyH = (a[0] + a[1]*T/2. + a[2]*T*T/3. + a[3]*T*T*T/4. + a[4]*T*T*T*T/5. + a[5]/T) #H/RT
+		#polyS = a[0] lnT + a2 T + a3 T^2 /2 + a4 T^3 /3 + a5 T^4 /4 + a7 # S/R
 		for p in self.products:
 			krev += "-"+str(p.chempot)+"*4.1761236d-4"# + ("+str(p.poly1[0])+"*log(Tgas*T0inv) +0.5d0*("+str(p.poly1[1])+")*(Tgas-T0)"
 			#krev += "+0.16666666d0*("+str(p.poly1[2])+")*(Tgas2 - T02) -0.08333333333d0*("+str(p.poly1[3])+")*(Tgas3 - T03)"
@@ -168,9 +174,18 @@ class reaction():
 			krev += "+"+str(r.chempot)+"*4.1761236d-4"# - ("+str(r.poly1[0])+"*log(Tgas*T0inv) +0.5d0*("+str(r.poly1[1])+")*(Tgas-T0)"
 			#krev += "+0.16666666d0*("+str(r.poly1[2])+")*(Tgas2 - T02) -0.08333333333d0*("+str(r.poly1[3])+")*(Tgas3 - T03)"
 			#krev += " +0.05d0*("+str(r.poly1[4])+")*(Tgas4 - T04) -("+str(r.poly1[5])+")*(invT - T0inv))"
+
+		#for p in self.products:
+		#	polyH = "+".join([str(p.poly2[i])+termH[i] for i in range(len(termH)) if (p.poly2[i]!=0e0)])
+		#	polyS = "+".join([str(p.poly2[i])+termS[i] for i in range(len(termS)) if (p.poly2[i]!=0e0)])
+		#	krev += " - (("+polyH+") -&\n ("+polyS+") +&\n " + str(p.enthalpy/Rgas) + "* invT)&\n"
+		#for r in self.reactants:
+		#	polyH = "+".join([str(r.poly2[i])+termH[i] for i in range(len(termH)) if (r.poly2[i]!=0e0)])
+		#	polyS = "+".join([str(r.poly2[i])+termS[i] for i in range(len(termS)) if (r.poly2[i]!=0e0)])
+		#	krev += " + (("+polyH+") -&\n ("+polyS+") +&\n " + str(r.enthalpy/Rgas) + "* invT)&\n"
 		krev = krev.replace("--","+").replace("+-","-").replace("-+","-")
 		ndif = len(self.reactants)-len(self.products)
-		kk = "("+self.krate+") * exp("+krev+")"
+		kk = "("+self.krate+") * exp("+krev+")" + ""
 		if(ndif!=0): kk ="0.d0"  #" * (1.3806488d-2 * Tgas)**("+str(ndif)+")"
 		return kk
 ##################################
@@ -278,8 +293,7 @@ def parsevar(arg):
 	return arg.split("@")
 ##################################
 def get_Tshortcut(rea,slist):
-	shcut = ["Tgas = max(2.73d0, n(idx_Tgas))",
-	"t = Tgas !alias for Tgas (K)",
+	shcut = ["t = Tgas !alias for Tgas (K)",
 	"logT = log10(Tgas) !log10 of Tgas (#)",
 	"lnT = log(Tgas) !ln of Tgas (#)",
 	"Te = Tgas*8.617343d-5 !Tgas in eV (eV)",
@@ -433,7 +447,7 @@ DESCRIPTION
 	-test=TEST
 		select a test model within TEST:
 		planetary	Simple planet atmosphere
-		fake		Fake reactions (slow manifold)
+		slowmanifold	Slow manifold (Reinhardt et al. 2008)
 		cloud		Molecular cloud one-zone
 		topology	Topology reduction (authority/hub)
 		flux		Flux method (Grassi et al. 2012)
@@ -658,6 +672,11 @@ def parser(name, mass_dic, atoms):
 		20:"Ca",
 		26:"Fe"}
 	
+	#Elke Goos, Alexander Burcat and Branko Ruscic
+	#Ideal Gas Thermochemical Database with updates from Active Thermochemical Tables
+	#<ftp://ftp.technion.ac.il/pub/supported/aetdd/thermodynamics>;date.
+	#mirrored at <http://garfield.chem.elte.hu/Burcat/burcat.html>;date. 	
+
 	#potential energy and coefficient for nasa polynomials (a1-a7:1000-5000K, a8-a14:200-1000K)
 	thermo_data = {"H2O": [-228600,  0.26770389E+01, 0.29731816E-02,-0.77376889E-06, 0.94433514E-10,-0.42689991E-14,-0.29885894E+05, 0.68825500E+01, 0.41986352E+01,-0.20364017E-02, 0.65203416E-05,-0.54879269E-08, 0.17719680E-11,-0.30293726E+05,-0.84900901E+00,-0.29084817E+05],
 	"O(1D)": [231700,  2.49368475E+00, 1.37617903E-05,-1.00401058E-08, 2.76012182E-12,-2.01597513E-16, 5.19986304E+04, 4.65050950E+00, 2.49993786E+00, 1.71935346E-07,-3.45215267E-10, 3.71342028E-13,-1.70964494E-16, 5.19965317E+04, 4.61684555E+00, 5.27418934E+04],
@@ -717,6 +736,8 @@ def parser(name, mass_dic, atoms):
 	"HSO": [150000,  4.34724125E+00, 2.53372236E-03,-9.51430950E-07, 1.58095446E-10,-9.65294637E-15,-4.20893834E+03, 3.15887502E+00, 4.13565093E+00,-3.69243127E-03, 2.05169784E-05,-2.40530656E-08, 9.17084270E-12,-3.82371653E+03, 5.88770120E+00,-2.61672666E+03]
 	}
 
+	enthalpy_data = {"H2":0.e0, "H":217.998e0, "O2":0.e0, "OH":38.99e0, "H2O":-241.826e0,"O":249.18e0}
+
 	zatom = 0 #atomic number init
 	#loop over charcters
 	for a in atoms:
@@ -768,6 +789,11 @@ def parser(name, mass_dic, atoms):
 		mymol.poly2 = thermo_data[mymol.name][1:8] #1000-5000K
 		mymol.chempot = thermo_data[mymol.name][0] #J/mol
 		#mymol.doChempot(thermo_data)
+	#enthalpy data
+	if(mymol.name in enthalpy_data):
+		mymol.enthalpy = enthalpy_data[mymol.name]
+		#mymol.doChempot(thermo_data)
+
 
 	if(len(namecp)>0): 
 		print "************************************************"

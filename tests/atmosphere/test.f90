@@ -14,6 +14,7 @@ program test
   call lin(xmin,xmax,x(:))
   call lin(tmin,tmax,t(:))
 
+  
    
   dt = (tmax-tmin)/tnum
   h(1) = .0d0
