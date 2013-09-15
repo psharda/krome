@@ -158,34 +158,31 @@ class reaction():
 			pH += deltaH[xp.name] 
 		self.dH = None
 		if(available): self.dH = (rH-pH)*1.60217657e-12 #eV->erg (cooling<0)
+
+
+	def calGibbs(self,sp):
+		apoly = sp.poly2
+		termH = ["", "*0.5d0*Tgas", "*Tgas2/3.d0", "*Tgas3*0.25d0", "*Tgas4*0.2d0", "*invT"]
+		termS = ["*lnT", "*Tgas", "*Tgas2*0.5d0", "*Tgas3/3.d0", "*Tgas4*0.25d0", "*0.d0", ""]
+		sH = "+".join([str(apoly[i])+termH[i] for i in range(len(termH))])
+		sS = "+".join([str(apoly[i])+termS[i] for i in range(len(termS))])
+		print "****************"
+		print sp.name
+		print sH
+		print sS
+		return "((" + sH + ") - (" + sS + "))"
+
+
 	#calculate reverse reaction
 	def doReverse(self):
 		krev = ""
-		termH = ["", "*0.5d0*Tgas", "*Tgas2/3.d0", "*Tgas3*0.25d0", "*Tgas4*0.2d0", "*invT"]
-		termS = ["*lnT", "*Tgas", "*Tgas2*0.5d0", "*Tgas3/3.d0", "*Tgas4*0.25d0", ""]
-		Rgas = 8.314472e-3 #gas constant in kJ/mol
-		#polyH = (a[0] + a[1]*T/2. + a[2]*T*T/3. + a[3]*T*T*T/4. + a[4]*T*T*T*T/5. + a[5]/T) #H/RT
-		#polyS = a[0] lnT + a2 T + a3 T^2 /2 + a4 T^3 /3 + a5 T^4 /4 + a7 # S/R
 		for p in self.products:
-			krev += "-"+str(p.chempot)+"*4.1761236d-4"# + ("+str(p.poly1[0])+"*log(Tgas*T0inv) +0.5d0*("+str(p.poly1[1])+")*(Tgas-T0)"
-			#krev += "+0.16666666d0*("+str(p.poly1[2])+")*(Tgas2 - T02) -0.08333333333d0*("+str(p.poly1[3])+")*(Tgas3 - T03)"
-			#krev += " +0.05d0*("+str(p.poly1[4])+")*(Tgas4 - T04) -("+str(p.poly1[5])+")*(invT - T0inv))"
+			krev += "+" + self.calGibbs(p)
 		for r in self.reactants:
-			krev += "+"+str(r.chempot)+"*4.1761236d-4"# - ("+str(r.poly1[0])+"*log(Tgas*T0inv) +0.5d0*("+str(r.poly1[1])+")*(Tgas-T0)"
-			#krev += "+0.16666666d0*("+str(r.poly1[2])+")*(Tgas2 - T02) -0.08333333333d0*("+str(r.poly1[3])+")*(Tgas3 - T03)"
-			#krev += " +0.05d0*("+str(r.poly1[4])+")*(Tgas4 - T04) -("+str(r.poly1[5])+")*(invT - T0inv))"
-
-		#for p in self.products:
-		#	polyH = "+".join([str(p.poly2[i])+termH[i] for i in range(len(termH)) if (p.poly2[i]!=0e0)])
-		#	polyS = "+".join([str(p.poly2[i])+termS[i] for i in range(len(termS)) if (p.poly2[i]!=0e0)])
-		#	krev += " - (("+polyH+") -&\n ("+polyS+") +&\n " + str(p.enthalpy/Rgas) + "* invT)&\n"
-		#for r in self.reactants:
-		#	polyH = "+".join([str(r.poly2[i])+termH[i] for i in range(len(termH)) if (r.poly2[i]!=0e0)])
-		#	polyS = "+".join([str(r.poly2[i])+termS[i] for i in range(len(termS)) if (r.poly2[i]!=0e0)])
-		#	krev += " + (("+polyH+") -&\n ("+polyS+") +&\n " + str(r.enthalpy/Rgas) + "* invT)&\n"
-		krev = krev.replace("--","+").replace("+-","-").replace("-+","-")
+			krev += "-" + self.calGibbs(r)
+		krev = krev.replace("--","+").replace("+-","-").replace("-+","-").replace("++","+")
 		ndif = len(self.reactants)-len(self.products)
-		kk = "("+self.krate+") * exp("+krev+")" + ""
+		kk = "("+self.krate+") / exp("+krev+")"
 		if(ndif!=0): kk ="0.d0"  #" * (1.3806488d-2 * Tgas)**("+str(ndif)+")"
 		return kk
 ##################################
@@ -259,7 +256,7 @@ def get_example(nsp,useX):
 			@rho_init@
 
 			!call the solver
-			call krome(x(:), @rhof@ Tgas, dt) !chiamata al solver
+			call krome(x(:), @rhof@ Tgas, dt) !call KROME
 
 			print *,"Test OK!"
 		
@@ -439,7 +436,7 @@ DESCRIPTION
 		SPUTTER sputtering
 		H2 	molecular hydrogen formation on dust
 		TDUST	computes dust T with photon flux + CMB radiation
-		
+	-useODEcool
 
 	-usePhot
 		use photons indicated in the reaction file
@@ -449,9 +446,6 @@ DESCRIPTION
 		planetary	Simple planet atmosphere
 		slowmanifold	Slow manifold (Reinhardt et al. 2008)
 		cloud		Molecular cloud one-zone
-		topology	Topology reduction (authority/hub)
-		flux		Flux method (Grassi et al. 2012)
-		cooling		Plot cooling functions
                 collapse        One-zone primordial collapse
                 collapseZ       One-zone collapse with metals
                 collapseUV      One-zone collapse with UV background
@@ -465,12 +459,6 @@ DESCRIPTION
 
 	-useDvodeF90
 		use Dvode implementation in F90 (slower)
-
-	-useTopology
-		use topological reduction (authority/hub)
-
-	-useFlux
-		use flux reduction (Grassi et al. 2012)
 
 	-useTabs
 		use tabulated rate coefficients (free parameter: temperature)
@@ -785,7 +773,7 @@ def parser(name, mass_dic, atoms):
 	
 	#thermal data
 	if(mymol.name in thermo_data):
-		mymol.poly1 = thermo_data[mymol.name][8:15] #200-1000K
+		mymol.poly1 = thermo_data[mymol.name][8:] #200-1000K
 		mymol.poly2 = thermo_data[mymol.name][1:8] #1000-5000K
 		mymol.chempot = thermo_data[mymol.name][0] #J/mol
 		#mymol.doChempot(thermo_data)
@@ -1487,7 +1475,7 @@ def trunc(mystr,sublen,sep):
 			s+="\n"
 	return s
 #################################
-def get_implicit_ode(nr=3,np=4,use_reduction = False):
+def get_implicit_ode(nr=3,np=4):
 	s = """
 n(idx_dummy) = 1.d0
 n(idx_g) = 1.d0
@@ -1495,7 +1483,6 @@ n(idx_CR) = 1.d0
 """
 
 	s += "do i=1,nrea\n"
-	if(use_reduction): s += "if(arr_u(i)==0) cycle\n"
 
 	#r1=arr_r1(i)
 	for i in range(nr):

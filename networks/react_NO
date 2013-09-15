@@ -1,0 +1,6 @@
+@format:idx,R,R,P,P,rate
+1,N2,O,NO,N,3d-10*exp(-38300.*invT)
+2,O2,N,NO,O,1.5d-14*Tgas*exp(-3270.*invT)
+#3,N,NO,N2,O,6.31d-11*exp(-425.*invT)
+#4,NO,O,O2,N,6.31d-15*Tgas*exp(-20820.*invT)
+

@@ -11,13 +11,30 @@ contains
   !******************
   !alias of plot_cool
   subroutine krome_plot_cooling(n)
-    use KROME_cooling
+    use krome_cooling
     implicit none
     real*8::n(:)
 
     call plot_cool(n(:))
 
   end subroutine krome_plot_cooling
+
+  !****************
+  subroutine krome_dump_cooling(n,Tgas,nfile_in)
+    use krome_cooling
+    use krome_commons
+    implicit none
+    real*8::n(nmols),Tgas,x(nspec)
+    integer,optional::nfile_in
+    integer::nfile
+    nfile = 31
+    x(:) = 0.d0
+    x(1:nmols) = n(:)
+    if(present(nfile_in)) nfile = nfile_in
+    call dump_cool(x(:),Tgas,nfile)
+    
+  end subroutine krome_dump_cooling
+
 #ENDIFKROME
 
   !*****************

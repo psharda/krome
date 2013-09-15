@@ -50,6 +50,7 @@ program test_krome
            if(sum((xold(:)-x(:))**2)/nspec<1d-20) exit !check the steady-state
         end do
         write(66,*) !blank line
+        write(66,*) !blank line
      end do
   end do
   

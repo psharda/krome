@@ -22,7 +22,7 @@ useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = u
 useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = False
 pedanticMakefile = False
-useX = has_plot = useFakeOpacity = doIndent = useTlimits = True
+useX = has_plot = useFakeOpacity = doIndent = useTlimits = useODEthermo = True
 useDustGrowth = useDustSputter = useDustH2 = useDustT = False
 typeGamma = "DEFAULT"
 test_name = "default"
@@ -51,14 +51,8 @@ for arg in sys.argv:
 		elif(test_name=="slowmanifold"):
 			[sys.argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_SM"
-		elif(test_name=="topology"):
-			[sys.argv.append(x) for x in ["-useN","-iRHS","-useTopology"]]
-			filename = "networks/react_WH2008"
-		elif(test_name=="flux"):
-			[sys.argv.append(x) for x in ["-useN","-iRHS","-useFlux"]]
-			filename = "networks/react_WH2008"
 		elif(test_name=="cooling"):
-			[sys.argv.append(x) for x in ["-useN","-cooling=ATOMIC,H2,HD,Z,DH,H2GP98"]]
+			[sys.argv.append(x) for x in ["-useN","-cooling=H2,HD,H2GP98"]]
 			filename = "networks/react_primordial"
 		elif(test_name=="shock1Dcool"):
 			[sys.argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
@@ -98,6 +92,9 @@ for arg in sys.argv:
 		elif(test_name=="kasting"):
 			[sys.argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_planet2"
+		elif(test_name=="reverse"):
+			[sys.argv.append(x) for x in ["-useN","-reverse"]]
+			filename = "networks/react_NO"
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
 			sys.exit()
@@ -134,14 +131,6 @@ if("-useTabs" in sys.argv):
 if("-useDvodeF90" in sys.argv):
 	useDvodeF90 = True
 	print "Reading option -useDvodeF90"
-#use topology reduction
-if("-useTopology" in sys.argv):
-	useTopology = True
-	print "Reading option -useTopology"
-#use topology reduction
-if("-useFlux" in sys.argv):
-	useFlux = True
-	print "Reading option -useFlux"
 #do report
 if("-report" in sys.argv):
 	doReport = True
@@ -194,6 +183,11 @@ if("-reverse" in sys.argv):
 if("-useH2opacity" in sys.argv):
 	useH2opacity = True
 	print "Reading option -useH2opacity"
+
+#use cooling dT/dt in the ODE fex
+if("-skipODEthermo" in sys.argv):
+	useODEthermo = False
+	print "Reading option -skipODEthermo"
 
 #determine Tgas limit operators
 for arg in sys.argv:
@@ -471,12 +465,14 @@ irate = 10 #position of the rate in F90 style
 hasFormat = False
 format_items = 4+len(ireact)+len(iprod)
 if(skipDup): fdup = open("duplicates.log","w")
+idxFound = tminFound = tmaxFound = rateFound = True
 for row in fh:
 	srow = row.strip() #stripped row
 	if(srow.strip()==""): continue #looks for blank line
 	if(srow[0]=="#"): continue #looks for comment line
 	#search for format string
 	if("@format:" in srow):
+		idxFound = tminFound = tmaxFound = rateFound = False
 		hasFormat = True
 		srow = srow.replace("@format:","") #remove 
 		print "Using custom format:"
@@ -484,14 +480,13 @@ for row in fh:
 		arow = srow.split(",") #split format line
 		if(len(arow)<6):
 			print "ERROR: format line must contains at least 6 elements"
-			print " idx,R,P,Tmin,Tmax,rate"
+			print " idx,R,R,P,P,rate"
 			print " You provided "+str(len(arow))+" elements:"
 			print " "+srow
 			sys.exit()
 		ipos = 0 #count items in the splitted line
 		ireact = [] #reactants index array
 		iprod = [] #products index array
-		idxFound = tminFound = tmaxFound = rateFound = False
 		format_items = len(arow)
 		for x in arow:
 			x = x.lower().strip() #lower trimmed item
@@ -500,7 +495,7 @@ for row in fh:
 				idxFound = True
 			if(x=="r"): ireact.append(ipos) #reactants positions
 			if(x=="p"): iprod.append(ipos) #products positions
-			if(x=="tmin"): 
+			if(x=="tmin"):
 				iTmin = ipos #min temperature position
 				tminFound = True
 			if(x=="tmax"): 
@@ -1527,7 +1522,7 @@ if(useDustH2):
 
 skip = False
 for row in fh:
-	if(row.strip() == "#IFKROME_use_thermo" and not(use_thermo)): skip = True
+	if(row.strip() == "#IFKROME_use_thermo" and (not(use_thermo) or not(useODEthermo))): skip = True
 	if(row.strip() == "#ENDIFKROME"): skip = False
 
 	if(row.strip() == "#IFKROME_report" and not(doReport)): skip = True
@@ -1540,7 +1535,7 @@ for row in fh:
 
 	if(row.strip() == "#KROME_ODE"):
 		if(use_implicit_RHS):
-			fout.write(get_implicit_ode(maxnreag, maxnprod, useTopology or useFlux)+"\n")
+			fout.write(get_implicit_ode(maxnreag, maxnprod)+"\n")
 		else:
 			#add dust ODE and partner specie RHS terms
 			if(useDust):
@@ -1698,7 +1693,15 @@ solar = {
 	}
 
 scaleZ = []
+#looks for H to rescale the metallicity
+has_H = False
+for mols in specs:
+	if(mols.name=="H"): 
+		has_H = True
+		break
+#creates the metallicity rescaling routine
 for (k,v) in solar.iteritems():
+	if(not(has_H)): break #skip routine if H is not present
 	for mols in specs:
 		if(k.upper()==mols.name.upper()):
 			scaleZ.append("n("+mols.fidx+") = max(n(idx_H) * 1d1**(Z+log10("+str(v)+")), 1d-40)")

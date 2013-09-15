@@ -83,11 +83,6 @@ contains
     istate = 1 !init solver state
     tloc = 0.d0 !set starting time
 
-#IFKROME_useFlux
-    rrmax = fex_check(n(:),Tgas)
-    call flux_reduction(rrmax)
-#ENDIFKROME
-
 #IFKROME_check_mass_conservation
     mass(:) = get_mass() !get masses
     totmass = sum(n(:) * mass(:)) !calculate total mass

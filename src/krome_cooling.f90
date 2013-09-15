@@ -1218,5 +1218,52 @@ contains
 
   end subroutine plot_cool
 
+  !***********************************
+  subroutine dump_cool(n,Tgas,nfile)
+    implicit none
+    real*8::Tgas,n(:),cool(9)
+    integer::nfile
+
+    cool(:) = 0.d0
+
+#IFKROME_useCoolingH2
+    cool(1) = cooling_H2(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingH2GP
+    cool(2) = cooling_H2GP(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingCEN
+    cool(3) = cooling_CEN(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingHD
+    cool(4) = cooling_HD(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingZ
+    cool(5) = cooling_Z(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingdH
+    cool(6) = cooling_dH(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingDust
+    cool(7) = cooling_dust(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingCompton
+    cool(8) = cooling_compton(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingCIE
+    cool(9) = cooling_CIE(n(:), Tgas)
+#ENDIFKROME
+
+    write(nfile,'(99E14.5e3)') Tgas,sum(cool),cool(:) 
+
+  end subroutine dump_cool
 
 end module KROME_cooling

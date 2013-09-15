@@ -17,11 +17,17 @@ module krome_constants
   real*8,parameter:: pi = 3.14159 !PI
   
   real*8,parameter:: eV_to_erg = 1.60217646d-12 !eV -> erg
-  real*8,parameter:: seconds_per_year = 365d0*24d0*3600d0 
+  real*8,parameter:: seconds_per_year = 365d0*24d0*3600d0 !yr -> s
 
   real*8,parameter:: kvgas_erg = 8.d0*boltzmann_erg/pi/p_mass
   
   real*8,parameter:: pre_planck = 2.d0*planck_erg/clight**2 !erg/cm2*s3
   real*8,parameter:: exp_planck =  planck_erg / boltzmann_erg !s*K
+  
+  real*8,parameter:: N_avogadro = 6.0221d23 !#
+  real*8,parameter:: Rgas_J = 8.3144621d0 !J/K/mol
+  real*8,parameter:: Rgas_kJ = 8.3144621d-3 !kJ/K/mol
+
+
   
 end module krome_constants

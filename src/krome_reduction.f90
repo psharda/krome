@@ -1,9 +1,9 @@
 module krome_reduction
 contains
 
-
 #IFKROME_useTopology
   subroutine krome_authub(threshold)
+    !this routine is not supported, use at your own risk
     use krome_commons
     use krome_subs
     implicit none
@@ -134,6 +134,7 @@ contains
 #IFKROME_useFlux
   !*************************
   subroutine flux_reduction(rrmax,threshold)
+    !this routine is not supported, use at your own risk
     use krome_commons
     implicit none
     integer::i
