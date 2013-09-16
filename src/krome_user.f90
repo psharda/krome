@@ -5,6 +5,8 @@ module krome_user
 
 #KROME_species
 
+#KROME_common_alias
+
 contains
 
 #IFKROME_use_cooling

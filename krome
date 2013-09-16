@@ -1677,19 +1677,23 @@ if(not(buildCompact)):
 	fout = open(buildFolder+"krome_user.f90","w")
 skip = False
 
+#from Anders+Grevesse 1989
 solar = {
-	#"He":"9.749177d-2",
-	"O":"5.241966d-4",
-	"C":"3.582559d-4",
-	"N":"1.120923d-4",
-	"Ne":"1.098945d-4",
-	"Si":"3.296834d-5",
-	"Mg":"3.077045d-5",
-	"Fe":"2.967150d-5",
-	"Si":"1.758311d-5",
-	"Ne":"1.648417d-5",
-	#"D":"1.648417d-5",
-	"Ca":"2.197889d-6"
+	"Li":"2.046595d-9",
+	"C" :"3.620072d-4",
+	"N" :"1.121864d-4",
+	"O" :"8.530466d-4",
+	"F" :"3.021505d-8",
+	"Ne":"1.232975d-4",
+	"Na":"2.057348d-6",
+	"Mg":"3.849462d-5",
+	"Al":"3.043011d-6",
+	"Si":"3.584229d-5",
+	"P" :"3.727599d-7",
+	"S" :"1.845878d-5",
+	"Cl":"1.878136d-7",
+	"Ca":"2.189964d-6",
+	"Fe":"3.225806d-5"
 	}
 
 scaleZ = []
@@ -1718,6 +1722,12 @@ for row in fh:
 			fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
 	elif(srow == "#KROME_header"):
 		fout.write(get_licence_header())
+	elif(srow == "#KROME_common_alias"):
+		fout.write("\tinteger,parameter::krome_nrea=" + str(len(reacts)) + "\n")
+		fout.write("\tinteger,parameter::krome_nmols=" + str(len(specs)-4-dustArraySize*dustTypesSize) + "\n")
+		fout.write("\tinteger,parameter::krome_nspec=" + str(len(specs)) + "\n")
+		fout.write("\tinteger,parameter::krome_ndust=" + str(dustArraySize*dustTypesSize) + "\n")
+		fout.write("\tinteger,parameter::krome_ndustTypes=" + str(dustTypesSize) + "\n")
 	elif(srow == "#KROME_scaleZ"):
 		fout.write(("\n".join(scaleZ))+"\n")
 	else:

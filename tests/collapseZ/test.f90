@@ -1,18 +1,14 @@
 !THIS IS THE ONE-ZONE COLLAPSE TEST
 program test_krome
 
-  use krome_commons
   use krome_main
   use krome_user
   use krome_user_commons
-  use krome_cooling
-  use krome_heating
-
   integer,parameter::rstep = 500000
   integer::i,jz
   real*8::dtH,deldd
   real*8::tff,dd,dd1
-  real*8::x(nmols),Tgas,dt
+  real*8::x(krome_nmols),Tgas,dt
   real*8::ntot,rho,zs(5)
 
   !INITIALIZE KROME PARAMETERS AND DUST 
@@ -38,13 +34,10 @@ program test_krome
      !rescale metallicity for neutral metals (C,Fe,Si,O)
      call krome_scale_Z(x(:), zs(jz))
 
-
      x(krome_idx_Cj) = x(krome_idx_C) !carbon is fully ionized
      x(krome_idx_C)  = 1d-40
      x(krome_idx_Fe)  = 1d-40
      x(krome_idx_Si)  = 1d-40
-
-
 
      !list abundances
      call krome_get_info(x(:),Tgas)
@@ -73,15 +66,11 @@ program test_krome
 
         if(dd.gt.1d18) exit !quit after 1e18 1/cm3
 
-        !dump cooling
-        write(55,'(99E17.5e3)') zs(jz),dd,cooling_H2(x(:),Tgas),cooling_CEN(x(:),Tgas),&
-             cooling_Z(x(:),Tgas),cooling_compton(x(:),Tgas),cooling_CIE(x(:),Tgas), &
-             heatingChem(x(:), Tgas), heat_compress(x(:), Tgas)
-
         !solve the chemistry
         call krome(x(:),Tgas,dt)
-        
-        write(22,'(99E12.3e3)') zs(jz),dd,Tgas,x(:)/dd !dump Tgas and normalized abundances
+
+        !dump Tgas and normalized abundances
+        write(22,'(99E12.3e3)') zs(jz),dd,Tgas,x(:)/dd 
         if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas !print every 100 steps
 
      end do
