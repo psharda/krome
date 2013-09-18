@@ -55,7 +55,8 @@ contains
           krome_dust_aspan(i+ilow-1) = abin(i+1) - abin(i) !bin span
        end do
        krome_dust_asize(ilow:iup) = adust(:) !store mean size
-       krome_dust_asize2(ilow:iup) = adust(:)**2 !store mean size squared
+       krome_dust_asize2(ilow:iup) = adust(:)**2 !store mean size square
+       krome_dust_asize3(ilow:iup) = adust(:)**3 !store mean size cube
        !amount of dust per bin computed using the dust to gas ratio (dtg)
        ! of the jth dust type.
        xdust(ilow:iup) = rhogas * dtg(j) / adust(:)**3 / krome_grain_rho / nd 

@@ -87,7 +87,7 @@ for arg in sys.argv:
 			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial_UV"
 		elif(test_name=="collapseDUST"):
-			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL","-dust=5,C,Si","-dustOptions=TDUST,H2"]]
+			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST"]]
 			filename = "networks/react_primordial"
 		elif(test_name=="kasting"):
 			[sys.argv.append(x) for x in ["-useN"]]
@@ -95,6 +95,10 @@ for arg in sys.argv:
 		elif(test_name=="reverse"):
 			[sys.argv.append(x) for x in ["-useN","-reverse"]]
 			filename = "networks/react_NO"
+		elif(test_name=="atmosphere"):
+			[sys.argv.append(x) for x in ["-useN"]]
+			filename = "networks/react_kast80"
+			has_plot = False
 		else:
 			print "ERROR: test \""+test_name+"\" not present!"
 			sys.exit()
@@ -715,11 +719,25 @@ if(useDust):
 				mymol.idx = len(specs)+1
 				specs.append(mymol)
 
+	#add dust Temperatures as species
+	if(useDustT):
+		for dType in dustTypes:
+			for i in range(dustArraySize):
+					#create the object named dust_type_Tdust_index
+					mymol = molec()
+					mymol.name = "dust_"+dType+"_Tdust_"+str(i)
+					mymol.charge = 0
+					mymol.mass = 0.e0
+					mymol.ename = "dust_"+dType+"_Tdust_"+str(i)
+					mymol.fidx = "idx_dust_"+dType+"_Tdust_"+str(i)
+					mymol.idx = len(specs)+1
+					specs.append(mymol)
+
 	print "Dust added:",dustArraySize*dustTypesSize
+	if(useDustT): print "Dust Tempperature added:",dustArraySize*dustTypesSize
 
-#look for photons and CR
+#look for photons and CR to add to the species list
 has_g = has_CR = False
-
 for mol in specs:
 	if(mol.name=="g"):
 		has_g = True
@@ -774,11 +792,18 @@ mymol.idx = len(specs)+1
 specs.append(mymol)
 dummy = mymol #store object
 
+#evaluate the number of chemical species (excluding, dust, dummies, Tgas, Tdust)
+nmols = len(specs)-4-dustArraySize*dustTypesSize
+ndustT = 0 #default for Tdust
+if(useDustT): 
+	nmols -= dustArraySize*dustTypesSize #remove Tdust elements
+	ndustT = dustArraySize*dustTypesSize #number of Tdust elements
+
 #print found values
 print
 print "ODEs needed:", len(specs)
 print "Reactions found:", len(reacts)
-print "Species found:", len(specs)-4-dustArraySize*dustTypesSize
+print "Species found:", nmols
 
 #dump species to log file
 fout = open("species.log","w")
@@ -798,12 +823,13 @@ fout.close()
 
 print
 #include dust in ODE array partition
-sdust = ""
+sdust = sdustT = ""
 if(useDust):
 	#include dust by types
 	for dType in dustTypes:
 		sdust += " + ["+str(dustArraySize)+" "+dType+"-dust]"
-sODEpart = "ODE partition: [" + str(len(specs)-4-dustArraySize*dustTypesSize) + " atom/mols] "+sdust+" + [1 CR] + [1 PHOT] + [1 Tgas] + [1 dummy] = "+str(len(specs))+" ODEs"
+		sdustT += " + ["+str(dustArraySize)+" "+dType+"-dust T]"
+sODEpart = "ODE partition: [" + str(nmols) + " atom/mols] "+sdust+sdustT+" + [1 CR] + [1 PHOT] + [1 Tgas] + [1 dummy] = "+str(len(specs))+" ODEs"
 print sODEpart
 #if species are few print list of species
 if(len(specs)<20): print "ODEs list: "+(", ".join([x.name for x in specs]))
@@ -823,11 +849,11 @@ for rea in reacts:
 		dns[p.idx-1] += " +"+rea.RHS
 
 #add dust to ODEs
-nmols = len(specs)-4-dustArraySize*dustTypesSize
 if(useDust):
 	j = 0
 	for dType in dustTypes:
 		for i in range(dustArraySize):
+			myndust = dustArraySize*dustTypesSize
 			j += 1
 			#******growth / sputtering******
 			if(useDustGrowth):
@@ -835,6 +861,13 @@ if(useDust):
 				dns[nmols+j-1] += ",krome_dust_T("+str(j)+"),vgas,krome_dust_asize("+str(j)+"))"
 			if(useDustSputter):
 				dns[nmols+j-1] += " - krome_dust_sput_DS79(Tgas,krome_dust_asize("+str(j)+"),ntot,n("+str(nmols+j)+"))"
+			if(useDustT):
+				diffTdust = "( - n("+str(nmols+j)+") * krome_dust_asize3("+str(j)+") * krome_grain_rho &\n"
+				diffTdust += " * dustEm(krome_dust_asize("+str(j)+"), n("+str(nmols+myndust+j)+")," 
+				diffTdust += "dust_opt_asize_"+dType+", dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+") &\n"
+				diffTdust += " + dustCool(krome_dust_asize2("+str(j)+"),n("+str(nmols+j)
+				diffTdust += "), Tgas, n("+str(nmols+myndust+j)+"),ntot)) / boltzmann_erg / n("+str(nmols+j)+")"
+				dns[nmols+myndust+j-1] += " + " + diffTdust
 
 #find the maximum number of products and reactants
 maxnprod = maxnreag = 0
@@ -863,7 +896,11 @@ for i in range(len(arr_pp)):
 
 #wrap RHS (e.g. knn+knn=2*knn)
 dnw = []
+idn = 0
 for dn in dns:
+	if(idn>nmols):
+		dnw.append(dn)
+		continue
 	RHSs = []
 	RHSc = []
 	dnspl =  dn.strip().split()
@@ -879,8 +916,9 @@ for dn in dns:
 		if("+" in RHSs[i] and RHSc[i]>1): dns += RHSs[i].replace("+"," +"+str(RHSc[i])+".d0*")
 		if(RHSc[i]==1): dns+= " "+RHSs[i]
 	dnw.append(dns)
+	idn += 1
 
-#create explicit JAC
+#create explicit JAC for chemical species
 neq = len(specs)
 jac = [["pdj("+str(j+1)+") = 0.d0" for i in range(neq)] for j in range(neq)]
 jsparse = [[0 for i in range(neq)] for j in range(neq)]
@@ -901,12 +939,26 @@ for rea in reacts:
 			jac[pp.idx-1][r1.idx-1] += " +"+sjac
 			jsparse[pp.idx-1][r1.idx-1] = 1
 
+#create approximated Jacobian term for Tgas
 for i in range(neq):
 	if(not(use_thermo)): break
 	jsparse[i][Tgas_species.idx-1] = jsparse[Tgas_species.idx-1][i] = 1
 	s = str(i+1)
 	if(specs[i].name!="dummy" and specs[i].name!="CR" and specs[i].name!="g"):
 		jac[Tgas_species.idx-1][i] = "if(abs(n("+s+") - jac_nold("+s+"))>1d-10) pdj(idx_Tgas) = (jac_dn(idx_Tgas) - jac_dnold(idx_Tgas)) / (n("+s+") - jac_nold("+s+"))"
+
+#TODO:create approximated Jacobian term for Tdust
+for i in range(neq):
+	if(not(useDustT)): break
+	for j in range(dustArraySize*dustTypesSize):
+		jTdust = nmols + (dustArraySize*dustTypesSize) + j
+		print i,j,jTdust
+		sjTdust = str(jTdust)
+		jsparse[i][jTdust] = jsparse[jTdust][i] = 1
+		s = str(i+1)
+		if(specs[i].name!="dummy" and specs[i].name!="CR" and specs[i].name!="g"):
+			jac[jTdust][i] = "if(abs(n("+s+") - jac_nold("+s+"))>1d-10) pdj(idx_Tgas) = (jac_dn(idx_Tgas) - jac_dnold(idx_Tgas)) / (n("+s+") - jac_nold("+s+"))"
+
 
 #create IAC/JAC (see DLSODES manual)
 isum = 1
@@ -934,7 +986,7 @@ neq = len(specs) #number of equations
 nrea = len(reacts) #number of reactions
 lenrat = 2
 nnz_estimate = pow(neq,2) - nrea #estimate non-zero elements (inaccurate)
-nnz = max(nnz, nnz_estimate) #estimate can be more realistic than nnz calculation
+nnz = max(nnz, nnz_estimate) #estimate can be more realistic than nnz calculation!
 if(nnz<0):
 	die("ERROR: nnz<0, please check RWORK size estimation!")
 
@@ -1014,37 +1066,40 @@ if(usePhIoniz):
 			phvars.append(react.krate)
 			pheatvars.append(react.krate.replace("krome_kph_","krome_pheat_"))
 
+#common dust optical variables
 optVariables = ""
 if(useDust):
 	for dType in dustTypes:
 		optVariables += "real*8,allocatable::dust_opt_asize_"+dType+"(:), dust_opt_nu_"+dType+"(:),dust_opt_Qabs_"+dType+"(:,:)\n"
 		optVariables += "real*8,allocatable::dust_opt_Em_"+dType+"(:,:),dust_opt_Tbb_"+dType+"(:)\n"
 
+#common variables
 skip = False
 for row in fh:
-
-	if(row.strip() == "#KROME_species_index"):
+	srow = row.strip()
+	if(srow == "#KROME_species_index"):
 		for x in specs:
 			fout.write("\tinteger,parameter::" + x.fidx + "=" + str(x.idx) + "\n")
-	elif(row.strip() == "#KROME_parameters"):
+	elif(srow == "#KROME_parameters"):
 			fout.write("\tinteger,parameter::nrea=" + str(len(reacts)) + "\n")
-			fout.write("\tinteger,parameter::nmols=" + str(len(specs)-4-dustArraySize*dustTypesSize) + "\n")
+			fout.write("\tinteger,parameter::nmols=" + str(nmols) + "\n")
 			fout.write("\tinteger,parameter::nspec=" + str(len(specs)) + "\n")
 			fout.write("\tinteger,parameter::ndust=" + str(dustArraySize*dustTypesSize) + "\n")
+			fout.write("\tinteger,parameter::ntdust=" + str(dustArraySize*dustTypesSize) + "\n")
 			fout.write("\tinteger,parameter::ndustTypes=" + str(dustTypesSize) + "\n")
-	elif(row.strip() == "#KROME_header"):
+	elif(srow == "#KROME_header"):
 		fout.write(get_licence_header())
-	elif(row.strip() == "#KROME_implicit_arr_r"):
+	elif(srow == "#KROME_implicit_arr_r"):
 		for j in range(maxnreag):
 			fout.write("integer::arr_r"+str(j+1)+"(nrea)\n")
-	elif(row.strip() == "#KROME_implicit_arr_p"):
+	elif(srow == "#KROME_implicit_arr_p"):
 		for j in range(maxnprod):
 			fout.write("integer::arr_p"+str(j+1)+"(nrea)\n")
-	elif(row.strip() == "#KROME_photo_variables" and usePhIoniz and len(phvars)>0):
+	elif(srow == "#KROME_photo_variables" and usePhIoniz and len(phvars)>0):
 		fout.write("real*8::"+(",".join(phvars))+"\n")
-	elif(row.strip() == "#KROME_photoheating_variables" and useHeatingPhoto):
+	elif(srow == "#KROME_photoheating_variables" and useHeatingPhoto):
 		fout.write("real*8::"+(",".join(pheatvars))+"\n")
-	elif(row.strip() == "#KROME_opt_variables"):
+	elif(srow == "#KROME_opt_variables"):
 		fout.write(optVariables)
 	else:
 		if(row[0]!="#"): fout.write(row)
@@ -1079,6 +1134,7 @@ if(not(file_exists(buildFolder+"krome_user_commons.f90"))):
 	print "done!"
 else:
 	print "WARNING: krome_user_commons.f90 not replaced!"
+
 #*********SUBS****************
 #write parameters in krome_subs.f90
 print "- writing krome_subs.f90...",
@@ -1091,34 +1147,34 @@ for rea in reacts:
 	sclist = get_Tshortcut(rea,sclist)
 
 for row in fh:
-	if(row.strip() == "#KROME_krates"):
+	srow = row.strip()
+	if(srow == "#KROME_krates"):
 		for x in reacts:
 			sTlimit = ""
 			if(x.kphrate==None and useTlimits): sTlimit = "if(Tgas."+x.TminOp+"."+x.Tmin+" .and. Tgas."+x.TmaxOp+"."+x.Tmax+")"
 			kstr = "\t" + sTlimit + " k("+str(x.idx)+") = " + x.krate + " !" + x.verbatim
 			kstr = truncF90(kstr, 60,"*")
 			fout.write(truncF90(kstr, 60,"/")+"\n")
-	elif(row.strip() == "#KROME_implicit_arrays"):
+	elif(srow == "#KROME_implicit_arrays"):
 		fout.write(truncF90(implicit_arrays,60,","))
-	elif(row.strip() == "#KROME_masses"):
+	elif(srow == "#KROME_masses"):
 		for x in specs:
 			massrow = "\tget_mass("+str(x.idx)+") = " + str(x.mass).replace("e","d") + "\t!" + x.name + "\n"
 			fout.write(massrow.replace("0.0","0.d0"))
-	elif(row.strip() == "#KROME_names"):
+	elif(srow == "#KROME_names"):
 		for x in specs:
 			fout.write("\tget_names("+str(x.idx)+") = \"" + x.name + "\"\n")
-	elif(row.strip() == "#KROME_charges"):
+	elif(srow == "#KROME_charges"):
 		for x in specs:
 			fout.write("\tget_charges("+str(x.idx)+") = " + str(x.charge) + ".d0 \t!" + x.name + "\n")
-	elif(row.strip() == "#KROME_reaction_names"):
+	elif(srow == "#KROME_reaction_names"):
 		for x in reacts:
 			kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
 			fout.write(kstr+"\n")
-	elif(row.strip() == "#KROME_Tshortcuts"):
-		#print [x.split("=")[0] for x in sclist]
+	elif(srow == "#KROME_Tshortcuts"):
 		for shortcut in sclist:
 			fout.write(shortcut+"\n")
-	elif(row.strip() == "#KROME_header"):
+	elif(srow == "#KROME_header"):
 		fout.write(get_licence_header())
 	else:
 		fout.write(row)
@@ -1157,7 +1213,7 @@ for x in phvars:
 for x in pheatvars:
 	ph_zero += x + " = 0.d0\n"
 
-
+#replace photoionization and photoheating functions
 skip = False
 for row in fh:
 	if(row.strip() == "#IFKROME_usePhIoniz" and not(usePhIoniz)): skip = True
@@ -1209,6 +1265,7 @@ for row in fh:
 if(not(buildCompact)):
 	fout.close()
 print "done!"
+
 #********* DUST ****************
 print "- writing krome_dust.f90...",
 fh = open("src/krome_dust.f90")
@@ -1434,7 +1491,7 @@ if(useHeatingChem):
 		HChemDust += "HChem = HChem + nH2dust * (0.2d0/h2heatfac + 4.2d0)\n"
 
 
-#build heating terms
+#build heating terms for photoionization
 pheatvars = []
 if(usePhIoniz):
 	for react in reacts:
@@ -1446,7 +1503,7 @@ if(usePhIoniz):
 		if(useFakeOpacity): fake_opacity = " * exp(-n(" + reag[0].fidx + ") / n0)"
 		pheatvars.append("krome_pheat_"+reaname + " * n(" + reag[0].fidx + ")" + fake_opacity)
 
-
+#replace pragma with strings built above
 skip = False
 for row in fh:
 	if(row.strip() == "#KROME_header"):
@@ -1499,17 +1556,19 @@ fh = open("src/krome_ode.f90")
 if(not(buildCompact)):
 	fout = open(buildFolder+"krome_ode.f90","w")
 
+#root-finding based Tdust function (without dTdust/dt) PIPPO
 getTdust = ""
-if(useDustT):
-	iType = 0
-	getTdust = "nd = "+str(dustArraySize)+" !number dust bins per types\n"
-	for dType in dustTypes:
-		getTdust += "call getTdust(krome_dust_T(nd*("+str(iType)+")+1:nd*"+str(iType+1)
-		getTdust += "), dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+",&\n"
-		getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+", n(:))\n"
-		getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")
-		iType += 1
+#if(useDustT):
+#	iType = 0
+#	getTdust = "nd = "+str(dustArraySize)+" !number dust bins per types\n"
+#	for dType in dustTypes:
+#		getTdust += "call getTdust(krome_dust_T(nd*("+str(iType)+")+1:nd*"+str(iType+1)
+#		getTdust += "), dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+",&\n"
+#		getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+", n(:))\n"
+#		getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")
+#		iType += 1
 
+#string for the function computing dust H2 formation
 dustH2 = "\n"
 if(useDustH2):
 	iType = 0
@@ -1520,6 +1579,7 @@ if(useDustH2):
 		dustH2 += " krome_dust_T(" + str(ilow-nmols) + ":" + str(iup-nmols) + "), n(:), H2_eps_"+dType+", vgas)\n"
 		iType += 1
 
+#replace pragma with built strings 
 skip = False
 for row in fh:
 	if(row.strip() == "#IFKROME_use_thermo" and (not(use_thermo) or not(useODEthermo))): skip = True
@@ -1540,9 +1600,9 @@ for row in fh:
 			#add dust ODE and partner specie RHS terms
 			if(useDust):
 				ndust = dustArraySize*dustTypesSize #number of dust ODEs
-				nmols = len(specs)-4-ndust #number of mols ODEs
+				#nmols = len(specs)-4-ndust #number of mols ODEs
 
-				#print first dust to sum terms up
+				#print first dust to sum gas-dust terms up (e.g. dustC<->gasC)
 				for x in dnw[nmols:nmols+ndust]:
 					fout.write("\t" + x + "\n")
 				fout.write("\n") #print a blank line
@@ -1550,8 +1610,8 @@ for row in fh:
 				#print sums for different partners
 				iType = 0
 				for dType in dustTypes:
-					ilow = nmols + iType * dustArraySize + 1
-					iup = nmols + (iType + 1) * dustArraySize
+					ilow = nmols + iType * dustArraySize + 1 #lower index for dust in specs array
+					iup = nmols + (iType + 1) * dustArraySize #upper index for dust in specs array
 					kpart = "krome_dust_partner_ratio(" + str(ilow-nmols) + ":" + str(iup-nmols) + ")"
 					fout.write("\tdSumDust"+dType + " = sum(dn(" + str(ilow) + ":" + str(iup) + ")*"+kpart+")\n")
 					iType += 1
@@ -1596,7 +1656,7 @@ for row in fh:
  		fout.write("write(fnum,'(I5,E12.3e3,a2,a50)') i,k(i)*"+report_flux+",'',rnames(i)\n")
 
 	elif(row.strip() == "#KROME_odeConstant" and useODEConstant):
-		fout.write("dn(:) = dn(:) "+ODEConstant+" \n")
+		fout.write("dn(:) = dn(:) "+ODEConstant+" \n") #add the string contains an ODE expression
 	elif(row.strip() == "#KROME_odeDust"):
 		fout.write("dn(:) =  krome_dust \n")
 	elif(row.strip() == "#KROME_dust_H2"):
@@ -1605,7 +1665,7 @@ for row in fh:
 		if(solver_MF==222):
 			fout.write("\n")
 		else:
-			#J(i,j) = df_i/dx_j
+			#build the Jacobian as J(i,j) = df_i/dx_j
 			for i in range(neq):
 				if(i==0): fout.write("if(j=="+str(i+1)+") then\n")
 				if(i>0): fout.write("elseif(j=="+str(i+1)+") then\n")
@@ -1631,13 +1691,14 @@ for row in fh:
 	elif(row.strip() == "#KROME_gamma"):
 		#computes the adiabatic index if needed or uses a user-defined expression 
 		if(typeGamma=="DEFAULT"):
-			gamma = "1.66666666667d0" #default gamma is 5/3
+			gamma = "1.66666666667d0" #default gamma is 5/3 (atomic)
 		elif(typeGamma=="FULL"):
+			#build gamma following (Grassi+2010,MerlinPhDTheis)
 			specsGamma = ["H","HE","E","H2"] #species used in the gamma
-			gammaNm = []
-			gammaDm = []
-			gammaNb = []
-			gammaDb = []
+			gammaNm = [] #numerator monoatomics
+			gammaDm = [] #denominator monoatomics
+			gammaNb = [] #numerator diatomics
+			gammaDb = [] #denominator diatomics
 			#loop on species
 			for mol in specs:
 				if(mol.name.upper() in specsGamma):
@@ -1648,7 +1709,7 @@ for row in fh:
 					else: #diatomic
 						gammaNb.append(nfidx)
 						gammaDb.append(nfidx)
-			#build fortran expression for gamma (see Grassi et al. 2011)
+			#build fortran expression for gamma
 			gammaN = "(5.d0*("+(" + ".join(gammaNm)) + ") + 7.d0*("+(" + ".join(gammaNb)) + "))"
 			gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + "))"
 			gamma = gammaN + " / &\n" +gammaD
@@ -1697,13 +1758,13 @@ solar = {
 	}
 
 scaleZ = []
-#looks for H to rescale the metallicity
+#looks for H to rescale the metallicity otherwise skips
 has_H = False
 for mols in specs:
 	if(mols.name=="H"): 
 		has_H = True
 		break
-#creates the metallicity rescaling routine
+#creates the metallicity rescaling subroutine
 for (k,v) in solar.iteritems():
 	if(not(has_H)): break #skip routine if H is not present
 	for mols in specs:
@@ -1724,9 +1785,10 @@ for row in fh:
 		fout.write(get_licence_header())
 	elif(srow == "#KROME_common_alias"):
 		fout.write("\tinteger,parameter::krome_nrea=" + str(len(reacts)) + "\n")
-		fout.write("\tinteger,parameter::krome_nmols=" + str(len(specs)-4-dustArraySize*dustTypesSize) + "\n")
+		fout.write("\tinteger,parameter::krome_nmols=" + str(nmols) + "\n")
 		fout.write("\tinteger,parameter::krome_nspec=" + str(len(specs)) + "\n")
 		fout.write("\tinteger,parameter::krome_ndust=" + str(dustArraySize*dustTypesSize) + "\n")
+		if(useDustT): fout.write("\tinteger,parameter::krome_nTdust=" + str(dustArraySize*dustTypesSize) + "\n")
 		fout.write("\tinteger,parameter::krome_ndustTypes=" + str(dustTypesSize) + "\n")
 	elif(srow == "#KROME_scaleZ"):
 		fout.write(("\n".join(scaleZ))+"\n")
@@ -1741,6 +1803,7 @@ print "done!"
 
 
 #********* REDUCTION ****************
+#WARNING: this part is not supported and its use is discouraged
 print "- writing krome_reduction.f90...",
 fh = open("src/krome_reduction.f90")
 if(not(buildCompact)):
@@ -1788,31 +1851,35 @@ if(not(buildCompact)):
 	fout = open(buildFolder+"krome.f90","w")
 skip = False
 for row in fh:
-	if(row.strip() == "#IFKROME_useX" and not(useX)): skip = True
-	if(row.strip() == "#ELSEKROME" and not(useX)): skip = False
-	if(row.strip() == "#ELSEKROME" and useX): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
+	srow = row.strip()
+	if(srow == "#IFKROME_useX" and not(useX)): skip = True
+	if(srow == "#ELSEKROME" and not(useX)): skip = False
+	if(srow == "#ELSEKROME" and useX): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
 
-	if(row.strip() == "#IFKROME_useTabs" and not(useTabs)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
+	if(srow == "#IFKROME_useTabs" and not(useTabs)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
 
-	if(row.strip() == "#IFKROME_useFlux" and not(useFlux)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
+	if(srow == "#IFKROME_useFlux" and not(useFlux)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
 
-	if(row.strip() == "#IFKROME_report" and not(doReport)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
+	if(srow == "#IFKROME_report" and not(doReport)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
 
-	if(row.strip() == "#IFKROME_useTopology" and not(useTopology)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
+	if(srow == "#IFKROME_useTopology" and not(useTopology)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
 
-	if(row.strip() == "#IFKROME_check_mass_conservation" and not(checkConserv)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
+	if(srow == "#IFKROME_check_mass_conservation" and not(checkConserv)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
 
-	if(row.strip() == "#IFKROME_useDust" and not(useDust)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
+	if(srow == "#IFKROME_useDust" and not(useDust)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
 
-	if(row.strip() == "#IFKROME_useEquilibrium" and not(useEquilibrium)): skip = True
-	if(row.strip() == "#ENDIFKROME"): skip = False
+	if(srow == "#IFKROME_useDustT" and not(useDustT)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
+
+	if(srow == "#IFKROME_useEquilibrium" and not(useEquilibrium)): skip = True
+	if(srow == "#ENDIFKROME"): skip = False
 
 	if(useDust):
 		row = row.replace("#KROME_dust_arguments",",xdust")
@@ -1824,17 +1891,17 @@ for row in fh:
 
 	if(skip): continue
 
-	if(row.strip() == "#KROME_header"):
+	if(srow == "#KROME_header"):
 		fout.write(get_licence_header())
-	elif(row.strip() == "#KROME_rwork_array"):
+	elif(srow == "#KROME_rwork_array"):
 		fout.write("\treal*8::rwork("+str(lrw)+")\n")
-	elif(row.strip() == "#KROME_iwork_array"):
+	elif(srow == "#KROME_iwork_array"):
 		fout.write("\tinteger::iwork("+str(30+len(ia)+len(ja))+")\n")
-	elif(row.strip() == "#KROME_init_IAC"):
+	elif(srow == "#KROME_init_IAC"):
 		fout.write("\t"+iaf+"\n")
-	elif(row.strip() == "#KROME_init_JAC"):
+	elif(srow == "#KROME_init_JAC"):
 		fout.write("\t"+jaf+"\n")
-	elif(row.strip() == "#KROME_MF"):
+	elif(srow == "#KROME_MF"):
 		if(solver_MF==21):
 			fout.write("\tMF=21\n")
 		elif(solver_MF==222):
@@ -1846,14 +1913,16 @@ if(not(buildCompact)):
 print "done!"
 
 
-if(buildCompact): fout.close()
+if(buildCompact): fout.close() #close the compact file
 
 #*********REPORT.gps****************
 #write gnuplot script to plot abundances evolution
 if(doReport):
 	fout = open(buildFolder+"report.gps","w")
 	fout.write("#plot KROME report\n")
+	fout.write("reset\n")
 	fout.write("set logscale\n")
+	fout.write("set autoscale\n")
 	fout.write("set xlabel \"log(time/s)\"\n")
 	fout.write("plot 'fort.98' u 1:2 w l t \""+specs[0].name+"\",\\\n")
 	for i in range(neq-2):
@@ -1882,8 +1951,8 @@ if(is_test):
 
 	test_file = "tests/"+test_name+"/test.f90"
 	plot_file = "tests/"+test_name+"/plot.gps"
-	#chech if test file exists
 
+	#chech if test file exists
 	if(not(os.path.isfile(filename))): die("ERROR: Test file \""+test_file+"\" doesn't exist!")
 
 	shutil.copyfile(test_file, buildFolder+"test.f90")
@@ -1900,6 +1969,7 @@ else:
 	shutil.copyfile("solver/opkda2.f", buildFolder+"opkda2.f")
 print " done!"
 
+#kasting specific TODO:REPLACE
 if(test_name=="kasting"):
 	shutil.copyfile("tests/kasting/init_specs", buildFolder+"init_specs")
 	shutil.copyfile("tests/kasting/layers_data", buildFolder+"layers_data")
@@ -1912,7 +1982,7 @@ if(useDustT):
 	
 
 print
-print "indent...",
+print "indenting...",
 if(doIndent):
 	if(buildCompact):
 		indentF90(buildFolder+"krome_all.f90")
@@ -1942,22 +2012,25 @@ if(len(reacts)>500 and not(use_implicit_RHS)):
 	print
 	print "WARNING: "+str(len(reacts))+" reactions found! Using implicit RHS (option -iRHS) could be more efficient"
 	print "  and also allows faster compilation."
+	a = raw_input("Any key to continue q to quit... ")
+	if(a=="q"): print sys.exit()
 
 print
 if(not(is_test)):
+	#TODO: add description in case of dust
 	print "Call KROME in your code as:"
 	if(useX):
 		print "    call krome(x(:), gas_density, gas_temperature, time_step)"
 	else:
 		print "    call krome(x(:), gas_temperature, time_step)"
 	print "where:" 
-	print " x(:) is a real*8 array of size "+str(len(specs)-4)+(" of the mass fractions" if useX else " of number densities [1/cm3]")
+	print " x(:) is a real*8 array of size "+str(nmols)+(" of the mass fractions" if useX else " of number densities [1/cm3]")
 	if(useX): print " gas_density  is the gas density in [g/cm3]"
 	print " gas_temperature is the gas temperature in [K]"
 	print " time_step is the integration time-step in [s]"
 
 	fout = open(buildFolder+"test.f90","w")
-	fout.write(get_example(len(specs)-4,useX))
+	fout.write(get_example(nmols,useX))
 	fout.close()
 	indentF90(buildFolder+"test.f90")
 	if(buildCompact):

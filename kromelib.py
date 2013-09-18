@@ -564,13 +564,16 @@ DESCRIPTION
 		show this help message
 
 CREDITS
-	written by Tommaso Grassi 
-	
-	tested by S. Bovino
-	
-	also tested by E. Simoncini, and E. Tognelli
-	
-	thanks to F.A. Gianturco, D.R.G. Schleicher
+	Written and developed by Tommaso Grassi
+	tommasograssi@gmail.com,
+	University of Rome "Sapienza".
+
+	Co-developer Stefano Bovino
+  	sbovino@astro.physik.uni-goettingen.de
+	Institut fuer Astrophysik, Goettingen.
+
+	Others (alphabetically): F.A. Gianturco, J.Prieto,
+	E. Simoncini, D.R.G. Schleicher, D. Seifreid 
 
 """
 	c = 0	
@@ -999,6 +1002,7 @@ def get_photo_qromosV96(atom):
 	return "!REMARK: photoionization of "+myatom+" is not present in Verner et al. 1996." 
 
 #################################
+#photoheating reaction dictionary (verner96)
 def get_photo_heatV96(atom):
 	myatom = atom.lower()
 	heat = {"h" : "heat_h = heat_v96(energy_eV,1.360d+01,4.298d-01,5.475d+04,3.288d+01,2.963d+00,0.000d+00,0.000d+00,0.000d+00)",
@@ -1192,6 +1196,7 @@ def get_photo_heatV96(atom):
 	return "heat_" + myatom + " = 0.d0"
 
 #################################
+#verner96 photochemistry cross sections dictionary
 def get_photo_crossV96(atom):
 	myatom = atom.lower()
 	cross = {"h" : "sigma_h = sigma_v96(energy_eV,4.298d-01,5.475d+04,3.288d+01,2.963d+00,0.000d+00,0.000d+00,0.000d+00)",
@@ -1385,6 +1390,8 @@ def get_photo_crossV96(atom):
 
 	
 ################################
+#create photochemistry parts
+# for a given reaction (react)
 def get_ph_stuff(react):
 	if(len(react.reactants)>1): return None #die("ERROR:too much reactants for a photoreaction!", react.verbatim)
 	if(react.kphrate==None): return None
@@ -1425,6 +1432,7 @@ def get_ph_stuff(react):
 
 
 #################################
+# returns the licence of KROME
 def get_licence_header():
 	header =  """!!*************************************************************
 	!!KROME is a nice and friendly chemistry package for a wide range of 
@@ -1438,32 +1446,35 @@ def get_licence_header():
 	!! the users is well accepted. See disclaimer below and GNU License 
 	!! in gpl-3.0.txt.
 	!!
-	!!Written and developed by >Tommaso Grassi< 
-	!! tommasograssi@gmail.com, 
-	!! University of Rome \"Sapienza\".
+	!!
+	!!Written and developed by Tommaso Grassi
+	!!tommasograssi@gmail.com,
+	!!University of Rome \"Sapienza\".
 	!!
 	!!Co-developer Stefano Bovino
-	!! sbovino@astro.physik.uni-goettingen.de
-	!! Institut fuer Astrophysik, Goettingen.
+  	!!sbovino@astro.physik.uni-goettingen.de
+	!!Institut fuer Astrophysik, Goettingen.
 	!!
-	!!
-	!!Collaborators: F.A. Gianturco, Eugenio Simoncini, Dominik Schlicher, 
-	!! and Emanuele Tognelli.
+	!!Others (alphabetically): F.A. Gianturco, J.Prieto,
+	!!E. Simoncini, D.R.G. Schleicher, D. Seifreid 
 	!!
 	!!
 	!!KROME is provided \"as it is\", without any warranty. 
-	!! The Author assumes no liability for any damages of any kind 
+	!! The Authors assume no liability for any damages of any kind 
 	!! (direct or indirect damages, contractual or non-contractual 
 	!! damages, pecuniary or non-pecuniary damages), directly or 
 	!! indirectly derived or arising from the correct or incorrect 
 	!! usage of KROME, in any possible environment, or arising from 
 	!! the impossibility to use, fully or partially, the software, 
-	!! or any bug or malefunction. 
+	!! or any bug or malefunction.
 	!! Such exclusion of liability expressly includes any damages 
 	!! including the loss of data of any kind (including personal data)
 	!!*************************************************************\n"""
 	return header.replace("\t","").replace("!!","   ! ")
 #################################
+#breaks a string (mystr), in piece
+# of length (sublen), using a 
+# separator (sep)
 def trunc(mystr,sublen,sep):
 	astr = mystr.split(sep)
 	s = z = ""
@@ -1475,6 +1486,9 @@ def trunc(mystr,sublen,sep):
 			s+="\n"
 	return s
 #################################
+#Returns the implicit ode loop
+# arguments are number or reactants (nr)
+# an products (np)
 def get_implicit_ode(nr=3,np=4):
 	s = """
 n(idx_dummy) = 1.d0
@@ -1557,12 +1571,16 @@ def indentF90(filename):
 		fh.write(x)
 	fh.close()
 
-#################################
+################################
+#This function writes an error 
+# and exit
 def die(msg):
 	import sys
 	print msg
 	sys.exit()
 #################################
+#This function returns a random
+# quotation properly formtatted
 def get_quote():
 	import random
 	quotes = [["If you lie to the computer, it will get you.","Perry Farrar"],

@@ -7,46 +7,48 @@ contains
   function cooling(n, Tgas)
     implicit none
     real*8::n(:), Tgas
-    real*8::cooling 
-    !total cooling erg/cm3/s
-    cooling = 0.d0
+    real*8::cooling,cools(9)
+    
+    !returns cooling in erg/cm3/s
+    cools(:) = 0.d0
 
 #IFKROME_useCoolingH2
-    cooling = cooling + cooling_H2(n(:), Tgas)
+    cools(1) = cooling_H2(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingH2GP
-    cooling = cooling + cooling_H2GP(n(:), Tgas)
+    cools(2) = cooling_H2GP(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingCEN
-    cooling = cooling + cooling_CEN(n(:), Tgas)
+    cools(3) = cooling_CEN(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingHD
-    cooling = cooling + cooling_HD(n(:), Tgas)
+    cools(4) = cooling_HD(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
-    cooling = cooling + cooling_Z(n(:), Tgas)
+    cools(5) = cooling_Z(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingdH
-    cooling = cooling + cooling_dH(n(:), Tgas)
+    cools(6) = cooling_dH(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingDust
-    cooling = cooling + cooling_dust(n(:), Tgas)
+    cools(7) = cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingCompton
-    cooling = cooling + cooling_compton(n(:), Tgas)
+    cools(8) = cooling_compton(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingCIE
-    cooling = cooling + cooling_CIE(n(:), Tgas)
+    cools(9) = cooling_CIE(n(:), Tgas)
 #ENDIFKROME
 
+    cooling = sum(cools)
   end function cooling
 
 

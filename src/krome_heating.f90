@@ -7,24 +7,29 @@ contains
   function heating(n, Tgas, k, nH2dust)
     implicit none
     real*8::n(:), Tgas, k(:), nH2dust
-    real*8::heating 
-    !total heating erg/cm3/s
-    heating = 0.d0
+    real*8::heating,heats(4)
+    !returns heating in erg/cm3/s
+
+    heats(:) = 0.d0
+
 #IFKROME_useHeatingChem
-    heating = heating + heatingChem(n(:), Tgas, k(:), nH2dust)
+    heats(1) = heatingChem(n(:), Tgas, k(:), nH2dust)
 #ENDIFKROME
 
 #IFKROME_useHeatingCompress
-    heating = heating + heat_compress(n(:), Tgas)
+    heats(2) = heat_compress(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useHeatingPhoto
-    heating = heating + photo_heating(n(:))
+    heats(3) = photo_heating(n(:))
 #ENDIFKROME
 
 #IFKROME_useHeatingdH
-    heating = heating + heat_dH(n(:),Tgas)
+    heats(4) = heat_dH(n(:),Tgas)
 #ENDIFKROME
+    
+    heating = sum(heats)
+
   end function heating
   
 
