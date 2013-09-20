@@ -101,6 +101,15 @@ contains
     
   end subroutine krome_scale_Z
 
+  !***********************
+  function krome_get_electrons(n)
+    use krome_commons
+    real*8::n(:),ee,krome_get_electrons
+    ee = sum(n(:) * krome_get_charges())
+    krome_get_electrons = max(0.d0, ee)
+  end function krome_get_electrons
+
+
   !************************
   !print species informations
   subroutine krome_get_info(x, Tgas)

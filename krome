@@ -21,8 +21,8 @@ useCoolingCEN = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = u
 useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = False
-pedanticMakefile = False
-useX = has_plot = useFakeOpacity = doIndent = useTlimits = useODEthermo = True
+pedanticMakefile = useFakeOpacity = False
+useX = has_plot = doIndent = useTlimits = useODEthermo = True
 useDustGrowth = useDustSputter = useDustH2 = useDustT = False
 typeGamma = "DEFAULT"
 test_name = "default"
@@ -47,13 +47,10 @@ for arg in sys.argv:
 			filename = "networks/react_planet"
 		elif(test_name=="cloud"):
 			[sys.argv.append(x) for x in ["-useN","-iRHS"]]
-			filename = "networks/react_WH2008"
+			filename = "networks/react_cloud"
 		elif(test_name=="slowmanifold"):
 			[sys.argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_SM"
-		elif(test_name=="cooling"):
-			[sys.argv.append(x) for x in ["-useN","-cooling=H2,HD,H2GP98"]]
-			filename = "networks/react_primordial"
 		elif(test_name=="shock1Dcool"):
 			[sys.argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
 			filename = "networks/react_primordial"
@@ -65,18 +62,15 @@ for arg in sys.argv:
 		elif(test_name=="shock1Dlarge"):
 			[sys.argv.append(x) for x in ["-iRHS"]]
 			filename = "networks/react_WH2008"
-		elif(test_name=="shock1Dbuff"):
-			[sys.argv.append(x) for x in ["-usePhIoniz", "-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium"]]
-			filename = "networks/react_primordial_photo"
 		elif(test_name=="dust"):
-			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN"]]
+			[sys.argv.append(x) for x in ["-dust=10,C,Si","-useN","-dustOptions=GROWTH,SPUTTER"]]
 			filename = "networks/react_primordial"
 		elif(test_name=="compact"):
 			[sys.argv.append(x) for x in ["-compact"]]
 			filename = "networks/react_primordial"
 		elif(test_name=="map"):
-			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,HD", "-heating=PHOTO","-usePhIoniz"]]
-			filename = "networks/react_primordial_photo"
+			[sys.argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-usePhIoniz"]]
+			filename = "networks/react_primordial_photoH2"
 		elif(test_name=="collapse"):
 			[sys.argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM","-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial"
@@ -1201,8 +1195,8 @@ for react in reacts:
 	phvars.append("krome_kph_"+ph_name)
 	pheatvars.append("krome_pheat_"+ph_name)
 
-	#string to print computed photoheating values
-	ph_heat_print += "print '(a20,E11.3,a1,a6)',\"" + react.verbatim + "\", " + "krome_pheat_"+ ph_name + ",\"\",\"eV/s\"\n"
+	#string to print computed photoheating values (uncomment for debug)
+	#ph_heat_print += "print '(a20,E11.3,a1,a6)',\"" + react.verbatim + "\", " + "krome_pheat_"+ ph_name + ",\"\",\"eV/s\"\n"
 
 	#string containing photoheating computations (integrals)
 	ph_heat_qromos += "\t" + phstuff["qromos"].replace("sigma_", "heat_").replace("krome_kph_","krome_pheat_") + "\n"

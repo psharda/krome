@@ -1,8 +1,27 @@
 reset
+set multiplot
 set logscale
 set autoscale
 set pm3d map
-set xlabel "T[K]"
-set ylabel "rho[K]"
+set ylabel "log(J21)\n"
+set xlabel "log(rho[g/cm3])"
+set format cb "%L"
+set format x "%L"
+set format y "%L"
+set format z "%L"
 
-splot 'fort.66' u 1:2:3 t "final T[K]"
+set xrange [:1e-21]
+splot 'fort.66' u 1:2:4
+set contour base
+#set cntrparam levels 30
+set cntrparam levels discrete 1e-5, 1e-3, 1e-2, 1e-1, .9
+set style line 5 lc rgb "black" lw 1.5 lt 1
+set style line 2 lc rgb "orange" lw 1.5 lt 2
+set style line 3 lc rgb "blue" lw 1.5 lt 3
+set style line 4 lc rgb "green" lw 1.5 lt 4
+set style increment user
+unset pm3d
+unset surface
+set key l
+#set zrange [1e-5:]
+splot 'fort.66' u 1:2:12 w l t "x(H2)"

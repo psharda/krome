@@ -1,3 +1,4 @@
+#reaction rates for molecular cloud (from E.Herbst)
 1,E,GRAIN0,,GRAIN-,,,,1.d1,1d4,6.90e-15*T32**(5.00e-01)*gas_dust_ratio
 2,C+,GRAIN-,,C,GRAIN0,,,1.d1,1d4,4.90e-17*T32**(5.00e-01)*gas_dust_ratio
 3,FE+,GRAIN-,,FE,GRAIN0,,,1.d1,1d4,2.30e-17*T32**(5.00e-01)*gas_dust_ratio

@@ -1,4 +1,0 @@
-#you can add comments starting lines with the # symbol
-1,CH,H,,CH2,,,,10.,100.,4.d-10*Tgas
-2,CH2,,,CH,H,,,10.,100.,1.d-10*Tgas
-3,CH2,,,C,H2,,,10.,100.,3.d-9*Tgas

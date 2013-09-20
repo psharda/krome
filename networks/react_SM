@@ -1,3 +1,4 @@
+#slow manifold network from Reinhardt et al. 2008
 @format:idx,R,R,P,P,rate
 1,H2,,H,H,2d0
 2,H,H,H2,,216d0

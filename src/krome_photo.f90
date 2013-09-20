@@ -20,14 +20,14 @@ contains
   subroutine krome_init_photo()
     use krome_commons
 
-    print *,"Initializaing photoreactions..."
+    !print *,"Initializaing photoreactions..."
 
 #KROME_photo_init_zero
 #KROME_photo_qromos
 #KROME_photo_heating_qromos
 
 #KROME_photo_heating_print
-    print *,"done!"
+    !print *,"done!"
 
   end subroutine krome_init_photo
 
