@@ -731,7 +731,8 @@ def parser(name, mass_dic, atoms):
 
 	zatom = 0 #atomic number init
 	#loop over charcters
-	for a in atoms:
+	for atm in atoms:
+		a = atm.upper()
 		if(not(a) in namecp): continue #skip
 		#loop to up to _30 subscript
 		for j in range(30):
@@ -1623,9 +1624,16 @@ def get_quote():
 	["Any code of your own that you haven't looked at for six or more months might as well have been written by someone else.","Eagleson's Law"],
 	["All science is either physics or stamp collecting.", "Ernest Rutherford"],
 	["Done is better than perfect.", ""],
-	["AAAAAAAAAA!",""]
+	["Computers are like Old Testament gods; lots of rules and no mercy","Joseph Campbell"],
+	["A computer lets you make more mistakes faster than any other invention with the possible exceptions of handguns and Tequila.","Mitch Ratcliffe"],
+	["Computer Science is no more about computers than astronomy is about telescopes.","Edsger W. Dijkstra"],
+	["To err is human, but to really foul things up you need a computer.","Paul Ehrlich"],
+	["Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.","Brian W. Kernighan"],
+	["Always code as if the guy who ends up maintaining your code will be a violent psychopath who knows where you live.","Martin Golding"],
+	["One of my most productive days was throwing away 1000 lines of code.","Ken Thompson "],
 	]
-	qtup = quotes[int(random.random()*(len(quotes)-1))]
+	irand = int(random.random()*(len(quotes)))
+	qtup = quotes[irand]
 	myqt = trunc(qtup[0],40," ").upper().strip()
 	amyqt = myqt.split("\n")
 	lqt = max([len(x) for x in amyqt]) 

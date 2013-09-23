@@ -20,8 +20,8 @@ contains
     cools(2) = cooling_H2GP(n(:), Tgas)
 #ENDIFKROME
 
-#IFKROME_useCoolingCEN
-    cools(3) = cooling_CEN(n(:), Tgas)
+#IFKROME_useCoolingAtomic
+    cools(3) = cooling_Atomic(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingHD
@@ -110,7 +110,8 @@ contains
     tauCIE = (n(idx_H2) * 1.4285714e-16)**2.8 !note: 1/7e15 = 1.4285714e-16
     cool = p_mass * 1d1**logcool !erg*cm3/s
     !lambda_thick = lambda_thin * opacity
-    cooling_CIE = cool * min(1.d0, (1.d0-exp(-tauCIE))/tauCIE) * n(idx_H2) * sum(n(1:nmols)) !erg/cm3/s
+    cooling_CIE = cool * min(1.d0, (1.d0-exp(-tauCIE))/tauCIE) &
+         * n(idx_H2) * sum(n(1:nmols)) !erg/cm3/s
 
   end function cooling_CIE
 #ENDIFKROME
@@ -342,14 +343,14 @@ contains
 #ENDIFKROME
 
 
-#IFKROME_useCoolingCEN
-  !CEN COOLING ApJS, 78, 341, 1992
+#IFKROME_useCoolingAtomic
+  !Atomic COOLING ApJS, 78, 341, 1992
   !UNITS = erg/s/cm3
   !*******************************
-  function cooling_CEN(n, Tgas)
+  function cooling_Atomic(n, Tgas)
     use krome_commons
     use krome_subs
-    real*8::Tgas,cooling_CEN,n(:)
+    real*8::Tgas,cooling_atomic,n(:)
     real*8::temp,gaunt_factor,T5,cool,bms_ions
 
 
@@ -392,8 +393,8 @@ contains
     cool = cool+ 1.42d-27*gaunt_factor*sqrt(temp)&
          *bms_ions*n(idx_e)
 
-    cooling_CEN = max(cool, 0.d0)  !erg/cm3/s
-  end function cooling_CEN
+    cooling_atomic = max(cool, 0.d0)  !erg/cm3/s
+  end function cooling_Atomic
 #ENDIFKROME
 
 #IFKROME_useCoolingHD
@@ -563,8 +564,8 @@ contains
        end do
     end if
 
-    tot_metals = n(idx_C) + n(idx_Cj) + n(idx_Si) + n(idx_Sij) + n(idx_Fe)&
-         + n(idx_Fej) + n(idx_O) + n(idx_Oj)
+#KROME_tot_metals
+    
     ratio_para_ortho = 1.d0/3.d0
     kb = boltzmann_erg
     Tgas = max(inTgas,0d0)
@@ -592,27 +593,6 @@ contains
        g10C_H = 1.6D-10*(T2)**(.14)
        g20C_H = 9.2D-11*(T2)**(.26)
        g21C_H = 2.9D-10*(T2)**(.26)
-
-       !//C-H G10 ****WARNING::these are excitation!!!!!****
-       !Tgasb41 = Tgas**(-0.25)
-       !Tgasb42 = Tgasb41 * Tgasb41
-       !Tgasb43 = Tgasb42 * Tgasb41
-       !Tgasb44 = Tgasb43 * Tgasb41
-       !Tgasb45 = Tgasb44 * Tgasb41
-       !Tgasb46 = Tgasb45 * Tgasb41
-       !Tgasb47 = Tgasb46 * Tgasb41
-       !Tgasb48 = Tgasb47 * Tgasb41
-       !Tgasb31 = Tgas**(-0.33333333d0)
-       !Tgasb32 = Tgasb31 * Tgasb31
-       !Tgasb33 = Tgasb32 * Tgasb31
-       !Tgasb34 = Tgasb33 * Tgasb31
-       !Tgasb35 = Tgasb34 * Tgasb31
-       !Tgasb36 = Tgasb35 * Tgasb31
-       !Tgasb37 = Tgasb36 * Tgasb31
-       !Tgasb38 = Tgasb37 * Tgasb31
-       !g01C_H = 1d-11 * exp(3.6593d0 + 56.6023d0*Tgas41 -802.9765d0*Tgas42 +5025.1882d0*Tgas43 -17874.4255d0*Tgas44 +38343.665d0*Tgas45 -49249.4895d0*Tgas46 +34789.3941d0*Tgas47 -10390.9809*Tgas48)
-       !g02C_H = 1d-11 * exp(10.8377d0 -173.4153d0*Tgas31 +2024.0272d0*Tgas32 -13391.6549d0*Tgas33 +52198.5522d0*Tgas34 -124518.3586d0*Tgas35 +178182.5823d0*Tgas36 -140970.6106d0*Tgas37 +47504.5861d0*Tgas38)
-       !g12C_H = 1d-11 * exp(15.8996d0 -201.3030d0*Tgas41 +1533.6164d0*Tgas42 -6491.00830d0*Tgas43 +15921.9239d0*Tgas44 -22691.1632d0*Tgas45 +17334.7529d0*Tgas46 -5517.9360d0*Tgas47)
 
        !//C-H+ GJ07
        g10C_Hp = (9.6D-11 -1.8D-14*Tgas +1.9D-18*Tgas**2) *Tgas**(.45)
@@ -1176,7 +1156,7 @@ contains
   !************************************
   subroutine plot_cool(n)
     real*8::n(:),Tgas,Tmin,Tmax
-    real*8::cool_CEN,cool_H2,cool_HD,cool_tot, cool_totGP,cool_H2GP
+    real*8::cool_atomic,cool_H2,cool_HD,cool_tot, cool_totGP,cool_H2GP
     real*8::cool_dH,cool_Z
     integer::i,imax
     imax = 1000
@@ -1189,7 +1169,7 @@ contains
        cool_H2 = 0.d0
        cool_H2GP = 0.d0
        cool_HD = 0.d0
-       cool_CEN = 0.d0
+       cool_atomic = 0.d0
        cool_Z = 0.d0
        cool_dH = 0.d0
 #IFKROME_useCoolingH2
@@ -1198,8 +1178,8 @@ contains
 #IFKROME_useCoolingH2GP
        cool_H2GP = cooling_H2GP(n(:),Tgas)
 #ENDIFKROME
-#IFKROME_useCoolingCEN
-       cool_CEN = cooling_CEN(n(:),Tgas)
+#IFKROME_useCoolingAtomic
+       cool_atomic = cooling_atomic(n(:),Tgas)
 #ENDIFKROME
 #IFKROME_useCoolingHD
        cool_HD = cooling_HD(n(:),Tgas)
@@ -1210,10 +1190,10 @@ contains
 #IFKROME_useCoolingdH
        cool_dH = cooling_dH(n(:),Tgas)
 #ENDIFKROME
-       cool_tot = cool_H2 + cool_CEN + cool_HD + cool_Z + cool_dH
-       cool_totGP = cool_H2GP + cool_CEN + cool_HD + cool_Z + cool_dH
-       write(33,'(99E12.3e3)') Tgas, cool_tot, cool_totGP, cool_H2, cool_CEN, &
-            cool_HD, cool_H2GP, cool_Z, cool_dH
+       cool_tot = cool_H2 + cool_atomic + cool_HD + cool_Z + cool_dH
+       cool_totGP = cool_H2GP + cool_atomic + cool_HD + cool_Z + cool_dH
+       write(33,'(99E12.3e3)') Tgas, cool_tot, cool_totGP, cool_H2, &
+            cool_atomic, cool_HD, cool_H2GP, cool_Z, cool_dH
     end do
     close(33)
     print *,"done!"
@@ -1236,8 +1216,8 @@ contains
     cool(2) = cooling_H2GP(n(:), Tgas)
 #ENDIFKROME
 
-#IFKROME_useCoolingCEN
-    cool(3) = cooling_CEN(n(:), Tgas)
+#IFKROME_useCoolingAtomic
+    cool(3) = cooling_atomic(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingHD

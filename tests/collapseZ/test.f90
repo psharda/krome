@@ -36,8 +36,6 @@ program test_krome
 
      x(krome_idx_Cj) = x(krome_idx_C) !carbon is fully ionized
      x(krome_idx_C)  = 1d-40
-     x(krome_idx_Fe)  = 1d-40
-     x(krome_idx_Si)  = 1d-40
 
      !list abundances
      call krome_get_info(x(:),Tgas)
