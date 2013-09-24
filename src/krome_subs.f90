@@ -100,8 +100,56 @@ contains
 
   end function get_rnames
 
+  !*****************************
+  function revKc(Tgas,ridx,pidx)
+    real*8::revKc,Tgas
+    integer::ridx(:),pidx(:),i
 
+    revKc = 0.d0
 
+    do i=1,size(pidx)
+       revKc = revKc + revHS(Tgas,pidx(i))
+    end do
+
+    do i=1,size(ridx)
+       revKc = revKc - revHS(Tgas,ridx(i))
+    end do
+
+  end function revKc
+  
+  !*****************************
+  function revHS(Tgas,idx)
+    use krome_commons
+    real*8::revHS,Tgas,Tgas2,Tgas3,Tgas4,invT,lnT,H,S
+#KROME_var_reverse
+    integer::idx
+
+    p1(:,:) = 0.d0
+    p2(:,:) = 0.d0
+    Tlim(:,:) = 0.d0
+    Tgas2 = Tgas * Tgas
+    Tgas3 = Tgas2 * Tgas
+    Tgas4 = Tgas3 * Tgas
+    invT = 1d0/Tgas
+    lnT = log(Tgas)
+
+#KROME_kc_reverse
+
+    if(Tlim(idx,2)==0.d0) then
+       revHS = 0.d0
+       return
+    end if
+
+    if(Tlim(idx,1).le.Tgas .and. Tgas.le.Tlim(idx,2)) p(:) = p1(idx,:)
+    if(Tlim(idx,2)<Tgas .and. Tgas.le.Tlim(idx,3)) p(:) = p2(idx,:)
+    H = p(1) + p(2)*0.5d0*Tgas + p(3)*Tgas2/3.d0 + p(4)*Tgas3*0.25d0 + &
+         p(5)*Tgas4*0.2d0 + p(6)*invT
+    S = p(1)*lnT + p(2)*Tgas + p(3)*Tgas2*0.5d0 + p(4)*Tgas3/3.d0 + &
+         p(5)*Tgas4*0.25d0 + p(7)
+
+    revHS = H - S
+
+  end function revHS
 
   !*****************************
   subroutine load_arrays()

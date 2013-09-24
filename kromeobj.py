@@ -31,7 +31,7 @@ class krome():
 	reacts = []
 	dummy = molec()
 	implicit_arrays = totMetals = ""
-
+	thermodata = dict() #thermochemistry data (nasa polynomials)
 	
 	######################################
 	#select test name
@@ -374,6 +374,53 @@ class krome():
 		if("-help" in argv or "-h" in argv or "--help" in argv):
 			get_usage()
 
+	####################################################
+	#load thermochemistry data form chemkin-formatted file
+	def load_thermochemistry(self):
+		nskip = 99999 #skip comments
+		thermo = dict() #prepare dictionary
+		fth = open("data/thermo30.dat") #open thermochemistry file
+		#loop on file
+		for row in fth:
+			srow = row.strip()
+			if(len(srow)==0): continue #skip empty lines
+			arow = srow.split()
+			if(arow[0]=="END"): break #break on END
+			if(arow[0]=="THERMO"): #start to read data
+				nskip = 1 #skip line after thermo
+				continue
+			#skip comments
+			if(nskip>0 or srow[0]=="!"):
+				nskip -= 1 #reduce line to be skipped by one
+				continue
+			#if not number is a species
+			if(not(is_number(row[:15]))):
+				spec = arow[0].strip() #read species name
+				Tmin = arow[len(arow)-4]
+				Tmed = arow[len(arow)-2]
+				Tmax = arow[len(arow)-3]
+				mypoly = [Tmin, Tmed, Tmax] #first data are temperature limits
+			else:
+				coe = [row[i*15:(i+1)*15] for i in range(5)] #read 5 coefficients
+				irow = int(row[5*15:].strip()) #read line number
+				mypoly += coe #add coefficients to the coefficients list
+				#last line for the given species
+				if(irow==4):
+					#convert coefficients to floating and skip empty values
+					coef = [float(x) for x in mypoly[:17] if x.strip()!=""]
+					#check the number of coefficients (3temp+14poly)
+					if(len(coef)!=17):
+						print "ERROR: wrong format for NASA polynomials!"
+						print spec	
+						print srow
+						sys.exit()
+					thermo[spec] = coef #append coefficients to the dictionary
+		fth.close()
+		self.thermodata = thermo
+		print "Thermochemistry data loaded!"
+
+
+
 	################################################
 	def prepare_massdict(self):
 		self.use_RHS_variable = False
@@ -570,7 +617,7 @@ class krome():
 			for r in reactants:
 				if(r.strip()=="g" and not(self.use_photons)): continue
 				if(r.strip()!=""):
-					mol = parser(r,mass_dic,atoms)
+					mol = parser(r,mass_dic,atoms,self.thermodata)
 					if(not(mol.name in spec_names)):
 						spec_names.append(mol.name)
 						specs.append(mol)
@@ -580,7 +627,7 @@ class krome():
 			for p in products:
 				if(p.strip()=="g" and not(self.use_photons)): continue
 				if(p.strip()!=""):
-					mol = parser(p,mass_dic,atoms)
+					mol = parser(p,mass_dic,atoms,self.thermodata)
 					if(not(mol.name in spec_names)):
 						spec_names.append(mol.name)
 						specs.append(mol)
@@ -685,7 +732,7 @@ class krome():
 			#if not found parse and add
 			if(not(zFound)):
 				print "Adding specie \""+zcool+"\" (request by metal cooling)"
-				mymol = parser(zcool,self.mass_dic,self.atoms)
+				mymol = parser(zcool,self.mass_dic,self.atoms,self.thermodata)
 				mymol.idx = len(specs)+1
 				self.specs.append(mymol)
 		self.totMetals = "tot_metals = " + (" + ".join(["n(idx_"+x.replace("+","j")+")" for x in Zcools]))
@@ -727,7 +774,7 @@ class krome():
 				#if not found add to specs parsing the name (e.g. Si)
 				if(not(dTypeFound)):
 						print "Add species \""+dType+"\" (request by dust type)"
-						mymol = parser(dType,mass_dic,atoms)
+						mymol = parser(dType,mass_dic,atoms,self.thermodata)
 						mymol.idx = len(specs)+1
 						specs.append(mymol)
 			#add dust bins as species
@@ -1261,6 +1308,7 @@ class krome():
 		buildFolder = self.buildFolder
 		reacts = self.reacts
 		specs = self.specs
+		thermodata = self.thermodata
 		#*********SUBS****************
 		#write parameters in krome_subs.f90
 		print "- writing krome_subs.f90...",
@@ -1306,6 +1354,19 @@ class krome():
 			elif(srow == "#KROME_Tshortcuts"):
 				for shortcut in sclist:
 					fout.write(shortcut+"\n")
+			elif(srow == "#KROME_var_reverse"):
+				slen = str(len(specs))
+				fout.write("real*8::p1("+slen+",7), p2("+slen+",7), Tlim("+slen+",3), p(7)\n")
+			elif(srow == "#KROME_kc_reverse"):
+				datarev = ""
+				sp1 = sp2 = spt = ""
+				print
+				for x in specs:
+					if(min(x.poly1)==0 and max(x.poly1)==0): continue
+					sp1 += "p1("+x.fidx+",:)  = (/" + (", ".join([format_double(pp) for pp in x.poly1])) + "/)\n"
+					sp2 += "p2("+x.fidx+",:)  = (/" + (", ".join([format_double(pp) for pp in x.poly2])) + "/)\n"
+					spt += "Tlim("+x.fidx+",:)  = (/" + (", ".join([format_double(pp) for pp in x.Tpoly])) + "/)\n"
+				fout.write(sp1+sp2+spt)
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header())
 			else:
