@@ -4,12 +4,17 @@ set autoscale
 set format x "%L"
 set format y "%L"
 set format z "%L"
-set xlabel "log(t/yr)"
-set ylabel "log(a/cm)"
-set zlabel "log(n/cm-3)"
-set zrange[1e-20:]
-set xrange[:1e8]
+set xlabel "log(T/K)"
+set ylabel "log(n/ni)"
+set yrange[1e-1:]
 set grid
+set key reverse
+set key Left
+set key l t
 
-splot './fort.77' w l t "dust C", './fort.78' w l t "dust Si"
-
+plot './fort.77' u 3:4 w l t "C  (a=2.5e-5 cm)",\
+ './fort.78' u 3:4 w l t "Si (a=2.5e-5 cm)",\
+ './fort.79' u 3:4 w l t "C  (a=5e-7 cm)",\
+ './fort.80' u 3:4 w l t "Si (a=5e-7 cm)",\
+'fort.66' u 2:15 w l t "C  (gas)",\
+'fort.66' u 2:16 w l t "Si (gas)"

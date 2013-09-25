@@ -211,7 +211,7 @@ contains
     real*8::krome_dust_grow,ndust,natom,Tgas,Tdust,vgas,adust,seed
     
     seed = 1d-12 !1/cm3
-    krome_dust_grow = pi * adust**2 * (max(ndust,0.d0) + seed) &
+    krome_dust_grow = 1d-4 * pi * adust**2 * (max(ndust,0.d0) + seed) &
          * max(natom,0.d0) * krome_dust_stick(Tgas,Tdust) * vgas
         
   end function krome_dust_grow
@@ -228,23 +228,38 @@ contains
   end function krome_dust_stick
   
   !***************
-  function krome_dust_sput_DS79(Tgas,adust,natom,ndust)
-    !krome_dust_sput_D97: sputtering following (Draine et al. 79)
-    real*8::krome_dust_sput_DS79,Tgas,adust,natom,T6,ndust
+  function krome_dust_sput(Tgas,adust,natom,ndust)
+    use krome_constants
+    use krome_commons
+    !sputtering rate using nozawa 2006 yields as impact efficiency
+    real*8::krome_dust_sput,Tgas,adust,natom,logT,ndust,y,logy
+    real*8::a0,a1,a2,a3,mgrain
     
-    if(Tgas<1d4) then
-       krome_dust_sput_DS79 = 0.d0
+    if(Tgas<1d5) then
+       krome_dust_sput = 0.d0
        return
     end if
-    T6 = 1d6/Tgas
-    krome_dust_sput_DS79 = 3.d-17 / adust * natom / (1.d0 + T6**3) * ndust !1/s
+    logT = log10(Tgas)
+    a0 = -3.9280689440337335d-01
+    a1 = 1.9746828032397993d+01
+    a2 = -4.0031865960055839d+00
+    a3 = 7.8081665612858187d+00
+    
+    !yield contains thermal speed (y*vgas)
+    logy = exp(-a0 * logT) / (a1 + a2 * logT) + a3
+    y = 1d1**logy
+    mgrain = adust**3 *krome_grain_rho / (p_mass)
+    krome_dust_sput = y*natom*ndust*adust**2 / mgrain
+    
+    !T6 = 1d6/Tgas
+    !krome_dust_sput = 3.d-17 / adust * natom / (1.d0 + T6**3) * ndust !1/s
 
-    if(krome_dust_sput_DS79>1.d0) then
-       print *,krome_dust_sput_DS79,adust,natom,Tgas,T6,ndust
+    if(krome_dust_sput>1.d0) then
+       print *,krome_dust_sput,adust,natom,Tgas,ndust
        stop
     end if
-    !print *,natom,Tgas,T6,adust,krome_dust_sput_DS79
-  end function krome_dust_sput_DS79
+
+  end function krome_dust_sput
 
  !*****************+
   function dustAbs(asize, dust_opt_asize, dust_opt_nu, dust_opt_Qabs)

@@ -316,10 +316,10 @@ class krome():
 				adust = dustopt.split(",")
 				self.useDust = True
 				if(len(adust)<2): die("ERROR: you must specify dust size and type(s), e.g. -dust=20,C,Si")
-				if(use_implicit_RHS): die("ERROR: you cannot use dust AND implicit RHS: remove -iRHS option")
+				if(self.use_implicit_RHS): die("ERROR: you cannot use dust AND implicit RHS: remove -iRHS option")
 				self.dustArraySize = int(adust[0])
 				self.dustTypes = adust[1:]
-				self.dustTypesSize = len(dustTypes)
+				self.dustTypesSize = len(self.dustTypes)
 				print "Reading option -dust (size="+str(self.dustArraySize)+", type(s)="+(",".join(self.dustTypes))+")"
 				if(not(hasDustOptions)):
 					print "ERROR: -dust flag needs to define -dustOptions=[see help])"
@@ -328,7 +328,7 @@ class krome():
 		#dust options
 		for arg in argv:
 			if("dustOptions=" in arg):
-				if(not(useDust)): die("ERROR: you need -dust=[see help] to activate dust options!")
+				if(not(self.useDust)): die("ERROR: you need -dust=[see help] to activate dust options!")
 				dustopt = (arg.strip().replace("-dustOptions=",""))
 				dustOptions = dustopt.split(",")
 				if("GROWTH" in dustOptions): self.useDustGrowth = True
@@ -774,7 +774,7 @@ class krome():
 				#if not found add to specs parsing the name (e.g. Si)
 				if(not(dTypeFound)):
 						print "Add species \""+dType+"\" (request by dust type)"
-						mymol = parser(dType,mass_dic,atoms,self.thermodata)
+						mymol = parser(dType,self.mass_dic,self.atoms,self.thermodata)
 						mymol.idx = len(specs)+1
 						specs.append(mymol)
 			#add dust bins as species
@@ -789,7 +789,7 @@ class krome():
 						mymol.fidx = "idx_dust_"+dType+"_"+str(i)
 						mymol.idx = len(specs)+1
 						specs.append(mymol)
-			print "Dust added:",dustArraySize*dustTypesSize
+			print "Dust added:",self.dustArraySize*self.dustTypesSize
 		self.specs = specs
 
 	######################################
@@ -959,7 +959,7 @@ class krome():
 						dns[nmols+j-1] += " + krome_dust_grow(n("+str(nmols+j)+"),n(idx_"+dType+"),Tgas"
 						dns[nmols+j-1] += ",krome_dust_T("+str(j)+"),vgas,krome_dust_asize("+str(j)+"))"
 					if(self.useDustSputter):
-						dns[nmols+j-1] += " - krome_dust_sput_DS79(Tgas,krome_dust_asize("
+						dns[nmols+j-1] += " - krome_dust_sput(Tgas,krome_dust_asize("
 						dns[nmols+j-1] += str(j)+"),ntot,n("+str(nmols+j)+"))"
 					if(self.useDustT):
 						diffTdust = "( - n("+str(nmols+j)+") * krome_dust_asize3("+str(j)+") * krome_grain_rho &\n"

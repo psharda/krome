@@ -7,18 +7,18 @@ program test_krome
   use krome_constants
 
   integer,parameter::nx=krome_nmols,nd=10*2
-  real*8::x(nx),Tgas,t,dt,spy,xH,tend,vgas
+  real*8::x(nx),Tgas,t,dt,spy,xH,tend,vgas,xi(nx)
   real*8::xdust(nd),adust(nd),dust_to_gas(2),xdusti(nd)
   integer::i
 
   spy = 365.*24.*3600. !seconds per year
   Tgas = 1d1 !gas temperature (K)
   xH = 1d0 !Hydrogen density
-  
+
   !total abundance of dust (C, Si)
   !ndust(:) = (/1d-3, 1d-4/) !cm-3
   dust_to_gas(:) = 1d-5
-  
+
   !initialize krome
   call krome_init()
 
@@ -26,7 +26,6 @@ program test_krome
 
   !number densities (cm-3)
   x(KROME_idx_H)     = 1d0 * xH  !H
-  x(KROME_idx_E)     = 1.d-4 * xH    !E
   x(KROME_idx_Hj)    = 1.d-4 * xH   !H+
   x(KROME_idx_H2)    = 1.d-5 *xH   !H2
   x(KROME_idx_HD)    = 1.d-8 *xH   !HD
@@ -40,6 +39,7 @@ program test_krome
   ! ndust=total dust abundance per type, )
   call krome_init_dust(xdust(:), adust(:), dust_to_gas(:),x(:))
   xdusti(:) = xdust(:) !store initial dust amount
+  xi(:) = x(:) !store the initial amount of species
   dt = 1d-4*spy !time-step (s)
   t = 0.d0 !initial time (s)
   tend = 1d8*spy !end time (s)
@@ -47,23 +47,22 @@ program test_krome
   write(66,'(999E12.3e3)') t/spy,Tgas,x(:)
   !loop over time-steps
   do
-     !Tgas = (1d6-1d1) * (t/tend) + 1d1 !Tgas increas with time
-     print *,t
-     Tgas = (1d5-1d2) /(1.d0+exp(-25.*(log10(t/spy+1d0)-7.5))) + 1d2
+     Tgas = (1d6-1d1) * (t/tend) + 1d1 !Tgas increas with time
+
+     !Tgas = (1d5-1d2) /(1.d0+exp(-25.*(log10(t/spy+1d0)-7.5))) + 1d2
      print '(a10,E11.3,a10,E11.3,a3)',"time:",t/spy,"yr, Tgas:",Tgas,"K"
 
      call krome(x(:),Tgas,dt,xdust(:)) !###call KROME###
 
      t = t + dt !increase time
      dt = max(1d2,t/3.d0) !increase time-step
-     write(66,'(999E12.3e3)') t/spy,Tgas,x(:) !dump species
+     write(66,'(999E12.3e3)') t/spy,Tgas,x(:)/xi(:) !dump species
      !dump dust
-     do i=1,nd/2 !half C + half Si
-        write(77,'(999E12.3e3)') t/spy,adust(i),Tgas,xdust(i)/xdusti(i)
-        write(78,'(999E12.3e3)') t/spy,adust(nd/2+i),Tgas,xdust(nd/2+i),xdusti(nd/2+1)
-     end do
-     write(77,*)
-     write(78,*)
+     write(77,'(999E12.3e3)') t/spy,adust(nd),Tgas,xdust(nd)/xdusti(nd)
+     write(78,'(999E12.3e3)') t/spy,adust(nd/2),Tgas,xdust(nd/2)/xdusti(nd/2)
+     write(79,'(999E12.3e3)') t/spy,adust(1),Tgas,xdust(1)/xdusti(1)
+     write(80,'(999E12.3e3)') t/spy,adust(nd/2+1),Tgas,&
+          xdust(nd/2+1)/xdusti(nd/2+1)
      if(t>tend) exit !exit when overshoot 1d8 years
   end do
 
