@@ -76,10 +76,10 @@ contains
     krome_dust_T(:) = 2.73d0 !defualt dust temperature
 
     !init optical properties
-#KROME_init_Qabs
+    !KROME_init_Qabs
 
     !init integral Qabs(nu)*B(nu)*dnu
-#KROME_opt_integral
+    !KROME_opt_integral
     
     print *,"Dust initialized!"
 
@@ -115,6 +115,7 @@ contains
     !computes and stores Qabs(nu)*B(nu)*dnu integral for each dust bin
     imax = int(1e4) !number of Tbb values
     allocate(dust_opt_Em(nd,imax), dust_opt_Tbb(imax))
+    print *,"tabulating dust emission integrals..."
     do j=1,nd !loop on bins
        do i=1,imax !loop on Tbb
           Tbb = (i-1) * (1d4-1d0) / (imax-1) + 1d0 !BB temperature
@@ -124,37 +125,49 @@ contains
                dust_opt_asize, dust_opt_nu, dust_opt_Qabs) 
        end do
     end do
+    print *,"done!"
   end subroutine dustOptIntegral
 
   !**********************
-  subroutine getTdust(Tdust, dust_opt_Tbb, dust_opt_Em, &
-       dust_opt_asize, dust_opt_nu, dust_opt_Qabs,n)
+  subroutine getTdust(n)
     !Tdust evaluation from eqn.6 Schneider+2006 MNRAS_369
     use krome_commons
     use krome_constants
-    integer::i,nd,j,nT,j2,jr,jl,iter
-    real*8::asize,eAbs,T0,T1,mysgn,dleft,dright,Tdust(:)
+    integer::i,nd,j,j2,jr,jl,iter
+    real*8::asize,eAbs
     real*8::dustHl,dustHr,dustH,rhogr,sgnr,sgnl,dust2H
-    real*8::dust_opt_Em(:,:),dust_opt_Tbb(:),dust_opt_asize(:)
-    real*8::dust_opt_nu(:), dust_opt_Qabs(:,:),ntot,n(:)
+    real*8::ntot,n(:),xl,xr,x2
     logical::found
-    nd = ndust/ndustTypes !dust bins
-    nT = size(dust_opt_Tbb) !number of temperature values
-    ntot = sum(n(1:nmols))
+    nd = ndust
+    ntot = sum(n(1:nmols)) !total density
     !loop on bins
     do i=1,nd
        if(n(nmols+i)<1d-19) cycle !note that this limit depends on ATOL
-       asize = krome_dust_asize(i) !mean bin size
-       rhogr = n(nmols+i) * asize**3 * krome_grain_rho
+       xl = 2.73d0 !starting smaller Tdust
+       xr = 1d4 !starting larger Tdust
+       asize = krome_dust_asize(i) !mean bin size (cm)
+       rhogr = n(nmols+i) * asize**3 * krome_grain_rho !dust mass rho (g/cm3)
        !absorbed erg/cm3/s (rhogr g/cm3)
-       eAbs = dustAbs(asize, dust_opt_asize, dust_opt_nu, dust_opt_Qabs) * rhogr
+       eAbs = 0.d0 
+       ! = dustAbs(asize, dust_opt_asize, dust_opt_nu, dust_opt_Qabs) * rhogr
+       
+       !init root-finding
+       dustHl = - beta(n(:),asize,xl,n(nmols+i)) * kopa(xl) &
+            * 5.67d-5 * 4.d0 * xl**4 * rhogr +&
+            dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+            xl, ntot)
 
-       dustHl = eAbs - dust_opt_Em(i,1) *rhogr &
-            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-            dust_opt_Tbb(1), ntot)
-       dustHr = eAbs - dust_opt_Em(i,nT) *rhogr &
-            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-            dust_opt_Tbb(nT), ntot)
+       dustHr = - beta(n(:),asize,xr,n(nmols+i)) * kopa(xr) * 5.67d-5 &
+            * 4.d0 * xr**4 * rhogr + &
+            dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+            xr, ntot)
+
+       !dustHl = eAbs - dust_opt_Em(i,1) *rhogr &
+       !     + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+       !     dust_opt_Tbb(1), ntot)
+       !dustHr = eAbs - dust_opt_Em(i,nT) *rhogr &
+       !     + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+       !     dust_opt_Tbb(nT), ntot)
 
        sgnr = sgn(dustHr) !stores right bound sign
        sgnl = sgn(dustHl) !stores left bound sign
@@ -165,34 +178,65 @@ contains
           stop
        end if
        
-       jl = 1
-       jr = nT
        iter = 0
        !root-finding
        do
           iter = iter + 1
-          j2 = .5d0 * (jr + jl)
-          dust2H = eAbs - dust_opt_Em(i,j2) *rhogr &
-               + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-               dust_opt_Tbb(j2), ntot)
+          x2 = .5d0 * (xr + xl) !new temperature
+          !new evaluation
+          dust2H = -kopa(x2) * beta(n(:),asize,x2,n(nmols+i)) &
+               * 5.67d-5 * 4.d0 * x2**4 * rhogr +&
+               dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+               x2, ntot)
+          !check sign
           if(sgn(dust2H)==sgnr) then
-             jr = j2
+             xr = x2
           else
-             jl = j2
+             xl = x2
           end if
-          if(abs(jr-jl).le.1) exit
+          !check error
+          if(abs(xr-xl).le.1d-3) exit
        end do
-       dustHr = eAbs - dust_opt_Em(i,jr) *rhogr &
-            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-            dust_opt_Tbb(jr), ntot)
-       dustHl = eAbs - dust_opt_Em(i,jl) *rhogr &
-            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-            dust_opt_Tbb(jl), ntot)
-       Tdust(i) = (0.d0 - dustHr)/(dustHl-dustHr)&
-            *(dust_opt_Tbb(jl)-dust_opt_Tbb(jr)) + dust_opt_Tbb(jr)  
+       n(nmols+ndust+i) = x2 !copy found value to array
     end do
   end subroutine getTdust
+  
+  !*****************************
+  function beta(n,asize,Tdust,ndust)
+    !opacity term (Omukai+2000, 2005)
+    use krome_commons
+    use krome_constants
+    use krome_subs
+    real*8::n(:),ntot,beta,tau,lj,rhodust,Tdust
+    real*8::ndust,asize,rhogas,Tgas,m(nspec)
 
+    m(:) = get_mass() !get masses (g)
+    Tgas = n(idx_Tgas) !get Tgas (K)
+    rhodust = ndust * asize**3 * krome_grain_rho !dust mass density g/cm3
+    rhogas = sum(n(1:nmols)*m(1:nmols)) !gas mass density g/cm3
+    !jeans length
+    lj = sqrt(15./4.*boltzmann_erg*Tgas/pi/gravity/1.22/rhogas/p_mass)
+    ntot = sum(n(1:nmols)) !total density gas
+    tau = kopa(Tdust) * rhodust * lj !opacity
+    beta = min(1d0, tau**-2) !final opacity
+
+  end function beta
+  !****************************
+  function kopa(Tbb)
+    real*8::kopa,Tbb,x
+    !returns black body integrated with 
+    ! opacity as kernel in cm2/g (Dopcke+2012)
+    x = Tbb
+    
+    if(x<2d2) then
+       kopa = 0.0004d0*x*x
+    elseif(x.ge.2d2 .and. x<1.5d3) then
+       kopa = 16.d0
+    else
+       kopa = 2.07594d-12*x**(-12)
+    end if
+
+  end function kopa
   !******************
   function sgn(arg)
     real*8::sgn,arg

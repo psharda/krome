@@ -23,7 +23,8 @@ module krome_constants
   
   real*8,parameter:: pre_planck = 2.d0*planck_erg/clight**2 !erg/cm2*s3
   real*8,parameter:: exp_planck =  planck_erg / boltzmann_erg !s*K
-  
+  real*8,parameter:: stefboltz_erg = 5.670373d-5 !erg/s/cm2/K4
+
   real*8,parameter:: N_avogadro = 6.0221d23 !#
   real*8,parameter:: Rgas_J = 8.3144621d0 !J/K/mol
   real*8,parameter:: Rgas_kJ = 8.3144621d-3 !kJ/K/mol

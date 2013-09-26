@@ -8,7 +8,7 @@ program test_krome
   use krome_dust
 
 
-  integer,parameter::rstep = 500000,nd=2*5,ndtype=2
+  integer,parameter::rstep = 500000,nd=1*1,ndtype=1
   integer::i,j
   real*8::dtH,deldd
   real*8::tff,dd,dd1
@@ -41,13 +41,7 @@ program test_krome
 
      dd = ntot
      print *,"dust to gas:",dust_gas_ratio(:)
-     print '(a5,2a11)',"type","a(cm)","n(cm-3)"
-     do i=1,nd/2
-        print '(a5,99E11.3)',"C",adust(i),xdust(i)
-     end do
-     do i=nd/2+1,nd
-        print '(a5,99E11.3)',"Si",adust(i),xdust(i)
-     end do
+
      print *,"solving..."
      print '(a5,3a11)',"step","n(cm-3)","Tgas(K)","<Tdust(K)>"
 
@@ -73,7 +67,7 @@ program test_krome
         !solve the chemistry
         call krome(x(:),Tgas,dt,xdust(:))
 
-        write(22,'(I5,99E12.3e3)') j,js(j),dd,Tgas,krome_dust_T(:),&
+        write(22,'(I5,99E17.8e3)') j,js(j),dd,Tgas,krome_dust_T(:),&
              x(:)/dd,xdust(:)/dd
 
         if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas,sum(krome_dust_T(:))/nd

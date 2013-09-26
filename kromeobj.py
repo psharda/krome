@@ -13,7 +13,8 @@ class krome():
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = False
 	pedanticMakefile = useFakeOpacity = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = True
-	useDustGrowth = useDustSputter = useDustH2 = useDustT = False
+	useDustGrowth = useDustSputter = useDustH2 = False
+	useDustT = "NONE" #T dust calculation mode (NONE=no calculations, FEX=inside fex, ODE=dust has its own dT/dt)
 	typeGamma = "DEFAULT"
 	test_name = "default"
 	is_test = False
@@ -84,7 +85,7 @@ class krome():
 					filename = "networks/react_primordial_UV"
 				elif(test_name=="collapseDUST"):
 					[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST", "-heating=COMPRESS,CHEM"]]
-					[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST"]]
+					[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST_FEX"]]
 					filename = "networks/react_primordial"
 				elif(test_name=="kasting"):
 					[argv.append(x) for x in ["-useN"]]
@@ -334,7 +335,8 @@ class krome():
 				if("GROWTH" in dustOptions): self.useDustGrowth = True
 				if("SPUTTER" in dustOptions): self.useDustSputter = True
 				if("H2" in dustOptions): self.useDustH2 = True
-				if("TDUST" in dustOptions): self.useDustT = True
+				if("TDUST_FEX" in dustOptions): self.useDustT = "FEX"
+				if("TDUST_ODE" in dustOptions): self.useDustT = "ODE"
 				print "Reading option -dustOptions (options="+(",".join(dustOptions))+")"
 				break
 
@@ -799,10 +801,10 @@ class krome():
 		dustArraySize = self.dustArraySize
 		dustTypesSize = self.dustTypesSize
 		#add dust Temperatures as species
-		if(self.useDustT):
+		if(self.useDustT!="NONE"):
 			for dType in dustTypes:
 				for i in range(dustArraySize):
-						#create the object named dust_type_Tdust_index
+						#create the object named dust_type_Tdust_index (e.g. dust_C_Tdust_2)
 						mymol = molec()
 						mymol.name = "dust_"+dType+"_Tdust_"+str(i)
 						mymol.charge = 0
@@ -879,7 +881,7 @@ class krome():
 		#evaluate the number of chemical species (excluding, dust, dummies, Tgas, Tdust)
 		self.nmols = len(self.specs)-4-self.dustArraySize*self.dustTypesSize
 		self.ndustT = 0 #default for Tdust
-		if(self.useDustT): 
+		if(self.useDustT!="NONE"): 
 			self.nmols -= self.dustArraySize*self.dustTypesSize #remove Tdust elements
 			self.ndustT = self.dustArraySize*self.dustTypesSize #number of Tdust elements
 		#print found values
@@ -918,7 +920,7 @@ class krome():
 			#include dust by types
 			for dType in self.dustTypes:
 				sdust += " + ["+str(dustArraySize)+" "+dType+"-dust]"
-				if(self.useDustT): sdustT += " + ["+str(dustArraySize)+" "+dType+"-dust T]"
+				if(self.useDustT!="NONE"): sdustT += " + ["+str(dustArraySize)+" "+dType+"-dust T]"
 		sODEpart = "ODE partition: [" + str(nmols) + " atom/mols] "+sdust+sdustT+" + [1 CR] + [1 PHOT] + [1 Tgas] + [1 dummy] = "
 		sODEpart += str(len(specs))+" ODEs"
 		print sODEpart
@@ -935,6 +937,7 @@ class krome():
 		dustTypes = self.dustTypes
 		dustArraySize = self.dustArraySize
 		dustTypesSize = len(dustTypes)
+		ndust = dustArraySize*dustTypesSize
 		nmols = self.nmols
 		dummy = self.dummy
 		#create explicit differentials
@@ -954,17 +957,18 @@ class krome():
 				for i in range(dustArraySize):
 					myndust = dustArraySize*dustTypesSize
 					j += 1
-					#******growth / sputtering******
+					#******growth / sputtering / tdust******
 					if(self.useDustGrowth):
 						dns[nmols+j-1] += " + krome_dust_grow(n("+str(nmols+j)+"),n(idx_"+dType+"),Tgas"
 						dns[nmols+j-1] += ",krome_dust_T("+str(j)+"),vgas,krome_dust_asize("+str(j)+"))"
 					if(self.useDustSputter):
 						dns[nmols+j-1] += " - krome_dust_sput(Tgas,krome_dust_asize("
 						dns[nmols+j-1] += str(j)+"),ntot,n("+str(nmols+j)+"))"
-					if(self.useDustT):
+					if(self.useDustT=="ODE"):
 						diffTdust = "( - n("+str(nmols+j)+") * krome_dust_asize3("+str(j)+") * krome_grain_rho &\n"
-						diffTdust += " * dustEm(krome_dust_asize("+str(j)+"), n("+str(nmols+myndust+j)+")," 
-						diffTdust += "dust_opt_asize_"+dType+", dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+") &\n"
+						diffTdust += " * 4.d0 * stefboltz_erg  * n("+str(nmols+ndust+j)+")**4 &\n"
+						diffTdust += "* beta(n(:), krome_dust_asize("+str(j)+"), n("+str(nmols+ndust+j)+"), "
+						diffTdust += "n("+str(nmols+j)+"))&\n"
 						diffTdust += " + dustCool(krome_dust_asize2("+str(j)+"),n("+str(nmols+j)
 						diffTdust += "), Tgas, n("+str(nmols+myndust+j)+"),ntot)) / boltzmann_erg / n("+str(nmols+j)+")"
 						dns[nmols+myndust+j-1] += " + " + diffTdust
@@ -1030,6 +1034,7 @@ class krome():
 		specs = self.specs
 		Tgas_species = self.Tgas_species
 		ndust = self.dustArraySize * self.dustTypesSize
+		nmols = self.nmols
 		#create explicit JAC for chemical species
 		neq = len(specs)
 		jac = [["pdj("+str(j+1)+") = 0.d0" for i in range(neq)] for j in range(neq)]
@@ -1063,7 +1068,7 @@ class krome():
 
 		#TODO:create approximated Jacobian term for Tdust
 		for i in range(neq):
-			if(not(self.useDustT)): break
+			if(self.useDustT=="NONE"): break
 			for j in range(ndust):
 				jTdust = nmols + (ndust) + j
 				print i,j,jTdust
@@ -1495,7 +1500,7 @@ class krome():
 			for dType in self.dustTypes:
 				itype += 1 #increase index
 				dustPartnerIdx += "krome_dust_partner_idx("+str(itype)+") = idx_"+dType+"\n"
-				if(self.useDustT):
+				if(self.useDustT!="NONE"):
 					dustQabs += "call init_Qabs(\"opt"+dType+".dat\",dust_opt_Qabs_"+dType
 					dustQabs += ",dust_opt_asize_"+dType+",dust_opt_nu_"+dType+")\n"
 					dustOptInt += "call dustOptIntegral(dust_opt_Em_"+dType+",dust_opt_Tbb_"+dType+","
@@ -1813,18 +1818,6 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome_ode.f90","w")
 
-		#root-finding based Tdust function (without dTdust/dt) PIPPO
-		getTdust = ""
-		#if(useDustT):
-		#	iType = 0
-		#	getTdust = "nd = "+str(dustArraySize)+" !number dust bins per types\n"
-		#	for dType in dustTypes:
-		#		getTdust += "call getTdust(krome_dust_T(nd*("+str(iType)+")+1:nd*"+str(iType+1)
-		#		getTdust += "), dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+", dust_opt_asize_"+dType+",&\n"
-		#		getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+", n(:))\n"
-		#		getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")
-		#		iType += 1
-
 		#string for the function computing dust H2 formation
 		dustH2 = "\n"
 		if(self.useDustH2):
@@ -1894,8 +1887,6 @@ class krome():
 					else:
 						for x in dnw:
 							fout.write("\t" + x + "\n")
-			elif(srow == "#KROME_getTdust" and self.useDustT):
-				fout.write(getTdust);
 			elif(srow == "#KROME_dustSumVariables" and self.useDust):
 				#add partner sum dust variable declarations
 				dustSumVar = []
@@ -2058,7 +2049,7 @@ class krome():
 				fout.write("\tinteger,parameter::krome_nmols=" + str(nmols) + "\n")
 				fout.write("\tinteger,parameter::krome_nspec=" + str(len(specs)) + "\n")
 				fout.write("\tinteger,parameter::krome_ndust=" + str(dustArraySize*dustTypesSize) + "\n")
-				if(self.useDustT): fout.write("\tinteger,parameter::krome_nTdust=" + str(dustArraySize*dustTypesSize) + "\n")
+				if(self.useDustT!="NONE"): fout.write("\tinteger,parameter::krome_nTdust=" + str(dustArraySize*dustTypesSize) + "\n")
 				fout.write("\tinteger,parameter::krome_ndustTypes=" + str(dustTypesSize) + "\n")
 			elif(srow == "#KROME_scaleZ"):
 				fout.write(("\n".join(scaleZ))+"\n")
@@ -2112,6 +2103,8 @@ class krome():
 	###############################
 	def makeMain(self):
 		buildFolder = self.buildFolder
+		dustArraySize = self.dustArraySize
+		dustTypes = self.dustTypes
 		#*********MAIN****************
 		#write WORKS arrays and IAC/JAC in krome.f90
 		print "- writing krome.f90...",
@@ -2126,6 +2119,12 @@ class krome():
 		if(is_number(RTOL)): RTOL = '%e' % RTOL
 		ATOL = ATOL.replace("e","d")
 		RTOL = RTOL.replace("e","d")
+
+		#root-finding based Tdust function (without dTdust/dt)
+		getTdust = ""
+		if(self.useDustT=="FEX"):
+			getTdust += "call getTdust(n(:))\n"
+			#getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")	
 
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
@@ -2158,7 +2157,7 @@ class krome():
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
-			if(srow == "#IFKROME_useDustT" and not(self.useDustT)): skip = True
+			if(srow == "#IFKROME_useDustT" and self.useDustT=="NONE"): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(srow == "#IFKROME_useEquilibrium" and not(self.useEquilibrium)): skip = True
@@ -2189,6 +2188,8 @@ class krome():
 					fout.write("\tMF=21\n")
 				elif(self.solver_MF==222):
 					fout.write("\tMF=222\n")
+			elif(srow == "#KROME_getTdust" and self.useDustT!="NONE"):
+				fout.write(getTdust);
 			else:
 				if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):
@@ -2261,7 +2262,7 @@ class krome():
 
 
 		#copy dust optical properties to build/
-		if(self.useDustT):
+		if(self.useDustT!="NONE"):
 			for dType in self.dustTypes:
 				shutil.copyfile("data/opt"+dType+".dat", buildFolder+"opt"+dType+".dat")
 

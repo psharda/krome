@@ -16,6 +16,7 @@ contains
     use krome_subs
     use krome_ode
     use krome_reduction
+    use krome_dust
     real*8::dt,x(nmols),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,xdust(ndust),n_old(nspec)
     integer::icount,i
@@ -70,18 +71,18 @@ contains
 #ELSEKROME
     n(1:nmols) = x(:)
 #ENDIFKROME
+
+    n(idx_Tgas) = Tgas !put temperature in the input array
     
 #IFKROME_useDust
-    n(nmols+1:nmols+ndust) = xdust(:)
+    n(nmols+1:nmols+ndust) = xdust(:) !get dust abundances
 #ENDIFKROME
 
 #IFKROME_useDustT
-    n(nmols+ndust+1:nmols+2*ndust) = krome_dust_T(:)
+    n(nmols+ndust+1:nmols+2*ndust) = krome_dust_T(:) !get dust temperatures
+#KROME_getTdust
 #ENDIFKROME
 
-
-
-    n(idx_Tgas) = Tgas !put temperature in the input array
     jac_nold(:) = n(:) !store initial densities (finite difference for Jacobian)
     jac_dn(:) = 0.d0
     jac_dnold(:) = 0.d0
