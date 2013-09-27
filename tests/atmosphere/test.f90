@@ -3,13 +3,15 @@ program test
   use krome_user
   implicit none
   integer,parameter::nmax=64,nread=59
-  real*8::r(nmax), tt, dt, x(krome_nmols)
-  real*8::xmax,xmin,rout(2),rout2(4),tgas(nmax),n(nmax,krome_nmols),n1(nmax)
-  real*8::datar(nread),ntot,dtin
+  real*8::r(nmax), tt, dt, x(krome_nmols),h(nmax)
+  real*8::rout(2),rout2(4),tgas(nmax),n(nmax,krome_nmols),n1(nmax)
+  real*8::datar(nread),ntot,dtin,tmax,xx(krome_nmols)
   integer::i,j,iout,istep
 
 
   call krome_init()
+
+  tmax = 2d4 !total simulation timesimul
 
   !read eddy values
   open(33,file="eddy.dat",status="old")
@@ -19,14 +21,14 @@ program test
   end do
   close(33)
 
-  r(:) = r(:) / maxval(r) * 1d-1
+  r(:) = r(:) / maxval(r) * 5d-1
 
   !read initial layers data
   open(33,file="layers_data",status="old")
   read(33,*)
   do i=1,nmax
      read(33,*) iout, rout2(:)
-     !x(i) = rout2(1) * 1d5
+     h(i) = rout2(1) * 1d5
      tgas(i) = rout2(3)
   end do
   close(33)
@@ -66,20 +68,25 @@ program test
      x(krome_idx_CH3O2) = datar(32)
      x(krome_idx_NO3) = datar(33)
 
-     x(:) = 0d0
-     
-     x(krome_idx_OH) = i * 1d0 / nmax
-     n(i,:) = x(:)
+
+     xx(:) = 0d0
+     xx(krome_idx_O3) = x(krome_idx_O3)
+     xx(krome_idx_H2CO) = x(krome_idx_H2CO)
+     xx(krome_idx_NO2) = x(krome_idx_NO2)
+     xx(krome_idx_H2O) = x(krome_idx_H2O)
+
+     !x(krome_idx_O3) = i * 1d0 / nmax
+     !x(krome_idx_H2CO) = (nmax-i) * 1d0 / nmax
+     !x(krome_idx_NO2) = .3d0*cos(i*3.1415/nmax)**2
+     !x(krome_idx_H2O) = sin(i*3.1415/nmax)**2
+     n(i,:) = xx(:)
   end do
   close(33)
 
-  n(:,:) = n(:,:) / maxval(n)
+  n(:,:) = n(:,:) / maxval(n) !normalize
   print *,maxval(n),minval(n)
   
-  xmax = maxval(x)
-  xmin = minval(x)
-
-  dt = 1d-1 !minval(r, MASK = r>0) / 1d3
+  dt = 1d0 !minval(r, MASK = r>0) / 1d3
   tt = 0
   istep = 0
   do
@@ -96,18 +103,20 @@ program test
      do i=1,nmax
         x(:) = n(i,:)
         dtin = dt
-        !call krome(x(:), Tgas(i), dtin)
+        call krome(x(:), Tgas(i), dtin)
         n(i,:) = x(:)
      end do
 
-     if(mod(istep,1000)==0) then
+     if(mod(istep,100)==0) then
+        print '(F11.2,a2)',tt/tmax*1d2," %"
         do i = 1,nmax
-           write(55,*) tt,i,n(i,krome_idx_H2O)
+           x(:) = n(i,:)
+           write(55,'(999E17.8e3)') tt,h(i),x(:)
         end do
         write(55,*)
      end if
      tt = tt + dt
-     if(istep>int(1e6)) exit
+     if(tt>tmax) exit
      istep = istep + 1
   end do
 

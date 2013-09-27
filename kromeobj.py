@@ -1,5 +1,8 @@
-import os,glob,shutil
+import os,glob,shutil,argparse
 from kromelib import *
+from os import listdir
+from os.path import isfile, join
+
 
 class krome():
 	#set defaults
@@ -14,7 +17,7 @@ class krome():
 	pedanticMakefile = useFakeOpacity = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = True
 	useDustGrowth = useDustSputter = useDustH2 = False
-	useDustT = "NONE" #T dust calculation mode (NONE=no calculations, FEX=inside fex, ODE=dust has its own dT/dt)
+	useDustT = "NONE" #T dust calculation mode (NONE=no calculations, ROOT=rootfinding in krome_main, ODE=dust has its own dT/dt)
 	typeGamma = "DEFAULT"
 	test_name = "default"
 	is_test = False
@@ -33,81 +36,133 @@ class krome():
 	dummy = molec()
 	implicit_arrays = totMetals = ""
 	thermodata = dict() #thermochemistry data (nasa polynomials)
+	parser = ""
+
+	#########################################
+	def init_argparser(self):
+		self.parser = argparse.ArgumentParser()
+		self.parser.add_argument("-forceMF21", action="store_true", help="force explicit sparsity and Jacobian")
+		self.parser.add_argument("-forceMF222", action="store_true", help="force internal-generated sparsity and Jacobian")
+	 
+		self.parser.add_argument("-test", help="""select a test model within TEST:\n
+		planetary	Simple planet atmosphere
+		slowmanifold	Slow manifold (Reinhardt et al. 2008)
+		cloud		Molecular cloud one-zone
+                collapse        One-zone primordial collapse
+                collapseZ       One-zone collapse with metals
+                collapseUV      One-zone collapse with UV background
+		shock1D		1D shock without cooling and heating
+		shock1Dcool	1D shock with cooling
+		shock1Dphoto	1D shock with photoionization, cooling, heating
+		shock1Dbuff 	1D shock with cooling and photoheating but using buffer
+		shock1Dlarge 	1D shock using WH2008 network (very slow!)
+		dust		One-zone: dust growth and thermal sputtering
+		compact		1D shock using compact source file""")
+		self.parser.add_argument("-heating", help="heating options")
+		self.parser.add_argument("-cooling", help="cooling options")
+		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
+		self.parser.add_argument("-useH2opacity", action="store_true",help="use H2 opacity for H2 cooling")
+		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al. 2011, or a custom F90 expression e.g. -gamma=5.d0/3.d0")
+		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
+		self.parser.add_argument("-atol", help="set solver absolute tolerance to the float or double value N, e.g. -atol=1d-40 Default is ATOL=1d-20")
+		self.parser.add_argument("-rtol", help="set solver relative tolerance to the float double value N, e.g. -rtol=1e-5 Default is RTOL=1d-4")
+		self.parser.add_argument("-usePhIoniz", action="store_true", help="include photochemistry")
+		self.parser.add_argument("-useEquilibrium", action="store_true", help="check if the solver has reached the equilbirum. If so break the solver's loop and return the values found. It is useful when the system oscillates around a solution (as in some photoheating cases). To be used with caution.")
+		self.parser.add_argument("-dust", help="include dust ODE using N bins for each TYPE, e.g. -dust=10,C,Si set 10 dust carbon bins and 10 dust silicon dust bins. Require a call to the krome_init_dust subroutine. See test=dust for an example.")
+		self.parser.add_argument("-dustOptions", help="activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular hydrogen formation on dust, (TDUST) computes dust T with photon flux + CMB radiation.")
+		self.parser.add_argument("-compact", action="store_true", help="creates a single fortran file with all the modules instead of various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact).")
+		self.parser.add_argument("-useDvodeF90", action="store_true", help="use Dvode implementation in F90 (slower)")
+		self.parser.add_argument("-useTabs", action="store_true", help="use tabulated rate coefficients (free parameter: temperature)")
+		self.parser.add_argument("-report", action="store_true", help="generate report file in the main call to krome as KROME_ERROR_REPORT and when calling the fex as KROME_ODE_REPORT. It also stores abundances evolution in fex as fort.98, and prepares a report.gps gnuplot script file to plot evolutions callable in gnuplot with load 'report.gps'. Warning: it slows the whole system!")
+		self.parser.add_argument("-checkConserv", action="store_true", help="check mass conservation during integration (slower)")
+		self.parser.add_argument("-useFileIdx", action="store_true", help="use the reaction index in the reaction file instead of using the automatic progressive index starting from 1. Useful with rate coefficients that depends on other coefficients, e.g. k(10) = 1d-2*k(3)")
+		self.parser.add_argument("-Tlimit=opLow,opHigh", help="set the operators for all the reaction temperature limits where opLow is the operator for the first temperature value in the reaction file, and opHigh is for the second one. e.g. if the T limits for a 	given reaction are 10. and 1d4 the option -Tlmit=[GE,LE] will provide (Tgas>=10. AND Tgas<=1d4) as the reaction range of validity. Operators opLow and opHigh must be one of the following: LE, GE, LT, GT.")
+		self.parser.add_argument("-noTlimits", action="store_true", help="ignore rate coefficient temperature limits.")
+		self.parser.add_argument("-reverse", action="store_true", help="create reverse reaction from the current network using NASA polynomials.")
+		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION must be explicitly included in krome_user_commons module.")
+		self.parser.add_argument("-useODEConstant", help="postpone an expression to each ODE. EXPRESSION must be a valid f90 expression (e.g. *3.d0 or +1.d-10)")
+		self.parser.add_argument("-usePlainIsotopes", action="store_true", help="use kA format for isotopes instead of [k]A format, where k is the isotopic number and A is the atom name, e.g. krome looks for 14C instead of [14]C in the reactions file.")
+		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the default build folder. It also creates a NAME.kpj file with the krome input used.")
+		self.parser.add_argument("-clean", action="store_true", help="clean all in /build (including krome_user_commons.f90 that is normally kept by default) before creating new f90 files.")
+		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
+		
 	
 	######################################
 	#select test name
 	def select_test(self,argv):
-		for arg in argv:
-			if("test=" in arg):
-				self.is_test = True
-				test_name = (arg.strip().replace("-test=",""))
-				print "Reading option -test (test="+test_name+")"
-				if(test_name=="planet"):
-					[argv.append(x) for x in ["-useN","-reverse"]]
-					filename = "networks/react_planet"
-				elif(test_name=="cloud"):
-					[argv.append(x) for x in ["-useN","-iRHS"]]
-					filename = "networks/react_cloud"
-				elif(test_name=="slowmanifold"):
-					[argv.append(x) for x in ["-useN"]]
-					filename = "networks/react_SM"
-				elif(test_name=="shock1Dcool"):
-					[argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
-					filename = "networks/react_primordial"
-				elif(test_name=="shock1D"):
-					filename = "networks/react_primordial"
-				elif(test_name=="shock1Dphoto"):
-					[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium"]]
-					filename = "networks/react_primordial_photo"
-				elif(test_name=="shock1Dlarge"):
-					[argv.append(x) for x in ["-iRHS"]]
-					filename = "networks/react_WH2008"
-				elif(test_name=="dust"):
-					[argv.append(x) for x in ["-dust=10,C,Si","-useN","-dustOptions=GROWTH,SPUTTER"]]
-					filename = "networks/react_primordial"
-				elif(test_name=="compact"):
-					[argv.append(x) for x in ["-compact"]]
-					filename = "networks/react_primordial"
-				elif(test_name=="map"):
-					[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-usePhIoniz"]]
-					filename = "networks/react_primordial_photoH2"
-				elif(test_name=="collapse"):
-					[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM"]]
-					[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL"]]
-					filename = "networks/react_primordial"
-				elif(test_name=="collapseZ"):
-					[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,CII,OI", "-heating=COMPRESS,CHEM"]]
-					[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-ATOL=1d-40","-forceMF=21"]]
-					filename = "networks/react_primordialZ"
-				elif(test_name=="collapseUV"):
-					[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM"]]
-					[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL"]]
-					filename = "networks/react_primordial_UV"
-				elif(test_name=="collapseDUST"):
-					[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST", "-heating=COMPRESS,CHEM"]]
-					[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST_FEX"]]
-					filename = "networks/react_primordial"
-				elif(test_name=="kasting"):
-					[argv.append(x) for x in ["-useN"]]
-					filename = "networks/react_planet2"
-				elif(test_name=="reverse"):
-					[argv.append(x) for x in ["-useN","-reverse"]]
-					filename = "networks/react_NO"
-				elif(test_name=="atmosphere"):
-					[argv.append(x) for x in ["-useN"]]
-					filename = "networks/react_kast80"
-				else:
-					print "ERROR: test \""+test_name+"\" not present!"
-					sys.exit()
-				self.filename = filename
-				self.test_name = test_name
-				break
+		parser = self.parser
+		args = parser.parse_args()
+		if(args.test):
+			self.is_test = True
+		#test_name = (arg.strip().replace("-test=",""))
+		#print "Reading option -test (test="+test_name+")"
+		if(args.test=="planet"):
+			[argv.append(x) for x in ["-useN","-reverse"]]
+			filename = "networks/react_planet"
+		elif(args.test=="cloud"):
+			[argv.append(x) for x in ["-useN","-iRHS"]]
+			filename = "networks/react_cloud"
+		elif(args.test=="slowmanifold"):
+			[argv.append(x) for x in ["-useN"]]
+			filename = "networks/react_SM"
+		elif(args.test=="shock1Dcool"):
+			[argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
+			filename = "networks/react_primordial"
+		elif(args.test=="shock1D"):
+			filename = "networks/react_primordial"
+		elif(args.test=="shock1Dphoto"):
+			[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium"]]
+			filename = "networks/react_primordial_photo"
+		elif(args.test=="shock1Dlarge"):
+			[argv.append(x) for x in ["-iRHS"]]
+			filename = "networks/react_WH2008"
+		elif(args.test=="dust"):
+			[argv.append(x) for x in ["-dust=10,C,Si","-useN","-dustOptions=GROWTH,SPUTTER"]]
+			filename = "networks/react_primordial"
+		elif(args.test=="compact"):
+			[argv.append(x) for x in ["-compact"]]
+			filename = "networks/react_primordial"
+		elif(args.test=="map"):
+			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-usePhIoniz"]]
+			filename = "networks/react_primordial_photoH2"
+		elif(args.test=="collapse"):
+			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL"]]
+			filename = "networks/react_primordial"
+		elif(args.test=="collapseZ"):
+			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,CII,OI", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-atol=1d-40","-forceMF21"]]
+			filename = "networks/react_primordialZ"
+		elif(args.test=="collapseUV"):
+			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL"]]
+			filename = "networks/react_primordial_UV"
+		elif(args.test=="collapseDUST"):
+			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST_ROOT"]]
+			filename = "networks/react_primordial"
+		elif(args.test=="kasting"):
+			[argv.append(x) for x in ["-useN"]]
+			filename = "networks/react_planet2"
+		elif(args.test=="reverse"):
+			[argv.append(x) for x in ["-useN","-reverse"]]
+			filename = "networks/react_NO"
+		elif(args.test=="atmosphere"):
+			[argv.append(x) for x in ["-useN"]]
+			filename = "networks/react_kast80"
+		else:
+			print "ERROR: test \""+args.test+"\" not present!"
+			sys.exit()
+		self.filename = filename
+		self.test_name = args.test
 
 	##########################################
 	def argparsing(self,argv):
+		self.parser.parse_args()
+
 		#you can select only one -forceMF
-		if(("-forceMF=222" in argv) and ("-forceMF=21" in argv)):
-			die("ERROR: options -forceMF=222 and -forceMF=21 are mutually exclusive: choose one.")
+		if(("-forceMF222" in argv) and ("-forceMF21" in argv)):
+			die("ERROR: options -forceMF222 and -forceMF21 are mutually exclusive: choose one.")
 
 		#get filename
 		if(not(self.is_test)): self.filename = argv[1]
@@ -121,13 +176,13 @@ class krome():
 			self.solver_MF = 222
 			print "Reading option -iRHS"
 		#force MF=21
-		if("-forceMF=21" in argv):
+		if("-forceMF21" in argv):
 			self.solver_MF = 21
-			print "Reading option -forceMF=21"
+			print "Reading option -forceMF21"
 		#force MF=222
-		if("-forceMF=222" in argv):
+		if("-forceMF222" in argv):
 			self.solver_MF = 222
-			print "Reading option -forceMF=222"
+			print "Reading option -forceMF222"
 		#use numeric density instead of fractions as input
 		if("-useN" in argv):
 			self.useX = False
@@ -335,7 +390,7 @@ class krome():
 				if("GROWTH" in dustOptions): self.useDustGrowth = True
 				if("SPUTTER" in dustOptions): self.useDustSputter = True
 				if("H2" in dustOptions): self.useDustH2 = True
-				if("TDUST_FEX" in dustOptions): self.useDustT = "FEX"
+				if("TDUST_ROOT" in dustOptions): self.useDustT = "ROOT"
 				if("TDUST_ODE" in dustOptions): self.useDustT = "ODE"
 				print "Reading option -dustOptions (options="+(",".join(dustOptions))+")"
 				break
@@ -361,15 +416,15 @@ class krome():
 		#ATOL
 		for arg in argv:
 			if("ATOL=" in arg):
-				self.ATOL = (arg.strip().replace("-ATOL=",""))
-				print "Reading option -ATOL (ATOL="+str(self.ATOL)+")"
+				self.ATOL = (arg.strip().replace("-atol=",""))
+				print "Reading option -atol (atol="+str(self.ATOL)+")"
 				break
 
 		#RTOL
 		for arg in argv:
 			if("RTOL=" in arg):
-				self.RTOL = (arg.strip().replace("-RTOL=",""))
-				print "Reading option -RTOL (RTOL="+str(self.RTOL)+")"
+				self.RTOL = (arg.strip().replace("-rtol=",""))
+				print "Reading option -rtol (rtol="+str(self.RTOL)+")"
 				break
 
 		#show help
@@ -2122,7 +2177,7 @@ class krome():
 
 		#root-finding based Tdust function (without dTdust/dt)
 		getTdust = ""
-		if(self.useDustT=="FEX"):
+		if(self.useDustT=="ROOT"):
 			getTdust += "call getTdust(n(:))\n"
 			#getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")	
 
@@ -2224,7 +2279,12 @@ class krome():
 
 		#copy static files to build
 		if(self.is_test):
-			print "- copying test to /build...",
+			print "- copying test to /build..."
+			mypath = "tests/"+test_name
+			files = [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
+			for fdir in files:
+				shutil.copyfile("tests/"+test_name+"/"+fdir, buildFolder+"/"+fdir)
+				print "- copying "+fdir+" to "+buildFolder
 			if(self.useDvodeF90):
 				shutil.copyfile("tests/"+test_name+"/MakefileF90", buildFolder+"Makefile")
 			elif(self.buildCompact):
@@ -2235,14 +2295,14 @@ class krome():
 				else:
 					shutil.copyfile("tests/"+test_name+"/Makefile", buildFolder+"Makefile")
 
-			test_file = "tests/"+test_name+"/test.f90"
-			plot_file = "tests/"+test_name+"/plot.gps"
+			#test_file = "tests/"+test_name+"/test.f90"
+			#plot_file = "tests/"+test_name+"/plot.gps"
 
 			#chech if test file exists
 			#if(not(os.path.isfile(filename))): die("ERROR: Test file \""+test_file+"\" doesn't exist!")
 
-			shutil.copyfile(test_file, buildFolder+"test.f90")
-			if(self.has_plot): shutil.copyfile(plot_file, buildFolder+"plot.gps")
+			#shutil.copyfile(test_file, buildFolder+"test.f90")
+			#if(self.has_plot): shutil.copyfile(plot_file, buildFolder+"plot.gps")
 			print " done!"
 
 		#copy solver files to build

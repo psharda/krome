@@ -12,14 +12,17 @@ if(len(argv)<2):
 #create the KROME object
 krome = krome()
 
-#read thermochemistry data from file
-krome.load_thermochemistry()
+#init argaprser
+krome.init_argparser()
 
 #search argv for tests
 krome.select_test(argv)
 
 #read argv options
 krome.argparsing(argv)
+
+#read thermochemistry data from file
+krome.load_thermochemistry()
 
 #prepares mass an species dictionaries
 krome.prepare_massdict()
