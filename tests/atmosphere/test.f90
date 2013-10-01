@@ -68,37 +68,12 @@ program test
      x(krome_idx_CH3O2) = datar(32)
      x(krome_idx_NO3) = datar(33)
 
-     xmax = -1d99
-     do j=1,size(x)
-        if(x(j)>xmax) then
-           xmax = x(j)
-           jmax = j
-        end if
-     end do
-     print *,"*********"
-     print *,xmax,jmax
-
-
-     !xx(:) = 0d0
-     !xx(krome_idx_O3) = x(krome_idx_O3)
-     !xx(krome_idx_H2CO) = x(krome_idx_H2CO)
-     !xx(krome_idx_NO2) = x(krome_idx_NO2)
-     !xx(krome_idx_H2O) = x(krome_idx_H2O)
-     !xx(krome_idx_OH) = x(krome_idx_OH) !
-     !xx(krome_idx_O2) = x(krome_idx_O2) !
-     !print *,xx(krome_idx_O3), xx(krome_idx_H2CO)
-     xx(:) = x(:)
-     
-     !x(krome_idx_O3) = i * 1d0 / nmax
-     !x(krome_idx_H2CO) = (nmax-i) * 1d0 / nmax
-     !x(krome_idx_NO2) = .3d0*cos(i*3.1415/nmax)**2
-     !x(krome_idx_H2O) = sin(i*3.1415/nmax)**2
-     n(i,:) = xx(:)
+     n(i,:) = x(:)
   end do
   close(33)
 
   n(:,:) = n(:,:) / maxval(n) !normalize
-  print *,maxval(n),minval(n)
+  print *,"Wait, it takes a while..."
   
   dt = 1d0 !minval(r, MASK = r>0) / 1d3
   tt = 0
@@ -111,7 +86,7 @@ program test
         end do
         n1(1) = n1(2)
         n1(nmax) = n1(nmax-1)
-        !n(:,j) = n1(:) !/ sum(n1(:)) * ntot
+        n(:,j) = n1(:) !/ sum(n1(:)) * ntot
      end do
 
      do i=1,nmax
@@ -121,7 +96,7 @@ program test
         n(i,:) = x(:)
      end do
 
-     if(mod(istep,100)==0) then
+     if(mod(istep,1000)==0) then
         print '(F11.2,a2)',tt/tmax*1d2," %"
         do i = 1,nmax
            x(:) = n(i,:)
@@ -133,5 +108,10 @@ program test
      if(tt>tmax) exit
      istep = istep + 1
   end do
+
+  print *,"done!"
+  print *,"type:"
+  print *," >load 'plot.gps'"
+  print *,"in gnuplot to show the results"
 
 end program test

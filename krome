@@ -5,9 +5,6 @@ from kromelib import *
 from kromeobj import *
 
 argv = sys.argv
-#check number the of arguments
-if(len(argv)<2):
-	die(get_usage())
 
 #create the KROME object
 krome = krome()

@@ -40,51 +40,44 @@ class krome():
 
 	#########################################
 	def init_argparser(self):
-		self.parser = argparse.ArgumentParser()
+
+		tests = ", ".join(os.walk('tests').next()[1])
+		self.parser = argparse.ArgumentParser(description="KROME a package for astrochemistry")
+		self.parser.add_argument("-n", help="reaction network file", metavar='FILENAME')
 		self.parser.add_argument("-forceMF21", action="store_true", help="force explicit sparsity and Jacobian")
 		self.parser.add_argument("-forceMF222", action="store_true", help="force internal-generated sparsity and Jacobian")
 	 
-		self.parser.add_argument("-test", help="""select a test model within TEST:\n
-		planetary	Simple planet atmosphere
-		slowmanifold	Slow manifold (Reinhardt et al. 2008)
-		cloud		Molecular cloud one-zone
-                collapse        One-zone primordial collapse
-                collapseZ       One-zone collapse with metals
-                collapseUV      One-zone collapse with UV background
-		shock1D		1D shock without cooling and heating
-		shock1Dcool	1D shock with cooling
-		shock1Dphoto	1D shock with photoionization, cooling, heating
-		shock1Dbuff 	1D shock with cooling and photoheating but using buffer
-		shock1Dlarge 	1D shock using WH2008 network (very slow!)
-		dust		One-zone: dust growth and thermal sputtering
-		compact		1D shock using compact source file""")
+		self.parser.add_argument("-test",help=("Create a test model in /build. TEST can be: "+tests+"."))
 		self.parser.add_argument("-heating", help="heating options")
-		self.parser.add_argument("-cooling", help="cooling options")
+		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98, COMPTON, CIE, CI, CII, SiI, SiII, OI, OII, FeI, FeII (e.g. -cooling ATOMIC,CII,OI,FeI)")
 		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
 		self.parser.add_argument("-useH2opacity", action="store_true",help="use H2 opacity for H2 cooling")
-		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al. 2011, or a custom F90 expression e.g. -gamma=5.d0/3.d0")
+		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al. 2011, or a custom F90 expression e.g. -gamma 5.d0/3.d0",metavar="OPTION")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
-		self.parser.add_argument("-atol", help="set solver absolute tolerance to the float or double value N, e.g. -atol=1d-40 Default is ATOL=1d-20")
-		self.parser.add_argument("-rtol", help="set solver relative tolerance to the float double value N, e.g. -rtol=1e-5 Default is RTOL=1d-4")
+		self.parser.add_argument("-ATOL", help="set solver absolute tolerance to the float or double value ATOL, e.g. -atol 1d-40 Default is ATOL=1d-20")
+		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g. -rtol 1e-5 Default is RTOL=1d-4")
 		self.parser.add_argument("-usePhIoniz", action="store_true", help="include photochemistry")
 		self.parser.add_argument("-useEquilibrium", action="store_true", help="check if the solver has reached the equilbirum. If so break the solver's loop and return the values found. It is useful when the system oscillates around a solution (as in some photoheating cases). To be used with caution.")
-		self.parser.add_argument("-dust", help="include dust ODE using N bins for each TYPE, e.g. -dust=10,C,Si set 10 dust carbon bins and 10 dust silicon dust bins. Require a call to the krome_init_dust subroutine. See test=dust for an example.")
-		self.parser.add_argument("-dustOptions", help="activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular hydrogen formation on dust, (TDUST) computes dust T with photon flux + CMB radiation.")
+		self.parser.add_argument("-dust", help="include dust ODE using N bins for each TYPE, e.g. -dust 10,C,Si set 10 dust carbon bins and 10 dust silicon dust bins. Require a call to the krome_init_dust subroutine. See test=dust for an example.")
+		self.parser.add_argument("-dustOptions", help="activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular hydrogen formation on dust, (TDUST) computes dust T with photon flux + CMB radiation.", metavar="OPTIONS")
 		self.parser.add_argument("-compact", action="store_true", help="creates a single fortran file with all the modules instead of various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact).")
 		self.parser.add_argument("-useDvodeF90", action="store_true", help="use Dvode implementation in F90 (slower)")
 		self.parser.add_argument("-useTabs", action="store_true", help="use tabulated rate coefficients (free parameter: temperature)")
 		self.parser.add_argument("-report", action="store_true", help="generate report file in the main call to krome as KROME_ERROR_REPORT and when calling the fex as KROME_ODE_REPORT. It also stores abundances evolution in fex as fort.98, and prepares a report.gps gnuplot script file to plot evolutions callable in gnuplot with load 'report.gps'. Warning: it slows the whole system!")
 		self.parser.add_argument("-checkConserv", action="store_true", help="check mass conservation during integration (slower)")
 		self.parser.add_argument("-useFileIdx", action="store_true", help="use the reaction index in the reaction file instead of using the automatic progressive index starting from 1. Useful with rate coefficients that depends on other coefficients, e.g. k(10) = 1d-2*k(3)")
-		self.parser.add_argument("-Tlimit=opLow,opHigh", help="set the operators for all the reaction temperature limits where opLow is the operator for the first temperature value in the reaction file, and opHigh is for the second one. e.g. if the T limits for a 	given reaction are 10. and 1d4 the option -Tlmit=[GE,LE] will provide (Tgas>=10. AND Tgas<=1d4) as the reaction range of validity. Operators opLow and opHigh must be one of the following: LE, GE, LT, GT.")
+		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
+		self.parser.add_argument("-Tlimit", metavar="opLow,opHigh", help="set the operators for all the reaction temperature limits where opLow is the operator for the first temperature value in the reaction file, and opHigh is for the second one. e.g. if the T limits for a 	given reaction are 10. and 1d4 the option -Tlmit GE,LE will provide (Tgas>=10. AND Tgas<=1d4) as the reaction range of validity. Operators opLow and opHigh must be one of the following: LE, GE, LT, GT.")
 		self.parser.add_argument("-noTlimits", action="store_true", help="ignore rate coefficient temperature limits.")
 		self.parser.add_argument("-reverse", action="store_true", help="create reverse reaction from the current network using NASA polynomials.")
-		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION must be explicitly included in krome_user_commons module.")
-		self.parser.add_argument("-useODEConstant", help="postpone an expression to each ODE. EXPRESSION must be a valid f90 expression (e.g. *3.d0 or +1.d-10)")
+		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION must be explicitly included in krome_user_commons module.", metavar="FUNCTION")
+		self.parser.add_argument("-useODEConstant", help="postpone an expression to each ODE. EXPRESSION must be a valid f90 expression (e.g. *3.d0 or +1.d-10)", metavar="EXPRESSION")
+		self.parser.add_argument("-skipODEthermo", action="store_true", help="do not compute dT/dt in the ODE RHS function (fex)")
 		self.parser.add_argument("-usePlainIsotopes", action="store_true", help="use kA format for isotopes instead of [k]A format, where k is the isotopic number and A is the atom name, e.g. krome looks for 14C instead of [14]C in the reactions file.")
-		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the default build folder. It also creates a NAME.kpj file with the krome input used.")
+		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
 		self.parser.add_argument("-clean", action="store_true", help="clean all in /build (including krome_user_commons.f90 that is normally kept by default) before creating new f90 files.")
 		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
+		self.parser.add_argument("-forceRWORK", help="force the size of RWORK to N", metavar="N")
 		
 	
 	######################################
@@ -92,8 +85,11 @@ class krome():
 	def select_test(self,argv):
 		parser = self.parser
 		args = parser.parse_args()
+
 		if(args.test):
 			self.is_test = True
+		else:
+			return
 		#test_name = (arg.strip().replace("-test=",""))
 		#print "Reading option -test (test="+test_name+")"
 		if(args.test=="cloud"):
@@ -128,7 +124,7 @@ class krome():
 			filename = "networks/react_primordial"
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,CII,OI", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-atol=1d-40","-forceMF21"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-ATOL=1d-40","-forceMF21"]]
 			filename = "networks/react_primordialZ"
 		elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM"]]
@@ -152,278 +148,256 @@ class krome():
 
 	##########################################
 	def argparsing(self,argv):
-		self.parser.parse_args()
+		args = self.parser.parse_args()
+
 
 		#you can select only one -forceMF
-		if(("-forceMF222" in argv) and ("-forceMF21" in argv)):
+		if((args.forceMF222) and (args.forceMF21)):
 			die("ERROR: options -forceMF222 and -forceMF21 are mutually exclusive: choose one.")
 
 		#get filename
-		if(not(self.is_test)): self.filename = argv[1]
+		if(not(self.is_test)): self.filename = args.n
 		#chech if reactions file exists
 		if(not(os.path.isfile(self.filename))): die("ERROR: Reaction file \""+self.filename+"\" doesn't exist!")
 
 
 		#set implicit RHS
-		if("-iRHS" in argv):
+		if(args.iRHS):
 			self.use_implicit_RHS = True
 			self.solver_MF = 222
 			print "Reading option -iRHS"
 		#force MF=21
-		if("-forceMF21" in argv):
+		if(args.forceMF21):
 			self.solver_MF = 21
 			print "Reading option -forceMF21"
 		#force MF=222
-		if("-forceMF222" in argv):
+		if(args.forceMF222):
 			self.solver_MF = 222
 			print "Reading option -forceMF222"
 		#use numeric density instead of fractions as input
-		if("-useN" in argv):
+		if(args.useN):
 			self.useX = False
 			print "Reading option -useN"
 		#force to use photons
-		if("-usePhot" in argv):
-			self.use_photons = True
-			print "Reading option -usePhot"
+		#if(args.usePhot):
+		#	self.use_photons = True
+		#	print "Reading option -usePhot"
 		#use rate tables
-		if("-useTabs" in argv):
+		if(args.useTabs):
 			self.useTabs = True
 			print "Reading option -useTabs"
 		#use f90 solver
-		if("-useDvodeF90" in argv):
+		if(args.useDvodeF90):
 			self.useDvodeF90 = True
 			print "Reading option -useDvodeF90"
 		#do report
-		if("-report" in argv):
+		if(args.report):
 			self.doReport = True
 			print "Reading option -report"
 		#check mass conservation
-		if("-checkConserv" in argv):
+		if(args.checkConserv):
 			self.checkConserv = True
 			print "Reading option -checkConserv"
 		#use reaction indexes in reaction file
-		if("-useFileIdx" in argv):
+		if(args.useFileIdx):
 			self.useFileIdx = True
 			print "Reading option -useFileIdx"
 		#write a single compact file krome_all.f90
-		if("-compact" in argv):
+		if(args.compact):
 			self.buildCompact = True
 			print "Reading option -compact"
 		#perform a clean build
-		if("-clean" in argv):
+		if(args.clean):
 			self.cleanBuild = True
 			print "Reading option -clean"
 		#build isotopes automatically
-		if("-usePlainIsotopes" in argv):
+		if(args.usePlainIsotopes):
 			self.usePlainIsotopes = True
 			print "Reading option -usePlainIsotopes"
 		#use photoionization from Verner et al. 1996
-		if("-usePhIoniz" in argv):
+		if(args.usePhIoniz):
 			self.usePhIoniz = True
 			print "Reading option -usePhIoniz"
 		#use equilibrium check to break loops earlier
-		if("-useEquilibrium" in argv):
+		if(args.useEquilibrium):
 			self.useEquilibrium = True
 			print "Reading option -useEquilibrium"
 		#do not use temperature limits
-		if("-noTlimits" in argv):
+		if(args.noTlimits):
 			self.useTlimits = False
 			print "Reading option -noTlimits"
 		#skip duplicated reactions
-		if("-skipDup" in argv):
+		if(args.skipDup):
 			self.skipDup = True
 			print "Reading option -skipDup"
 		#skip duplicated reactions
-		if("-pedantic" in argv):
+		if(args.pedantic):
 			self.pedanticMakefile = True
 			print "Reading option -pedantic"
 		#use reverse kinetics
-		if("-reverse" in argv):
+		if(args.reverse):
 			self.useReverse = True
 			print "Reading option -reverse"
 		#use H2opacity following 
-		if("-useH2opacity" in argv):
+		if(args.useH2opacity):
 			self.useH2opacity = True
 			print "Reading option -useH2opacity"
 
 		#use cooling dT/dt in the ODE fex
-		if("-skipODEthermo" in argv):
+		if(args.skipODEthermo):
 			self.useODEthermo = False
 			print "Reading option -skipODEthermo"
 
 		#determine Tgas limit operators
-		for arg in argv:
-			if("Tlimit=" in arg):
-				self.myTlimit = (arg.strip().replace("-Tlimit=",""))
-				self.myTlimit = myTlimit.replace("[","").replace("]","").split(",")
-				self.TlimitOpHigh = myTlimit[1].strip().upper()
-				self.TlimitOpLow = myTlimit[0].strip().upper()
-				allOps = ["LE","LT","GE","GT"]
-				if(not(self.TlimitOpLow in allOps) or not(self.TlimitOpHigh in allOps)):
-					die("ERROR: on -Tlimit operators must be one of the followings: "+(", ".join(allOps)))
-				print "Reading option -Tlimit (Low="+self.TlimitOpLow+", High="+self.TlimitOpHigh+")"
-				break
+		if(args.Tlimit):
+			self.myTlimit = args.Tlimit
+			self.myTlimit = myTlimit.replace("[","").replace("]","").split(",")
+			self.TlimitOpHigh = myTlimit[1].strip().upper()
+			self.TlimitOpLow = myTlimit[0].strip().upper()
+			allOps = ["LE","LT","GE","GT"]
+			if(not(self.TlimitOpLow in allOps) or not(self.TlimitOpHigh in allOps)):
+				die("ERROR: on -Tlimit operators must be one of the followings: "+(", ".join(allOps)))
+			print "Reading option -Tlimit (Low="+self.TlimitOpLow+", High="+self.TlimitOpHigh+")"
 		#determine cooling types
-		for arg in argv:
-			if("cooling=" in arg):
-				myCools = arg.strip().replace("-cooling=","").split(",")
-				allCools = ["ATOMIC","H2","HD","Z","DH","DUST","H2GP98","COMPTON","CIE",
-						"CI","CII","SiI","SiII","OI","OII","FeI","FeII"]
-				for coo in myCools:
-					if(not(coo in allCools)):
-						die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
+		if(args.cooling):
+			myCools = args.cooling.split(",")
+			allCools = ["ATOMIC","H2","HD","Z","DH","DUST","H2GP98","COMPTON","CIE",
+					"CI","CII","SiI","SiII","OI","OII","FeI","FeII"]
+			for coo in myCools:
+				if(not(coo in allCools)):
+					die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
 
-				if("ATOMIC" in myCools): self.useCoolingAtomic = True
-				if("H2" in myCools): self.useCoolingH2 = True
-				if("H2GP98" in myCools): self.useCoolingH2GP98 = True
-				if("HD" in myCools): self.useCoolingHD = True
-				if("DH" in myCools): self.useCoolingdH = True
-				if("DUST" in myCools): self.useCoolingDust = True
-				if("COMPTON" in myCools): self.useCoolingCompton = True
-				if("CIE" in myCools): self.useCoolingCIE = True
-				if("Z" in myCools): 
-					self.useCoolingZ = self.useCoolingZC = self.useCoolingZCp = self.useCoolingZSi = True
-					self.useCoolingZSip = self.useCoolingZO = self.useCoolingZOp = self.useCoolingZFe = True
-					self.useCoolingZFep = True
-				if("CI" in myCools): self.useCoolingZ = self.useCoolingZC = True
-				if("CII" in myCools): self.useCoolingZ = self.useCoolingZCp = True
-				if("SiI" in myCools): self.useCoolingZ = self.useCoolingZSi = True
-				if("SiII" in myCools): self.useCoolingZ = self.useCoolingZSip = True
-				if("OI" in myCools): self.useCoolingZ = self.useCoolingZO = True
-				if("OII" in myCools): self.useCoolingZ = self.useCoolingZOp = True
-				if("FeI" in myCools): self.useCoolingZ = self.useCoolingZFe = True
-				if("FeII" in myCools): self.useCoolingZ = self.useCoolingZFep = True
-					
-				self.use_cooling = True
-				self.hasDust = False
-				for aa in argv:
-					if("dust=" in aa): self.hasDust = True
-				if(self.useCoolingDust and not(self.hasDust)):
-					die("ERROR: to include dust cooling you need dust (use -dust=[see help]).")
+			if("ATOMIC" in myCools): self.useCoolingAtomic = True
+			if("H2" in myCools): self.useCoolingH2 = True
+			if("H2GP98" in myCools): self.useCoolingH2GP98 = True
+			if("HD" in myCools): self.useCoolingHD = True
+			if("DH" in myCools): self.useCoolingdH = True
+			if("DUST" in myCools): self.useCoolingDust = True
+			if("COMPTON" in myCools): self.useCoolingCompton = True
+			if("CIE" in myCools): self.useCoolingCIE = True
+			if("Z" in myCools): 
+				self.useCoolingZ = self.useCoolingZC = self.useCoolingZCp = self.useCoolingZSi = True
+				self.useCoolingZSip = self.useCoolingZO = self.useCoolingZOp = self.useCoolingZFe = True
+				self.useCoolingZFep = True
+			if("CI" in myCools): self.useCoolingZ = self.useCoolingZC = True
+			if("CII" in myCools): self.useCoolingZ = self.useCoolingZCp = True
+			if("SiI" in myCools): self.useCoolingZ = self.useCoolingZSi = True
+			if("SiII" in myCools): self.useCoolingZ = self.useCoolingZSip = True
+			if("OI" in myCools): self.useCoolingZ = self.useCoolingZO = True
+			if("OII" in myCools): self.useCoolingZ = self.useCoolingZOp = True
+			if("FeI" in myCools): self.useCoolingZ = self.useCoolingZFe = True
+			if("FeII" in myCools): self.useCoolingZ = self.useCoolingZFep = True
+				
+			self.use_cooling = True
+			self.hasDust = False
+			for aa in argv:
+				if("dust=" in aa): self.hasDust = True
+			if(self.useCoolingDust and not(self.hasDust)):
+				die("ERROR: to include dust cooling you need dust (use -dust=[see help]).")
 
-				self.use_thermo = True
+			self.use_thermo = True
 
-				print "Reading option -cooling ("+(",".join(myCools))+")"
+			print "Reading option -cooling ("+(",".join(myCools))+")"
 		
 		#determine heating types
-		for arg in argv:
-			if("heating=" in arg):
-				myHeat = arg.strip().replace("-heating=","").upper().split(",")
-				allHeats = ["COMPRESS","PHOTO","CHEM","DH"]
-				for hea in myHeat:
-					if(not(hea in allHeats)):
-						die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
+		if(args.heating):
+			myHeat = args.heating.upper().split(",")
+			allHeats = ["COMPRESS","PHOTO","CHEM","DH"]
+			for hea in myHeat:
+				if(not(hea in allHeats)):
+					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
 
-				if("COMPRESS" in myHeat): self.useHeatingCompress = True
-				if("PHOTO" in myHeat): self.useHeatingPhoto = True
-				if("CHEM" in myHeat): self.useHeatingChem = True
-				if("DH" in myHeat): self.useHeatingdH = True
+			if("COMPRESS" in myHeat): self.useHeatingCompress = True
+			if("PHOTO" in myHeat): self.useHeatingPhoto = True
+			if("CHEM" in myHeat): self.useHeatingChem = True
+			if("DH" in myHeat): self.useHeatingdH = True
 
-				self.use_thermo = True
-				if(not(self.usePhIoniz) and self.useHeatingPhoto):
-					die("ERROR: if you use photoheating you have to include potoionization via -usePhIoniz")
+			self.use_thermo = True
+			if(not(self.usePhIoniz) and self.useHeatingPhoto):
+				die("ERROR: if you use photoheating you have to include potoionization via -usePhIoniz")
 
-				print "Reading option -heating ("+(",".join(myHeat))+")"
+			print "Reading option -heating ("+(",".join(myHeat))+")"
 	
 
 		#force rwork size
-		for arg in argv:
-			if("testFile=" in arg):
-				myrwork = (arg.strip().replace("-testFile=",""))
-				self.is_test = True
-				self.test_name = myrwork
-				print "Reading option -testFile (file="+str(myrwork)+")"
-				break
+		#if(args.testFile):
+		#	myrwork = (arg.strip().replace("-testFile=",""))
+		#	self.is_test = True
+		#	self.test_name = myrwork
+		#	print "Reading option -testFile (file="+str(myrwork)+")"
+		#	break
 
 		#force rwork size
-		for arg in argv:
-			if("forceRWORK=" in arg):
-				myrwork = (arg.strip().replace("-forceRWORK=",""))
-				self.force_rwork = True
-				print "Reading option -forceRWORK (RWORK="+str(myrwork)+")"
-				break
+		if(args.forceRWORK):
+			myrwork = args.forceRWORK
+			self.force_rwork = True
+			print "Reading option -forceRWORK (RWORK="+str(myrwork)+")"
+
 		#use custom function for coefficient instead of coe_tab()
-		for arg in argv:
-			if("useCustomCoe=" in arg):
-				self.customCoeFunction = (arg.strip().replace("-useCustomCoe=",""))
-				self.useCustomCoe = True
-				print "Reading option -useCustomCoe (Expression="+str(customCoeFunction)+")"
-				break
+		if(args.useCustomCoe):
+			self.customCoeFunction = args.useCustomCoe
+			self.useCustomCoe = True
+			print "Reading option -useCustomCoe (Expression="+str(customCoeFunction)+")"
+
 		#use function to append after each ODE
-		for arg in argv:
-			if("useODEConstant=" in arg):
-				self.ODEConstant = (arg.strip().replace("-useODEConstant=",""))
-				self.useODEConstant = True
-				print "Reading option -useODEConstant (Constant="+str(ODEConstant)+")"
-				break
+		if(args.useODEConstant):
+			self.ODEConstant = args.useODEConstant
+			self.useODEConstant = True
+			print "Reading option -useODEConstant (Constant="+str(ODEConstant)+")"
+
 		#dust
 		hasDustOptions = False
-		for arg in argv:
-			if("dustOptions=" in arg): hasDustOptions = True
-		for arg in argv:
-			if("dust=" in arg):
-				dustopt = (arg.strip().replace("-dust=",""))
-				adust = dustopt.split(",")
-				self.useDust = True
-				if(len(adust)<2): die("ERROR: you must specify dust size and type(s), e.g. -dust=20,C,Si")
-				if(self.use_implicit_RHS): die("ERROR: you cannot use dust AND implicit RHS: remove -iRHS option")
-				self.dustArraySize = int(adust[0])
-				self.dustTypes = adust[1:]
-				self.dustTypesSize = len(self.dustTypes)
-				print "Reading option -dust (size="+str(self.dustArraySize)+", type(s)="+(",".join(self.dustTypes))+")"
-				if(not(hasDustOptions)):
-					print "ERROR: -dust flag needs to define -dustOptions=[see help])"
-					sys.exit()
-				break
+		if(args.dustOptions): hasDustOptions = True
+		if(args.dust):
+			dustopt = args.dust
+			adust = dustopt.split(",")
+			self.useDust = True
+			if(len(adust)<2): die("ERROR: you must specify dust size and type(s), e.g. -dust=20,C,Si")
+			if(self.use_implicit_RHS): die("ERROR: you cannot use dust AND implicit RHS: remove -iRHS option")
+			self.dustArraySize = int(adust[0])
+			self.dustTypes = adust[1:]
+			self.dustTypesSize = len(self.dustTypes)
+			print "Reading option -dust (size="+str(self.dustArraySize)+", type(s)="+(",".join(self.dustTypes))+")"
+			if(not(hasDustOptions)):
+				print "ERROR: -dust flag needs to define -dustOptions=[see help])"
+				sys.exit()
 		#dust options
-		for arg in argv:
-			if("dustOptions=" in arg):
-				if(not(self.useDust)): die("ERROR: you need -dust=[see help] to activate dust options!")
-				dustopt = (arg.strip().replace("-dustOptions=",""))
-				dustOptions = dustopt.split(",")
-				if("GROWTH" in dustOptions): self.useDustGrowth = True
-				if("SPUTTER" in dustOptions): self.useDustSputter = True
-				if("H2" in dustOptions): self.useDustH2 = True
-				if("TDUST_ROOT" in dustOptions): self.useDustT = "ROOT"
-				if("TDUST_ODE" in dustOptions): self.useDustT = "ODE"
-				print "Reading option -dustOptions (options="+(",".join(dustOptions))+")"
-				break
+		if(args.dustOptions):
+			if(not(self.useDust)): die("ERROR: you need -dust=[see help] to activate dust options!")
+			dustopt = args.dustOptions
+			dustOptions = dustopt.split(",")
+			if("GROWTH" in dustOptions): self.useDustGrowth = True
+			if("SPUTTER" in dustOptions): self.useDustSputter = True
+			if("H2" in dustOptions): self.useDustH2 = True
+			if("TDUST_ROOT" in dustOptions): self.useDustT = "ROOT"
+			if("TDUST_ODE" in dustOptions): self.useDustT = "ODE"
+			print "Reading option -dustOptions (options="+(",".join(dustOptions))+")"
 
 		#project name folder
-		for arg in argv:
-			if("project=" in arg):
-				self.projectName = (arg.strip().replace("-project=",""))
-				print "Reading option -project (name="+str(projectName)+")"
-				self.buildFolder = "build_"+projectName+"/"
-				fout = open(projectName+".kpj","w")
-				fout.write((" ".join(argv)))
-				fout.close()
-				break
+		if(args.project):
+			self.projectName = projectName = args.project
+			print "Reading option -project (name="+str(projectName)+")"
+			self.buildFolder = "build_"+projectName+"/"
+			fout = open(projectName+".kpj","w")
+			fout.write((" ".join(argv)))
+			fout.close()
+
 		#typeGamma
-		for arg in argv:
-			if("gamma=" in arg):
-				typeGamma = (arg.strip().replace("-gamma=",""))
-				self.typeGamma = typeGamma.replace("\"","")
-				print "Reading option -gamma (gamma="+str(self.typeGamma)+")"
-				break
+		if(args.gamma):
+			typeGamma = args.gamma
+			self.typeGamma = typeGamma.replace("\"","")
+			print "Reading option -gamma (gamma="+str(self.typeGamma)+")"
 
 		#ATOL
-		for arg in argv:
-			if("ATOL=" in arg):
-				self.ATOL = (arg.strip().replace("-atol=",""))
-				print "Reading option -atol (atol="+str(self.ATOL)+")"
-				break
+		if(args.ATOL):
+			self.ATOL = args.ATOL
+			print "Reading option -atol (atol="+str(self.ATOL)+")"
 
 		#RTOL
-		for arg in argv:
-			if("RTOL=" in arg):
-				self.RTOL = (arg.strip().replace("-rtol=",""))
-				print "Reading option -rtol (rtol="+str(self.RTOL)+")"
-				break
+		if(args.RTOL):
+			self.RTOL = args.RTOL
+			print "Reading option -rtol (rtol="+str(self.RTOL)+")"
 
-		#show help
-		if("-help" in argv or "-h" in argv or "--help" in argv):
-			get_usage()
 
 	####################################################
 	#load thermochemistry data form chemkin-formatted file
@@ -1417,9 +1391,9 @@ class krome():
 				print
 				for x in specs:
 					if(min(x.poly1)==0 and max(x.poly1)==0): continue
-					sp1 += "p1("+x.fidx+",:)  = (/" + (", ".join([format_double(pp) for pp in x.poly1])) + "/)\n"
-					sp2 += "p2("+x.fidx+",:)  = (/" + (", ".join([format_double(pp) for pp in x.poly2])) + "/)\n"
-					spt += "Tlim("+x.fidx+",:)  = (/" + (", ".join([format_double(pp) for pp in x.Tpoly])) + "/)\n"
+					sp1 += "p1("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly1])) + "/)\n"
+					sp2 += "p2("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2])) + "/)\n"
+					spt += "Tlim("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.Tpoly])) + "/)\n"
 				fout.write(sp1+sp2+spt)
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header())

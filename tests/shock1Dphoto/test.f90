@@ -193,6 +193,7 @@ program sedov
   use krome_constants
   use krome_subs
   use krome_photo
+  use krome_user_commons
   use commons
   use subs
   implicit none
@@ -208,6 +209,7 @@ program sedov
   !     and H2/HD/CEN cooling
 
   call krome_init() !###init KROME###
+  krome_J21 = 1d0
   call krome_init_photo()  !###init photoheating/ionization###
   
   gamma = 5.d0/3.d0 !adiabatic index
