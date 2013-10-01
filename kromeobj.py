@@ -96,10 +96,7 @@ class krome():
 			self.is_test = True
 		#test_name = (arg.strip().replace("-test=",""))
 		#print "Reading option -test (test="+test_name+")"
-		if(args.test=="planet"):
-			[argv.append(x) for x in ["-useN","-reverse"]]
-			filename = "networks/react_planet"
-		elif(args.test=="cloud"):
+		if(args.test=="cloud"):
 			[argv.append(x) for x in ["-useN","-iRHS"]]
 			filename = "networks/react_cloud"
 		elif(args.test=="slowmanifold"):
@@ -141,9 +138,6 @@ class krome():
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST_ROOT"]]
 			filename = "networks/react_primordial"
-		elif(args.test=="kasting"):
-			[argv.append(x) for x in ["-useN"]]
-			filename = "networks/react_planet2"
 		elif(args.test=="reverse"):
 			[argv.append(x) for x in ["-useN","-reverse"]]
 			filename = "networks/react_NO"

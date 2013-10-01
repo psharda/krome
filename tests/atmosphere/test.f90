@@ -5,8 +5,8 @@ program test
   integer,parameter::nmax=64,nread=59
   real*8::r(nmax), tt, dt, x(krome_nmols),h(nmax)
   real*8::rout(2),rout2(4),tgas(nmax),n(nmax,krome_nmols),n1(nmax)
-  real*8::datar(nread),ntot,dtin,tmax,xx(krome_nmols)
-  integer::i,j,iout,istep
+  real*8::datar(nread),ntot,dtin,tmax,xx(krome_nmols),xmax
+  integer::i,j,iout,istep,jmax
 
 
   call krome_init()
@@ -68,13 +68,27 @@ program test
      x(krome_idx_CH3O2) = datar(32)
      x(krome_idx_NO3) = datar(33)
 
+     xmax = -1d99
+     do j=1,size(x)
+        if(x(j)>xmax) then
+           xmax = x(j)
+           jmax = j
+        end if
+     end do
+     print *,"*********"
+     print *,xmax,jmax
 
-     xx(:) = 0d0
-     xx(krome_idx_O3) = x(krome_idx_O3)
-     xx(krome_idx_H2CO) = x(krome_idx_H2CO)
-     xx(krome_idx_NO2) = x(krome_idx_NO2)
-     xx(krome_idx_H2O) = x(krome_idx_H2O)
 
+     !xx(:) = 0d0
+     !xx(krome_idx_O3) = x(krome_idx_O3)
+     !xx(krome_idx_H2CO) = x(krome_idx_H2CO)
+     !xx(krome_idx_NO2) = x(krome_idx_NO2)
+     !xx(krome_idx_H2O) = x(krome_idx_H2O)
+     !xx(krome_idx_OH) = x(krome_idx_OH) !
+     !xx(krome_idx_O2) = x(krome_idx_O2) !
+     !print *,xx(krome_idx_O3), xx(krome_idx_H2CO)
+     xx(:) = x(:)
+     
      !x(krome_idx_O3) = i * 1d0 / nmax
      !x(krome_idx_H2CO) = (nmax-i) * 1d0 / nmax
      !x(krome_idx_NO2) = .3d0*cos(i*3.1415/nmax)**2
@@ -97,7 +111,7 @@ program test
         end do
         n1(1) = n1(2)
         n1(nmax) = n1(nmax-1)
-        n(:,j) = n1(:) !/ sum(n1(:)) * ntot
+        !n(:,j) = n1(:) !/ sum(n1(:)) * ntot
      end do
 
      do i=1,nmax
