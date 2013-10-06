@@ -133,7 +133,7 @@ class krome():
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST,HD", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST_ODE"]]
-			filename = "networks/react_primordial3B"
+			filename = "networks/react_primordial"
 		elif(args.test=="reverse"):
 			[argv.append(x) for x in ["-useN","-reverse"]]
 			filename = "networks/react_NO"
