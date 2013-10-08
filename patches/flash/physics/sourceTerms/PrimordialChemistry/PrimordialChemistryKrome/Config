@@ -1,0 +1,11 @@
+#   This is the Config file for PrimordialChemistry with Krome
+#   Basically here for defining the species I will be using
+
+REQUIRES Driver
+REQUIRES Simulation/SimulationComposition/PrimordialChemistryKrome
+
+
+#KROME_species
+
+D usePrimordialChemistry
+PARAMETER usePrimordialChemistry   BOOLEAN TRUE

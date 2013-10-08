@@ -17,7 +17,7 @@ class krome():
 	pedanticMakefile = useFakeOpacity = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = True
 	useDustGrowth = useDustSputter = useDustH2 = False
-	doRamses = False
+	doRamses = doFlash = doEnzo = False
 	useDustT = "NONE" #T dust calculation mode (NONE=no calculations, ROOT=rootfinding in krome_main, ODE=dust has its own dT/dt)
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -79,7 +79,9 @@ class krome():
 		self.parser.add_argument("-clean", action="store_true", help="clean all in /build (including krome_user_commons.f90 that is normally kept by default) before creating new f90 files.")
 		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
 		self.parser.add_argument("-forceRWORK", help="force the size of RWORK to N", metavar="N")
-		self.parser.add_argument("-ramses", action="store_true", help="create patches for ramses")
+		self.parser.add_argument("-ramses", action="store_true", help="create patches for RAMSES")
+		self.parser.add_argument("-flash", action="store_true", help="create patches for FLASH")
+		self.parser.add_argument("-enzo", action="store_true", help="create patches for ENZO")
 		
 	
 	######################################
@@ -255,6 +257,15 @@ class krome():
 			self.doRamses = True
 			print "Reading option -ramses"
 
+		#creates flash patches
+		if(args.flash):
+			self.doFlash = True
+			print "Reading option -flash"
+
+		#creates enzo patches
+		if(args.enzo):
+			self.doEnzo = True
+			print "Reading option -enzo"
 
 		#determine Tgas limit operators
 		if(args.Tlimit):
@@ -2418,10 +2429,67 @@ class krome():
 		fname = "output_hydro.f90"
 		self.replacein(pfold+fname,buildFolder+fname,["aaa"],["aaa"])
 		indentF90(buildFolder+fname)
+
+	###########################################
+	def flash_patch(self):
+		pfold = "patches/flash/physics/sourceTerms/PrimordialChemistry/PrimordialChemistryKrome/"
+		buildFolder = self.buildFolder
+		specs = self.specs
+
+		#Config
+		species = ""
+		for x in specs:
+			if(x.name in ["CR","g","Tgas","dummy"]): continue
+			name = x.name.upper().replace("+","P").replace("-","M")
+			if(name=="E"): name="ELEC"
+			
+			species += "SPECIES "+name+"\n"
+
+		fname = "Config"
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_species"],[species])
+		indentF90(buildFolder+fname)
+
+		#Makefile
+		fname = "Makefile"
+		shutil.copyfile(pfold+fname, buildFolder+fname)
+
+		#pchem_mapNetworkToSpecies
+		fname = "pchem_mapNetworkToSpecies.F90"
+		shutil.copyfile(pfold+fname, buildFolder+fname)
+
+		#PrimordialChemistry
+		fname = "PrimordialChemistry.F90"
+		shutil.copyfile(pfold+fname, buildFolder+fname)
 		
+		#PrimordialChemistry_data
+		fname = "PrimordialChemistry_data.F90"
+		shutil.copyfile(pfold+fname, buildFolder+fname)
+	
+	###########################################
+	def enzo_patch(self):
+		pfold = "patches/enzo/"
+		buildFolder = self.buildFolder
+		specs = self.specs
+
+		#Config
+		species = ""
+		for x in specs:
+			if(x.name in ["CR","g","Tgas","dummy"]): continue
+			name = x.name.upper().replace("+","P").replace("-","M")
+			if(name=="E"): name="ELEC"
+			
+			species += "SPECIES "+name+"\n"
+
+		fname = "Config"
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_species"],[species])
+		indentF90(buildFolder+fname)
+
+
 	############################################
 	def patches(self):
 		if(self.doRamses): self.ramses_patch()
+		if(self.doFlash): self.flash_patch()
+		if(self.doEnzo): self.enzo_patch()
 
 	#########################################
 	def final_report(self):
