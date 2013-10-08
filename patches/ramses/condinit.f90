@@ -58,16 +58,6 @@ subroutine condinit(x,u,dx,nn)
   ! MASS FRACTION OF EACH SPECIE (in this case for a neutral gas):
   if(chemistry)then
 #KROME_init_chem
-    q(1:nn,ndim+3)  = 200.d0     !Set temperature in K
-    q(1:nn,ndim+4)  = 7.5615d-1  !H
-    q(1:nn,ndim+5)  = 4.4655d-8  !E
-    q(1:nn,ndim+6)  = 8.1967d-5  !H+
-    q(1:nn,ndim+7)  = 2.4375d-1  !He
-    q(1:nn,ndim+8)  = 1.0d-20    !He+
-    q(1:nn,ndim+9)  = 1.0d-20    !He++
-    q(1:nn,ndim+10) = 1.6393d-20 !H-
-    q(1:nn,ndim+11) = 1.6393d-5  !H2
-    q(1:nn,ndim+12) = 1.6393d-20 !H2+
   endif
 
   do ivar=ndim+3,nvar

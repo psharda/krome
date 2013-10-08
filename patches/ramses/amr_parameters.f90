@@ -129,8 +129,7 @@ module amr_parameters
   logical ::pressure_fix=.false.
   logical ::nordlund_fix=.true.
   logical ::cooling=.false.
-#KROME_chemistry_flag
-  logical ::chemistry=.false. ! Activate Chemical Evolution with KROME 
+  logical ::chemistry=.true. ! Activate Chemical Evolution with KROME 
   logical ::isothermal=.false.
   logical ::metal=.false.
   logical ::bondi=.true.      ! Activate Bondi accretion onto sink particle 

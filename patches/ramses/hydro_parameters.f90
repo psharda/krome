@@ -3,7 +3,7 @@ module hydro_parameters
 
   ! Number of independant variables including chemical species
 #ifndef NVAR
-  integer,parameter::nvar=ndim+12
+  integer,parameter::nvar=ndim+3+#KROME_NCHEM
 #else
   integer,parameter::nvar=NVAR
 #endif

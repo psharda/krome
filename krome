@@ -21,7 +21,7 @@ krome.argparsing(argv)
 #read thermochemistry data from file
 krome.load_thermochemistry()
 
-#prepares mass and species dictionaries
+#prepares mass an species dictionaries
 krome.prepare_massdict()
 
 #read reaction file
@@ -96,7 +96,11 @@ krome.copyOthers()
 #indent all the f90 files
 krome.indent()
 
-#print a final report and usage hints
+#create patches if needed
+krome.patches()
+
+
+#print a final report an usage hints
 krome.final_report()
 
 #write a random quote

@@ -17,6 +17,7 @@ class krome():
 	pedanticMakefile = useFakeOpacity = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = True
 	useDustGrowth = useDustSputter = useDustH2 = False
+	doRamses = False
 	useDustT = "NONE" #T dust calculation mode (NONE=no calculations, ROOT=rootfinding in krome_main, ODE=dust has its own dT/dt)
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -78,6 +79,7 @@ class krome():
 		self.parser.add_argument("-clean", action="store_true", help="clean all in /build (including krome_user_commons.f90 that is normally kept by default) before creating new f90 files.")
 		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
 		self.parser.add_argument("-forceRWORK", help="force the size of RWORK to N", metavar="N")
+		self.parser.add_argument("-ramses", action="store_true", help="create patches for ramses")
 		
 	
 	######################################
@@ -247,6 +249,12 @@ class krome():
 		if(args.skipODEthermo):
 			self.useODEthermo = False
 			print "Reading option -skipODEthermo"
+
+		#creates ramses patches
+		if(args.ramses):
+			self.doRamses = True
+			print "Reading option -ramses"
+
 
 		#determine Tgas limit operators
 		if(args.Tlimit):
@@ -2317,7 +2325,7 @@ class krome():
 
 		print "done!"
 	#########################################
-	def replacein(fsrc,fout,pragmas,repls):
+	def replacein(self,fsrc,fout,pragmas,repls):
 		fh = open(fsrc,"rb")
 		fw = open(fout,"w")
 		if(len(pragmas)!=len(repls)):
@@ -2327,7 +2335,7 @@ class krome():
 			srow = row.strip()
 			for i in range(len(pragmas)):
 				x = pragmas[i]
-				y = repls[i]
+				y = str(repls[i])
 				srow = srow.replace(x,y)
 			fw.write(srow+"\n")
 		fh.close()
@@ -2341,20 +2349,79 @@ class krome():
 		pfold = "patches/ramses/"
 		buildFolder = self.buildFolder
 		specs = self.specs
+
+		ndef = {"H": 7.5615e-1,
+			"E": 4.4983e-8,
+			"H+": 8.1967e-5,
+			"HE": 2.4375e-1,
+			"HE+": 1e-20,
+			"HE++": 1e-20,
+			"H-": 1e-20,
+			"H2": 1.5123e-6,
+			"H2+": 1e-20,
+			"D": 1e-20,
+			"D+": 1e-20,
+			"HD": 1e-20,
+			"HD+": 1e-20
+		}
+
+
 		#amr_parameters
-		replacein(pfold+"amr_parameters.f90",buildFolder+"amr_parameters.f90",["#KROME_chemistry_flag"],["logical ::chemistry=.false."])
+		fname = "amr_parameters.f90"
+		self.replacein(pfold+fname,buildFolder+fname,["aaa"],["aaa"])
+		indentF90(buildFolder+fname)
 
 		#condinit
-		cheminit = "if(chemistry) then\n"
-		cheminit += " q(1:nn,ndim+3)  = 200.d0     !Set temperature in K\n"
+		cheminit = " q(1:nn,ndim+3) = 200.d0     !Set temperature in K\n"
 		ichem = 3
+		fname = "condinit.f90"
+		for x in specs:
+			if(x.name in ["CR","g","Tgas","dummy"]): continue
+			ichem += 1
+			cheminit += "q(1:nn,ndim+"+str(ichem)+")  = "+str(ndef[x.name])+"  !"+x.name+"\n"
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_init_chem"],[cheminit])
+		indentF90(buildFolder+fname)
+
+		#cooling_fine
+		updateueq = scaleueq = bkscaleueq = bkupdateueq = ""
+		ichem = 3
+		fname = "cooling_fine.f90"
 		for x in specs:
 			ichem += 1
-			cheminit += "q(1:nn,ndim+"+str(ichem)+")  = ?  !"+x.name+"\n"
-		cheminit += "endif\n"
-		replacein(pfold+"condinit.f90",buildFolder+"condinit.f90",["#KROME_init_chem"],[cheminit])
+			if(not(x.name in ["CR","g","Tgas","dummy"])):
+				updateueq += "unoneq("+str(ichem-3)+") = uold(ind_leaf(i),ndim+"+str(ichem)+") !"+x.name+"\n"
+				scaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
+				bkscaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
+				bkupdateueq += "uequold(ind_leaf(i),ndim+3+"+str(ichem-3)+") = unoneq("+str(ichem-3)+")\n"
+		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
+		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
+		self.replacein(pfold+fname,buildFolder+fname,org,new)
+		indentF90(buildFolder+fname)
 
-		#
+		#hydro_parameters
+		fname = "hydro_parameters.f90"
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_NCHEM"],[self.nmols])
+		indentF90(buildFolder+fname)
+
+		#init_flow_fine
+		fname = "init_flow_fine.f90"
+		init_array = ""
+		ichem = 3
+		for x in specs:
+			if(x.name in ["CR","g","Tgas","dummy"]): continue
+			ichem += 1
+			init_array += "if(ivar==ndim+"+str(ichem)+")  init_array = "+str(ndef[x.name])+"  !"+x.name+"\n"
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_init_array"],[init_array])
+		indentF90(buildFolder+fname)
+		
+		#output_hydro
+		fname = "output_hydro.f90"
+		self.replacein(pfold+fname,buildFolder+fname,["aaa"],["aaa"])
+		indentF90(buildFolder+fname)
+		
+	############################################
+	def patches(self):
+		if(self.doRamses): self.ramses_patch()
 
 	#########################################
 	def final_report(self):

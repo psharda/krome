@@ -196,18 +196,10 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
         do i=1,nleaf
            ! Compute "thermal" temperature by substracting polytrope
            T2(i) = max(T2(i)-T2min(i),T2_min_fix)
+
 	   ! Species mass density in code units
-           unoneq(1) = uold(ind_leaf(i),ndim+4) ! HI                    
-           unoneq(2) = uold(ind_leaf(i),ndim+5) ! E  
-           unoneq(3) = uold(ind_leaf(i),ndim+6) ! HII  
-           unoneq(4) = uold(ind_leaf(i),ndim+7) ! HeI  
-           unoneq(5) = uold(ind_leaf(i),ndim+8) ! HeII 
-           unoneq(6) = uold(ind_leaf(i),ndim+9) ! HeIII
-           unoneq(7) = uold(ind_leaf(i),ndim+10)! HM
-           unoneq(8) = uold(ind_leaf(i),ndim+11)! H2I  
-           unoneq(9) = uold(ind_leaf(i),ndim+12)! H2II 
-           unoneq(10)= 0.0d0                    ! CR 
-           unoneq(11)= 0.0d0                    ! g            
+#KROME_update_unoneq
+
            rhogas     = (nH(i)/scale_nH)        ! code units
            ! Compute the non-eq. mean molecular weight
 	   call get_mu(unoneq(:),rhogas,mu_noneqold)
@@ -216,38 +208,21 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
            t2gas(i)   = t2gasold(i)             ! K
            tgas(i)    = tgasold(i)
            dthydro    = dtcool                  ! s
+
            ! Species mass density (in code units) -> number denstiy for krome 1/cm3
-           unoneq(1) = unoneq(1)*scale_d/mH        ! HI                    
-           unoneq(2) = unoneq(2)*scale_d/me        ! E  
-           unoneq(3) = unoneq(3)*scale_d/mH        ! HII  
-           unoneq(4) = unoneq(4)*scale_d/(4.d0*mH) ! HeI  
-           unoneq(5) = unoneq(5)*scale_d/(4.d0*mH) ! HeII 
-           unoneq(6) = unoneq(6)*scale_d/(4.d0*mH) ! HeIII
-           unoneq(7) = unoneq(7)*scale_d/mH        ! HM
-           unoneq(8) = unoneq(8)*scale_d/(2.d0*mH) ! H2I  
-           unoneq(9) = unoneq(9)*scale_d/(4.d0*mH) ! H2II 
-           unoneq(10)= 0.0d0                       ! CR 
-           unoneq(11)= 0.0d0                       ! g 
+#KROME_scale_unoneq
+
            ! Call non-equilibrium cooling package KROME
            ! with c.g.s. parameters 
            call krome(unoneq(:),tgas(i),dthydro)
-           ! Species number denstiy (in c.g.s.) -> mass density (code units) 
-           unoneq(1) = unoneq(1)*mH/scale_d        ! HI                    
-           unoneq(2) = unoneq(2)*me/scale_d        ! E  
-           unoneq(3) = unoneq(3)*mH/scale_d        ! HII  
-           unoneq(4) = unoneq(4)*(4.d0*mH)/scale_d ! HeI  
-           unoneq(5) = unoneq(5)*(4.d0*mH)/scale_d ! HeII 
-           unoneq(6) = unoneq(6)*(4.d0*mH)/scale_d ! HeIII
-           unoneq(7) = unoneq(7)*mH/scale_d        ! HM
-           unoneq(8) = unoneq(8)*(2.d0*mH)/scale_d ! H2I  
-           unoneq(9) = unoneq(9)*(4.d0*mH)/scale_d ! H2II 
-           unoneq(10)= 0.0d0                     ! CR 
-           unoneq(11)= 0.0d0                     ! g 
+
+           ! Species number denstiy (in c.g.s.) -> mass density (code units)
+#KROME_backscale_unoneq
+
            ! print chemical evolution
            ! Update the species (mass density) array in code units
-           do indchem=1,9
-              uold(ind_leaf(i),ndim+3+indchem) = unoneq(indchem)
-           end do
+#KROME_backupdate_unoneq
+
            ! Save gas temperature in K for the output
            uold(ind_leaf(i),ndim+3) = tgas(i)
            ! Compute new mu
@@ -321,37 +296,20 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   ! End loop over cells
 
 end subroutine coolfine1
+
 !**************************************************
 ! Function to compute the non-eq. molecular weight
 !**************************************************
 subroutine get_mu(unoneq,rhogas,molweight)
+  !default for mean molecular weight function
   use amr_commons
   use hydro_commons
   use cooling_module
   implicit none
-  real(dp),dimension(1:11)::unoneq
+  real(dp)::unoneq(:)
   real(dp)::rhogas,molweight
-  real(dp)::xHI,xE,xHII,xHeI,xHeII,xHeIII,xHM,xH2I,xH2II
-  real(dp)::zHII,zHeII,zHeIII,zHM,zH2II
-  real(dp)::fiHII,fiHeII,fiHeIII,fiHM,fiH2II
-  real(dp)::mu_i,mu_e
-  ! Species mass fractions, charges
-  ! and ionization fraction to compute mu
-  xHI     = unoneq(1)/rhogas ; 
-  xE      = unoneq(2)/rhogas ; 
-  xHII    = unoneq(3)/rhogas ; zHII   = 1.d0 ; fiHII   = xHII/(xHI+xHII+xHM+xH2I+xH2II)
-  xHeI    = unoneq(4)/rhogas ; 
-  xHeII   = unoneq(5)/rhogas ; zHeII  = 1.d0 ; fiHeII  = xHeII/(xHeI+xHeII+xHeIII)
-  xHeIII  = unoneq(6)/rhogas ; zHeIII = 2.d0 ; fiHeIII = xHeIII/(xHeI+xHeII+xHeIII)
-  xHM     = unoneq(7)/rhogas ; zHM    =-1.d0 ; fiHM    = xHM/(xHI+xHII+xHM+xH2I+xH2II) 
-  xH2I    = unoneq(8)/rhogas ; 
-  xH2II   = unoneq(9)/rhogas ; zH2II  = 1.d0 ; fiH2II  = xH2II/(xHI+xHII+xHM+xH2I+xH2II)
-  ! Mean molecular weight
-  mu_i       = xHI + xHII + xHM +xH2I/2.d0 + xH2II/2.d0 + xHeI/4.d0 + xHeII/4.d0 + xHeIII/4.d0
-  mu_e       = zHII*xHII*fiHII + zHeII*(xHeII/4.d0)*fiHeII + zHeIII*(xHeIII/4.d0)*fiHeIII +zHM*(xHM)*fiHM + zH2II*(xH2II/2.d0)*fiH2II
-  mu_i       = 1.d0/mu_i
-  mu_e       = 1.d0/mu_e
-  molweight  = 1.d0/(1.d0/mu_i + 1.d0/mu_e)
+  
+  molweight = 1.22d0
 
   return
 end subroutine get_mu
