@@ -1,11 +1,9 @@
+!##################################################
+! Test based on [R2008] Reinhardt, V. et al.
+! JPhysChemA 112, 1712 (2008)
+! Slow manifold trajectories example
+!##################################################
 program test_krome
-
-  !********************************
-  ! Test based on [R2008] Reinhardt, V. et al.
-  ! JPhysChemA 112, 1712 (2008)
-  ! Slow manifold trajectories example
-  !********************************
-
   use krome_main
   use krome_subs
   use krome_user_commons

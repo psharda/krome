@@ -1,8 +1,10 @@
+!##########################################################
 !The following test provides a benchmark for 
 ! molecular clouds environments and it is useful
 ! to test the capability of the solver to handle
 ! with very large network. 
 !It is based on the EA2 model of Wakelam&Herbst 2008.
+!##########################################################
 program test_krome
 
   use krome_main

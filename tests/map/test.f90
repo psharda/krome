@@ -1,3 +1,8 @@
+!##################################################
+!This test represents a series of one-zone models
+! with different photon flux (J21) and an initial
+! temperature of 10^4 Kelvin.
+!##################################################
 program test
   use krome_main
   use krome_photo

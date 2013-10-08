@@ -1,6 +1,13 @@
-
-!###################################################
-
+!################################################################
+!This test is based on the Zel'dovich nitric oxide mechanism
+! involving two reactions and its reverse as discussed 
+! in Al-Khateeb et al. 2009. The aim of the test is to 
+! evaluate the inverse reaction rate coefficients applying 
+! the thermodynamic method discussed in Grassi et al. 2013
+! and employed in KROME.
+! Initial conditions are n = 1e-3 mols, Volume = 1e3 cm3 and
+! T = 4000 Kelvin.
+!################################################################
 program test
   use krome_main !use krome
   use krome_user !use utilities
@@ -34,4 +41,3 @@ program test
   print *,"in gnuplot for graphical results."
    
 end program test
-

@@ -1,7 +1,10 @@
+!################################################################
 !This is a simple one-zone collapse test following
 ! the chemical and thermal evolution of a primordial cloud.
 !The dynamics is described by the Larson-Penston-type
 ! similar solution and includes cooling and heating processes.
+!For additional details look also to Omukai 2000.
+!################################################################
 program test_krome
 
   use krome_commons
