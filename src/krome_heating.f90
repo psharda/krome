@@ -5,6 +5,7 @@ contains
 
   !*******************************
   function heating(n, Tgas, k, nH2dust)
+    use krome_commons
     implicit none
     real*8::n(:), Tgas, k(:), nH2dust
     real*8::heating,heats(4)
@@ -29,6 +30,15 @@ contains
 #ENDIFKROME
     
     heating = sum(heats)
+
+    !remove the comment below to write heating terms to fort.55
+    !write(55,'(99E17.8e3)') sum(n(1:nmols)),Tgas,heats(:)
+
+    !gnuplot command (n=100, and m=1 for density or m=2 for temperature) 
+    !plot 'fort.55' u m:3 every n w l t "chem",\
+    ! '' u m:4 every n w l t "compress",\
+    ! '' u m:5 every n w l t "photo",\
+    ! '' u m:6 every n w l t "enthalpy"
 
   end function heating
   
@@ -138,8 +148,7 @@ contains
     dd = sum(n(1:nmols)) !total number density
 
     !COMPRESSIONAL HEATING
-    !note that krome_gamma is computed in the FEX in krome_ode module
-    heat_compress = dd * boltzmann_erg * Tgas * (krome_gamma - 1.d0) / user_tff !erg/s/cm3
+    heat_compress = dd * boltzmann_erg * Tgas / user_tff !erg/s/cm3
 
   end function heat_compress
 #ENDIFKROME

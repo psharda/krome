@@ -195,7 +195,7 @@ contains
              xl = x2
           end if
           !check error
-          if(abs(xr-xl).le.1d-3) exit
+          if(abs(xr-xl).le.1d-10) exit
        end do
        n(nmols+ndust+i) = x2 !copy found value to array
     end do
@@ -217,7 +217,7 @@ contains
     !jeans length
     lj = sqrt(15./4.*boltzmann_erg*Tgas/pi/gravity/1.22/rhogas/p_mass)
     ntot = sum(n(1:nmols)) !total density gas
-    tau = kopa(Tdust) * rhodust * lj !opacity
+    tau = kopa(Tdust) * rhogas * lj !opacity
     beta = min(1d0, tau**-2) !final opacity
 
   end function beta

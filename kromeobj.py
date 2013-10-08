@@ -132,7 +132,7 @@ class krome():
 			filename = "networks/react_primordial_UV"
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST,HD", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST_ODE"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=TDUST_ODE,H2"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="reverse"):
 			[argv.append(x) for x in ["-useN","-reverse"]]
@@ -991,7 +991,7 @@ class krome():
 						diffTdust = "( - n("+str(nmols+j)+") * krome_dust_asize3("+str(j)+") * krome_grain_rho &\n"
 						diffTdust += " * 4.d0 * stefboltz_erg  * n("+str(nmols+ndust+j)+")**4 &\n"
 						diffTdust += "* beta(n(:), krome_dust_asize("+str(j)+"), n("+str(nmols+ndust+j)+"), "
-						diffTdust += "n("+str(nmols+j)+"))&\n"
+						diffTdust += "n("+str(nmols+j)+")) * kopa("+str(nmols+ndust+j)+")&\n"
 						diffTdust += " + dustCool(krome_dust_asize2("+str(j)+"),n("+str(nmols+j)
 						diffTdust += "), Tgas, n("+str(nmols+myndust+j)+"),ntot)) / boltzmann_erg / n("+str(nmols+j)+")"
 						dns[nmols+myndust+j-1] += " + " + diffTdust
@@ -2316,6 +2316,45 @@ class krome():
 				indentF90(buildFolder+"krome_user.f90")
 
 		print "done!"
+	#########################################
+	def replacein(fsrc,fout,pragmas,repls):
+		fh = open(fsrc,"rb")
+		fw = open(fout,"w")
+		if(len(pragmas)!=len(repls)):
+			print "ERROR: in replacein len(pragmas)!=len(repls)"
+			sys.exit()
+		for row in fh:
+			srow = row.strip()
+			for i in range(len(pragmas)):
+				x = pragmas[i]
+				y = repls[i]
+				srow = srow.replace(x,y)
+			fw.write(srow+"\n")
+		fh.close()
+		fw.close()
+
+
+				
+
+	#########################################
+	def ramses_patch(self):
+		pfold = "patches/ramses/"
+		buildFolder = self.buildFolder
+		specs = self.specs
+		#amr_parameters
+		replacein(pfold+"amr_parameters.f90",buildFolder+"amr_parameters.f90",["#KROME_chemistry_flag"],["logical ::chemistry=.false."])
+
+		#condinit
+		cheminit = "if(chemistry) then\n"
+		cheminit += " q(1:nn,ndim+3)  = 200.d0     !Set temperature in K\n"
+		ichem = 3
+		for x in specs:
+			ichem += 1
+			cheminit += "q(1:nn,ndim+"+str(ichem)+")  = ?  !"+x.name+"\n"
+		cheminit += "endif\n"
+		replacein(pfold+"condinit.f90",buildFolder+"condinit.f90",["#KROME_init_chem"],[cheminit])
+
+		#
 
 	#########################################
 	def final_report(self):

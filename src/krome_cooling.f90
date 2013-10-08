@@ -5,6 +5,7 @@ contains
 
   !*******************************
   function cooling(n, Tgas)
+    use krome_commons
     implicit none
     real*8::n(:), Tgas
     real*8::cooling,cools(9)
@@ -49,6 +50,21 @@ contains
 #ENDIFKROME
 
     cooling = sum(cools)
+
+    !remove the comment below to write cooling contributions to fort.44
+    !write(44,'(99E17.8e3)') sum(n(1:nmols)),Tgas,cools(:)
+
+    !gnuplot command (n=100, and m=1 for density or m=2 for temperature) 
+    !plot 'fort.44' u m:3 every n w l t "H2",\
+    ! '' u m:4 every n w l t "H2GP",\
+    ! '' u m:5 every n w l t "atomic",\
+    ! '' u m:6 every n w l t "HD",\
+    ! '' u m:7 every n w l t "Z",\
+    ! '' u m:8 every n w l t "enthalpy",\
+    ! '' u m:9 every n w l t "dust",\
+    ! '' u m:10 every n w l t "compton",\
+    ! '' u m:11 every n w l t "CIE"
+
   end function cooling
 
 
