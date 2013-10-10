@@ -7,7 +7,6 @@
 !################################################################
 program test_krome
 
-  use krome_commons
   use krome_main
   use krome_user
   use krome_user_commons
@@ -17,13 +16,13 @@ program test_krome
   integer::i
   real*8::dtH,deldd
   real*8::tff,dd,dd1
-  real*8::x(nmols),Tgas,dt
+  real*8::x(krome_nmols),Tgas,dt
   real*8::ntot,rho
 
   !INITIAL CONDITIONS
   redshift = 15.0d0    !redshift
-  ntot = 1.d0           !total density in 1/cm3
-  Tgas = 1d2              !temperature in kelvin
+  ntot = 1.d0          !total density in 1/cm3
+  Tgas = 1d2           !temperature in kelvin
 
   !INITIALIZE KROME PARAMETERS AND DUST 
   call krome_init()
@@ -55,15 +54,7 @@ program test_krome
      deldd = (dd/tff) * dtH
      dd = dd + deldd        !UPDATE DENSITY
 
-     x(KROME_idx_H)        = x(KROME_idx_H)*dd/dd1  
-     x(KROME_idx_E)        = x(KROME_idx_E)*dd/dd1  
-     x(KROME_idx_Hj)       = x(KROME_idx_Hj)*dd/dd1 
-     x(KROME_idx_HE)       = x(KROME_idx_HE)*dd/dd1
-     x(KROME_idx_HEj)      = x(KROME_idx_HEj)*dd/dd1
-     x(KROME_idx_H2)       = x(KROME_idx_H2)*dd/dd1
-     x(KROME_idx_H2j)      = x(KROME_idx_H2j)*dd/dd1
-     x(KROME_idx_Hk)       = x(KROME_idx_Hk)*dd/dd1
-     x(KROME_idx_HEjj)     = x(KROME_idx_HEjj)*dd/dd1
+     x(:) = x(:)*dd/dd1  
 
      dt = dtH 
      
@@ -72,7 +63,7 @@ program test_krome
      !solve the chemistry
      call krome(x(:),Tgas,dt)
 
-     write(22,'(99E12.3e3)') dd,Tgas,x(KROME_idx_H2)/dd,x(KROME_idx_H)/dd
+     write(22,'(99E17.8e3)') dd,Tgas,x(:)/dd
      if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas
 
   end do
