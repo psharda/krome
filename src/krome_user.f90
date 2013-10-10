@@ -109,6 +109,18 @@ contains
     krome_get_electrons = max(0.d0, ee)
   end function krome_get_electrons
 
+  !*******************************
+  function krome_get_flux(n,Tgas)
+    use krome_commons
+    use krome_subs
+    real*8::krome_get_flux(nrea),n(nmols),Tgas
+    real*8::x(nspec)
+    x(:) = 0.d0
+    x(1:nmols) = n(:)
+    x(idx_Tgas) = Tgas
+    krome_get_flux(:) = get_flux(x(:), Tgas)
+  end function krome_get_flux
+
 
   !************************
   !print species informations

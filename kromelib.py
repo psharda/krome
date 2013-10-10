@@ -289,6 +289,7 @@ def get_Tshortcut(rea,slist):
 	"invTe = 1.d0/Te !inverse of T (1/eV)",
 	"sqrTgas = sqrt(Tgas) !Tgas rootsquare (K**0.5)",
 	"invsqrT32 = 1.d0/sqrt(T32)",
+	"invsqrT = 1.d0/sqrTgas",
 	"sqrT32 = sqrt(T32)",
 	"Tgas2 = Tgas*Tgas",
 	"Tgas3 = Tgas2*Tgas",

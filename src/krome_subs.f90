@@ -11,12 +11,16 @@ contains
     implicit none
     real*8::coe(nrea),k(nrea),Tgas,t,t3,n(nspec)
     real*8::logT,lnT,Te,lnTe,T32,invT,invTe,sqrTgas,invsqrT32,sqrT32
-    real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv,T4
+    real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv,T4,invsqrT
     integer::i
+#KROME_initcoevars
     !Tgas is in K
     Tgas = max(n(idx_Tgas), 2.73d0)
+    T = Tgas
 
 #KROME_Tshortcuts
+
+#KROME_coevars
 
     k(:) = 1.d-40 !inizialize coefficients
 
@@ -150,6 +154,27 @@ contains
     revHS = H - S
 
   end function revHS
+
+  !******************************
+  function get_flux(n,Tgas)
+    use krome_commons
+    implicit none
+    integer::i
+#KROME_rvars
+    real*8::get_flux(nrea),n(nspec),k(nrea),rrmax,Tgas
+
+    k(:) = coe(n(:))
+    rrmax = 0.d0
+    n(idx_dummy) = 1.d0
+    n(idx_g) = 1.d0
+    n(idx_CR) = 1.d0
+    do i=1,nrea
+#KROME_arrs
+#KROME_arr_flux
+    end do
+    get_flux(:) = arr_flux(:)
+
+  end function get_flux
 
   !*****************************
   subroutine load_arrays()

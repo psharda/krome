@@ -30,6 +30,9 @@ krome.read_file()
 #compute reverse kinetics if necessary
 krome.do_reverse()
 
+#verify thermochemical data for species
+krome.verifyThermochem()
+
 #add metals if cooling is selected
 krome.addMetals()
 
@@ -41,9 +44,6 @@ krome.computeEnthalpy()
 
 #add the dust if selected
 krome.addDust()
-
-#add the dust temperature
-krome.addDustT()
 
 #add special species (e.g. dummy)
 krome.addSpecial()
