@@ -102,13 +102,14 @@ contains
     use krome_constants
     use krome_commons
     use krome_dust
+    use krome_subs
     implicit none
     real*8::heatingChem, n(:), Tgas,k(:),nH2dust
     real*8::h2heatfac,HChem,yH,yH2
     real*8::ncr,ncrn,ncrd1,ncrd2,dd,n2H
     real*8::logT,lnT,Te,lnTe,T32,invT,invTe,sqrTgas,invsqrT32,sqrT32
     real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv,t,vgas
-    dd = sum(n(1:nmols))
+    dd = get_Hnuclei(n(:))
 
 #KROME_Tshortcuts
 
@@ -130,7 +131,7 @@ contains
 #KROME_HChem_terms
 #KROME_HChem_dust
 
-    HChem = HChem * h2heatfac
+    !HChem = HChem * h2heatfac
     
     heatingChem = HChem * eV_to_erg  !erg/cm3/s
     
@@ -143,9 +144,10 @@ contains
     use krome_user_commons
     use krome_commons
     use krome_constants
+    use krome_subs
     real*8::heat_compress,n(:), dd, Tgas
 
-    dd = sum(n(1:nmols)) !total number density
+    dd = get_Hnuclei(n(:)) !sum(n(1:nmols)) !total number density
 
     !COMPRESSIONAL HEATING
     heat_compress = dd * boltzmann_erg * Tgas / user_tff !erg/s/cm3

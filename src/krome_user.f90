@@ -121,6 +121,19 @@ contains
     krome_get_flux(:) = get_flux(x(:), Tgas)
   end function krome_get_flux
 
+  !************************
+  subroutine krome_dump_flux(x,n,Tgas,nfile)
+    use krome_commons
+    real*8::n(:),Tgas,x,flux(nrea)
+    integer::nfile,i
+
+    flux(:) = krome_get_flux(n(:),Tgas)
+    do i=1,nrea
+       write(nfile,'(E17.8e3,I8,E17.8e3)') x,i,flux(i)
+    end do
+    write(nfile,*)
+
+  end subroutine krome_dump_flux
 
   !************************
   !print species informations

@@ -8,7 +8,7 @@ contains
     use krome_commons
     implicit none
     real*8::n(:), Tgas
-    real*8::cooling,cools(9)
+    real*8::cooling,cools(10)
     
     !returns cooling in erg/cm3/s
     cools(:) = 0.d0
@@ -49,6 +49,10 @@ contains
     cools(9) = cooling_CIE(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingContinuum
+    cools(10) = cooling_continuum(n(:), Tgas)
+#ENDIFKROME
+
     cooling = sum(cools)
 
     !remove the comment below to write cooling contributions to fort.44
@@ -63,9 +67,56 @@ contains
     ! '' u m:8 every n w l t "enthalpy",\
     ! '' u m:9 every n w l t "dust",\
     ! '' u m:10 every n w l t "compton",\
-    ! '' u m:11 every n w l t "CIE"
+    ! '' u m:11 every n w l t "CIE",\
+    ! '' u m:12 every n w l t "Cont"
 
   end function cooling
+
+
+  !**********************************
+  function kpla(n,Tgas)
+    !Planck opacity mean fit (Lenzuni+1996) 
+    use krome_subs
+    use krome_commons
+    implicit none
+    real*8::kpla,rhogas,Tgas,n(:),a(5,5),kp,logj
+    integer::i,j,nfit
+    nfit = 5
+    rhogas = sum(n(:)*get_mass())
+    a(1,:) = (/3.6725d0, -2.1787d0, 0.27920d0, -0.02727d0, 9.5771d-4/) 
+    a(2,:) = (/-2.5149d0, -0.99396d0, 1.5611d0, -1.9368d0, 6.0204d-3/) 
+    a(3,:) = (/17.446d0, 15.869d0, -12.366d0, 1.414d0, -4.4582d-2/) 
+    a(4,:) = (/-43.283d0, -43.647d0, 27.475d0, -3.0006d0, 9.5233d-2/) 
+    a(5,:) = (/29.048d0, 35.237d0, -18.45d0, 1.9472d0, -6.1633d-2/) 
+    
+    kp = 0.d0
+    do j=1,nfit
+       logj = log10(rhogas)**(j-1)
+       do i=1,nfit
+          kp = kp + a(i,j) * logj * log10(Tgas)**(i-1)
+       end do
+    end do
+
+    kpla = 1d1**kp
+
+  end function kpla
+
+#IFKROME_useContinuum
+  !**********************************
+  function cooling_Continuum(n,Tgas)
+    !cooling from continuum for a thin gas (no opacity)
+   use krome_commons
+    use krome_constants
+    use krome_subs
+    implicit none
+    real*8::n(:),Tgas,cooling_Continuum,kgas,rhogas
+    rhogas = sum(n(:)*get_mass())
+    kgas = kpla(n(:),Tgas) !planck opacity (Omukai+2000)
+    cooling_Continuum = 4.d0 * stefboltz_erg * Tgas**4 &
+         * kgas * rhogas !erg/s/cm3
+    
+  end function cooling_Continuum
+#ENDIFKROME
 
 
 #IFKROME_useCoolingCIE
@@ -360,7 +411,7 @@ contains
 
 
 #IFKROME_useCoolingAtomic
-  !Atomic COOLING ApJS, 78, 341, 1992
+  !Atomic COOLING  Cen ApJS, 78, 341, 1992
   !UNITS = erg/s/cm3
   !*******************************
   function cooling_Atomic(n, Tgas)

@@ -5,7 +5,7 @@ contains
 
   !********************************
   !KROME main (interface to the solver library)
-  subroutine krome(x,rhogas,Tgas,dt)
+  subroutine krome(x,Tgas,dt)
 
     use krome_commons
     use krome_subs
@@ -13,7 +13,7 @@ contains
     USE DVODE_F90_M
     implicit none
 
-    real*8::dt,x(nspec-2),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin
+    real*8::dt,x(nmols),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin,ntot
     integer::icount,i
 
     !DLSODES variables
@@ -33,9 +33,9 @@ contains
     lrw = size(rwork)
     iwork(:) = 0
     rwork(:) = 0.d0
-    itol = 1 !both tolerances are scalar
-    rtol = 1d-2 !relative tolerance (default: 1d-4)
-    atol = 1d-10 !absolute tolerance (default: 1d-40)
+    itol = 1 !both tolerances are scalars
+    rtol = 1d-4 !relative tolerance (default: 1d-4)
+    atol = 1d-10 !absolute tolerance (default: 1d-10)
     itask = 1
     iopt = 0
     !MF=
@@ -61,13 +61,13 @@ contains
        if(mass(i)>0.d0) n(i) = rhogas * x(i) / mass(i)
     end do
 #ELSEKROME
-    n(1:nspec-2) = x(:)
+    n(1:nmols) = x(:)
 #ENDIFKROME
 
-    common_ntot = sum(n(1:nspec-2))
+    ntot = sum(n(1:nmols))
 
     n(idx_Tgas) = Tgas !put temperature in the input array
-    nold(:) = n(:) !store initial densities (needed for Jacobian)
+
     icount = 0 !count solver iterations
     istate = 1 !init solver state
     tloc = 0.d0 !set starting time
@@ -81,9 +81,6 @@ contains
     do
        icount = icount + 1
        !solve ODE
-       !CALL DLSODES(fex, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
-       !     ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, JES, MF)
-
        CALL DVODE_F90(FEX, NEQ, n, tloc, dt, ITASK, ISTATE, OPTIONS, &
             J_FCN=JES)
 
@@ -108,13 +105,14 @@ contains
     end do
 
 #IFKROME_useX
-    x(:) = mass(1:nspec-2)*n(1:nspec-2)/rhogas !return to fractions
+    x(:) = mass(1:nmols)*n(1:nmols)/rhogas !return to fractions
     x(:) = x(:) / sum(x) * xin !force mass conservation
 #ELSEKROME
-    x(:) = n(1:nspec-2)
+    x(:) = n(1:nmols)
 #ENDIFKROME
 
     Tgas = n(idx_Tgas) !get new temperature
+
   end subroutine krome
 
   !********************************

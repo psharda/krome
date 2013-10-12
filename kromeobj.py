@@ -9,7 +9,7 @@ class krome():
 	solver_MF = 222
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
-	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = False
+	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingCompton = useH2opacity = useCoolingCIE = False
 	useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
@@ -123,7 +123,7 @@ class krome():
 			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-usePhIoniz"]]
 			filename = "networks/react_primordial_photoH2"
 		elif(args.test=="collapse"):
-			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial2"
 		elif(args.test=="collapseZ"):
@@ -281,7 +281,7 @@ class krome():
 		if(args.cooling):
 			myCools = args.cooling.split(",")
 			allCools = ["ATOMIC","H2","HD","Z","DH","DUST","H2GP98","COMPTON","CIE",
-					"CI","CII","SiI","SiII","OI","OII","FeI","FeII"]
+					"CI","CII","SiI","SiII","OI","OII","FeI","FeII","CONT"]
 			for coo in myCools:
 				if(not(coo in allCools)):
 					die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
@@ -294,6 +294,7 @@ class krome():
 			if("DUST" in myCools): self.useCoolingDust = True
 			if("COMPTON" in myCools): self.useCoolingCompton = True
 			if("CIE" in myCools): self.useCoolingCIE = True
+			if("CONT" in myCools): self.useCoolingCont = True
 			if("Z" in myCools): 
 				self.useCoolingZ = self.useCoolingZC = self.useCoolingZCp = self.useCoolingZSi = True
 				self.useCoolingZSip = self.useCoolingZO = self.useCoolingZOp = self.useCoolingZFe = True
@@ -931,6 +932,12 @@ class krome():
 		print "Reactions found:", len(self.reacts)
 		print "Species found:", self.nmols
 
+	########################
+	def uniq(self,a):
+		u = []
+		for x in a:
+			if(not(x in u)): u.append(x)
+		return u
 
 	###############################################
 	def dumpNetwork(self):
@@ -962,7 +969,21 @@ class krome():
 			idx += 1
 			fout.write(str(rea.idx)+"\t"+rea.verbatim+"\n")
 		fout.close()	
-
+		
+		#dump network to dot file
+		fout = open("networ.dot","w")
+		ntw = dict()
+		dot = "digraph{\n"
+		for rea in self.reacts:
+			react = self.uniq(rea.reactants)		
+			prods = self.uniq(rea.products)
+			for x in react:
+				dot += "\""+x.name+"\" -> k"+str(rea.idx) +"\n"
+			for y in prods:
+				dot += "k"+str(rea.idx) +" -> \""+y.name+"\";\n"
+		dot +="}\n"
+		fout.write(dot)
+		fout.close
 	###############################################
 	def showODE(self):
 		dustArraySize = self.dustArraySize
@@ -1408,7 +1429,14 @@ class krome():
 					fout.write("r"+str(j+1)+" = arr_r"+str(j+1)+"(i)\n")
 			elif(srow == "#KROME_arr_flux"):
 				fout.write("arr_flux(i) = k(i)*"+("*".join(["n(r"+str(j+1)+")" for j in range(self.maxnreag)]))+"\n")
-
+			elif(srow == "#KROME_sum_H_nuclei"):
+				hsum = []
+				for x in specs:
+					if(not("H") in x.atomcount): continue
+					if(x.atomcount["H"]==0): continue
+					hmult = ("*"+format_double(x.atomcount["H"]) if x.atomcount["H"]>1 else "")
+					hsum.append("n("+x.fidx+")"+hmult)
+				fout.write("nH = "+(" + &\n".join(hsum))+"\n")
 			elif(srow == "#KROME_var_reverse"):
 				slen = str(len(specs))
 				fout.write("real*8::p1("+slen+",7), p2("+slen+",7), Tlim("+slen+",3), p(7)\n")
@@ -1684,6 +1712,10 @@ class krome():
 				if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
 				if(srow == "#ENDIFKROME"): skip = False
 
+				#Continuum
+				if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
+				if(srow == "#ENDIFKROME"): skip = False
+
 				if(skip): continue
 		
 				#replace pragma for total metals
@@ -1754,19 +1786,34 @@ class krome():
 			kref = []
 			Rref.append(sorted(["H","H","H"]))
 			Pref.append(sorted(["H2","H"]))
-			kref.append("4.48d0*n(idx_H)*n2H")
+			kref.append("4.48d0*n(idx_H)*n2H * h2heatfac")
 			Rref.append(sorted(["H2","H","H"]))
 			Pref.append(sorted(["H2","H2"]))
-			kref.append("4.48d0*n2H*n(idx_H2)")
+			kref.append("4.48d0*n2H*n(idx_H2) * h2heatfac")
 			Rref.append(sorted(["H-","H"]))
 			Pref.append(sorted(["H2","E"]))
-			kref.append("3.53d0*n(idx_H)*n(idx_Hk)")
+			kref.append("3.53d0*n(idx_H)*n(idx_Hk) * h2heatfac")
 			Rref.append(sorted(["H2+","H"]))
 			Pref.append(sorted(["H2","H+"]))
-			kref.append("1.83d0*n(idx_H)*n(idx_H2j)")
+			kref.append("1.83d0*n(idx_H)*n(idx_H2j) * h2heatfac")
+			Rref.append(sorted(["H","E"]))
+			Pref.append(sorted(["H+","E","E"]))
+			kref.append("-13.6d0*n(idx_H)*n(idx_e)")
+			Rref.append(sorted(["HE","E"]))
+			Pref.append(sorted(["HE+","E","E"]))
+			kref.append("-24.6d0*n(idx_He)*n(idx_e)")
+			Rref.append(sorted(["HE+","E"]))
+			Pref.append(sorted(["HE++","E","E"]))
+			kref.append("-79.d0*n(idx_He)*n(idx_e)")
 			Rref.append(sorted(["H2","H"]))
 			Pref.append(sorted(["H","H","H"]))
 			kref.append("-4.48d0*n(idx_H)*n(idx_H2)")
+			Rref.append(sorted(["H2","E"]))
+			Pref.append(sorted(["H","H","E"]))
+			kref.append("-4.48d0*n(idx_H2)*n(idx_e)")
+			Rref.append(sorted(["H2","H2"]))
+			Pref.append(sorted(["H2","H","H"]))
+			kref.append("-4.48d0*n(idx_H2)*n(idx_e)")
 			for rea in reacts:
 				R = sorted([x.name for x in rea.reactants])
 				P = sorted([x.name for x in rea.products])
@@ -2264,7 +2311,7 @@ class krome():
 				shutil.copyfile("tests/"+test_name+"/"+fdir, buildFolder+"/"+fdir)
 				print "- copying "+fdir+" to "+buildFolder
 			if(self.useDvodeF90):
-				shutil.copyfile("tests/"+test_name+"/MakefileF90", buildFolder+"Makefile")
+				shutil.copyfile("tests/MakefileF90", buildFolder+"Makefile")
 			elif(self.buildCompact):
 				shutil.copyfile("tests/"+test_name+"/MakefileCompact", buildFolder+"Makefile")
 			else:

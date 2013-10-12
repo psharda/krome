@@ -56,6 +56,16 @@ contains
 
   end function get_names
 
+  !******************************
+  !get the total number of H nuclei
+  function get_Hnuclei(n)
+    use krome_commons
+    real*8::n(:),get_Hnuclei,nH
+
+#KROME_sum_H_nuclei
+    get_Hnuclei = nH
+
+  end function get_Hnuclei
   !***************************
   !get the index of the specie name
   function get_index(name)

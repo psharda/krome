@@ -16,7 +16,13 @@ class molec():
 	Tpoly = [0.e0]*7 #temperature limits
 	idx = 0 #species index
 	enthalpy = 0.e0 #enthalpy of formation
-	
+	atomcount = dict() #dictionary containin the count of atoms (e.g H2O is {"H":2, "O":1})
+
+	def __init__(self):
+		self.poly1 = [0.e0]*7
+		self.poly2 = [0.e0]*7
+		self.Tpoly = [0.e0]*7
+		self.atomcount = dict()	
 ##################################
 class reaction():
 	verbatim = "" #reaction written as string (e.g. A+B->C+D)
@@ -660,6 +666,7 @@ def parser(name, mass_dic, atoms, thermo_data):
 	#loop over charcters
 	for atm in atoms:
 		a = atm.upper()
+		mymol.atomcount[format_subel(a)] = 0
 		if(not(a) in namecp): continue #skip
 		#loop to up to _30 subscript
 		for j in range(30):
@@ -674,6 +681,7 @@ def parser(name, mass_dic, atoms, thermo_data):
 				imult = max(int(mult),1)
 				mass += mass_dic[a]*imult
 				if(a in zdic): zatom += zdic[a]
+				mymol.atomcount[format_subel(a)] = imult
 				ename += [format_subel(a)]*imult
 				namecp = namecp.replace(subs,"",1)
 				if(namecp==""): break
