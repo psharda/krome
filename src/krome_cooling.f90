@@ -79,25 +79,38 @@ contains
     use krome_subs
     use krome_commons
     implicit none
-    real*8::kpla,rhogas,Tgas,n(:),a(5,5),kp,logj
+    real*8::kpla,rhogas,Tgas,n(:),a(5,5),kp,logj,y,x
+    real*8::a0,a1,a2,a3,a4,a5
     integer::i,j,nfit
-    nfit = 5
+    !    nfit = 5
     rhogas = sum(n(:)*get_mass())
-    a(1,:) = (/3.6725d0, -2.1787d0, 0.27920d0, -0.02727d0, 9.5771d-4/) 
-    a(2,:) = (/-2.5149d0, -0.99396d0, 1.5611d0, -1.9368d0, 6.0204d-3/) 
-    a(3,:) = (/17.446d0, 15.869d0, -12.366d0, 1.414d0, -4.4582d-2/) 
-    a(4,:) = (/-43.283d0, -43.647d0, 27.475d0, -3.0006d0, 9.5233d-2/) 
-    a(5,:) = (/29.048d0, 35.237d0, -18.45d0, 1.9472d0, -6.1633d-2/) 
-    
-    kp = 0.d0
-    do j=1,nfit
-       logj = log10(rhogas)**(j-1)
-       do i=1,nfit
-          kp = kp + a(i,j) * logj * log10(Tgas)**(i-1)
-       end do
-    end do
+!!$    a(1,:) = (/3.6725d0, -2.1787d0, 0.27920d0, -0.02727d0, 9.5771d-4/) 
+!!$    a(2,:) = (/-2.5149d0, -0.99396d0, 1.5611d0, -1.9368d0, 6.0204d-3/) 
+!!$    a(3,:) = (/17.446d0, 15.869d0, -12.366d0, 1.414d0, -4.4582d-2/) 
+!!$    a(4,:) = (/-43.283d0, -43.647d0, 27.475d0, -3.0006d0, 9.5233d-2/) 
+!!$    a(5,:) = (/29.048d0, 35.237d0, -18.45d0, 1.9472d0, -6.1633d-2/)
 
-    kpla = 1d1**kp
+    !approximation of data from Lenzuni+1991 (w=1)
+    a0 = 1.92246760d1
+    a1 = -1.82845399d1
+    a2 = -9.42270023d0
+    a3 = 1.22841846d1
+    a4 = 1.28793541d0
+    a5 = -1.94592194d0
+
+    x = log10(min(max(Tgas,1d3),6d3)) !Tgas
+    y = log10(min(max(rhogas,1d-12),0.5)) !rhogas
+    kpla = 1e1**(a0 + a1*y + a2*x + a3*x*y + a4*x**2 + a5*x**2*y) !cm2/g
+
+!!$    kp = 0.d0
+!!$    do j=1,nfit
+!!$       logj = log10(rhogas)**(j-1)
+!!$       do i=1,nfit
+!!$          kp = kp + a(i,j) * logj * log10(Tgas)**(i-1)
+!!$       end do
+!!$    end do
+!!$
+!!$    kpla = 1d1**kp
 
   end function kpla
 

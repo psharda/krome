@@ -123,7 +123,7 @@ class krome():
 			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-usePhIoniz"]]
 			filename = "networks/react_primordial_photoH2"
 		elif(args.test=="collapse"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-cooling=H2GP98,COMPTON,CIE", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial2"
 		elif(args.test=="collapseZ"):

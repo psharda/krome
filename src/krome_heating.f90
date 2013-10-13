@@ -35,7 +35,7 @@ contains
     !write(55,'(99E17.8e3)') sum(n(1:nmols)),Tgas,heats(:)
 
     !gnuplot command (n=100, and m=1 for density or m=2 for temperature) 
-    !plot 'fort.55' u m:3 every n w l t "chem",\
+    !plot 'fort.55' u m:(abs($3)) every n w l t "chem",\
     ! '' u m:4 every n w l t "compress",\
     ! '' u m:5 every n w l t "photo",\
     ! '' u m:6 every n w l t "enthalpy"
@@ -116,7 +116,7 @@ contains
     heatingChem = 0.d0
 
     ncrn  = 1.0d6*(Tgas**(-0.5d0))
-    ncrd1 = 1.6d0*exp(-(4.0d2/Tgas)**(2.d0))
+    ncrd1 = 1.6d0*exp(-(4.0d2/Tgas)**2)
     ncrd2 = 1.4d0*exp(-1.2d4/(Tgas+1.2d3))
 
     yH = n(idx_H)/dd   !dimensionless
@@ -131,10 +131,8 @@ contains
 #KROME_HChem_terms
 #KROME_HChem_dust
 
-    !HChem = HChem * h2heatfac
-    
     heatingChem = HChem * eV_to_erg  !erg/cm3/s
-    
+
   end function heatingChem
 #ENDIFKROME
 
