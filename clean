@@ -1,0 +1,13 @@
+#!/usr/bin/python
+#!python
+import glob
+import os
+os.chdir(".")
+
+#clean all files with give extention
+for x in [".log","~",".pyc",".dot",".gps"]:
+	for files in glob.glob("*"+x):
+		os.unlink(files)
+		print "removing "+files
+
+print "done!"

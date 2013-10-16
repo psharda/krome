@@ -123,7 +123,7 @@ class krome():
 			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-usePhIoniz"]]
 			filename = "networks/react_primordial_photoH2"
 		elif(args.test=="collapse"):
-			[argv.append(x) for x in ["-cooling=H2GP98,COMPTON,CIE", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial2"
 		elif(args.test=="collapseZ"):
@@ -1781,49 +1781,37 @@ class krome():
 		HChem = HChemDust = ""
 		sclist = []
 		if(self.useHeatingChem):
+			RPK = []
+			RPK.append([["H","H","H"], ["H2","H"], "4.48d0*h2heatfac"])
+			RPK.append([["H2","H","H"], ["H2","H2"], "4.48d0*h2heatfac"])
+			RPK.append([["H-","H"], ["H2","E"], "3.53d0*h2heatfac"])
+			RPK.append([["H2+","H"], ["H2","H+"], "1.83d0*h2heatfac"])
+			RPK.append([["H","E"], ["H+","E","E"], "-13.6d0"])
+			RPK.append([["HE","E"], ["HE+","E","E"], "-24.6d0"])
+			RPK.append([["HE+","E"], ["HE++","E","E"], "-79.d0"])
+			RPK.append([["H2","H"], ["H","H","H"], "-4.48d0"])
+			RPK.append([["H2","E"], ["H","H","E"], "-4.48d0"])
+			RPK.append([["H2","H2"], ["H2","H","H"], "-4.48d0"])
+
 			Rref = []
 			Pref = []
 			kref = []
-			Rref.append(sorted(["H","H","H"]))
-			Pref.append(sorted(["H2","H"]))
-			kref.append("4.48d0*n(idx_H)*n2H * h2heatfac")
-			Rref.append(sorted(["H2","H","H"]))
-			Pref.append(sorted(["H2","H2"]))
-			kref.append("4.48d0*n2H*n(idx_H2) * h2heatfac")
-			Rref.append(sorted(["H-","H"]))
-			Pref.append(sorted(["H2","E"]))
-			kref.append("3.53d0*n(idx_H)*n(idx_Hk) * h2heatfac")
-			Rref.append(sorted(["H2+","H"]))
-			Pref.append(sorted(["H2","H+"]))
-			kref.append("1.83d0*n(idx_H)*n(idx_H2j) * h2heatfac")
-			Rref.append(sorted(["H","E"]))
-			Pref.append(sorted(["H+","E","E"]))
-			kref.append("-13.6d0*n(idx_H)*n(idx_e)")
-			Rref.append(sorted(["HE","E"]))
-			Pref.append(sorted(["HE+","E","E"]))
-			kref.append("-24.6d0*n(idx_He)*n(idx_e)")
-			Rref.append(sorted(["HE+","E"]))
-			Pref.append(sorted(["HE++","E","E"]))
-			kref.append("-79.d0*n(idx_He)*n(idx_e)")
-			Rref.append(sorted(["H2","H"]))
-			Pref.append(sorted(["H","H","H"]))
-			kref.append("-4.48d0*n(idx_H)*n(idx_H2)")
-			Rref.append(sorted(["H2","E"]))
-			Pref.append(sorted(["H","H","E"]))
-			kref.append("-4.48d0*n(idx_H2)*n(idx_e)")
-			Rref.append(sorted(["H2","H2"]))
-			Pref.append(sorted(["H2","H","H"]))
-			kref.append("-4.48d0*n(idx_H2)*n(idx_e)")
+			for rpk in RPK:
+				Rref.append(sorted(rpk[0]))
+				Pref.append(sorted(rpk[1]))
+				kref.append(rpk[2])
+
 			for rea in reacts:
 				R = sorted([x.name for x in rea.reactants])
 				P = sorted([x.name for x in rea.products])
+				rmult = ("*".join(["n("+x.fidx+")" for x in rea.reactants]))
 				for i in range(len(Rref)):
 					if(Rref[i]==R and Pref[i]==P):
 						sclist = get_Tshortcut(rea,sclist) #get the shortcuts for temperature
 						headchem = "!"+rea.verbatim + "\n"
 						tklim = headchem + "if(Tgas." + rea.TminOp + "."  + rea.Tmin
 						tklim += " .and. Tgas." + rea.TmaxOp + "." + rea.Tmax + ") then\n"
-						HChem += tklim + "HChem = HChem + k("+str(rea.idx)+") * ("+kref[i] + ")\n end if\n\n"
+						HChem += tklim + "HChem = HChem + k("+str(rea.idx)+") * ("+kref[i] + "*"+rmult+")\n end if\n\n"
 						break
 			if(self.useDustH2):
 				HChemDust += "HChem = HChem + nH2dust * (0.2d0/h2heatfac + 4.2d0)\n"

@@ -66,6 +66,23 @@ contains
     get_Hnuclei = nH
 
   end function get_Hnuclei
+
+  !********************************
+  function get_jeans_length(n,Tgas)
+    !get jeans length in cm
+    use krome_constants
+    use krome_commons
+    implicit none
+    real*8::n(:),Tgas,mu,rhogas
+    real*8::m(nspec),get_jeans_length
+    m(:) = get_mass()
+    rhogas = sum(n(1:nmols)*m(1:nmols))
+    mu = 1.22d0
+    get_jeans_length = sqrt(pi*boltzmann_erg*Tgas/rhogas&
+         /p_mass/gravity/mu)
+    
+  end function get_jeans_length
+
   !***************************
   !get the index of the specie name
   function get_index(name)
