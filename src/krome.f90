@@ -47,6 +47,9 @@ contains
     !atol(idx_Tgas) = 1d-2 !absolute tolerance for temperature
     itask = 1
     iopt = 0
+
+#KROME_maxord
+
     !MF=
     !  = 222 internal-generated JAC and sparsity
     !  = 121 user-provided JAC and internal generated sparsity

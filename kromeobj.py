@@ -30,6 +30,7 @@ class krome():
 	RTOL = 1e-4 #default relative tolerance
 	ATOL = 1e-20 #default absolute tolerance
 	dustArraySize = dustTypesSize = 0
+	maxord = 0
 	dustTypes = []
 	specs = []
 	reacts = []
@@ -55,6 +56,8 @@ class krome():
 		self.parser.add_argument("-useH2opacity", action="store_true",help="use H2 opacity for H2 cooling")
 		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al. 2011, or a custom F90 expression e.g. -gamma 5.d0/3.d0",metavar="OPTION")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
+
+		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
 		self.parser.add_argument("-ATOL", help="set solver absolute tolerance to the float or double value ATOL, e.g. -atol 1d-40 Default is ATOL=1d-20")
 		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g. -rtol 1e-5 Default is RTOL=1d-4")
 		self.parser.add_argument("-usePhIoniz", action="store_true", help="include photochemistry")
@@ -127,9 +130,9 @@ class krome():
 			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial2"
 		elif(args.test=="collapseZ"):
-			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,CII,OI", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-ATOL=1d-40","-forceMF21"]]
-			filename = "networks/react_primordialZ"
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CII,OI,CONT", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-ATOL=1d-40"]]
+			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL"]]
@@ -415,6 +418,11 @@ class krome():
 		if(args.RTOL):
 			self.RTOL = args.RTOL
 			print "Reading option -rtol (rtol="+str(self.RTOL)+")"
+
+		#maxord
+		if(args.maxord):
+			self.maxord = min(max(1,int(args.maxord)),5)
+			print "Reading option -maxord (maxord="+str(self.maxord)+")"
 
 
 	####################################################
@@ -1085,10 +1093,11 @@ class krome():
 					RHSc.append(0)
 				RHSc[RHSs.index(p)] += 1
 			for i in range(len(RHSs)):
-				if((i+1) % 4 == 0): dns += "&\n" #break long lines
-				if("-" in RHSs[i] and RHSc[i]>1): dns += RHSs[i].replace("-"," -"+str(RHSc[i])+".d0*")
-				if("+" in RHSs[i] and RHSc[i]>1): dns += RHSs[i].replace("+"," +"+str(RHSc[i])+".d0*")
-				if(RHSc[i]==1): dns+= " "+RHSs[i]
+				#if((i+1) % 4 == 0): dns += "&\n" #break long lines
+				if("-" in RHSs[i] and RHSc[i]>1): dns += RHSs[i].replace("-"," &\n-"+str(RHSc[i])+".d0*")
+				if("+" in RHSs[i] and RHSc[i]>1): dns += RHSs[i].replace("+"," &\n+"+str(RHSc[i])+".d0*")
+				if(RHSc[i]==1): dns+= " &\n"+RHSs[i]
+			dns = dns.replace("*"," * ")
 			dnw.append(dns)
 			idn += 1
 		self.dnw = dnw
@@ -1965,8 +1974,12 @@ class krome():
 
 					#simply write ODEs without dust
 					else:
+						inw = 0
 						for x in dnw:
+							fout.write("\n")
+							fout.write("!"+specs[inw].name+"\n")
 							fout.write("\t" + x + "\n")
+							inw += 1
 			elif(srow == "#KROME_dustSumVariables" and self.useDust):
 				#add partner sum dust variable declarations
 				dustSumVar = []
@@ -2253,6 +2266,9 @@ class krome():
 				fout.write("\t"+self.iaf+"\n")
 			elif(srow == "#KROME_init_JAC"):
 				fout.write("\t"+self.jaf+"\n")
+			elif(srow == "#KROME_maxord"):
+				fout.write("iopt = 1 !activate optional inputs\n")
+				fout.write("IWORK(5) = "+str(self.maxord)+" !maximum integration order\n")
 			elif(srow == "#KROME_MF"):
 				if(self.solver_MF==21):
 					fout.write("\tMF=21\n")

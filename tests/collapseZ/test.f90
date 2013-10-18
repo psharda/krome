@@ -74,7 +74,7 @@ program test_krome
         call krome(x(:),Tgas,dt)
 
         !dump Tgas and normalized abundances
-        write(22,'(99E12.3e3)') zs(jz),dd,Tgas,x(:)/dd 
+        write(22,'(99E17.8e3)') zs(jz),dd,Tgas,x(:)/dd 
         if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas !print every 100 steps
 
      end do

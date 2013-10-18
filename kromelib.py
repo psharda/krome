@@ -73,7 +73,7 @@ class reaction():
 		self.RHSvar = "kflux"+str(self.idx)
 		ns = []
 		for r in self.reactants:
-			ns.append("n("+str(r.idx)+")")
+			ns.append("n("+str(r.fidx)+")")
 			if(r.idx<=0):
 				print "************************************************************"
 				print "ERROR: species index (molec.idx) must be greater than 0"
@@ -1563,6 +1563,7 @@ def get_quote():
 	["Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.","Brian W. Kernighan"],
 	["Always code as if the guy who ends up maintaining your code will be a violent psychopath who knows where you live.","Martin Golding"],
 	["One of my most productive days was throwing away 1000 lines of code.","Ken Thompson "],
+	["And God said, \"Let there be light\" and segmentation fault (core dumped)",""]
 	]
 	irand = int(random.random()*(len(quotes)))
 	qtup = quotes[irand]
