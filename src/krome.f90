@@ -81,10 +81,6 @@ contains
     n(nmols+1:nmols+ndust) = xdust(:) !get dust abundances
 #ENDIFKROME
 
-#IFKROME_useDustT
-    n(nmols+ndust+1:nmols+2*ndust) = krome_dust_T(:) !get dust temperatures
-#KROME_getTdust
-#ENDIFKROME
 
     jac_nold(:) = n(:) !store initial densities (finite difference for Jacobian)
     jac_dn(:) = 0.d0
@@ -168,11 +164,6 @@ contains
 #IFKROME_useDust
     xdust(:) = n(nmols+1:nmols+ndust)
 #ENDIFKROME
-
-#IFKROME_useDustT
-    krome_dust_T(:) = n(nmols+ndust+1:nmols+2*ndust)
-#ENDIFKROME
-
 
     Tgas = n(idx_Tgas) !get new temperature
   end subroutine krome

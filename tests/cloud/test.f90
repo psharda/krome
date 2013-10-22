@@ -8,15 +8,13 @@
 program test_krome
 
   use krome_main
-  use krome_subs
   use krome_user
   use krome_user_commons
-  use krome_constants
 
-  integer,parameter::nx=452
+  integer,parameter::nx=krome_nmols
   real*8::x(nx),Tgas,t,dt,spy,xH
 
-  spy = seconds_per_year
+  spy = 3600. * 24. * 365. !seconds per year
   Tgas = 1d1 !gas temperature (K)
   xH = 2d4 !Hydrogen density
 
@@ -45,9 +43,7 @@ program test_krome
   x(KROME_idx_Fj)  = 1.8d-8  * xH
 
   !calculate elctrons (neutral cloud)
-  x(KROME_idx_e) = x(KROME_idx_Cj) + x(KROME_idx_Sj) + x(KROME_idx_Sij) &
-       + x(KROME_idx_Fej) + x(KROME_idx_Naj) + x(KROME_idx_Mgj) &
-       + x(KROME_idx_Clj) + x(KROME_idx_Pj) + x(KROME_idx_Fj)   
+  x(KROME_idx_e) = krome_get_electrons(x(:))
 
   dt = 1d2*spy !time-step (s)
   t = 0.d0 !initial time (s)

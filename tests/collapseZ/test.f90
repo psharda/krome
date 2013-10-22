@@ -31,23 +31,27 @@ program test_krome
      !species initialization in 1/cm3
      x(:) = 1.d-40
 
-     x(KROME_idx_H)         = ntot           !H
-     x(KROME_idx_H2)        = 1.0e-6*ntot    !H2
-     x(KROME_idx_E)         = 1.0e-4*ntot    !E
-     x(KROME_idx_Hj)        = 1.0e-4*ntot    !H+
-     x(KROME_idx_HE)        = 0.0775d0*ntot  !He
-     
+     x(KROME_idx_H)  = ntot          !H
+     x(KROME_idx_H2) = 1.d-6*ntot    !H2
+     x(KROME_idx_E)  = 1.d-4*ntot    !E
+     x(KROME_idx_Hj) = 1.d-4*ntot    !H+
+     x(KROME_idx_HE) = 0.0775d0*ntot !He
+
      !rescale metallicity for neutral metals (C,Fe,Si,O)
      call krome_scale_Z(x(:), zs(jz))
 
      x(krome_idx_Cj) = x(krome_idx_C) !carbon is fully ionized
      x(krome_idx_C)  = 1d-40
+     x(krome_idx_Sij) = x(krome_idx_Si) !silicon is fully ionized
+     x(krome_idx_Si)  = 1d-40
+     x(krome_idx_Fej) = x(krome_idx_Fe) !iron is fully ionized
+     x(krome_idx_Fe)  = 1d-40
 
      !list abundances
      call krome_get_info(x(:),Tgas)
 
      dd = ntot
-    
+
      print *,"solving..."
      print '(a5,2a11)',"step","n(cm-3)","Tgas(K)"
 

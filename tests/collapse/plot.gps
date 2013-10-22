@@ -10,11 +10,11 @@ set lmargin 6
 unset key
 set xtics format " " 
 set ylabel "log(T/K)"
-set label "A"  at first  6, first  4e2
+set label "A"  at first  6, first  6e2
 set label "B"  at first  150, first  6e2
 set label "C"  at first  1e1**3.5, first  1e1**2.6
-set label "D"  at first  1e1**10, first  1e1**3.2
-set label "E"  at first  1e1**16, first  1e1**3.45
+set label "D"  at first  1e1**10, first  1e1**3.1
+set label "E"  at first  1e1**16, first  1e1**3.55
 set label "F"  at first  1e1**17.5, first  1e1**3.7
 plot './fort.22' w l
 

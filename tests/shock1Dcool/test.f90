@@ -13,9 +13,9 @@
 !***************START MODULES NEEDED BY THE TEST-CODE***************
 !*****COMMONS*****!
 module commons
-  use krome_commons
-  integer,parameter::nx=100, il=20, nsp=nmols
-  real*8,parameter:: pi43=4.d0/3.d0*3.14, spy=365.*24.*3600.d0
+  use krome_user
+  integer,parameter::nx=100, il=20, nsp=krome_nmols
+  real*8,parameter::pi=krome_pi,pi43=4.d0/3.d0*pi, spy=365.*24.*3600.d0
   real*8::cflfactor,dfactor,gamma,dt12,dt,t, fmratio, efac, tmax, Tgas(nx)
   real*8::radius, rhogas, mass0, esed
 
@@ -92,7 +92,7 @@ contains
   !*****HYDRODINAMIC INITIAL CONDITIONS********!
   subroutine inicond
     use commons
-    use krome_constants
+    use krome_user
     implicit none
     real*8::dmej,rhoej,rhoamb,dmamb,rSN
     integer::ix
@@ -110,7 +110,7 @@ contains
     !inner: high pressure ejecta
     rhoej  =  ((dble(nx)/dble(il))**3 - 1.d0) * fmratio * rhogas
     dmej   =  pi43 * (dble(il)/dble(nx) * rSN)**3 * rhoej / dble(il)
-    efac = 1d6 * boltzmann_erg / p_mass
+    efac = 1d6 * krome_boltzmann_erg / krome_p_mass
 
     print *,"***********************"
     print *,"inner: high pressure ejecta"
@@ -131,7 +131,7 @@ contains
     rhoamb = rhogas
     dmamb  = pi43 * rSN**3 * (1.d0-(dble(il)/dble(nx))**3) / dble(nx-il) &
          * rhoamb
-    efac = 1d1 * boltzmann_erg / p_mass
+    efac = 1d1 * krome_boltzmann_erg / krome_p_mass
     print *,"outer: low pressure ambient medium"
     print *,"rho (g/cm3):",rhoamb
     print *,"dm (g):",dmamb
@@ -190,8 +190,6 @@ program sedov
 
   use krome_main
   use krome_user
-  use krome_constants
-  use krome_subs
   use commons
   use subs
   implicit none
@@ -226,7 +224,7 @@ program sedov
   write(*,222) "q:", q      !artificial viscosity parameter
   write(*,222) "radius (cm):", radius !radius of the object
   write(*,222) "density (g/cm3):", rhogas !density of the object
-  write(*,222) "density (1/cm3):", rhogas/p_mass !number density of the object
+  write(*,222) "density (1/cm3):", rhogas/krome_p_mass !obj number density
 
 221 format(a20,I11)
 222 format(a20,E11.3)
@@ -247,7 +245,7 @@ program sedov
              - .5d0 * (w(ix) * (3.d0*ak12(ix)-a(ix)) &
              - w(ix-1) * (3.d0*ak12(ix-1)-a(ix))) &
              * dt/dm(ix) 
-        u(ix) = u(ix) - gravity * massr(ix) / r(ix)**2 * dt
+        u(ix) = u(ix) - krome_gravity * massr(ix) / r(ix)**2 * dt
      end do
 
      u(1) = 0.d0 !velocity of the first shell
@@ -320,7 +318,8 @@ program sedov
         eps(ix) = eps(ix) - .5d0 * w(ix) * dt12/dm12(ix) &
              * (u(ix+1)*(3.d0 * ak12(ix) - at12(ix+1)) &
              - u(ix)*(3.d0 * ak12(ix) - at12(ix)))
-        Tgas(ix) = (gamma - 1.d0) * eps(ix) / boltzmann_erg * p_mass
+        Tgas(ix) = (gamma - 1.d0) * eps(ix) / krome_boltzmann_erg &
+             * krome_p_mass
      end do
 
      !DO CHEMISTRY: CALL KROME PACKAGE
@@ -333,7 +332,8 @@ program sedov
      enddo
 
      !update internal energy with new temperature
-     eps(:) = Tgas(:) / (gamma - 1.d0) / p_mass * boltzmann_erg
+     eps(:) = Tgas(:) / (gamma - 1.d0) / krome_p_mass &
+          * krome_boltzmann_erg
 
      !update pressure
      do ix = 1, nx-1

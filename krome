@@ -6,6 +6,10 @@ from kromeobj import *
 
 argv = sys.argv
 
+print "******************************"
+print "      WELCOME TO KROME"
+print "******************************"
+print 
 #create the KROME object
 krome = krome()
 

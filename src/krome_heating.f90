@@ -107,11 +107,7 @@ contains
     real*8::heatingChem, n(:), Tgas,k(:),nH2dust
     real*8::h2heatfac,HChem,yH,yH2
     real*8::ncr,ncrn,ncrd1,ncrd2,dd,n2H
-    real*8::logT,lnT,Te,lnTe,T32,invT,invTe,sqrTgas,invsqrT32,sqrT32
-    real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv,t,vgas
     dd = get_Hnuclei(n(:))
-
-#KROME_Tshortcuts
 
     heatingChem = 0.d0
 

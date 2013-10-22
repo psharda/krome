@@ -8,7 +8,7 @@ contains
     use krome_commons
     implicit none
     real*8::n(:), Tgas
-    real*8::cooling,cools(11)
+    real*8::cooling,cools(10)
     
     !returns cooling in erg/cm3/s
     cools(:) = 0.d0
@@ -75,7 +75,9 @@ contains
 
   !**********************************
   function kpla(n,Tgas)
-    !Planck opacity mean fit (Lenzuni+1996) 
+    !Planck opacity mean fit (Lenzuni+1996)
+    !only temperautre dependent (note that the
+    ! fit provided by Lenzuni is wrong)
     use krome_subs
     use krome_commons
     implicit none

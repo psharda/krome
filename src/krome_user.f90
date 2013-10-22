@@ -7,6 +7,8 @@ module krome_user
 
 #KROME_common_alias
 
+#KROME_constant_list
+
 contains
 
 #IFKROME_use_cooling

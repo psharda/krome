@@ -20,33 +20,35 @@ program test
 
   call krome_init()
 
-  tmax = 2d4 !total simulation timesimul
+  tmax = 2d4 !total simulation time
 
-  !read eddy values
+  !read eddy values from file
   open(33,file="eddy.dat",status="old")
+  !loop on layers
   do i=1,nmax
      read(33,*) rout(:)
-     r(i) = rout(2) 
+     r(i) = rout(2) !second column
   end do
   close(33)
 
-  r(:) = r(:) / maxval(r) * 5d-1
+  r(:) = r(:) / maxval(r) * 5d-1 !normalize to 0.5
 
   !read initial layers data
   open(33,file="layers_data",status="old")
-  read(33,*)
+  read(33,*) !read header
+  !loop on layers
   do i=1,nmax
      read(33,*) iout, rout2(:)
-     h(i) = rout2(1) * 1d5
-     tgas(i) = rout2(3)
+     h(i) = rout2(1) * 1d5 !km->cm
+     tgas(i) = rout2(3) !temperature in K
   end do
   close(33)
 
   !read species
   open(33,file="init_spec.dat",status="old")
   do i=1,nmax
-     x(:) = 0.d0
-     read(33,*) datar(:)
+     x(:) = 0.d0 !default
+     read(33,*) datar(:) !read file line
      x(krome_idx_H2O) = datar(1)
      x(krome_idx_O_1D) = datar(2)
      x(krome_idx_OH) = datar(3)
@@ -76,7 +78,7 @@ program test
      x(krome_idx_CH2_3) = datar(31)
      x(krome_idx_CH3O2) = datar(32)
      x(krome_idx_NO3) = datar(33)
-
+     !copy to layer
      n(i,:) = x(:)
   end do
   close(33)
@@ -85,26 +87,29 @@ program test
   print *,"Wait, it takes a while..."
   
   dt = 1d0 !minval(r, MASK = r>0) / 1d3
-  tt = 0
-  istep = 0
+  tt = 0 !absolute time
+  istep = 0 !count steps
   do
+     !do diffusion
      do j=1,krome_nmols
-        ntot = sum(n(:,j))
+        ntot = sum(n(:,j)) 
         do i = 2, nmax - 1
            n1(i) = n(i,j) + r(i) * (n(i - 1,j) - 2 * n(i,j) + n(i + 1,j))
         end do
         n1(1) = n1(2)
         n1(nmax) = n1(nmax-1)
-        n(:,j) = n1(:) !/ sum(n1(:)) * ntot
+        n(:,j) = n1(:) 
      end do
 
+     !do chemistry
      do i=1,nmax
         x(:) = n(i,:)
         dtin = dt
         call krome(x(:), Tgas(i), dtin)
         n(i,:) = x(:)
      end do
-
+     
+     !dump every 1000 steps
      if(mod(istep,1000)==0) then
         print '(F11.2,a2)',tt/tmax*1d2," %"
         do i = 1,nmax
@@ -113,9 +118,9 @@ program test
         end do
         write(55,*)
      end if
-     tt = tt + dt
-     if(tt>tmax) exit
-     istep = istep + 1
+     tt = tt + dt !increase time
+     if(tt>tmax) exit !exit condition
+     istep = istep + 1 !increase timestep
   end do
 
   print *,"done!"
