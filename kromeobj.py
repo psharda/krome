@@ -39,8 +39,9 @@ class krome():
 	coevars = dict() #variables in function coe() (krome_subs.f90)
 	implicit_arrays = totMetals = ""
 	thermodata = dict() #thermochemistry data (nasa polynomials)
-	parser = ""
-
+	parser = filename = ""
+	atols = []
+	rtols = []
 	#########################################
 	def init_argparser(self):
 
@@ -59,6 +60,8 @@ class krome():
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
 
 		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
+		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line, e.g. H2 1d-20", metavar="filename")
+		self.parser.add_argument("-customRTOL", help="file with the list of the individual RTOLs in the form SPECIES RTOL in each line, e.g. H3+ 1d-4", metavar="filename")
 		self.parser.add_argument("-ATOL", help="set solver absolute tolerance to the float or double value ATOL, e.g. -atol 1d-40 Default is ATOL=1d-20")
 		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g. -rtol 1e-5 Default is RTOL=1d-4")
 		self.parser.add_argument("-usePhIoniz", action="store_true", help="include photochemistry")
@@ -164,7 +167,7 @@ class krome():
 			die("ERROR: options -forceMF222 and -forceMF21 are mutually exclusive: choose one.")
 
 		#get filename
-		if(not(self.is_test)): self.filename = args.n
+		if(not(self.is_test) and args.n): self.filename = args.n
 		#chech if reactions file exists
 		if(not(os.path.isfile(self.filename))): die("ERROR: Reaction file \""+self.filename+"\" doesn't exist!")
 
@@ -270,6 +273,7 @@ class krome():
 		if(args.enzo):
 			self.doEnzo = True
 			print "Reading option -enzo"
+
 
 		#determine Tgas limit operators
 		if(args.Tlimit):
@@ -426,6 +430,50 @@ class krome():
 			self.maxord = min(max(1,int(args.maxord)),5)
 			print "Reading option -maxord (maxord="+str(self.maxord)+")"
 
+		#custom ATOLs
+		if(args.customATOL):
+			fname = args.customATOL
+			print "Reading option -customATOL (file="+fname+")"
+			if(not(file_exists(fname))):
+				print "ERROR: custom ATOL file \""+fname+"\" does not exist!"
+				sys.exit()
+			fh = open(fname,"rb")
+			for row in fh:
+				srow = row.strip()
+				if(len(srow)==0): continue
+				if(srow[0]=="#"): continue
+				arow = [x for x in srow.split(" ") if x.strip()!=""]
+				if(len(arow)<2):
+					print "ERROR: wrong format in custom ATOL file!"
+					print srow
+					sys.exit()
+				print "ATOL: "+arow[0]+" "+arow[1]
+				self.atols.append([arow[0],arow[1]])
+			fh.close()
+
+
+
+		#custom RTOLs
+		if(args.customRTOL):
+			fname = args.customRTOL
+			print "Reading option -customRTOL (file="+fname+")"
+			if(not(file_exists(fname))):
+				print "ERROR: custom RTOL file \""+fname+"\" does not exist!"
+				sys.exit()
+			fh = open(fname,"rb")
+			for row in fh:
+				srow = row.strip()
+				if(len(srow)==0): continue
+				if(srow[0]=="#"): continue
+				arow = [x for x in srow.split(" ") if x.strip()!=""]
+				if(len(arow)<2):
+					print "ERROR: wrong format in custom RTOL file!"
+					print srow
+					sys.exit()
+				print "RTOL: "+arow[0]+" "+arow[1]
+				self.rtols.append([arow[0],arow[1]])
+			fh.close()
+
 
 	####################################################
 	#load thermochemistry data form chemkin-formatted file
@@ -571,10 +619,18 @@ class krome():
 		specs = []
 		reacts = []
 		fh = open(filename,"rb") #OPEN FILE
+		isComment = False #flag for comment block
 		for row in fh:
 			srow = row.strip() #stripped row
 			if(srow.strip()==""): continue #looks for blank line
 			if(srow[0]=="#"): continue #looks for comment line
+			if(srow[0:1]=="//"): continue #looks for comment line
+			if(srow[0:1]=="/*"): isComment = True #start multiline comment
+			#end multiline comment
+			if("*/" in srow):
+				isComment = False
+				continue
+			if(isComment): continue #skip if in comment block
 
 			#search for variables
 			if("@var:" in srow):
@@ -1126,14 +1182,14 @@ class krome():
 				for rj in range(len(rea.reactants)):
 					r2 = rea.reactants[rj]
 					if(ri!=rj):
-						sjac += "*n("+str(r2.idx)+")"
+						sjac += "*n("+str(r2.fidx)+")"
 				for rr in rea.reactants:
 					jac[rr.idx-1][r1.idx-1] = jac[rr.idx-1][r1.idx-1].replace(" = 0.d0"," =")
-					jac[rr.idx-1][r1.idx-1] += " -"+sjac
+					jac[rr.idx-1][r1.idx-1] += " &\n-"+sjac
 					jsparse[rr.idx-1][r1.idx-1] = 1
 				for pp in rea.products:
 					jac[pp.idx-1][r1.idx-1] = jac[pp.idx-1][r1.idx-1].replace(" = 0.d0"," =")
-					jac[pp.idx-1][r1.idx-1] += " +"+sjac
+					jac[pp.idx-1][r1.idx-1] += " &\n+"+sjac
 					jsparse[pp.idx-1][r1.idx-1] = 1
 
 		#create approximated Jacobian term for Tgas
@@ -2313,6 +2369,26 @@ class krome():
 
 			if(srow == "#KROME_header"):
 				fout.write(get_licence_header())
+			elif(srow == "#KROME_custom_ATOL"):
+				#add custom atols
+				if(len(self.atols)>0):
+					for x in self.atols:
+						#check for species in species list
+						for y in self.specs:
+							#one can use either the name or the idx name (e.g. H+ or idx_Hp)
+							if(x[0]==y.name or x[0]==y.fidx):
+								fout.write("atol("+y.fidx+") = "+format_double(x[1])+"\n")
+								break
+			elif(srow == "#KROME_custom_RTOL"):
+				#add custom rtols
+				if(len(self.rtols)>0):
+					for x in self.rtols:
+						#check for species in species list
+						for y in self.specs:
+							#one can use either the name or the idx name (e.g. H+ or idx_Hp)
+							if(x[0]==y.name or x[0]==y.fidx):
+								fout.write("rtol("+y.fidx+") = "+format_double(x[1])+"\n")
+								break
 			elif(srow == "#KROME_rwork_array"):
 				fout.write("\treal*8::rwork("+str(self.lrw)+")\n")
 			elif(srow == "#KROME_iwork_array"):

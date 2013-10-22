@@ -42,9 +42,11 @@ contains
     itol = 4 !both tolerances are scalar
     rtol(:) = #KROME_RTOL !relative tolerance (default: 1d-4)
     atol(:) = #KROME_ATOL !absolute tolerance (default: 1d-40)
-    !example to introduce specific tolerances (warning: instability!)
-    !rtol(idx_Tgas) = 1d0 !realtive tolerance for temperature
-    !atol(idx_Tgas) = 1d-2 !absolute tolerance for temperature
+    
+#KROME_custom_RTOL
+
+#KROME_custom_ATOL
+
     itask = 1
     iopt = 0
 

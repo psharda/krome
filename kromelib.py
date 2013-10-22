@@ -228,9 +228,9 @@ def get_example(nsp,useX):
 
 		program test
 			use krome_main !use krome (mandatory)
-			use krome_user !use utility (for krome_idx_* constants)
+			use krome_user !use utility (for krome_idx_* constants and others)
 			implicit none
-			integer,parameter::nsp=@nsp@ !number of species (automatic)
+			integer,parameter::nsp=krome_nmols !number of species (common)
 			real*8::Tgas,dt,x(nsp)@rho@,spy
 
 			spy = 3.65d2 * 2.4d1 * 3.6d3 !seconds per year
