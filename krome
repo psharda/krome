@@ -58,6 +58,9 @@ krome.countSpecies()
 #dump reactions and species to a file
 krome.dumpNetwork()
 
+#prepares a simple C header for wrappers
+krome.simpleCHeader()
+
 #show ODE stats
 krome.showODE()
 

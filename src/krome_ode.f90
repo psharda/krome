@@ -67,13 +67,18 @@ contains
     use krome_commons
     use krome_subs
     use krome_tabs
+    use krome_cooling
+    use krome_heating
+    use krome_constants
     implicit none
     integer::neq, j, ian, jan, r1, r2, p1, p2, p3, i
     real*8::tt, n(neq), pdj(neq), dr1, dr2, kk,k(nrea),Tgas
-    
+    real*8::nn(neq),dn0,dn1,dnn,nH2dust,dn(neq)
+
+    nH2dust = 0.d0
     Tgas = n(idx_Tgas)
     
-    k(:) = coe_tab(n(:)) !compute coefficients
+    if(j.ne.idx_Tgas) k(:) = coe_tab(n(:)) !compute coefficients
     
 #KROME_JAC_PD
     

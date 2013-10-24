@@ -1,4 +1,4 @@
-import os,glob,shutil,argparse
+import os,glob,shutil,argparse,re
 from kromelib import *
 from os import listdir
 from os.path import isfile, join
@@ -17,7 +17,7 @@ class krome():
 	pedanticMakefile = useFakeOpacity = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = True
 	useDustGrowth = useDustSputter = useDustH2 = False
-	doRamses = doFlash = doEnzo = False
+	doRamses = doFlash = doEnzo = wrapC = False
 	typeGamma = "DEFAULT"
 	test_name = "default"
 	is_test = False
@@ -40,6 +40,8 @@ class krome():
 	implicit_arrays = totMetals = ""
 	thermodata = dict() #thermochemistry data (nasa polynomials)
 	parser = filename = ""
+	deltajacMode = "RELATIVE" #increment mode: RELATIVE or ABSOLUTE
+	deltajac = "1d-3" #increment (relative or absolute, see deltajacMode)
 	atols = []
 	rtols = []
 	#########################################
@@ -89,6 +91,7 @@ class krome():
 		self.parser.add_argument("-ramses", action="store_true", help="create patches for RAMSES")
 		self.parser.add_argument("-flash", action="store_true", help="create patches for FLASH")
 		self.parser.add_argument("-enzo", action="store_true", help="create patches for ENZO")
+		self.parser.add_argument("-C", action="store_true", help="create a simple C wrapper")
 		
 	
 	######################################
@@ -151,6 +154,9 @@ class krome():
 		elif(args.test=="atmosphere"):
 			[argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_kast80"
+		elif(args.test=="wrapC"):
+			[argv.append(x) for x in ["-useN"]]
+			filename = "networks/react_primordial2"
 		else:
 			print "ERROR: test \""+args.test+"\" not present!"
 			sys.exit()
@@ -273,6 +279,11 @@ class krome():
 		if(args.enzo):
 			self.doEnzo = True
 			print "Reading option -enzo"
+
+		#creates simple C wrapper
+		if(args.C):
+			self.wrapC = True
+			print "Reading option -C"
 
 
 		#determine Tgas limit operators
@@ -1012,16 +1023,20 @@ class krome():
 	def dumpNetwork(self):
 		#dump species to log file
 		fout = open("species.log","w")
+		fout.write("#This file contains:\n")
+		fout.write("#1. a list of the species used with their indexes\n")
+		fout.write("#2. a list of the species to initialize gnuplot\n")
+		fout.write("\n")
 		idx = 0
 		for mol in self.specs:
 			idx += 1
 			fout.write(str(idx)+"\t"+mol.name+"\t"+mol.fidx+"\n")
-		fout.close()
 
 		#dump species to gnuplot initialization
-		fout = open("species.gps","w")
 		idx = 0
-		fout.write("#cat-and-paste this into gnuplot to initialize species variables\n")
+		fout.write("\n")
+		fout.write("\n")
+		fout.write("#cut-and-paste this into gnuplot to initialize species variables\n")
 		fout.write("# nkrome is an optional offset\n")
 		fout.write("nkrome = 0\n")
 		inits = []
@@ -1029,8 +1044,8 @@ class krome():
 			idx += 1
 			inits.append("krome_"+mol.fidx+" = "+str(idx)+" + nkrome")
 		fout.write(("\n".join(inits))+"\n")
-		fout.close()
-
+		fout.close()	
+	
 		#dump reactions to log file
 		fout = open("reactions.log","w")
 		idx = 0
@@ -1053,6 +1068,28 @@ class krome():
 		dot +="}\n"
 		fout.write(dot)
 		fout.close
+	
+	##############################################
+	def simpleCHeader(self):
+		if(not(self.wrapC)): return
+		fout = open("krome.h","w")
+		fout.write("#ifndef KROME_H_\n")
+		fout.write("#define KROME_H_\n")
+		fout.write("\n")
+		idx = 0
+		for mol in self.specs:
+			idx += 1
+			fout.write("extern int krome_"+mol.fidx+" = "+str(idx-1)+"; //"+mol.name+"\n")
+		fout.write("\n")
+		fout.write("extern char* krome_names[] = {\n")
+		fout.write(",\n".join(["  \""+x.name+"\"" for x in self.specs])+"\n};")
+		fout.write("\n")
+		fout.write("extern int krome_nmols = "+str(self.nmols)+"; //number of species\n")
+		fout.write("extern int krome_nrea = "+str(len(self.reacts))+"; //number of reactions\n")
+		fout.write("\n")
+		fout.write("#endif\n")
+		fout.close()
+
 	###############################################
 	def showODE(self):
 		dustArraySize = self.dustArraySize
@@ -1140,7 +1177,8 @@ class krome():
 		#wrap RHS (e.g. knn+knn=2*knn)
 		dnw = []
 		idn = 0
-		for dn in dns:
+		ldns = dns
+		for dn in ldns:
 			if(idn>nmols):
 				dnw.append(dn)
 				continue
@@ -1158,13 +1196,15 @@ class krome():
 				if("-" in RHSs[i] and RHSc[i]>1): dns += RHSs[i].replace("-"," &\n-"+str(RHSc[i])+".d0*")
 				if("+" in RHSs[i] and RHSc[i]>1): dns += RHSs[i].replace("+"," &\n+"+str(RHSc[i])+".d0*")
 				if(RHSc[i]==1): dns+= " &\n"+RHSs[i]
-			dns = dns.replace("*"," * ")
+			#dns = dns.replace("*"," * ")
 			dnw.append(dns)
 			idn += 1
+		#dnw = [x.replace("+"," &\n+").replace("-"," &\n-") for x in ldns]
 		self.dnw = dnw
 
 
 	###############################################
+	#build the jacobian
 	def createJAC(self):
 		reacts = self.reacts
 		specs = self.specs
@@ -1173,8 +1213,8 @@ class krome():
 		nmols = self.nmols
 		#create explicit JAC for chemical species
 		neq = len(specs)
-		jac = [["pdj("+str(j+1)+") = 0.d0" for i in range(neq)] for j in range(neq)]
-		jsparse = [[0 for i in range(neq)] for j in range(neq)]
+		jac = [["pdj("+str(j+1)+") = 0.d0" for i in range(neq)] for j in range(neq)] #init jacobian
+		jsparse = [[0 for i in range(neq)] for j in range(neq)] #sparsity matrix
 		for rea in reacts:
 			for ri in range(len(rea.reactants)):
 				r1 = rea.reactants[ri]
@@ -1192,15 +1232,56 @@ class krome():
 					jac[pp.idx-1][r1.idx-1] += " &\n+"+sjac
 					jsparse[pp.idx-1][r1.idx-1] = 1
 
+		#this part compress jacobian terms (e.g. k1*H*H+k1*H*H => 2*k1*H*H)
+		jacnew = [["" for i in range(neq)] for j in range(neq)] #create empty jacobian neq*neq
+		#loop over jacobian
+		for i in range(neq):
+			for j in range(neq):
+				jcount = dict() #dictionary to count items
+				jpz = jac[i][j] #jacobian element
+				ajpz = [x.strip() for x in jpz.split("&\n")] #split on returns
+				#loop over pieces and count (first piece is initialization)
+				for pz in ajpz[1:]:
+					if(pz in jcount):
+						jcount[pz] += 1 #already found, add 1
+					else:
+						jcount[pz] = 1 #newly found, init to 1
+				jacel = ajpz[0] #element start
+				#loop on counted pieces
+				for (k,v) in jcount.iteritems():
+					if(v>1):
+						jacel += " "+k[0]+str(v)+".d0*"+k[1:] #add multiplication factor
+					else:
+						jacel += " "+k #add piece
+				#print jacel
+				jacel = jacel.replace("+"," &\n +").replace("-"," &\n -") #new line for each term
+				jacnew[i][j] = jacel #update element into the jacobian
+		jac = jacnew #replace old jacobian
+
 		#create approximated Jacobian term for Tgas
 		for i in range(neq):
 			if(not(self.use_thermo)): break
 			jsparse[i][Tgas_species.idx-1] = jsparse[Tgas_species.idx-1][i] = 1
 			s = str(i+1)
 			if(specs[i].name!="dummy" and specs[i].name!="CR" and specs[i].name!="g"):
-				jac[Tgas_species.idx-1][i] = "if(abs(n("+s+") - jac_nold(" + s 
-				jac[Tgas_species.idx-1][i] += "))>1d-10) pdj(idx_Tgas) = (jac_dn(idx_Tgas) - jac_dnold(idx_Tgas)) / (n("
-				jac[Tgas_species.idx-1][i] += s + ") - jac_nold(" + s + "))"
+				jac[Tgas_species.idx-1][i] = "dn0 = (heating(n(:), Tgas, k(:), nH2dust) - cooling(n(:), Tgas)) &\n"
+				jac[Tgas_species.idx-1][i] += "* (krome_gamma - 1.d0) / boltzmann_erg / sum(n(1:nmols))\n"
+				jac[Tgas_species.idx-1][i] += "nn(:) = n(:)\n"
+				if(self.deltajacMode=="RELATIVE"):
+					jac[Tgas_species.idx-1][i] += "dnn = n("+s+")*"+str(self.deltajac)+"\n"
+				elif(self.deltajacMode=="ABSOLUTE"):
+					jac[Tgas_species.idx-1][i] += "dnn = "+str(self.deltajac)+"\n"
+				else:
+					die("ERROR: deltajacMode unknonw!"+self.deltajacMode)
+				jac[Tgas_species.idx-1][i] += "if(dnn>0.d0) then\n"
+				jac[Tgas_species.idx-1][i] += " nn("+s+") = n("+s+") + dnn\n"
+				jac[Tgas_species.idx-1][i] += " dn1 = (heating(nn(:), Tgas, k(:), nH2dust) - cooling(nn(:), Tgas)) &\n"
+				jac[Tgas_species.idx-1][i] += "  * (krome_gamma - 1.d0) / boltzmann_erg / sum(n(1:nmols))\n"
+				jac[Tgas_species.idx-1][i] += " pdj(idx_Tgas) = (dn1-dn0)/dnn\n"
+				jac[Tgas_species.idx-1][i] += "end if\n"
+				#jac[Tgas_species.idx-1][i] = "if(abs(n("+s+") - jac_nold(" + s 
+				#jac[Tgas_species.idx-1][i] += "))>1d-10) pdj(idx_Tgas) = (jac_dn(idx_Tgas) - jac_dnold(idx_Tgas)) / (n("
+				#jac[Tgas_species.idx-1][i] += s + ") - jac_nold(" + s + "))"
 
 		self.jac = jac
 		self.jsparse = jsparse
@@ -2118,11 +2199,18 @@ class krome():
 							#if(has_pdj): fout.write("k(:) = coe_tab(n(:))\n")
 							fout.write(spdj)
 						else:
-							jacT = """!rough estimate for d^2T/dt/dx_i
+							jacT = "!use fex to compute temperature-dependent Jacobian\n"
+							if(self.deltajacMode=="RELATIVE"):
+								jacT += "dnn = n(idx_Tgas)*"+str(self.deltajac)+"\n"
+							elif(self.deltajacMode=="ABSOLUTE"):
+								jacT += "dnn = "+str(self.deltajac)+"\n"
+							else:
+								die("ERROR: unknown deltajacMode! "+self.deltajacMode)
+							jacT += """nn(:) = n(:)
+								nn(idx_Tgas) = n(idx_Tgas) + dnn
+								call fex(neq,tt,nn(:),dn(:))
 								do i=1,neq-1
-							         if(n(idx_Tgas)-jac_nold(idx_Tgas).ne.0.d0) then
-								  pdj(i) = (jac_dnold(i) - jac_dn(i))/(jac_nold(idx_Tgas) - n(idx_Tgas))
-								 end if
+								  pdj(i) = dn(i) / dnn
 								end do"""
 							if(not(self.use_thermo)): jacT = ""
 							fout.write("\t" + jacT.replace("\t","") + "\n")
