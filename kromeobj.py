@@ -37,6 +37,7 @@ class krome():
 	constantList = []
 	dummy = molec()
 	coevars = dict() #variables in function coe() (krome_subs.f90)
+	coevarsODE = dict() #variables in function fex() (krome_ode.f90)
 	implicit_arrays = totMetals = ""
 	thermodata = dict() #thermochemistry data (nasa polynomials)
 	parser = filename = ""
@@ -511,7 +512,7 @@ class krome():
 						print "found: "+srow
 						sys.exit()
 					print "var: "+arow[0]
-					self.coevars[arow[0]] = [ivarcoe,arow[1]]
+					self.coevarsODE[arow[0]] = [ivarcoe,arow[1]]
 					ivarcoe += 1 #count variables to sort
 					continue #SKIP: a variable line is not a reaction line		
 				#search for ODE		
@@ -2129,7 +2130,7 @@ class krome():
 		neq = len(specs)
 		solver_MF = self.solver_MF
 		Tgas_species = self.Tgas_species
-		coevars = self.coevars
+		coevarsODE = self.coevarsODE
 
 		#*********ODE****************
 		#write parameters in krome_ode.f90
@@ -2223,12 +2224,12 @@ class krome():
 							fout.write("\t" + x + "\n")
 							inw += 1
 			elif(srow == "#KROME_initcoevars"):
-				if(len(coevars)==0): continue
-				kvars = "real*8::"+(",".join([x for x in coevars.keys()]))
+				if(len(coevarsODE)==0): continue
+				kvars = "real*8::"+(",".join([x for x in coevarsODE.keys()]))
 				fout.write(kvars+"\n")
 			elif(srow == "#KROME_coevars"):
-				if(len(coevars)==0): continue
-				klist = [[k+" = "+v[1]+"\n",v[0]] for k,v in coevars.iteritems()] #this mess is to sort dict
+				if(len(coevarsODE)==0): continue
+				klist = [[k+" = "+v[1]+"\n",v[0]] for k,v in coevarsODE.iteritems()] #this mess is to sort dict
 				klist = sorted(klist, key=lambda x: x[1])
 				fout.write("".join([x[0] for x in klist]))
 
@@ -2245,7 +2246,8 @@ class krome():
 				ris = (",".join(["r"+str(i+1) for i in range(self.maxnreag)]))
 				pis = (",".join(["p"+str(i+1) for i in range(self.maxnprod)]))
 				rpis = ",".join([x for x in ["i",ris,pis] if(len(x)>0)])
-				fout.write("integer::"+(",".join(rpis))+"\n")
+				print rpis
+				fout.write("integer::"+rpis+"\n")
 			elif(srow == "#KROME_report_flux"):
 				report_flux = ("*".join(["n(arr_r"+str(j+1)+"(i))" for j in range(self.maxnreag)]))
 		 		fout.write("write(fnum,'(I5,E12.3e3,a2,a50)') i,k(i)*"+report_flux+",'',rnames(i)\n")
