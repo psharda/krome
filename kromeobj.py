@@ -42,8 +42,9 @@ class krome():
 	parser = filename = ""
 	deltajacMode = "RELATIVE" #increment mode: RELATIVE or ABSOLUTE
 	deltajac = "1d-3" #increment (relative or absolute, see deltajacMode)
-	atols = []
-	rtols = []
+	atols = [] #custom ATOLs
+	rtols = [] #custom RTOLs
+	customODEs = [] #custom ODEs
 	#########################################
 	def init_argparser(self):
 
@@ -92,6 +93,7 @@ class krome():
 		self.parser.add_argument("-flash", action="store_true", help="create patches for FLASH")
 		self.parser.add_argument("-enzo", action="store_true", help="create patches for ENZO")
 		self.parser.add_argument("-C", action="store_true", help="create a simple C wrapper")
+		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
 		
 	
 	######################################
@@ -157,6 +159,9 @@ class krome():
 		elif(args.test=="wrapC"):
 			[argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_primordial2"
+		elif(args.test=="lotkav"):
+			[argv.append(x) for x in ["-useN","-customODE=tests/lotkav/lotkav"]]
+			filename = "networks/react_dummy"
 		else:
 			print "ERROR: test \""+args.test+"\" not present!"
 			sys.exit()
@@ -483,6 +488,40 @@ class krome():
 					sys.exit()
 				print "RTOL: "+arow[0]+" "+arow[1]
 				self.rtols.append([arow[0],arow[1]])
+			fh.close()
+
+		#custom ODEs
+		if(args.customODE):
+			fname = args.customODE
+			print "Reading option -customODE (file="+fname+")"
+			if(not(file_exists(fname))):
+				print "ERROR: custom ODE file \""+fname+"\" does not exist!"
+				sys.exit()
+			fh = open(fname,"rb")
+			ivarcoe = 0
+			for row in fh:
+				srow = row.strip()
+				if(len(srow)==0): continue
+				if(srow[0]=="#"): continue
+				#search for variables
+				if("@var:" in srow):
+					arow = srow.replace("@var:","").split("=")
+					if(len(arow)!=2):
+						print "ERROR: variable line must be @var:variable=F90_expression"
+						print "found: "+srow
+						sys.exit()
+					print "var: "+arow[0]
+					self.coevars[arow[0]] = [ivarcoe,arow[1]]
+					ivarcoe += 1 #count variables to sort
+					continue #SKIP: a variable line is not a reaction line		
+				#search for ODE		
+				arow = [x.strip() for x in srow.split("=")]
+				if(len(arow)!=2):
+					print "ERROR: wrong format in custom ODE file!"
+					print srow
+					sys.exit()
+				print "ODE: "+arow[0]+" "+arow[1]
+				self.customODEs.append([arow[0],arow[1]])
 			fh.close()
 
 
@@ -944,7 +983,8 @@ class krome():
 
 	###################################
 	def addSpecial(self):
-		specs = self.specs		
+		specs = self.specs
+		customODEs = self.customODEs
 		#look for photons and CR to add to the species list
 		has_g = has_CR = False
 		for mol in specs:
@@ -953,7 +993,20 @@ class krome():
 			if(mol.name=="CR"):
 				has_CR = True
 
-	#append CR as species named CR
+		#append custom ODEs as species
+		if(len(customODEs)>0):
+			for x in customODEs:
+				mymol = molec()
+				mymol.name = x[0]
+				mymol.charge = 0
+				mymol.mass = 0.e0
+				mymol.ename = mymol.name
+				mymol.fidx = "idx_" + mymol.name
+				mymol.idx = len(specs)+1
+				specs.append(mymol)
+				print "Added "+mymol.name+" as species"
+
+		#append CR as species named CR
 		if(not(has_CR)):
 			mymol = molec()
 			mymol.name = "CR"
@@ -1607,12 +1660,15 @@ class krome():
 				for shortcut in sclist:
 					fout.write(shortcut+"\n")
 			elif(srow == "#KROME_rvars"):
-				fout.write("integer::"+(",".join(["r"+str(j+1) for j in range(self.maxnreag)]))+"\n")
+				if(self.maxnreag>0):
+					fout.write("integer::"+(",".join(["r"+str(j+1) for j in range(self.maxnreag)]))+"\n")
 			elif(srow == "#KROME_arrs"):
-				for j in range(self.maxnreag):
-					fout.write("r"+str(j+1)+" = arr_r"+str(j+1)+"(i)\n")
+				if(self.maxnreag>0):
+					for j in range(self.maxnreag):
+						fout.write("r"+str(j+1)+" = arr_r"+str(j+1)+"(i)\n")
 			elif(srow == "#KROME_arr_flux"):
-				fout.write("arr_flux(i) = k(i)*"+("*".join(["n(r"+str(j+1)+")" for j in range(self.maxnreag)]))+"\n")
+				if(self.maxnreag>0):
+					fout.write("arr_flux(i) = k(i)*"+("*".join(["n(r"+str(j+1)+")" for j in range(self.maxnreag)]))+"\n")
 			elif(srow == "#KROME_sum_H_nuclei"):
 				hsum = []
 				for x in specs:
@@ -2073,6 +2129,7 @@ class krome():
 		neq = len(specs)
 		solver_MF = self.solver_MF
 		Tgas_species = self.Tgas_species
+		coevars = self.coevars
 
 		#*********ODE****************
 		#write parameters in krome_ode.f90
@@ -2154,10 +2211,27 @@ class krome():
 					else:
 						inw = 0
 						for x in dnw:
+							#add custom ODE if needed
+							if(len(self.customODEs)>0):
+								for ode in self.customODEs:
+									#build custom ODE
+									if(ode[0]==specs[inw].name):
+										x = "dn("+str(inw+1)+") = "+ode[1]
+										break
 							fout.write("\n")
 							fout.write("!"+specs[inw].name+"\n")
 							fout.write("\t" + x + "\n")
 							inw += 1
+			elif(srow == "#KROME_initcoevars"):
+				if(len(coevars)==0): continue
+				kvars = "real*8::"+(",".join([x for x in coevars.keys()]))
+				fout.write(kvars+"\n")
+			elif(srow == "#KROME_coevars"):
+				if(len(coevars)==0): continue
+				klist = [[k+" = "+v[1]+"\n",v[0]] for k,v in coevars.iteritems()] #this mess is to sort dict
+				klist = sorted(klist, key=lambda x: x[1])
+				fout.write("".join([x[0] for x in klist]))
+
 			elif(srow == "#KROME_dustSumVariables" and self.useDust):
 				#add partner sum dust variable declarations
 				dustSumVar = []
@@ -2170,7 +2244,8 @@ class krome():
 				fout.write("real*8::rr\n")
 				ris = (",".join(["r"+str(i+1) for i in range(self.maxnreag)]))
 				pis = (",".join(["p"+str(i+1) for i in range(self.maxnprod)]))
-				fout.write("integer::i,"+ris+","+pis+"\n")
+				rpis = ",".join([x for x in ["i",ris,pis] if(len(x)>0)])
+				fout.write("integer::"+(",".join(rpis))+"\n")
 			elif(srow == "#KROME_report_flux"):
 				report_flux = ("*".join(["n(arr_r"+str(j+1)+"(i))" for j in range(self.maxnreag)]))
 		 		fout.write("write(fnum,'(I5,E12.3e3,a2,a50)') i,k(i)*"+report_flux+",'',rnames(i)\n")
@@ -2378,12 +2453,15 @@ class krome():
 
 			if(skip): continue
 			if(srow == "#KROME_rvars"):
-				fout.write("integer::"+(",".join(["r"+str(j+1) for j in range(self.maxnreag)]))+"\n")
+				if(self.maxnreag>0):
+					fout.write("integer::"+(",".join(["r"+str(j+1) for j in range(self.maxnreag)]))+"\n")
 			if(srow == "#KROME_arrs"):
 				for j in range(self.maxnreag):
 					fout.write("r"+str(j+1)+" = arr_r"+str(j+1)+"(i)\n")
 			if(srow == "#KROME_arr_flux"):
-				fout.write("arr_flux(i) = k(i)*"+("*".join(["n(r"+str(j+1)+")" for j in range(self.maxnreag)]))+"\n")
+				print self.maxnreag
+				if(self.maxnreag>0):
+					fout.write("arr_flux(i) = k(i)*"+("*".join(["n(r"+str(j+1)+")" for j in range(self.maxnreag)]))+"\n")
 
 			if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):
@@ -2706,7 +2784,16 @@ class krome():
 
 		#pchem_mapNetworkToSpecies
 		fname = "pchem_mapNetworkToSpecies.F90"
-		shutil.copyfile(pfold+fname, buildFolder+fname)
+		species = ""
+		for x in specs:
+			if(x.name in ["CR","g","Tgas","dummy"]): continue
+			name = x.name.upper().replace("+","P").replace("-","M")
+			if(name=="E"): name="ELEC"
+			species += "\tcase(\""+(x.name)+"\")\n"
+			species += "\t\tspecieOut = "+name+"_SPEC\n"
+
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_cases"],[species])
+		indentF90(buildFolder+fname)
 
 		#PrimordialChemistry
 		fname = "PrimordialChemistry.F90"

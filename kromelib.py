@@ -104,17 +104,17 @@ class reaction():
 		for p in self.products:
 			mass_products += p.mass
 			charge_products += p.charge
-		
-		if(abs(1.e0-mass_products/mass_reactants)>1e-6):
-			print "************************************************"
-			print "ERROR: problem with mass conservation in reaction", self.idx
-			print "reaction:",self.verbatim
-			print "reactants:", [r.name for r in self.reactants], mass_reactants
-			print "products:", [p.name for p in self.products], mass_products
-			print "mass ratio:",mass_products/mass_reactants, "(should be 1.0)"
-			print "************************************************"
-			a = raw_input("Any key to continue q to quit... ")
-			if(a=="q"): print sys.exit()
+		if(mass_reactants!=0):
+			if(abs(1.e0-mass_products/mass_reactants)>1e-6):
+				print "************************************************"
+				print "ERROR: problem with mass conservation in reaction", self.idx
+				print "reaction:",self.verbatim
+				print "reactants:", [r.name for r in self.reactants], mass_reactants
+				print "products:", [p.name for p in self.products], mass_products
+				print "mass ratio:",mass_products/mass_reactants, "(should be 1.0)"
+				print "************************************************"
+				a = raw_input("Any key to continue q to quit... ")
+				if(a=="q"): print sys.exit()
 		if(abs(charge_products - charge_reactants)!=0):
 			print "************************************************"
 			print "ERROR: problem with charge conservation in reaction", self.idx
@@ -132,6 +132,9 @@ class reaction():
 		deltaH ={"H":2.25129, "H+":15.84969,"H-":0.750000,"HE":0.e0,"HE+":24.58675,"HE++":54.41671,"H2":0.e0,"H2+":15.42590,
 				"D":2.29793,"D+":15.89633,"HD":0.00330, "E":0.e0, "C":7.42764, "C+":18.6882, "SI":3.81606, 
 				"SI+":11.9674, "O":2.5807, "O+":161981}
+		if(len(self.reactants)==0 and len(self.products)==0):
+			self.dH = 0.e0
+			return
 		if(len(self.reactants)==0 or len(self.products)==0):
 			print "ERROR: you have called enthalpy calculation"
 			print " with empty reactants and/or products!"

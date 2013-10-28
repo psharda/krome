@@ -1,0 +1,13 @@
+#ODE for lotka volterra problem
+
+#custom variables
+@var:a = 1.d0
+@var:b = 0.2d0
+@var:c = 4d-2
+@var:d = 5d-1
+
+#ODE equations
+#please note that independent variables are handled like number densities
+x = (a - b * n(idx_y)) * n(idx_x)
+y = (c * n(idx_x) - d) * n(idx_y)
+

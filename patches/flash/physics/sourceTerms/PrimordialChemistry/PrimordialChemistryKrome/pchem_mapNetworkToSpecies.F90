@@ -37,24 +37,7 @@ subroutine pchem_mapNetworkToSpecies(krome_species_name, specieOut)
 
 ! Add further species according to the name convention given in krome:get_names and Flash.h
    select case(krome_species_name)
-   case("H")
-      specieOut = H_SPEC
-   case ("E")
-      specieOut = ELEC_SPEC
-   case ("H+")
-      specieOut = HP_SPEC
-   case ("HE") 
-      specieOut = HE_SPEC
-   case ("HE+")
-      specieOut = HEP_SPEC
-   case ("HE++")
-      specieOut = HEPP_SPEC
-   case ("H-")
-      specieOut = HM_SPEC
-   case ("H2")
-      specieOut = H2_SPEC
-   case ("H2+")
-      specieOut = H2P_SPEC
+#KROME_cases
    case default
       !!Abort
       call Logfile_stampMessage('ERROR in pchem_mapNetworkToSpecies')

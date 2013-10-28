@@ -1,0 +1,6 @@
+reset
+
+set ylabel "#"
+set xlabel "time (s)"
+plot 'fort.66' w l t "prey (x)", '' u 1:3 w l t "predator (y)"
+ 

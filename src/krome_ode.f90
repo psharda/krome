@@ -19,6 +19,9 @@ contains
     real*8::gamma,Tgas,vgas,ntot,nH2dust,nd
 #KROME_dustSumVariables
 #KROME_implicit_variables
+#KROME_initcoevars
+
+#KROME_coevars
 
     nH2dust = 0.d0
     n(idx_CR) = 1.d0

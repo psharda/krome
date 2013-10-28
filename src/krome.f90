@@ -40,8 +40,8 @@ contains
     iwork(:) = 0
     rwork(:) = 0.d0
     itol = 4 !both tolerances are scalar
-    rtol(:) = #KROME_RTOL !relative tolerance (default: 1d-4)
-    atol(:) = #KROME_ATOL !absolute tolerance (default: 1d-40)
+    rtol(:) = #KROME_RTOL !relative tolerance
+    atol(:) = #KROME_ATOL !absolute tolerance
     
 #KROME_custom_RTOL
 
@@ -270,9 +270,6 @@ contains
 #IFKROME_useTabs
     call make_ktab()
     call check_tabs()
-#ENDIFKROME
-#IFKROME_useTopology
-    call krome_authub()
 #ENDIFKROME
 
   end subroutine krome_init

@@ -5,7 +5,11 @@ contains
 
   !********************************
   !KROME main (interface to the solver library)
-  subroutine krome(x,Tgas,dt)
+#IFKROME_useX
+  subroutine krome(x,rhogas,Tgas,dt#KROME_dust_arguments)
+#ELSEKROME
+  subroutine krome(x,Tgas,dt#KROME_dust_arguments)
+#ENDIFKROME
 
     use krome_commons
     use krome_subs
@@ -34,10 +38,18 @@ contains
     iwork(:) = 0
     rwork(:) = 0.d0
     itol = 1 !both tolerances are scalars
-    rtol = 1d-4 !relative tolerance (default: 1d-4)
-    atol = 1d-10 !absolute tolerance (default: 1d-10)
+    rtol = #KROME_RTOL !relative tolerance
+    atol = #KROME_ATOL !absolute tolerance
+
+#KROME_custom_RTOL
+
+#KROME_custom_ATOL
+
     itask = 1
     iopt = 0
+
+#KROME_maxord
+
     !MF=
     !  = 222 internal-generated JAC and sparsity
     !  = 121 user-provided JAC and internal generated sparsity
@@ -76,7 +88,8 @@ contains
        atol(i) = max(n(i)*1d-3, 1d-6)
     end do
 
-    OPTIONS = SET_OPTS(ABSERR_VECTOR=ATOL,RELERR=RTOL,METHOD_FLAG=227)
+    OPTIONS = SET_OPTS(ABSERR_VECTOR=ATOL,RELERR=RTOL,METHOD_FLAG=227,&
+         MXHNIL=0)
 
     do
        icount = icount + 1
@@ -119,11 +132,38 @@ contains
   subroutine krome_init()
     use krome_tabs
     use krome_subs
+
+    call load_arrays
+
 #IFKROME_useTabs
     call make_ktab()
     call check_tabs()
 #ENDIFKROME
-    call load_arrays
+
   end subroutine krome_init
+
+  !****************************
+  function krome_get_coe(n)
+    !krome_get_coe: public interface to obtain rate coefficients
+    use krome_commons
+    use krome_subs
+    use krome_tabs
+    implicit none
+    real*8::krome_get_coe(nrea),n(:)
+    krome_get_coe(:) = coe_tab(n(:))
+  end function krome_get_coe
+
+  !****************************
+  function krome_get_coeT(Tgas)
+    !krome_get_coeT: public interface to obtain rate coefficients
+    ! with argument Tgas only
+    use krome_commons
+    use krome_subs
+    use krome_tabs
+    implicit none
+    real*8::krome_get_coeT(nrea),n(nspec),Tgas
+    n(idx_Tgas) = Tgas
+    krome_get_coeT(:) = coe_tab(n(:))
+  end function krome_get_coeT
 
 end module krome_main
