@@ -26,7 +26,7 @@ class krome():
 	customCoeFunction = "[CUSTOM COE FUNCTION NOT SET!]"
 	buildFolder = "build/"
 	TminAuto = 1e99
-	TmaxAuto = -1e99
+	TmaxAuto = 0e0
 	RTOL = 1e-4 #default relative tolerance
 	ATOL = 1e-20 #default absolute tolerance
 	dustArraySize = dustTypesSize = 0
@@ -164,7 +164,9 @@ class krome():
 			[argv.append(x) for x in ["-useN","-customODE=tests/lotkav/lotkav"]]
 			filename = "networks/react_dummy"
 		else:
+			tests = ", ".join(os.walk('tests').next()[1])
 			print "ERROR: test \""+args.test+"\" not present!"
+			print "Available tests are: "+tests
 			sys.exit()
 		self.filename = filename
 		self.test_name = args.test
@@ -340,6 +342,8 @@ class krome():
 				if("dust=" in aa): self.hasDust = True
 			if(self.useCoolingDust and not(self.hasDust)):
 				die("ERROR: to include dust cooling you need dust (use -dust=[see help]).")
+			if(("CHEM" in myCools) and ("ATOMIC" in myCools)):
+				die("ERROR: CHEM and ATOMIC cooling are mutually exclusive!")
 
 			self.use_thermo = True
 
@@ -846,6 +850,8 @@ class krome():
 
 		self.specs = specs
 		self.reacts = reacts
+		self.TminAuto = TminAuto
+		self.TmaxAuto = TmaxAuto
 
 		print "done!"
 
@@ -2089,7 +2095,7 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingPhoto" and not(self.useHeatingPhoto)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
-				if(row.strip() == "#IFKROME_useHeatingChem" and not(self.useHeatingChem)): skip = True
+				if(row.strip() == "#IFKROME_useHeatingChem" and not(self.useHeatingChem) and not(self.useCoolingChem)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				if(skip): continue
@@ -2246,7 +2252,6 @@ class krome():
 				ris = (",".join(["r"+str(i+1) for i in range(self.maxnreag)]))
 				pis = (",".join(["p"+str(i+1) for i in range(self.maxnprod)]))
 				rpis = ",".join([x for x in ["i",ris,pis] if(len(x)>0)])
-				print rpis
 				fout.write("integer::"+rpis+"\n")
 			elif(srow == "#KROME_report_flux"):
 				report_flux = ("*".join(["n(arr_r"+str(j+1)+"(i))" for j in range(self.maxnreag)]))

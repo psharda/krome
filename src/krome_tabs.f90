@@ -45,7 +45,7 @@ contains
        inv_ktab_T(i) = 1.d0 / (ktab_T(i+1)-ktab_T(i))
     end do
 
-    inv_ktab_idx = 1.d0 / (ktab_logTup - ktab_logTlow) * ktab_n
+    inv_ktab_idx = 1.d0 / (ktab_logTup - ktab_logTlow) * (ktab_n - 1)
     
   end subroutine make_ktab
   
@@ -123,13 +123,13 @@ contains
 #ENDIFKROME
     
 #IFKROME_useTabs
-    idx = (log10(Tgas)-ktab_logTlow) * inv_ktab_idx
+    idx = (log10(Tgas)-ktab_logTlow) * inv_ktab_idx + 1
     idx = max(idx,1)
     idx = min(idx,ktab_n-1)
     coe_tab(:) = 0.d0
     do j=1,nrea
        coe_tab(j) = (Tgas-ktab_T(idx)) * inv_ktab_T(idx) *&
-            (ktab(j,idx+1)-ktab(j,idx)) + ktab(j,idx+1)
+            (ktab(j,idx+1)-ktab(j,idx)) + ktab(j,idx)
     end do
 #ENDIFKROME
 

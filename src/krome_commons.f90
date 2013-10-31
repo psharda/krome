@@ -10,7 +10,8 @@ module krome_commons
   real*8::krome_gamma !adiabatic index
 
   !commons for rate tables
-  integer,parameter::ktab_n=int(1e4)
+  !modify ktab_n according to the requested precision
+  integer,parameter::ktab_n=int(1e3)
   real*8::ktab(nrea,ktab_n),ktab_logTlow, ktab_logTup, ktab_T(ktab_n)
   real*8::inv_ktab_T(ktab_n-1), inv_ktab_idx
   
