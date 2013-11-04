@@ -24,6 +24,7 @@ contains
   end subroutine krome_plot_cooling
 
   !****************
+  !alias for dumping cooling in the unit nfile_in
   subroutine krome_dump_cooling(n,Tgas,nfile_in)
     use krome_cooling
     use krome_commons
@@ -42,6 +43,8 @@ contains
 #ENDIFKROME
 
   !*****************
+  !get an array of double containing the masses in g
+  ! of the species
   !alias for get_mass
   function krome_get_mass()
     use krome_subs
@@ -53,6 +56,7 @@ contains
   end function krome_get_mass
 
   !*****************
+  !get an array containing the charges of the species
   !alias for get_charges
   function krome_get_charges()
     use krome_subs
@@ -64,6 +68,8 @@ contains
   end function krome_get_charges
 
   !*****************
+  !get an array of character*16 containing the names
+  ! of alla the species
   !alias for get_names
   function krome_get_names()
     use krome_subs
@@ -75,6 +81,7 @@ contains
   end function krome_get_names
 
   !*****************
+  !get the index of the species with name name
   !alias for get_index
   function krome_get_index(name)
     use krome_subs
@@ -85,6 +92,8 @@ contains
   end function krome_get_index
 
   !*******************
+  !get the total density of the gas in g/cm3
+  ! giving all the number densities n(:)
   function krome_get_rho(n)
     use krome_commons
     real*8::krome_get_rho,n(:)
@@ -95,7 +104,8 @@ contains
   
   !*************************
   subroutine krome_scale_Z(n,Z)
-    !scale metallicity according to Arnett(1996)
+    !scale metallicity the metals contained in n(:) 
+    ! to Z according to Arnett(1996)
     use krome_commons
     real*8::n(:),Z
 
@@ -105,13 +115,18 @@ contains
 
   !***********************
   function krome_get_electrons(n)
+    !get the total number of electrons from
+    ! the number denisities of all the species
     use krome_commons
-    real*8::n(:),ee,krome_get_electrons
-    ee = sum(n(:) * krome_get_charges())
+    real*8::n(:),ee,krome_get_electrons,x(size(n))
+    x(:) = n(:)
+    x(krome_idx_e) = 0.d0
+    ee = sum(x(:) * krome_get_charges())
     krome_get_electrons = max(0.d0, ee)
   end function krome_get_electrons
 
   !*******************************
+  !get the fluxes of all the reactions in 1/cm3/s
   function krome_get_flux(n,Tgas)
     use krome_commons
     use krome_subs
@@ -124,6 +139,7 @@ contains
   end function krome_get_flux
 
   !************************
+  !dump the fluxes to the file unit nfile
   subroutine krome_dump_flux(x,n,Tgas,nfile)
     use krome_commons
     real*8::n(:),Tgas,x,flux(nrea)
@@ -138,7 +154,7 @@ contains
   end subroutine krome_dump_flux
 
   !************************
-  !print species informations
+  !print species informations on screen
   subroutine krome_get_info(x, Tgas)
     use krome_commons
     use krome_subs

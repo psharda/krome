@@ -76,25 +76,29 @@ contains
   !**********************************
   function kpla(n,Tgas)
     !Planck opacity mean fit (Lenzuni+1996)
-    !only temperautre dependent (note that the
+    !only denisity dependent (note that the
     ! fit provided by Lenzuni is wrong)
+    ! valid for T<3e3 K
     use krome_subs
     use krome_commons
     implicit none
     real*8::kpla,rhogas,Tgas,n(:),y
     real*8::a0,a1
 
-    rhogas = sum(n(:)*get_mass())
+    rhogas = sum(n(:)*get_mass()) !g/cm3
 
     kpla = 0.d0
+    !opacity is zero under 1e-12 g/cm3
     if(rhogas<1d-12) return
 
+    !fit coefficients
     a0 = 1.000042d0
     a1 = 2.14989d0
-
-    y = log10(min(rhogas,0.5d0)) !rhogas
     
-    kpla = 1d1**(a0*y + a1)
+    !log density cannot exceed 0.5 g/cm3
+    y = log10(min(rhogas,0.5d0))
+    
+    kpla = 1d1**(a0*y + a1) !fit density only
     
   end function kpla
 
@@ -102,17 +106,18 @@ contains
   !**********************************
   function cooling_Continuum(n,Tgas)
     !cooling from continuum for a thin gas (no opacity)
+    !see Omukai+2000 for details
     use krome_commons
     use krome_constants
     use krome_subs
     implicit none
     real*8::n(:),Tgas,cooling_Continuum,kgas,rhogas
     real*8::lj,tau,beta
-    rhogas = sum(n(:)*get_mass())
-    kgas = kpla(n(:),Tgas) !planck opacity (Omukai+2000)
-    lj = get_jeans_length(n(:), Tgas)
-    tau = lj * kgas * rhogas + 1d-40
-    beta = min(1.d0,tau**-2)
+    rhogas = sum(n(:)*get_mass()) !g/cm3
+    kgas = kpla(n(:),Tgas) !planck opacity cm2/g (Omukai+2000)
+    lj = get_jeans_length(n(:), Tgas) !cm
+    tau = lj * kgas * rhogas + 1d-40 !opacity
+    beta = min(1.d0,tau**-2) !beta escape (always <1.)
     cooling_Continuum = 4.d0 * stefboltz_erg * Tgas**4 &
          * kgas * rhogas * beta !erg/s/cm3
     
@@ -137,13 +142,16 @@ contains
     real*8::b0,b1,b2,b3,b4,b5
     real*8::cool,tauCIE,logcool
 
+    !under 1e-12 1/cm3 cooling is zero
     if(n(idx_H2)<1d-12) then
        cooling_CIE = 0.d0
        return
     end if
 
-    Tgas = max(Tgas, 2.73d0)
+    !temperature limit
+    Tgas = max(Tgas, 2.73d0) 
 
+    !prepares variables
     x = log10(Tgas)
     x2 = x*x
     x3 = x2*x
@@ -151,6 +159,7 @@ contains
     x5 = x4*x
 
     cool = 0.d0
+    !outside boundaries below cooling is zero
     logcool = -1d99
 
     !evaluates fitting functions
@@ -177,7 +186,7 @@ contains
     !opacity according to RA04
     tauCIE = (n(idx_H2) * 1.4285714e-16)**2.8 !note: 1/7e15 = 1.4285714e-16
     cool = p_mass * 1d1**logcool !erg*cm3/s
-    !lambda_thick = lambda_thin * opacity
+
     cooling_CIE = cool * min(1.d0, (1.d0-exp(-tauCIE))/tauCIE) &
          * n(idx_H2) * sum(n(1:nmols)) !erg/cm3/s
 
@@ -212,7 +221,7 @@ contains
     real*8::cooling_dust,n(:),Tgas,cool,ntot
     integer::i,idust
     
-    !total gas density
+    !total gas density 1/cm3
     ntot = sum(n(1:nmols))
 
     cool = 0.d0 !cooling in erg/s/cm3
@@ -223,7 +232,7 @@ contains
             krome_dust_T(idust), ntot)
     end do
 
-    cooling_dust = cool
+    cooling_dust = cool !erg/s/cm3
 
   end function cooling_dust
 #ENDIFKROME
@@ -262,17 +271,16 @@ contains
 #ENDIFKROME
   
 #IFKROME_useCoolingH2GP
-  !H2 COOLING GALLI&PALLA 1998 
-  !VALIDITY RANGE 10<=T(K)<=1d4
   !*******************************
   function cooling_H2GP(n, Tgas)
+    !cooling from Galli&Palla98
     use krome_commons
     use krome_subs
     real*8::n(:),Tgas, tm, logT
     real*8::cooling_H2GP,T3
     real*8::LDL,HDLR,HDLV,HDL,fact
 
-    tm = max(Tgas, 13.0d0)    ! no cooling below 13 Kelvin ...
+    tm = max(Tgas, 13.0d0)    ! no cooling below 13 Kelvin
     tm = min(Tgas, 1.d5)      ! fixes numerics
     logT = log10(tm)
     T3 = tm / 1.d3
@@ -425,7 +433,7 @@ contains
     gaunt_factor = 1.5d0
     temp = max(Tgas,10.d0) !K
     T5 = temp/1.d5 !K
-    cool = 0.d0
+    cool = 0.d0 !erg/cm3/s
 
     !COLLISIONAL IONIZATION: H, He, He+, He(2S)
     cool = cool+ 1.27d-21*sqrt(temp)/(1.d0+sqrt(T5))&
@@ -480,7 +488,7 @@ contains
     real*8::c(0:ns,0:ns),logW,W,dd,lhj
 
     !default HD cooling value
-    cooling_HD = 0.0d0
+    cooling_HD = 0.0d0 !erg/cm3/s
 
     !exit on low temperature
     if(Tgas<1d2) return
@@ -618,9 +626,16 @@ contains
 
     real*8::tot_metals,invTgas,ratio_para_ortho
     real*8::T2
-    !real*8::Tgasb41, Tgasb42, Tgasb43, Tgasb44, Tgasb45, Tgasb46, Tgasb47, Tgasb48
-    !real*8::Tgasb31, Tgasb32, Tgasb33, Tgasb34, Tgasb35, Tgasb36, Tgasb37, Tgasb38
 
+    !quite complex routine:
+    !(1) evaluates de-excitation rates
+    !(2) computes excitation rates from de-excitations
+    !(3) computes matrix elements
+    !(4) builds matrix
+    !(5) solves linear system
+    !(6) computes final cooling
+    
+    
     !rate coefficients (gijA_B) are in cm3/s
     ! GJ07 = Glover&Jappsen2007
     ! HM89 = Hollenbach&McKee1989
@@ -635,7 +650,7 @@ contains
 #KROME_tot_metals
     
     ratio_para_ortho = 1.d0/3.d0
-    kb = boltzmann_erg
+    kb = boltzmann_erg !erg/K
     Tgas = max(inTgas,0d0)
     invTgas = 1.d0/Tgas
     lnT = log(Tgas)
@@ -1050,7 +1065,7 @@ contains
 #ENDIFKROME_useCoolingZFep
 
        !(4)-----------------------------------------------------------------
-       !//matrici di coefficienti
+       !//prepares matrices
 
 
 #IFKROME_useCoolingZC
@@ -1199,6 +1214,7 @@ contains
 
   !*********************************
   subroutine mydgesv(A,B)
+    !driver for LAPACK dgesv
     real*8::A(:,:),B(:)
     integer::n,info,i
     integer,allocatable::ipiv(:),tmp(:)
@@ -1223,6 +1239,7 @@ contains
 
   !************************************
   subroutine plot_cool(n)
+    !routine to plot cooling at runtime
     real*8::n(:),Tgas,Tmin,Tmax
     real*8::cool_atomic,cool_H2,cool_HD,cool_tot, cool_totGP,cool_H2GP
     real*8::cool_dH,cool_Z
@@ -1269,6 +1286,7 @@ contains
   end subroutine plot_cool
 
   !***********************************
+  !routine to dump cooling in unit nfile
   subroutine dump_cool(n,Tgas,nfile)
     implicit none
     real*8::Tgas,n(:),cool(9)

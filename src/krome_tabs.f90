@@ -3,20 +3,24 @@ contains
 
 #IFKROME_useTabs
   subroutine make_ktab()
+    !build the tabs from coefficients
     use krome_commons
     use krome_subs
     integer::i,j,ierror,kwarnup(nrea),kwarndown(nrea),pblock
     real*8::kk(nrea),valmax,n(nspec)
-    
-    #KROME_logTlow
-    #KROME_logTup
 
+    !temperature limits
+#KROME_logTlow
+#KROME_logTup
+
+    !loop to create tabs (it may take a while)
     valmax = 1d0
-    ierror = 0
-    pblock = ktab_n/10
+    ierror = 0 !error count
+    pblock = ktab_n/10 !ouput frequency
     print *,"KROME: creating tabs..."
-    kwarnup(:) = 0
-    kwarndown(:) = 0
+    kwarnup(:) = 0 !store warnings
+    kwarndown(:) = 0 !store warnings
+    !loop on temperatures
     do i=1,ktab_n
        if(mod(i,pblock)==0) print *,i/pblock*10,"%"
        ktab_T(i) = 1d1**((i-1)*(ktab_logTup-ktab_logTlow)/(ktab_n-1)&
@@ -24,6 +28,7 @@ contains
        n(:) = 0.d0
        n(idx_Tgas) = ktab_T(i)
        kk(:) = coe(n(:))
+       !check for errors or discrepancies
        if((maxval(kk)>valmax.or.minval(kk)<0.d0)) then
           ierror = ierror + 1
           if(ierror==1) print '(a16,a5,2a11)',"","idx","Tgas","rate"
@@ -41,12 +46,14 @@ contains
        ktab(:,i) = kk(:)
     end do
 
+    !store inverse values of deltaT to speed-up at runtime
     do i=1,ktab_n-1
        inv_ktab_T(i) = 1.d0 / (ktab_T(i+1)-ktab_T(i))
     end do
-
-    inv_ktab_idx = 1.d0 / (ktab_logTup - ktab_logTlow) * (ktab_n - 1)
     
+    !store inverse to go fast at runtime
+    inv_ktab_idx = 1.d0 / (ktab_logTup - ktab_logTlow) * (ktab_n - 1)
+
   end subroutine make_ktab
   
   !************************
@@ -106,6 +113,7 @@ contains
 
   !***********************+
   function coe_tab(n)
+    !interface to tabs
     use krome_subs
     use krome_commons
     use krome_user_commons

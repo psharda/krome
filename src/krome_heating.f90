@@ -81,7 +81,7 @@ contains
     use krome_commons
     use krome_constants
     real*8::photo_heating,n(:),n0
-    n0 = 1d99 !density for fake opacity (see KROME paper)
+    n0 = 1d99 !density for fake opacity
     photo_heating = 0.d0
 #KROME_photo_heating
 
@@ -92,12 +92,9 @@ contains
 #IFKROME_useHeatingChem
   !H2 FORMATION HEATING
   !UNITS = erg/cm3/s
-  !Following Hollenbach & McKee (1979), we assume the heat deposited 
-  !per a formed H2 is: 
-  !3.53*(1+ncr/n)^−1 eV for H2 formation by H− process
-  !1.83*(1+ncr/n)^−1 eV for H2 formation by H2+ process
-  !4.48*(1+ncr/n)^−1 eV for H2 formation by the three-body 
-    !*******************************
+  !krome build the heating/cooling term according
+  ! to the chemical network employed
+  !*******************************
   function heatingChem(n, Tgas, k, nH2dust)
     use krome_constants
     use krome_commons
@@ -134,6 +131,9 @@ contains
 
 #IFKROME_useHeatingCompress
   !***********************
+  !evaluates compressional heating
+  ! WARNING: user_tff is a common variable
+  ! available in krome_user_commons.f90
   function heat_compress(n, Tgas)
     use krome_user_commons
     use krome_commons

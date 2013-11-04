@@ -19,8 +19,4 @@ contains
     kooij = kalpha*(Tgas/3d2)**kbeta*exp(-kgamma/Tgas)
   end function kooij
 
-  function ktrimol(zazero,zaone,zcfirst,zcsecond,Tgas,dn)
-    real*8::ktrimol,zazero,zaone,zcfirst,zcsecond,Tgas,dn
-    ktrimol = 0.d0
-  end function ktrimol
 end module krome_user_commons

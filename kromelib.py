@@ -663,6 +663,18 @@ def parser(name, mass_dic, atoms, thermo_data):
 		18:"Ar",
 		20:"Ca",
 		26:"Fe"}
+
+	#check for fake species
+	if("FK" in name):
+		mymol.name = name #name
+		mymol.mass = 0e0 #mass (g)
+		mymol.ename = name #exploded name
+		mymol.charge = 0 #charge
+		mymol.zatom = 0 #atomic number
+		mymol.fname = name #f90 name
+		mymol.is_atom = True #atom flag
+		mymol.fidx = "idx_"+name #f90 index
+		return mymol
 	
 
 	zatom = 0 #atomic number init
@@ -1367,8 +1379,12 @@ def get_ph_stuff(react):
 
 #################################
 # returns the licence of KROME
-def get_licence_header():
+def get_licence_header(version, codename):
+	import datetime
 	header =  """!!*************************************************************
+	!! This file has been generated with:
+	!! krome #version# "#codename#" on #date#.
+	!!
 	!!KROME is a nice and friendly chemistry package for a wide range of 
 	!! astrophysical simulations. Given a chemical network (in CSV format) 
 	!! it automatically generates all the routines needed to solve the kinetic 
@@ -1380,6 +1396,8 @@ def get_licence_header():
 	!! the users is well accepted. See disclaimer below and GNU License 
 	!! in gpl-3.0.txt.
 	!!
+	!! more details in http://kromepackage.org/
+	!! also see https://bitbucket.org/krome/krome_stable
 	!!
 	!!Written and developed by Tommaso Grassi
 	!!tommasograssi@gmail.com,
@@ -1390,7 +1408,7 @@ def get_licence_header():
 	!!Institut fuer Astrophysik, Goettingen.
 	!!
 	!!Others (alphabetically): F.A. Gianturco, J.Prieto,
-	!!E. Simoncini, D.R.G. Schleicher, D. Seifreid 
+	!!D.R.G. Schleicher, D. Seifreid, E. Simoncini 
 	!!
 	!!
 	!!KROME is provided \"as it is\", without any warranty. 
@@ -1404,6 +1422,9 @@ def get_licence_header():
 	!! Such exclusion of liability expressly includes any damages 
 	!! including the loss of data of any kind (including personal data)
 	!!*************************************************************\n"""
+
+	datenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+	header = header.replace("#date#",datenow).replace("#version#",version).replace("#codename#",codename)
 	return header.replace("\t","").replace("!!","   ! ")
 #################################
 #breaks a string (mystr), in piece

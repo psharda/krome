@@ -4,7 +4,7 @@ contains
 #KROME_header
 
   !************************
-  !compute reaction rates
+  !compute reaction rates cm^3(n-1)/s
   function coe(n)
     use krome_commons
     use krome_user_commons
@@ -25,11 +25,6 @@ contains
     k(:) = 1.d-40 !inizialize coefficients
 
 #KROME_krates
-
-    !set a minumum value for the rates
-    !do i=1,nrea
-    !   k(i) = max(k(i),1d-40) 
-    !end do
 
     coe(:) = k(:)!set coefficients to return variable
   end function coe
@@ -132,7 +127,10 @@ contains
   end function get_rnames
 
   !*****************************
+  !computes revers kinetics from reaction and
+  ! product indexes
   function revKc(Tgas,ridx,pidx)
+    implicit none
     real*8::revKc,Tgas
     integer::ridx(:),pidx(:),i
 
@@ -149,6 +147,8 @@ contains
   end function revKc
   
   !*****************************
+  !compute H-S for species with index idx 
+  ! when temperature is Tgas
   function revHS(Tgas,idx)
     use krome_commons
     real*8::revHS,Tgas,Tgas2,Tgas3,Tgas4,invT,lnT,H,S
@@ -184,6 +184,7 @@ contains
 
   !******************************
   function get_flux(n,Tgas)
+    !get the flux k*n*n*... of the rates
     use krome_commons
     implicit none
     integer::i
@@ -205,6 +206,8 @@ contains
 
   !*****************************
   subroutine load_arrays()
+    !load the array containing reactants
+    ! and product index
     use krome_commons
 
 #KROME_implicit_arrays

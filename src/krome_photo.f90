@@ -20,19 +20,17 @@ contains
   subroutine krome_init_photo()
     use krome_commons
 
-    !print *,"Initializaing photoreactions..."
-
 #KROME_photo_init_zero
 #KROME_photo_qromos
 #KROME_photo_heating_qromos
 
 #KROME_photo_heating_print
-    !print *,"done!"
 
   end subroutine krome_init_photo
 
   !*******************************
   function intf(nrg)
+    !integral argument for flux
     use krome_constants
     real*8::intf,nrg
     intf = 4.d0 * pi * Jflux(nrg) / nrg / planck_eV
@@ -40,6 +38,7 @@ contains
 
   !********************
   function sigma_v96(energy_eV,E0,sigma_0,ya,P,yw,y0,y1)
+    !Verner+96 cross section fit (cm2)
     real*8::sigma_v96,energy_eV,sigma_0,Fy,yw,x,y,E0
     real*8::y0,y1,ya,P
     x = energy_eV/E0 - y0
@@ -51,6 +50,7 @@ contains
 
   !********************
   function heat_v96(energy_eV,Eth,E0,sigma_0,ya,P,yw,y0,y1)
+    !Heating with Verner+96 cross section fit (cm2*eV)
     use krome_constants
     real*8::heat_v96,energy_eV,sigma_0,Fy,yw,x,y,E0,Eth
     real*8::y0,y1,ya,P
@@ -66,7 +66,9 @@ contains
 
   !********************************
   subroutine qromos(func, sigma, a, b, ss, choose)
-    !modified qromo to have sigma*function
+    !integrates func*sigma with Romberg's method
+    ! from Numerical Recipeis, but modified interface 
+    ! to have sigma*function
     implicit none
 
     !     Parameters

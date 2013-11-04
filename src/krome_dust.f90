@@ -36,6 +36,9 @@ contains
 
     rhogas = sum(mass(1:nmols)*ngas(:)) !total gas density g/cm3
 
+    !WARNING: this algorithm evaluates the bin sizes in order to
+    ! have the same amount of dust per each bin, following MNR
+    ! distribution. change according to your needs
     do j=1,ndustTypes
        ilow = nd * (j - 1) + 1 !lower index
        iup = nd * j !upper index
@@ -162,13 +165,6 @@ contains
             dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
             xr, ntot)
 
-       !dustHl = eAbs - dust_opt_Em(i,1) *rhogr &
-       !     + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-       !     dust_opt_Tbb(1), ntot)
-       !dustHr = eAbs - dust_opt_Em(i,nT) *rhogr &
-       !     + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-       !     dust_opt_Tbb(nT), ntot)
-
        sgnr = sgn(dustHr) !stores right bound sign
        sgnl = sgn(dustHl) !stores left bound sign
 
@@ -239,6 +235,7 @@ contains
   end function kopa
   !******************
   function sgn(arg)
+    !return sign of a double arg
     real*8::sgn,arg
     sgn = 1.d0
     if(arg>=0.d0) return
@@ -295,9 +292,6 @@ contains
     mgrain = adust**3 *krome_grain_rho / (p_mass)
     krome_dust_sput = y*natom*ndust*adust**2 / mgrain
     
-    !T6 = 1d6/Tgas
-    !krome_dust_sput = 3.d-17 / adust * natom / (1.d0 + T6**3) * ndust !1/s
-
     if(krome_dust_sput>1.d0) then
        print *,krome_dust_sput,adust,natom,Tgas,ndust
        stop
@@ -331,10 +325,11 @@ contains
     int1 = 0.d0 !init right integral
     !computes integral by using trapezoidal method
     do i=2,size(dust_opt_nu)
+       !flux is the kernel (J(nu)+Planck)
        kera =  Jflux(dust_opt_nu(i-1)*planck_eV) * eV_to_erg + &
-            fplanck(dust_opt_nu(i-1), 2.73d0*(1.d0+redshift)) !flux is the kernel (J(nu)+Planck)
+            fplanck(dust_opt_nu(i-1), 2.73d0*(1.d0+redshift)) 
        kerb = Jflux(dust_opt_nu(i)*planck_eV) * eV_to_erg + &
-            fplanck(dust_opt_nu(i), 2.73d0*(1.d0+redshift)) !flux is the kernel (J(nu)+Planck)
+            fplanck(dust_opt_nu(i), 2.73d0*(1.d0+redshift))
        dnu = dust_opt_nu(ival) - dust_opt_nu(ival-1) !stepsize
        !calculates integrals
        int0 = int0 + 0.5d0 * (kera * dust_opt_Qabs(ival-1,i-1) &
@@ -558,9 +553,6 @@ contains
        stop
     end if
   end function stick
-
-
-
   
 #ENDIFKROME
 end module krome_dust

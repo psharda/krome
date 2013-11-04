@@ -46,6 +46,8 @@ class krome():
 	atols = [] #custom ATOLs
 	rtols = [] #custom RTOLs
 	customODEs = [] #custom ODEs
+	version = "13.11"
+	codename = "Astonishing Ansatz"
 	#########################################
 	def init_argparser(self):
 
@@ -1511,7 +1513,7 @@ class krome():
 					fout.write("\tinteger,parameter::ndust=" + str(ndust) + "\n")
 					fout.write("\tinteger,parameter::ndustTypes=" + str(self.dustTypesSize) + "\n")
 			elif(srow == "#KROME_header"):
-				fout.write(get_licence_header())
+				fout.write(get_licence_header(self.version, self.codename))
 			elif(srow == "#KROME_implicit_arr_r"):
 				for j in range(self.maxnreag):
 					fout.write("integer::arr_r"+str(j+1)+"(nrea)\n")
@@ -1595,7 +1597,7 @@ class krome():
 			fouta = open(self.buildFolder+"krome_user_commons.f90","w")
 
 			for row in fh:
-				row = row.replace("#KROME_header", get_licence_header())
+				row = row.replace("#KROME_header", get_licence_header(self.version, self.codename))
 
 				if(row[0]!="#"): fouta.write(row)
 
@@ -1698,7 +1700,7 @@ class krome():
 					spt += "Tlim("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.Tpoly])) + "/)\n"
 				fout.write(sp1+sp2+spt)
 			elif(srow == "#KROME_header"):
-				fout.write(get_licence_header())
+				fout.write(get_licence_header(self.version, self.codename))
 			else:
 				fout.write(row)
 		if(not(self.buildCompact)):
@@ -1894,7 +1896,7 @@ class krome():
 		#loop on source to replace pragmas
 		for row in fh:
 			if(row.strip() == "#KROME_header"):
-				fout.write(get_licence_header())
+				fout.write(get_licence_header(self.version, self.codename))
 			else:
 				srow = row.strip()
 				#enthalpic
@@ -2084,7 +2086,7 @@ class krome():
 		for row in fh:
 			if(row.strip() == "#KROME_header"):
 
-				fout.write(get_licence_header())
+				fout.write(get_licence_header(self.version, self.codename))
 			else:
 				if(row.strip() == "#IFKROME_useHeatingdH" and (not(self.useHeatingdH) or len(dH_varsa)==0)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
@@ -2246,7 +2248,7 @@ class krome():
 					dustSumVar.append("dSumDust"+dType)
 				fout.write("\t real*8::" + (",".join(dustSumVar)) + "\n")
 			elif(srow == "#KROME_header"):
-				fout.write(get_licence_header())
+				fout.write(get_licence_header(self.version, self.codename))
 			elif(srow == "#KROME_implicit_variables"):
 				fout.write("real*8::rr\n")
 				ris = (",".join(["r"+str(i+1) for i in range(self.maxnreag)]))
@@ -2403,7 +2405,7 @@ class krome():
 				for x in specs:
 					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
 			elif(srow == "#KROME_header"):
-				fout.write(get_licence_header())
+				fout.write(get_licence_header(self.version, self.codename))
 			elif(srow == "#KROME_constant_list"):
 				const = ""
 				constants = self.constantList
@@ -2541,7 +2543,7 @@ class krome():
 			if(skip): continue
 
 			if(srow == "#KROME_header"):
-				fout.write(get_licence_header())
+				fout.write(get_licence_header(self.version, self.codename))
 			elif(srow == "#KROME_custom_ATOL"):
 				#add custom atols
 				if(len(self.atols)>0):
