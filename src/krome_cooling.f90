@@ -117,7 +117,7 @@ contains
     kgas = kpla(n(:),Tgas) !planck opacity cm2/g (Omukai+2000)
     lj = get_jeans_length(n(:), Tgas) !cm
     tau = lj * kgas * rhogas + 1d-40 !opacity
-    beta = min(1.d0,tau**-2) !beta escape (always <1.)
+    beta = min(1.d0,tau**(-2)) !beta escape (always <1.)
     cooling_Continuum = 4.d0 * stefboltz_erg * Tgas**4 &
          * kgas * rhogas * beta !erg/s/cm3
     

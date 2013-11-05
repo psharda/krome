@@ -1205,7 +1205,7 @@ class krome():
 						dns[nmols+j-1] += " + krome_dust_grow(n("+str(nmols+j)+"),n(idx_"+dType+"),Tgas"
 						dns[nmols+j-1] += ",krome_dust_T("+str(j)+"),vgas,krome_dust_asize("+str(j)+"))"
 					if(self.useDustSputter):
-						dns[nmols+j-1] += " - krome_dust_sput(Tgas,krome_dust_asize("
+						dns[nmols+j-1] += " &\n- krome_dust_sput(Tgas,krome_dust_asize("
 						dns[nmols+j-1] += str(j)+"),ntot,n("+str(nmols+j)+"))"
 
 		#find the maximum number of products and reactants

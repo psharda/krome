@@ -62,7 +62,8 @@ contains
        krome_dust_asize3(ilow:iup) = adust(:)**3 !store mean size cube
        !amount of dust per bin computed using the dust to gas ratio (dtg)
        ! of the jth dust type.
-       xdust(ilow:iup) = rhogas * dtg(j) / adust(:)**3 / krome_grain_rho / nd 
+       xdust(ilow:iup) = rhogas * dtg(j) / adust(ilow:iup)**3 &
+            / krome_grain_rho / nd 
 
        !evaluate dust-parnter ratio (e.g. 1dust=1e2 C atoms)
        krome_dust_partner_ratio(ilow:iup) = adust(ilow:iup)**3 &
@@ -90,9 +91,9 @@ contains
 
 
   !*****************************
-  function dustCool(adust2,ndust,Tgas,Tdust,ntot)
+  function dustCool(adust2,nndust,Tgas,Tdust,ntot)
     use krome_constants
-    real*8::dustCool,adust2,Tgas,ndust,ntot,fact,vgas,Tdust
+    real*8::dustCool,adust2,Tgas,nndust,ntot,fact,vgas,Tdust
 
     !factor of contribution for species other than protons
     ! mean value, see Hollenbach and McKee 1979 for a
@@ -100,7 +101,7 @@ contains
     fact = 0.5d0
     vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
 
-    dustCool = 2.d0 * boltzmann_erg * ndust * adust2 * &
+    dustCool = 2.d0 * boltzmann_erg * nndust * adust2 * &
          fact * vgas * (Tgas - Tdust) * ntot
 
   end function dustCool
@@ -201,23 +202,23 @@ contains
   end function getTdust
   
   !*****************************
-  function beta(n,asize,Tdust,ndust)
+  function beta(n,asize,Tdust,nndust)
     !opacity term (Omukai+2000, 2005)
     use krome_commons
     use krome_constants
     use krome_subs
     real*8::n(:),ntot,beta,tau,lj,rhodust,Tdust
-    real*8::ndust,asize,rhogas,Tgas,m(nspec)
+    real*8::nndust,asize,rhogas,Tgas,m(nspec)
 
     m(:) = get_mass() !get masses (g)
     Tgas = n(idx_Tgas) !get Tgas (K)
-    rhodust = ndust * asize**3 * krome_grain_rho !dust mass density g/cm3
+    rhodust = nndust * asize**3 * krome_grain_rho !dust mass density g/cm3
     rhogas = sum(n(1:nmols)*m(1:nmols)) !gas mass density g/cm3
     !jeans length
     lj = sqrt(15./4.*boltzmann_erg*Tgas/pi/gravity/1.22/rhogas/p_mass)
     ntot = sum(n(1:nmols)) !total density gas
     tau = kopa(Tdust) * rhogas * lj !opacity
-    beta = min(1d0, tau**-2) !final opacity
+    beta = min(1d0, tau**(-2)) !final opacity
 
   end function beta
   !****************************
@@ -247,15 +248,15 @@ contains
 
 
   !*********************
-  function krome_dust_grow(ndust,natom,Tgas,Tdust,vgas,adust)
+  function krome_dust_grow(nndust,natom,Tgas,Tdust,vgas,adust)
     !krome_dust_grow: compute dust formation in cm3/s 
     ! (Grassi2012, eqn.25)
     use krome_constants
     implicit none
-    real*8::krome_dust_grow,ndust,natom,Tgas,Tdust,vgas,adust,seed
+    real*8::krome_dust_grow,nndust,natom,Tgas,Tdust,vgas,adust,seed
     
     seed = 1d-12 !1/cm3
-    krome_dust_grow = 1d-4 * pi * adust**2 * (max(ndust,0.d0) + seed) &
+    krome_dust_grow = 1d-4 * pi * adust**2 * (max(nndust,0.d0) + seed) &
          * max(natom,0.d0) * krome_dust_stick(Tgas,Tdust) * vgas
         
   end function krome_dust_grow
@@ -272,11 +273,11 @@ contains
   end function krome_dust_stick
   
   !***************
-  function krome_dust_sput(Tgas,adust,natom,ndust)
+  function krome_dust_sput(Tgas,adust,natom,nndust)
     use krome_constants
     use krome_commons
     !sputtering rate using nozawa 2006 yields as impact efficiency
-    real*8::krome_dust_sput,Tgas,adust,natom,logT,ndust,y,logy
+    real*8::krome_dust_sput,Tgas,adust,natom,logT,nndust,y,logy
     real*8::a0,a1,a2,a3,mgrain
     
     if(Tgas<1d5) then
@@ -293,10 +294,12 @@ contains
     logy = exp(-a0 * logT) / (a1 + a2 * logT) + a3
     y = 1d1**logy
     mgrain = adust**3 *krome_grain_rho / (p_mass)
-    krome_dust_sput = y*natom*ndust*adust**2 / mgrain
+    krome_dust_sput = y*natom*nndust*adust**2 / mgrain
     
     if(krome_dust_sput>1.d0) then
-       print *,krome_dust_sput,adust,natom,Tgas,ndust
+       print *,"sputtering>1!"
+       print *,"sputtering ","adust ","natom ","Tgas ","nndust"
+       print *,krome_dust_sput,adust,natom,Tgas,nndust
        stop
     end if
 
@@ -483,12 +486,12 @@ contains
 
 
   !*******************************
-  function krome_H2_dust(ndust,Tdust,n,H2_eps_f,myvgas)
+  function krome_H2_dust(nndust,Tdust,n,H2_eps_f,myvgas)
     !H2 formed on dust (1/cm3/s)
     use krome_constants
     use krome_commons
     real*8::H2_dust, krome_H2_dust,Tgas,Tdust(:)
-    real*8::myvgas,H2_eps,ndust(:),n(:),H2_eps_f
+    real*8::myvgas,H2_eps,nndust(:),n(:),H2_eps_f
     integer::i
 
     Tgas = n(idx_Tgas)
@@ -496,7 +499,7 @@ contains
     H2_dust = 0.d0 
     do i = 1,size(Tdust)
        H2_eps = H2_eps_f(Tgas, Tdust(i))
-       H2_dust = H2_dust + 0.5d0 * n(idx_H) * myvgas * ndust(i) &
+       H2_dust = H2_dust + 0.5d0 * n(idx_H) * myvgas * nndust(i) &
             * krome_dust_asize2(i) &
             * pi * H2_eps * stick(Tgas, Tdust(i))
     end do
