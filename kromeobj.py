@@ -16,7 +16,7 @@ class krome():
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	pedanticMakefile = useFakeOpacity = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = True
-	useDustGrowth = useDustSputter = useDustH2 = False
+	useDustGrowth = useDustSputter = useDustH2 = useDustT = False
 	doRamses = doFlash = doEnzo = wrapC = False
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -58,7 +58,7 @@ class krome():
 		self.parser.add_argument("-forceMF222", action="store_true", help="force internal-generated sparsity and Jacobian")
 	 
 		self.parser.add_argument("-test",help=("Create a test model in /build. TEST can be: "+tests+"."))
-		self.parser.add_argument("-heating", help="heating options")
+		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98, COMPTON, CIE, CI, CII, SiI, SiII, OI, OII, FeI, FeII (e.g. -cooling ATOMIC,CII,OI,FeI), CHEM")
 		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
 		self.parser.add_argument("-useH2opacity", action="store_true",help="use H2 opacity for H2 cooling")
@@ -73,7 +73,7 @@ class krome():
 		self.parser.add_argument("-usePhIoniz", action="store_true", help="include photochemistry")
 		self.parser.add_argument("-useEquilibrium", action="store_true", help="check if the solver has reached the equilbirum. If so break the solver's loop and return the values found. It is useful when the system oscillates around a solution (as in some photoheating cases). To be used with caution.")
 		self.parser.add_argument("-dust", help="include dust ODE using N bins for each TYPE, e.g. -dust 10,C,Si set 10 dust carbon bins and 10 dust silicon dust bins. Require a call to the krome_init_dust subroutine. See test=dust for an example.")
-		self.parser.add_argument("-dustOptions", help="activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular hydrogen formation on dust.", metavar="OPTIONS")
+		self.parser.add_argument("-dustOptions", help="activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular hydrogen formation on dust, and (T) dust temperature. The last option provide a template for the FEX routine.", metavar="OPTIONS")
 		self.parser.add_argument("-compact", action="store_true", help="creates a single fortran file with all the modules instead of various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact).")
 		self.parser.add_argument("-useDvodeF90", action="store_true", help="use Dvode implementation in F90 (slower)")
 		self.parser.add_argument("-useTabs", action="store_true", help="use tabulated rate coefficients (free parameter: temperature)")
@@ -129,7 +129,7 @@ class krome():
 			[argv.append(x) for x in ["-iRHS"]]
 			filename = "networks/react_WH2008"
 		elif(args.test=="dust"):
-			[argv.append(x) for x in ["-dust=10,C,Si","-useN","-dustOptions=GROWTH,SPUTTER"]]
+			[argv.append(x) for x in ["-dust=10,C,Si","-useN","-dustOptions=GROWTH,SPUTTER,T"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="compact"):
 			[argv.append(x) for x in ["-compact"]]
@@ -421,6 +421,7 @@ class krome():
 			if("GROWTH" in dustOptions): self.useDustGrowth = True
 			if("SPUTTER" in dustOptions): self.useDustSputter = True
 			if("H2" in dustOptions): self.useDustH2 = True
+			if("T" in dustOptions): self.useDustT = True
 			print "Reading option -dustOptions (options="+(",".join(dustOptions))+")"
 
 		#project name folder
@@ -1811,6 +1812,7 @@ class krome():
 	###############################
 	def makeDust(self):
 		buildFolder = self.buildFolder
+		useDustT = self.useDustT
 		#********* DUST ****************
 		print "- writing krome_dust.f90...",
 		fh = open("src/krome_dust.f90")
@@ -1820,13 +1822,19 @@ class krome():
 			fout = open(buildFolder+"krome_dust.f90","w")
 
 
-		dustPartnerIdx = dustQabs = dustOptInt = ""
+		dustPartnerIdx = dustQabs = dustOptInt = "" 
 		if(self.useDust):
 			itype = 0 #dust type index
 			#loop in dust types
 			for dType in self.dustTypes:
 				itype += 1 #increase index
 				dustPartnerIdx += "krome_dust_partner_idx("+str(itype)+") = idx_"+dType+"\n"
+				if(useDustT):
+					dustQabs += "call init_Qabs(\"opt"+dType+".dat\",dust_opt_Qabs_"+dType
+					dustQabs += ",dust_opt_asize_"+dType+", &\n dust_opt_nu_"+dType+")\n"
+					dustOptInt += "call dustOptIntegral(dust_opt_Em_"+dType+",dust_opt_Tbb_"+dType+","
+					dustOptInt += "dust_opt_asize_"+dType+",&\n dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
+
 
 		skip = False
 		for row in fh:
@@ -2231,6 +2239,18 @@ class krome():
 							fout.write("!"+specs[inw].name+"\n")
 							fout.write("\t" + x + "\n")
 							inw += 1
+			elif(srow == "#KROME_calc_Tdust" and self.useDustT):
+				getTdust = "nd = " + str(self.dustArraySize) + "\n"
+				itype = 0 #dust type index
+				#loop in dust types
+				for dType in self.dustTypes:
+					itype += 1 #increase index
+					getTdust += "krome_dust_T(nd*("+str(itype-1)+")+1:nd*"+str(itype) + ") = getTdust("
+					getTdust += "dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+",&\n dust_opt_asize_"+dType+","
+					getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+", n(:))\n"
+					getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")
+				fout.write(getTdust+"\n")
+
 			elif(srow == "#KROME_initcoevars"):
 				if(len(coevarsODE)==0): continue
 				kvars = "real*8::"+(",".join([x for x in coevarsODE.keys()]))

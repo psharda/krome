@@ -79,11 +79,11 @@ contains
     krome_dust_T(:) = 2.73d0 !defualt dust temperature
 
     !init optical properties
-    !KROME_init_Qabs
+#KROME_init_Qabs
 
     !init integral Qabs(nu)*B(nu)*dnu
-    !KROME_opt_integral
-    
+#KROME_opt_integral
+
     print *,"Dust initialized!"
 
   end subroutine krome_init_dust
@@ -132,38 +132,35 @@ contains
   end subroutine dustOptIntegral
 
   !**********************
-  subroutine getTdust(n)
+  function getTdust(dust_opt_Tbb, dust_opt_Em, &
+       dust_opt_asize, dust_opt_nu, dust_opt_Qabs,n)
     !Tdust evaluation from eqn.6 Schneider+2006 MNRAS_369
     use krome_commons
     use krome_constants
-    integer::i,nd,j,j2,jr,jl,iter
+    integer::i,nd,j,j2,jr,jl,iter,nT
     real*8::asize,eAbs
     real*8::dustHl,dustHr,dustH,rhogr,sgnr,sgnl,dust2H
-    real*8::ntot,n(:),xl,xr,x2
+    real*8::ntot,n(:),xl,xr,x2,getTdust(ndust)
+    real*8::dust_opt_Em(:,:),dust_opt_Tbb(:),dust_opt_asize(:)
+    real*8::dust_opt_nu(:), dust_opt_Qabs(:,:), Tdust(ndust)
     logical::found
     nd = ndust
     ntot = sum(n(1:nmols)) !total density
+    nT = size(dust_opt_Tbb) !number of temperature values
     !loop on bins
     do i=1,nd
        if(n(nmols+i)<1d-19) cycle !note that this limit depends on ATOL
-       xl = 2.73d0 !starting smaller Tdust
-       xr = 1d4 !starting larger Tdust
-       asize = krome_dust_asize(i) !mean bin size (cm)
-       rhogr = n(nmols+i) * asize**3 * krome_grain_rho !dust mass rho (g/cm3)
+       asize = krome_dust_asize(i) !mean bin size
+       rhogr = n(nmols+i) * asize**3 * krome_grain_rho
        !absorbed erg/cm3/s (rhogr g/cm3)
-       eAbs = 0.d0 
-       ! = dustAbs(asize, dust_opt_asize, dust_opt_nu, dust_opt_Qabs) * rhogr
-       
-       !init root-finding
-       dustHl = - beta(n(:),asize,xl,n(nmols+i)) * kopa(xl) &
-            * 5.67d-5 * 4.d0 * xl**4 * rhogr +&
-            dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-            xl, ntot)
+       eAbs = dustAbs(asize, dust_opt_asize, dust_opt_nu, dust_opt_Qabs) * rhogr
 
-       dustHr = - beta(n(:),asize,xr,n(nmols+i)) * kopa(xr) * 5.67d-5 &
-            * 4.d0 * xr**4 * rhogr + &
-            dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-            xr, ntot)
+       dustHl = eAbs - dust_opt_Em(i,1) *rhogr &
+            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+            dust_opt_Tbb(1), ntot)
+       dustHr = eAbs - dust_opt_Em(i,nT) *rhogr &
+            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+            dust_opt_Tbb(nT), ntot)
 
        sgnr = sgn(dustHr) !stores right bound sign
        sgnl = sgn(dustHl) !stores left bound sign
@@ -173,29 +170,35 @@ contains
           print *,"ERROR: probably the opacity-temperature curve has no roots!"
           stop
        end if
-       
+
+       jl = 1
+       jr = nT
        iter = 0
        !root-finding
        do
           iter = iter + 1
-          x2 = .5d0 * (xr + xl) !new temperature
-          !new evaluation
-          dust2H = -kopa(x2) * beta(n(:),asize,x2,n(nmols+i)) &
-               * 5.67d-5 * 4.d0 * x2**4 * rhogr +&
-               dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
-               x2, ntot)
-          !check sign
+          j2 = .5d0 * (jr + jl)
+          dust2H = eAbs - dust_opt_Em(i,j2) *rhogr &
+               + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+               dust_opt_Tbb(j2), ntot)
           if(sgn(dust2H)==sgnr) then
-             xr = x2
+             jr = j2
           else
-             xl = x2
+             jl = j2
           end if
-          !check error
-          if(abs(xr-xl).le.1d-10) exit
+          if(abs(jr-jl).le.1) exit
        end do
-       n(nmols+ndust+i) = x2 !copy found value to array
+       dustHr = eAbs - dust_opt_Em(i,jr) *rhogr &
+            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+            dust_opt_Tbb(jr), ntot)
+       dustHl = eAbs - dust_opt_Em(i,jl) *rhogr &
+            + dustCool(krome_dust_asize2(i), n(nmols+i), n(idx_Tgas),&
+            dust_opt_Tbb(jl), ntot)
+       Tdust(i) = (0.d0 - dustHr)/(dustHl-dustHr)&
+            *(dust_opt_Tbb(jl)-dust_opt_Tbb(jr)) + dust_opt_Tbb(jr)
     end do
-  end subroutine getTdust
+    getTdust(:) = Tdust(:)
+  end function getTdust
   
   !*****************************
   function beta(n,asize,Tdust,ndust)

@@ -37,11 +37,12 @@ contains
     vgas = sqrt(kvgas_erg*Tgas)
     ntot = sum(n(1:nmols))
 
+    #KROME_calc_Tdust
+
     #KROME_dust_H2
 #ENDIFKROME
 
 #KROME_ODE
-
     
 #IFKROME_use_thermo
     
