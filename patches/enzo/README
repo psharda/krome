@@ -1,13 +1,1 @@
-==============================================================================================
-IF PROBLEMS IN COMPILATION WE SUGGEST TO FOLLOW THESE STEPS:
-
-	- FIRST COMPILE KROME PACKAGE
-          	ifort -O3 -c opkda1.F opkda2.F opkdmain.F krome_user_commons.F90 krome_all.F90
-        - SECOND:
-          	make (using the enzo Makefile)
-        - THIRDH:
-                Following solver tolerances are strongly suggested:
-		RTOL=1e-6, ATOL=1e-10 which provide enough accuracy for ENZO. 
-==============================================================================================
-
-********* FOR ANY ADDITIONAL QUESTIONS CONTACT THE KROME's DEVELOPERS *************
+this folder will contains the enzo patch

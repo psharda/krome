@@ -5,6 +5,7 @@ class molec():
 	charge = 0 #charge (0=neutral)
 	mass = 0. #mass in g
 	zatom = 0 #atomic number (also for molecules)
+	neutrons = 0 #total number of neutrons
 	ename = "" #exploded name (e.g. H2C4=CCCCHH)
 	fname = "" #f90 name (e.g. H+=Hj, D-=Dk)
 	phname = "" #compact name for photoionizations (e.g. Fe++++=Fej4)
@@ -13,7 +14,7 @@ class molec():
 	chempot = 0. #chemical potential (J/mol)
 	poly1 = [0.e0]*7 #nasa polynomials (200-1000K)
 	poly2 = [0.e0]*7 #nasa polynomials (1000-5000K)
-	Tpoly = [0.e0]*7 #temperature limits
+	Tpoly = [0.e0]*3 #temperature limits
 	idx = 0 #species index
 	enthalpy = 0.e0 #enthalpy of formation
 	atomcount = dict() #dictionary containin the count of atoms (e.g H2O is {"H":2, "O":1})
@@ -21,7 +22,7 @@ class molec():
 	def __init__(self):
 		self.poly1 = [0.e0]*7
 		self.poly2 = [0.e0]*7
-		self.Tpoly = [0.e0]*7
+		self.Tpoly = [0.e0]*3
 		self.atomcount = dict()	
 ##################################
 class reaction():
@@ -128,12 +129,9 @@ class reaction():
 	#calcluate enthalpy of formation
 	def enthalpy(self):
 		if("krome_kph" in self.krate): return
-		#enthalpy of formation dictionary (add for more species)
-		deltaH ={"H":2.25129, "H+":15.84969,"H-":0.750000,"HE":0.e0,"HE+":24.58675,"HE++":54.41671,"H2":0.e0,"H2+":15.42590,
-				"D":2.29793,"D+":15.89633,"HD":0.00330, "E":0.e0, "C":7.42764, "C+":18.6882, "SI":3.81606, 
-				"SI+":11.9674, "O":2.5807, "O+":161981}
+
 		if(len(self.reactants)==0 and len(self.products)==0):
-			self.dH = 0.e0
+			self.dH = 0e0
 			return
 		if(len(self.reactants)==0 or len(self.products)==0):
 			print "ERROR: you have called enthalpy calculation"
@@ -147,19 +145,19 @@ class reaction():
 		for xr in reag:
 			xr.name = xr.name.upper()
 			#print xr.name
-			if(not(xr.name in deltaH)):
-				available = False
-				break
-			rH += deltaH[xr.name] 
+			#if(not(xr.name in deltaH)):
+			#	available = False
+			#	break
+			rH += xr.enthalpy #deltaH[xr.name] 
 
 		#loop on products
 		for xp in prod:
 			xp.name = xp.name.upper()
 			#print xp.name
-			if(not(xp.name in deltaH)):
-				available = False
-				break	
-			pH += deltaH[xp.name] 
+			#if(not(xp.name in deltaH)):
+			#	available = False
+			#	break	
+			pH += xp.enthalpy
 		self.dH = None
 		if(available): self.dH = (rH-pH)*1.60217657e-12 #eV->erg (cooling<0)
 
@@ -644,7 +642,14 @@ def parser(name, mass_dic, atoms, thermo_data):
 	is_atom = True #atom flag
 	founds = 0 #atoms found
 
-	#atomic number dictionary
+	#if you change these check the same values in kromeob
+	#(employed here for computing number of neutrons)
+	me = 9.10938188e-28 #electron mass (g)
+	mp = 1.67262158e-24 #proton mass (g)
+	mn = 1.6725e-24 #neutron mass (g)
+
+
+	#atomic number dictionary (add here atoms if needed)
 	zdic = {1:"H",
 		2:"He",
 		3:"Li",
@@ -674,6 +679,7 @@ def parser(name, mass_dic, atoms, thermo_data):
 		mymol.fname = name #f90 name
 		mymol.is_atom = True #atom flag
 		mymol.fidx = "idx_"+name #f90 index
+		mymol.neutrons = 0 #number of neutrons
 		return mymol
 	
 
@@ -703,6 +709,7 @@ def parser(name, mass_dic, atoms, thermo_data):
 		if(a!="+" and a!="-"): founds += imult
 	if(founds>1): is_atom = False
 
+
 	mymol.name = name #name
 	mymol.mass = mass #mass (g)
 	mymol.ename = sorted(ename) #exploded name
@@ -713,6 +720,10 @@ def parser(name, mass_dic, atoms, thermo_data):
 	mymol.fidx = "idx_"+name.replace("+","j").replace("-","k").replace("(","_").replace(")","") #f90 index
 	if("+" in name): mymol.charge = name.count("+") #get + charge
 	if("-" in name): mymol.charge = -name.count("-") #get - charge
+
+	#number of neutrons (computed using total mass)
+	Nn = int((mymol.mass - (me*(mymol.zatom - mymol.charge) + mp*(mymol.zatom))) / mn)
+	mymol.neutrons = Nn
 
 	#name for photoionization reactions (e.g. Sijjj = Sij3)
 	jj = kk = ""
@@ -729,9 +740,15 @@ def parser(name, mass_dic, atoms, thermo_data):
 	if(mymol.name in thermo_data):
 		mymol.poly1 = thermo_data[mymol.name][10:] #
 		mymol.poly2 = thermo_data[mymol.name][3:10] #
-		mymol.Tpoly = thermo_data[mymol.name][0:3] #J/mol
-		
+		mymol.Tpoly = thermo_data[mymol.name][0:3] #(K) [min,med,max] interval
 
+	#compute enthaly @300K using NASA poly
+	p = mymol.poly1 #copy polynomials
+	Tgas = 300. #K
+	polyH = p[0] + p[1]*0.5*Tgas + p[2]*Tgas**2/3. + p[3]*Tgas**3*0.25 + p[4]*Tgas**4*0.2 + p[5]/Tgas
+	mymol.enthalpy = polyH*8.314472e-3*Tgas*0.01036410e0 #eV
+
+	#checks parsing results
 	if(len(namecp)>0): 
 		print "************************************************"
 		print "ERROR: Parsing problem for", name

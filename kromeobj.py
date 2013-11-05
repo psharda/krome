@@ -129,7 +129,7 @@ class krome():
 			[argv.append(x) for x in ["-iRHS"]]
 			filename = "networks/react_WH2008"
 		elif(args.test=="dust"):
-			[argv.append(x) for x in ["-dust=10,C,Si","-useN","-dustOptions=GROWTH,SPUTTER,T"]]
+			[argv.append(x) for x in ["-dust=10,C,Si","-useN","-dustOptions=GROWTH,SPUTTER"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="compact"):
 			[argv.append(x) for x in ["-compact"]]
@@ -1118,7 +1118,7 @@ class krome():
 		fout.close()	
 		
 		#dump network to dot file
-		fout = open("networ.dot","w")
+		fout = open("network.dot","w")
 		ntw = dict()
 		dot = "digraph{\n"
 		for rea in self.reacts:
@@ -2426,6 +2426,12 @@ class krome():
 					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename))
+			elif(srow == "#KROME_zero_electrons"):
+				#check if electron exists
+				for x in specs:
+					if(x.name=="E"):
+						fout.write("x(idx_e) = 0.d0\n")
+						break
 			elif(srow == "#KROME_constant_list"):
 				const = ""
 				constants = self.constantList
@@ -2632,6 +2638,11 @@ class krome():
 		#copy other files to build
 		print "- copying others...",
 
+		print " copying optical data for dust..."
+		if(self.useDust):
+			shutil.copyfile("data/optC.dat", buildFolder+"optC.dat")
+			shutil.copyfile("data/optSi.dat", buildFolder+"optSi.dat")
+
 		#copy static files to build
 		if(self.is_test):
 			print "- copying test to /build..."
@@ -2715,147 +2726,34 @@ class krome():
 
 	#########################################
 	def ramses_patch(self):
-		pfold = "patches/ramses/"
-		buildFolder = self.buildFolder
-		specs = self.specs
-
-		ndef = {"H": 7.5615e-1,
-			"E": 4.4983e-8,
-			"H+": 8.1967e-5,
-			"HE": 2.4375e-1,
-			"HE+": 1e-20,
-			"HE++": 1e-20,
-			"H-": 1e-20,
-			"H2": 1.5123e-6,
-			"H2+": 1e-20,
-			"D": 1e-20,
-			"D+": 1e-20,
-			"HD": 1e-20,
-			"HD+": 1e-20
-		}
-
-
-		#amr_parameters
-		fname = "amr_parameters.f90"
-		self.replacein(pfold+fname,buildFolder+fname,["aaa"],["aaa"])
-		indentF90(buildFolder+fname)
-
-		#condinit
-		cheminit = " q(1:nn,ndim+3) = 200.d0     !Set temperature in K\n"
-		ichem = 3
-		fname = "condinit.f90"
-		for x in specs:
-			if(x.name in ["CR","g","Tgas","dummy"]): continue
-			ichem += 1
-			cheminit += "q(1:nn,ndim+"+str(ichem)+")  = "+str(ndef[x.name])+"  !"+x.name+"\n"
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_init_chem"],[cheminit])
-		indentF90(buildFolder+fname)
-
-		#cooling_fine
-		updateueq = scaleueq = bkscaleueq = bkupdateueq = ""
-		ichem = 3
-		fname = "cooling_fine.f90"
-		for x in specs:
-			ichem += 1
-			if(not(x.name in ["CR","g","Tgas","dummy"])):
-				updateueq += "unoneq("+str(ichem-3)+") = uold(ind_leaf(i),ndim+"+str(ichem)+") !"+x.name+"\n"
-				scaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
-				bkscaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
-				bkupdateueq += "uequold(ind_leaf(i),ndim+3+"+str(ichem-3)+") = unoneq("+str(ichem-3)+")\n"
-		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
-		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
-		self.replacein(pfold+fname,buildFolder+fname,org,new)
-		indentF90(buildFolder+fname)
-
-		#hydro_parameters
-		fname = "hydro_parameters.f90"
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_NCHEM"],[self.nmols])
-		indentF90(buildFolder+fname)
-
-		#init_flow_fine
-		fname = "init_flow_fine.f90"
-		init_array = ""
-		ichem = 3
-		for x in specs:
-			if(x.name in ["CR","g","Tgas","dummy"]): continue
-			ichem += 1
-			init_array += "if(ivar==ndim+"+str(ichem)+")  init_array = "+str(ndef[x.name])+"  !"+x.name+"\n"
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_init_array"],[init_array])
-		indentF90(buildFolder+fname)
-		
-		#output_hydro
-		fname = "output_hydro.f90"
-		self.replacein(pfold+fname,buildFolder+fname,["aaa"],["aaa"])
-		indentF90(buildFolder+fname)
+		return
 
 	###########################################
 	def flash_patch(self):
-		pfold = "patches/flash/physics/sourceTerms/PrimordialChemistry/PrimordialChemistryKrome/"
-		buildFolder = self.buildFolder
-		specs = self.specs
-
-		#Config
-		species = ""
-		for x in specs:
-			if(x.name in ["CR","g","Tgas","dummy"]): continue
-			name = x.name.upper().replace("+","P").replace("-","M")
-			if(name=="E"): name="ELEC"
-			
-			species += "SPECIES "+name+"\n"
-
-		fname = "Config"
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_species"],[species])
-		indentF90(buildFolder+fname)
-
-		#Makefile
-		fname = "Makefile"
-		shutil.copyfile(pfold+fname, buildFolder+fname)
-
-		#pchem_mapNetworkToSpecies
-		fname = "pchem_mapNetworkToSpecies.F90"
-		species = ""
-		for x in specs:
-			if(x.name in ["CR","g","Tgas","dummy"]): continue
-			name = x.name.upper().replace("+","P").replace("-","M")
-			if(name=="E"): name="ELEC"
-			species += "\tcase(\""+(x.name)+"\")\n"
-			species += "\t\tspecieOut = "+name+"_SPEC\n"
-
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_cases"],[species])
-		indentF90(buildFolder+fname)
-
-		#PrimordialChemistry
-		fname = "PrimordialChemistry.F90"
-		shutil.copyfile(pfold+fname, buildFolder+fname)
-		
-		#PrimordialChemistry_data
-		fname = "PrimordialChemistry_data.F90"
-		shutil.copyfile(pfold+fname, buildFolder+fname)
+		return
 	
 	###########################################
 	def enzo_patch(self):
-		pfold = "patches/enzo/"
-		buildFolder = self.buildFolder
-		specs = self.specs
-
-		#Config
-		species = ""
-		for x in specs:
-			if(x.name in ["CR","g","Tgas","dummy"]): continue
-			name = x.name.upper().replace("+","P").replace("-","M")
-			if(name=="E"): name="ELEC"
-			
-			species += "SPECIES "+name+"\n"
-
-		fname = "Config"
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_species"],[species])
-		indentF90(buildFolder+fname)
-
+		return
 
 	############################################
 	def patches(self):
-		if(self.doRamses): self.ramses_patch()
+		if(self.doFlash or self.doRamses or self.doEnzo):		
+			print "**********************************************************"
+			print "  We're sorry, but in this version of KROME"
+			print "  the patch builder is available only on request."
+			print "  If you are interested please contact the krome"
+			print "  developers to obtain the beta versions of the patches."
+			print "  We will give all the support you need!"
+			print
+			print "  email       : krome@kromepackage.org"
+			print "  www         : http://kromepackage.org/"
+			print "  mailing list: https://groups.google.com/forum/#!forum/kromeusers"
+			print "  bitbucket   : https://bitbucket.org/krome/krome_stable"
+			print "**********************************************************"
+			sys.exit()
 		if(self.doFlash): self.flash_patch()
+		if(self.doRamses): self.ramses_patch()
 		if(self.doEnzo): self.enzo_patch()
 
 	#########################################

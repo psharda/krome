@@ -51,7 +51,7 @@ program test
      end do !end rho loop
      write(66,*)
   end do !end J21 loop
-
+  print *,"Models done:",itmax*irmax
   print *,"End of map test!"
   print *,"plot.gps in gnuplot to plot the map!"
 

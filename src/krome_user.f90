@@ -120,7 +120,7 @@ contains
     use krome_commons
     real*8::n(:),ee,krome_get_electrons,x(size(n))
     x(:) = n(:)
-    x(krome_idx_e) = 0.d0
+#KROME_zero_electrons
     ee = sum(x(:) * krome_get_charges())
     krome_get_electrons = max(0.d0, ee)
   end function krome_get_electrons
