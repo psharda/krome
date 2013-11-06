@@ -65,7 +65,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real(kind=8),dimension(1:nvector),save::nH,T2,delta_T2,ekk
   real(kind=8),dimension(1:nvector),save::t2gas,t2gasold,tgas,tgasold
   real(kind=8),dimension(1:nvector),save::T2min,Zsolar,boost
-  real(kind=8),dimension(1:11),save::unoneq
+  real(kind=8),dimension(1:#KROME_nmols1),save::unoneq
   real(dp),dimension(1:3)::skip_loc
   real(kind=8)::dx,dx_loc,scale,vol_loc
 

@@ -2783,8 +2783,8 @@ class krome():
 				scaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
 				bkscaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
 				bkupdateueq += "uequold(ind_leaf(i),ndim+3+"+str(ichem-3)+") = unoneq("+str(ichem-3)+")\n"
-		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
-		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
+		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq","#KROME_nmols1"]
+		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq, str(chemCount+1)]
 		self.replacein(pfold+fname,ramsesFolder+fname,org,new)
 		indentF90(ramsesFolder+fname)
 
@@ -2827,7 +2827,7 @@ class krome():
 		#Makefile
 		fname = "Makefile"
 		#note that makefile will be copied in the build folder
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["#this must be NVAR+"+str(chemCount+1)])
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["#this must be NDIM+"+str(chemCount+1)])
 
 		#move the krome files into the ramses patch folder
 		shutil.move(buildFolder+"krome_all.f90", ramsesFolder+"krome_all.f90")
