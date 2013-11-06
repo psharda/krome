@@ -2727,7 +2727,7 @@ class krome():
 	#########################################
 	def ramses_patch(self):
 		pfold = "patches/ramses/"
-		ramsesFolder = self.buildFolder+"ramses_patch/" 
+		ramsesFolder = self.buildFolder+"krome_ramses_patch/" 
 		if not os.path.exists(ramsesFolder): os.makedirs(ramsesFolder)
 		specs = self.specs
 
@@ -2810,6 +2810,16 @@ class krome():
 		#read_hydro_params
 		fname = "read_hydro_params.f90"
 		self.replacein(pfold+fname,ramsesFolder+fname,["aaa"],["aaa"])
+		indentF90(ramsesFolder+fname)
+
+		#Makefile
+		chemCount = 1 #start from one to include temperature
+		for x in specs:
+			if(x.name in ["CR","g","Tgas","dummy"]): continue
+			chemCount += 1
+
+		fname = "Makefile"
+		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_nvar"],["NDIM + " + str(chemCount)])
 		indentF90(ramsesFolder+fname)
 
 
