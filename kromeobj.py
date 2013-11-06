@@ -279,7 +279,12 @@ class krome():
 		if(args.ramses):
 			self.doRamses = True
 			print "Reading option -ramses"
-
+			if(not(args.compact)):
+				print "ERROR: the patch for RAMSES requires the -compact option!"
+				sys.exit()
+			if(self.is_test):
+				print "ERROR: -test option and -ramses are incompatible!"
+				sys.exit()
 		#creates flash patches
 		if(args.flash):
 			self.doFlash = True
@@ -2728,6 +2733,7 @@ class krome():
 	def ramses_patch(self):
 		pfold = "patches/ramses/"
 		ramsesFolder = self.buildFolder+"krome_ramses_patch/" 
+		buildFolder = self.buildFolder 
 		if not os.path.exists(ramsesFolder): os.makedirs(ramsesFolder)
 		specs = self.specs
 
@@ -2817,10 +2823,17 @@ class krome():
 		for x in specs:
 			if(x.name in ["CR","g","Tgas","dummy"]): continue
 			chemCount += 1
-
 		fname = "Makefile"
-		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_nvar"],["NDIM + " + str(chemCount)])
-		indentF90(ramsesFolder+fname)
+		#note that makefile will be copied in the build folder
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["NDIM + " + str(chemCount)])
+
+		#move the krome files into the ramses patch folder
+		shutil.move(buildFolder+"krome_all.f90", ramsesFolder+"krome_all.f90")
+		shutil.move(buildFolder+"krome_user_commons.f90", ramsesFolder+"krome_user_commons.f90")
+		shutil.move(buildFolder+"opkda1.f", ramsesFolder+"opkda1.f")
+		shutil.move(buildFolder+"opkda2.f", ramsesFolder+"opkda2.f")
+		shutil.move(buildFolder+"opkdmain.f", ramsesFolder+"opkdmain.f")
+
 
 
 	###########################################
@@ -2873,31 +2886,35 @@ class krome():
 			if(a=="q"): print sys.exit()
 
 		print
+		#IF NOT TEST
 		if(not(self.is_test)):
-			#TODO: add description in case of dust
-			print "Call KROME in your code as:"
-			if(useX):
-				print "    call krome(x(:), gas_density, gas_temperature, time_step)"
-			else:
-				print "    call krome(x(:), gas_temperature, time_step)"
-			print "where:" 
-			print " x(:) is a real*8 array of size "+str(nmols)+(" of the mass fractions" if useX else " of number densities [1/cm3]")
-			if(useX): print " gas_density  is the gas density in [g/cm3]"
-			print " gas_temperature is the gas temperature in [K]"
-			print " time_step is the integration time-step in [s]"
-
-			fout = open(buildFolder+"test.f90","w")
-			fout.write(get_example(nmols,useX))
-			fout.close()
-			indentF90(buildFolder+"test.f90")
-			if(self.buildCompact):
-				shutil.copyfile("tests/MakefileCompact", buildFolder+"Makefile")
-			else:
-				if(self.pedanticMakefile):
-					shutil.copyfile("tests/Makefile_pedantic", buildFolder+"Makefile")
+			#PATCHES DO NOT NEED MAKEFILE AND TEST.F90
+			if(not(self.doFlash or self.doRamses or self.doEnzo)):
+				#TODO: add description in case of dust
+				print "Call KROME in your code as:"
+				if(useX):
+					print "    call krome(x(:), gas_density, gas_temperature, time_step)"
 				else:
-					shutil.copyfile("tests/Makefile", buildFolder+"Makefile")
+					print "    call krome(x(:), gas_temperature, time_step)"
+				print "where:" 
+				print " x(:) is a real*8 array of size "+str(nmols)+(" of the mass fractions" if useX else " of number densities [1/cm3]")
+				if(useX): print " gas_density  is the gas density in [g/cm3]"
+				print " gas_temperature is the gas temperature in [K]"
+				print " time_step is the integration time-step in [s]"
+			
+				fout = open(buildFolder+"test.f90","w")
+				fout.write(get_example(nmols,useX))
+				fout.close()
+				indentF90(buildFolder+"test.f90")
+				if(self.buildCompact):
+					shutil.copyfile("tests/MakefileCompact", buildFolder+"Makefile")
+				else:
+					if(self.pedanticMakefile):
+						shutil.copyfile("tests/Makefile_pedantic", buildFolder+"Makefile")
+					else:
+						shutil.copyfile("tests/Makefile", buildFolder+"Makefile")
 
+		#IF IT IS A TEST
 		else:
 			print "This is a test. To run it just type:"
 			print "> cd build/"
