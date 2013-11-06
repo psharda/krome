@@ -2744,6 +2744,12 @@ class krome():
 			"H2": 1.5123e-6,
 		}
 
+		excl = ["CR","g","Tgas","dummy"]
+		#count species excluding 
+		chemCount = 0
+		for x in specs:
+			if(x.name in excl): continue
+			chemCount += 1
 
 		#amr_parameters
 		fname = "amr_parameters.f90"
@@ -2755,7 +2761,7 @@ class krome():
 		ichem = 3
 		fname = "condinit.f90"
 		for x in specs:
-			if(x.name in ["CR","g","Tgas","dummy"]): continue
+			if(x.name in excl): continue
 			ichem += 1
 			#check if species
 			if(x.name in ndef):
@@ -2772,7 +2778,7 @@ class krome():
 		fname = "cooling_fine.f90"
 		for x in specs:
 			ichem += 1
-			if(not(x.name in ["CR","g","Tgas","dummy"])):
+			if(not(x.name in excl)):
 				updateueq += "unoneq("+str(ichem-3)+") = uold(ind_leaf(i),ndim+"+str(ichem)+") !"+x.name+"\n"
 				scaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
 				bkscaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
@@ -2789,15 +2795,15 @@ class krome():
 
 		#hydro_parameters
 		fname = "hydro_parameters.f90"
-		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_NCHEM"],[self.nmols])
-		indentF90(ramsesFolder+fname)
+		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_NCHEM"],[str(chemCount+1)])
+		#indentF90(ramsesFolder+fname)
 
 		#init_flow_fine
 		fname = "init_flow_fine.f90"
 		init_array = ""
 		ichem = 3
 		for x in specs:
-			if(x.name in ["CR","g","Tgas","dummy"]): continue
+			if(x.name in excl): continue
 			ichem += 1
 			#check if species
 			if(x.name in ndef):
@@ -2819,13 +2825,9 @@ class krome():
 		indentF90(ramsesFolder+fname)
 
 		#Makefile
-		chemCount = 1 #start from one to include temperature
-		for x in specs:
-			if(x.name in ["CR","g","Tgas","dummy"]): continue
-			chemCount += 1
 		fname = "Makefile"
 		#note that makefile will be copied in the build folder
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["NDIM + " + str(chemCount)])
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["#this must be NVAR+"+str(chemCount+1)])
 
 		#move the krome files into the ramses patch folder
 		shutil.move(buildFolder+"krome_all.f90", ramsesFolder+"krome_all.f90")
