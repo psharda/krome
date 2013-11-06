@@ -2726,7 +2726,92 @@ class krome():
 
 	#########################################
 	def ramses_patch(self):
-		return
+		pfold = "patches/ramses/"
+		ramsesFolder = self.buildFolder+"ramses_patch/" 
+		if not os.path.exists(ramsesFolder): os.makedirs(ramsesFolder)
+		specs = self.specs
+
+		ndef = {"H": 7.5615e-1,
+			"E": 4.4983e-8,
+			"H+": 8.1967e-5,
+			"HE": 2.4375e-1,
+			"H2": 1.5123e-6,
+		}
+
+
+		#amr_parameters
+		fname = "amr_parameters.f90"
+		self.replacein(pfold+fname,ramsesFolder+fname,["aaa"],["aaa"])
+		indentF90(ramsesFolder+fname)
+
+		#condinit
+		cheminit = " q(1:nn,ndim+3) = 200.d0     !Set temperature in K\n"
+		ichem = 3
+		fname = "condinit.f90"
+		for x in specs:
+			if(x.name in ["CR","g","Tgas","dummy"]): continue
+			ichem += 1
+			#check if species
+			if(x.name in ndef):
+				sdef = str(ndef[x.name]) #default value from array
+			else:
+				sdef = "1d-20" #default values if not present in array
+			cheminit += "q(1:nn,ndim+"+str(ichem)+")  = "+sdef+"  !"+x.name+"\n"
+		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_init_chem"],[cheminit])
+		indentF90(ramsesFolder+fname)
+
+		#cooling_fine
+		updateueq = scaleueq = bkscaleueq = bkupdateueq = ""
+		ichem = 3
+		fname = "cooling_fine.f90"
+		for x in specs:
+			ichem += 1
+			if(not(x.name in ["CR","g","Tgas","dummy"])):
+				updateueq += "unoneq("+str(ichem-3)+") = uold(ind_leaf(i),ndim+"+str(ichem)+") !"+x.name+"\n"
+				scaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
+				bkscaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
+				bkupdateueq += "uequold(ind_leaf(i),ndim+3+"+str(ichem-3)+") = unoneq("+str(ichem-3)+")\n"
+		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
+		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
+		self.replacein(pfold+fname,ramsesFolder+fname,org,new)
+		indentF90(ramsesFolder+fname)
+
+		#cooling_module
+		fname = "cooling_module.f90"
+		self.replacein(pfold+fname,ramsesFolder+fname,["aaa"],["aaa"])
+		indentF90(ramsesFolder+fname)
+
+		#hydro_parameters
+		fname = "hydro_parameters.f90"
+		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_NCHEM"],[self.nmols])
+		indentF90(ramsesFolder+fname)
+
+		#init_flow_fine
+		fname = "init_flow_fine.f90"
+		init_array = ""
+		ichem = 3
+		for x in specs:
+			if(x.name in ["CR","g","Tgas","dummy"]): continue
+			ichem += 1
+			#check if species
+			if(x.name in ndef):
+				sdef = str(ndef[x.name]) #default value from array
+			else:
+				sdef = "1d-20" #default values if not present in array
+			init_array += "if(ivar==ndim+"+str(ichem)+")  init_array = "+sdef+"  !"+x.name+"\n"
+		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_init_array"],[init_array])
+		indentF90(ramsesFolder+fname)
+		
+		#output_hydro
+		fname = "output_hydro.f90"
+		self.replacein(pfold+fname,ramsesFolder+fname,["aaa"],["aaa"])
+		indentF90(ramsesFolder+fname)
+
+		#read_hydro_params
+		fname = "read_hydro_params.f90"
+		self.replacein(pfold+fname,ramsesFolder+fname,["aaa"],["aaa"])
+		indentF90(ramsesFolder+fname)
+
 
 	###########################################
 	def flash_patch(self):
@@ -2738,6 +2823,10 @@ class krome():
 
 	############################################
 	def patches(self):
+		if(self.doFlash): self.flash_patch()
+		if(self.doRamses): self.ramses_patch()
+		if(self.doEnzo): self.enzo_patch()
+		return
 		if(self.doFlash or self.doRamses or self.doEnzo):		
 			print "**********************************************************"
 			print "  We're sorry, but in this version of KROME"
@@ -2752,9 +2841,6 @@ class krome():
 			print "  bitbucket   : https://bitbucket.org/krome/krome_stable"
 			print "**********************************************************"
 			sys.exit()
-		if(self.doFlash): self.flash_patch()
-		if(self.doRamses): self.ramses_patch()
-		if(self.doEnzo): self.enzo_patch()
 
 	#########################################
 	def final_report(self):
