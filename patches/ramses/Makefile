@@ -9,8 +9,7 @@ NPRE = 8
 #NVAR INCLUDES THE CHEMICAL SPECIES 
 NVAR = #KROME_nvar
 SOLVER = hydro
-#use absolute path if needed
-PATCH = patch/hydro/krome_ramses_patch
+PATCH = #requires absolute path ending with patch/hydro/krome_ramses_patch
 EXEC = ramses
 ATON_FLAGS = #-DATON  # Uncomment to enable ATON.
 #############################################################################

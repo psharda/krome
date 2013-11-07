@@ -285,6 +285,9 @@ class krome():
 			if(self.is_test):
 				print "ERROR: -test option and -ramses are incompatible!"
 				sys.exit()
+			if(self.useX):
+				print "ERROR: the patch for RAMSES requires the -useN option!"
+				sys.exit()
 		#creates flash patches
 		if(args.flash):
 			self.doFlash = True
@@ -2710,18 +2713,21 @@ class krome():
 
 		print "done!"
 	#########################################
-	def replacein(self,fsrc,fout,pragmas,repls):
+	#copy fsrc to fout file and replace the list in pragmas with the list in repls
+	def replacein(self,fsrc,fout,pragmas,repls,trim=True):
 		fh = open(fsrc,"rb")
 		fw = open(fout,"w")
 		if(len(pragmas)!=len(repls)):
 			print "ERROR: in replacein len(pragmas)!=len(repls)"
 			sys.exit()
 		for row in fh:
-			srow = row.strip()
-			for i in range(len(pragmas)):
-				x = pragmas[i]
-				y = str(repls[i])
-				srow = srow.replace(x,y)
+			if(trim): srow = row.strip()
+			#replace only with non-empty lists
+			if(len(pragmas)>0):
+				for i in range(len(pragmas)):
+					x = pragmas[i]
+					y = str(repls[i])
+					srow = srow.replace(x,y)
 			fw.write(srow+"\n")
 		fh.close()
 		fw.close()
@@ -2737,15 +2743,18 @@ class krome():
 		if not os.path.exists(ramsesFolder): os.makedirs(ramsesFolder)
 		specs = self.specs
 
+		#some initial abundances. if not found set default
 		ndef = {"H": 7.5615e-1,
 			"E": 4.4983e-8,
 			"H+": 8.1967e-5,
 			"HE": 2.4375e-1,
 			"H2": 1.5123e-6,
+			"default":1e-20
 		}
 
-		excl = ["CR","g","Tgas","dummy"]
-		#count species excluding 
+		excl = ["CR","g","Tgas","dummy"] #avoid specials
+
+		#count species excluding excl
 		chemCount = 0
 		for x in specs:
 			if(x.name in excl): continue
@@ -2758,50 +2767,50 @@ class krome():
 
 		#condinit
 		cheminit = " q(1:nn,ndim+3) = 200.d0     !Set temperature in K\n"
-		ichem = 3
+		ichem = 0
 		fname = "condinit.f90"
 		for x in specs:
 			if(x.name in excl): continue
 			ichem += 1
-			#check if species
+			#check if species is ini init array
 			if(x.name in ndef):
 				sdef = str(ndef[x.name]) #default value from array
 			else:
-				sdef = "1d-20" #default values if not present in array
-			cheminit += "q(1:nn,ndim+"+str(ichem)+")  = "+sdef+"  !"+x.name+"\n"
+				sdef = str(ndef["default"]) #default values if not present in array
+			cheminit += "q(1:nn,ndim+3+"+str(ichem)+")  = "+sdef+"  !"+x.name+"\n"
 		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_init_chem"],[cheminit])
 		indentF90(ramsesFolder+fname)
 
 		#cooling_fine
 		updateueq = scaleueq = bkscaleueq = bkupdateueq = ""
-		ichem = 3
+		ichem = 0
 		fname = "cooling_fine.f90"
 		for x in specs:
 			ichem += 1
 			if(not(x.name in excl)):
-				updateueq += "unoneq("+str(ichem-3)+") = uold(ind_leaf(i),ndim+"+str(ichem)+") !"+x.name+"\n"
-				scaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
-				bkscaleueq += "unoneq("+str(ichem-3)+") = unoneq("+str(ichem-3)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
-				bkupdateueq += "uequold(ind_leaf(i),ndim+3+"+str(ichem-3)+") = unoneq("+str(ichem-3)+")\n"
-		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq","#KROME_nmols1"]
-		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq, str(chemCount+1)]
+				updateueq += "unoneq("+str(ichem)+") = uold(ind_leaf(i),ndim+3+"+str(ichem)+") !"+x.name+"\n"
+				if(x.mass>0e0): scaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
+				bkscaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
+				bkupdateueq += "uold(ind_leaf(i),ndim+3+"+str(ichem)+") = unoneq("+str(ichem)+")\n"
+		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
+		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
 		self.replacein(pfold+fname,ramsesFolder+fname,org,new)
 		indentF90(ramsesFolder+fname)
 
 		#cooling_module
 		fname = "cooling_module.f90"
-		self.replacein(pfold+fname,ramsesFolder+fname,["aaa"],["aaa"])
+		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
 		indentF90(ramsesFolder+fname)
 
 		#hydro_parameters
 		fname = "hydro_parameters.f90"
-		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_NCHEM"],[str(chemCount+1)])
+		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
 		#indentF90(ramsesFolder+fname)
 
 		#init_flow_fine
 		fname = "init_flow_fine.f90"
-		init_array = ""
-		ichem = 3
+		init_array = "if(ivar==ndim+3)  init_array = 1.356d-2/aexp**2 ! T in K\n"
+		ichem = 0
 		for x in specs:
 			if(x.name in excl): continue
 			ichem += 1
@@ -2810,24 +2819,24 @@ class krome():
 				sdef = str(ndef[x.name]) #default value from array
 			else:
 				sdef = "1d-20" #default values if not present in array
-			init_array += "if(ivar==ndim+"+str(ichem)+")  init_array = "+sdef+"  !"+x.name+"\n"
+			init_array += "if(ivar==ndim+3+"+str(ichem)+")  init_array = "+sdef+"  !"+x.name+"\n"
 		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_init_array"],[init_array])
 		indentF90(ramsesFolder+fname)
 		
 		#output_hydro
 		fname = "output_hydro.f90"
-		self.replacein(pfold+fname,ramsesFolder+fname,["aaa"],["aaa"])
+		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
 		indentF90(ramsesFolder+fname)
 
 		#read_hydro_params
 		fname = "read_hydro_params.f90"
-		self.replacein(pfold+fname,ramsesFolder+fname,["aaa"],["aaa"])
+		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
 		indentF90(ramsesFolder+fname)
 
 		#Makefile
 		fname = "Makefile"
 		#note that makefile will be copied in the build folder
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["#this must be NDIM+"+str(chemCount+1)])
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["#this must be NDIM+"+str(chemCount+1)], False)
 
 		#move the krome files into the ramses patch folder
 		shutil.move(buildFolder+"krome_all.f90", ramsesFolder+"krome_all.f90")

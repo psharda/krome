@@ -5,6 +5,7 @@
 subroutine condinit(x,u,dx,nn)
   use amr_parameters
   use hydro_parameters
+  use krome_user
   implicit none
   integer ::nn                            ! Number of cells
   real(dp)::dx                            ! Cell size
@@ -60,7 +61,7 @@ subroutine condinit(x,u,dx,nn)
 #KROME_init_chem
   endif
 
-  do ivar=ndim+3,nvar
+  do ivar=ndim+4,ndim+3+krome_nmols
      u(1:nn,ivar)=q(1:nn,ivar)*q(1:nn,1) 
   end do
   

@@ -47,6 +47,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   use hydro_commons
   use hydro_parameters, ONLY: nvar
   use krome_main
+  use krome_user
 #ifdef ATON
   use radiation_commons, ONLY: Erad
 #endif
@@ -65,7 +66,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real(kind=8),dimension(1:nvector),save::nH,T2,delta_T2,ekk
   real(kind=8),dimension(1:nvector),save::t2gas,t2gasold,tgas,tgasold
   real(kind=8),dimension(1:nvector),save::T2min,Zsolar,boost
-  real(kind=8),dimension(1:#KROME_nmols1),save::unoneq
+  real(kind=8),dimension(1:krome_nmols),save::unoneq
   real(dp),dimension(1:3)::skip_loc
   real(kind=8)::dx,dx_loc,scale,vol_loc
 
@@ -309,7 +310,7 @@ subroutine get_mu(unoneq,rhogas,molweight)
   real(dp)::unoneq(:)
   real(dp)::rhogas,molweight
   
-  molweight = 1.22d0
+  molweight = 1.22d0 !use a custom expression here if you desire
 
   return
 end subroutine get_mu

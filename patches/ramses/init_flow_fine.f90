@@ -236,7 +236,6 @@ subroutine init_flow_fine(ilevel)
            if(cosmo.and.ivar==ixion.and.aton)init_array=1.2d-5*xval
 	   ! Initial values for chemical abundances (mass fraction).
            if(chemistry) then
-              if(ivar==ndim+3)  init_array = 1.356d-2/aexp**2 ! T in K
 #KROME_init_array
            end if
         endif

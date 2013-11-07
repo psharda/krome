@@ -1,9 +1,10 @@
 module hydro_parameters
   use amr_parameters
+  use krome_user
 
   ! Number of independant variables including chemical species
 #ifndef NVAR
-  integer,parameter::nvar=ndim+3+#KROME_NCHEM
+  integer,parameter::nvar=ndim+3+krome_nmols
 #else
   integer,parameter::nvar=NVAR
 #endif
