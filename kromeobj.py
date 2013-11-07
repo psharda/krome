@@ -2840,7 +2840,7 @@ class krome():
 		#Makefile
 		fname = "Makefile"
 		#note that makefile will be copied in the build folder
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["#this must be NDIM+"+str(chemCount+1)], False)
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["#this must be NDIM+"+str(chemCount+3)], False)
 
 		#move the krome files into the ramses patch folder
 		shutil.move(buildFolder+"krome_all.f90", ramsesFolder+"krome_all.f90")
