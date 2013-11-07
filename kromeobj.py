@@ -2721,6 +2721,7 @@ class krome():
 			print "ERROR: in replacein len(pragmas)!=len(repls)"
 			sys.exit()
 		for row in fh:
+			srow = row
 			if(trim): srow = row.strip()
 			#replace only with non-empty lists
 			if(len(pragmas)>0):
@@ -2728,7 +2729,10 @@ class krome():
 					x = pragmas[i]
 					y = str(repls[i])
 					srow = srow.replace(x,y)
-			fw.write(srow+"\n")
+			if(trim): 
+				fw.write(srow+"\n")
+			else:
+				fw.write(srow)
 		fh.close()
 		fw.close()
 
