@@ -13,6 +13,9 @@ print
 #create the KROME object
 krome = krome()
 
+#check prerequisites
+krome.checkPrereq()
+
 #init argaprser
 krome.init_argparser()
 

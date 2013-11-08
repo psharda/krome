@@ -1,0 +1,32 @@
+REQUIRES Driver 
+REQUIRES physics/Hydro
+REQUIRES physics/Eos/EosMain/Multigamma
+REQUIRES Grid/GridBoundaryConditions/OneRow
+REQUIRES physics/sourceTerms/KromeChemistry/KromeChemistryMain
+REQUIRES Multispecies
+
+#REQUIRES physics/Gravity/GravityMain/Poisson/Multipole
+#REQUIRES physics/Gravity/GravityMain/Poisson/BHTree
+REQUIRES physics/Gravity/GravityMain/Poisson/Multigrid
+
+PARAMETER sim_c_temp           REAL    1000.0
+PARAMETER sim_c_den	       REAL    1.0e-21
+
+PARAMETER sim_contrast         REAL    0.01
+
+PARAMETER sim_nblockx              REAL    1.0
+PARAMETER sim_nblocky		   REAL	   1.0
+PARAMETER sim_nblockz	  	   REAL    1.0
+
+
+#Define the mass fractions for all the species above!
+PARAMETER sim_xH	REAL	0.760
+PARAMETER sim_xHP	REAL	0.0
+PARAMETER sim_xHM	REAL	0.0
+PARAMETER sim_xHe	REAL	0.240
+PARAMETER sim_xHePP	REAL	0.0
+PARAMETER sim_xHeP	REAL	0.0
+PARAMETER sim_xH2P	REAL	0.0
+PARAMETER sim_xH2	REAL	0.0
+PARAMETER sim_xELEC	REAL	0.0
+

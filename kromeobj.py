@@ -48,6 +48,28 @@ class krome():
 	customODEs = [] #custom ODEs
 	version = "13.11"
 	codename = "Astonishing Ansatz"
+
+	#########################################
+	def checkPrereq(self):
+		#check for argparse module
+		try:
+			import argparse
+		except:
+			print "ERROR: you need installed argparse!"
+			print "You can obtain it by typing (ubuntu users):"
+			print " apt-get install python-setuptools"
+			print " easy_install argparse"
+			sys.exit()
+
+		#check python version
+		ver = sys.version_info
+		aver = list(ver)
+		sver = (".".join([str(x) for x in aver[:3]]))
+		if(not(aver[0]>=2 and aver[1]>=5)):
+			print "ERROR: your version of Python ("+sver+") is not supported by KROME!"
+			print " KROME needs at least Python 2.5!"
+			sys.exit()
+
 	#########################################
 	def init_argparser(self):
 
@@ -2853,8 +2875,91 @@ class krome():
 
 	###########################################
 	def flash_patch(self):
-		return
-	
+		buildFolder = self.buildFolder
+		specs = self.specs
+		#TODO:create folders
+		#TODO:copy /physics/sourceTerms/KromeChemistry files only
+		#TODO:copy /Driver/... as it is
+
+		flashFolder = buildFolder+"krome_ramses_patch/"
+
+		excl = ["CR","g","Tgas","dummy"] #species to exclude
+
+		########Driver#############
+
+
+		########physics#############
+		#*******Config**********
+		treeFolder = "physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
+		pfold = "patches/flash/"+treeFolder
+		species = ""
+		speciesCount = 0
+		for x in specs:
+			if(x.name in excl): continue
+			name = x.name.upper().replace("+","P").replace("-","M")
+			if(name=="E"): name="ELEC"
+			speciesCount += 1
+			species += "SPECIES "+name+"\n"
+
+		fname = "Config"
+		self.replacein(pfold+fname,flashFolder+treeFolder+fname,["#KROME_species"],[species])
+
+		#*******build->treeFolder****************
+		kromeFileList = ["krome_all.f90", "krome_user_commens.f90", "opkda1.f", "opkda2.f", "opkdmain.f"]
+		for fl in kromeFileList:
+			treeFolder = "physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
+			shutil.move(buildFolder+fl, flashFolder+treeFolder+fl)
+
+		#***********pfold->treeFolder***********
+		flashFileList = ["KromeChemistry.F90", "KromeChemistry_data.F90", "KromeChemistry_init.F90", "Makefile"]
+		for fl in kromeFileList:
+			treeFolder = "patches/flash/physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
+			pfold = "patches/flash/"+treeFolder
+			shutil.move(pfold+fl, flashFolder+treeFolder+fl)
+
+		#**************pchem_mapNetworkToSpecies*********
+		treeFolder = "physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
+		pfold = "patches/flash/"+treeFolder
+		fname = "pchem_mapNetworkToSpecies.F90"
+		species = ""
+		for x in specs:
+			if(x.name in excl): continue
+			name = x.name.upper().replace("+","P").replace("-","M")
+			if(name=="E"): name="ELEC"
+			species += "\tcase(\""+(x.name)+"\")\n"
+			species += "\t\tspecieOut = "+name+"_SPEC\n"
+
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_cases"],[species])
+		indentF90(buildFolder+fname)
+
+		########Simulation#############
+		#***********pfold->treeFolder***********
+		flashFileList = ["Config"]
+		for fl in kromeFileList:
+			treeFolder = "Simulation/SimulationComposition/PrimordialChemistryKrome/"
+			pfold = "patches/flash/"+treeFolder
+			shutil.move(pfold+fl, flashFolder+treeFolder+fl)
+		#******simulation_initSpecies
+		fname = "Simulation_initSpecies.F90"
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_specnum"],[str(speciesCount)])
+
+		#SpeciesList.txt
+		fname = "SpeciesList.txt"
+		spec_data = ""
+		for x in specs:
+			if(x.name in excl): continue
+			name = x.name.upper().replace("+","P").replace("-","M")
+			if(name=="E"): name="ELEC"
+			if(x.is_atom): #monoatomic
+				gamma = 5./3.
+			else: #molecule
+				gamma = 7./5.				
+			parts = [name, x.zatom, x.mass, x.neutrons, int(x.charge), gamma]
+			spec_data += ("".join([str(x)+(20-len(str(x)))*" " for x in parts]))	+ "\n"
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_spec_data"],[spec_data])
+
+
+
 	###########################################
 	def enzo_patch(self):
 		return

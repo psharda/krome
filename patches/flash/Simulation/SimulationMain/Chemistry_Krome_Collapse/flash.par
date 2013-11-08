@@ -1,0 +1,116 @@
+useKromeChemistry=.true.
+# Parameters for the setup
+
+gamma = 1.666666666667
+
+ppm_modifystates = .true.
+useGravity = .true.
+
+smallp                      = 1.0000000000000E-30
+smlrho                      = 1.0000000000000E-40
+smallu                      = 1.0000000000000E-10
+smallt                      = 1.0000000000000E-10
+smallx                      = 1.e-30
+irenorm                     = 1
+
+
+#	checkpoint file output parameters
+checkpointFileIntervalTime = 0
+checkpointFileIntervalStep = 25
+checkpointFileNumber = 0
+
+#	plotfile output parameters
+plotfileIntervalTime = 0.
+plotfileIntervalStep = 0
+plotfileNumber = 0
+plot_var_1      = "temp"
+
+
+# go for nend steps or tmax seconds, whichever comes first
+nend            = 100000
+tmax		= 1.0e16
+dtmax		= 5.0e11
+
+# for starting a new run
+restart         = .truee.
+checkpointfilenumber = 1
+plotfilenumber = 1
+
+# initial, and minimum timesteps
+dtinit           = 1.e5
+dtmin           = 1.e4
+
+# Grid geometry
+geometry = "cartesian"
+
+# Size of computational volume
+xmin		= -1.38852e18
+xmax		=  1.38852e18
+ymin		= -1.38852e18
+ymax		=  1.38852e18
+zmin		= -1.38852e18
+zmax		=  1.38852e18
+
+
+# Boundary conditions
+xl_boundary_type = "outflow" 
+xr_boundary_type = "outflow"
+yl_boundary_type = "outflow"
+yr_boundary_type = "outflow"
+zl_boundary_type = "outflow"
+zr_boundary_type = "outflow"
+grav_boundary_type = "isolated"
+
+# Variables for refinement test
+refine_var_1    = "dens"
+refine_var_2    = "velx"
+refine_var_3    = "none"
+refine_var_4    = "none"
+
+
+# Refinement levels
+lrefine_max_2deriv = 6
+lrefine_min     = 2
+lrefine_max     = 16
+lrefine_max_2deriv_local = 16
+refine_2deriv_height = 2.e17
+derefine_cutoff_1 = 0.7
+refine_cutoff_1   = 0.9
+derefine_cutoff_2 = 0.7
+refine_cutoff_2   = 0.9
+
+# Number of lowest-level blocks
+sim_nblockx         = 1.0
+sim_nblocky         = 1.0 
+sim_nblockz         = 1.0
+
+# Hydrodynamics parameters
+cfl	        = 0.6
+
+# Simulation-specific parameters
+basenm          = "Chem_Krome_"
+run_number      = "001"
+run_comment     = "hydrostatic spherical cluster"
+log_file        = "Krome.log"
+
+#Parameters for the Chemistry
+sim_xHP         =       1.2e-5  
+sim_xH          =       0.76
+sim_xHM         =       2.e-9     
+sim_xDP         =       0.0     
+sim_xD          =       0.0
+sim_xDM         =       0.0     
+sim_xHeP        =       1.e-14     
+sim_xHePP       =       1.e-17    
+sim_xHe         =       0.24
+sim_xH2P        =       3.e-14     
+sim_xH2         =       2.0e-20    
+sim_xHDP        =       0.0     
+sim_xHD         =       0.0     
+sim_xD2         =       0.0
+sim_xD2P        =       0.0
+sim_xELEC       =       0.0 
+
+# Test 
+sim_c_temp = 1000.0
+sim_c_den  = 1.673e-18

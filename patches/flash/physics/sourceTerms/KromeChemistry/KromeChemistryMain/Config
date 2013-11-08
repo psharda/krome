@@ -1,0 +1,11 @@
+#   This is the Config file for KromeChemistry with Krome
+#   Basically here for defining the species I will be using
+
+REQUIRES Driver
+REQUIRES Simulation/SimulationComposition/KromeChemistry
+
+
+#KROME_spec_data
+
+D useKromeChemistry
+PARAMETER useKromeChemistry   BOOLEAN TRUE
