@@ -20,13 +20,5 @@ PARAMETER sim_nblockz	  	   REAL    1.0
 
 
 #Define the mass fractions for all the species above!
-PARAMETER sim_xH	REAL	0.760
-PARAMETER sim_xHP	REAL	0.0
-PARAMETER sim_xHM	REAL	0.0
-PARAMETER sim_xHe	REAL	0.240
-PARAMETER sim_xHePP	REAL	0.0
-PARAMETER sim_xHeP	REAL	0.0
-PARAMETER sim_xH2P	REAL	0.0
-PARAMETER sim_xH2	REAL	0.0
-PARAMETER sim_xELEC	REAL	0.0
+#KROME_specs_config
 

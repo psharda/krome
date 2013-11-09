@@ -79,13 +79,10 @@ subroutine Simulation_initblock (blockID)
   
   !This is a part dedicated to the PrimordialChemistry. This is followed
   !from the Cellular problem and the unitTest problem
-  real :: abar, zbar
   real, dimension(SPECIES_BEGIN:SPECIES_END) :: massFraction
-  real :: temp_zone, rho_zone, vel_zone
-  real ::  smallx
-  real :: ptot, eint, etot
+  real :: smallx
   real, dimension(EOS_NUM) :: eosData
-  real :: hpA, hmA, dpA, hepA, heppA, h2pA, elecA
+#KROME_specs_block_vars
   
   
   !  print *,'Simulation InitBlock'
@@ -110,25 +107,12 @@ subroutine Simulation_initblock (blockID)
   call Grid_getCellCoords(IAXIS,blockID,CENTER,gcell,x,sizex)
   
   !Setup initial composition of all species
-  !Question, Cellular had some small fraction for each species, can this not be zero?
-  smallx = 1.0e-30;  !Trying something small
   massFraction(:) = smallx
-  
-! this initialization is basically free and arbitrarily adjustable,
-! just make sure that the electron fraction is initialized properly to guarantee that the gas is neutral  !!!!!!
-  if (HP_SPEC > 0) massFraction(HP_SPEC) = max(sim_xH*sim_xHP, smallx)
-  if (HM_SPEC > 0) massFraction(HM_SPEC) = max(sim_xHM*massFraction(HP_SPEC)*sim_c_temp**0.88, smallx)
-  if (HEP_SPEC > 0) massFraction(HEP_SPEC) = max(sim_xHE*4.*sim_xHeP, smallx)
-  if (HEPP_SPEC > 0) massFraction(HEPP_SPEC) = max(sim_xHE*4.*sim_xHePP, smallx)
-
-  if (H2P_SPEC > 0) massFraction(H2P_SPEC) = max(sim_xH2P*2.*massFraction(HP_SPEC)*sim_c_temp**1.8, smallx)
-  if (H2_SPEC > 0) massFraction(H2_SPEC) = max(sim_xH2*2.*sim_xH*301.**5.1, smallx)
-
-  if (H_SPEC > 0) massFraction(H_SPEC) = max(sim_xH-massFraction(HP_SPEC)-massFraction(HM_SPEC)- &
-                                            & massFraction(H2P_SPEC)-massFraction(H2_SPEC),smallx)
-  if (HE_SPEC > 0) massFraction(HE_SPEC) = max(sim_xHE-massFraction(HEP_SPEC)-massFraction(HEPP_SPEC), smallx)
 
 
+#KROME_specs_block_if
+
+#KROME_specs_prop
   call Multispecies_getProperty(HP_SPEC,A,hpA)
   call Multispecies_getProperty(HM_SPEC,A,hmA)
   call Multispecies_getProperty(HEP_SPEC,A,hepA)
@@ -144,6 +128,8 @@ subroutine Simulation_initblock (blockID)
   !***************************************************
   !!***Now loop over all cells in the current block***
   !  
+  xx=0.
+  yy=0.
   zz=0.
   do k = 1, sizeZ
      if(NDIM==3) zz = z(k)
@@ -172,11 +158,7 @@ subroutine Simulation_initblock (blockID)
            eosData(EOS_PRES) = p
            
            call Eos(MODE_DENS_TEMP,1,eosData,massFraction)
-           
-           
-           ptot = eosData(EOS_PRES)
-           eint = eosData(EOS_EINT)
-           
+          
            vx   = 0.
            vy   = 0.
            vz   = 0.

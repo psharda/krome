@@ -35,8 +35,8 @@ module Simulation_data
 
 !!Fluid
 
-    real, save :: sim_xH,sim_xHP,sim_xHM
-    real, save :: sim_xHE,sim_xHEP,sim_xHEPP,sim_xH2,sim_xH2P
-    real, save :: sim_xELEC
+#KROME_specs_data
+
+ real, save :: smallx
 
 end module Simulation_data

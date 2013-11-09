@@ -96,22 +96,7 @@ run_comment     = "hydrostatic spherical cluster"
 log_file        = "Krome.log"
 
 #Parameters for the Chemistry
-sim_xHP         =       1.2e-5
-sim_xH          =       0.76
-sim_xHM         =       2.e-9
-sim_xDP         =       0.0
-sim_xD          =       0.0
-sim_xDM         =       0.0
-sim_xHeP        =       1.e-14
-sim_xHePP       =       1.e-17
-sim_xHe         =       0.24
-sim_xH2P        =       3.e-14
-sim_xH2         =       2.0e-20
-sim_xHDP        =       0.0
-sim_xHD         =       0.0
-sim_xD2         =       0.0
-sim_xD2P        =       0.0
-sim_xELEC       =       0.0
+#KROME_specs_par
 
 # Test 
 sim_c_temp = 1000.0

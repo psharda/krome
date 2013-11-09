@@ -74,16 +74,9 @@ subroutine Simulation_init()
      call RuntimeParameters_get("sim_c_den", sim_c_den)
      call RuntimeParameters_get("sim_contrast", sim_contrast)
 
-     call RuntimeParameters_get("sim_xH", sim_xH)
-     call RuntimeParameters_get("sim_xHP", sim_xHP)
-     call RuntimeParameters_get("sim_xHM", sim_xHM)
-     call RuntimeParameters_get("sim_xHE", sim_xHE)
-     call RuntimeParameters_get("sim_xHEP", sim_xHEP)
-     call RuntimeParameters_get("sim_xHEPP", sim_xHEPP)
-     call RuntimeParameters_get("sim_xH2", sim_xH2)
-     call RuntimeParameters_get("sim_xH2P", sim_xH2P)
-     call RuntimeParameters_get("sim_xELEC", sim_xELEC)     
-
+#KROME_specs_init
+   
+     call RuntimeParameters_get("smallx", smallx)
 
     return
 

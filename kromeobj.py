@@ -70,6 +70,8 @@ class krome():
 			print " KROME needs at least Python 2.5!"
 			sys.exit()
 
+		#TODO:check necessary files
+
 	#########################################
 	def init_argparser(self):
 
@@ -314,6 +316,15 @@ class krome():
 		if(args.flash):
 			self.doFlash = True
 			print "Reading option -flash"
+			if(not(args.compact)):
+				print "ERROR: the patch for FLASH requires the -compact option!"
+				sys.exit()
+			if(self.is_test):
+				print "ERROR: -test option and -flash are incompatible!"
+				sys.exit()
+			if(self.useX):
+				print "ERROR: the patch for FLASH requires the -useN option!"
+				sys.exit()
 
 		#creates enzo patches
 		if(args.enzo):
@@ -2757,9 +2768,7 @@ class krome():
 				fw.write(srow)
 		fh.close()
 		fw.close()
-
-
-				
+			
 
 	#########################################
 	def ramses_patch(self):
@@ -2775,7 +2784,7 @@ class krome():
 			"H+": 8.1967e-5,
 			"HE": 2.4375e-1,
 			"H2": 1.5123e-6,
-			"default":1e-20
+			"default":1e-40
 		}
 
 		excl = ["CR","g","Tgas","dummy"] #avoid specials
@@ -2875,23 +2884,43 @@ class krome():
 
 	###########################################
 	def flash_patch(self):
-		buildFolder = self.buildFolder
 		specs = self.specs
-		#TODO:create folders
-		#TODO:copy /physics/sourceTerms/KromeChemistry files only
-		#TODO:copy /Driver/... as it is
 
-		flashFolder = buildFolder+"krome_ramses_patch/"
+		#some initial fractions. if not found set default
+		ndef = {"H": 0.76e0,
+			"HE": 0.24e0,
+			"H+": 1e-14,
+			"H-": 2e-9,
+			"He+": 1e-14,
+			"He++": 1e-17,
+			"H2": 2e-20,
+			"default":1e-40
+		}
+
+		buildFolder = self.buildFolder
+		flashFolder = buildFolder+"krome_flash_patch/"
+		patchFolder = "patches/flash/"
+
+		#create folders
+		dirs = [flashFolder + "Driver/DriverMain"]
+		dirs.append(flashFolder + "physics/sourceTerms/KromeChemistry/KromeChemistryMain")
+		dirs.append(flashFolder + "Simulation/SimulationComposition/KromeChemistry")
+		dirs.append(flashFolder + "Simulation/SimulationMain/Chemistry_Krome_Collapse")
+		for pdir in dirs:
+			if(not(os.path.exists(pdir))): os.makedirs(pdir)
 
 		excl = ["CR","g","Tgas","dummy"] #species to exclude
 
 		########Driver#############
+		pFolder = "Driver/DriverMain/"
+		flist = ["Driver_finalizeSourceTerms.F90","Driver_initSourceTerms.F90","Driver_sourceTerms.F90"]
+		for fle in flist:
+			shutil.copy(patchFolder+pFolder+fle, flashFolder+pFolder+fle)
 
 
 		########physics#############
 		#*******Config**********
-		treeFolder = "physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
-		pfold = "patches/flash/"+treeFolder
+		pFolder = "physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
 		species = ""
 		speciesCount = 0
 		for x in specs:
@@ -2902,24 +2931,29 @@ class krome():
 			species += "SPECIES "+name+"\n"
 
 		fname = "Config"
-		self.replacein(pfold+fname,flashFolder+treeFolder+fname,["#KROME_species"],[species])
+		self.replacein(patchFolder+pFolder+fname, flashFolder+pFolder+fname,["#KROME_species"],[species])
 
-		#*******build->treeFolder****************
-		kromeFileList = ["krome_all.f90", "krome_user_commens.f90", "opkda1.f", "opkda2.f", "opkdmain.f"]
+		#*******build->physics****************
+		pFolder = "physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
+		kromeFileList = ["krome_all.f90", "krome_user_commons.f90", "opkda1.f", "opkda2.f", "opkdmain.f"]
 		for fl in kromeFileList:
-			treeFolder = "physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
-			shutil.move(buildFolder+fl, flashFolder+treeFolder+fl)
+			shutil.move(buildFolder+fl, flashFolder+pFolder+fl)
 
-		#***********pfold->treeFolder***********
-		flashFileList = ["KromeChemistry.F90", "KromeChemistry_data.F90", "KromeChemistry_init.F90", "Makefile"]
+		#***********physics->physics***********
+		pFolder = "physics/sourceTerms/KromeChemistry/"
+		kromeFileList = ["KromeChemistry.F90","KromeChemistry_finalize.F90", 
+			"KromeChemistry_init.F90", "KromeChemistry_interface.F90", "Makefile"]
 		for fl in kromeFileList:
-			treeFolder = "patches/flash/physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
-			pfold = "patches/flash/"+treeFolder
-			shutil.move(pfold+fl, flashFolder+treeFolder+fl)
+			shutil.copy(patchFolder+pFolder+fl, flashFolder+pFolder+fl)
+
+		#***********physics_main->physics_main***********
+		kromeFileList = ["KromeChemistry.F90", "KromeChemistry_data.F90", "KromeChemistry_init.F90", "Makefile"]
+		pFolder = "physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
+		for fl in kromeFileList:
+			shutil.copy(patchFolder+pFolder+fl, flashFolder+pFolder+fl)
 
 		#**************pchem_mapNetworkToSpecies*********
-		treeFolder = "physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
-		pfold = "patches/flash/"+treeFolder
+		pFolder = "physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
 		fname = "pchem_mapNetworkToSpecies.F90"
 		species = ""
 		for x in specs:
@@ -2929,22 +2963,24 @@ class krome():
 			species += "\tcase(\""+(x.name)+"\")\n"
 			species += "\t\tspecieOut = "+name+"_SPEC\n"
 
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_cases"],[species])
-		indentF90(buildFolder+fname)
+		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_cases"],[species])
+		indentF90(flashFolder+pFolder+fname)
 
 		########Simulation#############
 		#***********pfold->treeFolder***********
-		flashFileList = ["Config"]
+		kromeFileList = ["Config"]
+		pFolder = "Simulation/SimulationComposition/KromeChemistry/"
 		for fl in kromeFileList:
-			treeFolder = "Simulation/SimulationComposition/PrimordialChemistryKrome/"
-			pfold = "patches/flash/"+treeFolder
-			shutil.move(pfold+fl, flashFolder+treeFolder+fl)
+			shutil.copy(patchFolder+pFolder+fl, flashFolder+pFolder+fl)
+
 		#******simulation_initSpecies
 		fname = "Simulation_initSpecies.F90"
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_specnum"],[str(speciesCount)])
+		pFolder = "Simulation/SimulationComposition/KromeChemistry/"
+		self.replacein(patchFolder+pFolder+fname, flashFolder+pFolder+fname,["#KROME_specnum"],[str(speciesCount)])
 
 		#SpeciesList.txt
 		fname = "SpeciesList.txt"
+		pFolder = "Simulation/SimulationComposition/KromeChemistry/"
 		spec_data = ""
 		for x in specs:
 			if(x.name in excl): continue
@@ -2956,8 +2992,52 @@ class krome():
 				gamma = 7./5.				
 			parts = [name, x.zatom, x.mass, x.neutrons, int(x.charge), gamma]
 			spec_data += ("".join([str(x)+(20-len(str(x)))*" " for x in parts]))	+ "\n"
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_spec_data"],[spec_data])
+		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_spec_data"],[spec_data])
 
+		#************####Collapse example###**************
+		pFolder = "Simulation/SimulationMain/Chemistry_Krome_Collapse/"
+		specs_config = specs_par = specs_data =  specs_init = ""
+		specs_block_vars = specs_block_if = specs_block_prop = ""
+
+		for x in specs:
+			if(x.name in excl): continue
+			name = x.name.upper().replace("+","P").replace("-","M")
+			if(name=="E"): name="ELEC"
+			if(x.name in ndef):
+				nn = ndef[x.name]
+			else:
+				nn = ndef["default"]
+			parts = ["PARAMETER", "sim_x"+name, "REAL", nn]
+			specs_config += ("".join([str(x)+(20-len(str(x)))*" " for x in parts]))	+ "\n"
+			parts = ["sim_x"+name, "=", nn]
+			specs_par += ("".join([str(x)+(20-len(str(x)))*" " for x in parts]))	+ "\n"
+			specs_data += "real, save :: sim_x"+name +"\n"
+			specs_init += "call RuntimeParameters_get(\"sim_x"+name+"\", sim_"+name+")\n"
+			specs_block_vars += "real :: "+name.lower()+"A\n"
+			specs_block_if += "if("+name+"_SPEC > 0) massFraction("+name+"_SPEC) = max(sim_x"+name+", smallx)"
+			specs_block_prop += "call Multispecies_getProperty("+name+"_SPEC,A,"+name.lower()+"A)"
+
+
+		fname = "Config"
+		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_specs_config"],[specs_config])
+		fname = "flash.par"
+		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_specs_par"],[specs_par])
+		fname = "flash.par_1d"
+		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_specs_par"],[specs_par])
+		fname = "Simulation_data.F90"
+		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_specs_data"],[specs_data])
+		fname = "Simulation_init.F90"
+		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_specs_init"],[specs_init])
+		fname = "Simulation_initBlock.F90"
+		pragmas = ["#KROME_block_vars", "#KROME_block_if","KROME_block_prop"]
+		reps = [specs_block_vars, specs_block_if,specs_block_prop]
+		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,pragmas,reps)
+
+		#***********pfold->treeFolder***********
+		kromeFileList = ["Makefile"]
+		pFolder = "Simulation/SimulationMain/Chemistry_Krome_Collapse/"
+		for fl in kromeFileList:
+			shutil.copy(patchFolder+pFolder+fl, flashFolder+pFolder+fl)
 
 
 	###########################################
