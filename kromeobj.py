@@ -2977,6 +2977,7 @@ class krome():
 		fname = "Simulation_initSpecies.F90"
 		pFolder = "Simulation/SimulationComposition/KromeChemistry/"
 		self.replacein(patchFolder+pFolder+fname, flashFolder+pFolder+fname,["#KROME_specnum"],[str(speciesCount)])
+		indentF90(flashFolder+pFolder+fname)
 
 		#SpeciesList.txt
 		fname = "SpeciesList.txt"
@@ -2986,10 +2987,16 @@ class krome():
 			if(x.name in excl): continue
 			name = x.name.upper().replace("+","P").replace("-","M")
 			if(name=="E"): name="ELEC"
-			if(x.is_atom): #monoatomic
-				gamma = 5./3.
-			else: #molecule
-				gamma = 7./5.				
+			#prepares gamma depending on the model employed for gamma
+			if(self.typeGamma=="FULL"):
+				if(x.is_atom): #monoatomic
+					gamma = 5./3.
+				else: #molecule
+					gamma = 7./5.
+			if(self.typeGamma=="DEFAULT"):
+				gamma = "1.66666666667d0"
+			else:
+				gamma = self.typeGamma
 			parts = [name, x.zatom, x.mass, x.neutrons, int(x.charge), gamma]
 			spec_data += ("".join([str(x)+(20-len(str(x)))*" " for x in parts]))	+ "\n"
 		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_spec_data"],[spec_data])
@@ -2998,7 +3005,7 @@ class krome():
 		pFolder = "Simulation/SimulationMain/Chemistry_Krome_Collapse/"
 		specs_config = specs_par = specs_data =  specs_init = ""
 		specs_block_vars = specs_block_if = specs_block_prop = ""
-
+		ablocke = []
 		for x in specs:
 			if(x.name in excl): continue
 			name = x.name.upper().replace("+","P").replace("-","M")
@@ -3008,30 +3015,52 @@ class krome():
 			else:
 				nn = ndef["default"]
 			parts = ["PARAMETER", "sim_x"+name, "REAL", nn]
-			specs_config += ("".join([str(x)+(20-len(str(x)))*" " for x in parts]))	+ "\n"
+			specs_config += ("".join([str(y)+(20-len(str(x)))*" " for y in parts]))	+ "\n"
 			parts = ["sim_x"+name, "=", nn]
-			specs_par += ("".join([str(x)+(20-len(str(x)))*" " for x in parts]))	+ "\n"
+			specs_par += ("".join([str(y)+(20-len(str(x)))*" " for y in parts]))	+ "\n"
 			specs_data += "real, save :: sim_x"+name +"\n"
 			specs_init += "call RuntimeParameters_get(\"sim_x"+name+"\", sim_"+name+")\n"
 			specs_block_vars += "real :: "+name.lower()+"A\n"
-			specs_block_if += "if("+name+"_SPEC > 0) massFraction("+name+"_SPEC) = max(sim_x"+name+", smallx)"
-			specs_block_prop += "call Multispecies_getProperty("+name+"_SPEC,A,"+name.lower()+"A)"
-
+			specs_block_if += "if("+name+"_SPEC > 0) massFraction("+name+"_SPEC) = max(sim_x"+name+", smallx)\n"
+			specs_block_prop += "call Multispecies_getProperty("+name+"_SPEC,A,"+name.lower()+"A)\n"
+			if(x.charge!=0 and x.name!="E"):
+				if(x.charge==1):
+					emult = " +"
+				elif(x.charge==-1):
+					emult = " -"
+				else:
+					emult = " "+str(int(x.charge))+"*"
+					if(x.charge>0): emult = "+" + emult
+				ablocke.append(emult+"massFraction("+name+"_SPEC)/"+name.lower()+"A")
+		specs_block_e = "if (ELEC_SPEC > 0) massFraction(ELEC_SPEC) = max( elecA*(&\n"
+		specs_block_e += ("&\n".join(ablocke))
+		specs_block_e += "&\n), smallx)"
 
 		fname = "Config"
 		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_specs_config"],[specs_config])
+		indentF90(flashFolder+pFolder+fname)
+
 		fname = "flash.par"
 		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_specs_par"],[specs_par])
+		indentF90(flashFolder+pFolder+fname)
+
 		fname = "flash.par_1d"
 		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_specs_par"],[specs_par])
+		indentF90(flashFolder+pFolder+fname)
+
 		fname = "Simulation_data.F90"
 		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_specs_data"],[specs_data])
+		indentF90(flashFolder+pFolder+fname)
+
 		fname = "Simulation_init.F90"
 		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_specs_init"],[specs_init])
+		indentF90(flashFolder+pFolder+fname)
+
 		fname = "Simulation_initBlock.F90"
-		pragmas = ["#KROME_block_vars", "#KROME_block_if","KROME_block_prop"]
-		reps = [specs_block_vars, specs_block_if,specs_block_prop]
+		pragmas = ["#KROME_specs_block_vars", "#KROME_specs_block_if","#KROME_specs_block_prop","#KROME_specs_block_e"]
+		reps = [specs_block_vars, specs_block_if,specs_block_prop,specs_block_e]
 		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,pragmas,reps)
+		indentF90(flashFolder+pFolder+fname)
 
 		#***********pfold->treeFolder***********
 		kromeFileList = ["Makefile"]

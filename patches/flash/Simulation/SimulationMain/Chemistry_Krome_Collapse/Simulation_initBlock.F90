@@ -112,17 +112,9 @@ subroutine Simulation_initblock (blockID)
 
 #KROME_specs_block_if
 
-#KROME_specs_prop
-  call Multispecies_getProperty(HP_SPEC,A,hpA)
-  call Multispecies_getProperty(HM_SPEC,A,hmA)
-  call Multispecies_getProperty(HEP_SPEC,A,hepA)
-  call Multispecies_getProperty(HEPP_SPEC,A,heppA)
-  call Multispecies_getProperty(H2P_SPEC,A,h2pA)
-  call Multispecies_getProperty(ELEC_SPEC,A,elecA)
+#KROME_specs_block_prop
 
-! guarantee that gas is neutral
-  if (ELEC_SPEC > 0) massFraction(ELEC_SPEC) = max( elecA*(massFraction(HP_SPEC)/hpA - massFraction(HM_SPEC)/hmA &
- 				        	& + massFraction(HEP_SPEC)/hepA + 2.*massFraction(HEPP_SPEC)/heppA + massFraction(H2P_SPEC)/h2pA), smallx)
+#KROME_specs_block_e
 
 
   !***************************************************
