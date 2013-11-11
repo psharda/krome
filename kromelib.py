@@ -650,24 +650,26 @@ def parser(name, mass_dic, atoms, thermo_data):
 
 
 	#atomic number dictionary (add here atoms if needed)
-	zdic = {1:"H",
-		2:"He",
-		3:"Li",
-		4:"Be",
-		5:"B",
-		6:"C",
-		7:"N",
-		8:"O",
-		9:"F",
-		10:"Ne",
-		11:"Na",
-		12:"Mg",
-		13:"Al",
-		14:"Si",
-		16:"S",
-		18:"Ar",
-		20:"Ca",
-		26:"Fe"}
+	zdic = {"E":0,
+		"D":1,
+		"H":1,
+		"HE":2,
+		"Li":3,
+		"BE":4,
+		"B":5,
+		"C":6,
+		"N":7,
+		"O":8,
+		"F":9,
+		"NE":10,
+		"NA":11,
+		"MG":12,
+		"AL":13,
+		"SI":14,
+		"S":15,
+		"AR":18,
+		"CA":20,
+		"FE":26}
 
 	#check for fake species
 	if("FK" in name):

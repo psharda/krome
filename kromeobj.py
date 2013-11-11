@@ -2931,7 +2931,7 @@ class krome():
 			species += "SPECIES "+name+"\n"
 
 		fname = "Config"
-		self.replacein(patchFolder+pFolder+fname, flashFolder+pFolder+fname,["#KROME_species"],[species])
+		self.replacein(patchFolder+pFolder+fname, flashFolder+pFolder+fname,["#KROME_spec_data"],[species])
 
 		#*******build->physics****************
 		pFolder = "physics/sourceTerms/KromeChemistry/KromeChemistryMain/"
@@ -2983,6 +2983,7 @@ class krome():
 		fname = "SpeciesList.txt"
 		pFolder = "Simulation/SimulationComposition/KromeChemistry/"
 		spec_data = ""
+		all_parts = []
 		for x in specs:
 			if(x.name in excl): continue
 			name = x.name.upper().replace("+","P").replace("-","M")
@@ -2997,8 +2998,10 @@ class krome():
 				gamma = "1.66666666667d0"
 			else:
 				gamma = self.typeGamma
-			parts = [name, x.zatom, x.mass, x.neutrons, int(x.charge), gamma]
-			spec_data += ("".join([str(x)+(20-len(str(x)))*" " for x in parts]))	+ "\n"
+			all_parts.append([name, x.zatom, x.zatom+x.neutrons, x.neutrons, x.charge,gamma])
+		all_parts = sorted(all_parts,key=lambda x:x[1]) #sort by atomic number
+		for parts in all_parts:
+			spec_data += ("".join([str(y)+(20-len(str(y)))*" " for y in parts]))	+ "\n"
 		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_spec_data"],[spec_data])
 
 		#************####Collapse example###**************
@@ -3015,9 +3018,9 @@ class krome():
 			else:
 				nn = ndef["default"]
 			parts = ["PARAMETER", "sim_x"+name, "REAL", nn]
-			specs_config += ("".join([str(y)+(20-len(str(x)))*" " for y in parts]))	+ "\n"
+			specs_config += ("".join([str(y)+(20-len(str(y)))*" " for y in parts]))	+ "\n"
 			parts = ["sim_x"+name, "=", nn]
-			specs_par += ("".join([str(y)+(20-len(str(x)))*" " for y in parts]))	+ "\n"
+			specs_par += ("".join([str(y)+(20-len(str(y)))*" " for y in parts]))	+ "\n"
 			specs_data += "real, save :: sim_x"+name +"\n"
 			specs_init += "call RuntimeParameters_get(\"sim_x"+name+"\", sim_"+name+")\n"
 			specs_block_vars += "real :: "+name.lower()+"A\n"
@@ -3071,8 +3074,25 @@ class krome():
 
 	###########################################
 	def enzo_patch(self):
-		return
 
+		specs = self.specs
+		excl = ["CR","g","Tgas","dummy"] #species to exclude
+		speciesCount = 0
+		krome_driver_args = krome_driver_rprec = krome_driver_scale = ""
+		krome_driver_minval = krome_driver_dom = ""
+		for x in specs:
+			if(x.name in excl): continue
+			name = x.name.upper().replace("+","I").replace("-","M")
+			if(name=="E"): name="de"
+			speciesCount += 1
+			krome_driver_args += "& "+name+",\n"
+			krome_driver_rprec += "R_PREC "+name+"(in,jn,kn)\n"
+			krome_driver_scale += name+"(i,j,k) = "+name+"(i,j,k)*factor\n"
+			krome_driver_minval += name+"(i,j,k) = max("+name+"(i,j,k), krome_tiny)\n" 
+			krome_driver_dom += "krome_x(krome_"+x.fidx+") = "+name+"(i,j,k)*dom/"+str(x.zatom)+"\n"
+		print krome_driver_dom
+		# #KROME_args, #KROME_rprec, #KROME_scale, #KROME_minval, #KROME_dom
+		return
 	############################################
 	def patches(self):
 		if(self.doFlash): self.flash_patch()

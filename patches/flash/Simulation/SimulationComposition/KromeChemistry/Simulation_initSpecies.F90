@@ -30,13 +30,14 @@
 !!  found.
 !!
 !!  The format of SpeciesList.txt is as follow
-!!  Column#         Variable                  Description
+!!  Column#    Variable      Description
 !!  ---------------------------------------------------------
-!!  1               isotopeName               Sorted in increasing atomic number
-!!  2               Z                         zbar, Atomic number; number of protons in nucleus
-!!  3               A                         abar, total number of protons and neutrons in nucleus
-!!  4               N                         Number of neutrons
-!!  5               gamma
+!!  1        isotopeName   Sorted in increasing atomic number
+!!  2        Z             zbar, Atomic number; number of protons in nucleus
+!!  3        A             abar, total number of protons and neutrons
+!!  4        N             Number of neutrons
+!!  5        e             NUmber of electrons
+!!  6        gamma
 !!
 !!
 !!
