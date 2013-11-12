@@ -312,6 +312,12 @@ class krome():
 			if(self.useX):
 				print "ERROR: the patch for RAMSES requires the -useN option!"
 				sys.exit()
+			if(self.useHeatingCompress):
+				print "ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse!"
+				sys.exit()
+			if(not(args.customATOL) and not(args.ATOL)):
+				print "WARNING: default ATOL set to 1e-10 due to -ramses flag."
+				self.ATOL = 1e-10
 		#creates flash patches
 		if(args.flash):
 			self.doFlash = True
@@ -325,11 +331,33 @@ class krome():
 			if(self.useX):
 				print "ERROR: the patch for FLASH requires the -useN option!"
 				sys.exit()
+			if(self.useHeatingCompress):
+				print "ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse!"
+				sys.exit()
+			if(not(args.customATOL) and not(args.ATOL)):
+				print "WARNING: default ATOL set to 1e-10 due to -flash flag."
+				self.ATOL = 1e-10
+
 
 		#creates enzo patches
 		if(args.enzo):
 			self.doEnzo = True
 			print "Reading option -enzo"
+			if(not(args.compact)):
+				print "ERROR: the patch for ENZO requires the -compact option!"
+				sys.exit()
+			if(self.is_test):
+				print "ERROR: -test option and -enzo are incompatible!"
+				sys.exit()
+			if(self.useX):
+				print "ERROR: the patch for ENZO -useN option!"
+				sys.exit()
+			if(self.useHeatingCompress):
+				print "ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse!"
+				sys.exit()
+			if(not(args.customATOL) and not(args.ATOL)):
+				print "WARNING: default ATOL set to 1e-10 due to -enzo flag."
+				self.ATOL = 1e-10
 
 		#creates simple C wrapper
 		if(args.C):
@@ -2998,7 +3026,7 @@ class krome():
 				gamma = "1.66666666667d0"
 			else:
 				gamma = self.typeGamma
-			all_parts.append([name, x.zatom, x.zatom+x.neutrons, x.neutrons, x.charge,gamma])
+			all_parts.append([name, x.zatom, x.mass, x.neutrons, x.zatom-x.charge,gamma])
 		all_parts = sorted(all_parts,key=lambda x:x[1]) #sort by atomic number
 		for parts in all_parts:
 			spec_data += ("".join([str(y)+(20-len(str(y)))*" " for y in parts]))	+ "\n"
@@ -3022,7 +3050,7 @@ class krome():
 			parts = ["sim_x"+name, "=", nn]
 			specs_par += ("".join([str(y)+(20-len(str(y)))*" " for y in parts]))	+ "\n"
 			specs_data += "real, save :: sim_x"+name +"\n"
-			specs_init += "call RuntimeParameters_get(\"sim_x"+name+"\", sim_"+name+")\n"
+			specs_init += "call RuntimeParameters_get(\"sim_x"+name+"\", sim_x"+name+")\n"
 			specs_block_vars += "real :: "+name.lower()+"A\n"
 			specs_block_if += "if("+name+"_SPEC > 0) massFraction("+name+"_SPEC) = max(sim_x"+name+", smallx)\n"
 			specs_block_prop += "call Multispecies_getProperty("+name+"_SPEC,A,"+name.lower()+"A)\n"

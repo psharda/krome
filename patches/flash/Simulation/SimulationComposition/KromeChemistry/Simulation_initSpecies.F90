@@ -34,7 +34,7 @@
 !!  ---------------------------------------------------------
 !!  1        isotopeName   Sorted in increasing atomic number
 !!  2        Z             zbar, Atomic number; number of protons in nucleus
-!!  3        A             abar, total number of protons and neutrons
+!!  3        m             total mass of species in g
 !!  4        N             Number of neutrons
 !!  5        e             NUmber of electrons
 !!  6        gamma

@@ -80,7 +80,6 @@ subroutine Simulation_initblock (blockID)
   !This is a part dedicated to the PrimordialChemistry. This is followed
   !from the Cellular problem and the unitTest problem
   real, dimension(SPECIES_BEGIN:SPECIES_END) :: massFraction
-  real :: smallx
   real, dimension(EOS_NUM) :: eosData
 #KROME_specs_block_vars
   

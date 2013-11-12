@@ -339,247 +339,7 @@ def get_Tshortcut(rea,slist):
 ##################################
 #get list of available commands
 def get_usage():
-
-	tsze =  get_terminal_size()
-	th = tsze[0]
-	msg = """
-
-NAME
-	KROME - a tool for creating chemical kinetics
-	subroutines for astrophysical simulations (F90)
-
-SYNOPSYS
-	./krome reaction_list_file [OPTIONS]
-	./krome -test=TEST
-
-DESCRIPTION 
-
-	reaction_list_file must be in the CSV format:
-	index,r1,r2,r3,p1,p2,p3,p4,Tmin,Tmax,rate
-
-	or custom format, e.g.
-	R,R,P,P,P,Tmin,Tmax,rate
-	
-
-	available OPTIONS are:
-	
-	-iRHS
-		implicit loop-based RHS (suggested for large systems)
- 
-	-forceMF=21
-		force explicit sparsity and Jacobian 
-		(default without -iRHS)
- 
-	-forceMF=222
-		force internal-generated sparsity and Jacobian 
-		(default with -iRHS)
-	
-	-forceRWORK=N
-		force the size of RWORK to N
-
-	-ATOL=N
-		set solver absolute tolerance to the float
-		or double value N, e.g. -ATOL=1d-40
-		Default is ATOL=1d-20
-
-	-RTOL=N
-		set solver relative tolerance to the float
-		double value N, e.g. -RTOL=1e-5
-		Default is RTOL=1d-4
-	
-	-useN
-		use number densities (1/cm3) as input/ouput 
-		instead of fractions (#)
-
-	-cooling=COOLING
-		activate cooling listed in COOLING:
-		ATOMIC	Cen 1992
-		H2	H2 Glover&Abel 2008
-		H2GP	H2 Galli&Palla 1998
-		HD 	HD Lipovka2005
-                CI      Carbon cooling
-                CII     Carbon ion cooling
-                OI      Oxygen cooling
-                OII     Oxygen ion cooling
-                FeI     Iron cooling
-                FeII    Iron ion cooling
-                SiI     Silicon cooling
-                SiII    Silicon  ion cooling
-	        Z	All metals
-		DH	enthalpic
-		DUST 	dust cooling
-                COMPTON compton cooling (Cen1992, Glover&Jappsen2007)
-                CIE     collisional induced emission
-		example: -cooling=CEN,H2,HD
-
-	-heating=HEATING
-		activate cooling listed in HEATING:
-		COMPRESS compressional Omukai 2000
-		CHEM	recombination H2 heating (Omukai2000)
-		PHOTO	photoionization heating (Grassi+2012)
-		DH	enthalpic	
-		example: -heating=A,PHOTO
-
-	-dust=N,TYPE1,TYPE2,...
-		include dust ODE using N bins for each TYPE,
-		e.g. -dust=10,C,Si set 10 dust carbon bins and
-		10 dust silicon dust bins. Require a call to 
-		the krome_init_dust subroutine. See test=dust
-		for an example.
-	-dustOptions=OPTIONS
-		activate dust options where OPTIONS is
-		GROWTH	dust growth
-		SPUTTER sputtering
-		H2 	molecular hydrogen formation on dust
-		TDUST	computes dust T with photon flux + CMB radiation
-	-useODEcool
-
-	-usePhot
-		use photons indicated in the reaction file
-
-	-test=TEST
-		select a test model within TEST:
-		planetary	Simple planet atmosphere
-		slowmanifold	Slow manifold (Reinhardt et al. 2008)
-		cloud		Molecular cloud one-zone
-                collapse        One-zone primordial collapse
-                collapseZ       One-zone collapse with metals
-                collapseUV      One-zone collapse with UV background
-		shock1D		1D shock without cooling and heating
-		shock1Dcool	1D shock with cooling
-		shock1Dphoto	1D shock with photoionization, cooling, heating
-		shock1Dbuff 	1D shock with cooling and photoheating but using buffer
-		shock1Dlarge 	1D shock using WH2008 network (very slow!)
-		dust		One-zone: dust growth and thermal sputtering
-		compact		1D shock using compact source file
-
-	-useDvodeF90
-		use Dvode implementation in F90 (slower)
-
-	-useTabs
-		use tabulated rate coefficients (free parameter: temperature)
-
-	-report
-		generate report file in the main call to krome as 
-		KROME_ERROR_REPORT and when calling the fex as 
-		KROME_ODE_REPORT. It also stores abundances evolution
-		in fex as fort.98, and prepares a report.gps gnuplot
-		script file to plot evolutions callable in gnuplot 
-		with load 'report.gps'. Warning: it slows the whole 
-		system!
-
-	-checkConserv
-		check mass conservation during integration (slower)
-
-	-useEquilibrium
-		check if the solver has reached the equilbirum. If so
-		break the solver's loop and return the values found.
-		It is useful when the system oscillates around a
-		solution (as in some photoheating cases).
-
-	-useFileIdx
-		use the reaction index in the reaction file instead 
-		of using the automatic progressive index starting 
-		from 1. Useful with rate coefficients that depends
-		on other coefficients, e.g. k(10) = 1d-2*k(3)
-
-	-compact
-		creates a single fortran file with all the modules
-		instead of various file with the different modules.
-		Solver files remain stand-alone (see example make in 
-		test/MakefileCompact).
-
-	-Tlimit=opLow,opHigh
-		set the operators for all the reaction temperature 
-		limits where opLow is the operator for the first 
-		temperature value in the reaction file, and opHigh 
-		is for the second one. e.g. if the T limits for a 
-		given reaction are 10. and 1d4 the option -Tlmit=[GE,LE] 
-		will provide (Tgas>=10. AND Tgas<=1d4) as the reaction
-		range of validity. Operators opLow and opHigh must 
-		be one of the following: LE, GE, LT, GT.
-
-	-noTlimits
-		ignore rate coefficient temperature limits.
-
-        -gamma="OPTION"
-               define the adiabatic index according to OPTION that can be
-               "FULL" for employing Grassi et al. 2011, or a custom F90 
-               expression e.g. -gamma="5.d0/3.d0"
-
-	-reverse="EXPRESSION"
-		create reverse reaction from the given set. Inverse rate
-		coefficient are built as k_reverse = k_forward EXPRESSION.
-		EXPRESSION allows to use @nRi and @nPi as i-th reactant and 
-		product	respectively, while Tgas is the temperature.
-		It also allows to use the indexes of products and reactants
-		by using @iRi and @iPi, e.g. @iR1 or @iP2.
-		The number of non-dummy products and reactants is @NR and @NP
-		respectively. 
-		Dummies are removed automatically.
-		e.g. using -reverse="*@nP2/(@nR1+@nR2+@nR3) * A(@iR1)" 
-		the reaction 
-		H+HO -> H2+O with rate k_forward is reversed as
-		H2+O -> H+HO with a rate k_reverse of
-		k_reverse = k_forward * n(idx_HO) / (n(idx_H2) + n(idx_O))
-		 * A(idx_H2)
-		as indicate in EXPRESSION (note that nR3 has removed).
-		EXPRESSION also allows functions that (if used) must be 
-		included in krome_user_commons.
-
-	-useCustomCoe="FUNCTION"
-		use a user-defined custom function that returns a real*8 
-		array of size NREA = number of reactions, that replaces 
-		the standard rate coefficient calculation function. 
-		Note that FUNCTION must be explicitly included in 
-		krome_user_commons module.
-
-	-useODEConstant="EXPRESSION"
-		postpone an expression to each ODE. EXPRESSION must be
-		a valid f90 expression (e.g. *3.d0 or +1.d-10)
-
-	-usePlainIsotopes
-		use kA format for isotopes instead of [k]A format, where
-		k is the isotopic number and A is the atom name, e.g. krome
-		looks for 14C instead of [14]C in the reactions file.
-
-	-project=NAME
-		build everything in a folder called build_NAME instead
-		of building all in the default build folder. It also
-		creates a NAME.kpj file with the krome input used.
-
-	-clean
-		clean all in /build (including krome_user_commons.f90
-		that is normally kept by default) before creating new
-		f90 files.
-
-	-pedantic
-		uses a pedantic Makefile (debug purposes)
-
- 	-help -h --help
-		show this help message
-
-CREDITS
-	Written and developed by Tommaso Grassi
-	tommasograssi@gmail.com,
-	University of Rome "Sapienza".
-
-	Co-developer Stefano Bovino
-  	sbovino@astro.physik.uni-goettingen.de
-	Institut fuer Astrophysik, Goettingen.
-
-	Others (alphabetically): F.A. Gianturco, J.Prieto,
-	E. Simoncini, D.R.G. Schleicher, D. Seifreid 
-
-"""
-	c = 0	
-	msgs = msg.split("\n")
-	for a in msgs:
-		c += 1
-		print a
-		if(c%(th-2)==0):
-			print 
-			a = raw_input("Press Enter for more... (" + str(c*100/len(msgs)) + "%)")
+	print "use -h to see the help"
 	sys.exit()
 
 ##################################
@@ -642,7 +402,7 @@ def parser(name, mass_dic, atoms, thermo_data):
 	is_atom = True #atom flag
 	founds = 0 #atoms found
 
-	#if you change these check the same values in kromeob
+	#if you change these check the same values in kromeobj
 	#(employed here for computing number of neutrons)
 	me = 9.10938188e-28 #electron mass (g)
 	mp = 1.67262158e-24 #proton mass (g)
@@ -684,12 +444,11 @@ def parser(name, mass_dic, atoms, thermo_data):
 		mymol.neutrons = 0 #number of neutrons
 		return mymol
 	
-
 	zatom = 0 #atomic number init
 	#loop over charcters
 	for atm in atoms:
-		a = atm.upper()
-		mymol.atomcount[format_subel(a)] = 0
+		a = atm.upper() #capitalize name
+		mymol.atomcount[format_subel(a)] = 0 #count total number of atoms per type
 		if(not(a) in namecp): continue #skip
 		#loop to up to _30 subscript
 		for j in range(30):
@@ -699,17 +458,17 @@ def parser(name, mass_dic, atoms, thermo_data):
 				mult = "0" #multiplicator
 				for i in range(idx+len(a),len(namecp)):
 					if(not(is_number(namecp[i]))): break
-					mult += namecp[i]
+					mult += namecp[i] #find multiplicator
 					subs += namecp[i]
-				imult = max(int(mult),1)
-				mass += mass_dic[a]*imult
-				if(a in zdic): zatom += zdic[a]
-				mymol.atomcount[format_subel(a)] = imult
-				ename += [format_subel(a)]*imult
-				namecp = namecp.replace(subs,"",1)
-				if(namecp==""): break
-		if(a!="+" and a!="-"): founds += imult
-	if(founds>1): is_atom = False
+				imult = max(int(mult),1) #evaluate multiplicator (must be >0)
+				mass += mass_dic[a]*imult #compute mass
+				if(a in zdic): zatom += zdic[a]*imult #increase atomic number
+				mymol.atomcount[format_subel(a)] += imult #increase atom count
+				ename += [format_subel(a)]*imult #exploded name
+				namecp = namecp.replace(subs,"",1) #remove found in name
+				if(namecp==""): break #if nothing more to find break loop
+		if(a!="+" and a!="-"): founds += imult #count found atoms for is_atom
+	if(founds>1): is_atom = False #atoms have only one atom (viz.)
 
 
 	mymol.name = name #name
@@ -724,8 +483,9 @@ def parser(name, mass_dic, atoms, thermo_data):
 	if("-" in name): mymol.charge = -name.count("-") #get - charge
 
 	#number of neutrons (computed using total mass)
-	Nn = int((mymol.mass - (me*(mymol.zatom - mymol.charge) + mp*(mymol.zatom))) / mn)
-	mymol.neutrons = Nn
+	Nn = round((mymol.mass - (me*(mymol.zatom - mymol.charge) + mp*(mymol.zatom))) / mn,0)
+	mymol.neutrons = int(Nn)
+
 
 	#name for photoionization reactions (e.g. Sijjj = Sij3)
 	jj = kk = ""
@@ -740,9 +500,9 @@ def parser(name, mass_dic, atoms, thermo_data):
 	
 	#thermal data
 	if(mymol.name in thermo_data):
-		mymol.poly1 = thermo_data[mymol.name][10:] #
-		mymol.poly2 = thermo_data[mymol.name][3:10] #
-		mymol.Tpoly = thermo_data[mymol.name][0:3] #(K) [min,med,max] interval
+		mymol.poly1 = thermo_data[mymol.name][10:] #NASA polynomials lower T interval (min-med)
+		mymol.poly2 = thermo_data[mymol.name][3:10] #NASA polynomials upper T interval (med-max)
+		mymol.Tpoly = thermo_data[mymol.name][0:3] #(K) [min,med,max] T interval limits
 
 	#compute enthaly @300K using NASA poly
 	p = mymol.poly1 #copy polynomials
@@ -1606,7 +1366,13 @@ def get_quote():
 	["Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.","Brian W. Kernighan"],
 	["Always code as if the guy who ends up maintaining your code will be a violent psychopath who knows where you live.","Martin Golding"],
 	["One of my most productive days was throwing away 1000 lines of code.","Ken Thompson "],
-	["And God said, \"Let there be light\" and segmentation fault (core dumped)",""]
+	["And God said, \"Let there be light\" and segmentation fault (core dumped)",""],
+	["Today, most software exists, not to solve a problem, but to interface with other software","Ian Angell"],
+	["Measure twice, cut once",""],
+	["Weeks of programming can save you hours of planning",""],
+	["All models are wrong; some models are useful","George Box"],
+	["The generation of random numbers is too important to be left to chance","Robert Coveyou"],
+	["Problems worthy / of attack / prove their worth / by hitting back","Piet Hein"]
 	]
 	irand = int(random.random()*(len(quotes)))
 	qtup = quotes[irand]
