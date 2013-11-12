@@ -29,6 +29,17 @@ contains
     coe(:) = k(:)!set coefficients to return variable
   end function coe
 
+  !*********************
+  !get gamma
+  function gamma_index(n)
+    use krome_commons
+    real*8::n(:),gamma_index,krome_gamma
+    
+#KROME_gamma
+
+    gamma_index = krome_gamma
+  end function gamma_index
+
   !************************
   !get species masses (g)
   function get_mass()

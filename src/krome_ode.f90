@@ -15,7 +15,7 @@ contains
 #ENDIFKROME
     implicit none
     integer::neq
-    real*8::tt,dn(neq),n(neq),k(nrea)
+    real*8::tt,dn(neq),n(neq),k(nrea),krome_gamma
     real*8::gamma,Tgas,vgas,ntot,nH2dust,nd
 #KROME_dustSumVariables
 #KROME_implicit_variables
@@ -46,7 +46,7 @@ contains
     
 #IFKROME_use_thermo
     
-#KROME_gamma
+    krome_gamma = gamma_index(n(:))
 
     dn(idx_Tgas) = (heating(n(:), Tgas, k(:), nH2dust) - cooling(n(:), Tgas)) &
          * (krome_gamma - 1.d0) / boltzmann_erg / sum(n(1:nmols))

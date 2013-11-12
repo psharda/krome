@@ -312,9 +312,11 @@ class krome():
 			if(self.useX):
 				print "ERROR: the patch for RAMSES requires the -useN option!"
 				sys.exit()
-			if(self.useHeatingCompress):
-				print "ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse!"
-				sys.exit()
+			if(args.heating):
+				if("COMPR" in args.heating):
+					print "ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse!"
+					sys.exit()
+
 			if(not(args.customATOL) and not(args.ATOL)):
 				print "WARNING: default ATOL set to 1e-10 due to -ramses flag."
 				self.ATOL = 1e-10
@@ -331,9 +333,11 @@ class krome():
 			if(self.useX):
 				print "ERROR: the patch for FLASH requires the -useN option!"
 				sys.exit()
-			if(self.useHeatingCompress):
-				print "ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse!"
-				sys.exit()
+			if(args.heating):
+				if("COMPR" in args.heating):
+					print "ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse!"
+					sys.exit()
+
 			if(not(args.customATOL) and not(args.ATOL)):
 				print "WARNING: default ATOL set to 1e-10 due to -flash flag."
 				self.ATOL = 1e-10
@@ -352,9 +356,10 @@ class krome():
 			if(self.useX):
 				print "ERROR: the patch for ENZO -useN option!"
 				sys.exit()
-			if(self.useHeatingCompress):
-				print "ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse!"
-				sys.exit()
+			if(args.heating):
+				if("COMPR" in args.heating):
+					print "ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse!"
+					sys.exit()
 			if(not(args.customATOL) and not(args.ATOL)):
 				print "WARNING: default ATOL set to 1e-10 due to -enzo flag."
 				self.ATOL = 1e-10
@@ -1771,6 +1776,38 @@ class krome():
 				fout.write(sp1+sp2+spt)
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename))
+			elif(srow == "#KROME_gamma"):
+				#computes the adiabatic index if needed or uses a user-defined expression 
+				if(self.typeGamma=="DEFAULT"):
+					gamma = "1.66666666667d0" #default gamma is 5/3 (atomic)
+				elif(self.typeGamma=="FULL"):
+					#build gamma following (Grassi+2010,MerlinPhDTheis)
+					specsGamma = ["H","HE","E","H2"] #species used in the gamma
+					gammaNm = [] #numerator monoatomics
+					gammaDm = [] #denominator monoatomics
+					gammaNb = [] #numerator diatomics
+					gammaDb = [] #denominator diatomics
+					#loop on species
+					for mol in specs:
+						if(mol.name.upper() in specsGamma):
+							nfidx = "n("+mol.fidx+")" #number density
+							if(mol.is_atom): #monoatomic
+								gammaNm.append(nfidx)
+								gammaDm.append(nfidx)
+							else: #diatomic
+								gammaNb.append(nfidx)
+								gammaDb.append(nfidx)
+					#build fortran expression for gamma
+					gammaN = "(5.d0*("+(" + ".join(gammaNm)) + ") + 7.d0*("+(" + ".join(gammaNb)) + "))"
+					gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + "))"
+					gamma = gammaN + " / &\n" +gammaD
+				else: 
+					#user-defined gamma
+					gamma = self.typeGamma
+
+				#write gamma
+				fout.write("krome_gamma = " + gamma + "\n")
+		
 			else:
 				fout.write(row)
 		if(not(self.buildCompact)):
@@ -2388,38 +2425,7 @@ class krome():
 							if(not(self.use_thermo)): jacT = ""
 							fout.write("\t" + jacT.replace("\t","") + "\n")
 					fout.write("end if\n")
-			elif(srow == "#KROME_gamma"):
-				#computes the adiabatic index if needed or uses a user-defined expression 
-				if(self.typeGamma=="DEFAULT"):
-					gamma = "1.66666666667d0" #default gamma is 5/3 (atomic)
-				elif(self.typeGamma=="FULL"):
-					#build gamma following (Grassi+2010,MerlinPhDTheis)
-					specsGamma = ["H","HE","E","H2"] #species used in the gamma
-					gammaNm = [] #numerator monoatomics
-					gammaDm = [] #denominator monoatomics
-					gammaNb = [] #numerator diatomics
-					gammaDb = [] #denominator diatomics
-					#loop on species
-					for mol in specs:
-						if(mol.name.upper() in specsGamma):
-							nfidx = "n("+mol.fidx+")" #number density
-							if(mol.is_atom): #monoatomic
-								gammaNm.append(nfidx)
-								gammaDm.append(nfidx)
-							else: #diatomic
-								gammaNb.append(nfidx)
-								gammaDb.append(nfidx)
-					#build fortran expression for gamma
-					gammaN = "(5.d0*("+(" + ".join(gammaNm)) + ") + 7.d0*("+(" + ".join(gammaNb)) + "))"
-					gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + "))"
-					gamma = gammaN + " / &\n" +gammaD
-				else: 
-					#user-defined gamma
-					gamma = self.typeGamma
 
-				#write gamma
-				fout.write("krome_gamma = " + gamma + "\n")
-		
 			else:
 				srow = row.strip()
 				if(len(srow)>0):
@@ -3102,24 +3108,43 @@ class krome():
 
 	###########################################
 	def enzo_patch(self):
+		buildFolder = self.buildFolder
+		enzoFolder = buildFolder+"krome_enzo_patch/"
+		patchFolder = "patches/enzo/"
+
+		if(not(os.path.exists(enzoFolder))): os.makedirs(enzoFolder)
 
 		specs = self.specs
 		excl = ["CR","g","Tgas","dummy"] #species to exclude
 		speciesCount = 0
 		krome_driver_args = krome_driver_rprec = krome_driver_scale = ""
-		krome_driver_minval = krome_driver_dom = ""
+		krome_driver_minval = krome_driver_dom = krome_driver_mod = ""
 		for x in specs:
 			if(x.name in excl): continue
 			name = x.name.upper().replace("+","I").replace("-","M")
 			if(name=="E"): name="de"
 			speciesCount += 1
-			krome_driver_args += "& "+name+",\n"
+			#1. DRIVER file pragama
+			krome_driver_args += name+", &\n" #function arguments
 			krome_driver_rprec += "R_PREC "+name+"(in,jn,kn)\n"
-			krome_driver_scale += name+"(i,j,k) = "+name+"(i,j,k)*factor\n"
-			krome_driver_minval += name+"(i,j,k) = max("+name+"(i,j,k), krome_tiny)\n" 
-			krome_driver_dom += "krome_x(krome_"+x.fidx+") = "+name+"(i,j,k)*dom/"+str(x.zatom)+"\n"
-		print krome_driver_dom
-		# #KROME_args, #KROME_rprec, #KROME_scale, #KROME_minval, #KROME_dom
+			krome_driver_scale += name+"(:,:,:) = "+name+"(:,:,:) * factor\n"
+			krome_driver_minval += name+"(i,j,k) = max("+name+"(i,j,k), krome_tiny)\n"
+			dmult = ""
+			if(x.zatom>1): dmult = "* "+str(1e0/x.zatom)+"d0"
+			krome_driver_dom += "krome_x(krome_"+x.fidx+") = "+name+"(i,j,k) * dom "+dmult+"\n"
+			dmult2 = ""
+			if(x.zatom>1): dmult2 = "* "+str(x.zatom)+"d0"
+			krome_driver_mod += name+"(i,j,k) = krome_x(krome_"+x.fidx+") * idom "+dmult2+"\n"
+
+		fname = "krome_driver.f90"
+		prags = ["#KROME_args","#KROME_rprec","#KROME_scale","#KROME_minval","#KROME_dom","#KROME_mod"]
+		reps = [krome_driver_args,krome_driver_rprec,krome_driver_scale,krome_driver_minval,krome_driver_dom,krome_driver_mod]
+		self.replacein(patchFolder+fname, enzoFolder+fname, prags, reps)
+		indentF90(enzoFolder+fname)
+
+		fname = "evaluate_temp.f90"
+		shutil.copy(patchFolder+fname, enzoFolder+fname)
+
 		return
 	############################################
 	def patches(self):

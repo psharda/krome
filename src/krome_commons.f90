@@ -7,8 +7,7 @@ module krome_commons
 
   real*8::arr_k(nrea)
   real*8::jac_nold(nspec),jac_dnold(nspec),jac_dn(nspec)
-  real*8::krome_gamma !adiabatic index
-
+    
   !commons for rate tables
   !modify ktab_n according to the requested precision
   integer,parameter::ktab_n=int(1e3)
