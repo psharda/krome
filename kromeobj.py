@@ -3105,6 +3105,23 @@ class krome():
 		for fl in kromeFileList:
 			shutil.copy(patchFolder+pFolder+fl, flashFolder+pFolder+fl)
 
+	########################################
+	#cut the arg sting using sep as separtor
+	# when a piece is longer than largmax append the
+	# chracter rep
+	def linebreakerC(self,arg,sep,largmax = 40,rep="\n"):
+		
+		aarg = arg.split(sep)
+		sarg = ""
+		larg = 0
+		for x in aarg[:len(aarg)-1]:
+			sarg += x + sep
+			larg += len(x+sep)
+			if(larg>largmax):
+				sarg += rep
+				larg = 0
+		sarg += aarg[len(aarg)-1]
+		return sarg
 
 	###########################################
 	def enzo_patch(self):
@@ -3119,29 +3136,93 @@ class krome():
 		speciesCount = 0
 		krome_driver_args = krome_driver_rprec = krome_driver_scale = ""
 		krome_driver_minval = krome_driver_dom = krome_driver_mod = ""
+		krome_identify_num = ""
+		krome_solve_args = krome_solve_baryon = ""
+		krome_driver_suma = []
+		kdrive_args = []
+		krome_identify_identifya = []
+		krome_identify_zeroa = []
+		krome_identify_binarya = []
+		krome_identify_vfail1a = []
+		krome_identify_vfail2a = []
+		krome_solve_numa = []
+		krome_solve_identifya = []
 		for x in specs:
 			if(x.name in excl): continue
-			name = x.name.upper().replace("+","I").replace("-","M")
-			if(name=="E"): name="de"
-			speciesCount += 1
+			uname = x.name.upper() #upper-case name
+			#enzo-like names, e.g. H- -> HM, and H+ -> HII
+			if("-" in uname):
+				name = uname.replace("-","M") #anions
+			else:
+				name = (uname+"I").replace("+","I") #neutral and ions
+			extname = name+"Density"
+			if(name=="EI"): 
+				name = "De" #electron is special
+				extaname = "ElectronDensity"
+			speciesCount += 1 #increases species count
 			#1. DRIVER file pragama
-			krome_driver_args += name+", &\n" #function arguments
-			krome_driver_rprec += "R_PREC "+name+"(in,jn,kn)\n"
+			krome_driver_args += name+", " #function arguments
+			if(speciesCount%4==0): krome_driver_args += "&\n"
+			krome_driver_rprec += "R_PREC "+name+"(:,:,:)\n"
 			krome_driver_scale += name+"(:,:,:) = "+name+"(:,:,:) * factor\n"
 			krome_driver_minval += name+"(i,j,k) = max("+name+"(i,j,k), krome_tiny)\n"
+			krome_driver_suma.append("+"+name+"(i,j,k)")
 			dmult = ""
-			if(x.zatom>1): dmult = "* "+str(1e0/x.zatom)+"d0"
+			if(x.zatom>1): dmult = "* "+str(1e0/(x.zatom+x.neutrons))+"d0"
 			krome_driver_dom += "krome_x(krome_"+x.fidx+") = "+name+"(i,j,k) * dom "+dmult+"\n"
 			dmult2 = ""
 			if(x.zatom>1): dmult2 = "* "+str(x.zatom)+"d0"
 			krome_driver_mod += name+"(i,j,k) = krome_x(krome_"+x.fidx+") * idom "+dmult2+"\n"
 
+			#2. Grid_IdentifySpeciesFieldsKrome.C
+			krome_identify_identifya.append("int &"+name+"Num")
+			krome_identify_zeroa.append(name+"Num")
+			krome_identify_binarya.append(name+"Num<0")
+			krome_identify_vfail1a.append("\""+name+"=%\"ISYM\"")
+			krome_identify_vfail2a.append(name+"Num")
+			krome_identify_num += name+"Num = FindField(ElectronDensity, FieldType, NumberOfBaryonFields);\n"
+
+			#3. Grid_SolveRateAndCoolEquations
+			krome_solve_args += "float *"+name+", "
+			krome_solve_baryon += "BaryonField["+name+"Num], "
+			krome_solve_numa.append(name+"Num")
+			krome_solve_identifya.append(name+"Num")
+
+		if(speciesCount%4!=0): krome_driver_args += "&"
+		krome_driver_sum = (" &\n".join(krome_driver_suma))
+
+		krome_identify_identify = self.linebreakerC((", ".join(krome_identify_identifya)), ",")
+		krome_identify_zero = self.linebreakerC((" = ".join(krome_identify_zeroa)), "=")+" = 0;"
+		krome_identify_binary = self.linebreakerC((" || ".join(krome_identify_binarya)), "||")
+		krome_identify_vfail1 = self.linebreakerC((", ".join(krome_identify_vfail1a)), ",")+"\\n\""
+		krome_identify_vfail2 = self.linebreakerC((", ".join(krome_identify_vfail2a)), ",")
+
+		krome_solve_args = self.linebreakerC(krome_solve_args, ",")
+		krome_solve_num = "int "+ self.linebreakerC((", ".join(krome_solve_numa)), ",")+";"
+		krome_solve_identify = self.linebreakerC((", ".join(krome_solve_identifya)), ",")
+		krome_solve_baryon = self.linebreakerC(krome_solve_baryon, ",")
+
+		#1. replace
 		fname = "krome_driver.f90"
-		prags = ["#KROME_args","#KROME_rprec","#KROME_scale","#KROME_minval","#KROME_dom","#KROME_mod"]
-		reps = [krome_driver_args,krome_driver_rprec,krome_driver_scale,krome_driver_minval,krome_driver_dom,krome_driver_mod]
+		prags = ["#KROME_args","#KROME_rprec","#KROME_scale","#KROME_minval","#KROME_dom","#KROME_mod","#KROME_sum"]
+		reps = [krome_driver_args,krome_driver_rprec,krome_driver_scale,krome_driver_minval]
+		reps += [krome_driver_dom,krome_driver_mod,krome_driver_sum]
 		self.replacein(patchFolder+fname, enzoFolder+fname, prags, reps)
 		indentF90(enzoFolder+fname)
 
+		#2. replace in Grid_IdentifySpeciesFieldsKrome.C
+		fname = "Grid_IdentifySpeciesFieldsKrome.C"
+		prags = ["#KROME_identify", "#KROME_zero","#KROME_binary", "#KROME_vfail1", "#KROME_vfail2"]
+		reps = [krome_identify_identify, krome_identify_zero, krome_identify_binary, krome_identify_vfail1, krome_identify_vfail2]
+		self.replacein(patchFolder+fname, enzoFolder+fname, prags, reps, False)
+
+		#3. replace in Grid_SolveRateAndCoolEquations.C
+		fname = "Grid_SolveRateAndCoolEquations.C"
+		prags = ["#KROME_args", "#KROME_num", "#KROME_identify","#KROME_baryon"]
+		reps = [krome_solve_args, krome_solve_num, krome_solve_identify, krome_solve_baryon]
+		self.replacein(patchFolder+fname, enzoFolder+fname, prags, reps, False)
+
+		#4. evaluate
 		fname = "evaluate_temp.f90"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
 

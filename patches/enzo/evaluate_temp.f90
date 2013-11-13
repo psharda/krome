@@ -4,7 +4,7 @@
 
   
   subroutine evaluate_temp(d, e, ge, u, v, w, 
-    krome_x,imethod,idual,idim,tgas,temstart,utem)
+    krome_x,imethod,idual,idim,tgas,temstart,utem,rhogas)
     use krome_user
 
     !     written by: KROME DEVELOPERS
@@ -17,8 +17,8 @@
     implicit none
 #include "fortran_types.def"
     real*8::krome_x(:),p2d
-    real*8::d,ge,e,tgas
-    real*8::u,v,w,temstart,utem,temstart,rho
+    real*8::d,ge,e,tgas,rhogas
+    real*8::u,v,w,temstart,utem,temstart,ntot
     integer::imethod,idim,idual,kgamma
 
     kgamma = krome_get_gamma(krome_x(:))
@@ -34,16 +34,13 @@
        else
           !PPM without dual energy -- use total energy
           p2d = e - 0.5d0*u**2
-          if (idim.gt.1) p2d = p2d - 0.5d0*v**2
-          if (idim.gt.2) p2d = p2d - 0.5d0*w**2
-          p2d = max((kgamma - 1.d0)*d*p2d, 1d-40)
+          if (idim.gt.1) p2d = p2d - 0.5d0 * v**2
+          if (idim.gt.2) p2d = p2d - 0.5d0 * w**2
+          p2d = max((kgamma - 1.d0) * d * p2d, tiny)
        endif
     endif
 
-    !density
-    rho =  sum(krome_get_mass()*krome_x(:))
-
     !compute temperature
-    tgas = max(p2d * utem / rho, temstart) 
+    tgas = max(p2d * utem / rhogas, temstart) 
 
   end subroutine evaluate_temp

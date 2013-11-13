@@ -2,17 +2,16 @@
   #include "phys_const.def"
   #include "error.def"
   
-  !=======================================================================
-  !/////////////////////  SUBROUTINE KROME_DRIVER  \\\\\\\\\\\\\\\\\\\\\\\\\
+  !KROME_DRIVER
   
   subroutine krome_driver(d, e, ge, u, v, w, &
        #KROME_args
-       metal,in, jn, kn, imethod, &
-       idual, ispecies, imetal, idim, &
+       in, jn, kn, imethod, &
+       idual, idim, &
        is, js, ks, ie, je, ke, &
        dt, aye, temstart, &
        utem, uxyz, uaye, urho, utim, & 
-       gamma, fh, dtoh, z_solar, ierr)
+       gamma, fh, dtoh)
     
     
     !     SOLVE MULTI-SPECIES RATE EQUATIONS AND RADIATIVE COOLING
@@ -65,19 +64,19 @@
     !-----------------------------------------------------------------------
     !     USE KROME
     use krome_main
+    use krome_user
 
     implicit none
 #include "fortran_types.def"
 
     real*8,parameter::mh=mass_h
-    real*8::dom,urho,aye,factor,tgas,tgasold,temstart,utem
+    real*8::dom,,factor,tgas,tgasold
     real*8::utim,dt,dt_hydro,rhogas,idom,edot,krome_tiny
-    real*8::d(:,:,:),e(:,:,:),ge(:,:,:)
-    real*8::u(:,:,:),v(:,:,:),w(:,:,:)
-    integer::i,is,ie,in
-    integer::j,js,je,jn
-    integer::k,ks,ke,kn
-    integer::imethod,idual,idim
+    R_PREC d(:,:,:),e(:,:,:),ge(:,:,:)
+    R_PREC u(:,:,:),v(:,:,:),w(:,:,:)
+    R_PREC dt,aye,temstart,utem,uxyz,uaye,urho,utim,gamma
+    INTG_PREC in,jn,kn,imethod,idual,is,js,ks,ie,je,ke
+    integer::i,j,k
 
 #KROME_rprec
 
@@ -97,7 +96,7 @@
 #KROME_scale
 
     !check minimal value
-    krome_tiny = 1d-40
+    krome_tiny = tiny
     do k = ks+1, ke+1
        do j = js+1, je+1
           do i = is+1, ie+1  
@@ -110,19 +109,22 @@
     do k = ks+1, ke+1
        do j = js+1, je+1
           do i = is+1, ie+1
+
+             rhogas = #KROME_sum
+
              !convert to number densities
 #KROME_dom
              call evaluate_temp(d(i,j,k), e(i,j,k), ge(i,j,k),&
                   u(i,j,k), v(i,j,k), w(i,j,k),& 
                   krome_x(:),imethod,idual,idim,tgas,&
-                  temstart,utem)
+                  temstart,utem,rhogas)
 
              !store old tgas
              tgasold = tgas
 
              !convert to g/cm3
-             rhogas=d(i,j,k)*dom
-             dt_hydro= utim*dt !dt*time_conversion
+             rhogas = d(i,j,k) * dom
+             dt_hydro = utim*dt !dt*time_conversion
 
              !call KROME solver
              call krome(krome_x(:),tgas,dt_hydro) 
