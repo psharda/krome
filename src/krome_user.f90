@@ -47,7 +47,7 @@ contains
   function krome_get_gamma(x,Tgas)
     use krome_subs
     use krome_commons
-    real*8::krome_get_gamma,x(nmols),n(nspecs)
+    real*8::krome_get_gamma,x(nmols),n(nspec),Tgas
     n(:) = 0.d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas

@@ -35,8 +35,7 @@ int FindField(int field, int farray[], int numfields);
 double ReturnWallTime();
 extern "C" void FORTRAN_NAME(krome_driver)(
 	float *d, float *e, float *ge, float *u, float *v, float *w, 
- #KROME_args
-	int *in, int *jn, int *kn,
+ #KROME_args int *in, int *jn, int *kn,
 	hydro_method *imethod,
         int *idual, int *idim,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke, 
@@ -77,7 +76,6 @@ int grid::SolveRateAndCoolEquations(int RTCoupledSolverIntermediateStep)
   /* Find Multi-species fields. New routine from KROME */
 
   if (MultiSpecies)
-  #KROME_identify
     if (IdentifySpeciesFieldsKrome(
   #KROME_identify
   ) == FAIL) {
