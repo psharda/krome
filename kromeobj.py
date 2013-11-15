@@ -10,7 +10,7 @@ class krome():
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
-	useCoolingCompton = useH2opacity = useCoolingCIE = False
+	useCoolingCompton = useH2opacity = useCoolingCIE = useCoolingDISS = False
 	useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
@@ -83,7 +83,7 @@ class krome():
 	 
 		self.parser.add_argument("-test",help=("Create a test model in /build. TEST can be: "+tests+"."))
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH")
-		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98, COMPTON, CIE, CI, CII, SiI, SiII, OI, OII, FeI, FeII (e.g. -cooling ATOMIC,CII,OI,FeI), CHEM")
+		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98, COMPTON, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII (e.g. -cooling ATOMIC,CII,OI,FeI), CHEM")
 		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
 		self.parser.add_argument("-useH2opacity", action="store_true",help="use H2 opacity for H2 cooling")
 		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al. 2011, or a custom F90 expression e.g. -gamma 5.d0/3.d0",metavar="OPTION")
@@ -384,7 +384,7 @@ class krome():
 		if(args.cooling):
 			myCools = args.cooling.split(",")
 			allCools = ["ATOMIC","H2","HD","Z","DH","DUST","H2GP98","COMPTON","CIE",
-					"CI","CII","SiI","SiII","OI","OII","FeI","FeII","CONT","CHEM"]
+					"CI","CII","SiI","SiII","OI","OII","FeI","FeII","CONT","CHEM","DISS"]
 			for coo in myCools:
 				if(not(coo in allCools)):
 					die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
@@ -398,6 +398,7 @@ class krome():
 			if("COMPTON" in myCools): self.useCoolingCompton = True
 			if("CHEM" in myCools): self.useCoolingChem = True
 			if("CIE" in myCools): self.useCoolingCIE = True
+			if("DISS" in myCools): self.useCoolingDISS = True
 			if("CONT" in myCools): self.useCoolingCont = True
 			if("Z" in myCools): 
 				self.useCoolingZ = self.useCoolingZC = self.useCoolingZCp = self.useCoolingZSi = True
@@ -2143,7 +2144,7 @@ class krome():
 		#build H2 heating according to the rates
 		HChem = HChemDust = ""
 		sclist = [] 
-		if(self.useHeatingChem or self.useCoolingChem):
+		if(self.useHeatingChem or self.useCoolingChem or self.useCoolingDISS):
 			RPK = []
 			if(self.useHeatingChem):
 				RPK.append([["H","H","H"], ["H2","H"], "4.48d0*h2heatfac","H"])
@@ -2154,6 +2155,7 @@ class krome():
 				RPK.append([["H","E"], ["H+","E","E"], "-13.6d0","C"])
 				RPK.append([["HE","E"], ["HE+","E","E"], "-24.6d0","C"])
 				RPK.append([["HE+","E"], ["HE++","E","E"], "-79.d0","C"])
+			if(self.useCoolingChem or self.useCoolingDISS):
 				RPK.append([["H2","H"], ["H","H","H"], "-4.48d0","C"])
 				RPK.append([["H2","E"], ["H","H","E"], "-4.48d0","C"])
 				RPK.append([["H2","H2"], ["H2","H","H"], "-4.48d0","C"])
@@ -2181,7 +2183,6 @@ class krome():
 						break
 			if(self.useDustH2):
 				HChemDust += "HChem = HChem + nH2dust * (0.2d0/h2heatfac + 4.2d0)\n"
-
 
 		#build heating terms for photoionization
 		pheatvars = []
@@ -2211,7 +2212,8 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingPhoto" and not(self.useHeatingPhoto)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
-				if(row.strip() == "#IFKROME_useHeatingChem" and not(self.useHeatingChem) and not(self.useCoolingChem)): skip = True
+				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
+				if(row.strip() == "#IFKROME_useHeatingChem" and skipBool): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				if(skip): continue

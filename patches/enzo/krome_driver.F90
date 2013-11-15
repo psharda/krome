@@ -78,7 +78,7 @@
     factor = aye**(-3)
 
     !check minimal value and comoving->proper
-    krome_tiny = TINY
+    krome_tiny = 1d-20
     do k = ks+1, ke+1
        do j = js+1, je+1
           do i = is+1, ie+1  

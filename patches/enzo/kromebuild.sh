@@ -20,6 +20,4 @@ $fc -c krome_user_commons.F90 $switch
 echo "building krome_all.F90"
 $fc -c krome_all.F90 $switch
 
-echo "removing mod files" 
-rm *.mod
 echo "everything done!"

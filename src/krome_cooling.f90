@@ -102,7 +102,19 @@ contains
     
   end function kpla
 
-#IFKROME_useContinuum
+  !*****************************
+  function coolingChem(n,Tgas)
+    real*8::coolingChem,n(:),Tgas
+    
+    !note that this function is a dummy.
+    ! For chemical cooling you should see
+    ! heatingChem function in krome_heating.f90
+
+    coolingChem = 0.d0
+
+  end function coolingChem
+
+#IFKROME_useCoolingContinuum
   !**********************************
   function cooling_Continuum(n,Tgas)
     !cooling from continuum for a thin gas (no opacity)
