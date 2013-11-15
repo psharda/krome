@@ -133,7 +133,16 @@
 
     !scale comoving<-proper
     factor = aye**3
-    d(:,:,:) = d(:,:,:) * factor
+    do k = ks+1, ke+1
+       do j = js+1, je+1
+          do i = is+1, ie+1  
+             d(i,j,k) = d(i,j,k) * factor
+             !scale comoving->proper
 #KROME_scale
+             !mimimal value check
+#KROME_minval
+          end do
+       end do
+    end do
 
   end subroutine krome_driver
