@@ -3151,6 +3151,7 @@ class krome():
 		for x in specs:
 			if(x.name in excl): continue
 			uname = x.name.upper() #upper-case name
+			uname = uname.replace("HE","He") #Helium is lowecase
 			#enzo-like names, e.g. H- -> HM, and H+ -> HII
 			if("-" in uname):
 				name = uname.replace("-","M") #anions
@@ -3159,7 +3160,7 @@ class krome():
 			extname = name+"Density"
 			if(name=="EI"): 
 				name = "De" #electron is special
-				extaname = "ElectronDensity"
+				extname = "ElectronDensity"
 			speciesCount += 1 #increases species count
 			#1. DRIVER file pragama
 			krome_driver_args += name+", " #function arguments
@@ -3182,7 +3183,7 @@ class krome():
 			krome_identify_binarya.append(name+"Num<0")
 			krome_identify_vfail1a.append(name+"=%\"ISYM\"")
 			krome_identify_vfail2a.append(name+"Num")
-			krome_identify_num += " "+name+"Num = FindField(ElectronDensity, FieldType, NumberOfBaryonFields);\n"
+			krome_identify_num += " "+name+"Num = FindField("+extname+", FieldType, NumberOfBaryonFields);\n"
 
 			#3. Grid_SolveRateAndCoolEquations
 			krome_solve_args += "float *"+name+", "
@@ -3243,7 +3244,7 @@ class krome():
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
 		fname = "Make.config.objects"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
-		fname = "Makefile"
+		fname = "kromebuild.sh"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
 
 		#6. move others
