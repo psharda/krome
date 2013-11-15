@@ -198,17 +198,15 @@ int grid::SolveRateAndCoolEquations(int RTCoupledSolverIntermediateStep)
   FORTRAN_NAME(krome_driver)(
     density, totalenergy, gasenergy, velocity1, velocity2, velocity3,
  #KROME_baryon
-    MetalPointer, GridDimension, GridDimension+1, GridDimension+2, 
+    GridDimension, GridDimension+1, GridDimension+2, 
     &HydroMethod, 
-    &DualEnergyFormalism, &MultiSpecies, &MetalFieldPresent,
+    &DualEnergyFormalism,
     &GridRank, GridStartIndex, GridStartIndex+1, GridStartIndex+2, 
     GridEndIndex, GridEndIndex+1, GridEndIndex+2,
     &dtCool, &afloat, &CoolData.TemperatureStart, 
     &TemperatureUnits, &LengthUnits, &aUnits, &DensityUnits, &TimeUnits,
     &Gamma,
-    &CoolData.HydrogenFractionByMass, &CoolData.DeuteriumToHydrogenRatio,
-    &CoolData.SolarMetalFractionByMass,
-    &ierr);
+    &CoolData.HydrogenFractionByMass, &CoolData.DeuteriumToHydrogenRatio);
 
   if (ierr) {
       fprintf(stdout, "GridLeftEdge = %"FSYM" %"FSYM" %"FSYM"\n",

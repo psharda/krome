@@ -3200,7 +3200,7 @@ class krome():
 		krome_identify_identify = self.linebreakerC((", ".join(krome_identify_identifya)), ",")
 		krome_identify_zero = self.linebreakerC((" = ".join(krome_identify_zeroa)), "=")+" = 0;"
 		krome_identify_binary = self.linebreakerC((" || ".join(krome_identify_binarya)), "||")
-		krome_identify_vfail1 = "\""+self.linebreakerC((", ".join(krome_identify_vfail1a)), ",")+"\\n\""
+		krome_identify_vfail1 = "\""(", ".join(krome_identify_vfail1a))+"\\n\""
 		krome_identify_vfail2 = self.linebreakerC((", ".join(krome_identify_vfail2a)), ",")
 
 		krome_solve_args = self.linebreakerC(krome_solve_args, ",")
