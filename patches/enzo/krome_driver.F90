@@ -26,26 +26,15 @@
     !     in,jn,kn - dimensions of 3D fields
     !     
     !     d        - total density field
-    !     de       - electron density field
-    !     HI,HII   - H density fields (neutral & ionized)
-    !     HeI/II/III - He density fields
-    !     DI/II    - D density fields (neutral & ionized)
-    !     HDI      - neutral HD molecule density field
-    !     HM       - H- density field
-    !     H2I      - H_2 (molecular H) density field
-    !     H2II     - H_2+ density field
     !     
     !     is,ie    - start and end indices of active region (zero based)
     !     idual    - dual energy formalism flag (0 = off, 1 = on)
     !     idim     - dimensionality (rank) of problem
-    !     ispecies - chemistry module (1 - H/He only, 2 - molecular H, 3 - D) 
-    !     imetal   - flag if metal field is active (0 = no, 1 = yes)
     !     imethod  - Hydro method (0 = PPMDE, 2 = ZEUS-type)
     !     temstart - start of temperature range for rate table
     !     
     !     fh       - Hydrogen mass fraction (typically 0.76)
     !     dtoh     - Deuterium to H mass ratio
-    !     z_solar  - Solar metal mass fraction
     !     dt       - timestep to integrate over
     !     aye      - expansion factor (in code units)
     !     
@@ -70,20 +59,17 @@
 #include "fortran_types.def"
 
     real*8,parameter::mh=mass_h
-    real*8::dom,,factor,tgas,tgasold
-    real*8::utim,dt,dt_hydro,rhogas,idom,edot,krome_tiny
-    R_PREC d(:,:,:),e(:,:,:),ge(:,:,:)
-    R_PREC u(:,:,:),v(:,:,:),w(:,:,:)
-    R_PREC dt,aye,temstart,utem,uxyz,uaye,urho,utim,gamma
-    INTG_PREC in,jn,kn,imethod,idual,is,js,ks,ie,je,ke
+    real*8::dom,factor,tgas,tgasold,krome_x(krome_nmols)
+    real*8::dt,dt_hydro,rhogas,idom,edot,krome_tiny
+    real*8::d(in,jn,kn),e(in,jn,kn),ge(in,jn,kn)
+    real*8::u(in,jn,kn),v(in,jn,kn),w(in,jn,kn)
+    real*8::aye,temstart,utem,uxyz,uaye,urho,utim,gamma,fh,dtoh
+    integer::in,jn,kn,imethod,idual,is,js,ks,ie,je,ke,idim
     integer::i,j,k
 
 #KROME_rprec
 
     !******************************
-
-    !set error indicator
-    ierr = 0
 
     !set units
     dom = urho*(aye**3)/mh
@@ -91,20 +77,20 @@
     !scaling factor for comoving->proper
     factor = aye**(-3)
 
-    !scale comoving->proper
-    d(:,:,:) = d(:,:,:) * factor
-#KROME_scale
-
-    !check minimal value
-    krome_tiny = tiny
+    !check minimal value and comoving->proper
+    krome_tiny = TINY
     do k = ks+1, ke+1
        do j = js+1, je+1
           do i = is+1, ie+1  
+             d(i,j,k) = d(i,j,k) * factor
+             !scale comoving->proper
+#KROME_scale
+             !mimimal value check
 #KROME_minval
           end do
        end do
     end do
-
+    
     !loop over zones
     do k = ks+1, ke+1
        do j = js+1, je+1

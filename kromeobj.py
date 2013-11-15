@@ -3165,8 +3165,8 @@ class krome():
 			#1. DRIVER file pragama
 			krome_driver_args += name+", " #function arguments
 			if(speciesCount%4==0): krome_driver_args += "&\n"
-			krome_driver_rprec += "R_PREC "+name+"(:,:,:)\n"
-			krome_driver_scale += name+"(:,:,:) = "+name+"(:,:,:) * factor\n"
+			krome_driver_rprec += "real*8::"+name+"(in,jn,kn)\n"
+			krome_driver_scale += name+"(i,j,k) = "+name+"(i,j,k) * factor\n"
 			krome_driver_minval += name+"(i,j,k) = max("+name+"(i,j,k), krome_tiny)\n"
 			dmult = ""
 			xzn = x.zatom+x.neutrons

@@ -16,12 +16,12 @@
 
     implicit none
 #include "fortran_types.def"
-    real*8::krome_x(:),p2d
-    real*8::d,ge,e,tgas,rhogas
+    real*8::krome_x(krome_nmols),p2d
+    real*8::d,ge,e,tgas,rhogas,kgamma
     real*8::u,v,w,temstart,utem,ntot
-    integer::imethod,idim,idual,kgamma
+    integer::imethod,idim,idual
 
-    kgamma = krome_get_gamma(krome_x(:), Tgas)
+    kgamma = krome_get_gamma(krome_x(:), 3d2) !3d2 is a dummy
 
     !Compute Pressure with various methods 
     if (imethod .eq. 2) then

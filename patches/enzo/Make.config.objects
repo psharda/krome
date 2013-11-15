@@ -624,6 +624,7 @@ OBJS_CONFIG_LIB = \
         InitializePythonInterface.o \
         InitializeRadiationFieldData.o \
         InitializeRadiativeTransferSpectrumTable.o \
+	krome_initab.o \
         InitializeRateData.o \
 	InitialLoadBalanceRootGrids.o \
 	interp1d.o \
