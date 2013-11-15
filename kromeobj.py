@@ -3180,7 +3180,7 @@ class krome():
 			krome_identify_identifya.append("int &"+name+"Num")
 			krome_identify_zeroa.append(name+"Num")
 			krome_identify_binarya.append(name+"Num<0")
-			krome_identify_vfail1a.append("\""+name+"=%\"ISYM\"")
+			krome_identify_vfail1a.append(name+"=%\"ISYM\"")
 			krome_identify_vfail2a.append(name+"Num")
 			krome_identify_num += " "+name+"Num = FindField(ElectronDensity, FieldType, NumberOfBaryonFields);\n"
 
@@ -3199,7 +3199,7 @@ class krome():
 		krome_identify_identify = self.linebreakerC((", ".join(krome_identify_identifya)), ",")
 		krome_identify_zero = self.linebreakerC((" = ".join(krome_identify_zeroa)), "=")+" = 0;"
 		krome_identify_binary = self.linebreakerC((" || ".join(krome_identify_binarya)), "||")
-		krome_identify_vfail1 = self.linebreakerC((", ".join(krome_identify_vfail1a)), ",")+"\\n\""
+		krome_identify_vfail1 = "\""+self.linebreakerC((", ".join(krome_identify_vfail1a)), ",")+"\\n\""
 		krome_identify_vfail2 = self.linebreakerC((", ".join(krome_identify_vfail2a)), ",")
 
 		krome_solve_args = self.linebreakerC(krome_solve_args, ",")
@@ -3234,7 +3234,7 @@ class krome():
 		fname = "Grid.h"
 		self.replacein(patchFolder+fname, enzoFolder+fname, ["#KROME_identify"], [krome_grid_identify], False)
 
-		#5. others
+		#5. copy others
 		fname = "evaluate_temp.F90"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
 		fname = "InitializeRateData.C"
@@ -3243,6 +3243,17 @@ class krome():
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
 		fname = "Make.config.objects"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
+		fname = "Makefile"
+		shutil.copy(patchFolder+fname, enzoFolder+fname)
+
+		#6. move others
+		flist = ["krome_all", "krome_user_commons"]
+		for fle in flist:
+			shutil.move(buildFolder+fle+".f90", enzoFolder+fle+".F90")
+
+		flist = ["opkda1", "opkda2", "opkdmain"]
+		for fle in flist:
+			shutil.move(buildFolder+fle+".f", enzoFolder+fle+".F")
 
 		return
 	############################################

@@ -3,7 +3,7 @@
 #include "error.def"
 
   
-  subroutine evaluate_temp(d, e, ge, u, v, w, 
+  subroutine evaluate_temp(d, e, ge, u, v, w, &
     krome_x,imethod,idual,idim,tgas,temstart,utem,rhogas)
     use krome_user
 
@@ -18,10 +18,10 @@
 #include "fortran_types.def"
     real*8::krome_x(:),p2d
     real*8::d,ge,e,tgas,rhogas
-    real*8::u,v,w,temstart,utem,temstart,ntot
+    real*8::u,v,w,temstart,utem,ntot
     integer::imethod,idim,idual,kgamma
 
-    kgamma = krome_get_gamma(krome_x(:))
+    kgamma = krome_get_gamma(krome_x(:), Tgas)
 
     !Compute Pressure with various methods 
     if (imethod .eq. 2) then
