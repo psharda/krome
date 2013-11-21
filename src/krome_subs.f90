@@ -30,9 +30,24 @@ contains
   end function coe
 
   !*********************
+  function conserve(n,ni)
+    use krome_commons
+    implicit none
+    real*8::conserve(nspec),n(nspec),ni(nspec)
+    real*8::ntot,nitot,nold,fscale
+    
+#KROME_conserve
+
+    conserve(:) = 0d0
+    conserve(:) = n(:)
+
+  end function conserve
+
+  !*********************
   !get gamma
   function gamma_index(n)
     use krome_commons
+    implicit none
     real*8::n(:),gamma_index,krome_gamma
     
 #KROME_gamma

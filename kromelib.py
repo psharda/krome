@@ -17,7 +17,8 @@ class molec():
 	Tpoly = [0.e0]*3 #temperature limits
 	idx = 0 #species index
 	enthalpy = 0.e0 #enthalpy of formation
-	atomcount = dict() #dictionary containin the count of atoms (e.g H2O is {"H":2, "O":1})
+	atomcount = dict() #dictionary containin the count of atoms including zero (e.g H2O is {"H":2, "O":1})
+	atomcount2 = dict() #dictionary containin the count of atoms without zero species (e.g H2O is {"H":2, "O":1})
 
 	def __init__(self):
 		self.poly1 = [0.e0]*7
@@ -469,7 +470,10 @@ def parser(name, mass_dic, atoms, thermo_data):
 				if(namecp==""): break #if nothing more to find break loop
 		if(a!="+" and a!="-"): founds += imult #count found atoms for is_atom
 	if(founds>1): is_atom = False #atoms have only one atom (viz.)
-
+	
+	mymol.atomcount2 = dict()
+	for (k,v) in mymol.atomcount.iteritems():
+		if(v>0): mymol.atomcount2[k] = v
 
 	mymol.name = name #name
 	mymol.mass = mass #mass (g)

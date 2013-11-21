@@ -42,6 +42,22 @@ contains
 
 #ENDIFKROME
 
+  !*************************
+  !alias for conserve in krome_subs
+  function krome_conserve(x,xi)
+    use krome_subs
+    implicit none
+    real*8::x(:),xi(:)
+    real*8::n(krome_nspec),ni(krome_nspec),krome_conserve(krome_nmols)
+    
+    n(:) = 0d0
+    ni(:) = 0d0
+    n(1:krome_nmols) = x(1:krome_nmols)
+    ni(1:krome_nmols) = xi(1:krome_nmols)
+    n(:) = conserve(n(:), ni(:))
+    krome_conserve(:) = n(1:krome_nmols)
+  end function krome_conserve
+
   !***************************
   !alias for gamma_index in krome_subs
   function krome_get_gamma(x,Tgas)

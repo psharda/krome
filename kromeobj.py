@@ -745,6 +745,8 @@ class krome():
 		iTmax = 9 #position of tmax
 		irate = 10 #position of the rate in F90 style
 		ivarcoe = 0 #number variable to order dictionary (dictionaries are not ordered by definition!)
+		TminAuto = self.TminAuto
+		TmaxAuto = self.TmaxAuto
 		hasFormat = False
 		format_items = 4+len(ireact)+len(iprod)
 		if(skipDup): fdup = open("duplicates.log","w")
@@ -862,13 +864,12 @@ class krome():
 					myrea.TmaxOp = op.replace(">","GT").replace("<","LT").replace(".","")
 					break
 
-			myrea.Tmin = TminAuto = "2.73d0" #default min temperature
-			myrea.Tmax = TmaxAuto = "1.d8" #default max temperature
+			myrea.Tmin = "2.73d0" #default min temperature
+			myrea.Tmax = "1.d8" #default max temperature
 			if(tminFound): myrea.Tmin = format_double(arow[iTmin]) #get Tmin
 			if(tmaxFound): myrea.Tmax = format_double(arow[iTmax]) #get Tmax
 			if(tminFound): TminAuto = min(float(arow[iTmin].lower().replace("d","e")), TminAuto)
 			if(tmaxFound): TmaxAuto = max(float(arow[iTmax].lower().replace("d","e")), TmaxAuto)
-
 			myrea.krate = arow[irate] #get reaction rate written in F90 style
 			if(self.useCustomCoe): myrea.krate = "0.d0" #when custom function is used standard coefficient are set to zero
 			#loop over reactants to grep molecules
@@ -1703,6 +1704,26 @@ class krome():
 		for rea in reacts:
 			sclist = get_Tshortcut(rea,sclist)
 
+		#conserve
+		skipa = ["CR","Tgas","dummy","g"]
+		atoms = []
+		acount = dict()
+		for x in specs:
+			xname = x.name
+			if(xname in skipa): continue
+			for a in x.atomcount2:
+				if(a in ["+","-"]): continue
+				if(not(a in atoms)): atoms.append(a)
+				if(a in acount):
+					acount[a].append(x)
+				else:
+					acount[a] = [x]
+		print
+		#for k,v in acount.iteritems():
+		#	print "n(idx_"+k+") =  [x.name for x in v]
+		print len(atoms)
+
+
 		#loop on src file and replace pragmas
 		for row in fh:
 			srow = row.strip()
@@ -1716,6 +1737,8 @@ class krome():
 					kstr += "\t" + sTlimit + " k("+str(x.idx)+") = " + x.krate
 					kstr = truncF90(kstr, 60,"*")
 					fout.write(truncF90(kstr, 60,"/")+"\n\n")
+			#elif(srow == "#KROME_conserve"):
+			#	fout.write(full_conserve+"\n")
 			elif(srow == "#KROME_implicit_arrays"):
 				fout.write(truncF90(self.implicit_arrays,60,","))
 			elif(srow == "#KROME_initcoevars"):
@@ -1904,7 +1927,7 @@ class krome():
 
 			if(skip): continue
 			row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(max("+str(self.TminAuto)+",2.73d0))")
-			row = row.replace("#KROME_logTup", "ktab_logTup = log10("+str(self.TmaxAuto)+")")
+			row = row.replace("#KROME_logTup", "ktab_logTup = log10(min("+str(self.TmaxAuto)+",1d8)")
 			if(self.useCustomCoe): row = row.replace("#KROMEREPLACE_customCoeFunction", self.customCoeFunction)
 
 			if(row[0]!="#"): fout.write(row)
