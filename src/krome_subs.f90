@@ -33,13 +33,14 @@ contains
   function conserve(n,ni)
     use krome_commons
     implicit none
-    real*8::conserve(nspec),n(nspec),ni(nspec)
+    real*8::conserve(nspec),n(nspec),ni(nspec),no(nspec)
     real*8::ntot,nitot,factor
     
+    no(:) = n(:)
 #KROME_conserve
 
     conserve(:) = 0d0
-    conserve(:) = n(:)
+    conserve(:) = no(:)
 
   end function conserve
 

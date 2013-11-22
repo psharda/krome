@@ -1762,7 +1762,7 @@ class krome():
 				for x in v:
 					mult = (str(x.atomcount2[k])+"d0*" if x.atomcount2[k]>1 else "") #multiplication factor
 					aadd.append(mult+"n("+x.fidx+")") #append species density with factor
-					sdiff += "n("+x.fidx+") = n("+x.fidx+") * factor\n" #rescaling
+					sdiff += "no("+x.fidx+") = n("+x.fidx+") * factor\n" #rescaling
 				sadd = "ntot = " + (" &\n + ".join(aadd)) #current total density of the species k
 				saddi = "nitot = " + (" &\n + ".join([y.replace("n(","ni(") for y in aadd])) #initial total density of the species k
 				#prepare replacing string
