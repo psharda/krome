@@ -28,14 +28,12 @@
 
 subroutine Simulation_initblock (blockID)
 
-
-
-!!***used modules from FLASH.***
+  !!***used modules from FLASH.***
 
   use Simulation_data
   use Logfile_interface, ONLY : Logfile_stamp
   use Grid_interface, ONLY : Grid_getCellCoords, Grid_getBlkPtr, &
-       Grid_releaseBlkPtr, Grid_getBlkIndexLimits, Grid_putPointData
+      Grid_releaseBlkPtr, Grid_getBlkIndexLimits, Grid_putPointData
   
   use Eos_interface, ONLY : Eos 
   implicit none
@@ -46,13 +44,10 @@ subroutine Simulation_initblock (blockID)
   
   ! HERE are the arguments
   integer, intent(in) :: blockID
-  
-  
-  
+   
   !!***block number and (cell) counters***
   integer  ::  i, j, k, n
-  
-  
+    
   !!** this is where we read and write the data
   real, pointer, dimension(:,:,:,:)  :: solnData
   
@@ -72,8 +67,6 @@ subroutine Simulation_initblock (blockID)
   
   !! This says that we are grabing the guard cells when we grab the block
   logical :: gcell = .true.
-  
-  
   
   integer, dimension(2,MDIM) :: blkLimits, blkLimitsGC
   
@@ -100,9 +93,8 @@ subroutine Simulation_initblock (blockID)
   y = 0.0
   z = 0.0
   
-  
   if (NDIM==3) call Grid_getCellCoords(KAXIS,blockID,CENTER,gcell,z,sizeZ)
-  call Grid_getCellCoords(JAXIS,blockID,CENTER,gcell,y,sizey)
+  if (NDIM > 1) call Grid_getCellCoords(JAXIS,blockID,CENTER,gcell,y,sizey)
   call Grid_getCellCoords(IAXIS,blockID,CENTER,gcell,x,sizex)
   
   !Setup initial composition of all species
@@ -134,8 +126,8 @@ subroutine Simulation_initblock (blockID)
            rho = sim_c_den*sim_contrast
            T = 5.
            
-!           if(xx .le. 0.225*3.0856e18) then ! 1D case
-           if(sqrt(xx**2+yy**2.+zz**2.) .le. 0.225*3.0856e18) then
+           if(xx .le. 0.225*3.0856e18) then ! 1D case
+           !if(sqrt(xx**2+yy**2.+zz**2.) .le. 0.225*3.0856e18) then
 
              rho= sim_c_den 
              T= sim_c_temp 

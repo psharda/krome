@@ -14,7 +14,7 @@ class krome():
 	useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
-	pedanticMakefile = useFakeOpacity = False
+	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = False
 	doRamses = doFlash = doEnzo = wrapC = False
@@ -121,6 +121,8 @@ class krome():
 		self.parser.add_argument("-enzo", action="store_true", help="create patches for ENZO")
 		self.parser.add_argument("-C", action="store_true", help="create a simple C wrapper")
 		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
+		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global neutrality. Works with some limitations, please read the manual.")
+		self.parser.add_argument("-conserveE", action="store_true", help="conserves the charge global neutrality only.")
 		
 	
 	######################################
@@ -298,6 +300,17 @@ class krome():
 		if(args.skipODEthermo):
 			self.useODEthermo = False
 			print "Reading option -skipODEthermo"
+
+		#use species mass conservation (and charge)
+		if(args.conserve):
+			self.useConserve = True
+			self.useConserveE = True
+			print "Reading option -conserve"
+
+		#use species charge conservation only
+		if(args.conserveE):
+			self.useConserveE = True
+			print "Reading option -conserveE"
 
 		#creates ramses patches
 		if(args.ramses):
@@ -1705,24 +1718,90 @@ class krome():
 			sclist = get_Tshortcut(rea,sclist)
 
 		#conserve
-		skipa = ["CR","Tgas","dummy","g"]
-		atoms = []
-		acount = dict()
-		for x in specs:
-			xname = x.name
-			if(xname in skipa): continue
-			for a in x.atomcount2:
-				if(a in ["+","-"]): continue
-				if(not(a in atoms)): atoms.append(a)
-				if(a in acount):
-					acount[a].append(x)
-				else:
-					acount[a] = [x]
-		print
-		#for k,v in acount.iteritems():
-		#	print "n(idx_"+k+") =  [x.name for x in v]
-		print len(atoms)
+		krome_conserve = "" #init full string for the pragma replacement
+		if(self.useConserve):
+			skipa = ["CR","Tgas","dummy","g"] #skip these species
+			multi = [] #species with shared atoms
+			acount = dict() #store species per atom type (e.g. {"C":["C","CO","C2"], ...})
+			has_multiple = False #check if spcies with shared atoms are present (e.g. CO but not H2)
+			#loop on the species
+			for x in specs:
+				xname = x.name #species name
+				if(xname in skipa): continue #cycle if the name is prensent in the skip list
+				afound = 0 #cont founded type atoms
+				#loop on the dictionary taht count the atoms in the species
+				for a in x.atomcount2:
+					if(a in ["+","-"]): continue #skip non-atoms
+					afound +=1 #count founded atoms (for account of shared atoms)
+					#append species to dictioanry if contains the atom a
+					if(a in acount):
+						acount[a].append(x)
+					else:
+						acount[a] = [x]
+				if(afound>1): 
+					has_multiple = True #flag for shared atoms
+					multi.append(x.name)
+			#if species with shared atoms warns the user (also in the subs file)
+			if(has_multiple):
+				krome_conserve += "!WARNING: found species with different atoms:\n"
+				krome_conserve += "!conservation function may be non-accurate\n"
+				krome_conserve += "!the approximation is valid when the following species\n"
+				krome_conserve += "! are smaller compared to the others\n"
+				krome_conserve += "! "+(", ".join(multi))+"\n"
+				print
+				print "WARNING: found species with different atoms:"
+				print " conservation function may be non-accurate"
+			print
 
+			#loop on the found atoms. k=atom, v=list of species with k
+			for (k,v) in acount.iteritems():
+				if(k=="E"): continue #skip electrons
+				aadd = [] #parts of the summation for ntot
+				sdiff = "" #string for scaling
+				#loop on the species
+				for x in v:
+					mult = (str(x.atomcount2[k])+"d0*" if x.atomcount2[k]>1 else "") #multiplication factor
+					aadd.append(mult+"n("+x.fidx+")") #append species density with factor
+					sdiff += "n("+x.fidx+") = n("+x.fidx+") * factor\n" #rescaling
+				sadd = "ntot = " + (" &\n + ".join(aadd)) #current total density of the species k
+				saddi = "nitot = " + (" &\n + ".join([y.replace("n(","ni(") for y in aadd])) #initial total density of the species k
+				#prepare replacing string
+				krome_conserve += "\n!********** "+k+" **********\n"
+				krome_conserve += sadd + "\n"
+				krome_conserve += saddi + "\n"
+				krome_conserve += "factor = nitot/ntot\n"
+				krome_conserve += sdiff + "\n"
+				krome_conserve += "\n"
+	
+		nmax = 30
+		if(len(specs)>nmax and self.useConserve):
+			print "WARNING: more than "+str(nmax)+" species, -conserve disabled!"
+			krome_conserve = "" #with more than NMAX species conserve only electrons
+
+		has_electrons = False #check if electrons are present
+		#check if electrons are present
+		for x in specs:
+			if(x.name=="E"): 
+				has_electrons = True #check if electrons are present
+				break
+
+		#charge conservation
+		if(has_electrons and self.useConserveE):
+			consE = "n(idx_E) = max("
+			for x in specs:
+				if(x.name=="E"): continue #skip electron
+				if(x.charge==0): continue #skip neutrals
+				#prepare charge multiplicator
+				mult = ""
+				if(x.charge>0): mult = "+"
+				if(x.charge>1): mult = "+" + str(x.charge) + "d0*"
+				if(x.charge<0): mult = "-"
+				if(x.charge<-1): mult = str(x.charge) + "d0*"
+				consE += " &\n"+mult+"n("+x.fidx+")"
+			consE += ", 1d-40)"
+			krome_conserve += "\n!********** E **********\n"
+			krome_conserve += consE + "\n"
+		
 
 		#loop on src file and replace pragmas
 		for row in fh:
@@ -1737,8 +1816,8 @@ class krome():
 					kstr += "\t" + sTlimit + " k("+str(x.idx)+") = " + x.krate
 					kstr = truncF90(kstr, 60,"*")
 					fout.write(truncF90(kstr, 60,"/")+"\n\n")
-			#elif(srow == "#KROME_conserve"):
-			#	fout.write(full_conserve+"\n")
+			elif(srow == "#KROME_conserve"):
+				fout.write(krome_conserve+"\n")
 			elif(srow == "#KROME_implicit_arrays"):
 				fout.write(truncF90(self.implicit_arrays,60,","))
 			elif(srow == "#KROME_initcoevars"):
@@ -1927,7 +2006,7 @@ class krome():
 
 			if(skip): continue
 			row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(max("+str(self.TminAuto)+",2.73d0))")
-			row = row.replace("#KROME_logTup", "ktab_logTup = log10(min("+str(self.TmaxAuto)+",1d8)")
+			row = row.replace("#KROME_logTup", "ktab_logTup = log10(min("+str(self.TmaxAuto)+",1d8))")
 			if(self.useCustomCoe): row = row.replace("#KROMEREPLACE_customCoeFunction", self.customCoeFunction)
 
 			if(row[0]!="#"): fout.write(row)
@@ -2643,6 +2722,9 @@ class krome():
 			if(srow == "#IFKROME_useFlux" and not(self.useFlux)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
+			if(srow == "#IFKROME_conserve" and not(self.useConserve) and not(self.useConserveE)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
 			if(srow == "#IFKROME_report" and not(self.doReport)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -2945,10 +3027,11 @@ class krome():
 	def flash_patch(self):
 		specs = self.specs
 
+
 		#some initial fractions. if not found set default
 		ndef = {"H": 0.76e0,
 			"HE": 0.24e0,
-			"H+": 1e-14,
+			"H+": 1.2e-5,
 			"H-": 2e-9,
 			"He+": 1e-14,
 			"He++": 1e-17,

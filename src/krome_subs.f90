@@ -34,7 +34,7 @@ contains
     use krome_commons
     implicit none
     real*8::conserve(nspec),n(nspec),ni(nspec)
-    real*8::ntot,nitot,nold,fscale
+    real*8::ntot,nitot,factor
     
 #KROME_conserve
 

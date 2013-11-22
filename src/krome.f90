@@ -18,7 +18,7 @@ contains
     use krome_reduction
     use krome_dust
     real*8::dt,x(nmols),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin
-    real*8::rrmax,totmass,xdust(ndust),n_old(nspec)
+    real*8::rrmax,totmass,xdust(ndust),n_old(nspec),ni(nspec)
     integer::icount,i
     
     !DLSODES variables
@@ -94,7 +94,11 @@ contains
 #IFKROME_check_mass_conservation
     mass(:) = get_mass() !get masses
     totmass = sum(n(:) * mass(:)) !calculate total mass
-#ENDIFKROME 
+#ENDIFKROME
+
+#IFKROME_conserve
+    ni(:) = n(:)
+#ENDIFKROME
 
     n_old(:) = -1d99
     krome_call_to_fex = 0
@@ -144,6 +148,8 @@ contains
 
     end do
 
+
+
 #IFKROME_check_mass_conservation
     if(abs(1.d0-totmass/sum(n(:) * mass(:)))>1d-3) then
        print *,"ERROR: mass conservation failure!"
@@ -155,6 +161,10 @@ contains
     do i=1,nspec
        n(i) = max(n(i),0.d0)
     end do
+
+#IFKROME_conserve
+    n(:) = conserve(n(:),ni(:))
+#ENDIFKROME
 
 #IFKROME_useX
     x(:) = mass(1:nmols)*n(1:nmols)/rhogas !return to fractions
