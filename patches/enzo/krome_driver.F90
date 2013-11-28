@@ -108,8 +108,6 @@
              !store old tgas
              tgasold = tgas
 
-             !convert to g/cm3
-             rhogas = d(i,j,k) * dom
              dt_hydro = utim*dt !dt*time_conversion
 
              !call KROME solver

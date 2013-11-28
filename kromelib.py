@@ -1191,7 +1191,7 @@ def get_licence_header(version, codename):
 	!!Institut fuer Astrophysik, Goettingen.
 	!!
 	!!Others (alphabetically): F.A. Gianturco, J.Prieto,
-	!!D.R.G. Schleicher, D. Seifreid, E. Simoncini 
+	!!D.R.G. Schleicher, D. Seifried, E. Simoncini 
 	!!
 	!!
 	!!KROME is provided \"as it is\", without any warranty. 
@@ -1285,7 +1285,7 @@ def indentF90(filename):
 	nspace = 2 #number of space for indent
 	tokenclose = ["end do","end if","end function","end subroutine","else if","elseif","else","enddo","end module","endif"]
 	tokenclose += ["contains","endfunction","endsubroutine","endmodule","end program", "endprogram"]
-	tokenopen = ["do","function","subroutine","contains","else","else if","elseif","module","program"]
+	tokenopen = ["do ","function","subroutine","contains","else","else if","elseif","module","program"]
 	for row in fh:
 		srow = row.strip() #trim the row
 		#check module begin

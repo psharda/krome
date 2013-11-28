@@ -15,7 +15,7 @@ class krome():
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
-	useX = has_plot = doIndent = useTlimits = useODEthermo = True
+	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = False
 	doRamses = doFlash = doEnzo = wrapC = False
 	typeGamma = "DEFAULT"
@@ -25,6 +25,7 @@ class krome():
 	TlimitOpHigh = "LT"
 	customCoeFunction = "[CUSTOM COE FUNCTION NOT SET!]"
 	buildFolder = "build/"
+	srcFolder = "src/"
 	TminAuto = 1e99
 	TmaxAuto = 0e0
 	RTOL = 1e-4 #default relative tolerance
@@ -123,6 +124,8 @@ class krome():
 		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
 		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global neutrality. Works with some limitations, please read the manual.")
 		self.parser.add_argument("-conserveE", action="store_true", help="conserves the charge global neutrality only.")
+		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
+		self.parser.add_argument("-source", metavar="folder", help="use FOLDER as source directory")
 		
 	
 	######################################
@@ -383,6 +386,12 @@ class krome():
 			print "Reading option -C"
 
 
+		#check for objects in build/
+		if(args.unsafe):
+			self.safe = False
+			print "Reading option -unsafe"
+
+
 		#determine Tgas limit operators
 		if(args.Tlimit):
 			self.myTlimit = args.Tlimit
@@ -521,10 +530,46 @@ class krome():
 			fout.write((" ".join(argv)))
 			fout.close()
 
+		#project name folder
+		if(args.source):
+			flist = ["krome_commons.f90", "krome_cooling.f90", "krome.f90", "krome_heating.f90"]
+			flist += ["krome_photo.f90","krome_subs.f90", "krome_user_commons.f90", "krome_constants.f90"]
+			flist += ["krome_dust.f90", "kromeF90.f90", "krome_ode.f90", "krome_reduction.f90"]
+			flist += ["krome_tabs.f90", "krome_user.f90"]
+
+			src = str(args.source)
+			print "Reading option -source (name="+src+")"
+	
+			#check if folder exists
+			if(not(os.path.exists(src))):
+				print "ERROR: the folder "+src+"/ doesn't exist!"
+				sys.exit()
+			#check if the file in flist are present in the folder
+			notfound = []
+			for fle in flist:
+				try:
+					with open(src+"/"+fle):
+						pass
+				except:
+					notfound.append(fle)
+
+			#if file missing write the error message
+			if(len(notfound)>0):
+				print "ERROR: you suggested to use the folder "+src+"/ as source"
+				print " but the following file(s) missing:"
+				print " " + (", ".join(notfound))
+				sys.exit()
+
+			self.srcFolder = src+"/"
+
+
 		#typeGamma
 		if(args.gamma):
 			typeGamma = args.gamma
 			self.typeGamma = typeGamma.replace("\"","")
+			if(not(args.heating) and not(args.cooling)):
+				print "ERROR: you are trying to use -gamma without -cooling or -heating"
+				sys.exit()
 			print "Reading option -gamma (gamma="+str(self.typeGamma)+")"
 
 		#ATOL
@@ -620,9 +665,20 @@ class krome():
 				self.customODEs.append([arow[0],arow[1]])
 			fh.close()
 
-
+	###################################################
+	def safe_check(self):
+		if(not(self.safe)): return
+		files = ", ".join(os.walk(self.buildFolder).next()[1])
+		if(len(files)<1): return
+		print "************************************************"
+		print "WARNING: the folder "+self.buildFolder+" is not empty"
+		print " some items may be replaced. Do you want to proceed?"
+		print "To avoid this message use -unsafe option."
+		print "************************************************"
+		a = raw_input("Any key to ignore q to quit... ")
+		if(a=="q"): print sys.exit()
 	####################################################
-	#load thermochemistry data form chemkin-formatted file
+	#load thermochemistry data from chemkin-formatted file
 	def load_thermochemistry(self):
 		nskip = 99999 #skip comments
 		thermo = dict() #prepare dictionary
@@ -1565,7 +1621,7 @@ class krome():
 		#*********COMMONS****************
 		#write parameters in krome_commons.f90
 		print "- writing krome_commons.f90...",
-		fh = open("src/krome_commons.f90")
+		fh = open(self.srcFolder+"krome_commons.f90")
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
 		else:
@@ -1652,7 +1708,7 @@ class krome():
 
 
 		#********* CONSTANTS ****************
-		fh = open("src/krome_constants.f90")
+		fh = open(self.srcFolder+"krome_constants.f90")
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
 		else:
@@ -1683,7 +1739,7 @@ class krome():
 		if(not(file_exists(buildFolder+"krome_user_commons.f90"))):
 			print "- writing krome_user_commons.f90...",
 
-			fh = open("src/krome_user_commons.f90")
+			fh = open(self.srcFolder+"krome_user_commons.f90")
 			fouta = open(self.buildFolder+"krome_user_commons.f90","w")
 
 			for row in fh:
@@ -1706,7 +1762,7 @@ class krome():
 		#*********SUBS****************
 		#write parameters in krome_subs.f90
 		print "- writing krome_subs.f90...",
-		fh = open("src/krome_subs.f90")
+		fh = open(self.srcFolder+"krome_subs.f90")
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
 		else:
@@ -1925,7 +1981,7 @@ class krome():
 		reacts = self.reacts
 		#********* PHOTO ****************
 		print "- writing krome_photo.f90...",
-		fh = open("src/krome_photo.f90")
+		fh = open(self.srcFolder+"krome_photo.f90")
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
 		else:
@@ -1986,7 +2042,7 @@ class krome():
 		buildFolder = self.buildFolder
 		#********* TABS ****************
 		print "- writing krome_tabs.f90...",
-		fh = open("src/krome_tabs.f90")
+		fh = open(self.srcFolder+"krome_tabs.f90")
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
 		else:
@@ -2024,7 +2080,7 @@ class krome():
 		useDustT = self.useDustT
 		#********* DUST ****************
 		print "- writing krome_dust.f90...",
-		fh = open("src/krome_dust.f90")
+		fh = open(self.srcFolder+"krome_dust.f90")
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
 		else:
@@ -2072,7 +2128,7 @@ class krome():
 		#*********COOLING****************
 		#write header in krome_cooling.f90
 		print "- writing krome_cooling.f90...",
-		fh = open("src/krome_cooling.f90")
+		fh = open(self.srcFolder+"krome_cooling.f90")
 
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
@@ -2218,7 +2274,7 @@ class krome():
 		#write header in krome_heating.f90
 		print "- writing krome_heating.f90...",
 
-		fh = open("src/krome_heating.f90")
+		fh = open(self.srcFolder+"krome_heating.f90")
 
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
@@ -2362,7 +2418,7 @@ class krome():
 		#write parameters in krome_ode.f90
 		print "- writing krome_ode.f90...",
 
-		fh = open("src/krome_ode.f90")
+		fh = open(self.srcFolder+"krome_ode.f90")
 
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
@@ -2551,7 +2607,7 @@ class krome():
 		#*********USER****************
 		#write parameters in krome_user.f90
 		print "- writing krome_user.f90...",
-		fh = open("src/krome_user.f90")
+		fh = open(self.srcFolder+"krome_user.f90")
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
 		else:
@@ -2648,7 +2704,7 @@ class krome():
 		#********* REDUCTION ****************
 		#WARNING: this part is not supported and its use is discouraged
 		print "- writing krome_reduction.f90...",
-		fh = open("src/krome_reduction.f90")
+		fh = open(self.srcFolder+"krome_reduction.f90")
 
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
@@ -2692,9 +2748,9 @@ class krome():
 		#write WORKS arrays and IAC/JAC in krome.f90
 		print "- writing krome.f90...",
 		if(self.useDvodeF90):
-			fh = open("src/kromeF90.f90")
+			fh = open(self.srcFolder+"kromeF90.f90")
 		else:
-			fh = open("src/krome.f90")
+			fh = open(self.srcFolder+"krome.f90")
 
 		ATOL = self.ATOL
 		RTOL = self.RTOL

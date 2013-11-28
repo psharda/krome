@@ -77,10 +77,14 @@ contains
     implicit none
     integer::neq, j, ian, jan, r1, r2, p1, p2, p3, i
     real*8::tt, n(neq), pdj(neq), dr1, dr2, kk,k(nrea),Tgas
-    real*8::nn(neq),dn0,dn1,dnn,nH2dust,dn(neq)
+    real*8::nn(neq),dn0,dn1,dnn,nH2dust,dn(neq),krome_gamma
 
     nH2dust = 0.d0
     Tgas = n(idx_Tgas)
+
+#IFKROME_use_thermo
+    krome_gamma = gamma_index(n(:))
+#ENDIFKROME
     
     if(j.ne.idx_Tgas) k(:) = coe_tab(n(:)) !compute coefficients
     

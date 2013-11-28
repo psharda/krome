@@ -1,10 +1,11 @@
 #!/bin/sh
 
-#script to compile KROME in ENZO 
+#script to compile KROME in ENZO
+#WARNING: THIS IS NOT A MAKEFILE!
 fc=ifort
 
 std="-check all -traceback -fpe0  -ftz -ftrapuv -warn all -u"
-hswitch="-O3 -ipo -ip -unroll"
+hswitch="-O3"
 switch=$hswitch
 
 echo "build using $fc -c $switch"

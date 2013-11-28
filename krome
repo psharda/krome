@@ -25,6 +25,9 @@ krome.select_test(argv)
 #read argv options
 krome.argparsing(argv)
 
+#check if build folder is empty
+krome.safe_check()
+
 #read thermochemistry data from file
 krome.load_thermochemistry()
 
