@@ -668,8 +668,9 @@ class krome():
 	###################################################
 	def safe_check(self):
 		if(not(self.safe)): return
-		files = ", ".join(os.walk(self.buildFolder).next()[1])
-		if(len(files)<1): return
+		wlk = os.walk(self.buildFolder).next()
+		wlk = wlk[1]+wlk[2] #folders+files
+		if(len(wlk)<1): return
 		print "************************************************"
 		print "WARNING: the folder "+self.buildFolder+" is not empty"
 		print " some items may be replaced. Do you want to proceed?"
