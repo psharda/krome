@@ -1,19 +1,30 @@
+#
+# THIS SCRIPT CONVERT A KIDA DATABASE INTO A KROME-READABLE FILE.
+# THIS FILE IS PROVIDED AS IT IS, PLEASE CAREFULLY CHECK THE OUTPUT PRODUCED.
+# SEE THE DISCLAIMER AT THE END OF THIS SECTION.
+#
+
 #convert from KIDA file to KROME network (including a set of option to chose a subset)
 
 #input filename (provided by KIDA website)
-fname = "kida_demo.dat" #KIDA filename
+fname = "kida_reac_2013-10-26_1.dat"
 #output filename for KROME
-foutname = "react_subkida" #output file
+foutname = "react_subkida"
+#filename for multiple reactions (same reactants and same products)
+fmultname = "react_multi"
 
 #several options to select your own reaction subset
 avoid = [] #avoid atoms (can be empty)
-use = ["e","C","H","N"] #use atoms (can be empty, e=electron)
-maxatoms = 6 #maximum number of atoms
+use = [] #use atoms (can be empty, e=electron)
+maxatoms = 999 #maximum number of atoms
 ions = True #use ions
 anions = True #use anions
-Tmin = -9999. #minimum temperature
+Tmin = 1. #minimum temperature
 Tmax = 99999. #maximum temperature
-exclude = ["C8"] #species to exclude (can be empty)
+exclude = [] #species to exclude (can be empty)
+excludein = [] #exclude species that contain a specific case-sensitive string (can be empty, e.g. l- for linear mols)
+multiple = False #include multiple reactions (same reactants and same products)
+
 #Recommendation is the recommendation given by experts in KIDA. (from KIDA help)
 #0 means that the value is not recommended. 
 #1 means that there is no recommendation (experts have not looked at the data). 
@@ -27,11 +38,49 @@ recom = [1,2,3] #recomandations to include (see above)
 #3: Kooij 
 #4: ionpol1 
 #5: ionpol2 
-processes = [3,4,5] #processes included (see above)
+processes = [1,2,3,4,5] #processes included (see above)
 
 #variables for cosmic rays and photochemistry
 CRvar = "crflux" #name of the CR flux variable
 Avvar = "Av" #name of the Av variable
+
+# This script is a part of KROME.
+# KROME is a nice and friendly chemistry package for a wide range of 
+# astrophysical simulations. Given a chemical network (in CSV format) 
+# it automatically generates all the routines needed to solve the kinetic 
+# of the system, modelled as system of coupled Ordinary Differential 
+# Equations. 
+# It provides different options which make it unique and very flexible. 
+# Any suggestions and comments are welcomed. KROME is an open-source 
+# package, GNU-licensed, and any improvements provided by 
+# the users is well accepted. See disclaimer below and GNU License 
+# in gpl-3.0.txt.
+#
+# more details in http://kromepackage.org/
+# also see https://bitbucket.org/krome/krome_stable
+#
+# Written and developed by Tommaso Grassi
+# tommasograssi@gmail.com,
+# University of Rome \"Sapienza\".
+#
+# Co-developer Stefano Bovino
+# sbovino@astro.physik.uni-goettingen.de
+# Institut fuer Astrophysik, Goettingen.
+#
+# Others (alphabetically): F.A. Gianturco, J.Prieto,
+# D.R.G. Schleicher, D. Seifried, E. Simoncini 
+#
+#
+# KROME and this script are provided \"as it is\", without any warranty. 
+# The Authors assume no liability for any damages of any kind 
+# (direct or indirect damages, contractual or non-contractual 
+# damages, pecuniary or non-pecuniary damages), directly or 
+# indirectly derived or arising from the correct or incorrect 
+# usage of KROME, in any possible environment, or arising from 
+# the impossibility to use, fully or partially, the software, 
+# or any bug or malefunction.
+# Such exclusion of liability expressly includes any damages 
+# including the loss of data of any kind (including personal data)
 
 
 #******************************************************************
@@ -126,11 +175,15 @@ print "************************"
 
 print "reading file "+fname+", wait..."
 
-okcount = totcount = 0
+okcount = totcount = trangecount = singlecount = 0
 nhist = dict()
 idxdic = dict()
+trange = dict()
+tsingle = dict()
+formulahist = dict()
 fh = open(fname,"rb")
 fout = open(foutname,"w")
+fmult = open(fmultname,"w")
 fmt = [11]*3 + [1] + 5*[11] +[1] + 3*[11] + [8,9] + [1,4,3] + 2*[7] + [3,6,3,2]
 keys = ["R"+str(i) for i in range(3)] + ["x"] + ["P"+str(i) for i in range(5)] +["x"] + ["a","b","c"] + ["F","g"] + ["x","unc","type"] + ["tmin","tmax"] + ["formula","num","subnum","recom"]
 reacts = []
@@ -197,24 +250,32 @@ for row in fh:
 	else:
 		print "ERROR: Formula not found!",arow["formula"]
 	KK = KK.replace("--","+").replace("++","+").replace("-+","-").replace("+-","-")
-
 	krow = (RR+","+PP+","+TT+","+KK+"\n")
 	for x in rems:
 		krow = krow.replace(x,"")
 	
 	ok = True
 	#print arow
-	if(not(arow["formula"] in processes)): ok = False
-	if(not(int(arow["recom"]) in recom)): ok = False 
-	if(float(arow["tmin"])<Tmin): ok = False
-	if(float(arow["tmax"])>Tmax): ok = False
+	if(not(int(arow["formula"]) in processes)): ok = False
+	if(not(int(arow["recom"]) in recom)): ok = False
+	if(arow["formula"]!=1 and arow["formula"]!=2):
+		if(float(arow["tmin"])<Tmin): ok = False
+		if(float(arow["tmax"])>Tmax): ok = False
 	if(not(ok)): continue
+
+
 	for i in range(3):
 		if(not(ok)): break
 		mymol = mol()
 		R = arow["R"+str(i)]
 		if(R in rems): continue
 		if(R in exclude): ok = False
+		#check if string from stringlist excludein is in R
+		if(len(excludein)>0):
+			for ex in excludein:
+				if(ex in R):
+					ok = False
+					break
 		mymol.name = R
 		mymol.parse()
 		if(mymol.natoms>maxatoms): ok = False
@@ -232,6 +293,12 @@ for row in fh:
 		P = arow["P"+str(i)]
 		if(P in rems): continue
 		if(P in exclude): ok = False
+		#check if string from stringlist excludein is in P
+		if(len(excludein)>0):
+			for ex in excludein:
+				if(ex in P):
+					ok = False
+					break
 		mymol.name = P
 		mymol.parse()
 		if(mymol.natoms>maxatoms): ok = False
@@ -243,35 +310,77 @@ for row in fh:
 			for x in mymol.atoms:
 				if(not(x in use)): ok = False
 	if(not(ok)): continue
-	if(arow["num"] in nhist): 
-		nhist[arow["num"]].append(arow["subnum"])
-		idxdic[arow["num"]] = okcount+1
-	else: nhist[arow["num"]] = [arow["subnum"]]
+
+	#chek for reactions with Tmax==Tmin
+	if(float(arow["tmin"])==float(arow["tmax"])):
+		singlecount += 1
+		if(float(arow["tmin"]) in tsingle):
+			tsingle[float(arow["tmin"])] += 1
+		else:
+			tsingle[float(arow["tmin"])] = 1
+
+	if(not(arow["formula"] in formulahist)):
+		formulahist[arow["formula"]] = 1
+	else:
+		formulahist[arow["formula"]] += 1
+		
+	isMult = False
+	if(arow["num"] in nhist):
+		sameTRange = False
+		if(float(arow["tmin"])>trange[arow["num"]][0] and float(arow["tmin"])<trange[arow["num"]][1]): sameTRange = True
+		if(float(arow["tmax"])>trange[arow["num"]][0] and float(arow["tmax"])<trange[arow["num"]][1]): sameTRange = True
+		if(float(arow["tmin"])==trange[arow["num"]][0]): sameTRange = True
+		if(float(arow["tmax"])==trange[arow["num"]][1]): sameTRange = True
+		if(not(sameTRange)): trangecount += 1
+		if(not(multiple) and sameTRange): continue
+		if(sameTRange):
+			nhist[arow["num"]].append(arow["subnum"])
+			idxdic[arow["num"]] = okcount+1
+			isMult = True
+	else: 
+		nhist[arow["num"]] = [arow["subnum"]]
+		trange[arow["num"]] = [float(arow["tmin"]), float(arow["tmax"])]
+
 
 	okcount += 1
+	if(isMult): fmult.write(str(okcount)+","+krow)
 	fout.write(str(okcount)+","+krow)
 	reacts.append(arow)
 
+fmult.close()
 fout.close()
 fh.close()
 
 
 #FINAL OUTPUT
-print "Rections included:", okcount
 if(okcount==0):
 	print "********** WARNING! **********"
 	print "No reactions match your criteria!!!"
 	sys.exit()
-print "Total reactions:", totcount
-print "File written in:",foutname
-multi = [str(k)+"("+str(idxdic[k])+")" for (k,v) in nhist.iteritems() if len(v)>1 ]
+multi = [str(k)+"("+str(idxdic[k])+") ["+(",".join(v))+"]" for (k,v) in nhist.iteritems() if len(v)>1 ]
 if(len(multi)>1):
 	print "-------------------"
 	print "The following reactions have multiple values:"
-	print " "+(", ".join(multi))
+	for x in multi:
+		print x
 	print " as KIDA_index (KROME_index)"
 	print " please check!"
 	print "-------------------"
+print "Total reactions:", totcount
+print "Rections INCLUDED:", okcount
+print "Multiple reactions:", len(multi)
+print "Different Trange reactions:", trangecount
+print "Reactions with Tmin==Tmax:", singlecount,"as"
+if(len(tsingle)>0):
+	print " T","count"
+	for k,v in tsingle.iteritems():
+		print " "+str(k),v
+print "Formula count per type:"
+rtype = {1:"CR ioniz", 2:"Photo-diss",3:"Kooij",4:"ionpol1",5:"ionpol2"}
+if(len(formulahist)>0):
+	for k,v in formulahist.iteritems():
+		print " "+rtype[k]+":",v
+print "File written in:",foutname
 
 print "Everything done! Bye!"
 print
