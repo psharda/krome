@@ -21,5 +21,16 @@ for root, dirnames, filenames in os.walk('.'):
 			print "removing "+fname
 			hasrm = True
 
+#add README file in build if not present
+fname = "build/README"
+try:
+   with open(fname):
+       pass
+except IOError:
+	print "adding README in build"
+	fout = open(fname,"w")
+	fout.write("this folder will contains the built files\n")
+	fout.close()
+
 if(not(hasrm)): print "nothing to clean"
 print "done!"

@@ -32,7 +32,7 @@ contains
   !*****************************
   !adapt rate coefficients for nuclear reactions in stars,
   ! using a template screening function. more details in 
-  ! star_screen function
+  ! stars_screen function
   function stars_coe(n,rho,Tgas)
     use krome_commons
     use krome_subs
@@ -48,7 +48,7 @@ contains
     do i=1,nrea
        z1 = zz(arr_r1(i)) !first reactant atomic number
        z2 = zz(arr_r2(i)) !second reactant atomic number
-       k(i) = ko(i) * star_screen(Tgas,rho,n(:),z1,z2)
+       k(i) = ko(i) * stars_screen(Tgas,rho,n(:),z1,z2)
     end do
 
 #KROME_stars_3body
@@ -70,7 +70,7 @@ contains
     real*8::stars_screen
     real*8::Tgas,rho,n(:),ZY,T13,Atmp,pmol,lamb0,lamb12
     real*8::lamb0i,Zt058,Zm028,Z158m,H12i,lamb0s,Zm13
-    real*8::a,b,c,CHK,H12,fer,theta,Zt,Zm,f(nmols),H12s
+    real*8::a,b,c,d,CHK,H12,fer,theta,Zt,Zm,f(nmols),H12s
     integer::z1,z2,i,zz(nmols),zo(nspec)
     real*8,parameter::H12max=2d2
 
@@ -181,7 +181,7 @@ contains
     use krome_subs
     implicit none
     real*8::stars_energy(nrea),qeff(nrea),flux(nrea)
-    real*8::k(nrea).n(:)
+    real*8::k(nrea),n(:)
     qeff(:) = get_qeff()
 
 #KROME_stars_energy

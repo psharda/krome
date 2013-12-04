@@ -2884,8 +2884,8 @@ class krome():
 						sdx = str(rea.idx) #string index
 						stars3Body += "\n!3body: "+rea.verbatim+"\n"
 						stars3Body += "z12 = zz(arr_r1("+sdx+")) + zz(arr_r2("+sdx+"))\n"
-						stars3Body += "scr12 = star_screen(Tgas,rho,n(:), zz(arr_r1("+sdx+")), zz(arr_r2("+sdx+")))\n"
-						stars3Body += "scr23 = star_screen(Tgas,rho,n(:), z12, zz(arr_r3("+sdx+")))\n"
+						stars3Body += "scr12 = stars_screen(Tgas,rho,n(:), zz(arr_r1("+sdx+")), zz(arr_r2("+sdx+")))\n"
+						stars3Body += "scr23 = stars_screen(Tgas,rho,n(:), z12, zz(arr_r3("+sdx+")))\n"
 						stars3Body += "k("+sdx+") = ko("+sdx+") * scr12 * scr23 \n"
 				fout.write(stars3Body)
 			elif(srow=="#KROME_stars_energy"):
