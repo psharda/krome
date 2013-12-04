@@ -138,6 +138,7 @@ krome.makeHeating()
 krome.makeODE()
 krome.makeUser()
 krome.makeReduction()
+krome.makeStars()
 krome.makeMain()
 
 #create a gnuplot script for report

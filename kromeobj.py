@@ -49,14 +49,14 @@ class krome():
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
-	useCoolingCompton = useH2opacity = useCoolingCIE = useCoolingDISS = False
+	useCoolingCompton = useH2opacity = useCoolingCIE = useCoolingDISS = useStars = False
 	useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = False
-	doRamses = doFlash = doEnzo = wrapC = False
+	doRamses = doFlash = doEnzo = wrapC = mergeTlimits = False
 	typeGamma = "DEFAULT"
 	test_name = "default"
 	is_test = False
@@ -86,6 +86,7 @@ class krome():
 	atols = [] #custom ATOLs
 	rtols = [] #custom RTOLs
 	customODEs = [] #custom ODEs
+	nrea = 0 #number of reactions
 	version = "13.11"
 	codename = "Astonishing Ansatz"
 
@@ -165,6 +166,8 @@ class krome():
 		self.parser.add_argument("-conserveE", action="store_true", help="conserves the charge global neutrality only.")
 		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
 		self.parser.add_argument("-source", metavar="folder", help="use FOLDER as source directory")
+		self.parser.add_argument("-mergeTlimits", action="store_true", help="use the same reaction index for equivalent reactions (same reactants and products) that have different temperature limits")
+		self.parser.add_argument("-stars", action="store_true", help="use star module for nuclear reactions. NOTE: krome_stars module required in the Makefile")
 		
 	
 	######################################
@@ -273,10 +276,7 @@ class krome():
 		if(args.useN):
 			self.useX = False
 			print "Reading option -useN"
-		#force to use photons
-		#if(args.usePhot):
-		#	self.use_photons = True
-		#	print "Reading option -usePhot"
+
 		#use rate tables
 		if(args.useTabs):
 			self.useTabs = True
@@ -354,6 +354,12 @@ class krome():
 			self.useConserveE = True
 			print "Reading option -conserveE"
 
+		#same index for equivalent reactions with different Tlimits
+		if(args.mergeTlimits):
+			self.mergeTlimits = True
+			print "Reading option -mergeTlimits"
+
+
 		#creates ramses patches
 		if(args.ramses):
 			self.doRamses = True
@@ -425,10 +431,15 @@ class krome():
 			print "Reading option -C"
 
 
-		#check for objects in build/
+		#skip checking for objects in build/
 		if(args.unsafe):
 			self.safe = False
 			print "Reading option -unsafe"
+
+		#enable stellar physics
+		if(args.stars):
+			self.useStars = True
+			print "Reading option -stars"
 
 
 		#determine Tgas limit operators
@@ -482,6 +493,8 @@ class krome():
 				die("ERROR: to include dust cooling you need dust (use -dust=[see help]).")
 			if(("CHEM" in myCools) and ("ATOMIC" in myCools)):
 				die("ERROR: CHEM and ATOMIC cooling are mutually exclusive!")
+			if(("CIE" in myCools) and ("CONT" in myCools)):
+				die("ERROR: CIE and CONT cooling are mutually exclusive!")
 
 			self.use_thermo = True
 
@@ -506,15 +519,6 @@ class krome():
 
 			print "Reading option -heating ("+(",".join(myHeat))+")"
 	
-
-		#force rwork size
-		#if(args.testFile):
-		#	myrwork = (arg.strip().replace("-testFile=",""))
-		#	self.is_test = True
-		#	self.test_name = myrwork
-		#	print "Reading option -testFile (file="+str(myrwork)+")"
-		#	break
-
 		#force rwork size
 		if(args.forceRWORK):
 			myrwork = args.forceRWORK
@@ -832,6 +836,7 @@ class krome():
 		self.mass_dic = dict([[k.upper(),v] for (k,v) in mass_dic.iteritems()])
 		self.atoms = sorted(mass_dic, key = lambda x: len(x),reverse=True)
 
+	
 	#################################################
 	def read_file(self):
 		skipDup = self.skipDup
@@ -862,6 +867,9 @@ class krome():
 		idxFound = tminFound = tmaxFound = rateFound = True
 		specs = []
 		reacts = []
+		reags = [] #list of reagents for already found
+		prods = [] #list of prods for already found
+		idxs = [] #list of index for already found
 		fh = open(filename,"rb") #OPEN FILE
 		isComment = False #flag for comment block
 		for row in fh:
@@ -887,6 +895,7 @@ class krome():
 				ivarcoe += 1 #count variables to sort
 				continue #SKIP: a variable line is not a reaction line
 
+			qeffFound = False
 			#search for format string
 			if("@format:" in srow):
 				idxFound = tminFound = tmaxFound = rateFound = False
@@ -922,6 +931,9 @@ class krome():
 					if(x=="rate" or x=="k"): 
 						irate = ipos #rate in F90 style position
 						rateFound = True
+					if(x=="qeff" or x=="qpp"):
+						iqeff = ipos
+						qeffFound = True
 					ipos += 1 #increase position
 				#check for rate
 				if(not(rateFound)):
@@ -957,6 +969,25 @@ class krome():
 			reactants = [arow[x] for x in ireact]
 			products = [arow[x] for x in iprod]
 
+			#remove empty reactants/products and sort
+			reags_clean = sorted([x for x in reactants if x.strip()!=""])
+			prods_clean = sorted([x for x in products if x.strip()!=""])
+
+			#check for identical ractions
+			foundAlready = False
+			for i in range(len(reags)):
+				if(reags_clean==reags[i] and prods_clean==prods[i] and self.mergeTlimits):
+					foundAlready = True
+					rcount -= 1 #decrease reaction index (since already increased few lines above)
+					myrea.idx = idxs[i]
+					print "already found: ("+str(idxs[i])+") "+(" + ".join(reags_clean))+" -> "+(" + ".join(prods_clean))
+
+			#store reactants and products to find identical reactions (and different Tlimits)
+			if(not(foundAlready)):
+				reags.append(reags_clean)
+				prods.append(prods_clean)
+				idxs.append(myrea.idx)
+
 			opTlist = ["<",">",".LE.",".GE.",".LT.",".GT."]
 			myrea.TminOp = self.TlimitOpLow
 			myrea.TmaxOp = self.TlimitOpHigh
@@ -980,7 +1011,9 @@ class krome():
 			if(tminFound): TminAuto = min(float(arow[iTmin].lower().replace("d","e")), TminAuto)
 			if(tmaxFound): TmaxAuto = max(float(arow[iTmax].lower().replace("d","e")), TmaxAuto)
 			myrea.krate = arow[irate] #get reaction rate written in F90 style
-			if(self.useCustomCoe): myrea.krate = "0.d0" #when custom function is used standard coefficient are set to zero
+			if(qeffFound): myrea.qeff = arow[iqeff]
+
+			#if(self.useCustomCoe): myrea.krate = "0.d0" #when custom function is used standard coefficient are set to zero
 			#loop over reactants to grep molecules
 			for r in reactants:
 				if(r.strip()=="g" and not(self.use_photons)): continue
@@ -1026,6 +1059,8 @@ class krome():
 					pseudo_hash_list.append(myrea.pseudo_hash)
 			if(not(skip_append)): reacts.append(myrea)
 
+	
+
 		if(skipDup): 
 			fdup.close()
 			print "Skipped duplicated reactions:",skipped_dupl
@@ -1036,6 +1071,15 @@ class krome():
 		if(unmatch_idx):
 			print "WARNING: index in \""+filename+"\" are not sequential!"
 
+		#count reactions with unique index
+		idxs = []
+		nrea = 0
+		for rea in reacts:
+			if(rea.idx in idxs): continue #skip reactions same index
+			idxs.append(rea.idx)
+			nrea += 1
+
+		self.nrea = nrea
 		self.specs = specs
 		self.reacts = reacts
 		self.TminAuto = TminAuto
@@ -1333,7 +1377,7 @@ class krome():
 		fout.write(",\n".join(["  \""+x.name+"\"" for x in self.specs])+"\n};")
 		fout.write("\n")
 		fout.write("extern int krome_nmols = "+str(self.nmols)+"; //number of species\n")
-		fout.write("extern int krome_nrea = "+str(len(self.reacts))+"; //number of reactions\n")
+		fout.write("extern int krome_nrea = "+str(self.nrea)+"; //number of reactions\n")
 		fout.write("\n")
 		fout.write("#endif\n")
 		fout.close()
@@ -1370,7 +1414,10 @@ class krome():
 		dummy = self.dummy
 		#create explicit differentials
 		dns = ["dn("+str(sp.idx)+") = 0.d0" for sp in specs] #initialize
+		idxs = [] #already employed indexes
 		for rea in reacts:
+			if(rea.idx in idxs): continue #skip if already employed index
+			idxs.append(rea.idx)
 			for r in rea.reactants:
 				dns[r.idx-1] = dns[r.idx-1].replace(" = 0.d0"," =")
 				dns[r.idx-1] += " -"+rea.RHS
@@ -1405,7 +1452,10 @@ class krome():
 		#create implicit RHS arrays
 		arr_rr = [[] for i in range(maxnreag)]
 		arr_pp = [[] for i in range(maxnprod)]
+		idxs = []
 		for rea in reacts:
+			if(rea.idx in idxs): continue #avoid reactions with same index
+			idxs.append(rea.idx)
 			for i in range(maxnreag):
 				if(i<len(rea.reactants)): arr_rr[i].append(rea.reactants[i].idx)
 				else: arr_rr[i].append(dummy.idx)
@@ -1463,7 +1513,10 @@ class krome():
 		neq = len(specs)
 		jac = [["pdj("+str(j+1)+") = 0.d0" for i in range(neq)] for j in range(neq)] #init jacobian
 		jsparse = [[0 for i in range(neq)] for j in range(neq)] #sparsity matrix
+		idxs = [] #store reaction indexes
 		for rea in reacts:
+			if(rea.idx in idxs): continue #skip reactions with same index
+			idxs.append(rea.idx) #store reaction indexes
 			for ri in range(len(rea.reactants)):
 				r1 = rea.reactants[ri]
 				sjac = "k("+str(rea.idx)+")"
@@ -1579,7 +1632,7 @@ class krome():
 
 		#estimate size of RWORK array (see DLSODES manual)
 		neq = len(specs) #number of equations
-		nrea = len(reacts) #number of reactions
+		nrea = self.nrea #number of reactions
 		lenrat = 2
 		nnz_estimate = pow(neq,2) - nrea #estimate non-zero elements (inaccurate)
 		nnz = len(self.ja)
@@ -1693,7 +1746,7 @@ class krome():
 					fout.write("\tinteger,parameter::" + x.fidx + "=" + str(x.idx) + "\n")
 			elif(srow == "#KROME_parameters"):
 					ndust = self.dustArraySize*self.dustTypesSize
-					fout.write("\tinteger,parameter::nrea=" + str(len(self.reacts)) + "\n")
+					fout.write("\tinteger,parameter::nrea=" + str(self.nrea) + "\n")
 					fout.write("\tinteger,parameter::nmols=" + str(self.nmols) + "\n")
 					fout.write("\tinteger,parameter::nspec=" + str(len(specs)) + "\n")
 					fout.write("\tinteger,parameter::ndust=" + str(ndust) + "\n")
@@ -1929,6 +1982,11 @@ class krome():
 				for x in specs:
 					massrow = "\tget_mass("+str(x.idx)+") = " + str(x.mass).replace("e","d") + "\t!" + x.name + "\n"
 					fout.write(massrow.replace("0.0","0.d0"))
+			elif(srow == "#KROME_zatoms"):
+				for x in specs:
+					zatomrow = "\tget_zatoms("+str(x.idx)+") = " + str(x.zatom) + "\t!" + x.name + "\n"
+					fout.write(zatomrow)
+					
 			elif(srow == "#KROME_names"):
 				for x in specs:
 					fout.write("\tget_names("+str(x.idx)+") = \"" + x.name + "\"\n")
@@ -1939,6 +1997,10 @@ class krome():
 				for x in reacts:
 					kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
 					fout.write(kstr+"\n")
+			elif(srow == "#KROME_qeff"):
+				for x in reacts:
+					sqeff = "\tget_qeff("+str(x.idx)+") = "+str(x.qeff)+" !" + x.verbatim
+					fout.write(sqeff+"\n")
 			elif(srow == "#KROME_Tshortcuts"):
 				for shortcut in sclist:
 					fout.write(shortcut+"\n")
@@ -2140,7 +2202,6 @@ class krome():
 					dustOptInt += "call dustOptIntegral(dust_opt_Em_"+dType+",dust_opt_Tbb_"+dType+","
 					dustOptInt += "dust_opt_asize_"+dType+",&\n dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
 
-
 		skip = False
 		for row in fh:
 			srow = row.strip()
@@ -2181,7 +2242,10 @@ class krome():
 		dH_varsa = []
 		dH_coe = dH_cool = ""
 		if(self.useCoolingdH):
+			idxs = []
 			for rea in reacts:
+				if(rea.idx in idxs): continue #skip reactions with the same index
+				idx.append(rea.idx)
 				if(rea.dH!=None and rea.dH<0.e0):
 					i += 1 #count cooling reactions
 					kvar = "k"+str(i) #local variable for coefficient
@@ -2325,8 +2389,11 @@ class krome():
 		i = 0
 		dH_varsa = []
 		dH_coe = dH_heat = ""
+		idxs = []
 		if(self.useHeatingdH):
 			for rea in reacts:
+				if(rea.idx in idxs): continue #skip reactions with the same index
+				idxs.append(rea.idx)
 				if(rea.dH!=None and rea.dH>0.e0):
 					i += 1 #count heating reactions
 					kvar = "k"+str(i) #local variable for coefficient
@@ -2344,6 +2411,8 @@ class krome():
 		sclist = [] 
 		if(self.useHeatingChem or self.useCoolingChem or self.useCoolingDISS):
 			RPK = []
+			#RPK is the list of the heating/cooling processes as 
+			# [product_list, reactant_list, fortran_rate, heating/cooling_flag]
 			if(self.useHeatingChem):
 				RPK.append([["H","H","H"], ["H2","H"], "4.48d0*h2heatfac","H"])
 				RPK.append([["H2","H","H"], ["H2","H2"], "4.48d0*h2heatfac","H"])
@@ -2363,12 +2432,15 @@ class krome():
 			kref = []
 			href = []
 			for rpk in RPK:
-				Rref.append(sorted(rpk[0]))
-				Pref.append(sorted(rpk[1]))
-				kref.append(rpk[2])
-				href.append(rpk[3])
+				Rref.append(sorted(rpk[0])) #list of the reactants
+				Pref.append(sorted(rpk[1])) #list fo the products
+				kref.append(rpk[2]) #rate coefficient
+				href.append(rpk[3]) #heating/cooling flag
 
+			idxs = []
 			for rea in reacts:
+				if(rea.idx in idxs): continue #skip reactions with the same idx
+				idxs.append(rea.idx)
 				R = sorted([x.name for x in rea.reactants])
 				P = sorted([x.name for x in rea.products])
 				rmult = ("*".join(["n("+x.fidx+")" for x in rea.reactants]))
@@ -2722,7 +2794,7 @@ class krome():
 					const += "real*8,parameter::krome_" + x[0] + " = " + x[1] + " !" + x[2] + "\n"
 				fout.write(const)
 			elif(srow == "#KROME_common_alias"):
-				fout.write("\tinteger,parameter::krome_nrea=" + str(len(reacts)) + "\n")
+				fout.write("\tinteger,parameter::krome_nrea=" + str(self.nrea) + "\n")
 				fout.write("\tinteger,parameter::krome_nmols=" + str(nmols) + "\n")
 				fout.write("\tinteger,parameter::krome_nspec=" + str(len(specs)) + "\n")
 				fout.write("\tinteger,parameter::krome_ndust=" + str(dustArraySize*dustTypesSize) + "\n")
@@ -2779,6 +2851,58 @@ class krome():
 
 		print "done!"
 
+	##############################
+	def makeStars(self):		
+		buildFolder = self.buildFolder
+		#********* STARS ****************
+		#intended for nuclear networks of stars
+		print "- writing krome_stars.f90...",
+		fh = open(self.srcFolder+"krome_stars.f90")
+
+		if(self.buildCompact):
+			fout = open(buildFolder+"krome_all.f90","a")
+		else:
+			fout = open(buildFolder+"krome_stars.f90","w")
+
+
+		skip = False
+		for row in fh:
+			srow = row.strip()
+
+			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+			if(skip): continue
+			#computes screening for 3body reactions (as screen products [1,2]*[1+2,3])
+			if(srow == "#KROME_stars_3body"):
+				stars3Body = "" #3body string to replace pragma
+				idxs = []
+				for rea in self.reacts:
+					if(rea.idx in idxs): continue
+					idxs.append(rea.idx)
+					if(len(rea.reactants)==3):
+						sdx = str(rea.idx) #string index
+						stars3Body += "\n!3body: "+rea.verbatim+"\n"
+						stars3Body += "z12 = zz(arr_r1("+sdx+")) + zz(arr_r2("+sdx+"))\n"
+						stars3Body += "scr12 = star_screen(Tgas,rho,n(:), zz(arr_r1("+sdx+")), zz(arr_r2("+sdx+")))\n"
+						stars3Body += "scr23 = star_screen(Tgas,rho,n(:), z12, zz(arr_r3("+sdx+")))\n"
+						stars3Body += "k("+sdx+") = ko("+sdx+") * scr12 * scr23 \n"
+				fout.write(stars3Body)
+			elif(srow=="#KROME_stars_energy"):
+				starsE = "" #energy string replacing pragma
+				idxs = []
+				for rea in self.reacts:
+					if(rea.idx in idxs): continue #avoid reactions with same index
+					idxs.append(rea.idx)
+					sdx = str(rea.idx) #string index
+					starsE += "flux("+sdx+") = "+rea.RHS+"\n"
+				fout.write(starsE)
+
+			if(row[0]!="#"): fout.write(row)
+		if(not(self.buildCompact)):
+			fout.close()
+
+
 	###############################
 	def makeMain(self):
 		buildFolder = self.buildFolder
@@ -2834,6 +2958,9 @@ class krome():
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(srow == "#IFKROME_useEquilibrium" and not(self.useEquilibrium)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(self.useDust):
@@ -2976,6 +3103,7 @@ class krome():
 				indentF90(buildFolder+"krome.f90")
 				indentF90(buildFolder+"krome_ode.f90")
 				indentF90(buildFolder+"krome_photo.f90")
+				indentF90(buildFolder+"krome_stars.f90")
 				indentF90(buildFolder+"krome_reduction.f90")
 				indentF90(buildFolder+"krome_subs.f90")
 				indentF90(buildFolder+"krome_tabs.f90")

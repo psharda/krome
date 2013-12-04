@@ -4,10 +4,22 @@ import glob
 import os
 os.chdir(".")
 
+hasrm = False
 #clean all files with give extention
 for x in [".log","~",".pyc",".dot",".gps"]:
 	for files in glob.glob("*"+x):
 		os.unlink(files)
 		print "removing "+files
+		hasrm = True
 
+#remove temp files (~) from subfolders
+for root, dirnames, filenames in os.walk('.'):
+	for fle in filenames:
+		if(fle[len(fle)-1]=="~"):
+			fname = root+"/"+fle 
+			os.unlink(fname)
+			print "removing "+fname
+			hasrm = True
+
+if(not(hasrm)): print "nothing to clean"
 print "done!"

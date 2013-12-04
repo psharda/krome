@@ -274,12 +274,19 @@ contains
     use krome_tabs
     use krome_subs
     use krome_reduction
+#IFKROME_useStars
+    use krome_stars
+#ENDIFKROME
 
     call load_arrays
 
 #IFKROME_useTabs
     call make_ktab()
     call check_tabs()
+#ENDIFKROME
+
+#IFKROME_useStars
+    call stars_init()
 #ENDIFKROME
 
   end subroutine krome_init

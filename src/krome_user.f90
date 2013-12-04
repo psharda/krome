@@ -70,6 +70,21 @@ contains
     krome_get_gamma = gamma_index(n(:))
   end function krome_get_gamma
 
+  !***************************
+  !get an integer array containing the atomic numbers Z
+  ! of the spcecies
+  !alias for get_zatoms
+  function krome_get_zatoms()
+    use krome_subs
+    use krome_commons
+    implicit none
+    integer::krome_get_zatoms(nmols),zatoms(nspec)
+
+    zatoms(:) = get_zatoms()
+    krome_get_zatoms(:) = zatoms(1:nmols)
+    
+  end function krome_get_zatoms
+
   !*****************
   !get an array of double containing the masses in g
   ! of the species

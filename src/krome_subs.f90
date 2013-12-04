@@ -89,6 +89,26 @@ contains
 
   end function get_Hnuclei
 
+  !***************************
+  function get_zatoms()
+    use krome_commons
+    implicit none
+    integer::get_zatoms(nspec)
+
+#KROME_zatoms
+
+  end function get_zatoms
+
+  !******************************
+  function get_qeff()
+    use krome_commons
+    implicit none
+    real*8::get_qeff(nrea)
+
+#KROME_qeff
+
+  end function get_qeff
+
   !********************************
   function get_jeans_length(n,Tgas)
     !get jeans length in cm

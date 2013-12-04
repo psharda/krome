@@ -82,6 +82,7 @@ class reaction():
 	RHSvar = "" #ODE RHS as variable k1n2n3
 	kphrate = None #photochemical rate
 	dH = None #enthalpy of formation
+	qeff = 0.e0 #effective Q value (for nuclear reactions)
 	#method: constructor to initialize lists
 	def __init__(self):
 		self.reactants = []
@@ -1417,7 +1418,8 @@ def get_quote():
 	["Weeks of programming can save you hours of planning",""],
 	["All models are wrong; some models are useful","George Box"],
 	["The generation of random numbers is too important to be left to chance","Robert Coveyou"],
-	["Problems worthy / of attack / prove their worth / by hitting back","Piet Hein"]
+	["Problems worthy / of attack / prove their worth / by hitting back","Piet Hein"],
+	["Chemistry has been termed by the physicist as the messy part of physics", "Frederick Soddy "]
 	]
 	irand = int(random.random()*(len(quotes)))
 	qtup = quotes[irand]
