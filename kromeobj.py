@@ -555,13 +555,13 @@ class krome():
 		if(args.useCustomCoe):
 			self.customCoeFunction = args.useCustomCoe
 			self.useCustomCoe = True
-			print "Reading option -useCustomCoe (Expression="+str(customCoeFunction)+")"
+			print "Reading option -useCustomCoe (Expression="+str(self.customCoeFunction)+")"
 
 		#use function to append after each ODE
 		if(args.useODEConstant):
 			self.ODEConstant = args.useODEConstant
 			self.useODEConstant = True
-			print "Reading option -useODEConstant (Constant="+str(ODEConstant)+")"
+			print "Reading option -useODEConstant (Constant="+str(self.ODEConstant)+")"
 
 		#dust
 		hasDustOptions = False
@@ -723,7 +723,7 @@ class krome():
 					print "var: "+arow[0]
 					self.coevarsODE[arow[0]] = [ivarcoe,arow[1]]
 					ivarcoe += 1 #count variables to sort
-					continue #SKIP: a variable line is not a reaction line		
+					continue #SKIP: a variable line is not a reaction line	
 				#search for ODE		
 				arow = [x.strip() for x in srow.split("=")]
 				if(len(arow)!=2):
@@ -921,10 +921,9 @@ class krome():
 				ivarcoe += 1 #count variables to sort
 				continue #SKIP: a variable line is not a reaction line
 
-			qeffFound = False
 			#search for format string
 			if("@format:" in srow):
-				idxFound = tminFound = tmaxFound = rateFound = False
+				idxFound = tminFound = tmaxFound = rateFound = qeffFound = False
 				hasFormat = True #format flag
 				srow = srow.replace("@format:","") #remove 
 				print "Found custom format: "+srow
@@ -2882,7 +2881,7 @@ class krome():
 				for j in range(self.maxnreag):
 					fout.write("r"+str(j+1)+" = arr_r"+str(j+1)+"(i)\n")
 			if(srow == "#KROME_arr_flux"):
-				print self.maxnreag
+				#print self.maxnreag
 				if(self.maxnreag>0):
 					fout.write("arr_flux(i) = k(i)*"+("*".join(["n(r"+str(j+1)+")" for j in range(self.maxnreag)]))+"\n")
 

@@ -11,8 +11,6 @@
 @var: T943 = T923 * T923
 @var: T912 = sqrt(T9)
 @var: T932 = T9 * T912
-@var: T9 = T * 1.0d-9
-@var: T9 = T * 1.0d-9
 
 @format:idx,R,R,R,P,P,P,qeff,Tmin,Tmax,rate
 # NACRE99 (R1)

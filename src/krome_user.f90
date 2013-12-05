@@ -195,7 +195,7 @@ contains
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
-    krome_stars_coe(:) = star_coe(n(:),rho,Tgas)
+    krome_stars_coe(:) = stars_coe(n(:),rho,Tgas)
     
   end function krome_stars_coe
 
