@@ -1549,9 +1549,11 @@ class krome():
 			if(rea.idx in idxs): continue #skip reactions with same index
 			idxs.append(rea.idx) #store reaction indexes
 			for ri in range(len(rea.reactants)):
-				r1 = rea.reactants[ri]
+				if(rea.curlyR[ri] and self.useNuclearMult): continue
 				sjac = rea.nuclearMult+"k("+str(rea.idx)+")" #init and include nuclearMulteplicity if any
+				r1 = rea.reactants[ri]
 				for rj in range(len(rea.reactants)):
+					if(rea.curlyR[rj] and self.useNuclearMult): continue
 					r2 = rea.reactants[rj]
 					if(ri!=rj):
 						sjac += "*n("+str(r2.fidx)+")"
