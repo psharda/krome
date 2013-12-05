@@ -83,6 +83,9 @@ class reaction():
 	kphrate = None #photochemical rate
 	dH = None #enthalpy of formation
 	qeff = 0.e0 #effective Q value (for nuclear reactions)
+	curlyR = [] #reactants curlyness
+	curlyP = [] #products curlyness
+	nuclearMult = "" #nuclear multeplicty factor 1/(n!)
 	#method: constructor to initialize lists
 	def __init__(self):
 		self.reactants = []
@@ -106,17 +109,32 @@ class reaction():
 		if(self.krate.strip()=="krome_kph_auto"): self.krate = "krome_kph_"+myr[0].phname
 		else: self.krate = "krome_kph_" + myr[0].phname.capitalize() + "R" + str(self.idx)
 	#method: build RHS
-	def build_RHS(self):
+	def build_RHS(self,useNuclearMult=False):
 		if(self.idx<=0):
 			print "************************************************************"
 			print "ERROR: reaction index (reaction.idx) must be greater than 0"
 			print "Probably you have to define idx"
 			print "************************************************************"
 			sys.exit()
-		self.RHS = "k("+str(self.idx)+")"
+
+		#keeps into account nuclear multeplicity (if option is enabled)
+		nuclearMult = "" #default nuclear multeplicity value
+		if(useNuclearMult):
+			uncurledR = [self.reactants[i].name for i in range(len(self.reactants)) if not(self.curlyR[i])]
+			if(len(uncurledR)==2):
+				if(uncurledR[0]==uncurledR[1]): nuclearMult = "0.5d0*"
+			if(len(uncurledR)==3):
+				if(uncurledR[0]==uncurledR[1] and uncurledR[1]==uncurledR[2]): nuclearMult = "0.16666666667d0*"
+				if(uncurledR[0]==uncurledR[1] and uncurledR[1]!=uncurledR[2]): nuclearMult = "0.5d0*"
+				if(uncurledR[1]==uncurledR[2] and uncurledR[0]!=uncurledR[1]): nuclearMult = "0.5d0*"
+		self.nuclearMult = nuclearMult
+		self.RHS = nuclearMult+"k("+str(self.idx)+")"
 		self.RHSvar = "kflux"+str(self.idx)
 		ns = []
+		i = 0
 		for r in self.reactants:
+			if(self.curlyR[i]): continue #skip curly reactants
+			i += 1
 			ns.append("n("+str(r.fidx)+")")
 			if(r.idx<=0):
 				print "************************************************************"
@@ -138,7 +156,7 @@ class reaction():
 		self.pseudo_hash = ("_".join(sorted(rname)))+"|"+("_".join(sorted(pname))) 
 
 	#method: check reaction (mass and charge conservation)
-	def check(self):
+	def check(self,mode="ALL"):
 		mass_reactants = mass_products = 0.e0
 		charge_reactants = charge_products = 0
 		for r in self.reactants:
@@ -148,7 +166,7 @@ class reaction():
 		for p in self.products:
 			mass_products += p.mass
 			charge_products += p.charge
-		if(mass_reactants!=0):
+		if(mass_reactants!=0 and (mode=="ALL" or "MASS" in mode)):
 			if(abs(1.e0-mass_products/mass_reactants)>1e-6):
 				print "************************************************"
 				print "ERROR: problem with mass conservation in reaction", self.idx
@@ -159,7 +177,7 @@ class reaction():
 				print "************************************************"
 				a = raw_input("Any key to continue q to quit... ")
 				if(a=="q"): print sys.exit()
-		if(abs(charge_products - charge_reactants)!=0):
+		if(abs(charge_products - charge_reactants)!=0 and (mode=="ALL" or "CHARGE" in mode)):
 			print "************************************************"
 			print "ERROR: problem with charge conservation in reaction", self.idx
 			print "reaction:",self.verbatim
@@ -390,7 +408,7 @@ def get_usage():
 def truncF90(mystr, sublen, sep):
 	#split (&\n) the string mystr in parts smaller tha sublen using sep as separator
 	if(mystr.strip()==""): return mystr
-	mystr = mystr.replace("**","##")	
+	mystr = mystr.replace("**","##")
 	astr = mystr.split(sep)
 	s = z = ""
 	first = True
@@ -425,7 +443,8 @@ def format_subel(subel):
 		fsubel = subel[0].upper() + subel[1].lower()
 	else:
 		fsubel = subel
-	return fsubel		
+	return fsubel
+
 ##################################
 #check if the value s is a number or not (return logical)
 def is_number(s):	
@@ -434,6 +453,7 @@ def is_number(s):
 		return True
 	except ValueError:
 		return False
+
 ##################################
 #parse molecule name using dictionary and atoms list
 def parser(name, mass_dic, atoms, thermo_data):
@@ -457,7 +477,7 @@ def parser(name, mass_dic, atoms, thermo_data):
 		"D":1,
 		"H":1,
 		"HE":2,
-		"Li":3,
+		"LI":3,
 		"BE":4,
 		"B":5,
 		"C":6,
@@ -469,10 +489,24 @@ def parser(name, mass_dic, atoms, thermo_data):
 		"MG":12,
 		"AL":13,
 		"SI":14,
-		"S":15,
+		"P":15,
+		"S":16,
+		"CL":17,
 		"AR":18,
+		"K":19,
+		"TI":22,
 		"CA":20,
-		"FE":26}
+		"CR":24,
+		"MN":25,
+		"FE":26,
+		"NI":28}
+
+
+	#add isotopes Z numbers (same as non-isotopes)
+	zdic_copy = zdic.copy()
+	for k,v in zdic_copy.iteritems():
+		for i in range(2,56):
+			zdic[str(i)+k] = v
 
 	#check for fake species
 	if("FK" in name):

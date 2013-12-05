@@ -181,6 +181,42 @@ contains
     krome_get_flux(:) = get_flux(x(:), Tgas)
   end function krome_get_flux
 
+#IFKROME_useStars
+
+  !**************************
+  !alias for stars_coe in krome_star
+  function krome_stars_coe(x,rho,Tgas)
+    use krome_commons
+    use krome_stars
+    implicit none
+    real*8::rho,Tgas,krome_stars_coe(nrea)
+    real*8::n(nspec),x(:)
+    
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
+    krome_stars_coe(:) = star_coe(n(:),rho,Tgas)
+    
+  end function krome_stars_coe
+
+  !********************************
+  !alias for stars_energy
+  function krome_stars_energy(x,rho,Tgas)
+    use krome_commons
+    use krome_stars
+    implicit none
+    real*8::x(:),rho,Tgas,krome_stars_energy(nrea)
+    real*8::n(nspec)
+
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
+    krome_stars_energy(:) = stars_energy(n(:),rho,Tgas)
+
+  end function krome_stars_energy
+    
+#ENDIFKROME
+
   !************************
   !dump the fluxes to the file unit nfile
   subroutine krome_dump_flux(x,n,Tgas,nfile)

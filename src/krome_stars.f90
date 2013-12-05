@@ -62,7 +62,7 @@ contains
   ! is provided as a template since is suited only for 
   ! ionized medium, two-body interaction, and nuclear-only 
   ! interaction.
-  function stars_screen(Tgas, rho, n, z1, z2)
+  function stars_screen(Tgas,rho, n, z1, z2)
     use krome_commons
     use krome_subs
     use krome_constants
@@ -176,13 +176,15 @@ contains
 
   !*****************************
   !computes energies for nuclear reactions using Qeff and flux
-  function stars_energy(n)
+  function stars_energy(n,rho,Tgas)
     use krome_commons
     use krome_subs
     implicit none
     real*8::stars_energy(nrea),qeff(nrea),flux(nrea)
-    real*8::k(nrea),n(:)
+    real*8::k(nrea),n(:),rho,Tgas
     qeff(:) = get_qeff()
+    
+    k(:) = stars_coe(n(:),rho,Tgas)
 
 #KROME_stars_energy
 

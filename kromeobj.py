@@ -49,7 +49,7 @@ class krome():
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
-	useCoolingCompton = useH2opacity = useCoolingCIE = useCoolingDISS = useStars = False
+	useCoolingCompton = useH2opacity = useCoolingCIE = useCoolingDISS = useStars = useNuclearMult = False
 	useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
@@ -67,6 +67,7 @@ class krome():
 	srcFolder = "src/"
 	TminAuto = 1e99
 	TmaxAuto = 0e0
+	checkMode = "ALL" #conservation check mode (ALL | [CHARGE],[MASS]| NONE)
 	RTOL = 1e-4 #default relative tolerance
 	ATOL = 1e-20 #default absolute tolerance
 	dustArraySize = dustTypesSize = 0
@@ -168,6 +169,10 @@ class krome():
 		self.parser.add_argument("-source", metavar="folder", help="use FOLDER as source directory")
 		self.parser.add_argument("-mergeTlimits", action="store_true", help="use the same reaction index for equivalent reactions (same reactants and products) that have different temperature limits")
 		self.parser.add_argument("-stars", action="store_true", help="use star module for nuclear reactions. NOTE: krome_stars module required in the Makefile")
+		self.parser.add_argument("-nomassCheck", action="store_true", help="skip reaction mass check")
+		self.parser.add_argument("-nochargeCheck", action="store_true", help="skip reaction charge check")
+		self.parser.add_argument("-noCheck", action="store_true", help="skip reaction charge and mass check. Equivalent to -nomassCheck -nochargeCheck options.")
+		self.parser.add_argument("-nuclearMult", action="store_true", help="keep into account reactants multeplicity, and modify fluxes according to this. Intended for nuclear networks.")
 		
 	
 	######################################
@@ -359,6 +364,27 @@ class krome():
 			self.mergeTlimits = True
 			print "Reading option -mergeTlimits"
 
+		#skip reaction mass / charge check
+		if((args.nomassCheck and args.nochargeCheck) or args.noCheck):
+			print "Reading option -nochargeCheck"
+			print "Reading option -nomassCheck"
+			self.checkMode = "NONE"
+		elif(args.nomassCheck and not(args.nochargeCheck)):
+			print "Reading option -nomassCheck"
+			self.checkMode = "MASS"
+		elif(not(args.nomassCheck) and (args.nochargeCheck)):
+			print "Reading option -nochargeCheck"
+			self.checkMode = "CHARGE"
+		elif(not(args.nomassCheck) and not(args.nochargeCheck)):
+			self.checkMode = "ALL"
+		else:
+			print "ERROR: problem with -nomassCheck and/or -nochargeCheck and/or -noCheck"
+			sys.exit()
+
+		#use nuclear multeplicity flux/(1.+delta_ij)
+		if(args.nuclearMult):
+			self.useNuclearMult = True
+			print "Reading option -useNuclearMult"
 
 		#creates ramses patches
 		if(args.ramses):
@@ -966,10 +992,16 @@ class krome():
 				if(not(hasFormat) or (hasFormat and idxFound)):
 					if(rcount!=int(arow[0])): unmatch_idx = True
 
-			reactants = [arow[x] for x in ireact]
-			products = [arow[x] for x in iprod]
+			reactants = [arow[x].strip() for x in ireact]
+			products = [arow[x].strip() for x in iprod]
 
-			#remove empty reactants/products and sort
+			#store reactants "curlyness" before purge
+			myrea.curlyR = [("{" in x) for x in reactants]
+
+			#purge reactants name from curly brackets
+			reactants = [x.replace("}","").replace("{","") for x in reactants]
+
+			#remove empty reactants/products (i.e. dummy) and sort
 			reags_clean = sorted([x for x in reactants if x.strip()!=""])
 			prods_clean = sorted([x for x in products if x.strip()!=""])
 
@@ -1036,11 +1068,11 @@ class krome():
 					myrea.products.append(mol) #add molecule object to products
 
 			myrea.build_verbatim() #build reaction as string (e.g. A+B->C)
-			myrea.reactants = sorted(myrea.reactants, key=lambda r:r.idx) #sort reactants
-			myrea.products = sorted(myrea.products, key=lambda p:p.idx) #sort products
-			myrea.build_RHS() #build RHS in F90 format (e.g. k(2)*n(10)*n(8) )
+			#myrea.reactants = sorted(myrea.reactants, key=lambda r:r.idx) #sort reactants
+			#myrea.products = sorted(myrea.products, key=lambda p:p.idx) #sort products
+			myrea.build_RHS(self.useNuclearMult) #build RHS in F90 format (e.g. k(2)*n(10)*n(8) )
 			myrea.build_phrate() #build photoionization rate
-			myrea.check() #check mass and charge conservation
+			myrea.check(self.checkMode) #check mass and charge conservation
 			if(myrea.krate.count("(")!=myrea.krate.count(")")):
 				print "ERROR: unbalanced brakets in reaction "+str(myrea.idx)
 				print " "+myrea.verbatim
@@ -1118,8 +1150,8 @@ class krome():
 					myproducts = myrev.products #get list of products
 					myrev.krate = myrea.krate #set the forward reaction
 					myrev.krate = myrev.doReverse() #compute reverse reaction using Simoncini2013PRL
-					myrev.build_RHS() #build RHS in F90 format (e.g. k(2)*n(10)*n(8) )
-					myrev.check() #check mass and charge conservation
+					myrev.build_RHS(self.useNuclearMult) #build RHS in F90 format (e.g. k(2)*n(10)*n(8) )
+					myrev.check(self.checkMode) #check mass and charge conservation
 					reacts.append(myrev)
 			print "Inverse reaction added: "+str(count_reverse)
 			
@@ -1519,7 +1551,7 @@ class krome():
 			idxs.append(rea.idx) #store reaction indexes
 			for ri in range(len(rea.reactants)):
 				r1 = rea.reactants[ri]
-				sjac = "k("+str(rea.idx)+")"
+				sjac = rea.nuclearMult+"k("+str(rea.idx)+")" #init and include nuclearMulteplicity if any
 				for rj in range(len(rea.reactants)):
 					r2 = rea.reactants[rj]
 					if(ri!=rj):
@@ -1953,8 +1985,17 @@ class krome():
 		
 
 		#loop on src file and replace pragmas
+		skip = False
 		for row in fh:
+
 			srow = row.strip()
+
+			#skip when find IF pragmas
+			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+			if(skip): continue #skip
+
 			if(srow == "#KROME_krates"):
 				for x in reacts:
 					sTlimit = ""
@@ -2880,7 +2921,7 @@ class krome():
 				for rea in self.reacts:
 					if(rea.idx in idxs): continue
 					idxs.append(rea.idx)
-					if(len(rea.reactants)==3):
+					if(len(rea.reactants)==3 and not(True in rea.curlyR)):
 						sdx = str(rea.idx) #string index
 						stars3Body += "\n!3body: "+rea.verbatim+"\n"
 						stars3Body += "z12 = zz(arr_r1("+sdx+")) + zz(arr_r2("+sdx+"))\n"
@@ -2895,7 +2936,7 @@ class krome():
 					if(rea.idx in idxs): continue #avoid reactions with same index
 					idxs.append(rea.idx)
 					sdx = str(rea.idx) #string index
-					starsE += "flux("+sdx+") = "+rea.RHS+"\n"
+					starsE += "flux("+sdx+") = "+rea.RHS+" !"+rea.verbatim+"\n"
 				fout.write(starsE)
 
 			if(row[0]!="#"): fout.write(row)
