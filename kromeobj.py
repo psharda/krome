@@ -891,6 +891,7 @@ class krome():
 		format_items = 4+len(ireact)+len(iprod)
 		if(skipDup): fdup = open("duplicates.log","w")
 		idxFound = tminFound = tmaxFound = rateFound = True
+		qeffFound = False
 		specs = []
 		reacts = []
 		reags = [] #list of reagents for already found
@@ -1147,6 +1148,7 @@ class krome():
 					myrev.verbatim += " (REV)" #append REV label to reaction string
 					myreactants = myrev.reactants #get list of reactants
 					myproducts = myrev.products #get list of products
+					myrev.curlyR = [False]*len(myrev.reactants)
 					myrev.krate = myrea.krate #set the forward reaction
 					myrev.krate = myrev.doReverse() #compute reverse reaction using Simoncini2013PRL
 					myrev.build_RHS(self.useNuclearMult) #build RHS in F90 format (e.g. k(2)*n(10)*n(8) )
@@ -1155,6 +1157,7 @@ class krome():
 			print "Inverse reaction added: "+str(count_reverse)
 			
 		self.reacts = reacts
+		self.nrea = len(reacts)
 	
 	###################################################
 	def verifyThermochem(self):
@@ -2287,7 +2290,7 @@ class krome():
 			idxs = []
 			for rea in reacts:
 				if(rea.idx in idxs): continue #skip reactions with the same index
-				idx.append(rea.idx)
+				idxs.append(rea.idx)
 				if(rea.dH!=None and rea.dH<0.e0):
 					i += 1 #count cooling reactions
 					kvar = "k"+str(i) #local variable for coefficient
@@ -2806,8 +2809,13 @@ class krome():
 		for row in fh:
 
 			srow = row.strip()
+
+			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
+
 			if(skip): continue
 
 			if(srow == "#KROME_species"):
