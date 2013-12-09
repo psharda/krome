@@ -173,6 +173,7 @@ class krome():
 		self.parser.add_argument("-nochargeCheck", action="store_true", help="skip reaction charge check")
 		self.parser.add_argument("-noCheck", action="store_true", help="skip reaction charge and mass check. Equivalent to -nomassCheck -nochargeCheck options.")
 		self.parser.add_argument("-nuclearMult", action="store_true", help="keep into account reactants multeplicity, and modify fluxes according to this. Intended for nuclear networks.")
+		self.parser.add_argument("-options", metavar="filename", help="read the options from a file instead of command line (in principle you can use both)")
 		
 	
 	######################################
@@ -251,8 +252,32 @@ class krome():
 
 	##########################################
 	def argparsing(self,argv):
+
 		args = self.parser.parse_args()
 
+		#use custom option file (load options from a file and append to argv)
+		if(args.options):
+			fopt = args.options.strip()
+			print "Reading option -option="+fopt
+			if(not(file_exists(fopt))):
+				print "ERROR: custom option file \""+fopt+"\" does not exist!"
+				sys.exit()
+			fho = open(fopt,"rb")
+			for row in fho:
+				srow = row.strip()
+				if(srow==""): continue
+				arow = srow.split()
+				for x in arow:
+					sys.argv.append(x)
+
+		args = self.parser.parse_args()
+
+		#save options into a file
+		fopt = open("options.log","w")
+		for k,v in vars(args).iteritems():
+			if(v):
+				if(v is True): v=""
+				fopt.write("-"+k+" "+v+"\n")
 
 		#you can select only one -forceMF
 		if((args.forceMF222) and (args.forceMF21)):

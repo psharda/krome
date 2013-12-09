@@ -5,7 +5,6 @@ module krome_stars
   integer,parameter::nzp=26
   real*8::pow13(nzp),pow23(nzp),pow43(nzp)
   real*8::pow53(nzp),pow186(nzp),pow158(nzp)
-  real*8::zz158(nspec)
 contains
 
 
@@ -24,8 +23,6 @@ contains
        pow158(i) = (1.0d0*i)**(1.580)  !! ^1.580
     end do
 
-    zz158(:) = get_zatoms()**1.158
-
   end subroutine stars_init
 
 
@@ -39,14 +36,15 @@ contains
     implicit none
     real*8::n(:),Tgas,k(nrea),stars_coe(nrea),rho,ko(nrea)
     real*8::scr12,scr23,y(:)
-    integer::zz(:),z1,z2,i,z12
+    integer::zz(:),z1,z2,i,z12,zo(nspec)
 
+    zo(:) = get_zatoms()
     ko(:) = coe(n(:))
 
     !scale reactions using screening
     do i=1,nrea
-       z1 = zz(arr_r1(i)) !first reactant atomic number
-       z2 = zz(arr_r2(i)) !second reactant atomic number
+       z1 = zo(arr_r1(i)) !first reactant atomic number
+       z2 = zo(arr_r2(i)) !second reactant atomic number
        k(i) = ko(i) &
             * stars_screen(Tgas,rho,y(:),zz(:),z1,z2)
     end do
@@ -70,7 +68,8 @@ contains
     real*8::stars_screen
     real*8::Tgas,rho,n(:),ZY,T13,Atmp,pmol,lamb0,lamb12
     real*8::lamb0i,Zt058,Zm028,Z158m,H12i,lamb0s,Zm13
-    real*8::a,b,c,d,CHK,H12,fer,theta,Zt,Zm,f(nmols),H12s
+    real*8::a,b,c,d,CHK,H12,fer,theta,Zt,Zm,f(size(n))
+    real*8::H12s,zz158(size(n))
     integer::z1,z2,i,zz(:)
     real*8,parameter::H12max=2d2
 
@@ -79,6 +78,8 @@ contains
     !           DeWitt, Graboske, and Cooper, 1973, ApJ, 181, 439
     ! ITOH:     Itoh, Totsuji, and Ichimaru, 1977, ApJ, 218, 477
     !           Itoh, Totsuji, Ichimaru, and DeWitt, 1979, ApJ, 234, 1079
+
+    zz158(:) = zz(:)**1.580
 
     !ITOH
     ZY = sum(zz(:)*n(:))
@@ -128,7 +129,7 @@ contains
        Zt058 = Zt**(0.580)
        Zm028 = Zm**(0.280)
 
-       Z158m = sum(f(:) * ZZ158(1:nmols))
+       Z158m = sum(f(:) * ZZ158(:))
 
        H12i = 0.38d0 * a * lamb0i * Z158m / (Zt058 * Zm028)
 
