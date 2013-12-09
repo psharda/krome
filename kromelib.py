@@ -1267,7 +1267,7 @@ def get_licence_header(version, codename):
 	!!Institut fuer Astrophysik, Goettingen.
 	!!
 	!!Others (alphabetically): F.A. Gianturco, J.Prieto,
-	!!D.R.G. Schleicher, D. Seifried, E. Simoncini 
+	!!D.R.G. Schleicher, D. Seifried, E. Simoncini, E. Tognelli.
 	!!
 	!!
 	!!KROME is provided \"as it is\", without any warranty. 

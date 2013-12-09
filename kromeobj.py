@@ -736,7 +736,7 @@ class krome():
 
 	###################################################
 	def safe_check(self):
-		if(not(self.safe)): return
+		if(not(self.safe) or not(os.path.exists(self.buildFolder))): return
 		wlk = os.walk(self.buildFolder).next()
 		wlk = wlk[1]+wlk[2] #folders+files
 		if(len(wlk)<1): return
@@ -747,6 +747,7 @@ class krome():
 		print "************************************************"
 		a = raw_input("Any key to ignore q to quit... ")
 		if(a=="q"): print sys.exit()
+
 	####################################################
 	#load thermochemistry data from chemkin-formatted file
 	def load_thermochemistry(self):
@@ -840,7 +841,7 @@ class krome():
 		for i in range(10):
 			mass_dic['FK'+str(i)] = 1.
 
-		#exited levels of some molecules
+		#exited levels of some molecules add here if needed
 		for i in range(9):
 			mass_dic['CH2_'+str(i+1)] = 6.*(menp) + 2.*(me+mp)
 			mass_dic['SO2_'+str(i+1)] = 16.*(menp) + 2.*8.*(menp)
@@ -992,8 +993,8 @@ class krome():
 				if(not(hasFormat) or (hasFormat and idxFound)):
 					if(rcount!=int(arow[0])): unmatch_idx = True
 
-			reactants = [arow[x].strip() for x in ireact]
-			products = [arow[x].strip() for x in iprod]
+			reactants = [arow[x].strip().upper() for x in ireact]
+			products = [arow[x].strip().upper() for x in iprod]
 
 			#store reactants "curlyness" before purge
 			myrea.curlyR = [("{" in x) for x in reactants]
@@ -1156,8 +1157,8 @@ class krome():
 					reacts.append(myrev)
 			print "Inverse reaction added: "+str(count_reverse)
 			
-		self.reacts = reacts
-		self.nrea = len(reacts)
+			self.reacts = reacts
+			self.nrea = len(reacts)
 	
 	###################################################
 	def verifyThermochem(self):
@@ -1202,7 +1203,7 @@ class krome():
 	#######################################
 	def addReaMin(self):
 		for rea in self.reacts:
-			if(not("krome_" in rea.krate)): rea.krate = "1d-40 + ("+rea.krate+")"
+			if(not("krome_" in rea.krate)): rea.krate = "small + ("+rea.krate+")"
 
 
 	##################################

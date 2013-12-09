@@ -56,6 +56,7 @@ contains
     ni(1:krome_nmols) = xi(1:krome_nmols)
     n(:) = conserve(n(:), ni(:))
     krome_conserve(:) = n(1:krome_nmols)
+
   end function krome_conserve
 
   !***************************
@@ -181,37 +182,67 @@ contains
     krome_get_flux(:) = get_flux(x(:), Tgas)
   end function krome_get_flux
 
+  !*********************
+  function krome_get_qeff()
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::krome_get_qeff(nrea)
+    
+    krome_get_qeff(:) = get_qeff()
+    
+  end function krome_get_qeff
+
 #IFKROME_useStars
 
   !**************************
   !alias for stars_coe in krome_star
-  function krome_stars_coe(x,rho,Tgas)
+  function krome_stars_coe(x,rho,Tgas,y_in,zz_in)
     use krome_commons
     use krome_stars
+    use krome_subs
     implicit none
     real*8::rho,Tgas,krome_stars_coe(nrea)
     real*8::n(nspec),x(:)
+    integer::ny
+    real*8,allocatable::y(:)
+    integer,allocatable::zz(:)
+    real*8,optional::y_in(:)
+    integer,optional::zz_in(:)
     
+    !check if extened abundances and zatom array are present
+    if(present(y_in)) then
+       ny = size(y_in)
+       allocate(y(ny), zz(ny))
+       y(:) = y_in(:)
+       zz(:) = zz_in(:)
+    else
+       allocate(y(nmols),zz(nmols))
+       zz(:) = get_zatoms()
+       y(:) = x(:)
+    end if
+
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
-    krome_stars_coe(:) = stars_coe(n(:),rho,Tgas)
     
+    krome_stars_coe(:) = stars_coe(n(:),rho,Tgas,y(:),zz(:))
+    deallocate(y,zz)
   end function krome_stars_coe
 
   !********************************
   !alias for stars_energy
-  function krome_stars_energy(x,rho,Tgas)
+  function krome_stars_energy(x,rho,Tgas,k)
     use krome_commons
     use krome_stars
     implicit none
     real*8::x(:),rho,Tgas,krome_stars_energy(nrea)
-    real*8::n(nspec)
+    real*8::n(nspec),k(nrea)
 
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
-    krome_stars_energy(:) = stars_energy(n(:),rho,Tgas)
+    krome_stars_energy(:) = stars_energy(n(:),rho,Tgas,k(:))
 
   end function krome_stars_energy
     

@@ -33,22 +33,22 @@ contains
   !adapt rate coefficients for nuclear reactions in stars,
   ! using a template screening function. more details in 
   ! stars_screen function
-  function stars_coe(n,rho,Tgas)
+  function stars_coe(n,rho,Tgas,y,zz)
     use krome_commons
     use krome_subs
     implicit none
     real*8::n(:),Tgas,k(nrea),stars_coe(nrea),rho,ko(nrea)
-    real*8::scr12,scr23
-    integer::zz(nspec),z1,z2,i,z12
+    real*8::scr12,scr23,y(:)
+    integer::zz(:),z1,z2,i,z12
 
-    zz(:) = get_zatoms()
     ko(:) = coe(n(:))
 
     !scale reactions using screening
     do i=1,nrea
        z1 = zz(arr_r1(i)) !first reactant atomic number
        z2 = zz(arr_r2(i)) !second reactant atomic number
-       k(i) = ko(i) * stars_screen(Tgas,rho,n(:),z1,z2)
+       k(i) = ko(i) &
+            * stars_screen(Tgas,rho,y(:),zz(:),z1,z2)
     end do
 
 #KROME_stars_3body
@@ -62,7 +62,7 @@ contains
   ! is provided as a template since is suited only for 
   ! ionized medium, two-body interaction, and nuclear-only 
   ! interaction.
-  function stars_screen(Tgas,rho, n, z1, z2)
+  function stars_screen(Tgas,rho, n, zz, z1, z2)
     use krome_commons
     use krome_subs
     use krome_constants
@@ -71,7 +71,7 @@ contains
     real*8::Tgas,rho,n(:),ZY,T13,Atmp,pmol,lamb0,lamb12
     real*8::lamb0i,Zt058,Zm028,Z158m,H12i,lamb0s,Zm13
     real*8::a,b,c,d,CHK,H12,fer,theta,Zt,Zm,f(nmols),H12s
-    integer::z1,z2,i,zz(nmols),zo(nspec)
+    integer::z1,z2,i,zz(:)
     real*8,parameter::H12max=2d2
 
     !screen following
@@ -79,10 +79,6 @@ contains
     !           DeWitt, Graboske, and Cooper, 1973, ApJ, 181, 439
     ! ITOH:     Itoh, Totsuji, and Ichimaru, 1977, ApJ, 218, 477
     !           Itoh, Totsuji, Ichimaru, and DeWitt, 1979, ApJ, 234, 1079
-
-    !get atomic numbers
-    zo(:) = get_zatoms()
-    zz(:) = zo(1:nmols)
 
     !ITOH
     ZY = sum(zz(:)*n(:))
@@ -176,7 +172,7 @@ contains
 
   !*****************************
   !computes energies for nuclear reactions using Qeff and flux
-  function stars_energy(n,rho,Tgas)
+  function stars_energy(n,rho,Tgas,k)
     use krome_commons
     use krome_subs
     implicit none
@@ -184,8 +180,6 @@ contains
     real*8::k(nrea),n(:),rho,Tgas
     qeff(:) = get_qeff()
     
-    k(:) = stars_coe(n(:),rho,Tgas)
-
 #KROME_stars_energy
 
     stars_energy(:) = flux(:) * qeff(:)
