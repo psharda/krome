@@ -253,31 +253,35 @@ class krome():
 	##########################################
 	def argparsing(self,argv):
 
-		args = self.parser.parse_args()
+		args = self.parser.parse_args() #return namespace from argv
 
 		#use custom option file (load options from a file and append to argv)
 		if(args.options):
-			fopt = args.options.strip()
+			fopt = args.options.strip() #get filename
 			print "Reading option -option="+fopt
+			#check if option file exsists
 			if(not(file_exists(fopt))):
 				print "ERROR: custom option file \""+fopt+"\" does not exist!"
 				sys.exit()
+			#read from file
 			fho = open(fopt,"rb")
 			for row in fho:
 				srow = row.strip()
-				if(srow==""): continue
+				if(srow==""): continue #skip blank lines
 				arow = srow.split()
+				#append to argv
 				for x in arow:
 					sys.argv.append(x)
 
-		args = self.parser.parse_args()
+			args = self.parser.parse_args() #return updated namespace
 
 		#save options into a file
 		fopt = open("options.log","w")
 		for k,v in vars(args).iteritems():
+			#if option is set add to the namespace
 			if(v):
-				if(v is True): v=""
-				fopt.write("-"+k+" "+v+"\n")
+				if(v is True): v="" #if is exactly True write key only
+				fopt.write("-"+k+" "+v+"\n") #write to file
 
 		#you can select only one -forceMF
 		if((args.forceMF222) and (args.forceMF21)):

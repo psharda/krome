@@ -153,6 +153,7 @@ contains
           H12 = min(H12i, H12s)
           stars_screen = exp(H12)
        end if
+    else
        ! GRABOSKE !!
        ! strong screening
        lamb0s = lamb0**(2.0/3.0)
