@@ -952,6 +952,18 @@ class krome():
 				ivarcoe += 1 #count variables to sort
 				continue #SKIP: a variable line is not a reaction line
 
+			#search for ghost species
+			if("@ghost:" in srow):
+				ghost = srow.replace("@ghost:","").strip()
+				print "Found ghost species: "+ghost
+				mol = parser(ghost,mass_dic,atoms,self.thermodata)
+				if(not(mol.name in spec_names)):
+					spec_names.append(mol.name)
+					specs.append(mol)
+				mol.idx = spec_names.index(mol.name) + 1
+				continue #SKIP: a ghost line is not a reaction line
+				
+
 			#search for format string
 			if("@format:" in srow):
 				idxFound = tminFound = tmaxFound = rateFound = qeffFound = False
@@ -1291,7 +1303,7 @@ class krome():
 		#look for photons and CR to add to the species list
 		has_g = has_CR = False
 		for mol in specs:
-			if(mol.name=="g"):
+			if(mol.name=="G"):
 				has_g = True
 			if(mol.name=="CR"):
 				has_CR = True
