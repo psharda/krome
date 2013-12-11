@@ -1302,11 +1302,11 @@ class krome():
 		customODEs = self.customODEs
 		#look for photons and CR to add to the species list
 		has_g = has_CR = False
-		for mol in specs:
-			if(mol.name=="G"):
-				has_g = True
-			if(mol.name=="CR"):
-				has_CR = True
+		#for mol in specs:
+		#	if(mol.name=="G"):
+		#		has_g = True
+		#	if(mol.name=="CR"):
+		#		has_CR = True
 
 		#append custom ODEs as species
 		if(len(customODEs)>0):
