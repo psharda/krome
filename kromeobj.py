@@ -1090,7 +1090,7 @@ class krome():
 			#if(self.useCustomCoe): myrea.krate = "0.d0" #when custom function is used standard coefficient are set to zero
 			#loop over reactants to grep molecules
 			for r in reactants:
-				if(r.strip()=="g" and not(self.use_photons)): continue
+				if(r.strip()=="G" and not(self.use_photons)): continue
 				if(r.strip()!=""):
 					mol = parser(r,mass_dic,atoms,self.thermodata)
 					if(not(mol.name in spec_names)):
@@ -1100,7 +1100,7 @@ class krome():
 					myrea.reactants.append(mol) #add molecule object to reactants
 			#loop over prodcuts to grep molecules
 			for p in products:
-				if(p.strip()=="g" and not(self.use_photons)): continue
+				if(p.strip()=="G" and not(self.use_photons)): continue
 				if(p.strip()!=""):
 					mol = parser(p,mass_dic,atoms,self.thermodata)
 					if(not(mol.name in spec_names)):
