@@ -28,6 +28,8 @@ contains
 #KROME_rwork_array
    
     TYPE (VODE_OPTS) :: OPTIONS
+#KROME_iaja_parameters
+    integer::iauser(niauser), jauser(njauser)
 
     !****************************
     !init DLSODES (see DLSODES manual)
@@ -42,7 +44,6 @@ contains
     atol = #KROME_ATOL !absolute tolerance
 
 #KROME_custom_RTOL
-
 #KROME_custom_ATOL
 
     itask = 1
@@ -51,17 +52,16 @@ contains
 #KROME_maxord
 
     !MF=
-    !  = 222 internal-generated JAC and sparsity
-    !  = 121 user-provided JAC and internal generated sparsity
-    !  =  22 internal-generated JAC but sparsity user-provided
-    !  =  21 user-provided JAC and sparsity
+    !  = 227 internal-generated sparse JAC
+    !  = 221 user-supplied dense JAC
+    !  = 222 internal-generated dense JAC
+    !  = 27  user-supplied JAC and sparsity structure
 #KROME_MF
     !end init DLSODES
     !****************************
 
 #KROME_init_JAC
 #KROME_init_IAC
-
 
     n(:) = 0.d0 !initialize densities
 
@@ -84,18 +84,16 @@ contains
     istate = 1 !init solver state
     tloc = 0.d0 !set starting time
 
-    do i=1,nspec
-       atol(i) = max(n(i)*1d-3, 1d-6)
-    end do
-
-    OPTIONS = SET_OPTS(ABSERR_VECTOR=ATOL,RELERR=RTOL,METHOD_FLAG=227,&
+    OPTIONS = SET_OPTS(ABSERR_VECTOR=ATOL,RELERR=RTOL,METHOD_FLAG=MF,&
          MXHNIL=0)
+
+    CALL USERSETS_IAJA(IAUSER,NIAUSER,JAUSER,NJAUSER)
 
     do
        icount = icount + 1
        !solve ODE
-       CALL DVODE_F90(FEX, NEQ, n, tloc, dt, ITASK, ISTATE, OPTIONS, &
-            J_FCN=JES)
+       CALL DVODE_F90(FEX, NEQ, n(:), tloc, dt, ITASK, ISTATE, OPTIONS, &
+            J_FCN=JEX)
 
        !check DLSODES exit status
        if(istate==2) then

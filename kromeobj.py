@@ -86,6 +86,7 @@ class krome():
 	deltajac = "1d-3" #increment (relative or absolute, see deltajacMode)
 	atols = [] #custom ATOLs
 	rtols = [] #custom RTOLs
+	jaca = [] #unrolled sparse jacobian
 	customODEs = [] #custom ODEs
 	nrea = 0 #number of reactions
 	version = "13.11"
@@ -292,19 +293,30 @@ class krome():
 		#chech if reactions file exists
 		if(not(os.path.isfile(self.filename))): die("ERROR: Reaction file \""+self.filename+"\" doesn't exist!")
 
+		#use f90 solver
+		if(args.useDvodeF90):
+			self.useDvodeF90 = True
+			self.solver_MF = 227
+			print "Reading option -useDvodeF90"
 
 		#set implicit RHS
 		if(args.iRHS):
 			self.use_implicit_RHS = True
 			self.solver_MF = 222
+			if(self.useDvodeF90):
+				self.solver_MF = 227
 			print "Reading option -iRHS"
 		#force MF=21
 		if(args.forceMF21):
 			self.solver_MF = 21
+			if(self.useDvodeF90):
+				self.solver_MF = 27
 			print "Reading option -forceMF21"
 		#force MF=222
 		if(args.forceMF222):
 			self.solver_MF = 222
+			if(self.useDvodeF90):
+				self.solver_MF = 227
 			print "Reading option -forceMF222"
 		#use numeric density instead of fractions as input
 		if(args.useN):
@@ -315,10 +327,7 @@ class krome():
 		if(args.useTabs):
 			self.useTabs = True
 			print "Reading option -useTabs"
-		#use f90 solver
-		if(args.useDvodeF90):
-			self.useDvodeF90 = True
-			print "Reading option -useDvodeF90"
+
 		#do report
 		if(args.report):
 			self.doReport = True
@@ -1592,20 +1601,25 @@ class krome():
 		idxs = [] #store reaction indexes
 		for rea in reacts:
 			if(rea.idx in idxs): continue #skip reactions with same index
-			idxs.append(rea.idx) #store reaction indexes
+			idxs.append(rea.idx) #store reaction index
+			#loop over reactants
 			for ri in range(len(rea.reactants)):
-				if(rea.curlyR[ri] and self.useNuclearMult): continue
+				if(rea.curlyR[ri] and self.useNuclearMult): continue #skip curly reactants
 				sjac = rea.nuclearMult+"k("+str(rea.idx)+")" #init and include nuclearMulteplicity if any
-				r1 = rea.reactants[ri]
+				r1 = rea.reactants[ri] #get ri-th reactant
+				#loop over reactants again
 				for rj in range(len(rea.reactants)):
-					if(rea.curlyR[rj] and self.useNuclearMult): continue
-					r2 = rea.reactants[rj]
+					if(rea.curlyR[rj] and self.useNuclearMult): continue #skip curly reactants
+					r2 = rea.reactants[rj] #get rj-th reactant
+					#if reactants are different add rj-th to jacobian
 					if(ri!=rj):
 						sjac += "*n("+str(r2.fidx)+")"
+				#update built jacobian and sparsity for reactants
 				for rr in rea.reactants:
 					jac[rr.idx-1][r1.idx-1] = jac[rr.idx-1][r1.idx-1].replace(" = 0.d0"," =")
 					jac[rr.idx-1][r1.idx-1] += " &\n-"+sjac
 					jsparse[rr.idx-1][r1.idx-1] = 1
+				#update built jacobian and sparsity for products
 				for pp in rea.products:
 					jac[pp.idx-1][r1.idx-1] = jac[pp.idx-1][r1.idx-1].replace(" = 0.d0"," =")
 					jac[pp.idx-1][r1.idx-1] += " &\n+"+sjac
@@ -1658,6 +1672,7 @@ class krome():
 				jac[Tgas_species.idx-1][i] += "  * (krome_gamma - 1.d0) / boltzmann_erg / sum(n(1:nmols))\n"
 				jac[Tgas_species.idx-1][i] += " pdj(idx_Tgas) = (dn1-dn0)/dnn\n"
 				jac[Tgas_species.idx-1][i] += "end if\n"
+
 				#jac[Tgas_species.idx-1][i] = "if(abs(n("+s+") - jac_nold(" + s 
 				#jac[Tgas_species.idx-1][i] += "))>1d-10) pdj(idx_Tgas) = (jac_dn(idx_Tgas) - jac_dnold(idx_Tgas)) / (n("
 				#jac[Tgas_species.idx-1][i] += s + ") - jac_nold(" + s + "))"
@@ -1666,6 +1681,9 @@ class krome():
 		self.jsparse = jsparse
 
 	#######################################
+	#this function computes the sparsity structure in the yale format
+	# namely IA e JA in the DLSODES documentation
+	#Do the same for dvodeF90
 	def IACJAC(self):
 		neq = len(self.specs)
 		jsparse = self.jsparse
@@ -1681,10 +1699,28 @@ class krome():
 		nnz = len(ja)
 		iaf = "IWORK(31:" + str(30+neq+1) + ") = (/" + (",".join([str(x) for x in ia])) + "/)"
 		jaf = "IWORK("+str(31+neq+1)+":"+str(31+neq+nnz)+") = (/"+(",".join([str(x) for x in ja]))+"/)"
+
 		pnnz = round(nnz*100./neq/neq,2)
 		print
 		print "Jacobian non-zero elements:",nnz,"over",neq*neq
 		print "("+str(pnnz)+"% of total elements, sparsity = "+str(100.-pnnz)+"%)"
+
+		#sparsity for dvodeF90
+		jaca = [] #unrolled sparse jacobian
+		if(self.useDvodeF90):
+			ia = [1] #sparsity structure IA (see dvode_f90 manual)
+			ja = [] #sparsity structure JA (see dvode_f90 manual)
+			isum = 1
+			for i in range(neq):
+				isum += sum(jsparse[i])
+				ia.append(isum)
+				for j in range(neq):
+					if(jsparse[i][j]==1):
+						ja.append(j+1)
+						jaca.append(self.jac[i][j].replace("pdj("+str(i+1)+") =  &\n","").strip())
+			iaf = "iauser(:) = (/" + (",".join([str(x) for x in ia])) + "/)"
+			jaf = "jauser(:) = (/"+(",".join([str(x) for x in ja]))+"/)"
+
 
 		#if MF=222 no need for sparsity structure arrays
 		if(self.solver_MF == 222):
@@ -1693,6 +1729,8 @@ class krome():
 		self.ia = ia
 		self.iaf = iaf
 		self.jaf = jaf
+		self.jaca = jaca
+
 	####################################
 	def solverParams(self):
 		specs = self.specs
@@ -1727,6 +1765,8 @@ class krome():
 			lwm = 2*nnz + 2*neq + (nnz+10*neq)/lenrat
 		elif(solver_miter==3):
 			lwm = neq + 2
+		elif(solver_miter==7):
+			lwm = 0
 		else:
 			die("ERROR: solver_miter value "+str(solver_miter)+" unknown!")
 
@@ -1743,6 +1783,10 @@ class krome():
 			lrw = 20+9*neq+lwm
 		elif(solver_MF==23):
 			lrw = 22+10*neq
+		elif(solver_MF==227):
+			lrw = 0
+		elif(solver_MF==27):
+			lrw = 0
 		else:
 			die("ERROR: solver_MF value "+str(solver_MF)+" unknown in LRW calculation!")
 
@@ -2750,40 +2794,53 @@ class krome():
 				fout.write("dn(:) =  krome_dust \n")
 			elif(srow == "#KROME_dust_H2"):
 				fout.write(dustH2+"\n")
+			elif(srow == "#KROME_JAC_PDX"):
+				spdj = ""
+				for i in range(neq):
+					speci = specs[i]
+					for j in range(neq):
+						specj = specs[j]
+						if(self.jsparse[j][i]==1):
+							org = "pdj("+str(j+1)+")"
+							rep = "pd("+str(j+1)+","+str(i+1)+")"
+							orgT = "pdj(idx_Tgas)"
+							repT = "pd(idx_Tgas,"+str(i+1)+")"
+							spdj += "!d["+str(specj.name)+"_dot]/d["+str(speci.name)+"]\n"
+							spdj += self.jac[j][i].replace(org,rep).replace(orgT,repT)+"\n\n"
+							
+				fout.write(spdj)
+
 			elif(srow == "#KROME_JAC_PD"):
-				if(solver_MF==222):
-					fout.write("\n")
-				else:
-					#build the Jacobian as J(i,j) = df_i/dx_j
-					for i in range(neq):
-						if(i==0): fout.write("if(j=="+str(i+1)+") then\n")
-						if(i>0): fout.write("elseif(j=="+str(i+1)+") then\n")
-						if(i!=Tgas_species.idx-1):
-							spdj = ""
-							has_pdj = False
-							for j in range(neq):
-								if(self.jsparse[j][i]==1):
-									has_pdj = True
-									spdj += ("\t" + self.jac[j][i] + "\n")
-							#if(has_pdj): fout.write("k(:) = coe_tab(n(:))\n")
-							fout.write(spdj)
+				#build the Jacobian as J(i,j) = df_i/dx_j
+				for i in range(neq):
+					if(i==0): fout.write("if(j=="+str(i+1)+") then\n")
+					if(i>0): fout.write("elseif(j=="+str(i+1)+") then\n")
+					if(i!=Tgas_species.idx-1):
+						spdj = ""
+						has_pdj = False
+						for j in range(neq):
+							if(self.jsparse[j][i]==1):
+								has_pdj = True
+								spdj += ("\t" + self.jac[j][i] + "\n")
+						#if(has_pdj): fout.write("k(:) = coe_tab(n(:))\n")
+						fout.write(spdj)
+					else:
+						jacT = "!use fex to compute temperature-dependent Jacobian\n"
+						if(self.deltajacMode=="RELATIVE"):
+							jacT += "dnn = n(idx_Tgas)*"+str(self.deltajac)+"\n"
+						elif(self.deltajacMode=="ABSOLUTE"):
+							jacT += "dnn = "+str(self.deltajac)+"\n"
 						else:
-							jacT = "!use fex to compute temperature-dependent Jacobian\n"
-							if(self.deltajacMode=="RELATIVE"):
-								jacT += "dnn = n(idx_Tgas)*"+str(self.deltajac)+"\n"
-							elif(self.deltajacMode=="ABSOLUTE"):
-								jacT += "dnn = "+str(self.deltajac)+"\n"
-							else:
-								die("ERROR: unknown deltajacMode! "+self.deltajacMode)
-							jacT += """nn(:) = n(:)
-								nn(idx_Tgas) = n(idx_Tgas) + dnn
-								call fex(neq,tt,nn(:),dn(:))
-								do i=1,neq-1
-								  pdj(i) = dn(i) / dnn
-								end do"""
-							if(not(self.use_thermo)): jacT = ""
-							fout.write("\t" + jacT.replace("\t","") + "\n")
-					fout.write("end if\n")
+							die("ERROR: unknown deltajacMode! "+self.deltajacMode)
+						jacT += """nn(:) = n(:)
+							nn(idx_Tgas) = n(idx_Tgas) + dnn
+							call fex(neq,tt,nn(:),dn(:))
+							do i=1,neq-1
+							  pdj(i) = dn(i) / dnn
+							end do"""
+						if(not(self.use_thermo)): jacT = ""
+						fout.write("\t" + jacT.replace("\t","") + "\n")
+				fout.write("end if\n")
 
 			else:
 				srow = row.strip()
@@ -3095,14 +3152,13 @@ class krome():
 				fout.write("\t"+self.iaf+"\n")
 			elif(srow == "#KROME_init_JAC"):
 				fout.write("\t"+self.jaf+"\n")
+			elif(srow == "#KROME_iaja_parameters"):
+				fout.write("integer,parameter::niauser="+str(len(self.ia))+",njauser="+str(len(self.ja))+"\n")
 			elif(srow == "#KROME_maxord" and self.maxord!=0):
 				fout.write("iopt = 1 !activate optional inputs\n")
 				fout.write("IWORK(5) = "+str(self.maxord)+" !maximum integration order\n")
 			elif(srow == "#KROME_MF"):
-				if(self.solver_MF==21):
-					fout.write("\tMF=21\n")
-				elif(self.solver_MF==222):
-					fout.write("\tMF=222\n")
+				fout.write("MF = "+str(self.solver_MF)+"\n")
 			else:
 				if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):

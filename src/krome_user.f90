@@ -250,14 +250,14 @@ contains
 
   !************************
   !dump the fluxes to the file unit nfile
-  subroutine krome_dump_flux(x,n,Tgas,nfile)
+  subroutine krome_dump_flux(n,Tgas,nfile)
     use krome_commons
-    real*8::n(:),Tgas,x,flux(nrea)
+    real*8::n(:),Tgas,flux(nrea)
     integer::nfile,i
 
     flux(:) = krome_get_flux(n(:),Tgas)
     do i=1,nrea
-       write(nfile,'(E17.8e3,I8,E17.8e3)') x,i,flux(i)
+       write(nfile,'(I8,E17.8e3)') i,flux(i)
     end do
     write(nfile,*)
 
