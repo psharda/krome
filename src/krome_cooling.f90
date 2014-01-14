@@ -1141,11 +1141,11 @@ contains
 
        !(5)------------------------------------------------------------------
 #IFKROME_useCoolingZC
-       call mydgesv(AC,BC)
+       call mylin3(AC,BC)
 #ENDIFKROME_useCoolingZC
 
 #IFKROME_useCoolingZSi
-       call mydgesv(ASi,BSi)
+       call mylin3(ASi,BSi)
 #ENDIFKROME_useCoolingZSi
 
 #IFKROME_useCoolingZFe
@@ -1153,15 +1153,15 @@ contains
 #ENDIFKROME_useCoolingZFe
 
 #IFKROME_useCoolingZO
-       call mydgesv(AO,BO)
+       call mylin3(AO,BO)
 #ENDIFKROME_useCoolingZO
 
 #IFKROME_useCoolingZCp
-       call mydgesv(ACp,BCp)
+       call mylin2(ACp,BCp)
 #ENDIFKROME_useCoolingZCp
 
 #IFKROME_useCoolingZSip
-       call mydgesv(ASip,BSip)
+       call mylin2(ASip,BSip)
 #ENDIFKROME_useCoolingZSip
 
 #IFKROME_useCoolingZFep
@@ -1169,7 +1169,7 @@ contains
 #ENDIFKROME_useCoolingZFep
 
 #IFKROME_useCoolingZOp
-       call mydgesv(AOp,BOp)
+       call mylin3(AOp,BOp)
 #ENDIFKROME_useCoolingZOp
 
        
@@ -1213,7 +1213,7 @@ contains
             BFep(5)*1.88D-4*164.6)*kb
 #ENDIFKROME_useCoolingZFep
 
-    !check errore
+    !check error
     if(cool<0.d0) then
        print *,"ERROR!!! metal cooling <0",cool
        do i=1,size(n)
@@ -1223,6 +1223,52 @@ contains
     end if
     cooling_Z = cool
   end function cooling_Z
+
+ !***********************
+  subroutine mylin2(a,b)
+    !solve Ax=B analytically for a 2-levels system
+    implicit none
+    integer,parameter::n=2
+    real*8::a(n,n),b(n),c(n),iab
+    
+    !if(a(2,2)==a(2,1)) then
+    !   print *,"a22=a21"
+    !   stop
+    !end if
+    iab = b(1)/(a(2,2)-a(2,1))
+    c(1) = a(2,2) * iab
+    c(2) = -a(2,1) * iab
+    b(:) = c(:)
+
+  end subroutine mylin2
+
+
+  !************************
+  subroutine mylin3(a,b)
+    !solve Ax=B analytically for a 3-levels system
+    implicit none
+    integer,parameter::n=3
+    real*8::iab,a(n,n),b(n),c(n)
+
+    !if(a(2,2)==a(2,3)) then
+    !   print *,"a22=a23"
+    !   stop
+    !end if
+    
+    !if(a(2,1)*a(3,2)+a(2,2)*a(3,3)+a(2,3)*a(3,1) == &
+    !     a(2,1)*a(3,3)+a(2,2)*a(3,1)+a(2,3)*a(3,2)) then
+    !   print *,"aaaa=aaa"
+    !   stop
+    !end if
+
+    iab = b(1) / (a(2,1)*(a(3,3)-a(3,2)) + a(2,2)*(a(3,1)-a(3,3)) &
+         + a(2,3)*(a(3,2)-a(3,1)))
+    c(1) = (a(2,3)*a(3,2)-a(2,2)*a(3,3)) * iab
+    c(2) = -(a(2,3)*a(3,1)-a(2,1)*a(3,3)) * iab
+    c(3) = (a(3,1)*a(2,2)-a(2,1)*a(3,2)) * iab
+    b(:) = c(:)
+
+  end subroutine mylin3
 
   !*********************************
   subroutine mydgesv(A,B)
