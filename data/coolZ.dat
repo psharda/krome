@@ -1,0 +1,31 @@
+@var:T2 = T*1d-2
+
+metal:C
+#level n: energy (K), degeneracy g
+level 0: 0.e0, 1
+level 1: 24.e0, 3
+level 2: 63.e0, 5
+
+#Aij (1/s)
+1, 0, 7.9d-8
+2, 1, 2.7d-7
+2, 0, 2.1d-14
+
+#collider, level_up, level_down, rate
+H, 1, 0, 1.6d-10*(T2)**(.14)
+H, 2, 0, 9.2d-11*(T2)**(.26)
+H, 2, 1, 2.9d-10*(T2)**(.26)
+
+H+, 1, 0, 9.6D-11 -1.8D-14*Tgas +1.9D-18*Tgas**2) *Tgas**(.45)
+       if(Tgas > 5d3): 8.9D-10*Tgas**(.117)
+H+, 2, 0, (3.1D-12 -6.D-16*Tgas +3.9d-20*Tgas**2) *Tgas
+       if(Tgas > 5d3): 2.3D-9*Tgas**(.0965)
+H+, 2, 1, (1.D-10 -2.2D-14*Tgas +1.7D-18*Tgas**2) *Tgas**(.70)
+       if(Tgas > 5d3): 9.2D-9*Tgas**(.0535)
+
+
+#       g10C_H = 1.6D-10*(T2)**(.14)
+#       g20C_H = 9.2D-11*(T2)**(.26)
+#       g21C_H = 2.9D-10*(T2)**(.26)
+
+endmetal

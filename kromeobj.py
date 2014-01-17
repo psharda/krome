@@ -1799,6 +1799,138 @@ class krome():
 		print " LWM:",lwm,"LRW:",lrw
 		self.lwm = lwm
 		self.lrw = lrw
+	#######################################
+	def createZcooling(self):
+		fname = "data/coolZ.dat"
+		if(not(file_exists(fname))):
+			print "ERROR: file "+fname+" not found!"
+			sys.exit()
+
+		real_variables = []
+		skip = False
+		inmetal = False
+		vars_cool = []		
+		fh = open(fname,"rb")
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow[0]=="#"): continue
+			if(srow[0]=="//"): continue
+			if(srow[0]=="/*"): skip = True
+			if("*/" in srow[0]): skip = False
+			if(skip): continue
+			#variables
+			if("@var:" in srow):
+				srow = srow.replace("@var:","").strip()
+				vars_cool.append([x.strip() for x in srow.split("=")]) #read extra variables
+				continue
+			#metal
+			if("metal:" in srow):
+				inmetal = True #flag reading metal
+				cur_metal = srow.replace("metal:","").strip().replace("+","j").replace("-","k") #current metal name
+				excitation_rates = [] #list of excitation rates written in F90 for cur_metal 
+				transitions = [] #list of transitions
+				colliders = [] #list of colliders names
+				Aijs = dict()
+				levels = dict()
+				continue
+
+			#levels
+			if("level" in srow):
+				nlev = int(srow.split(":")[0].replace("level","").strip()) #level number
+				energy, gmult = srow.split(":")[1].split(",") #get energy and degenerancy factor
+				levels[nlev] = {"energy":float(energy), "gmult":int(gmult)} #store energy and degenerancy
+				continue
+			
+			#end of metals block
+			if(srow=="endmetal" or srow=="end metal"):
+				#check end metal
+				if(not(inmetal)):
+					print "ERROR: end metal statement without metal: statement!"
+					sys.exit()
+				inmetal = False #in metal block flag
+			
+				for x in excitation_rates:
+					print x
+				print
+				for tr in transitions:
+					ij2jivar = cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
+					ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"])
+					ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + "*invTgas)" 
+					print ij2ji
+					real_variables.append(ij2jivar)
+					for coll in colliders:
+						varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll 
+						vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll 
+						print  varup + " = " + vardown +" * " + ij2jivar
+				print
+				for tr in transitions:
+					varM = "M" + str(tr["down"]) + str(tr["up"]) + cur_metal
+					real_variables.append(varM) #add to double variable list
+					avarM = []
+					for coll in colliders:
+						varup = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll 
+						avarM.append(varup+"*n(idx_"+coll+")")
+					print  varM + " = " + (" +&\n ".join(avarM))
+				print
+				for tr in transitions:
+					varM = "M" + str(tr["up"]) + str(tr["down"]) + cur_metal
+					real_variables.append(varM) #add to double variable list
+					avarM = []
+					for coll in colliders:
+						varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll 
+						avarM.append(varup+"*n(idx_"+coll+")")
+					print  varM + " = " + (" + &\n ".join(avarM)) + " + " + Aijs[(tr["up"],tr["down"])]
+
+				print
+				nlev = len(levels)
+				Avar = "A"+cur_metal
+				real_variables.append(Avar+"("+str(nlev)+","+str(nlev)+")")
+				Bvar = "B"+cur_metal
+				real_variables.append(Bvar+"("+str(nlev)+")")
+				print Avar+"(1,:) = (/" + (", ".join(["1d0"]*nlev)) + "/)" 
+				print Bvar+"(:) = (/n(idx_"+cur_metal+"), " + (", ".join(["0d0"]*(nlev-1))) + "/)" 
+				#for ilev, lev in levels.iteritems():
+				#	if(ilev==0): continue
+				#	Arow = []
+				#	for tri in transitions:
+				#		Arow[tri["down"]] = dict() 
+						#for trj in transitions:
+						#	Amtx[trj["down"] = 	
+						#str(tr["down"]) + str(tr["up"])
+						#Arow[]			
+					#Avar+"("+str(ilev+1)+",:) = (/"+"/)"
+			
+				continue
+			
+			#if block for rates, e.g. if(Tgas > 5d3)
+			if(srow[:2]=="if"):
+				ifcond, ifrate = srow.split(":") #if condition, and rate
+				excitation_rates.append(ifcond.strip() +" "+ var_excitation +" = "+ifrate.strip()) #append rate
+				continue			
+			
+			#read collider rate
+			if(len(row.split(","))==4):
+				#read collider, starting level, end level, rate F90 expression
+				coll, lev_up, lev_down, rate = [x.strip() for x in srow.split(",")]
+				coll = coll.replace("+","j").replace("-","k") #collider name for variable
+				var_excitation = "g"+lev_up+lev_down+cur_metal+"_"+coll #excitation variable, g10C_Hp
+				var_excitation_rev = "g"+lev_down+lev_up+cur_metal+"_"+coll #dexcitation variable, g01C_Hp
+
+				if(not(coll in colliders)): colliders.append(coll) #append collider names
+				real_variables.append(var_excitation) #add to double variable list
+				excitation_rates.append(var_excitation +" = "+rate) #store excitation rates
+				transitions.append({"up":int(lev_up), "down":int(lev_down)}) #store level transition
+
+			#read Aij
+			if(len(row.split(","))==3):
+				lup, ldown, Aij = [x.strip() for x in srow.split(",")]
+				Aijs[(int(lup),int(ldown))] = Aij
+								
+		print real_variables
+		if(inmetal):
+			print "ERROR: end metal statement missing!"
+			sys.exit()
 
 	#######################################
 	def prepareBuild(self):

@@ -122,6 +122,9 @@ krome.IACJAC()
 #compute solver parameters
 krome.solverParams()
 
+#read metal cooling from data file
+krome.createZcooling()
+
 #prepare build directory
 krome.prepareBuild()
 
