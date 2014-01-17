@@ -1503,12 +1503,14 @@ class krome():
 		for rea in reacts:
 			if(rea.idx in idxs): continue #skip if already employed index
 			idxs.append(rea.idx)
+			#rhs = rea.RHS
+			rhs = "kflux("+str(rea.idx)+")"
 			for r in rea.reactants:
 				dns[r.idx-1] = dns[r.idx-1].replace(" = 0.d0"," =")
-				dns[r.idx-1] += " -"+rea.RHS
+				dns[r.idx-1] += " -"+rhs
 			for p in rea.products:
 				dns[p.idx-1] = dns[p.idx-1].replace(" = 0.d0"," =")
-				dns[p.idx-1] += " +"+rea.RHS
+				dns[p.idx-1] += " +"+rhs
 
 		#add dust to ODEs
 		if(self.useDust):
@@ -2735,6 +2737,12 @@ class krome():
 
 					#simply write ODEs without dust
 					else:
+
+						#add init flux var
+						for x in self.reacts:
+							fout.write("kflux("+str(x.idx)+") = "+x.RHS+"\n")
+						fout.write("\n")
+					
 						inw = 0
 						for x in dnw:
 							#add custom ODE if needed
@@ -2748,6 +2756,13 @@ class krome():
 							fout.write("!"+specs[inw].name+"\n")
 							fout.write("\t" + x + "\n")
 							inw += 1
+			elif(srow == "#KROME_flux_variables"):
+				#add var declaration for flux
+				#for x in self.reacts:
+				#	fout.write("real*8::"+x.RHSvar+"\n")
+				fout.write("real*8::kflux("+str(len(self.reacts))+")\n")
+				fout.write("\n")
+
 			elif(srow == "#KROME_calc_Tdust" and self.useDustT):
 				getTdust = "nd = " + str(self.dustArraySize) + "\n"
 				itype = 0 #dust type index

@@ -19,6 +19,7 @@ contains
     real*8::gamma,Tgas,vgas,ntot,nH2dust,nd
 #KROME_dustSumVariables
 #KROME_implicit_variables
+#KROME_flux_variables
 #KROME_initcoevars
 
 #KROME_coevars
