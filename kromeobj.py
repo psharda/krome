@@ -1863,24 +1863,38 @@ class krome():
 						varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll 
 						vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll 
 						print  varup + " = " + vardown +" * " + ij2jivar
+
 				print
+				varMexist = []
+				MM = dict()
+				MMij = dict()
 				for tr in transitions:
 					varM = "M" + str(tr["down"]) + str(tr["up"]) + cur_metal
 					real_variables.append(varM) #add to double variable list
-					avarM = []
-					for coll in colliders:
-						varup = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll 
-						avarM.append(varup+"*n(idx_"+coll+")")
-					print  varM + " = " + (" +&\n ".join(avarM))
+					if(not(varM in varMexist)):
+						MM[varM] = []
+						MMij[varM] = [tr["down"],tr["up"]]
+					coll = tr["coll"]
+					varup = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll 
+					MM[varM].append(varup+"*n(idx_"+coll+")")
+					varMexist.append(varM)
+
 				print
 				for tr in transitions:
 					varM = "M" + str(tr["up"]) + str(tr["down"]) + cur_metal
 					real_variables.append(varM) #add to double variable list
-					avarM = []
-					for coll in colliders:
-						varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll 
-						avarM.append(varup+"*n(idx_"+coll+")")
-					print  varM + " = " + (" + &\n ".join(avarM)) + " + " + Aijs[(tr["up"],tr["down"])]
+					if(not(varM in varMexist)): 
+						MM[varM] = [Aijs[(tr["up"],tr["down"])]]
+						MMij[varM] = [tr["up"],tr["down"]]
+					coll = tr["coll"]
+					varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll 
+					MM[varM].append(varup+"*n(idx_"+coll+")")
+					varMexist.append(varM)
+
+				for k,v in MM.iteritems():
+					print
+					print k + " = " + (" + &\n".join(v))
+				
 
 				print
 				nlev = len(levels)
@@ -1888,19 +1902,38 @@ class krome():
 				real_variables.append(Avar+"("+str(nlev)+","+str(nlev)+")")
 				Bvar = "B"+cur_metal
 				real_variables.append(Bvar+"("+str(nlev)+")")
-				print Avar+"(1,:) = (/" + (", ".join(["1d0"]*nlev)) + "/)" 
-				print Bvar+"(:) = (/n(idx_"+cur_metal+"), " + (", ".join(["0d0"]*(nlev-1))) + "/)" 
-				#for ilev, lev in levels.iteritems():
-				#	if(ilev==0): continue
-				#	Arow = []
-				#	for tri in transitions:
-				#		Arow[tri["down"]] = dict() 
-						#for trj in transitions:
-						#	Amtx[trj["down"] = 	
-						#str(tr["down"]) + str(tr["up"])
-						#Arow[]			
-					#Avar+"("+str(ilev+1)+",:) = (/"+"/)"
-			
+				print Bvar+"(:) = (/n(idx_"+cur_metal+"), " + (", ".join(["0d0"]*(nlev-1))) + "/)"
+				print Avar+"(1,:) = (/" + (", ".join(["1d0"]*nlev)) + "/)"
+				
+				for ilev, lev in levels.iteritems():
+					if(ilev==0): continue
+					Arow = ["" for i in range(nlev)]
+					for k,v in MMij.iteritems():
+						if(ilev==v[0]): Arow[v[0]] += "-"+k
+						if(ilev==v[1]): Arow[v[0]] += "+"+k
+					print Avar+"("+str(ilev+1)+",:) = (/" + (", ".join(Arow)) + "/)"
+
+				print
+				if(nlev==2): 
+					print "call mylin2("+Avar+"(:,:), "+Bvar+"(:))"
+				elif(nlev==3): 
+					print "call mylin3("+Avar+"(:,:), "+Bvar+"(:))"
+				else:
+					print "call mydgesv("+Avar+"(:,:), "+Bvar+"(:))"
+
+
+				print
+				cools = []
+				trs = []
+				for tr in transitions:
+					if([tr["up"],tr["down"]] in trs): continue
+					trs.append([tr["up"],tr["down"]])
+					cool = Aijs[(tr["up"],tr["down"])] + "*"
+					cool += str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + " * "
+					cool += Bvar + "(" + str(tr["up"]+1) + ")"
+					cools.append(cool)
+				print "cool = cool + " + (" + &\n".join(cools))
+
 				continue
 			
 			#if block for rates, e.g. if(Tgas > 5d3)
@@ -1920,7 +1953,7 @@ class krome():
 				if(not(coll in colliders)): colliders.append(coll) #append collider names
 				real_variables.append(var_excitation) #add to double variable list
 				excitation_rates.append(var_excitation +" = "+rate) #store excitation rates
-				transitions.append({"up":int(lev_up), "down":int(lev_down)}) #store level transition
+				transitions.append({"up":int(lev_up), "down":int(lev_down), "coll":coll}) #store level transition
 
 			#read Aij
 			if(len(row.split(","))==3):
