@@ -89,6 +89,7 @@ class krome():
 	jaca = [] #unrolled sparse jacobian
 	customODEs = [] #custom ODEs
 	nrea = 0 #number of reactions
+	full_cool = vars_cool = ""
 	version = "13.11"
 	codename = "Astonishing Ansatz"
 
@@ -1811,6 +1812,7 @@ class krome():
 		inmetal = False
 		vars_cool = []		
 		fh = open(fname,"rb")
+		full_cool = ""
 		for row in fh:
 			srow = row.strip()
 			if(srow==""): continue
@@ -1818,6 +1820,7 @@ class krome():
 			if(srow[0]=="//"): continue
 			if(srow[0]=="/*"): skip = True
 			if("*/" in srow[0]): skip = False
+			srow = srow.split("#")[0]
 			if(skip): continue
 			#variables
 			if("@var:" in srow):
@@ -1833,6 +1836,8 @@ class krome():
 				colliders = [] #list of colliders names
 				Aijs = dict()
 				levels = dict()
+				full_cool += "\n"
+				full_cool += "!########## " + cur_metal + " #########\n"
 				continue
 
 			#levels
@@ -1850,21 +1855,27 @@ class krome():
 					sys.exit()
 				inmetal = False #in metal block flag
 			
+				full_cool += "!de-excitation rates\n"
 				for x in excitation_rates:
-					print x
-				print
+					full_cool += x + "\n"
+				full_cool += "\n"
+
+				full_cool += "!excitation rates\n"
 				for tr in transitions:
+					full_cool += "!"+cur_metal+": " + str(tr["up"])+str(tr["down"])+"->"+str(tr["down"])+str(tr["up"]) + "\n"
 					ij2jivar = cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
-					ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"])
-					ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + "*invTgas)" 
-					print ij2ji
+					ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
+					ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + "*invTgas)"
+					full_cool += ij2ji + "\n"
 					real_variables.append(ij2jivar)
 					for coll in colliders:
 						varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll 
 						vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll 
-						print  varup + " = " + vardown +" * " + ij2jivar
+						full_cool += varup + " = " + vardown +" * " + ij2jivar + "\n"
+					full_cool += "\n"
 
-				print
+				full_cool += "\n"
+				full_cool += "!transitions\n"
 				varMexist = []
 				MM = dict()
 				MMij = dict()
@@ -1879,7 +1890,6 @@ class krome():
 					MM[varM].append(varup+"*n(idx_"+coll+")")
 					varMexist.append(varM)
 
-				print
 				for tr in transitions:
 					varM = "M" + str(tr["up"]) + str(tr["down"]) + cur_metal
 					real_variables.append(varM) #add to double variable list
@@ -1892,18 +1902,18 @@ class krome():
 					varMexist.append(varM)
 
 				for k,v in MM.iteritems():
-					print
-					print k + " = " + (" + &\n".join(v))
+					full_cool += k + " = " + (" + &\n".join(v)) + "\n"
+					full_cool += "\n"
 				
 
-				print
+				full_cool += "!preparing matrix Ax=b\n"
 				nlev = len(levels)
 				Avar = "A"+cur_metal
 				real_variables.append(Avar+"("+str(nlev)+","+str(nlev)+")")
 				Bvar = "B"+cur_metal
 				real_variables.append(Bvar+"("+str(nlev)+")")
-				print Bvar+"(:) = (/n(idx_"+cur_metal+"), " + (", ".join(["0d0"]*(nlev-1))) + "/)"
-				print Avar+"(1,:) = (/" + (", ".join(["1d0"]*nlev)) + "/)"
+				full_cool += Bvar+"(:) = (/n(idx_"+cur_metal+"), " + (", ".join(["0d0"]*(nlev-1))) + "/)\n"
+				full_cool += Avar+"(1,:) = (/" + (", ".join(["1d0"]*nlev)) + "/)\n"
 				
 				for ilev, lev in levels.iteritems():
 					if(ilev==0): continue
@@ -1911,18 +1921,20 @@ class krome():
 					for k,v in MMij.iteritems():
 						if(ilev==v[0]): Arow[v[0]] += "-"+k
 						if(ilev==v[1]): Arow[v[0]] += "+"+k
-					print Avar+"("+str(ilev+1)+",:) = (/" + (", ".join(Arow)) + "/)"
+					full_cool += Avar+"("+str(ilev+1)+",:) = (/" + (", ".join(Arow)) + "/)\n"
 
-				print
+				full_cool += "\n"
+				full_cool += "!solving Ax=b\n"
 				if(nlev==2): 
-					print "call mylin2("+Avar+"(:,:), "+Bvar+"(:))"
+					full_cool += "call mylin2("+Avar+"(:,:), "+Bvar+"(:))\n"
 				elif(nlev==3): 
-					print "call mylin3("+Avar+"(:,:), "+Bvar+"(:))"
+					full_cool += "call mylin3("+Avar+"(:,:), "+Bvar+"(:))\n"
 				else:
-					print "call mydgesv("+Avar+"(:,:), "+Bvar+"(:))"
+					full_cool += "call mydgesv("+Avar+"(:,:), "+Bvar+"(:))\n"
 
 
-				print
+				full_cool += "\n"
+				full_cool += "!computing cooling\n"
 				cools = []
 				trs = []
 				for tr in transitions:
@@ -1932,7 +1944,7 @@ class krome():
 					cool += str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + " * "
 					cool += Bvar + "(" + str(tr["up"]+1) + ")"
 					cools.append(cool)
-				print "cool = cool + " + (" + &\n".join(cools))
+				full_cool += "cool = cool + " + (" + &\n".join(cools)) + "\n"
 
 				continue
 			
@@ -1959,6 +1971,12 @@ class krome():
 			if(len(row.split(","))==3):
 				lup, ldown, Aij = [x.strip() for x in srow.split(",")]
 				Aijs[(int(lup),int(ldown))] = Aij
+
+		vars_cool = ""
+		for x in real_variables:
+			vars_cool += "real*8::"+x+"\n"
+		self.full_cool = full_cool
+		self.vars_cool = vars_cool
 								
 		print real_variables
 		if(inmetal):
@@ -2572,6 +2590,10 @@ class krome():
 		for row in fh:
 			if(row.strip() == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename))
+			elif(row.strip() == "#KROME_full_cool"):
+				fout.write(self.full_cool+"\n")
+			elif(row.strip() == "#KROME_vars_cool"):
+				fout.write(self.vars_cool+"\n")
 			else:
 				srow = row.strip()
 				#enthalpic

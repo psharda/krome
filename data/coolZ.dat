@@ -1,5 +1,7 @@
 @var:T2 = T*1d-2
 
+##############
+#CARBON
 metal:C
 #level n: energy (K), degeneracy g
 level 0: 0.e0, 1
@@ -24,8 +26,24 @@ H+, 2, 1, (1.D-10 -2.2D-14*Tgas +1.7D-18*Tgas**2) *Tgas**(.70)
        if(Tgas > 5d3): 9.2D-9*Tgas**(.0535)
 
 
-#       g10C_H = 1.6D-10*(T2)**(.14)
-#       g20C_H = 9.2D-11*(T2)**(.26)
-#       g21C_H = 2.9D-10*(T2)**(.26)
+endmetal
+
+##############
+#OXYGEN II
+metal:O+
+#level n: energy (K), degeneracy g
+level 0: 0.e0, 1
+level 1: 24.e0, 3
+level 2: 63.e0, 5
+
+#Aij
+1, 0, 5.1d-5
+2, 0, 1.7d-4
+2, 1, 1.3d-7
+
+e, 1, 0, 1.3D-8*(Tgas/1.D4)**(-.5)
+e, 2, 0, 1.3D-8*(Tgas/1.D4)**(-.5)
+e, 2, 1, 2.5D-8*(Tgas/1.D4)**(-.5)
 
 endmetal
+

@@ -537,6 +537,29 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
+
+
+  !***********************
+  !metal cooling as in Maio et al. 2007
+  ! loaded from data file 
+  function cooling_Z(n,inTgas)
+    !//coefficients written as gijCOOLANT_COLLIDER
+    !//e.g. g10C_H2o means Carbon colliding with H2-ortho cooling through 
+    !//transition 1->0
+    use krome_commons
+    use krome_constants
+    implicit none
+    real*8::n(:), inTgas, cool, cooling_Z
+#KROME_vars_cool    
+    cool = 0d0
+
+#KROME_full_cool
+
+    cooling_Z = cool * boltzmann_erg
+    
+  end function cooling_Z
+
+
   !**************************************
   !metal cooling (as in Maio et al. 2007)
   function cooling_Z(n,inTgas)
