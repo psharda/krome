@@ -238,6 +238,25 @@ def file_exists(fname):
 	import os
 	return os.path.exists(fname)
 
+####################################
+def int_to_roman(input):
+	#Convert an integer to Roman numerals.
+	#from http://code.activestate.com/recipes/81611-roman-numerals/
+	if type(input) != type(1):
+		print "ERROR: expected integer, got " + type(input)
+		sys.exit()
+	if not 0 < input < 4000:
+		print "ERROR: Argument must be between 1 and 3999"
+		sys.exit()
+	ints = (1000, 900,  500, 400, 100,  90, 50,  40, 10,  9,   5,  4,   1)
+	nums = ('M',  'CM', 'D', 'CD','C', 'XC','L','XL','X','IX','V','IV','I')
+	result = ""
+	for i in range(len(ints)):
+		count = int(input / ints[i])
+		result += nums[i] * count
+		input -= ints[i] * count
+	return result
+
 ##################################
 #store file in a list
 def store_file(fname):

@@ -90,6 +90,10 @@ class krome():
 	customODEs = [] #custom ODEs
 	nrea = 0 #number of reactions
 	full_cool = vars_cool = ""
+	coolZ_functions = []
+	coolZ_rates = []
+	coolZ_vars_cool = []
+	coolZ_nkrates = 0
 	version = "13.11"
 	codename = "Astonishing Ansatz"
 
@@ -1807,12 +1811,13 @@ class krome():
 			print "ERROR: file "+fname+" not found!"
 			sys.exit()
 
-		real_variables = []
 		skip = False
 		inmetal = False
-		vars_cool = []		
+		vars_cool = []
+		coolZ_functions = []
+		krates = []
+		nkrates = 0
 		fh = open(fname,"rb")
-		full_cool = ""
 		for row in fh:
 			srow = row.strip()
 			if(srow==""): continue
@@ -1830,15 +1835,33 @@ class krome():
 			#metal
 			if("metal:" in srow):
 				inmetal = True #flag reading metal
-				cur_metal = srow.replace("metal:","").strip().replace("+","j").replace("-","k") #current metal name
+				real_variables = []
+				kkrates = []
+				metal_name = srow.replace("metal:","").strip()
+				if("+" in metal_name):
+					mname = metal_name.replace("+","")+int_to_roman(metal_name.count("+")+1)
+				elif("-" in metal_name):
+					mname = metal_name.replace("-","")+"m"+int_to_roman(metal_name.count("-")+1)
+				else:
+					mname = metal_name+"I"
+
+				function_name = "cooling"+mname
+				cur_metal = metal_name.replace("+","j").replace("-","k") #current metal name
 				excitation_rates = [] #list of excitation rates written in F90 for cur_metal 
 				transitions = [] #list of transitions
 				colliders = [] #list of colliders names
 				Aijs = dict()
 				levels = dict()
-				full_cool += "\n"
+				full_cool = "\n"
 				full_cool += "!########## " + cur_metal + " #########\n"
-				continue
+				full_cool += "function "+function_name+"(n,inTgas,k)\n"
+				full_cool += "use krome_commons\n"
+				full_cool += "implicit none\n"
+				full_cool += "real*8::"+function_name+",n(:),inTgas,Tgas,k(:),invTgas\n"
+				#full_cool += "real*8::" + (",".join([x[0] for x in vars_cool]))+"\n"
+				full_cool += "#KROME_replace_with_declarations\n\n"
+				full_cool += "Tgas = inTgas\n"
+				full_cool += "invTgas = 1d0/Tgas\n"
 
 			#levels
 			if("level" in srow):
@@ -1856,7 +1879,7 @@ class krome():
 				inmetal = False #in metal block flag
 			
 				full_cool += "!de-excitation rates\n"
-				for x in excitation_rates:
+				for x in kkrates:
 					full_cool += x + "\n"
 				full_cool += "\n"
 
@@ -1869,9 +1892,12 @@ class krome():
 					full_cool += ij2ji + "\n"
 					real_variables.append(ij2jivar)
 					for coll in colliders:
-						varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll 
-						vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll 
-						full_cool += varup + " = " + vardown +" * " + ij2jivar + "\n"
+						varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
+						vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
+						real_variables.append(varup)
+						real_variables.append(vardown)
+						real_variables.append(ij2jivar)
+						full_cool += vardown + " = " + varup +" * " + ij2jivar + "\n"
 					full_cool += "\n"
 
 				full_cool += "\n"
@@ -1944,7 +1970,19 @@ class krome():
 					cool += str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + " * "
 					cool += Bvar + "(" + str(tr["up"]+1) + ")"
 					cools.append(cool)
-				full_cool += "cool = cool + " + (" + &\n".join(cools)) + "\n"
+				full_cool += function_name + " = " + (" + &\n".join(cools)) + "\n"
+
+				full_cool += "\n end function "+function_name+"\n"
+	
+				vcool = ""
+				uniq = []
+				for x in real_variables:
+					if(x in uniq): continue
+					vcool += "real*8::"+x+"\n"
+					uniq.append(x)
+				full_cool = full_cool.replace("#KROME_replace_with_declarations", vcool)
+
+				coolZ_functions.append([function_name, full_cool])
 
 				continue
 			
@@ -1952,10 +1990,12 @@ class krome():
 			if(srow[:2]=="if"):
 				ifcond, ifrate = srow.split(":") #if condition, and rate
 				excitation_rates.append(ifcond.strip() +" "+ var_excitation +" = "+ifrate.strip()) #append rate
+				krates.append(ifcond.strip() +" k("+ str(nkrates) +") = "+ifrate.strip())
 				continue			
 			
 			#read collider rate
 			if(len(row.split(","))==4):
+				nkrates += 1
 				#read collider, starting level, end level, rate F90 expression
 				coll, lev_up, lev_down, rate = [x.strip() for x in srow.split(",")]
 				coll = coll.replace("+","j").replace("-","k") #collider name for variable
@@ -1965,6 +2005,8 @@ class krome():
 				if(not(coll in colliders)): colliders.append(coll) #append collider names
 				real_variables.append(var_excitation) #add to double variable list
 				excitation_rates.append(var_excitation +" = "+rate) #store excitation rates
+				krates.append("k("+ str(nkrates) +") = "+rate+" !"+cur_metal+lev_up+lev_down+"_"+coll)
+				kkrates.append(var_excitation+" = k("+str(nkrates) +")")
 				transitions.append({"up":int(lev_up), "down":int(lev_down), "coll":coll}) #store level transition
 
 			#read Aij
@@ -1972,11 +2014,10 @@ class krome():
 				lup, ldown, Aij = [x.strip() for x in srow.split(",")]
 				Aijs[(int(lup),int(ldown))] = Aij
 
-		vars_cool = ""
-		for x in real_variables:
-			vars_cool += "real*8::"+x+"\n"
-		self.full_cool = full_cool
-		self.vars_cool = vars_cool
+		self.coolZ_functions = coolZ_functions
+		self.coolZ_rates = krates
+		self.coolZ_nkrates = nkrates
+		self.coolZ_vars_cool = vars_cool
 								
 		print real_variables
 		if(inmetal):
@@ -2590,10 +2631,25 @@ class krome():
 		for row in fh:
 			if(row.strip() == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename))
-			elif(row.strip() == "#KROME_full_cool"):
-				fout.write(self.full_cool+"\n")
-			elif(row.strip() == "#KROME_vars_cool"):
-				fout.write(self.vars_cool+"\n")
+			elif(row.strip() == "#KROME_nZrate"):
+					fout.write("integer,parameter::nZrate="+str(self.coolZ_nkrates)+"\n")
+			elif(row.strip() == "#KROME_coolingZ_call_functions"):
+				for x in self.coolZ_functions:
+					fout.write("cool = cool + "+x[0]+"(n(:),inTgas,k(:))\n")
+			elif(row.strip() == "#KROME_coolingZ_custom_vars"):
+				for x in self.coolZ_vars_cool:
+					fout.write(x[0]+" = "+x[1]+"\n")
+			elif(row.strip() == "#KROME_coolingZ_declare_custom_vars"):
+				vcool = []
+				for x in self.coolZ_vars_cool:
+					vcool.append(x[0])
+				if(len(vcool)>0): fout.write("real*8::"+(",".join(vcool))+"\n")
+			elif(row.strip() == "#KROME_coolingZ_functions"):
+				for x in self.coolZ_functions:
+					fout.write(x[1]+"\n")
+			elif(row.strip() == "#KROME_coolingZ_rates"):
+				for x in self.coolZ_rates:
+					fout.write(x+"\n")
 			else:
 				srow = row.strip()
 				#enthalpic
