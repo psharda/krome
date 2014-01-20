@@ -614,12 +614,15 @@ contains
     jmax = coolTab_n
     coolTab_logTlow = log10(1d1)
     coolTab_logTup = log10(1d4)
+
+    inv_coolTab_idx = (jmax-1) / (coolTab_logTup-coolTab_logTlow)
     
     do j=1,jmax
        Tgas = 1d1**((j-1)*(coolTab_logTup-coolTab_logTlow) &
             /(jmax-1) + coolTab_logTlow)
        coolTab(:,j) = coolingZ_rates(Tgas)
-       if(j>1) inv_coolTab_T(j) = (jmax - 1) / (Tgas-Tgasold)
+       coolTab_T(j) = Tgas
+       if(j>1) inv_coolTab_T(j-1) = 1d0 / (Tgas-Tgasold)
        Tgasold = Tgas
     end do
 

@@ -1884,21 +1884,30 @@ class krome():
 				full_cool += "\n"
 
 				full_cool += "!excitation rates\n"
+				trfound = []
 				for tr in transitions:
-					full_cool += "!"+cur_metal+": " + str(tr["up"])+str(tr["down"])+"->"+str(tr["down"])+str(tr["up"]) + "\n"
 					ij2jivar = cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
 					ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
 					ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + "*invTgas)"
-					full_cool += ij2ji + "\n"
-					real_variables.append(ij2jivar)
-					for coll in colliders:
-						varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
-						vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
-						real_variables.append(varup)
-						real_variables.append(vardown)
+					if(not([tr["up"], tr["down"]] in trfound)):
+						full_cool += ij2ji + "\n"
 						real_variables.append(ij2jivar)
-						full_cool += vardown + " = " + varup +" * " + ij2jivar + "\n"
-					full_cool += "\n"
+						trfound.append([tr["up"], tr["down"]])
+
+				full_cool += "\n"
+				for tr in transitions:
+					coll = tr["coll"]
+					#for coll in colliders:
+					#	if(not(coll!=tr["coll"])): continue
+					#full_cool += "!"+cur_metal+": " + str(tr["up"])+str(tr["down"])+"->"+str(tr["down"])+str(tr["up"]) 
+					#full_cool += " (" + coll + ")\n"
+					ij2jivar = cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
+					varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
+					vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
+					real_variables.append(varup)
+					real_variables.append(vardown)
+					full_cool += vardown + " = " + varup +" * " + ij2jivar + "\n"
+					#full_cool += "\n"
 
 				full_cool += "\n"
 				full_cool += "!transitions\n"
@@ -1947,6 +1956,7 @@ class krome():
 					for k,v in MMij.iteritems():
 						if(ilev==v[0]): Arow[v[0]] += "-"+k
 						if(ilev==v[1]): Arow[v[0]] += "+"+k
+					Arow = ["0d0" if x=="" else x for x in Arow]
 					full_cool += Avar+"("+str(ilev+1)+",:) = (/" + (", ".join(Arow)) + "/)\n"
 
 				full_cool += "\n"
