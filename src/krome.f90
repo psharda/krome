@@ -274,11 +274,18 @@ contains
     use krome_tabs
     use krome_subs
     use krome_reduction
+#IFKROME_useCoolingZ
+    use krome_cooling
+#ENDIFKROME
 #IFKROME_useStars
     use krome_stars
 #ENDIFKROME
 
     call load_arrays
+
+#IFKROME_useCoolingZ
+    call coolingZ_init_tabs()
+#ENDIFKROME
 
 #IFKROME_useTabs
     call make_ktab()

@@ -50,12 +50,12 @@ contains
     do i=1,ktab_n-1
        inv_ktab_T(i) = 1.d0 / (ktab_T(i+1)-ktab_T(i))
     end do
-    
+
     !store inverse to go fast at runtime
     inv_ktab_idx = 1.d0 / (ktab_logTup - ktab_logTlow) * (ktab_n - 1)
 
   end subroutine make_ktab
-  
+
   !************************
   subroutine check_tabs()
     use krome_commons
@@ -107,7 +107,7 @@ contains
        kold(:) = kk(:)
     end do
     print *,"KROME: tabs are ok!"
-    
+
   end subroutine check_tabs
 #ENDIFKROME
 
@@ -129,7 +129,7 @@ contains
 #IFKROME_useStandardCoe
     coe_tab(:) = coe(n(:))
 #ENDIFKROME
-    
+
 #IFKROME_useTabs
     idx = (log10(Tgas)-ktab_logTlow) * inv_ktab_idx + 1
     idx = max(idx,1)

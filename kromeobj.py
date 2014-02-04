@@ -50,7 +50,7 @@ class krome():
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingCompton = useH2opacity = useCoolingCIE = useCoolingDISS = useStars = useNuclearMult = False
-	useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
+	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
@@ -94,6 +94,8 @@ class krome():
 	coolZ_rates = []
 	coolZ_vars_cool = []
 	coolZ_nkrates = 0
+	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
+	Zcools = [] #list of cooling read from file (species name, e.g. C+)
 	version = "13.11"
 	codename = "Astonishing Ansatz"
 
@@ -524,8 +526,40 @@ class krome():
 		#determine cooling types
 		if(args.cooling):
 			myCools = args.cooling.split(",")
-			allCools = ["ATOMIC","H2","HD","Z","DH","DUST","H2GP98","COMPTON","CIE",
-					"CI","CII","SiI","SiII","OI","OII","FeI","FeII","CONT","CHEM","DISS"]
+			#list of all cooling (excluded from file)
+
+			allCools = ["ATOMIC","H2","HD","DH","DUST","H2GP98","COMPTON","CIE","CONT","CHEM","DISS"]
+			#load additional coolings from file
+			fname = "data/coolZ.dat"
+			fh = open(fname,"rb")
+			for row in fh:
+				srow = row.strip()
+				#skip cooments
+				if(srow==""): continue
+				if(srow[0]=="#"): continue
+				if(srow[0]=="//"): continue
+				srow = srow.split("#")[0]
+				#look for the metal name
+				if("metal:" in srow):
+					metal_name = srow.split(":")[1].strip().capitalize() #metal name starts with capital letter
+					#metal name in roman style (e.j. C+ -> CII)
+					if("+" in metal_name):
+						mname = metal_name.replace("+","") + int_to_roman(metal_name.count("+")+1)
+					elif("-" in metal_name):
+						mname = metal_name.replace("-","") + "m"+int_to_roman(metal_name.count("-")+1)
+					else:
+						mname = metal_name+"I" #is not an ion
+
+					self.Zcools.append(metal_name) #append metal name to the list of the requested species
+					self.zcoolants.append(mname) #append roman metal name to the list of the coolants
+					if(mname in allCools):
+						print "ERROR: conflict name for "+mname+", which is already present!"
+						sys.exit()
+					allCools.append(mname) #append flag to the list of the coolants
+			#write found coolants
+			if(len(self.zcoolants)>0): print "Cooling "+(", ".join(self.zcoolants))+" loaded from "+fname
+			
+			#check coolant names
 			for coo in myCools:
 				if(not(coo in allCools)):
 					die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
@@ -541,19 +575,11 @@ class krome():
 			if("CIE" in myCools): self.useCoolingCIE = True
 			if("DISS" in myCools): self.useCoolingDISS = True
 			if("CONT" in myCools): self.useCoolingCont = True
-			if("Z" in myCools): 
-				self.useCoolingZ = self.useCoolingZC = self.useCoolingZCp = self.useCoolingZSi = True
-				self.useCoolingZSip = self.useCoolingZO = self.useCoolingZOp = self.useCoolingZFe = True
-				self.useCoolingZFep = True
-			if("CI" in myCools): self.useCoolingZ = self.useCoolingZC = True
-			if("CII" in myCools): self.useCoolingZ = self.useCoolingZCp = True
-			if("SiI" in myCools): self.useCoolingZ = self.useCoolingZSi = True
-			if("SiII" in myCools): self.useCoolingZ = self.useCoolingZSip = True
-			if("OI" in myCools): self.useCoolingZ = self.useCoolingZO = True
-			if("OII" in myCools): self.useCoolingZ = self.useCoolingZOp = True
-			if("FeI" in myCools): self.useCoolingZ = self.useCoolingZFe = True
-			if("FeII" in myCools): self.useCoolingZ = self.useCoolingZFep = True
-				
+			for coo in myCools:
+				if(coo in self.zcoolants):
+					self.useCoolingZ = True
+					break
+
 			self.use_cooling = True
 			self.hasDust = False
 			for aa in argv:
@@ -1225,20 +1251,8 @@ class krome():
 
 	###########################################add all the metals to cooling
 	def addMetals(self):
-		Zcools = []
+		Zcools = self.Zcools
 		specs = self.specs
-		if(self.useCoolingZC or self.useCoolingZCp): 
-			Zcools.append("C") 
-			Zcools.append("C+") 
-		if(self.useCoolingZO or self.useCoolingZOp): 
-			Zcools.append("O") 
-			Zcools.append("O+") 
-		if(self.useCoolingZSi or self.useCoolingZSip): 
-			Zcools.append("Si") 
-			Zcools.append("Si+") 
-		if(self.useCoolingZFe or self.useCoolingZFep): 
-			Zcools.append("Fe")
-			Zcools.append("Fe+")
 		for zcool in Zcools:
 			zFound = False #flag metal found
 			#loop on specs to found metals
@@ -1249,7 +1263,7 @@ class krome():
 					break
 			#if not found parse and add
 			if(not(zFound)):
-				print "Adding specie \""+zcool+"\" (request by metal cooling)"
+				print "Adding specie \""+zcool+"\" (requested by metal cooling)"
 				mymol = parser(zcool,self.mass_dic,self.atoms,self.thermodata)
 				mymol.idx = len(specs)+1
 				self.specs.append(mymol)
@@ -1805,65 +1819,76 @@ class krome():
 		self.lwm = lwm
 		self.lrw = lrw
 	#######################################
+	#this function loads the cooling functions from a file
+	# and prepares all the necessary stuff 
 	def createZcooling(self):
-		fname = "data/coolZ.dat"
+		fname = "data/coolZ.dat" #file containing cooling information
 		if(not(file_exists(fname))):
 			print "ERROR: file "+fname+" not found!"
 			sys.exit()
-
+	
+		zcoolants = self.zcoolants
 		skip = False
 		inmetal = False
-		vars_cool = []
-		coolZ_functions = []
-		krates = []
+		skip_metal = False
+		vars_cool = [] #variables
+		coolZ_functions = [] #cooling functions
+		krates = [] #rates
 		nkrates = 0
+		#read file
 		fh = open(fname,"rb")
 		for row in fh:
 			srow = row.strip()
-			if(srow==""): continue
-			if(srow[0]=="#"): continue
-			if(srow[0]=="//"): continue
-			if(srow[0]=="/*"): skip = True
+			if(srow==""): continue #skip blank lines
+			if(srow[0]=="#"): continue #skip lines with coments
+			if(srow[0]=="//"): continue #comments
+			if(srow[0]=="/*"): skip = True #skip large comments
 			if("*/" in srow[0]): skip = False
-			srow = srow.split("#")[0]
+			srow = srow.split("#")[0] #skip comments
 			if(skip): continue
-			#variables
+			if((srow=="endmetal" or srow=="end metal") and skip_metal):
+				skip_metal = False
+				continue
+			if(skip_metal): continue #skip metals that are not present in the cooling options
+			#read variables and store to vars_cool
 			if("@var:" in srow):
 				srow = srow.replace("@var:","").strip()
 				vars_cool.append([x.strip() for x in srow.split("=")]) #read extra variables
 				continue
-			#metal
+			#read metal name
 			if("metal:" in srow):
 				inmetal = True #flag reading metal
 				real_variables = []
 				kkrates = []
+				#modify the name of the metal (e.g. C+ becomes CII)
 				metal_name = srow.replace("metal:","").strip()
 				if("+" in metal_name):
-					mname = metal_name.replace("+","")+int_to_roman(metal_name.count("+")+1)
+					mname = metal_name.replace("+","") + int_to_roman(metal_name.count("+")+1)
 				elif("-" in metal_name):
-					mname = metal_name.replace("-","")+"m"+int_to_roman(metal_name.count("-")+1)
+					mname = metal_name.replace("-","") + "m"+int_to_roman(metal_name.count("-")+1)
 				else:
-					mname = metal_name+"I"
+					mname = metal_name+"I" #is not an ion
+				if(not(mname in zcoolants)): skip_metal = True 
 
-				function_name = "cooling"+mname
+				function_name = "cooling"+mname #name of the cooling function
 				cur_metal = metal_name.replace("+","j").replace("-","k") #current metal name
 				excitation_rates = [] #list of excitation rates written in F90 for cur_metal 
 				transitions = [] #list of transitions
 				colliders = [] #list of colliders names
-				Aijs = dict()
-				levels = dict()
+				Aijs = dict() #init dictionary for Einsten's
+				levels = dict() #init dictionary for levels
+				#prepares the header of the function
 				full_cool = "\n"
 				full_cool += "!########## " + cur_metal + " #########\n"
 				full_cool += "function "+function_name+"(n,inTgas,k)\n"
 				full_cool += "use krome_commons\n"
 				full_cool += "implicit none\n"
 				full_cool += "real*8::"+function_name+",n(:),inTgas,Tgas,k(:),invTgas\n"
-				#full_cool += "real*8::" + (",".join([x[0] for x in vars_cool]))+"\n"
 				full_cool += "#KROME_replace_with_declarations\n\n"
 				full_cool += "Tgas = inTgas\n"
 				full_cool += "invTgas = 1d0/Tgas\n"
 
-			#levels
+			#read the levels
 			if("level" in srow):
 				nlev = int(srow.split(":")[0].replace("level","").strip()) #level number
 				energy, gmult = srow.split(":")[1].split(",") #get energy and degenerancy factor
@@ -1878,53 +1903,56 @@ class krome():
 					sys.exit()
 				inmetal = False #in metal block flag
 			
+				#write de-excitation rates
 				full_cool += "!de-excitation rates\n"
 				for x in kkrates:
 					full_cool += x + "\n"
 				full_cool += "\n"
 
+				#prepares conversion factor to ji from ij
 				full_cool += "!excitation rates\n"
 				trfound = []
 				for tr in transitions:
 					ij2jivar = cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
 					ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
 					ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + "*invTgas)"
+					#skip already found transitions					
 					if(not([tr["up"], tr["down"]] in trfound)):
 						full_cool += ij2ji + "\n"
 						real_variables.append(ij2jivar)
 						trfound.append([tr["up"], tr["down"]])
-
+				
+				#prepares rate conversion using conversion factor computed above
 				full_cool += "\n"
 				for tr in transitions:
 					coll = tr["coll"]
-					#for coll in colliders:
-					#	if(not(coll!=tr["coll"])): continue
-					#full_cool += "!"+cur_metal+": " + str(tr["up"])+str(tr["down"])+"->"+str(tr["down"])+str(tr["up"]) 
-					#full_cool += " (" + coll + ")\n"
 					ij2jivar = cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
 					varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
 					vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
 					real_variables.append(varup)
 					real_variables.append(vardown)
 					full_cool += vardown + " = " + varup +" * " + ij2jivar + "\n"
-					#full_cool += "\n"
 
+				#prepares the Mij and Mji transition elements
 				full_cool += "\n"
 				full_cool += "!transitions\n"
 				varMexist = []
 				MM = dict()
 				MMij = dict()
+				#build Mij
 				for tr in transitions:
-					varM = "M" + str(tr["down"]) + str(tr["up"]) + cur_metal
+					varM = "M" + str(tr["down"]) + str(tr["up"]) + cur_metal #init variable name
 					real_variables.append(varM) #add to double variable list
+					#check if variable is unique
 					if(not(varM in varMexist)):
 						MM[varM] = []
 						MMij[varM] = [tr["down"],tr["up"]]
-					coll = tr["coll"]
+					coll = tr["coll"] #get colliders for the given transition
 					varup = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll 
-					MM[varM].append(varup+"*n(idx_"+coll+")")
+					MM[varM].append(varup+"*n(idx_"+coll+")") #include colliders abundance
 					varMexist.append(varM)
 
+				#build Mji as above
 				for tr in transitions:
 					varM = "M" + str(tr["up"]) + str(tr["down"]) + cur_metal
 					real_variables.append(varM) #add to double variable list
@@ -1936,20 +1964,23 @@ class krome():
 					MM[varM].append(varup+"*n(idx_"+coll+")")
 					varMexist.append(varM)
 
+				#write Mij and Mji definitions
 				for k,v in MM.iteritems():
 					full_cool += k + " = " + (" + &\n".join(v)) + "\n"
 					full_cool += "\n"
 				
-
+				#prepares the matrix A and B
 				full_cool += "!preparing matrix Ax=b\n"
 				nlev = len(levels)
-				Avar = "A"+cur_metal
+				Avar = "A"+cur_metal #A variable name
 				real_variables.append(Avar+"("+str(nlev)+","+str(nlev)+")")
-				Bvar = "B"+cur_metal
+				Bvar = "B"+cur_metal #B variable name
 				real_variables.append(Bvar+"("+str(nlev)+")")
+				#build B and the first row of A which is 1
 				full_cool += Bvar+"(:) = (/n(idx_"+cur_metal+"), " + (", ".join(["0d0"]*(nlev-1))) + "/)\n"
 				full_cool += Avar+"(1,:) = (/" + (", ".join(["1d0"]*nlev)) + "/)\n"
 				
+				#build the other rows of A
 				for ilev, lev in levels.iteritems():
 					if(ilev==0): continue
 					Arow = ["" for i in range(nlev)]
@@ -1959,6 +1990,8 @@ class krome():
 					Arow = ["0d0" if x=="" else x for x in Arow]
 					full_cool += Avar+"("+str(ilev+1)+",:) = (/" + (", ".join(Arow)) + "/)\n"
 
+				#include function to solve the linear system
+				# depending on the number of levels
 				full_cool += "\n"
 				full_cool += "!solving Ax=b\n"
 				if(nlev==2): 
@@ -1966,9 +1999,11 @@ class krome():
 				elif(nlev==3): 
 					full_cool += "call mylin3("+Avar+"(:,:), "+Bvar+"(:))\n"
 				else:
+					#LAPACK are called for more than 3 levels
 					full_cool += "call mydgesv("+Avar+"(:,:), "+Bvar+"(:))\n"
 
 
+				#prepares the cooling summing up the cooling from all the transitions
 				full_cool += "\n"
 				full_cool += "!computing cooling\n"
 				cools = []
@@ -1982,8 +2017,10 @@ class krome():
 					cools.append(cool)
 				full_cool += function_name + " = " + (" + &\n".join(cools)) + "\n"
 
+				#insert the end of the function
 				full_cool += "\n end function "+function_name+"\n"
 	
+				#replace the real variables needed by the cooling function
 				vcool = ""
 				uniq = []
 				for x in real_variables:
@@ -2024,14 +2061,15 @@ class krome():
 				lup, ldown, Aij = [x.strip() for x in srow.split(",")]
 				Aijs[(int(lup),int(ldown))] = Aij
 
+		#copy local arrays and dictionaries to class attributes
 		self.coolZ_functions = coolZ_functions
 		self.coolZ_rates = krates
 		self.coolZ_nkrates = nkrates
 		self.coolZ_vars_cool = vars_cool
-								
-		print real_variables
+		
+		#check for end statement								
 		if(inmetal):
-			print "ERROR: end metal statement missing!"
+			print "ERROR: end metal statement missing in "+fname+"!"
 			sys.exit()
 
 	#######################################
@@ -2673,32 +2711,6 @@ class krome():
 				#metals
 				if(srow == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
 				if(srow == "#ENDIFKROME_useCoolingZ"): skip = False
-
-				#individual metals
-				if(srow == "#IFKROME_useCoolingZC" and not(self.useCoolingZC)): skip = True
-				if(srow == "#ENDIFKROME_useCoolingZC" and useCoolingZ): skip = False
-		
-				if(srow == "#IFKROME_useCoolingZCp" and not(self.useCoolingZCp)): skip = True
-				if(srow == "#ENDIFKROME_useCoolingZCp" and useCoolingZ): skip = False
-		
-				if(srow == "#IFKROME_useCoolingZSi" and not(self.useCoolingZSi)): skip = True
-				if(srow == "#ENDIFKROME_useCoolingZSi" and useCoolingZ): skip = False
-		
-				if(srow == "#IFKROME_useCoolingZSip" and not(self.useCoolingZSip)): skip = True
-				if(srow == "#ENDIFKROME_useCoolingZSip" and useCoolingZ): skip = False
-
-				if(srow == "#IFKROME_useCoolingZO" and not(self.useCoolingZO)): skip = True
-				if(srow == "#ENDIFKROME_useCoolingZO" and useCoolingZ): skip = False
-		
-				if(srow == "#IFKROME_useCoolingZOp" and not(self.useCoolingZOp)): skip = True
-				if(srow == "#ENDIFKROME_useCoolingZOp" and useCoolingZ): skip = False
-		
-				if(srow == "#IFKROME_useCoolingZFe" and not(self.useCoolingZFe)): skip = True
-				if(srow == "#ENDIFKROME_useCoolingZFe" and useCoolingZ): skip = False
-		
-				if(srow == "#IFKROME_useCoolingZFep" and not(self.useCoolingZFep)): skip = True
-				if(srow == "#ENDIFKROME_useCoolingZFep" and useCoolingZ): skip = False
-
 
 				#CEN
 				if(srow == "#IFKROME_useCoolingAtomic" and not(self.useCoolingAtomic)): skip = True
@@ -3378,6 +3390,9 @@ class krome():
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+			if(srow == "#IFKROME_useCoolingZ" and not(self.useCoolingZ)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(self.useDust):

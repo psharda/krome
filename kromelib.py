@@ -360,6 +360,7 @@ def parsevar(arg):
 		arg = arg.replace("@@","@")
 	#tks2 = ["exp","sqrt","log","log10"]
 	return arg.split("@")
+
 ##################################
 #extend the list slist with the temperature shortcuts 
 # for the reaction rea
@@ -410,6 +411,8 @@ def get_Tshortcut(rea,slist):
 
 	#sort the shortcuts by using the index in the list sckey to follow the hierarchy
 	slist = sorted(slist, key=lambda x:sckey.index((x.split("="))[0].strip().lower()))
+
+	#keep only unique shortcuts
 	ulist = []
 	for x in slist:
 		if(not(x in ulist)): ulist.append(x)
