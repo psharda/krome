@@ -260,10 +260,11 @@ contains
     !cooling from reaction enthalpy erg/s/cm3
     use krome_commons
     implicit none
-    real*8::cooling_dH,cool,n(:),Tgas
+    real*8::cooling_dH,cool,n(:),Tgas,small
     real*8::logT,lnT,Te,lnTe,T32,t3,invT,invTe,sqrTgas,invsqrT32,sqrT32
 #KROME_vars
     
+    small = 1d-40
     logT = log10(Tgas) !log10 of Tgas (#)
     lnT = log(Tgas) !ln of Tgas (#)
     Te = Tgas*8.617343d-5 !Tgas in eV (eV)
@@ -541,7 +542,6 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
-
   !***********************
   !metal cooling as in Maio et al. 2007
   ! loaded from data file 
@@ -703,7 +703,7 @@ contains
     deallocate(ipiv)
   end subroutine mydgesv
 
-#ENDIFKROME_useCoolingZ
+#ENDIFKROME
 
   !************************************
   subroutine plot_cool(n)

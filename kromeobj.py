@@ -528,7 +528,7 @@ class krome():
 			myCools = args.cooling.split(",")
 			#list of all cooling (excluded from file)
 
-			allCools = ["ATOMIC","H2","HD","DH","DUST","H2GP98","COMPTON","CIE","CONT","CHEM","DISS"]
+			allCools = ["ATOMIC","H2","HD","DH","DUST","H2GP98","COMPTON","CIE","CONT","CHEM","DISS","Z"]
 			#load additional coolings from file
 			fname = "data/coolZ.dat"
 			fh = open(fname,"rb")
@@ -575,6 +575,8 @@ class krome():
 			if("CIE" in myCools): self.useCoolingCIE = True
 			if("DISS" in myCools): self.useCoolingDISS = True
 			if("CONT" in myCools): self.useCoolingCont = True
+			if("Z" in myCools): self.useCoolingZ = True
+			self.zcoolants += ["CI","CII","OI","OII","SiI","SiII","FeI","FeII"]
 			for coo in myCools:
 				if(coo in self.zcoolants):
 					self.useCoolingZ = True
@@ -1330,11 +1332,11 @@ class krome():
 		customODEs = self.customODEs
 		#look for photons and CR to add to the species list
 		has_g = has_CR = False
-		#for mol in specs:
+		for mol in specs:
 		#	if(mol.name=="G"):
 		#		has_g = True
-		#	if(mol.name=="CR"):
-		#		has_CR = True
+			if(mol.name=="CR"):
+				has_CR = True
 
 		#append custom ODEs as species
 		if(len(customODEs)>0):
@@ -1847,6 +1849,7 @@ class krome():
 			srow = srow.split("#")[0] #skip comments
 			if(skip): continue
 			if((srow=="endmetal" or srow=="end metal") and skip_metal):
+				inmetal = False
 				skip_metal = False
 				continue
 			if(skip_metal): continue #skip metals that are not present in the cooling options
@@ -2677,6 +2680,26 @@ class krome():
 		useCoolingZ = self.useCoolingZ
 		#loop on source to replace pragmas
 		for row in fh:
+
+			srow = row.strip()
+
+			#cooling pragmas
+			if(srow == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
+			if(srow == "#IFKROME_useCoolingdH" and (not(self.useCoolingdH) or len(dH_varsa)==0)): skip = True
+			if(srow == "#IFKROME_useCoolingDust" and not(self.useCoolingDust)): skip = True
+			if(srow == "#IFKROME_useCoolingAtomic" and not(self.useCoolingAtomic)): skip = True
+			if(srow == "#IFKROME_useCoolingH2" and not(self.useCoolingH2)): skip = True
+			if(srow == "#IFKROME_useCoolingH2GP" and not(self.useCoolingH2GP98)): skip = True
+			if(srow == "#IFKROME_useCoolingHD" and not(self.useCoolingHD)): skip = True
+			if(srow == "#IFKROME_useCoolingCompton" and not(self.useCoolingCompton)): skip = True
+			if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
+			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
+
+			if(srow == "#ENDIFKROME"): skip = False
+
+			if(skip): continue
+
+
 			if(row.strip() == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename))
 			elif(row.strip() == "#KROME_nZrate"):
@@ -2699,49 +2722,6 @@ class krome():
 				for x in self.coolZ_rates:
 					fout.write(x+"\n")
 			else:
-				srow = row.strip()
-				#enthalpic
-				if(srow == "#IFKROME_useCoolingdH" and (not(self.useCoolingdH) or len(dH_varsa)==0)): skip = True
-				if(srow == "#ENDIFKROME"): skip = False
-
-				#dust
-				if(srow == "#IFKROME_useCoolingDust" and not(self.useCoolingDust)): skip = True
-				if(srow == "#ENDIFKROME"): skip = False
-
-				#metals
-				if(srow == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
-				if(srow == "#ENDIFKROME_useCoolingZ"): skip = False
-
-				#CEN
-				if(srow == "#IFKROME_useCoolingAtomic" and not(self.useCoolingAtomic)): skip = True
-				if(srow == "#ENDIFKROME"): skip = False
-
-				#H2
-				if(srow == "#IFKROME_useCoolingH2" and not(self.useCoolingH2)): skip = True
-				if(srow == "#ENDIFKROME"): skip = False
-
-				#H2GP92
-				if(srow == "#IFKROME_useCoolingH2GP" and not(self.useCoolingH2GP98)): skip = True
-				if(srow == "#ENDIFKROME"): skip = False
-		
-				#HD
-				if(srow == "#IFKROME_useCoolingHD" and not(self.useCoolingHD)): skip = True
-				if(srow == "#ENDIFKROME"): skip = False
-		
-				#COMPTON
-				if(srow == "#IFKROME_useCoolingCompton" and not(self.useCoolingCompton)): skip = True
-				if(srow == "#ENDIFKROME"): skip = False
-
-				#CIE
-				if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
-				if(srow == "#ENDIFKROME"): skip = False
-
-				#Continuum
-				if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
-				if(srow == "#ENDIFKROME"): skip = False
-
-				if(skip): continue
-		
 				#replace pragma for total metals
 				row = row.replace("#KROME_tot_metals", self.totMetals)
 				

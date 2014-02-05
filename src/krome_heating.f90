@@ -49,10 +49,10 @@ contains
     !heating from reaction enthalpy erg/s/cm3
     use krome_commons
     implicit none
-    real*8::heat_dH,heat,n(:),Tgas,T4
+    real*8::heat_dH,heat,n(:),Tgas,T4,small
     real*8::logT,lnT,Te,lnTe,T32,t3,invT,invTe,sqrTgas,invsqrT32,sqrT32
 #KROME_vars
-    
+    small = 1d-40
     logT = log10(Tgas) !log10 of Tgas (#)
     lnT = log(Tgas) !ln of Tgas (#)
     Te = Tgas*8.617343d-5 !Tgas in eV (eV)
@@ -103,8 +103,10 @@ contains
     implicit none
     real*8::heatingChem, n(:), Tgas,k(:),nH2dust
     real*8::h2heatfac,HChem,yH,yH2
-    real*8::ncr,ncrn,ncrd1,ncrd2,dd,n2H
+    real*8::ncr,ncrn,ncrd1,ncrd2,dd,n2H,small
     dd = get_Hnuclei(n(:))
+
+    small = 1d-40
 
     heatingChem = 0.d0
 
