@@ -127,62 +127,94 @@ class krome():
 
 		tests = ", ".join(os.walk('tests').next()[1])
 		self.parser = argparse.ArgumentParser(description="KROME a package for astrochemistry")
-		self.parser.add_argument("-n", help="reaction network file", metavar='FILENAME')
+		self.parser.add_argument("-ATOL", help="set solver absolute tolerance to the float or double value ATOL, e.g. -atol 1d-40\
+			Default is ATOL=1d-20, see also -RTOL and -customATOL")
+		self.parser.add_argument("-C", action="store_true", help="create a simple C wrapper")
+		self.parser.add_argument("-compact", action="store_true", help="creates a single fortran file with all the modules instead of\
+			various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact).")
+		self.parser.add_argument("-checkConserv", action="store_true", help="check mass conservation during integration (slower)")
+		self.parser.add_argument("-clean", action="store_true", help="clean all in /build (including krome_user_commons.f90 that\
+			is normally kept by default) before creating new f90 files.")
+		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global\
+			neutrality. Works with some limitations, please read the manual.")
+		self.parser.add_argument("-conserveE", action="store_true", help="conserves the charge global neutrality only.")
+		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
+			COMPTON, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI)")
+		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line,\
+			e.g. H2 1d-20, see also -ATOL", metavar="filename")
+		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
+		self.parser.add_argument("-customRTOL", help="file with the list of the individual RTOLs in the form SPECIES RTOL in each line,\
+			e.g. H3+ 1d-4, see also -RTOL", metavar="filename")
+		self.parser.add_argument("-dust", help="include dust ODE using N bins for each TYPE, e.g. -dust 10,C,Si set 10 dust carbon\
+			bins and 10 dust silicon dust bins. Note: requires a call to the krome_init_dust subroutine.\
+			See -test=dust for an example.")
+		self.parser.add_argument("-dustOptions", help="activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular\
+			hydrogen formation on dust, and (T) dust temperature. The last option provide a template for the FEX routine.",\
+			metavar="OPTIONS")
+		self.parser.add_argument("-enzo", action="store_true", help="create patches for ENZO")
+		self.parser.add_argument("-flash", action="store_true", help="create patches for FLASH")
 		self.parser.add_argument("-forceMF21", action="store_true", help="force explicit sparsity and Jacobian")
 		self.parser.add_argument("-forceMF222", action="store_true", help="force internal-generated sparsity and Jacobian")
-	 
-		self.parser.add_argument("-test",help=("Create a test model in /build. TEST can be: "+tests+"."))
-		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH")
-		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98, COMPTON, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII (e.g. -cooling ATOMIC,CII,OI,FeI), CHEM")
-		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
-		self.parser.add_argument("-useH2opacity", action="store_true",help="use H2 opacity for H2 cooling")
-		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al. 2011, or a custom F90 expression e.g. -gamma 5.d0/3.d0",metavar="OPTION")
-		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
-
-		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
-		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line, e.g. H2 1d-20", metavar="filename")
-		self.parser.add_argument("-customRTOL", help="file with the list of the individual RTOLs in the form SPECIES RTOL in each line, e.g. H3+ 1d-4", metavar="filename")
-		self.parser.add_argument("-ATOL", help="set solver absolute tolerance to the float or double value ATOL, e.g. -atol 1d-40 Default is ATOL=1d-20")
-		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g. -rtol 1e-5 Default is RTOL=1d-4")
-		self.parser.add_argument("-usePhIoniz", action="store_true", help="include photochemistry")
-		self.parser.add_argument("-useEquilibrium", action="store_true", help="check if the solver has reached the equilbirum. If so break the solver's loop and return the values found. It is useful when the system oscillates around a solution (as in some photoheating cases). To be used with caution.")
-		self.parser.add_argument("-dust", help="include dust ODE using N bins for each TYPE, e.g. -dust 10,C,Si set 10 dust carbon bins and 10 dust silicon dust bins. Require a call to the krome_init_dust subroutine. See test=dust for an example.")
-		self.parser.add_argument("-dustOptions", help="activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular hydrogen formation on dust, and (T) dust temperature. The last option provide a template for the FEX routine.", metavar="OPTIONS")
-		self.parser.add_argument("-compact", action="store_true", help="creates a single fortran file with all the modules instead of various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact).")
-		self.parser.add_argument("-useDvodeF90", action="store_true", help="use Dvode implementation in F90 (slower)")
-		self.parser.add_argument("-useTabs", action="store_true", help="use tabulated rate coefficients (free parameter: temperature)")
-		self.parser.add_argument("-report", action="store_true", help="generate report file in the main call to krome as KROME_ERROR_REPORT and when calling the fex as KROME_ODE_REPORT. It also stores abundances evolution in fex as fort.98, and prepares a report.gps gnuplot script file to plot evolutions callable in gnuplot with load 'report.gps'. Warning: it slows the whole system!")
-		self.parser.add_argument("-checkConserv", action="store_true", help="check mass conservation during integration (slower)")
-		self.parser.add_argument("-useFileIdx", action="store_true", help="use the reaction index in the reaction file instead of using the automatic progressive index starting from 1. Useful with rate coefficients that depends on other coefficients, e.g. k(10) = 1d-2*k(3)")
-		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
-		self.parser.add_argument("-Tlimit", metavar="opLow,opHigh", help="set the operators for all the reaction temperature limits where opLow is the operator for the first temperature value in the reaction file, and opHigh is for the second one. e.g. if the T limits for a 	given reaction are 10. and 1d4 the option -Tlmit GE,LE will provide (Tgas>=10. AND Tgas<=1d4) as the reaction range of validity. Operators opLow and opHigh must be one of the following: LE, GE, LT, GT.")
-		self.parser.add_argument("-noTlimits", action="store_true", help="ignore rate coefficient temperature limits.")
-		self.parser.add_argument("-reverse", action="store_true", help="create reverse reaction from the current network using NASA polynomials.")
-		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION must be explicitly included in krome_user_commons module.", metavar="FUNCTION")
-		self.parser.add_argument("-useODEConstant", help="postpone an expression to each ODE. EXPRESSION must be a valid f90 expression (e.g. *3.d0 or +1.d-10)", metavar="EXPRESSION")
-		self.parser.add_argument("-skipODEthermo", action="store_true", help="do not compute dT/dt in the ODE RHS function (fex)")
-		self.parser.add_argument("-usePlainIsotopes", action="store_true", help="use kA format for isotopes instead of [k]A format, where k is the isotopic number and A is the atom name, e.g. krome looks for 14C instead of [14]C in the reactions file.")
-		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
-		self.parser.add_argument("-clean", action="store_true", help="clean all in /build (including krome_user_commons.f90 that is normally kept by default) before creating new f90 files.")
-		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
 		self.parser.add_argument("-forceRWORK", help="force the size of RWORK to N", metavar="N")
-		self.parser.add_argument("-ramses", action="store_true", help="create patches for RAMSES")
-		self.parser.add_argument("-flash", action="store_true", help="create patches for FLASH")
-		self.parser.add_argument("-enzo", action="store_true", help="create patches for ENZO")
-		self.parser.add_argument("-C", action="store_true", help="create a simple C wrapper")
-		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
-		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global neutrality. Works with some limitations, please read the manual.")
-		self.parser.add_argument("-conserveE", action="store_true", help="conserves the charge global neutrality only.")
-		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
-		self.parser.add_argument("-source", metavar="folder", help="use FOLDER as source directory")
-		self.parser.add_argument("-mergeTlimits", action="store_true", help="use the same reaction index for equivalent reactions (same reactants and products) that have different temperature limits")
-		self.parser.add_argument("-stars", action="store_true", help="use star module for nuclear reactions. NOTE: krome_stars module required in the Makefile")
-		self.parser.add_argument("-nomassCheck", action="store_true", help="skip reaction mass check")
+		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al.\
+			2011, or a custom F90 expression e.g. -gamma 5.d0/3.d0",metavar="OPTION")
+		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH")
+		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
+		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
+		self.parser.add_argument("-mergeTlimits", action="store_true", help="use the same reaction index for equivalent\
+			reactions (same reactants and products) that have different temperature limits")
+		self.parser.add_argument("-n", help="reaction network file", metavar='FILENAME')
 		self.parser.add_argument("-nochargeCheck", action="store_true", help="skip reaction charge check")
-		self.parser.add_argument("-noCheck", action="store_true", help="skip reaction charge and mass check. Equivalent to -nomassCheck -nochargeCheck options.")
-		self.parser.add_argument("-nuclearMult", action="store_true", help="keep into account reactants multeplicity, and modify fluxes according to this. Intended for nuclear networks.")
-		self.parser.add_argument("-options", metavar="filename", help="read the options from a file instead of command line (in principle you can use both)")
-		
+		self.parser.add_argument("-noCheck", action="store_true", help="skip reaction charge and mass check. Equivalent to\
+			-nomassCheck -nochargeCheck options.")
+		self.parser.add_argument("-nomassCheck", action="store_true", help="skip reaction mass check")
+		self.parser.add_argument("-noTlimits", action="store_true", help="ignore rate coefficient temperature limits.")
+		self.parser.add_argument("-nuclearMult", action="store_true", help="keep into account reactants multeplicity, and modify\
+			fluxes according to this. Intended for nuclear networks.")
+		self.parser.add_argument("-options", metavar="filename", help="read the options from a file instead of command line\
+			(in principle you can use both)")
+		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
+		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the\
+			default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
+		self.parser.add_argument("-ramses", action="store_true", help="create patches for RAMSES, see also -enzo and -flash")
+		self.parser.add_argument("-report", action="store_true", help="generate report file in the main call to krome as\
+			KROME_ERROR_REPORT and when calling the fex as KROME_ODE_REPORT. It also stores abundances evolution in fex as \
+			fort.98, and prepares a report.gps gnuplot script file to plot evolutions callable in gnuplot with load \
+			'report.gps'. Warning: it slows the whole system!")
+		self.parser.add_argument("-reverse", action="store_true", help="create reverse reaction from the current network\
+			using NASA polynomials.")
+		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g.\
+			-RTOL 1e-5 Default is RTOL=1d-4, see also -ATOL and -customRTOL")
+		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
+		self.parser.add_argument("-skipODEthermo", action="store_true", help="do not compute dT/dt in the ODE RHS function (fex)")
+		self.parser.add_argument("-source", metavar="folder", help="use FOLDER as source directory")
+		self.parser.add_argument("-stars", action="store_true", help="use star module for nuclear reactions. NOTE: krome_stars\
+			module required in the Makefile")
+		self.parser.add_argument("-test",help=("Create a test model in /build. TEST can be: "+tests+"."))
+		self.parser.add_argument("-Tlimit", metavar="opLow,opHigh", help="set the operators for all the reaction temperature limits\
+			where opLow is the operator for the first temperature value in the reaction file, and opHigh is for the second one. e.g.\
+			if the T limits for a given reaction are 10. and 1d4 the option -Tlmit GE,LE will provide (Tgas>=10. AND Tgas<=1d4) as\
+			the reaction range of validity. Operators opLow and opHigh must be one of the following: LE, GE, LT, GT.")
+		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
+		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size\
+			NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION\
+			must be explicitly included in krome_user_commons module.", metavar="FUNCTION")
+		self.parser.add_argument("-useDvodeF90", action="store_true", help="use Dvode implementation in F90 (slower)")
+		self.parser.add_argument("-useEquilibrium", action="store_true", help="check if the solver has reached the equilbirum.\
+			If so break the solver's loop and return the values found. It is useful when the system oscillates around\
+			a solution (as in some photoheating cases). To be used with caution!")
+		self.parser.add_argument("-useH2opacity", action="store_true",help="use H2 opacity for H2 cooling")
+		self.parser.add_argument("-useFileIdx", action="store_true", help="use the reaction index in the reaction file instead of\
+			using the automatic progressive index starting from 1. Useful with rate coefficients that depends on other\
+			coefficients, e.g. k(10) = 1d-2*k(3)")
+		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
+		self.parser.add_argument("-useODEConstant", help="postpone an expression to each ODE. EXPRESSION must be a valid f90\
+			expression (e.g. *3.d0 or +1.d-10)", metavar="EXPRESSION")
+		self.parser.add_argument("-usePhIoniz", action="store_true", help="include photochemistry")
+		self.parser.add_argument("-usePlainIsotopes", action="store_true", help="use kA format for isotopes instead of [k]A format,\
+			where k is the isotopic number and A is the atom name, e.g. krome looks for 14C instead of [14]C in the reactions file.")
+		self.parser.add_argument("-useTabs", action="store_true", help="use tabulated rate coefficients (free parameter: temperature)")
+	 
 	
 	######################################
 	#select test name
