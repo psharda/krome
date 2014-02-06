@@ -235,6 +235,73 @@ contains
 
   end function revHS
 
+ !******************************
+  subroutine print_best_flux(n,Tgas,nbestin)
+    !print the first nbestin fluxes 
+    use krome_commons
+    implicit none
+    real*8::n(nspec),Tgas,flux(nrea)
+    integer::nbest,idx(nrea),i,nbestin
+    character*50::name(nrea)
+
+    nbest = min(nbestin,nrea) !cannot exceed the number of reactions
+
+    flux(:) = get_flux(n(:),Tgas) !get fluxes
+    name(:) = get_rnames() !get reaction names
+
+    !call the sorting algorithm (bubblesort)
+    idx(:) = idx_sort(flux(:))
+    
+    !print to screen
+    print *,"***************"
+    do i=1,nbest
+       print '(I4,a1,a50,E17.8)',i," ",name(idx(i)),flux(idx(i))
+    end do
+    
+  end subroutine print_best_flux
+
+  !*****************************
+  function idx_sort(fin)
+    !sorting algorithm: requires an array of real values fin
+    ! and returns the sorted index list. descending.
+    ! bubblesort: not very efficient, replace with what you prefer
+    implicit none
+    real*8::fin(:),f(size(fin)),ftmp
+    integer::idx_sort(size(fin)),n,itmp,i
+    logical::found
+
+    f(:) = fin(:) !copy to local 
+
+    n = size(f)
+    !init indexes
+    do i=1,n
+       idx_sort(i) = i
+    end do
+
+    !loop to sort
+    do
+       found = .false. !swapped something flag
+       do i=2,n
+          !> for descending, < for ascending
+          if(f(i)>f(i-1)) then
+             found = .true.
+             !swap real value
+             ftmp = f(i)
+             f(i) = f(i-1)
+             f(i-1) = ftmp
+             !swap index
+             itmp = idx_sort(i)
+             idx_sort(i) = idx_sort(i-1)
+             idx_sort(i-1) = itmp
+          end if
+       end do
+       !if nothing swapped exit
+       if(not(found)) exit
+    end do
+
+    
+  end function idx_sort
+
   !******************************
   function get_flux(n,Tgas)
     !get the flux k*n*n*... of the rates

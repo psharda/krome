@@ -1133,6 +1133,7 @@ class krome():
 			#loop over reactants to grep molecules
 			for r in reactants:
 				if(r.strip()=="G" and not(self.use_photons)): continue
+				if(r.strip()=="E-"): r = "E"
 				if(r.strip()!=""):
 					mol = parser(r,mass_dic,atoms,self.thermodata)
 					if(not(mol.name in spec_names)):
@@ -1143,6 +1144,7 @@ class krome():
 			#loop over prodcuts to grep molecules
 			for p in products:
 				if(p.strip()=="G" and not(self.use_photons)): continue
+				if(p.strip()=="E-"): p = "E"
 				if(p.strip()!=""):
 					mol = parser(p,mass_dic,atoms,self.thermodata)
 					if(not(mol.name in spec_names)):
