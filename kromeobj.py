@@ -3773,7 +3773,7 @@ class krome():
 					gamma = 5./3.
 				else: #molecule
 					gamma = 7./5.
-			if(self.typeGamma=="DEFAULT"):
+			elif(self.typeGamma=="DEFAULT"):
 				gamma = "1.66666666667d0"
 			else:
 				gamma = self.typeGamma

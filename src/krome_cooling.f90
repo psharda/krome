@@ -684,8 +684,9 @@ contains
   subroutine mydgesv(A,B)
     !driver for LAPACK dgesv
     real*8::A(:,:),B(:)
+    real*8,allocatable::tmp(:)
     integer::n,info,i
-    integer,allocatable::ipiv(:),tmp(:)
+    integer,allocatable::ipiv(:)
     n=size(B)
     allocate(tmp(n))
     allocate(ipiv(n))
