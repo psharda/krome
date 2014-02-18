@@ -120,15 +120,17 @@ contains
           istate = 3 !wrong sparsity recompute
        else
           call XSETF(1)!turn on verbosity
-          if(got_error) then
-             print *,"ERROR: wrong solver exit status!"
-             print *,"istate:",istate
-             print *,"SEE KROME_ERROR_REPORT file"
-             call krome_dump(n(:), rwork(:), iwork(:))
-             stop
-          end if
           got_error = .true.
           istate = 1
+          cycle
+       end if
+       
+       if(got_error) then
+          print *,"ERROR: wrong solver exit status!"
+          print *,"istate:",istate
+          print *,"SEE KROME_ERROR_REPORT file"
+          call krome_dump(n(:), rwork(:), iwork(:))
+          stop
        end if
 #IFKROME_useEquilibrium
        !try to determine if the system has reached a steady equilibrium
@@ -186,23 +188,27 @@ contains
     use krome_subs
     use krome_tabs
     use krome_reduction
-    integer::fnum,i,iwork(:)
-    real*8::n(:),rwork(:),rrmax,k(nrea),kmax,rperc,kperc
+    use krome_ode
+    integer::fnum,i,iwork(:),idx(nrea),j
+    real*8::n(:),rwork(:),rrmax,k(nrea),kmax,rperc,kperc,dn(nspec),tt
     character*16::names(nspec),FMTi,FMTr
+    character*50::rnames(nrea)
     fnum = 99
     open(fnum,FILE="KROME_ERROR_REPORT",status="replace")
-    
+    tt = 0d0
     names(:) = get_names()
+    rnames(:) = get_rnames()
+    call fex(nspec,tt,n(:),dn(:))
 
     write(fnum,*) "KROME ERROR REPORT"
     write(fnum,*) 
     !SPECIES
-    write(fnum,*) "Species aboundances"
+    write(fnum,*) "Species abundances"
     write(fnum,*) "**********************"
-    write(fnum,'(a5,a20,a12)') "#","name","qty"
+    write(fnum,'(a5,a20,2a12)') "#","name","qty","dn/dt"
     write(fnum,*) "**********************"
     do i=1,nspec
-       write(fnum,'(I5,a20,E12.3e3)') i,names(i),n(i)
+       write(fnum,'(I5,a20,2E12.3e3)') i,names(i),n(i),dn(i)
     end do
     write(fnum,*) "**********************"
     
@@ -212,12 +218,12 @@ contains
     write(fnum,*)
     write(fnum,*) "Rate coefficients at Tgas",n(idx_Tgas)
     write(fnum,*) "**********************"
-    write(fnum,'(a5,2a12)') "#","k","k %"
+    write(fnum,'(a5,2a12,a10)') "#","k","k %","  name"
     write(fnum,*) "**********************"    
     do i=1,nrea
        kperc = 0.d0
        if(kmax>0.d0) kperc = k(i)*1d2/kmax
-       write(fnum,'(I5,2E12.3e3)') i,k(i),kperc
+       write(fnum,'(I5,2E12.3e3,a2,a50)') i,k(i),kperc,"  ", rnames(i)
     end do
     write(fnum,*) "**********************"
     write(fnum,*)
@@ -225,18 +231,21 @@ contains
     !FLUXES
     call load_arrays
     rrmax = fex_check(n(:), n(idx_Tgas))
+    idx(:) = idx_sort(arr_flux(:))
     write(fnum,*)
-    write(fnum,*) "Reaction magnitude [k*n1*n2*n3]"
+    write(fnum,*) "Reaction magnitude (sorted) [k*n1*n2*n3]"
     write(fnum,*) "**********************"
-    write(fnum,'(a5,2a12)') "#","flux","flux %"
+    write(fnum,'(a5,2a12,a10)') "#","flux","flux %","  name"
     write(fnum,*) "**********************"    
-    do i=1,nrea
+    do j=1,nrea
+       i = idx(j)
        rperc = 0.d0
        if(rrmax>0.d0) rperc = arr_flux(i)*1d2/rrmax
-       write(fnum,'(I5,2E12.3e3)') i,arr_flux(i),rperc
+       write(fnum,'(I5,2E12.3e3,a2,a50)') i,arr_flux(i),rperc,"  ",rnames(i)
     end do
     write(fnum,*) "**********************"
     write(fnum,*)
+  
 
     !SOLVER
     FMTr = "(a30,E16.7e3)"

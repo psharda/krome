@@ -86,6 +86,7 @@ class reaction():
 	curlyR = [] #reactants curlyness
 	curlyP = [] #products curlyness
 	nuclearMult = "" #nuclear multeplicty factor 1/(n!)
+	hasTlimitMax = hasTlimitMin = True #flag to determine the presence of Temperature limits
 	#method: constructor to initialize lists
 	def __init__(self):
 		self.reactants = []
@@ -169,20 +170,22 @@ class reaction():
 		if(mass_reactants!=0 and (mode=="ALL" or "MASS" in mode)):
 			if(abs(1.e0-mass_products/mass_reactants)>1e-6):
 				print "************************************************"
-				print "ERROR: problem with mass conservation in reaction", self.idx
+				print "WARNING: problem with mass conservation in reaction", self.idx
 				print "reaction:",self.verbatim
 				print "reactants:", [r.name for r in self.reactants], mass_reactants
 				print "products:", [p.name for p in self.products], mass_products
-				print "mass ratio:",mass_products/mass_reactants, "(should be 1.0)"
+				print "mass ratio (prods/reacts):",mass_products/mass_reactants, "(should be 1.0)"
+				print "You can remove this check with the -nomassCheck option"	
 				print "************************************************"
 				a = raw_input("Any key to continue q to quit... ")
 				if(a=="q"): print sys.exit()
 		if(abs(charge_products - charge_reactants)!=0 and (mode=="ALL" or "CHARGE" in mode)):
 			print "************************************************"
-			print "ERROR: problem with charge conservation in reaction", self.idx
+			print "WARNING: problem with charge conservation in reaction", self.idx
 			print "reaction:",self.verbatim
 			print "reactants:", [r.name for r in self.reactants], charge_reactants
 			print "products:", [p.name for p in self.products], charge_products
+			print "You can remove this check with the -nochargeCheck option"
 			print "************************************************"
 			a = raw_input("Any key to continue q to quit... ")
 			if(a=="q"): print sys.exit()
@@ -1260,7 +1263,7 @@ def get_ph_stuff(react):
 
 #################################
 # returns the licence of KROME
-def get_licence_header(version, codename):
+def get_licence_header(version, codename, short=False):
 	import datetime
 	header =  """!!*************************************************************
 	!! This file has been generated with:
@@ -1302,6 +1305,20 @@ def get_licence_header(version, codename):
 	!! or any bug or malefunction.
 	!! Such exclusion of liability expressly includes any damages 
 	!! including the loss of data of any kind (including personal data)
+	!!*************************************************************\n"""
+
+	if(short): header = """!!*************************************************************
+	!!This file has been generated with:
+	!!KROME #version# on #date#
+	!!see http://kromepackage.org
+	!!
+	!!Written and developed by Tommaso Grassi
+	!!
+	!!Co-developer Stefano Bovino
+	!!Others (alphabetically): F.A. Gianturco, J.Prieto,
+	!!D.R.G. Schleicher, D. Seifried, E. Simoncini, E. Tognelli.
+	!!
+	!!KROME is provided \"as it is\", without any warranty.
 	!!*************************************************************\n"""
 
 	datenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

@@ -260,11 +260,15 @@ contains
     !cooling from reaction enthalpy erg/s/cm3
     use krome_commons
     implicit none
-    real*8::cooling_dH,cool,n(:),Tgas,small
+    real*8::cooling_dH,cool,n(:),Tgas,small,nmax
     real*8::logT,lnT,Te,lnTe,T32,t3,invT,invTe,sqrTgas,invsqrT32,sqrT32
 #KROME_vars
     
-    small = 1d-40
+    !replace small according to the desired enviroment
+    ! and remove nmax if needed
+    nmax = maxval(n(1:nmols))
+    small = #KROME_small
+
     logT = log10(Tgas) !log10 of Tgas (#)
     lnT = log(Tgas) !ln of Tgas (#)
     Te = Tgas*8.617343d-5 !Tgas in eV (eV)

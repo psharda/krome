@@ -103,10 +103,13 @@ contains
     implicit none
     real*8::heatingChem, n(:), Tgas,k(:),nH2dust
     real*8::h2heatfac,HChem,yH,yH2
-    real*8::ncr,ncrn,ncrd1,ncrd2,dd,n2H,small
+    real*8::ncr,ncrn,ncrd1,ncrd2,dd,n2H,small,nmax
     dd = get_Hnuclei(n(:))
 
-    small = 1d-40
+    !replace small according to the desired enviroment
+    ! and remove nmax if needed
+    nmax = maxval(n(1:nmols))
+    small = #KROME_small
 
     heatingChem = 0.d0
 

@@ -56,7 +56,8 @@ class krome():
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = False
-	doRamses = doFlash = doEnzo = wrapC = mergeTlimits = False
+	doRamses = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = False
+	humanFlux = True
 	typeGamma = "DEFAULT"
 	test_name = "default"
 	is_test = False
@@ -131,15 +132,17 @@ class krome():
 			Default is ATOL=1d-20, see also -RTOL and -customATOL")
 		self.parser.add_argument("-C", action="store_true", help="create a simple C wrapper")
 		self.parser.add_argument("-compact", action="store_true", help="creates a single fortran file with all the modules instead of\
-			various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact).")
+			various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact)")
 		self.parser.add_argument("-checkConserv", action="store_true", help="check mass conservation during integration (slower)")
 		self.parser.add_argument("-clean", action="store_true", help="clean all in /build (including krome_user_commons.f90 that\
 			is normally kept by default) before creating new f90 files.")
+		self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
 		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global\
 			neutrality. Works with some limitations, please read the manual.")
 		self.parser.add_argument("-conserveE", action="store_true", help="conserves the charge global neutrality only.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
-			COMPTON, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI)")
+			COMPTON, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI). Note that further\
+			cooling options can be added when reading cooling function from file")
 		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line,\
 			e.g. H2 1d-20, see also -ATOL", metavar="filename")
 		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
@@ -185,6 +188,7 @@ class krome():
 			using NASA polynomials.")
 		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g.\
 			-RTOL 1e-5 Default is RTOL=1d-4, see also -ATOL and -customRTOL")
+		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
 		self.parser.add_argument("-skipODEthermo", action="store_true", help="do not compute dT/dt in the ODE RHS function (fex)")
 		self.parser.add_argument("-source", metavar="folder", help="use FOLDER as source directory")
@@ -415,10 +419,15 @@ class krome():
 		if(args.reverse):
 			self.useReverse = True
 			print "Reading option -reverse"
-		#use H2opacity following 
+		#use H2opacity following
 		if(args.useH2opacity):
 			self.useH2opacity = True
 			print "Reading option -useH2opacity"
+
+		#use human Fluxes
+		if(args.compressFluxes):
+			self.humanFlux = False
+			print "Reading option -compressFluxes"
 
 		#use cooling dT/dt in the ODE fex
 		if(args.skipODEthermo):
@@ -441,6 +450,11 @@ class krome():
 			self.mergeTlimits = True
 			print "Reading option -mergeTlimits"
 
+		#use short header for f90 files
+		if(args.sh):
+			self.shortHead = True
+			print "Reading option -sh"
+
 		#skip reaction mass / charge check
 		if((args.nomassCheck and args.nochargeCheck) or args.noCheck):
 			print "Reading option -nochargeCheck"
@@ -448,10 +462,10 @@ class krome():
 			self.checkMode = "NONE"
 		elif(args.nomassCheck and not(args.nochargeCheck)):
 			print "Reading option -nomassCheck"
-			self.checkMode = "MASS"
+			self.checkMode = "CHARGE"
 		elif(not(args.nomassCheck) and (args.nochargeCheck)):
 			print "Reading option -nochargeCheck"
-			self.checkMode = "CHARGE"
+			self.checkMode = "MASS"
 		elif(not(args.nomassCheck) and not(args.nochargeCheck)):
 			self.checkMode = "ALL"
 		else:
@@ -558,6 +572,7 @@ class krome():
 		#determine cooling types
 		if(args.cooling):
 			myCools = args.cooling.split(",")
+			myCools = [x.strip() for x in myCools]
 			#list of all cooling (excluded from file)
 
 			allCools = ["ATOMIC","H2","HD","DH","DUST","H2GP98","COMPTON","CIE","CONT","CHEM","DISS","Z"]
@@ -632,6 +647,7 @@ class krome():
 		#determine heating types
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
+			myHeat = [x.strip() for x in myHeat]
 			allHeats = ["COMPRESS","PHOTO","CHEM","DH"]
 			for hea in myHeat:
 				if(not(hea in allHeats)):
@@ -1083,15 +1099,17 @@ class krome():
 					sys.exit()
 			
 				continue #SKIP format line (it is not a reaction line)
+
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
+			arow = [x.strip() for x in arow] #strip single elements
 			if(len(arow)!=format_items): 
 				print "WARNING: wrong format for reaction "+str(rcount+1)
 				print srow
 				a = raw_input("Any key to continue q to quit... ")
 				if(a=="q"): print sys.exit()
 				continue #check line format (N elements, 4=idx+Tmin+Tmax+rate)
-			found_one = True
-			rcount += 1
+			found_one = True #flag to determine at least one reaction found
+			rcount += 1 #count the totoal number of reaction found
 			myrea = reaction() #create object reaction
 
 			#use reaction index found into the file
@@ -1154,10 +1172,19 @@ class krome():
 
 			myrea.Tmin = "2.73d0" #default min temperature
 			myrea.Tmax = "1.d8" #default max temperature
-			if(tminFound): myrea.Tmin = format_double(arow[iTmin]) #get Tmin
-			if(tmaxFound): myrea.Tmax = format_double(arow[iTmax]) #get Tmax
-			if(tminFound): TminAuto = min(float(arow[iTmin].lower().replace("d","e")), TminAuto)
-			if(tmaxFound): TmaxAuto = max(float(arow[iTmax].lower().replace("d","e")), TmaxAuto)
+			#search for reactions without Tlims
+			if(tminFound):
+				if(arow[iTmin].strip().upper() in ["N","NONE","N/A","NO"]): myrea.hasTlimitMin = False
+			if(tmaxFound):
+				if(arow[iTmax].strip().upper() in ["N","NONE","N/A","NO"]): myrea.hasTlimitMax = False
+			#store Tlimits if any
+			if(myrea.hasTlimitMin):
+				if(tminFound): myrea.Tmin = format_double(arow[iTmin]) #get Tmin
+				if(tminFound): TminAuto = min(float(arow[iTmin].lower().replace("d","e")), TminAuto)
+			if(myrea.hasTlimitMax):
+				if(tmaxFound): myrea.Tmax = format_double(arow[iTmax]) #get Tmax
+				if(tmaxFound): TmaxAuto = max(float(arow[iTmax].lower().replace("d","e")), TmaxAuto)
+			#store other data
 			myrea.krate = arow[irate] #get reaction rate written in F90 style
 			if(qeffFound): myrea.qeff = arow[iqeff]
 
@@ -1197,6 +1224,7 @@ class krome():
 				print " rate = "+myrea.krate
 				sys.exit()
 
+			#skip duplicated reactions if requested
 			skip_append = False
 			if(skipDup):
 				myrea.build_pseudo_hash() #build pseudo_hash
@@ -1207,6 +1235,8 @@ class krome():
 					rcount -= 1
 				else:
 					pseudo_hash_list.append(myrea.pseudo_hash)
+
+			#append reactions if not skipped 
 			if(not(skip_append)): reacts.append(myrea)
 
 	
@@ -1229,6 +1259,7 @@ class krome():
 			idxs.append(rea.idx)
 			nrea += 1
 
+		#copy local to global vars
 		self.nrea = nrea
 		self.specs = specs
 		self.reacts = reacts
@@ -1236,7 +1267,19 @@ class krome():
 		self.TmaxAuto = TmaxAuto
 
 		print "done!"
-
+	
+	#####################################################
+	def photo_warnings(self):
+		if(self.is_test): return #skip warning if test mode
+		if(self.usePhIoniz or self.useHeatingPhoto):
+			print "************************************************"
+			print "REMINDER: note that, since you are using photon-based"
+			print " options, you need to include \"call krome_init_photo()\""
+			print " to your main file in order to initialize the rate" 
+			print " coefficients!"
+			print "************************************************"
+			a = raw_input("Any key to continue...")
+		
 	###############################################
 	def do_reverse(self):
 		#do reverse reaction if needed
@@ -1258,6 +1301,7 @@ class krome():
 					myrev.idx = count_reverse
 					myrev.Tmin = myrea.Tmin #get Tmin
 					myrev.Tmax = myrea.Tmax #get Tmax
+					myrev.hasTlimts = myrea.hasTlimits #get info on Tlimits
 					myrev.reactants = myrea.products
 					myrev.products = myrea.reactants
 					myrev.TminOp = myrea.TminOp #get Tmin operator
@@ -1539,7 +1583,7 @@ class krome():
 
 		#if species are few print list of species
 		if(len(specs)<20): print "ODEs list: "+(", ".join([x.name for x in specs]))
-		print "Species list in species.log"
+		print "Species list saved in species.log"
 		print
 
 	############################################
@@ -1558,8 +1602,8 @@ class krome():
 		for rea in reacts:
 			if(rea.idx in idxs): continue #skip if already employed index
 			idxs.append(rea.idx)
-			#rhs = rea.RHS
 			rhs = "kflux("+str(rea.idx)+")"
+			if(self.humanFlux): rhs = rea.RHS
 			for r in rea.reactants:
 				dns[r.idx-1] = dns[r.idx-1].replace(" = 0.d0"," =")
 				dns[r.idx-1] += " -"+rhs
@@ -2185,7 +2229,7 @@ class krome():
 					fout.write("\tinteger,parameter::ndust=" + str(ndust) + "\n")
 					fout.write("\tinteger,parameter::ndustTypes=" + str(self.dustTypesSize) + "\n")
 			elif(srow == "#KROME_header"):
-				fout.write(get_licence_header(self.version, self.codename))
+				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(srow == "#KROME_implicit_arr_r"):
 				for j in range(self.maxnreag):
 					fout.write("integer::arr_r"+str(j+1)+"(nrea)\n")
@@ -2269,7 +2313,7 @@ class krome():
 			fouta = open(self.buildFolder+"krome_user_commons.f90","w")
 
 			for row in fh:
-				row = row.replace("#KROME_header", get_licence_header(self.version, self.codename))
+				row = row.replace("#KROME_header", get_licence_header(self.version, self.codename,self.shortHead))
 
 				if(row[0]!="#"): fouta.write(row)
 
@@ -2397,16 +2441,30 @@ class krome():
 
 			if(skip): continue #skip
 
+			#replace the small value for rates according to the maximum number of products 
+			if("#KROME_small" in srow):
+				maxprod = 0
+				for x in reacts:
+					maxprod = max(len(x.products),maxprod)
+				fout.write(srow.replace("#KROME_small","1d-40/("+("*".join(["nmax"]*maxprod))+")")+"\n")
+				continue
+
+			#write reaction rates in coe function
 			if(srow == "#KROME_krates"):
 				for x in reacts:
+					#build temperature limit IF
 					sTlimit = ""
-					if(x.kphrate==None and self.useTlimits): 
-						sTlimit = "if(Tgas."+x.TminOp+"."+x.Tmin
-						sTlimit += " .and. Tgas."+x.TmaxOp+"."+x.Tmax+")"
-					kstr = "!" + x.verbatim+"\n"
-					kstr += "\t" + sTlimit + " k("+str(x.idx)+") = " + x.krate
-					kstr = truncF90(kstr, 60,"*")
-					fout.write(truncF90(kstr, 60,"/")+"\n\n")
+					hasTlim = (x.hasTlimitMin or x.hasTlimitMax) #Tmin or Tmax are present
+					if(x.kphrate==None and self.useTlimits and hasTlim):
+						sTlimit = "if("
+						if(x.hasTlimitMin): sTlimit += "Tgas."+x.TminOp+"."+x.Tmin #Tmin is present
+						if(x.hasTlimitMin and x.hasTlimitMax): sTlimit += " .and. " #Tmin and Tmax are present
+						if(x.hasTlimitMax): sTlimit += "Tgas."+x.TmaxOp+"."+x.Tmax #Tmax is present
+						sTlimit += ")"
+					kstr = "!" + x.verbatim+"\n" #reaction header
+					kstr += "\t" + sTlimit + " k("+str(x.idx)+") = " + x.krate #limit+rate
+					kstr = truncF90(kstr, 60,"*") #truncates long reaction rates
+					fout.write(truncF90(kstr, 60,"/")+"\n\n") #truncate
 			elif(srow == "#KROME_conserve"):
 				fout.write(krome_conserve+"\n")
 			elif(srow == "#KROME_implicit_arrays"):
@@ -2478,7 +2536,7 @@ class krome():
 					spt += "Tlim("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.Tpoly])) + "/)\n"
 				fout.write(sp1+sp2+spt)
 			elif(srow == "#KROME_header"):
-				fout.write(get_licence_header(self.version, self.codename))
+				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(srow == "#KROME_gamma"):
 				#computes the adiabatic index if needed or uses a user-defined expression 
 				if(self.typeGamma=="DEFAULT"):
@@ -2733,9 +2791,16 @@ class krome():
 
 			if(skip): continue
 
+			#replace the small value for rates according to the maximum number of products 
+			if("#KROME_small" in srow):
+				maxprod = 0
+				for x in reacts:
+					maxprod = max(len(x.products),maxprod)
+				fout.write(srow.replace("#KROME_small","1d-40/("+("*".join(["nmax"]*maxprod))+")")+"\n")
+				continue
 
 			if(row.strip() == "#KROME_header"):
-				fout.write(get_licence_header(self.version, self.codename))
+				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(row.strip() == "#KROME_nZrate"):
 					fout.write("integer,parameter::nZrate="+str(self.coolZ_nkrates)+"\n")
 			elif(row.strip() == "#KROME_coolingZ_call_functions"):
@@ -2859,9 +2924,15 @@ class krome():
 				for i in range(len(Rref)):
 					if(Rref[i]==R and Pref[i]==P):
 						headchem = "!"+rea.verbatim + " ("+("heating" if href[i]=="H"  else "cooling") + ")\n"
-						tklim = headchem + "if(Tgas." + rea.TminOp + "."  + rea.Tmin
-						tklim += " .and. Tgas." + rea.TmaxOp + "." + rea.Tmax + ") then\n"
-						HChem += tklim + "HChem = HChem + k("+str(rea.idx)+") * ("+kref[i] + "*"+rmult+")\n end if\n\n"
+						hasTlim = (rea.hasTlimitMin or rea.hasTlimitMax) #Tmin or Tmax are present
+						if(self.useTlimits and hasTlim):
+							tklim = "if("
+							if(rea.hasTlimitMin): tklim += "Tgas." + rea.TminOp + "."  + rea.Tmin #Tmin is present
+							if(rea.hasTlimitMin and rea.hasTlimitMax): tklim += " .and. " #Tmax and Tmin are present
+							if(rea.hasTlimitMax): tklim += "Tgas." + rea.TmaxOp + "." + rea.Tmax #Tmax is present
+							tklim += ") then\n"
+						HChem += headchem + tklim + "HChem = HChem + k("+str(rea.idx)+") * ("+kref[i] + "*"+rmult+")\n"
+						if(self.useTlimits and hasTlim): HChem += "end if\n\n"
 						break
 			if(self.useDustH2):
 				HChemDust += "HChem = HChem + nH2dust * (0.2d0/h2heatfac + 4.2d0)\n"
@@ -2883,7 +2954,7 @@ class krome():
 		for row in fh:
 			if(row.strip() == "#KROME_header"):
 
-				fout.write(get_licence_header(self.version, self.codename))
+				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			else:
 				if(row.strip() == "#IFKROME_useHeatingdH" and (not(self.useHeatingdH) or len(dH_varsa)==0)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
@@ -2899,6 +2970,13 @@ class krome():
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				if(skip): continue
+
+				#replace the small value for rates according to the maximum number of products 
+				if("#KROME_small" in row):
+					maxprod = 0
+					for x in reacts:
+						maxprod = max(len(x.products),maxprod)
+					row = row.replace("#KROME_small","1d-40/("+("*".join(["nmax"]*maxprod))+")")
 
 				row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
 				row = row.replace("#KROME_HChem_terms", HChem) #replace chemical heating terms
@@ -3018,9 +3096,10 @@ class krome():
 					else:
 
 						#add init flux var
-						for x in self.reacts:
-							fout.write("kflux("+str(x.idx)+") = "+x.RHS+"\n")
-						fout.write("\n")
+						if(not(self.humanFlux)): 
+							for x in self.reacts:
+								fout.write("kflux("+str(x.idx)+") = "+x.RHS+"\n")
+							fout.write("\n")
 					
 						inw = 0
 						for x in dnw:
@@ -3035,7 +3114,7 @@ class krome():
 							fout.write("!"+specs[inw].name+"\n")
 							fout.write("\t" + x + "\n")
 							inw += 1
-			elif(srow == "#KROME_flux_variables"):
+			elif(srow == "#KROME_flux_variables" and not(self.humanFlux)):
 				#add var declaration for flux
 				#for x in self.reacts:
 				#	fout.write("real*8::"+x.RHSvar+"\n")
@@ -3071,7 +3150,7 @@ class krome():
 					dustSumVar.append("dSumDust"+dType)
 				fout.write("\t real*8::" + (",".join(dustSumVar)) + "\n")
 			elif(srow == "#KROME_header"):
-				fout.write(get_licence_header(self.version, self.codename))
+				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(srow == "#KROME_implicit_variables"):
 				fout.write("real*8::rr\n")
 				ris = (",".join(["r"+str(i+1) for i in range(self.maxnreag)]))
@@ -3215,7 +3294,7 @@ class krome():
 				for x in specs:
 					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
 			elif(srow == "#KROME_header"):
-				fout.write(get_licence_header(self.version, self.codename))
+				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(srow == "#KROME_zero_electrons"):
 				#check if electron exists
 				for x in specs:
@@ -3420,7 +3499,7 @@ class krome():
 			if(skip): continue
 
 			if(srow == "#KROME_header"):
-				fout.write(get_licence_header(self.version, self.codename))
+				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(srow == "#KROME_custom_ATOL"):
 				#add custom atols
 				if(len(self.atols)>0):

@@ -77,6 +77,9 @@ krome.prepare_massdict()
 #read reaction file
 krome.read_file()
 
+#issue photo-warning is needed
+krome.photo_warnings()
+
 #compute reverse kinetics if necessary
 krome.do_reverse()
 

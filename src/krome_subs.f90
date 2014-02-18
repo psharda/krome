@@ -12,13 +12,17 @@ contains
     real*8::coe(nrea),k(nrea),Tgas,t,t3,n(nspec)
     real*8::logT,lnT,Te,lnTe,T32,invT,invTe,sqrTgas,invsqrT32,sqrT32
     real*8::Tgas2,Tgas3,Tgas4,T0,T02,T03,T04,T0inv,T4,invsqrT
-    real*8::small
+    real*8::small,nmax
     integer::i
 #KROME_initcoevars
     !Tgas is in K
     Tgas = max(n(idx_Tgas), 2.73d0)
     T = Tgas
-    small = 1d-40
+    
+    !maxn initialization can be removed and small can be
+    ! replaced with a proper value according to the environment
+    nmax = maxval(n(1:nmols))
+    small = #KROME_small
 
 #KROME_Tshortcuts
 
