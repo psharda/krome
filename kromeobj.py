@@ -218,6 +218,9 @@ class krome():
 		self.parser.add_argument("-usePlainIsotopes", action="store_true", help="use kA format for isotopes instead of [k]A format,\
 			where k is the isotopic number and A is the atom name, e.g. krome looks for 14C instead of [14]C in the reactions file.")
 		self.parser.add_argument("-useTabs", action="store_true", help="use tabulated rate coefficients (free parameter: temperature)")
+		self.parser.add_argument("-v", action="store_true", help="print the current version of KROME")
+		self.parser.add_argument("-ver", action="store_true", help="same as -v")
+		self.parser.add_argument("-version", action="store_true", help="same as -v")
 	 
 	
 	######################################
@@ -334,7 +337,8 @@ class krome():
 		#get filename
 		if(not(self.is_test) and args.n): self.filename = args.n
 		#chech if reactions file exists
-		if(not(os.path.isfile(self.filename))): die("ERROR: Reaction file \""+self.filename+"\" doesn't exist!")
+		if(args.n):
+			if(not(os.path.isfile(self.filename))): die("ERROR: Reaction file \""+self.filename+"\" doesn't exist!")
 
 		#use f90 solver
 		if(args.useDvodeF90):
@@ -454,6 +458,11 @@ class krome():
 		if(args.sh):
 			self.shortHead = True
 			print "Reading option -sh"
+
+		#use short header for f90 files
+		if(args.v or args.ver or args.version):
+			print "You are using KROME "+self.version+" \""+self.codename+"\""
+			sys.exit()
 
 		#skip reaction mass / charge check
 		if((args.nomassCheck and args.nochargeCheck) or args.noCheck):
