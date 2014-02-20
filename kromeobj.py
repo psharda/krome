@@ -97,6 +97,7 @@ class krome():
 	coolZ_nkrates = 0
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
 	Zcools = [] #list of cooling read from file (species name, e.g. C+)
+	coolFile = "data/coolZ.dat" #"tools/out.dat"
 	version = "13.11"
 	codename = "Astonishing Ansatz"
 
@@ -583,18 +584,24 @@ class krome():
 			myCools = args.cooling.split(",")
 			myCools = [x.strip() for x in myCools]
 			#list of all cooling (excluded from file)
-
 			allCools = ["ATOMIC","H2","HD","DH","DUST","H2GP98","COMPTON","CIE","CONT","CHEM","DISS","Z"]
+			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
-			fname = "data/coolZ.dat"
+			fname = self.coolFile
 			fh = open(fname,"rb")
+			inComment = False
 			for row in fh:
 				srow = row.strip()
 				#skip cooments
 				if(srow==""): continue
 				if(srow[0]=="#"): continue
-				if(srow[0]=="//"): continue
+				if(srow[:1]=="//"): continue
+				if(srow[:1]=="/*"): inComment = True
+				if("*/" in srow): 
+					inComment = False
+					continue
 				srow = srow.split("#")[0]
+				if(inComment): continue
 				#look for the metal name
 				if("metal:" in srow):
 					metal_name = srow.split(":")[1].strip().capitalize() #metal name starts with capital letter
@@ -606,14 +613,13 @@ class krome():
 					else:
 						mname = metal_name+"I" #is not an ion
 
-					self.Zcools.append(metal_name) #append metal name to the list of the requested species
-					self.zcoolants.append(mname) #append roman metal name to the list of the coolants
 					if(mname in allCools):
 						print "ERROR: conflict name for "+mname+", which is already present!"
 						sys.exit()
+					fileCools.append({"flag":mname,"name":metal_name}) #append to the list fo the available coolings
 					allCools.append(mname) #append flag to the list of the coolants
 			#write found coolants
-			if(len(self.zcoolants)>0): print "Cooling "+(", ".join(self.zcoolants))+" loaded from "+fname
+			if(len(fileCools)>0): print "Cooling "+(", ".join([x["flag"] for x in fileCools]))+" available from "+fname
 			
 			#check coolant names
 			for coo in myCools:
@@ -632,11 +638,22 @@ class krome():
 			if("DISS" in myCools): self.useCoolingDISS = True
 			if("CONT" in myCools): self.useCoolingCont = True
 			if("Z" in myCools): self.useCoolingZ = True
-			self.zcoolants += ["CI","CII","OI","OII","SiI","SiII","FeI","FeII"]
-			for coo in myCools:
-				if(coo in self.zcoolants):
+
+			#loop over metals loaded from file and search for themin the cooling flags provided by the user
+			for met in fileCools:
+				if(met["flag"] in myCools):
+					#print "Option "+met["flag"]+" will load data from "+fname
 					self.useCoolingZ = True
-					break
+					self.Zcools.append(met["name"]) #append metal name to the list of the requested species
+					self.zcoolants.append(met["flag"]) #append roman metal name to the list of the coolants
+					#add also neutral in case of ions
+					if("+" in met["name"]):
+						neutral_name = met["name"].replace("+","")
+						if(not(neutral_name in self.Zcools)): self.Zcools.append(neutral_name)
+					#add also neutral in case of anions
+					if("-" in met["name"]):
+						neutral_name = met["name"].replace("-","")
+						if(not(neutral_name in self.Zcools)): self.Zcools.append(netural_name)
 
 			self.use_cooling = True
 			self.hasDust = False
@@ -1352,7 +1369,7 @@ class krome():
 					break
 			#if not found parse and add
 			if(not(zFound)):
-				print "Adding specie \""+zcool+"\" (requested by metal cooling)"
+				print "Adding species \""+zcool+"\" (requested by metal cooling)"
 				mymol = parser(zcool,self.mass_dic,self.atoms,self.thermodata)
 				mymol.idx = len(specs)+1
 				self.specs.append(mymol)
@@ -1907,11 +1924,12 @@ class krome():
 		print " LWM:",lwm,"LRW:",lrw
 		self.lwm = lwm
 		self.lrw = lrw
+
 	#######################################
 	#this function loads the cooling functions from a file
 	# and prepares all the necessary stuff 
 	def createZcooling(self):
-		fname = "data/coolZ.dat" #file containing cooling information
+		fname = self.coolFile #file containing cooling information
 		if(not(file_exists(fname))):
 			print "ERROR: file "+fname+" not found!"
 			sys.exit()
@@ -1925,14 +1943,17 @@ class krome():
 		krates = [] #rates
 		nkrates = 0
 		#read file
+		print "******************"
 		fh = open(fname,"rb")
 		for row in fh:
 			srow = row.strip()
 			if(srow==""): continue #skip blank lines
 			if(srow[0]=="#"): continue #skip lines with coments
-			if(srow[0]=="//"): continue #comments
-			if(srow[0]=="/*"): skip = True #skip large comments
-			if("*/" in srow[0]): skip = False
+			if(srow[:1]=="//"): continue #comments
+			if(srow[:1]=="/*"): skip = True #skip large comments
+			if("*/" in srow): 
+				skip = False
+				continue
 			srow = srow.split("#")[0] #skip comments
 			if(skip): continue
 			if((srow=="endmetal" or srow=="end metal") and skip_metal):
@@ -1958,7 +1979,7 @@ class krome():
 					mname = metal_name.replace("-","") + "m"+int_to_roman(metal_name.count("-")+1)
 				else:
 					mname = metal_name+"I" #is not an ion
-				if(not(mname in zcoolants)): skip_metal = True 
+				if(not(mname.upper() in [x.upper() for x in zcoolants])): skip_metal = True
 
 				function_name = "cooling"+mname #name of the cooling function
 				cur_metal = metal_name.replace("+","j").replace("-","k") #current metal name
@@ -1982,7 +2003,7 @@ class krome():
 			if("level" in srow):
 				nlev = int(srow.split(":")[0].replace("level","").strip()) #level number
 				energy, gmult = srow.split(":")[1].split(",") #get energy and degenerancy factor
-				levels[nlev] = {"energy":float(energy), "gmult":int(gmult)} #store energy and degenerancy
+				levels[nlev] = {"energy":float(energy), "gmult":float(gmult)} #store energy and degenerancy
 				continue
 			
 			#end of metals block
@@ -2046,8 +2067,11 @@ class krome():
 				for tr in transitions:
 					varM = "M" + str(tr["up"]) + str(tr["down"]) + cur_metal
 					real_variables.append(varM) #add to double variable list
-					if(not(varM in varMexist)): 
-						MM[varM] = [Aijs[(tr["up"],tr["down"])]]
+					if(not(varM in varMexist)):
+						try:
+							MM[varM] = [Aijs[(tr["up"],tr["down"])]]
+						except:
+							MM[varM] = ["0e0"]
 						MMij[varM] = [tr["up"],tr["down"]]
 					coll = tr["coll"]
 					varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll 
@@ -2101,10 +2125,13 @@ class krome():
 				for tr in transitions:
 					if([tr["up"],tr["down"]] in trs): continue
 					trs.append([tr["up"],tr["down"]])
-					cool = Aijs[(tr["up"],tr["down"])] + "*"
-					cool += str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + " * "
-					cool += Bvar + "(" + str(tr["up"]+1) + ")"
-					cools.append(cool)
+					try:
+						cool = Aijs[(tr["up"],tr["down"])] + "*"
+						cool += str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + " * "
+						cool += Bvar + "(" + str(tr["up"]+1) + ")"
+						cools.append(cool)
+					except:
+						pass
 				full_cool += function_name + " = " + (" + &\n".join(cools)) + "\n"
 
 				#insert the end of the function
@@ -2130,11 +2157,11 @@ class krome():
 				krates.append(ifcond.strip() +" k("+ str(nkrates) +") = "+ifrate.strip())
 				continue			
 			
-			#read collider rate
-			if(len(row.split(","))==4):
+			#read collider rates
+			if(len(row.split(","))>=4):
 				nkrates += 1
 				#read collider, starting level, end level, rate F90 expression
-				coll, lev_up, lev_down, rate = [x.strip() for x in srow.split(",")]
+				coll, lev_up, lev_down, rate = [x.strip() for x in srow.split(",",3)]
 				coll = coll.replace("+","j").replace("-","k") #collider name for variable
 				var_excitation = "g"+lev_up+lev_down+cur_metal+"_"+coll #excitation variable, g10C_Hp
 				var_excitation_rev = "g"+lev_down+lev_up+cur_metal+"_"+coll #dexcitation variable, g01C_Hp
@@ -2142,13 +2169,14 @@ class krome():
 				if(not(coll in colliders)): colliders.append(coll) #append collider names
 				real_variables.append(var_excitation) #add to double variable list
 				excitation_rates.append(var_excitation +" = "+rate) #store excitation rates
+				#print rate
 				krates.append("k("+ str(nkrates) +") = "+rate+" !"+cur_metal+lev_up+lev_down+"_"+coll)
 				kkrates.append(var_excitation+" = k("+str(nkrates) +")")
 				transitions.append({"up":int(lev_up), "down":int(lev_down), "coll":coll}) #store level transition
 
 			#read Aij
 			if(len(row.split(","))==3):
-				lup, ldown, Aij = [x.strip() for x in srow.split(",")]
+				lup, ldown, Aij = [x.strip() for x in srow.split(",",4)]
 				Aijs[(int(lup),int(ldown))] = Aij
 
 		#copy local arrays and dictionaries to class attributes

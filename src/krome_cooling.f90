@@ -546,6 +546,32 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
+  !function for linear interpolation of f(x), using xval(:)
+  ! and the corresponding yval(:) as reference values
+  ! note: slow function, use only for initializations
+  function flin(xval,yval,x)
+    implicit none
+    real*8::xval(:),yval(:),x,flin
+    integer::i,n
+    logical::found
+    found = .false.
+    n = size(xval)
+    x = max(x,xval(1)) !set lower bound
+    x = min(x,xval(n)) !set upper bound
+    !loop to find interval (slow)
+    do i=1,n-1
+       if(x.le.xval(i)) then
+          !linear fit
+          flin = (yval(i+1) - yval(i)) / (xval(i+1) - xval(i)) * &
+               (x - xval(i)) + yval(i)
+          found = .true. !found flag
+          exit
+       end if
+    end do
+    if(not(found)) flin = yval(n)
+
+  end function flin
+
   !***********************
   !metal cooling as in Maio et al. 2007
   ! loaded from data file 

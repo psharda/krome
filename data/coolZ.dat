@@ -1,3 +1,6 @@
+#cooling function for several species (especially metals)
+
+#define here shortcut variables employed in excitation rates
 @var:T2 = Tgas*1d-2
 @var:invTgas = 1d0/Tgas
 @var:lnT = log(Tgas)
