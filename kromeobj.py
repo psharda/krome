@@ -463,6 +463,7 @@ class krome():
 		#use short header for f90 files
 		if(args.v or args.ver or args.version):
 			print "You are using KROME "+self.version+" \""+self.codename+"\""
+			print GetHashofDirs()
 			sys.exit()
 
 		#skip reaction mass / charge check
