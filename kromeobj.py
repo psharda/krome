@@ -123,6 +123,16 @@ class krome():
 			sys.exit()
 
 		#TODO:check necessary files
+		fles = get_file_list()
+		for fle in fles:
+			if(os.path.isdir(fle)): continue
+			if(not(os.path.isfile(fle))):
+				print "************************************************"
+				print "WARNING: the file "+fle+" is missing!"
+				print "Do you want to proceed?"
+				print "************************************************"
+				a = raw_input("Any key to ignore q to quit... ")
+				if(a=="q"): print sys.exit()
 
 	#########################################
 	def init_argparser(self):
@@ -463,7 +473,7 @@ class krome():
 		#use short header for f90 files
 		if(args.v or args.ver or args.version):
 			print "You are using KROME "+self.version+" \""+self.codename+"\""
-			print GetHashofDirs()
+			#print "MD5: "+GetHashofDirs()
 			sys.exit()
 
 		#skip reaction mass / charge check
@@ -762,10 +772,7 @@ class krome():
 			#check if the file in flist are present in the folder
 			notfound = []
 			for fle in flist:
-				try:
-					with open(src+"/"+fle):
-						pass
-				except:
+				if(not(file_exists(src+"/"+fle))):
 					notfound.append(fle)
 
 			#if file missing write the error message
@@ -1943,6 +1950,7 @@ class krome():
 		coolZ_functions = [] #cooling functions
 		krates = [] #rates
 		nkrates = 0
+		needOrthoPara = False
 		#read file
 		print "******************"
 		fh = open(fname,"rb")
@@ -2014,9 +2022,17 @@ class krome():
 					print "ERROR: end metal statement without metal: statement!"
 					sys.exit()
 				inmetal = False #in metal block flag
+
+				#prepare ortho/para variables if needed
+				if(needOrthoPara):
+					full_cool += "H2or = "+str(ortho2para/(1e0+ortho2para)) + " * n(idx_H2)\n"
+					full_cool += "H2pa = "+str(1e0/(1e0+ortho2para)) + " * n(idx_H2)\n"
+					full_cool += "!explicit if needed\n"
+					full_cool += "!H2or = o2p / (1d0 + o2p) * n(idx_H2)\n"
+					full_cool += "!H2pa = 1d0 / (1d0 + o2p) * n(idx_H2)\n"
 			
 				#write de-excitation rates
-				full_cool += "!de-excitation rates\n"
+				full_cool += "\n!de-excitation rates\n"
 				for x in kkrates:
 					full_cool += x + "\n"
 				full_cool += "\n"
@@ -2060,8 +2076,11 @@ class krome():
 						MM[varM] = []
 						MMij[varM] = [tr["down"],tr["up"]]
 					coll = tr["coll"] #get colliders for the given transition
-					varup = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll 
-					MM[varM].append(varup+"*n(idx_"+coll+")") #include colliders abundance
+					varup = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
+					if(coll=="H2pa" or coll=="H2or"):
+						MM[varM].append(varup+"*"+coll) #include colliders abundance if ortho or para H2
+					else:
+						MM[varM].append(varup+"*n(idx_"+coll+")") #include colliders abundance
 					varMexist.append(varM)
 
 				#build Mji as above
@@ -2075,8 +2094,11 @@ class krome():
 							MM[varM] = ["0e0"]
 						MMij[varM] = [tr["up"],tr["down"]]
 					coll = tr["coll"]
-					varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll 
-					MM[varM].append(varup+"*n(idx_"+coll+")")
+					varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
+					if(coll=="H2pa" or coll=="H2or"):
+						MM[varM].append(varup+"*"+coll) #include colliders abundance if ortho or para H2
+					else:
+						MM[varM].append(varup+"*n(idx_"+coll+")") #include colliders abundance
 					varMexist.append(varM)
 
 				#write Mij and Mji definitions
@@ -2145,6 +2167,10 @@ class krome():
 					if(x in uniq): continue
 					vcool += "real*8::"+x+"\n"
 					uniq.append(x)
+				#add ortho/para variables if needed
+				if(needOrthoPara):
+					vcool += "real*8::H2pa,H2or,o2p\n"
+
 				full_cool = full_cool.replace("#KROME_replace_with_declarations", vcool)
 
 				coolZ_functions.append([function_name, full_cool])
@@ -2156,8 +2182,16 @@ class krome():
 				ifcond, ifrate = srow.split(":") #if condition, and rate
 				excitation_rates.append(ifcond.strip() +" "+ var_excitation +" = "+ifrate.strip()) #append rate
 				krates.append(ifcond.strip() +" k("+ str(nkrates) +") = "+ifrate.strip())
-				continue			
+				continue
 			
+			#read ortho/para
+			if("para/ortho" in srow.replace(" ","")):
+				aop = srow.split(":")[1].split("/")
+				para2ortho = float(aop[0])/float(aop[1])
+				ortho2para = float(aop[1])/float(aop[0])
+				needOrthoPara = True
+				print "Found para/ortho in "+fname+": "+str(para2ortho)
+
 			#read collider rates
 			if(len(row.split(","))>=4):
 				nkrates += 1
