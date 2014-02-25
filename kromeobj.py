@@ -1362,7 +1362,8 @@ class krome():
 					myrev.idx = count_reverse
 					myrev.Tmin = myrea.Tmin #get Tmin
 					myrev.Tmax = myrea.Tmax #get Tmax
-					myrev.hasTlimts = myrea.hasTlimits #get info on Tlimits
+					myrev.hasTlimtMin = myrea.hasTlimitMin #get info on TlimitMin
+					myrev.hasTlimtMax = myrea.hasTlimitMax #get info on TlimitMax
 					myrev.reactants = myrea.products
 					myrev.products = myrea.reactants
 					myrev.TminOp = myrea.TminOp #get Tmin operator
@@ -2619,7 +2620,9 @@ class krome():
 				maxprod = 0
 				for x in reacts:
 					maxprod = max(len(x.products),maxprod)
-				fout.write(srow.replace("#KROME_small","1d-40/("+("*".join(["nmax"]*maxprod))+")")+"\n")
+				mysmall = "1d-40/("+("*".join(["nmax"]*maxprod))+")"
+				if(maxprod==0): mysmall = "0d0"
+				fout.write(srow.replace("#KROME_small",mysmall)+"\n")
 				continue
 
 			#write reaction rates in coe function
@@ -2838,6 +2841,7 @@ class krome():
 			
 
 		#if reactions that cannot be tabbed are found
+		klist = kvars = ""
 		if(countNoTab>0):
 			if(len(coevars)!=0):
 				#define variables
@@ -2848,6 +2852,7 @@ class krome():
 				klist = "".join([x[0] for x in klist])
 
 
+		#replace pragmas
 		skip = False
 		for row in fh:
 			if(row.strip() == "#IFKROME_useCustomCoe" and not(self.useCustomCoe)): skip = True
@@ -3007,7 +3012,9 @@ class krome():
 				maxprod = 0
 				for x in reacts:
 					maxprod = max(len(x.products),maxprod)
-				fout.write(srow.replace("#KROME_small","1d-40/("+("*".join(["nmax"]*maxprod))+")")+"\n")
+				mysmall = "1d-40/("+("*".join(["nmax"]*maxprod))+")"
+				if(maxprod==0): mysmall = "0d0"
+				fout.write(srow.replace("#KROME_small",mysmall)+"\n")
 				continue
 
 			if(row.strip() == "#KROME_header"):
@@ -3191,7 +3198,9 @@ class krome():
 					maxprod = 0
 					for x in reacts:
 						maxprod = max(len(x.products),maxprod)
-					row = row.replace("#KROME_small","1d-40/("+("*".join(["nmax"]*maxprod))+")")
+					mysmall = "1d-40/("+("*".join(["nmax"]*maxprod))+")"
+					if(maxprod==0): mysmall = "0d0"
+					row = row.replace("#KROME_small",mysmall)
 
 				row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
 				row = row.replace("#KROME_HChem_terms", HChem) #replace chemical heating terms

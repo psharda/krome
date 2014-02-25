@@ -9,7 +9,7 @@ contains
     use krome_commons
     use krome_user_commons
     implicit none
-    real*8::coe(nrea),k(nrea),Tgas,n(nspec)
+    real*8::coe(nrea),k(nrea),Tgas,n(nspec),t
 #KROME_shortcut_variables
     real*8::small,nmax
     integer::i
@@ -299,7 +299,7 @@ contains
           end if
        end do
        !if nothing swapped exit
-       if(not(found)) exit
+       if(found==.false.) exit
     end do
 
     

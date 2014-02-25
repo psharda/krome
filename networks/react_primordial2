@@ -26,7 +26,6 @@
 12,H2,E,,H,H,E,,NONE,NONE,4.4d-10*Tgas**0.35*exp(-1.02d5*invT)
 
 @var:invT = 1d0/Tgas
-@var:T = Tgas
 @var:invsqrT = 1d0/sqrt(Tgas)
 @var:Hnuclei = get_Hnuclei(n(:))
 @var:kl13 = 1.12d-10*exp(-7.035d4*invT)
