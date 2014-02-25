@@ -128,36 +128,37 @@ krome.solverParams()
 #read metal cooling from data file
 krome.createZcooling()
 
-#prepare build directory
-krome.prepareBuild()
+if(not(krome.isdry)):
+	#prepare build directory
+	krome.prepareBuild()
 
-#replace pragma from src files
-krome.makeCommons()
-krome.makeConstants()
-krome.makeUserCommons()
-krome.makeSubs()
-krome.makePhoto()
-krome.makeTabs()
-krome.makeDust()
-krome.makeCooling()
-krome.makeHeating()
-krome.makeStars()
-krome.makeODE()
-krome.makeUser()
-krome.makeReduction()
-krome.makeMain()
+	#replace pragma from src files
+	krome.makeCommons()
+	krome.makeConstants()
+	krome.makeUserCommons()
+	krome.makeSubs()
+	krome.makePhoto()
+	krome.makeTabs()
+	krome.makeDust()
+	krome.makeCooling()
+	krome.makeHeating()
+	krome.makeStars()
+	krome.makeODE()
+	krome.makeUser()
+	krome.makeReduction()
+	krome.makeMain()
 
-#create a gnuplot script for report
-krome.makeReport()
+	#create a gnuplot script for report
+	krome.makeReport()
 
-#copy other files
-krome.copyOthers()
+	#copy other files
+	krome.copyOthers()
 
-#indent all the f90 files
-krome.indent()
+	#indent all the f90 files
+	krome.indent()
 
-#create patches if needed
-krome.patches()
+	#create patches if needed
+	krome.patches()
 
 
 #print a final report an usage hints

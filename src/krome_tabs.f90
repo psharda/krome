@@ -118,9 +118,14 @@ contains
     use krome_commons
     use krome_user_commons
     integer::idx,j
-    real*8::Tgas, coe_tab(nrea),n(nspec)
+    real*8::Tgas, coe_tab(nrea),n(nspec),small
+#KROME_define_vars
 
     Tgas = max(2.73d0,n(idx_Tgas))
+    small = 0d0
+
+#KROME_Tshortcuts
+#KROME_init_vars
 
 #IFKROME_useCustomCoe
     coe_tab(:) = #KROMEREPLACE_customCoeFunction
@@ -139,6 +144,8 @@ contains
        coe_tab(j) = (Tgas-ktab_T(idx)) * inv_ktab_T(idx) *&
             (ktab(j,idx+1)-ktab(j,idx)) + ktab(j,idx)
     end do
+
+    #KROME_noTabReactions
 #ENDIFKROME
 
   end function coe_tab

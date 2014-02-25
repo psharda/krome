@@ -56,7 +56,7 @@ class krome():
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = False
-	doRamses = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = False
+	doRamses = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -97,7 +97,7 @@ class krome():
 	coolZ_nkrates = 0
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
 	Zcools = [] #list of cooling read from file (species name, e.g. C+)
-	coolFile = "data/coolZ.dat" #"tools/out.dat"
+	coolFile = "data/coolZ.dat" #"tools/out.dat" #
 	version = "13.11"
 	codename = "Astonishing Ansatz"
 
@@ -159,6 +159,7 @@ class krome():
 		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
 		self.parser.add_argument("-customRTOL", help="file with the list of the individual RTOLs in the form SPECIES RTOL in each line,\
 			e.g. H3+ 1d-4, see also -RTOL", metavar="filename")
+		self.parser.add_argument("-dry", action="store_true", help="dry pre-compilation: does not write anything in the build direactory")
 		self.parser.add_argument("-dust", help="include dust ODE using N bins for each TYPE, e.g. -dust 10,C,Si set 10 dust carbon\
 			bins and 10 dust silicon dust bins. Note: requires a call to the krome_init_dust subroutine.\
 			See -test=dust for an example.")
@@ -469,6 +470,11 @@ class krome():
 		if(args.sh):
 			self.shortHead = True
 			print "Reading option -sh"
+
+		#do not write anything to the build directory
+		if(args.dry):
+			self.isdry = True
+			print "Reading option -dry"
 
 		#use short header for f90 files
 		if(args.v or args.ver or args.version):
@@ -890,6 +896,7 @@ class krome():
 	###################################################
 	def safe_check(self):
 		if(not(self.safe) or not(os.path.exists(self.buildFolder))): return
+		if(self.isdry): return
 		wlk = os.walk(self.buildFolder).next()
 		wlk = wlk[1]+wlk[2] #folders+files
 		if(len(wlk)<1): return
@@ -1046,6 +1053,7 @@ class krome():
 		if(skipDup): fdup = open("duplicates.log","w")
 		idxFound = tminFound = tmaxFound = rateFound = True
 		qeffFound = False
+		group = "__DEFAULT__" #default group for reactions
 		specs = []
 		reacts = []
 		reags = [] #list of reagents for already found
@@ -1053,6 +1061,7 @@ class krome():
 		idxs = [] #list of index for already found
 		fh = open(filename,"rb") #OPEN FILE
 		isComment = False #flag for comment block
+		noTabNext = False #flag for use tabs for the next reaction 
 		for row in fh:
 			srow = row.strip() #stripped row
 			if(srow.strip()==""): continue #looks for blank line
@@ -1065,6 +1074,14 @@ class krome():
 				continue
 			if(isComment): continue #skip if in comment block
 
+			#search for group indication
+			if("@group:" in srow):
+				group = srow.replace("group:","").strip().replace(" ","_")
+				if(not(group.isalnum())): die("ERROR: group must be alphanumeric. Found "+group)
+				print "Found reactions group "+group
+				if(not(group in self.groups)): groups.append(group)
+				continue
+
 			#search for variables
 			if("@var:" in srow):
 				arow = srow.replace("@var:","").split("=")
@@ -1072,6 +1089,7 @@ class krome():
 					print "ERROR: variable line must be @var:variable=F90_expression"
 					print "found: "+srow
 					sys.exit()
+				if(arow[0] in self.coevars): continue #skip already found variables
 				self.coevars[arow[0]] = [ivarcoe,arow[1]]
 				ivarcoe += 1 #count variables to sort
 				continue #SKIP: a variable line is not a reaction line
@@ -1133,6 +1151,12 @@ class krome():
 					sys.exit()
 			
 				continue #SKIP format line (it is not a reaction line)
+
+			#if requested the next reaction will not uses tabs
+			if(srow.lower()=="@notabnext"):
+				noTabNext = True
+				continue #SKIP (not a reaction)
+				
 
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
 			arow = [x.strip() for x in arow] #strip single elements
@@ -1252,6 +1276,8 @@ class krome():
 			myrea.build_RHS(self.useNuclearMult) #build RHS in F90 format (e.g. k(2)*n(10)*n(8) )
 			myrea.build_phrate() #build photoionization rate
 			myrea.check(self.checkMode) #check mass and charge conservation
+			myrea.group = group #add the group to the reaction
+			myrea.canUseTabs = not(noTabNext) #check if this reaction can use tabs or not
 			if(myrea.krate.count("(")!=myrea.krate.count(")")):
 				print "ERROR: unbalanced brakets in reaction "+str(myrea.idx)
 				print " "+myrea.verbatim
@@ -1272,6 +1298,7 @@ class krome():
 
 			#append reactions if not skipped 
 			if(not(skip_append)): reacts.append(myrea)
+			noTabNext = False #return to default value
 
 	
 
@@ -1630,6 +1657,7 @@ class krome():
 		ndust = dustArraySize*dustTypesSize
 		nmols = self.nmols
 		dummy = self.dummy
+
 		#create explicit differentials
 		dns = ["dn("+str(sp.idx)+") = 0.d0" for sp in specs] #initialize
 		idxs = [] #already employed indexes
@@ -1644,6 +1672,68 @@ class krome():
 			for p in rea.products:
 				dns[p.idx-1] = dns[p.idx-1].replace(" = 0.d0"," =")
 				dns[p.idx-1] += " +"+rhs
+				
+
+
+		#equilibrium matrix (computed but not supported in this version)
+		idxs = [] #already employed indexes
+		xvar = [] #names of the composite variables
+		xvarM = [] #equilibrium matrix
+		xvarS = [] #symbolic matrix (for signless comparison)
+		for rea in reacts:
+			if(rea.idx in idxs): continue #skip if already employed index
+			ridx = rea.idx-1
+			#build matrix variable reactants
+			pre_xvarR = []
+			for r in rea.reactants:
+				pre_xvarR.append("n("+r.fidx+")")
+			#build matrix variable reactants
+			pre_xvarP = []
+			for p in rea.products:
+				pre_xvarP.append("n("+p.fidx+")")
+			#look for powers (e.g. H*H*H, or H2*H2)
+			#equals = 0
+			#if(pre_xvar.count(pre_xvar[0])==len(pre_xvar)): equals = pre_xvar.count(pre_xvar[0])
+			pre_xvarR = "*".join(pre_xvarR)
+			pre_xvarP = "*".join(pre_xvarP)
+			#in case of new variable add a row to the matrix
+			if(not(pre_xvarR in xvar)):
+				xvar.append(pre_xvarR)
+				xvarM.append(["0d0" for i in reacts])
+				xvarS.append(["" for i in reacts])
+			if(not(pre_xvarP in xvar)):
+				xvar.append(pre_xvarP)
+				xvarM.append(["0d0" for i in reacts])
+				xvarS.append(["" for i in reacts])
+			#add rate to the matrix element
+			for r in rea.reactants:
+				xvarM[xvar.index(pre_xvarR)][ridx] = xvarM[xvar.index(pre_xvarR)][ridx].replace("0d0", "")
+				xvarM[xvar.index(pre_xvarR)][ridx] += " -k("+str(ridx+1)+")"
+				xvarS[xvar.index(pre_xvarR)][ridx] += "_"+str(ridx)
+			for p in rea.products:
+				xvarM[xvar.index(pre_xvarP)][ridx] = xvarM[xvar.index(pre_xvarP)][ridx].replace("0d0", "")
+				xvarM[xvar.index(pre_xvarP)][ridx] += " +k("+str(ridx+1)+")"
+				xvarS[xvar.index(pre_xvarP)][ridx] += "_"+str(ridx)
+
+		#add conseravtion to matrix
+		xvarM.append(["1d0" for i in reacts])
+		xvarS.append(["eq1" for i in reacts]) #add dummy for symbolic matrix
+		xvar.append("+".join(xvar))
+		
+		#remove linear dependent terms
+		xvarM_u = []
+		for i in range(len(xvarS)):
+			row1 = xvarS[i]
+			isequal = False
+			for j in range(i+1,len(xvarS)):
+				row2 = xvarS[j]
+				if(row1==row2):
+					isequal = True
+					break
+			if(not(isequal)): 
+				xvarM_u.append(xvarM[i])
+		if(len(xvar)==len(xvarM_u)): print "NOTE: this system can be solved algebrically to the equilibrium"
+		#print str(len(xvar))+" variables and "+str(len(xvarM_u))+ " equations"
 
 		#add dust to ODEs
 		if(self.useDust):
@@ -1718,6 +1808,7 @@ class krome():
 			dnw.append(dns)
 			idn += 1
 		#dnw = [x.replace("+"," &\n+").replace("-"," &\n-") for x in ldns]
+
 		self.dnw = dnw
 
 
@@ -2401,6 +2492,7 @@ class krome():
 		specs = self.specs
 		thermodata = self.thermodata
 		coevars = self.coevars
+
 		#*********SUBS****************
 		#write parameters in krome_subs.f90
 		print "- writing krome_subs.f90...",
@@ -2410,10 +2502,16 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome_subs.f90","w")
 
+
 		#create list of temperature shortcuts
 		sclist = []
 		for rea in reacts:
-			sclist = get_Tshortcut(rea,sclist)
+			sclist = get_Tshortcut(rea,sclist,coevars)
+
+		#prepare shortcut definitions
+		shortcutVars = ""
+		for x in sclist:
+			shortcutVars += "real*8::"+x.split("=")[0].strip()+"\n"
 
 		#conserve
 		krome_conserve = "" #init full string for the pragma replacement
@@ -2515,6 +2613,9 @@ class krome():
 
 			#replace the small value for rates according to the maximum number of products 
 			if("#KROME_small" in srow):
+				if(self.useTabs):
+					fout.write(srow.replace("#KROME_small","0d0")+"\n")
+					continue					
 				maxprod = 0
 				for x in reacts:
 					maxprod = max(len(x.products),maxprod)
@@ -2607,6 +2708,8 @@ class krome():
 					sp2 += "p2("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2])) + "/)\n"
 					spt += "Tlim("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.Tpoly])) + "/)\n"
 				fout.write(sp1+sp2+spt)
+			elif(srow == "#KROME_shortcut_variables"):
+				fout.write(shortcutVars)
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(srow == "#KROME_gamma"):
@@ -2714,6 +2817,7 @@ class krome():
 	########################################################
 	def makeTabs(self):
 		buildFolder = self.buildFolder
+		coevars = self.coevars #copy coefficient varaibles
 		#********* TABS ****************
 		print "- writing krome_tabs.f90...",
 		fh = open(self.srcFolder+"krome_tabs.f90")
@@ -2721,6 +2825,27 @@ class krome():
 			fout = open(buildFolder+"krome_all.f90","a")
 		else:
 			fout = open(buildFolder+"krome_tabs.f90","w")
+
+		#include reactions that cannot be tabbed
+		countNoTab = 0
+		noTabReactions = ""
+		sclist = [] #list of the temperature shortcuts
+		for rea in self.reacts:
+			if(not(rea.canUseTabs)): 
+				noTabReactions += "coe_tab("+str(rea.idx)+") = "+rea.krate+"\n"
+				countNoTab += 1
+				sclist = get_Tshortcut(rea,sclist,coevars) #add shotcut if needed
+			
+
+		#if reactions that cannot be tabbed are found
+		if(countNoTab>0):
+			if(len(coevars)!=0):
+				#define variables
+				kvars = "real*8::"+(",".join([x.strip() for x in coevars.keys()]))
+				#variables initialization
+				klist = [[k+" = "+v[1]+"\n",v[0]] for k,v in coevars.iteritems()] #this mess is to sort dict
+				klist = sorted(klist, key=lambda x: x[1])
+				klist = "".join([x[0] for x in klist])
 
 
 		skip = False
@@ -2737,8 +2862,19 @@ class krome():
 			if(skip): continue
 			row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(max("+str(self.TminAuto)+",2.73d0))")
 			row = row.replace("#KROME_logTup", "ktab_logTup = log10(min("+str(self.TmaxAuto)+",1d8))")
+			row = row.replace("#KROME_define_vars",kvars)
+			row = row.replace("#KROME_init_vars",klist)
+			row = row.replace("#KROME_noTabReactions",noTabReactions)
+
+			if(row.strip() == "#KROME_Tshortcuts"):
+				ssc = ""
+				for shortcut in sclist:
+					ssc += shortcut + "\n"
+				row = ssc
+
 			if(self.useCustomCoe): row = row.replace("#KROMEREPLACE_customCoeFunction", self.customCoeFunction)
 
+			if(len(row)==0): continue
 			if(row[0]!="#"): fout.write(row)
 
 		if(not(self.buildCompact)):
@@ -2865,6 +3001,9 @@ class krome():
 
 			#replace the small value for rates according to the maximum number of products 
 			if("#KROME_small" in srow):
+				if(self.useTabs):
+					fout.write(srow.replace("#KROME_small","0d0")+"\n")
+					continue					
 				maxprod = 0
 				for x in reacts:
 					maxprod = max(len(x.products),maxprod)
@@ -2997,6 +3136,7 @@ class krome():
 					if(Rref[i]==R and Pref[i]==P):
 						headchem = "!"+rea.verbatim + " ("+("heating" if href[i]=="H"  else "cooling") + ")\n"
 						hasTlim = (rea.hasTlimitMin or rea.hasTlimitMax) #Tmin or Tmax are present
+						tklim = ""
 						if(self.useTlimits and hasTlim):
 							tklim = "if("
 							if(rea.hasTlimitMin): tklim += "Tgas." + rea.TminOp + "."  + rea.Tmin #Tmin is present
@@ -3045,6 +3185,9 @@ class krome():
 
 				#replace the small value for rates according to the maximum number of products 
 				if("#KROME_small" in row):
+					if(self.useTabs):
+						fout.write(row.replace("#KROME_small","0d0")+"\n")
+						continue					
 					maxprod = 0
 					for x in reacts:
 						maxprod = max(len(x.products),maxprod)
@@ -3082,6 +3225,7 @@ class krome():
 		dustTypes = self.dustTypes
 		nmols = self.nmols
 		specs = self.specs
+		#dnw_grouped = self.dnw_grouped
 		dnw = self.dnw
 		neq = len(specs)
 		solver_MF = self.solver_MF

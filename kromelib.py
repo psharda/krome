@@ -87,6 +87,8 @@ class reaction():
 	curlyP = [] #products curlyness
 	nuclearMult = "" #nuclear multeplicty factor 1/(n!)
 	hasTlimitMax = hasTlimitMin = True #flag to determine the presence of Temperature limits
+	group = "__DEFAULT__"
+	canUseTabs = True
 	#method: constructor to initialize lists
 	def __init__(self):
 		self.reactants = []
@@ -367,7 +369,7 @@ def parsevar(arg):
 ##################################
 #extend the list slist with the temperature shortcuts 
 # for the reaction rea
-def get_Tshortcut(rea,slist):
+def get_Tshortcut(rea,slist,cvars=[]):
 	shcut = ["t = Tgas !alias for Tgas (K)",
 	"logT = log10(Tgas) !log10 of Tgas (#)",
 	"lnT = log(Tgas) !ln of Tgas (#)",
@@ -415,9 +417,23 @@ def get_Tshortcut(rea,slist):
 	#sort the shortcuts by using the index in the list sckey to follow the hierarchy
 	slist = sorted(slist, key=lambda x:sckey.index((x.split("="))[0].strip().lower()))
 
-	#keep only unique shortcuts
-	ulist = []
+	#remove shortcuts that are already use as user-defined variables
+	slistu = []
 	for x in slist:
+		xkey = x.split("=")[0] #get the variable name
+		xFound = False
+		#loop on user-defined variables
+		for cv in cvars:
+			#when variable is found skip it
+			if(xkey.lower().strip()==cv.lower().strip()): 
+				xFound = True
+				break
+		if(not(xFound)):
+			slistu.append(x)
+
+	#keep only unique shortcuts (remove duplicates)
+	ulist = []
+	for x in slistu:
 		if(not(x in ulist)): ulist.append(x)
 
 	return ulist
@@ -631,7 +647,6 @@ def parser(name, mass_dic, atoms, thermo_data):
 ######################################
 def get_file_list():
 	files = []
-	files.append("README")
 	files.append("kromelib.py")
 	files.append("patches")
 	files.append("patches/flash")
@@ -768,13 +783,11 @@ def get_file_list():
 	files.append("krome")
 	files.append("kromeobj.py")
 	files.append("build")
-	files.append("build/README")
 	files.append("tools")
 	files.append("tools/subkida.py")
 	files.append("tools/hnc.dat")
 	files.append("tools/lamda2.py")
 	files.append("tools/kida_demo.dat")
-	files.append("gpl-3.0.txt")
 	files.append("src")
 	files.append("src/krome_constants.f90")
 	files.append("src/krome_tabs.f90")

@@ -2,7 +2,7 @@
 # SPCTROSCOPIC DATA FROM THE LAMDA DATABSE TO THE KROME FORMAT
 # FOR METAL/MOLECULAR COOLING
 
-fname = "hnc.dat" #input file
+fname = "co.dat" #input file
 outfile = "out.dat" #output file
 
 
@@ -65,6 +65,8 @@ for j in range(data["npartners"]):
 	rdx += 2
 	arow = read_line(rows[rdx])	
 	partner_name = arow[1].replace(data["molecule"]+"-","").replace(":","")
+	if(partner_name=="pH2"): partner_name = "H2pa"
+	if(partner_name=="oH2"): partner_name = "H2or"
 	data["colls"][partner_name] = dict()
 	data["colls"][partner_name]["info"] = rows[rdx]
 	data["partners"].append(partner_name)

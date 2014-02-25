@@ -546,6 +546,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
+  !*********************************************
   !function for linear interpolation of f(x), using xval(:)
   ! and the corresponding yval(:) as reference values
   ! note: slow function, use only for initializations
