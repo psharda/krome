@@ -56,7 +56,7 @@ class krome():
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = False
-	doRamses = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = False
+	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -111,6 +111,9 @@ class krome():
 			print "You can obtain it by typing (ubuntu users):"
 			print " apt-get install python-setuptools"
 			print " easy_install argparse"
+			print ""
+			print "more details here:"
+			print " https://pypi.python.org/pypi/argparse"
 			sys.exit()
 
 		#check python version
@@ -122,14 +125,14 @@ class krome():
 			print " KROME needs at least Python 2.5!"
 			sys.exit()
 
-		#TODO:check necessary files
-		fles = get_file_list()
+		#check necessary files
+		fles = get_file_list() #get the list of necessary files
 		for fle in fles:
-			if(os.path.isdir(fle)): continue
+			if(os.path.isdir(fle)): continue #do not check folders
 			if(not(os.path.isfile(fle))):
 				print "************************************************"
 				print "WARNING: the file "+fle+" is missing!"
-				print "Do you want to proceed?"
+				print "Do you want to proceed anyway?"
 				print "************************************************"
 				a = raw_input("Any key to ignore q to quit... ")
 				if(a=="q"): print sys.exit()
@@ -192,6 +195,8 @@ class krome():
 		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the\
 			default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
 		self.parser.add_argument("-ramses", action="store_true", help="create patches for RAMSES, see also -enzo and -flash")
+		self.parser.add_argument("-ramsesTH", action="store_true", help="create patches for RAMSES_TH. This is a private version\
+			and probably does not fix your needs.")
 		self.parser.add_argument("-report", action="store_true", help="generate report file in the main call to krome as\
 			KROME_ERROR_REPORT and when calling the fex as KROME_ODE_REPORT. It also stores abundances evolution in fex as \
 			fort.98, and prepares a report.gps gnuplot script file to plot evolutions callable in gnuplot with load \
@@ -525,6 +530,25 @@ class krome():
 			if(not(args.customATOL) and not(args.ATOL)):
 				print "WARNING: default ATOL set to 1e-10 due to -ramses flag."
 				self.ATOL = 1e-10
+
+		#creates ramsesTH version patches
+		if(args.ramsesTH):
+			self.doRamsesTH = True
+			print "Reading option -ramsesTH"
+			if(not(args.compact)):
+				die("ERROR: the patch for RAMSES TH requires the -compact option!")
+			if(self.is_test):
+				die("ERROR: -test option and -ramsesTH are incompatible!")
+			if(self.useX):
+				die("ERROR: the patch for RAMSES TH requires the -useN option!")
+			if(args.heating):
+				if("COMPR" in args.heating):
+					die("ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse! Remove it")
+
+			if(not(args.customATOL) and not(args.ATOL)):
+				print "WARNING: default ATOL set to 1e-10 due to -ramsesTH flag."
+				self.ATOL = 1e-10
+
 		#creates flash patches
 		if(args.flash):
 			self.doFlash = True
@@ -605,6 +629,9 @@ class krome():
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			fname = self.coolFile
+			if(not(file_exists(fname))):
+				print "ERROR: file "+fname+" not found!"
+				sys.exit()
 			fh = open(fname,"rb")
 			inComment = False
 			for row in fh:
@@ -2276,13 +2303,21 @@ class krome():
 				krates.append(ifcond.strip() +" k("+ str(nkrates) +") = "+ifrate.strip())
 				continue
 			
-			#read ortho/para
+			#read para/ortho
 			if("para/ortho" in srow.replace(" ","")):
 				aop = srow.split(":")[1].split("/")
 				para2ortho = float(aop[0])/float(aop[1])
 				ortho2para = float(aop[1])/float(aop[0])
 				needOrthoPara = True
 				print "Found para/ortho in "+fname+": "+str(para2ortho)
+
+			#read ortho/para
+			if("ortho/para" in srow.replace(" ","")):
+				aop = srow.split(":")[1].split("/")
+				para2ortho = float(aop[1])/float(aop[0])
+				ortho2para = float(aop[0])/float(aop[1])
+				needOrthoPara = True
+				print "Found ortho/para in "+fname+": "+str(ortho2para)
 
 			#read collider rates
 			if(len(row.split(","))>=4):
@@ -2658,6 +2693,12 @@ class krome():
 				for x in specs:
 					massrow = "\tget_mass("+str(x.idx)+") = " + str(x.mass).replace("e","d") + "\t!" + x.name + "\n"
 					fout.write(massrow.replace("0.0","0.d0"))
+			elif(srow == "#KROME_imasses"):
+				for x in specs:
+					myimass = 0e0
+					if(x.mass!=0e0): myimass = 1e0/x.mass
+					imassrow = "\tget_imass("+str(x.idx)+") = " + str(myimass).replace("e","d") + "\t!" + x.name + "\n"
+					fout.write(imassrow.replace("0.0","0.d0"))
 			elif(srow == "#KROME_zatoms"):
 				for x in specs:
 					zatomrow = "\tget_zatoms("+str(x.idx)+") = " + str(x.zatom) + "\t!" + x.name + "\n"
@@ -3513,6 +3554,9 @@ class krome():
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
+			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
 			if(skip): continue
 
 			if(srow == "#KROME_species"):
@@ -3860,7 +3904,8 @@ class krome():
 
 		print "done!"
 	#########################################
-	#copy fsrc to fout file and replace the list in pragmas with the list in repls
+	#copy fsrc to fout file and replace the list in pragmas with the list in repls.
+	# if trim the each line is trimmed and a return \n is added when write it again
 	def replacein(self,fsrc,fout,pragmas,repls,trim=True):
 		fh = open(fsrc,"rb")
 		fw = open(fout,"w")
@@ -3888,49 +3933,61 @@ class krome():
 	def ramses_patch(self):
 		pfold = "patches/ramses/"
 		ramsesFolder = self.buildFolder+"krome_ramses_patch/" 
-		buildFolder = self.buildFolder 
+		buildFolder = self.buildFolder
 		if not os.path.exists(ramsesFolder): os.makedirs(ramsesFolder)
 		specs = self.specs
 
 		#some initial abundances. if not found set default
+		# all in 1/cm3, except for T which is K
 		ndef = {"H": 7.5615e-1,
 			"E": 4.4983e-8,
 			"H+": 8.1967e-5,
 			"HE": 2.4375e-1,
 			"H2": 1.5123e-6,
+			"Tgas" : 200,
 			"default":1e-40
 		}
 
 		excl = ["CR","g","Tgas","dummy"] #avoid specials
 
-		#count species excluding excl
+		#count species excluding what is conteinted in excl list
 		chemCount = 0
 		for x in specs:
 			if(x.name in excl): continue
 			chemCount += 1
 
 		#amr_parameters
+		#just copy the file fname to the build/ramses folder
 		fname = "amr_parameters.f90"
-		self.replacein(pfold+fname,ramsesFolder+fname,["aaa"],["aaa"])
+		self.replacein(pfold+fname, ramsesFolder+fname, ["aaa"], ["aaa"])
 		indentF90(ramsesFolder+fname)
 
 		#condinit
-		cheminit = " q(1:nn,ndim+3) = 200.d0     !Set temperature in K\n"
+		#prepares the initial conditions and copy fname
+		cheminit = " q(1:nn,ndim+3) = "+str(ndef["Tgas"])+"     !Set temperature in K\n"
 		ichem = 0
 		fname = "condinit.f90"
+		#loop on species
 		for x in specs:
+			#skip species in exl list
 			if(x.name in excl): continue
 			ichem += 1
-			#check if species is ini init array
+			#check if species is in init array (ndef) else default
 			if(x.name in ndef):
 				sdef = str(ndef[x.name]) #default value from array
 			else:
 				sdef = str(ndef["default"]) #default values if not present in array
 			cheminit += "q(1:nn,ndim+3+"+str(ichem)+")  = "+sdef+"  !"+x.name+"\n"
-		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_init_chem"],[cheminit])
+		#replace initialization
+		self.replacein(pfold+fname, ramsesFolder+fname, ["#KROME_init_chem"], [cheminit])
 		indentF90(ramsesFolder+fname)
 
 		#cooling_fine
+		#prepare the array for krome and back (ramses->krome->ramses)
+		# updateueq: copy from ramses 2dim array to 1dim array for krome (unoneq<-uold)
+		# scaleueq: scale array from code units (RAMSES) to 1/cm3 (KROME) (unoneq<-unoneq)
+		# bkscaleueq: scale array from 1/cm3 (KROME) to code units (RAMSES) (unoneq->unoneq)
+		# bkupdateueq: copy from 1dim array of krome to 2dim array of ramses (unoneq->uold)
 		updateueq = scaleueq = bkscaleueq = bkupdateueq = ""
 		ichem = 0
 		fname = "cooling_fine.f90"
@@ -3943,17 +4000,21 @@ class krome():
 				bkupdateueq += "uold(ind_leaf(i),ndim+3+"+str(ichem)+") = unoneq("+str(ichem)+")\n"
 		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
 		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
-		self.replacein(pfold+fname,ramsesFolder+fname,org,new)
+		#replace pragmas (org) with expressions (new)
+		self.replacein(pfold+fname, ramsesFolder+fname, org, new)
 		indentF90(ramsesFolder+fname)
 
 		#cooling_module
+		# simply copy the cooling_module into build/ramses
 		fname = "cooling_module.f90"
-		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
+		self.replacein(pfold+fname,ramsesFolder+fname, [], [])
 		indentF90(ramsesFolder+fname)
 
 		#hydro_parameters
+		# simply copy the hydro_parameters into build/ramses
+		# extend nvar according to KROME species
 		fname = "hydro_parameters.f90"
-		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
+		self.replacein(pfold+fname, ramsesFolder+fname, [], [])
 		#indentF90(ramsesFolder+fname)
 
 		#init_flow_fine
@@ -3963,12 +4024,13 @@ class krome():
 		for x in specs:
 			if(x.name in excl): continue
 			ichem += 1
-			#check if species
+			#check if species is contained in the ndef array (see above)
 			if(x.name in ndef):
 				sdef = str(ndef[x.name]) #default value from array
 			else:
-				sdef = "1d-20" #default values if not present in array
+				sdef = str(ndef["default"]) #default value if not present in array
 			init_array += "if(ivar==ndim+3+"+str(ichem)+")  init_array = "+sdef+"  !"+x.name+"\n"
+		#replace pragma and copy the file to the build/ramses
 		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_init_array"],[init_array])
 		indentF90(ramsesFolder+fname)
 		
@@ -3986,6 +4048,98 @@ class krome():
 		fname = "Makefile"
 		#note that makefile will be copied in the build folder
 		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["#this must be NDIM+"+str(chemCount+3)], False)
+
+		#move the krome files into the ramses patch folder
+		shutil.move(buildFolder+"krome_all.f90", ramsesFolder+"krome_all.f90")
+		shutil.move(buildFolder+"krome_user_commons.f90", ramsesFolder+"krome_user_commons.f90")
+		shutil.move(buildFolder+"opkda1.f", ramsesFolder+"opkda1.f")
+		shutil.move(buildFolder+"opkda2.f", ramsesFolder+"opkda2.f")
+		shutil.move(buildFolder+"opkdmain.f", ramsesFolder+"opkdmain.f")
+
+
+	#########################################
+	def ramsesTH_patch(self):
+		pfold = "patches/ramsesTH/" #source folder
+		ramsesFolder = self.buildFolder+"krome_ramsesTH_patch/" #destination folder
+		buildFolder = self.buildFolder
+		if(not(os.path.exists(ramsesFolder))): os.makedirs(ramsesFolder)
+		specs = self.specs
+
+		#some initial abundances. if not found set default
+		# all in 1/cm3, except for T which is K
+		ndef = {"H": 7.5615e-1,
+			"E": 4.4983e-8,
+			"H+": 8.1967e-5,
+			"HE": 2.4375e-1,
+			"H2": 1.5123e-6,
+			"Tgas" : 200,
+			"default":1e-40
+		}
+
+		excl = ["CR","g","Tgas","dummy"] #avoid specials
+
+		#count species excluding what is conteinted in excl list
+		chemCount = 0
+		for x in specs:
+			if(x.name in excl): continue
+			chemCount += 1
+
+
+		#cooling_fine
+		#prepare the array for krome and back (ramses->krome->ramses)
+		# updateueq: copy from ramses 2dim array to 1dim array for krome (unoneq<-uold)
+		# scaleueq: scale array from code units (RAMSES) to 1/cm3 (KROME) (unoneq<-unoneq)
+		# bkscaleueq: scale array from 1/cm3 (KROME) to code units (RAMSES) (unoneq->unoneq)
+		# bkupdateueq: copy from 1dim array of krome to 2dim array of ramses (unoneq->uold)
+		updateueq = scaleueq = bkscaleueq = bkupdateueq = ""
+		ichem = 0
+		fname = "cooling_fine.f90"
+		for x in specs:
+			ichem += 1
+			if(not(x.name in excl)):
+				updateueq += "unoneq("+str(ichem)+") = uold(ind_leaf(i),ichem+"+str(ichem)+") !"+x.name+"\n"
+				if(x.mass>0e0): scaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
+				bkscaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
+				bkupdateueq += "uold(ind_leaf(i),ichem+"+str(ichem)+") = unoneq("+str(ichem)+")\n"
+		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
+		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
+		#replace pragmas (org) with expressions (new)
+		self.replacein(pfold+fname, ramsesFolder+fname, org, new)
+		indentF90(ramsesFolder+fname)
+
+
+		#prepares abundances.nml
+		abnml = "!This file contains the initialization for the species\n"
+		abnml += "! employed by KROME. Change them according to your needs\n"
+		ichem = 0
+		comma = ","
+		for x in specs:
+			if(chemCount==ichem+1): comma = ""
+			if(x.name in excl): continue
+			#check if species is contained in the ndef array (see above)
+			if(x.name in ndef):
+				sdef = format_double(ndef[x.name]) #default value from array
+			else:
+				sdef = format_double(ndef["default"]) #default value if not present in array
+			if(ichem==0):
+				abpart = "metal_region = "
+				absize = len(abpart)
+				abpart += sdef+comma+(" "*(20-len(sdef)-len(comma)))
+			else:
+				abpart = (" "*absize)+sdef+comma+(" "*(20-len(sdef)-len(comma)))
+			abnml += abpart+"!"+x.name+"\n"
+			ichem += 1
+
+		#write abundances.nml
+		fh = open(buildFolder+"abundances.nml","w")
+		fh.write(abnml)
+		fh.close()
+
+		#copy cooling
+		fname = "cooling.f90"
+		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
+		indentF90(ramsesFolder+fname)
+
 
 		#move the krome files into the ramses patch folder
 		shutil.move(buildFolder+"krome_all.f90", ramsesFolder+"krome_all.f90")
@@ -4339,25 +4493,13 @@ class krome():
 
 		return
 	############################################
+	#prepare the patches if needed
 	def patches(self):
 		if(self.doFlash): self.flash_patch()
 		if(self.doRamses): self.ramses_patch()
+		if(self.doRamsesTH): self.ramsesTH_patch()
 		if(self.doEnzo): self.enzo_patch()
 		return
-		if(self.doFlash or self.doRamses or self.doEnzo):		
-			print "**********************************************************"
-			print "  We're sorry, but in this version of KROME"
-			print "  the patch builder is available only on request."
-			print "  If you are interested please contact the krome"
-			print "  developers to obtain the beta versions of the patches."
-			print "  We will give all the support you need!"
-			print
-			print "  email       : krome@kromepackage.org"
-			print "  www         : http://kromepackage.org/"
-			print "  mailing list: https://groups.google.com/forum/#!forum/kromeusers"
-			print "  bitbucket   : https://bitbucket.org/krome/krome_stable"
-			print "**********************************************************"
-			sys.exit()
 
 	#########################################
 	def final_report(self):
@@ -4383,7 +4525,7 @@ class krome():
 		#IF NOT TEST
 		if(not(self.is_test)):
 			#PATCHES DO NOT NEED MAKEFILE AND TEST.F90
-			if(not(self.doFlash or self.doRamses or self.doEnzo)):
+			if(not(self.doFlash or self.doRamses or self.doEnzo or self.doRamsesTH)):
 				#TODO: add description in case of dust
 				print "Call KROME in your code as:"
 				if(useX):
@@ -4391,7 +4533,8 @@ class krome():
 				else:
 					print "    call krome(x(:), gas_temperature, time_step)"
 				print "where:" 
-				print " x(:) is a real*8 array of size "+str(nmols)+(" of the mass fractions" if useX else " of number densities [1/cm3]")
+				print " x(:) is a real*8 array of size "+str(nmols)+(" of the mass fractions" if useX else\
+					 " of number densities [1/cm3]")
 				if(useX): print " gas_density  is the gas density in [g/cm3]"
 				print " gas_temperature is the gas temperature in [K]"
 				print " time_step is the integration time-step in [s]"

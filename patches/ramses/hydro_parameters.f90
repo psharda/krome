@@ -1,9 +1,11 @@
 module hydro_parameters
   use amr_parameters
+  !KROME: include KROME user module (contains commons like krome_nmols)
   use krome_user
 
   ! Number of independant variables including chemical species
 #ifndef NVAR
+  ! KROME: extended nvar in order to include the species of KROME
   integer,parameter::nvar=ndim+3+krome_nmols
 #else
   integer,parameter::nvar=NVAR

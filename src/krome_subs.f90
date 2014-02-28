@@ -62,6 +62,15 @@ contains
     gamma_index = krome_gamma
   end function gamma_index
 
+  !*****************************
+  !get the mean molecular weight
+  function get_mu(n,rho)
+    real*8::n(:),rho,get_mu
+
+    get_mu = 1.22d0
+
+  end function get_mu
+
   !************************
   !get species masses (g)
   function get_mass()
@@ -72,6 +81,28 @@ contains
 #KROME_masses
 
   end function get_mass
+
+  !************************
+  !get species masses (g)
+  function get_mass()
+    use krome_commons
+    implicit none
+    real*8::get_mass(nspec)
+
+#KROME_masses
+
+  end function get_mass
+
+  !************************
+  !get inverse of the species masses (1/g)
+  function get_imass()
+    use krome_commons
+    implicit none
+    real*8::get_imass(nspec)
+
+#KROME_imasses
+
+  end function get_imass
 
   !************************
   !get species names

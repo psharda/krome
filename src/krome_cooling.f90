@@ -304,7 +304,7 @@ contains
     tm = max(Tgas, 13.0d0)    ! no cooling below 13 Kelvin
     tm = min(Tgas, 1.d5)      ! fixes numerics
     logT = log10(tm)
-    T3 = tm / 1.d3
+    T3 = tm * 1.d-3
 
     !low density limit in erg/s
     LDL = 1.d1**(-103.d0+97.59d0*logT-48.05d0*logT**2&
@@ -348,7 +348,7 @@ contains
     character*16::names(nspec)
     temp = max(Tgas, 1d1)
 
-    T3 = temp / 1.d3
+    T3 = temp * 1.d-3
     logt3 = log10(T3)
     logt = log10(temp)
     cool = 0.d0

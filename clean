@@ -5,7 +5,7 @@ import os
 os.chdir(".")
 
 hasrm = False
-#clean all files with give extention
+#clean all files with given extention
 for x in [".log","~",".pyc",".dot",".gps"]:
 	for files in glob.glob("*"+x):
 		os.unlink(files)
@@ -23,10 +23,7 @@ for root, dirnames, filenames in os.walk('.'):
 
 #add README file in build if not present
 fname = "build/README"
-try:
-   with open(fname):
-       pass
-except IOError:
+if(not(os.path.isfile(fname))):
 	print "adding README in build"
 	fout = open(fname,"w")
 	fout.write("this folder will contains the built files\n")

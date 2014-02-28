@@ -5,6 +5,7 @@
 subroutine init_flow  
   use amr_commons
   use hydro_commons, ONLY: nvar, uold
+  !KROME: add the main module to call krome_init
   use krome_main
   implicit none
 
@@ -12,6 +13,7 @@ subroutine init_flow
   
   if(verbose) write(*,*)'Entering init_flow'
 
+  !KROME: initialize KROME. This call is mandatory.
   call krome_init()
 
   do ilevel=nlevelmax,1,-1
@@ -235,6 +237,11 @@ subroutine init_flow_fine(ilevel)
            xval=sqrt(omega_m)/(h0/100.*omega_b) ! From the book of Peebles p. 173
            if(cosmo.and.ivar==ixion.and.aton)init_array=1.2d-5*xval
 	   ! Initial values for chemical abundances (mass fraction).
+
+	   ! KROME: initialize the species according to the default values suggested by KROME
+	   ! If you want to change the default values refer to ndef dictionary contained 
+	   !   in the ramses_patch(self) function in kromeobj.py. Be careful!
+	   ! The default for Tgas distribution is 1.356d-2/aexp**2 with T in K
            if(chemistry) then
 #KROME_init_array
            end if

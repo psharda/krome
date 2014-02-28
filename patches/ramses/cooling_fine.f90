@@ -46,6 +46,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   use amr_commons
   use hydro_commons
   use hydro_parameters, ONLY: nvar
+!KROME: include the modules (main, user) of KROME in this subroutine
   use krome_main
   use krome_user
 #ifdef ATON
@@ -66,6 +67,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real(kind=8),dimension(1:nvector),save::nH,T2,delta_T2,ekk
   real(kind=8),dimension(1:nvector),save::t2gas,t2gasold,tgas,tgasold
   real(kind=8),dimension(1:nvector),save::T2min,Zsolar,boost
+  !KROME: increase the size of the array in order to include the krome's species
   real(kind=8),dimension(1:krome_nmols),save::unoneq
   real(dp),dimension(1:3)::skip_loc
   real(kind=8)::dx,dx_loc,scale,vol_loc
@@ -199,6 +201,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
            T2(i) = max(T2(i)-T2min(i),T2_min_fix)
 
 	   ! Species mass density in code units
+	   ! KROME: from 2dim array of RAMSES to 1dim array for KROME
 #KROME_update_unoneq
 
            rhogas     = (nH(i)/scale_nH)        ! code units
@@ -210,18 +213,16 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
            tgas(i)    = tgasold(i)
            dthydro    = dtcool                  ! s
 
-           ! Species mass density (in code units) -> number denstiy for krome 1/cm3
+	   ! KROME: from code units to 1/cm3 for KROME
 #KROME_scale_unoneq
 
-           ! Call non-equilibrium cooling package KROME
-           ! with c.g.s. parameters 
+           ! KROME: call KROME, unoneq (abundances in 1/cm3, in/out), Tgas (temperature, K), dthydro (time-step, s)
            call krome(unoneq(:),tgas(i),dthydro)
 
-           ! Species number denstiy (in c.g.s.) -> mass density (code units)
+	   ! KROME: from KROME 1/cm3 to code units of RAMSES
 #KROME_backscale_unoneq
 
-           ! print chemical evolution
-           ! Update the species (mass density) array in code units
+	   ! KROME: from 1dim array of KROME to 2dim array of RAMSES
 #KROME_backupdate_unoneq
 
            ! Save gas temperature in K for the output

@@ -11,6 +11,36 @@ module krome_user
 
 contains
 
+  !*******************
+  !do only cooling and heating
+  subroutine krome_thermo(x,Tgas,dt)
+    use krome_commons
+    use krome_cooling
+    use krome_heating
+    use krome_subs
+    use krome_tabs
+    use krome_constants
+    implicit none
+    real*8::x(:),Tgas,dt,dTgas,k(nrea),krome_gamma
+    real*8::n(nspec),nH2dust
+
+#IFKROME_use_thermo
+    nH2dust = 0d0
+    n(:) = 0d0
+    n(idx_Tgas) = Tgas
+    n(1:nmols) = x(:)
+    k(:) = coe_tab(n(:)) !compute coefficients
+    krome_gamma = gamma_index(n(:))
+
+    dTgas = (heating(n(:), Tgas, k(:), nH2dust) - cooling(n(:), Tgas)) &
+         * (krome_gamma - 1.d0) / boltzmann_erg / sum(n(1:nmols))
+
+    Tgas = Tgas + dTgas*dt !update gas
+#ENDIFKROME
+
+  end subroutine krome_thermo
+
+
 #IFKROME_use_cooling
   !******************
   !alias of plot_cool
@@ -86,10 +116,24 @@ contains
     
   end function krome_get_zatoms
 
+  !****************************
+  !get the mean molecular weight from 
+  ! number density and mass density
+  ! alias for get_mu in krome_subs module
+  function krome_get_mu(x,rhogas)
+    use rkome_commons
+    use krome_subs
+    implicit none
+    real*8::krome_get_mu,x(:),rhogas,n(1:nspecs)
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    krome_get_mu = get_mu(n(:),rhogas)
+  end function krome_get_mu
+
   !*****************
   !get an array of double containing the masses in g
   ! of the species
-  !alias for get_mass
+  !alias for get_mass in krome_subs
   function krome_get_mass()
     use krome_subs
     use krome_commons
@@ -99,6 +143,18 @@ contains
     krome_get_mass = tmp(1:nmols)
   end function krome_get_mass
 
+  !*****************
+  !get an array of double containing the inverse 
+  ! of the mass (1/g) of the species
+  !alias for get_imass in krome_subs
+  function krome_get_imass()
+    use krome_subs
+    use krome_commons
+    implicit none
+    real*8::tmp(nspec), krome_get_imass(nmols)
+    tmp(:) = get_imass()
+    krome_get_imass = tmp(1:nmols)
+  end function krome_get_imass
 
   !***********************
   !get the total number of H nuclei

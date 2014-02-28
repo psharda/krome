@@ -56,11 +56,16 @@ subroutine condinit(x,u,dx,nn)
   u(1:nn,ndim+2)=u(1:nn,ndim+2)+q(1:nn,ndim+2)/(gamma-1.0d0)
   ! passive scalars !ADD HERE THE CHEMICAL SPECIES INITIALIZATION
   ! IF WE CONSIDER HI, E, HII, HeI, H2I, HeII, H2II, HeIII, HM
-  ! MASS FRACTION OF EACH SPECIE (in this case for a neutral gas):
+  ! MASS FRACTION OF EACH SPECIES (in this case for a neutral gas):
+
+!KROME: default initialization created with krome. If you want to change the default values refer to 
+! ndef dictionary contained in the ramses_patch(self) function in kromeobj.py. Be careful!
   if(chemistry)then
 #KROME_init_chem
   endif
 
+!KROME: scale species by the density. Modified the upper limit of the do
+! in order to include krome species
   do ivar=ndim+4,ndim+3+krome_nmols
      u(1:nn,ivar)=q(1:nn,ivar)*q(1:nn,1) 
   end do

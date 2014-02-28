@@ -1,14 +1,18 @@
 ############################################################################
 # If you have problems with this makefile, contact Romain.Teyssier@cea.fr
+# Note that some parts of this code have been modified by KROME.
+# If you have problems with them >>>DO NOT<<< contact Romain.Teyssier@cea.fr but post your question on:
+#  https://groups.google.com/forum/#!forum/kromeusers
 #############################################################################
 # Compilation time parameters
 NVECTOR = 16
 #REMEMBER TO CHANGE NDIM TO 2 IF YOU WANT 2D TESTS
 NDIM = 1
 NPRE = 8
-#NVAR INCLUDES THE CHEMICAL SPECIES 
+#NVAR INCLUDES THE CHEMICAL SPECIES OF KROME
 NVAR = #KROME_nvar
 SOLVER = hydro
+#NAME OF THE PATCH GOES HERE
 PATCH = #requires absolute path ending with patch/hydro/krome_ramses_patch
 EXEC = ramses
 ATON_FLAGS = #-DATON  # Uncomment to enable ATON.
@@ -77,6 +81,7 @@ LIBS = $(LIBMPI)
 VPATH = $(PATCH):../$(SOLVER):../aton:../hydro:../pm:../poisson:../amr
 #############################################################################
 # All objects
+# KROME: include KROME objects into a new variable
 KROMEOBJ = opkda1.o opkda2.o opkdmain.o krome_user_commons.o krome_all.o
 MODOBJ = $(KROMEOBJ) amr_parameters.o amr_commons.o random.o pm_parameters.o pm_commons.o poisson_parameters.o poisson_commons.o hydro_parameters.o hydro_commons.o cooling_module.o bisection.o clfind_commons.o 
 AMROBJ = read_params.o init_amr.o init_time.o init_refine.o adaptive_loop.o amr_step.o update_time.o output_amr.o flag_utils.o physical_boundaries.o virtual_boundaries.o refine_utils.o nbors_utils.o hilbert.o load_balance.o title.o sort.o  cooling_fine.o units.o light_cone.o 

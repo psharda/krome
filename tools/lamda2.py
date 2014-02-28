@@ -60,15 +60,21 @@ data["npartners"] = int(rows[rdx])
 #READ PARTNERS
 data["colls"] = dict()
 data["partners"] = []
+isOrthoPara = False
 for j in range(data["npartners"]):
 	#READ COLLIDER NAME AND INFO
 	rdx += 2
 	arow = read_line(rows[rdx])	
 	partner_name = arow[1].replace(data["molecule"]+"-","").replace(":","")
-	if(partner_name=="pH2"): partner_name = "H2pa"
-	if(partner_name=="oH2"): partner_name = "H2or"
+	if(partner_name=="pH2"): 
+		partner_name = "H2pa"
+		isOrthoPara = True
+	if(partner_name=="oH2"): 
+		partner_name = "H2or"
+		isOrthoPara = True
 	data["colls"][partner_name] = dict()
 	data["colls"][partner_name]["info"] = rows[rdx]
+	data["colls"][partner_name]["isOrthoPara"] = isOrthoPara
 	data["partners"].append(partner_name)
 	#NUMBER OF COLLISIONAL TRANSITIONS
 	rdx += 2
@@ -118,6 +124,7 @@ for p in data["partners"]:
 	fout.write("\n")
 	fout.write("#collider, level_up, level_down, rate\n")
 	pdata = data["colls"][p]
+	if(pdata["isOrthoPara"]): fout.write("ortho/para: 3/1\n")
 	for i in range(len(pdata["colls"])):
 		myc = pdata["colls"][i]
 		cup = str(int(myc["up"])-1)
