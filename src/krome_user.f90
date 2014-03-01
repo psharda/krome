@@ -121,10 +121,10 @@ contains
   ! number density and mass density
   ! alias for get_mu in krome_subs module
   function krome_get_mu(x,rhogas)
-    use rkome_commons
+    use krome_commons
     use krome_subs
     implicit none
-    real*8::krome_get_mu,x(:),rhogas,n(1:nspecs)
+    real*8::krome_get_mu,x(:),rhogas,n(1:nspec)
     n(:) = 0d0
     n(1:nmols) = x(:)
     krome_get_mu = get_mu(n(:),rhogas)

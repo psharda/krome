@@ -83,17 +83,6 @@ contains
   end function get_mass
 
   !************************
-  !get species masses (g)
-  function get_mass()
-    use krome_commons
-    implicit none
-    real*8::get_mass(nspec)
-
-#KROME_masses
-
-  end function get_mass
-
-  !************************
   !get inverse of the species masses (1/g)
   function get_imass()
     use krome_commons
