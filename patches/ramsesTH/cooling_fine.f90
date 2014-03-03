@@ -20,9 +20,6 @@ subroutine cooling_fine(ilevel)
   if(numbtot(1,ilevel)==0)return
   if(verbose)write(*,111)ilevel
 
-  ! Compute sink accretion rates
-  if(sink)call compute_accretion_rate(0)
-
   ! Operator splitting step for cooling source term by vector sweeps
   if (do_cool) then
      ncache=active(ilevel)%ngrid
@@ -34,10 +31,6 @@ subroutine cooling_fine(ilevel)
         end do
         call coolfine1(ind_grid,ngrid,ilevel)
      end do
-     if(ilevel==levelmin.and.cosmo)then
-        if(myid==1)write(*,*)'Computing new cooling table'
-        call set_table(dble(aexp))
-     end if
   end if
 
   if (do_radtrans) then
@@ -122,7 +115,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
         end do
      end do
      do i=1,nleaf
-        T2(i)=(gamma-1.0)*(T2(i)-ekk(i)-emag(i))
+        T2(i)=(uold(ind_leaf(i),ichem)-1.0)*(T2(i)-ekk(i)-emag(i)) ! Use effective adiabatic index
      end do
 
      ! Compute T2=T/mu in Kelvin
@@ -205,10 +198,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
      ! Compute net energy sink, 
      do i=1,nleaf
-        delta_T2(i) = delta_T2(i)*nH(i)/scale_T2/(gamma-1.0)
+        delta_T2(i) = delta_T2(i)*nH(i)/scale_T2/(uold(ind_leaf(i),ichem)-1.0)
      end do
-     
-
 
      ! Update total fluid energy
      do i=1,nleaf
