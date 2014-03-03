@@ -1,14 +1,14 @@
 ! $Id: cooling.f90,v 1.40 2013/08/04 09:13:09 troels_h Exp $
 !***********************************************************************
 MODULE cooling_mod
-  logical do_cool, do_radtrans, chemistry
+  logical do_cool, do_radtrans
   !KROME: these variables are here for back-compatibilty
   real*8::T_MC
 END MODULE cooling_mod
 
 !***********************************************************************
 SUBROUTINE read_cooling_namelist
-  USE amr_commons, only: myid
+  USE amr_commons, only: myid, chemistry
   USE cooling_mod
   implicit none
   namelist /cool/ do_cool,do_radtrans,chemistry
