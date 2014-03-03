@@ -319,7 +319,7 @@ contains
           end if
        end do
        !if nothing swapped exit
-       if(found==.false.) exit
+       if(.not.found) exit
     end do
 
     

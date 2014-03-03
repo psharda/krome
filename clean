@@ -21,6 +21,11 @@ for root, dirnames, filenames in os.walk('.'):
 			print "removing "+fname
 			hasrm = True
 
+#clear build
+#clear directory
+for ff in glob.glob("build/*"):
+	os.remove(ff)
+
 #add README file in build if not present
 fname = "build/README"
 if(not(os.path.isfile(fname))):

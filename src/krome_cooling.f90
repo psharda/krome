@@ -569,7 +569,7 @@ contains
           exit
        end if
     end do
-    if(found==.false.) flin = yval(n)
+    if(.not.found) flin = yval(n)
 
   end function flin
 

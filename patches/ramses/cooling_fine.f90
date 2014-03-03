@@ -230,8 +230,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
            ! Compute new mu
 	   call get_mu(unoneq(:),rhogas,mu_noneq) 
            ! Compute t2emperature difference
-           t2gas(i)    = tgas(i)/mu_noneq
-           delta_T2(i) = t2gas(i) - t2gasold(i)
+           t2gas    = tgas(i)/mu_noneq
+           delta_T2(i) = t2gas - t2gasold(i)
         enddo
      else if(cooling) then
         ! Compute "thermal" temperature by substracting polytrope

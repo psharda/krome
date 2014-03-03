@@ -120,13 +120,14 @@ contains
   !get the mean molecular weight from 
   ! number density and mass density
   ! alias for get_mu in krome_subs module
-  function krome_get_mu(x,rhogas)
+  function krome_get_mu(x)
     use krome_commons
     use krome_subs
     implicit none
     real*8::krome_get_mu,x(:),rhogas,n(1:nspec)
     n(:) = 0d0
     n(1:nmols) = x(:)
+    rhogas = sum(x(:)*krome_get_mass())
     krome_get_mu = get_mu(n(:),rhogas)
   end function krome_get_mu
 

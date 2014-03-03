@@ -2,7 +2,8 @@ subroutine cooling_fine(ilevel)
   use amr_commons
   use hydro_commons
   use cooling_module
-  use cooling_mod, only : do_radtrans, do_cool
+  !use cooling_mod, only : do_radtrans, do_cool,chemistry
+  use cooling_mod
   implicit none
 #ifndef WITHOUTMPI
   include 'mpif.h'
@@ -53,7 +54,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   use amr_commons
   use hydro_commons
   use cooling_module
-  use krome !mandatory
+  use cooling_mod
+  use krome_main !mandatory
   use krome_user !array sizes and utils
   implicit none
   integer::ilevel,ngrid
@@ -69,7 +71,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   integer, save :: nprint=20
 
   !KROME: additional variables requested by KROME
-  real*8::unoneq(krome_nmols), Tgas(nvector),mu_noneq,iscale_d
+  real*8::unoneq(krome_nmols), Tgas(nvector)
+  real*8::mu_noneq,iscale_d,T2old,t2gas
   !$omp threadprivate(nH,T2,delta_T2,ekk,emag,ind_cell,ind_leaf)
 
   ! Conversion factor from user units to cgs units
@@ -100,6 +103,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
      do i=1,nleaf
         T2(i)=uold(ind_leaf(i),neul)
      end do
+
      do i=1,nleaf
         ekk(i)=0.5_8*uold(ind_leaf(i),1+1)**2/nH(i)
      end do
@@ -136,7 +140,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
      !************************
      !KROME: inside this cooling+chemistry
-     if(do_cool.or.do_chemsitry) then
+     if(do_cool.or.chemistry) then
 
         !scale_d inverse
         iscale_d = 1d0/scale_d
@@ -149,10 +153,11 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 #KROME_update_unoneq
 
            !get the mean molecular weight
-           mu_noneq = krome_get_mu(unoneq(:), rhogas)
+           mu_noneq = krome_get_mu(unoneq(:))
 
            !convert to K
            Tgas(i) = T2(i) * mu_noneq
+           T2old = Tgas(i)
 
            ! KROME: from code units to 1/cm3 for KROME
 #KROME_scale_unoneq
@@ -179,17 +184,17 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
            !KROME: store the adiabatic index as the first element
            ! of the chem array (index=ichem)
-           uold(ind_leaf(i),ichem) = krome_get_gamma()
+           uold(ind_leaf(i),ichem) = krome_get_gamma(unoneq(:),Tgas(i))
 
            !Save gas temperature in K for the output
            !uold(ind_leaf(i),ndim+3) = tgas(i)
 
            !KROME: compute mu with the chemistry updated
-           mu_noneq = krome_get_mu(unoneq(:), rhogas)
+           mu_noneq = krome_get_mu(unoneq(:))
 
            !KROME: compute t2emperature difference
-           t2gas(i)    = Tgas(i) / mu_noneq
-           delta_T2(i) = t2gas(i) - t2gasold(i)
+           t2gas    = Tgas(i) / mu_noneq
+           delta_T2(i) = t2gas - t2old
         end do
      end if
 
@@ -202,6 +207,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
      do i=1,nleaf
         delta_T2(i) = delta_T2(i)*nH(i)/scale_T2/(gamma-1.0)
      end do
+     
+
 
      ! Update total fluid energy
      do i=1,nleaf
