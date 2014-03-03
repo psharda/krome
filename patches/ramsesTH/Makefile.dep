@@ -1,0 +1,3 @@
+cooling.o   	     : krome_all.o
+krome_all.o	     : krome_user_commons.o opkdmain.o
+opkdmain.o	     : opkda1.o opkda2.o

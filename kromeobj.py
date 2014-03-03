@@ -4097,10 +4097,10 @@ class krome():
 		for x in specs:
 			ichem += 1
 			if(not(x.name in excl)):
-				updateueq += "unoneq("+str(ichem)+") = uold(ind_leaf(i),ichem+"+str(ichem)+") !"+x.name+"\n"
+				updateueq += "unoneq("+str(ichem)+") = uold(ind_leaf(i),ichem+1+"+str(ichem-1)+") !"+x.name+"\n"
 				if(x.mass>0e0): scaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
-				bkscaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
-				bkupdateueq += "uold(ind_leaf(i),ichem+"+str(ichem)+") = unoneq("+str(ichem)+")\n"
+				bkscaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*"+str(x.mass)+"*iscale_d !"+x.name+"\n"
+				bkupdateueq += "uold(ind_leaf(i),ichem+1+"+str(ichem-1)+") = unoneq("+str(ichem)+") !"+x.name+"\n"
 		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
 		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
 		#replace pragmas (org) with expressions (new)
@@ -4139,6 +4139,14 @@ class krome():
 		fname = "cooling.f90"
 		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
 		indentF90(ramsesFolder+fname)
+
+		#copy Makefile
+		fname = "Makefile"
+		shutil.copy(pfold+fname,ramsesFolder+fname)
+
+		#copy Makefile.dep
+		fname = "Makefile.dep"
+		shutil.copy(pfold+fname,ramsesFolder+fname)
 
 
 		#move the krome files into the ramses patch folder

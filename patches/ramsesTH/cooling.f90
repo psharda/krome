@@ -26,7 +26,6 @@ SUBROUTINE init_cooling
   call print_id(id)
   do_radtrans=.false.
   do_cool = .true.
-  chemistry=.true.
   call read_cooling_namelist
   if(do_cool.or.chemistry) call krome_init()
 

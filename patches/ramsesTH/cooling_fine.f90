@@ -70,7 +70,6 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
   !KROME: additional variables requested by KROME
   real*8::unoneq(krome_nmols), Tgas(nvector),mu_noneq,iscale_d
-  real*8::krome_imass(krome_nmols), krome_mass(krome_nmols)
   !$omp threadprivate(nH,T2,delta_T2,ekk,emag,ind_cell,ind_leaf)
 
   ! Conversion factor from user units to cgs units
@@ -138,11 +137,6 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
      !************************
      !KROME: inside this cooling+chemistry
      if(do_cool.or.do_chemsitry) then
-        !KROME:get the mass
-        krome_mass(:) = krome_get_mass()
-
-        !KROME:get the inverse of the mass
-        krome_imass(:) = krome_get_imass()
 
         !scale_d inverse
         iscale_d = 1d0/scale_d
@@ -154,37 +148,47 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
            ! KROME: from 2dim array of RAMSES to 1dim array for KROME
 #KROME_update_unoneq
 
-           !get the main molecular weight
+           !get the mean molecular weight
            mu_noneq = krome_get_mu(unoneq(:), rhogas)
 
            !convert to K
-           Tgas(i) = T2(i) / mu_noneq
+           Tgas(i) = T2(i) * mu_noneq
 
            ! KROME: from code units to 1/cm3 for KROME
-           unoneq(:) = unoneq(:)*scale_d*imass(:)
+#KROME_scale_unoneq
 
-           if(do_cool.and.do_chemistry) then
+           if(do_cool.and.chemistry) then
               !KROME: do chemistry+cooling
               call krome(unoneq(:), Tgas(i), dtcool)
-           else
+           elseif(.not.chemistry.and.do_cool) then
               !KROME: cooling only
               call krome_thermo(unoneq(:), Tgas(i), dtcool)
+           elseif(.not.do_cool.and.chemistry) then
+              print *,"ERROR (KROME): you cannot do chemstry without cooling"
+           else
+              continue
            end if
 
-           ! KROME: from KROME 1/cm3 to code units of RAMSES
-           unoneq(:) = unoneq(:)*krome_mass(:)*iscale_d !H
+           !KROME: from KROME 1/cm3 to code units of RAMSES
+#KROME_backscale_unoneq
 
-           ! KROME: from 1dim array of KROME to 2dim array of RAMSES
+           !KROME: from 1dim array of KROME to 2dim array of RAMSES
+           ! indexes are shifted by 1 because of adiabatic index 
+           ! position (first species index = ichem+1)
 #KROME_backupdate_unoneq
 
-           ! Save gas temperature in K for the output
+           !KROME: store the adiabatic index as the first element
+           ! of the chem array (index=ichem)
+           uold(ind_leaf(i),ichem) = krome_get_gamma()
+
+           !Save gas temperature in K for the output
            !uold(ind_leaf(i),ndim+3) = tgas(i)
 
-           !KROME:  Compute mu with the chemistry updated
+           !KROME: compute mu with the chemistry updated
            mu_noneq = krome_get_mu(unoneq(:), rhogas)
 
-           !KROME: Compute t2emperature difference
-           t2gas(i)    = Tgas(i)*mu_noneq
+           !KROME: compute t2emperature difference
+           t2gas(i)    = Tgas(i) / mu_noneq
            delta_T2(i) = t2gas(i) - t2gasold(i)
         end do
      end if
