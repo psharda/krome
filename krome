@@ -83,6 +83,9 @@ krome.photo_warnings()
 #compute reverse kinetics if necessary
 krome.do_reverse()
 
+#check if reactions have reverse in this network
+krome.check_reverse()
+
 #verify thermochemical data for species
 krome.verifyThermochem()
 

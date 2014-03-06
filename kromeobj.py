@@ -56,7 +56,7 @@ class krome():
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = False
-	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = False
+	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -148,6 +148,8 @@ class krome():
 		self.parser.add_argument("-compact", action="store_true", help="creates a single fortran file with all the modules instead of\
 			various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact)")
 		self.parser.add_argument("-checkConserv", action="store_true", help="check mass conservation during integration (slower)")
+		self.parser.add_argument("-checkReverse", action="store_true", help="check network for reverse reactions. Write warning on\
+			screen if any.")
 		self.parser.add_argument("-clean", action="store_true", help="clean all in /build (including krome_user_commons.f90 that\
 			is normally kept by default) before creating new f90 files.")
 		self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
@@ -481,10 +483,15 @@ class krome():
 			print "Reading option -sh"
 
 
-		#use short header for f90 files
+		#use IERR interface for krome
 		if(args.useIERR or args.ierr):
 			self.useIERR = True
 			print "Reading option -useIERR"
+
+		#check if reverse reactions are present in the network
+		if(args.checkReverse):
+			self.checkReverse = True
+			print "Reading option -checkReverse"
 
 		#do not write anything to the build directory
 		if(args.dry):
@@ -1419,7 +1426,54 @@ class krome():
 			
 			self.reacts = reacts
 			self.nrea = len(reacts)
-	
+
+	#########################
+	#break degenerancy for reactions that contains catalyser
+	# e.g. H + e -> H+ + e + e, which is equal to H -> H+ + e
+	# arg1 and arg2 are the arrays of reactants and products
+	# to return pruned reactant list
+	def PRuniq(self,arg1, arg2):
+		
+		arg1n = []
+		arg1c = [x.name for x in arg1]
+		arg2c = [x.name for x in arg2]
+		for x in arg1c:
+			if(x in arg2c):
+				ii = arg2c.index(x)
+				arg2c[ii] = "@@@@"
+				continue
+			arg1n.append(x)
+		return arg1n
+			
+	###########################################
+	#check if reactions have their reverse in the chemical network
+	def check_reverse(self):
+		if(not(self.checkReverse)): return
+		idxRev = []
+		reacts = self.reacts
+		#loop on reacts
+		for i in range(len(reacts)):
+			if(i in idxRev): continue #if already found reverse skip
+			rea1 = reacts[i]
+			#prune catalysers from reactants and products
+			R1 = self.PRuniq(rea1.reactants, rea1.products)
+			P1 = self.PRuniq(rea1.products, rea1.reactants)
+			revFound = False
+			#loop on reacts
+			for j in range(i,len(reacts)):
+				rea2 = reacts[j]
+				#prune catalysers from reactants and products
+				R2 = self.PRuniq(rea2.reactants, rea2.products)
+				P2 = self.PRuniq(rea2.products, rea2.reactants)
+				#verify conditions
+				if((R1==P2) and (R2==P1)):
+					revFound = True
+					#store reverse index
+					idxRev.append(i)
+					idxRev.append(j)
+					break #break loop when reverse found
+			if(not(revFound)): print "WARNING: no reverse reaction found for "+rea1.verbatim
+					
 	###################################################
 	def verifyThermochem(self):
 		for x in self.specs:
