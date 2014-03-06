@@ -56,7 +56,7 @@ class krome():
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = False
-	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = False
+	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -175,8 +175,10 @@ class krome():
 		self.parser.add_argument("-forceMF222", action="store_true", help="force internal-generated sparsity and Jacobian")
 		self.parser.add_argument("-forceRWORK", help="force the size of RWORK to N", metavar="N")
 		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al.\
-			2011, or a custom F90 expression e.g. -gamma 5.d0/3.d0",metavar="OPTION")
+			2011, VIB to keep into account the vibrational paritition function, or a custom F90 expression e.g. -gamma=\"1d0\".\
+			Default value is 5/3.",metavar="OPTION")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH")
+		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
 		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
 		self.parser.add_argument("-mergeTlimits", action="store_true", help="use the same reaction index for equivalent\
@@ -224,10 +226,12 @@ class krome():
 		self.parser.add_argument("-useEquilibrium", action="store_true", help="check if the solver has reached the equilbirum.\
 			If so break the solver's loop and return the values found. It is useful when the system oscillates around\
 			a solution (as in some photoheating cases). To be used with caution!")
-		self.parser.add_argument("-useH2opacity", action="store_true",help="use H2 opacity for H2 cooling")
 		self.parser.add_argument("-useFileIdx", action="store_true", help="use the reaction index in the reaction file instead of\
 			using the automatic progressive index starting from 1. Useful with rate coefficients that depends on other\
 			coefficients, e.g. k(10) = 1d-2*k(3)")
+		self.parser.add_argument("-useH2opacity", action="store_true",help="use H2 opacity for H2 cooling")
+		self.parser.add_argument("-useIERR", action="store_true",help="use ierr in the interface with KROME to return errors instead\
+			of stopping the exectution")
 		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
 		self.parser.add_argument("-useODEConstant", help="postpone an expression to each ODE. EXPRESSION must be a valid f90\
 			expression (e.g. *3.d0 or +1.d-10)", metavar="EXPRESSION")
@@ -475,6 +479,12 @@ class krome():
 		if(args.sh):
 			self.shortHead = True
 			print "Reading option -sh"
+
+
+		#use short header for f90 files
+		if(args.useIERR or args.ierr):
+			self.useIERR = True
+			print "Reading option -useIERR"
 
 		#do not write anything to the build directory
 		if(args.dry):
@@ -1259,9 +1269,9 @@ class krome():
 			myrea.Tmax = "1.d8" #default max temperature
 			#search for reactions without Tlims
 			if(tminFound):
-				if(arow[iTmin].strip().upper() in ["N","NONE","N/A","NO"]): myrea.hasTlimitMin = False
+				if(arow[iTmin].strip().upper() in ["N","NONE","N/A","NO",""]): myrea.hasTlimitMin = False
 			if(tmaxFound):
-				if(arow[iTmax].strip().upper() in ["N","NONE","N/A","NO"]): myrea.hasTlimitMax = False
+				if(arow[iTmax].strip().upper() in ["N","NONE","N/A","NO",""]): myrea.hasTlimitMax = False
 			#store Tlimits if any
 			if(myrea.hasTlimitMin):
 				if(tminFound): myrea.Tmin = format_double(arow[iTmin]) #get Tmin
@@ -2757,6 +2767,7 @@ class krome():
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(srow == "#KROME_gamma"):
+				is_multiline = False #flag for multiline gamma
 				#computes the adiabatic index if needed or uses a user-defined expression 
 				if(self.typeGamma=="DEFAULT"):
 					gamma = "1.66666666667d0" #default gamma is 5/3 (atomic)
@@ -2781,12 +2792,67 @@ class krome():
 					gammaN = "(5.d0*("+(" + ".join(gammaNm)) + ") + 7.d0*("+(" + ".join(gammaNb)) + "))"
 					gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + "))"
 					gamma = gammaN + " / &\n" +gammaD
+
+				elif(self.typeGamma=="VIB"):
+					#extends Omukai+Nishi1998 eqs.5,6,7
+					header = "real*8::Tgas,invTgas,x,expx,ysum,gsum,mosum\n"
+					gamma = "invTgas = 1d0/Tgas\n"
+					#gamma += "nH = get_Hnuclei(n(:))\n\n"
+					gi_vars = []
+					g_vars = []
+					di_vars = []
+					mo_vars = []
+					smallest_ve = 1e99
+					for mol in specs:
+						#monoatomic
+						if(mol.natoms==1):
+							gi_mo = "1.5d0" #where gi=1/(gamma_atom-1), where gamma_atom=5/3
+							mo_vars.append(mol.fidx)
+						#diatomic
+						elif(mol.natoms==2):
+							if(mol.ve_vib!="__NONE__"):
+								smallest_ve = min(smallest_ve, mol.ve_vib) #store the smallest vib constant
+								xvar = "x = "+format_double(mol.ve_vib)+"*invTgas\n"
+								di_vars.append(mol.fname)
+								gi_vars.append("gi_"+mol.fname)
+								expvar = "expx = exp(x)\n"
+								#define 1/(gamma_diatom-1)
+								gi = "gi_"+mol.fname+" = 0.5d0*(5d0+2d0*x*x*expx/(expx-1d0)**2)\n"
+								gamma += "\n!evaluate 1/(gamma-1) for "+mol.name+"\n"
+								gamma += xvar
+								gamma += expvar
+								gamma += gi
+							else:
+								print "WARNING: no vibrational constant for "+mol.name+" in gamma calculation!"
+						#polyatomic
+						else:
+							pass
+					#prepone variables declaration
+					header += "real*8::"+(",".join(gi_vars)) + "\n"
+					gamma += "\n!sum monotomic abundances\n"
+					gamma += "mosum = " + (" + &\n".join(["n("+x+")" for x in mo_vars])) + "\n"
+					gamma += "\n!sum all abundances\n"
+					gamma += "ysum = mosum + "+(" + &\n".join(["n(idx_"+x+")" for x in di_vars]))+"\n"
+					gamma += "\n!computes gamma\n"
+					gamma += "gsum = mosum * "+gi_mo+" + "\
+						+(" + &\n".join([("n(idx_"+x+")*gi_"+x) for x in di_vars]))+"\n"
+					#add sum
+					gamma += "krome_gamma = 1d0 + ysum/gsum\n"
+					header += "!avoid small Tgas that causes large x=a/Tgas below\n"
+					header += "Tgas = max(n(idx_Tgas), "+format_double(smallest_ve*1e-2) + ")\n"
+				
+					gamma = header + gamma
+					is_multiline = True
+					
 				else: 
 					#user-defined gamma
 					gamma = self.typeGamma
 
 				#write gamma
-				fout.write("krome_gamma = " + gamma + "\n")
+				if(is_multiline):
+					fout.write(gamma)
+				else:
+					fout.write("krome_gamma = " + gamma + "\n")
 		
 			else:
 				fout.write(row)
@@ -3692,6 +3758,7 @@ class krome():
 			if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):
 			fout.close()
+		print "done!"
 
 
 	###############################
@@ -3757,10 +3824,18 @@ class krome():
 			if(srow == "#IFKROME_useCoolingZ" and not(self.useCoolingZ)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
+			if(srow == "#IFKROME_ierr" and not(self.useIERR)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+			if(srow == "#IFKROME_noierr" and (self.useIERR)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+			ierr = ""
+			if(self.useIERR): ierr = ",ierr"
 			if(self.useDust):
-				row = row.replace("#KROME_dust_arguments",",xdust")
+				row = row.replace("#KROME_dust_arguments",",xdust"+ierr)
 			else:
-				row = row.replace("#KROME_dust_arguments","")
+				row = row.replace("#KROME_dust_arguments",""+ierr)
 
 			row = row.replace("#KROME_ATOL",str(ATOL))
 			row = row.replace("#KROME_RTOL",str(RTOL))
@@ -3834,9 +3909,7 @@ class krome():
 		buildFolder = self.buildFolder
 		test_name = self.test_name
 		#copy other files to build
-		print "- copying others...",
-
-		print " copying optical data for dust..."
+		print "- copying optical data for dust..."
 		if(self.useDust):
 			shutil.copyfile("data/optC.dat", buildFolder+"optC.dat")
 			shutil.copyfile("data/optSi.dat", buildFolder+"optSi.dat")
@@ -3870,14 +3943,13 @@ class krome():
 			#print " done!"
 
 		#copy solver files to build
-		print "- copying solver to /build...",
+		print "- copying solver to /build..."
 		if(self.useDvodeF90):
 			shutil.copyfile("solver/dvode_f90_m.f90", buildFolder+"dvode_f90_m.f90")
 		else:
 			shutil.copyfile("solver/opkdmain.f", buildFolder+"opkdmain.f")
 			shutil.copyfile("solver/opkda1.f", buildFolder+"opkda1.f")
 			shutil.copyfile("solver/opkda2.f", buildFolder+"opkda2.f")
-		print " done!"
 
 
 	#######################################################

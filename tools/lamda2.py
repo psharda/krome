@@ -1,11 +1,14 @@
-#THIS PYTHON SCRIPT IS A PART OF KROME AND ALLOWS TO COVERT THE 
-# SPCTROSCOPIC DATA FROM THE LAMDA DATABSE TO THE KROME FORMAT
+#THIS PYTHON SCRIPT IS A PART OF KROME AND ALLOWS TO CONVERT THE 
+# SPECTROSCOPIC DATA FROM THE LAMDA DATABASE TO THE KROME FORMAT
 # FOR METAL/MOLECULAR COOLING
 
 fname = "co.dat" #input file
 outfile = "out.dat" #output file
 
-
+##############################################
+# PLEASE DO NOT MODIFY UNDER THIS LINE IF 
+# YOU ARE NOT SURE OF WHAT YOU ARE DOING
+###############################################
 def read_line(line):
 	line = line.replace("\t"," ")
 	while("  " in line):
@@ -40,11 +43,11 @@ for i in range(data["nlevels"]):
 	arow = read_line(rows[rdx])
 	data["levels"].append({"level":arow[0], "energy":arow[1], "weight":arow[2], "J":arow[3]})
 
-#NUMBER OF RADIATIVE TRANSTIONS
+#NUMBER OF RADIATIVE TRANSITIONS
 rdx += 2
 data["nrad"] = int(rows[rdx])
 
-#READ RADIATIVE TRANSITONS
+#READ RADIATIVE TRANSITIONS
 data["rads"] = []
 rdx += 1
 for i in range(data["nrad"]):
@@ -53,7 +56,7 @@ for i in range(data["nrad"]):
 	tdic = {"irad":int(arow[0]), "up":arow[1], "low":arow[2], "Aij":arow[3], "nu":float(arow[4]), "energy":float(arow[5])}
 	data["rads"].append(tdic)
 
-#COLLISIONAL PARTENERS
+#COLLISIONAL PARTNERS
 rdx += 2
 data["npartners"] = int(rows[rdx])
 
@@ -111,6 +114,7 @@ for i in range(len(data["rads"])):
 	alow = int(data["rads"][i]["low"])-1
 	fout.write(str(aup)+", "+str(alow)+", "+data["rads"][i]["Aij"]+"\n")
 
+#format to F90 format
 def fmt_f90(xarg):
 	xarg = xarg.lower()
 	if("e" in xarg): 
@@ -132,20 +136,12 @@ for p in data["partners"]:
 		xvals = "(/"+(", ".join([fmt_f90(x)  for x in pdata["temps"]]))+"/)"
 		yvals = "(/"+(", ".join([fmt_f90(x) for x in myc["rates"]]))+"/)"
 		fout.write(p+", "+cup+", "+clow+", flin("+xvals+", "+yvals+", Tgas)\n")
-		#xfit = np.asarray([float(x) for x in pdata["temps"]])
-		#yfit = np.asarray([float(x) for x in myc["rates"]])
-		#p0 = sy.array([float(myc["rates"][0]), 1, .0001])
-		#popt, pcov = curve_fit(ffit, xfit, yfit, p0)
-		#print "****"
-		#print popt,pcov
-		#print i
-		#for j in range(len(pdata["temps"])):
-		#	xx = float(pdata["temps"][j])
-		#	fgraph.write(str(i)+" "+str(pdata["temps"][j])+" "+myc["rates"][j]+" "+str(ffit(xx,popt[0],popt[1],popt[2]))+"\n")
+
 fout.write("end metal\n")
 
 fout.close()
 
+#RECURSIVE FUNCTION TO SHOW THE DATA STRUCTURE
 def pd(d,depth):
 	for (k,v) in d.iteritems():
 		if(isinstance(v,dict) or isinstance(v,list)):

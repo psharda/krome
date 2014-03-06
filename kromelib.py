@@ -60,6 +60,8 @@ class molec():
 	enthalpy = 0.e0 #enthalpy of formation
 	atomcount = dict() #dictionary containin the count of atoms including zero (e.g H2O is {"H":2, "O":1})
 	atomcount2 = dict() #dictionary containin the count of atoms without zero species (e.g H2O is {"H":2, "O":1})
+	natoms = 0 #the number of atoms (e.g. diatomic=2)
+	ve_vib = "__NONE__" #rotational constant in K (-1 means no data)
 
 	def __init__(self):
 		self.poly1 = [0.e0]*7
@@ -236,6 +238,34 @@ class reaction():
 		kk = "("+self.krate+") / exp(revKc(Tgas,"+ridx+","+pidx+"))"
 		if(ndif!=0): kk ="0.d0"  #" * (1.3806488d-2 * Tgas)**("+str(ndif)+")"
 		return kk
+
+
+###################################
+#vibrational constant dictionary
+#IRIKURA J. Phys. Chem. Ref. Data, Vol. 36, No. 2, 2007
+#energy in cm-1, returns K
+#returns False if arg not found in list
+def get_ve_vib(arg):
+	ve = {"H2":4401.213,
+		"HD":3813.15,
+		"D2":3115.5,
+		"C2":1855.0663,
+		"C2-":1781.189,
+		"CH":2860.7508,
+		"CO":2169.75589,
+		"CO+":2214.127,
+		"N2":2358.57,
+		"N2+":2207.0115,
+		"NH":3282.72,
+		"NO":1904.1346,
+		"NO+":2376.72,
+		"O2":1580.161,
+		"O2+":1905.892,
+		"OH":3737.761}
+	if(arg in ve):
+		return ve[arg]*1.42879e0 #cm-1 to K 
+	else:
+		False
 
 ##################################
 #check if a file exists
@@ -589,8 +619,17 @@ def parser(name, mass_dic, atoms, thermo_data):
 	if(founds>1): is_atom = False #atoms have only one atom (viz.)
 	
 	mymol.atomcount2 = dict()
+	natoms = 0
 	for (k,v) in mymol.atomcount.iteritems():
-		if(v>0): mymol.atomcount2[k] = v
+		if(v>0):
+			mymol.atomcount2[k] = v
+			if(k!="+" and k!="-"): natoms += v
+
+	mymol.natoms = natoms #number of atoms (e.g. diatom=2)
+
+	#get vibrational constant in K
+	if(get_ve_vib(name)):
+		mymol.ve_vib = get_ve_vib(name)
 
 	mymol.name = name #name
 	mymol.mass = mass #mass (g)

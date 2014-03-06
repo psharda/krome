@@ -19,7 +19,7 @@ contains
     use krome_dust
     real*8::dt,x(nmols),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,xdust(ndust),n_old(nspec),ni(nspec)
-    integer::icount,i
+    integer::icount,i,ierr
     
     !DLSODES variables
     integer,parameter::meth=2 !1=adam, 2=BDF
@@ -63,7 +63,8 @@ contains
 
 #KROME_init_JAC
 #KROME_init_IAC
-    
+
+    ierr = 0 !error flag, zero==OK!
     n(:) = 0.d0 !initialize densities
     
 #IFKROME_useX
@@ -118,6 +119,7 @@ contains
           istate = 1 !exceeded internal max iterations
        elseif(istate==-5 .or. istate==-4) then
           istate = 3 !wrong sparsity recompute
+#IFKROME_noierr
        else
           call XSETF(1)!turn on verbosity
           got_error = .true.
@@ -132,6 +134,17 @@ contains
           call krome_dump(n(:), rwork(:), iwork(:))
           stop
        end if
+#ENDIFKROME
+#IFKROME_ierr
+       else
+          !store the istate in ierr and exit from the loop
+          ierr = istate
+          exit
+       end if
+
+#ENDIFKROME
+
+
 #IFKROME_useEquilibrium
        !try to determine if the system has reached a steady equilibrium
        equil = .true.
@@ -172,6 +185,7 @@ contains
     x(:) = mass(1:nmols)*n(1:nmols)/rhogas !return to fractions
     x(:) = x(:) / sum(x) * xin !force mass conservation
 #ELSEKROME
+    !returns to user array
     x(:) = n(1:nmols)
 #ENDIFKROME
 
@@ -180,6 +194,7 @@ contains
 #ENDIFKROME
 
     Tgas = n(idx_Tgas) !get new temperature
+
   end subroutine krome
 
   !*******************************
