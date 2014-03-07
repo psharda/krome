@@ -290,7 +290,8 @@ class krome():
 			filename = "networks/react_primordial2"
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
+			#[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-ATOL=1d-40","-maxord=1"]]
 			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,ATOMIC", "-heating=COMPRESS,CHEM"]]
@@ -2847,11 +2848,12 @@ class krome():
 					gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + "))"
 					gamma = gammaN + " / &\n" +gammaD
 
-				elif(self.typeGamma=="EXACT" or self.typeGamma=="VIB" or typeGamma=="ROT"):
+				elif(self.typeGamma=="EXACT" or self.typeGamma=="VIB" or self.typeGamma=="ROT"):
 					#extends Omukai+Nishi1998 eqs.5,6,7
 					# and Boley+2007 (+erratum!) eqs.2,3
 					header = "real*8::Tgas,invTgas,x,expx,ysum,gsum,mosum,gvib\n"
-					gamma = "invTgas = 1d0/Tgas\n\n"
+					header += "real*8::Tgas_vib,invTgas_vib\n"
+					gamma = "invTgas_vib = 1d0/Tgas_vib\n\n"
 					#gamma += "nH = get_Hnuclei(n(:))\n\n"
 					gi_vars = []
 					g_vars = []
@@ -2876,13 +2878,12 @@ class krome():
 							#continue if both constants were not found
 							if(mol.ve_vib=="__NONE__" and mol.be_rot=="__NONE__"):
 								continue
+							gamma += "\n!evaluate 1/(gamma-1) for "+mol.name+"\n"
 							#prepare the vibrational part
 							vibpart = "0d0"
-							if(mol.ve_vib!="__NONE__"):
+							if(mol.ve_vib!="__NONE__" and (gtype=="EXACT" or gtype=="VIB")):
 								smallest_ve = min(smallest_ve, mol.ve_vib) #store the smallest vib constant
-								xvar = "x = "+format_double(mol.ve_vib)+"*invTgas\n"
-								di_vars.append(mol.fname)
-								gi_vars.append("gi_"+mol.fname)
+								xvar = "x = "+format_double(mol.ve_vib)+"*invTgas_vib\n"
 								expvar = "expx = exp(x)\n"
 								gamma += xvar
 								gamma += expvar
@@ -2890,15 +2891,13 @@ class krome():
 								vibpart = "gvib"
 							#prepare the rotational part
 							rotpart = "2d0"
-							if(mol.be_rot!="__NONE__"):
-								di_vars.append(mol.fname)
-								gvar = "gi_"+mol.fname
-								if(not(gvar in gi_vars)): gi_vars.append(gvar)
+							if(mol.be_rot!="__NONE__" and (gtype=="EXACT" or gtype=="ROT")):
 								if(mol.name=="H2"):
 									rotpart = "gamma_rotop(Tgas, 3d0)"
 								else:
 									rotpart = "gamma_rot(Tgas, "+format_double(mol.be_rot)+")"
-							gamma += "\n!evaluate 1/(gamma-1) for "+mol.name+"\n"
+							di_vars.append(mol.fname)
+							gi_vars.append("gi_"+mol.fname)
 							gi = "gi_"+mol.fname+" = 0.5d0*(3d0 + "+rotpart+" + "+vibpart+")\n"
 							gamma += gi
 
@@ -2920,7 +2919,8 @@ class krome():
 
 					#append Tgas limit to avoid overflows on exp()
 					header += "\n!avoid small Tgas that causes large x=a/Tgas below\n"
-					header += "Tgas = max(n(idx_Tgas), "+format_double(smallest_ve*1e-2) + ")\n"
+					header += "Tgas_vib = max(n(idx_Tgas), "+format_double(smallest_ve*1e-2) + ")\n"
+					header += "Tgas = n(idx_Tgas)\n"
 				
 					#append gamma to the header
 					gamma = header + gamma

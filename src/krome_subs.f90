@@ -64,7 +64,7 @@ contains
     brot = 85.4d0 !H2 rotational constant in K
     zo = 0d0 !sum for ortho partition function
     zp = 0d0 !sum for para partition function
-    jmax = 100 !number of terms in sum
+    jmax = 10 !number of terms in sum
     ibTgas = brot/Tgas !pre-calc
 
     !loop over levels
