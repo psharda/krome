@@ -2847,16 +2847,18 @@ class krome():
 					gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + "))"
 					gamma = gammaN + " / &\n" +gammaD
 
-				elif(self.typeGamma=="VIB"):
+				elif(self.typeGamma=="EXACT" or self.typeGamma=="VIB" or typeGamma=="ROT"):
 					#extends Omukai+Nishi1998 eqs.5,6,7
-					header = "real*8::Tgas,invTgas,x,expx,ysum,gsum,mosum\n"
-					gamma = "invTgas = 1d0/Tgas\n"
+					# and Boley+2007 (+erratum!) eqs.2,3
+					header = "real*8::Tgas,invTgas,x,expx,ysum,gsum,mosum,gvib\n"
+					gamma = "invTgas = 1d0/Tgas\n\n"
 					#gamma += "nH = get_Hnuclei(n(:))\n\n"
 					gi_vars = []
 					g_vars = []
 					di_vars = []
 					mo_vars = []
 					smallest_ve = 1e99
+					print 
 					for mol in specs:
 						#monoatomic
 						if(mol.natoms==1):
@@ -2864,25 +2866,48 @@ class krome():
 							mo_vars.append(mol.fidx)
 						#diatomic
 						elif(mol.natoms==2):
+							gtype = self.typeGamma
+							#warning if vibrational constant not found
+							if(mol.ve_vib=="__NONE__" and (gtype=="EXACT" or gtype=="VIB")):
+								print "WARNING: no vibrational constant for "+mol.name+" in gamma calculation!"
+							#warning if rotational constant not found
+							if(mol.be_rot=="__NONE__" and (gtype=="EXACT" or gtype=="ROT")):
+								print "WARNING: no rotational constant for "+mol.name+" in gamma calculation!"
+							#continue if both constants were not found
+							if(mol.ve_vib=="__NONE__" and mol.be_rot=="__NONE__"):
+								continue
+							#prepare the vibrational part
+							vibpart = "0d0"
 							if(mol.ve_vib!="__NONE__"):
 								smallest_ve = min(smallest_ve, mol.ve_vib) #store the smallest vib constant
 								xvar = "x = "+format_double(mol.ve_vib)+"*invTgas\n"
 								di_vars.append(mol.fname)
 								gi_vars.append("gi_"+mol.fname)
 								expvar = "expx = exp(x)\n"
-								#define 1/(gamma_diatom-1)
-								gi = "gi_"+mol.fname+" = 0.5d0*(5d0+2d0*x*x*expx/(expx-1d0)**2)\n"
-								gamma += "\n!evaluate 1/(gamma-1) for "+mol.name+"\n"
 								gamma += xvar
 								gamma += expvar
-								gamma += gi
-							else:
-								print "WARNING: no vibrational constant for "+mol.name+" in gamma calculation!"
+								gamma += "gvib = 2d0*x*x*expx/(expx-1d0)**2\n"
+								vibpart = "gvib"
+							#prepare the rotational part
+							rotpart = "2d0"
+							if(mol.be_rot!="__NONE__"):
+								di_vars.append(mol.fname)
+								gvar = "gi_"+mol.fname
+								if(not(gvar in gi_vars)): gi_vars.append(gvar)
+								if(mol.name=="H2"):
+									rotpart = "gamma_rotop(Tgas, 3d0)"
+								else:
+									rotpart = "gamma_rot(Tgas, "+format_double(mol.be_rot)+")"
+							gamma += "\n!evaluate 1/(gamma-1) for "+mol.name+"\n"
+							gi = "gi_"+mol.fname+" = 0.5d0*(3d0 + "+rotpart+" + "+vibpart+")\n"
+							gamma += gi
+
 						#polyatomic
 						else:
-							pass
+							pass #skip polyatomic
 					#prepone variables declaration
 					header += "real*8::"+(",".join(gi_vars)) + "\n"
+					#write sums
 					gamma += "\n!sum monotomic abundances\n"
 					gamma += "mosum = " + (" + &\n".join(["n("+x+")" for x in mo_vars])) + "\n"
 					gamma += "\n!sum all abundances\n"
@@ -2892,9 +2917,12 @@ class krome():
 						+(" + &\n".join([("n(idx_"+x+")*gi_"+x) for x in di_vars]))+"\n"
 					#add sum
 					gamma += "krome_gamma = 1d0 + ysum/gsum\n"
-					header += "!avoid small Tgas that causes large x=a/Tgas below\n"
+
+					#append Tgas limit to avoid overflows on exp()
+					header += "\n!avoid small Tgas that causes large x=a/Tgas below\n"
 					header += "Tgas = max(n(idx_Tgas), "+format_double(smallest_ve*1e-2) + ")\n"
 				
+					#append gamma to the header
 					gamma = header + gamma
 					is_multiline = True
 					

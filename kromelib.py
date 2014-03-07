@@ -61,7 +61,8 @@ class molec():
 	atomcount = dict() #dictionary containin the count of atoms including zero (e.g H2O is {"H":2, "O":1})
 	atomcount2 = dict() #dictionary containin the count of atoms without zero species (e.g H2O is {"H":2, "O":1})
 	natoms = 0 #the number of atoms (e.g. diatomic=2)
-	ve_vib = "__NONE__" #rotational constant in K (-1 means no data)
+	ve_vib = "__NONE__" #vibrational constant in K
+	be_rot = "__NONE__" #rotational constant in K
 
 	def __init__(self):
 		self.poly1 = [0.e0]*7
@@ -262,6 +263,24 @@ def get_ve_vib(arg):
 		"O2":1580.161,
 		"O2+":1905.892,
 		"OH":3737.761}
+	if(arg in ve):
+		return ve[arg]*1.42879e0 #cm-1 to K 
+	else:
+		False
+
+###################################
+#rotational constant Be dictionary
+#from NIST and Atkins Book
+#constant in cm-1, returns K
+#returns False if arg not found in list
+def get_be_rot(arg):
+	ve = {"H2":60.853,
+		"H2+":42.9,
+		"HD":45.644,
+		"D2":30.443,
+		"N2":1.9982,
+		"O2":1.4264,
+		"CO":2.78}
 	if(arg in ve):
 		return ve[arg]*1.42879e0 #cm-1 to K 
 	else:
@@ -630,6 +649,9 @@ def parser(name, mass_dic, atoms, thermo_data):
 	#get vibrational constant in K
 	if(get_ve_vib(name)):
 		mymol.ve_vib = get_ve_vib(name)
+	#get rotational constant in K
+	if(get_be_rot(name)):
+		mymol.be_rot = get_be_rot(name)
 
 	mymol.name = name #name
 	mymol.mass = mass #mass (g)

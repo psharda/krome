@@ -50,13 +50,117 @@ contains
 
   end function conserve
 
+
+
+  !**************************
+  !function to get the partition function
+  ! of H2 at Tgas with a orto-para ratio
+  ! equal to opratio
+  function zfop(Tgas,opratio)
+    implicit none
+    real*8::Tgas,zfop,brot,ibTgas
+    real*8::a,b,zo,zp,opratio
+    integer::j,jmax,j1
+    brot = 85.4d0 !H2 rotational constant in K
+    zo = 0d0 !sum for ortho partition function
+    zp = 0d0 !sum for para partition function
+    jmax = 100 !number of terms in sum
+    ibTgas = brot/Tgas !pre-calc
+
+    !loop over levels
+    do j=0,jmax,2 !step 2
+       j1 = j + 1
+       zp = zp + (2d0*j+1d0) * exp(-j*(j+1d0)*ibTgas)
+       zo = zo + 3d0 * (2d0*j1+1d0) * exp(-j1*(j1+1d0)*ibTgas)
+    end do
+
+    a = opratio/(opratio+1d0) !exponent zo
+    b = 1d0-a !exponent zp
+
+    zfop = (zp**b * zo**a*exp(-2d0*ibTgas)) !final partition f
+
+  end function zfop
+
+  !*********************
+  !get the partition function at Tgas
+  ! of a diatom with rotational constant
+  ! brot in K
+  function zf(Tgas,brot)
+    real*8::Tgas,zf,brot,z,ibTgas
+    integer::j,jmax
+    jmax = 10 !number of levels
+    ibTgas = brot/Tgas !store
+    z = 0d0
+    !loop on levels
+    do j=0,jmax
+       z = z + (2d0*j+1d0)*exp(-j*(j+1d0)*ibTgas)
+    end do
+
+    zf = z
+
+  end function zf
+
+  !***********************
+  !get the degrees of freedom at Tgas for
+  ! the rotational component of H2 with
+  ! an ortho-para ratio of opratio
+  function gamma_rotop(Tgas,opratio)
+    implicit none
+    real*8::gamma_rotop,Tgas,dT
+    real*8::idT,dlog1,prot1,dlog2,prot2
+    real*8::logp1,opratio
+
+    dT = Tgas*1d-5 !dT for derivative
+    idT =  1d0/dT !stored for numeric derivative
+    logp1 = log(zfop(Tgas+dT,opratio)) !store since used twice
+
+    !derivative dlog(T)/dT = f(T)
+    dlog1 = (logp1-log(zfop(Tgas,opratio)))*idT
+    prot1 = dlog1*Tgas**2
+   
+    !derivative dlog(T+dT)/dT = f(T+dT)
+    dlog2 = (log(zfop(Tgas+dT+dT,opratio))-logp1)*idT
+    prot2 = dlog2*(Tgas+dT)**2
+
+    !derivative df(T)/dT
+    gamma_rotop = (prot2-prot1)*idT
+    
+  end function gamma_rotop
+
+  !***********************
+  !get the degrees of freedom at Tgas for
+  ! the rotational component of a diatom 
+  ! with rotational constant brot in K
+  function gamma_rot(Tgas,brot)
+    implicit none
+    real*8::gamma_rot,Tgas,dT
+    real*8::idT,dlog1,prot1,dlog2,prot2
+    real*8::logp1,brot
+
+    dT = Tgas*1d-5 !dT for derivative
+    idT =  1d0/dT !stored for numeric derivative
+    logp1 = log(zf(Tgas+dT,brot)) !store since used twice
+
+    !derivative dlog(T)/dT = f(T)
+    dlog1 = (logp1-log(zf(Tgas,brot)))*idT
+    prot1 = dlog1*Tgas**2
+
+    !derivative dlog(T+dT)/dT = f(T+dT)
+    dlog2 = (log(zf(Tgas+dT+dT,brot))-logp1)*idT
+    prot2 = dlog2*(Tgas+dT)**2
+
+    !derivative df(T)/dT
+    gamma_rot = (prot2-prot1)*idT
+
+  end function gamma_rot
+
   !*********************
   !get gamma
   function gamma_index(n)
     use krome_commons
     implicit none
     real*8::n(:),gamma_index,krome_gamma
-    
+
 #KROME_gamma
 
     gamma_index = krome_gamma
@@ -148,7 +252,7 @@ contains
     mu = 1.22d0
     get_jeans_length = sqrt(pi*boltzmann_erg*Tgas/rhogas&
          /p_mass/gravity/mu)
-    
+
   end function get_jeans_length
 
   !***************************
@@ -168,7 +272,7 @@ contains
           exit
        end if
     end do
-    
+
     !error if species not found
     if(get_index<0) then
        print *,"ERROR: can't find the index of ",name
@@ -187,7 +291,7 @@ contains
 #KROME_charges
 
   end function get_charges
-  
+
   !************************
   !get species charges
   function get_rnames()
@@ -218,7 +322,7 @@ contains
     end do
 
   end function revKc
-  
+
   !*****************************
   !compute H-S for species with index idx 
   ! when temperature is Tgas
@@ -258,7 +362,7 @@ contains
 
   end function revHS
 
- !******************************
+  !******************************
   subroutine print_best_flux(n,Tgas,nbestin)
     !print the first nbestin fluxes 
     use krome_commons
@@ -274,13 +378,13 @@ contains
 
     !call the sorting algorithm (bubblesort)
     idx(:) = idx_sort(flux(:))
-    
+
     !print to screen
     print *,"***************"
     do i=1,nbest
        print '(I4,a1,a50,E17.8)',i," ",name(idx(i)),flux(idx(i))
     end do
-    
+
   end subroutine print_best_flux
 
   !*****************************
@@ -322,7 +426,7 @@ contains
        if(.not.found) exit
     end do
 
-    
+
   end function idx_sort
 
   !******************************
