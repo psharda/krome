@@ -167,11 +167,19 @@ contains
   end function gamma_index
 
   !*****************************
-  !get the mean molecular weight
+  !get the mean molecular weight in grams
   function get_mu(n,rho)
-    real*8::n(:),rho,get_mu
+    use krome_commons
+    use krome_constants
+    implicit none
+    real*8::n(:),rho,get_mu,m(nspec)
+    m(:) = get_mass()
+    
+    !ip_mass is 1/proton_mass_in_g
+    get_mu = sum(n(1:nmols)*m(1:nmols)) &
+         / sum(n(1:nmols)) * ip_mass
 
-    get_mu = 1.22d0
+    !get_mu = 1.22d0
 
   end function get_mu
 

@@ -97,9 +97,10 @@ class krome():
 	coolZ_nkrates = 0
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
 	Zcools = [] #list of cooling read from file (species name, e.g. C+)
+	ramses_offset = 3 #offset in the array for ramses
 	coolFile = "data/coolZ.dat" #"tools/out.dat" #
-	version = "13.11"
-	codename = "Astonishing Ansatz"
+	version = "14.03"
+	codename = "Beastie Boyle"
 
 	#########################################
 	def checkPrereq(self):
@@ -199,6 +200,8 @@ class krome():
 		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the\
 			default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
 		self.parser.add_argument("-ramses", action="store_true", help="create patches for RAMSES, see also -enzo and -flash")
+		self.parser.add_argument("-ramsesOffset", metavar="offset", help="add an offset to the array of the passive scalar. The\
+			default is 3.")
 		self.parser.add_argument("-ramsesTH", action="store_true", help="create patches for RAMSES_TH. This is a private version\
 			and probably does not fix your needs.")
 		self.parser.add_argument("-report", action="store_true", help="generate report file in the main call to krome as\
@@ -843,6 +846,12 @@ class krome():
 				print "ERROR: you are trying to use -gamma without -cooling or -heating"
 				sys.exit()
 			print "Reading option -gamma (gamma="+str(self.typeGamma)+")"
+
+		#offset for ramses
+		if(args.ramsesOffset):
+			if(not(args.ramses)): die("ERROR: if you use -ramsesOffset you must also add -ramses option!")
+			self.ramses_offset = args.ramsesOffset
+			print "Reading option -ramsesOffset (offset="+str(args.ramsesOffset)+")"
 
 		#ATOL
 		if(args.ATOL):
@@ -2524,8 +2533,10 @@ class krome():
 		constants.append(["planck_J","6.62606957d-34","J s"])  
 		constants.append(["planck_erg","6.62606957d-27","erg s"]) 
 		constants.append(["gravity","6.674d-8","cm3 / g / s2"])      
-		constants.append(["e_mass","9.10938188d-28","g"]) 
-		constants.append(["p_mass","1.67262158d-24","g"]) 
+		constants.append(["e_mass","9.10938188d-28","g"])
+		constants.append(["p_mass","1.67262158d-24","g"])
+		constants.append(["n_mass","1.674920d-24","g"])
+		constants.append(["ip_mass","1d0/p_mass","1/g"])
 		constants.append(["clight","2.99792458e10","cm/s"]) 
 		constants.append(["pi","3.14159265359d0","#"]) 
 		constants.append(["eV_to_erg","1.60217646d-12","eV -> erg"]) 
@@ -4087,8 +4098,9 @@ class krome():
 		pfold = "patches/ramses/"
 		ramsesFolder = self.buildFolder+"krome_ramses_patch/" 
 		buildFolder = self.buildFolder
-		if not os.path.exists(ramsesFolder): os.makedirs(ramsesFolder)
+		if(not(os.path.exists(ramsesFolder))): os.makedirs(ramsesFolder)
 		specs = self.specs
+		ramses_offset = str(self.ramses_offset)
 
 		#some initial abundances. if not found set default
 		# all in 1/cm3, except for T which is K
@@ -4147,10 +4159,10 @@ class krome():
 		for x in specs:
 			ichem += 1
 			if(not(x.name in excl)):
-				updateueq += "unoneq("+str(ichem)+") = uold(ind_leaf(i),ndim+3+"+str(ichem)+") !"+x.name+"\n"
+				updateueq += "unoneq("+str(ichem)+") = uold(ind_leaf(i),ndim+"+ramses_offset+"+"+str(ichem)+") !"+x.name+"\n"
 				if(x.mass>0e0): scaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
 				bkscaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
-				bkupdateueq += "uold(ind_leaf(i),ndim+3+"+str(ichem)+") = unoneq("+str(ichem)+")\n"
+				bkupdateueq += "uold(ind_leaf(i),ndim+"+ramses_offset+"+"+str(ichem)+") = unoneq("+str(ichem)+")\n"
 		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
 		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
 		#replace pragmas (org) with expressions (new)
@@ -4172,7 +4184,7 @@ class krome():
 
 		#init_flow_fine
 		fname = "init_flow_fine.f90"
-		init_array = "if(ivar==ndim+3)  init_array = 1.356d-2/aexp**2 ! T in K\n"
+		init_array = "if(ivar==ndim+"+ramses_offset+")  init_array = 1.356d-2/aexp**2 ! T in K\n"
 		ichem = 0
 		for x in specs:
 			if(x.name in excl): continue
@@ -4182,7 +4194,7 @@ class krome():
 				sdef = str(ndef[x.name]) #default value from array
 			else:
 				sdef = str(ndef["default"]) #default value if not present in array
-			init_array += "if(ivar==ndim+3+"+str(ichem)+")  init_array = "+sdef+"  !"+x.name+"\n"
+			init_array += "if(ivar==ndim+"+ramses_offset+"+"+str(ichem)+")  init_array = "+sdef+"  !"+x.name+"\n"
 		#replace pragma and copy the file to the build/ramses
 		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_init_array"],[init_array])
 		indentF90(ramsesFolder+fname)
