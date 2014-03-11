@@ -12,8 +12,7 @@ ifeq ($(fc),ifort)
 	nswitch = $(std) -O0
 	switch =  $(hswitch)
 else
-	switch += -ffpe-trap=invalid,zero,overflow -g
-	switch += -fbacktrace -O3
+	switch = -O3
 	nowarn = 
 endif
 

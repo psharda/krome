@@ -54,7 +54,7 @@ class krome():
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
-	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = True
+	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = False
 	humanFlux = True
@@ -214,6 +214,8 @@ class krome():
 			-RTOL 1e-5 Default is RTOL=1d-4, see also -ATOL and -customRTOL")
 		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
+		self.parser.add_argument("-skipJacobian", action="store_true", help="do not write Jacobian in krome_ode.f90 file. Useful\
+			to reduce compilation time when Jacobian is not needed (MF=222).")
 		self.parser.add_argument("-skipODEthermo", action="store_true", help="do not compute dT/dt in the ODE RHS function (fex)")
 		self.parser.add_argument("-source", metavar="folder", help="use FOLDER as source directory")
 		self.parser.add_argument("-stars", action="store_true", help="use star module for nuclear reactions. NOTE: krome_stars\
@@ -264,7 +266,7 @@ class krome():
 		#test_name = (arg.strip().replace("-test=",""))
 		#print "Reading option -test (test="+test_name+")"
 		if(args.test=="cloud"):
-			[argv.append(x) for x in ["-useN","-iRHS"]]
+			[argv.append(x) for x in ["-useN","-iRHS","-skipJacobian"]]
 			filename = "networks/react_cloud"
 		elif(args.test=="slowmanifold"):
 			[argv.append(x) for x in ["-useN"]]
@@ -623,6 +625,12 @@ class krome():
 		if(args.C):
 			self.wrapC = True
 			print "Reading option -C"
+
+
+		#skip writing Jacobian in krome_ode.f90, allows faster compilation
+		if(args.skipJacobian):
+			self.doJacobian = False
+			print "Reading option -skipJacobian"
 
 
 		#skip checking for objects in build/
@@ -1119,10 +1127,13 @@ class krome():
 		prods = [] #list of prods for already found
 		idxs = [] #list of index for already found
 
-		#read the size of the file in lines
+		#read the size of the file in lines (skip blank and comments)
+		# to have a rough idea of the size
 		fh = open(filename,"rb")
 		line_count = 0
 		for row in fh:
+			if(row.strip()==""): continue
+			if(row.strip()[0]=="#"): continue
 			line_count += 1
 		fh.close()
 	
@@ -1796,65 +1807,66 @@ class krome():
 
 
 		#equilibrium matrix (NOTE: NOT SUPPORTED!)
-		idxs = [] #already employed indexes
-		xvar = [] #names of the composite variables
-		xvarM = [] #equilibrium matrix
-		xvarS = [] #symbolic matrix (for signless comparison)
-		for rea in reacts:
-			break ### TODO: fix equilibrium matrix (NOTE: NOT SUPPORTED!)
-			if(rea.idx in idxs): continue #skip if already employed index
-			ridx = rea.idx-1
-			#build matrix variable reactants
-			pre_xvarR = []
-			for r in rea.reactants:
-				pre_xvarR.append("n("+r.fidx+")")
-			#build matrix variable reactants
-			pre_xvarP = []
-			for p in rea.products:
-				pre_xvarP.append("n("+p.fidx+")")
-			#look for powers (e.g. H*H*H, or H2*H2)
-			#equals = 0
-			#if(pre_xvar.count(pre_xvar[0])==len(pre_xvar)): equals = pre_xvar.count(pre_xvar[0])
-			pre_xvarR = "*".join(pre_xvarR)
-			pre_xvarP = "*".join(pre_xvarP)
-			#in case of new variable add a row to the matrix
-			if(not(pre_xvarR in xvar)):
-				xvar.append(pre_xvarR)
-				xvarM.append(["0d0" for i in reacts])
-				xvarS.append(["" for i in reacts])
-			if(not(pre_xvarP in xvar)):
-				xvar.append(pre_xvarP)
-				xvarM.append(["0d0" for i in reacts])
-				xvarS.append(["" for i in reacts])
-			#add rate to the matrix element
-			for r in rea.reactants:
-				xvarM[xvar.index(pre_xvarR)][ridx] = xvarM[xvar.index(pre_xvarR)][ridx].replace("0d0", "")
-				xvarM[xvar.index(pre_xvarR)][ridx] += " -k("+str(ridx+1)+")"
-				xvarS[xvar.index(pre_xvarR)][ridx] += "_"+str(ridx)
-			for p in rea.products:
-				xvarM[xvar.index(pre_xvarP)][ridx] = xvarM[xvar.index(pre_xvarP)][ridx].replace("0d0", "")
-				xvarM[xvar.index(pre_xvarP)][ridx] += " +k("+str(ridx+1)+")"
-				xvarS[xvar.index(pre_xvarP)][ridx] += "_"+str(ridx)
+		#TODO: fix it
+		if(False):
+			idxs = [] #already employed indexes
+			xvar = [] #names of the composite variables
+			xvarM = [] #equilibrium matrix
+			xvarS = [] #symbolic matrix (for signless comparison)
+			for rea in reacts:
+				if(rea.idx in idxs): continue #skip if already employed index
+				ridx = rea.idx-1
+				#build matrix variable reactants
+				pre_xvarR = []
+				for r in rea.reactants:
+					pre_xvarR.append("n("+r.fidx+")")
+				#build matrix variable reactants
+				pre_xvarP = []
+				for p in rea.products:
+					pre_xvarP.append("n("+p.fidx+")")
+				#look for powers (e.g. H*H*H, or H2*H2)
+				#equals = 0
+				#if(pre_xvar.count(pre_xvar[0])==len(pre_xvar)): equals = pre_xvar.count(pre_xvar[0])
+				pre_xvarR = "*".join(pre_xvarR)
+				pre_xvarP = "*".join(pre_xvarP)
+				#in case of new variable add a row to the matrix
+				if(not(pre_xvarR in xvar)):
+					xvar.append(pre_xvarR)
+					xvarM.append(["0d0" for i in reacts])
+					xvarS.append(["" for i in reacts])
+				if(not(pre_xvarP in xvar)):
+					xvar.append(pre_xvarP)
+					xvarM.append(["0d0" for i in reacts])
+					xvarS.append(["" for i in reacts])
+				#add rate to the matrix element
+				for r in rea.reactants:
+					xvarM[xvar.index(pre_xvarR)][ridx] = xvarM[xvar.index(pre_xvarR)][ridx].replace("0d0", "")
+					xvarM[xvar.index(pre_xvarR)][ridx] += " -k("+str(ridx+1)+")"
+					xvarS[xvar.index(pre_xvarR)][ridx] += "_"+str(ridx)
+				for p in rea.products:
+					xvarM[xvar.index(pre_xvarP)][ridx] = xvarM[xvar.index(pre_xvarP)][ridx].replace("0d0", "")
+					xvarM[xvar.index(pre_xvarP)][ridx] += " +k("+str(ridx+1)+")"
+					xvarS[xvar.index(pre_xvarP)][ridx] += "_"+str(ridx)
 
-		#add conseravtion to matrix
-		xvarM.append(["1d0" for i in reacts])
-		xvarS.append(["eq1" for i in reacts]) #add dummy for symbolic matrix
-		xvar.append("+".join(xvar))
+			#add conseravtion to matrix
+			xvarM.append(["1d0" for i in reacts])
+			xvarS.append(["eq1" for i in reacts]) #add dummy for symbolic matrix
+			xvar.append("+".join(xvar))
 		
-		#remove linear dependent terms
-		xvarM_u = []
-		for i in range(len(xvarS)):
-			row1 = xvarS[i]
-			isequal = False
-			for j in range(i+1,len(xvarS)):
-				row2 = xvarS[j]
-				if(row1==row2):
-					isequal = True
-					break
-			if(not(isequal)): 
-				xvarM_u.append(xvarM[i])
-		if(len(xvar)==len(xvarM_u)): print "NOTE: this system can be solved algebrically to the equilibrium"
-		#print str(len(xvar))+" variables and "+str(len(xvarM_u))+ " equations"
+			#remove linear dependent terms
+			xvarM_u = []
+			for i in range(len(xvarS)):
+				row1 = xvarS[i]
+				isequal = False
+				for j in range(i+1,len(xvarS)):
+					row2 = xvarS[j]
+					if(row1==row2):
+						isequal = True
+						break
+				if(not(isequal)): 
+					xvarM_u.append(xvarM[i])
+			if(len(xvar)==len(xvarM_u)): print "NOTE: this system can be solved algebrically to the equilibrium"
+			#print str(len(xvar))+" variables and "+str(len(xvarM_u))+ " equations"
 
 		#add dust to ODEs
 		if(self.useDust):
@@ -3612,6 +3624,7 @@ class krome():
 			elif(srow == "#KROME_dust_H2"):
 				fout.write(dustH2+"\n")
 			elif(srow == "#KROME_JAC_PDX"):
+				if(not(self.doJacobian)): continue
 				spdj = ""
 				for i in range(neq):
 					speci = specs[i]
@@ -3628,6 +3641,7 @@ class krome():
 				fout.write(spdj)
 
 			elif(srow == "#KROME_JAC_PD"):
+				if(not(self.doJacobian)): continue
 				#build the Jacobian as J(i,j) = df_i/dx_j
 				for i in range(neq):
 					if(i==0): fout.write("if(j=="+str(i+1)+") then\n")
