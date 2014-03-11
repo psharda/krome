@@ -168,11 +168,11 @@ contains
 
   !*****************************
   !get the mean molecular weight in grams
-  function get_mu(n,rho)
+  function get_mu(n)
     use krome_commons
     use krome_constants
     implicit none
-    real*8::n(:),rho,get_mu,m(nspec)
+    real*8::n(:),get_mu,m(nspec)
     m(:) = get_mass()
     
     !ip_mass is 1/proton_mass_in_g

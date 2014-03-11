@@ -307,6 +307,9 @@ class krome():
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST,HD", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=H2"]]
 			filename = "networks/react_primordial"
+		elif(args.test=="stars"):
+			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck"]]
+			filename = "networks/react_star"
 		elif(args.test=="reverse"):
 			[argv.append(x) for x in ["-useN","-reverse"]]
 			filename = "networks/react_NO"
@@ -1325,7 +1328,14 @@ class krome():
 				if(tmaxFound): myrea.Tmax = format_double(arow[iTmax]) #get Tmax
 				if(tmaxFound): TmaxAuto = max(float(arow[iTmax].lower().replace("d","e")), TmaxAuto)
 			#store other data
-			myrea.krate = arow[irate] #get reaction rate written in F90 style
+			area = arow[irate].split(":",2) #raction can be if_condition:reaction_rate
+			if(len(area)==1):
+				myrea.ifrate = "" #store empty prepending if condition
+				myrea.krate = arow[irate] #get reaction rate written in F90 style
+			else:
+				myrea.ifrate = area[0] #store prepending if condition
+				myrea.krate = area[1] #get reaction rate written in F90 style
+				
 			if(qeffFound): myrea.qeff = arow[iqeff]
 
 			#if(self.useCustomCoe): myrea.krate = "0.d0" #when custom function is used standard coefficient are set to zero
@@ -2773,14 +2783,17 @@ class krome():
 					#build temperature limit IF
 					sTlimit = ""
 					hasTlim = (x.hasTlimitMin or x.hasTlimitMax) #Tmin or Tmax are present
+					Tlimfound = False #flag to check if enfif is needed after the reaction rate
 					if(x.kphrate==None and self.useTlimits and hasTlim):
+						Tlimfound = True #need to close the if statement opened here
 						sTlimit = "if("
 						if(x.hasTlimitMin): sTlimit += "Tgas."+x.TminOp+"."+x.Tmin #Tmin is present
 						if(x.hasTlimitMin and x.hasTlimitMax): sTlimit += " .and. " #Tmin and Tmax are present
 						if(x.hasTlimitMax): sTlimit += "Tgas."+x.TmaxOp+"."+x.Tmax #Tmax is present
-						sTlimit += ")"
+						sTlimit += ") then\n"
 					kstr = "!" + x.verbatim+"\n" #reaction header
-					kstr += "\t" + sTlimit + " k("+str(x.idx)+") = " + x.krate #limit+rate
+					kstr += "\t" + sTlimit + x.ifrate + " k("+str(x.idx)+") = " + x.krate #limit+extraif+rate
+					if(Tlimfound): kstr += "\nend if" #close the if statement for temperature
 					kstr = truncF90(kstr, 60,"*") #truncates long reaction rates
 					fout.write(truncF90(kstr, 60,"/")+"\n\n") #truncate
 			elif(srow == "#KROME_conserve"):
