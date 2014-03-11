@@ -55,7 +55,7 @@ class krome():
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = True
-	useDustGrowth = useDustSputter = useDustH2 = useDustT = False
+	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
@@ -219,6 +219,8 @@ class krome():
 		self.parser.add_argument("-stars", action="store_true", help="use star module for nuclear reactions. NOTE: krome_stars\
 			module required in the Makefile")
 		self.parser.add_argument("-test",help=("Create a test model in /build. TEST can be: "+tests+"."))
+		self.parser.add_argument("-checkThermochem", action="store_true", help="print a warning when thermochemistry data are not found\
+			for a given species.")
 		self.parser.add_argument("-Tlimit", metavar="opLow,opHigh", help="set the operators for all the reaction temperature limits\
 			where opLow is the operator for the first temperature value in the reaction file, and opHigh is for the second one. e.g.\
 			if the T limits for a given reaction are 10. and 1d4 the option -Tlmit GE,LE will provide (Tgas>=10. AND Tgas<=1d4) as\
@@ -485,6 +487,10 @@ class krome():
 			self.shortHead = True
 			print "Reading option -sh"
 
+		#enable thermochemistry checking
+		if(args.checkThermochem):
+			self.checkThermochem = True
+			print "Reading option -checkThermochem"
 
 		#use IERR interface for krome
 		if(args.useIERR or args.ierr):
@@ -1112,6 +1118,18 @@ class krome():
 		reags = [] #list of reagents for already found
 		prods = [] #list of prods for already found
 		idxs = [] #list of index for already found
+
+		#read the size of the file in lines
+		fh = open(filename,"rb")
+		line_count = 0
+		for row in fh:
+			line_count += 1
+		fh.close()
+	
+		#warning if the number of lines exceed a certain limit
+		if(line_count>1000): print "Found "+str(line_count)+" lines! It takes a while..."
+
+		#star proper reading
 		fh = open(filename,"rb") #OPEN FILE
 		isComment = False #flag for comment block
 		noTabNext = False #flag for use tabs for the next reaction 
@@ -1485,6 +1503,7 @@ class krome():
 					
 	###################################################
 	def verifyThermochem(self):
+		if(not(self.checkThermochem)): return
 		for x in self.specs:
 			if(not(x.name in self.thermodata)):
 				print "WARNING: no thermochemical data for "+x.name+"!"
@@ -1776,12 +1795,13 @@ class krome():
 				
 
 
-		#equilibrium matrix (computed but not supported in this version)
+		#equilibrium matrix (NOTE: NOT SUPPORTED!)
 		idxs = [] #already employed indexes
 		xvar = [] #names of the composite variables
 		xvarM = [] #equilibrium matrix
 		xvarS = [] #symbolic matrix (for signless comparison)
 		for rea in reacts:
+			break ### TODO: fix equilibrium matrix (NOTE: NOT SUPPORTED!)
 			if(rea.idx in idxs): continue #skip if already employed index
 			ridx = rea.idx-1
 			#build matrix variable reactants
