@@ -124,11 +124,10 @@ contains
     use krome_commons
     use krome_subs
     implicit none
-    real*8::krome_get_mu,x(:),rhogas,n(1:nspec)
+    real*8::krome_get_mu,x(:),n(1:nspec)
     n(:) = 0d0
     n(1:nmols) = x(:)
-    rhogas = sum(x(:)*krome_get_mass())
-    krome_get_mu = get_mu(n(:),rhogas)
+    krome_get_mu = get_mu(n(:))
   end function krome_get_mu
 
   !*****************
