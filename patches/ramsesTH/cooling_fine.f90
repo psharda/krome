@@ -150,7 +150,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
            !convert to K
            Tgas(i) = T2(i) * mu_noneq
-           T2old = Tgas(i)
+           T2old = T2(i)
 
            ! KROME: from code units to 1/cm3 for KROME
 #KROME_scale_unoneq
