@@ -42,6 +42,19 @@ contains
 
 
 #IFKROME_use_cooling
+  !*************************
+  function krome_get_cooling(x,inTgas)
+    use krome_cooling
+    use krome_commons
+    implicit none
+    real*8::krome_get_cooling,x(nmols),n(nspec)
+    real*8::Tgas,inTgas
+    n(1:nmols) = x(:)
+    Tgas = inTgas
+    n(idx_Tgas) = Tgas
+    krome_get_cooling = cooling(n,Tgas)
+  end function krome_get_cooling
+
   !******************
   !alias of plot_cool
   subroutine krome_plot_cooling(n)

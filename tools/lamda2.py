@@ -1,14 +1,33 @@
+#!/usr/bin/python
+#!python
+
 #THIS PYTHON SCRIPT IS A PART OF KROME AND ALLOWS TO CONVERT THE 
 # SPECTROSCOPIC DATA FROM THE LAMDA DATABASE TO THE KROME FORMAT
 # FOR METAL/MOLECULAR COOLING
+# WRITTEN by Tommaso Grassi and the KROME group.
+import sys,os
 
-fname = "co.dat" #input file
-outfile = "out.dat" #output file
+########################################
+# PLEASE DO NOT MODIFY IF YOU ARE NOT 
+# SURE OF WHAT YOU ARE DOING!
+########################################
 
-##############################################
-# PLEASE DO NOT MODIFY UNDER THIS LINE IF 
-# YOU ARE NOT SURE OF WHAT YOU ARE DOING
-###############################################
+#name = "co.dat" #input file
+#outfile = "out.dat" #output file
+
+#check command-line arguments and store them
+if(len(sys.argv)<3):
+    sys.exit("Usage: %s INPUT OUTPUT" % sys.argv[0])
+
+if(not os.path.isfile(sys.argv[1].strip())):
+    sys.exit("ERROR: input file %s was not found!" % sys.argv[1])
+
+fname = sys.argv[1]
+outfile = sys.argv[2]
+if(fname==outfile):
+    sys.exit("ERROR: input and output are the same file!")
+
+#function to read a line, strip and pack into a list
 def read_line(line):
 	line = line.replace("\t"," ")
 	while("  " in line):
@@ -16,7 +35,8 @@ def read_line(line):
 	aarow = line.strip().split(" ")
 	return [ael.strip() for ael in aarow]
 
-
+#star reading
+# simple script, just reads lines knowing their position within the file
 print "Now reading from "+fname
 fh = open(fname,"rb")
 data = dict()
@@ -67,8 +87,11 @@ isOrthoPara = False
 for j in range(data["npartners"]):
 	#READ COLLIDER NAME AND INFO
 	rdx += 2
-	arow = read_line(rows[rdx])	
+	arow = read_line(rows[rdx])
 	partner_name = arow[1].replace(data["molecule"]+"-","").replace(":","")
+	#according to LAMDA: collision partner ID and reference.
+	# Valid identifications are: 1=H2, 2=para-H2, 3=ortho-H2, 4=electrons, 5=H, 6=He. 
+
 	if(partner_name=="pH2"): 
 		partner_name = "H2pa"
 		isOrthoPara = True
@@ -114,7 +137,7 @@ for i in range(len(data["rads"])):
 	alow = int(data["rads"][i]["low"])-1
 	fout.write(str(aup)+", "+str(alow)+", "+data["rads"][i]["Aij"]+"\n")
 
-#format to F90 format
+#function to format numbers to F90 format (x.xdx)
 def fmt_f90(xarg):
 	xarg = xarg.lower()
 	if("e" in xarg): 
@@ -124,6 +147,9 @@ def fmt_f90(xarg):
 	else:
 		return xarg + "d0"
 
+#write the partners to the krome file
+#note here that the function is employed to pass from lamda
+# linear interpolation to krome linear interpolation.
 for p in data["partners"]:
 	fout.write("\n")
 	fout.write("#collider, level_up, level_down, rate\n")
@@ -151,6 +177,7 @@ def pd(d,depth):
 		print ("---"*depth)+"> " + k,ll
 		if(isinstance(v,dict)): pd(v,depth+1)
 
+#print a pseudo-data structure, just to check that everything went smooth
 print "Data structure:"
 pd(data,0)
 print "output written in "+outfile

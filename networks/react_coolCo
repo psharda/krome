@@ -1,0 +1,6 @@
+#this is a dummy reaction network that is employed
+# for cooling from CO. Note that ghost species H2
+# is included since it is a collider
+@ghost:H2
+@format:idx,R,R,P,P,rate
+1,,,,,0.d0

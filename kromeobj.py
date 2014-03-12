@@ -21,7 +21,7 @@
 # Institut fuer Astrophysik, Goettingen.
 #
 # Others (alphabetically): F.A. Gianturco, J.Prieto,
-# D.R.G. Schleicher, D. Seifried, E. Simoncini 
+# D.R.G. Schleicher, D. Seifried, E. Simoncini , E. Tognelli
 #
 #
 #KROME is provided \"as it is\", without any warranty. 
@@ -98,7 +98,7 @@ class krome():
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
 	Zcools = [] #list of cooling read from file (species name, e.g. C+)
 	ramses_offset = 3 #offset in the array for ramses
-	coolFile = "data/coolZ.dat" #"tools/out.dat" #
+	coolFile = "data/coolZ.dat"
 	version = "14.03"
 	codename = "Beastie Boyle"
 
@@ -157,6 +157,9 @@ class krome():
 		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global\
 			neutrality. Works with some limitations, please read the manual.")
 		self.parser.add_argument("-conserveE", action="store_true", help="conserves the charge global neutrality only.")
+		self.parser.add_argument("-coolFile", metavar='FILENAME', help="select the filename to be used to load external cooling. See\
+			also tools/lamda2.py script for a LAMDA<->KROME converter. Default FILENAME is data/coolZ.dat, which contains\
+			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
 			COMPTON, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI). Note that further\
 			cooling options can be added when reading cooling function from file")
@@ -310,6 +313,9 @@ class krome():
 		elif(args.test=="stars"):
 			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck"]]
 			filename = "networks/react_star"
+		elif(args.test=="coolCO"):
+			[argv.append(x) for x in [""]]
+			filename = "networks/react_dummy"
 		elif(args.test=="reverse"):
 			[argv.append(x) for x in ["-useN","-reverse"]]
 			filename = "networks/react_NO"
@@ -372,6 +378,14 @@ class krome():
 		#chech if reactions file exists
 		if(args.n):
 			if(not(os.path.isfile(self.filename))): die("ERROR: Reaction file \""+self.filename+"\" doesn't exist!")
+		else:
+			die("ERROR: you must define -n FILENAME, where FILENAME is the reaction file!")
+
+		#read the coolFile
+		if(args.coolFile):
+			self.coolFile = args.coolFile
+			print "Reading option -coolFile (filename="+str(self.coolFile)+")"
+
 
 		#use f90 solver
 		if(args.useDvodeF90):
@@ -863,6 +877,8 @@ class krome():
 				print "ERROR: you are trying to use -gamma without -cooling or -heating"
 				sys.exit()
 			print "Reading option -gamma (gamma="+str(self.typeGamma)+")"
+
+
 
 		#offset for ramses
 		if(args.ramsesOffset):
@@ -2187,6 +2203,7 @@ class krome():
 		needOrthoPara = False
 		#read file
 		print "******************"
+		print "Reading coolants from "+fname+"..."
 		fh = open(fname,"rb")
 		for row in fh:
 			srow = row.strip()
@@ -2275,7 +2292,7 @@ class krome():
 				full_cool += "!excitation rates\n"
 				trfound = []
 				for tr in transitions:
-					ij2jivar = cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
+					ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
 					ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
 					ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + "*invTgas)"
 					#skip already found transitions					
@@ -2288,7 +2305,7 @@ class krome():
 				full_cool += "\n"
 				for tr in transitions:
 					coll = tr["coll"]
-					ij2jivar = cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
+					ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
 					varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
 					vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
 					real_variables.append(varup)
@@ -4354,7 +4371,7 @@ class krome():
 
 		#copy Makefile
 		fname = "Makefile"
-		shutil.copy(pfold+fname,ramsesFolder+fname)
+		self.replacein(pfold+fname, ramsesFolder+fname, ["#KROME_NMOLS"], [str(ichem)], False)
 
 		#copy Makefile.dep
 		fname = "Makefile.dep"
