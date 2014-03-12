@@ -4341,7 +4341,7 @@ class krome():
 		abnml = "!This file contains the initialization for the species\n"
 		abnml += "! employed by KROME. Change them according to your needs\n"
 		ichem = 0
-		comma = ","
+		comma = "" #add a separator here for namelist
 		for x in specs:
 			if(chemCount==ichem+1): comma = ""
 			if(x.name in excl): continue
@@ -4351,7 +4351,7 @@ class krome():
 			else:
 				sdef = format_double(ndef["default"]) #default value if not present in array
 			if(ichem==0):
-				abpart = "metal_region = "
+				abpart = "metal_region(1,1) = "
 				absize = len(abpart)
 				abpart += sdef+comma+(" "*(20-len(sdef)-len(comma)))
 			else:
@@ -4371,7 +4371,8 @@ class krome():
 
 		#copy Makefile
 		fname = "Makefile"
-		self.replacein(pfold+fname, ramsesFolder+fname, ["#KROME_NMOLS"], [str(ichem)], False)
+		#+1 after ichem is for adiabatic index
+		self.replacein(pfold+fname, ramsesFolder+fname, ["#KROME_NMOLS"], [str(ichem+1)], False)
 
 		#copy Makefile.dep
 		fname = "Makefile.dep"
