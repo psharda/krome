@@ -846,9 +846,7 @@ def get_file_list():
 	files.append("build")
 	files.append("tools")
 	files.append("tools/subkida.py")
-	files.append("tools/hnc.dat")
 	files.append("tools/lamda2.py")
-	files.append("tools/kida_demo.dat")
 	files.append("src")
 	files.append("src/krome_constants.f90")
 	files.append("src/krome_tabs.f90")
@@ -865,10 +863,7 @@ def get_file_list():
 	files.append("src/krome.f90")
 	files.append("src/krome_heating.f90")
 	files.append("src/krome_commons.f90")
-	files.append("clean")
 	files.append("data")
-	files.append("data/optSi.dat")
-	files.append("data/optC.dat")
 	files.append("data/thermo30.dat")
 	files.append("data/coolZ.dat")
 	files.append("solver")
@@ -877,6 +872,7 @@ def get_file_list():
 	files.append("solver/dvode_f90_license.txt")
 	files.append("solver/opkda1.f")
 	files.append("solver/dvode_f90_m.f90")
+	return files
 	files.append("networks")
 	files.append("networks/react_primordial2")
 	files.append("networks/react_primordial_photo")
@@ -892,7 +888,6 @@ def get_file_list():
 	files.append("networks/react_star")
 	files.append("networks/react_dummy")
 	files.append("networks/react_primordial_UV")
-	return files
 
 ###################################
 # modified from:
