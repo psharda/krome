@@ -88,15 +88,14 @@ for j in range(data["npartners"]):
 	#READ COLLIDER NAME AND INFO
 	rdx += 2
 	arow = read_line(rows[rdx])
-	partner_name = arow[1].replace(data["molecule"]+"-","").replace(":","")
 	#according to LAMDA: collision partner ID and reference.
-	# Valid identifications are: 1=H2, 2=para-H2, 3=ortho-H2, 4=electrons, 5=H, 6=He. 
-
-	if(partner_name=="pH2"): 
-		partner_name = "H2pa"
-		isOrthoPara = True
-	if(partner_name=="oH2"): 
-		partner_name = "H2or"
+	# Valid identifications are: 1=H2, 2=para-H2, 3=ortho-H2, 4=electrons, 5=H, 6=He.
+	valid_id = ["","H2","H2pa","H2or","e","H","He"]
+	partner_id = int(arow[0])
+	if(partner_id>len(valid_id)-1 or partner_id==0): sys.exit("ERROR: unknown partner id "+str(partner_id))
+	#partner_name = arow[1].replace(data["molecule"]+"-","").replace(":","")
+	partner_name = valid_id[partner_id]
+	if(partner_id==2 or partner_id==3):
 		isOrthoPara = True
 	data["colls"][partner_name] = dict()
 	data["colls"][partner_name]["info"] = rows[rdx]
