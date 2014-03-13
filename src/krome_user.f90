@@ -11,6 +11,30 @@ module krome_user
 
 contains
 
+  !*********************
+  function krome_n2x(n,rhogas)
+    use krome_commons
+     implicit none
+    real*8::n(nmols),rhogas,krome_n2x(nmols)
+
+    krome_n2x(:) = n(:) * krome_get_mass() / rhogas
+
+  end function krome_n2x
+
+  !********************
+  !return an array sized krome_nmols containing
+  ! the number densities (1/cm3), computed from the mass 
+  !fractions and the total density in g/cm3
+  function krome_x2n(x,rhogas)
+    use krome_commons
+    implicit none
+    real*8::x(nmols),rhogas,krome_x2n(nmols)
+    
+    !compute densities from fractions
+    krome_x2n(:) = rhogas * x(:) * krome_get_imass()
+
+  end function krome_x2n
+
   !*******************
   !do only cooling and heating
   subroutine krome_thermo(x,Tgas,dt)

@@ -642,17 +642,25 @@ contains
     integer::j,jmax,idx
     real*8::Tgas,Tgasold
 
-    jmax = coolTab_n
-    coolTab_logTlow = log10(1d1)
+    jmax = coolTab_n !size of the cooling tables (number of saples)
+    
+    !note: change upper and lower limit for rate tables here
+    coolTab_logTlow = log10(3d0)
     coolTab_logTup = log10(1d4)
 
+    !pre compute this value since used jmax times
     inv_coolTab_idx = (jmax-1) / (coolTab_logTup-coolTab_logTlow)
     
+    !loop over the jmax interpolation points
     do j=1,jmax
+       !compute Tgas for the given point
        Tgas = 1d1**((j-1)*(coolTab_logTup-coolTab_logTlow) &
             /(jmax-1) + coolTab_logTlow)
+       !produce cooling function for the given Tgas
        coolTab(:,j) = coolingZ_rates(Tgas)
+       !store Tgas into the array
        coolTab_T(j) = Tgas
+       !save 1/dT since it is known
        if(j>1) inv_coolTab_T(j-1) = 1d0 / (Tgas-Tgasold)
        Tgasold = Tgas
     end do

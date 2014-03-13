@@ -4301,7 +4301,9 @@ class krome():
 			"H+": 8.1967e-5,
 			"HE": 2.4375e-1,
 			"H2": 1.5123e-6,
-			"Tgas" : 200,
+			"O": 0.003792e0,
+			"C": 0.001269e0,
+			"Tgas" : 200e0,
 			"default":1e-40
 		}
 
@@ -4356,7 +4358,7 @@ class krome():
 				abpart += sdef+comma+(" "*(20-len(sdef)-len(comma)))
 			else:
 				abpart = (" "*absize)+sdef+comma+(" "*(20-len(sdef)-len(comma)))
-			abnml += abpart+"!"+x.name+"\n"
+			abnml += abpart+"!"+str(ichem+1)+": "+x.name+"\n"
 			ichem += 1
 
 		#write abundances.nml
