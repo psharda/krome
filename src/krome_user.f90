@@ -12,11 +12,14 @@ module krome_user
 contains
 
   !*********************
+  !return an array sized krome_nmols containing
+  ! the mass fractions (#), computed from the number 
+  ! densities (1/cm3) and the total density in g/cm3
   function krome_n2x(n,rhogas)
     use krome_commons
-     implicit none
+    implicit none
     real*8::n(nmols),rhogas,krome_n2x(nmols)
-
+    
     krome_n2x(:) = n(:) * krome_get_mass() / rhogas
 
   end function krome_n2x
@@ -24,7 +27,7 @@ contains
   !********************
   !return an array sized krome_nmols containing
   ! the number densities (1/cm3), computed from the mass 
-  !fractions and the total density in g/cm3
+  ! fractions and the total density in g/cm3
   function krome_x2n(x,rhogas)
     use krome_commons
     implicit none
