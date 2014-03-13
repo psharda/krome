@@ -11,6 +11,41 @@ module krome_user
 
 contains
 
+  !***************************
+  !normalize mass fractions and
+  ! set charge to zero
+  subroutine krome_consistent_x(x)
+    use krome_commons
+    use krome_constants
+    implicit none
+    real*8::x(nmols),isumx,sumx,xerr,imass(nmols),ee
+
+    !1. charge consistency
+    imass(:) = krome_get_imass()
+
+#KROME_zero_electrons
+
+    ee = sum(krome_get_charges()*x(:)*imass(:))
+    ee = max(ee*e_mass,0d0)
+#KROME_electrons_balance
+
+    !2. mass fraction consistency
+    sumx = sum(x)
+
+    !NOTE: uncomment here if you want some additional control
+    !conservation error threshold: rise an error if above xerr
+    !xerr = 1d-2
+    !if(abs(sum-1d0)>xerr) then
+    !   print *,"ERROR: some problem with conservation!"
+    !   print *,"|sum(x)-1|=",abs(sum-1d0)
+    !   stop
+    !end if
+
+    isumx = 1d0/sumx
+    x(:) = x(:) * isumx
+
+  end subroutine krome_consistent_x
+
   !*********************
   !return an array sized krome_nmols containing
   ! the mass fractions (#), computed from the number 

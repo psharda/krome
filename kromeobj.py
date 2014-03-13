@@ -3792,6 +3792,8 @@ class krome():
 					if(x.name=="E"):
 						fout.write("x(idx_e) = 0.d0\n")
 						break
+			elif(srow == "#KROME_electrons_balance"):
+				fout.write("x(idx_e) = ee\n")
 			elif(srow == "#KROME_constant_list"):
 				const = ""
 				constants = self.constantList
