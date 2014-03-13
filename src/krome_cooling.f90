@@ -669,6 +669,7 @@ contains
 
 #KROME_coolingZ_functions
 
+#ENDIFKROME
 
  !***********************
   subroutine mylin2(a,b)
@@ -719,6 +720,7 @@ contains
 
   end subroutine mylin3
 
+#IFKROME_useLAPACK
   !*********************************
   subroutine mydgesv(A,B)
     !driver for LAPACK dgesv
@@ -742,7 +744,6 @@ contains
     deallocate(tmp)
     deallocate(ipiv)
   end subroutine mydgesv
-
 #ENDIFKROME
 
   !************************************

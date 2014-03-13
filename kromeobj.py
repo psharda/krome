@@ -55,7 +55,7 @@ class krome():
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
-	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = False
+	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
@@ -2389,6 +2389,7 @@ class krome():
 				else:
 					#LAPACK are called for more than 3 levels
 					full_cool += "call mydgesv("+Avar+"(:,:), "+Bvar+"(:))\n"
+					self.needLAPACK = True
 
 
 				#prepares the cooling summing up the cooling from all the transitions
@@ -3260,6 +3261,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCompton" and not(self.useCoolingCompton)): skip = True
 			if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
+			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK 
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -4375,8 +4377,10 @@ class krome():
 
 		#copy Makefile
 		fname = "Makefile"
+		liblapack = ""
+		if(self.needLAPACK): liblapack = "LIBS += -llapack"
 		#+1 after ichem is for adiabatic index
-		self.replacein(pfold+fname, ramsesFolder+fname, ["#KROME_NMOLS"], [str(ichem+1)], False)
+		self.replacein(pfold+fname, ramsesFolder+fname, ["#KROME_NMOLS","#KROME_useLAPACK"], [str(ichem+1),liblapack], False)
 
 		#copy Makefile.dep
 		fname = "Makefile.dep"
