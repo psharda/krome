@@ -53,7 +53,7 @@ class krome():
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
-	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = False
+	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = False
@@ -151,6 +151,8 @@ class krome():
 		self.parser.add_argument("-checkConserv", action="store_true", help="check mass conservation during integration (slower)")
 		self.parser.add_argument("-checkReverse", action="store_true", help="check network for reverse reactions. Write warning on\
 			screen if any.")
+		self.parser.add_argument("-checkThermochem", action="store_true", help="print a warning when thermochemistry data are not found\
+			for a given species.")
 		self.parser.add_argument("-clean", action="store_true", help="clean all in /build (including krome_user_commons.f90 that\
 			is normally kept by default) before creating new f90 files.")
 		self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
@@ -193,6 +195,7 @@ class krome():
 		self.parser.add_argument("-nochargeCheck", action="store_true", help="skip reaction charge check")
 		self.parser.add_argument("-noCheck", action="store_true", help="skip reaction charge and mass check. Equivalent to\
 			-nomassCheck -nochargeCheck options.")
+		self.parser.add_argument("-noExample", action="store_true", help="do not write test.f90 and Makefile in the build directory")
 		self.parser.add_argument("-nomassCheck", action="store_true", help="skip reaction mass check")
 		self.parser.add_argument("-noTlimits", action="store_true", help="ignore rate coefficient temperature limits.")
 		self.parser.add_argument("-nuclearMult", action="store_true", help="keep into account reactants multeplicity, and modify\
@@ -202,6 +205,7 @@ class krome():
 		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
 		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the\
 			default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
+		self.parser.add_argument("-quote", action="store_true", help="print a citation and exit")
 		self.parser.add_argument("-ramses", action="store_true", help="create patches for RAMSES, see also -enzo and -flash")
 		self.parser.add_argument("-ramsesOffset", metavar="offset", help="add an offset to the array of the passive scalar. The\
 			default is 3.")
@@ -224,8 +228,6 @@ class krome():
 		self.parser.add_argument("-stars", action="store_true", help="use star module for nuclear reactions. NOTE: krome_stars\
 			module required in the Makefile")
 		self.parser.add_argument("-test",help=("Create a test model in /build. TEST can be: "+tests+"."))
-		self.parser.add_argument("-checkThermochem", action="store_true", help="print a warning when thermochemistry data are not found\
-			for a given species.")
 		self.parser.add_argument("-Tlimit", metavar="opLow,opHigh", help="set the operators for all the reaction temperature limits\
 			where opLow is the operator for the first temperature value in the reaction file, and opHigh is for the second one. e.g.\
 			if the T limits for a given reaction are 10. and 1d4 the option -Tlmit GE,LE will provide (Tgas>=10. AND Tgas<=1d4) as\
@@ -360,6 +362,11 @@ class krome():
 					sys.argv.append(x)
 
 			args = self.parser.parse_args() #return updated namespace
+		
+		#get a citation and exit
+		if(args.quote):
+			get_quote()
+			sys.exit()
 
 		#save options into a file
 		fopt = open("options.log","w")
@@ -659,6 +666,11 @@ class krome():
 		if(args.stars):
 			self.useStars = True
 			print "Reading option -stars"
+
+		#do not write test.f90 or Makefile
+		if(args.noExample):
+			self.noExample = True
+			print "Reading option -noExample"
 
 
 		#determine Tgas limit operators
@@ -4770,8 +4782,8 @@ class krome():
 		print
 		#IF NOT TEST
 		if(not(self.is_test)):
-			#PATCHES DO NOT NEED MAKEFILE AND TEST.F90
-			if(not(self.doFlash or self.doRamses or self.doEnzo or self.doRamsesTH)):
+			#PATCHES DO NOT NEED MAKEFILE AND TEST.F90, and also if noExample is enabled
+			if(not(self.doFlash or self.doRamses or self.doEnzo or self.doRamsesTH or self.noExample)):
 				#TODO: add description in case of dust
 				print "Call KROME in your code as:"
 				if(useX):
@@ -4785,17 +4797,18 @@ class krome():
 				print " gas_temperature is the gas temperature in [K]"
 				print " time_step is the integration time-step in [s]"
 			
-				fout = open(buildFolder+"test.f90","w")
-				fout.write(get_example(nmols,useX))
-				fout.close()
-				indentF90(buildFolder+"test.f90")
-				if(self.buildCompact):
-					shutil.copyfile("tests/MakefileCompact", buildFolder+"Makefile")
-				else:
-					if(self.pedanticMakefile):
-						shutil.copyfile("tests/Makefile_pedantic", buildFolder+"Makefile")
+				if(not(self.isdry)):
+					fout = open(buildFolder+"test.f90","w")
+					fout.write(get_example(nmols,useX))
+					fout.close()
+					indentF90(buildFolder+"test.f90")
+					if(self.buildCompact):
+						shutil.copyfile("tests/MakefileCompact", buildFolder+"Makefile")
 					else:
-						shutil.copyfile("tests/Makefile", buildFolder+"Makefile")
+						if(self.pedanticMakefile):
+							shutil.copyfile("tests/Makefile_pedantic", buildFolder+"Makefile")
+						else:
+							shutil.copyfile("tests/Makefile", buildFolder+"Makefile")
 
 		#IF IT IS A TEST
 		else:
