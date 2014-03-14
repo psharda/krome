@@ -27,6 +27,14 @@ contains
 
 #KROME_coevars
 
+#IFKROME_useShieldingDB96
+    fsh =  calc_H2shieldDB96(n, Tgas)
+#ENDIFKROME
+
+#IFKROME_useShieldingWG11
+    fsh =  calc_H2shieldWG11(n, Tgas)
+#ENDIFKROME
+
     k(:) = small !inizialize coefficients
 
 #KROME_krates
@@ -262,6 +270,43 @@ contains
          /p_mass/gravity/mu)
 
   end function get_jeans_length
+
+  !************************
+  !Calculate the self-shielding factor, following Draine & Bertoldi 1996 
+  function calc_H2shieldDB96(n,Tgas)
+    use krome_commons
+    use krome_constants
+    real*8::n(nspec),Tgas,calc_H2shieldDB96,N_H2, nH2
+
+    !Check on H2 abundances to avoid
+    ! weird numerical artifacts
+    nH2 = max(1d-40, n(idx_H2))
+
+    N_H2 = nH2*get_jeans_length(n,Tgas)*0.5d0  !column density (cm-2)
+    calc_H2shieldDB96 = min(1.d0,(N_H2*1.d-14)**(-0.75d0))
+
+  end function calc_H2shieldDB96
+
+  !************************
+  !Calculate the self-shielding factor, following Wolcott&Greene 2011 
+  function calc_H2shieldWG11(n,Tgas)
+    use krome_commons
+    use krome_constants
+    real*8::n(nspec),Tgas,calc_H2shieldWG11,N_H2,nH2
+    real*8::x_N_H2,b5
+
+    !Check on H2 abundances to avoid
+    ! weird numerical artifacts
+    nH2 = max(1d-40, n(idx_H2))
+    N_H2 = nH2*get_jeans_length(n,Tgas)*0.5d0  !column density (cm-2)
+    x_N_H2 = N_H2/(5.d14) !dimensionless column density (#)
+    b5 = ((2.d0*boltzmann_erg*Tgas/(2.d0*H_mass))**0.5d0)/1.d5 !Doppler broadening parameter b divided by 1d5 cm/s (#)
+    !!b5 = 3.d0 !Doppler broadening parameter b divided by 1d5 cm/s (#)
+    calc_H2shieldWG11 = 0.965d0/(1.d0+x_N_H2/b5)**1.1d0 + (0.035d0/(1.d0+x_N_H2)**0.5d0)&
+        *exp(-8.5d-4*(1.d0+x_N_H2)**0.5d0)
+
+  end function calc_H2shieldWG11
+
 
   !***************************
   !get the index of the specie name

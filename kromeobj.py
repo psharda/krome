@@ -49,7 +49,7 @@ class krome():
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
-	useCoolingCompton = useH2opacity = useCoolingCIE = useCoolingDISS = useStars = useNuclearMult = False
+	useCoolingCompton = useH2opacity = useShieldingDB96 = useShieldingWG11 =  useCoolingCIE = useCoolingDISS = useStars = useNuclearMult = False
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
@@ -220,6 +220,8 @@ class krome():
 		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g.\
 			-RTOL 1e-5 Default is RTOL=1d-4, see also -ATOL and -customRTOL")
 		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files")
+                self.parser.add_argument("-shielding", metavar="TERMS", help="use H2 self-shielding, TERMS can be DB96 for Draine&Bertoldi 1996,\
+                        WG11 for the more accurate Wolcott&Greene 2011")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
 		self.parser.add_argument("-skipJacobian", action="store_true", help="do not write Jacobian in krome_ode.f90 file. Useful\
 			to reduce compilation time when Jacobian is not needed (MF=222).")
@@ -481,6 +483,21 @@ class krome():
 		if(args.useH2opacity):
 			self.useH2opacity = True
 			print "Reading option -useH2opacity"
+
+                #determine H2shielding types 
+		if(args.shielding):
+                        myShielding = args.shielding.split(",")
+			myShielding = [x.strip() for x in myShielding]
+			#list of the shielding approximations 
+			allShielding = ["DB96","WG11"]
+			for shi in myShielding:
+				if(not(shi in allShielding)):
+					die("ERROR: Shielding \""+shi+"\" is unknown!\nAvailable shielding are: "+(", ".join(allShielding)))
+			if("DB96" in myShielding): self.useShieldingDB96 = True
+			if("WG11" in myShielding): self.useShieldingWG11 = True
+                        self.useShielding = True
+			print "Reading option -shielding ("+(",".join(myShielding))+")"
+
 
 		#use human Fluxes
 		if(args.compressFluxes):
@@ -2788,9 +2805,12 @@ class krome():
 
 			srow = row.strip()
 
-			#skip when find IF pragmas
-			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
+                        #skip when find IF pragmas
+                        if(srow == "#IFKROME_useShieldingWG11" and not(self.useShieldingWG11)): skip = True
+		        if(srow == "#ENDIFKROME"): skip = False
+
+                        if(srow == "#IFKROME_useShieldingDB96" and not(self.useShieldingDB96)): skip = True
+		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
 
@@ -3022,7 +3042,7 @@ class krome():
 					fout.write("krome_gamma = " + gamma + "\n")
 		
 			else:
-				fout.write(row)
+                                if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):
 			fout.close()
 		print "done!"
