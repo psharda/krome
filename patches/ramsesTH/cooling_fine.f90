@@ -61,11 +61,12 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real(kind=8)  :: dtcool
   integer,dimension(1:nvector),      save :: ind_cell,ind_leaf
   real(kind=8),dimension(1:nvector), save :: nH,T2,delta_T2,ekk,emag
+  real(kind=8), save :: time_old=-1.
   integer, save :: nprint=20
 
   !KROME: additional variables requested by KROME
-  real*8::unoneq(krome_nmols), Tgas(nvector)
-  real*8::mu_noneq,iscale_d,T2old,t2gas
+  real*8::unoneq(krome_nmols), Tgas
+  real*8::mu_noneq,mu_noneq_old,iscale_d,T2old,t2gas
   !$omp threadprivate(nH,T2,delta_T2,ekk,emag,ind_cell,ind_leaf)
 
   ! Conversion factor from user units to cgs units
@@ -146,10 +147,10 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 #KROME_update_unoneq
 
            !get the mean molecular weight
-           mu_noneq = krome_get_mu(unoneq(:))
+           mu_noneq_old = krome_get_mu(unoneq(:))
 
            !convert to K
-           Tgas(i) = T2(i) * mu_noneq
+           Tgas  = T2(i) * mu_noneq_old
            T2old = T2(i)
 
            ! KROME: from code units to 1/cm3 for KROME
@@ -157,12 +158,12 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
            if(do_cool.and.chemistry) then
               !KROME: do chemistry+cooling
-              call krome(unoneq(:), Tgas(i), dtcool)
+              call krome(unoneq(:), Tgas, dtcool)
            elseif(.not.chemistry.and.do_cool) then
               !KROME: cooling only
-              call krome_thermo(unoneq(:), Tgas(i), dtcool)
+              call krome_thermo(unoneq(:), Tgas, dtcool)
            elseif(.not.do_cool.and.chemistry) then
-              print *,"ERROR (KROME): you cannot do chemstry without cooling"
+              print *,"ERROR (KROME): you cannot do chemistry without cooling"
            else
               continue
            end if
@@ -177,17 +178,31 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
            !KROME: store the adiabatic index as the first element
            ! of the chem array (index=ichem)
-           uold(ind_leaf(i),ichem) = krome_get_gamma(unoneq(:),Tgas(i))
+           uold(ind_leaf(i),ichem) = krome_get_gamma(unoneq(:),Tgas)
 
            !Save gas temperature in K for the output
-           !uold(ind_leaf(i),ndim+3) = tgas(i)
+           !uold(ind_leaf(i),ndim+3) = tgas
 
            !KROME: compute mu with the chemistry updated
            mu_noneq = krome_get_mu(unoneq(:))
 
            !KROME: compute t2emperature difference
-           t2gas    = Tgas(i) / mu_noneq
+           t2gas    = Tgas / mu_noneq
            delta_T2(i) = t2gas - t2old
+           if (c_verbose > 0) then
+           !$omp critical
+           if (t .ne. time_old) then
+             time_old = t
+             print '(a,F10.2,F8.0,3e11.3)', 'Time [kyr], temperature [K], density [N_H cm^-3], cooling rate [erg / (s cm^3)] :', &
+               t*scale_t / (3600.*24.*365.25*1e3), t2old * mu_noneq_old, nH(i),  &
+               delta_T2(i)*nH(i)/scale_T2/(uold(ind_leaf(i),ichem)-1.0) * scale_d * scale_V**2 / dtcool, &
+               delta_T2(i)/nH(i)/scale_T2/(uold(ind_leaf(i),ichem)-1.0) * scale_d * scale_V**2 / dtcool
+             print '(a,3F10.2,2e11.3)', 'T, mu, gamma, X_H, X_H2 :', t2old * mu_noneq_old, mu_noneq, uold(ind_leaf(i),ichem), &
+               uold(ind_leaf(i),ichem+krome_idx_H)  / uold(ind_leaf(i),1), &
+               uold(ind_leaf(i),ichem+krome_idx_H2) / uold(ind_leaf(i),1)
+           end if
+           !$omp end critical
+           end if
         end do
      end if
 
