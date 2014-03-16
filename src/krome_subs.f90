@@ -310,6 +310,59 @@ contains
   end function calc_H2shieldWG11
 
   !***************************
+  !Collisional dissociation by Martin et al. 1996
+  !NOTE: the use of this rate is suggested
+  ! for high-density regime and in the presence of UV backgrounds.
+  function dissH2_Martin96(n, Tgas)
+    use krome_commons
+    integer::i
+    real*8::n(nspec),Tgas,dissH2_Martin96
+    real*8::CDrates,logTv(4),k_CIDm(2,21),k_CID,invT,logT,n_c1,n_c2,n_H
+    real*8::logk_h1,logk_h2,logk_l1,logk_l2,logn_c1,logn_c2,p,logk_CID
+
+    !k_CID = collision-induced dissociation + dissociative tunneling
+
+    !Collisional dissociation of H2
+    k_CIDm(1,:) = (/-178.4239d0, -68.42243d0, 43.20243d0, -4.633167d0, 69.70086d0,&
+           40870.38d0, -23705.70d0, 128.8953d0, -53.91334d0, 5.313317d0, -19.73427d0,&
+           16780.95d0, -25786.11d0, 14.82123d0, -4.890915d0, 0.4749030d0, -133.8283d0,&
+           -1.164408d0, 0.8227443d0, 0.5864073d0, -2.056313d0/)
+
+    !Dissociative tunneling of H2
+    k_CIDm(2,:) = (/-142.7664d0, 42.70741d0, -2.027365d0, -0.2582097d0, 21.36094d0,&
+        27535.31d0, -21467.79d0, 60.34928d0, -27.43096d0, 2.676150d0, -11.28215d0,&
+        14254.55d0, -23125.20d0, 9.305564d0, -2.464009d0, 0.1985955d0, 743.0600d0,&
+        -1.174242d0, 0.7502286d0, 0.2358848d0, 2.937507d0/)
+
+    n_H  = get_Hnuclei(n(:))
+    logT = log10(Tgas)
+    invT = 1.0d0/Tgas
+    logTv = (/1.d0, logT, logT**2.d0, logT**3.d0/)
+    k_CID = 0.d0
+    do i=1,2
+      logk_h1 = k_CIDm(i,1)*logTv(1) + k_CIDm(i,2)*logTv(2) + k_CIDm(i,3)*logTv(3)&
+          + k_CIDm(i,4)*logTv(4) + k_CIDm(i,5)*log10(1.d0+k_CIDm(i,6)*invT)
+      logk_h2 = k_CIDm(i,7)*invT
+      logk_l1 = k_CIDm(i,8)*logTv(1) + k_CIDm(i,9)*logTv(2) + k_CIDm(i,10)*logTv(3)&
+          + k_CIDm(i,11)*log10(1.d0+k_CIDm(i,12)*invT)
+      logk_l2 = k_CIDm(i,13)*invT      
+      logn_c1 = k_CIDm(i,14)*logTv(1) + k_CIDm(i,15)*logTv(2) + k_CIDm(i,16)*logTv(3)&
+          + k_CIDm(i,17)*invT
+      logn_c2 = k_CIDm(i,18) + logn_c1
+      p = k_CIDm(i,19) + k_CIDm(i,20)*exp(-Tgas*1.850d-3) + k_CIDm(i,21)*exp(-Tgas*4.40d-2)
+      n_c1 = 10**(logn_c1) 
+      n_c2 = 10**(logn_c2)
+      logk_CID = logk_h1 - (logk_h1 - logk_l1)/(1.d0 + (n_H/n_c1)**p)&
+          + logk_h2 - (logk_h2 - logk_l2)/(1.d0 + (n_H/n_c2)**p)
+      k_CID = k_CID + 1.d1**logk_CID
+    enddo
+   
+    dissH2_Martin96 = k_CID 
+
+  end function dissH2_Martin96
+
+
+  !***************************
   !get the index of the specie name
   function get_index(name)
     use krome_commons
