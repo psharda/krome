@@ -76,7 +76,7 @@
 30,H+,D,,H,D+,,,.GE.5d1,NONE,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
 
 #Galli & Palla 2002 from Wolf Savin 2001
-31,H,D+,,H+,D,,,.GE.5d1,NONE,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)-2.03d-9*Tgas**(-0.332)
+31,H,D+,,H+,D,,,.GE.5d1,NONE,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
 
 #Galli&Palla 2002 from Gerlich 1982 
 32,H2,D+,,HD,H+,,,NONE,NONE,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
