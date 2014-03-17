@@ -20,9 +20,9 @@ program test_krome
   real*8::ntot,rho
 
   !INITIAL CONDITIONS
-  redshift = 15.0d0    !redshift
-  ntot = 1.d0          !total density in 1/cm3
-  Tgas = 1d2           !temperature in kelvin
+  krome_redshift = 15.0d0    !redshift
+  ntot = 1.d0                !total density in 1/cm3
+  Tgas = 1d2                 !temperature in kelvin
 
   !INITIALIZE KROME PARAMETERS AND DUST 
   call krome_init()

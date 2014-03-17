@@ -333,9 +333,9 @@ contains
     do i=2,size(dust_opt_nu)
        !flux is the kernel (J(nu)+Planck)
        kera =  Jflux(dust_opt_nu(i-1)*planck_eV) * eV_to_erg + &
-            fplanck(dust_opt_nu(i-1), 2.73d0*(1.d0+redshift)) 
+            fplanck(dust_opt_nu(i-1), 2.73d0*(1.d0+krome_redshift)) 
        kerb = Jflux(dust_opt_nu(i)*planck_eV) * eV_to_erg + &
-            fplanck(dust_opt_nu(i), 2.73d0*(1.d0+redshift))
+            fplanck(dust_opt_nu(i), 2.73d0*(1.d0+krome_redshift))
        dnu = dust_opt_nu(ival) - dust_opt_nu(ival-1) !stepsize
        !calculates integrals
        int0 = int0 + 0.5d0 * (kera * dust_opt_Qabs(ival-1,i-1) &

@@ -751,7 +751,7 @@ def get_file_list():
 	files.append("patches/enzo/InitializeRateData.C")
 	files.append("patches/enzo/Grid_SolveRateAndCoolEquations.C")
 	files.append("patches/enzo/krome_initab.F90")
-	files.append("patches/enzo/evaluate_temp.F90")
+	files.append("patches/enzo/evaluate_tgas.F90")
 	files.append("patches/enzo/Make.config.objects")
 	files.append("patches/enzo/Grid_IdentifySpeciesFieldsKrome.C")
 	files.append("patches/enzo/krome_driver.F90")
@@ -1789,13 +1789,4 @@ def get_quote():
 	print "--- "+qtup[1]
 	print "*"*lqt
 	print
-
-
-
-
-
-
-
-
-
 
