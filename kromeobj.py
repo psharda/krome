@@ -2634,7 +2634,7 @@ class krome():
 		constants.append(["eV_to_erg","1.60217646d-12","eV -> erg"]) 
 		constants.append(["seconds_per_year","365d0*24d0*3600d0","yr -> s"]) 
 		constants.append(["km_to_cm","1d5","km -> cm"]) 
-		constants.append(["cm_to_Mpc","3.08d-24","cm -> Mpc"]) 
+		constants.append(["cm_to_Mpc","1.d0/3.08d24","cm -> Mpc"]) 
 		constants.append(["kvgas_erg","8.d0*boltzmann_erg/pi/p_mass",""]) 
 		constants.append(["pre_planck","2.d0*planck_erg/clight**2","erg/cm2*s3"]) 
 		constants.append(["exp_planck","planck_erg / boltzmann_erg","s*K"]) 
