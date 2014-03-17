@@ -100,7 +100,7 @@
 
              !convert to number densities
 #KROME_dom
-             call evaluate_temp(d(i,j,k), e(i,j,k), ge(i,j,k),&
+             call evaluate_tgas(d(i,j,k), e(i,j,k), ge(i,j,k),&
                   u(i,j,k), v(i,j,k), w(i,j,k),& 
                   krome_x(:),imethod,idual,idim,tgas,&
                   temstart,utem,rhogas)
