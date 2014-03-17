@@ -271,6 +271,7 @@ contains
 
   end function get_jeans_length
 
+#IFKROME_useShieldingDB96
   !************************
   !calculate the self-shielding factor, following Draine&Bertoldi 1996 
   !NOTE: this function is suited for collapse. Use with caution!
@@ -286,7 +287,9 @@ contains
     calc_H2shieldDB96 = min(1.d0, (N_H2*1.d-14)**(-0.75d0))
 
   end function calc_H2shieldDB96
+#ENDIFKROME
 
+#IFKROME_useShieldingWG11
   !************************
   !calculate the self-shielding factor, following Wolcott&Greene 2011
   !NOTE: this function is suited for collapse. Use with caution!
@@ -304,10 +307,12 @@ contains
 
     !doppler broadening parameter b divided by 1d5 cm/s (#)
     b5 = ((2.d0*boltzmann_erg*Tgas/(2.d0*H_mass))**0.5d0)*1.d-5 
-    calc_H2shieldWG11 = 0.965d0/(1.d0+xN_H2/b5)**1.1d0 + (0.035d0/(1.d0+xN_H2)**0.5d0) &
+    calc_H2shieldWG11 = 0.965d0/(1.d0+xN_H2/b5)**1.1d0 &
+         + (0.035d0/(1.d0+xN_H2)**0.5d0) &
          * exp(-8.5d-4*(1.d0+xN_H2)**0.5d0)
 
   end function calc_H2shieldWG11
+#ENDIFKROME
 
   !***************************
   !Collisional dissociation rate (cm-3/s) by Martin et al. 1996
