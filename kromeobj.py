@@ -2461,7 +2461,7 @@ class krome():
 
 				continue
 			
-			#if block for rates, e.g. if(Tgas > 5d3)
+			#if block for rates, e.g. if(Tgas > 5d3):
 			if(srow[:2]=="if"):
 				ifcond, ifrate = srow.split(":") #if condition, and rate
 				excitation_rates.append(ifcond.strip() +" "+ var_excitation +" = "+ifrate.strip()) #append rate
@@ -3834,7 +3834,11 @@ class krome():
 						fout.write("x(idx_e) = 0.d0\n")
 						break
 			elif(srow == "#KROME_electrons_balance"):
-				fout.write("x(idx_e) = ee\n")
+				#check if electron exists
+				for x in specs:
+					if(x.name=="E"):
+						fout.write("x(idx_e) = ee\n")
+						break
 			elif(srow == "#KROME_constant_list"):
 				const = ""
 				constants = self.constantList

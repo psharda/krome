@@ -91,7 +91,8 @@ class reaction():
 	nuclearMult = "" #nuclear multeplicty factor 1/(n!)
 	hasTlimitMax = hasTlimitMin = True #flag to determine the presence of Temperature limits
 	group = "__DEFAULT__"
-	canUseTabs = True
+	canUseTabs = True #flag if this reaction can use tabs
+	ifrate = "" #if condition on rate, e.g. if(Tgas>1d2):
 	#method: constructor to initialize lists
 	def __init__(self):
 		self.reactants = []
