@@ -183,8 +183,10 @@ class krome():
 		self.parser.add_argument("-forceMF222", action="store_true", help="force internal-generated sparsity and Jacobian")
 		self.parser.add_argument("-forceRWORK", help="force the size of RWORK to N", metavar="N")
 		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al.\
-			2011, VIB to keep into account the vibrational paritition function, or a custom F90 expression e.g. -gamma=\"1d0\".\
-			Default value is 5/3.",metavar="OPTION")
+			2011, i.e. a density dependent but temperature independent adiabatic index, VIB to keep into account the vibrational\
+                        paritition function, ROT to keep into account the rotational partition function, or EXACT to evaluate the\
+                        adiabatic index accurately taking into account both contributions. Finally a custom F90 expression e.g. -gamma=\"1d0\"\
+			can also be used. Default value is 5/3.",metavar="OPTION")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
