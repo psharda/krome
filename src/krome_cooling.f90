@@ -12,7 +12,7 @@ contains
     use krome_commons
     implicit none
     real*8::n(:), Tgas
-    real*8::cooling,cools(10)
+    real*8::cooling,cools(11)
     
     !returns cooling in erg/cm3/s
     cools(:) = 0.d0
@@ -55,6 +55,10 @@ contains
 
 #IFKROME_useCoolingContinuum
     cools(10) = cooling_continuum(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingExpansion
+    cools(11) = cooling_expansion(n(:), Tgas)
 #ENDIFKROME
 
     cooling = sum(cools)
@@ -209,6 +213,25 @@ contains
   end function cooling_CIE
 #ENDIFKROME
 
+
+#IFKROME_useCoolingExpansion
+  !*******************************
+  function cooling_expansion(n, Tgas)
+    !R'/R expansion cooling erg/cm3/s from Galli&Palla 1998
+    use krome_user_commons
+    use krome_commons
+    use krome_constants
+    real*8::cooling_expansion,n(:),Tgas
+    real*8::ntot
+    
+    ntot=sum(n(1:nmols))
+    !note that redhsift is defined in krome_user_commons and
+    ! must be provided by the user
+    cooling_expansion = 3.d0*ntot*boltzmann_erg*Tgas*Hubble0 & 
+           *(1.0d0+redshift)*sqrt(Omega0*redshift+1.0d0) !erg/s/cm3
+    
+  end function cooling_expansion
+#ENDIFKROME
 
 #IFKROME_useCoolingCompton
   !*******************************

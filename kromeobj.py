@@ -49,9 +49,9 @@ class krome():
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
-	useCoolingCompton = useH2opacity = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS = useStars = useNuclearMult = False
+	useCoolingCompton = useCoolingExpansion = useH2opacity = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS  = False
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
-	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = False
+	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
@@ -163,7 +163,7 @@ class krome():
 			also tools/lamda2.py script for a LAMDA<->KROME converter. Default FILENAME is data/coolZ.dat, which contains\
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
-			COMPTON, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI). Note that further\
+			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI). Note that further\
 			cooling options can be added when reading cooling function from file")
 		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line,\
 			e.g. H2 1d-20, see also -ATOL", metavar="filename")
@@ -707,7 +707,7 @@ class krome():
 			myCools = args.cooling.split(",")
 			myCools = [x.strip() for x in myCools]
 			#list of all cooling (excluded from file)
-			allCools = ["ATOMIC","H2","HD","DH","DUST","H2GP98","COMPTON","CIE","CONT","CHEM","DISS","Z"]
+			allCools = ["ATOMIC","H2","HD","DH","DUST","H2GP98","COMPTON","EXPANSION","CIE","CONT","CHEM","DISS","Z"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			fname = self.coolFile
@@ -759,6 +759,7 @@ class krome():
 			if("DH" in myCools): self.useCoolingdH = True
 			if("DUST" in myCools): self.useCoolingDust = True
 			if("COMPTON" in myCools): self.useCoolingCompton = True
+			if("EXPANSION" in myCools): self.useCoolingExpansion = True
 			if("CHEM" in myCools): self.useCoolingChem = True
 			if("CIE" in myCools): self.useCoolingCIE = True
 			if("DISS" in myCools): self.useCoolingDISS = True
@@ -2632,6 +2633,8 @@ class krome():
 		constants.append(["pi","3.14159265359d0","#"]) 
 		constants.append(["eV_to_erg","1.60217646d-12","eV -> erg"]) 
 		constants.append(["seconds_per_year","365d0*24d0*3600d0","yr -> s"]) 
+		constants.append(["km_to_cm","1d5","km -> cm"]) 
+		constants.append(["cm_to_Mpc","1.d0/3.08d24","cm -> Mpc"]) 
 		constants.append(["kvgas_erg","8.d0*boltzmann_erg/pi/p_mass",""]) 
 		constants.append(["pre_planck","2.d0*planck_erg/clight**2","erg/cm2*s3"]) 
 		constants.append(["exp_planck","planck_erg / boltzmann_erg","s*K"]) 
@@ -2639,6 +2642,9 @@ class krome():
 		constants.append(["N_avogadro","6.0221d23","#"]) 
 		constants.append(["Rgas_J","8.3144621d0","J/K/mol"]) 
 		constants.append(["Rgas_kJ","8.3144621d-3","kJ/K/mol"])
+		constants.append(["hubble","0.67d0","dimensionless"])
+		constants.append(["Omega0","1.0d0","dimensionless"])
+		constants.append(["Hubble0","1.d2*hubble*km_to_cm*cm_to_Mpc","1/s"])
 
 
 
@@ -3291,6 +3297,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingH2GP" and not(self.useCoolingH2GP98)): skip = True
 			if(srow == "#IFKROME_useCoolingHD" and not(self.useCoolingHD)): skip = True
 			if(srow == "#IFKROME_useCoolingCompton" and not(self.useCoolingCompton)): skip = True
+			if(srow == "#IFKROME_useCoolingExpansion" and not(self.useCoolingExpansion)): skip = True
 			if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK 
