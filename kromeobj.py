@@ -163,8 +163,8 @@ class krome():
 			also tools/lamda2.py script for a LAMDA<->KROME converter. Default FILENAME is data/coolZ.dat, which contains\
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
-			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI). Note that further\
-			cooling options can be added when reading cooling function from file")
+			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI).\
+			Note that further cooling options can be added when reading cooling function from file")
 		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line,\
 			e.g. H2 1d-20, see also -ATOL", metavar="filename")
 		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")

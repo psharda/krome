@@ -24,9 +24,9 @@ program test_krome
   do jz = 1,size(zs)
 
      !INITIAL CONDITIONS
-     redshift = 0d0    !redshift
-     ntot     = 0.1d0  !total density in 1/cm3
-     Tgas     = 3d2    !temperature in kelvin
+     krome_redshift = 0d0    !redshift
+     ntot           = 0.1d0  !total density in 1/cm3
+     Tgas           = 3d2    !temperature in kelvin
 
      !species initialization in 1/cm3
      x(:) = 1.d-40

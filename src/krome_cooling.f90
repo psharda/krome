@@ -225,10 +225,11 @@ contains
     real*8::ntot
     
     ntot=sum(n(1:nmols))
-    !note that redhsift is defined in krome_user_commons and
+    !note that krome_redshift is defined in krome_user_commons and
     ! must be provided by the user
     cooling_expansion = 3.d0*ntot*boltzmann_erg*Tgas*Hubble0 & 
-           *(1.0d0+redshift)*sqrt(Omega0*redshift+1.0d0) !erg/s/cm3
+           * (1.d0 + krome_redshift) &
+           * sqrt(Omega0 * krome_redshift + 1.d0) !erg/s/cm3
     
   end function cooling_expansion
 #ENDIFKROME
@@ -243,8 +244,8 @@ contains
     
     !note that redhsift is defined in krome_user_commons and 
     ! must be provided by the user
-    cooling_compton = 5.65d-36 * (1.d0 + redshift)**4 &
-         * (Tgas - 2.73d0 * (1.d0 + redshift)) * n(idx_e) !erg/s/cm3
+    cooling_compton = 5.65d-36 * (1.d0 + krome_redshift)**4 &
+         * (Tgas - 2.73d0 * (1.d0 + krome_redshift)) * n(idx_e) !erg/s/cm3
     
   end function cooling_compton
 #ENDIFKROME
