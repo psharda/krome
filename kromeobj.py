@@ -1191,6 +1191,7 @@ class krome():
 		#warning if the number of lines exceed a certain limit
 		if(line_count>1000): print "Found "+str(line_count)+" lines! It takes a while..."
 
+		fsh_found = False #search for fsh variable for shielding if needed
 		#star proper reading
 		fh = open(filename,"rb") #OPEN FILE
 		isComment = False #flag for comment block
@@ -1383,6 +1384,7 @@ class krome():
 			else:
 				myrea.ifrate = area[0] #store prepending if condition
 				myrea.krate = area[1] #get reaction rate written in F90 style
+			if("fsh" in myrea.krate.lower()): fsh_found = True
 				
 			if(qeffFound): myrea.qeff = arow[iqeff]
 
@@ -1441,6 +1443,15 @@ class krome():
 			noTabNext = False #return to default value
 
 	
+		if((self.useShieldingDB96 or self.useShieldingWG11) and not(fsh_found)):
+			print
+			print "WARNING: no fsh variable found in rate coefficient"
+			print " even if shielding options enabled."
+			print " Please check your network file!"
+			a = raw_input("Any key to continue q to quit... ")
+			if(a=="q"): print sys.exit()
+
+
 
 		if(skipDup): 
 			fdup.close()
