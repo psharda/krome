@@ -239,6 +239,97 @@
 89,O2,C,CO,O,NONE,295d0,4.7d-11*T32**(-.34)
 90,O2,C,CO,O,295d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
 
+#Glover+2010
+91,CO,H,C,OH,NONE,NONE,1.1d-10*T32**0.5*exp(-77700d0*invT)
+
+#Glover+2010
+92,H2+,H2,H3+,H,NONE,NONE,2.24d-9*T32*.042*exp(-Tgas/46600.)
+
+#Glover+2010
+93,H3+,H,H2+,H2,NONE,NONE,7.7d-9*T32*.042*exp(-17560d0*invT)
+
+#Glover+2010
+94,C,H2+,CH+,H,NONE,NONE,2.4d-9
+
+#Glover+2010
+94,C,H3+,CH+,H2,NONE,NONE,2d-9
+
+#Glover+2010, KIDA for second channel
+95,C+,H2,CH+,H,NONE,NONE,1d-10*exp(-4640d0*invT)
+96,C+,H2,CH2+,,NONE,NONE,2d-16*T32**(-1.3)*exp(-23d0*invT)
+
+#Glover+2010
+97,CH+,H,C+,H2,NONE,NONE,7.5d-10
+
+#Glover+2010
+98,CH+,H2,CH2+,H,NONE,NONE,1.2d-9
+
+#Glover+2010
+99,CH+,O,CO+,H,NONE,NONE,3.5d-10
+
+#KIDA, including additional channel (same rate)
+100,CH2,H+,CH+,H2,NONE,1.5d2,1.765d-9*(0.62d0+0.67215d0*(3d2*invT)**.5)
+101,CH2,H+,CH+,H2,1.5d2,NONE,1.765d-9+(1d0+0.136347d0*(3d2*invT)**.5 + 56.6626d0*invT)
+102,CH2,H+,H,CH2+,NONE,1.5d2,1.765d-9*(0.62d0+0.67215d0*(3d2*invT)**.5)
+103,CH2,H+,H,CH2+,1.5d2,NONE,1.765d-9+(1d0+0.136347d0*(3d2*invT)**.5 + 56.6626d0*invT)
+
+#Glover+2010
+104,CH2+,H,CH+,H2,NONE,NONE,1d-9*exp(-7080d0*invT)
+
+#Glover+2010
+105,CH2+,H2,CH3+,H,NONE,NONE,1.6d-9
+
+#Glover+2010
+106,CH2+,O,HCO+,H,NONE,NONE,7.5d-10
+
+#Glover+2010
+106,CH3+,H,CH2+,H2,NONE,NONE,7.d-10*exp(-10560d*invT)
+
+#KIDA, including additional channel, while H2CO+ channel ignored
+107,CH3+,O,HOC+,H2,NONE,NONE,2.5d-10
+108,CH3+,O,HCO+,H2,NONE,NONE,2.5d-10
+
+#KIDA, including additional channel
+109,C2,O+,CO+,C,NONE,NONE,4.8d-10
+110,C2,O+,O,C2+,NONE,NONE,4.8d-10
+
+#KIDA
+111,O+,H2,H,OH+,NONE,NONE,1.69d-9
+
+#Glover+2010
+111,O,H2+,H,OH+,NONE,NONE,1.5d-9
+
+#KIDA and additional channel both recomended
+112,O,H3+,H2,OH+,NONE,NONE,7.98d-10*T32**(-.156)*exp(-1.41d0*invT)
+113,O,H3+,H,H2O+,NONE,NONE,3.42d-10*T32**(-.156)*exp(-1.41d0*invT)
+
+#KIDA, below 10K constant
+114,OH,H3+,H2,H2O+,NONE,1d1,2.28d-8
+115,OH,H3+,H2,H2O+,1d1,NONE,1.52d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+
+#KIDA, below 10K constant
+116,OH,C+,H,CO+,NONE,1d1,2.28d-8
+117,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+
+#Glover+2010
+118,OH+,H2,H2O+,H,NONE,NONE,1.01d-9
+
+#Glover+2010
+119,H2O+,H2,H3O+,H,NONE,NONE,6.4d-10
+
+#KIDA, constant below 10K
+120,H2O,H3+,H2,H3O+,NONE,1d1,2.55d-8
+121,H2O,H3+,H2,H3O+,1d1,NONE,1.73d-9*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
+
+#Glover+2010, KIDA, constant below 10K, and KIDA for additional channel
+122,H2O,C+,HOC+,H,NONE,NONE,1.8d-9
+123,H2O,C+,HCO+,H,NONE,1d1,5.03d-9
+124,H2O,C+,HCO+,H,1d1,NONE,3.4093e-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
+125,H2O,C+,H2O+,C,NONE,NONE,2.4d-10
+
+#Glover+2010
+122,H3O+,C,HCO+,H2,NONE,NONE,1d-11
+
 
 
 
