@@ -34,8 +34,17 @@
 @noTabNext
 11,H2,He,H,H,He,NONE,NONE,kh11**(1.-a11)*kl11**a11
 
+#Glover+2011
+11,H2,He+,,He,H2+,NONE,NONE,7.2d-15
+@format:idx,R,R,R,P,P,P,Tmin,Tmax,rate
+12,H2,He+,,He,H,H+,NONE,NONE,3.7d-14*exp(35d0*invT)
+
+#KIDA
+13,H2,He+,,He+,H,H,NONE,NONE,3d-11*sqrt(T32*exp(-5.2d4*invT)
+
 
 #CHECK
+@format:idx,R,R,R,P,P,Tmin,Tmax,rate
 8,HE++,E,,HE+,g,,,2.73d0,1e8,3.36d-10/sqrTgas/(Tgas/1.d3)**0.2d0/(1+(Tgas/1.d6)**0.7d0)
 
 9,H,E,,H-,g,,,2.73d0,1e8,6.77d-15*Te**0.8779d0
@@ -239,6 +248,192 @@
 89,O2,C,CO,O,NONE,295d0,4.7d-11*T32**(-.34)
 90,O2,C,CO,O,295d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
 
+#Glover+2010
+91,CO,H,C,OH,NONE,NONE,1.1d-10*T32**0.5*exp(-77700d0*invT)
+
+#Glover+2010
+92,H2+,H2,H3+,H,NONE,NONE,2.24d-9*T32*.042*exp(-Tgas/46600.)
+
+#Glover+2010
+93,H3+,H,H2+,H2,NONE,NONE,7.7d-9*T32*.042*exp(-17560d0*invT)
+
+#Glover+2010
+94,C,H2+,CH+,H,NONE,NONE,2.4d-9
+
+#Glover+2010
+94,C,H3+,CH+,H2,NONE,NONE,2d-9
+
+#Glover+2010, KIDA for second channel
+95,C+,H2,CH+,H,NONE,NONE,1d-10*exp(-4640d0*invT)
+96,C+,H2,CH2+,,NONE,NONE,2d-16*T32**(-1.3)*exp(-23d0*invT)
+
+#Glover+2010
+97,CH+,H,C+,H2,NONE,NONE,7.5d-10
+
+#Glover+2010
+98,CH+,H2,CH2+,H,NONE,NONE,1.2d-9
+
+#Glover+2010
+99,CH+,O,CO+,H,NONE,NONE,3.5d-10
+
+#KIDA, including additional channel (same rate)
+100,CH2,H+,CH+,H2,NONE,1.5d2,1.765d-9*(0.62d0+0.67215d0*(3d2*invT)**.5)
+101,CH2,H+,CH+,H2,1.5d2,NONE,1.765d-9+(1d0+0.136347d0*(3d2*invT)**.5 + 56.6626d0*invT)
+102,CH2,H+,H,CH2+,NONE,1.5d2,1.765d-9*(0.62d0+0.67215d0*(3d2*invT)**.5)
+103,CH2,H+,H,CH2+,1.5d2,NONE,1.765d-9+(1d0+0.136347d0*(3d2*invT)**.5 + 56.6626d0*invT)
+
+#Glover+2010
+104,CH2+,H,CH+,H2,NONE,NONE,1d-9*exp(-7080d0*invT)
+
+#Glover+2010
+105,CH2+,H2,CH3+,H,NONE,NONE,1.6d-9
+
+#Glover+2010
+106,CH2+,O,HCO+,H,NONE,NONE,7.5d-10
+
+#Glover+2010
+106,CH3+,H,CH2+,H2,NONE,NONE,7.d-10*exp(-10560d*invT)
+
+#KIDA, including additional channel, while H2CO+ channel ignored
+107,CH3+,O,HOC+,H2,NONE,NONE,2.5d-10
+108,CH3+,O,HCO+,H2,NONE,NONE,2.5d-10
+
+#KIDA, including additional channel
+109,C2,O+,CO+,C,NONE,NONE,4.8d-10
+110,C2,O+,O,C2+,NONE,NONE,4.8d-10
+
+#KIDA
+111,O+,H2,H,OH+,NONE,NONE,1.69d-9
+
+#Glover+2010
+111,O,H2+,H,OH+,NONE,NONE,1.5d-9
+
+#KIDA and additional channel both recomended
+112,O,H3+,H2,OH+,NONE,NONE,7.98d-10*T32**(-.156)*exp(-1.41d0*invT)
+113,O,H3+,H,H2O+,NONE,NONE,3.42d-10*T32**(-.156)*exp(-1.41d0*invT)
+
+#KIDA, below 10K constant
+114,OH,H3+,H2,H2O+,NONE,1d1,2.28d-8
+115,OH,H3+,H2,H2O+,1d1,NONE,1.52d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+
+#KIDA, below 10K constant
+116,OH,C+,H,CO+,NONE,1d1,2.28d-8
+117,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+
+#Glover+2010
+118,OH+,H2,H2O+,H,NONE,NONE,1.01d-9
+
+#Glover+2010
+119,H2O+,H2,H3O+,H,NONE,NONE,6.4d-10
+
+#KIDA, constant below 10K
+120,H2O,H3+,H2,H3O+,NONE,1d1,2.55d-8
+121,H2O,H3+,H2,H3O+,1d1,NONE,1.73d-9*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
+
+#Glover+2010, KIDA, constant below 10K, and KIDA for additional channel
+122,H2O,C+,HOC+,H,NONE,NONE,1.8d-9
+123,H2O,C+,HCO+,H,NONE,1d1,5.03d-9
+124,H2O,C+,HCO+,H,1d1,NONE,3.4093e-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
+125,H2O,C+,H2O+,C,NONE,NONE,2.4d-10
+
+#Glover+2010
+126,H3O+,C,HCO+,H2,NONE,NONE,1d-11
+
+#KIDA, both recomended
+127,O2,C+,CO+,O,NONE,NONE,3.42d-10
+128,O2,C+,CO,O+,NONE,NONE,4.53d-10
 
 
+#Glover+2010, KIDA HOCO+ channel ignored
+129,O2,CH2+,HCO+,OH,NONE,NONE,9.1d-10
+
+#Glover+2010, KIDA additional channel
+130,C,O2+,O,CO+,NONE,NONE,5.2d-11
+131,C,O2+,O2,C+,NONE,NONE,5.2d-11
+
+#KIDA, constant below 10K
+132,CO,H3+,H2,HCO+,NONE,1d1,2.47d-9
+133,CO,H3+,H2,HCO+,1d1,NONE,1.88055d-9*(1d0 + 0.02427d0*(3d2*invT)**.5 + 1.79558d0*invT)
+
+#KIDA, constant below 10K
+134,CO,H3+,H2,HOC+,NONE,1d1,1.45d-10
+135,CO,H3+,H2,HOC+,1d1,NONE,1.08256d-10*(1d0 + 0.02427d0*(3d2*invT)**.5 + 1.79558d0*invT)
+
+#Glover+2010
+136,HCO+,C,CO,CH+,NONE,1d1,1d-9
+
+#KIDA, constant below 10K
+136,HCO+,H2O,CO,H3O+,NONE,1d1,1.23d-8
+137,HCO+,H2O,CO,H3O+,1d1,NONE,8.34d-10*(1d0 + 0.5232d0*(3d2*invT)**.5 + 834.165880*invT)
+
+#KIDA, constant below 10K
+138,CH,H+,CH+,H,1d1,NONE,3.3d-8
+139,CH,H+,CH+,H,1d1,NONE,3.54e-09*(0.62d0 + 1.587411d0*(3d2*invT)**.5)
+
+#KIDA, same rate for both channels
+140,CH2,H+,H2,CH+,NONE,1.5d2,1.765d-9*(0.62d0 + 0.672147d0*(3d2*invT)**.5)
+141,CH2,H+,H2,CH+,1.5d2,NONE,1.765d-9*(1d0 + 0.136347d0*(3d2*invT)**.5 + 56.66255d0*invT)
+142,CH2,H+,H,CH2+,NONE,1.5d2,1.765d-9*(0.62d0 + 0.672147d0*(3d2*invT)**.5)
+144,CH2,H+,H,CH2+,1.5d2,NONE,1.765d-9*(1d0 + 0.136347d0*(3d2*invT)**.5 + 56.66255d0*invT)
+
+#KIDA, same rate for both channels
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+145,CH2,He+,He,H2,C+,NONE,1.5d2,9.65d-10*(0.62d0 + 0.672147d0*(3d2*invT)**.5)
+146,CH2,He+,He,H2,C+,1.5d2,NONE,9.65d-10*(1d0 + 0.136347d0*(3d2*invT)**.5 + 56.6625498765d0*invT)
+147,CH2,He+,He,H,CH+,NONE,1.5d2,9.65d-10*(0.62d0 + 0.672147d0*(3d2*invT)**.5)
+148,CH2,He+,He,H,CH+,1.5d2,NONE,9.65d-10*(1d0 + 0.136347d0*(3d2*invT)**.5 + 56.6625498765d0*invT)
+
+#KIDA, constant below 10K
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+149,OH,H+,OH+,H,NONE,1d1,3.75d-8
+150,OH,H+,OH+,H,1d1,NONE,2.5d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+
+#KIDA, constant below 10K
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+151,OH,He+,O+,He,H,NONE,1d1,2.2d-8
+152,OH,He+,O+,He,H,1d1,NONE,1.35d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+
+
+#KIDA, constant below 10K
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+153,H2O,H+,H,H2O+,NONE,1d1,4.2d-8
+154,H2O,H+,H,H2O+,1d1,NONE,2.85d-9*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
+
+#KIDA,constant below 10K
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+155,H2O,He+,He,OH,H+,NONE,1d1,7.56d-9
+156,H2O,He+,He,OH,H+,1d1,NONE,5.1282d-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
+
+#KIDA,constant below 10K
+157,H2O,He+,He,OH+,H,NONE,1d1,7.56d-9
+158,H2O,He+,He,OH+,H,1d1,NONE,5.1282d-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
+
+#KIDA,constant below 10K
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+159,H2O,He+,He,H2O+,NONE,1d1,7.56d-9
+160,H2O,He+,He,H2O+,1d1,NONE,5.1282d-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
+
+#G+10
+161,O2,H+,O2+,H,NONE,NONE,2d-9
+
+#G+10
+151,O2,He+,O2+,He,NONE,NONE,3.3d-11
+
+#G+10
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+151,O2,He+,O+,He,O,NONE,NONE,1.1d-9
+
+#G+10
+151,CO,He+,C+,He,O,NONE,NONE,1.4d-9*(T32)**(-.5)
+152,CO,He+,C,He,O+,NONE,NONE,1.4d-16*(T32)**(-.5)
+
+#G+10
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+153,CO+,H,CO,H+,NONE,NONE,7.5d-10
+
+#G+10
+154,C-,H+,C,H,NONE,NONE,2.3d-7*(T32)**(-.5)
+
+#G+10
+155,C-,H+,C,H,NONE,NONE,2.3d-7*(T32)**(-.5)
 
