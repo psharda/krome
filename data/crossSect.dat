@@ -1,0 +1,62 @@
+#H- photodetachment, Glover+Jappsen07
+1,H-,H,E
+gamma: .5d0
+functions: 
+2.11d-16*(nrg-0.755)**(1.5)*nrg**(-3)
+
+#H2+ photodissociation
+2,H2+,H,H+
+gamma: 1.9d0
+functions:
+0d0
+if(nrg>2.65d0.and.nrg<11.27d0): 1d1**(-40.97d0 + 15.9795*nrg/2.65 -3.53934d0*(nrg/2.65)**2 +0.2581155d0*(nrg/2.65)**3)
+if(nrg.ge.11.27d0): 1d1**(-30.26d0 + 7.3935*nrg/2.65 -1.29214d0*(nrg/2.65)**2 +6.5785d-2*(nrg/2.65)**3)
+
+
+#H3+ photodissociation H2,H+ channel
+3,H3+,H2,H+
+gamma: 1.8d0
+#table is #,angstrom, cm2, from http://home.strw.leidenuniv.nl/~ewine/photo/showfile.php?showfile=h3p.pd
+table: 
+   1   413.0  0.000E+00
+   2   443.0  0.220E-17
+   3   477.0  0.560E-17
+   4   517.0  0.150E-16
+   5   564.0  0.240E-16
+   6   590.0  0.260E-16
+   7   620.0  0.240E-16
+   8   653.0  0.180E-16
+   9   689.0  0.960E-17
+  10   729.0  0.440E-17
+  11   775.0  0.220E-17
+  12   886.0  0.000E+00
+  13   912.0  0.000E+00
+
+#H3+ photodissociation H2+,H channel
+4,H3+,H2+,H
+gamma: 2.3d0
+#table is #,angstrom, cm2, from http://home.strw.leidenuniv.nl/~ewine/photo/showfile.php?showfile=h3p.pd
+table: 
+   1   413.0  0.000E+00
+   2   443.0  0.220E-17
+   3   477.0  0.560E-17
+   4   517.0  0.150E-16
+   5   564.0  0.240E-16
+   6   590.0  0.260E-16
+   7   620.0  0.240E-16
+   8   653.0  0.180E-16
+   9   689.0  0.960E-17
+  10   729.0  0.440E-17
+  11   775.0  0.220E-17
+  12   886.0  0.000E+00
+  13   912.0  0.000E+00
+
+#C photoionization
+5,C,C+,E
+gamma: 3d0
+function:
+sigma_v96(nrg,4.058d-1, 8.709d0, 1.261d2, 8.578d0, 2.093d0, 4.929d1, 3.234d0)
+
+#
+
+
