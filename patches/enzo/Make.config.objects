@@ -146,7 +146,6 @@ OBJS_CONFIG_LIB = \
 	EnzoVector_ExchangeEnd.o \
 	EnzoVector_test.o \
         euler.o \
-	evaluate_temp.o \
 	evaluate_tgas.o \
         EvolveHierarchy.o \
 	EventHooks.o \
