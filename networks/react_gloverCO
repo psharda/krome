@@ -519,8 +519,40 @@
 199,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
 200,OH,H,H2O,,NONE,NONE,5.26d-18*T32**(-5.22)*exp(-9d1*invT)
 
-
-
-
-
+#PHOTOREACTIONS
+@format:idx,R,P,P,rate
+201,H-,H,E,7.1d-7*exp(-.5*Av)
+202,H2+,H,H+,1.1d-9*exp(-1.9*Av)
+203,H2,H,H,5.6d-11*exp(-3.74*Av)*fselfH2(column_density, doppler_broad)
+204,H3+,H2,H+,4.9d-13*exp(-1.8*Av)
+205,H3+,H2+,H,4.9d-13*exp(-2.3*Av)
+206,C,C+,E,3.1d-10*exp(-3.*Av)
+207,C-,C,E,2.4d-7*exp(-.9*Av)
+208,CH,C,H,8.7d-10*exp(-1.2*Av)
+209,CH,CH+,E,7.7d-10*exp(-2.8*Av)
+210,CH+,C,H+,2.6d-10*exp(-2.5*Av)
+211,CH2,CH,H,7.1d-10*exp(-1.7*Av)
+212,CH2,CH2+,E,5.9d-10*exp(-2.3*Av)
+213,CH2+,CH+,H,4.6d-10*exp(-1.7*Av)
+214,CH3+,CH2+,H,1d-9*exp(-1.7*Av)
+215,CH3+,CH+,H2,1d-9*exp(-1.7*Av)
+216,C2,C,C,1.5d-10*exp(-2.1*Av)
+217,O-,O,E,2.4d-7*exp(-.5*Av)
+218,OH,O,H,3.7d-10*exp(-1.7*Av)
+219,OH,OH+,E,1.6d-12*exp(-3.1*Av)
+220,OH,OH+,E,1.6d-12*exp(-3.1*Av)
+221,OH+,O,H+,1d-12*exp(-1.8*Av)
+222,H2O,OH,H,6d-10*exp(-1.7*Av)
+223,H2O,H2O+,E,3.2d-11*exp(-3.9*Av)
+224,H2O+,H2+,O,5.d-11*fHnOj(Av)
+225,H2O+,H+,OH,5.d-11*fHnOj(Av)
+226,H2O+,O+,H2,5.d-11*fHnOj(Av)
+227,H2O+,OH+,H,5.d-11*fHnOj(Av)
+228,H3O+,H+,H2O,2.5d-11*fHnOj(Av)
+229,H3O+,H2+,OH,2.5d-11*fHnOj(Av)
+230,H3O+,H2O+,H,7.5d-11*fHnOj(Av)
+231,H3O+,OH+,H,2.5d-11*fHnOj(Av)
+232,O2,O2+,E,5.6d-11*exp(-3.7*Av)
+233,O2,O,O,7d-10*exp(-1.8*Av)
+234,CO,C,O,2.d-10*krome_fCO(column_density)*krome_fH2(column_density)*exp(-3.53*Av)
 

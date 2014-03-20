@@ -60,6 +60,38 @@ contains
 
   end function conserve
 
+
+  !**************************
+  !shielding function for H2O+ and H3O+
+  ! following Glover+2010 MNRAS sect 2.2 eqn.4
+  function fHnOj(Av)
+    implicit none
+    real*8::fHnOj,Av
+    if(Av.le.15d0) then
+       fHnOj = exp(-2.55*Av+0.0165*Av**2)
+    else
+       fHnOj = exp(-2.8*Av)
+    end if
+  end function fHnOj
+
+  !******************************
+  !self-shielding for H2 
+  ! following Glover+2010 MNRAS sect2.2 eqn.6
+  ! N: column density (cm-2)
+  ! b: doppler broadening (cm/s)
+  function fselfH2(N, b)
+    implicit none
+    real*8::fselfH2,N,b,x,b5
+
+    x = N*2d-15 !normalized column density (#)
+    b5 = b*10d-5 !normalized doppler broadening (#)
+
+    fselfH2 = 0.965d0/(1+x/b5) + &
+         0.035d0/sqrt(1d0+x) * &
+         exp(-8.5d-4*sqrt(1+x))
+
+  end function fselfH2
+  
   !**************************
   !function to get the partition function
   ! of H2 at Tgas with a orto-para ratio
