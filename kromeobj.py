@@ -4771,7 +4771,7 @@ class krome():
 		self.replacein(patchFolder+fname, enzoFolder+fname, ["#KROME_identify"], [krome_grid_identify], False)
 
 		#5. copy others
-		fname = "evaluate_temp.F90"
+		fname = "evaluate_tgas.F90"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
 		fname = "InitializeRateData.C"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)

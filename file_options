@@ -1,0 +1,8 @@
+-n networks/react_shang
+-enzo
+-compact
+-useN
+-shielding=DB96
+-ATOL=1d-8
+-conserve
+-cooling=H2GP98,ATOMIC
