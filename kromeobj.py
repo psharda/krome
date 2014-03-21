@@ -1248,9 +1248,9 @@ class krome():
 				print "Found custom format: "+srow
 				arow = srow.split(",") #split format line
 				#check format (at least 6 elements)
-				if(len(arow)<6):
-					print "ERROR: format line must contains at least 6 elements"
-					print " idx,R,R,P,P,rate"
+				if(len(arow)<5):
+					print "ERROR: format line must contains at least 5 elements"
+					print " idx,R,P,P,rate"
 					print " You provided "+str(len(arow))+" elements:"
 					print " "+srow
 					sys.exit()
@@ -2732,6 +2732,7 @@ class krome():
 		for x in sclist:
 			shortcutVars += "real*8::"+x.split("=")[0].strip()+"\n"
 
+
 		#conserve
 		krome_conserve = "" #init full string for the pragma replacement
 		if(self.useConserve):
@@ -2821,7 +2822,6 @@ class krome():
 		#loop on src file and replace pragmas
 		skip = False
 		for row in fh:
-
 			srow = row.strip()
 
                         #skip when find IF pragmas
@@ -3153,7 +3153,7 @@ class krome():
 
 		#if reactions that cannot be tabbed are found
 		klist = kvars = ""
-		if(countNoTab>0):
+		if(countNoTab>0 and self.useTabs):
 			if(len(coevars)!=0):
 				#define variables
 				kvars = "real*8::"+(",".join([x.strip() for x in coevars.keys()]))
@@ -4771,7 +4771,7 @@ class krome():
 		self.replacein(patchFolder+fname, enzoFolder+fname, ["#KROME_identify"], [krome_grid_identify], False)
 
 		#5. copy others
-		fname = "evaluate_tgas.F90"
+		fname = "evaluate_temp.F90"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
 		fname = "InitializeRateData.C"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
