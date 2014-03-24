@@ -338,7 +338,7 @@ contains
     H_mass = p_mass+e_mass !H mass in g
 
     !doppler broadening parameter b divided by 1d5 cm/s (#)
-    b5 = ((2.d0*boltzmann_erg*Tgas/(2.d0*H_mass))**0.5d0)*1.d-5 
+    b5 = ((boltzmann_erg*Tgas/H_mass)**0.5d0)*1.d-5 
     calc_H2shieldWG11 = 0.965d0/(1.d0+xN_H2/b5)**1.1d0 &
          + (0.035d0/(1.d0+xN_H2)**0.5d0) &
          * exp(-8.5d-4*(1.d0+xN_H2)**0.5d0)
