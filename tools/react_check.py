@@ -1,3 +1,6 @@
+#!/usr/bin/python
+#!python
+
 import sys,os
 #THIS UTILITY CHECKS A RATE FILE
 #1) CHECK FOR DUPLICATES
