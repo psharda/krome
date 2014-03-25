@@ -15,7 +15,8 @@ from random import random as rand
 ########################################
 tmpfile = str(1e8+rand()*1e8)+"tmp.dot"
 EMAX = 2 #maximum number of object on label edge. if greater select by degree
-DEGMIN = 0 #limit on degree percentage
+DEGMIN = 0 #limit on degree percentage nodes
+DEGMIN_LABEL = 0 #limit on degree percentage edge
 prog = "dot" #graphviz tool employed
 
 
@@ -114,7 +115,11 @@ foundrea = [] #list of reaction found (for output on screen only)
 fout.write("//DOT file created with PATHWAY of KROME\n")
 fout.write("// see kromepackage.org\n")
 fout.write("digraph pathway{\n")
-fout.write("node [shape=circle newrank=true];\n")
+fout.write("node [shape=circle];\n")
+#fout.write("newrank=true;\n")
+#fout.write("splines=false;\n")
+fout.write("overlap=scale;\n")
+fout.write("fontsize=11;\n")
 
 degree = dict()
 
@@ -229,6 +234,7 @@ degree = degnorm
 #print deg
 
 #prepare dot file
+species = []
 gotwarn = False
 for k,v in foundedge.iteritems():
 	uniq = []
@@ -238,10 +244,18 @@ for k,v in foundedge.iteritems():
 		uniq.append(x)
 	node_start = k.split("->")[0].strip().replace("\"","")
 	node_end = k.split("->")[1].strip().replace("\"","")
+	species.append(node_start)
+	species.append(node_end)	
 	if(degree[node_start]<DEGMIN or degree[node_end]<DEGMIN): continue
 	#print "*********"
 	#print k
 	#print uniq
+	maxdeg = 0
+	#eliminate edge with partners with max degree < DEGMIN_LABEL
+	for x in uniq:
+		maxdeg = max(degree[x],maxdeg)
+	if(maxdeg<DEGMIN_LABEL): continue
+
 	vals = []
 	#if more than EMAX objects on the edge label keeps only the EMAX with highes degree
 	if(len(uniq)>EMAX):
@@ -256,6 +270,16 @@ for k,v in foundedge.iteritems():
 	link = "\t"+k+" [label=\""+(",".join(uniq))+"\"];\n"
 	fout.write(link)
 if(gotwarn): print "To avoid this warning change EMAX in the script."
+
+#select species containing atom base (unique)
+uniq = []
+for x in species:
+	if(x in uniq): continue
+	uniq.append(x)
+species = uniq
+
+
+
 fout.write("}\n")
 fout.close()
 
