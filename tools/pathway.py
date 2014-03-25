@@ -15,6 +15,9 @@ from random import random as rand
 ########################################
 tmpfile = str(1e8+rand()*1e8)+"tmp.dot"
 EMAX = 2 #maximum number of object on label edge. if greater select by degree
+DEGMIN = 0 #limit on degree percentage
+prog = "dot" #graphviz tool employed
+
 
 
 #check command-line arguments and store them
@@ -87,7 +90,7 @@ def is_number(s):
         return False
 
 adic = ['H','HE','LI','BE','B','C','N','O','F','NE','NA','MG','AL','SI','P','S','CL','AR',\
-		'K','CA','SC','TI','V','CR','MN','FE','CO','NI','CU','ZN','GA','GE','AS','SE','BR','KR',\
+		'K','CA','SC','TI','V','CR','MN','FE','NI','CU','ZN','GA','GE','AS','SE','BR','KR',\
 		'RB','SR','Y','ZR','NB','MO','TC','RU','RH','PD','AG','CD','IN','SN','SB','TE','I','XE',\
 		'CS','BA','LA','CE','PR','ND','PM','SM','EU','GD','TB','DY',\
 		'HO','ER','TM','YB','LU','HF','TA','W','RE','OS','IR','PT',\
@@ -111,7 +114,7 @@ foundrea = [] #list of reaction found (for output on screen only)
 fout.write("//DOT file created with PATHWAY of KROME\n")
 fout.write("// see kromepackage.org\n")
 fout.write("digraph pathway{\n")
-fout.write("node [shape=circle];\n")
+fout.write("node [shape=circle newrank=true];\n")
 
 degree = dict()
 
@@ -217,9 +220,12 @@ if(ifound==0):
 #dictionary->list (easier to sort)
 sumdeg = sum(degree.values())
 deg = []
+degnorm = dict()
 for k,v in degree.iteritems():
 	deg.append([k,v*100./sumdeg])
+	degnorm[k] = int(v*100./sumdeg)
 deg = sorted(deg, key=lambda x:x[1],reverse=True)
+degree = degnorm
 #print deg
 
 #prepare dot file
@@ -230,6 +236,9 @@ for k,v in foundedge.iteritems():
 	for x in v:
 		if(x in uniq): continue
 		uniq.append(x)
+	node_start = k.split("->")[0].strip().replace("\"","")
+	node_end = k.split("->")[1].strip().replace("\"","")
+	if(degree[node_start]<DEGMIN or degree[node_end]<DEGMIN): continue
 	#print "*********"
 	#print k
 	#print uniq
@@ -238,7 +247,7 @@ for k,v in foundedge.iteritems():
 	if(len(uniq)>EMAX):
 		tmpu = (", ".join(uniq))
 		for x in uniq:
-			vals.append([x,int(degree[x]*100./sumdeg)])
+			vals.append([x,degree[x]])
 		vals = sorted(vals, key=lambda x:x[1],reverse=True)
 		uniq = [x[0] for x in vals[0:EMAX]]
 		print "WARNING: found ("+tmpu+") selected ("+(", ".join(uniq))+")"#,vals
@@ -253,7 +262,7 @@ fout.close()
 #run dot to prepare eps file
 fstdout = open(outfile,"w")
 try:
-	call(["dot",tmpfile,"-Teps"],stdout=fstdout)
+	call([prog,tmpfile,"-Teps"],stdout=fstdout)
 except:
 	print "ERROR: problem with dot!"
 	print "You need graphviz to run this script (http://www.graphviz.org/)"
