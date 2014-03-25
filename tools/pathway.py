@@ -79,6 +79,27 @@ class form():
 			print self.rate
 			print self.fmt
 
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+adic = ['H','HE','LI','BE','B','C','N','O','F','NE','NA','MG','AL','SI','P','S','CL','AR',\
+		'K','CA','SC','TI','V','CR','MN','FE','CO','NI','CU','ZN','GA','GE','AS','SE','BR','KR',\
+		'RB','SR','Y','ZR','NB','MO','TC','RU','RH','PD','AG','CD','IN','SN','SB','TE','I','XE',\
+		'CS','BA','LA','CE','PR','ND','PM','SM','EU','GD','TB','DY',\
+		'HO','ER','TM','YB','LU','HF','TA','W','RE','OS','IR','PT',\
+		'AU','HG','TL','PB','BI','PO','AT','RN','FR','RA','AC','TH','PA','U']
+adic = sorted([x.lower() for x in adic],key=lambda x:len(x),reverse=True)
+
+def basein(mydic,argin,hayin):
+	hay = hayin.lower()
+	arg = argin.lower()
+	for el in mydic:
+		if(len(el)>len(arg)): hay = hay.replace(el,"")
+	return (arg in hay)
 
 cfmt = form() #object class format
 fh = open(fname,"rb") #open file to read
@@ -153,12 +174,13 @@ for row in fh:
 			degree[x] = 1
 
 	#search for the atom in reactants and products
-	if(base in rr+pp):
+	rrpp = "".join(rr+pp)
+	if(basein(adic,base,rrpp)):
 		irr = 0
 		#loop on reactants
 		for x in rr:
 			#if a reactants has the atom
-			if(base in x):
+			if(basein(adic,base,x)):
 				node_start = x #store reactants
 				other_reacts = []
 				#store all other reactants
@@ -168,7 +190,7 @@ for row in fh:
 				node_ends = []
 				#store products with the atom
 				for p in pp:
-					if(base in p):
+					if(basein(adic,base,p)):
 						node_ends.append(p)
 				#empty reactants are CR or photons
 				if(len(other_reacts)==0): other_reacts = ["CR/hv"]
