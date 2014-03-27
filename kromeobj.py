@@ -2236,6 +2236,7 @@ class krome():
 			sys.exit()
 	
 		zcoolants = self.zcoolants
+		use_escape = False #TODO
 		skip = False
 		inmetal = False
 		skip_metal = False
@@ -2343,6 +2344,33 @@ class krome():
 						full_cool += ij2ji + "\n"
 						real_variables.append(ij2jivar)
 						trfound.append([tr["up"], tr["down"]])
+
+				#prepares Bij and Bji if needed
+				if(use_escape):
+						full_cool += "\n"
+						full_cool += "!prepares Bij and Bji\n"
+
+				for tr in transitions:
+					if(not(use_escape)): break #Bij and Bji only needed for escape
+					hasAij = False
+					try:
+						bAij = Aijs[(tr["up"],tr["down"])]
+						hasAij = True
+					except:
+						pass
+				
+					if(hasAij):
+						varBji = "B"+str(tr["up"])+str(tr["down"])
+						varBij = "B"+str(tr["down"])+str(tr["up"])
+						if(varBji in real_variables): continue
+						nrg = str(pow(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"],-3))
+						gji = str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
+						full_cool += varBji + " = preB * " + nrg + " * " + bAij + "\n"
+						full_cool += varBij + " = " + varBji + " * " + gji + "\n"
+						real_variables.append(varBji)
+						real_variables.append(varBij)
+
+ 
 				
 				#prepares rate conversion using conversion factor computed above
 				full_cool += "\n"
@@ -2382,8 +2410,13 @@ class krome():
 					varM = "M" + str(tr["up"]) + str(tr["down"]) + cur_metal
 					real_variables.append(varM) #add to double variable list
 					if(not(varM in varMexist)):
+						beta = ""
+						if(use_escape):
+							betavar = "beta"+str(tr["up"])+str(tr["down"])
+							beta = " * " + betavar
+							
 						try:
-							MM[varM] = [Aijs[(tr["up"],tr["down"])]]
+							MM[varM] = [Aijs[(tr["up"],tr["down"])] + beta]
 						except:
 							MM[varM] = ["0e0"]
 						MMij[varM] = [tr["up"],tr["down"]]
