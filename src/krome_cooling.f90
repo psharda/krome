@@ -4,7 +4,7 @@ module KROME_cooling
 #KROME_nZrate
   real*8::coolTab(nZrate,coolTab_n),coolTab_logTlow, coolTab_logTup
   real*8::coolTab_T(coolTab_n),inv_coolTab_T(coolTab_n-1),inv_coolTab_idx
-
+#KROME_escape_vars
 contains
 
   !*******************************
@@ -690,6 +690,70 @@ contains
     end do
 
   end subroutine coolingZ_init_tabs
+
+  !********************************
+  !driver for nleq that solves a non-linear
+  ! system of equations
+  subroutine krome_nleq_driver(x)
+    implicit none
+    real*8::x(:)
+
+    x(:) = 1d0 !initial guess
+    !solve non linear system
+    call nleq_wrap(x)
+
+  end subroutine krome_nleq_driver
+
+  !*******************************
+  !this subroutine solve a non linear system
+  ! with the equations stored in fcn function
+  ! and a dummy jacobian jcn
+  subroutine nleq_wrap(x)
+    integer,parameter::nmax=50
+    integer,parameter::liwk=nmax+50
+    integer,parameter::lrwk=(nmax+13)*nmax+60
+    integer,parameter::luprt=6
+    real*8::x(:),xscal(nmax),rtol,rwk(lrwk)
+    integer::neq,iopt(50),ierr,niw,nrw,iwk(liwk)
+    neq = size(x)
+    niw = neq+50
+    nrw = (neq+13)*neq+60
+    
+    rtol = 1d-5
+    xscal(:) = 0d0
+    iopt(:) = 0
+    rwk(:) = 0d0
+    iwk(:) = 0
+
+    !output options
+    iopt(11) = 0 !0=no output,1=error,2=warning,3=info
+    iopt(12) = luprt
+    iopt(13) = 0 !0?no output,1=std,2=summary,3=detailed,4,5,6
+    iopt(14) = luprt
+    iopt(19) = 0 !time monitor, 0=no output
+    iopt(20) = luprt
+    iwk(31) = 10000 !max iterations
+    
+    call nleq1(neq,fcn,jcn,x(:),xscal(:),rtol,iopt,ierr,&
+         liwk,iwk(:),lrwk,rwk(:))
+    
+  end subroutine nleq_wrap
+
+  !***************************
+  subroutine fcn(n,x,f,ierr)
+    implicit none
+    integer::n,ierr
+    real*8::x(n),f(n)
+
+#KROME_fcn_cases
+
+  end subroutine fcn
+
+  !**********************************
+  !dummy jacobian for non linear equation solver
+  subroutine jcn()
+    
+  end subroutine jcn
 
 #KROME_coolingZ_functions
 

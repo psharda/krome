@@ -94,6 +94,7 @@ class krome():
 	coolZ_functions = []
 	coolZ_rates = []
 	coolZ_vars_cool = []
+	fcn_levs = [] #list of number of cooling levels found
 	coolZ_nkrates = 0
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
 	Zcools = [] #list of cooling read from file (species name, e.g. C+)
@@ -2236,7 +2237,7 @@ class krome():
 			sys.exit()
 	
 		zcoolants = self.zcoolants
-		use_escape = False #TODO
+		use_escape = True #TODO
 		skip = False
 		inmetal = False
 		skip_metal = False
@@ -2244,6 +2245,7 @@ class krome():
 		coolZ_functions = [] #cooling functions
 		krates = [] #rates
 		nkrates = 0
+		fcn_levs = [] #list of fcn_i functions produced
 		needOrthoPara = False
 		#read file
 		print "******************"
@@ -2348,7 +2350,7 @@ class krome():
 				#prepares Bij and Bji if needed
 				if(use_escape):
 						full_cool += "\n"
-						full_cool += "!prepares Bij and Bji\n"
+						full_cool += "!prepares Bij and Bji for escape probability\n"
 
 				for tr in transitions:
 					if(not(use_escape)): break #Bij and Bji only needed for escape
@@ -2363,10 +2365,12 @@ class krome():
 						varBji = "B"+str(tr["up"])+str(tr["down"])
 						varBij = "B"+str(tr["down"])+str(tr["up"])
 						if(varBji in real_variables): continue
-						nrg = str(pow(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"],-3))
+						nrg = str(pow(float(levels[tr["up"]]["energy"]) - (levels[tr["down"]]["energy"]),-3))
 						gji = str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
-						full_cool += varBji + " = preB * " + nrg + " * " + bAij + "\n"
-						full_cool += varBij + " = " + varBji + " * " + gji + "\n"
+						Bescji = "Besc("+str(tr["up"]+1)+","+str(tr["down"]+1)+")"
+						Bescij = "Besc("+str(tr["down"]+1)+","+str(tr["up"]+1)+")"
+						full_cool += Bescji + " = preB * " + nrg + " * " + bAij + "\n"
+						full_cool += Bescij + " = " + Bescji + " * " + gji + "\n"
 						real_variables.append(varBji)
 						real_variables.append(varBij)
 
@@ -2410,15 +2414,11 @@ class krome():
 					varM = "M" + str(tr["up"]) + str(tr["down"]) + cur_metal
 					real_variables.append(varM) #add to double variable list
 					if(not(varM in varMexist)):
-						beta = ""
-						if(use_escape):
-							betavar = "beta"+str(tr["up"])+str(tr["down"])
-							beta = " * " + betavar
-							
 						try:
 							MM[varM] = [Aijs[(tr["up"],tr["down"])] + beta]
 						except:
 							MM[varM] = ["0e0"]
+						if(use_escape): MM[varM] = ["0e0"]
 						MMij[varM] = [tr["up"],tr["down"]]
 					coll = tr["coll"]
 					varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
@@ -2433,39 +2433,61 @@ class krome():
 					full_cool += k + " = " + (" + &\n".join(v)) + "\n"
 					full_cool += "\n"
 				
-				#prepares the matrix A and B
-				full_cool += "!preparing matrix Ax=b\n"
 				nlev = len(levels)
-				Avar = "A"+cur_metal #A variable name
-				real_variables.append(Avar+"("+str(nlev)+","+str(nlev)+")")
+
+				#init B variable
 				Bvar = "B"+cur_metal #B variable name
 				real_variables.append(Bvar+"("+str(nlev)+")")
-				#build B and the first row of A which is 1
-				full_cool += Bvar+"(:) = (/n(idx_"+cur_metal+"), " + (", ".join(["0d0"]*(nlev-1))) + "/)\n"
-				full_cool += Avar+"(1,:) = (/" + (", ".join(["1d0"]*nlev)) + "/)\n"
-				
-				#build the other rows of A
-				for ilev, lev in levels.iteritems():
-					if(ilev==0): continue
-					Arow = ["" for i in range(nlev)]
-					for k,v in MMij.iteritems():
-						if(ilev==v[0]): Arow[v[0]] += "-"+k
-						if(ilev==v[1]): Arow[v[0]] += "+"+k
-					Arow = ["0d0" if x=="" else x for x in Arow]
-					full_cool += Avar+"("+str(ilev+1)+",:) = (/" + (", ".join(Arow)) + "/)\n"
 
-				#include function to solve the linear system
-				# depending on the number of levels
-				full_cool += "\n"
-				full_cool += "!solving Ax=b\n"
-				if(nlev==2): 
-					full_cool += "call mylin2("+Avar+"(:,:), "+Bvar+"(:))\n"
-				elif(nlev==3): 
-					full_cool += "call mylin3("+Avar+"(:,:), "+Bvar+"(:))\n"
-				else:
-					#LAPACK are called for more than 3 levels
-					full_cool += "call mydgesv("+Avar+"(:,:), "+Bvar+"(:))\n"
-					self.needLAPACK = True
+				if(not(use_escape)):
+					#prepares the matrix A and B
+					full_cool += "!preparing matrix Ax=b\n"
+					Avar = "A"+cur_metal #A variable name
+					real_variables.append(Avar+"("+str(nlev)+","+str(nlev)+")")
+					#build B and the first row of A which is 1
+					full_cool += Bvar+"(:) = (/n(idx_"+cur_metal+"), " + (", ".join(["0d0"]*(nlev-1))) + "/)\n"
+					full_cool += Avar+"(1,:) = (/" + (", ".join(["1d0"]*nlev)) + "/)\n"
+				
+					#build the other rows of A
+					for ilev, lev in levels.iteritems():
+						if(ilev==0): continue
+						Arow = ["" for i in range(nlev)]
+						for k,v in MMij.iteritems():
+							if(ilev==v[0]): Arow[v[0]] += "-"+k
+							if(ilev==v[1]): Arow[v[0]] += "+"+k
+						Arow = ["0d0" if x=="" else x for x in Arow]
+						full_cool += Avar+"("+str(ilev+1)+",:) = (/" + (", ".join(Arow)) + "/)\n"
+
+					#include function to solve the linear system
+					# depending on the number of levels
+					full_cool += "\n"
+					full_cool += "!solving Ax=b\n"
+					if(nlev<2):
+						print "ERROR: you want to solve level poupulation for a system"
+						print " with less than 2 levels, i.e. "+str(nlev)+" for species "+cur_metal
+						sys.exit()
+					elif(nlev==2): 
+						full_cool += "call mylin2("+Avar+"(:,:), "+Bvar+"(:))\n"
+					elif(nlev==3): 
+						full_cool += "call mylin3("+Avar+"(:,:), "+Bvar+"(:))\n"
+					else:
+						#LAPACK are called for more than 3 levels
+						full_cool += "call mydgesv("+Avar+"(:,:), "+Bvar+"(:))\n"
+						self.needLAPACK = True
+
+				if(use_escape):
+					full_cool += "\n"
+					full_cool += "!init common Matrix without Aij terms\n"
+					full_cool += "! needed for non-linear function fcn\n"
+					#filling M matrix
+					for k,v in MMij.iteritems():
+						full_cool += "MMesc"+str(nlev)+"("+str(v[0]+1)+","+str(v[1]+1)+") = "+k+"\n"
+					
+					
+					#solving non linear system
+					full_cool += "\n"
+					full_cool += "!solving non linear system\n"
+					full_cool += "call nleq_wrap("+Bvar+"(:))\n"
 
 
 				#prepares the cooling summing up the cooling from all the transitions
@@ -2478,7 +2500,7 @@ class krome():
 					trs.append([tr["up"],tr["down"]])
 					try:
 						cool = Aijs[(tr["up"],tr["down"])] + "*"
-						cool += str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + " * "
+						cool += str(float(levels[tr["up"]]["energy"]) - float(levels[tr["down"]]["energy"])) + " * "
 						cool += Bvar + "(" + str(tr["up"]+1) + ")"
 						cools.append(cool)
 					except:
@@ -2487,6 +2509,49 @@ class krome():
 
 				#insert the end of the function
 				full_cool += "\n end function "+function_name+"\n"
+
+
+				#prepare the FCN function for the problem of size nlev
+				if(not(nlev in fcn_levs) and use_escape):
+					full_cool += "\n"
+					full_cool += "!*********************\n"
+					full_cool += "subroutine fcn_"+str(nlev)+"(x)\n"
+					full_cool += "implicit none\n"
+					full_cool += "real*8::x(:)\n"
+					fcn_levs.append(nlev)
+					print "**************"
+					print nlev,cur_metal
+					taus = dict()
+					fun_tot = "f(1) = "+(" + ".join(["x("+str(i+1)+")"for i in range(nlev)])) + " - ntotcoll\n"
+					for i in range(1,nlev):
+						fun = "f("+str(i+1)+") = 0d0"
+						for k,v in MMij.iteritems():
+							sup = str(v[0]+1)
+							sdown = str(v[1]+1)
+							smud = "("+sup+","+sdown+")"
+							smdu = "("+sdown+","+sup+")"
+							beta = ""
+							if(v[0]>v[1]):
+								tauvar = "b"+sup+sdown
+								bij = "Besc"+str(nlev)+smud
+								bji = "Besc"+str(nlev)+smdu
+								tauexpr = "preLVG*(x("+sdown+")*"+bji+"-x("+sup+")*"+bij+")"
+								beta = "/(1d0+3d0*"+tauvar+")"
+								if(not(tauvar in taus)): taus[tauvar] = tauexpr
+							if(v[0]==i): fun += " &\n-(MMesc"+str(nlev)+smud+beta+")*x("+str(v[0]+1)+")"
+							if(v[1]==i): fun += " &\n+(MMesc"+str(nlev)+smud+beta+")*x("+str(v[0]+1)+")"
+						fun_tot += fun + "\n"
+					full_cool += "use krome_constants\n"
+					full_cool += "real*8::"+(",".join(taus))+"\n"
+					full_cool += "real*8::preLVG,invdvdz\n"
+					full_cool += "invdvdz = 1d-2 !test number\n"			
+					full_cool += "preLVG = 0.25d0*planck_erg*clight/pi\n"
+					for k,v in taus.iteritems():
+						full_cool += k+" = "+v+"\n"
+					full_cool += "\n"
+					full_cool += fun_tot
+				
+					full_cool += "end subroutine fcn_"+str(nlev)+"\n"
 	
 				#replace the real variables needed by the cooling function
 				vcool = ""
@@ -2555,6 +2620,7 @@ class krome():
 		self.coolZ_rates = krates
 		self.coolZ_nkrates = nkrates
 		self.coolZ_vars_cool = vars_cool
+		self.fcn_levs = fcn_levs
 		
 		#check for end statement								
 		if(inmetal):
@@ -3365,6 +3431,25 @@ class krome():
 
 			if(row.strip() == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
+			elif(row.strip() == "#KROME_escape_vars"):
+				if(len(self.fcn_levs)>0):
+					fcn_levs = sorted(self.fcn_levs)
+					bvars = "real*8::"+(",".join(["Besc"+str(x)+"("+str(x)+","+str(x)+")" for x in fcn_levs]))+"\n"
+					bvars += "real*8::"+(",".join(["MMesc"+str(x)+"("+str(x)+","+str(x)+")" for x in fcn_levs]))+"\n"
+					bvars += "real*8::ntotcoll\n"
+					fout.write(bvars)
+			elif(row.strip() == "#KROME_fcn_cases"):
+				if(len(self.fcn_levs)>0):
+					fcn_levs = sorted(self.fcn_levs)
+					for i in range(len(fcn_levs)):
+						preif = ""
+						if(i>0): preif = "else "
+						fcase = preif+"if(n=="+str(fcn_levs[i])+") then\n"		
+						fcase += "call fcn_"+str(fcn_levs[i])+"(x(:),f(:))\n"
+						fout.write(fcase)
+					fout.write("end if\n")
+				
+
 			elif(row.strip() == "#KROME_nZrate"):
 					fout.write("integer,parameter::nZrate="+str(self.coolZ_nkrates)+"\n")
 			elif(row.strip() == "#KROME_coolingZ_call_functions"):
