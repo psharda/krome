@@ -2299,8 +2299,10 @@ class krome():
 				full_cool += "!########## " + cur_metal + " #########\n"
 				full_cool += "function "+function_name+"(n,inTgas,k)\n"
 				full_cool += "use krome_commons\n"
+				full_cool += "use krome_constants\n"
 				full_cool += "implicit none\n"
 				full_cool += "real*8::"+function_name+",n(:),inTgas,Tgas,k(:),invTgas\n"
+				full_cool += "integer::i\n"				
 				full_cool += "#KROME_replace_with_declarations\n\n"
 				full_cool += "Tgas = inTgas\n"
 				full_cool += "invTgas = 1d0/Tgas\n"
@@ -2351,7 +2353,11 @@ class krome():
 				if(use_escape):
 						full_cool += "\n"
 						full_cool += "!prepares Bij and Bji for escape probability\n"
+						full_cool += "! being Bij=Aij*c^2h^2/2/k^3/T^3\n"
+						full_cool += "preB = .5d0*(clight*planck_erg)**2/boltzmann_erg**3\n"
+						real_variables.append("preB")
 
+				nlev = len(levels)
 				for tr in transitions:
 					if(not(use_escape)): break #Bij and Bji only needed for escape
 					hasAij = False
@@ -2365,11 +2371,11 @@ class krome():
 						varBji = "B"+str(tr["up"])+str(tr["down"])
 						varBij = "B"+str(tr["down"])+str(tr["up"])
 						if(varBji in real_variables): continue
-						nrg = str(pow(float(levels[tr["up"]]["energy"]) - (levels[tr["down"]]["energy"]),-3))
+						nrg3 = str(pow(float(levels[tr["up"]]["energy"]) - (levels[tr["down"]]["energy"]),-3))
 						gji = str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
-						Bescji = "Besc("+str(tr["up"]+1)+","+str(tr["down"]+1)+")"
-						Bescij = "Besc("+str(tr["down"]+1)+","+str(tr["up"]+1)+")"
-						full_cool += Bescji + " = preB * " + nrg + " * " + bAij + "\n"
+						Bescji = "Besc"+str(nlev)+"("+str(tr["up"]+1)+","+str(tr["down"]+1)+")"
+						Bescij = "Besc"+str(nlev)+"("+str(tr["down"]+1)+","+str(tr["up"]+1)+")"
+						full_cool += Bescji + " = preB * " + nrg3 + " * " + bAij + "\n"
 						full_cool += Bescij + " = " + Bescji + " * " + gji + "\n"
 						real_variables.append(varBji)
 						real_variables.append(varBij)
@@ -2487,9 +2493,15 @@ class krome():
 					#solving non linear system
 					full_cool += "\n"
 					full_cool += "!solving non linear system\n"
+					full_cool += "ntotcoll = n(idx_"+cur_metal+")\n"
 					full_cool += "call nleq_wrap("+Bvar+"(:))\n"
 
-
+				if(use_escape):
+					full_cool += "\n"
+					full_cool += "!scale to beta\n"
+					full_cool += "do i=2,"+str(nlev)+"\n"
+					full_cool += "beta"+str(nlev)+"(i,i-1) = 1d0/(1d0+3d0*beta"+str(nlev)+"(i,i-1))\n"
+					full_cool += "end do\n"
 				#prepares the cooling summing up the cooling from all the transitions
 				full_cool += "\n"
 				full_cool += "!computing cooling\n"
@@ -2502,6 +2514,7 @@ class krome():
 						cool = Aijs[(tr["up"],tr["down"])] + "*"
 						cool += str(float(levels[tr["up"]]["energy"]) - float(levels[tr["down"]]["energy"])) + " * "
 						cool += Bvar + "(" + str(tr["up"]+1) + ")"
+						if(use_escape): cool += "*beta"+str(nlev)+"("+str(tr["up"]+1)+","+str(tr["down"]+1)+")"
 						cools.append(cool)
 					except:
 						pass
@@ -2515,9 +2528,11 @@ class krome():
 				if(not(nlev in fcn_levs) and use_escape):
 					full_cool += "\n"
 					full_cool += "!*********************\n"
-					full_cool += "subroutine fcn_"+str(nlev)+"(x)\n"
+					full_cool += "subroutine fcn_"+str(nlev)+"(n,x,f)\n"
+					full_cool += "use krome_constants\n"
 					full_cool += "implicit none\n"
-					full_cool += "real*8::x(:)\n"
+					full_cool += "integer::n\n"	
+					full_cool += "real*8::x(:),f(n)\n"
 					fcn_levs.append(nlev)
 					print "**************"
 					print nlev,cur_metal
@@ -2531,8 +2546,8 @@ class krome():
 							smud = "("+sup+","+sdown+")"
 							smdu = "("+sdown+","+sup+")"
 							beta = ""
-							if(v[0]>v[1]):
-								tauvar = "b"+sup+sdown
+							if(v[0]==v[1]+1):
+								tauvar = "beta"+str(nlev)+"("+sup+","+sdown+")"
 								bij = "Besc"+str(nlev)+smud
 								bji = "Besc"+str(nlev)+smdu
 								tauexpr = "preLVG*(x("+sdown+")*"+bji+"-x("+sup+")*"+bij+")"
@@ -2541,13 +2556,16 @@ class krome():
 							if(v[0]==i): fun += " &\n-(MMesc"+str(nlev)+smud+beta+")*x("+str(v[0]+1)+")"
 							if(v[1]==i): fun += " &\n+(MMesc"+str(nlev)+smud+beta+")*x("+str(v[0]+1)+")"
 						fun_tot += fun + "\n"
-					full_cool += "use krome_constants\n"
-					full_cool += "real*8::"+(",".join(taus))+"\n"
+					#full_cool += "real*8::"+(",".join(taus))+"\n"
 					full_cool += "real*8::preLVG,invdvdz\n"
-					full_cool += "invdvdz = 1d-2 !test number\n"			
-					full_cool += "preLVG = 0.25d0*planck_erg*clight/pi\n"
-					for k,v in taus.iteritems():
-						full_cool += k+" = "+v+"\n"
+					full_cool += "invdvdz = 1d-11 !inverse of |dv/dz|test number\n"			
+					full_cool += "preLVG = 0.25d0*planck_erg*clight/pi * invdvdz\n"
+					betaList = [[k,v] for k,v in taus.iteritems()]
+					betaList = sorted(betaList, key=lambda x:x[0])
+					for betaval in betaList:
+						full_cool += betaval[0]+" = "+betaval[1]+"\n"
+					#for k,v in taus.iteritems():
+					#	full_cool += k+" = "+v+"\n"
 					full_cool += "\n"
 					full_cool += fun_tot
 				
@@ -3434,7 +3452,8 @@ class krome():
 			elif(row.strip() == "#KROME_escape_vars"):
 				if(len(self.fcn_levs)>0):
 					fcn_levs = sorted(self.fcn_levs)
-					bvars = "real*8::"+(",".join(["Besc"+str(x)+"("+str(x)+","+str(x)+")" for x in fcn_levs]))+"\n"
+					bvars = "real*8::"+(",".join(["beta"+str(x)+"("+str(x)+","+str(x)+")" for x in fcn_levs]))+"\n"
+					bvars += "real*8::"+(",".join(["Besc"+str(x)+"("+str(x)+","+str(x)+")" for x in fcn_levs]))+"\n"
 					bvars += "real*8::"+(",".join(["MMesc"+str(x)+"("+str(x)+","+str(x)+")" for x in fcn_levs]))+"\n"
 					bvars += "real*8::ntotcoll\n"
 					fout.write(bvars)
@@ -3445,8 +3464,11 @@ class krome():
 						preif = ""
 						if(i>0): preif = "else "
 						fcase = preif+"if(n=="+str(fcn_levs[i])+") then\n"		
-						fcase += "call fcn_"+str(fcn_levs[i])+"(x(:),f(:))\n"
+						fcase += "call fcn_"+str(fcn_levs[i])+"(n,x(:),f(:))\n"
 						fout.write(fcase)
+					fout.write("else\n")
+					fout.write("print *,\"ERROR: unknown case in fcn subroutine!\", n\n")
+					fout.write("stop\n")
 					fout.write("end if\n")
 				
 
