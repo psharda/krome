@@ -2536,6 +2536,7 @@ class krome():
 					full_cool += "!*********************\n"
 					full_cool += "subroutine fcn_"+str(nlev)+"(n,x,f)\n"
 					full_cool += "use krome_constants\n"
+					full_cool += "use krome_user_commons\n"
 					full_cool += "implicit none\n"
 					full_cool += "integer::n\n"	
 					full_cool += "real*8::x(:),f(n)\n"
@@ -2543,7 +2544,7 @@ class krome():
 					print "**************"
 					print nlev,cur_metal
 					taus = dict()
-					fun_tot = "f(1) = "+(" + ".join(["x("+str(i+1)+")"for i in range(nlev)])) + " - ntotcoll\n"
+					fun_tot = "f(1) = "+(" + &\n".join(["x("+str(i+1)+")"for i in range(nlev)])) + " - ntotcoll\n"
 					for i in range(1,nlev):
 						fun = "f("+str(i+1)+") = 0d0"
 						for k,v in MMij.iteritems():
@@ -2564,7 +2565,7 @@ class krome():
 						fun_tot += fun + "\n"
 					#full_cool += "real*8::"+(",".join(taus))+"\n"
 					full_cool += "real*8::preLVG,invdvdz\n"
-					full_cool += "invdvdz = 1d-11 !inverse of |dv/dz|test number\n"			
+					full_cool += "invdvdz = krome_invdvdz !inverse of |dv/dz|\n"			
 					full_cool += "preLVG = 0.25d0*planck_erg*clight/pi * invdvdz\n"
 					betaList = [[k,v] for k,v in taus.iteritems()]
 					betaList = sorted(betaList, key=lambda x:x[0])
