@@ -584,11 +584,11 @@ contains
     x = max(x,xval(1)) !set lower bound
     x = min(x,xval(n)) !set upper bound
     !loop to find interval (slow)
-    do i=1,n-1
+    do i=2,n
        if(x.le.xval(i)) then
           !linear fit
-          flin = (yval(i+1) - yval(i)) / (xval(i+1) - xval(i)) * &
-               (x - xval(i)) + yval(i)
+          flin = (yval(i) - yval(i-1)) / (xval(i) - xval(i-1)) * &
+               (x - xval(i-1)) + yval(i-1)
           found = .true. !found flag
           exit
        end if
