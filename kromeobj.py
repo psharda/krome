@@ -2557,7 +2557,7 @@ class krome():
 								bij = "Besc"+str(nlev)+smud
 								bji = "Besc"+str(nlev)+smdu
 								tauexpr = "preLVG*(x("+sdown+")*"+bji+"-x("+sup+")*"+bij+")"
-								beta = "/(1d0+3d0*"+tauvar+")"
+								beta = "+"+Aijs[(v[0],v[1])]+"/(1d0+3d0*"+tauvar+")"
 								if(not(tauvar in taus)): taus[tauvar] = tauexpr
 							if(v[0]==i): fun += " &\n-(MMesc"+str(nlev)+smud+beta+")*x("+str(v[0]+1)+")"
 							if(v[1]==i): fun += " &\n+(MMesc"+str(nlev)+smud+beta+")*x("+str(v[0]+1)+")"
