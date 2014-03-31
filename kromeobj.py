@@ -2237,7 +2237,7 @@ class krome():
 			sys.exit()
 	
 		zcoolants = self.zcoolants
-		use_escape = True #TODO
+		use_escape = False #TODO
 		skip = False
 		inmetal = False
 		skip_metal = False
@@ -2267,6 +2267,12 @@ class krome():
 				skip_metal = False
 				continue
 			if(skip_metal): continue #skip metals that are not present in the cooling options
+			#read variables and store to vars_cool
+			if("escape:" in srow):
+				srow = srow.replace("escape:","").strip()
+				if(srow.lower()=="yes"): use_escape = True
+				continue
+
 			#read variables and store to vars_cool
 			if("@var:" in srow):
 				srow = srow.replace("@var:","").strip()
