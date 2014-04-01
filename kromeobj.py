@@ -99,7 +99,7 @@ class krome():
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
 	Zcools = [] #list of cooling read from file (species name, e.g. C+)
 	ramses_offset = 3 #offset in the array for ramses
-	coolFile = "data/coolZ.dat"
+	coolFile = ["data/coolZ.dat"]
 	version = "14.03"
 	codename = "Beastie Boyle"
 
@@ -162,7 +162,7 @@ class krome():
 		self.parser.add_argument("-conserveE", action="store_true", help="conserves the charge global neutrality only.")
 		self.parser.add_argument("-coolFile", metavar='FILENAME', help="select the filename to be used to load external cooling. See\
 			also tools/lamda2.py script for a LAMDA<->KROME converter. Default FILENAME is data/coolZ.dat, which contains\
-			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions.")
+			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
 			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI).\
 			Note that further cooling options can be added when reading cooling function from file")
@@ -395,8 +395,8 @@ class krome():
 
 		#read the coolFile
 		if(args.coolFile):
-			self.coolFile = args.coolFile
-			print "Reading option -coolFile (filename="+str(self.coolFile)+")"
+			self.coolFile = args.coolFile.split(",")
+			print "Reading option -coolFile (filename="+str(",".join(self.coolFile))+")"
 
 
 		#use f90 solver
@@ -711,42 +711,45 @@ class krome():
 			allCools = ["ATOMIC","H2","HD","DH","DUST","H2GP98","COMPTON","EXPANSION","CIE","CONT","CHEM","DISS","Z"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
-			fname = self.coolFile
-			if(not(file_exists(fname))):
-				print "ERROR: file "+fname+" not found!"
-				sys.exit()
-			fh = open(fname,"rb")
-			inComment = False
-			for row in fh:
-				srow = row.strip()
-				#skip cooments
-				if(srow==""): continue
-				if(srow[0]=="#"): continue
-				if(srow[:1]=="//"): continue
-				if(srow[:1]=="/*"): inComment = True
-				if("*/" in srow): 
-					inComment = False
-					continue
-				srow = srow.split("#")[0]
-				if(inComment): continue
-				#look for the metal name
-				if("metal:" in srow):
-					metal_name = srow.split(":")[1].strip().capitalize() #metal name starts with capital letter
-					#metal name in roman style (e.j. C+ -> CII)
-					if("+" in metal_name):
-						mname = metal_name.replace("+","") + int_to_roman(metal_name.count("+")+1)
-					elif("-" in metal_name):
-						mname = metal_name.replace("-","") + "m"+int_to_roman(metal_name.count("-")+1)
-					else:
-						mname = metal_name+"I" #is not an ion
+			for fname in self.coolFile:
+				partialFileCools = [] #for output purposes
+				if(not(file_exists(fname))):
+					print "ERROR: file "+fname+" not found!"
+					sys.exit()
+				fh = open(fname,"rb")
+				inComment = False
+				for row in fh:
+					srow = row.strip()
+					#skip cooments
+					if(srow==""): continue
+					if(srow[0]=="#"): continue
+					if(srow[:1]=="//"): continue
+					if(srow[:1]=="/*"): inComment = True
+					if("*/" in srow): 
+						inComment = False
+						continue
+					srow = srow.split("#")[0]
+					if(inComment): continue
+					#look for the metal name
+					if("metal:" in srow):
+						metal_name = srow.split(":")[1].strip().capitalize() #metal name starts with capital letter
+						#metal name in roman style (e.j. C+ -> CII)
+						if("+" in metal_name):
+							mname = metal_name.replace("+","") + int_to_roman(metal_name.count("+")+1)
+						elif("-" in metal_name):
+							mname = metal_name.replace("-","") + "m"+int_to_roman(metal_name.count("-")+1)
+						else:
+							mname = metal_name+"I" #is not an ion
 
-					if(mname in allCools):
-						print "ERROR: conflict name for "+mname+", which is already present!"
-						sys.exit()
-					fileCools.append({"flag":mname,"name":metal_name}) #append to the list fo the available coolings
-					allCools.append(mname) #append flag to the list of the coolants
-			#write found coolants
-			if(len(fileCools)>0): print "Cooling "+(", ".join([x["flag"] for x in fileCools]))+" available from "+fname
+						if(mname in allCools):
+							print "ERROR: conflict name for "+mname+", which is already present!"
+							sys.exit()
+						partialFileCools.append({"flag":mname,"name":metal_name})
+						fileCools.append({"flag":mname,"name":metal_name}) #append to the list fo the available coolings
+						allCools.append(mname) #append flag to the list of the coolants
+				#write found coolants
+				joinedCool = (", ".join([x["flag"] for x in partialFileCools]))
+				if(len(partialFileCools)>0): print "Cooling "+joinedCool+" available from "+fname
 			
 			#check coolant names
 			for coo in myCools:
@@ -2229,419 +2232,420 @@ class krome():
 
 	#######################################
 	#this function loads the cooling functions from a file
-	# and prepares all the necessary stuff 
+	# and prepares all the necessary stuff. It's a little bit complex :)
 	def createZcooling(self):
-		fname = self.coolFile #file containing cooling information
-		if(not(file_exists(fname))):
-			print "ERROR: file "+fname+" not found!"
-			sys.exit()
-	
-		zcoolants = self.zcoolants
-		use_escape = False #TODO
-		skip = False
-		inmetal = False
-		skip_metal = False
+
 		vars_cool = [] #variables
 		coolZ_functions = [] #cooling functions
 		krates = [] #rates
 		nkrates = 0
 		fcn_levs = [] #list of fcn_i functions produced
-		needOrthoPara = False
-		#read file
-		print "******************"
-		print "Reading coolants from "+fname+"..."
-		fh = open(fname,"rb")
-		for row in fh:
-			srow = row.strip()
-			if(srow==""): continue #skip blank lines
-			if(srow[0]=="#"): continue #skip lines with coments
-			if(srow[:1]=="//"): continue #comments
-			if(srow[:1]=="/*"): skip = True #skip large comments
-			if("*/" in srow): 
-				skip = False
-				continue
-			srow = srow.split("#")[0] #skip comments
-			if(skip): continue
-			if((srow=="endmetal" or srow=="end metal") and skip_metal):
-				inmetal = False
-				skip_metal = False
-				continue
-			if(skip_metal): continue #skip metals that are not present in the cooling options
-			#read variables and store to vars_cool
-			if("escape:" in srow):
-				srow = srow.replace("escape:","").strip()
-				if(srow.lower()=="yes"): use_escape = True
-				continue
-
-			#read variables and store to vars_cool
-			if("@var:" in srow):
-				srow = srow.replace("@var:","").strip()
-				vars_cool.append([x.strip() for x in srow.split("=")]) #read extra variables
-				continue
-			#read metal name
-			if("metal:" in srow):
-				inmetal = True #flag reading metal
-				real_variables = []
-				kkrates = []
-				#modify the name of the metal (e.g. C+ becomes CII)
-				metal_name = srow.replace("metal:","").strip()
-				if("+" in metal_name):
-					mname = metal_name.replace("+","") + int_to_roman(metal_name.count("+")+1)
-				elif("-" in metal_name):
-					mname = metal_name.replace("-","") + "m"+int_to_roman(metal_name.count("-")+1)
-				else:
-					mname = metal_name+"I" #is not an ion
-				if(not(mname.upper() in [x.upper() for x in zcoolants])): skip_metal = True
-
-				function_name = "cooling"+mname #name of the cooling function
-				cur_metal = metal_name.replace("+","j").replace("-","k") #current metal name
-				excitation_rates = [] #list of excitation rates written in F90 for cur_metal 
-				transitions = [] #list of transitions
-				colliders = [] #list of colliders names
-				Aijs = dict() #init dictionary for Einsten's
-				levels = dict() #init dictionary for levels
-				#prepares the header of the function
-				full_cool = "\n"
-				full_cool += "!########## " + cur_metal + " #########\n"
-				full_cool += "function "+function_name+"(n,inTgas,k)\n"
-				full_cool += "use krome_commons\n"
-				full_cool += "use krome_constants\n"
-				full_cool += "implicit none\n"
-				full_cool += "real*8::"+function_name+",n(:),inTgas,Tgas,k(:),invTgas\n"
-				full_cool += "integer::i\n"				
-				full_cool += "#KROME_replace_with_declarations\n\n"
-				full_cool += "Tgas = inTgas\n"
-				full_cool += "invTgas = 1d0/Tgas\n"
-
-			#read the levels
-			if("level" in srow):
-				nlev = int(srow.split(":")[0].replace("level","").strip()) #level number
-				energy, gmult = srow.split(":")[1].split(",") #get energy and degenerancy factor
-				levels[nlev] = {"energy":float(energy), "gmult":float(gmult)} #store energy and degenerancy
-				continue
-			
-			#end of metals block
-			if(srow=="endmetal" or srow=="end metal"):
-				#check end metal
-				if(not(inmetal)):
-					print "ERROR: end metal statement without metal: statement!"
-					sys.exit()
-				inmetal = False #in metal block flag
-
-				#prepare ortho/para variables if needed
-				if(needOrthoPara):
-					full_cool += "H2or = "+str(ortho2para/(1e0+ortho2para)) + " * n(idx_H2)\n"
-					full_cool += "H2pa = "+str(1e0/(1e0+ortho2para)) + " * n(idx_H2)\n"
-					full_cool += "!explicit if needed\n"
-					full_cool += "!H2or = o2p / (1d0 + o2p) * n(idx_H2)\n"
-					full_cool += "!H2pa = 1d0 / (1d0 + o2p) * n(idx_H2)\n"
-			
-				#write de-excitation rates
-				full_cool += "\n!de-excitation rates\n"
-				for x in kkrates:
-					full_cool += x + "\n"
-				full_cool += "\n"
-
-				#prepares conversion factor to ji from ij
-				full_cool += "!excitation rates\n"
-				trfound = []
-				for tr in transitions:
-					ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
-					ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
-					ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + "*invTgas)"
-					#skip already found transitions					
-					if(not([tr["up"], tr["down"]] in trfound)):
-						full_cool += ij2ji + "\n"
-						real_variables.append(ij2jivar)
-						trfound.append([tr["up"], tr["down"]])
-
-				#prepares Bij and Bji if needed
-				if(use_escape):
-						full_cool += "\n"
-						full_cool += "!prepares Bij and Bji for escape probability\n"
-						full_cool += "! being Bij=Aij*c^2h^2/2/k^3/T^3\n"
-						full_cool += "preB = .5d0*(clight*planck_erg)**2/boltzmann_erg**3\n"
-						real_variables.append("preB")
-
-				nlev = len(levels)
-				for tr in transitions:
-					if(not(use_escape)): break #Bij and Bji only needed for escape
-					hasAij = False
-					try:
-						bAij = Aijs[(tr["up"],tr["down"])]
-						hasAij = True
-					except:
-						pass
-				
-					if(hasAij):
-						varBji = "B"+str(tr["up"])+str(tr["down"])
-						varBij = "B"+str(tr["down"])+str(tr["up"])
-						if(varBji in real_variables): continue
-						nrg3 = str(pow(float(levels[tr["up"]]["energy"]) - (levels[tr["down"]]["energy"]),-3))
-						gji = str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
-						Bescji = "Besc"+str(nlev)+"("+str(tr["up"]+1)+","+str(tr["down"]+1)+")"
-						Bescij = "Besc"+str(nlev)+"("+str(tr["down"]+1)+","+str(tr["up"]+1)+")"
-						full_cool += Bescji + " = preB * " + nrg3 + " * " + bAij + "\n"
-						full_cool += Bescij + " = " + Bescji + " * " + gji + "\n"
-						real_variables.append(varBji)
-						real_variables.append(varBij)
-
- 
-				
-				#prepares rate conversion using conversion factor computed above
-				full_cool += "\n"
-				for tr in transitions:
-					coll = tr["coll"]
-					ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
-					varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
-					vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
-					real_variables.append(varup)
-					real_variables.append(vardown)
-					full_cool += vardown + " = " + varup +" * " + ij2jivar + "\n"
-
-				#prepares the Mij and Mji transition elements
-				full_cool += "\n"
-				full_cool += "!transitions\n"
-				varMexist = []
-				MM = dict()
-				MMij = dict()
-				#build Mij
-				for tr in transitions:
-					varM = "M" + str(tr["down"]) + str(tr["up"]) + cur_metal #init variable name
-					real_variables.append(varM) #add to double variable list
-					#check if variable is unique
-					if(not(varM in varMexist)):
-						MM[varM] = []
-						MMij[varM] = [tr["down"],tr["up"]]
-					coll = tr["coll"] #get colliders for the given transition
-					varup = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
-					if(coll=="H2pa" or coll=="H2or"):
-						MM[varM].append(varup+"*"+coll) #include colliders abundance if ortho or para H2
-					else:
-						MM[varM].append(varup+"*n(idx_"+coll+")") #include colliders abundance
-					varMexist.append(varM)
-
-				#build Mji as above
-				for tr in transitions:
-					varM = "M" + str(tr["up"]) + str(tr["down"]) + cur_metal
-					real_variables.append(varM) #add to double variable list
-					if(not(varM in varMexist)):
-						try:
-							MM[varM] = [Aijs[(tr["up"],tr["down"])]]
-						except:
-							MM[varM] = ["0e0"]
-						if(use_escape): MM[varM] = ["0e0"]
-						MMij[varM] = [tr["up"],tr["down"]]
-					coll = tr["coll"]
-					varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
-					if(coll=="H2pa" or coll=="H2or"):
-						MM[varM].append(varup+"*"+coll) #include colliders abundance if ortho or para H2
-					else:
-						MM[varM].append(varup+"*n(idx_"+coll+")") #include colliders abundance
-					varMexist.append(varM)
-
-				#write Mij and Mji definitions
-				for k,v in MM.iteritems():
-					full_cool += k + " = " + (" + &\n".join(v)) + "\n"
-					full_cool += "\n"
-				
-				nlev = len(levels)
-
-				#init B variable
-				Bvar = "B"+cur_metal #B variable name
-				real_variables.append(Bvar+"("+str(nlev)+")")
-
-				if(not(use_escape)):
-					#prepares the matrix A and B
-					full_cool += "!preparing matrix Ax=b\n"
-					Avar = "A"+cur_metal #A variable name
-					real_variables.append(Avar+"("+str(nlev)+","+str(nlev)+")")
-					#build B and the first row of A which is 1
-					full_cool += Bvar+"(:) = (/n(idx_"+cur_metal+"), " + (", ".join(["0d0"]*(nlev-1))) + "/)\n"
-					full_cool += Avar+"(1,:) = (/" + (", ".join(["1d0"]*nlev)) + "/)\n"
-				
-					#build the other rows of A
-					for ilev, lev in levels.iteritems():
-						if(ilev==0): continue
-						Arow = ["" for i in range(nlev)]
-						for k,v in MMij.iteritems():
-							if(ilev==v[0]): Arow[v[0]] += "-"+k
-							if(ilev==v[1]): Arow[v[0]] += "+"+k
-						Arow = ["0d0" if x=="" else x for x in Arow]
-						full_cool += Avar+"("+str(ilev+1)+",:) = (/" + (", ".join(Arow)) + "/)\n"
-
-					#include function to solve the linear system
-					# depending on the number of levels
-					full_cool += "\n"
-					full_cool += "!solving Ax=b\n"
-					if(nlev<2):
-						print "ERROR: you want to solve level poupulation for a system"
-						print " with less than 2 levels, i.e. "+str(nlev)+" for species "+cur_metal
-						sys.exit()
-					elif(nlev==2): 
-						full_cool += "call mylin2("+Avar+"(:,:), "+Bvar+"(:))\n"
-					elif(nlev==3): 
-						full_cool += "call mylin3("+Avar+"(:,:), "+Bvar+"(:))\n"
-					else:
-						#LAPACK are called for more than 3 levels
-						full_cool += "call mydgesv("+Avar+"(:,:), "+Bvar+"(:))\n"
-						self.needLAPACK = True
-
-				if(use_escape):
-					full_cool += "\n"
-					full_cool += "!init common Matrix without Aij terms\n"
-					full_cool += "! needed for non-linear function fcn\n"
-					#filling M matrix
-					for k,v in MMij.iteritems():
-						full_cool += "MMesc"+str(nlev)+"("+str(v[0]+1)+","+str(v[1]+1)+") = "+k+"\n"
-					
-					
-					#solving non linear system
-					full_cool += "\n"
-					full_cool += "!solving non linear system\n"
-					full_cool += "ntotcoll = n(idx_"+cur_metal+")\n"
-					full_cool += Bvar+"(:) = ntotcoll*"+str(1./nlev)+" !initial guess: ntot/nlevel\n"
-					full_cool += "call nleq_wrap("+Bvar+"(:))\n"
-					self.useNLEQ = True
-
-				if(use_escape):
-					full_cool += "\n"
-					full_cool += "!scale to beta\n"
-					full_cool += "do i=2,"+str(nlev)+"\n"
-					full_cool += "beta"+str(nlev)+"(i,i-1) = 1d0/(1d0+3d0*beta"+str(nlev)+"(i,i-1))\n"
-					full_cool += "end do\n"
-
-				#prepares the cooling summing up the cooling from all the transitions
-				full_cool += "\n"
-				full_cool += "!computing cooling\n"
-				cools = []
-				trs = []
-				for tr in transitions:
-					if([tr["up"],tr["down"]] in trs): continue
-					trs.append([tr["up"],tr["down"]])
-					try:
-						cool = Aijs[(tr["up"],tr["down"])] + "*"
-						cool += str(float(levels[tr["up"]]["energy"]) - float(levels[tr["down"]]["energy"])) + " * "
-						cool += Bvar + "(" + str(tr["up"]+1) + ")"
-						if(use_escape): cool += "*beta"+str(nlev)+"("+str(tr["up"]+1)+","+str(tr["down"]+1)+")"
-						cools.append(cool)
-					except:
-						pass
-				full_cool += function_name + " = " + (" + &\n".join(cools)) + "\n"
-
-				#insert the end of the function
-				full_cool += "\n end function "+function_name+"\n"
-
-
-				#prepare the FCN function for the problem of size nlev
-				if(not(nlev in fcn_levs) and use_escape):
-					full_cool += "\n"
-					full_cool += "!*********************\n"
-					full_cool += "subroutine fcn_"+str(nlev)+"(n,x,f)\n"
-					full_cool += "use krome_constants\n"
-					full_cool += "use krome_user_commons\n"
-					full_cool += "implicit none\n"
-					full_cool += "integer::n\n"	
-					full_cool += "real*8::x(:),f(n)\n"
-					fcn_levs.append(nlev)
-					print "**************"
-					print nlev,cur_metal
-					taus = dict()
-					fun_tot = "f(1) = "+(" + &\n".join(["x("+str(i+1)+")"for i in range(nlev)])) + " - ntotcoll\n"
-					for i in range(1,nlev):
-						fun = "f("+str(i+1)+") = 0d0"
-						for k,v in MMij.iteritems():
-							sup = str(v[0]+1)
-							sdown = str(v[1]+1)
-							smud = "("+sup+","+sdown+")"
-							smdu = "("+sdown+","+sup+")"
-							beta = ""
-							if(v[0]==v[1]+1):
-								tauvar = "beta"+str(nlev)+"("+sup+","+sdown+")"
-								bij = "Besc"+str(nlev)+smud
-								bji = "Besc"+str(nlev)+smdu
-								tauexpr = "preLVG*(x("+sdown+")*"+bji+"-x("+sup+")*"+bij+")"
-								beta = "+"+Aijs[(v[0],v[1])]+"/(1d0+3d0*"+tauvar+")"
-								if(not(tauvar in taus)): taus[tauvar] = tauexpr
-							if(v[0]==i): fun += " &\n-(MMesc"+str(nlev)+smud+beta+")*x("+str(v[0]+1)+")"
-							if(v[1]==i): fun += " &\n+(MMesc"+str(nlev)+smud+beta+")*x("+str(v[0]+1)+")"
-						fun_tot += fun + "\n"
-					#full_cool += "real*8::"+(",".join(taus))+"\n"
-					full_cool += "real*8::preLVG,invdvdz\n"
-					full_cool += "invdvdz = krome_invdvdz !inverse of |dv/dz|\n"			
-					full_cool += "preLVG = 0.25d0*planck_erg*clight/pi * invdvdz\n"
-					betaList = [[k,v] for k,v in taus.iteritems()]
-					betaList = sorted(betaList, key=lambda x:x[0])
-					for betaval in betaList:
-						full_cool += betaval[0]+" = "+betaval[1]+"\n"
-					#for k,v in taus.iteritems():
-					#	full_cool += k+" = "+v+"\n"
-					full_cool += "\n"
-					full_cool += fun_tot
-				
-					full_cool += "end subroutine fcn_"+str(nlev)+"\n"
+		zcoolants = self.zcoolants
+		for fname in self.coolFile:
+			if(not(file_exists(fname))):
+				print "ERROR: file "+fname+" not found!"
+				sys.exit()
 	
-				#replace the real variables needed by the cooling function
-				vcool = ""
-				uniq = []
-				for x in real_variables:
-					if(x in uniq): continue
-					vcool += "real*8::"+x+"\n"
-					uniq.append(x)
-				#add ortho/para variables if needed
-				if(needOrthoPara):
-					vcool += "real*8::H2pa,H2or,o2p\n"
+			use_escape = False
+			skip = False
+			inmetal = False
+			skip_metal = False
+			needOrthoPara = False
+			#read file
+			print "******************"
+			print "Reading coolants from "+fname+"..."
+			fh = open(fname,"rb")
+			for row in fh:
+				srow = row.strip()
+				if(srow==""): continue #skip blank lines
+				if(srow[0]=="#"): continue #skip lines with coments
+				if(srow[:1]=="//"): continue #comments
+				if(srow[:1]=="/*"): skip = True #skip large comments
+				if("*/" in srow): 
+					skip = False
+					continue
+				srow = srow.split("#")[0] #skip comments
+				if(skip): continue
+				if((srow=="endmetal" or srow=="end metal") and skip_metal):
+					inmetal = False
+					skip_metal = False
+					continue
+				if(skip_metal): continue #skip metals that are not present in the cooling options
+				#read variables and store to vars_cool
+				if("escape:" in srow):
+					srow = srow.replace("escape:","").strip()
+					if(srow.lower()=="yes"): use_escape = True
+					continue
 
-				full_cool = full_cool.replace("#KROME_replace_with_declarations", vcool)
+				#read variables and store to vars_cool
+				if("@var:" in srow):
+					srow = srow.replace("@var:","").strip()
+					vars_cool.append([x.strip() for x in srow.split("=")]) #read extra variables
+					continue
+				#read metal name
+				if("metal:" in srow):
+					inmetal = True #flag reading metal
+					real_variables = []
+					kkrates = []
+					#modify the name of the metal (e.g. C+ becomes CII)
+					metal_name = srow.replace("metal:","").strip()
+					if("+" in metal_name):
+						mname = metal_name.replace("+","") + int_to_roman(metal_name.count("+")+1)
+					elif("-" in metal_name):
+						mname = metal_name.replace("-","") + "m"+int_to_roman(metal_name.count("-")+1)
+					else:
+						mname = metal_name+"I" #is not an ion
+					if(not(mname.upper() in [x.upper() for x in zcoolants])): skip_metal = True
 
-				coolZ_functions.append([function_name, full_cool])
+					function_name = "cooling"+mname #name of the cooling function
+					cur_metal = metal_name.replace("+","j").replace("-","k") #current metal name
+					excitation_rates = [] #list of excitation rates written in F90 for cur_metal 
+					transitions = [] #list of transitions
+					colliders = [] #list of colliders names
+					Aijs = dict() #init dictionary for Einsten's
+					levels = dict() #init dictionary for levels
+					#prepares the header of the function
+					full_cool = "\n"
+					full_cool += "!########## " + cur_metal + " #########\n"
+					full_cool += "function "+function_name+"(n,inTgas,k)\n"
+					full_cool += "use krome_commons\n"
+					full_cool += "use krome_constants\n"
+					full_cool += "implicit none\n"
+					full_cool += "real*8::"+function_name+",n(:),inTgas,Tgas,k(:),invTgas\n"
+					full_cool += "integer::i\n"				
+					full_cool += "#KROME_replace_with_declarations\n\n"
+					full_cool += "Tgas = inTgas\n"
+					full_cool += "invTgas = 1d0/Tgas\n"
 
-				continue
+				#read the levels
+				if("level" in srow):
+					nlev = int(srow.split(":")[0].replace("level","").strip()) #level number
+					energy, gmult = srow.split(":")[1].split(",") #get energy and degenerancy factor
+					levels[nlev] = {"energy":float(energy), "gmult":float(gmult)} #store energy and degenerancy
+					continue
 			
-			#if block for rates, e.g. if(Tgas > 5d3):
-			if(srow[:2]=="if"):
-				ifcond, ifrate = srow.split(":") #if condition, and rate
-				excitation_rates.append(ifcond.strip() +" "+ var_excitation +" = "+ifrate.strip()) #append rate
-				krates.append(ifcond.strip() +" k("+ str(nkrates) +") = "+ifrate.strip())
-				continue
+				#end of metals block
+				if(srow=="endmetal" or srow=="end metal"):
+					#check end metal
+					if(not(inmetal)):
+						print "ERROR: end metal statement without metal: statement!"
+						sys.exit()
+					inmetal = False #in metal block flag
+
+					#prepare ortho/para variables if needed
+					if(needOrthoPara):
+						full_cool += "H2or = "+str(ortho2para/(1e0+ortho2para)) + " * n(idx_H2)\n"
+						full_cool += "H2pa = "+str(1e0/(1e0+ortho2para)) + " * n(idx_H2)\n"
+						full_cool += "!explicit if needed\n"
+						full_cool += "!H2or = o2p / (1d0 + o2p) * n(idx_H2)\n"
+						full_cool += "!H2pa = 1d0 / (1d0 + o2p) * n(idx_H2)\n"
 			
-			#read para/ortho
-			if("para/ortho" in srow.replace(" ","")):
-				aop = srow.split(":")[1].split("/")
-				para2ortho = float(aop[0])/float(aop[1])
-				ortho2para = float(aop[1])/float(aop[0])
-				needOrthoPara = True
-				print "Found para/ortho in "+fname+": "+str(para2ortho)
+					#write de-excitation rates
+					full_cool += "\n!de-excitation rates\n"
+					for x in kkrates:
+						full_cool += x + "\n"
+					full_cool += "\n"
 
-			#read ortho/para
-			if("ortho/para" in srow.replace(" ","")):
-				aop = srow.split(":")[1].split("/")
-				para2ortho = float(aop[1])/float(aop[0])
-				ortho2para = float(aop[0])/float(aop[1])
-				needOrthoPara = True
-				print "Found ortho/para in "+fname+": "+str(ortho2para)
+					#prepares conversion factor to ji from ij
+					full_cool += "!excitation rates\n"
+					trfound = []
+					for tr in transitions:
+						ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
+						ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
+						ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + "*invTgas)"
+						#skip already found transitions					
+						if(not([tr["up"], tr["down"]] in trfound)):
+							full_cool += ij2ji + "\n"
+							real_variables.append(ij2jivar)
+							trfound.append([tr["up"], tr["down"]])
 
-			#read collider rates
-			if(len(row.split(","))>=4):
-				nkrates += 1
-				#read collider, starting level, end level, rate F90 expression
-				coll, lev_up, lev_down, rate = [x.strip() for x in srow.split(",",3)]
-				coll = coll.replace("+","j").replace("-","k") #collider name for variable
-				var_excitation = "g"+lev_up+lev_down+cur_metal+"_"+coll #excitation variable, g10C_Hp
-				var_excitation_rev = "g"+lev_down+lev_up+cur_metal+"_"+coll #dexcitation variable, g01C_Hp
+					#prepares Bij and Bji if needed
+					if(use_escape):
+							full_cool += "\n"
+							full_cool += "!prepares Bij and Bji for escape probability\n"
+							full_cool += "! being Bij=Aij*c^2h^2/2/k^3/T^3\n"
+							full_cool += "preB = .5d0*(clight*planck_erg)**2/boltzmann_erg**3\n"
+							real_variables.append("preB")
 
-				if(not(coll in colliders)): colliders.append(coll) #append collider names
-				real_variables.append(var_excitation) #add to double variable list
-				excitation_rates.append(var_excitation +" = "+rate) #store excitation rates
-				#print rate
-				krates.append("k("+ str(nkrates) +") = "+rate+" !"+cur_metal+lev_up+lev_down+"_"+coll)
-				kkrates.append(var_excitation+" = k("+str(nkrates) +")")
-				transitions.append({"up":int(lev_up), "down":int(lev_down), "coll":coll}) #store level transition
+					nlev = len(levels)
+					for tr in transitions:
+						if(not(use_escape)): break #Bij and Bji only needed for escape
+						hasAij = False
+						try:
+							bAij = Aijs[(tr["up"],tr["down"])]
+							hasAij = True
+						except:
+							pass
+				
+						if(hasAij):
+							varBji = "B"+str(tr["up"])+str(tr["down"])
+							varBij = "B"+str(tr["down"])+str(tr["up"])
+							if(varBji in real_variables): continue
+							nrg3 = str(pow(float(levels[tr["up"]]["energy"]) - (levels[tr["down"]]["energy"]),-3))
+							gji = str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
+							Bescji = "Besc"+str(nlev)+"("+str(tr["up"]+1)+","+str(tr["down"]+1)+")"
+							Bescij = "Besc"+str(nlev)+"("+str(tr["down"]+1)+","+str(tr["up"]+1)+")"
+							full_cool += Bescji + " = preB * " + nrg3 + " * " + bAij + "\n"
+							full_cool += Bescij + " = " + Bescji + " * " + gji + "\n"
+							real_variables.append(varBji)
+							real_variables.append(varBij)
 
-			#read Aij
-			if(len(row.split(","))==3):
-				lup, ldown, Aij = [x.strip() for x in srow.split(",",4)]
-				Aijs[(int(lup),int(ldown))] = Aij
+	 
+				
+					#prepares rate conversion using conversion factor computed above
+					full_cool += "\n"
+					for tr in transitions:
+						coll = tr["coll"]
+						ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
+						varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
+						vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
+						real_variables.append(varup)
+						real_variables.append(vardown)
+						full_cool += vardown + " = " + varup +" * " + ij2jivar + "\n"
+
+					#prepares the Mij and Mji transition elements
+					full_cool += "\n"
+					full_cool += "!transitions\n"
+					varMexist = []
+					MM = dict()
+					MMij = dict()
+					#build Mij
+					for tr in transitions:
+						varM = "M" + str(tr["down"]) + str(tr["up"]) + cur_metal #init variable name
+						real_variables.append(varM) #add to double variable list
+						#check if variable is unique
+						if(not(varM in varMexist)):
+							MM[varM] = []
+							MMij[varM] = [tr["down"],tr["up"]]
+						coll = tr["coll"] #get colliders for the given transition
+						varup = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
+						if(coll=="H2pa" or coll=="H2or"):
+							MM[varM].append(varup+"*"+coll) #include colliders abundance if ortho or para H2
+						else:
+							MM[varM].append(varup+"*n(idx_"+coll+")") #include colliders abundance
+						varMexist.append(varM)
+
+					#build Mji as above
+					for tr in transitions:
+						varM = "M" + str(tr["up"]) + str(tr["down"]) + cur_metal
+						real_variables.append(varM) #add to double variable list
+						if(not(varM in varMexist)):
+							try:
+								MM[varM] = [Aijs[(tr["up"],tr["down"])]]
+							except:
+								MM[varM] = ["0e0"]
+							if(use_escape): MM[varM] = ["0e0"]
+							MMij[varM] = [tr["up"],tr["down"]]
+						coll = tr["coll"]
+						varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
+						if(coll=="H2pa" or coll=="H2or"):
+							MM[varM].append(varup+"*"+coll) #include colliders abundance if ortho or para H2
+						else:
+							MM[varM].append(varup+"*n(idx_"+coll+")") #include colliders abundance
+						varMexist.append(varM)
+
+					#write Mij and Mji definitions
+					for k,v in MM.iteritems():
+						full_cool += k + " = " + (" + &\n".join(v)) + "\n"
+						full_cool += "\n"
+				
+					nlev = len(levels)
+
+					#init B variable
+					Bvar = "B"+cur_metal #B variable name
+					real_variables.append(Bvar+"("+str(nlev)+")")
+
+					if(not(use_escape)):
+						#prepares the matrix A and B
+						full_cool += "!preparing matrix Ax=b\n"
+						Avar = "A"+cur_metal #A variable name
+						real_variables.append(Avar+"("+str(nlev)+","+str(nlev)+")")
+						#build B and the first row of A which is 1
+						full_cool += Bvar+"(:) = (/n(idx_"+cur_metal+"), " + (", ".join(["0d0"]*(nlev-1))) + "/)\n"
+						full_cool += Avar+"(1,:) = (/" + (", ".join(["1d0"]*nlev)) + "/)\n"
+				
+						#build the other rows of A
+						for ilev, lev in levels.iteritems():
+							if(ilev==0): continue
+							Arow = ["" for i in range(nlev)]
+							for k,v in MMij.iteritems():
+								if(ilev==v[0]): Arow[v[0]] += "-"+k
+								if(ilev==v[1]): Arow[v[0]] += "+"+k
+							Arow = ["0d0" if x=="" else x for x in Arow]
+							full_cool += Avar+"("+str(ilev+1)+",:) = (/" + (", ".join(Arow)) + "/)\n"
+
+						#include function to solve the linear system
+						# depending on the number of levels
+						full_cool += "\n"
+						full_cool += "!solving Ax=b\n"
+						if(nlev<2):
+							print "ERROR: you want to solve level poupulation for a system"
+							print " with less than 2 levels, i.e. "+str(nlev)+" for species "+cur_metal
+							sys.exit()
+						elif(nlev==2): 
+							full_cool += "call mylin2("+Avar+"(:,:), "+Bvar+"(:))\n"
+						elif(nlev==3): 
+							full_cool += "call mylin3("+Avar+"(:,:), "+Bvar+"(:))\n"
+						else:
+							#LAPACK are called for more than 3 levels
+							full_cool += "call mydgesv("+Avar+"(:,:), "+Bvar+"(:))\n"
+							self.needLAPACK = True
+
+					if(use_escape):
+						full_cool += "\n"
+						full_cool += "!init common Matrix without Aij terms\n"
+						full_cool += "! needed for non-linear function fcn\n"
+						#filling M matrix
+						for k,v in MMij.iteritems():
+							full_cool += "MMesc"+str(nlev)+"("+str(v[0]+1)+","+str(v[1]+1)+") = "+k+"\n"
+					
+					
+						#solving non linear system
+						full_cool += "\n"
+						full_cool += "!solving non linear system\n"
+						full_cool += "ntotcoll = n(idx_"+cur_metal+")\n"
+						full_cool += Bvar+"(:) = ntotcoll*"+str(1./nlev)+" !initial guess: ntot/nlevel\n"
+						full_cool += "call nleq_wrap("+Bvar+"(:))\n"
+						self.useNLEQ = True
+
+					if(use_escape):
+						full_cool += "\n"
+						full_cool += "!scale to beta\n"
+						full_cool += "do i=2,"+str(nlev)+"\n"
+						full_cool += "beta"+str(nlev)+"(i,i-1) = 1d0/(1d0+3d0*beta"+str(nlev)+"(i,i-1))\n"
+						full_cool += "end do\n"
+
+					#prepares the cooling summing up the cooling from all the transitions
+					full_cool += "\n"
+					full_cool += "!computing cooling\n"
+					cools = []
+					trs = []
+					for tr in transitions:
+						if([tr["up"],tr["down"]] in trs): continue
+						trs.append([tr["up"],tr["down"]])
+						try:
+							cool = Aijs[(tr["up"],tr["down"])] + "*"
+							cool += str(float(levels[tr["up"]]["energy"]) - float(levels[tr["down"]]["energy"])) + " * "
+							cool += Bvar + "(" + str(tr["up"]+1) + ")"
+							if(use_escape): cool += "*beta"+str(nlev)+"("+str(tr["up"]+1)+","+str(tr["down"]+1)+")"
+							cools.append(cool)
+						except:
+							pass
+					full_cool += function_name + " = " + (" + &\n".join(cools)) + "\n"
+
+					#insert the end of the function
+					full_cool += "\n end function "+function_name+"\n"
+
+
+					#prepare the FCN function for the problem of size nlev
+					if(not(nlev in fcn_levs) and use_escape):
+						full_cool += "\n"
+						full_cool += "!*********************\n"
+						full_cool += "subroutine fcn_"+str(nlev)+"(n,x,f)\n"
+						full_cool += "use krome_constants\n"
+						full_cool += "use krome_user_commons\n"
+						full_cool += "implicit none\n"
+						full_cool += "integer::n\n"	
+						full_cool += "real*8::x(:),f(n)\n"
+						fcn_levs.append(nlev)
+						print "**************"
+						print nlev,cur_metal
+						taus = dict()
+						fun_tot = "f(1) = "+(" + &\n".join(["x("+str(i+1)+")"for i in range(nlev)])) + " - ntotcoll\n"
+						for i in range(1,nlev):
+							fun = "f("+str(i+1)+") = 0d0"
+							for k,v in MMij.iteritems():
+								sup = str(v[0]+1)
+								sdown = str(v[1]+1)
+								smud = "("+sup+","+sdown+")"
+								smdu = "("+sdown+","+sup+")"
+								beta = ""
+								if(v[0]==v[1]+1):
+									tauvar = "beta"+str(nlev)+"("+sup+","+sdown+")"
+									bij = "Besc"+str(nlev)+smud
+									bji = "Besc"+str(nlev)+smdu
+									tauexpr = "preLVG*(x("+sdown+")*"+bji+"-x("+sup+")*"+bij+")"
+									beta = "+"+Aijs[(v[0],v[1])]+"/(1d0+3d0*"+tauvar+")"
+									if(not(tauvar in taus)): taus[tauvar] = tauexpr
+								if(v[0]==i): fun += " &\n-(MMesc"+str(nlev)+smud+beta+")*x("+str(v[0]+1)+")"
+								if(v[1]==i): fun += " &\n+(MMesc"+str(nlev)+smud+beta+")*x("+str(v[0]+1)+")"
+							fun_tot += fun + "\n"
+						#full_cool += "real*8::"+(",".join(taus))+"\n"
+						full_cool += "real*8::preLVG,invdvdz\n"
+						full_cool += "invdvdz = krome_invdvdz !inverse of |dv/dz|\n"			
+						full_cool += "preLVG = 0.25d0*planck_erg*clight/pi * invdvdz\n"
+						betaList = [[k,v] for k,v in taus.iteritems()]
+						betaList = sorted(betaList, key=lambda x:x[0])
+						for betaval in betaList:
+							full_cool += betaval[0]+" = "+betaval[1]+"\n"
+						#for k,v in taus.iteritems():
+						#	full_cool += k+" = "+v+"\n"
+						full_cool += "\n"
+						full_cool += fun_tot
+				
+						full_cool += "end subroutine fcn_"+str(nlev)+"\n"
+	
+					#replace the real variables needed by the cooling function
+					vcool = ""
+					uniq = []
+					for x in real_variables:
+						if(x in uniq): continue
+						vcool += "real*8::"+x+"\n"
+						uniq.append(x)
+					#add ortho/para variables if needed
+					if(needOrthoPara):
+						vcool += "real*8::H2pa,H2or,o2p\n"
+
+					full_cool = full_cool.replace("#KROME_replace_with_declarations", vcool)
+
+					coolZ_functions.append([function_name, full_cool])
+
+					continue
+			
+				#if block for rates, e.g. if(Tgas > 5d3):
+				if(srow[:2]=="if"):
+					ifcond, ifrate = srow.split(":") #if condition, and rate
+					excitation_rates.append(ifcond.strip() +" "+ var_excitation +" = "+ifrate.strip()) #append rate
+					krates.append(ifcond.strip() +" k("+ str(nkrates) +") = "+ifrate.strip())
+					continue
+			
+				#read para/ortho
+				if("para/ortho" in srow.replace(" ","")):
+					aop = srow.split(":")[1].split("/")
+					para2ortho = float(aop[0])/float(aop[1])
+					ortho2para = float(aop[1])/float(aop[0])
+					needOrthoPara = True
+					print "Found para/ortho in "+fname+": "+str(para2ortho)
+
+				#read ortho/para
+				if("ortho/para" in srow.replace(" ","")):
+					aop = srow.split(":")[1].split("/")
+					para2ortho = float(aop[1])/float(aop[0])
+					ortho2para = float(aop[0])/float(aop[1])
+					needOrthoPara = True
+					print "Found ortho/para in "+fname+": "+str(ortho2para)
+
+				#read collider rates
+				if(len(row.split(","))>=4):
+					nkrates += 1
+					#read collider, starting level, end level, rate F90 expression
+					coll, lev_up, lev_down, rate = [x.strip() for x in srow.split(",",3)]
+					coll = coll.replace("+","j").replace("-","k") #collider name for variable
+					var_excitation = "g"+lev_up+lev_down+cur_metal+"_"+coll #excitation variable, g10C_Hp
+					var_excitation_rev = "g"+lev_down+lev_up+cur_metal+"_"+coll #dexcitation variable, g01C_Hp
+
+					if(not(coll in colliders)): colliders.append(coll) #append collider names
+					real_variables.append(var_excitation) #add to double variable list
+					excitation_rates.append(var_excitation +" = "+rate) #store excitation rates
+					#print rate
+					krates.append("k("+ str(nkrates) +") = "+rate+" !"+cur_metal+lev_up+lev_down+"_"+coll)
+					kkrates.append(var_excitation+" = k("+str(nkrates) +")")
+					transitions.append({"up":int(lev_up), "down":int(lev_down), "coll":coll}) #store level transition
+
+				#read Aij
+				if(len(row.split(","))==3):
+					lup, ldown, Aij = [x.strip() for x in srow.split(",",4)]
+					Aijs[(int(lup),int(ldown))] = Aij
 
 		#copy local arrays and dictionaries to class attributes
 		self.coolZ_functions = coolZ_functions
