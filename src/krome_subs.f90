@@ -20,7 +20,7 @@ contains
 
     !maxn initialization can be removed and small can be
     ! replaced with a proper value according to the environment
-    nmax = maxval(n(1:nmols))
+    nmax = max(maxval(n(1:nmols)),1d0)
     small = #KROME_small
 
 #KROME_Tshortcuts

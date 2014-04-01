@@ -26,6 +26,12 @@ program test_krome
 
   call krome_init()
 
+  !NOTE: here myCoe array is employed to store the 
+  ! coefficient values, since the temperature is 
+  ! constant during the model evolution.
+  ! myCoe(:) is defined in krome_user_commons
+  myCoe(:) = krome_get_coef(Tgas)
+
   x(:) = 1.d-20
   !initial densities (model EA2 Wakelam+Herbst 2008)
   x(KROME_idx_H2)  = 0.5d0   * xH 

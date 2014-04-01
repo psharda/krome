@@ -275,7 +275,7 @@ class krome():
 		#test_name = (arg.strip().replace("-test=",""))
 		#print "Reading option -test (test="+test_name+")"
 		if(args.test=="cloud"):
-			[argv.append(x) for x in ["-useN","-iRHS","-skipJacobian"]]
+			[argv.append(x) for x in ["-useN","-iRHS","-skipJacobian","-useCustomCoe=\"myCoe(:)\""]]
 			filename = "networks/react_cloud"
 		elif(args.test=="slowmanifold"):
 			[argv.append(x) for x in ["-useN"]]
