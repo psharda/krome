@@ -24,7 +24,7 @@
 # D.R.G. Schleicher, D. Seifried, E. Simoncini 
 #
 #
-#KROME is provided \"as it is\", without any warranty. 
+#KROME is provided "as it is", without any warranty. 
 # The Authors assume no liability for any damages of any kind 
 # (direct or indirect damages, contractual or non-contractual 
 # damages, pecuniary or non-pecuniary damages), directly or 
