@@ -53,7 +53,7 @@ class krome():
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
-	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = False
+	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = False
@@ -687,7 +687,7 @@ class krome():
 			self.useStars = True
 			print "Reading option -stars"
 
-		#do not write test.f90 or Makefile
+		#do not write test.f90 and Makefile
 		if(args.noExample):
 			self.noExample = True
 			print "Reading option -noExample"
@@ -2427,7 +2427,7 @@ class krome():
 					real_variables.append(varM) #add to double variable list
 					if(not(varM in varMexist)):
 						try:
-							MM[varM] = [Aijs[(tr["up"],tr["down"])] + beta]
+							MM[varM] = [Aijs[(tr["up"],tr["down"])]]
 						except:
 							MM[varM] = ["0e0"]
 						if(use_escape): MM[varM] = ["0e0"]
@@ -2500,7 +2500,9 @@ class krome():
 					full_cool += "\n"
 					full_cool += "!solving non linear system\n"
 					full_cool += "ntotcoll = n(idx_"+cur_metal+")\n"
+					full_cool += Bvar+"(:) = ntotcoll*"+str(1./nlev)+" !initial guess: ntot/nlevel\n"
 					full_cool += "call nleq_wrap("+Bvar+"(:))\n"
+					self.useNLEQ = True
 
 				if(use_escape):
 					full_cool += "\n"
@@ -2508,6 +2510,7 @@ class krome():
 					full_cool += "do i=2,"+str(nlev)+"\n"
 					full_cool += "beta"+str(nlev)+"(i,i-1) = 1d0/(1d0+3d0*beta"+str(nlev)+"(i,i-1))\n"
 					full_cool += "end do\n"
+
 				#prepares the cooling summing up the cooling from all the transitions
 				full_cool += "\n"
 				full_cool += "!computing cooling\n"
@@ -3408,7 +3411,7 @@ class krome():
 
 
 		#bremsstrahlung for all the ions as charge**2*n_ion
-		skip = False
+		skip = skip_nleq = False
 		bms_ions = "bms_ions ="
 		for x in specs:
 			charge = x.charge
@@ -3435,11 +3438,13 @@ class krome():
 			if(srow == "#IFKROME_useCoolingExpansion" and not(self.useCoolingExpansion)): skip = True
 			if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
-			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK 
+			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
+			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
 
+			if(srow == "#ENDIFKROME_use_NLEQ"): skip_nleq = False
 			if(srow == "#ENDIFKROME"): skip = False
 
-			if(skip): continue
+			if(skip or skip_nleq): continue
 
 			#replace the small value for rates according to the maximum number of products 
 			if("#KROME_small" in srow):
@@ -4283,15 +4288,17 @@ class krome():
 			for fdir in files:
 				shutil.copyfile("tests/"+test_name+"/"+fdir, buildFolder+"/"+fdir)
 				print "- copying "+fdir+" to "+buildFolder
-			if(self.useDvodeF90):
-				shutil.copyfile("tests/MakefileF90", buildFolder+"Makefile")
-			elif(self.buildCompact):
-				shutil.copyfile("tests/"+test_name+"/MakefileCompact", buildFolder+"Makefile")
-			else:
-				if(self.pedanticMakefile):
-					shutil.copyfile("tests/Makefile_pedantic", buildFolder+"Makefile")
+			#if Makefile is not present in the tests directory use the default Makefile
+			if(not(os.path.exists("tests/"+test_name+"/Makefile"))):
+				if(self.useDvodeF90):
+					shutil.copyfile("tests/MakefileF90", buildFolder+"Makefile")
+				elif(self.buildCompact):
+					shutil.copyfile("tests/MakefileCompact", buildFolder+"Makefile")
 				else:
-					shutil.copyfile("tests/"+test_name+"/Makefile", buildFolder+"Makefile")
+					if(self.pedanticMakefile):
+						shutil.copyfile("tests/Makefile_pedantic", buildFolder+"Makefile")
+					else:
+						shutil.copyfile("tests/Makefile", buildFolder+"Makefile")
 
 			#test_file = "tests/"+test_name+"/test.f90"
 			#plot_file = "tests/"+test_name+"/plot.gps"
@@ -4303,14 +4310,16 @@ class krome():
 			#if(self.has_plot): shutil.copyfile(plot_file, buildFolder+"plot.gps")
 			#print " done!"
 
-		#copy solver files to build
-		print "- copying solver to /build..."
+		#copy solver files to build folder
+		print "- copying solver(s) to /build..."
 		if(self.useDvodeF90):
 			shutil.copyfile("solver/dvode_f90_m.f90", buildFolder+"dvode_f90_m.f90")
 		else:
 			shutil.copyfile("solver/opkdmain.f", buildFolder+"opkdmain.f")
 			shutil.copyfile("solver/opkda1.f", buildFolder+"opkda1.f")
 			shutil.copyfile("solver/opkda2.f", buildFolder+"opkda2.f")
+		#copy non-linear equation solver to build folder
+		if(self.useNLEQ): shutil.copyfile("solver/nleq_all.f", buildFolder+"nleq_all.f")
 
 
 	#######################################################

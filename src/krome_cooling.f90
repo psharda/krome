@@ -691,35 +691,22 @@ contains
 
   end subroutine coolingZ_init_tabs
 
-  !********************************
-  !driver for nleq that solves a non-linear
-  ! system of equations
-  subroutine krome_nleq_driver(x)
-    implicit none
-    real*8::x(:)
-
-    x(:) = 1d0 !initial guess
-    !solve non linear system
-    call nleq_wrap(x)
-
-  end subroutine krome_nleq_driver
-
   !*******************************
-  !this subroutine solve a non linear system
+  !this subroutine solves a non linear system
   ! with the equations stored in fcn function
   ! and a dummy jacobian jcn
   subroutine nleq_wrap(x)
-    integer,parameter::nmax=50
-    integer,parameter::liwk=nmax+50
-    integer,parameter::lrwk=(nmax+13)*nmax+60
-    integer,parameter::luprt=6
+    integer,parameter::nmax=100 !problem size
+    integer,parameter::liwk=nmax+50 !size integer workspace
+    integer,parameter::lrwk=(nmax+13)*nmax+60 !real workspace
+    integer,parameter::luprt=6 !logical unit verbose output
     real*8::x(:),xscal(nmax),rtol,rwk(lrwk)
     integer::neq,iopt(50),ierr,niw,nrw,iwk(liwk)
-    neq = size(x)
+    neq = nmax
     niw = neq+50
     nrw = (neq+13)*neq+60
     
-    rtol = 1d-5
+    rtol = 1d-5 !realtive tolerance
     xscal(:) = 0d0
     iopt(:) = 0
     rwk(:) = 0d0
@@ -734,9 +721,10 @@ contains
     iopt(20) = luprt
     iwk(31) = 10000 !max iterations
     
+#IFKROME_use_NLEQ
     call nleq1(neq,fcn,jcn,x(:),xscal(:),rtol,iopt,ierr,&
          liwk,iwk(:),lrwk,rwk(:))
-    
+#ENDIFKROME_use_NLEQ
   end subroutine nleq_wrap
 
   !***************************

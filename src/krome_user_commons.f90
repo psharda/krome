@@ -8,6 +8,7 @@ module krome_user_commons
   !pressure, density, ...)
   real*8::tau,zrate,pah_size,gas_dust_ratio,krome_redshift
   real*8::krome_J21,user_tff
+  real*8::krome_invdvdz !inverse of |velocity gradient| 1/abs(dv/dz)
 
 
 contains 
