@@ -550,6 +550,7 @@ def is_number(s):
 ##################################
 #parse molecule name using dictionary and atoms list
 def parser(name, mass_dic, atoms, thermo_data):
+
 	mymol = molec() #oggetto molec
 	namecp = name.upper()
 	if(namecp=="E-"): namecp = "E" #avoid double negative charge

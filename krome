@@ -1,6 +1,5 @@
 #!/usr/bin/python
 #!python
-
 #KROME is a nice and friendly chemistry package for a wide range of 
 # astrophysical simulations. Given a chemical network (in CSV format) 
 # it automatically generates all the routines needed to solve the kinetic 

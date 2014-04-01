@@ -42,7 +42,6 @@ from kromelib import *
 from os import listdir
 from os.path import isfile, join
 
-
 class krome():
 	#set defaults
 	solver_MF = 222
@@ -1147,11 +1146,13 @@ class krome():
 
 	
 	#################################################
+	#@profile
 	def read_file(self):
 		skipDup = self.skipDup
 		filename = self.filename
 		atoms = self.atoms
 		mass_dic = self.mass_dic
+		thermodata = self.thermodata
 		print "Reading from file \""+filename+"\"..."
 		spec_names = [] #string
 		idx_list = [] #store reaction index in case of -useFileIdx
@@ -1186,10 +1187,12 @@ class krome():
 		# to have a rough idea of the size
 		fh = open(filename,"rb")
 		line_count = 0
+		allrows = []
 		for row in fh:
 			if(row.strip()==""): continue
 			if(row.strip()[0]=="#"): continue
 			line_count += 1
+			allrows.append(row.strip())
 		fh.close()
 	
 		#warning if the number of lines exceed a certain limit
@@ -1200,7 +1203,7 @@ class krome():
 		fh = open(filename,"rb") #OPEN FILE
 		isComment = False #flag for comment block
 		noTabNext = False #flag for use tabs for the next reaction 
-		for row in fh:
+		for row in allrows:
 			srow = row.strip() #stripped row
 			if(srow.strip()==""): continue #looks for blank line
 			if(srow[0]=="#"): continue #looks for comment line
@@ -1306,6 +1309,7 @@ class krome():
 				continue #check line format (N elements, 4=idx+Tmin+Tmax+rate)
 			found_one = True #flag to determine at least one reaction found
 			rcount += 1 #count the totoal number of reaction found
+
 			myrea = reaction() #create object reaction
 
 			#use reaction index found into the file
@@ -1398,23 +1402,25 @@ class krome():
 				if(r.strip()=="G" and not(self.use_photons)): continue
 				if(r.strip()=="E-"): r = "E"
 				if(r.strip()!=""):
-					mol = parser(r,mass_dic,atoms,self.thermodata)
+					mol = parser(r,mass_dic,atoms,thermodata)
 					if(not(mol.name in spec_names)):
 						spec_names.append(mol.name)
 						specs.append(mol)
 					mol.idx = spec_names.index(mol.name) + 1
 					myrea.reactants.append(mol) #add molecule object to reactants
+
 			#loop over prodcuts to grep molecules
 			for p in products:
 				if(p.strip()=="G" and not(self.use_photons)): continue
 				if(p.strip()=="E-"): p = "E"
 				if(p.strip()!=""):
-					mol = parser(p,mass_dic,atoms,self.thermodata)
+					mol = parser(p,mass_dic,atoms,thermodata)
 					if(not(mol.name in spec_names)):
 						spec_names.append(mol.name)
 						specs.append(mol)
 					mol.idx = spec_names.index(mol.name) + 1
 					myrea.products.append(mol) #add molecule object to products
+
 
 			myrea.build_verbatim() #build reaction as string (e.g. A+B->C)
 			#myrea.reactants = sorted(myrea.reactants, key=lambda r:r.idx) #sort reactants
@@ -1444,8 +1450,8 @@ class krome():
 
 			#append reactions if not skipped 
 			if(not(skip_append)): reacts.append(myrea)
+			del myrea,row
 			noTabNext = False #return to default value
-
 	
 		if((self.useShieldingDB96 or self.useShieldingWG11) and not(fsh_found)):
 			print
@@ -1481,7 +1487,6 @@ class krome():
 		self.reacts = reacts
 		self.TminAuto = TminAuto
 		self.TmaxAuto = TmaxAuto
-
 		print "done!"
 	
 	#####################################################
