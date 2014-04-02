@@ -1,6 +1,8 @@
+#THIS FILE CONTAINS DATA FOR CO AND 13CO FROM LAMDA DATABASE
 ############
 metal:CO
 escape: yes
+
 #level n: energy (K), degeneracy g
 level 0: 0.0, 1.0
 level 1: 5.49374529016, 3.0
@@ -1734,6 +1736,8 @@ H2or, 40, 39, flin((/2.0d0, 5.0d0, 10.0d0, 20.0d0, 30.0d0, 40.0d0, 50.0d0, 60.0d
 end metal
 ############
 metal:13C16O
+escape: yes
+
 #level n: energy (K), degeneracy g
 level 0: 0.0, 1.0
 level 1: 5.25211988427, 3.0
