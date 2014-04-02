@@ -2553,8 +2553,7 @@ class krome():
 						full_cool += "integer::n\n"	
 						full_cool += "real*8::x(:),f(n)\n"
 						fcn_levs.append(nlev)
-						print "**************"
-						print nlev,cur_metal
+
 						taus = dict()
 						fun_tot = "f(1) = "+(" + &\n".join(["x("+str(i+1)+")"for i in range(nlev)])) + " - ntotcoll\n"
 						for i in range(1,nlev):
@@ -3997,6 +3996,22 @@ class krome():
 			if(srow == "#KROME_species"):
 				for x in specs:
 					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
+			elif(srow == "#KROME_cooling_functions"):
+				for x in self.coolZ_functions:
+					funcname =  "krome_"+x[0];
+					fout.write("\n!*******************\n")
+					fout.write("function "+funcname+"(xin,inTgas)\n")
+					fout.write("use krome_commons\n")
+					fout.write("use krome_cooling\n")
+					fout.write("use krome_constants\n")
+					fout.write("real*8::xin(:),n(nspec),inTgas,k(nZrate),"+funcname+"\n")
+					fout.write("n(:) = 0d0\n")
+					fout.write("n(idx_Tgas) = inTgas\n")
+					fout.write("n(1:nmols) = xin(:)\n")
+					fout.write("k(:) = coolingZ_rate_tabs(inTgas)\n")
+					fout.write(funcname+" = "+x[0]+"(n(:),n(idx_Tgas),k(:)) *  boltzmann_erg\n")
+					fout.write("end function "+funcname+"\n")
+
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(srow == "#KROME_zero_electrons"):

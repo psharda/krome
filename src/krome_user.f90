@@ -11,6 +11,8 @@ module krome_user
 
 contains
 
+#KROME_cooling_functions
+
   !***************************
   !alias for coe in krome_subs
   ! returns the coefficients for a given Tgas
