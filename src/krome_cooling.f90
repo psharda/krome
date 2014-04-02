@@ -4,7 +4,7 @@ module KROME_cooling
 #KROME_nZrate
   real*8::coolTab(nZrate,coolTab_n),coolTab_logTlow, coolTab_logTup
   real*8::coolTab_T(coolTab_n),inv_coolTab_T(coolTab_n-1),inv_coolTab_idx
-
+#KROME_escape_vars
 contains
 
   !*******************************
@@ -584,11 +584,11 @@ contains
     x = max(x,xval(1)) !set lower bound
     x = min(x,xval(n)) !set upper bound
     !loop to find interval (slow)
-    do i=1,n-1
+    do i=2,n
        if(x.le.xval(i)) then
           !linear fit
-          flin = (yval(i+1) - yval(i)) / (xval(i+1) - xval(i)) * &
-               (x - xval(i)) + yval(i)
+          flin = (yval(i) - yval(i-1)) / (xval(i) - xval(i-1)) * &
+               (x - xval(i-1)) + yval(i-1)
           found = .true. !found flag
           exit
        end if
@@ -690,6 +690,58 @@ contains
     end do
 
   end subroutine coolingZ_init_tabs
+
+  !*******************************
+  !this subroutine solves a non linear system
+  ! with the equations stored in fcn function
+  ! and a dummy jacobian jcn
+  subroutine nleq_wrap(x)
+    integer,parameter::nmax=100 !problem size
+    integer,parameter::liwk=nmax+50 !size integer workspace
+    integer,parameter::lrwk=(nmax+13)*nmax+60 !real workspace
+    integer,parameter::luprt=6 !logical unit verbose output
+    real*8::x(:),xscal(nmax),rtol,rwk(lrwk)
+    integer::neq,iopt(50),ierr,niw,nrw,iwk(liwk)
+    neq = nmax
+    niw = neq+50
+    nrw = (neq+13)*neq+60
+    
+    rtol = 1d-5 !realtive tolerance
+    xscal(:) = 0d0
+    iopt(:) = 0
+    rwk(:) = 0d0
+    iwk(:) = 0
+
+    !output options
+    iopt(11) = 0 !0=no output,1=error,2=warning,3=info
+    iopt(12) = luprt
+    iopt(13) = 0 !0?no output,1=std,2=summary,3=detailed,4,5,6
+    iopt(14) = luprt
+    iopt(19) = 0 !time monitor, 0=no output
+    iopt(20) = luprt
+    iwk(31) = 10000 !max iterations
+    
+#IFKROME_use_NLEQ
+    call nleq1(neq,fcn,jcn,x(:),xscal(:),rtol,iopt,ierr,&
+         liwk,iwk(:),lrwk,rwk(:))
+#ENDIFKROME_use_NLEQ
+  end subroutine nleq_wrap
+
+  !***************************
+  subroutine fcn(n,x,f,ierr)
+    implicit none
+    integer::n,ierr
+    real*8::x(n),f(n)
+
+#KROME_fcn_cases
+
+  end subroutine fcn
+
+  !**********************************
+  !dummy jacobian for non linear equation solver
+  subroutine jcn()
+    
+  end subroutine jcn
 
 #KROME_coolingZ_functions
 

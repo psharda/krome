@@ -1,5 +1,6 @@
 ############
 metal:CO
+escape: yes
 #level n: energy (K), degeneracy g
 level 0: 0.0, 1.0
 level 1: 5.49374529016, 3.0

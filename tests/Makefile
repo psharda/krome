@@ -1,9 +1,16 @@
 fc = ifort
 #fc = gfortran
+prj = krome #exe name
+lib = -llapack #libraries
 
-lib = -llapack
+GREP = $(shell grep -i 'dgesv' krome_cooling.f90)
+ifeq ($(GREP),)
+	lib = 
+endif
+
+
 ifeq ($(fc),ifort)
-	std = -check all -traceback -fpe0  -ftz -ftrapuv -warn all -u
+	std = -check all -traceback -fpe0 -ftz -ftrapuv -warn all -u
 	nowarn = -nowarn
 	sswitch = $(std)
 	fswitch = $(std) -O3 -ipo -ip -unroll 
@@ -16,14 +23,21 @@ else
 	nowarn = 
 endif
 
-
-
-prj = krome
-
 all:
+
+ifneq ($(wildcard opkdmain.f),) 
 	$(fc) -c opkda2.f $(switch) $(nowarn)
 	$(fc) -c opkda1.f $(switch) $(nowarn)
 	$(fc) -c opkdmain.f $(switch) $(nowarn)
+endif
+
+ifneq ($(wildcard dvode_f90_m.f90),) 
+	$(fc) -c dvode_f90_m.f90 $(switch) $(nowarn)
+endif
+
+ifneq ($(wildcard nleq_all.f),) 
+	$(fc) -c nleq_all.f $(switch) $(nowarn)
+endif
 	$(fc) -c krome_commons.f90 $(switch) 
 	$(fc) -c krome_constants.f90 $(switch)
 	$(fc) -c krome_user_commons.f90 $(switch)

@@ -8,6 +8,7 @@
 import sys,os
 from subprocess import call
 from random import random as rand
+from math import sin,cos
 
 ########################################
 # PLEASE DO NOT MODIFY IF YOU ARE NOT 
@@ -112,13 +113,15 @@ foundedge = dict() #dictionary key="x -> y", value=[reaction partners]
 foundrea = [] #list of reaction found (for output on screen only)
 
 #start writin digraph file
-fout.write("//DOT file created with PATHWAY of KROME\n")
+fout.write("//DOT file created with PATHWAY tool from KROME\n")
 fout.write("// see kromepackage.org\n")
 fout.write("digraph pathway{\n")
 fout.write("node [shape=circle];\n")
-#fout.write("newrank=true;\n")
-#fout.write("splines=false;\n")
-fout.write("overlap=scale;\n")
+#fout.write("nodesep=0.6;\n")
+fout.write("splines=true;\n")
+fout.write("overlap=scalexy;\n")
+#fout.write("sep=\"+25,25\";\n")
+
 fout.write("fontsize=11;\n")
 
 degree = dict()
@@ -277,6 +280,17 @@ for x in species:
 	if(x in uniq): continue
 	uniq.append(x)
 species = uniq
+
+
+fout.write("{\n")
+i = 0
+r=10.
+for x in species:
+	px = r*cos(i*2.*3.1415/(len(species)))
+	py = r*sin(i*2.*3.1415/(len(species)))
+	fout.write("\""+x+"\" [pos=\""+str(px)+","+str(py)+"\"]\n")
+	i += 1
+fout.write("}\n")
 
 
 

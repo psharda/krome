@@ -11,6 +11,20 @@ module krome_user
 
 contains
 
+  !***************************
+  !alias for coe in krome_subs
+  ! returns the coefficients for a given Tgas
+  function krome_get_coef(Tgas)
+    use krome_commons
+    use krome_subs
+    real*8::krome_get_coef(nrea),Tgas,n(nspec)
+    n(:) = 0d0
+    n(idx_Tgas) = Tgas
+
+    krome_get_coef(:) = coe(n(:))
+    
+  end function krome_get_coef
+
   !****************************
   !return the adiabatic index from mass fractions
   ! and temperature in K

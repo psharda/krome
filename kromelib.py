@@ -24,7 +24,7 @@
 # D.R.G. Schleicher, D. Seifried, E. Simoncini 
 #
 #
-#KROME is provided \"as it is\", without any warranty. 
+#KROME is provided "as it is", without any warranty. 
 # The Authors assume no liability for any damages of any kind 
 # (direct or indirect damages, contractual or non-contractual 
 # damages, pecuniary or non-pecuniary damages), directly or 
@@ -550,6 +550,7 @@ def is_number(s):
 ##################################
 #parse molecule name using dictionary and atoms list
 def parser(name, mass_dic, atoms, thermo_data):
+
 	mymol = molec() #oggetto molec
 	namecp = name.upper()
 	if(namecp=="E-"): namecp = "E" #avoid double negative charge
@@ -780,11 +781,9 @@ def get_file_list():
 	files.append("tests/compact/plot.gps")
 	files.append("tests/map")
 	files.append("tests/map/test.f90")
-	files.append("tests/map/Makefile")
 	files.append("tests/map/plot.gps")
 	files.append("tests/collapse")
 	files.append("tests/collapse/test.f90")
-	files.append("tests/collapse/Makefile")
 	files.append("tests/collapse/plot.gps")
 	files.append("tests/cloud")
 	files.append("tests/cloud/test.f90")
@@ -792,21 +791,17 @@ def get_file_list():
 	files.append("tests/cloud/plot.gps")
 	files.append("tests/collapseUV")
 	files.append("tests/collapseUV/test.f90")
-	files.append("tests/collapseUV/Makefile")
 	files.append("tests/collapseUV/plot.gps")
 	files.append("tests/collapseZ")
 	files.append("tests/collapseZ/test.f90")
-	files.append("tests/collapseZ/Makefile")
 	files.append("tests/collapseZ/MakefileF90")
 	files.append("tests/collapseZ/plot.gps")
 	files.append("tests/slowmanifold")
 	files.append("tests/slowmanifold/test.f90")
-	files.append("tests/slowmanifold/Makefile")
 	files.append("tests/slowmanifold/testzzz.f90")
 	files.append("tests/slowmanifold/plot.gps")
 	files.append("tests/atmosphere")
 	files.append("tests/atmosphere/test.f90")
-	files.append("tests/atmosphere/Makefile")
 	files.append("tests/atmosphere/eddy.dat")
 	files.append("tests/atmosphere/init_spec.dat")
 	files.append("tests/atmosphere/layers_data")
@@ -814,42 +809,33 @@ def get_file_list():
 	files.append("tests/MakefileCompact")
 	files.append("tests/shock1Dcool")
 	files.append("tests/shock1Dcool/test.f90")
-	files.append("tests/shock1Dcool/Makefile")
 	files.append("tests/shock1Dcool/shock1D.dat")
 	files.append("tests/shock1Dcool/plot.gps")
 	files.append("tests/dust")
 	files.append("tests/dust/test.f90")
-	files.append("tests/dust/Makefile")
 	files.append("tests/dust/plot.gps")
 	files.append("tests/reverse")
 	files.append("tests/reverse/test.f90")
-	files.append("tests/reverse/Makefile")
 	files.append("tests/reverse/plot.gps")
 	files.append("tests/shock1D")
 	files.append("tests/shock1D/test.f90")
-	files.append("tests/shock1D/Makefile")
 	files.append("tests/shock1D/plot.gps")
 	files.append("tests/lotkav")
 	files.append("tests/lotkav/test.f90")
-	files.append("tests/lotkav/Makefile")
 	files.append("tests/lotkav/plot.gps")
 	files.append("tests/lotkav/lotkav")
 	files.append("tests/Makefile_pedantic")
 	files.append("tests/wrapC")
-	files.append("tests/wrapC/Makefile")
 	files.append("tests/wrapC/test.c")
 	files.append("tests/wrapC/krome.h")
 	files.append("tests/shock1Dphoto")
 	files.append("tests/shock1Dphoto/test.f90")
-	files.append("tests/shock1Dphoto/Makefile")
 	files.append("tests/shock1Dphoto/shock1D.dat")
 	files.append("tests/shock1Dphoto/plot.gps")
 	files.append("krome")
 	files.append("kromeobj.py")
 	files.append("build")
 	files.append("tools")
-	files.append("tools/subkida.py")
-	files.append("tools/lamda2.py")
 	files.append("src")
 	files.append("src/krome_constants.f90")
 	files.append("src/krome_tabs.f90")
@@ -870,6 +856,7 @@ def get_file_list():
 	files.append("data/thermo30.dat")
 	files.append("data/coolZ.dat")
 	files.append("solver")
+	files.append("solver/nleq_all.f")
 	files.append("solver/opkda2.f")
 	files.append("solver/opkdmain.f")
 	files.append("solver/dvode_f90_license.txt")
