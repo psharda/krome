@@ -691,18 +691,19 @@ contains
 
   end subroutine coolingZ_init_tabs
 
-
   !*******************************
   !this subroutine solves a non linear system
   ! with the equations stored in fcn function
   ! and a dummy jacobian jcn
   subroutine nleq_wrap(x)
+    use krome_user_commons
     integer,parameter::nmax=100 !problem size
     integer,parameter::liwk=nmax+50 !size integer workspace
     integer,parameter::lrwk=(nmax+13)*nmax+60 !real workspace
     integer,parameter::luprt=6 !logical unit verbose output
-    real*8::x(:),xscal(nmax),rtol,rwk(lrwk),idamp,mdamp,xi(size(x)),minx
     integer::neq,iopt(50),ierr,niw,nrw,iwk(liwk),ptype,i
+    real*8::x(:),xscal(nmax),rtol,rwk(lrwk),idamp,mdamp,xi(size(x)),minx
+    real*8::store_invdvdz
     neq = size(x)
     niw = neq+50
     nrw = (neq+13)*neq+60
@@ -712,22 +713,51 @@ contains
     xi(:) = x(:) !store initial guess
     idamp = 1d-4 !initial damp (when ptype>=4, else default)
     mdamp = 1d-8 !minimum damp (when ptype>=4, else default)
+    ierr = 0
 
-    !iterate until ierr==0
+    !iterate until ierr==0 and non-negative solutions
     do
-       !print *,"****************"
+       if(ptype>50) then
+          print *,"ERROR in nleq1: can't find a solution after attempt",ptype
+          stop
+       end if
+       
        x(:) = xi(:) !restore initial guess
+
+       !if damping error or negative solutions
+       ! prepares initial guess with the thin case
+       if(ptype>7.and.(ierr==3.or.ierr==0)) then
+          rtol = 1d-5
+          iwk(:) = 0
+          iopt(:) = 0
+          rwk(:) = 0d0
+          xscal(:) = 0d0
+          store_invdvdz = krome_invdvdz !store global variable
+          krome_invdvdz = 0d0 !this sets beta to 1
+#IFKROME_use_NLEQ
+          call nleq1(neq,fcn,jcn,x(:),xscal(:),rtol,iopt,ierr,&
+               liwk,iwk(:),lrwk,rwk(:))
+#ENDIFKROME_use_NLEQ
+          if(ierr.ne.0) then
+             print *,"ERROR in nleq for thin approx",ierr
+             stop
+          end if
+          krome_invdvdz = store_invdvdz !restore global variable
+       end if
        xscal(:) = 0d0 !scaling factor
        rtol = 1d-5 !relative tolerance
        iwk(:) = 0 !default iwk
-       iwk(31) = 10000 !max iterations
+       iwk(31) = int(1e8) !max iterations
        iopt(:) = 0 !default iopt
        iopt(31) = min(ptype,4) !problem type
        rwk(:) = 0d0 !default rwk
-       if(ptype>4) then
+       !reduce damps if damping error
+       if(ptype>4.and.ierr==3) then
           idamp = idamp * 1d-1 !reduce idamp
           mdamp = mdamp * 1d-1 !reduce mdamp
-          !print *,"new damp",idamp,mdamp
+       end if
+       !if problem is extremely nonlinear use custom damps
+       if(ptype>4) then
           rwk(21) = idamp !copy idamp to solver
           rwk(22) = mdamp !copy mdamp to solver
        end if
@@ -741,9 +771,10 @@ contains
        if(ierr.ne.0) then
           !print *,"error",ierr
           !problem with damping factor and/or problem type
-          if(ierr==3.or.ierr==5) then
+          if(ierr==3) then
              ptype = ptype + 1 !change the problem type (non-linearity)
-             !print *,"new ptype",ptype
+          elseif(ierr==5) then
+             xi(:) = x(:)
           else
              !other type of error hence stop
              print *,"ERROR in nleq1, ierr:",ierr
@@ -769,7 +800,6 @@ contains
              else
                 !if large negative values increase non-linearity
                 ptype = ptype + 1
-                !print *,"new ptype",ptype
              end if
           end if
        end if
