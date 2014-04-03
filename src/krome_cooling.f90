@@ -13,7 +13,7 @@ contains
     implicit none
     real*8::n(:), Tgas
     real*8::cooling,cools(11)
-    
+
     !returns cooling in erg/cm3/s
     cools(:) = 0.d0
 
@@ -102,18 +102,18 @@ contains
     !fit coefficients
     a0 = 1.000042d0
     a1 = 2.14989d0
-    
+
     !log density cannot exceed 0.5 g/cm3
     y = log10(min(rhogas,0.5d0))
-    
+
     kpla = 1d1**(a0*y + a1) !fit density only
-    
+
   end function kpla
 
   !*****************************
   function coolingChem(n,Tgas)
     real*8::coolingChem,n(:),Tgas
-    
+
     !note that this function is a dummy.
     ! For chemical cooling you should see
     ! heatingChem function in krome_heating.f90
@@ -140,7 +140,7 @@ contains
     beta = min(1.d0,tau**(-2)) !beta escape (always <1.)
     cooling_Continuum = 4.d0 * stefboltz_erg * Tgas**4 &
          * kgas * rhogas * beta !erg/s/cm3
-    
+
   end function cooling_Continuum
 #ENDIFKROME
 
@@ -223,14 +223,14 @@ contains
     use krome_constants
     real*8::cooling_expansion,n(:),Tgas
     real*8::ntot
-    
+
     ntot=sum(n(1:nmols))
     !note that krome_redshift is defined in krome_user_commons and
     ! must be provided by the user
     cooling_expansion = 3.d0*ntot*boltzmann_erg*Tgas*Hubble0 & 
-           * (1.d0 + krome_redshift) &
-           * sqrt(Omega0 * krome_redshift + 1.d0) !erg/s/cm3
-    
+         * (1.d0 + krome_redshift) &
+         * sqrt(Omega0 * krome_redshift + 1.d0) !erg/s/cm3
+
   end function cooling_expansion
 #ENDIFKROME
 
@@ -241,12 +241,12 @@ contains
     use krome_user_commons
     use krome_commons
     real*8::cooling_compton,n(:),Tgas
-    
+
     !note that redhsift is defined in krome_user_commons and 
     ! must be provided by the user
     cooling_compton = 5.65d-36 * (1.d0 + krome_redshift)**4 &
          * (Tgas - 2.73d0 * (1.d0 + krome_redshift)) * n(idx_e) !erg/s/cm3
-    
+
   end function cooling_compton
 #ENDIFKROME
 
@@ -260,7 +260,7 @@ contains
     implicit none
     real*8::cooling_dust,n(:),Tgas,cool,ntot
     integer::i,idust
-    
+
     !total gas density 1/cm3
     ntot = sum(n(1:nmols))
 
@@ -287,7 +287,7 @@ contains
     real*8::cooling_dH,cool,n(:),Tgas,small,nmax
     real*8::logT,lnT,Te,lnTe,T32,t3,invT,invTe,sqrTgas,invsqrT32,sqrT32
 #KROME_vars
-    
+
     !replace small according to the desired enviroment
     ! and remove nmax if needed
     nmax = maxval(n(1:nmols))
@@ -314,7 +314,7 @@ contains
 
   end function cooling_dH
 #ENDIFKROME
-  
+
 #IFKROME_useCoolingH2GP
   !*******************************
   function cooling_H2GP(n, Tgas)
@@ -333,7 +333,7 @@ contains
     !low density limit in erg/s
     LDL = 1.d1**(-103.d0+97.59d0*logT-48.05d0*logT**2&
          +10.8d0*logT**3-0.9032d0*logT**4)*n(idx_H)
-    
+
     !this will avoid a division by zero and useless calculations
     if(LDL==0d0) then
        cooling_H2GP = 0.d0
@@ -348,10 +348,10 @@ contains
 
     !TO AVOID DIVISION BY ZERO
     fact = HDL/LDL !dimensionless
-    
+
     cooling_H2GP = HDL*n(idx_H2)/(1.d0+(fact)) #KROME_H2opacity !erg/cm3/s
 
-  
+
   end function cooling_H2GP
 #ENDIFKROME
 
@@ -616,7 +616,7 @@ contains
 #KROME_coolingZ_call_functions
 
     cooling_Z = cool * boltzmann_erg
-    
+
   end function cooling_Z
 
   !********************************
@@ -667,14 +667,14 @@ contains
     real*8::Tgas,Tgasold
 
     jmax = coolTab_n !size of the cooling tables (number of saples)
-    
+
     !note: change upper and lower limit for rate tables here
     coolTab_logTlow = log10(3d0)
     coolTab_logTup = log10(1d4)
 
     !pre compute this value since used jmax times
     inv_coolTab_idx = (jmax-1) / (coolTab_logTup-coolTab_logTlow)
-    
+
     !loop over the jmax interpolation points
     do j=1,jmax
        !compute Tgas for the given point
@@ -696,35 +696,114 @@ contains
   ! with the equations stored in fcn function
   ! and a dummy jacobian jcn
   subroutine nleq_wrap(x)
+    use krome_user_commons
     integer,parameter::nmax=100 !problem size
     integer,parameter::liwk=nmax+50 !size integer workspace
     integer,parameter::lrwk=(nmax+13)*nmax+60 !real workspace
     integer,parameter::luprt=6 !logical unit verbose output
-    real*8::x(:),xscal(nmax),rtol,rwk(lrwk)
-    integer::neq,iopt(50),ierr,niw,nrw,iwk(liwk)
-    neq = nmax
+    integer::neq,iopt(50),ierr,niw,nrw,iwk(liwk),ptype,i
+    real*8::x(:),xscal(nmax),rtol,rwk(lrwk),idamp,mdamp,xi(size(x)),minx
+    real*8::store_invdvdz
+    neq = size(x)
     niw = neq+50
     nrw = (neq+13)*neq+60
-    
-    rtol = 1d-5 !realtive tolerance
-    xscal(:) = 0d0
-    iopt(:) = 0
-    rwk(:) = 0d0
-    iwk(:) = 0
 
-    !output options
-    iopt(11) = 0 !0=no output,1=error,2=warning,3=info
-    iopt(12) = luprt
-    iopt(13) = 0 !0?no output,1=std,2=summary,3=detailed,4,5,6
-    iopt(14) = luprt
-    iopt(19) = 0 !time monitor, 0=no output
-    iopt(20) = luprt
-    iwk(31) = 10000 !max iterations
-    
+    ptype = 2 !initial problem type, 2=mildly non-linear
+    rtol = 1d-5 !realtive tolerance
+    xi(:) = x(:) !store initial guess
+    idamp = 1d-4 !initial damp (when ptype>=4, else default)
+    mdamp = 1d-8 !minimum damp (when ptype>=4, else default)
+    ierr = 0
+
+    !iterate until ierr==0 and non-negative solutions
+    do
+       if(ptype>50) then
+          print *,"ERROR in nleq1: can't find a solution after attempt",ptype
+          stop
+       end if
+       
+       x(:) = xi(:) !restore initial guess
+
+       !if damping error or negative solutions
+       ! prepares initial guess with the thin case
+       if(ptype>7.and.(ierr==3.or.ierr==0)) then
+          rtol = 1d-5
+          iwk(:) = 0
+          iopt(:) = 0
+          rwk(:) = 0d0
+          xscal(:) = 0d0
+          store_invdvdz = krome_invdvdz !store global variable
+          krome_invdvdz = 0d0 !this sets beta to 1
 #IFKROME_use_NLEQ
-    call nleq1(neq,fcn,jcn,x(:),xscal(:),rtol,iopt,ierr,&
-         liwk,iwk(:),lrwk,rwk(:))
+          call nleq1(neq,fcn,jcn,x(:),xscal(:),rtol,iopt,ierr,&
+               liwk,iwk(:),lrwk,rwk(:))
 #ENDIFKROME_use_NLEQ
+          if(ierr.ne.0) then
+             print *,"ERROR in nleq for thin approx",ierr
+             stop
+          end if
+          krome_invdvdz = store_invdvdz !restore global variable
+       end if
+       xscal(:) = 0d0 !scaling factor
+       rtol = 1d-5 !relative tolerance
+       iwk(:) = 0 !default iwk
+       iwk(31) = int(1e8) !max iterations
+       iopt(:) = 0 !default iopt
+       iopt(31) = min(ptype,4) !problem type
+       rwk(:) = 0d0 !default rwk
+       !reduce damps if damping error
+       if(ptype>4.and.ierr==3) then
+          idamp = idamp * 1d-1 !reduce idamp
+          mdamp = mdamp * 1d-1 !reduce mdamp
+       end if
+       !if problem is extremely nonlinear use custom damps
+       if(ptype>4) then
+          rwk(21) = idamp !copy idamp to solver
+          rwk(22) = mdamp !copy mdamp to solver
+       end if
+
+#IFKROME_use_NLEQ
+       call nleq1(neq,fcn,jcn,x(:),xscal(:),rtol,iopt,ierr,&
+            liwk,iwk(:),lrwk,rwk(:))
+#ENDIFKROME_use_NLEQ
+
+       !check for errors
+       if(ierr.ne.0) then
+          !print *,"error",ierr
+          !problem with damping factor and/or problem type
+          if(ierr==3) then
+             ptype = ptype + 1 !change the problem type (non-linearity)
+          elseif(ierr==5) then
+             xi(:) = x(:)
+          else
+             !other type of error hence stop
+             print *,"ERROR in nleq1, ierr:",ierr
+             print *,"solutions found so far:"
+             do i=1,size(x)
+                print *,i,x(i)
+             end do
+             stop
+          end if
+       else
+          !if succesful search for negative results
+          minx = minval(x) !minimum value
+          !if minimum value is positive OK
+          if(minx.ge.0d0) then
+             exit
+          else
+             !if negative values are small set to zero
+             if(abs(minx)/maxval(x)<rtol) then
+                do i=1,neq
+                   x(i) = max(x(i),0d0)
+                end do
+                exit
+             else
+                !if large negative values increase non-linearity
+                ptype = ptype + 1
+             end if
+          end if
+       end if
+    end do
   end subroutine nleq_wrap
 
   !***************************
@@ -740,20 +819,20 @@ contains
   !**********************************
   !dummy jacobian for non linear equation solver
   subroutine jcn()
-    
+
   end subroutine jcn
 
 #KROME_coolingZ_functions
 
 #ENDIFKROME
 
- !***********************
+  !***********************
   subroutine mylin2(a,b)
     !solve Ax=B analytically for a 2-levels system
     implicit none
     integer,parameter::n=2
     real*8::a(n,n),b(n),c(n),iab
-    
+
     !uncomment this: safer but slower function
     !if(a(2,2)==a(2,1)) then
     !   print *,"ERROR: a22=a21 in mylin2"
@@ -779,7 +858,7 @@ contains
     !   print *,"ERROR: a22=a23 in mylin3"
     !   stop
     !end if
-    
+
     !uncomment this: safer but slower
     !if(a(2,1)*a(3,2)+a(2,2)*a(3,3)+a(2,3)*a(3,1) == &
     !     a(2,1)*a(3,3)+a(2,2)*a(3,1)+a(2,3)*a(3,2)) then

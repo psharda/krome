@@ -164,7 +164,8 @@ class krome():
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
 			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI).\
-			Note that further cooling options can be added when reading cooling function from file")
+			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
+			the available cooling options type -cooling=?")
 		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line,\
 			e.g. H2 1d-20, see also -ATOL", metavar="filename")
 		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
@@ -187,7 +188,8 @@ class krome():
                         paritition function, ROT to keep into account the rotational partition function, or EXACT to evaluate the\
                         adiabatic index accurately taking into account both contributions. Finally a custom F90 expression e.g. -gamma=\"1d0\"\
 			can also be used. Default value is 5/3.",metavar="OPTION")
-		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH")
+		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH. If you want\
+			a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
 		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
@@ -334,6 +336,10 @@ class krome():
 		elif(args.test=="lotkav"):
 			[argv.append(x) for x in ["-useN","-customODE=tests/lotkav/lotkav"]]
 			filename = "networks/react_dummy"
+		elif(args.test=="lamda"):
+			[argv.append(x) for x in ["-useN","-coolFile=data/coolZ.dat,tools/coolCO_12_13.dat", "-cooling=CII,CI,OI,CoI,13coI"]]
+			[argv.append(x) for x in ["-usePlainIsotopes"]]
+			filename = "networks/react_primordialZ"
 		else:
 			tests = ", ".join(os.walk('tests').next()[1])
 			print "ERROR: test \""+args.test+"\" not present!"
@@ -749,7 +755,11 @@ class krome():
 				#write found coolants
 				joinedCool = (", ".join([x["flag"] for x in partialFileCools]))
 				if(len(partialFileCools)>0): print "Cooling "+joinedCool+" available from "+fname
-			
+
+			if("?" in myCools):
+				print "Available coolings are:", (", ".join(allCools))
+				sys.exit()
+
 			#check coolant names
 			for coo in myCools:
 				if(not(coo in allCools)):
@@ -817,6 +827,11 @@ class krome():
 			self.use_thermo = True
 			if(not(self.usePhIoniz) and self.useHeatingPhoto):
 				die("ERROR: if you use photoheating you have to include potoionization via -usePhIoniz")
+
+			if("?" in myHeat):
+				print "Available heatings are:", (", ".join(allHeats))
+				sys.exit()
+
 
 			print "Reading option -heating ("+(",".join(myHeat))+")"
 	
