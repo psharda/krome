@@ -1,8 +1,8 @@
 #!/usr/bin/python
 #!python
 
-#THIS CREATES A GRAPH WITH GRAPHVIZ
-# FOR ALL THE SPECIES THAT CONTAINS A GIVEN ATOM
+#THIS SCRIPT PREPARES COOLING TABLES WITH SELF-SHIELDING
+# BY READING DATA FROM LAMDA-like FILES
 #written by Tommaso Grassi and the KROME team (Apr3,2014)
 
 from scipy.optimize import fsolve
