@@ -5,12 +5,18 @@ import os
 os.chdir(".")
 
 hasrm = False
-#clean all files with given extention
+#clean all files with given extention in the root folder
 for x in [".log","~",".pyc",".dot",".gps"]:
 	for files in glob.glob("*"+x):
 		os.unlink(files)
 		print "removing "+files
 		hasrm = True
+
+#cleam pyc form tools
+for files in glob.glob("tools/*.pyc"):
+	os.unlink(files)
+	print "removing "+files
+	hasrm = True
 
 #remove temp files (~) from subfolders
 for root, dirnames, filenames in os.walk('.'):
