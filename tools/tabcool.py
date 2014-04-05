@@ -26,8 +26,185 @@ class krome_tabcool:
 	Cfit = dict() #Collisional coeff, key=collider; this is a dicionary of dictionaries
 	colliders = [] #list of colliders
 
+	#########################
+	def is_number(self,s):
+		try:
+			float(s)
+			return True
+		except ValueError:
+			return False
 
-	def __init__(self,fname,verbose=False):
+	##############################
+	def load_BASECOL(self,fname,collider,verbose=False):
+		colliders = self.colliders
+		energy = self.energy
+		Cfit = self.Cfit
+		g = self.g
+		A = self.A
+		B = self.B
+		nu = dict() #frequency in 1/s, key=level number
+		
+		Cfit[collider] = dict()
+		if(not(collider in colliders)): colliders.append(collider)
+		if(verbose): print "Reading from "+fname
+		#read data from file
+		fh = open(fname)
+		icount = 0
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(not(self.is_number(srow[0]))): continue
+			icount += 1
+			if(icount==1):
+				number_of_temps = int(srow)
+				continue
+
+			if(icount==2):
+				number_of_trans = int(srow)
+				if(verbose): print "Number of transitions:", number_of_trans
+				continue
+			if(icount==7):
+				while("  " in srow):
+					srow = srow.replace("  "," ")
+				temps = [float(x) for x in srow.split(" ")]
+				if(len(temps)!=number_of_temps):
+					sys.exit("ERROR: wrong number of temperature values!")
+				continue
+			if(icount>7):
+				while("  " in srow):
+					srow = srow.replace("  "," ")
+				arow = srow.split(" ")
+				level_low = int(arow[0]) - 1
+				level_up = int(arow[1]) - 1
+				vals = [float(x) for x in arow[4:]]
+				if(len(vals)!=number_of_temps):
+					sys.exit("ERROR: wrong number of rate values!")
+				Cfit[collider][(int(level_up), int(level_low))] = {"T":temps, "val":vals}
+				continue
+
+	###########################
+	def load_LAMDA(self,fname,verbose=False):
+		colliders = self.colliders
+		energy = self.energy
+		Cfit = self.Cfit
+		g = self.g
+		A = self.A
+		B = self.B
+		nu = dict() #frequency in 1/s, key=level number
+
+		if(verbose): print "Reading from "+fname
+		#read data from file
+		fh = open(fname)
+		icount = 0
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow[0]=="!"): continue
+			srow = srow.split("!")[0].strip()
+			icount += 1
+			#name of the molecule
+			if(icount==1): 
+				molecule_name = srow
+				if(verbose): print "Molecule name:", molecule_name
+				continue
+			#molecular weight
+			if(icount==2):
+				molecular_weight = float(srow)
+				continue
+			#number of levels
+			if(icount==3):
+				number_of_levels = int(srow)
+				if(verbose): print "Number of levels:", number_of_levels
+				continue
+			#data of the levels
+			if(icount>=4 and icount<4+number_of_levels):
+				while("  " in srow):
+					srow = srow.replace("  "," ")
+				arow = srow.split(" ")
+				level_number = int(arow[0])-1
+				energy[level_number] = float(arow[1]) * 1.42879e0  #cm-1 -> K
+				g[level_number] = float(arow[2])
+				continue
+			#number of radiative transitions
+			if(icount==4+number_of_levels):
+				number_of_rad_trans = int(srow)
+				if(verbose): print "Number of radiative transitions:", number_of_rad_trans
+				continue
+			#read radiative transition data
+			if(icount>4+number_of_levels and icount<=4+number_of_levels+number_of_rad_trans):
+				while("  " in srow):
+					srow = srow.replace("  "," ")
+				(trans, level_up, level_low, level_A, freq, nrg) = srow.split(" ")
+				level_up = int(level_up)-1 #upper level
+				level_low = int(level_low)-1 #lower level
+				level_A = float(level_A)
+				freq = float(freq) * 1e9 #Ghz->1/s
+				A[(level_up, level_low)] = level_A #store Aij 1/s
+				B[(level_up, level_low)] = .5e0 * level_A * self.clight**2 / self.hplanck / (freq)**3
+				B[(level_low, level_up)] = B[(level_up, level_low)] * g[level_up] / g[level_low]
+				continue
+			#number of colliders
+			if(icount==4+number_of_levels+number_of_rad_trans+1):
+				number_of_colliders = int(srow)
+				continue
+			#read collider name
+			if(icount==4+number_of_levels+number_of_rad_trans+2):
+				arow = srow.split(" ")
+				#according to LAMDA: collision partner ID and reference.
+				# Valid identifications are: 1=H2, 2=para-H2, 3=ortho-H2, 4=electrons, 5=H, 6=He.
+				valid_id = ["","H2","H2pa","H2or","e","H","He"]
+				partner_id = int(arow[0])
+				icount_store = icount
+				if(partner_id>len(valid_id)-1 or partner_id==0): 
+					sys.exit("ERROR: unknown partner id "+str(partner_id))
+				collider = valid_id[partner_id]
+				Cfit[collider] = dict()
+				if(not(collider in colliders)): colliders.append(collider)
+				if(verbose): print "collider fonund:", collider
+				continue
+			#read number of collisional excitations
+			if(icount==4+number_of_levels+number_of_rad_trans+3):
+				number_of_coll_trans = int(srow)
+				count_colls = 0
+	 			continue
+			#number of temperatures
+			if(icount==4+number_of_levels+number_of_rad_trans+4):
+				number_of_temps = int(srow)
+	 			continue
+			#read temperature values
+			if(icount==4+number_of_levels+number_of_rad_trans+5):
+				while("  " in srow):
+					srow = srow.replace("  "," ")
+				temps = [float(x) for x in srow.split(" ")]
+				if(len(temps)!=number_of_temps):
+					sys.exit("ERROR: wrong number of temperatures "+str(len(temps)))
+	 			continue
+			#read collisional values
+			ntot = 4+number_of_levels+number_of_rad_trans+5
+			if(icount>ntot and icount<=ntot+number_of_coll_trans):
+				while("  " in srow):
+					srow = srow.replace("  "," ")
+				arow = srow.split(" ")
+				level_up = int(arow[1])-1
+				level_low = int(arow[2])-1
+				vals = [float(x) for x in arow[3:]]
+				if(len(vals)!=number_of_temps):
+					sys.exit("ERROR: wrong number of rate values "+str(len(vals)))
+				count_colls += 1
+				Cfit[collider][(int(level_up), int(level_low))] = {"T":temps, "val":vals}
+				#rewind the number of lines to read all colliders
+				if(count_colls==number_of_coll_trans):
+					if(number_of_colliders>1):
+						number_of_colliders -= 1
+						icount = icount_store-1
+				continue
+
+
+
+
+	###########################
+	#load data from krome file with flin
+	def load_krome(self,fname,verbose=False):
 		colliders = self.colliders
 		energy = self.energy
 		Cfit = self.Cfit
@@ -139,7 +316,7 @@ class krome_tabcool:
 				CC = 0e0
 				#sum up (de)excitations from colliders
 				for coll in lcolliders:
-					CC += lC[coll][(j,i)] * lxcoll[coll]
+					if((j,i) in lC[coll]): CC += lC[coll][(j,i)] * lxcoll[coll]
 				#put everything together
 				p1 += x[j] * (AA1 + CC)
 
@@ -155,7 +332,7 @@ class krome_tabcool:
 
 				CC = 0e0
 				for coll in lcolliders:
-					CC += lC[coll][(i,j)] * lxcoll[coll]
+					if((i,j) in lC[coll]): CC += lC[coll][(i,j)] * lxcoll[coll]
 
 				p2 += (AA2 + CC)
 
@@ -182,7 +359,9 @@ class krome_tabcool:
 			for k,v in Cfit[coll].iteritems():
 				#interpolate Cij for Tgas
 				f = interpolate.interp1d(Cfit[coll][k]["T"], Cfit[coll][k]["val"])
-				C[coll][k] = f(Tgas) #store Cij
+				Tgasi = max(Tgas,Cfit[coll][k]["T"][0])
+				Tgasi = min(Tgasi,Cfit[coll][k]["T"][len(Cfit[coll][k]["T"])-1])
+				C[coll][k] = f(Tgasi) #store Cij
 				deltaE = energy[k[0]]-energy[k[1]] #already K
 				#compute and store Cji from Cij
 				C[coll][(k[1],k[0])] = C[coll][k] * g[k[0]]/g[k[1]] * math.exp(-deltaE/Tgas)
