@@ -280,15 +280,18 @@ class krome_tabcool:
 		self.g = g
 		
 
+	#######################
 	#function to compute tau according to NK93
 	def ftau(self,lBji,lBij,dv,xj,xi):
 		return self.hplanck*self.clight*0.25/math.pi/dv*(xj*lBji-xi*lBij)
 
+	#######################
 	#function to beta according to NK93
 	def fbeta(self,lBji,lBij,dv,xj,xi):
 		mytau = self.ftau(lBji,lBij,dv,xj,xi)
 		return 1e0/(1e0+3e0*mytau)
 
+	######################
 	#define system of equations as in NK93
 	def eqs(self,x,args):
 		#read data from additional arguments
@@ -299,6 +302,8 @@ class krome_tabcool:
 		lcolliders = args["colliders"]
 		lxcoll = args["xcoll"]
 		nlev = args["nlev"]
+		Tbb = args["Tbb"]
+		energy = args["energy"]
 		eq = [0e0 for i in range(nlev)] #initialize equations
 		#loop on levels to prepare equations
 		for i in range(nlev):
@@ -307,34 +312,46 @@ class krome_tabcool:
 			#loop on levels
 			for j in range(nlev):
 				if(i==j): continue #i=j is not a transition!
+
+				AA1 = 0e0
 				#use only available transitions
-				try:
+				if((j,i) in lA):
 					AA1 = lA[(j,i)]
 					AA1 *= self.fbeta(lB[(i,j)],lB[(j,i)],dvdz,x[i],x[j]) #add shielding
-				except:
-					AA1 = 0e0 #otherwise transition is zero
+
 				CC = 0e0
 				#sum up (de)excitations from colliders
 				for coll in lcolliders:
 					if((j,i) in lC[coll]): CC += lC[coll][(j,i)] * lxcoll[coll]
+
+				BI = 0e0
+				#stimulated emmission/absorption for when blackbody radiation with Tbb
+				if(((j,i) in lA) and (Tbb>0e0)):
+					dE = abs(energy[i]-energy[j]) #K
+					BI = AA1/(math.exp(dE/Tbb)-1e0)
+
 				#put everything together
-				p1 += x[j] * (AA1 + CC)
+				p1 += x[j] * (AA1 + BI + CC)
 
 			#prepare second term (i->j), see comments above
 			p2 = 0e0
 			for j in range(nlev):
 				if(i==j): continue #i=j is not a transition!
-				try:
+				AA2 = 0e0
+				if((i,j) in lA):
 					AA2 = lA[(i,j)]
 					AA2 *= self.fbeta(lB[(j,i)],lB[(i,j)],dvdz,x[j],x[i])
-				except:
-					AA2 = 0e0
 
 				CC = 0e0
 				for coll in lcolliders:
 					if((i,j) in lC[coll]): CC += lC[coll][(i,j)] * lxcoll[coll]
 
-				p2 += (AA2 + CC)
+				BI = 0e0
+				if(((i,j) in lA) and Tbb>0e0):
+					dE = abs(energy[i]-energy[j]) #K
+					BI = AA2/(math.exp(dE/Tbb)-1e0)
+
+				p2 += (AA2 + BI + CC)
 
 			#build equation for the ith level
 			eq[i] = p1 - x[i] * p2
@@ -343,8 +360,47 @@ class krome_tabcool:
 		eq[0] = sum(x) - 1e0
 		return eq
 
-	#loop on temperatures
-	def get_cool(self,Tgas,xcoll,absdvdz):
+	########################
+	#recap the number of lines and transitions
+	def recap(self):
+		colliders = self.colliders
+		Cfit = self.Cfit
+		Aij = self.A
+		print "*********************"
+		print "      DATA RECAP"
+		for collider in colliders:
+			mytrans = []
+			maxlevC = 0
+			minlevC = 9999
+			for k,v in Cfit[collider].iteritems():
+				if(not(k in mytrans)): 
+					mytrans.append(k)
+					maxlevC = max(list(k)+[maxlevC])
+					minlevC = min(list(k)+[minlevC])
+			print "*********************"
+			print "collider:",collider
+			nlev = maxlevC-minlevC+1
+			print "collisional transitions (Cij):",len(mytrans)," of ",nlev*(nlev-1)/2,"allowed"
+			print "upper level:",maxlevC
+			print "lower level:",minlevC
+			print
+		maxlevA = 0
+		minlevA = 9999
+		for k,v in Aij.iteritems():
+			maxlevA = max(list(k)+[maxlevA])
+			minlevA = min(list(k)+[minlevA])
+		print "*********************"
+		print "spontaneus transitions (Aij):",len(Aij)
+		print "upper level:",maxlevA
+		print "lower level:",minlevA
+
+		print
+
+
+			
+	#######################
+	#compute cooling
+	def get_cool(self,Tgas,xcoll,absdvdz=1e99,Tbb=0e0):
 		colliders = self.colliders
 		energy = self.energy
 		Cfit = self.Cfit
@@ -368,7 +424,7 @@ class krome_tabcool:
 
 
 		#prepare additional arguments
-		myargs = {"A":A, "B":B, "C":C,"nlev":len(energy),"dvdz":absdvdz,"colliders":colliders,"xcoll":xcoll}
+		myargs = {"A":A, "B":B, "C":C,"nlev":len(energy),"dvdz":absdvdz,"colliders":colliders,"xcoll":xcoll,"Tbb":Tbb,"energy":energy}
 
 		#initial guess
 		x0 = [1e0/len(energy) for i in range(len(energy))]
