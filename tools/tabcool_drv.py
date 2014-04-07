@@ -17,7 +17,6 @@ tabc = tabcool.krome_tabcool()
 tabc.load_BASECOL("CO_He_STS50_V1.kij","He")
 tabc.load_LAMDA("co.dat")
 
-print tabc.colliders
 
 #init some Tgas
 someTgas = [2e1, 2e2, 3e2, 1e3, 2e3]
@@ -29,10 +28,12 @@ for xHe in someHe:
 	xcoll = {"H2pa": 0.25e0*xH2, "H2or": 0.75*xH2, "He":xHe}
 
 	for Tgas in someTgas:
-		absdvdz = 1e99 #velocity gradient cm/s/cm
-		thin = tabc.get_cool(Tgas,xcoll,absdvdz)
+		thin = tabc.get_cool(Tgas,xcoll)
 
-		absdvdz = 1e-11
+		absdvdz = 1e-11  #velocity gradient cm/s/cm
 		thick = tabc.get_cool(Tgas,xcoll,absdvdz)
+		
+		Tbb = 3e3
+		cbb = tabc.get_cool(Tgas,xcoll,absdvdz,Tbb)
 	
-		print Tgas, xHe, thin, thick
+		print Tgas, xHe, thin, thick,cbb
