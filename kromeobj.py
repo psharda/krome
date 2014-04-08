@@ -4974,17 +4974,26 @@ class krome():
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
 		fname = "Make.config.objects"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
-		fname = "kromebuild.sh"
-		shutil.copy(patchFolder+fname, enzoFolder+fname)
+                if(self.useDvodeF90):
+                        fname = "kromebuild_dvode.sh"
+		        shutil.copy(patchFolder+fname, enzoFolder+"kromebuild.sh")
+                else:
+		        fname = "kromebuild.sh"
+		        shutil.copy(patchFolder+fname, enzoFolder+fname)
 
 		#6. move others
 		flist = ["krome_all", "krome_user_commons"]
 		for fle in flist:
 			shutil.move(buildFolder+fle+".f90", enzoFolder+fle+".F90")
-
-		flist = ["opkda1", "opkda2", "opkdmain"]
-		for fle in flist:
-			shutil.move(buildFolder+fle+".f", enzoFolder+fle+".F")
+       
+                if(self.useDvodeF90):
+		        flist = ["dvode_f90_m"]
+		        for fle in flist:
+                                shutil.move(buildFolder+fle+".f90", enzoFolder+fle+".F90")
+                else:
+		        flist = ["opkda1", "opkda2", "opkdmain"]
+		        for fle in flist:
+			        shutil.move(buildFolder+fle+".f", enzoFolder+fle+".F")
 
 		return
 	############################################
