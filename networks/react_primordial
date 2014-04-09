@@ -1,7 +1,7 @@
 #primordial rates from several authors mostly based on Abel et al. 1997 (see also Grassi et al. 2014)
 
 #Janev 1987
-1,H,E,,H+,E,E,,NONE,NONE,dexp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
+1,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
 
 #Abel et al. 1997, fit by data from Ferland et al. 1992
 2,H+,E,,H,g,,,NONE,.LE.5.5e3,3.92d-13*invTe**0.6353d0
@@ -18,7 +18,7 @@
 7,HE+,E,,HE++,E,E,,NONE,NONE,exp(-68.71040990212001d0+43.93347632635d0*lnTe-18.48066993568d0*lnTe**2+4.701626486759002d0*lnTe**3-0.7692466334492d0*lnTe**4+0.08113042097303d0*lnTe**5-0.005324020628287001d0*lnTe**6+0.0001975705312221d0*lnTe**7-3.165581065665d-6*lnTe**8)
 
 #Cen 1992
-8,HE++,E,,HE+,g,,,NONE,1e8,3.36d-10/sqrTgas/(Tgas/1.d3)**0.2d0/(1+(Tgas/1.d6)**0.7d0)
+8,HE++,E,,HE+,g,,,NONE,NONE,3.36d-10/sqrTgas/(Tgas/1.d3)**0.2d0/(1+(Tgas/1.d6)**0.7d0)
 
 #ENZO
 9,H,E,,H-,g,,,NONE,NONE,6.77d-15*Te**0.8779d0
