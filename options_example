@@ -1,0 +1,278 @@
+#THIS IS AN OPTION FILE FOR KROME
+############# NOTES ###################
+#Note that this file is an alternative to call the options from command line, e.g. -cooling=H2,HD
+#You can call this file by using -options=FILENAME, where FILENAME is the path of this file.
+#The options can be (un)selected in several ways:
+#if the option do not requires any argument (e.g. -conserve) you can write one of the following
+# conserve
+# conserve YES
+# conserve TRUE
+# conserve T
+# conserve 1
+#or to exclude the command
+# conserve NO
+# conserve FALSE
+# conserve F
+# conserve 0
+#When the option requires a parameter (e.g. -ATOL=1d-10)
+# you must specify the parameter as
+# ATOL 1d-10
+# ATOL=1d-10
+#note that you can prepone "-" character before the option, e.g.
+# -ATOL 1d-10
+# -conserve
+#comments are allowed via hash (#) and C-like comments (//)
+############# END NOTES ###################
+
+#absolute tolerance, the default is 1d-20
+#ATOL 1d-10
+
+#create a C wrapper to call KROME from a C program, see wrapC example in tests, or call it using -test=wrapC
+# -C
+
+#prepare a single file that stores all the krome modules in one. Less intellegible, but more compact. See -test=compact for an example
+# -compact
+
+#check mass conservation during integration (slower). Returns an error if the mass conservation relative error is larger than 0.001
+# intended for debugging purposes
+# -checkConserv
+
+#check network for reverse reactions. Write warning on screen if missing.
+# -checkReverse
+
+#print a warning when thermochemistry data are not found for a given species. Intended for reverese reactions.
+# -checkThermochem
+
+#clean the build directory before write, including krome_user_commons.f90. Warning, you cannot undo this action.
+# -clean
+
+#in the ODE the fluxes are stored in a single variable instead of explicitely written. For old compilers.
+# -compressFluxes
+
+
+#conserves the species total number and charge global neutrality. Works with some limitations, please read the manual before using,
+# especially for non-primordial enviroments with heteronuclear molecules.
+# -conserve
+
+#conserves the charge global neutrality by changing the electrons number density in order to balance the ions
+# -conserveE
+
+#select the filename to be used to load external cooling. See also tools/lamda2.py script for a LAMDA<->KROME converter. 
+# Default FILENAME is data/coolZ.dat, which contains fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. 
+# It can also be a list of files comma-separated.
+# -coolFile=your/cooling/file
+
+#cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,
+# COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI).
+# Note that further cooling options can be added when reading cooling function from file. If you want a complete list of
+# the available cooling options type -cooling=?
+-cooling=H2,HD
+
+#a file with the list of the individual ATOLs in the form SPECIES ATOL in each line, e.g. 
+# H2 1d-20
+# HD 1d-6
+# See also -ATOL. Note that comments (#) are allowed
+# -customATOL=your/custom/atol/file
+
+#file with the list of custom ODEs to extend the ODEs employed by the chemistry. See -test=lotkav for an example and the
+# file tests/lotkav/lotkav
+# -customODE=custom/ODE/file
+
+#a file with the list of the individual RTOLs in the form SPECIES RTOL in each line, e.g. 
+# H2 1d-4
+# HD 1d-2
+# See also -RTOL. Note that comments (#) are allowed
+# -customRTOL=your/custom/rtol/file
+
+
+#dry pre-compilation: does not write anything in the build directory. Employed To test and debug the python pre-processor.
+# -dry
+
+#include dust ODE using N bins for each TYPE, e.g. -dust 10,C,Si set 10 dust carbon bins and 10 dust silicon dust bins. 
+# Note: requires a call to the krome_init_dust subroutine. See -test=dust for an example.
+# -dust=10,C,Si
+
+#activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular hydrogen formation on dust, and (T) dust temperature. 
+# The last option provide a template for the FEX routine.
+# -dustOptions=GROWTH,SPUTTER,H2
+
+#create patches for ENZO code in the build folder
+# -enzo
+
+#create patches for FLASH code in the build folder
+# -flash
+
+#force explicit sparsity and Jacobian
+# -forceMF21
+
+#force internal generated sparsity and Jacobian (default)
+# -forceMF222
+
+#force RWORK size to N. Use this option in case of solver error.
+# -foceRWORK=3000
+
+#define the adiabatic index according to OPTION that can be FULL for employing Grassi et al.
+# 2011, i.e. a density dependent but temperature independent adiabatic index, VIB to calculate the vibrational
+# paritition function and keeping the rotational part constant to 2, ROT to keep into account the rotational partition function and the 
+# vibrational part to zero, or EXACT to evaluate the adiabatic index accurately taking into account both contributions. 
+# Finally a custom F90 expression e.g. -gamma="1.5d0" can also be used, as well as any fortran expression. Default value is 5/3 (ideal atomic gas).
+-gamma=FULL
+
+#heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH. If you want
+# a complete list of the available heating options type -heating=?
+-heating=CHEM
+
+#see useIERR
+# -ierr
+
+#implicit loop-based RHS (suggested for large systems, e.g. >1000 reactions). This option compacts the FEX construction into a loop instead of 
+# writing explicit equations. It's faster during compilation, but slower at running time, even if depends on the solver employed.
+# -iRHS 
+
+#max order of the BDF solver. Default (and maximum values) is 5. Reducing the order to 2 can be helpful to increase the stability in some
+# cases.
+# -maxord=2
+
+#use the same reaction index for equivalent reactions (same reactants and products) that have different temperature limits
+# -mergeTlimits
+
+#reaction network file path
+-n networks/react_primordialZ2
+
+#same as -n
+# -network networks/react_primordialZ2
+
+#skip reaction charge check. Helpful with nuclear networks
+# -nochargeCheck
+
+#skip reaction charge and mass check. Equivalent to -nomassCheck -nochargeCheck options (see).
+# -noCheck
+
+#do not write test.f90 and Makefile in the build directory. Ignored if -test option is enabled.
+# -noExample
+
+#skip reaction mass check
+# -nomassCheck
+
+#ignore rate coefficient temperature limits.
+# -noTlimits
+
+#keep into account reactants multeplicity, and modify fluxes according to this. Intended for nuclear networks.
+# -nuclearMult
+
+#uses a pedantic Makefile from tests\ folder. Slow at run-time but traps errors. 
+# -pedantic
+
+#build everything in a folder called build_NAME instead of building all in the
+# default build folder. It also creates a NAME.kpj file with the krome input used.
+# -project=myProject
+
+#print a quote and exit. All other options are ignored.
+# -quote
+
+#create patches for RAMSES, see also -enzo and -flash
+# -ramses
+
+#add an offset to the array of the passive scalar. The default is 3.
+# -ramsesOffset=5
+
+#create patches for RAMSES_TH. This is a private version and probably does not fix your needs.
+# -ramsesTH
+
+#generate report file in the main call to krome as KROME_ERROR_REPORT and when calling the fex as KROME_ODE_REPORT. 
+#It also stores abundances evolution in fex as fort.98, and prepares a report.gps gnuplot script file to plot evolutions 
+#callable in gnuplot with load 'report.gps'. Warning: it slows the whole system!
+# -report
+
+#create reverse reaction from the current network using NASA polynomials and thermochemistry data.
+# -reverse
+
+#set solver relative tolerance to the float double value RTOL, e.g. -RTOL 1e-5 Default is RTOL=1d-4, 
+#see also -ATOL and -customRTOL
+# -RTOL=1d-4
+
+#write a shorter header in the f90 files
+# -sh
+
+#use H2 self-shielding, TYPE can be DB96 for Draine+Bertoldi 1996, WG11 for the more accurate Wolcott+Greene 2011
+# -shielding=DB96
+
+#skip duplicate reactions, e.g. same reactants and products, but not same temperature range. Use with caution!
+# -skipDup
+
+#do not write Jacobian in krome_ode.f90 file. Useful to reduce compilation time when Jacobian is not needed (MF=222).
+# Note that Jacobian is written also if not used. If it is very large this could increase the compilation time.
+# -skipJacobian
+
+#do not compute dT/dt in the ODE RHS function
+# -skipODEthermo
+
+#use FOLDER as source directory instead of the default folder src\
+# -source=source/directory
+
+#use star module for nuclear reactions.
+# -stars
+
+#create a test model in /build . Type make and ./krome in build/ folder to run it
+#tests are listed in the folder tests/
+# -test=collapseZ
+
+#et the operators for all the reaction temperature limits where opLow is the operator for the first temperature 
+#value in the reaction file, and opHigh is for the second one. e.g. if the T limits for a given reaction are 10. 
+#and 1d4 the option -Tlmit GE,LE will provide (Tgas>=10. AND Tgas<=1d4) as the reaction range of validity. 
+#Operators opLow and opHigh must be one of the following: LE, GE, LT, GT. Noe that in the reaction file you can
+#indicate the limits for individual reactions. The latter override the default.
+# -Tlimit=GE,LT
+
+#skip to check if the build folder is empty or not and replace everything
+# -unsafe
+
+#use a user-defined custom function that returns a real*8 array of size NREA = number of reactions, that replaces 
+#the standard rate coefficient calculation function. Note that FUNCTION must be explicitly included in krome_user_commons module.
+#You can also use an array also defined in the krome_user_commons module
+# -useCustomCoe=mycoe(:)
+
+#use Dvode implementation in F90 (slower and not fully mantained)
+# -useDvodeF90
+
+
+#check if the solver has reached the equilbirum. If so break the solver's loop and return the values found. 
+#It is useful when the system oscillates around	a solution (as in some photoheating cases). 
+#To be used with caution!
+# -useEquilibrium
+
+#use the reaction index in the reaction file instead of using the automatic progressive index starting from 1. 
+#Useful with rate coefficients that depends on other coefficients, e.g. k(10) = 1d-2*k(3)
+# -useFileIdx
+
+
+#use H2 opacity for H2 cooling using Ripamonti+Abel2004
+#-useH2opacity
+
+
+#use ierr in the interface with KROME to return errors instead of stopping the exectution, see also -ierr.
+# -useIERR
+
+#use number densities (1/cm3) as input/ouput instead of fractions (#)
+-useN
+
+#postpone an expression to each ODE. EXPRESSION must be a valid f90 expression starting with an operator (e.g. *3.d0 or +1.d-10)
+# -useODEConstant="+1d-2"
+
+#include photochemistry
+# -usePhIoniz
+
+#use kA format for isotopes instead of [k]A format, where k is the isotopic number and A is the atom name, 
+#e.g. krome looks for 14C instead of [14]C in the reactions file.
+# -usePlainIsotopes
+
+#use tabulated rate coefficients. Note that if your rates depend on a parameter other than the temperture
+#you may incurr on errors.
+-useTabs
+
+#print the current version of krome
+# -v
+# -ver
+# -version
+
+
