@@ -142,7 +142,7 @@ class krome():
 	def init_argparser(self):
 
 		tests = ", ".join(os.walk('tests').next()[1])
-		self.parser = argparse.ArgumentParser(description="KROME a package for astrochemistry")
+		self.parser = argparse.ArgumentParser(description="KROME a package for astrochemistry and microphysics")
 		self.parser.add_argument("-ATOL", help="set solver absolute tolerance to the float or double value ATOL, e.g. -atol 1d-40\
 			Default is ATOL=1d-20, see also -RTOL and -customATOL")
 		self.parser.add_argument("-C", action="store_true", help="create a simple C wrapper")
@@ -196,6 +196,7 @@ class krome():
 		self.parser.add_argument("-mergeTlimits", action="store_true", help="use the same reaction index for equivalent\
 			reactions (same reactants and products) that have different temperature limits")
 		self.parser.add_argument("-n", help="reaction network file", metavar='FILENAME')
+		self.parser.add_argument("-network", help="same as -n", metavar='FILENAME')
 		self.parser.add_argument("-nochargeCheck", action="store_true", help="skip reaction charge check")
 		self.parser.add_argument("-noCheck", action="store_true", help="skip reaction charge and mass check. Equivalent to\
 			-nomassCheck -nochargeCheck options.")
@@ -205,7 +206,7 @@ class krome():
 		self.parser.add_argument("-nuclearMult", action="store_true", help="keep into account reactants multeplicity, and modify\
 			fluxes according to this. Intended for nuclear networks.")
 		self.parser.add_argument("-options", metavar="filename", help="read the options from a file instead of command line\
-			(in principle you can use both)")
+			(in principle you can use both). See options_example file.")
 		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
 		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the\
 			default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
@@ -357,19 +358,45 @@ class krome():
 		if(args.options):
 			fopt = args.options.strip() #get filename
 			print "Reading option -option="+fopt
-			#check if option file exsists
+			#check if option file exists
 			if(not(file_exists(fopt))):
 				print "ERROR: custom option file \""+fopt+"\" does not exist!"
 				sys.exit()
+
+			trues = ["T","TRUE","1","Y","YES","OK","YEP","SURE"]
+			falses = ["F","FALSE","0","N","NO","KO","NOPE"]
 			#read from file
 			fho = open(fopt,"rb")
 			for row in fho:
 				srow = row.strip()
 				if(srow==""): continue #skip blank lines
+				if(srow[0]=="#"): continue #skip comments
+				if(srow[:2]=="//"): continue #skip comments
+				srow = srow.split("#")[0]
+				srow = srow.split("//")[0]
+				srow = srow.strip()
+				#replace tabs
+				srow = srow.replace("\t"," ")
+				#replace double spaces
+				while("  " in srow):
+					srow = srow.replace("  "," ")
+				if(srow[0]!="-"): srow = "-"+srow
+
 				arow = srow.split()
-				#append to argv
-				for x in arow:
-					sys.argv.append(x)
+				if(len(arow)==1): 
+					sys.argv.append(arow[0].strip())
+					continue
+				elif(len(arow)==2):
+					if(arow[1].strip().upper() in trues):
+						sys.argv.append(arow[0].strip())
+					elif(arow[1].strip().upper() in falses):
+						continue
+					else:
+						sys.argv.append("=".join([x.strip() for x in arow]))
+				else:
+					print "ERROR: problems with option line in option file "+fopt
+					print srow
+					sys.exit()
 
 			args = self.parser.parse_args() #return updated namespace
 		
@@ -392,11 +419,12 @@ class krome():
 
 		#get filename
 		if(not(self.is_test) and args.n): self.filename = args.n
+		if(not(self.is_test) and args.network): self.filename = args.network
 		#chech if reactions file exists
 		if(args.n or self.is_test):
 			if(not(os.path.isfile(self.filename))): die("ERROR: Reaction file \""+self.filename+"\" doesn't exist!")
 		else:
-			die("ERROR: you must define -n FILENAME, where FILENAME is the reaction file!")
+			die("ERROR: you must define -n FILENAME or -network FILENAME, where FILENAME is the reaction file!")
 
 		#read the coolFile
 		if(args.coolFile):
