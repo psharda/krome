@@ -1225,6 +1225,7 @@ class krome():
 		reags = [] #list of reagents for already found
 		prods = [] #list of prods for already found
 		idxs = [] #list of index for already found
+		noTabNextBlock = False #default for blocks of reactions
 
 		#read the size of the file in lines (skip blank and comments)
 		# to have a rough idea of the size
@@ -1337,10 +1338,17 @@ class krome():
 				continue #SKIP format line (it is not a reaction line)
 
 			#if requested the next reaction will not uses tabs
-			if(srow.lower()=="@notabnext"):
+			if(srow.lower()=="@notabnext" or srow.lower()=="@notab_next"):
 				noTabNext = True
 				continue #SKIP (not a reaction)
-				
+			#if requested the next reaction will not uses tabs for a BLOCK of reactions
+			if(srow.lower()=="@notab_begin" or srow.lower()=="@notab_start"):
+				noTabNext = noTabNextBlock = True
+				continue #SKIP (not a reaction)
+			#if requested the next reaction will not uses tabs for a BLOCK of reactions
+			if(srow.lower()=="@notab_end" or srow.lower()=="@notab_stop"):
+				noTabNext = noTabNextBlock = False
+				continue #SKIP (not a reaction)
 
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
 			arow = [x.strip() for x in arow] #strip single elements
@@ -1494,7 +1502,7 @@ class krome():
 			#append reactions if not skipped 
 			if(not(skip_append)): reacts.append(myrea)
 			del myrea,row
-			noTabNext = False #return to default value
+			if(not(noTabNextBlock)): noTabNext = False #return to default value when outside a block
 	
 		if((self.useShieldingDB96 or self.useShieldingWG11) and not(fsh_found)):
 			print
@@ -1504,7 +1512,10 @@ class krome():
 			a = raw_input("Any key to continue q to quit... ")
 			if(a=="q"): print sys.exit()
 
-
+		if(noTabNextBlock): 
+			print "ERROR: block of skipped reaction still open!"
+			print "Add @noTab_stop or @noTab_end"
+			sys.exit()
 
 		if(skipDup): 
 			fdup.close()
