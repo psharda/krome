@@ -97,9 +97,9 @@ contains
     totmass = sum(n(:) * mass(:)) !calculate total mass
 #ENDIFKROME
 
-#IFKROME_conserve
+    !store initial values
     ni(:) = n(:)
-#ENDIFKROME
+
 
     n_old(:) = -1d99
     krome_call_to_fex = 0
@@ -109,7 +109,7 @@ contains
        CALL DLSODES(fex, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
             ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, JES, MF)
 #IFKROME_report
-       call krome_dump(n(:), rwork(:), iwork(:))
+       call krome_dump(n(:), rwork(:), iwork(:), ni(:))
 #ENDIFKROME
        krome_call_to_fex = krome_call_to_fex + IWORK(12)
        !check DLSODES exit status
@@ -131,7 +131,7 @@ contains
           print *,"ERROR: wrong solver exit status!"
           print *,"istate:",istate
           print *,"SEE KROME_ERROR_REPORT file"
-          call krome_dump(n(:), rwork(:), iwork(:))
+          call krome_dump(n(:), rwork(:), iwork(:), ni(:))
           stop
        end if
 #ENDIFKROME
@@ -198,14 +198,14 @@ contains
   end subroutine krome
 
   !*******************************
-  subroutine krome_dump(n,rwork,iwork)
+  subroutine krome_dump(n,rwork,iwork,ni)
     use krome_commons
     use krome_subs
     use krome_tabs
     use krome_reduction
     use krome_ode
     integer::fnum,i,iwork(:),idx(nrea),j
-    real*8::n(:),rwork(:),rrmax,k(nrea),kmax,rperc,kperc,dn(nspec),tt
+    real*8::n(:),rwork(:),rrmax,k(nrea),kmax,rperc,kperc,dn(nspec),tt,ni(:)
     character*16::names(nspec),FMTi,FMTr
     character*50::rnames(nrea)
     fnum = 99
@@ -220,10 +220,10 @@ contains
     !SPECIES
     write(fnum,*) "Species abundances"
     write(fnum,*) "**********************"
-    write(fnum,'(a5,a20,2a12)') "#","name","qty","dn/dt"
+    write(fnum,'(a5,a20,3a12)') "#","name","qty","dn/dt","ninit"
     write(fnum,*) "**********************"
     do i=1,nspec
-       write(fnum,'(I5,a20,2E12.3e3)') i,names(i),n(i),dn(i)
+       write(fnum,'(I5,a20,3E12.3e3)') i,names(i),n(i),dn(i),ni(i)
     end do
     write(fnum,*) "**********************"
     
