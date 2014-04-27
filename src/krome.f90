@@ -101,7 +101,6 @@ contains
     !store initial values
     ni(:) = n(:)
 
-
     n_old(:) = -1d99
     krome_call_to_fex = 0
     do
@@ -117,7 +116,6 @@ contains
        if(istate==2) then
           exit !sucsessful integration
        elseif(istate==-1) then
-          got_error = .true.
           istate = 1 !exceeded internal max iterations
        elseif(istate==-5 .or. istate==-4) then
           istate = 3 !wrong sparsity recompute
@@ -128,7 +126,7 @@ contains
           istate = 1
        end if
        
-       if(got_error) then
+       if(got_error.or.icount>icount_max) then
           if (krome_mpi_rank>0) then
             print *,krome_mpi_rank,"ERROR: wrong solver exit status!"
             print *,krome_mpi_rank,"istate:",istate
@@ -139,6 +137,7 @@ contains
             print *,"SEE KROME_ERROR_REPORT file"
           end if
           call krome_dump(n(:), rwork(:), iwork(:), ni(:))
+          stop
        end if
 #ENDIFKROME
 #IFKROME_ierr
@@ -147,9 +146,7 @@ contains
           ierr = istate
           exit
        end if
-
 #ENDIFKROME
-
 
 #IFKROME_useEquilibrium
        !try to determine if the system has reached a steady equilibrium
@@ -166,10 +163,7 @@ contains
        if(equil) exit
        n_old(:) = n(:)
 #ENDIFKROME
-
     end do
-
-
 
 #IFKROME_check_mass_conservation
     if(abs(1.d0-totmass/sum(n(:) * mass(:)))>1d-3) then
@@ -213,10 +207,10 @@ contains
     integer::fnum,i,iwork(:),idx(nrea),j
     real*8::n(:),rwork(:),rrmax,k(nrea),kmax,rperc,kperc,dn(nspec),tt,ni(:)
     character*16::names(nspec),FMTi,FMTr
-    character*50::rnames(nrea),fname
+    character*50::rnames(nrea),fname,prex
     integer,save::mx_dump=1000 ! max nr of reports before terminating
     fnum = 99
-    if (krome_mpi_rank > 0) then
+    if (krome_mpi_rank>0) then
       write(fname,'(a,i5.5)') "KROME_ERROR_REPORT_",krome_mpi_rank
     else
       fname = "KROME_ERROR_REPORT"
@@ -238,6 +232,21 @@ contains
        write(fnum,'(I5,a20,3E12.3e3)') i,names(i),n(i),dn(i),ni(i)
     end do
     write(fnum,*) "**********************"
+
+
+    !F90 FRIENDLY RESTART
+    write(fnum,*) 
+    write(fnum,*) "**********************"
+    write(fnum,*) "F90-friendly species"
+    write(fnum,*) "**********************"
+    do i=1,nspec
+       write(prex,'(a,i3,a)') "x(",i,") = "
+       write(fnum,*) trim(prex),n(i),"!"//names(i)
+    end do
+
+    write(fnum,*) "**********************"
+
+    
     
     !RATE COEFFIECIENTS
     k(:) = coe_tab(n(:))
