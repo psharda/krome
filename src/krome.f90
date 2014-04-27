@@ -117,26 +117,28 @@ contains
        if(istate==2) then
           exit !sucsessful integration
        elseif(istate==-1) then
+          got_error = .true.
           istate = 1 !exceeded internal max iterations
        elseif(istate==-5 .or. istate==-4) then
           istate = 3 !wrong sparsity recompute
-       elseif(icount>icount_max) then
-          istate = 99
-          got_error = .true.
 #IFKROME_noierr
        else
           call XSETF(1)!turn on verbosity
           got_error = .true.
           istate = 1
-          cycle
        end if
        
        if(got_error) then
-          print *,"ERROR: wrong solver exit status!"
-          print *,"istate:",istate
-          print *,"SEE KROME_ERROR_REPORT file"
+          if (krome_mpi_rank>0) then
+            print *,krome_mpi_rank,"ERROR: wrong solver exit status!"
+            print *,krome_mpi_rank,"istate:",istate
+            print *,krome_mpi_rank,"SEE KROME_ERROR_REPORT file"
+          else
+            print *,"ERROR: wrong solver exit status!"
+            print *,"istate:",istate
+            print *,"SEE KROME_ERROR_REPORT file"
+          end if
           call krome_dump(n(:), rwork(:), iwork(:), ni(:))
-          stop
        end if
 #ENDIFKROME
 #IFKROME_ierr
@@ -211,9 +213,15 @@ contains
     integer::fnum,i,iwork(:),idx(nrea),j
     real*8::n(:),rwork(:),rrmax,k(nrea),kmax,rperc,kperc,dn(nspec),tt,ni(:)
     character*16::names(nspec),FMTi,FMTr
-    character*50::rnames(nrea)
+    character*50::rnames(nrea),fname
+    integer,save::mx_dump=1000 ! max nr of reports before terminating
     fnum = 99
-    open(fnum,FILE="KROME_ERROR_REPORT",status="replace")
+    if (krome_mpi_rank > 0) then
+      write(fname,'(a,i5.5)') "KROME_ERROR_REPORT_",krome_mpi_rank
+    else
+      fname = "KROME_ERROR_REPORT"
+    endif
+    open(fnum,FILE=trim(fname),status="unknown",position="append")
     tt = 0d0
     names(:) = get_names()
     rnames(:) = get_rnames()
@@ -295,6 +303,10 @@ contains
     write(fnum,*) "END KROME ERROR REPORT"
     write(fnum,*)
     close(fnum)
+
+    mx_dump = mx_dump - 1
+    if (mx_dump==0) stop
+
   end subroutine krome_dump
 
   !********************************

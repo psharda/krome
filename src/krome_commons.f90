@@ -37,4 +37,7 @@ module krome_commons
   !commons for dust optical properties
 #KROME_opt_variables
 
+  !mpi rank of process. If 0, ignored
+  integer::krome_mpi_rank=0
+
 end module krome_commons
