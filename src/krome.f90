@@ -19,7 +19,7 @@ contains
     use krome_dust
     real*8::dt,x(nmols),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,xdust(ndust),n_old(nspec),ni(nspec)
-    integer::icount,i,ierr
+    integer::icount,i,ierr,icount_max
     
     !DLSODES variables
     integer,parameter::meth=2 !1=adam, 2=BDF
@@ -42,7 +42,8 @@ contains
     itol = 4 !both tolerances are scalar
     rtol(:) = #KROME_RTOL !relative tolerance
     atol(:) = #KROME_ATOL !absolute tolerance
-    
+    icount_max = 100 !maximum number of iterations
+
 #KROME_custom_RTOL
 
 #KROME_custom_ATOL
@@ -119,6 +120,9 @@ contains
           istate = 1 !exceeded internal max iterations
        elseif(istate==-5 .or. istate==-4) then
           istate = 3 !wrong sparsity recompute
+       elseif(icount>icount_max) then
+          istate = 99
+          got_error = .true.
 #IFKROME_noierr
        else
           call XSETF(1)!turn on verbosity
