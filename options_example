@@ -18,7 +18,7 @@
 # you must specify the parameter as
 # ATOL 1d-10
 # ATOL=1d-10
-#note that you can prepone "-" character before the option, e.g.
+#note that you can prepend "-" character before the option, e.g.
 # -ATOL 1d-10
 # -conserve
 #comments are allowed via hash (#) and C-like comments (//)
@@ -30,7 +30,7 @@
 #create a C wrapper to call KROME from a C program, see wrapC example in tests, or call it using -test=wrapC
 # -C
 
-#prepare a single file that stores all the krome modules in one. Less intellegible, but more compact. See -test=compact for an example
+#prepare a single file that stores all the KROME modules in one. Less intelligible, but more compact. See -test=compact for an example
 # -compact
 
 #check mass conservation during integration (slower). Returns an error if the mass conservation relative error is larger than 0.001
@@ -40,25 +40,25 @@
 #check network for reverse reactions. Write warning on screen if missing.
 # -checkReverse
 
-#print a warning when thermochemistry data are not found for a given species. Intended for reverese reactions.
+#print a warning when thermochemistry data are not found for a given species. Intended for reverse reactions.
 # -checkThermochem
 
 #clean the build directory before write, including krome_user_commons.f90. Warning, you cannot undo this action.
 # -clean
 
-#in the ODE the fluxes are stored in a single variable instead of explicitely written. For old compilers.
+#in the ODE the fluxes are stored in a single variable instead of explicitly written. For old compilers.
 # -compressFluxes
 
 
 #conserves the species total number and charge global neutrality. Works with some limitations, please read the manual before using,
-# especially for non-primordial enviroments with heteronuclear molecules.
+# especially for non-primordial environments with heteronuclear molecules.
 # -conserve
 
 #conserves the charge global neutrality by changing the electrons number density in order to balance the ions
 # -conserveE
 
 #select the filename to be used to load external cooling. See also tools/lamda2.py script for a LAMDA<->KROME converter. 
-# Default FILENAME is data/coolZ.dat, which contains fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. 
+# Default FILENAME is data/coolZ.dat, which contains fine-structure atomic metal cooling for C,O,Si,Fe, and their first ions. 
 # It can also be a list of files comma-separated.
 # -coolFile=your/cooling/file
 
@@ -113,7 +113,7 @@
 
 #define the adiabatic index according to OPTION that can be FULL for employing Grassi et al.
 # 2011, i.e. a density dependent but temperature independent adiabatic index, VIB to calculate the vibrational
-# paritition function and keeping the rotational part constant to 2, ROT to keep into account the rotational partition function and the 
+# partition function and keeping the rotational part constant to 2, ROT to keep into account the rotational partition function and the 
 # vibrational part to zero, or EXACT to evaluate the adiabatic index accurately taking into account both contributions. 
 # Finally a custom F90 expression e.g. -gamma="1.5d0" can also be used, as well as any fortran expression. Default value is 5/3 (ideal atomic gas).
 -gamma=FULL
@@ -157,14 +157,14 @@
 #ignore rate coefficient temperature limits.
 # -noTlimits
 
-#keep into account reactants multeplicity, and modify fluxes according to this. Intended for nuclear networks.
+#keep into account reactants multiplicity, and modify fluxes according to this. Intended for nuclear networks.
 # -nuclearMult
 
 #uses a pedantic Makefile from tests\ folder. Slow at run-time but traps errors. 
 # -pedantic
 
 #build everything in a folder called build_NAME instead of building all in the
-# default build folder. It also creates a NAME.kpj file with the krome input used.
+# default build folder. It also creates a NAME.kpj file with the KROME input used.
 # -project=myProject
 
 #print a quote and exit. All other options are ignored.
@@ -179,7 +179,7 @@
 #create patches for RAMSES_TH. This is a private version and probably does not fix your needs.
 # -ramsesTH
 
-#generate report file in the main call to krome as KROME_ERROR_REPORT and when calling the fex as KROME_ODE_REPORT. 
+#generate report file in the main call to KROME as KROME_ERROR_REPORT and when calling the fex as KROME_ODE_REPORT. 
 #It also stores abundances evolution in fex as fort.98, and prepares a report.gps gnuplot script file to plot evolutions 
 #callable in gnuplot with load 'report.gps'. Warning: it slows the whole system!
 # -report
@@ -232,11 +232,11 @@
 #You can also use an array also defined in the krome_user_commons module
 # -useCustomCoe=mycoe(:)
 
-#use Dvode implementation in F90 (slower and not fully mantained)
+#use Dvode implementation in F90 (slower and not fully maintained)
 # -useDvodeF90
 
 
-#check if the solver has reached the equilbirum. If so break the solver's loop and return the values found. 
+#check if the solver has reached the equilibrium. If so break the solver's loop and return the values found. 
 #It is useful when the system oscillates around	a solution (as in some photoheating cases). 
 #To be used with caution!
 # -useEquilibrium
@@ -250,10 +250,10 @@
 #-useH2opacity
 
 
-#use ierr in the interface with KROME to return errors instead of stopping the exectution, see also -ierr.
+#use ierr in the interface with KROME to return errors instead of stopping the execution, see also -ierr.
 # -useIERR
 
-#use number densities (1/cm3) as input/ouput instead of fractions (#)
+#use number densities (1/cm3) as input/output instead of fractions (#)
 -useN
 
 #postpone an expression to each ODE. EXPRESSION must be a valid f90 expression starting with an operator (e.g. *3.d0 or +1.d-10)
@@ -263,14 +263,17 @@
 # -usePhIoniz
 
 #use kA format for isotopes instead of [k]A format, where k is the isotopic number and A is the atom name, 
-#e.g. krome looks for 14C instead of [14]C in the reactions file.
+#e.g. KROME looks for 14C instead of [14]C in the reactions file.
 # -usePlainIsotopes
 
-#use tabulated rate coefficients. Note that if your rates depend on a parameter other than the temperture
-#you may incurr on errors.
+#use tabulated rate coefficients. Note that if your rates depend on a parameter other than the temperature
+#you may incur on errors. For this reason KROME has the possibility to add some statement in the reaction
+#file to prevent tabulation: for a single reaction just add in the line before @noTab_next or @noTabNext
+#while for blocks of reactions use @noTab_start / @noTab_stop or @noTab_begin / @noTab_end. Note that these
+#statements are case insensitive
 -useTabs
 
-#print the current version of krome
+#print the current version of KROME
 # -v
 # -ver
 # -version

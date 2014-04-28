@@ -52,6 +52,7 @@ class krome():
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
+	useHeatingCR = useHeatingPhotoAv = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
@@ -188,8 +189,8 @@ class krome():
                         paritition function, ROT to keep into account the rotational partition function, or EXACT to evaluate the\
                         adiabatic index accurately taking into account both contributions. Finally a custom F90 expression e.g. -gamma=\"1d0\"\
 			can also be used. Default value is 5/3.",metavar="OPTION")
-		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH. If you want\
-			a complete list of the available heating options type -heating=?")
+		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH, CR, PHOTOAV.\
+			If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
 		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
@@ -842,7 +843,7 @@ class krome():
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
 			myHeat = [x.strip() for x in myHeat]
-			allHeats = ["COMPRESS","PHOTO","CHEM","DH"]
+			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV"]
 			for hea in myHeat:
 				if(not(hea in allHeats)):
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
@@ -851,6 +852,8 @@ class krome():
 			if("PHOTO" in myHeat): self.useHeatingPhoto = True
 			if("CHEM" in myHeat): self.useHeatingChem = True
 			if("DH" in myHeat): self.useHeatingdH = True
+			if("CR" in myHeat): self.useHeatingCR = True
+			if("PHOTOAV" in myHeat): self.useHeatingPhotoAv = True
 
 			self.use_thermo = True
 			if(not(self.usePhIoniz) and self.useHeatingPhoto):
@@ -1225,6 +1228,8 @@ class krome():
 		reags = [] #list of reagents for already found
 		prods = [] #list of prods for already found
 		idxs = [] #list of index for already found
+		noTabNextBlock = False #default for blocks of reactions
+		inCRblock = False #block of CR reactions
 
 		#read the size of the file in lines (skip blank and comments)
 		# to have a rough idea of the size
@@ -1337,10 +1342,27 @@ class krome():
 				continue #SKIP format line (it is not a reaction line)
 
 			#if requested the next reaction will not uses tabs
-			if(srow.lower()=="@notabnext"):
+			if(srow.lower()=="@notabnext" or srow.lower()=="@notab_next"):
 				noTabNext = True
 				continue #SKIP (not a reaction)
-				
+			#if requested the next reaction will not uses tabs for a BLOCK of reactions
+			if(srow.lower()=="@notab_begin" or srow.lower()=="@notab_start"):
+				noTabNext = noTabNextBlock = True
+				continue #SKIP (not a reaction)
+			#if requested the next reaction will not uses tabs for a BLOCK of reactions
+			if(srow.lower()=="@notab_end" or srow.lower()=="@notab_stop"):
+				noTabNext = noTabNextBlock = False
+				continue #SKIP (not a reaction)
+
+			#start a CR reaction block
+			if(srow.lower()=="@cr_start" or srow.lower()=="@cr_begin"):
+				inCRblock = True
+				continue #SKIP (not a reaction)
+
+			#start a CR reaction block
+			if(srow.lower()=="@cr_stop" or srow.lower()=="@cr_end"):
+				inCRblock = False
+				continue #SKIP (not a reaction)
 
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
 			arow = [x.strip() for x in arow] #strip single elements
@@ -1478,6 +1500,7 @@ class krome():
 				print " "+myrea.verbatim
 				print " rate = "+myrea.krate
 				sys.exit()
+			myrea.isCR = inCRblock #is a CR reaction
 
 			#skip duplicated reactions if requested
 			skip_append = False
@@ -1494,7 +1517,7 @@ class krome():
 			#append reactions if not skipped 
 			if(not(skip_append)): reacts.append(myrea)
 			del myrea,row
-			noTabNext = False #return to default value
+			if(not(noTabNextBlock)): noTabNext = False #return to default value when outside a block
 	
 		if((self.useShieldingDB96 or self.useShieldingWG11) and not(fsh_found)):
 			print
@@ -1504,7 +1527,10 @@ class krome():
 			a = raw_input("Any key to continue q to quit... ")
 			if(a=="q"): print sys.exit()
 
-
+		if(noTabNextBlock): 
+			print "ERROR: block of skipped reaction still open!"
+			print "Add @noTab_stop or @noTab_end"
+			sys.exit()
 
 		if(skipDup): 
 			fdup.close()
@@ -3687,10 +3713,14 @@ class krome():
 		#replace pragma with strings built above
 		skip = False
 		for row in fh:
+			srow = row.strip()
 			if(row.strip() == "#KROME_header"):
 
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			else:
+				if(row.strip() == "#IFKROME_useHeatingCR" and not(self.useHeatingCR)): skip = True
+				if(row.strip() == "#ENDIFKROME"): skip = False
+
 				if(row.strip() == "#IFKROME_useHeatingdH" and (not(self.useHeatingdH) or len(dH_varsa)==0)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
@@ -3698,6 +3728,9 @@ class krome():
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				if(row.strip() == "#IFKROME_useHeatingPhoto" and not(self.useHeatingPhoto)): skip = True
+				if(row.strip() == "#ENDIFKROME"): skip = False
+
+				if(row.strip() == "#IFKROME_useHeatingPhotoAv" and not(self.useHeatingPhotoAv)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
@@ -3717,6 +3750,15 @@ class krome():
 					mysmall = "1d-40/("+("*".join(["nmax"]*maxprod))+")"
 					if(maxprod==0): mysmall = "0d0"
 					row = row.replace("#KROME_small",mysmall)
+
+				#replace cosmic ray heating
+				if("#KROME_heatingCR" in srow):
+					CRheat = ""
+					for rea in self.reacts:
+						if(not(rea.isCR)): continue
+						CRheat += "!"+rea.verbatim+"\n"
+						CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * Hfact\n\n"
+					row = row.replace("#KROME_heatingCR",CRheat)
 
 				row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
 				row = row.replace("#KROME_HChem_terms", HChem) #replace chemical heating terms

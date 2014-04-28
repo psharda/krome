@@ -19,7 +19,7 @@ contains
     use krome_dust
     real*8::dt,x(nmols),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,xdust(ndust),n_old(nspec),ni(nspec)
-    integer::icount,i,ierr
+    integer::icount,i,ierr,icount_max
     
     !DLSODES variables
     integer,parameter::meth=2 !1=adam, 2=BDF
@@ -42,7 +42,8 @@ contains
     itol = 4 !both tolerances are scalar
     rtol(:) = #KROME_RTOL !relative tolerance
     atol(:) = #KROME_ATOL !absolute tolerance
-    
+    icount_max = 100 !maximum number of iterations
+
 #KROME_custom_RTOL
 
 #KROME_custom_ATOL
@@ -97,9 +98,8 @@ contains
     totmass = sum(n(:) * mass(:)) !calculate total mass
 #ENDIFKROME
 
-#IFKROME_conserve
+    !store initial values
     ni(:) = n(:)
-#ENDIFKROME
 
     n_old(:) = -1d99
     krome_call_to_fex = 0
@@ -109,7 +109,7 @@ contains
        CALL DLSODES(fex, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
             ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, JES, MF)
 #IFKROME_report
-       call krome_dump(n(:), rwork(:), iwork(:))
+       call krome_dump(n(:), rwork(:), iwork(:), ni(:))
 #ENDIFKROME
        krome_call_to_fex = krome_call_to_fex + IWORK(12)
        !check DLSODES exit status
@@ -124,14 +124,19 @@ contains
           call XSETF(1)!turn on verbosity
           got_error = .true.
           istate = 1
-          cycle
        end if
        
-       if(got_error) then
-          print *,"ERROR: wrong solver exit status!"
-          print *,"istate:",istate
-          print *,"SEE KROME_ERROR_REPORT file"
-          call krome_dump(n(:), rwork(:), iwork(:))
+       if(got_error.or.icount>icount_max) then
+          if (krome_mpi_rank>0) then
+            print *,krome_mpi_rank,"ERROR: wrong solver exit status!"
+            print *,krome_mpi_rank,"istate:",istate
+            print *,krome_mpi_rank,"SEE KROME_ERROR_REPORT file"
+          else
+            print *,"ERROR: wrong solver exit status!"
+            print *,"istate:",istate
+            print *,"SEE KROME_ERROR_REPORT file"
+          end if
+          call krome_dump(n(:), rwork(:), iwork(:), ni(:))
           stop
        end if
 #ENDIFKROME
@@ -141,9 +146,7 @@ contains
           ierr = istate
           exit
        end if
-
 #ENDIFKROME
-
 
 #IFKROME_useEquilibrium
        !try to determine if the system has reached a steady equilibrium
@@ -160,10 +163,7 @@ contains
        if(equil) exit
        n_old(:) = n(:)
 #ENDIFKROME
-
     end do
-
-
 
 #IFKROME_check_mass_conservation
     if(abs(1.d0-totmass/sum(n(:) * mass(:)))>1d-3) then
@@ -198,18 +198,24 @@ contains
   end subroutine krome
 
   !*******************************
-  subroutine krome_dump(n,rwork,iwork)
+  subroutine krome_dump(n,rwork,iwork,ni)
     use krome_commons
     use krome_subs
     use krome_tabs
     use krome_reduction
     use krome_ode
     integer::fnum,i,iwork(:),idx(nrea),j
-    real*8::n(:),rwork(:),rrmax,k(nrea),kmax,rperc,kperc,dn(nspec),tt
+    real*8::n(:),rwork(:),rrmax,k(nrea),kmax,rperc,kperc,dn(nspec),tt,ni(:)
     character*16::names(nspec),FMTi,FMTr
-    character*50::rnames(nrea)
+    character*50::rnames(nrea),fname,prex
+    integer,save::mx_dump=1000 ! max nr of reports before terminating
     fnum = 99
-    open(fnum,FILE="KROME_ERROR_REPORT",status="replace")
+    if (krome_mpi_rank>0) then
+      write(fname,'(a,i5.5)') "KROME_ERROR_REPORT_",krome_mpi_rank
+    else
+      fname = "KROME_ERROR_REPORT"
+    endif
+    open(fnum,FILE=trim(fname),status="unknown",position="append")
     tt = 0d0
     names(:) = get_names()
     rnames(:) = get_rnames()
@@ -220,12 +226,27 @@ contains
     !SPECIES
     write(fnum,*) "Species abundances"
     write(fnum,*) "**********************"
-    write(fnum,'(a5,a20,2a12)') "#","name","qty","dn/dt"
+    write(fnum,'(a5,a20,3a12)') "#","name","qty","dn/dt","ninit"
     write(fnum,*) "**********************"
     do i=1,nspec
-       write(fnum,'(I5,a20,2E12.3e3)') i,names(i),n(i),dn(i)
+       write(fnum,'(I5,a20,3E12.3e3)') i,names(i),n(i),dn(i),ni(i)
     end do
     write(fnum,*) "**********************"
+
+
+    !F90 FRIENDLY RESTART
+    write(fnum,*) 
+    write(fnum,*) "**********************"
+    write(fnum,*) "F90-friendly species"
+    write(fnum,*) "**********************"
+    do i=1,nspec
+       write(prex,'(a,i3,a)') "x(",i,") = "
+       write(fnum,*) trim(prex),ni(i),"!"//names(i)
+    end do
+
+    write(fnum,*) "**********************"
+
+    
     
     !RATE COEFFIECIENTS
     k(:) = coe_tab(n(:))
@@ -291,6 +312,10 @@ contains
     write(fnum,*) "END KROME ERROR REPORT"
     write(fnum,*)
     close(fnum)
+
+    mx_dump = mx_dump - 1
+    if (mx_dump==0) stop
+
   end subroutine krome_dump
 
   !********************************

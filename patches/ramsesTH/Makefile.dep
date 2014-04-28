@@ -1,6 +1,6 @@
 opkdmain.o	     	: opkda1.o opkda2.o
 krome_all.o	     	: krome_user_commons.o opkdmain.o
-cooling.o   	     	: krome_all.o
+cooling.o           : krome_all.o
 cooling_fine.o		: cooling.o krome_all.o
-init_flow_fine.o        : krome_all.o
-
+init_flow_fine.o    : krome_all.o
+condinit.o          : krome_all.o
