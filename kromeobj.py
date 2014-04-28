@@ -52,7 +52,7 @@ class krome():
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
-	useHeatingCR = False
+	useHeatingCR = useHeatingPhotoAv = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
@@ -189,8 +189,8 @@ class krome():
                         paritition function, ROT to keep into account the rotational partition function, or EXACT to evaluate the\
                         adiabatic index accurately taking into account both contributions. Finally a custom F90 expression e.g. -gamma=\"1d0\"\
 			can also be used. Default value is 5/3.",metavar="OPTION")
-		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH, CR. If you want\
-			a complete list of the available heating options type -heating=?")
+		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH, CR, PHOTOAV.\
+			If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
 		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
@@ -843,7 +843,7 @@ class krome():
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
 			myHeat = [x.strip() for x in myHeat]
-			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR"]
+			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV"]
 			for hea in myHeat:
 				if(not(hea in allHeats)):
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
@@ -853,6 +853,7 @@ class krome():
 			if("CHEM" in myHeat): self.useHeatingChem = True
 			if("DH" in myHeat): self.useHeatingdH = True
 			if("CR" in myHeat): self.useHeatingCR = True
+			if("PHOTOAV" in myHeat): self.useHeatingPhotoAv = True
 
 			self.use_thermo = True
 			if(not(self.usePhIoniz) and self.useHeatingPhoto):
@@ -3727,6 +3728,9 @@ class krome():
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				if(row.strip() == "#IFKROME_useHeatingPhoto" and not(self.useHeatingPhoto)): skip = True
+				if(row.strip() == "#ENDIFKROME"): skip = False
+
+				if(row.strip() == "#IFKROME_useHeatingPhotoAv" and not(self.useHeatingPhotoAv)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
