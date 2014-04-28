@@ -241,7 +241,7 @@ contains
     write(fnum,*) "**********************"
     do i=1,nspec
        write(prex,'(a,i3,a)') "x(",i,") = "
-       write(fnum,*) trim(prex),n(i),"!"//names(i)
+       write(fnum,*) trim(prex),ni(i),"!"//names(i)
     end do
 
     write(fnum,*) "**********************"
