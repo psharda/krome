@@ -484,6 +484,7 @@
 
 
 #cosmic rays processes from OSU
+@CR_start
 257,H,H+,E,4.6d-1*krome_crate
 258,He,He+,E,5.d-1*krome_crate
 259,O,O+,E,2.8d0*krome_crate
@@ -508,3 +509,5 @@
 278,CH4,CH2,H2,2.34d3*krome_crate
 @format:idx,R,P,P,P,rate
 279,H2,H,H+,E,5d0*krome_crate
+@CR_stop
+

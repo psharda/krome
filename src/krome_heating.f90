@@ -34,7 +34,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useHeatingCR
-    heats(6) = heat_CR(n(:),Tgas)
+    heats(6) = heat_CR(n(:),Tgas,k(:))
 #ENDIFKROME
     
     heating = sum(heats)
@@ -86,13 +86,17 @@ contains
 
 #IFKROME_useHeatingCR
   !***************************
-  function heat_CR(n,Tgas)
+  function heat_CR(n,Tgas,k)
     !heating from cosmic rays erg/s/cm3
     use krome_commons
     implicit none
-    real*8::heat_CR,n(:),Tgas
+    real*8::heat_CR,n(:),Tgas,Hfact,k(:)
+
+    Hfact = 3.20435313d-11 !erg
 
     heat_CR = 0d0
+
+#KROME_heatingCR
 
   end function heat_CR
 #ENDIFKROME

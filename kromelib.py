@@ -93,6 +93,7 @@ class reaction():
 	group = "__DEFAULT__"
 	canUseTabs = True #flag if this reaction can use tabs
 	ifrate = "" #if condition on rate, e.g. if(Tgas>1d2):
+	isCR = False #flag this reaction is CR
 	#method: constructor to initialize lists
 	def __init__(self):
 		self.reactants = []
