@@ -8,7 +8,7 @@ contains
     use krome_commons
     implicit none
     real*8::n(:), Tgas, k(:), nH2dust
-    real*8::heating,heats(4)
+    real*8::heating,heats(6)
     !returns heating in erg/cm3/s
 
     heats(:) = 0.d0
@@ -28,6 +28,14 @@ contains
 #IFKROME_useHeatingdH
     heats(4) = heat_dH(n(:),Tgas)
 #ENDIFKROME
+
+#IFKROME_useHeatingPhotoAv
+    heats(5) = heat_photoAv(n(:),Tgas)
+#ENDIFKROME
+
+#IFKROME_useHeatingCR
+    heats(6) = heat_CR(n(:),Tgas)
+#ENDIFKROME
     
     heating = sum(heats)
 
@@ -41,7 +49,53 @@ contains
     ! '' u m:6 every n w l t "enthalpy"
 
   end function heating
-  
+
+#IFKROME_useHeatingPhotoAv
+  !******************************
+
+  function heat_photoAv(n,Tgas)
+    !heating from  photoreactions using rate approximation erg/s/cm3
+    use krome_commons
+    use krome_user_commons
+    use krome_subs
+    implicit none
+    real*8::heat_photoAv,n(:),Tgas
+    real*8::ncrn,ncrd1,ncrd2,yH,yH2,ncr,h2heatfac,dd,Rdiss
+
+    dd = get_Hnuclei(n(:))
+    ncrn  = 1.0d6*(Tgas**(-0.5d0))
+    ncrd1 = 1.6d0*exp(-(4.0d2/Tgas)**2)
+    ncrd2 = 1.4d0*exp(-1.2d4/(Tgas+1.2d3))
+    
+    yH = n(idx_H)/dd   !dimensionless
+    yH2= n(idx_H2)/dd  !dimensionless
+    
+    ncr = ncrn/(ncrd1*yH+ncrd2*yH2)      !1/cm3
+    h2heatfac = 1.0d0/(1.0d0+ncr/dd)     !dimensionless
+    
+    Rdiss = 5.6d-11*exp(-3.74*Av) 
+
+    !photodissociation H2 heating
+    heat_photoAv = 6.4d-13*Rdiss*n(idx_H2)
+
+    !UV photo-pumping H2
+    heat_photoAv = heat_photoAv + 2.7d-11*Rdiss*h2heatfac*n(idx_H2)
+    
+  end function heat_photoAv
+#ENDIFKROME
+
+#IFKROME_useHeatingCR
+  !***************************
+  function heat_CR(n,Tgas)
+    !heating from cosmic rays erg/s/cm3
+    use krome_commons
+    implicit none
+    real*8::heat_CR,n(:),Tgas
+
+    heat_CR = 0d0
+
+  end function heat_CR
+#ENDIFKROME
 
 #IFKROME_useHeatingdH
   !*************************

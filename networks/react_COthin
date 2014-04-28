@@ -436,11 +436,16 @@
 222,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
 223,OH,H,H2O,,NONE,NONE,5.26d-18*T32**(-5.22)*exp(-9d1*invT)
 
-#PHOTOREACTIONS THIN
+#PHOTOREACTIONS THIN WITH Av
 @format:idx,R,P,P,rate
 #PHOTOREACTIONS
 @format:idx,R,P,P,rate
 @noTab_start
+
+#integrated with J21*13.6/E flux, up to 200eV
+#223,H,H+,E,2.19e-12*exp(-1.14e4*Av)
+
+#FROM GLOVER+2009
 224,H-,H,E,7.1d-7*exp(-.5*Av)
 225,H2+,H,H+,1.1d-9*exp(-1.9*Av)
 226,H2,H,H,5.6d-11*exp(-3.74*Av)
