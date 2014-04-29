@@ -665,7 +665,10 @@ def parser(name, mass_dic, atoms, thermo_data):
 	mymol.zatom = zatom #atomic number
 	mymol.fname = name.replace("+","j").replace("-","k") #f90 name
 	mymol.is_atom = is_atom #atom flag
-	mymol.fidx = "idx_"+name.replace("+","j").replace("-","k").replace("(","_").replace(")","") #f90 index
+	f90idx = "idx_"+name.replace("+","j").replace("-","k").replace("(","_").replace(")","").replace("[","").replace("]","_") #f90 index
+	if(f90idx.endswith("_")): f90idx = f90idx[:-1] #remove last underscore if any
+	mymol.fidx = f90idx #index in f90 format
+	
 	if("+" in name): mymol.charge = name.count("+") #get + charge
 	if("-" in name): mymol.charge = -name.count("-") #get - charge
 
