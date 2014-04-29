@@ -52,7 +52,7 @@ class krome():
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
-	useHeatingCR = useHeatingPhotoAv = False
+	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
@@ -843,7 +843,7 @@ class krome():
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
 			myHeat = [x.strip() for x in myHeat]
-			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV"]
+			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST"]
 			for hea in myHeat:
 				if(not(hea in allHeats)):
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
@@ -854,6 +854,7 @@ class krome():
 			if("DH" in myHeat): self.useHeatingdH = True
 			if("CR" in myHeat): self.useHeatingCR = True
 			if("PHOTOAV" in myHeat): self.useHeatingPhotoAv = True
+			if("PHOTODUST" in myHeat): self.useHeatingPhotoDust = True
 
 			self.use_thermo = True
 			if(not(self.usePhIoniz) and self.useHeatingPhoto):
@@ -3731,6 +3732,9 @@ class krome():
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				if(row.strip() == "#IFKROME_useHeatingPhotoAv" and not(self.useHeatingPhotoAv)): skip = True
+				if(row.strip() == "#ENDIFKROME"): skip = False
+
+				if(row.strip() == "#IFKROME_useHeatingPhotoDust" and not(self.useHeatingPhotoDust)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
