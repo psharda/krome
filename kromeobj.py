@@ -2937,6 +2937,28 @@ class krome():
 		for x in sclist:
 			shortcutVars += "real*8::"+x.split("=")[0].strip()+"\n"
 
+		#preapare metallicity functions
+		#metallicity dictionary
+		metalDict = dict()
+		for x in specs:
+			for atom,count in x.atomcount2.iteritems():
+				if(atom in metalDict):
+					metalDict[atom].append([x.fidx,count])
+				else:
+					metalDict[atom] = [[x.fidx,count]]
+
+		#metallicity functions
+		nZs = ["H","He","+","-","E"] #these are not metals
+		zGets = []
+		for k,v in metalDict.iteritems():
+			if(k in nZs): continue #skip non-metals
+			parts = []
+			for x in v:
+				smult = "" #multiplication factor string if >1 atom/particle
+				if(x[1]>1): smult = str(x[1])+"d0*"
+				parts.append(smult+"n("+x[0]+")")
+			zGets.append([k, "z"+k, (" &\n + ".join(parts))])
+				
 
 		#conserve
 		krome_conserve = "" #init full string for the pragma replacement
@@ -3070,6 +3092,25 @@ class krome():
 					fout.write(truncF90(kstr, 60,"/")+"\n\n") #truncate
 			elif(srow == "#KROME_conserve"):
 				fout.write(krome_conserve+"\n")
+			elif(srow == "#KROME_metallicity_functions"):
+				solar = get_solar_abundances() #get solar abundances
+				ffs = "" #metallicity functions
+				for zg in zGets:
+					if(not(zg[0] in solar)): continue #skip if solar abundance is not present
+					#prepare function
+					ffname = "get_metallicity"+zg[0]
+					ff = "!*****************************\n"
+					ff = "! get metallicity using "+zg[0]+" as reference\n"
+					ff += "function "+ffname+"(n)\n"
+					ff += "use krome_commons\n"
+					ff += "implicit none\n"
+					ff += "real*8::n(:),"+ffname+","+zg[1]+",nH\n"
+					ff += "nH = get_Hnuclei(n(:))\n"
+					ff += zg[1]+" = "+zg[2]+"\n\n"
+					ff += ffname + " = log10("+zg[1]+"/nH) - "+solar[zg[0]]+"\n\n" #compute metallicity
+					ff += "end function "+ffname+"\n\n"
+					ffs += ff #append function to the others
+				fout.write(ffs+"\n") #replace functions
 			elif(srow == "#KROME_implicit_arrays"):
 				fout.write(truncF90(self.implicit_arrays,60,","))
 			elif(srow == "#KROME_initcoevars"):
@@ -4033,24 +4074,7 @@ class krome():
 
 		skip = False
 
-		#solar abundances from Anders+Grevesse 1989
-		solar = {
-			"Li":"2.046595d-9",
-			"C" :"3.620072d-4",
-			"N" :"1.121864d-4",
-			"O" :"8.530466d-4",
-			"F" :"3.021505d-8",
-			"Ne":"1.232975d-4",
-			"Na":"2.057348d-6",
-			"Mg":"3.849462d-5",
-			"Al":"3.043011d-6",
-			"Si":"3.584229d-5",
-			"P" :"3.727599d-7",
-			"S" :"1.845878d-5",
-			"Cl":"1.878136d-7",
-			"Ca":"2.189964d-6",
-			"Fe":"3.225806d-5"
-			}
+		solar = get_solar_abundances()
 
 		scaleZ = []
 		#looks for H to rescale the metallicity otherwise skips
