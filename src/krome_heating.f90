@@ -8,7 +8,7 @@ contains
     use krome_commons
     implicit none
     real*8::n(:), Tgas, k(:), nH2dust
-    real*8::heating,heats(6)
+    real*8::heating,heats(7)
     !returns heating in erg/cm3/s
 
     heats(:) = 0.d0
@@ -36,6 +36,10 @@ contains
 #IFKROME_useHeatingCR
     heats(6) = heat_CR(n(:),Tgas,k(:))
 #ENDIFKROME
+
+#IFKROME_useHeatingPhotoDust
+    heats(7) = heat_photoDust(n(:),Tgas)
+#ENDIFKROME
     
     heating = sum(heats)
 
@@ -50,9 +54,30 @@ contains
 
   end function heating
 
+#IFKROME_useHeatingPhotoDust
+  !***************************
+  function heat_photoDust(n,Tgas)
+    !photoelectric effect from dust in erg/s/cm3
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::heat_photoDust,n(:),Tgas,ntot,eps
+    real*8::Ghab,z,zsun,psi
+
+    ntot = get_Hnuclei(n(:))
+    zsun = 0.02d0 !solar metallicity
+    Ghab = 1.69d0 !habing flux, 1.69 is Draine78
+    psi = 2.d0*Ghab*sqrt(Tgas)*n(idx_e)
+    eps = 4.9d-2/(1d0+4d-3*psi**.73) + &
+         3.7d-2*(Tgas*1d-4)**.7/(1d0+2d-4*psi)
+    z = 1d-4 !metallicty
+    heat_photoDust = 1.3d-24*eps*Ghab*ntot*z/zsun
+
+  end function heat_photoDust
+#ENDIFKROME
+
 #IFKROME_useHeatingPhotoAv
   !******************************
-
   function heat_photoAv(n,Tgas)
     !heating from  photoreactions using rate approximation erg/s/cm3
     use krome_commons

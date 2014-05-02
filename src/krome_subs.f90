@@ -45,6 +45,8 @@ contains
 
   end function coe
 
+#KROME_metallicity_functions  
+
   !*********************
   function conserve(n,ni)
     use krome_commons

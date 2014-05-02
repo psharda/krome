@@ -242,6 +242,30 @@ class reaction():
 		if(ndif!=0): kk ="0.d0"  #" * (1.3806488d-2 * Tgas)**("+str(ndif)+")"
 		return kk
 
+####################################
+#solar metallicities
+def get_solar_abundances():
+	#solar abundances from Anders+Grevesse 1989
+	solar_abs = {
+		"Li":"2.046595d-9",
+		"C" :"3.620072d-4",
+		"N" :"1.121864d-4",
+		"O" :"8.530466d-4",
+		"F" :"3.021505d-8",
+		"Ne":"1.232975d-4",
+		"Na":"2.057348d-6",
+		"Mg":"3.849462d-5",
+		"Al":"3.043011d-6",
+		"Si":"3.584229d-5",
+		"P" :"3.727599d-7",
+		"S" :"1.845878d-5",
+		"Cl":"1.878136d-7",
+		"Ca":"2.189964d-6",
+		"Fe":"3.225806d-5"
+		}
+	return solar_abs
+
+
 
 ###################################
 #vibrational constant dictionary
@@ -665,7 +689,10 @@ def parser(name, mass_dic, atoms, thermo_data):
 	mymol.zatom = zatom #atomic number
 	mymol.fname = name.replace("+","j").replace("-","k") #f90 name
 	mymol.is_atom = is_atom #atom flag
-	mymol.fidx = "idx_"+name.replace("+","j").replace("-","k").replace("(","_").replace(")","") #f90 index
+	f90idx = "idx_"+name.replace("+","j").replace("-","k").replace("(","_").replace(")","").replace("[","").replace("]","_") #f90 index
+	if(f90idx.endswith("_")): f90idx = f90idx[:-1] #remove last underscore if any
+	mymol.fidx = f90idx #index in f90 format
+	
 	if("+" in name): mymol.charge = name.count("+") #get + charge
 	if("-" in name): mymol.charge = -name.count("-") #get - charge
 
