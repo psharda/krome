@@ -71,6 +71,7 @@ class krome():
 	checkMode = "ALL" #conservation check mode (ALL | [CHARGE],[MASS]| NONE)
 	RTOL = 1e-4 #default relative tolerance
 	ATOL = 1e-20 #default absolute tolerance
+	coolingQuench = -1e0 #if coolingQuench is negative cooling quench is not enabled, otherwise this is Tcrit
 	dustArraySize = dustTypesSize = 0
 	maxord = 0
 	dustTypes = []
@@ -167,6 +168,8 @@ class krome():
 			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI).\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
+		self.parser.add_argument("-coolingQuench", metavar='TCRIT', help="quenches the cooling when T<TCRIT with a sigmoid\
+		 function.")
 		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line,\
 			e.g. H2 1d-20, see also -ATOL", metavar="filename")
 		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
@@ -838,6 +841,13 @@ class krome():
 			self.use_thermo = True
 
 			print "Reading option -cooling ("+(",".join(myCools))+")"
+
+		#cooling quenching
+		if(args.coolingQuench):
+			self.coolingQuench = format_double(args.coolingQuench)
+			if(self.coolingQuench<0e0):
+				die("ERROR: Tcrit for coolingQuench should be greater than zero!")
+			print "Reading option -coolingQuench ("+str(self.coolingQuench)+")"
 		
 		#determine heating types
 		if(args.heating):
@@ -3100,7 +3110,7 @@ class krome():
 					#prepare function
 					ffname = "get_metallicity"+zg[0]
 					ff = "!*****************************\n"
-					ff = "! get metallicity using "+zg[0]+" as reference\n"
+					ff += "! get metallicity using "+zg[0]+" as reference\n"
 					ff += "function "+ffname+"(n)\n"
 					ff += "use krome_commons\n"
 					ff += "implicit none\n"
@@ -3576,6 +3586,14 @@ class krome():
 				mysmall = "1d-40/("+("*".join(["nmax"]*maxprod))+")"
 				if(maxprod==0): mysmall = "0d0"
 				fout.write(srow.replace("#KROME_small",mysmall)+"\n")
+				continue
+
+			if("#KROME_coolingQuench" in srow):
+				if(self.coolingQuench<0e0):
+					fout.write(srow.replace("#KROME_coolingQuench","")+"\n")
+				else:
+					qfunc = " * 2d0 / (1d0 + exp("+format_double(self.coolingQuench)+"/Tgas)**2))"
+					fout.write(srow.replace("#KROME_coolingQuench",qfunc)+"\n")
 				continue
 
 			if(row.strip() == "#KROME_header"):

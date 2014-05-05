@@ -61,7 +61,7 @@ contains
     cools(11) = cooling_expansion(n(:), Tgas)
 #ENDIFKROME
 
-    cooling = sum(cools)
+    cooling = sum(cools) #KROME_coolingQuench
 
     !remove the comment below to write cooling contributions to fort.44
     !write(44,'(99E17.8e3)') sum(n(1:nmols)),Tgas,cools(:)
