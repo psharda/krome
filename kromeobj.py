@@ -81,6 +81,7 @@ class krome():
 	dummy = molec()
 	coevars = dict() #variables in function coe() (krome_subs.f90)
 	coevarsODE = dict() #variables in function fex() (krome_ode.f90)
+	commonvars = [] #list of common variables
 	implicit_arrays = totMetals = ""
 	thermodata = dict() #thermochemistry data (nasa polynomials)
 	parser = filename = ""
@@ -168,7 +169,7 @@ class krome():
 			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI).\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
-		self.parser.add_argument("-coolingQuench", metavar='TCRIT', help="quenches the cooling when T<TCRIT with a sigmoid\
+		self.parser.add_argument("-coolingQuench", metavar='TCRIT', help="quenches the cooling when T<TCRIT with a tanh \
 		 function.")
 		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line,\
 			e.g. H2 1d-20, see also -ATOL", metavar="filename")
@@ -1294,6 +1295,14 @@ class krome():
 				ivarcoe += 1 #count variables to sort
 				continue #SKIP: a variable line is not a reaction line
 
+		
+			#search for common variables
+			if("@common:" in srow):
+				commonvar = srow.replace("@common:","").strip()
+				if(commonvar in self.commonvars): continue #skip if already present
+				self.commonvars.append(commonvar) #add to the global array
+				continue #skip: a common is not a reaction line
+
 			#search for ghost species
 			if("@ghost:" in srow):
 				ghost = srow.replace("@ghost:","").strip()
@@ -1311,7 +1320,7 @@ class krome():
 				idxFound = tminFound = tmaxFound = rateFound = qeffFound = False
 				hasFormat = True #format flag
 				srow = srow.replace("@format:","") #remove 
-				print "Found custom format: "+srow
+				#print "Found custom format: "+srow
 				arow = srow.split(",") #split format line
 				#check format (at least 6 elements)
 				if(len(arow)<5):
@@ -3588,11 +3597,12 @@ class krome():
 				fout.write(srow.replace("#KROME_small",mysmall)+"\n")
 				continue
 
+			#replace quenching function for cooling
 			if("#KROME_coolingQuench" in srow):
 				if(self.coolingQuench<0e0):
 					fout.write(srow.replace("#KROME_coolingQuench","")+"\n")
 				else:
-					qfunc = " * 2d0 / (1d0 + exp("+format_double(self.coolingQuench)+"/Tgas)**2)"
+					qfunc = " * 0.5d0 * (tanh(Tgas - "+format_double(self.coolingQuench)+") + 1d0)"
 					fout.write(srow.replace("#KROME_coolingQuench",qfunc)+"\n")
 				continue
 
