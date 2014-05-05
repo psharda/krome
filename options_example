@@ -68,6 +68,11 @@
 # the available cooling options type -cooling=?
 -cooling=H2,HD
 
+
+#quenching cooling using a multiplication factor of 2/(1+exp((Tcrit/Tgas)^2)), where Tcrit in K is the critical temperature
+# around where the factor starts to have effect. You can modify this function in the cooling() function in the krome_cooling module
+# -coolingQuench=Tcrit
+
 #a file with the list of the individual ATOLs in the form SPECIES ATOL in each line, e.g. 
 # H2 1d-20
 # HD 1d-6

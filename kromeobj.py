@@ -3592,7 +3592,7 @@ class krome():
 				if(self.coolingQuench<0e0):
 					fout.write(srow.replace("#KROME_coolingQuench","")+"\n")
 				else:
-					qfunc = " * 2d0 / (1d0 + exp("+format_double(self.coolingQuench)+"/Tgas)**2))"
+					qfunc = " * 2d0 / (1d0 + exp("+format_double(self.coolingQuench)+"/Tgas)**2)"
 					fout.write(srow.replace("#KROME_coolingQuench",qfunc)+"\n")
 				continue
 
