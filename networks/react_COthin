@@ -1,5 +1,7 @@
 #rates for CO network similar to Glover+2010 MNRAS from there and other authors
 @var:Hnuclei = get_Hnuclei(n(:))
+@common: user_crate,user_Av
+
 @format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
 #Glover+2010 MNRAS
 1,H,E,,H+,E,E,,2.73d0,1e8,dexp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
@@ -443,32 +445,32 @@
 @noTab_start
 
 #integrated with J21*13.6/E flux, up to 200eV
-#223,H,H+,E,2.19e-12*exp(-1.14e4*Av)
+#223,H,H+,E,2.19e-12*exp(-1.14e4*user_Av)
 
 #FROM GLOVER+2009
-224,H-,H,E,7.1d-7*exp(-.5*Av)
-225,H2+,H,H+,1.1d-9*exp(-1.9*Av)
-226,H2,H,H,5.6d-11*exp(-3.74*Av)
-227,H3+,H2,H+,4.9d-13*exp(-1.8*Av)
-228,H3+,H2+,H,4.9d-13*exp(-2.3*Av)
-229,C,C+,E,3.1d-10*exp(-3.*Av)
-230,C-,C,E,2.4d-7*exp(-.9*Av)
-231,CH,C,H,8.7d-10*exp(-1.2*Av)
-232,CH,CH+,E,7.7d-10*exp(-2.8*Av)
-233,CH+,C,H+,2.6d-10*exp(-2.5*Av)
-234,CH2,CH,H,7.1d-10*exp(-1.7*Av)
-235,CH2,CH2+,E,5.9d-10*exp(-2.3*Av)
-236,CH2+,CH+,H,4.6d-10*exp(-1.7*Av)
-237,CH3+,CH2+,H,1d-9*exp(-1.7*Av)
-238,CH3+,CH+,H2,1d-9*exp(-1.7*Av)
-239,C2,C,C,1.5d-10*exp(-2.1*Av)
-240,O-,O,E,2.4d-7*exp(-.5*Av)
-241,OH,O,H,3.7d-10*exp(-1.7*Av)
-242,OH,OH+,E,1.6d-12*exp(-3.1*Av)
-243,OH+,O,H+,1d-12*exp(-1.8*Av)
-244,H2O,OH,H,6d-10*exp(-1.7*Av)
-245,H2O,H2O+,E,3.2d-11*exp(-3.9*Av)
-@var: HnOj = fHnOj(Av)
+224,H-,H,E,7.1d-7*exp(-.5*user_Av)
+225,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
+226,H2,H,H,5.6d-11*exp(-3.74*user_Av)
+227,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
+228,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
+229,C,C+,E,3.1d-10*exp(-3.*user_Av)
+230,C-,C,E,2.4d-7*exp(-.9*user_Av)
+231,CH,C,H,8.7d-10*exp(-1.2*user_Av)
+232,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)
+233,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)
+234,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)
+235,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)
+236,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)
+237,CH3+,CH2+,H,1d-9*exp(-1.7*user_Av)
+238,CH3+,CH+,H2,1d-9*exp(-1.7*user_Av)
+239,C2,C,C,1.5d-10*exp(-2.1*user_Av)
+240,O-,O,E,2.4d-7*exp(-.5*user_Av)
+241,OH,O,H,3.7d-10*exp(-1.7*user_Av)
+242,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)
+243,OH+,O,H+,1d-12*exp(-1.8*user_Av)
+244,H2O,OH,H,6d-10*exp(-1.7*user_Av)
+245,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)
+@var: HnOj = fHnOj(user_Av)
 246,H2O+,H2+,O,5.d-11*HnOj
 247,H2O+,H+,OH,5.d-11*HnOj
 248,H2O+,O+,H2,5.d-11*HnOj
@@ -477,37 +479,37 @@
 251,H3O+,H2+,OH,2.5d-11*HnOj
 252,H3O+,H2O+,H,7.5d-11*HnOj
 253,H3O+,OH+,H2,2.5d-11*HnOj
-254,O2,O2+,E,5.6d-11*exp(-3.7*Av)
-255,O2,O,O,7d-10*exp(-1.8*Av)
-256,CO,C,O,2.d-10*exp(-3.53*Av)
+254,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)
+255,O2,O,O,7d-10*exp(-1.8*user_Av)
+256,CO,C,O,2.d-10*exp(-3.53*user_Av)
 @noTab_end
 
 
 #cosmic rays processes from OSU
 @CR_start
-257,H,H+,E,4.6d-1*krome_crate
-258,He,He+,E,5.d-1*krome_crate
-259,O,O+,E,2.8d0*krome_crate
-260,CO,C,O,5d0*krome_crate
-261,CO,CO+,E,3d0*krome_crate
-262,C2,C,C,2.37d2*krome_crate
-263,H2,H,H,1d-1*krome_crate
-264,H2,H+,H-,2d-2*krome_crate
-265,H2,H2+,E,9.3d-1*krome_crate
-266,C,C+,E,1.02d3*krome_crate
-267,CH,C,H,7.3d2*krome_crate
-268,O2,O,O,7.5d2*krome_crate
-269,O2,O2+,E,1.17d2*krome_crate
-270,OH,O,H,5.1d2*krome_crate
-271,CH2,CH2+,E,5d2*krome_crate
-272,CO2,CO,O,1.71d3*krome_crate
-273,H2O,OH,H,9.7d2*krome_crate
-274,HCO,CO,H,4.21d2*krome_crate
-275,HCO,HCO+,E,1.17d3*krome_crate
-276,CH3,CH2,H,5d2*krome_crate
-277,CH3,CH3+,E,5d2*krome_crate
-278,CH4,CH2,H2,2.34d3*krome_crate
+257,H,H+,E,4.6d-1*user_crate
+258,He,He+,E,5.d-1*user_crate
+259,O,O+,E,2.8d0*user_crate
+260,CO,C,O,5d0*user_crate
+261,CO,CO+,E,3d0*user_crate
+262,C2,C,C,2.37d2*user_crate
+263,H2,H,H,1d-1*user_crate
+264,H2,H+,H-,2d-2*user_crate
+265,H2,H2+,E,9.3d-1*user_crate
+266,C,C+,E,1.02d3*user_crate
+267,CH,C,H,7.3d2*user_crate
+268,O2,O,O,7.5d2*user_crate
+269,O2,O2+,E,1.17d2*user_crate
+270,OH,O,H,5.1d2*user_crate
+271,CH2,CH2+,E,5d2*user_crate
+272,CO2,CO,O,1.71d3*user_crate
+273,H2O,OH,H,9.7d2*user_crate
+274,HCO,CO,H,4.21d2*user_crate
+275,HCO,HCO+,E,1.17d3*user_crate
+276,CH3,CH2,H,5d2*user_crate
+277,CH3,CH3+,E,5d2*user_crate
+278,CH4,CH2,H2,2.34d3*user_crate
 @format:idx,R,P,P,P,rate
-279,H2,H,H+,E,5d0*krome_crate
+279,H2,H,H+,E,5d0*user_crate
 @CR_stop
 

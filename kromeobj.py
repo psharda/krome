@@ -1298,9 +1298,16 @@ class krome():
 		
 			#search for common variables
 			if("@common:" in srow):
-				commonvar = srow.replace("@common:","").strip()
-				if(commonvar in self.commonvars): continue #skip if already present
-				self.commonvars.append(commonvar) #add to the global array
+				arow = srow.replace("@common:","").split(",")
+				for x in arow:
+					commonvar = x.strip()
+					if(commonvar.split("_")[0].lower()!="user"):
+						print "ERROR: to avoid conflicts common variables with @common should begin with user_"
+						print " you provided: "+commonvar
+						print " it should be: user_"+commonvar
+						sys.exit()
+					if(commonvar in self.commonvars): continue #skip if already present
+					self.commonvars.append(commonvar) #add to the global array
 				continue #skip: a common is not a reaction line
 
 			#search for ghost species
@@ -2841,6 +2848,8 @@ class krome():
 				fout.write("real*8::"+(",".join(pheatvars))+"\n")
 			elif(srow == "#KROME_opt_variables"):
 				fout.write(optVariables)
+			elif(srow == "#KROME_user_commons"):
+				fout.write("real*8::"+(",".join(self.commonvars))+"\n")
 			else:
 				if(row[0]!="#"): fout.write(row)
 
@@ -2920,6 +2929,28 @@ class krome():
 
 			for row in fh:
 				row = row.replace("#KROME_header", get_licence_header(self.version, self.codename,self.shortHead))
+				if(row.strip()=="#KROME_user_commons_functions"):
+					funcs = ""
+					for x in self.commonvars:
+						fsetname = "krome_set_"+x
+						fset = "\n!*******************\n"
+						fset += "subroutine "+fsetname+"(argset)\n"
+						fset += "use krome_commons\n"
+						fset += "implicit none\n"
+						fset += "real*8::argset\n"
+						fset += x+" = argset\n"
+						fset += "end subroutine "+fsetname+"\n"
+						
+						fgetname = "krome_get_"+x
+						fget = "\n!*******************\n"
+						fget += "function "+fgetname+"()\n"
+						fget += "use krome_commons\n"
+						fget += "implicit none\n"
+						fget += "real*8::"+fgetname+"\n"
+						fget += fgetname+" = "+x+"\n"
+						fget += "end function "+fgetname+"\n"
+						funcs += fset + fget
+					row = funcs
 
 				if(row[0]!="#"): fouta.write(row)
 
@@ -3836,6 +3867,39 @@ class krome():
 				row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
 				row = row.replace("#KROME_HChem_terms", HChem) #replace chemical heating terms
 				row = row.replace("#KROME_HChem_dust", HChemDust) #replace chemical heating for dust
+
+				#replace metallicity
+				if("#KROME_photoDustZ" in row):
+					zFound = False
+					for zz in ["Fe","C","O","Si"]:
+						for x in self.specs:
+							if(zz==x.name):
+								zFound = True
+								dustZ = zz
+								break
+						if(zFound): break
+					if(not(zFound)): 
+						row = row.replace("#KROME_photoDustZ","0d0")
+					else:
+						row = row.replace("#KROME_photoDustZ","1d1**get_metallicity"+zz+"(n(:))")
+
+				#replace correct dissociation rate in 
+				if("#KROME_RdissH2" in row):
+					rdh2Found = False
+					for rea in self.reacts:
+						R = sorted([x.name for x in rea.reactants])
+						P = sorted([x.name for x in rea.products])
+						if(R==["H2"] and P==["H","H"]):
+							rateDissH2 = "k("+str(rea.idx)+")"
+							rdh2Found = True
+							break
+					#check if rate photodissiocation rate is present in the network
+					if(not(rdh2Found)): 
+						print "ERROR: if you use PHOTOAV heating you should have"
+						print " H2 photodissiocation rate in your chemical network!"
+						sys.exit()			
+
+					row = row.replace("#KROME_RdissH2",rateDissH2) #replace pragma with H2 photodissociation rate
 		
 				#replace shortcuts for temperature
 				if(row.strip() == "#KROME_Tshortcuts"):
@@ -4495,6 +4559,7 @@ class krome():
 			if(self.buildCompact):
 				indentF90(buildFolder+"krome_all.f90")
 			else:
+				indentF90(buildFolder+"krome_user_commons.f90")
 				indentF90(buildFolder+"krome_commons.f90")
 				indentF90(buildFolder+"krome_constants.f90")
 				indentF90(buildFolder+"krome_cooling.f90")

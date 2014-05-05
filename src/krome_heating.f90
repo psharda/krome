@@ -30,7 +30,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useHeatingPhotoAv
-    heats(5) = heat_photoAv(n(:),Tgas)
+    heats(5) = heat_photoAv(n(:),Tgas,k(:))
 #ENDIFKROME
 
 #IFKROME_useHeatingCR
@@ -70,7 +70,7 @@ contains
     psi = 2.d0*Ghab*sqrt(Tgas)*n(idx_e)
     eps = 4.9d-2/(1d0+4d-3*psi**.73) + &
          3.7d-2*(Tgas*1d-4)**.7/(1d0+2d-4*psi)
-    z = 1d-4 !metallicty
+    z = #KROME_photoDustZ !metallicty
     heat_photoDust = 1.3d-24*eps*Ghab*ntot*z/zsun
 
   end function heat_photoDust
@@ -78,13 +78,13 @@ contains
 
 #IFKROME_useHeatingPhotoAv
   !******************************
-  function heat_photoAv(n,Tgas)
+  function heat_photoAv(n,Tgas,k)
     !heating from  photoreactions using rate approximation erg/s/cm3
     use krome_commons
     use krome_user_commons
     use krome_subs
     implicit none
-    real*8::heat_photoAv,n(:),Tgas
+    real*8::heat_photoAv,n(:),Tgas,k(:)
     real*8::ncrn,ncrd1,ncrd2,yH,yH2,ncr,h2heatfac,dd,Rdiss
 
     dd = get_Hnuclei(n(:))
@@ -98,7 +98,7 @@ contains
     ncr = ncrn/(ncrd1*yH+ncrd2*yH2)      !1/cm3
     h2heatfac = 1.0d0/(1.0d0+ncr/dd)     !dimensionless
     
-    Rdiss = 5.6d-11*exp(-3.74*Av) 
+    Rdiss = #KROME_RdissH2
 
     !photodissociation H2 heating
     heat_photoAv = 6.4d-13*Rdiss*n(idx_H2)
