@@ -98,15 +98,19 @@ contains
   !function to get the partition function
   ! of H2 at Tgas with a orto-para ratio
   ! equal to opratio
-  function zfop(Tgas,opratio)
+  function zfop(Tgas_in,opratio)
     implicit none
-    real*8::Tgas,zfop,brot,ibTgas
+    real*8::Tgas,zfop,brot,ibTgas,Tgas_in
     real*8::a,b,zo,zp,opratio
     integer::j,jmax,j1
     brot = 85.4d0 !H2 rotational constant in K
     zo = 0d0 !sum for ortho partition function
     zp = 0d0 !sum for para partition function
     jmax = 10 !number of terms in sum
+
+    !avoid low-temperature problems
+    Tgas = max(Tgas_in,1d1)
+    
     ibTgas = brot/Tgas !pre-calc
 
     !loop over levels
@@ -127,10 +131,14 @@ contains
   !get the partition function at Tgas
   ! of a diatom with rotational constant
   ! brot in K
-  function zf(Tgas,brot)
-    real*8::Tgas,zf,brot,z,ibTgas
+  function zf(Tgas_in,brot)
+    real*8::Tgas,zf,brot,z,ibTgas,Tgas_in
     integer::j,jmax
     jmax = 10 !number of levels
+    
+    !avoid low-temperature problems
+    Tgas = max(Tgas_in,1d1)
+
     ibTgas = brot/Tgas !store
     z = 0d0
     !loop on levels
@@ -366,16 +374,18 @@ contains
     !k_CID = collision-induced dissociation + dissociative tunneling
 
     !Collisional dissociation of H2
-    k_CIDm(:,1) = (/-178.4239d0, -68.42243d0, 43.20243d0, -4.633167d0, 69.70086d0, &
-         40870.38d0, -23705.70d0, 128.8953d0, -53.91334d0, 5.313317d0, -19.73427d0, &
-         16780.95d0, -25786.11d0, 14.82123d0, -4.890915d0, 0.4749030d0, -133.8283d0, &
-         -1.164408d0, 0.8227443d0, 0.5864073d0, -2.056313d0/)
+    k_CIDm(:,1) = (/-178.4239d0, -68.42243d0, 43.20243d0, -4.633167d0, &
+         69.70086d0, 40870.38d0, -23705.70d0, 128.8953d0, -53.91334d0, &
+         5.313317d0, -19.73427d0, 16780.95d0, -25786.11d0, 14.82123d0, &
+         -4.890915d0, 0.4749030d0, -133.8283d0, -1.164408d0, 0.8227443d0,&
+         0.5864073d0, -2.056313d0/)
 
     !Dissociative tunneling of H2
-    k_CIDm(:,2) = (/-142.7664d0, 42.70741d0, -2.027365d0, -0.2582097d0, 21.36094d0, &
-         27535.31d0, -21467.79d0, 60.34928d0, -27.43096d0, 2.676150d0, -11.28215d0, &
-         14254.55d0, -23125.20d0, 9.305564d0, -2.464009d0, 0.1985955d0, 743.0600d0, &
-         -1.174242d0, 0.7502286d0, 0.2358848d0, 2.937507d0/)
+    k_CIDm(:,2) = (/-142.7664d0, 42.70741d0, -2.027365d0, -0.2582097d0, &
+         21.36094d0, 27535.31d0, -21467.79d0, 60.34928d0, -27.43096d0, &
+         2.676150d0, -11.28215d0, 14254.55d0, -23125.20d0, 9.305564d0, &
+         -2.464009d0, 0.1985955d0, 743.0600d0, -1.174242d0, 0.7502286d0, &
+         0.2358848d0, 2.937507d0/)
 
     n_H  = get_Hnuclei(n(:))
     logT = log10(Tgas)
@@ -385,16 +395,18 @@ contains
     logTv = (/1.d0, logT, logT2, logT3/)
     k_CID = 0.d0
     do i=1,2
-       logk_h1 = k_CIDm(1,i)*logTv(1) + k_CIDm(2,i)*logTv(2) + k_CIDm(3,i)*logTv(3) &
-            + k_CIDm(4,i)*logTv(4) + k_CIDm(5,i)*log10(1.d0+k_CIDm(6,i)*invT)
+       logk_h1 = k_CIDm(1,i)*logTv(1) + k_CIDm(2,i)*logTv(2) + &
+            k_CIDm(3,i)*logTv(3) + k_CIDm(4,i)*logTv(4) + &
+            k_CIDm(5,i)*log10(1.d0+k_CIDm(6,i)*invT)
        logk_h2 = k_CIDm(7,i)*invT
-       logk_l1 = k_CIDm(8,i)*logTv(1) + k_CIDm(9,i)*logTv(2) + k_CIDm(10,i)*logTv(3) &
-            + k_CIDm(11,i)*log10(1.d0+k_CIDm(12,i)*invT)
+       logk_l1 = k_CIDm(8,i)*logTv(1) + k_CIDm(9,i)*logTv(2) + &
+            k_CIDm(10,i)*logTv(3) + k_CIDm(11,i)*log10(1.d0+k_CIDm(12,i)*invT)
        logk_l2 = k_CIDm(13,i)*invT      
-       logn_c1 = k_CIDm(14,i)*logTv(1) + k_CIDm(15,i)*logTv(2) + k_CIDm(16,i)*logTv(3) &
-            + k_CIDm(17,i)*invT
+       logn_c1 = k_CIDm(14,i)*logTv(1) + k_CIDm(15,i)*logTv(2) &
+            + k_CIDm(16,i)*logTv(3) + k_CIDm(17,i)*invT
        logn_c2 = k_CIDm(18,i) + logn_c1
-       p = k_CIDm(19,i) + k_CIDm(20,i)*exp(-Tgas*1.850d-3) + k_CIDm(21,i)*exp(-Tgas*4.40d-2)
+       p = k_CIDm(19,i) + k_CIDm(20,i)*exp(-Tgas*1.850d-3) &
+            + k_CIDm(21,i)*exp(-Tgas*4.40d-2)
        n_c1 = 1d1**(-logn_c1)
        n_c2 = 1d1**(-logn_c2)
        logk_CID = logk_h1 - (logk_h1 - logk_l1) / (1.d0 + (n_H*n_c1)**p) &
