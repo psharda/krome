@@ -101,6 +101,7 @@ contains
     use krome_cooling
     use krome_heating
     use krome_constants
+    use krome_subs
     implicit none
     real*8::n(neq),pd(neq,neq),t,k(nrea),dn0,dn1,dnn,Tgas
     real*8::krome_gamma,nn(neq),nH2dust
@@ -110,6 +111,7 @@ contains
     npd = neq
     k(:) = coe_tab(n(:))
     pd(:,:) = 0d0
+    krome_gamma = gamma_index(n)
 
 #KROME_JAC_PDX
 
