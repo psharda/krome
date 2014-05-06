@@ -2849,7 +2849,8 @@ class krome():
 			elif(srow == "#KROME_opt_variables"):
 				fout.write(optVariables)
 			elif(srow == "#KROME_user_commons"):
-				fout.write("real*8::"+(",".join(self.commonvars))+"\n")
+				if(len(self.commonvars)>0):
+					fout.write("real*8::"+(",".join(self.commonvars))+"\n")
 			else:
 				if(row[0]!="#"): fout.write(row)
 
@@ -2950,9 +2951,9 @@ class krome():
 						fget += fgetname+" = "+x+"\n"
 						fget += "end function "+fgetname+"\n"
 						funcs += fset + fget
-					row = funcs
-
-				if(row[0]!="#"): fouta.write(row)
+					fouta.write(funcs)
+				else:
+					if(row[0]!="#"): fouta.write(row)
 
 			fouta.close()
 			print "done!"
