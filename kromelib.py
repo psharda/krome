@@ -644,7 +644,6 @@ def parser(name, mass_dic, atoms, thermo_data):
 	#loop over charcters
 	for atm in atoms:
 		a = atm.upper() #capitalize name
-		mymol.atomcount[format_subel(a)] = 0 #count total number of atoms per type
 		if(not(a) in namecp): continue #skip
 		#loop to up to _30 subscript
 		for j in range(30):
@@ -659,7 +658,10 @@ def parser(name, mass_dic, atoms, thermo_data):
 				imult = max(int(mult),1) #evaluate multiplicator (must be >0)
 				mass += mass_dic[a]*imult #compute mass
 				if(a in zdic): zatom += zdic[a]*imult #increase atomic number
-				mymol.atomcount[format_subel(a)] += imult #increase atom count
+				if(format_subel(a) in mymol.atomcount): 
+					mymol.atomcount[format_subel(a)] += imult #increase atom count
+				else:
+					mymol.atomcount[format_subel(a)] = imult #init atom count
 				ename += [format_subel(a)]*imult #exploded name
 				namecp = namecp.replace(subs,"",1) #remove found in name
 				if(namecp==""): break #if nothing more to find break loop

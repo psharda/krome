@@ -1488,6 +1488,7 @@ class krome():
 				
 			if(qeffFound): myrea.qeff = arow[iqeff]
 
+
 			#if(self.useCustomCoe): myrea.krate = "0.d0" #when custom function is used standard coefficient are set to zero
 			#loop over reactants to grep molecules
 			for r in reactants:
@@ -3218,9 +3219,9 @@ class krome():
 			elif(srow == "#KROME_sum_H_nuclei"):
 				hsum = []
 				for x in specs:
-					if(not("H") in x.atomcount): continue
-					if(x.atomcount["H"]==0): continue
-					hmult = ("*"+format_double(x.atomcount["H"]) if x.atomcount["H"]>1 else "")
+					if(not("H" in x.atomcount2)): continue
+					if(x.atomcount2["H"]==0): continue
+					hmult = ("*"+format_double(x.atomcount2["H"]) if x.atomcount2["H"]>1 else "")
 					hsum.append("n("+x.fidx+")"+hmult)
 				if(len(hsum)==0): hsum.append("0.d0")
 				fout.write("nH = "+(" + &\n".join(hsum))+"\n")
