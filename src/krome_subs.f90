@@ -154,11 +154,13 @@ contains
   !get the degrees of freedom at Tgas for
   ! the rotational component of H2 with
   ! an ortho-para ratio of opratio
-  function gamma_rotop(Tgas,opratio)
+  function gamma_rotop(Tgas_in,opratio)
     implicit none
-    real*8::gamma_rotop,Tgas,dT
+    real*8::gamma_rotop,Tgas,dT,Tgas_in
     real*8::idT,dlog1,prot1,dlog2,prot2
     real*8::logp1,opratio
+    
+    Tgas = max(Tgas_in,1d1)
 
     dT = Tgas*1d-5 !dT for derivative
     idT =  1d0/dT !stored for numeric derivative
@@ -181,11 +183,13 @@ contains
   !get the degrees of freedom at Tgas for
   ! the rotational component of a diatom 
   ! with rotational constant brot in K
-  function gamma_rot(Tgas,brot)
+  function gamma_rot(Tgas_in,brot)
     implicit none
-    real*8::gamma_rot,Tgas,dT
+    real*8::gamma_rot,Tgas,dT,Tgas_in
     real*8::idT,dlog1,prot1,dlog2,prot2
     real*8::logp1,brot
+
+    Tgas = max(Tgas_in,1d1)
 
     dT = Tgas*1d-5 !dT for derivative
     idT =  1d0/dT !stored for numeric derivative
