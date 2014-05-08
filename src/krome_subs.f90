@@ -98,9 +98,9 @@ contains
   !function to get the partition function
   ! of H2 at Tgas with a orto-para ratio
   ! equal to opratio
-  function zfop(Tgas_in,opratio)
+  function zfop(Tgas,opratio)
     implicit none
-    real*8::Tgas,zfop,brot,ibTgas,Tgas_in
+    real*8::Tgas,zfop,brot,ibTgas
     real*8::a,b,zo,zp,opratio
     integer::j,jmax,j1
     brot = 85.4d0 !H2 rotational constant in K
@@ -108,9 +108,6 @@ contains
     zp = 0d0 !sum for para partition function
     jmax = 10 !number of terms in sum
 
-    !avoid low-temperature problems
-    Tgas = max(Tgas_in,1d1)
-    
     ibTgas = brot/Tgas !pre-calc
 
     !loop over levels
@@ -131,14 +128,11 @@ contains
   !get the partition function at Tgas
   ! of a diatom with rotational constant
   ! brot in K
-  function zf(Tgas_in,brot)
-    real*8::Tgas,zf,brot,z,ibTgas,Tgas_in
+  function zf(Tgas,brot)
+    real*8::Tgas,zf,brot,z,ibTgas
     integer::j,jmax
     jmax = 10 !number of levels
     
-    !avoid low-temperature problems
-    Tgas = max(Tgas_in,1d1)
-
     ibTgas = brot/Tgas !store
     z = 0d0
     !loop on levels

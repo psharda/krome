@@ -3200,9 +3200,17 @@ class krome():
 					kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
 					fout.write(kstr+"\n")
 			elif(srow == "#KROME_qeff"):
+				#look for the largest qeff value
+				maxqeff = 0e0
 				for x in reacts:
-					sqeff = "\tget_qeff("+str(x.idx)+") = "+str(x.qeff)+" !" + x.verbatim
-					fout.write(sqeff+"\n")
+					maxqeff = max(maxqeff,x.qeff)
+				#if 0e0 is the largest compress the array, else write it explicitely
+				if(maxqeff==0e0):
+					fout.write("get_qeff(:) = 0e0\n")
+				else:
+					for x in reacts:
+						sqeff = "\tget_qeff("+str(x.idx)+") = "+str(x.qeff)+" !" + x.verbatim
+						fout.write(sqeff+"\n")
 			elif(srow == "#KROME_Tshortcuts"):
 				for shortcut in sclist:
 					fout.write(shortcut+"\n")
