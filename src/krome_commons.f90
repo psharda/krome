@@ -40,4 +40,7 @@ module krome_commons
   !mpi rank of process. If 0, ignored
   integer::krome_mpi_rank=0
 
+  !user-defined commons variables from the reaction file
+#KROME_user_commons
+
 end module krome_commons

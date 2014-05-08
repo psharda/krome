@@ -24,7 +24,7 @@ program test_krome
   do jz = 1,size(zs)
 
      !INITIAL CONDITIONS
-     krome_redshift = 0d0    !redshift
+     call krome_set_user_redshift(0d0)
      ntot           = 0.1d0  !total density in 1/cm3
      Tgas           = 3d2    !temperature in kelvin
 

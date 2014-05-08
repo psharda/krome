@@ -71,6 +71,7 @@ class krome():
 	checkMode = "ALL" #conservation check mode (ALL | [CHARGE],[MASS]| NONE)
 	RTOL = 1e-4 #default relative tolerance
 	ATOL = 1e-20 #default absolute tolerance
+	coolingQuench = -1e0 #if coolingQuench is negative cooling quench is not enabled, otherwise this is Tcrit
 	dustArraySize = dustTypesSize = 0
 	maxord = 0
 	dustTypes = []
@@ -80,6 +81,7 @@ class krome():
 	dummy = molec()
 	coevars = dict() #variables in function coe() (krome_subs.f90)
 	coevarsODE = dict() #variables in function fex() (krome_ode.f90)
+	commonvars = [] #list of common variables
 	implicit_arrays = totMetals = ""
 	thermodata = dict() #thermochemistry data (nasa polynomials)
 	parser = filename = ""
@@ -167,6 +169,8 @@ class krome():
 			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI).\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
+		self.parser.add_argument("-coolingQuench", metavar='TCRIT', help="quenches the cooling when T<TCRIT with a tanh \
+		 function.")
 		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line,\
 			e.g. H2 1d-20, see also -ATOL", metavar="filename")
 		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
@@ -838,6 +842,13 @@ class krome():
 			self.use_thermo = True
 
 			print "Reading option -cooling ("+(",".join(myCools))+")"
+
+		#cooling quenching
+		if(args.coolingQuench):
+			self.coolingQuench = format_double(args.coolingQuench)
+			if(self.coolingQuench<0e0):
+				die("ERROR: Tcrit for coolingQuench should be greater than zero!")
+			print "Reading option -coolingQuench ("+str(self.coolingQuench)+")"
 		
 		#determine heating types
 		if(args.heating):
@@ -1284,6 +1295,21 @@ class krome():
 				ivarcoe += 1 #count variables to sort
 				continue #SKIP: a variable line is not a reaction line
 
+		
+			#search for common variables
+			if("@common:" in srow):
+				arow = srow.replace("@common:","").split(",")
+				for x in arow:
+					commonvar = x.strip()
+					if(commonvar.split("_")[0].lower()!="user"):
+						print "ERROR: to avoid conflicts common variables with @common should begin with user_"
+						print " you provided: "+commonvar
+						print " it should be: user_"+commonvar
+						sys.exit()
+					if(commonvar in self.commonvars): continue #skip if already present
+					self.commonvars.append(commonvar) #add to the global array
+				continue #skip: a common is not a reaction line
+
 			#search for ghost species
 			if("@ghost:" in srow):
 				ghost = srow.replace("@ghost:","").strip()
@@ -1301,7 +1327,7 @@ class krome():
 				idxFound = tminFound = tmaxFound = rateFound = qeffFound = False
 				hasFormat = True #format flag
 				srow = srow.replace("@format:","") #remove 
-				print "Found custom format: "+srow
+				#print "Found custom format: "+srow
 				arow = srow.split(",") #split format line
 				#check format (at least 6 elements)
 				if(len(arow)<5):
@@ -1461,6 +1487,7 @@ class krome():
 			if("fsh" in myrea.krate.lower()): fsh_found = True
 				
 			if(qeffFound): myrea.qeff = arow[iqeff]
+
 
 			#if(self.useCustomCoe): myrea.krate = "0.d0" #when custom function is used standard coefficient are set to zero
 			#loop over reactants to grep molecules
@@ -2822,6 +2849,9 @@ class krome():
 				fout.write("real*8::"+(",".join(pheatvars))+"\n")
 			elif(srow == "#KROME_opt_variables"):
 				fout.write(optVariables)
+			elif(srow == "#KROME_user_commons"):
+				if(len(self.commonvars)>0):
+					fout.write("real*8::"+(",".join(self.commonvars))+"\n")
 			else:
 				if(row[0]!="#"): fout.write(row)
 
@@ -2901,8 +2931,30 @@ class krome():
 
 			for row in fh:
 				row = row.replace("#KROME_header", get_licence_header(self.version, self.codename,self.shortHead))
-
-				if(row[0]!="#"): fouta.write(row)
+				if(row.strip()=="#KROME_user_commons_functions"):
+					funcs = ""
+					for x in self.commonvars:
+						fsetname = "krome_set_"+x
+						fset = "\n!*******************\n"
+						fset += "subroutine "+fsetname+"(argset)\n"
+						fset += "use krome_commons\n"
+						fset += "implicit none\n"
+						fset += "real*8::argset\n"
+						fset += x+" = argset\n"
+						fset += "end subroutine "+fsetname+"\n"
+						
+						fgetname = "krome_get_"+x
+						fget = "\n!*******************\n"
+						fget += "function "+fgetname+"()\n"
+						fget += "use krome_commons\n"
+						fget += "implicit none\n"
+						fget += "real*8::"+fgetname+"\n"
+						fget += fgetname+" = "+x+"\n"
+						fget += "end function "+fgetname+"\n"
+						funcs += fset + fget
+					fouta.write(funcs)
+				else:
+					if(row[0]!="#"): fouta.write(row)
 
 			fouta.close()
 			print "done!"
@@ -3100,7 +3152,7 @@ class krome():
 					#prepare function
 					ffname = "get_metallicity"+zg[0]
 					ff = "!*****************************\n"
-					ff = "! get metallicity using "+zg[0]+" as reference\n"
+					ff += "! get metallicity using "+zg[0]+" as reference\n"
 					ff += "function "+ffname+"(n)\n"
 					ff += "use krome_commons\n"
 					ff += "implicit none\n"
@@ -3167,9 +3219,9 @@ class krome():
 			elif(srow == "#KROME_sum_H_nuclei"):
 				hsum = []
 				for x in specs:
-					if(not("H") in x.atomcount): continue
-					if(x.atomcount["H"]==0): continue
-					hmult = ("*"+format_double(x.atomcount["H"]) if x.atomcount["H"]>1 else "")
+					if(not("H" in x.atomcount2)): continue
+					if(x.atomcount2["H"]==0): continue
+					hmult = ("*"+format_double(x.atomcount2["H"]) if x.atomcount2["H"]>1 else "")
 					hsum.append("n("+x.fidx+")"+hmult)
 				if(len(hsum)==0): hsum.append("0.d0")
 				fout.write("nH = "+(" + &\n".join(hsum))+"\n")
@@ -3578,6 +3630,15 @@ class krome():
 				fout.write(srow.replace("#KROME_small",mysmall)+"\n")
 				continue
 
+			#replace quenching function for cooling
+			if("#KROME_coolingQuench" in srow):
+				if(self.coolingQuench<0e0):
+					fout.write(srow.replace("#KROME_coolingQuench","")+"\n")
+				else:
+					qfunc = " * 0.5d0 * (tanh(Tgas - "+format_double(self.coolingQuench)+") + 1d0)"
+					fout.write(srow.replace("#KROME_coolingQuench",qfunc)+"\n")
+				continue
+
 			if(row.strip() == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(row.strip() == "#KROME_escape_vars"):
@@ -3808,6 +3869,39 @@ class krome():
 				row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
 				row = row.replace("#KROME_HChem_terms", HChem) #replace chemical heating terms
 				row = row.replace("#KROME_HChem_dust", HChemDust) #replace chemical heating for dust
+
+				#replace metallicity
+				if("#KROME_photoDustZ" in row):
+					zFound = False
+					for zz in ["Fe","C","O","Si"]:
+						for x in self.specs:
+							if(zz==x.name):
+								zFound = True
+								dustZ = zz
+								break
+						if(zFound): break
+					if(not(zFound)): 
+						row = row.replace("#KROME_photoDustZ","0d0")
+					else:
+						row = row.replace("#KROME_photoDustZ","1d1**get_metallicity"+zz+"(n(:))")
+
+				#replace correct dissociation rate in 
+				if("#KROME_RdissH2" in row):
+					rdh2Found = False
+					for rea in self.reacts:
+						R = sorted([x.name for x in rea.reactants])
+						P = sorted([x.name for x in rea.products])
+						if(R==["H2"] and P==["H","H"]):
+							rateDissH2 = "k("+str(rea.idx)+")"
+							rdh2Found = True
+							break
+					#check if rate photodissiocation rate is present in the network
+					if(not(rdh2Found)): 
+						print "ERROR: if you use PHOTOAV heating you should have"
+						print " H2 photodissiocation rate in your chemical network!"
+						sys.exit()			
+
+					row = row.replace("#KROME_RdissH2",rateDissH2) #replace pragma with H2 photodissociation rate
 		
 				#replace shortcuts for temperature
 				if(row.strip() == "#KROME_Tshortcuts"):
@@ -4467,6 +4561,7 @@ class krome():
 			if(self.buildCompact):
 				indentF90(buildFolder+"krome_all.f90")
 			else:
+				indentF90(buildFolder+"krome_user_commons.f90")
 				indentF90(buildFolder+"krome_commons.f90")
 				indentF90(buildFolder+"krome_constants.f90")
 				indentF90(buildFolder+"krome_cooling.f90")
