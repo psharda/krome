@@ -134,6 +134,42 @@ contains
 
   end subroutine krome_thermo
 
+#IFKROME_use_heating
+  !*************************
+  function krome_get_heating(x,inTgas)
+    use krome_heating
+    use krome_subs
+    use krome_commons
+    implicit none
+    real*8::krome_get_heating,x(nmols),n(nspec)
+    real*8::Tgas,inTgas,k(nrea),nH2dust
+    n(1:nmols) = x(:)
+    Tgas = inTgas
+    n(idx_Tgas) = Tgas
+    k(:) = coe(n(:))
+    nH2dust = 0d0
+    krome_get_heating = heating(n(:),Tgas,k(:),nH2dust)
+  end function krome_get_heating
+
+  !*****************************
+  function krome_get_heating_array(x,inTgas)
+    use krome_heating
+    use krome_subs
+    use krome_commons
+    implicit none
+    real*8::x(:),n(nspec),inTgas,k(nrea)
+    real*8::krome_get_heating_array(7),Tgas,nH2dust
+
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = inTgas
+    k(:) = coe(n(:))
+    Tgas = inTgas
+    nH2dust = 0d0
+    krome_get_heating_array(:) = get_heating_array(n(:),Tgas,k(:),nH2dust)
+
+  end function krome_get_heating_array
+#ENDIFKROME
 
 #IFKROME_use_cooling
   !*************************
@@ -148,6 +184,22 @@ contains
     n(idx_Tgas) = Tgas
     krome_get_cooling = cooling(n,Tgas)
   end function krome_get_cooling
+
+  !*****************************
+  function krome_get_cooling_array(x,inTgas)
+    use krome_cooling
+    use krome_commons
+    implicit none
+    real*8::x(:),n(nspec),inTgas
+    real*8::krome_get_cooling_array(11),Tgas
+
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = inTgas
+    Tgas = inTgas
+    krome_get_cooling_array(:) = get_cooling_array(n(:),Tgas)
+
+  end function krome_get_cooling_array
 
   !******************
   !alias of plot_cool
