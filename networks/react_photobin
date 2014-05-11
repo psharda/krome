@@ -1,0 +1,5 @@
+@format:idx,R,P,P,Tmin,Tmax,rate
+@photo_start
+1,C,C+,E,1.126d+01,2.910d+02,sigma_v96(energy_eV,2.144d+00,5.027d+02,6.216d+01,5.101d+00,9.157d-02,1.133d+00,1.607d+00)
+2,H,H+,E,1.360d+01,5.000d+04,sigma_v96(energy_eV,4.298d-01,5.475d+04,3.288d+01,2.963d+00,0.000d+00,0.000d+00,0.000d+00)
+@photo_stop

@@ -14,7 +14,8 @@
 #
 # Written and developed by Tommaso Grassi
 # tommasograssi@gmail.com,
-# University of Rome \"Sapienza\".
+# Starplan Center, Copenhagen.
+# Niels Bohr Institute, Copenhagen.
 #
 # Co-developer Stefano Bovino
 # sbovino@astro.physik.uni-goettingen.de
@@ -110,12 +111,14 @@ class reaction():
 				myp.append(p.name)
 		self.verbatim = " + ".join(myr)+" -> "+" + ".join(myp)
 	#method: build photochemical rate
-	def build_phrate(self):
-		if(not("krome_kph_auto" in self.krate)): return
+	def build_phrate(self,photoBlock=False):
+		if(not("krome_kph_auto" in self.krate) and not(photoBlock)): return
 		myr = self.reactants
 		self.kphrate = self.krate.replace("krome_kph_auto=","")
-		if(self.krate.strip()=="krome_kph_auto"): self.krate = "krome_kph_"+myr[0].phname
-		else: self.krate = "krome_kph_" + myr[0].phname.capitalize() + "R" + str(self.idx)
+		if(self.krate.strip()=="krome_kph_auto"): 
+			self.krate = "krome_kph_"+myr[0].phname
+		else: 
+			self.krate = "krome_kph_" + myr[0].phname.capitalize() + "R" + str(self.idx)
 	#method: build RHS
 	def build_RHS(self,useNuclearMult=False):
 		if(self.idx<=0):
@@ -1587,7 +1590,8 @@ def get_licence_header(version, codename, short=False):
 	!!
 	!!Written and developed by Tommaso Grassi
 	!!tommasograssi@gmail.com,
-	!!University of Rome \"Sapienza\".
+	!!Starplan Center, Copenhagen.
+	!!Niels Bohr Institute, Copenhagen.
 	!!
 	!!Co-developer Stefano Bovino
   	!!sbovino@astro.physik.uni-goettingen.de
@@ -1626,6 +1630,7 @@ def get_licence_header(version, codename, short=False):
 	datenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 	header = header.replace("#date#",datenow).replace("#version#",version).replace("#codename#",codename)
 	return header.replace("\t","").replace("!!","   ! ")
+
 #################################
 #breaks a string (mystr), in piece
 # of length (sublen), using a 
@@ -1640,6 +1645,7 @@ def trunc(mystr,sublen,sep):
 			z=""
 			s+="\n"
 	return s
+
 #################################
 #Returns the implicit ode loop
 # arguments are number or reactants (nr)
@@ -1679,6 +1685,7 @@ def lbeg(aarg,line):
 	for arg in aarg:
 		if(line[:len(arg)]==arg): return True
 	return False
+
 ###########################
 #this function returns if the string line
 # ends with one of the items in the array 
@@ -1687,6 +1694,7 @@ def lend(aarg,line):
 	for arg in aarg:
 		if(line[len(line)-len(arg):]==arg): return True
 	return False
+
 ###############################
 #this function indent f90 file and remove multiple blank lines
 def indentF90(filename):
@@ -1735,10 +1743,11 @@ def die(msg):
 	import sys
 	print msg
 	sys.exit()
+
 #################################
-#This function returns a random
-# quotation properly formtatted
-def get_quote():
+#This function returns a random quotation properly formtatted
+# if qall=True print all the quotes
+def get_quote(qall=False):
 	import random
 	quotes = [["If you lie to the computer, it will get you.","Perry Farrar"],
 	["Premature optimization is the root of all evil.","Donald Knuth"],
@@ -1748,7 +1757,8 @@ def get_quote():
 	["There are two ways to write error-free programs; only the third one works.","Alan Perlis"],
 	["Software and cathedrals are much the same - first we build them, then we pray.","Sam Redwine"],
 	["Estimate always goes wrong.","Sumit Agrawal"],
-	["Weinberg's Second Law: If builders built buildings the way programmers wrote programs, then the first woodpecker that came along would destroy civilization.","Gerald Weinberg"],
+	["Weinberg's Second Law: If builders built buildings the way programmers wrote programs, then the first woodpecker that came\
+	 along would destroy civilization.","Gerald Weinberg"],
 	["Any sufficiently advanced magic is indistinguishable from a rigged demonstration.",""],
 	["Any given program, when running, is obsolete.",""],
 	["Programming would be so much easier without all the users.",""],
@@ -1756,11 +1766,13 @@ def get_quote():
 	["Testing can only prove the presence of bugs, not their absence.","Edsger W. Dijkstra"],
 	["If debugging is the process of removing bugs, then programming must be the process of putting them in.","Edsger W. Dijkstra"],
 	["God is Real, unless declared Integer.","J. Allan Toogood"],
-	["Curiously enough, the only thing that went through the mind of the bowl of petunias as it fell was Oh no, not again.","The Hitchhiker's Guide to the Galaxy"],
+	["Curiously enough, the only thing that went through the mind of the bowl of petunias as it fell was Oh no, not again.","The\
+	 Hitchhiker's Guide to the Galaxy"],
 	["Computer science differs from physics in that it is not actually a science.","Richard Feynman"],
 	["The purpose of computing is insight, not numbers.","Richard Hamming"],
 	["Computer science is neither mathematics nor electrical engineering.","Alan Perlis"],
-	["I can't be as confident about computer science as I can about biology. Biology easily has 500 years of exciting problems to work on. It's at that level.","Donald Knuth"],
+	["I can't be as confident about computer science as I can about biology. Biology easily has 500 years of exciting problems to work\
+	 on. It's at that level.","Donald Knuth"],
 	["The only legitimate use of a computer is to play games.","Eugene Jarvis"],
 	["UNIX is user-friendly, it just chooses its friends.","Andreas Bogk"],
 	["Quantum mechanic Seth Lloyd says the universe is one giant, hackable computer. Let's hope it's not running Windows.","Kevin Kelly"],
@@ -1768,23 +1780,32 @@ def get_quote():
 	["Computers in the future may weigh no more than 1.5 tons.","Popular Mechanics (1949)"],
 	["Don't trust a computer you can't throw out a window.","Steve Wozniak"],
 	["Computers are like bikinis. They save people a lot of guesswork.","Sam Ewing"],
-	["If the automobile had followed the same development cycle as the computer, a Rolls-Royce would today cost $100, get a million miles per gallon, and explode once a year, killing everyone inside.","Robert X. Cringely"],
-	["Computers are getting smarter all the time. Scientists tell us that soon they will be able to talk to us.  (And by 'they', I mean 'computers'.  I doubt scientists will ever be able to talk to us.)","Dave Barry"],
-	["Most software today is very much like an Egyptian pyramid with millions of bricks piled on top of each other, with no structural integrity, but just done by brute force and thousands of slaves.","Alan Kay"],
-	["No matter how slick the demo is in rehearsal, when you do it in front of a live audience, the probability of a flawless presentation is inversely proportional to the number of people watching, raised to the power of the amount of money involved.","Mark Gibbs"],
+	["If the automobile had followed the same development cycle as the computer, a Rolls-Royce would today cost $100, get a million\
+	 miles per gallon, and explode once a year, killing everyone inside.","Robert X. Cringely"],
+	["Computers are getting smarter all the time. Scientists tell us that soon they will be able to talk to us.  (And by 'they',\
+	 I mean 'computers'.  I doubt scientists will ever be able to talk to us.)","Dave Barry"],
+	["Most software today is very much like an Egyptian pyramid with millions of bricks piled on top of each other, with no structural\
+	 integrity, but just done by brute force and thousands of slaves.","Alan Kay"],
+	["No matter how slick the demo is in rehearsal, when you do it in front of a live audience, the probability of a flawless\
+	 presentation is inversely proportional to the number of people watching, raised to the power of the amount of money involved.",\
+	"Mark Gibbs"],
 	["Controlling complexity is the essence of computer programming.","Brian Kernigan"],
-	["Software suppliers are trying to make their software packages more 'user-friendly'...  Their best approach so far has been to take all the old brochures and stamp the words 'user-friendly' on the cover.","Bill Gates"],
-	["Programmers are in a race with the Universe to create bigger and better idiot-proof programs, while the Universe is trying to create bigger and better idiots.  So far the Universe is winning.","Rich Cook"],
+	["Software suppliers are trying to make their software packages more 'user-friendly'...  Their best approach so far has been to take\
+	 all the old brochures and stamp the words 'user-friendly' on the cover.","Bill Gates"],
+	["Programmers are in a race with the Universe to create bigger and better idiot-proof programs, while the Universe is trying to\
+	 create bigger and better idiots.  So far the Universe is winning.","Rich Cook"],
 	["To iterate is human, to recurse divine.","L. Peter Deutsch"],
 	["Should array indices start at 0 or 1?  My compromise of 0.5 was rejected without, I thought, proper consideration.","Stan Kelly-Bootle"],
 	["Any code of your own that you haven't looked at for six or more months might as well have been written by someone else.","Eagleson's Law"],
 	["All science is either physics or stamp collecting.", "Ernest Rutherford"],
 	["Done is better than perfect.", ""],
 	["Computers are like Old Testament gods; lots of rules and no mercy","Joseph Campbell"],
-	["A computer lets you make more mistakes faster than any other invention with the possible exceptions of handguns and Tequila.","Mitch Ratcliffe"],
+	["A computer lets you make more mistakes faster than any other invention with the possible exceptions of handguns and Tequila.",\
+	 "Mitch Ratcliffe"],
 	["Computer Science is no more about computers than astronomy is about telescopes.","Edsger W. Dijkstra"],
 	["To err is human, but to really foul things up you need a computer.","Paul Ehrlich"],
-	["Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.","Brian W. Kernighan"],
+	["Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are,\
+	 by definition, not smart enough to debug it.","Brian W. Kernighan"],
 	["Always code as if the guy who ends up maintaining your code will be a violent psychopath who knows where you live.","Martin Golding"],
 	["One of my most productive days was throwing away 1000 lines of code.","Ken Thompson "],
 	["And God said, \"Let there be light\" and segmentation fault (core dumped)",""],
@@ -1796,17 +1817,22 @@ def get_quote():
 	["Problems worthy / of attack / prove their worth / by hitting back","Piet Hein"],
 	["Chemistry has been termed by the physicist as the messy part of physics", "Frederick Soddy "]
 	]
-	irand = int(random.random()*(len(quotes)))
-	qtup = quotes[irand]
-	myqt = trunc(qtup[0],40," ").upper().strip()
-	amyqt = myqt.split("\n")
-	lqt = max([len(x) for x in amyqt]) 
+	qrange = 1
 	print 
-	print
-	print "*"*lqt
-	print myqt
-	if(qtup[1].strip()==""): qtup[1] = "Anonymous"
-	print "--- "+qtup[1]
-	print "*"*lqt
-	print
+	if(qall): qrange = len(quotes)
+	for i in range(qrange):
+		irand = int(random.random()*(len(quotes)))
+		if(qall): irand = i
+		qtup = quotes[irand]
+		myqt = trunc(str(irand+1)+". "+qtup[0],40," ").upper().strip()
+		amyqt = myqt.split("\n")
+		lqt = max([len(x) for x in amyqt])
+		print
+		if(i==0): print "*"*lqt
+		print myqt
+		if(qtup[1].strip()==""): qtup[1] = "Anonymous"
+		print "--- "+qtup[1]
+		if(i==qrange-1): 
+			print "*"*lqt
+			print
 

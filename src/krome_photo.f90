@@ -13,6 +13,54 @@ contains
     Jflux = 6.2415d-10 * krome_J21 * (13.6d0/nrg) !6.241d-10eV = 1d-21erg
 #ENDIFKROME
   end function Jflux
+
+  !*********************
+  subroutine krome_init_photoBins()
+    use krome_commons
+    implicit none
+    integer::i,j
+    real*8::energy_eV,kk
+
+    if(krome_photoBinE_mid(krome_nPhotoBins)==0d0) then
+       print *,"ERROR: when using photo bins you must define"
+       print *," the energy interval in bins!"
+    end if
+
+    if(krome_photoBinJ(krome_nPhotoBins)==0d0) then
+       print *,"ERROR: when using photo bins you must define"
+       print *," the intensities in the bins!"
+    end if
+
+    do j=1,nPhotoBins
+       energy_eV = photoBinEmid(j) !energy of the bin in eV
+       do i=1,nPhotoRea
+#KROME_photobin_xsecs
+       end do
+    end do
+
+  end subroutine krome_init_photoBins
+
+  !**********************
+  subroutine krome_calc_photoBins()
+    use krome_commons
+    implicit none
+    integer::i,j
+    real*8::dE,kk,Jval
+
+    do j=1,nPhotoBins
+       dE = photoBinEdelta(j) !energy interval 
+       E = photoBinEmid(j) !energy of the bin in eV
+       Jval = photoBinJ(j)
+       do i=1,nPhotoRea
+          kk = photoBinJTab(i,j)*Jval/E*dE
+          photoBinRates(i) = photoBinRate(i) + kk
+       end do
+    end do
+
+    !convert to 1/s
+    photoBinRates(:) = 4d0*pi*photoBinRates(:)/hplanck_eV
+
+  end subroutine krome_calc_photoBins
   
 
 #IFKROME_usePhIoniz

@@ -14,7 +14,8 @@
 #
 # Written and developed by Tommaso Grassi
 # tommasograssi@gmail.com,
-# University of Rome \"Sapienza\".
+# Starplan Center, Copenhagen.
+# Niels Bohr Institute, Copenhagen.
 #
 # Co-developer Stefano Bovino
 # sbovino@astro.physik.uni-goettingen.de
@@ -72,7 +73,7 @@ class krome():
 	RTOL = 1e-4 #default relative tolerance
 	ATOL = 1e-20 #default absolute tolerance
 	coolingQuench = -1e0 #if coolingQuench is negative cooling quench is not enabled, otherwise this is Tcrit
-	dustArraySize = dustTypesSize = 0
+	dustArraySize = dustTypesSize = photoBins = 0
 	maxord = 0
 	dustTypes = []
 	specs = []
@@ -92,6 +93,7 @@ class krome():
 	jaca = [] #unrolled sparse jacobian
 	customODEs = [] #custom ODEs
 	nrea = 0 #number of reactions
+	nPhotoRea = 0 #number of photoreactions (for photobin array)
 	full_cool = vars_cool = ""
 	coolZ_functions = []
 	coolZ_rates = []
@@ -216,6 +218,7 @@ class krome():
 		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the\
 			default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
 		self.parser.add_argument("-quote", action="store_true", help="print a citation and exit")
+		self.parser.add_argument("-quotelist", action="store_true", help="print all the citations and exit")
 		self.parser.add_argument("-ramses", action="store_true", help="create patches for RAMSES, see also -enzo and -flash")
 		self.parser.add_argument("-ramsesOffset", metavar="offset", help="add an offset to the array of the passive scalar. The\
 			default is 3.")
@@ -229,6 +232,7 @@ class krome():
 			using NASA polynomials.")
 		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g.\
 			-RTOL 1e-5 Default is RTOL=1d-4, see also -ATOL and -customRTOL")
+		self.parser.add_argument("-photoBins", metavar="NBINS", help="define the number of frequency bins for the impinging radiation.")
 		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files")
                 self.parser.add_argument("-shielding", metavar="TYPE", help="use H2 self-shielding, TYPE can be DB96 for Draine+Bertoldi 1996,\
                         WG11 for the more accurate Wolcott+Greene 2011")
@@ -407,7 +411,16 @@ class krome():
 		
 		#get a citation and exit
 		if(args.quote):
+			print "KROME is a quote random generator with some utility for astrochemistry."
+			print "As requested a random citation:"
 			get_quote()
+			sys.exit()
+
+		#get the list of the quotes and exit
+		if(args.quotelist):
+			print "KROME is a quote random generator with some utility for astrochemistry."
+			print "As requested the complete list of the available citations:"
+			get_quote(True)
 			sys.exit()
 
 		#save options into a file
@@ -730,6 +743,13 @@ class krome():
 			self.noExample = True
 			print "Reading option -noExample"
 
+
+		#set the number of photobins
+		if(args.photoBins):
+			self.photoBins = int(args.photoBins)
+			self.usePhIoniz = True
+			if(self.photoBins<0): die("ERRROR: number of frequency bins < 0!")
+			print "Reading option -photoBins (NBINS="+str(self.photoBins)+")"
 
 		#determine Tgas limit operators
 		if(args.Tlimit):
@@ -1123,7 +1143,7 @@ class krome():
 					coef = [float(x) for x in mypoly[:17] if x.strip()!=""]
 					#check the number of coefficients (3temp+14poly)
 					if(len(coef)!=17):
-						print "ERROR: wrong format for NASA polynomials!"
+						print "ERROR: NASA polynomials!"
 						print spec	
 						print srow
 						sys.exit()
@@ -1242,6 +1262,7 @@ class krome():
 		idxs = [] #list of index for already found
 		noTabNextBlock = False #default for blocks of reactions
 		inCRblock = False #block of CR reactions
+		inPhotoBlock = False #block of photo reactions with xsection function
 
 		#read the size of the file in lines (skip blank and comments)
 		# to have a rough idea of the size
@@ -1391,9 +1412,21 @@ class krome():
 				inCRblock = False
 				continue #SKIP (not a reaction)
 
+			#start a photo reaction block
+			if(srow.lower()=="@photo_start" or srow.lower()=="@photo_begin"):
+				inPhotoBlock = True
+				continue #SKIP (not a reaction)
+
+			#start a photo reaction block
+			if(srow.lower()=="@photo_stop" or srow.lower()=="@photo_end"):
+				inPhotoBlock = False
+				continue #SKIP (not a reaction)
+			
+			if(inPhotoBlock): self.nPhotoRea += 1
+
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
 			arow = [x.strip() for x in arow] #strip single elements
-			if(len(arow)!=format_items): 
+			if(len(arow)!=format_items):
 				print "WARNING: wrong format for reaction "+str(rcount+1)
 				print srow
 				a = raw_input("Any key to continue q to quit... ")
@@ -1519,7 +1552,7 @@ class krome():
 			#myrea.reactants = sorted(myrea.reactants, key=lambda r:r.idx) #sort reactants
 			#myrea.products = sorted(myrea.products, key=lambda p:p.idx) #sort products
 			myrea.build_RHS(self.useNuclearMult) #build RHS in F90 format (e.g. k(2)*n(10)*n(8) )
-			myrea.build_phrate() #build photoionization rate
+			myrea.build_phrate(inPhotoBlock) #build photoionization rate
 			myrea.check(self.checkMode) #check mass and charge conservation
 			myrea.group = group #add the group to the reaction
 			myrea.canUseTabs = not(noTabNext) #check if this reaction can use tabs or not
@@ -1854,6 +1887,8 @@ class krome():
 		print "ODEs needed:", len(self.specs)
 		print "Reactions found:", len(self.reacts)
 		print "Species found:", self.nmols
+		if(self.nPhotoRea>0): print "Photo reactions found: ",self.nPhotoRea
+
 
 	########################
 	def uniq(self,a):
@@ -2835,6 +2870,9 @@ class krome():
 					fout.write("\tinteger,parameter::nspec=" + str(len(specs)) + "\n")
 					fout.write("\tinteger,parameter::ndust=" + str(ndust) + "\n")
 					fout.write("\tinteger,parameter::ndustTypes=" + str(self.dustTypesSize) + "\n")
+					fout.write("\tinteger,parameter::nPhotoBins=" + str(self.photoBins) + "\n")
+					fout.write("\tinteger,parameter::nPhotoRea=" + str(self.nPhotoRea) + "\n")
+
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(srow == "#KROME_implicit_arr_r"):
@@ -2852,6 +2890,15 @@ class krome():
 			elif(srow == "#KROME_user_commons"):
 				if(len(self.commonvars)>0):
 					fout.write("real*8::"+(",".join(self.commonvars))+"\n")
+			elif(srow == "#KROME_photobins_array"):
+				if(self.photoBins>0):
+					fout.write("real*8::photoBinJ(nPhotoBins) !intensity per bin, erg/s/sr/Hz/cm2\n")
+					fout.write("real*8::photoBinEleft(nPhotoBins) !left limit of the freq bin, eV\n")
+					fout.write("real*8::photoBinEright(nPhotoBins) !right limit of the freq bin, eV\n")
+					fout.write("real*8::photoBinEmid(nPhotoBins) !middle point of the freq bin, eV\n")
+					fout.write("real*8::photoBinEdelta(nPhotoBins) !size of the freq bin, eV\n")
+					fout.write("real*8::photoBinJTab(nPhotoRea,nPhotoBins) !xsecs table, cm2\n")
+					fout.write("real*8::photoBinRates(nPhotoRea) !photo rates, 1/s\n")
 			else:
 				if(row[0]!="#"): fout.write(row)
 
@@ -3413,10 +3460,24 @@ class krome():
 		#replace photoionization and photoheating functions
 		skip = False
 		for row in fh:
+			srow = row.strip()
 			if(row.strip() == "#IFKROME_usePhIoniz" and not(self.usePhIoniz)): skip = True
 			if(row.strip() == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
+
+			#replace pragma with the initialization of the photorate table in bins
+			if(srow=="#KROME_photobin_xsecs"):
+				phbinx = ""
+				for rea in reacts:
+					if(rea.kphrate==None): continue
+					phbinx += "\n!"+rea.verbatim+"\n"
+					phbinx += "kk = "+rea.kphrate+"\n"
+					phbinx += "if(energy_eV<"+rea.Tmin+") kk = 0d0\n"
+					phbinx += "if(energy_eV>"+rea.Tmax+") kk = 0d0\n"
+					phbinx += "photoBinJTab(i,j) = kk\n"
+				row = phbinx
+
 			#replace krome variables
 			if(self.usePhIoniz):
 				row = row.replace("#KROME_photo_functions", ph_func +"\n")
@@ -4197,11 +4258,11 @@ class krome():
 
 			srow = row.strip()
 
+			if(srow == "#IFKROME_usePhotoBins" and self.photoBins<=0): skip = True
+
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
 
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
 
 			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
@@ -4261,6 +4322,7 @@ class krome():
 				fout.write("\tinteger,parameter::krome_nspec=" + str(len(specs)) + "\n")
 				fout.write("\tinteger,parameter::krome_ndust=" + str(dustArraySize*dustTypesSize) + "\n")
 				fout.write("\tinteger,parameter::krome_ndustTypes=" + str(dustTypesSize) + "\n")
+				fout.write("\tinteger,parameter::krome_nPhotoBins=" + str(self.photoBins) + "\n")
 			elif(srow == "#KROME_scaleZ"):
 				fout.write(("\n".join(scaleZ))+"\n")
 			else:

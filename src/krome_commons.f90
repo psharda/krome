@@ -34,6 +34,9 @@ module krome_commons
 #KROME_photo_variables
 #KROME_photoheating_variables
 
+  !commons for frequency bins
+#KROME_photobins_array
+
   !commons for dust optical properties
 #KROME_opt_variables
 
