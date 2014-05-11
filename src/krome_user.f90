@@ -14,14 +14,26 @@ contains
 #KROME_cooling_functions
 
 #IFKROME_usePhotoBins
+
+  !************************
+  subroutine krome_calc_photobins()
+    use krome_photo
+    call calc_photobins()
+  end subroutine krome_calc_photobins
+
   !****************************
   ! set the energy per photo bin
   ! erg/s/cm2/sr/Hz
   subroutine krome_set_photobinJ(phbin)
     use krome_commons
+    use krome_photo
     implicit none
     real*8::phbin(:)
     photoBinJ(:) = phbin(:)
+    
+    !compute rates
+    call calc_photobins()
+
   end subroutine krome_set_photobinJ
 
   !*************************
@@ -29,12 +41,17 @@ contains
   ! as left-right limits in eV
   subroutine krome_set_photobinE_lr(phbinleft,phbinright)
     use krome_commons
+    use krome_photo
     implicit none
     real*8::phbinleft(:),phbinright(:)
     photoBinEleft(:) = phbinleft(:)
     photoBinEright(:) = phbinright(:)
     photoBinEmid(:) = 0.5d0*(phbinleft(:)+phbinright(:))
     photoBinEdelta(:) = phbinright(:)-phbinleft(:)
+
+    !initialize xsecs table
+    call init_photoBins()
+    
   end subroutine krome_set_photobinE_lr
 
   !********************************
@@ -42,6 +59,7 @@ contains
   ! linearly from lowest and highest energy value
   subroutine krome_set_photobinE_lin(lower,upper)
     use krome_commons
+    use krome_photo
     implicit none
     real*8::lower,upper,dE
     integer::i
@@ -50,8 +68,12 @@ contains
        photoBinEleft(i) = dE*(i-1) + lower
        photoBinEright(i) = dE*i + lower
        photoBinEmid(i) = 0.5d0*(photoBinEleft(i)+photoBinEright(i))
-       photoBinEdelta(:) = phbinright(:)-phbinleft(:)
+       photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
     end do
+
+    !initialize xsecs table
+    call init_photoBins()
+
   end subroutine krome_set_photobinE_lin
 
  !********************************
@@ -59,6 +81,7 @@ contains
   ! logarithmic from lowwst to highest energy value
   subroutine krome_set_photobinE_log(lower,upper)
     use krome_commons
+    use krome_photo
     implicit none
     real*8::lower,upper,dE,logup,loglow
     integer::i
@@ -74,7 +97,11 @@ contains
        photoBinEright(i) = 1d1**(i*(logup-loglow)/nPhotoBins + loglow)
        photoBinEmid(i) = 0.5d0*(photoBinEleft(i)+photoBinEright(i))
     end do
-    photoBinEdelta(:) = phbinright(:)-phbinleft(:)
+    photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
+
+    !initialize xsecs table
+    call init_photoBins()
+
   end subroutine krome_set_photobinE_log
 
   !*********************************
@@ -117,23 +144,47 @@ contains
     krome_get_photoBinE_delta(:) = photoBinEdelta(:)
   end function krome_get_photoBinE_delta
 
+ !*********************************
+  function krome_get_photoBin_rates()
+    !returns an array with the integrated photo rates (1/s)
+    use krome_commons
+    real*8::krome_get_photoBin_rates(nPhotoRea)
+    krome_get_photoBin_rates(:) = photoBinRates(:)
+  end function krome_get_photoBin_rates
+
+ !*********************************
+  function krome_get_photoBin_heats()
+    !returns an array with the integrated photo heatings (erg/s)
+    use krome_commons
+    real*8::krome_get_photoBin_heats(nPhotoRea)
+    krome_get_photoBin_heats(:) = photoBinHeats(:)
+  end function krome_get_photoBin_heats
+
   !**************************
   subroutine krome_set_photoBin_J21lin(lower,upper)
     use krome_commons
+    use krome_photo
     real*8::upper,lower
     
     call krome_set_photoBinE_lin(lower,upper)
     photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:))**1.5 !eV
-    
+
+    !compute rates
+    call calc_photobins()
+
   end subroutine krome_set_photoBin_J21lin
   
   !**************************
   subroutine krome_set_photoBin_J21log(lower,upper)
     use krome_commons
+    use krome_photo
     real*8::upper,lower
     
     call krome_set_photoBinE_log(lower,upper)
     photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:))**1.5 !eV
+
+    !compute rates
+    call calc_photobins()
     
   end subroutine krome_set_photoBin_J21log
 

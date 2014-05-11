@@ -10,6 +10,7 @@ contains
     use krome_cooling
     use krome_heating
     use krome_tabs
+    use krome_photo
 #IFKROME_useDust
     use krome_dust
 #ENDIFKROME
@@ -33,6 +34,8 @@ contains
     Tgas = max(n(idx_Tgas), 2.73d0) !get temperature
     
     k(:) = coe_tab(n(:)) !compute coefficients
+
+#KROME_photobins_compute_thick
 
 #IFKROME_useDust
     vgas = sqrt(kvgas_erg*Tgas)

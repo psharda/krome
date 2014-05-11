@@ -171,21 +171,24 @@ contains
 #IFKROME_useHeatingPhoto
   !**************************
   function photo_heating(n)
+    !photo heating in erg/cm3/s using bin-based
+    ! approach. Terms are computed in the
+    ! krome_photo module
     use krome_commons
     use krome_constants
-    real*8::photo_heating,n(:),n0
-    n0 = 1d99 !density for fake opacity
+    implicit none
+    real*8::photo_heating,n(:)
+
     photo_heating = 0.d0
 #KROME_photo_heating
 
-    photo_heating = photo_heating * eV_to_erg
   end function photo_heating
 #ENDIFKROME
 
 #IFKROME_useHeatingChem
-  !H2 FORMATION HEATING
-  !UNITS = erg/cm3/s
-  !krome build the heating/cooling term according
+  !H2 FORMATION HEATING and other exo/endothermic 
+  ! processes (including H2 on dust) in erg/cm3/s
+  !krome builds the heating/cooling term according
   ! to the chemical network employed
   !*******************************
   function heatingChem(n, Tgas, k, nH2dust)

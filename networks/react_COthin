@@ -440,8 +440,7 @@
 
 #PHOTOREACTIONS THIN WITH Av
 @format:idx,R,P,P,rate
-#PHOTOREACTIONS
-@format:idx,R,P,P,rate
+
 @noTab_start
 
 #integrated with J21*13.6/E flux, up to 200eV
