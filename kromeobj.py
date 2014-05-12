@@ -3529,17 +3529,17 @@ class krome():
 			fout = open(buildFolder+"krome_photo.f90","w")
 
 		#replace photoionization and photoheating functions
-		skip = False
+		skip = skip_heat = False
 		for row in fh:
 			srow = row.strip()
 			if(row.strip() == "#IFKROME_usePhIoniz" and not(self.usePhIoniz)): skip = True
 			if(row.strip() == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True
 			if(row.strip() == "#ENDIFKROME"): skip = False
 
-			if(row.strip() == "#IFKROME_photobin_heat" and not(self.useHeatingPhoto)): skip = True
-			if(row.strip() == "#ENDIFKROME_photobin_heat"): skip = False
+			if(row.strip() == "#IFKROME_photobin_heat" and not(self.useHeatingPhoto)): skip_heat = True
+			if(row.strip() == "#ENDIFKROME_photobin_heat"): skip_heat = False
 
-			if(skip): continue
+			if(skip or skip_heat): continue
 
 			#replace pragma with the initialization of the photorate table in bins
 			if(srow=="#KROME_photobin_xsecs"):
