@@ -102,6 +102,10 @@ class krome():
 	coolZ_nkrates = 0
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
 	Zcools = [] #list of cooling read from file (species name, e.g. C+)
+	anytabvars = [] #variable names for the tables
+	anytabfiles = [] #file name for the tables
+	anytabpaths = [] #paths for the tables
+	anytabsizes = [] #sizes of the tables
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
 	version = "14.03"
@@ -1356,8 +1360,69 @@ class krome():
 						specs.append(mol)
 					mol.idx = spec_names.index(mol.name) + 1
 				continue #SKIP: a ghost line is not a reaction line
-				
 
+			#search for table pragma
+			if("@tabvar:" in srow):
+				atab = srow.replace("@tabvar:","").split("=")
+				if(len(atab)!=2):
+					print "ERROR: wrong format, it should be @tabvar:varname=file,var1,var2"
+					print " You provided: "+srow.strip()
+					sys.exit()
+				aatab = atab[1].split(",")
+				if(len(aatab)!=3):
+					print "ERROR: wrong format, it should be @tabvar:varname=file,var1,var2"
+					print " You provided: "+srow.strip()
+					sys.exit()
+				
+				mytabvar = atab[0].strip()
+				mytabpath = aatab[0].strip().replace("\"","")
+				mytabxxyy = aatab[1]+","+aatab[2]
+				if(mytabvar.split("_")[0].lower()!="user"):
+					print "ERROR: to avoid conflicts common variables with @tabvar should begin with user_"
+					print " you provided: "+mytabvar
+					print " it should be: user_"+mytabvar
+					sys.exit()
+				#check if file exists
+				if(not(file_exists(mytabpath))):
+					print "ERROR: file "+mytabpath+" not found!"
+					print " note that the path must be relative to the ./krome command"
+					sys.exit()
+
+				#read the size of the table from the first line file
+				fhtab = open(mytabpath,"rb")
+				for tabrow in fhtab:
+					stabrow = tabrow.strip()
+					if("," in stabrow): 
+						mytabsize = [xx.strip() for xx in stabrow.split(",")]
+					else:
+						print "ERROR: the file "+mytabpath+" must contain the size of the"
+						print " table in the first line (comma separated, e.g. 50,30)"
+						sys.exit()
+					break
+				fhtab.close()
+
+				#retrieve filename from the path
+				mytabfile = mytabpath.split("/")[-1] #read the last value
+
+				#store the data in the global arrays
+				self.anytabvars.append(mytabvar)
+				self.anytabfiles.append(mytabfile)
+				self.anytabpaths.append(mytabpath)
+				self.anytabsizes.append(mytabsize)
+
+				anytabx = mytabvar+"_anytabx(:)"
+				anytaby = mytabvar+"_anytaby(:)"
+				anytabz = mytabvar+"_anytabz(:,:)"
+				anytabxmul = mytabvar+"_anytabxmul"
+				anytabymul = mytabvar+"_anytabymul"
+				tabf =  "fit_anytab2D("+anytabx+","+anytaby+","+anytabz+","+anytabxmul+","+anytabxmul+","+mytabxxyy+")"
+				self.coevars[mytabvar] = [ivarcoe,tabf]
+				ivarcoe += 1 #count variables to sort
+
+
+				print "Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]"
+				continue #this is not a reaction line
+				
 			#search for format string
 			if("@format:" in srow):
 				idxFound = tminFound = tmaxFound = rateFound = qeffFound = False
@@ -1539,7 +1604,7 @@ class krome():
 				myrea.ifrate = area[0] #store prepending if condition
 				myrea.krate = area[1] #get reaction rate written in F90 style
 			if("fsh" in myrea.krate.lower()): fsh_found = True
-				
+			
 			if(qeffFound): myrea.qeff = arow[iqeff]
 
 
@@ -2914,6 +2979,20 @@ class krome():
 					fout.write("real*8::photoBinRates(nPhotoRea) !photo rates, 1/s\n")
 					fout.write("real*8::photoBinHeats(nPhotoRea) !photo heating, erg/s\n")
 					fout.write("real*8::photoBinEth(nPhotoRea) !energy treshold, eV\n")
+			#write the anytab common variables
+			elif(srow == "#KROME_vars_anytab"):
+				stab = ""
+				for i in range(len(self.anytabvars)):
+					tabvar = self.anytabvars[i]
+					tabfile = self.anytabfiles[i]
+					tabsize = self.anytabsizes[i]
+					stab += "real*8::" + tabvar+"_anytabx("+tabsize[0]+")\n"
+					stab += "real*8::" + tabvar+"_anytaby("+tabsize[1]+")\n"
+					stab += "real*8::" + tabvar+"_anytabz("+tabsize[0]+","+tabsize[1]+")\n"
+					stab += "real*8::" + tabvar+"_anytabxmul\n"
+					stab += "real*8::" + tabvar+"_anytabymul\n"
+					fout.write(stab+"\n")
+
 			else:
 				if(row[0]!="#"): fout.write(row)
 
@@ -3450,17 +3529,17 @@ class krome():
 			fout = open(buildFolder+"krome_photo.f90","w")
 
 		#replace photoionization and photoheating functions
-		skip = False
+		skip = skip_heat = False
 		for row in fh:
 			srow = row.strip()
 			if(row.strip() == "#IFKROME_usePhIoniz" and not(self.usePhIoniz)): skip = True
 			if(row.strip() == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True
 			if(row.strip() == "#ENDIFKROME"): skip = False
 
-			if(row.strip() == "#IFKROME_photobin_heat" and not(self.useHeatingPhoto)): skip = True
-			if(row.strip() == "#ENDIFKROME_photobin_heat"): skip = False
+			if(row.strip() == "#IFKROME_photobin_heat" and not(self.useHeatingPhoto)): skip_heat = True
+			if(row.strip() == "#ENDIFKROME_photobin_heat"): skip_heat = False
 
-			if(skip): continue
+			if(skip or skip_heat): continue
 
 			#replace pragma with the initialization of the photorate table in bins
 			if(srow=="#KROME_photobin_xsecs"):
@@ -3472,14 +3551,14 @@ class krome():
 					phbinx += "if(energy_eV<"+str(rea.Tmin)+") kk = 0d0\n"
 					phbinx += "if(energy_eV>"+str(rea.Tmax)+") kk = 0d0\n"
 					phbinx += "photoBinJTab("+str(rea.idxph)+",j) = kk\n"
-				row = phbinx
+				row = phbinx+"\n"
 			#replace the energy treshold assuming that it is equal to Tmin
 			elif(srow=="#KROME_photobin_Eth"):
 				phbinx = ""
 				for rea in reacts:
 					if(rea.kphrate==None): continue
 					phbinx += "photoBinEth("+str(rea.idxph)+") = "+str(rea.Tmin)+" !"+rea.verbatim+"\n"
-				row = phbinx
+				row = phbinx+"\n"
 			#replace pragma with the opacity calculation as N_i*sigma_i for any species
 			elif(srow=="#KROME_photobin_opacity"):
 				phbintau = ""
@@ -3487,8 +3566,7 @@ class krome():
 					if(rea.kphrate==None): continue
 					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+rea.reactants[0].fidx+") !"\
 						+rea.verbatim+"\n"
-				row = phbintau
-
+				row = phbintau+"\n"
 
 			if(row[0]!="#"): fout.write(row)
 
@@ -3937,7 +4015,8 @@ class krome():
 						CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * Hfact\n\n"
 					row = row.replace("#KROME_heatingCR",CRheat)
 
-				row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
+				if(len(pheatvars)>0):
+					row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
 				row = row.replace("#KROME_HChem_terms", HChem) #replace chemical heating terms
 				row = row.replace("#KROME_HChem_dust", HChemDust) #replace chemical heating for dust
 
@@ -4541,6 +4620,22 @@ class krome():
 							if(x[0]==y.name or x[0]==y.fidx):
 								fout.write("rtol("+y.fidx+") = "+format_double(x[1])+"\n")
 								break
+			#write the anytab initializations
+			elif(srow == "#KROME_init_anytab"):
+				stab = ""
+				for i in range(len(self.anytabvars)):
+					tabvar = self.anytabvars[i]
+					tabfile = self.anytabfiles[i]
+					anytabx = tabvar+"_anytabx(:)"
+					anytaby = tabvar+"_anytaby(:)"
+					anytabz = tabvar+"_anytabz(:,:)"
+					anytabxmul = tabvar+"_anytabxmul"
+					anytabymul = tabvar+"_anytabymul"
+					stab += "call init_anytab2D(\""+tabfile+"\","+anytabx+",&\n"\
+						+anytaby+","+anytabz+",&\n"+anytabxmul+","\
+						+anytabymul+")\n"
+				fout.write(stab+"\n")
+					
 			elif(srow == "#KROME_rwork_array"):
 				fout.write("\treal*8::rwork("+str(self.lrw)+")\n")
 			elif(srow == "#KROME_iwork_array"):
@@ -4586,10 +4681,14 @@ class krome():
 		buildFolder = self.buildFolder
 		test_name = self.test_name
 		#copy other files to build
-		print "- copying optical data for dust..."
 		if(self.useDust):
+			print "- copying optical data for dust..."
 			shutil.copyfile("data/optC.dat", buildFolder+"optC.dat")
 			shutil.copyfile("data/optSi.dat", buildFolder+"optSi.dat")
+
+		print "- copying anytab files..."
+		for i in range(len(self.anytabvars)):
+			shutil.copyfile(self.anytabpaths[i], buildFolder+self.anytabfiles[i])
 
 		#copy static files to build
 		if(self.is_test):

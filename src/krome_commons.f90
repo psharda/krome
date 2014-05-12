@@ -42,4 +42,7 @@ module krome_commons
   !user-defined commons variables from the reaction file
 #KROME_user_commons
 
+  !commons for anytab
+#KROME_vars_anytab
+  
 end module krome_commons

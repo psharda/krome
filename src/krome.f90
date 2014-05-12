@@ -320,6 +320,7 @@ contains
 
   !********************************
   subroutine krome_init()
+    use krome_commons
     use krome_tabs
     use krome_subs
     use krome_reduction
@@ -344,6 +345,8 @@ contains
 #IFKROME_useStars
     call stars_init()
 #ENDIFKROME
+
+#KROME_init_anytab
 
   end subroutine krome_init
 

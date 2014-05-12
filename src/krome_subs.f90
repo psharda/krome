@@ -93,7 +93,7 @@ contains
          exp(-8.5d-4*sqrt(1+x))
 
   end function fselfH2
-  
+
   !**************************
   !function to get the partition function
   ! of H2 at Tgas with a orto-para ratio
@@ -132,7 +132,7 @@ contains
     real*8::Tgas,zf,brot,z,ibTgas
     integer::j,jmax
     jmax = 10 !number of levels
-    
+
     ibTgas = brot/Tgas !store
     z = 0d0
     !loop on levels
@@ -153,7 +153,7 @@ contains
     real*8::gamma_rotop,Tgas,dT,Tgas_in
     real*8::idT,dlog1,prot1,dlog2,prot2
     real*8::logp1,opratio
-    
+
     Tgas = max(Tgas_in,1d1)
 
     dT = Tgas*1d-5 !dT for derivative
@@ -621,5 +621,92 @@ contains
 #KROME_implicit_arrays
 
   end subroutine load_arrays
+
+  !********************************************
+  subroutine init_anytab2D(filename,x,y,z,xmul,ymul)
+    character(len=*)::filename
+    real*8::x(:),y(:),z(:,:),rout(3),xmul,ymul
+    integer::i,j,ios
+
+    !check the size of the X input array
+    if(size(x).ne.size(z,1)) then
+       print *,"ERROR: in init_anytab2D x size differs from z"
+       stop
+    end if
+
+    !check the size of the Y input array
+    if(size(y).ne.size(z,2)) then
+       print *,"ERROR: in init_anytab2D y size differs from z"
+       stop
+    end if
+
+    !open file and check if it exists
+    open(51,file=trim(filename),status="old",iostat=ios)
+    if(ios.ne.0) then
+       print *,"ERROR: in init_anytab2D file ",trim(filename)," not found!"
+       stop
+    end if
+
+    !loop to read file
+    read(51,*) !skip header
+    do i=1,size(x)
+       do j=1,size(y)
+          read(51,*,iostat=ios) rout(:)
+          y(j) = rout(2)
+          z(i,j) = rout(3)
+       end do
+       x(i) = rout(1)
+       read(51,*,iostat=ios) !skip blanks
+       if(ios.ne.0) exit
+    end do
+    close(51)
+
+    xmul = (size(x)-1)/(x(size(x))-x(1))
+    ymul = (size(y)-1)/(y(size(y))-y(1))
+
+  end subroutine init_anytab2D
+
+  !******************************
+  function fit_anytab2D(x,y,z,xmul,ymul,xx,yy)
+    real*8::fit_anytab2D,x(:),y(:),z(:,:),xmul,ymul,xx,yy
+    real*8::zleft(size(x)),zright(size(x)),zl,zr
+    integer::ipos,i1,i2
+
+    ipos = (yy-y(1)) * ymul + 1
+    i1 = min(max(ipos,1),size(y))
+    i2 = min(max(ipos+1,1),size(y))
+    zleft(:) = z(:,i1)
+    zright(:) = z(:,i2)
+
+    zl = fit_anytab1D(x(:),zleft(:),xmul,xx)
+    if(i1==i2) then
+       fit_anytab2D = zl
+       return
+    end if
+    zr = fit_anytab1D(x(:),zright(:),xmul,xx)
+
+    fit_anytab2D = (yy-y(i1))/(y(i2)-y(i1))*(zr-zl)+zl
+
+  end function fit_anytab2D
+
+  !*********************
+  function fit_anytab1D(x,z,xmul,xx)
+    real*8::fit_anytab1D,x(:),z(:),xmul,xx,p
+    integer::ipos,i1,i2
+
+    ipos = (xx-x(1)) * xmul + 1
+    i1 = min(max(ipos,1),size(x))
+    i2 = min(max(ipos+1,1),size(x))
+    if(i1==i2) then
+       fit_anytab1D = z(i1)
+       return
+    end if
+
+    p = (xx-x(i1))/(x(i2)-x(i1))
+
+    fit_anytab1D = p * (z(i2) - z(i1)) + z(i1)
+
+  end function fit_anytab1D
+
 
 end module krome_subs
