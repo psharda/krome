@@ -13,8 +13,8 @@ contains
 
 #KROME_cooling_functions
 
+  
 #IFKROME_usePhotoBins
-
   !************************
   subroutine krome_calc_photobins()
     use krome_photo
