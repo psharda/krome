@@ -6,6 +6,7 @@ contains
     !build the tabs from coefficients
     use krome_commons
     use krome_subs
+    use krome_photo
     integer::i,j,ierror,kwarnup(nrea),kwarndown(nrea),pblock
     real*8::kk(nrea),valmax,n(nspec)
 

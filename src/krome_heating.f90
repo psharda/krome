@@ -3,12 +3,22 @@ contains
 
 #KROME_header
 
+  !************************
+  function heating(n,Tgas,k,nH2dust)
+    implicit none
+    real*8::n(:), Tgas, k(:), nH2dust
+    real*8::heating
+    
+    heating = sum(get_heating_array(n(:),Tgas,k(:), nH2dust))
+    
+  end function heating
+
   !*******************************
-  function heating(n, Tgas, k, nH2dust)
+  function get_heating_array(n, Tgas, k, nH2dust)
     use krome_commons
     implicit none
     real*8::n(:), Tgas, k(:), nH2dust
-    real*8::heating,heats(7)
+    real*8::get_heating_array(7),heats(7)
     !returns heating in erg/cm3/s
 
     heats(:) = 0.d0
@@ -41,7 +51,7 @@ contains
     heats(7) = heat_photoDust(n(:),Tgas)
 #ENDIFKROME
     
-    heating = sum(heats)
+    get_heating_array(:) = heats(:)
 
     !remove the comment below to write heating terms to fort.55
     !write(55,'(99E17.8e3)') sum(n(1:nmols)),Tgas,heats(:)
@@ -52,7 +62,7 @@ contains
     ! '' u m:5 every n w l t "photo",\
     ! '' u m:6 every n w l t "enthalpy"
 
-  end function heating
+  end function get_heating_array
 
 #IFKROME_useHeatingPhotoDust
   !***************************
@@ -161,21 +171,24 @@ contains
 #IFKROME_useHeatingPhoto
   !**************************
   function photo_heating(n)
+    !photo heating in erg/cm3/s using bin-based
+    ! approach. Terms are computed in the
+    ! krome_photo module
     use krome_commons
     use krome_constants
-    real*8::photo_heating,n(:),n0
-    n0 = 1d99 !density for fake opacity
+    implicit none
+    real*8::photo_heating,n(:)
+
     photo_heating = 0.d0
 #KROME_photo_heating
 
-    photo_heating = photo_heating * eV_to_erg
   end function photo_heating
 #ENDIFKROME
 
 #IFKROME_useHeatingChem
-  !H2 FORMATION HEATING
-  !UNITS = erg/cm3/s
-  !krome build the heating/cooling term according
+  !H2 FORMATION HEATING and other exo/endothermic 
+  ! processes (including H2 on dust) in erg/cm3/s
+  !krome builds the heating/cooling term according
   ! to the chemical network employed
   !*******************************
   function heatingChem(n, Tgas, k, nH2dust)
