@@ -4017,8 +4017,8 @@ class krome():
 
 				if(len(pheatvars)>0):
 					row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
-					row = row.replace("#KROME_HChem_terms", HChem) #replace chemical heating terms
-					row = row.replace("#KROME_HChem_dust", HChemDust) #replace chemical heating for dust
+				row = row.replace("#KROME_HChem_terms", HChem) #replace chemical heating terms
+				row = row.replace("#KROME_HChem_dust", HChemDust) #replace chemical heating for dust
 
 				#replace metallicity
 				if("#KROME_photoDustZ" in row):
