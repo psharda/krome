@@ -17,11 +17,12 @@
 @ghost:H2
 @ghost:He
 
-#TEST ANYTAB
+#TEST ANYTAB and XRAY
+@XRAY_start
 @tabvar:user_xflux="data/xray.dat",log10(n(idx_H)),log10(n(idx_He)/n(idx_H))
 @format:idx,R,P,P,Tmin,Tmax,rate
 7,H,H+,E,NONE,NONE,1d1**user_xflux
-
+@XRAY_stop
 
 @CR_start
 @common:user_crate

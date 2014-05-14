@@ -53,7 +53,7 @@ class krome():
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
-	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = False
+	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useXRay = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
@@ -888,7 +888,7 @@ class krome():
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
 			myHeat = [x.strip() for x in myHeat]
-			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST"]
+			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","XRAY"]
 			for hea in myHeat:
 				if(not(hea in allHeats)):
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
@@ -900,6 +900,7 @@ class krome():
 			if("CR" in myHeat): self.useHeatingCR = True
 			if("PHOTOAV" in myHeat): self.useHeatingPhotoAv = True
 			if("PHOTODUST" in myHeat): self.useHeatingPhotoDust = True
+			if("XRAY" in myHeat): self.useXRay = True
 
 			self.use_thermo = True
 			if(self.photoBins<=0 and self.useHeatingPhoto):
@@ -1279,6 +1280,7 @@ class krome():
 		noTabNextBlock = False #default for blocks of reactions
 		inCRblock = False #block of CR reactions
 		inPhotoBlock = False #block of photo reactions with xsection function
+		inXRayBlock = False #block of xray reactions
 		noTabBlockStored = noTabNextBlock #store the noTabNextBlock array before inPhotoBlock to restore it
 
 		#read the size of the file in lines (skip blank and comments)
@@ -1508,6 +1510,19 @@ class krome():
 				inPhotoBlock = False
 				noTabNext = noTabNextBlock = noTabBlockStored #restore the noTabNextBlock value before entering inPhotoBlock
 				continue #SKIP (not a reaction)
+
+			#start an XRAY reaction block
+			if(srow.lower()=="@xray_start" or srow.lower()=="@xray_begin"):
+				inXRayBlock = True
+				noTabBlockStored = noTabNextBlock
+				noTabNext = noTabNextBlock = True
+				continue #SKIP (not a reaction)
+
+			#start an XRAY reaction block
+			if(srow.lower()=="@xray_stop" or srow.lower()=="@xray_end"):
+				inXRayBlock = False
+				noTabNext = noTabNextBlock = noTabBlockStored #restore the noTabNextBlock value before entering inXRayBlock
+				continue #SKIP (not a reaction)
 			
 
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
@@ -1633,6 +1648,7 @@ class krome():
 					mol.idx = spec_names.index(mol.name) + 1
 					myrea.products.append(mol) #add molecule object to products
 
+			#increases the index of the photoreaction
 			if(inPhotoBlock):
 				self.nPhotoRea += 1
 				myrea.idxph = self.nPhotoRea
@@ -1650,8 +1666,9 @@ class krome():
 				print " "+myrea.verbatim
 				print " rate = "+myrea.krate
 				sys.exit()
-			myrea.isCR = inCRblock #is a CR reaction
 
+			myrea.isCR = inCRblock #is a CR reaction
+			myrea.isXRay = inXRayBlock #is an XRAY reaction
 
 			#skip duplicated reactions if requested
 			skip_append = False
@@ -3988,6 +4005,9 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingPhotoDust" and not(self.useHeatingPhotoDust)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
+				if(row.strip() == "#IFKROME_useHeatingXRay" and not(self.useXRay)): skip = True
+				if(row.strip() == "#ENDIFKROME"): skip = False
+
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
 				if(row.strip() == "#IFKROME_useHeatingChem" and skipBool): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
@@ -4035,7 +4055,7 @@ class krome():
 					else:
 						row = row.replace("#KROME_photoDustZ","1d1**get_metallicity"+zz+"(n(:))")
 
-				#replace correct dissociation rate in 
+				#replace correct dissociation rates
 				if("#KROME_RdissH2" in row):
 					rdh2Found = False
 					for rea in self.reacts:
@@ -4052,6 +4072,15 @@ class krome():
 						sys.exit()			
 
 					row = row.replace("#KROME_RdissH2",rateDissH2) #replace pragma with H2 photodissociation rate
+
+				#replace xray heating
+				if("#KROME_xray_rates" in row):
+					xrayrates = ""
+					for rea in self.reacts:
+						if(rea.isXRay):
+							xrayrates += "!"+rea.verbatim+"\n"
+							xrayrates += "heat_XRay = heat_XRay + k("+str(rea.idx)+")\n\n"
+					row = xrayrates+"\n"
 		
 				#replace shortcuts for temperature
 				if(row.strip() == "#KROME_Tshortcuts"):

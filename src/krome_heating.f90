@@ -18,7 +18,7 @@ contains
     use krome_commons
     implicit none
     real*8::n(:), Tgas, k(:), nH2dust
-    real*8::get_heating_array(7),heats(7)
+    real*8::get_heating_array(8),heats(8)
     !returns heating in erg/cm3/s
 
     heats(:) = 0.d0
@@ -50,6 +50,10 @@ contains
 #IFKROME_useHeatingPhotoDust
     heats(7) = heat_photoDust(n(:),Tgas)
 #ENDIFKROME
+
+#IFKROME_useHeatingXRay
+    heats(8) = heat_XRay(n(:),Tgas,k(:))
+#ENDIFKROME
     
     get_heating_array(:) = heats(:)
 
@@ -63,6 +67,20 @@ contains
     ! '' u m:6 every n w l t "enthalpy"
 
   end function get_heating_array
+
+#IFKROME_useHeatingXRay
+  !*************************
+  !heating from xrays in erg/s/cm3
+  function heat_XRay(n,Tgas,k)
+    use krome_commons
+    implicit none
+    real*8::n(:),Tgas,heat_Xray,k(:)
+
+    heat_Xray = 0d0
+#KROME_xray_rates
+
+  end function heat_XRay
+#ENDIFKROME
 
 #IFKROME_useHeatingPhotoDust
   !***************************

@@ -335,7 +335,7 @@ contains
     use krome_commons
     implicit none
     real*8::x(:),n(nspec),inTgas,k(nrea)
-    real*8::krome_get_heating_array(7),Tgas,nH2dust
+    real*8::krome_get_heating_array(8),Tgas,nH2dust
 
     n(:) = 0d0
     n(1:nmols) = x(:)
