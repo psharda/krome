@@ -15,13 +15,14 @@
 #@photo_stop
 
 @ghost:H2
-@ghost:He
+#@ghost:He
 
 #TEST ANYTAB and XRAY
 @XRAY_start
-@tabvar:user_xflux="data/xray.dat",log10(n(idx_H)),log10(n(idx_He)/n(idx_H))
+#@tabvar:user_xray=data/ratexH.dat,n(idx_H),n(idx_He)
 @format:idx,R,P,P,Tmin,Tmax,rate
-7,H,H+,E,NONE,NONE,1d1**user_xflux
+7,H,H+,E,NONE,NONE,auto
+8,He,He+,E,NONE,NONE,auto
 @XRAY_stop
 
 @CR_start

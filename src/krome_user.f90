@@ -167,7 +167,7 @@ contains
     real*8::upper,lower
     
     call krome_set_photoBinE_lin(lower,upper)
-    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:))**1.5 !eV
+    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV
 
     !compute rates
     call calc_photobins()
@@ -181,7 +181,7 @@ contains
     real*8::upper,lower
     
     call krome_set_photoBinE_log(lower,upper)
-    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:))**1.5 !eV
+    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV
 
     !compute rates
     call calc_photobins()

@@ -249,6 +249,54 @@ class reaction():
 		if(ndif!=0): kk ="0.d0"  #" * (1.3806488d-2 * Tgas)**("+str(ndif)+")"
 		return kk
 
+#################################
+#create tabvar (probably not the best interface ever)
+def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpaths,anytabsizes,coevars,ivarcoe):
+	if(mytabvar.split("_")[0].lower()!="user"):
+		print "ERROR: to avoid conflicts common variables with @tabvar should begin with user_"
+		print " you provided: "+mytabvar
+		print " it should be: user_"+mytabvar
+		sys.exit()
+	#check if file exists
+	if(not(file_exists(mytabpath))):
+		print "ERROR: file "+mytabpath+" not found!"
+		print " note that the path must be relative to the ./krome command"
+		sys.exit()
+
+	#read the size of the table from the first line file
+	fhtab = open(mytabpath,"rb")
+	for tabrow in fhtab:
+		stabrow = tabrow.strip()
+		if("," in stabrow): 
+			mytabsize = [xx.strip() for xx in stabrow.split(",")]
+		else:
+			print "ERROR: the file "+mytabpath+" must contain the size of the"
+			print " table in the first line (comma separated, e.g. 50,30)"
+			sys.exit()
+		break
+	fhtab.close()
+
+	#retrieve filename from the path
+	mytabfile = mytabpath.split("/")[-1] #read the last value
+
+	#store the data in the global arrays
+	anytabvars.append(mytabvar)
+	anytabfiles.append(mytabfile)
+	anytabpaths.append(mytabpath)
+	anytabsizes.append(mytabsize)
+
+
+	anytabx = mytabvar+"_anytabx(:)"
+	anytaby = mytabvar+"_anytaby(:)"
+	anytabz = mytabvar+"_anytabz(:,:)"
+	anytabxmul = mytabvar+"_anytabxmul"
+	anytabymul = mytabvar+"_anytabymul"
+	tabf =  "fit_anytab2D("+anytabx+", &\n"+anytaby+", &\n"+anytabz+", &\n"+anytabxmul+", &\n"+anytabymul+", &\n"+mytabxxyy+")"
+	coevars[mytabvar] = [ivarcoe,tabf]
+	ivarcoe += 1 #count variables to sort
+
+	print "Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]"
+
 ####################################
 #solar metallicities
 def get_solar_abundances():

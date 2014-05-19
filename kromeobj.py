@@ -53,7 +53,7 @@ class krome():
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
-	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useXRay = False
+	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
@@ -900,7 +900,7 @@ class krome():
 			if("CR" in myHeat): self.useHeatingCR = True
 			if("PHOTOAV" in myHeat): self.useHeatingPhotoAv = True
 			if("PHOTODUST" in myHeat): self.useHeatingPhotoDust = True
-			if("XRAY" in myHeat): self.useXRay = True
+			if("XRAY" in myHeat): self.useHeatingXRay = True
 
 			self.use_thermo = True
 			if(self.photoBins<=0 and self.useHeatingPhoto):
@@ -1379,50 +1379,9 @@ class krome():
 				mytabvar = atab[0].strip()
 				mytabpath = aatab[0].strip().replace("\"","")
 				mytabxxyy = aatab[1]+","+aatab[2]
-				if(mytabvar.split("_")[0].lower()!="user"):
-					print "ERROR: to avoid conflicts common variables with @tabvar should begin with user_"
-					print " you provided: "+mytabvar
-					print " it should be: user_"+mytabvar
-					sys.exit()
-				#check if file exists
-				if(not(file_exists(mytabpath))):
-					print "ERROR: file "+mytabpath+" not found!"
-					print " note that the path must be relative to the ./krome command"
-					sys.exit()
-
-				#read the size of the table from the first line file
-				fhtab = open(mytabpath,"rb")
-				for tabrow in fhtab:
-					stabrow = tabrow.strip()
-					if("," in stabrow): 
-						mytabsize = [xx.strip() for xx in stabrow.split(",")]
-					else:
-						print "ERROR: the file "+mytabpath+" must contain the size of the"
-						print " table in the first line (comma separated, e.g. 50,30)"
-						sys.exit()
-					break
-				fhtab.close()
-
-				#retrieve filename from the path
-				mytabfile = mytabpath.split("/")[-1] #read the last value
-
-				#store the data in the global arrays
-				self.anytabvars.append(mytabvar)
-				self.anytabfiles.append(mytabfile)
-				self.anytabpaths.append(mytabpath)
-				self.anytabsizes.append(mytabsize)
-
-				anytabx = mytabvar+"_anytabx(:)"
-				anytaby = mytabvar+"_anytaby(:)"
-				anytabz = mytabvar+"_anytabz(:,:)"
-				anytabxmul = mytabvar+"_anytabxmul"
-				anytabymul = mytabvar+"_anytabymul"
-				tabf =  "fit_anytab2D("+anytabx+","+anytaby+","+anytabz+","+anytabxmul+","+anytabxmul+","+mytabxxyy+")"
-				self.coevars[mytabvar] = [ivarcoe,tabf]
-				ivarcoe += 1 #count variables to sort
-
-
-				print "Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]"
+				#updates anytab arrays
+				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
+					self.anytabsizes,self.coevars,ivarcoe)
 				continue #this is not a reaction line
 				
 			#search for format string
@@ -1709,6 +1668,76 @@ class krome():
 			die("ERROR: no valid reactions found in file \""+filename+"\"")
 		if(unmatch_idx):
 			print "WARNING: index in \""+filename+"\" are not sequential!"
+
+		#prepares xray rates including self-shielding and secondary process
+		xrayHFound = xrayHeFound = False
+		for x in reacts:
+			if(not(x.isXRay)): continue
+			if(not("auto" in x.krate)): continue
+			ivarcoe = len(self.coevars)
+			fake_ivarcoe = 0
+			fake_coevars = dict()
+			#updates anytab arrays
+			if(x.reactants[0].name=="H"):
+				mytabvar = "user_xray_H"
+				mytabpath = "data/ratexH.dat"
+				mytabxxyy = "log10(n(idx_H)),log10(n(idx_He)/n(idx_H))"
+				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
+					self.anytabsizes,self.coevars,ivarcoe)
+				xrayHFound = True
+				x.krate = "1d1**"+mytabvar
+				print "H xray ionization found!"
+
+				#heating tabs H
+				mytabvar = "user_xheat_H"
+				mytabpath = "data/heatxH.dat"
+				mytabxxyy = "log10(n(idx_H)),log10(n(idx_He)/n(idx_H))"
+				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
+					self.anytabsizes,fake_coevars,fake_ivarcoe)
+
+			elif(x.reactants[0].name.lower()=="he"):
+				mytabvar = "user_xray_He"
+				mytabpath = "data/ratexHe.dat"
+				mytabxxyy = "log10(n(idx_H)),log10(n(idx_He)/n(idx_H))"
+				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
+					self.anytabsizes,self.coevars,ivarcoe)
+				x.krate = "1d1**"+mytabvar
+				xrayHeFound = True
+				print "He xray ionization found!"
+
+				#heating tabs He
+				mytabvar = "user_xheat_He"
+				mytabpath = "data/heatxHe.dat"
+				mytabxxyy = "log10(n(idx_H)),log10(n(idx_He)/n(idx_H))"
+				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
+					self.anytabsizes,fake_coevars,fake_ivarcoe)
+
+			else:
+				print "ERROR: xray reaction not tabulated!"
+				print " "+x.verbatim
+				print " remove it from the chemical network or provide non-automatic rate."
+				print " Note that you should also provide the heating tab if needed."
+				sys.exit()
+
+		#check if both (H and He) xray reactions are found, since tables are H and He dependant
+		if(xrayHeFound!=xrayHFound):
+			print "ERROR: for xrays you must include both H and He reaction in your reaction files, e.g.:"
+			print " @format:idx,R,P,P,Tmin,Tmax,rate"
+			print " 7,H,H+,E,NONE,NONE,auto"
+			print " 8,He,He+,E,NONE,NONE,auto"
+			print " where indexes are arbitrary"
+			sys.exit()
+
+		#check if both (H and He) xray reactions are found, when xray heating is enabled
+		if((not(xrayHeFound) and not(xrayHFound)) and self.useHeatingXRay):
+			print "ERROR: with XRAY heating option you must include both H and He reaction"
+			print " in your reaction files, e.g.:"
+			print " @format:idx,R,P,P,Tmin,Tmax,rate"
+			print " 7,H,H+,E,NONE,NONE,auto"
+			print " 8,He,He+,E,NONE,NONE,auto"
+			print " where indexes are arbitrary"
+			sys.exit()
+
 
 		#count reactions with unique index
 		idxs = []
@@ -3008,7 +3037,7 @@ class krome():
 					stab += "real*8::" + tabvar+"_anytabz("+tabsize[0]+","+tabsize[1]+")\n"
 					stab += "real*8::" + tabvar+"_anytabxmul\n"
 					stab += "real*8::" + tabvar+"_anytabymul\n"
-					fout.write(stab+"\n")
+				fout.write(stab+"\n")
 
 			else:
 				if(row[0]!="#"): fout.write(row)
@@ -3257,7 +3286,6 @@ class krome():
 			consE += ", 1d-40)"
 			krome_conserve += "\n!********** E **********\n"
 			krome_conserve += consE + "\n"
-		
 
 		#loop on src file and replace pragmas
 		skip = False
@@ -3286,6 +3314,8 @@ class krome():
 
 			#write reaction rates in coe function
 			if(srow == "#KROME_krates"):
+				
+
 				for x in reacts:
 					#build temperature limit IF
 					sTlimit = ""
@@ -4005,7 +4035,7 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingPhotoDust" and not(self.useHeatingPhotoDust)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
-				if(row.strip() == "#IFKROME_useHeatingXRay" and not(self.useXRay)): skip = True
+				if(row.strip() == "#IFKROME_useHeatingXRay" and not(self.useHeatingXRay)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
@@ -4073,15 +4103,6 @@ class krome():
 
 					row = row.replace("#KROME_RdissH2",rateDissH2) #replace pragma with H2 photodissociation rate
 
-				#replace xray heating
-				if("#KROME_xray_rates" in row):
-					xrayrates = ""
-					for rea in self.reacts:
-						if(rea.isXRay):
-							xrayrates += "!"+rea.verbatim+"\n"
-							xrayrates += "heat_XRay = heat_XRay + k("+str(rea.idx)+")\n\n"
-					row = xrayrates+"\n"
-		
 				#replace shortcuts for temperature
 				if(row.strip() == "#KROME_Tshortcuts"):
 					ssc = ""
