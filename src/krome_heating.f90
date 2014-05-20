@@ -18,7 +18,7 @@ contains
     use krome_commons
     implicit none
     real*8::n(:), Tgas, k(:), nH2dust
-    real*8::get_heating_array(7),heats(7)
+    real*8::get_heating_array(8),heats(8)
     !returns heating in erg/cm3/s
 
     heats(:) = 0.d0
@@ -50,6 +50,10 @@ contains
 #IFKROME_useHeatingPhotoDust
     heats(7) = heat_photoDust(n(:),Tgas)
 #ENDIFKROME
+
+#IFKROME_useHeatingXRay
+    heats(8) = heat_XRay(n(:),Tgas,k(:))
+#ENDIFKROME
     
     get_heating_array(:) = heats(:)
 
@@ -63,6 +67,41 @@ contains
     ! '' u m:6 every n w l t "enthalpy"
 
   end function get_heating_array
+
+#IFKROME_useHeatingXRay
+  !*************************
+  !heating from xrays in erg/s/cm3
+  function heat_XRay(n,Tgas,k)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::n(:),Tgas,heat_Xray,k(:),xe,ntot
+    real*8::xheat_H,xheat_He,logH,logHe
+
+    ntot = get_Hnuclei(n(:))
+    xe = min(n(idx_e)/ntot,1d0)
+
+    logH = log10(n(idx_H)+1d-40)
+    logHe = log10(n(idx_He)+1d-40)
+
+    heat_Xray = 0d0
+    xheat_H = fit_anytab2D(user_xheat_H_anytabx(:), &
+         user_xheat_H_anytaby(:), &
+         user_xheat_H_anytabz(:,:), &
+         user_xheat_H_anytabxmul, &
+         user_xheat_H_anytabxmul, &
+         logH,logHe-logH)
+    xheat_He = fit_anytab2D(user_xheat_He_anytabx(:), &
+         user_xheat_He_anytaby(:), &
+         user_xheat_He_anytabz(:,:), &
+         user_xheat_He_anytabxmul, &
+         user_xheat_He_anytabxmul, &
+         logH,logHe-logH)
+    heat_Xray = n(idx_H)*xheat_H + n(idx_He) * xheat_He
+    heat_Xray = heat_Xray * .9971d0 * (1d0-(1d0*xe**.2663)**1.3163)
+
+  end function heat_XRay
+#ENDIFKROME
 
 #IFKROME_useHeatingPhotoDust
   !***************************

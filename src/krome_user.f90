@@ -167,7 +167,7 @@ contains
     real*8::upper,lower
     
     call krome_set_photoBinE_lin(lower,upper)
-    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:))**1.5 !eV
+    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV
 
     !compute rates
     call calc_photobins()
@@ -181,7 +181,7 @@ contains
     real*8::upper,lower
     
     call krome_set_photoBinE_log(lower,upper)
-    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:))**1.5 !eV
+    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV
 
     !compute rates
     call calc_photobins()
@@ -335,7 +335,7 @@ contains
     use krome_commons
     implicit none
     real*8::x(:),n(nspec),inTgas,k(nrea)
-    real*8::krome_get_heating_array(7),Tgas,nH2dust
+    real*8::krome_get_heating_array(8),Tgas,nH2dust
 
     n(:) = 0d0
     n(1:nmols) = x(:)
