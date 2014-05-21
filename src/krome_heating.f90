@@ -97,7 +97,7 @@ contains
          user_xheat_He_anytabxmul, &
          user_xheat_He_anytabxmul, &
          logH,logHe-logH)
-    heat_Xray = n(idx_H)*xheat_H + n(idx_He) * xheat_He
+    heat_Xray = n(idx_H)*1d1**xheat_H + n(idx_He) * 1d1**xheat_He
     heat_Xray = heat_Xray * .9971d0 * (1d0-(1d0*xe**.2663)**1.3163)
 
   end function heat_XRay
