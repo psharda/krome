@@ -45,7 +45,7 @@ contains
 
   end function coe
 
-#KROME_metallicity_functions  
+#KROME_metallicity_functions
 
   !*********************
   function conserve(n,ni)

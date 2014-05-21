@@ -197,6 +197,49 @@ contains
 
   end subroutine krome
 
+  !*********************************
+  subroutine krome_equilibrium(x,Tgas)
+    use krome_commons
+    implicit none
+    integer,parameter::nmax=100 !problem size
+    integer,parameter::liwk=nmax+50 !size integer workspace
+    integer,parameter::lrwk=(nmax+13)*nmax+60 !real workspace
+    real*8::n(nspec),x(:),xscal(nspec),rtol,rwk(lrwk),Tgas
+    integer::ierr,iwk(liwk),iopt(50),neq
+    ierr = 0
+    iopt(:) = 0
+    iopt(31) = 2
+    neq = nspec
+    xscal(:) = 0d0
+    rwk(:) = 0d0
+    iwk(:) = 0
+    iwk(31) = int(1e5)
+    rtol = 1d-6
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
+    call nleq1(neq,fcn_tconst,jcn_dummy,n(:),xscal(:),rtol,iopt(:),ierr,&
+         liwk,iwk(:),lrwk,rwk(:))
+    
+  end subroutine krome_equilibrium
+
+  !**************************
+  subroutine jcn_dummy()
+
+  end subroutine jcn_dummy
+
+  !*******************
+  subroutine fcn_tconst(n,x,f,ierr)
+    use krome_commons
+    use krome_ode
+    implicit none
+    integer::n,ierr
+    real*8::x(n),f(n),tt
+    tt = 0d0
+    call fex(n,tt,x(:),f(:))
+    f(idx_Tgas) = 0d0
+  end subroutine fcn_tconst
+
   !*******************************
   subroutine krome_dump(n,rwork,iwork,ni)
     use krome_commons
