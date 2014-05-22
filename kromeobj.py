@@ -54,7 +54,7 @@ class krome():
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = False
-	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = False
+	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = False
@@ -1473,6 +1473,7 @@ class krome():
 			#start an XRAY reaction block
 			if(srow.lower()=="@xray_start" or srow.lower()=="@xray_begin"):
 				inXRayBlock = True
+				self.useXRay = True
 				noTabBlockStored = noTabNextBlock
 				noTabNext = noTabNextBlock = True
 				continue #SKIP (not a reaction)
@@ -1681,34 +1682,34 @@ class krome():
 			if(x.reactants[0].name=="H"):
 				mytabvar = "user_xray_H"
 				mytabpath = "data/ratexH.dat"
-				mytabxxyy = "log10(n(idx_H)),log10(n(idx_He)/n(idx_H))"
+				mytabxxyy = "logH,logHe-logH"
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
 					self.anytabsizes,self.coevars,ivarcoe)
 				xrayHFound = True
-				x.krate = "1d1**"+mytabvar
+				x.krate = "ratexH * (1d0+phiH) + n(idx_He)/(n(idx_H)+1d-40) * ratexHe * phiH"
 				print "H xray ionization found!"
 
 				#heating tabs H
 				mytabvar = "user_xheat_H"
 				mytabpath = "data/heatxH.dat"
-				mytabxxyy = "log10(n(idx_H)),log10(n(idx_He)/n(idx_H))"
+				mytabxxyy = "logH,logHe-logH"
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
 					self.anytabsizes,fake_coevars,fake_ivarcoe)
 
 			elif(x.reactants[0].name.lower()=="he"):
 				mytabvar = "user_xray_He"
 				mytabpath = "data/ratexHe.dat"
-				mytabxxyy = "log10(n(idx_H)),log10(n(idx_He)/n(idx_H))"
+				mytabxxyy = "logH,logHe-logH"
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
 					self.anytabsizes,self.coevars,ivarcoe)
-				x.krate = "1d1**"+mytabvar
+				x.krate = "ratexHe * (1d0+phiHe) + n(idx_H)/(n(idx_He)+1d-40) * ratexH * phiHe"
 				xrayHeFound = True
 				print "He xray ionization found!"
 
 				#heating tabs He
 				mytabvar = "user_xheat_He"
 				mytabpath = "data/heatxHe.dat"
-				mytabxxyy = "log10(n(idx_H)),log10(n(idx_He)/n(idx_H))"
+				mytabxxyy = "logH,logHe-logH"
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
 					self.anytabsizes,fake_coevars,fake_ivarcoe)
 
@@ -3295,6 +3296,8 @@ class krome():
                         #skip when find IF pragmas
                         if(srow == "#IFKROME_useShieldingWG11" and not(self.useShieldingWG11)): skip = True
                         if(srow == "#IFKROME_useShieldingDB96" and not(self.useShieldingDB96)): skip = True
+                        if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
+
 		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
@@ -3314,8 +3317,6 @@ class krome():
 
 			#write reaction rates in coe function
 			if(srow == "#KROME_krates"):
-				
-
 				for x in reacts:
 					#build temperature limit IF
 					sTlimit = ""
