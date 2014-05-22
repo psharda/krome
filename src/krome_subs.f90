@@ -11,7 +11,8 @@ contains
     implicit none
     real*8::coe(nrea),k(nrea),Tgas,n(nspec),t
 #KROME_shortcut_variables
-    real*8::small,nmax,fsh
+    real*8::small,nmax,fsh,xe,phiH,phiHe,ratexH,ratexHe
+    real*8::logH,logHe
     integer::i
 #KROME_initcoevars
     !Tgas is in K
@@ -25,7 +26,22 @@ contains
 
 #KROME_Tshortcuts
 
+#IFKROME_useXrays
+    !prepares logs for xrays
+    logH = log10(n(idx_H)+1d-40)
+    logHe = log10(n(idx_He)+1d-40)
+#ENDIFKROME
+
 #KROME_coevars
+
+#IFKROME_useXrays
+    !prepares varibles for xray photochemistry
+    xe = n(idx_e) / get_Hnuclei(n(:))
+    phiH = .3908d0*(1e0-xe**.4092)**1.7592
+    phiHe = .0554d0*(1e0-xe**.4614)**1.666
+    ratexH = 1d1**user_xray_H
+    ratexHe = 1d1**user_xray_He
+#ENDIFKROME
 
 #IFKROME_useShieldingDB96
     !compute shielding from Draine+Bertoldi 1996

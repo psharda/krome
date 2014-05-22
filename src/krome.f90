@@ -218,8 +218,8 @@ contains
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
-    call nleq1(neq,fcn_tconst,jcn_dummy,n(:),xscal(:),rtol,iopt(:),ierr,&
-         liwk,iwk(:),lrwk,rwk(:))
+    !call nleq1(neq,fcn_tconst,jcn_dummy,n(:),xscal(:),rtol,iopt(:),ierr,&
+    !     liwk,iwk(:),lrwk,rwk(:))
     
   end subroutine krome_equilibrium
 
