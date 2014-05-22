@@ -82,8 +82,8 @@ contains
     ntot = get_Hnuclei(n(:))
     xe = min(n(idx_e)/ntot,1d0)
 
-    logH = log10(n(idx_H)+1d-40)
-    logHe = log10(n(idx_He)+1d-40)
+    logH = log10(max(n(idx_H),1d-40))
+    logHe = log10(max(n(idx_He),1d-40))
 
 
     heat_Xray = 0d0

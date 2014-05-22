@@ -28,8 +28,8 @@ contains
 
 #IFKROME_useXrays
     !prepares logs for xrays
-    logH = log10(n(idx_H)+1d-40)
-    logHe = log10(n(idx_He)+1d-40)
+    logH = log10(max(n(idx_H),1d-40))
+    logHe = log10(max(n(idx_He),1d-40))
 #ENDIFKROME
 
 #KROME_coevars
