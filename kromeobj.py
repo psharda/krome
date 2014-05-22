@@ -4685,6 +4685,9 @@ class krome():
 					stab += "call init_anytab2D(\""+tabfile+"\","+anytabx+",&\n"\
 						+anytaby+","+anytabz+",&\n"+anytabxmul+","\
 						+anytabymul+")\n"
+					stab += "call test_anytab2D(\""+tabvar+"\","+anytabx+",&\n"\
+						+anytaby+","+anytabz+",&\n"+anytabxmul+","\
+						+anytabymul+")\n"
 				fout.write(stab+"\n")
 					
 			elif(srow == "#KROME_rwork_array"):

@@ -77,13 +77,16 @@ contains
     implicit none
     real*8::n(:),Tgas,heat_Xray,k(:),ntot
     real*8::xheat_H,xheat_He,logH,logHe
-    real*8::xe,ratexH,ratexHe
+    real*8::xe,ratexH,ratexHe,ncolH,ncolHe
 
     ntot = get_Hnuclei(n(:))
     xe = min(n(idx_e)/ntot,1d0)
 
-    logH = log10(max(n(idx_H),1d-40))
-    logHe = log10(max(n(idx_He),1d-40))
+    !prepares logs for xrays
+    ncolH = 1.8d21*(max(n(idx_H),1d-40)*1d-3)**(2./3.)
+    ncolHe = 1.8d21*(max(n(idx_He),1d-40)*1d-3)**(2./3.)
+    logH = log10(ncolH)
+    logHe = log10(ncolHe)
 
     heat_Xray = 0d0
     xheat_H = fit_anytab2D(user_xheat_H_anytabx(:), &
