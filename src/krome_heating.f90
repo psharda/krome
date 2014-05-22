@@ -77,14 +77,16 @@ contains
     implicit none
     real*8::n(:),Tgas,heat_Xray,k(:),ntot
     real*8::xheat_H,xheat_He,logH,logHe
-    real*8::xe,phiH,phiHe,ratexH,ratexHe
+    real*8::xe,ratexH,ratexHe,ncolH,ncolHe
 
     ntot = get_Hnuclei(n(:))
     xe = min(n(idx_e)/ntot,1d0)
 
-    logH = log10(n(idx_H)+1d-40)
-    logHe = log10(n(idx_He)+1d-40)
-
+    !prepares logs for xrays
+    ncolH = 1.8d21*(max(n(idx_H),1d-40)*1d-3)**(2./3.)
+    ncolHe = 1.8d21*(max(n(idx_He),1d-40)*1d-3)**(2./3.)
+    logH = log10(ncolH)
+    logHe = log10(ncolHe)
 
     heat_Xray = 0d0
     xheat_H = fit_anytab2D(user_xheat_H_anytabx(:), &
@@ -101,16 +103,12 @@ contains
          logH,logHe-logH)
 
     !prepares varibles for xray photochemistry
-    xe = n(idx_e) / get_Hnuclei(n(:))
-    phiH = .3908d0*(1e0-xe**.4092)**1.7592
-    phiHe = .0554d0*(1e0-xe**.4614)**1.666
     ratexH = 1d1**xheat_H
     ratexHe = 1d1**xheat_He
     
-    heat_Xray = (ratexH * (1d0+phiH) &
-         + n(idx_He) * ratexHe * phiH) * n(idx_H)
-    heat_Xray = (ratexHe * (1d0+phiHe) &
-         + n(idx_H) * ratexH * phiHe) * n(idx_He)
+    heat_Xray = ratexH * n(idx_H)
+    heat_Xray = ratexHe * n(idx_He)
+    heat_Xray = heat_Xray * .9971d0 * (1d0-(1d0*xe**.2663)**1.3163)
 
   end function heat_XRay
 #ENDIFKROME

@@ -12,7 +12,7 @@ contains
     real*8::coe(nrea),k(nrea),Tgas,n(nspec),t
 #KROME_shortcut_variables
     real*8::small,nmax,fsh,xe,phiH,phiHe,ratexH,ratexHe
-    real*8::logH,logHe
+    real*8::logH,logHe,ncolH,ncolHe
     integer::i
 #KROME_initcoevars
     !Tgas is in K
@@ -28,8 +28,10 @@ contains
 
 #IFKROME_useXrays
     !prepares logs for xrays
-    logH = log10(n(idx_H)+1d-40)
-    logHe = log10(n(idx_He)+1d-40)
+    ncolH = 1.8d21*(max(n(idx_H),1d-40)*1d-3)**(2./3.)
+    ncolHe = 1.8d21*(max(n(idx_He),1d-40)*1d-3)**(2./3.)
+    logH = log10(ncolH)
+    logHe = log10(ncolHe)
 #ENDIFKROME
 
 #KROME_coevars
@@ -656,6 +658,8 @@ contains
        stop
     end if
 
+    print *,"Reading tables from "//trim(filename)
+
     !open file and check if it exists
     open(51,file=trim(filename),status="old",iostat=ios)
     if(ios.ne.0) then
@@ -681,6 +685,27 @@ contains
     ymul = (size(y)-1)/(y(size(y))-y(1))
 
   end subroutine init_anytab2D
+
+  !******************************
+  subroutine test_anytab2D(fname,x,y,z,xmul,ymul)
+    implicit none
+    integer::i,j
+    real*8::x(:),y(:),z(:,:),xmul,ymul,xx,yy,zz
+    character(len=*)::fname
+
+    do i=1,size(x)
+       do j=1,size(y)
+          xx = x(i)
+          yy = y(i)
+          zz = fit_anytab2D(x(:),y(:),z(:,:),xmul,ymul,xx,yy)
+          if(abs(zz-z(i,j))/z(i,j)>1e-3) then
+             print *,"ERROR in anytab2D fitting check!"
+             print *," from",trim(fname)
+             stop
+          end if
+       end do
+    end do
+  end subroutine test_anytab2D
 
   !******************************
   function fit_anytab2D(x,y,z,xmul,ymul,xx,yy)
