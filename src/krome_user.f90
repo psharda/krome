@@ -48,6 +48,7 @@ contains
     photoBinEright(:) = phbinright(:)
     photoBinEmid(:) = 0.5d0*(phbinleft(:)+phbinright(:))
     photoBinEdelta(:) = phbinright(:)-phbinleft(:)
+    photoBinEidelta(:) = 1d0/photoBinEdelta(:)
 
     !initialize xsecs table
     call init_photoBins()
@@ -68,8 +69,9 @@ contains
        photoBinEleft(i) = dE*(i-1) + lower
        photoBinEright(i) = dE*i + lower
        photoBinEmid(i) = 0.5d0*(photoBinEleft(i)+photoBinEright(i))
-       photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
     end do
+    photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
+    photoBinEidelta(:) = 1d0/photoBinEdelta(:)
 
     !initialize xsecs table
     call init_photoBins()
@@ -98,7 +100,8 @@ contains
        photoBinEmid(i) = 0.5d0*(photoBinEleft(i)+photoBinEright(i))
     end do
     photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
-
+    photoBinEidelta(:) = 1d0/photoBinEdelta(:)
+    
     !initialize xsecs table
     call init_photoBins()
 
@@ -143,6 +146,14 @@ contains
     real*8::krome_get_photoBinE_delta(nPhotoBins)
     krome_get_photoBinE_delta(:) = photoBinEdelta(:)
   end function krome_get_photoBinE_delta
+
+ !*********************************
+  function krome_get_photoBinE_idelta()
+    !returns an array with the middle energy limits (eV)
+    use krome_commons
+    real*8::krome_get_photoBinE_idelta(nPhotoBins)
+    krome_get_photoBinE_idelta(:) = photoBinEidelta(:)
+  end function krome_get_photoBinE_idelta
 
  !*********************************
   function krome_get_photoBin_rates()

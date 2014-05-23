@@ -76,4 +76,5 @@
 39,NONE,NONE,H,CH4,H2,CH3,5.82*1d-13*(T32)**3.00*exp(-4045*invT)
 40,NONE,NONE,H2,C,CH2,,1.00*1d-17
 @format:idx,Tmin,Tmax,R,R,P,P,P,rate
-8,NONE,NONE,H3O+,E,OH,H,H,6.50*1d-7*(T32)**(-0.50)
+41,NONE,NONE,H3O+,E,OH,H,H,6.50*1d-7*(T32)**(-0.50)
+42,NONE,NONE,OH+,E,O,H,,6.3d-9*(T32)**(-0.48)

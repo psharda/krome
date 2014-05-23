@@ -57,7 +57,7 @@ class krome():
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
-	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = False
+	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -269,7 +269,9 @@ class krome():
 		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
 		self.parser.add_argument("-useODEConstant", help="postpone an expression to each ODE. EXPRESSION must be a valid f90\
 			expression (e.g. *3.d0 or +1.d-10)", metavar="EXPRESSION")
-		self.parser.add_argument("-usePhIoniz", action="store_true", help="include photochemistry (obsolete)")
+		self.parser.add_argument("-usePhIoniz", action="store_true", help="includes photochemistry (obsolete)")
+		self.parser.add_argument("-usePhotoInduced", action="store_true", help="includes the photo-induced transitions in the calculation\
+			of the cooling according to the choosen photon flux.")
 		self.parser.add_argument("-usePhotoOpacity", action="store_true", help="computes photorates using opacity as a function of \
 			the species densities and the photo cross sections, i.e. exp(-sum_i N_i*sigma_i). Column densities are computed\
 			from density by using the local approximation N = 1.8e21*(n/1000)**(2/3) 1/cm2.")
@@ -525,6 +527,16 @@ class krome():
 		if(args.usePhotoOpacity):
 			self.usePhotoOpacity = True
 			print "Reading option -usePhotoOpacity (now obsolete, you can remove it)"
+
+		#use photo-induced cooling transitions 
+		if(args.usePhotoInduced):
+			self.usePhotoInduced = True
+			if(not(args.photoBins)):
+				print "ERRROR: -usePhotoInduced requires the option -photoBins=N enabled"
+				print " where N is the number of photon bins employed."
+				sys.exit()
+			print "Reading option -usePhotoInduced"
+
 
 
 		#use equilibrium check to break loops earlier
@@ -2576,6 +2588,7 @@ class krome():
 					transitions = [] #list of transitions
 					colliders = [] #list of colliders names
 					Aijs = dict() #init dictionary for Einsten's
+					Bijs = dict() #init dictionary for Bij
 					levels = dict() #init dictionary for levels
 					#prepares the header of the function
 					full_cool = "\n"
@@ -2583,6 +2596,7 @@ class krome():
 					full_cool += "function "+function_name+"(n,inTgas,k)\n"
 					full_cool += "use krome_commons\n"
 					full_cool += "use krome_constants\n"
+					full_cool += "use krome_photo\n"
 					full_cool += "implicit none\n"
 					full_cool += "real*8::"+function_name+",n(:),inTgas,Tgas,k(:),invTgas\n"
 					full_cool += "integer::i\n"				
@@ -2624,8 +2638,10 @@ class krome():
 					trfound = []
 					for tr in transitions:
 						ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
-						ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
-						ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + "*invTgas)"
+						ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"])\
+							+ "d0"
+						ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"])\
+							+ "*invTgas)"
 						#skip already found transitions					
 						if(not([tr["up"], tr["down"]] in trfound)):
 							full_cool += ij2ji + "\n"
@@ -2688,7 +2704,24 @@ class krome():
 						real_variables.append(varM) #add to double variable list
 						#check if variable is unique
 						if(not(varM in varMexist)):
-							MM[varM] = []
+							try:
+								betas = ""
+								if(self.usePhotoInduced):
+									deltaE = float(levels[tr["up"]]["energy"]) \
+										- float(levels[tr["down"]]["energy"]) #K
+									boltz_eV = 8.6173324e-5 #eV/K
+									h_eV = 4.135667516e-15 #eV*s
+									h_erg = 6.6260755e-27 #erg*s
+									c_speed = 2.9979245800e10 #cm/s
+									nuE = deltaE*boltz_eV/h_eV #1/s
+									fAij = Aijs[(tr["up"],tr["down"])].replace("d","e")
+									gg = float(levels[tr["up"]]["gmult"]) / float(levels[tr["down"]]["gmult"])
+									betaI = gg * float(fAij) * c_speed**2/2e0/h_eV/nuE**3 #cm2/eV/s
+									betas = " &\n+ "+format_double(betaI) + " * get_photoIntensity("\
+										+ format_double(deltaE*boltz_eV)+")"
+								MM[varM] = [betas]
+							except:
+								MM[varM] = ["0e0"]
 							MMij[varM] = [tr["down"],tr["up"]]
 						coll = tr["coll"] #get colliders for the given transition
 						varup = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
@@ -2696,6 +2729,7 @@ class krome():
 							MM[varM].append(varup+"*"+coll) #include colliders abundance if ortho or para H2
 						else:
 							MM[varM].append(varup+"*n(idx_"+coll+")") #include colliders abundance
+
 						varMexist.append(varM)
 
 					#build Mji as above
@@ -2704,7 +2738,20 @@ class krome():
 						real_variables.append(varM) #add to double variable list
 						if(not(varM in varMexist)):
 							try:
-								MM[varM] = [Aijs[(tr["up"],tr["down"])]]
+								betas = ""
+								if(self.usePhotoInduced):
+									deltaE = float(levels[tr["up"]]["energy"]) \
+										- float(levels[tr["down"]]["energy"]) #K
+									boltz_eV = 8.6173324e-5 #eV/K
+									h_eV = 4.135667516e-15 #eV*s
+									h_erg = 6.6260755e-27 #erg*s
+									c_speed = 2.9979245800e10 #cm/s
+									nuE = deltaE*boltz_eV/h_eV #1/s
+									fAij = Aijs[(tr["up"],tr["down"])].replace("d","e")
+									betaI = float(fAij) * c_speed**2/2e0/h_eV/nuE**3 #cm2/eV/s
+									betas = " &\n+ "+format_double(betaI) + " * get_photoIntensity("\
+										+ format_double(deltaE*boltz_eV)+")"
+								MM[varM] = [Aijs[(tr["up"],tr["down"])] + betas]
 							except:
 								MM[varM] = ["0e0"]
 							if(use_escape): MM[varM] = ["0e0"]
@@ -3022,6 +3069,7 @@ class krome():
 					fout.write("real*8::photoBinEright(nPhotoBins) !right limit of the freq bin, eV\n")
 					fout.write("real*8::photoBinEmid(nPhotoBins) !middle point of the freq bin, eV\n")
 					fout.write("real*8::photoBinEdelta(nPhotoBins) !size of the freq bin, eV\n")
+					fout.write("real*8::photoBinEidelta(nPhotoBins) !inverse of the size of the freq bin, 1/eV\n")
 					fout.write("real*8::photoBinJTab(nPhotoRea,nPhotoBins) !xsecs table, cm2\n")
 					fout.write("real*8::photoBinRates(nPhotoRea) !photo rates, 1/s\n")
 					fout.write("real*8::photoBinHeats(nPhotoRea) !photo heating, erg/s\n")
@@ -3831,7 +3879,7 @@ class krome():
 				if(self.coolingQuench<0e0):
 					fout.write(srow.replace("#KROME_coolingQuench","")+"\n")
 				else:
-					qfunc = " * 0.5d0 * (tanh(Tgas - "+format_double(self.coolingQuench)+") + 1d0)"
+					qfunc = " &\n * 0.5d0 * (tanh(Tgas - "+format_double(self.coolingQuench)+") + 1d0)"
 					fout.write(srow.replace("#KROME_coolingQuench",qfunc)+"\n")
 				continue
 
