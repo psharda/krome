@@ -101,6 +101,7 @@ class reaction():
 	def __init__(self):
 		self.reactants = []
 		self.products = []
+
 	#method: build verbatim from reactants and products
 	def build_verbatim(self):
 		myr = []
@@ -112,6 +113,7 @@ class reaction():
 			if(p.name!="dummy"):
 				myp.append(p.name)
 		self.verbatim = " + ".join(myr)+" -> "+" + ".join(myp)
+
 	#method: build photochemical rate
 	def build_phrate(self,photoBlock=False):
 		if(not("krome_kph_auto" in self.krate) and not(photoBlock)): return
