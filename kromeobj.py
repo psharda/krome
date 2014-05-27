@@ -21,8 +21,9 @@
 # sbovino@astro.physik.uni-goettingen.de
 # Institut fuer Astrophysik, Goettingen.
 #
-# Others (alphabetically): F.A. Gianturco, J.Prieto,
-# D.R.G. Schleicher, D. Seifried, E. Simoncini , E. Tognelli
+# Others (alphabetically): F.A. Gianturco, T. Haugboelle, 
+# J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
+# E. Tognelli
 #
 #
 # KROME is provided "as it is", without any warranty. 
@@ -196,8 +197,9 @@ class krome():
 		self.parser.add_argument("-forceRWORK", help="force the size of RWORK to N", metavar="N")
 		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al.\
 			2011, i.e. a density dependent but temperature independent adiabatic index, VIB to keep into account the vibrational\
-                        paritition function, ROT to keep into account the rotational partition function, or EXACT to evaluate the\
-                        adiabatic index accurately taking into account both contributions. Finally a custom F90 expression e.g. -gamma=\"1d0\"\
+                        paritition function, ROT to keep into account the rotational partition function, EXACT to evaluate the\
+                        adiabatic index accurately taking into account both contributions, or REDUCED to use only H2 and CO as diatomic\
+			molecules (faster). Finally a custom F90 expression e.g. -gamma=\"1d0\"\
 			can also be used. Default value is 5/3.",metavar="OPTION")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH, CR, PHOTOAV.\
 			If you want a complete list of the available heating options type -heating=?")
@@ -2053,28 +2055,29 @@ class krome():
 	def dumpNetwork(self):
 		#dump species to log file
 		fout = open("species.log","w")
-		fout.write("#This file contains:\n")
-		fout.write("#1. a list of the species used with their indexes\n")
-		fout.write("#2. a list of the species to initialize gnuplot\n")
+		fout.write("#This file contains a list of the species used with their indexes\n")
 		fout.write("\n")
 		idx = 0
 		for mol in self.specs:
 			idx += 1
 			fout.write(str(idx)+"\t"+mol.name+"\t"+mol.fidx+"\n")
+		fout.close()
 
 		#dump species to gnuplot initialization
+		fout = open("species.gps","w")
+		fout.write("#This file is a script to initialize the species index in krome gnuplot\n")
 		idx = 0
 		fout.write("\n")
 		fout.write("\n")
-		fout.write("#cut-and-paste this into gnuplot to initialize species variables\n")
-		fout.write("# nkrome is an optional offset\n")
-		fout.write("nkrome = 0\n")
+		fout.write("if(!exists(\"nkrome\")) print \"First you should set the value of the nkrome offset\"\n")
 		inits = []
 		for mol in self.specs:
 			idx += 1
 			inits.append("krome_"+mol.fidx+" = "+str(idx)+" + nkrome")
 		fout.write(("\n".join(inits))+"\n")
-		fout.close()	
+		fout.write("print \"All variables set as e.g. krome_idx_H2\"\n")
+		fout.write("print \" the offset is nkrome=\",nkrome\n")
+		fout.close()
 	
 		#dump reactions to log file
 		fout = open("reactions.log","w")
@@ -3386,6 +3389,12 @@ class krome():
 					if(Tlimfound): kstr += "\nend if" #close the if statement for temperature
 					kstr = truncF90(kstr, 60,"*") #truncates long reaction rates
 					fout.write(truncF90(kstr, 60,"/")+"\n\n") #truncate
+			#replace arrays for best flux
+			elif(srow == "#KROME_arr_reactprod"):
+				for i in range(self.maxnreag):
+					fout.write("if(arr_r"+str(i+1)+"(i) == idx_found) found = .true.\n") 
+				for i in range(self.maxnprod):
+					fout.write("if(arr_p"+str(i+1)+"(i) == idx_found) found = .true.\n") 
 			elif(srow == "#KROME_conserve"):
 				fout.write(krome_conserve+"\n")
 			elif(srow == "#KROME_metallicity_functions"):
@@ -3402,8 +3411,9 @@ class krome():
 					ff += "implicit none\n"
 					ff += "real*8::n(:),"+ffname+","+zg[1]+",nH\n"
 					ff += "nH = get_Hnuclei(n(:))\n"
-					ff += zg[1]+" = "+zg[2]+"\n\n"
-					ff += ffname + " = log10("+zg[1]+"/nH) - "+solar[zg[0]]+"\n\n" #compute metallicity
+					ff += zg[1]+" = "+zg[2]+"\n"
+					ff += zg[1]+" = max("+zg[1]+", 0d0)\n\n"
+					ff += ffname + " = log10("+zg[1]+"/nH+1d-40) - "+solar[zg[0]]+"\n\n" #compute metallicity
 					ff += "end function "+ffname+"\n\n"
 					ffs += ff #append function to the others
 				fout.write(ffs+"\n") #replace functions
@@ -3520,7 +3530,7 @@ class krome():
 					gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + "))"
 					gamma = gammaN + " / &\n" +gammaD
 
-				elif(self.typeGamma=="EXACT" or self.typeGamma=="VIB" or self.typeGamma=="ROT"):
+				elif(self.typeGamma=="EXACT" or self.typeGamma=="VIB" or self.typeGamma=="ROT" or self.typeGamma=="REDUCED"):
 					#extends Omukai+Nishi1998 eqs.5,6,7
 					# and Boley+2007 (+erratum!) eqs.2,3
 					header = "real*8::Tgas,invTgas,x,expx,ysum,gsum,mosum,gvib\n"
@@ -3541,6 +3551,8 @@ class krome():
 						#diatomic
 						elif(mol.natoms==2):
 							gtype = self.typeGamma
+							#skip every diatoms except H2 and CO if REDUCED
+							if(gtype=="REDUCED" and (mol.name!="H2" and mol.name!="CO")): continue 
 							#warning if vibrational constant not found
 							if(mol.ve_vib=="__NONE__" and (gtype=="EXACT" or gtype=="VIB")):
 								print "WARNING: no vibrational constant for "+mol.name+" in gamma calculation!"

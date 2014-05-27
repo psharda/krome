@@ -586,7 +586,6 @@ contains
     krome_get_electrons = max(0.d0, ee)
   end function krome_get_electrons
 
-
   !**********************
   !print the nbest fluxes
   subroutine krome_print_best_flux(xin,Tgas,nbest)
@@ -599,8 +598,22 @@ contains
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
     call print_best_flux(n,Tgas,nbest)
-  end subroutine krome_print_best_flux
 
+  end subroutine krome_print_best_flux
+  !**********************
+  !print the nbest fluxes
+  subroutine krome_print_best_flux_spec(xin,Tgas,nbest,idx_find)
+    use krome_subs
+    use krome_commons
+    implicit none
+    real*8::x(nmols),xin(nmols),n(nspec),Tgas
+    integer::nbest,idx_find
+    x(:) = xin(:)
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
+    call print_best_flux_spec(n,Tgas,nbest,idx_find)
+  end subroutine krome_print_best_flux_spec
+  
   !*******************************
   !get the fluxes of all the reactions in 1/cm3/s
   function krome_get_flux(n,Tgas)
