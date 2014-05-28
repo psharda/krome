@@ -2,6 +2,10 @@
 @var:Hnuclei = get_Hnuclei(n(:))
 @common: user_crate,user_Av,user_Tdust
 
+@var: Te = Tgas*8.617343d-5
+@var: invT = 1d0/Tgas
+@var: lnTe = log(Te)
+
 @format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
 #Glover+2010 MNRAS
 1,H,E,,H+,E,E,,2.73d0,1e8,dexp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
@@ -23,7 +27,7 @@
 @var:kl11 = 1d1**(-27.029d0+3.801d0*logT-29487d0*invT)
 @var:kh11 = 1d1**(-2.729d0-1.75d0*logT-23474d0*invT)
 @var:ncr11 = 1d1**(5.0792d0*(1d0-1.23d-5*(Tgas-2d3)))
-@var:a11=1.d0/(1.d0+(Hnuclei/ncr11))
+@var:a11=1.d0/(1.d0+(Hnuclei/(ncr11+1d-40)))
 @noTabNext
 11,H2,He,,H,H,He,NONE,NONE,kh11**(1.-a11)*kl11**a11
 
@@ -55,7 +59,7 @@
 @var:kl21 = 1.18d-10*exp(-6.95d4*invT)
 @var:kh21 = 8.125d-8*invsqrT*exp(-5.2d4*invT)*(1.d0-exp(-6d3*invT))
 @var:ncr21 = 1d1**(4.845d0-1.3d0*log10(T*1d-4)+1.62d0*log10(T*1d-4)**2)
-@var:a21=1.d0/(1.d0+(Hnuclei/ncr21))
+@var:a21=1.d0/(1.d0+(Hnuclei/(ncr21+1d-40)))
 @noTabNext
 33,H2,H2,,H,H,H2,NONE,NONE,kh21**(1.-a21)*kl21**a21
 34,H,H,He,H2,He,,NONE,NONE,6.9d-32*Tgas**(-.4)
@@ -158,10 +162,6 @@
 
 #Glover+2010
 84,OH,H,O,H2,NONE,NONE,6.99d-14*T32**2.8*exp(-1950d0*invT)
-
-#additional channel from KIDA, under 10K constant value since rate defined above 10K
-85,OH,H,O,H2,NONE,1d1,3.6d-15
-86,OH,H,O,H2,1d1,NONE,4d-18*(T32)**-2.
 
 #KIDA, recomended with the largest T interval
 87,H2,OH,H2O,H,NONE,NONE,2.1d-12*(T32)**(1.52)*exp(-1.74d0*invT)
@@ -440,7 +440,7 @@
 
 #H2 ON GRAINS WITH RATE APPROXIMATION
 @format:idx,R,R,P,rate
-@var:fA = 1d0/(1d0+1d4*exp(-6d2/user_Tdust))
+@var:fA = 1d0/(1d0+1d4*exp(-6d2/(user_Tdust+1d-40)))
 @noTabNext
 223,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0+0.04d0*sqrt(max(Tgas-user_Tdust,0d0))+0.002d0*Tgas+8d-6*Tgas**2)
 
