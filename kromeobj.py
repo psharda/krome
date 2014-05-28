@@ -3180,30 +3180,7 @@ class krome():
 
 			for row in fh:
 				row = row.replace("#KROME_header", get_licence_header(self.version, self.codename,self.shortHead))
-				if(row.strip()=="#KROME_user_commons_functions"):
-					funcs = ""
-					for x in self.commonvars:
-						fsetname = "krome_set_"+x
-						fset = "\n!*******************\n"
-						fset += "subroutine "+fsetname+"(argset)\n"
-						fset += "use krome_commons\n"
-						fset += "implicit none\n"
-						fset += "real*8::argset\n"
-						fset += x+" = argset\n"
-						fset += "end subroutine "+fsetname+"\n"
-						
-						fgetname = "krome_get_"+x
-						fget = "\n!*******************\n"
-						fget += "function "+fgetname+"()\n"
-						fget += "use krome_commons\n"
-						fget += "implicit none\n"
-						fget += "real*8::"+fgetname+"\n"
-						fget += fgetname+" = "+x+"\n"
-						fget += "end function "+fgetname+"\n"
-						funcs += fset + fget
-					fouta.write(funcs)
-				else:
-					if(row[0]!="#"): fouta.write(row)
+				if(row[0]!="#"): fouta.write(row)
 
 			fouta.close()
 			print "done!"
@@ -4475,6 +4452,29 @@ class krome():
 			if(srow == "#KROME_species"):
 				for x in specs:
 					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
+			elif(srow == "#KROME_user_commons_functions"):
+				funcs = ""
+				for x in self.commonvars:
+					fsetname = "krome_set_"+x
+					fset = "\n!*******************\n"
+					fset += "subroutine "+fsetname+"(argset)\n"
+					fset += "use krome_commons\n"
+					fset += "implicit none\n"
+					fset += "real*8::argset\n"
+					fset += x+" = argset\n"
+					fset += "end subroutine "+fsetname+"\n"
+					
+					fgetname = "krome_get_"+x
+					fget = "\n!*******************\n"
+					fget += "function "+fgetname+"()\n"
+					fget += "use krome_commons\n"
+					fget += "implicit none\n"
+					fget += "real*8::"+fgetname+"\n"
+					fget += fgetname+" = "+x+"\n"
+					fget += "end function "+fgetname+"\n"
+					funcs += fset + fget
+				fout.write(funcs)
+
 			elif(srow == "#KROME_cooling_functions"):
 				for x in self.coolZ_functions:
 					funcname =  "krome_"+x[0];
