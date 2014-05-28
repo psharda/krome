@@ -13,6 +13,194 @@ contains
 
 #KROME_cooling_functions
 
+  
+#IFKROME_usePhotoBins
+  !************************
+  subroutine krome_calc_photobins()
+    use krome_photo
+    call calc_photobins()
+  end subroutine krome_calc_photobins
+
+  !****************************
+  ! set the energy per photo bin
+  ! erg/s/cm2/sr/Hz
+  subroutine krome_set_photobinJ(phbin)
+    use krome_commons
+    use krome_photo
+    implicit none
+    real*8::phbin(:)
+    photoBinJ(:) = phbin(:)
+    
+    !compute rates
+    call calc_photobins()
+
+  end subroutine krome_set_photobinJ
+
+  !*************************
+  ! set the energy (frequency) of the photobin
+  ! as left-right limits in eV
+  subroutine krome_set_photobinE_lr(phbinleft,phbinright)
+    use krome_commons
+    use krome_photo
+    implicit none
+    real*8::phbinleft(:),phbinright(:)
+    photoBinEleft(:) = phbinleft(:)
+    photoBinEright(:) = phbinright(:)
+    photoBinEmid(:) = 0.5d0*(phbinleft(:)+phbinright(:))
+    photoBinEdelta(:) = phbinright(:)-phbinleft(:)
+    photoBinEidelta(:) = 1d0/photoBinEdelta(:)
+
+    !initialize xsecs table
+    call init_photoBins()
+    
+  end subroutine krome_set_photobinE_lr
+
+  !********************************
+  ! set the energy (frequency) of the photobin
+  ! linearly from lowest and highest energy value
+  subroutine krome_set_photobinE_lin(lower,upper)
+    use krome_commons
+    use krome_photo
+    implicit none
+    real*8::lower,upper,dE
+    integer::i
+    dE = abs(upper-lower)/nPhotoBins
+    do i=1,nPhotoBins
+       photoBinEleft(i) = dE*(i-1) + lower
+       photoBinEright(i) = dE*i + lower
+       photoBinEmid(i) = 0.5d0*(photoBinEleft(i)+photoBinEright(i))
+    end do
+    photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
+    photoBinEidelta(:) = 1d0/photoBinEdelta(:)
+
+    !initialize xsecs table
+    call init_photoBins()
+
+  end subroutine krome_set_photobinE_lin
+
+ !********************************
+  ! set the energy (frequency) of the photobin
+  ! logarithmic from lowwst to highest energy value
+  subroutine krome_set_photobinE_log(lower,upper)
+    use krome_commons
+    use krome_photo
+    implicit none
+    real*8::lower,upper,dE,logup,loglow
+    integer::i
+    if(lower.ge.upper) then
+       print *,"ERROR: in  krome_set_photobinE_log lower >= upper limit!"
+       stop
+    end if
+    loglow = log10(lower)
+    logup = log10(upper)
+    dE = 1d1**(abs(upper-lower)/nPhotoBins)
+    do i=1,nPhotoBins
+       photoBinEleft(i) = 1d1**((i-1)*(logup-loglow)/nPhotoBins + loglow)
+       photoBinEright(i) = 1d1**(i*(logup-loglow)/nPhotoBins + loglow)
+       photoBinEmid(i) = 0.5d0*(photoBinEleft(i)+photoBinEright(i))
+    end do
+    photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
+    photoBinEidelta(:) = 1d0/photoBinEdelta(:)
+    
+    !initialize xsecs table
+    call init_photoBins()
+
+  end subroutine krome_set_photobinE_log
+
+  !*********************************
+  function krome_get_photoBinJ()
+    !returns an array containing the flux for each photo bin
+    use krome_commons
+    real*8::krome_get_photoBinJ(nPhotoBins)
+    krome_get_photoBinJ(:) = photoBinJ(:)
+  end function krome_get_photoBinJ
+
+  !*********************************
+  function krome_get_photoBinE_left()
+    !returns an array with the left energy limits (eV)
+    use krome_commons
+    real*8::krome_get_photoBinE_left(nPhotoBins)
+    krome_get_photoBinE_left(:) = photoBinEleft(:)
+  end function krome_get_photoBinE_left
+
+  !*********************************
+  function krome_get_photoBinE_right()
+    !returns an array with the right energy limits (eV)
+    use krome_commons
+    real*8::krome_get_photoBinE_right(nPhotoBins)
+    krome_get_photoBinE_right(:) = photoBinEright(:)
+  end function krome_get_photoBinE_right
+
+  !*********************************
+  function krome_get_photoBinE_mid()
+    !returns an array with the middle energy limits (eV)
+    use krome_commons
+    real*8::krome_get_photoBinE_mid(nPhotoBins)
+    krome_get_photoBinE_mid(:) = photoBinEmid(:)
+  end function krome_get_photoBinE_mid
+
+ !*********************************
+  function krome_get_photoBinE_delta()
+    !returns an array with the middle energy limits (eV)
+    use krome_commons
+    real*8::krome_get_photoBinE_delta(nPhotoBins)
+    krome_get_photoBinE_delta(:) = photoBinEdelta(:)
+  end function krome_get_photoBinE_delta
+
+ !*********************************
+  function krome_get_photoBinE_idelta()
+    !returns an array with the middle energy limits (eV)
+    use krome_commons
+    real*8::krome_get_photoBinE_idelta(nPhotoBins)
+    krome_get_photoBinE_idelta(:) = photoBinEidelta(:)
+  end function krome_get_photoBinE_idelta
+
+ !*********************************
+  function krome_get_photoBin_rates()
+    !returns an array with the integrated photo rates (1/s)
+    use krome_commons
+    real*8::krome_get_photoBin_rates(nPhotoRea)
+    krome_get_photoBin_rates(:) = photoBinRates(:)
+  end function krome_get_photoBin_rates
+
+ !*********************************
+  function krome_get_photoBin_heats()
+    !returns an array with the integrated photo heatings (erg/s)
+    use krome_commons
+    real*8::krome_get_photoBin_heats(nPhotoRea)
+    krome_get_photoBin_heats(:) = photoBinHeats(:)
+  end function krome_get_photoBin_heats
+
+  !**************************
+  subroutine krome_set_photoBin_J21lin(lower,upper)
+    use krome_commons
+    use krome_photo
+    real*8::upper,lower
+    
+    call krome_set_photoBinE_lin(lower,upper)
+    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV
+
+    !compute rates
+    call calc_photobins()
+
+  end subroutine krome_set_photoBin_J21lin
+  
+  !**************************
+  subroutine krome_set_photoBin_J21log(lower,upper)
+    use krome_commons
+    use krome_photo
+    real*8::upper,lower
+    
+    call krome_set_photoBinE_log(lower,upper)
+    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV
+
+    !compute rates
+    call calc_photobins()
+    
+  end subroutine krome_set_photoBin_J21log
+
+#ENDIFKROME
+
   !***************************
   !alias for coe in krome_subs
   ! returns the coefficients for a given Tgas
@@ -147,6 +335,42 @@ contains
 
   end subroutine krome_thermo
 
+#IFKROME_use_heating
+  !*************************
+  function krome_get_heating(x,inTgas)
+    use krome_heating
+    use krome_subs
+    use krome_commons
+    implicit none
+    real*8::krome_get_heating,x(nmols),n(nspec)
+    real*8::Tgas,inTgas,k(nrea),nH2dust
+    n(1:nmols) = x(:)
+    Tgas = inTgas
+    n(idx_Tgas) = Tgas
+    k(:) = coe(n(:))
+    nH2dust = 0d0
+    krome_get_heating = heating(n(:),Tgas,k(:),nH2dust)
+  end function krome_get_heating
+
+  !*****************************
+  function krome_get_heating_array(x,inTgas)
+    use krome_heating
+    use krome_subs
+    use krome_commons
+    implicit none
+    real*8::x(:),n(nspec),inTgas,k(nrea)
+    real*8::krome_get_heating_array(8),Tgas,nH2dust
+
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = inTgas
+    k(:) = coe(n(:))
+    Tgas = inTgas
+    nH2dust = 0d0
+    krome_get_heating_array(:) = get_heating_array(n(:),Tgas,k(:),nH2dust)
+
+  end function krome_get_heating_array
+#ENDIFKROME
 
 #IFKROME_use_cooling
   !*************************
@@ -161,6 +385,22 @@ contains
     n(idx_Tgas) = Tgas
     krome_get_cooling = cooling(n,Tgas)
   end function krome_get_cooling
+
+  !*****************************
+  function krome_get_cooling_array(x,inTgas)
+    use krome_cooling
+    use krome_commons
+    implicit none
+    real*8::x(:),n(nspec),inTgas
+    real*8::krome_get_cooling_array(11),Tgas
+
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = inTgas
+    Tgas = inTgas
+    krome_get_cooling_array(:) = get_cooling_array(n(:),Tgas)
+
+  end function krome_get_cooling_array
 
   !******************
   !alias of plot_cool
@@ -359,7 +599,6 @@ contains
     krome_get_electrons = max(0.d0, ee)
   end function krome_get_electrons
 
-
   !**********************
   !print the nbest fluxes
   subroutine krome_print_best_flux(xin,Tgas,nbest)
@@ -372,8 +611,22 @@ contains
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
     call print_best_flux(n,Tgas,nbest)
-  end subroutine krome_print_best_flux
 
+  end subroutine krome_print_best_flux
+  !**********************
+  !print the nbest fluxes
+  subroutine krome_print_best_flux_spec(xin,Tgas,nbest,idx_find)
+    use krome_subs
+    use krome_commons
+    implicit none
+    real*8::x(nmols),xin(nmols),n(nspec),Tgas
+    integer::nbest,idx_find
+    x(:) = xin(:)
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
+    call print_best_flux_spec(n,Tgas,nbest,idx_find)
+  end subroutine krome_print_best_flux_spec
+  
   !*******************************
   !get the fluxes of all the reactions in 1/cm3/s
   function krome_get_flux(n,Tgas)

@@ -1,6 +1,6 @@
 #rates for CO network similar to Glover+2010 MNRAS from there and other authors
 @var:Hnuclei = get_Hnuclei(n(:))
-@common: user_crate,user_Av
+@common: user_crate,user_Av,user_Tdust
 
 @format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
 #Glover+2010 MNRAS
@@ -438,10 +438,15 @@
 222,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
 223,OH,H,H2O,,NONE,NONE,5.26d-18*T32**(-5.22)*exp(-9d1*invT)
 
+#H2 ON GRAINS WITH RATE APPROXIMATION
+@format:idx,R,R,P,rate
+@var:fA = 1d0/(1d0+1d4*exp(-6d2/user_Tdust))
+@noTabNext
+223,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0+0.04d0*sqrt(max(Tgas-user_Tdust,0d0))+0.002d0*Tgas+8d-6*Tgas**2)
+
 #PHOTOREACTIONS THIN WITH Av
 @format:idx,R,P,P,rate
-#PHOTOREACTIONS
-@format:idx,R,P,P,rate
+
 @noTab_start
 
 #integrated with J21*13.6/E flux, up to 200eV
@@ -450,7 +455,8 @@
 #FROM GLOVER+2009
 224,H-,H,E,7.1d-7*exp(-.5*user_Av)
 225,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
-226,H2,H,H,5.6d-11*exp(-3.74*user_Av)
+@var: user_H2self = fselfH2(1.87d21*(n(idx_H2)*1d-3)**(2./3.), 1d5)
+226,H2,H,H,5.6d-11*exp(-3.74*user_Av)*user_H2self
 227,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
 228,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
 229,C,C+,E,3.1d-10*exp(-3.*user_Av)

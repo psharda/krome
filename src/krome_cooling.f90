@@ -7,12 +7,21 @@ module KROME_cooling
 #KROME_escape_vars
 contains
 
+  !*******************
+  function cooling(n,Tgas)
+    implicit none
+    real*8::n(:),Tgas,cooling
+
+    cooling = sum(get_cooling_array(n(:),Tgas)) #KROME_coolingQuench
+    
+  end function cooling
+
   !*******************************
-  function cooling(n, Tgas)
+  function get_cooling_array(n, Tgas)
     use krome_commons
     implicit none
     real*8::n(:), Tgas
-    real*8::cooling,cools(11)
+    real*8::get_cooling_array(11),cools(11)
 
     !returns cooling in erg/cm3/s
     cools(:) = 0.d0
@@ -61,7 +70,7 @@ contains
     cools(11) = cooling_expansion(n(:), Tgas)
 #ENDIFKROME
 
-    cooling = sum(cools) #KROME_coolingQuench
+    get_cooling_array(:) = cools(:)
 
     !remove the comment below to write cooling contributions to fort.44
     !write(44,'(99E17.8e3)') sum(n(1:nmols)),Tgas,cools(:)
@@ -80,7 +89,7 @@ contains
     ! '' u m:12 every n w l t "Cont",\
     ! '' u m:13 every n w l t "Exp"
 
-  end function cooling
+  end function get_cooling_array
 
 
   !**********************************

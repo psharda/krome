@@ -197,6 +197,74 @@ contains
 
   end subroutine krome
 
+  !*********************************
+  !integrates to equilibrium using constant temperature
+  subroutine krome_equilibrium(x,Tgas)
+    use krome_commons
+    use krome_constants
+    implicit none
+    integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
+    real*8::tloc,x(:),Tgas,n(nspec),dt
+#KROME_iwork_array
+    real*8::atol(nspec),rtol(nspec)
+#KROME_rwork_array
+
+    call XSETF(0)!toggle solver verbosity
+    meth = 2
+    neq = nspec !number of eqns
+    liw = size(iwork)
+    lrw = size(rwork)
+    iwork(:) = 0
+    rwork(:) = 0.d0
+    itol = 4 !both tolerances are scalar
+    rtol(:) = 1d-6 !relative tolerance
+    atol(:) = 1d-10 !absolute tolerance
+
+    !for DLSODES options see its manual
+    iopt = 0
+    itask = 1
+    istate = 1
+
+    mf = 222 !internally evaluated sparsity and jacobian
+    tloc = 0d0 !initial time
+    dt = seconds_per_year * 1d8
+    
+    !copy into array
+    n(nmols+1:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
+
+    !solve ODE
+    CALL DLSODES(fcn_tconst, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
+         ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, jcn_dummy, MF)
+
+    !check errors
+    if(istate.ne.2) then
+       print *,"ERROR: no equilibrium found!"
+       stop
+    end if
+    x(:) = n(1:nmols)
+
+  end subroutine krome_equilibrium
+
+  !********************
+  !dummy jacobian for equilibrium
+  subroutine jcn_dummy()
+
+  end subroutine jcn_dummy
+
+  !*******************
+  !dn/dt where dT/dt=0
+  subroutine fcn_tconst(n,tt,x,f)
+    use krome_commons
+    use krome_ode
+    implicit none
+    integer::n,ierr
+    real*8::x(n),f(n),tt
+    call fex(n,tt,x(:),f(:))
+    f(idx_Tgas) = 0d0
+  end subroutine fcn_tconst
+
   !*******************************
   subroutine krome_dump(n,rwork,iwork,ni)
     use krome_commons
@@ -320,6 +388,7 @@ contains
 
   !********************************
   subroutine krome_init()
+    use krome_commons
     use krome_tabs
     use krome_subs
     use krome_reduction
@@ -344,6 +413,8 @@ contains
 #IFKROME_useStars
     call stars_init()
 #ENDIFKROME
+
+#KROME_init_anytab
 
   end subroutine krome_init
 

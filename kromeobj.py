@@ -14,17 +14,19 @@
 #
 # Written and developed by Tommaso Grassi
 # tommasograssi@gmail.com,
-# University of Rome \"Sapienza\".
+# Starplan Center, Copenhagen.
+# Niels Bohr Institute, Copenhagen.
 #
 # Co-developer Stefano Bovino
 # sbovino@astro.physik.uni-goettingen.de
 # Institut fuer Astrophysik, Goettingen.
 #
-# Others (alphabetically): F.A. Gianturco, J.Prieto,
-# D.R.G. Schleicher, D. Seifried, E. Simoncini , E. Tognelli
+# Others (alphabetically): F.A. Gianturco, T. Haugboelle, 
+# J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
+# E. Tognelli
 #
 #
-#KROME is provided \"as it is\", without any warranty. 
+# KROME is provided "as it is", without any warranty. 
 # The Authors assume no liability for any damages of any kind 
 # (direct or indirect damages, contractual or non-contractual 
 # damages, pecuniary or non-pecuniary damages), directly or 
@@ -52,11 +54,11 @@ class krome():
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
-	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = False
-	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = False
+	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = False
+	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
-	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = False
+	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -72,7 +74,7 @@ class krome():
 	RTOL = 1e-4 #default relative tolerance
 	ATOL = 1e-20 #default absolute tolerance
 	coolingQuench = -1e0 #if coolingQuench is negative cooling quench is not enabled, otherwise this is Tcrit
-	dustArraySize = dustTypesSize = 0
+	dustArraySize = dustTypesSize = photoBins = 0
 	maxord = 0
 	dustTypes = []
 	specs = []
@@ -92,6 +94,7 @@ class krome():
 	jaca = [] #unrolled sparse jacobian
 	customODEs = [] #custom ODEs
 	nrea = 0 #number of reactions
+	nPhotoRea = 0 #number of photoreactions (for photobin array)
 	full_cool = vars_cool = ""
 	coolZ_functions = []
 	coolZ_rates = []
@@ -100,6 +103,10 @@ class krome():
 	coolZ_nkrates = 0
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
 	Zcools = [] #list of cooling read from file (species name, e.g. C+)
+	anytabvars = [] #variable names for the tables
+	anytabfiles = [] #file name for the tables
+	anytabpaths = [] #paths for the tables
+	anytabsizes = [] #sizes of the tables
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
 	version = "14.03"
@@ -190,8 +197,9 @@ class krome():
 		self.parser.add_argument("-forceRWORK", help="force the size of RWORK to N", metavar="N")
 		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al.\
 			2011, i.e. a density dependent but temperature independent adiabatic index, VIB to keep into account the vibrational\
-                        paritition function, ROT to keep into account the rotational partition function, or EXACT to evaluate the\
-                        adiabatic index accurately taking into account both contributions. Finally a custom F90 expression e.g. -gamma=\"1d0\"\
+                        paritition function, ROT to keep into account the rotational partition function, EXACT to evaluate the\
+                        adiabatic index accurately taking into account both contributions, or REDUCED to use only H2 and CO as diatomic\
+			molecules (faster). Finally a custom F90 expression e.g. -gamma=\"1d0\"\
 			can also be used. Default value is 5/3.",metavar="OPTION")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH, CR, PHOTOAV.\
 			If you want a complete list of the available heating options type -heating=?")
@@ -216,6 +224,7 @@ class krome():
 		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the\
 			default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
 		self.parser.add_argument("-quote", action="store_true", help="print a citation and exit")
+		self.parser.add_argument("-quotelist", action="store_true", help="print all the citations and exit")
 		self.parser.add_argument("-ramses", action="store_true", help="create patches for RAMSES, see also -enzo and -flash")
 		self.parser.add_argument("-ramsesOffset", metavar="offset", help="add an offset to the array of the passive scalar. The\
 			default is 3.")
@@ -229,6 +238,7 @@ class krome():
 			using NASA polynomials.")
 		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g.\
 			-RTOL 1e-5 Default is RTOL=1d-4, see also -ATOL and -customRTOL")
+		self.parser.add_argument("-photoBins", metavar="NBINS", help="define the number of frequency bins for the impinging radiation.")
 		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files")
                 self.parser.add_argument("-shielding", metavar="TYPE", help="use H2 self-shielding, TYPE can be DB96 for Draine+Bertoldi 1996,\
                         WG11 for the more accurate Wolcott+Greene 2011")
@@ -261,7 +271,12 @@ class krome():
 		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
 		self.parser.add_argument("-useODEConstant", help="postpone an expression to each ODE. EXPRESSION must be a valid f90\
 			expression (e.g. *3.d0 or +1.d-10)", metavar="EXPRESSION")
-		self.parser.add_argument("-usePhIoniz", action="store_true", help="include photochemistry")
+		self.parser.add_argument("-usePhIoniz", action="store_true", help="includes photochemistry (obsolete)")
+		self.parser.add_argument("-usePhotoInduced", action="store_true", help="includes the photo-induced transitions in the calculation\
+			of the cooling according to the choosen photon flux.")
+		self.parser.add_argument("-usePhotoOpacity", action="store_true", help="computes photorates using opacity as a function of \
+			the species densities and the photo cross sections, i.e. exp(-sum_i N_i*sigma_i). Column densities are computed\
+			from density by using the local approximation N = 1.8e21*(n/1000)**(2/3) 1/cm2.")
 		self.parser.add_argument("-usePlainIsotopes", action="store_true", help="use kA format for isotopes instead of [k]A format,\
 			where k is the isotopic number and A is the atom name, e.g. krome looks for 14C instead of [14]C in the reactions file.")
 		self.parser.add_argument("-useTabs", action="store_true", help="use tabulated rate coefficients (free parameter: temperature)")
@@ -316,6 +331,10 @@ class krome():
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
 			filename = "networks/react_primordialZ2"
+		elif(args.test=="collapseZ_UV"):
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
+			filename = "networks/react_primordialZ2_UV"
 		elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,ATOMIC", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useN","-gamma=FULL"]]
@@ -407,7 +426,16 @@ class krome():
 		
 		#get a citation and exit
 		if(args.quote):
+			print "KROME is a quote random generator with some utility for astrochemistry."
+			print "As requested a random citation:"
 			get_quote()
+			sys.exit()
+
+		#get the list of the quotes and exit
+		if(args.quotelist):
+			print "KROME is a quote random generator with some utility for astrochemistry."
+			print "As requested the complete list of the available citations:"
+			get_quote(True)
 			sys.exit()
 
 		#save options into a file
@@ -496,10 +524,27 @@ class krome():
 		if(args.usePlainIsotopes):
 			self.usePlainIsotopes = True
 			print "Reading option -usePlainIsotopes"
-		#use photoionization from Verner et al. 1996
+		#use photoionization from Verner et al. 1996 (no longer working)
 		if(args.usePhIoniz):
 			self.usePhIoniz = True
-			print "Reading option -usePhIoniz"
+			print "Reading option -usePhIoniz (now obsolete, you can remove it)"
+
+		#use photoionization 
+		if(args.usePhotoOpacity):
+			self.usePhotoOpacity = True
+			print "Reading option -usePhotoOpacity (now obsolete, you can remove it)"
+
+		#use photo-induced cooling transitions 
+		if(args.usePhotoInduced):
+			self.usePhotoInduced = True
+			if(not(args.photoBins)):
+				print "ERRROR: -usePhotoInduced requires the option -photoBins=N enabled"
+				print " where N is the number of photon bins employed."
+				sys.exit()
+			print "Reading option -usePhotoInduced"
+
+
+
 		#use equilibrium check to break loops earlier
 		if(args.useEquilibrium):
 			self.useEquilibrium = True
@@ -731,6 +776,13 @@ class krome():
 			print "Reading option -noExample"
 
 
+		#set the number of photobins
+		if(args.photoBins):
+			self.photoBins = int(args.photoBins)
+			self.usePhIoniz = True
+			if(self.photoBins<0): die("ERRROR: number of frequency bins < 0!")
+			print "Reading option -photoBins (NBINS="+str(self.photoBins)+")"
+
 		#determine Tgas limit operators
 		if(args.Tlimit):
 			self.myTlimit = args.Tlimit
@@ -854,7 +906,7 @@ class krome():
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
 			myHeat = [x.strip() for x in myHeat]
-			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST"]
+			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","XRAY"]
 			for hea in myHeat:
 				if(not(hea in allHeats)):
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
@@ -866,10 +918,13 @@ class krome():
 			if("CR" in myHeat): self.useHeatingCR = True
 			if("PHOTOAV" in myHeat): self.useHeatingPhotoAv = True
 			if("PHOTODUST" in myHeat): self.useHeatingPhotoDust = True
+			if("XRAY" in myHeat): self.useHeatingXRay = True
 
 			self.use_thermo = True
-			if(not(self.usePhIoniz) and self.useHeatingPhoto):
-				die("ERROR: if you use photoheating you have to include potoionization via -usePhIoniz")
+			if(self.photoBins<=0 and self.useHeatingPhoto):
+				print "ERROR: if you use photoheating you should include the number of photo-bins"
+				print " by using the option -photoBins=NBINS"
+				sys.exit()
 
 			if("?" in myHeat):
 				print "Available heatings are:", (", ".join(allHeats))
@@ -1123,7 +1178,7 @@ class krome():
 					coef = [float(x) for x in mypoly[:17] if x.strip()!=""]
 					#check the number of coefficients (3temp+14poly)
 					if(len(coef)!=17):
-						print "ERROR: wrong format for NASA polynomials!"
+						print "ERROR: NASA polynomials!"
 						print spec	
 						print srow
 						sys.exit()
@@ -1242,6 +1297,9 @@ class krome():
 		idxs = [] #list of index for already found
 		noTabNextBlock = False #default for blocks of reactions
 		inCRblock = False #block of CR reactions
+		inPhotoBlock = False #block of photo reactions with xsection function
+		inXRayBlock = False #block of xray reactions
+		noTabBlockStored = noTabNextBlock #store the noTabNextBlock array before inPhotoBlock to restore it
 
 		#read the size of the file in lines (skip blank and comments)
 		# to have a rough idea of the size
@@ -1313,15 +1371,37 @@ class krome():
 			#search for ghost species
 			if("@ghost:" in srow):
 				ghost = srow.replace("@ghost:","").strip()
-				print "Found ghost species: "+ghost
-				mol = parser(ghost,mass_dic,atoms,self.thermodata)
-				if(not(mol.name in spec_names)):
-					spec_names.append(mol.name)
-					specs.append(mol)
-				mol.idx = spec_names.index(mol.name) + 1
+				aghost = ghost.split(",")
+				for ghost in aghost:
+					print "Found ghost species: "+ghost
+					mol = parser(ghost,mass_dic,atoms,self.thermodata)
+					if(not(mol.name in spec_names)):
+						spec_names.append(mol.name)
+						specs.append(mol)
+					mol.idx = spec_names.index(mol.name) + 1
 				continue #SKIP: a ghost line is not a reaction line
-				
 
+			#search for table pragma
+			if("@tabvar:" in srow):
+				atab = srow.replace("@tabvar:","").split("=")
+				if(len(atab)!=2):
+					print "ERROR: wrong format, it should be @tabvar:varname=file,var1,var2"
+					print " You provided: "+srow.strip()
+					sys.exit()
+				aatab = atab[1].split(",")
+				if(len(aatab)!=3):
+					print "ERROR: wrong format, it should be @tabvar:varname=file,var1,var2"
+					print " You provided: "+srow.strip()
+					sys.exit()
+				
+				mytabvar = atab[0].strip()
+				mytabpath = aatab[0].strip().replace("\"","")
+				mytabxxyy = aatab[1]+","+aatab[2]
+				#updates anytab arrays
+				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
+					self.anytabsizes,self.coevars,ivarcoe)
+				continue #this is not a reaction line
+				
 			#search for format string
 			if("@format:" in srow):
 				idxFound = tminFound = tmaxFound = rateFound = qeffFound = False
@@ -1391,9 +1471,41 @@ class krome():
 				inCRblock = False
 				continue #SKIP (not a reaction)
 
+			#start a photo reaction block
+			if(srow.lower()=="@photo_start" or srow.lower()=="@photo_begin"):
+				if(self.photoBins<=0):
+					print "ERROR: you are using "+srow.lower()+" in your reaction file"
+					print " with zero photo-bins. Use -photoBins=NBINS option."
+					sys.exit()
+				inPhotoBlock = True
+				noTabBlockStored = noTabNextBlock
+				noTabNext = noTabNextBlock = True
+				continue #SKIP (not a reaction)
+
+			#start a photo reaction block
+			if(srow.lower()=="@photo_stop" or srow.lower()=="@photo_end"):
+				inPhotoBlock = False
+				noTabNext = noTabNextBlock = noTabBlockStored #restore the noTabNextBlock value before entering inPhotoBlock
+				continue #SKIP (not a reaction)
+
+			#start an XRAY reaction block
+			if(srow.lower()=="@xray_start" or srow.lower()=="@xray_begin"):
+				inXRayBlock = True
+				self.useXRay = True
+				noTabBlockStored = noTabNextBlock
+				noTabNext = noTabNextBlock = True
+				continue #SKIP (not a reaction)
+
+			#start an XRAY reaction block
+			if(srow.lower()=="@xray_stop" or srow.lower()=="@xray_end"):
+				inXRayBlock = False
+				noTabNext = noTabNextBlock = noTabBlockStored #restore the noTabNextBlock value before entering inXRayBlock
+				continue #SKIP (not a reaction)
+			
+
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
 			arow = [x.strip() for x in arow] #strip single elements
-			if(len(arow)!=format_items): 
+			if(len(arow)!=format_items):
 				print "WARNING: wrong format for reaction "+str(rcount+1)
 				print srow
 				a = raw_input("Any key to continue q to quit... ")
@@ -1485,7 +1597,7 @@ class krome():
 				myrea.ifrate = area[0] #store prepending if condition
 				myrea.krate = area[1] #get reaction rate written in F90 style
 			if("fsh" in myrea.krate.lower()): fsh_found = True
-				
+			
 			if(qeffFound): myrea.qeff = arow[iqeff]
 
 
@@ -1514,12 +1626,16 @@ class krome():
 					mol.idx = spec_names.index(mol.name) + 1
 					myrea.products.append(mol) #add molecule object to products
 
+			#increases the index of the photoreaction
+			if(inPhotoBlock):
+				self.nPhotoRea += 1
+				myrea.idxph = self.nPhotoRea
 
 			myrea.build_verbatim() #build reaction as string (e.g. A+B->C)
 			#myrea.reactants = sorted(myrea.reactants, key=lambda r:r.idx) #sort reactants
 			#myrea.products = sorted(myrea.products, key=lambda p:p.idx) #sort products
 			myrea.build_RHS(self.useNuclearMult) #build RHS in F90 format (e.g. k(2)*n(10)*n(8) )
-			myrea.build_phrate() #build photoionization rate
+			myrea.build_phrate(inPhotoBlock) #build photoionization rate
 			myrea.check(self.checkMode) #check mass and charge conservation
 			myrea.group = group #add the group to the reaction
 			myrea.canUseTabs = not(noTabNext) #check if this reaction can use tabs or not
@@ -1528,7 +1644,9 @@ class krome():
 				print " "+myrea.verbatim
 				print " rate = "+myrea.krate
 				sys.exit()
+
 			myrea.isCR = inCRblock #is a CR reaction
+			myrea.isXRay = inXRayBlock #is an XRAY reaction
 
 			#skip duplicated reactions if requested
 			skip_append = False
@@ -1570,6 +1688,76 @@ class krome():
 		if(unmatch_idx):
 			print "WARNING: index in \""+filename+"\" are not sequential!"
 
+		#prepares xray rates including self-shielding and secondary process
+		xrayHFound = xrayHeFound = False
+		for x in reacts:
+			if(not(x.isXRay)): continue
+			if(not("auto" in x.krate)): continue
+			ivarcoe = len(self.coevars)
+			fake_ivarcoe = 0
+			fake_coevars = dict()
+			#updates anytab arrays
+			if(x.reactants[0].name=="H"):
+				mytabvar = "user_xray_H"
+				mytabpath = "data/ratexH.dat"
+				mytabxxyy = "logH,logHe-logH"
+				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
+					self.anytabsizes,self.coevars,ivarcoe)
+				xrayHFound = True
+				x.krate = "ratexH * (1d0+phiH) + n(idx_He)/(n(idx_H)+1d-40) * ratexHe * phiH"
+				print "H xray ionization found!"
+
+				#heating tabs H
+				mytabvar = "user_xheat_H"
+				mytabpath = "data/heatxH.dat"
+				mytabxxyy = "logH,logHe-logH"
+				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
+					self.anytabsizes,fake_coevars,fake_ivarcoe)
+
+			elif(x.reactants[0].name.lower()=="he"):
+				mytabvar = "user_xray_He"
+				mytabpath = "data/ratexHe.dat"
+				mytabxxyy = "logH,logHe-logH"
+				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
+					self.anytabsizes,self.coevars,ivarcoe)
+				x.krate = "ratexHe * (1d0+phiHe) + n(idx_H)/(n(idx_He)+1d-40) * ratexH * phiHe"
+				xrayHeFound = True
+				print "He xray ionization found!"
+
+				#heating tabs He
+				mytabvar = "user_xheat_He"
+				mytabpath = "data/heatxHe.dat"
+				mytabxxyy = "logH,logHe-logH"
+				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
+					self.anytabsizes,fake_coevars,fake_ivarcoe)
+
+			else:
+				print "ERROR: xray reaction not tabulated!"
+				print " "+x.verbatim
+				print " remove it from the chemical network or provide non-automatic rate."
+				print " Note that you should also provide the heating tab if needed."
+				sys.exit()
+
+		#check if both (H and He) xray reactions are found, since tables are H and He dependant
+		if(xrayHeFound!=xrayHFound):
+			print "ERROR: for xrays you must include both H and He reaction in your reaction files, e.g.:"
+			print " @format:idx,R,P,P,Tmin,Tmax,rate"
+			print " 7,H,H+,E,NONE,NONE,auto"
+			print " 8,He,He+,E,NONE,NONE,auto"
+			print " where indexes are arbitrary"
+			sys.exit()
+
+		#check if both (H and He) xray reactions are found, when xray heating is enabled
+		if((not(xrayHeFound) and not(xrayHFound)) and self.useHeatingXRay):
+			print "ERROR: with XRAY heating option you must include both H and He reaction"
+			print " in your reaction files, e.g.:"
+			print " @format:idx,R,P,P,Tmin,Tmax,rate"
+			print " 7,H,H+,E,NONE,NONE,auto"
+			print " 8,He,He+,E,NONE,NONE,auto"
+			print " where indexes are arbitrary"
+			sys.exit()
+
+
 		#count reactions with unique index
 		idxs = []
 		nrea = 0
@@ -1592,9 +1780,8 @@ class krome():
 		if(self.usePhIoniz or self.useHeatingPhoto):
 			print "************************************************"
 			print "REMINDER: note that, since you are using photon-based"
-			print " options, you need to include \"call krome_init_photo()\""
-			print " to your main file in order to initialize the rate" 
-			print " coefficients!"
+			print " options, you need to initialize the machinery from"
+			print " your main file! Read the manual for further details."
 			print "************************************************"
 			a = raw_input("Any key to continue...")
 		
@@ -1854,6 +2041,8 @@ class krome():
 		print "ODEs needed:", len(self.specs)
 		print "Reactions found:", len(self.reacts)
 		print "Species found:", self.nmols
+		if(self.nPhotoRea>0): print "Photo reactions found: ",self.nPhotoRea
+
 
 	########################
 	def uniq(self,a):
@@ -1866,28 +2055,29 @@ class krome():
 	def dumpNetwork(self):
 		#dump species to log file
 		fout = open("species.log","w")
-		fout.write("#This file contains:\n")
-		fout.write("#1. a list of the species used with their indexes\n")
-		fout.write("#2. a list of the species to initialize gnuplot\n")
+		fout.write("#This file contains a list of the species used with their indexes\n")
 		fout.write("\n")
 		idx = 0
 		for mol in self.specs:
 			idx += 1
 			fout.write(str(idx)+"\t"+mol.name+"\t"+mol.fidx+"\n")
+		fout.close()
 
 		#dump species to gnuplot initialization
+		fout = open("species.gps","w")
+		fout.write("#This file is a script to initialize the species index in krome gnuplot\n")
 		idx = 0
 		fout.write("\n")
 		fout.write("\n")
-		fout.write("#cut-and-paste this into gnuplot to initialize species variables\n")
-		fout.write("# nkrome is an optional offset\n")
-		fout.write("nkrome = 0\n")
+		fout.write("if(!exists(\"nkrome\")) print \"First you should set the value of the nkrome offset\"\n")
 		inits = []
 		for mol in self.specs:
 			idx += 1
 			inits.append("krome_"+mol.fidx+" = "+str(idx)+" + nkrome")
 		fout.write(("\n".join(inits))+"\n")
-		fout.close()	
+		fout.write("print \"All variables set as e.g. krome_idx_H2\"\n")
+		fout.write("print \" the offset is nkrome=\",nkrome\n")
+		fout.close()
 	
 		#dump reactions to log file
 		fout = open("reactions.log","w")
@@ -2405,6 +2595,7 @@ class krome():
 					transitions = [] #list of transitions
 					colliders = [] #list of colliders names
 					Aijs = dict() #init dictionary for Einsten's
+					Bijs = dict() #init dictionary for Bij
 					levels = dict() #init dictionary for levels
 					#prepares the header of the function
 					full_cool = "\n"
@@ -2412,6 +2603,7 @@ class krome():
 					full_cool += "function "+function_name+"(n,inTgas,k)\n"
 					full_cool += "use krome_commons\n"
 					full_cool += "use krome_constants\n"
+					full_cool += "use krome_photo\n"
 					full_cool += "implicit none\n"
 					full_cool += "real*8::"+function_name+",n(:),inTgas,Tgas,k(:),invTgas\n"
 					full_cool += "integer::i\n"				
@@ -2453,8 +2645,10 @@ class krome():
 					trfound = []
 					for tr in transitions:
 						ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
-						ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
-						ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + "*invTgas)"
+						ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"])\
+							+ "d0"
+						ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"])\
+							+ "*invTgas)"
 						#skip already found transitions					
 						if(not([tr["up"], tr["down"]] in trfound)):
 							full_cool += ij2ji + "\n"
@@ -2517,7 +2711,24 @@ class krome():
 						real_variables.append(varM) #add to double variable list
 						#check if variable is unique
 						if(not(varM in varMexist)):
-							MM[varM] = []
+							try:
+								betas = ""
+								if(self.usePhotoInduced):
+									deltaE = float(levels[tr["up"]]["energy"]) \
+										- float(levels[tr["down"]]["energy"]) #K
+									boltz_eV = 8.6173324e-5 #eV/K
+									h_eV = 4.135667516e-15 #eV*s
+									h_erg = 6.6260755e-27 #erg*s
+									c_speed = 2.9979245800e10 #cm/s
+									nuE = deltaE*boltz_eV/h_eV #1/s
+									fAij = Aijs[(tr["up"],tr["down"])].replace("d","e")
+									gg = float(levels[tr["up"]]["gmult"]) / float(levels[tr["down"]]["gmult"])
+									betaI = gg * float(fAij) * c_speed**2/2e0/h_eV/nuE**3 #cm2/eV/s
+									betas = " &\n+ "+format_double(betaI) + " * get_photoIntensity("\
+										+ format_double(deltaE*boltz_eV)+")"
+								MM[varM] = [betas]
+							except:
+								MM[varM] = ["0e0"]
 							MMij[varM] = [tr["down"],tr["up"]]
 						coll = tr["coll"] #get colliders for the given transition
 						varup = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
@@ -2525,6 +2736,7 @@ class krome():
 							MM[varM].append(varup+"*"+coll) #include colliders abundance if ortho or para H2
 						else:
 							MM[varM].append(varup+"*n(idx_"+coll+")") #include colliders abundance
+
 						varMexist.append(varM)
 
 					#build Mji as above
@@ -2533,7 +2745,20 @@ class krome():
 						real_variables.append(varM) #add to double variable list
 						if(not(varM in varMexist)):
 							try:
-								MM[varM] = [Aijs[(tr["up"],tr["down"])]]
+								betas = ""
+								if(self.usePhotoInduced):
+									deltaE = float(levels[tr["up"]]["energy"]) \
+										- float(levels[tr["down"]]["energy"]) #K
+									boltz_eV = 8.6173324e-5 #eV/K
+									h_eV = 4.135667516e-15 #eV*s
+									h_erg = 6.6260755e-27 #erg*s
+									c_speed = 2.9979245800e10 #cm/s
+									nuE = deltaE*boltz_eV/h_eV #1/s
+									fAij = Aijs[(tr["up"],tr["down"])].replace("d","e")
+									betaI = float(fAij) * c_speed**2/2e0/h_eV/nuE**3 #cm2/eV/s
+									betas = " &\n+ "+format_double(betaI) + " * get_photoIntensity("\
+										+ format_double(deltaE*boltz_eV)+")"
+								MM[varM] = [Aijs[(tr["up"],tr["down"])] + betas]
 							except:
 								MM[varM] = ["0e0"]
 							if(use_escape): MM[varM] = ["0e0"]
@@ -2804,15 +3029,6 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome_commons.f90","w")
 
-		#photoionization variables and functions
-		phvars = []
-		pheatvars = []
-		if(self.usePhIoniz):
-			for react in reacts:
-				if("krome_kph_" in react.krate):
-					phvars.append(react.krate)
-					pheatvars.append(react.krate.replace("krome_kph_","krome_pheat_"))
-
 		#common dust optical variables
 		optVariables = ""
 		if(self.useDust):
@@ -2835,6 +3051,9 @@ class krome():
 					fout.write("\tinteger,parameter::nspec=" + str(len(specs)) + "\n")
 					fout.write("\tinteger,parameter::ndust=" + str(ndust) + "\n")
 					fout.write("\tinteger,parameter::ndustTypes=" + str(self.dustTypesSize) + "\n")
+					fout.write("\tinteger,parameter::nPhotoBins=" + str(self.photoBins) + "\n")
+					fout.write("\tinteger,parameter::nPhotoRea=" + str(self.nPhotoRea) + "\n")
+
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(srow == "#KROME_implicit_arr_r"):
@@ -2843,8 +3062,6 @@ class krome():
 			elif(srow == "#KROME_implicit_arr_p"):
 				for j in range(self.maxnprod):
 					fout.write("integer::arr_p"+str(j+1)+"(nrea)\n")
-			elif(srow == "#KROME_photo_variables" and self.usePhIoniz and len(phvars)>0):
-				fout.write("real*8::"+(",".join(phvars))+"\n")
 			elif(srow == "#KROME_photoheating_variables" and self.useHeatingPhoto):
 				fout.write("real*8::"+(",".join(pheatvars))+"\n")
 			elif(srow == "#KROME_opt_variables"):
@@ -2852,6 +3069,32 @@ class krome():
 			elif(srow == "#KROME_user_commons"):
 				if(len(self.commonvars)>0):
 					fout.write("real*8::"+(",".join(self.commonvars))+"\n")
+			elif(srow == "#KROME_photobins_array"):
+				if(self.photoBins>0):
+					fout.write("real*8::photoBinJ(nPhotoBins) !intensity per bin, erg/s/sr/Hz/cm2\n")
+					fout.write("real*8::photoBinEleft(nPhotoBins) !left limit of the freq bin, eV\n")
+					fout.write("real*8::photoBinEright(nPhotoBins) !right limit of the freq bin, eV\n")
+					fout.write("real*8::photoBinEmid(nPhotoBins) !middle point of the freq bin, eV\n")
+					fout.write("real*8::photoBinEdelta(nPhotoBins) !size of the freq bin, eV\n")
+					fout.write("real*8::photoBinEidelta(nPhotoBins) !inverse of the size of the freq bin, 1/eV\n")
+					fout.write("real*8::photoBinJTab(nPhotoRea,nPhotoBins) !xsecs table, cm2\n")
+					fout.write("real*8::photoBinRates(nPhotoRea) !photo rates, 1/s\n")
+					fout.write("real*8::photoBinHeats(nPhotoRea) !photo heating, erg/s\n")
+					fout.write("real*8::photoBinEth(nPhotoRea) !energy treshold, eV\n")
+			#write the anytab common variables
+			elif(srow == "#KROME_vars_anytab"):
+				stab = ""
+				for i in range(len(self.anytabvars)):
+					tabvar = self.anytabvars[i]
+					tabfile = self.anytabfiles[i]
+					tabsize = self.anytabsizes[i]
+					stab += "real*8::" + tabvar+"_anytabx("+tabsize[0]+")\n"
+					stab += "real*8::" + tabvar+"_anytaby("+tabsize[1]+")\n"
+					stab += "real*8::" + tabvar+"_anytabz("+tabsize[0]+","+tabsize[1]+")\n"
+					stab += "real*8::" + tabvar+"_anytabxmul\n"
+					stab += "real*8::" + tabvar+"_anytabymul\n"
+				fout.write(stab+"\n")
+
 			else:
 				if(row[0]!="#"): fout.write(row)
 
@@ -2867,9 +3110,12 @@ class krome():
 		constants.append(["boltzmann_eV", "8.617332478d-5","eV / K"]) 
 		constants.append(["boltzmann_J", "1.380648d-23","J / K"])
 		constants.append(["boltzmann_erg", "1.380648d-16","erg / K"]) 
-		constants.append(["planck_eV","4.135667516d-15","eV s"]) 
+		constants.append(["planck_eV","4.135667516d-15","eV s"])
 		constants.append(["planck_J","6.62606957d-34","J s"])  
 		constants.append(["planck_erg","6.62606957d-27","erg s"]) 
+		constants.append(["iplanck_eV","1d0/planck_eV","1 / eV / s"])
+		constants.append(["iplanck_J","1d0/planck_J","1 / J / s"])
+		constants.append(["iplanck_erg","1d0/planck_erg","1 / erg / s"])
 		constants.append(["gravity","6.674d-8","cm3 / g / s2"])      
 		constants.append(["e_mass","9.10938188d-28","g"])
 		constants.append(["p_mass","1.67262158d-24","g"])
@@ -3096,7 +3342,6 @@ class krome():
 			consE += ", 1d-40)"
 			krome_conserve += "\n!********** E **********\n"
 			krome_conserve += consE + "\n"
-		
 
 		#loop on src file and replace pragmas
 		skip = False
@@ -3106,6 +3351,8 @@ class krome():
                         #skip when find IF pragmas
                         if(srow == "#IFKROME_useShieldingWG11" and not(self.useShieldingWG11)): skip = True
                         if(srow == "#IFKROME_useShieldingDB96" and not(self.useShieldingDB96)): skip = True
+                        if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
+
 		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
@@ -3142,6 +3389,12 @@ class krome():
 					if(Tlimfound): kstr += "\nend if" #close the if statement for temperature
 					kstr = truncF90(kstr, 60,"*") #truncates long reaction rates
 					fout.write(truncF90(kstr, 60,"/")+"\n\n") #truncate
+			#replace arrays for best flux
+			elif(srow == "#KROME_arr_reactprod"):
+				for i in range(self.maxnreag):
+					fout.write("if(arr_r"+str(i+1)+"(i) == idx_found) found = .true.\n") 
+				for i in range(self.maxnprod):
+					fout.write("if(arr_p"+str(i+1)+"(i) == idx_found) found = .true.\n") 
 			elif(srow == "#KROME_conserve"):
 				fout.write(krome_conserve+"\n")
 			elif(srow == "#KROME_metallicity_functions"):
@@ -3158,8 +3411,9 @@ class krome():
 					ff += "implicit none\n"
 					ff += "real*8::n(:),"+ffname+","+zg[1]+",nH\n"
 					ff += "nH = get_Hnuclei(n(:))\n"
-					ff += zg[1]+" = "+zg[2]+"\n\n"
-					ff += ffname + " = log10("+zg[1]+"/nH) - "+solar[zg[0]]+"\n\n" #compute metallicity
+					ff += zg[1]+" = "+zg[2]+"\n"
+					ff += zg[1]+" = max("+zg[1]+", 0d0)\n\n"
+					ff += ffname + " = log10("+zg[1]+"/nH+1d-40) - "+solar[zg[0]]+"\n\n" #compute metallicity
 					ff += "end function "+ffname+"\n\n"
 					ffs += ff #append function to the others
 				fout.write(ffs+"\n") #replace functions
@@ -3200,9 +3454,17 @@ class krome():
 					kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
 					fout.write(kstr+"\n")
 			elif(srow == "#KROME_qeff"):
+				#look for the largest qeff value
+				maxqeff = 0e0
 				for x in reacts:
-					sqeff = "\tget_qeff("+str(x.idx)+") = "+str(x.qeff)+" !" + x.verbatim
-					fout.write(sqeff+"\n")
+					maxqeff = max(maxqeff,x.qeff)
+				#if 0e0 is the largest compress the array, else write it explicitely
+				if(maxqeff==0e0):
+					fout.write("get_qeff(:) = 0e0\n")
+				else:
+					for x in reacts:
+						sqeff = "\tget_qeff("+str(x.idx)+") = "+str(x.qeff)+" !" + x.verbatim
+						fout.write(sqeff+"\n")
 			elif(srow == "#KROME_Tshortcuts"):
 				for shortcut in sclist:
 					fout.write(shortcut+"\n")
@@ -3268,7 +3530,7 @@ class krome():
 					gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + "))"
 					gamma = gammaN + " / &\n" +gammaD
 
-				elif(self.typeGamma=="EXACT" or self.typeGamma=="VIB" or self.typeGamma=="ROT"):
+				elif(self.typeGamma=="EXACT" or self.typeGamma=="VIB" or self.typeGamma=="ROT" or self.typeGamma=="REDUCED"):
 					#extends Omukai+Nishi1998 eqs.5,6,7
 					# and Boley+2007 (+erratum!) eqs.2,3
 					header = "real*8::Tgas,invTgas,x,expx,ysum,gsum,mosum,gvib\n"
@@ -3289,6 +3551,8 @@ class krome():
 						#diatomic
 						elif(mol.natoms==2):
 							gtype = self.typeGamma
+							#skip every diatoms except H2 and CO if REDUCED
+							if(gtype=="REDUCED" and (mol.name!="H2" and mol.name!="CO")): continue 
 							#warning if vibrational constant not found
 							if(mol.ve_vib=="__NONE__" and (gtype=="EXACT" or gtype=="VIB")):
 								print "WARNING: no vibrational constant for "+mol.name+" in gamma calculation!"
@@ -3376,49 +3640,45 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome_photo.f90","w")
 
-		phvars = []
-		pheatvars= []
-		ph_func = ph_qromos = ph_heat = ph_heat_qromos = ph_zero = ph_heat_print = ""
-		for react in reacts:
-			phstuff = get_ph_stuff(react)
-			if(phstuff==None): continue
-			ph_func += phstuff["ph_func"]+"\n"
-			ph_qromos += phstuff["qromos"]+"\n"
-			ph_heat += phstuff["ph_heat"]+"\n"
-			ph_name = phstuff["reaname"]
-
-			phvars.append("krome_kph_"+ph_name)
-			pheatvars.append("krome_pheat_"+ph_name)
-
-			#string to print computed photoheating values (uncomment for debug)
-			#ph_heat_print += "print '(a20,E11.3,a1,a6)',\"" + react.verbatim + "\", " + "krome_pheat_"+ ph_name + ",\"\",\"eV/s\"\n"
-
-			#string containing photoheating computations (integrals)
-			ph_heat_qromos += "\t" + phstuff["qromos"].replace("sigma_", "heat_").replace("krome_kph_","krome_pheat_") + "\n"
-
-		#inizialization of photoionization and photoheating common variables to zero
-		for x in phvars:
-			ph_zero += x + " = 0.d0\n"
-		for x in pheatvars:
-			ph_zero += x + " = 0.d0\n"
-
 		#replace photoionization and photoheating functions
-		skip = False
+		skip = skip_heat = False
 		for row in fh:
+			srow = row.strip()
 			if(row.strip() == "#IFKROME_usePhIoniz" and not(self.usePhIoniz)): skip = True
+			if(row.strip() == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True
 			if(row.strip() == "#ENDIFKROME"): skip = False
 
-			if(skip): continue
-			#replace krome variables
-			if(self.usePhIoniz):
-				row = row.replace("#KROME_photo_functions", ph_func +"\n")
-				row = row.replace("#KROME_photo_qromos", ph_qromos +"\n")
-				row = row.replace("#KROME_photo_init_zero", ph_zero +"\n")
-			if(self.useHeatingPhoto):
-				row = row.replace("#KROME_photo_heating_qromos", ph_heat_qromos +"\n")
-				row = row.replace("#KROME_photo_heating_functions", ph_heat +"\n")
-				row = row.replace("#KROME_photo_heating_print", ph_heat_print +"\n")
+			if(row.strip() == "#IFKROME_photobin_heat" and not(self.useHeatingPhoto)): skip_heat = True
+			if(row.strip() == "#ENDIFKROME_photobin_heat"): skip_heat = False
 
+			if(skip or skip_heat): continue
+
+			#replace pragma with the initialization of the photorate table in bins
+			if(srow=="#KROME_photobin_xsecs"):
+				phbinx = ""
+				for rea in reacts:
+					if(rea.kphrate==None): continue
+					phbinx += "\n!"+rea.verbatim+"\n"
+					phbinx += "kk = "+rea.kphrate+"\n"
+					phbinx += "if(energy_eV<"+str(rea.Tmin)+") kk = 0d0\n"
+					phbinx += "if(energy_eV>"+str(rea.Tmax)+") kk = 0d0\n"
+					phbinx += "photoBinJTab("+str(rea.idxph)+",j) = kk\n"
+				row = phbinx+"\n"
+			#replace the energy treshold assuming that it is equal to Tmin
+			elif(srow=="#KROME_photobin_Eth"):
+				phbinx = ""
+				for rea in reacts:
+					if(rea.kphrate==None): continue
+					phbinx += "photoBinEth("+str(rea.idxph)+") = "+str(rea.Tmin)+" !"+rea.verbatim+"\n"
+				row = phbinx+"\n"
+			#replace pragma with the opacity calculation as N_i*sigma_i for any species
+			elif(srow=="#KROME_photobin_opacity"):
+				phbintau = ""
+				for rea in reacts:
+					if(rea.kphrate==None): continue
+					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+rea.reactants[0].fidx+") !"\
+						+rea.verbatim+"\n"
+				row = phbintau+"\n"
 
 			if(row[0]!="#"): fout.write(row)
 
@@ -3635,7 +3895,7 @@ class krome():
 				if(self.coolingQuench<0e0):
 					fout.write(srow.replace("#KROME_coolingQuench","")+"\n")
 				else:
-					qfunc = " * 0.5d0 * (tanh(Tgas - "+format_double(self.coolingQuench)+") + 1d0)"
+					qfunc = " &\n * 0.5d0 * (tanh(Tgas - "+format_double(self.coolingQuench)+") + 1d0)"
 					fout.write(srow.replace("#KROME_coolingQuench",qfunc)+"\n")
 				continue
 
@@ -3805,13 +4065,14 @@ class krome():
 		pheatvars = []
 		if(self.usePhIoniz):
 			for react in reacts:
-				phstuff = get_ph_stuff(react)
-				if(phstuff==None): continue
-				reaname = phstuff["reaname"]
-				reag = react.reactants
-				fake_opacity = ""
-				if(self.useFakeOpacity): fake_opacity = " * exp(-n(" + reag[0].fidx + ") / n0)"
-				pheatvars.append("krome_pheat_"+reaname + " * n(" + reag[0].fidx + ")" + fake_opacity)
+				#phstuff = get_ph_stuff(react)
+				#if(phstuff==None): continue
+				#reaname = phstuff["reaname"]
+				#reag = react.reactants
+				#fake_opacity = ""
+				#if(self.useFakeOpacity): fake_opacity = " * exp(-n(" + reag[0].fidx + ") / n0)"
+				if(react.idxph<=0): continue
+				pheatvars.append("photoBinHeats("+str(react.idxph)+") * n(" + react.reactants[0].fidx + ")")
 
 		#replace pragma with strings built above
 		skip = False
@@ -3837,6 +4098,9 @@ class krome():
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				if(row.strip() == "#IFKROME_useHeatingPhotoDust" and not(self.useHeatingPhotoDust)): skip = True
+				if(row.strip() == "#ENDIFKROME"): skip = False
+
+				if(row.strip() == "#IFKROME_useHeatingXRay" and not(self.useHeatingXRay)): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
 
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
@@ -3866,7 +4130,8 @@ class krome():
 						CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * Hfact\n\n"
 					row = row.replace("#KROME_heatingCR",CRheat)
 
-				row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
+				if(len(pheatvars)>0):
+					row = row.replace("#KROME_photo_heating", "photo_heating = " + (" &\n+ ".join(pheatvars)))
 				row = row.replace("#KROME_HChem_terms", HChem) #replace chemical heating terms
 				row = row.replace("#KROME_HChem_dust", HChemDust) #replace chemical heating for dust
 
@@ -3885,7 +4150,7 @@ class krome():
 					else:
 						row = row.replace("#KROME_photoDustZ","1d1**get_metallicity"+zz+"(n(:))")
 
-				#replace correct dissociation rate in 
+				#replace correct dissociation rates
 				if("#KROME_RdissH2" in row):
 					rdh2Found = False
 					for rea in self.reacts:
@@ -3902,7 +4167,7 @@ class krome():
 						sys.exit()			
 
 					row = row.replace("#KROME_RdissH2",rateDissH2) #replace pragma with H2 photodissociation rate
-		
+
 				#replace shortcuts for temperature
 				if(row.strip() == "#KROME_Tshortcuts"):
 					ssc = ""
@@ -4036,6 +4301,10 @@ class krome():
 							fout.write("!"+specs[inw].name+"\n")
 							fout.write("\t" + x + "\n")
 							inw += 1
+			#replace the pragma with the computation of the photorates using the opacity computed with
+			# the approximation of Glover+2009 Eqn.2
+			elif(srow == "#KROME_photobins_compute_thick" and self.usePhotoOpacity):
+				fout.write("call calc_photoBins_thick(n(:))\n")
 			elif(srow == "#KROME_flux_variables" and not(self.humanFlux)):
 				#add var declaration for flux
 				#for x in self.reacts:
@@ -4189,11 +4458,11 @@ class krome():
 
 			srow = row.strip()
 
+			if(srow == "#IFKROME_usePhotoBins" and self.photoBins<=0): skip = True
+
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
 
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
 
 			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
@@ -4253,6 +4522,8 @@ class krome():
 				fout.write("\tinteger,parameter::krome_nspec=" + str(len(specs)) + "\n")
 				fout.write("\tinteger,parameter::krome_ndust=" + str(dustArraySize*dustTypesSize) + "\n")
 				fout.write("\tinteger,parameter::krome_ndustTypes=" + str(dustTypesSize) + "\n")
+				fout.write("\tinteger,parameter::krome_nPhotoBins=" + str(self.photoBins) + "\n")
+				fout.write("\tinteger,parameter::krome_nPhotoRates=" + str(self.nPhotoRea) + "\n")
 			elif(srow == "#KROME_scaleZ"):
 				fout.write(("\n".join(scaleZ))+"\n")
 			else:
@@ -4394,6 +4665,9 @@ class krome():
 			if(srow == "#IFKROME_useTabs" and not(self.useTabs)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
+			if(srow == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
 			if(srow == "#IFKROME_useFlux" and not(self.useFlux)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -4461,6 +4735,25 @@ class krome():
 							if(x[0]==y.name or x[0]==y.fidx):
 								fout.write("rtol("+y.fidx+") = "+format_double(x[1])+"\n")
 								break
+			#write the anytab initializations
+			elif(srow == "#KROME_init_anytab"):
+				stab = ""
+				for i in range(len(self.anytabvars)):
+					tabvar = self.anytabvars[i]
+					tabfile = self.anytabfiles[i]
+					anytabx = tabvar+"_anytabx(:)"
+					anytaby = tabvar+"_anytaby(:)"
+					anytabz = tabvar+"_anytabz(:,:)"
+					anytabxmul = tabvar+"_anytabxmul"
+					anytabymul = tabvar+"_anytabymul"
+					stab += "call init_anytab2D(\""+tabfile+"\","+anytabx+",&\n"\
+						+anytaby+","+anytabz+",&\n"+anytabxmul+","\
+						+anytabymul+")\n"
+					stab += "call test_anytab2D(\""+tabvar+"\","+anytabx+",&\n"\
+						+anytaby+","+anytabz+",&\n"+anytabxmul+","\
+						+anytabymul+")\n"
+				fout.write(stab+"\n")
+					
 			elif(srow == "#KROME_rwork_array"):
 				fout.write("\treal*8::rwork("+str(self.lrw)+")\n")
 			elif(srow == "#KROME_iwork_array"):
@@ -4506,10 +4799,14 @@ class krome():
 		buildFolder = self.buildFolder
 		test_name = self.test_name
 		#copy other files to build
-		print "- copying optical data for dust..."
 		if(self.useDust):
+			print "- copying optical data for dust..."
 			shutil.copyfile("data/optC.dat", buildFolder+"optC.dat")
 			shutil.copyfile("data/optSi.dat", buildFolder+"optSi.dat")
+
+		print "- copying anytab files..."
+		for i in range(len(self.anytabvars)):
+			shutil.copyfile(self.anytabpaths[i], buildFolder+self.anytabfiles[i])
 
 		#copy static files to build
 		if(self.is_test):

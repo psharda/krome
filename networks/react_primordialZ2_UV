@@ -84,6 +84,13 @@
 
 35,HEH+,E,,H,HE,,,NONE,NONE,2d-7*invsqrT32
 
+@PHOTO_BEGIN
+@format:idx,R,P,P,Tmin,Tmax,rate
+36,H,H+,E,13.6,1e4,sigma_v96(energy_eV,4.298d-01,5.475d+04,3.288d+01,2.963d+00,0.000d+00,0.000d+00,0.000d+00)
+
+37,HE,HE+,E,26.6,1e4,sigma_v96(energy_eV,1.361d+01,9.492d+02,1.469d+00,3.188d+00,2.039d+00,4.434d-01,2.136d+00)
+@PHOTO_END
+
 
 
 @format:idx,Tmin,Tmax,R,R,P,P,rate

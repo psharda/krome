@@ -3,12 +3,22 @@ contains
 
 #KROME_header
 
+  !************************
+  function heating(n,Tgas,k,nH2dust)
+    implicit none
+    real*8::n(:), Tgas, k(:), nH2dust
+    real*8::heating
+    
+    heating = sum(get_heating_array(n(:),Tgas,k(:), nH2dust))
+    
+  end function heating
+
   !*******************************
-  function heating(n, Tgas, k, nH2dust)
+  function get_heating_array(n, Tgas, k, nH2dust)
     use krome_commons
     implicit none
     real*8::n(:), Tgas, k(:), nH2dust
-    real*8::heating,heats(7)
+    real*8::get_heating_array(8),heats(8)
     !returns heating in erg/cm3/s
 
     heats(:) = 0.d0
@@ -40,8 +50,12 @@ contains
 #IFKROME_useHeatingPhotoDust
     heats(7) = heat_photoDust(n(:),Tgas)
 #ENDIFKROME
+
+#IFKROME_useHeatingXRay
+    heats(8) = heat_XRay(n(:),Tgas,k(:))
+#ENDIFKROME
     
-    heating = sum(heats)
+    get_heating_array(:) = heats(:)
 
     !remove the comment below to write heating terms to fort.55
     !write(55,'(99E17.8e3)') sum(n(1:nmols)),Tgas,heats(:)
@@ -52,7 +66,52 @@ contains
     ! '' u m:5 every n w l t "photo",\
     ! '' u m:6 every n w l t "enthalpy"
 
-  end function heating
+  end function get_heating_array
+
+#IFKROME_useHeatingXRay
+  !*************************
+  !heating from xrays in erg/s/cm3
+  function heat_XRay(n,Tgas,k)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::n(:),Tgas,heat_Xray,k(:),ntot
+    real*8::xheat_H,xheat_He,logH,logHe
+    real*8::xe,ratexH,ratexHe,ncolH,ncolHe
+
+    ntot = get_Hnuclei(n(:))
+    xe = min(n(idx_e)/ntot,1d0)
+
+    !prepares logs for xrays
+    ncolH = 1.8d21*(max(n(idx_H),1d-40)*1d-3)**(2./3.)
+    ncolHe = 1.8d21*(max(n(idx_He),1d-40)*1d-3)**(2./3.)
+    logH = log10(ncolH)
+    logHe = log10(ncolHe)
+
+    heat_Xray = 0d0
+    xheat_H = fit_anytab2D(user_xheat_H_anytabx(:), &
+         user_xheat_H_anytaby(:), &
+         user_xheat_H_anytabz(:,:), &
+         user_xheat_H_anytabxmul, &
+         user_xheat_H_anytabxmul, &
+         logH,logHe-logH)
+    xheat_He = fit_anytab2D(user_xheat_He_anytabx(:), &
+         user_xheat_He_anytaby(:), &
+         user_xheat_He_anytabz(:,:), &
+         user_xheat_He_anytabxmul, &
+         user_xheat_He_anytabxmul, &
+         logH,logHe-logH)
+
+    !prepares varibles for xray photochemistry
+    ratexH = 1d1**xheat_H
+    ratexHe = 1d1**xheat_He
+    
+    heat_Xray = ratexH * n(idx_H)
+    heat_Xray = ratexHe * n(idx_He)
+    heat_Xray = heat_Xray * .9971d0 * (1d0-(1d0*xe**.2663)**1.3163)
+
+  end function heat_XRay
+#ENDIFKROME
 
 #IFKROME_useHeatingPhotoDust
   !***************************
@@ -161,21 +220,24 @@ contains
 #IFKROME_useHeatingPhoto
   !**************************
   function photo_heating(n)
+    !photo heating in erg/cm3/s using bin-based
+    ! approach. Terms are computed in the
+    ! krome_photo module
     use krome_commons
     use krome_constants
-    real*8::photo_heating,n(:),n0
-    n0 = 1d99 !density for fake opacity
+    implicit none
+    real*8::photo_heating,n(:)
+
     photo_heating = 0.d0
 #KROME_photo_heating
 
-    photo_heating = photo_heating * eV_to_erg
   end function photo_heating
 #ENDIFKROME
 
 #IFKROME_useHeatingChem
-  !H2 FORMATION HEATING
-  !UNITS = erg/cm3/s
-  !krome build the heating/cooling term according
+  !H2 FORMATION HEATING and other exo/endothermic 
+  ! processes (including H2 on dust) in erg/cm3/s
+  !krome builds the heating/cooling term according
   ! to the chemical network employed
   !*******************************
   function heatingChem(n, Tgas, k, nH2dust)

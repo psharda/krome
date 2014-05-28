@@ -30,9 +30,8 @@ module krome_commons
   real*8::krome_dust_asize3(ndust),krome_grain_rho
   integer::krome_dust_partner_idx(ndustTypes)
 
-  !commons for photoionization
-#KROME_photo_variables
-#KROME_photoheating_variables
+  !commons for frequency bins
+#KROME_photobins_array
 
   !commons for dust optical properties
 #KROME_opt_variables
@@ -43,4 +42,7 @@ module krome_commons
   !user-defined commons variables from the reaction file
 #KROME_user_commons
 
+  !commons for anytab
+#KROME_vars_anytab
+  
 end module krome_commons
