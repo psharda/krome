@@ -1464,11 +1464,14 @@ class krome():
 			#start a CR reaction block
 			if(srow.lower()=="@cr_start" or srow.lower()=="@cr_begin"):
 				inCRblock = True
+				noTabBlockStored = noTabNextBlock
+				noTabNext = noTabNextBlock = True
 				continue #SKIP (not a reaction)
 
 			#start a CR reaction block
 			if(srow.lower()=="@cr_stop" or srow.lower()=="@cr_end"):
 				inCRblock = False
+				noTabNext = noTabNextBlock = noTabBlockStored #restore the noTabNextBlock value before entering CR block
 				continue #SKIP (not a reaction)
 
 			#start a photo reaction block
