@@ -41,6 +41,19 @@ contains
     krome_get_gamma_x = krome_get_gamma(x(:),Tgas)
     
   end function krome_get_gamma_x
+
+
+  !****************************
+  !get the mean molecular weight from 
+  ! mass fractions
+  function krome_get_mu_x(xin)
+    use krome_commons
+    implicit none
+    real*8::krome_get_mu,xin(:)
+    real*8::n(nmols)
+    n(:) = krome_x2n(xin(:),1d0)
+    krome_get_mu_x = krome_get_mu(n(:))
+  end function krome_get_mu_x
   
 
   !***************************
