@@ -9,21 +9,23 @@ contains
     use krome_photo
     integer::i,j,ierror,kwarnup(nrea),kwarndown(nrea),pblock
     real*8::kk(nrea),valmax,n(nspec)
-
+    logical::is_rank_zero
     !temperature limits
 #KROME_logTlow
 #KROME_logTup
+
+    is_rank_zero = (krome_mpi_rank==0)
 
     !loop to create tabs (it may take a while)
     valmax = 1d0
     ierror = 0 !error count
     pblock = ktab_n/10 !ouput frequency
-    print *,"KROME: creating tabs..."
+    if(is_rank_zero) print *,"KROME: creating tabs..."
     kwarnup(:) = 0 !store warnings
     kwarndown(:) = 0 !store warnings
     !loop on temperatures
     do i=1,ktab_n
-       if(mod(i,pblock)==0) print *,i/pblock*10,"%"
+       if(mod(i,pblock)==0 .and. is_rank_zero) print *,i/pblock*10,"%"
        ktab_T(i) = 1d1**((i-1)*(ktab_logTup-ktab_logTlow)/(ktab_n-1)&
             +ktab_logTlow)
        n(:) = 0.d0
@@ -32,15 +34,17 @@ contains
        !check for errors or discrepancies
        if((maxval(kk)>valmax.or.minval(kk)<0.d0)) then
           ierror = ierror + 1
-          if(ierror==1) print '(a16,a5,2a11)',"","idx","Tgas","rate"
+          if(ierror==1.and. is_rank_zero) print '(a16,a5,2a11)',"",&
+               "idx","Tgas","rate"
           do j=1,nrea
              if(kk(j)>valmax .and. kwarnup(j)==0) then
                 kwarnup(j) = 1
-                print '(a16,I5,2E11.3)', "WARNING: k>1.",j,ktab_T(i),kk(j)
+                if(is_rank_zero) print '(a16,I5,2E11.3)', "WARNING: k>1.",&
+                     j,ktab_T(i),kk(j)
              end if
              if(kk(j)<0.d0 .and. kwarndown(j)==0) then
                 kwarndown(j) = 1
-                print *,"WARNING: k<0.d0",j,ktab_T(i),kk(j)
+                if(is_rank_zero) print *,"WARNING: k<0.d0",j,ktab_T(i),kk(j)
              end if
           end do
        end if
@@ -63,11 +67,15 @@ contains
     use krome_subs
     integer::i,j,pblock,ii
     real*8::kk(nrea),kktab(nrea),Tgas,kmax,n(nspec),kold(nrea),dk
+    logical::is_rank_zero
+
+    is_rank_zero = (krome_mpi_rank==0)
+    
     pblock = ktab_n/10 !write % every 10
-    print *,"KROME: checking tabs..."
+    if(is_rank_zero) print *,"KROME: checking tabs..."
     !loop on tabs
     do i=1,ktab_n
-       if(mod(i,pblock) == 0) print *,i/pblock*10,"%" !output
+       if(mod(i,pblock)==0.and.is_rank_zero) print *,i/pblock*10,"%" !output
        Tgas = 1d1**((i-1)*(ktab_logTup-ktab_logTlow)/(ktab_n-1)+ktab_logTlow) 
        n(:) = 0.d0 !rates do not depends on densities
        n(idx_Tgas) = Tgas !rates depend on temperature
@@ -80,34 +88,36 @@ contains
           if(kmax>0.d0.and.kk(j)>0.d0) then
              dk = abs(kk(j)-kold(j))/(kold(j)+1d-40)
              if(abs(kk(j)-kktab(j))/kmax>1d-1.and.kmax>1d-12.and.dk<1d-1) then
-                print *,"ERROR: wrong rate tables"
-                print *,"Rate index:",j
-                print *,"Temperature:",Tgas
-                print *,"Rate values:",kk(j),kktab(j)
-                print *,"Error:",abs(kk(j)-kktab(j))/kmax,&
-                     "(must be close to zero)"
+                if(is_rank_zero) then
+                   print *,"ERROR: wrong rate tables"
+                   print *,"Rate index:",j
+                   print *,"Temperature:",Tgas
+                   print *,"Rate values:",kk(j),kktab(j)
+                   print *,"Error:",abs(kk(j)-kktab(j))/kmax,&
+                        "(must be close to zero)"
 
-                !dump graph
-                open(93,file="KROME_TAB_DUMP.dat",status="replace")
-                do ii=1,ktab_n
-                   Tgas = 1d1**((ii-1)*(ktab_logTup-ktab_logTlow)/(ktab_n-1)&
-                        +ktab_logTlow)
-                   n(idx_Tgas) = Tgas !rates depend on temperature
-                   kk(:) = coe(n(:))
-                   kktab(:) = coe_tab(n(:))
-                   write(93,'(99E12.3e3)') Tgas,kk(j),kktab(j)
-                end do
-                close(93)
-                print *,"Graph dump to KROME_TAB_DUMP.dat"
-                print *,"gnuplot command:"
-                print *," plot 'KROME_TAB_DUMP.dat' w l, '' u 1:3"
-                stop
+                   !dump graph
+                   open(93,file="KROME_TAB_DUMP.dat",status="replace")
+                   do ii=1,ktab_n
+                      Tgas = 1d1**((ii-1)*(ktab_logTup-ktab_logTlow)/(ktab_n-1)&
+                           +ktab_logTlow)
+                      n(idx_Tgas) = Tgas !rates depend on temperature
+                      kk(:) = coe(n(:))
+                      kktab(:) = coe_tab(n(:))
+                      write(93,'(99E12.3e3)') Tgas,kk(j),kktab(j)
+                   end do
+                   close(93)
+                   print *,"Graph dump to KROME_TAB_DUMP.dat"
+                   print *,"gnuplot command:"
+                   print *," plot 'KROME_TAB_DUMP.dat' w l, '' u 1:3"
+                   stop
+                end if
              end if
           end if
        end do
        kold(:) = kk(:)
     end do
-    print *,"KROME: tabs are ok!"
+    if(is_rank_zero) print *,"KROME: tabs are ok!"
 
   end subroutine check_tabs
 #ENDIFKROME
