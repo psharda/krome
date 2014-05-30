@@ -14,7 +14,7 @@ contains
 #KROME_logTlow
 #KROME_logTup
 
-    is_rank_zero = (krome_mpi_rank==0)
+    is_rank_zero = (krome_mpi_rank<=1)
 
     !loop to create tabs (it may take a while)
     valmax = 1d0
@@ -69,7 +69,7 @@ contains
     real*8::kk(nrea),kktab(nrea),Tgas,kmax,n(nspec),kold(nrea),dk
     logical::is_rank_zero
 
-    is_rank_zero = (krome_mpi_rank==0)
+    is_rank_zero = (krome_mpi_rank<=1)
     
     pblock = ktab_n/10 !write % every 10
     if(is_rank_zero) print *,"KROME: checking tabs..."
