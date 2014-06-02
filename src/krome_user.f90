@@ -5,6 +5,10 @@ module krome_user
 
 #KROME_species
 
+#KROME_cool_index
+
+#KROME_heat_index
+
 #KROME_common_alias
 
 #KROME_constant_list
@@ -172,6 +176,73 @@ contains
     real*8::krome_get_photoBin_heats(nPhotoRea)
     krome_get_photoBin_heats(:) = photoBinHeats(:)
   end function krome_get_photoBin_heats
+
+  !****************************
+  subroutine krome_photoBin_scale(xscale)
+    use krome_commons
+    use krome_photo
+    implicit none
+    real*8::xscale
+    
+    photoBinJ(:) = photoBinJ(:) * xscale
+    
+    !compute rates
+    call calc_photobins()
+
+  end subroutine krome_photoBin_scale
+
+  !**************************
+  subroutine krome_set_photoBin_draineLin(lower,upper)
+    use krome_commons
+    use krome_photo
+    use krome_constants
+    real*8::upper,lower,x
+    integer::i
+
+    call krome_set_photoBinE_lin(lower,upper)
+    
+    do i=1,nPhotoBins
+       x = photoBinEmid(i) !eV
+       !eV/cm2/sr/s/Hz
+       if(x<13.6d0) then
+          photoBinJ(i) = (1.658d6*x - 2.152d5*x**2 + 6.919d3*x**3) &
+               * x *planck_eV
+       else
+          photoBinJ(i) = 0d0
+       end if
+    end do
+
+    !compute rates
+    call calc_photobins()
+
+  end subroutine krome_set_photoBin_draineLin
+
+
+ !**************************
+  subroutine krome_set_photoBin_draineLog(lower,upper)
+    use krome_commons
+    use krome_photo
+    use krome_constants
+    real*8::upper,lower,x
+    integer::i
+
+    call krome_set_photoBinE_log(lower,upper)
+    
+    do i=1,nPhotoBins
+       x = photoBinEmid(i) !eV
+       !eV/cm2/sr/s/Hz
+       if(x<13.6d0) then
+          photoBinJ(i) = (1.658d6*x - 2.152d5*x**2 + 6.919d3*x**3) &
+               * x *planck_eV
+       else
+          photoBinJ(i) = 0d0
+       end if
+    end do
+
+    !compute rates
+    call calc_photobins()
+
+  end subroutine krome_set_photoBin_draineLog
 
   !**************************
   subroutine krome_set_photoBin_J21lin(lower,upper)

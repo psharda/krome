@@ -333,7 +333,7 @@ class krome():
 			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseZ_UV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
-			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
 			filename = "networks/react_primordialZ2_UV"
 		elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,ATOMIC", "-heating=COMPRESS,CHEM"]]
@@ -3059,6 +3059,14 @@ class krome():
 
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
+			elif(srow == "#KROME_cool_index"):
+				idxcool = get_cooling_index_list()
+				for x in idxcool:
+					fout.write("real*8,parameter::"+x+"\n")
+			elif(srow == "#KROME_heat_index"):
+				idxheat = get_heating_index_list()
+				for x in idxheat:
+					fout.write("real*8,parameter::"+x+"\n")
 			elif(srow == "#KROME_implicit_arr_r"):
 				for j in range(self.maxnreag):
 					fout.write("integer::arr_r"+str(j+1)+"(nrea)\n")
@@ -4474,6 +4482,17 @@ class krome():
 					fget += "end function "+fgetname+"\n"
 					funcs += fset + fget
 				fout.write(funcs)
+
+			elif(srow == "#KROME_cool_index"):
+				idxcool = get_cooling_index_list()
+				for x in idxcool:
+					fout.write("real*8,parameter::krome_"+x+"\n")
+
+			elif(srow == "#KROME_heat_index"):
+				idxheat = get_heating_index_list()
+				for x in idxheat:
+					fout.write("real*8,parameter::krome_"+x+"\n")
+
 
 			elif(srow == "#KROME_cooling_functions"):
 				for x in self.coolZ_functions:

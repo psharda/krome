@@ -299,6 +299,37 @@ def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpath
 
 	print "Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]"
 
+#############################
+#cooling index list
+def get_cooling_index_list():
+	idxcoo = {"H2":1,"H2GP":2,"atomic":3, "CEN":3, "HD":4, "Z":5, "metal":5, "dH":6, "enthalpic":6, "dust":7,\
+		"compton":8,"CIE":9, "continuum":10, "cont":10,"exp":11,"expansion":11}
+
+	idxscoo = []
+	maxv = 0
+	for (k,v) in idxcoo.iteritems():
+		idxscoo.append([v,"idx_cool_"+k+" = "+str(v)])
+		maxv = max(maxv,v)
+	idxscoo = sorted(idxscoo,key=lambda x:x[0])
+	idxscoo.append([99,"ncools = "+str(maxv)])
+	return [x[1] for x in idxscoo]
+
+#############################
+#heating index list
+def get_heating_index_list():
+	idxhea = {"chem":1,"compress":2, "compr":2, "photo":3, "dH":4, "enthalpic":4, "photoAv":5, "Av":5,\
+		"CR":6, "dust":7, "xray":8}
+
+	idxshea = []
+	maxv = 0
+	for (k,v) in idxhea.iteritems():
+		idxshea.append([v, "idx_heat_"+k+" = "+str(v)])
+		maxv = max(maxv,v)
+	idxshea = sorted(idxshea,key=lambda x:x[0])
+	idxshea.append([99,"nheats = "+str(maxv)])
+	return [x[1] for x in idxshea]
+
+
 ####################################
 #solar metallicities
 def get_solar_abundances():
@@ -998,7 +1029,6 @@ def clear_dir(folder):
 	    except Exception, e:
 		print e
 
-
 #################################
 #verner96 photochemistry cross sections dictionary
 def get_photo_crossV96(atom):
@@ -1488,7 +1518,7 @@ def get_quote(qall=False):
 	["All models are wrong; some models are useful","George Box"],
 	["The generation of random numbers is too important to be left to chance","Robert Coveyou"],
 	["Problems worthy / of attack / prove their worth / by hitting back","Piet Hein"],
-	[" Good, Fast, Cheap: Pick any two","Memorandum RFC 1925"],
+	["Good, Fast, Cheap: Pick any two","Memorandum RFC 1925"],
 	["One size never fits all","Memorandum RFC 1925"],
 	["No matter how hard you push and no matter what the priority,you can't increase the speed of light","Memorandum RFC 1925"],
 	["Chemistry has been termed by the physicist as the messy part of physics", "Frederick Soddy "]

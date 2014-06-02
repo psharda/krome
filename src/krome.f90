@@ -247,12 +247,6 @@ contains
 
   end subroutine krome_equilibrium
 
-  !********************
-  !dummy jacobian for equilibrium
-  subroutine jcn_dummy()
-
-  end subroutine jcn_dummy
-
   !*******************
   !dn/dt where dT/dt=0
   subroutine fcn_tconst(n,tt,x,f)

@@ -80,7 +80,6 @@ contains
 
   end function conserve
 
-
   !**************************
   !shielding function for H2O+ and H3O+
   ! following Glover+2010 MNRAS sect 2.2 eqn.4

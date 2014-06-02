@@ -21,53 +21,53 @@ contains
     use krome_commons
     implicit none
     real*8::n(:), Tgas
-    real*8::get_cooling_array(11),cools(11)
+    real*8::get_cooling_array(ncools),cools(ncools)
 
     !returns cooling in erg/cm3/s
     cools(:) = 0.d0
 
 #IFKROME_useCoolingH2
-    cools(1) = cooling_H2(n(:), Tgas)
+    cools(idx_cool_H2) = cooling_H2(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingH2GP
-    cools(2) = cooling_H2GP(n(:), Tgas)
+    cools(idx_cool_H2GP) = cooling_H2GP(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingAtomic
-    cools(3) = cooling_Atomic(n(:), Tgas)
+    cools(idx_cool_atomic) = cooling_Atomic(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingHD
-    cools(4) = cooling_HD(n(:), Tgas)
+    cools(idx_cool_HD) = cooling_HD(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
-    cools(5) = cooling_Z(n(:), Tgas)
+    cools(idx_cool_Z) = cooling_Z(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingdH
-    cools(6) = cooling_dH(n(:), Tgas)
+    cools(idx_cool_dH) = cooling_dH(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingDust
-    cools(7) = cooling_dust(n(:), Tgas)
+    cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingCompton
-    cools(8) = cooling_compton(n(:), Tgas)
+    cools(idx_cool_compton) = cooling_compton(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingCIE
-    cools(9) = cooling_CIE(n(:), Tgas)
+    cools(idx_cool_CIE) = cooling_CIE(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingContinuum
-    cools(10) = cooling_continuum(n(:), Tgas)
+    cools(idx_cool_cont) = cooling_continuum(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingExpansion
-    cools(11) = cooling_expansion(n(:), Tgas)
+    cools(idx_cool_exp) = cooling_expansion(n(:), Tgas)
 #ENDIFKROME
 
     get_cooling_array(:) = cools(:)
