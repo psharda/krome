@@ -335,6 +335,10 @@ class krome():
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
 			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
 			filename = "networks/react_primordialZ2_UV"
+		elif(args.test=="collapseZ_induced"):
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
+			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,ATOMIC", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useN","-gamma=FULL"]]
@@ -2858,10 +2862,54 @@ class krome():
 							cool += str(float(levels[tr["up"]]["energy"]) - float(levels[tr["down"]]["energy"])) + " * "
 							cool += Bvar + "(" + str(tr["up"]+1) + ")"
 							if(use_escape): cool += "*beta"+str(nlev)+"("+str(tr["up"]+1)+","+str(tr["down"]+1)+")"
+							betas = ""
+							if(self.usePhotoInduced):
+								deltaE = float(levels[tr["up"]]["energy"]) \
+									- float(levels[tr["down"]]["energy"]) #K
+								boltz_eV = 8.6173324e-5 #eV/K
+								h_eV = 4.135667516e-15 #eV*s
+								h_erg = 6.6260755e-27 #erg*s
+								c_speed = 2.9979245800e10 #cm/s
+								nuE = deltaE*boltz_eV/h_eV #1/s
+								fAij = Aijs[(tr["up"],tr["down"])].replace("d","e")
+								betaI = float(fAij) * c_speed**2/2e0/h_eV/nuE**3 #cm2/eV/s
+								betas = " &\n+ "+format_double(betaI) + " * get_photoIntensity("\
+									+ format_double(deltaE*boltz_eV)+")"
+								cool += betas + " * " + Bvar + "(" + str(tr["up"]+1) + ")"
+
 							cools.append(cool)
 						except:
 							pass
-					full_cool += function_name + " = " + (" + &\n".join(cools)) + "\n"
+					full_cool += function_name + " = " + (" &\n + ".join(cools)) + "\n"
+
+					#add the heating in case of induced transitions
+					if(self.usePhotoInduced):
+						full_cool += "\n"
+						full_cool += "!computing induced heating\n"
+						heats = []
+						trs = []
+						for tr in transitions:
+							if([tr["up"],tr["down"]] in trs): continue
+							trs.append([tr["up"],tr["down"]])
+							try:
+								deltaE = float(levels[tr["up"]]["energy"]) \
+									- float(levels[tr["down"]]["energy"]) #K
+								boltz_eV = 8.6173324e-5 #eV/K
+								h_eV = 4.135667516e-15 #eV*s
+								h_erg = 6.6260755e-27 #erg*s
+								c_speed = 2.9979245800e10 #cm/s
+								nuE = deltaE*boltz_eV/h_eV #1/s
+								fAij = Aijs[(tr["up"],tr["down"])].replace("d","e")
+								gg = float(levels[tr["up"]]["gmult"]) / float(levels[tr["down"]]["gmult"])
+								betaI = gg * float(fAij) * c_speed**2/2e0/h_eV/nuE**3 #cm2/eV/s
+								betas = format_double(betaI) + " * get_photoIntensity("\
+									+ format_double(deltaE*boltz_eV)+")"
+								heat = betas + " * " + Bvar + "(" + str(tr["up"]+1) + ")"
+
+								heats.append(heat)
+							except:
+								pass
+						full_cool += function_name + " = " + function_name + " - &\n (" + (" &\n + ".join(heats)) + ")\n"
 
 					#insert the end of the function
 					full_cool += "\n end function "+function_name+"\n"

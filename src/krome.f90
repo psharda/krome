@@ -197,6 +197,7 @@ contains
 
   end subroutine krome
 
+
   !*********************************
   !integrates to equilibrium using constant temperature
   subroutine krome_equilibrium(x,Tgas)
@@ -246,6 +247,12 @@ contains
     x(:) = n(1:nmols)
 
   end subroutine krome_equilibrium
+
+  !********************
+  !dummy jacobian
+  subroutine jcn_dummy()
+    implicit none
+  end subroutine jcn_dummy
 
   !*******************
   !dn/dt where dT/dt=0

@@ -62,7 +62,7 @@ contains
   end subroutine krome_set_photobinE_lr
 
   !********************************
-  ! set the energy (frequency) of the photobin
+  ! set the energy (eV) of the photobin
   ! linearly from lowest and highest energy value
   subroutine krome_set_photobinE_lin(lower,upper)
     use krome_commons
@@ -85,8 +85,8 @@ contains
   end subroutine krome_set_photobinE_lin
 
  !********************************
-  ! set the energy (frequency) of the photobin
-  ! logarithmic from lowwst to highest energy value
+  ! set the energy (eV) of the photobin
+  ! logarithmic from lowest to highest energy value
   subroutine krome_set_photobinE_log(lower,upper)
     use krome_commons
     use krome_photo
@@ -190,6 +190,48 @@ contains
     call calc_photobins()
 
   end subroutine krome_photoBin_scale
+
+  !**********************************
+  subroutine krome_set_photoBin_BBlog(lower,upper,Tbb)
+    use krome_commons
+    use krome_constants
+    use krome_photo
+    implicit none
+    real*8::lower,upper,Tbb,x,xmax
+    integer::i
+    
+    call krome_set_photoBinE_log(lower,upper)
+    
+    !eV/cm2/s/Hz/sr
+    do i=1,nPhotoBins
+       x = photoBinEmid(i) !eV
+       photoBinJ(i) = 2d0*x**3/planck_eV**2/clight**2 &
+            / (exp(x/boltzmann_eV/Tbb)-1d0)/planck_eV
+    end do
+
+    !find the maximum using Wien's displacement law
+    xmax = Tbb/2.8977721d-1 * clight * planck_eV !eV
+
+    if(xmax<lower) then
+       print *,"WARNING: maximum of the Planck function"
+       print *," is below the lowest energy bin!"
+       print *,"max (eV)",xmax
+       print *,"lowest (eV)",lower
+       print *,"Tbb",Tbb
+    end if
+
+    if(xmax>upper) then
+       print *,"WARNING: maximum of the Planck function"
+       print *," is above the highest energy bin!"
+       print *,"max (eV)",xmax
+       print *,"highest (eV)",upper
+       print *,"Tbb",Tbb
+    end if
+
+    !compute rates
+    call calc_photobins()
+    
+  end subroutine krome_set_photoBin_BBlog
 
   !**************************
   subroutine krome_set_photoBin_draineLin(lower,upper)
