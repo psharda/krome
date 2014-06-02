@@ -107,8 +107,8 @@ contains
     ratexHe = 1d1**xheat_He
     
     heat_Xray = ratexH * n(idx_H)
-    heat_Xray = ratexHe * n(idx_He)
-    heat_Xray = heat_Xray * .9971d0 * (1d0-(1d0*xe**.2663)**1.3163)
+    heat_Xray = heat_Xray + ratexHe * n(idx_He)
+    heat_Xray = heat_Xray * .9971d0 * (1d0-(1d0-xe**.2663)**1.3163)
 
   end function heat_XRay
 #ENDIFKROME

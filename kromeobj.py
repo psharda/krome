@@ -2076,15 +2076,37 @@ class krome():
 		idx = 0
 		fout.write("\n")
 		fout.write("\n")
-		fout.write("if(!exists(\"nkrome\")) print \"First you should set the value of the nkrome offset\"\n")
+		fout.write("if(!exists(\"nkrome\")) print \"ERROR: first you must set the value of the nkrome offset\"\n")
 		inits = []
 		for mol in self.specs:
 			idx += 1
 			inits.append("krome_"+mol.fidx+" = "+str(idx)+" + nkrome")
 		fout.write(("\n".join(inits))+"\n")
 		fout.write("print \"All variables set as e.g. krome_idx_H2\"\n")
+		fout.write("print \"plot 'your_file' u 1:(column(krome_idx_H2))\"\n")
 		fout.write("print \" the offset is nkrome=\",nkrome\n")
 		fout.close()
+
+		#dump heating and cooling index initialization for gnuplot
+		fout = open("heatcool.gps","w")
+		fout.write("#This file is a script to initialize the heating and cooling index in krome gnuplot\n")
+		idx = 0
+		fout.write("\n")
+		fout.write("\n")
+		fout.write("if(!exists(\"nkrome_heatcool\")) print \"ERROR: first you must set the value of the nkrome_heatcool offset\"\n")
+		idxcools = get_cooling_index_list()
+		idxheats = get_heating_index_list()
+		inits = []
+		for idx in idxcools:
+			inits.append("krome_"+idx+" + nkrome_heatcool")
+		for idx in idxheats:
+			inits.append("krome_"+idx+" + nkrome_heatcool")
+		fout.write(("\n".join(inits))+"\n")
+		fout.write("print \"All variables set as e.g. krome_idx_cool_H2\"\n")
+		fout.write("print \"plot 'your_file' u 1:(column(krome_idx_cool_H2))\"\n")
+		fout.write("print \" the offset is nkrome_heatcool=\",nkrome_heatcool\n")
+		fout.close()
+
 	
 		#dump reactions to log file
 		fout = open("reactions.log","w")
