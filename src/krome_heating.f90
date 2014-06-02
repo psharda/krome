@@ -18,41 +18,41 @@ contains
     use krome_commons
     implicit none
     real*8::n(:), Tgas, k(:), nH2dust
-    real*8::get_heating_array(8),heats(8)
+    real*8::get_heating_array(nheats),heats(nheats)
     !returns heating in erg/cm3/s
 
     heats(:) = 0.d0
 
 #IFKROME_useHeatingChem
-    heats(1) = heatingChem(n(:), Tgas, k(:), nH2dust)
+    heats(idx_heat_chem) = heatingChem(n(:), Tgas, k(:), nH2dust)
 #ENDIFKROME
 
 #IFKROME_useHeatingCompress
-    heats(2) = heat_compress(n(:), Tgas)
+    heats(idx_heat_compress) = heat_compress(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useHeatingPhoto
-    heats(3) = photo_heating(n(:))
+    heats(idx_heat_photo) = photo_heating(n(:))
 #ENDIFKROME
 
 #IFKROME_useHeatingdH
-    heats(4) = heat_dH(n(:),Tgas)
+    heats(idx_heat_dH) = heat_dH(n(:),Tgas)
 #ENDIFKROME
 
 #IFKROME_useHeatingPhotoAv
-    heats(5) = heat_photoAv(n(:),Tgas,k(:))
+    heats(idx_heat_photoAv) = heat_photoAv(n(:),Tgas,k(:))
 #ENDIFKROME
 
 #IFKROME_useHeatingCR
-    heats(6) = heat_CR(n(:),Tgas,k(:))
+    heats(idx_heat_CR) = heat_CR(n(:),Tgas,k(:))
 #ENDIFKROME
 
 #IFKROME_useHeatingPhotoDust
-    heats(7) = heat_photoDust(n(:),Tgas)
+    heats(idx_heat_dust) = heat_photoDust(n(:),Tgas)
 #ENDIFKROME
 
 #IFKROME_useHeatingXRay
-    heats(8) = heat_XRay(n(:),Tgas,k(:))
+    heats(idx_heat_xray) = heat_XRay(n(:),Tgas,k(:))
 #ENDIFKROME
     
     get_heating_array(:) = heats(:)
@@ -121,16 +121,20 @@ contains
     use krome_subs
     implicit none
     real*8::heat_photoDust,n(:),Tgas,ntot,eps
-    real*8::Ghab,z,zsun,psi
+    real*8::Ghab,z,izsun,psi
 
     ntot = get_Hnuclei(n(:))
-    zsun = 0.02d0 !solar metallicity
+    izsun = 1d0/0.02d0 !inverse solar metallicity
     Ghab = 1.69d0 !habing flux, 1.69 is Draine78
-    psi = 2.d0*Ghab*sqrt(Tgas)*n(idx_e)
+    if(n(idx_e)>0d0) then
+       psi = 2.d0*Ghab*sqrt(Tgas)*n(idx_e)
+    else
+       psi = 0d0
+    end if
     eps = 4.9d-2/(1d0+4d-3*psi**.73) + &
          3.7d-2*(Tgas*1d-4)**.7/(1d0+2d-4*psi)
     z = #KROME_photoDustZ !metallicty
-    heat_photoDust = 1.3d-24*eps*Ghab*ntot*z/zsun
+    heat_photoDust = 1.3d-24*eps*Ghab*ntot*z*izsun
 
   end function heat_photoDust
 #ENDIFKROME

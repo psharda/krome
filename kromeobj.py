@@ -21,8 +21,9 @@
 # sbovino@astro.physik.uni-goettingen.de
 # Institut fuer Astrophysik, Goettingen.
 #
-# Others (alphabetically): F.A. Gianturco, J.Prieto,
-# D.R.G. Schleicher, D. Seifried, E. Simoncini , E. Tognelli
+# Others (alphabetically): F.A. Gianturco, T. Haugboelle, 
+# J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
+# E. Tognelli
 #
 #
 # KROME is provided "as it is", without any warranty. 
@@ -57,7 +58,7 @@ class krome():
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
-	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = False
+	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -196,8 +197,9 @@ class krome():
 		self.parser.add_argument("-forceRWORK", help="force the size of RWORK to N", metavar="N")
 		self.parser.add_argument("-gamma",help="define the adiabatic index according to OPTION that can be FULL for employing Grassi et al.\
 			2011, i.e. a density dependent but temperature independent adiabatic index, VIB to keep into account the vibrational\
-                        paritition function, ROT to keep into account the rotational partition function, or EXACT to evaluate the\
-                        adiabatic index accurately taking into account both contributions. Finally a custom F90 expression e.g. -gamma=\"1d0\"\
+                        paritition function, ROT to keep into account the rotational partition function, EXACT to evaluate the\
+                        adiabatic index accurately taking into account both contributions, or REDUCED to use only H2 and CO as diatomic\
+			molecules (faster). Finally a custom F90 expression e.g. -gamma=\"1d0\"\
 			can also be used. Default value is 5/3.",metavar="OPTION")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH, CR, PHOTOAV.\
 			If you want a complete list of the available heating options type -heating=?")
@@ -269,7 +271,9 @@ class krome():
 		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
 		self.parser.add_argument("-useODEConstant", help="postpone an expression to each ODE. EXPRESSION must be a valid f90\
 			expression (e.g. *3.d0 or +1.d-10)", metavar="EXPRESSION")
-		self.parser.add_argument("-usePhIoniz", action="store_true", help="include photochemistry (obsolete)")
+		self.parser.add_argument("-usePhIoniz", action="store_true", help="includes photochemistry (obsolete)")
+		self.parser.add_argument("-usePhotoInduced", action="store_true", help="includes the photo-induced transitions in the calculation\
+			of the cooling according to the choosen photon flux.")
 		self.parser.add_argument("-usePhotoOpacity", action="store_true", help="computes photorates using opacity as a function of \
 			the species densities and the photo cross sections, i.e. exp(-sum_i N_i*sigma_i). Column densities are computed\
 			from density by using the local approximation N = 1.8e21*(n/1000)**(2/3) 1/cm2.")
@@ -326,6 +330,14 @@ class krome():
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
+			filename = "networks/react_primordialZ2"
+		elif(args.test=="collapseZ_UV"):
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
+			filename = "networks/react_primordialZ2_UV"
+		elif(args.test=="collapseZ_induced"):
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
+			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
 			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,ATOMIC", "-heating=COMPRESS,CHEM"]]
@@ -525,6 +537,16 @@ class krome():
 		if(args.usePhotoOpacity):
 			self.usePhotoOpacity = True
 			print "Reading option -usePhotoOpacity (now obsolete, you can remove it)"
+
+		#use photo-induced cooling transitions 
+		if(args.usePhotoInduced):
+			self.usePhotoInduced = True
+			if(not(args.photoBins)):
+				print "ERRROR: -usePhotoInduced requires the option -photoBins=N enabled"
+				print " where N is the number of photon bins employed."
+				sys.exit()
+			print "Reading option -usePhotoInduced"
+
 
 
 		#use equilibrium check to break loops earlier
@@ -1446,11 +1468,14 @@ class krome():
 			#start a CR reaction block
 			if(srow.lower()=="@cr_start" or srow.lower()=="@cr_begin"):
 				inCRblock = True
+				noTabBlockStored = noTabNextBlock
+				noTabNext = noTabNextBlock = True
 				continue #SKIP (not a reaction)
 
 			#start a CR reaction block
 			if(srow.lower()=="@cr_stop" or srow.lower()=="@cr_end"):
 				inCRblock = False
+				noTabNext = noTabNextBlock = noTabBlockStored #restore the noTabNextBlock value before entering CR block
 				continue #SKIP (not a reaction)
 
 			#start a photo reaction block
@@ -2037,28 +2062,29 @@ class krome():
 	def dumpNetwork(self):
 		#dump species to log file
 		fout = open("species.log","w")
-		fout.write("#This file contains:\n")
-		fout.write("#1. a list of the species used with their indexes\n")
-		fout.write("#2. a list of the species to initialize gnuplot\n")
+		fout.write("#This file contains a list of the species used with their indexes\n")
 		fout.write("\n")
 		idx = 0
 		for mol in self.specs:
 			idx += 1
 			fout.write(str(idx)+"\t"+mol.name+"\t"+mol.fidx+"\n")
+		fout.close()
 
 		#dump species to gnuplot initialization
+		fout = open("species.gps","w")
+		fout.write("#This file is a script to initialize the species index in krome gnuplot\n")
 		idx = 0
 		fout.write("\n")
 		fout.write("\n")
-		fout.write("#cut-and-paste this into gnuplot to initialize species variables\n")
-		fout.write("# nkrome is an optional offset\n")
-		fout.write("nkrome = 0\n")
+		fout.write("if(!exists(\"nkrome\")) print \"First you should set the value of the nkrome offset\"\n")
 		inits = []
 		for mol in self.specs:
 			idx += 1
 			inits.append("krome_"+mol.fidx+" = "+str(idx)+" + nkrome")
 		fout.write(("\n".join(inits))+"\n")
-		fout.close()	
+		fout.write("print \"All variables set as e.g. krome_idx_H2\"\n")
+		fout.write("print \" the offset is nkrome=\",nkrome\n")
+		fout.close()
 	
 		#dump reactions to log file
 		fout = open("reactions.log","w")
@@ -2576,6 +2602,7 @@ class krome():
 					transitions = [] #list of transitions
 					colliders = [] #list of colliders names
 					Aijs = dict() #init dictionary for Einsten's
+					Bijs = dict() #init dictionary for Bij
 					levels = dict() #init dictionary for levels
 					#prepares the header of the function
 					full_cool = "\n"
@@ -2583,6 +2610,7 @@ class krome():
 					full_cool += "function "+function_name+"(n,inTgas,k)\n"
 					full_cool += "use krome_commons\n"
 					full_cool += "use krome_constants\n"
+					full_cool += "use krome_photo\n"
 					full_cool += "implicit none\n"
 					full_cool += "real*8::"+function_name+",n(:),inTgas,Tgas,k(:),invTgas\n"
 					full_cool += "integer::i\n"				
@@ -2624,8 +2652,10 @@ class krome():
 					trfound = []
 					for tr in transitions:
 						ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
-						ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
-						ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"]) + "*invTgas)"
+						ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"])\
+							+ "d0"
+						ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"])\
+							+ "*invTgas)"
 						#skip already found transitions					
 						if(not([tr["up"], tr["down"]] in trfound)):
 							full_cool += ij2ji + "\n"
@@ -2688,7 +2718,24 @@ class krome():
 						real_variables.append(varM) #add to double variable list
 						#check if variable is unique
 						if(not(varM in varMexist)):
-							MM[varM] = []
+							try:
+								betas = ""
+								if(self.usePhotoInduced):
+									deltaE = float(levels[tr["up"]]["energy"]) \
+										- float(levels[tr["down"]]["energy"]) #K
+									boltz_eV = 8.6173324e-5 #eV/K
+									h_eV = 4.135667516e-15 #eV*s
+									h_erg = 6.6260755e-27 #erg*s
+									c_speed = 2.9979245800e10 #cm/s
+									nuE = deltaE*boltz_eV/h_eV #1/s
+									fAij = Aijs[(tr["up"],tr["down"])].replace("d","e")
+									gg = float(levels[tr["up"]]["gmult"]) / float(levels[tr["down"]]["gmult"])
+									betaI = gg * float(fAij) * c_speed**2/2e0/h_eV/nuE**3 #cm2/eV/s
+									betas = " &\n+ "+format_double(betaI) + " * get_photoIntensity("\
+										+ format_double(deltaE*boltz_eV)+")"
+								MM[varM] = [betas]
+							except:
+								MM[varM] = ["0e0"]
 							MMij[varM] = [tr["down"],tr["up"]]
 						coll = tr["coll"] #get colliders for the given transition
 						varup = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
@@ -2696,6 +2743,7 @@ class krome():
 							MM[varM].append(varup+"*"+coll) #include colliders abundance if ortho or para H2
 						else:
 							MM[varM].append(varup+"*n(idx_"+coll+")") #include colliders abundance
+
 						varMexist.append(varM)
 
 					#build Mji as above
@@ -2704,7 +2752,20 @@ class krome():
 						real_variables.append(varM) #add to double variable list
 						if(not(varM in varMexist)):
 							try:
-								MM[varM] = [Aijs[(tr["up"],tr["down"])]]
+								betas = ""
+								if(self.usePhotoInduced):
+									deltaE = float(levels[tr["up"]]["energy"]) \
+										- float(levels[tr["down"]]["energy"]) #K
+									boltz_eV = 8.6173324e-5 #eV/K
+									h_eV = 4.135667516e-15 #eV*s
+									h_erg = 6.6260755e-27 #erg*s
+									c_speed = 2.9979245800e10 #cm/s
+									nuE = deltaE*boltz_eV/h_eV #1/s
+									fAij = Aijs[(tr["up"],tr["down"])].replace("d","e")
+									betaI = float(fAij) * c_speed**2/2e0/h_eV/nuE**3 #cm2/eV/s
+									betas = " &\n+ "+format_double(betaI) + " * get_photoIntensity("\
+										+ format_double(deltaE*boltz_eV)+")"
+								MM[varM] = [Aijs[(tr["up"],tr["down"])] + betas]
 							except:
 								MM[varM] = ["0e0"]
 							if(use_escape): MM[varM] = ["0e0"]
@@ -2801,10 +2862,54 @@ class krome():
 							cool += str(float(levels[tr["up"]]["energy"]) - float(levels[tr["down"]]["energy"])) + " * "
 							cool += Bvar + "(" + str(tr["up"]+1) + ")"
 							if(use_escape): cool += "*beta"+str(nlev)+"("+str(tr["up"]+1)+","+str(tr["down"]+1)+")"
+							betas = ""
+							if(self.usePhotoInduced):
+								deltaE = float(levels[tr["up"]]["energy"]) \
+									- float(levels[tr["down"]]["energy"]) #K
+								boltz_eV = 8.6173324e-5 #eV/K
+								h_eV = 4.135667516e-15 #eV*s
+								h_erg = 6.6260755e-27 #erg*s
+								c_speed = 2.9979245800e10 #cm/s
+								nuE = deltaE*boltz_eV/h_eV #1/s
+								fAij = Aijs[(tr["up"],tr["down"])].replace("d","e")
+								betaI = float(fAij) * c_speed**2/2e0/h_eV/nuE**3 #cm2/eV/s
+								betas = " &\n+ "+format_double(betaI) + " * get_photoIntensity("\
+									+ format_double(deltaE*boltz_eV)+")"
+								cool += betas + " * " + Bvar + "(" + str(tr["up"]+1) + ")"
+
 							cools.append(cool)
 						except:
 							pass
-					full_cool += function_name + " = " + (" + &\n".join(cools)) + "\n"
+					full_cool += function_name + " = " + (" &\n + ".join(cools)) + "\n"
+
+					#add the heating in case of induced transitions
+					if(self.usePhotoInduced):
+						full_cool += "\n"
+						full_cool += "!computing induced heating\n"
+						heats = []
+						trs = []
+						for tr in transitions:
+							if([tr["up"],tr["down"]] in trs): continue
+							trs.append([tr["up"],tr["down"]])
+							try:
+								deltaE = float(levels[tr["up"]]["energy"]) \
+									- float(levels[tr["down"]]["energy"]) #K
+								boltz_eV = 8.6173324e-5 #eV/K
+								h_eV = 4.135667516e-15 #eV*s
+								h_erg = 6.6260755e-27 #erg*s
+								c_speed = 2.9979245800e10 #cm/s
+								nuE = deltaE*boltz_eV/h_eV #1/s
+								fAij = Aijs[(tr["up"],tr["down"])].replace("d","e")
+								gg = float(levels[tr["up"]]["gmult"]) / float(levels[tr["down"]]["gmult"])
+								betaI = gg * float(fAij) * c_speed**2/2e0/h_eV/nuE**3 #cm2/eV/s
+								betas = format_double(betaI) + " * get_photoIntensity("\
+									+ format_double(deltaE*boltz_eV)+")"
+								heat = betas + " * " + Bvar + "(" + str(tr["up"]+1) + ")"
+
+								heats.append(heat)
+							except:
+								pass
+						full_cool += function_name + " = " + function_name + " - &\n (" + (" &\n + ".join(heats)) + ")\n"
 
 					#insert the end of the function
 					full_cool += "\n end function "+function_name+"\n"
@@ -3002,6 +3107,14 @@ class krome():
 
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
+			elif(srow == "#KROME_cool_index"):
+				idxcool = get_cooling_index_list()
+				for x in idxcool:
+					fout.write("real*8,parameter::"+x+"\n")
+			elif(srow == "#KROME_heat_index"):
+				idxheat = get_heating_index_list()
+				for x in idxheat:
+					fout.write("real*8,parameter::"+x+"\n")
 			elif(srow == "#KROME_implicit_arr_r"):
 				for j in range(self.maxnreag):
 					fout.write("integer::arr_r"+str(j+1)+"(nrea)\n")
@@ -3022,6 +3135,7 @@ class krome():
 					fout.write("real*8::photoBinEright(nPhotoBins) !right limit of the freq bin, eV\n")
 					fout.write("real*8::photoBinEmid(nPhotoBins) !middle point of the freq bin, eV\n")
 					fout.write("real*8::photoBinEdelta(nPhotoBins) !size of the freq bin, eV\n")
+					fout.write("real*8::photoBinEidelta(nPhotoBins) !inverse of the size of the freq bin, 1/eV\n")
 					fout.write("real*8::photoBinJTab(nPhotoRea,nPhotoBins) !xsecs table, cm2\n")
 					fout.write("real*8::photoBinRates(nPhotoRea) !photo rates, 1/s\n")
 					fout.write("real*8::photoBinHeats(nPhotoRea) !photo heating, erg/s\n")
@@ -3122,30 +3236,7 @@ class krome():
 
 			for row in fh:
 				row = row.replace("#KROME_header", get_licence_header(self.version, self.codename,self.shortHead))
-				if(row.strip()=="#KROME_user_commons_functions"):
-					funcs = ""
-					for x in self.commonvars:
-						fsetname = "krome_set_"+x
-						fset = "\n!*******************\n"
-						fset += "subroutine "+fsetname+"(argset)\n"
-						fset += "use krome_commons\n"
-						fset += "implicit none\n"
-						fset += "real*8::argset\n"
-						fset += x+" = argset\n"
-						fset += "end subroutine "+fsetname+"\n"
-						
-						fgetname = "krome_get_"+x
-						fget = "\n!*******************\n"
-						fget += "function "+fgetname+"()\n"
-						fget += "use krome_commons\n"
-						fget += "implicit none\n"
-						fget += "real*8::"+fgetname+"\n"
-						fget += fgetname+" = "+x+"\n"
-						fget += "end function "+fgetname+"\n"
-						funcs += fset + fget
-					fouta.write(funcs)
-				else:
-					if(row[0]!="#"): fouta.write(row)
+				if(row[0]!="#"): fouta.write(row)
 
 			fouta.close()
 			print "done!"
@@ -3334,6 +3425,12 @@ class krome():
 					if(Tlimfound): kstr += "\nend if" #close the if statement for temperature
 					kstr = truncF90(kstr, 60,"*") #truncates long reaction rates
 					fout.write(truncF90(kstr, 60,"/")+"\n\n") #truncate
+			#replace arrays for best flux
+			elif(srow == "#KROME_arr_reactprod"):
+				for i in range(self.maxnreag):
+					fout.write("if(arr_r"+str(i+1)+"(i) == idx_found) found = .true.\n") 
+				for i in range(self.maxnprod):
+					fout.write("if(arr_p"+str(i+1)+"(i) == idx_found) found = .true.\n") 
 			elif(srow == "#KROME_conserve"):
 				fout.write(krome_conserve+"\n")
 			elif(srow == "#KROME_metallicity_functions"):
@@ -3350,8 +3447,9 @@ class krome():
 					ff += "implicit none\n"
 					ff += "real*8::n(:),"+ffname+","+zg[1]+",nH\n"
 					ff += "nH = get_Hnuclei(n(:))\n"
-					ff += zg[1]+" = "+zg[2]+"\n\n"
-					ff += ffname + " = log10("+zg[1]+"/nH) - "+solar[zg[0]]+"\n\n" #compute metallicity
+					ff += zg[1]+" = "+zg[2]+"\n"
+					ff += zg[1]+" = max("+zg[1]+", 0d0)\n\n"
+					ff += ffname + " = log10("+zg[1]+"/nH+1d-40) - "+solar[zg[0]]+"\n\n" #compute metallicity
 					ff += "end function "+ffname+"\n\n"
 					ffs += ff #append function to the others
 				fout.write(ffs+"\n") #replace functions
@@ -3468,7 +3566,7 @@ class krome():
 					gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + "))"
 					gamma = gammaN + " / &\n" +gammaD
 
-				elif(self.typeGamma=="EXACT" or self.typeGamma=="VIB" or self.typeGamma=="ROT"):
+				elif(self.typeGamma=="EXACT" or self.typeGamma=="VIB" or self.typeGamma=="ROT" or self.typeGamma=="REDUCED"):
 					#extends Omukai+Nishi1998 eqs.5,6,7
 					# and Boley+2007 (+erratum!) eqs.2,3
 					header = "real*8::Tgas,invTgas,x,expx,ysum,gsum,mosum,gvib\n"
@@ -3489,6 +3587,8 @@ class krome():
 						#diatomic
 						elif(mol.natoms==2):
 							gtype = self.typeGamma
+							#skip every diatoms except H2 and CO if REDUCED
+							if(gtype=="REDUCED" and (mol.name!="H2" and mol.name!="CO")): continue 
 							#warning if vibrational constant not found
 							if(mol.ve_vib=="__NONE__" and (gtype=="EXACT" or gtype=="VIB")):
 								print "WARNING: no vibrational constant for "+mol.name+" in gamma calculation!"
@@ -3831,7 +3931,7 @@ class krome():
 				if(self.coolingQuench<0e0):
 					fout.write(srow.replace("#KROME_coolingQuench","")+"\n")
 				else:
-					qfunc = " * 0.5d0 * (tanh(Tgas - "+format_double(self.coolingQuench)+") + 1d0)"
+					qfunc = " &\n * 0.5d0 * (tanh(Tgas - "+format_double(self.coolingQuench)+") + 1d0)"
 					fout.write(srow.replace("#KROME_coolingQuench",qfunc)+"\n")
 				continue
 
@@ -4408,6 +4508,40 @@ class krome():
 			if(srow == "#KROME_species"):
 				for x in specs:
 					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
+			elif(srow == "#KROME_user_commons_functions"):
+				funcs = ""
+				for x in self.commonvars:
+					fsetname = "krome_set_"+x
+					fset = "\n!*******************\n"
+					fset += "subroutine "+fsetname+"(argset)\n"
+					fset += "use krome_commons\n"
+					fset += "implicit none\n"
+					fset += "real*8::argset\n"
+					fset += x+" = argset\n"
+					fset += "end subroutine "+fsetname+"\n"
+					
+					fgetname = "krome_get_"+x
+					fget = "\n!*******************\n"
+					fget += "function "+fgetname+"()\n"
+					fget += "use krome_commons\n"
+					fget += "implicit none\n"
+					fget += "real*8::"+fgetname+"\n"
+					fget += fgetname+" = "+x+"\n"
+					fget += "end function "+fgetname+"\n"
+					funcs += fset + fget
+				fout.write(funcs)
+
+			elif(srow == "#KROME_cool_index"):
+				idxcool = get_cooling_index_list()
+				for x in idxcool:
+					fout.write("real*8,parameter::krome_"+x+"\n")
+
+			elif(srow == "#KROME_heat_index"):
+				idxheat = get_heating_index_list()
+				for x in idxheat:
+					fout.write("real*8,parameter::krome_"+x+"\n")
+
+
 			elif(srow == "#KROME_cooling_functions"):
 				for x in self.coolZ_functions:
 					funcname =  "krome_"+x[0];

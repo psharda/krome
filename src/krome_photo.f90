@@ -3,6 +3,43 @@ contains
 
 #IFKROME_usePhotoBins
 
+  !*************************
+  !get the intensity of the photon flux at
+  ! a given energy in eV.
+  ! returned value is in eV/cm2/s/Hz
+  function get_photoIntensity(energy)
+    use krome_commons
+    implicit none
+    real*8::get_photoIntensity,energy
+    integer::i
+
+    !check if requested energy is lower than the lowest limit
+    if(energy<photoBinEleft(1)) then
+       get_photoIntensity = 0d0 !photoBinJ(1)
+       return
+    end if
+    
+    !check if requested energy is greater that the the largest limit
+    if(energy>photoBinEright(nPhotoBins)) then
+       get_photoIntensity = 0d0 !photoBinJ(nPhotoBins)
+       return
+    end if
+
+    !look for the interval
+    do i=1,nPhotoBins
+       if(photoBinEleft(i).le.energy .and. photoBinEright(i).ge.energy) then
+          get_photoIntensity = photoBinJ(i)
+          return
+       end if
+    end do
+
+    !error if nothing found
+    print *,"ERROR: no interval found in get_photoIntensity"
+    print *,"energy:",energy,"eV"
+    stop !halt program
+
+  end function get_photoIntensity
+
   !*********************
   !initialize/tabulate the bin-based xsecs
   subroutine init_photoBins()

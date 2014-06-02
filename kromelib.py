@@ -101,6 +101,7 @@ class reaction():
 	def __init__(self):
 		self.reactants = []
 		self.products = []
+
 	#method: build verbatim from reactants and products
 	def build_verbatim(self):
 		myr = []
@@ -112,6 +113,7 @@ class reaction():
 			if(p.name!="dummy"):
 				myp.append(p.name)
 		self.verbatim = " + ".join(myr)+" -> "+" + ".join(myp)
+
 	#method: build photochemical rate
 	def build_phrate(self,photoBlock=False):
 		if(not("krome_kph_auto" in self.krate) and not(photoBlock)): return
@@ -296,6 +298,37 @@ def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpath
 	ivarcoe += 1 #count variables to sort
 
 	print "Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]"
+
+#############################
+#cooling index list
+def get_cooling_index_list():
+	idxcoo = {"H2":1,"H2GP":2,"atomic":3, "CEN":3, "HD":4, "Z":5, "metal":5, "dH":6, "enthalpic":6, "dust":7,\
+		"compton":8,"CIE":9, "continuum":10, "cont":10,"exp":11,"expansion":11}
+
+	idxscoo = []
+	maxv = 0
+	for (k,v) in idxcoo.iteritems():
+		idxscoo.append([v,"idx_cool_"+k+" = "+str(v)])
+		maxv = max(maxv,v)
+	idxscoo = sorted(idxscoo,key=lambda x:x[0])
+	idxscoo.append([99,"ncools = "+str(maxv)])
+	return [x[1] for x in idxscoo]
+
+#############################
+#heating index list
+def get_heating_index_list():
+	idxhea = {"chem":1,"compress":2, "compr":2, "photo":3, "dH":4, "enthalpic":4, "photoAv":5, "Av":5,\
+		"CR":6, "dust":7, "xray":8}
+
+	idxshea = []
+	maxv = 0
+	for (k,v) in idxhea.iteritems():
+		idxshea.append([v, "idx_heat_"+k+" = "+str(v)])
+		maxv = max(maxv,v)
+	idxshea = sorted(idxshea,key=lambda x:x[0])
+	idxshea.append([99,"nheats = "+str(maxv)])
+	return [x[1] for x in idxshea]
+
 
 ####################################
 #solar metallicities
@@ -996,7 +1029,6 @@ def clear_dir(folder):
 	    except Exception, e:
 		print e
 
-
 #################################
 #verner96 photochemistry cross sections dictionary
 def get_photo_crossV96(atom):
@@ -1256,16 +1288,17 @@ def get_licence_header(version, codename, short=False):
 	!! also see https://bitbucket.org/krome/krome_stable
 	!!
 	!!Written and developed by Tommaso Grassi
-	!!tommasograssi@gmail.com,
-	!!Starplan Center, Copenhagen.
-	!!Niels Bohr Institute, Copenhagen.
+	!! tommasograssi@gmail.com,
+	!! Starplan Center, Copenhagen.
+	!! Niels Bohr Institute, Copenhagen.
 	!!
 	!!Co-developer Stefano Bovino
-  	!!sbovino@astro.physik.uni-goettingen.de
-	!!Institut fuer Astrophysik, Goettingen.
+  	!! sbovino@astro.physik.uni-goettingen.de
+	!! Institut fuer Astrophysik, Goettingen.
 	!!
-	!!Others (alphabetically): F.A. Gianturco, J.Prieto,
-	!!D.R.G. Schleicher, D. Seifried, E. Simoncini, E. Tognelli.
+	!!Others (alphabetically): F.A. Gianturco, T. Haugboelle, 
+	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
+	!! E. Tognelli
 	!!
 	!!
 	!!KROME is provided \"as it is\", without any warranty. 
@@ -1288,9 +1321,9 @@ def get_licence_header(version, codename, short=False):
 	!!Written and developed by Tommaso Grassi
 	!!
 	!!Co-developer Stefano Bovino
-	!!Others (alphabetically): F.A. Gianturco, J.Prieto,
-	!!D.R.G. Schleicher, D. Seifried, E. Simoncini, E. Tognelli.
-	!!
+	!!Others (alphabetically): F.A. Gianturco, T. Haugboelle, 
+	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
+	!! E. Tognelli.
 	!!KROME is provided \"as it is\", without any warranty.
 	!!*************************************************************\n"""
 
@@ -1427,8 +1460,8 @@ def get_quote(qall=False):
 	["There are two ways to write error-free programs; only the third one works.","Alan Perlis"],
 	["Software and cathedrals are much the same - first we build them, then we pray.","Sam Redwine"],
 	["Estimate always goes wrong.","Sumit Agrawal"],
-	["Weinberg's Second Law: If builders built buildings the way programmers wrote programs, then the first woodpecker that came\
-	 along would destroy civilization.","Gerald Weinberg"],
+	["Weinberg's Second Law: If builders built buildings the way programmers wrote programs, then the first woodpecker that came"\
+	 +" along would destroy civilization.","Gerald Weinberg"],
 	["Any sufficiently advanced magic is indistinguishable from a rigged demonstration.",""],
 	["Any given program, when running, is obsolete.",""],
 	["Programming would be so much easier without all the users.",""],
@@ -1436,13 +1469,13 @@ def get_quote(qall=False):
 	["Testing can only prove the presence of bugs, not their absence.","Edsger W. Dijkstra"],
 	["If debugging is the process of removing bugs, then programming must be the process of putting them in.","Edsger W. Dijkstra"],
 	["God is Real, unless declared Integer.","J. Allan Toogood"],
-	["Curiously enough, the only thing that went through the mind of the bowl of petunias as it fell was Oh no, not again.","The\
-	 Hitchhiker's Guide to the Galaxy"],
+	["Curiously enough, the only thing that went through the mind of the bowl of petunias as it fell was Oh no, not again.","The"\
+	 +" Hitchhiker's Guide to the Galaxy"],
 	["Computer science differs from physics in that it is not actually a science.","Richard Feynman"],
 	["The purpose of computing is insight, not numbers.","Richard Hamming"],
 	["Computer science is neither mathematics nor electrical engineering.","Alan Perlis"],
-	["I can't be as confident about computer science as I can about biology. Biology easily has 500 years of exciting problems to work\
-	 on. It's at that level.","Donald Knuth"],
+	["I can't be as confident about computer science as I can about biology. Biology easily has 500 years of exciting problems to work"\
+	 +" on. It's at that level.","Donald Knuth"],
 	["The only legitimate use of a computer is to play games.","Eugene Jarvis"],
 	["UNIX is user-friendly, it just chooses its friends.","Andreas Bogk"],
 	["Quantum mechanic Seth Lloyd says the universe is one giant, hackable computer. Let's hope it's not running Windows.","Kevin Kelly"],
@@ -1450,20 +1483,20 @@ def get_quote(qall=False):
 	["Computers in the future may weigh no more than 1.5 tons.","Popular Mechanics (1949)"],
 	["Don't trust a computer you can't throw out a window.","Steve Wozniak"],
 	["Computers are like bikinis. They save people a lot of guesswork.","Sam Ewing"],
-	["If the automobile had followed the same development cycle as the computer, a Rolls-Royce would today cost $100, get a million\
-	 miles per gallon, and explode once a year, killing everyone inside.","Robert X. Cringely"],
-	["Computers are getting smarter all the time. Scientists tell us that soon they will be able to talk to us.  (And by 'they',\
-	 I mean 'computers'.  I doubt scientists will ever be able to talk to us.)","Dave Barry"],
+	["If the automobile had followed the same development cycle as the computer, a Rolls-Royce would today cost $100, get a million"\
+	 +" miles per gallon, and explode once a year, killing everyone inside.","Robert X. Cringely"],
+	["Computers are getting smarter all the time. Scientists tell us that soon they will be able to talk to us.  (And by 'they',"\
+	 " I mean 'computers'.  I doubt scientists will ever be able to talk to us.)","Dave Barry"],
 	["Most software today is very much like an Egyptian pyramid with millions of bricks piled on top of each other, with no structural\
 	 integrity, but just done by brute force and thousands of slaves.","Alan Kay"],
 	["No matter how slick the demo is in rehearsal, when you do it in front of a live audience, the probability of a flawless\
 	 presentation is inversely proportional to the number of people watching, raised to the power of the amount of money involved.",\
 	"Mark Gibbs"],
 	["Controlling complexity is the essence of computer programming.","Brian Kernigan"],
-	["Software suppliers are trying to make their software packages more 'user-friendly'...  Their best approach so far has been to take\
-	 all the old brochures and stamp the words 'user-friendly' on the cover.","Bill Gates"],
-	["Programmers are in a race with the Universe to create bigger and better idiot-proof programs, while the Universe is trying to\
-	 create bigger and better idiots.  So far the Universe is winning.","Rich Cook"],
+	["Software suppliers are trying to make their software packages more 'user-friendly'...  Their best approach so far has been to take"\
+	 +" all the old brochures and stamp the words 'user-friendly' on the cover.","Bill Gates"],
+	["Programmers are in a race with the Universe to create bigger and better idiot-proof programs, while the Universe is trying to"\
+	 + " create bigger and better idiots.  So far the Universe is winning.","Rich Cook"],
 	["To iterate is human, to recurse divine.","L. Peter Deutsch"],
 	["Should array indices start at 0 or 1?  My compromise of 0.5 was rejected without, I thought, proper consideration.","Stan Kelly-Bootle"],
 	["Any code of your own that you haven't looked at for six or more months might as well have been written by someone else.","Eagleson's Law"],
@@ -1474,8 +1507,8 @@ def get_quote(qall=False):
 	 "Mitch Ratcliffe"],
 	["Computer Science is no more about computers than astronomy is about telescopes.","Edsger W. Dijkstra"],
 	["To err is human, but to really foul things up you need a computer.","Paul Ehrlich"],
-	["Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are,\
-	 by definition, not smart enough to debug it.","Brian W. Kernighan"],
+	["Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are,"\
+	 +" by definition, not smart enough to debug it.","Brian W. Kernighan"],
 	["Always code as if the guy who ends up maintaining your code will be a violent psychopath who knows where you live.","Martin Golding"],
 	["One of my most productive days was throwing away 1000 lines of code.","Ken Thompson "],
 	["And God said, \"Let there be light\" and segmentation fault (core dumped)",""],
@@ -1485,6 +1518,9 @@ def get_quote(qall=False):
 	["All models are wrong; some models are useful","George Box"],
 	["The generation of random numbers is too important to be left to chance","Robert Coveyou"],
 	["Problems worthy / of attack / prove their worth / by hitting back","Piet Hein"],
+	["Good, Fast, Cheap: Pick any two","Memorandum RFC 1925"],
+	["One size never fits all","Memorandum RFC 1925"],
+	["No matter how hard you push and no matter what the priority,you can't increase the speed of light","Memorandum RFC 1925"],
 	["Chemistry has been termed by the physicist as the messy part of physics", "Frederick Soddy "]
 	]
 	qrange = 1

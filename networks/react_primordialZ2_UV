@@ -84,7 +84,15 @@
 
 35,HEH+,E,,H,HE,,,NONE,NONE,2d-7*invsqrT32
 
+@PHOTO_BEGIN
+@format:idx,R,P,P,Tmin,Tmax,rate
+36,H,H+,E,13.6,1e4,sigma_v96(energy_eV,4.298d-01,5.475d+04,3.288d+01,2.963d+00,0.000d+00,0.000d+00,0.000d+00)
 
+37,HE,HE+,E,24.6,1e4,sigma_v96(energy_eV,1.361d+01,9.492d+02,1.469d+00,3.188d+00,2.039d+00,4.434d-01,2.136d+00)
+
+38,C,C+,E,11.26,291e0,sigma_v96(energy_eV,2.144d+00,5.027d+02,6.216d+01,5.101d+00,9.157d-02,1.133d+00,1.607d+00)
+39,O,O+,E,13.62,538e0,sigma_v96(energy_eV,1.240d+00,1.745d+03,3.784d+00,1.764d+01,7.589d-02,8.698d+00,1.271d-01)
+@PHOTO_END
 
 @format:idx,Tmin,Tmax,R,R,P,P,rate
 1,NONE,NONE,O+,H,H+,O,6.80*1d-10 

@@ -80,7 +80,6 @@ contains
 
   end function conserve
 
-
   !**************************
   !shielding function for H2O+ and H3O+
   ! following Glover+2010 MNRAS sect 2.2 eqn.4
@@ -104,9 +103,9 @@ contains
     real*8::fselfH2,N,b,x,b5
 
     x = N*2d-15 !normalized column density (#)
-    b5 = b*10d-5 !normalized doppler broadening (#)
+    b5 = b*1d-5 !normalized doppler broadening (#)
 
-    fselfH2 = 0.965d0/(1+x/b5) + &
+    fselfH2 = 0.965d0/(1+x/b5)**2 + &
          0.035d0/sqrt(1d0+x) * &
          exp(-8.5d-4*sqrt(1+x))
 
@@ -565,6 +564,38 @@ contains
     end do
 
   end subroutine print_best_flux
+
+  !******************************
+  subroutine print_best_flux_spec(n,Tgas,nbestin,idx_found)
+    !print the first nbestin fluxes for the reactions
+    ! that contains the species with index idx_found
+    use krome_commons
+    implicit none
+    real*8::n(nspec),Tgas,flux(nrea)
+    integer::nbest,idx(nrea),i,nbestin,idx_found
+    character*50::name(nrea)
+    logical::found
+
+    nbest = min(nbestin,nrea) !cannot exceed the number of reactions
+
+    flux(:) = get_flux(n(:),Tgas) !get fluxes
+    name(:) = get_rnames() !get reaction names
+    do i=1,nrea
+       found = .false.
+       #KROME_arr_reactprod
+       if(.not.found) flux(i) = 0d0
+    end do
+
+    !call the sorting algorithm (bubblesort)
+    idx(:) = idx_sort(flux(:))
+
+    !print to screen
+    print *,"***************"
+    do i=1,nbest
+       print '(I4,a1,a50,E17.8)',i," ",name(idx(i)),flux(idx(i))
+    end do
+
+  end subroutine print_best_flux_spec
 
   !*****************************
   function idx_sort(fin)

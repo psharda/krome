@@ -5,6 +5,12 @@ module krome_commons
 #KROME_species_index
 #KROME_parameters
 
+  !cooling index
+#KROME_cool_index
+
+  !heating index
+#KROME_heat_index
+
   real*8::arr_k(nrea)
   real*8::jac_nold(nspec),jac_dnold(nspec),jac_dn(nspec)
     

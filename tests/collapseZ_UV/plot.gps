@@ -1,0 +1,17 @@
+reset
+set logscale
+set autoscale
+set format y "%L"
+set format x "%L"
+
+set ylabel "log(T/K)"
+set xlabel "log(n/cm-3)"
+
+set key b r
+set grid
+
+plot './fort.22' u 2:($1<1e-99?$3:1/0) w l t "J21=0",\
+'' u 2:($1==1e-2?$3:1/0) w l t "J21=1e-2",\
+'' u 2:($1==1e-3?$3:1/0) w l t "J21=1e-1",\
+'' u 2:($1==1e0?$3:1/0) w l t "J21=1e0"
+

@@ -50,6 +50,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   use cooling_mod
   use krome_main !mandatory
   use krome_user !array sizes and utils
+  use krome_user_commons, only : krome_set_user_Av
   implicit none
   integer::ilevel,ngrid
   integer,dimension(1:nvector)::ind_grid
@@ -146,6 +147,9 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
            ! KROME: from 2dim array of RAMSES to 1dim array for KROME
 #KROME_update_unoneq
 
+           ! KROME: from code units to 1/cm3 for KROME
+#KROME_scale_unoneq
+
            !get the mean molecular weight
            mu_noneq_old = krome_get_mu(unoneq(:))
 
@@ -153,8 +157,9 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
            Tgas  = T2(i) * mu_noneq_old
            T2old = T2(i)
 
-           ! KROME: from code units to 1/cm3 for KROME
-#KROME_scale_unoneq
+           ! Normalise to Av = 1 for n ~ 1e3, and let it scale like 2/3 power.
+           ! This is roughly correct according to Glover et al (astro-ph:1403.3530)
+           call krome_set_user_Av( (Av_rho * nH(i) / mu_noneq_old)**0.66667_8 )
 
            if(do_cool.and.chemistry) then
               !KROME: do chemistry+cooling
@@ -168,6 +173,13 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
               continue
            end if
 
+           !KROME: store the adiabatic index as the first element
+           ! of the chem array (index=ichem)
+           uold(ind_leaf(i),ichem) = krome_get_gamma(unoneq(:),Tgas)
+
+           !KROME: compute mu with the chemistry updated
+           mu_noneq = krome_get_mu(unoneq(:))
+
            !KROME: from KROME 1/cm3 to code units of RAMSES
 #KROME_backscale_unoneq
 
@@ -176,19 +188,10 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
            ! position (first species index = ichem+1)
 #KROME_backupdate_unoneq
 
-           !KROME: store the adiabatic index as the first element
-           ! of the chem array (index=ichem)
-           uold(ind_leaf(i),ichem) = krome_get_gamma(unoneq(:),Tgas)
-
-           !Save gas temperature in K for the output
-           !uold(ind_leaf(i),ndim+3) = tgas
-
-           !KROME: compute mu with the chemistry updated
-           mu_noneq = krome_get_mu(unoneq(:))
-
            !KROME: compute t2emperature difference
            t2gas    = Tgas / mu_noneq
            delta_T2(i) = t2gas - t2old
+           T2(i) = t2gas
            if (c_verbose > 0) then
            !$omp critical
            if (t .ne. time_old) then
@@ -219,32 +222,22 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
         end do
      end if
 
-     ! Compute rho
+     ! Compute rho, new internal energy, and update total fluid energy
      do i=1,nleaf
-        nH(i) = nH(i)/scale_nH
+       nH(i) = nH(i)/scale_nH
+       T2(i) = T2(i)*nH(i)/scale_T2/(uold(ind_leaf(i),ichem)-1.0)
+       uold(ind_leaf(i),neul) = T2(i)+ekk(i)+emag(i)
+       if (T2(i) < 0.) then
+         !$omp critical
+         if (nprint>0) then
+           nprint=nprint-1
+           print '(a,i6,i4,i10,1p,6e11.3)', 'Negative temperature detected, mycpu, i, idx, Enew, rho :', &
+               myid, i, ind_leaf(i), uold(ind_leaf(i),neul)-(ekk(i)+emag(i)),nH(i)
+         endif
+         !$omp end critical
+       endif
      end do
-
-     ! Compute net energy sink, 
-     do i=1,nleaf
-        delta_T2(i) = delta_T2(i)*nH(i)/scale_T2/(uold(ind_leaf(i),ichem)-1.0)
-     end do
-
-     ! Update total fluid energy
-     do i=1,nleaf
-        T2(i) = uold(ind_leaf(i),neul)
-        uold(ind_leaf(i),neul) = T2(i)+delta_T2(i)
-        if (uold(ind_leaf(i),neul) < ekk(i)+emag(i)) then
-           !$omp critical
-           if (nprint>0) then
-              nprint=nprint-1
-              print '(a,i6,i4,i10,1p,6e11.3)', 'Negative energy detected, mycpu, i, idx, Eold, dT, Enew :', &
-                   myid, i, ind_leaf(i), T2(i)-(ekk(i)+emag(i)), &
-                   delta_T2(i), uold(ind_leaf(i),neul)-(ekk(i)+emag(i)),ekk(i),emag(i),nH(i)
-           endif
-           !$omp end critical
-        endif
-     end do
-
+    
   end do
   ! End loop over cells
 

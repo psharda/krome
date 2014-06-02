@@ -1,0 +1,19 @@
+reset
+set logscale
+set autoscale
+set format y "%L"
+set format x "%L"
+
+set ylabel "log(T/K)"
+set xlabel "log(n/cm-3)"
+
+set key b r
+set key Left
+set key reverse
+set grid
+
+plot './fort.22' u 2:($1==2.73?$3:1/0) w l t "Tbb=2.73 K",\
+'' u 2:($1==3e1?$3:1/0) w l t "Tbb=3e1 K",\
+'' u 2:($1==3e2?$3:1/0) w l t "Tbb=3e2 K",\
+'' u 2:($1==3e3?$3:1/0) w l t "Tbb=3e3 K"
+

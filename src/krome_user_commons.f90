@@ -20,7 +20,5 @@ contains
     kooij = kalpha*(Tgas/3d2)**kbeta*exp(-kgamma/Tgas)
   end function kooij
 
-#KROME_user_commons_functions
-
 
 end module krome_user_commons
