@@ -93,13 +93,13 @@ contains
          user_xheat_H_anytaby(:), &
          user_xheat_H_anytabz(:,:), &
          user_xheat_H_anytabxmul, &
-         user_xheat_H_anytabxmul, &
+         user_xheat_H_anytabymul, &
          logH,logHe-logH)
     xheat_He = fit_anytab2D(user_xheat_He_anytabx(:), &
          user_xheat_He_anytaby(:), &
          user_xheat_He_anytabz(:,:), &
          user_xheat_He_anytabxmul, &
-         user_xheat_He_anytabxmul, &
+         user_xheat_He_anytabymul, &
          logH,logHe-logH)
 
     !prepares varibles for xray photochemistry
