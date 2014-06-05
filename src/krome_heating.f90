@@ -93,13 +93,13 @@ contains
          user_xheat_H_anytaby(:), &
          user_xheat_H_anytabz(:,:), &
          user_xheat_H_anytabxmul, &
-         user_xheat_H_anytabxmul, &
+         user_xheat_H_anytabymul, &
          logH,logHe-logH)
     xheat_He = fit_anytab2D(user_xheat_He_anytabx(:), &
          user_xheat_He_anytaby(:), &
          user_xheat_He_anytabz(:,:), &
          user_xheat_He_anytabxmul, &
-         user_xheat_He_anytabxmul, &
+         user_xheat_He_anytabymul, &
          logH,logHe-logH)
 
     !prepares varibles for xray photochemistry
@@ -107,8 +107,8 @@ contains
     ratexHe = 1d1**xheat_He
     
     heat_Xray = ratexH * n(idx_H)
-    heat_Xray = ratexHe * n(idx_He)
-    heat_Xray = heat_Xray * .9971d0 * (1d0-(1d0*xe**.2663)**1.3163)
+    heat_Xray = heat_Xray + ratexHe * n(idx_He)
+    heat_Xray = heat_Xray * .9971d0 * (1d0-(1d0-xe**.2663)**1.3163)
 
   end function heat_XRay
 #ENDIFKROME
