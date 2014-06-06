@@ -1764,12 +1764,69 @@ class krome():
 			print " where indexes are arbitrary"
 			sys.exit()
 
+		#check for automatic reactions
+		autoFound = False
+		for rea in reacts:
+			if(rea.krate.lower().strip()!="auto" and rea.kphrate.lower().strip()!="auto"): continue
+			autoFound = True
+			break
+		
+		#search auto reaction in the database
+		if(autoFound):
+			autoreacts = [] #dbase array contains dictionary with reaction data
+			fdbase = "data/kromeauto.dat"
+			print "Automatic reactions found, loading "+fdbase
+			fhdbase = open(fdbase,"rb") #open the database
+			#load the database into an array of dictionaries
+			for row in fhdbase:
+				srow = row.strip()
+				if(srow==""): continue #skip blank
+				if(srow[0]=="#"): continue #skip comments
+				#each reaction block starts with @type, init the reaction dictionary
+				if("@type:" in srow):
+					myrea = dict()
+				myrea.update(at_extract(srow)) #append to the dictionary
+				#each reaction block ends with @rate, append to the main database array
+				if("@rate:" in srow):
+					autoreacts.append(myrea)
+			#loop on the reactions to find auto
+			for i in range(len(reacts)):
+				rea = reacts[i]
+				if(rea.krate.lower().strip()!="auto" and rea.kphrate.lower().strip()!="auto"): continue
+				dbFound = False
+				#loop on autoreactions
+				for autorea in autoreacts:
+					autop = [x.strip() for x in autorea["prods"].split(",")] #list of prods
+					autor = [x.strip() for x in autorea["reacts"].split(",")] #list of reacts
+					if(sorted([x.name for x in rea.reactants])!=sorted(autor)): continue
+					if(sorted([x.name for x in rea.products])!=sorted(autop)): continue
+					dbFound = True
+					#handle photochemistry
+					print "##########################"
+					print rea.kphrate, rea.krate
+					if(rea.kphrate=="auto"):
+						reacts[i].kphrate = autorea["rate"]
+					else:
+						reacts[i].krate = autorea["rate"]
+
+					reacts[i].Tmin = autorea["limits"].split(",")[0].strip()
+					reacts[i].Tmax = autorea["limits"].split(",")[1].strip()
+					print "automatic reaction found!",rea.verbatim
+					break
+				#error if automatic reactions not found
+				if(not(dbFound)):
+					print "ERROR: reaction not found in the automatc database!"
+					print rea.verbatim,[x.name for x in rea.reactants]
+					sys.exit()
+
 
 		#count reactions with unique index
 		idxs = []
 		nrea = 0
 		for rea in reacts:
-			if(rea.idx in idxs): continue #skip reactions same index
+			if(rea.idx in idxs):
+				print "skipping "+rea.verbatim+" since index already used!"
+				continue #skip reactions same index
 			idxs.append(rea.idx)
 			nrea += 1
 

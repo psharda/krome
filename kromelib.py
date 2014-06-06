@@ -629,6 +629,15 @@ def truncF90(mystr, sublen, sep):
 		first = False
 	return s.replace("##","**")	
 
+################################
+def at_extract(arg):
+	aarg = arg.split(":")
+	if(len(aarg)!=2):
+		print "ERROR: @label:value format not respected for"
+		print arg
+		sys.exit()
+	aarg[0] = aarg[0].replace("@","")
+	return {aarg[0]:aarg[1]}
 
 ##################################
 #double format for f90 expressions

@@ -371,6 +371,33 @@ contains
   end function calc_H2shieldWG11
 #ENDIFKROME
 
+  !******************************
+  !collisional ionization rate from Verner+96
+  ! unit: cm3/s
+  function colion_v96(Tgas,dE,P,A,X,K)
+    implicit none
+    real*8::colion_v96,Tgas,dE,A,X,K,U,Te
+    integer::P
+
+    Te = Tgas * 8.621738d-5 !K to eV
+    U = dE / Te
+    colion_v96 = A * (1d0 + P*sqrt(U)) * U**K * exp(-U) / (X+U)
+
+  end function colion_v96
+
+  !******************************
+  !radiative recombination rates from Verner+96
+  ! unit: cm3/s
+  function radrec_v96(Tgas,a,b,T0,T1)
+    implicit none
+    real*8::Tgas,a,b,T0,T1,radrec_v96,iT0
+   
+    iT0 = 1d0/T0
+    radrec_v96 = a/(sqrt(Tgas*iT0) + (1d0*sqrt(Tgas*iT0))**(1.-b) &
+         * (1d0+sqrt(Tgas/T1))**(1+b))
+
+  end function radrec_v96
+
   !***************************
   !Collisional dissociation rate (cm-3/s) by Martin et al. 1996
   ! H2+H->H+H+H
