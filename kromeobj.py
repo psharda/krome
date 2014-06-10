@@ -109,6 +109,7 @@ class krome():
 	anytabsizes = [] #sizes of the tables
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
+	fdbase = "data/kromeauto.dat"
 	version = "14.03"
 	codename = "Beastie Boyle"
 
@@ -205,6 +206,7 @@ class krome():
 			If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
+		self.parser.add_argument("-listAutomatics", action="store_true", help="list all the automatic reactions available")
 		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
 		self.parser.add_argument("-mergeTlimits", action="store_true", help="use the same reaction index for equivalent\
 			reactions (same reactants and products) that have different temperature limits")
@@ -303,6 +305,9 @@ class krome():
 		elif(args.test=="slowmanifold"):
 			[argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_SM"
+		elif(args.test=="auto"):
+			[argv.append(x) for x in ["-photoBins=10","-useN"]]
+			filename = "networks/react_auto"
 		elif(args.test=="shock1Dcool"):
 			[argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
 			filename = "networks/react_primordial"
@@ -427,6 +432,23 @@ class krome():
 					sys.exit()
 
 			args = self.parser.parse_args() #return updated namespace
+
+		#list all the automatic reactions available from the fdbase file and exit
+		if(args.listAutomatics):
+			fhauto = open(self.fdbase,"rb")
+			icounta = 0
+			reasa = prodsa = typea = ""
+			for row in fhauto:
+				srow = row.strip()
+				if("@type:" in srow):
+					reasa = prodsa = typea = ""
+				if(reasa!="" and prodsa!="" and typea!=""):
+					icounta += 1
+					print str(icounta)+". ("+typea+") "+reasa+" -> "+prodsa
+				if("@reacts:" in srow): reasa = " + ".join([x.strip() for x in srow.replace("@reacts:","").split(",")])
+				if("@prods:" in srow): prodsa = " + ".join([x.strip() for x in srow.replace("@prods:","").split(",")])
+				if("@type:" in srow): typea = srow.replace("@type:","").strip()
+			sys.exit()
 		
 		#get a citation and exit
 		if(args.quote):
@@ -1774,7 +1796,7 @@ class krome():
 		#search auto reaction in the database
 		if(autoFound):
 			autoreacts = [] #dbase array contains dictionary with reaction data
-			fdbase = "data/kromeauto.dat"
+			fdbase = self.fdbase
 			print "Automatic reactions found, loading "+fdbase
 			fhdbase = open(fdbase,"rb") #open the database
 			#load the database into an array of dictionaries
@@ -1817,6 +1839,10 @@ class krome():
 				if(not(dbFound)):
 					print "ERROR: reaction not found in the automatc database!"
 					print rea.verbatim,[x.name for x in rea.reactants]
+					print "you can:"
+					print "1. remove it from your network"
+					print "2. provide a non-automatic reaction rate"
+					print "3. add to the databse "+fdbase
 					sys.exit()
 
 
@@ -2128,7 +2154,7 @@ class krome():
 		fout.close()
 
 		#dump species to gnuplot initialization
-		fout = open("species.gps","w")
+		fout = open(self.buildFolder+"species.gps","w")
 		fout.write("#This file is a script to initialize the species index in krome gnuplot\n")
 		idx = 0
 		fout.write("\n")

@@ -376,8 +376,7 @@ contains
   ! unit: cm3/s
   function colion_v96(Tgas,dE,P,A,X,K)
     implicit none
-    real*8::colion_v96,Tgas,dE,A,X,K,U,Te
-    integer::P
+    real*8::colion_v96,Tgas,dE,A,X,K,U,Te,P
 
     Te = Tgas * 8.621738d-5 !K to eV
     U = dE / Te
@@ -397,6 +396,20 @@ contains
          * (1d0+sqrt(Tgas/T1))**(1+b))
 
   end function radrec_v96
+
+  !*******************************
+  !radiative recombination rates low-temp fit, Verner+96
+  function radrec_low_v96(Tgas,a,b,c,d,f)
+    implicit none
+    real*8::Tgas,a,b,c,d,f,radrec_low_v96,t,invt
+
+    t = Tgas*1d-4
+    invt = 1d0/t
+
+    radrec_low_v96 = 1d-12 * (a*invt + b + c*t + d*t**2) &
+         * t**(-1.5) * exp(-f*invt)
+
+  end function radrec_low_v96
 
   !***************************
   !Collisional dissociation rate (cm-3/s) by Martin et al. 1996
