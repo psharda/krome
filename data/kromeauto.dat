@@ -1,0 +1,5070 @@
+#photoionization rate from verner+96
+@type: photoion
+@reacts: H
+@prods: H+, E
+@limits: 1.360d+01, 5.000d+04
+@rate: sigma_v96(energy_ev, 4.298d-01, 5.475d+04, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: He
+@prods: He+, E
+@limits: 2.459d+01, 5.000d+04
+@rate: sigma_v96(energy_ev, 1.361d+01, 9.492d+02, 1.469d+00, 3.188d+00, 2.039d+00, 4.434d-01, 2.136d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: He+
+@prods: He+2, E
+@limits: 5.442d+01, 5.000d+04
+@rate: sigma_v96(energy_ev, 1.720d+00, 1.369d+04, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Li
+@prods: Li+, E
+@limits: 5.392d+00, 6.439d+01
+@rate: sigma_v96(energy_ev, 3.107d+00, 6.245d+01, 1.501d+01, 4.895d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Li+
+@prods: Li+2, E
+@limits: 7.564d+01, 5.000d+04
+@rate: sigma_v96(energy_ev, 2.006d+01, 3.201d+02, 7.391d+00, 2.916d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Li+2
+@prods: Li+3, E
+@limits: 1.225d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 3.871d+00, 6.083d+03, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Be
+@prods: Be+, E
+@limits: 9.323d+00, 1.193d+02
+@rate: sigma_v96(energy_ev, 9.539d+00, 2.932d+05, 4.301d-01, 1.052d+01, 3.655d-01, 8.278d-04, 1.269d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Be+
+@prods: Be+2, E
+@limits: 1.821d+01, 1.299d+02
+@rate: sigma_v96(energy_ev, 1.181d+00, 2.678d+02, 5.645d+00, 1.170d+01, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Be+2
+@prods: Be+3, E
+@limits: 1.539d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 1.760d+01, 5.458d+02, 1.719d+01, 3.157d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Be+3
+@prods: Be+4, E
+@limits: 2.177d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 6.879d+00, 3.422d+03, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: B
+@prods: B+, E
+@limits: 8.298d+00, 1.940d+02
+@rate: sigma_v96(energy_ev, 5.213d-01, 5.466d+00, 8.618d+00, 1.728d+01, 1.887d+01, 1.319d+01, 4.556d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: B+
+@prods: B+2, E
+@limits: 2.516d+01, 2.098d+02
+@rate: sigma_v96(energy_ev, 2.869d+00, 1.859d+04, 1.783d+00, 1.618d+01, 3.503d+00, 4.960d-03, 3.400d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: B+2
+@prods: B+3, E
+@limits: 3.793d+01, 2.274d+02
+@rate: sigma_v96(energy_ev, 1.041d+00, 5.393d+01, 1.767d+01, 9.540d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: B+3
+@prods: B+4, E
+@limits: 2.594d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 3.336d+01, 2.846d+02, 2.163d+01, 2.624d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: B+4
+@prods: B+5, E
+@limits: 3.402d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 1.075d+01, 2.190d+03, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: C
+@prods: C+, E
+@limits: 1.126d+01, 2.910d+02
+@rate: sigma_v96(energy_ev, 2.144d+00, 5.027d+02, 6.216d+01, 5.101d+00, 9.157d-02, 1.133d+00, 1.607d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: C+
+@prods: C+2, E
+@limits: 2.438d+01, 3.076d+02
+@rate: sigma_v96(energy_ev, 4.058d-01, 8.709d+00, 1.261d+02, 8.578d+00, 2.093d+00, 4.929d+01, 3.234d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: C+2
+@prods: C+3, E
+@limits: 4.789d+01, 3.289d+02
+@rate: sigma_v96(energy_ev, 4.614d+00, 1.539d+04, 1.737d+00, 1.593d+01, 5.922d+00, 4.378d-03, 2.528d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: C+3
+@prods: C+4, E
+@limits: 6.449d+01, 3.522d+02
+@rate: sigma_v96(energy_ev, 3.506d+00, 1.068d+02, 1.436d+01, 7.457d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: C+4
+@prods: C+5, E
+@limits: 3.921d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 4.624d+01, 2.344d+02, 2.183d+01, 2.581d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: C+5
+@prods: C+6, E
+@limits: 4.900d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 1.548d+01, 1.521d+03, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: N
+@prods: N+, E
+@limits: 1.453d+01, 4.048d+02
+@rate: sigma_v96(energy_ev, 4.034d+00, 8.235d+02, 8.033d+01, 3.928d+00, 9.097d-02, 8.598d-01, 2.325d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: N+
+@prods: N+2, E
+@limits: 2.960d+01, 4.236d+02
+@rate: sigma_v96(energy_ev, 6.128d-02, 1.944d+00, 8.163d+02, 8.773d+00, 1.043d+01, 4.280d+02, 2.030d+01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: N+2
+@prods: N+3, E
+@limits: 4.745d+01, 4.473d+02
+@rate: sigma_v96(energy_ev, 2.420d-01, 9.375d-01, 2.788d+02, 9.156d+00, 1.850d+00, 1.877d+02, 3.999d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: N+3
+@prods: N+4, E
+@limits: 7.747d+01, 4.753d+02
+@rate: sigma_v96(energy_ev, 5.494d+00, 1.690d+04, 1.714d+00, 1.706d+01, 7.904d+00, 6.415d-03, 1.937d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: N+4
+@prods: N+5, E
+@limits: 9.789d+01, 5.043d+02
+@rate: sigma_v96(energy_ev, 4.471d+00, 8.376d+01, 3.297d+01, 6.003d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: N+5
+@prods: N+6, E
+@limits: 5.521d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 6.943d+01, 1.519d+02, 2.627d+01, 2.315d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: N+6
+@prods: N+7, E
+@limits: 6.671d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 2.108d+01, 1.117d+03, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: O
+@prods: O+, E
+@limits: 1.362d+01, 5.380d+02
+@rate: sigma_v96(energy_ev, 1.240d+00, 1.745d+03, 3.784d+00, 1.764d+01, 7.589d-02, 8.698d+00, 1.271d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: O+
+@prods: O+2, E
+@limits: 3.512d+01, 5.581d+02
+@rate: sigma_v96(energy_ev, 1.386d+00, 5.967d+01, 3.175d+01, 8.943d+00, 1.934d-02, 2.131d+01, 1.503d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: O+2
+@prods: O+3, E
+@limits: 5.494d+01, 5.840d+02
+@rate: sigma_v96(energy_ev, 1.723d-01, 6.753d+02, 3.852d+02, 6.822d+00, 1.191d-01, 3.839d-03, 4.569d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: O+3
+@prods: O+4, E
+@limits: 7.741d+01, 6.144d+02
+@rate: sigma_v96(energy_ev, 2.044d-01, 8.659d-01, 4.931d+02, 8.785d+00, 3.143d+00, 3.328d+02, 4.285d+01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: O+4
+@prods: O+5, E
+@limits: 1.139d+02, 6.491d+02
+@rate: sigma_v96(energy_ev, 2.854d+00, 1.642d+04, 1.792d+00, 2.647d+01, 2.836d+01, 3.036d-02, 5.554d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: O+5
+@prods: O+6, E
+@limits: 1.381d+02, 6.837d+02
+@rate: sigma_v96(energy_ev, 7.824d+00, 6.864d+01, 3.210d+01, 5.495d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: O+6
+@prods: O+7, E
+@limits: 7.393d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 8.709d+01, 1.329d+02, 2.535d+01, 2.336d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: O+7
+@prods: O+8, E
+@limits: 8.714d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 2.754d+01, 8.554d+02, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: F
+@prods: F+, E
+@limits: 1.742d+01, 6.940d+02
+@rate: sigma_v96(energy_ev, 1.297d+01, 3.803d+03, 2.587d+00, 7.275d+00, 2.170d-03, 1.701d-04, 1.345d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: F+
+@prods: F+2, E
+@limits: 3.497d+01, 7.122d+02
+@rate: sigma_v96(energy_ev, 1.763d+00, 8.013d+01, 1.667d+01, 1.050d+01, 5.103d-01, 1.715d+01, 7.724d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: F+2
+@prods: F+3, E
+@limits: 6.271d+01, 7.392d+02
+@rate: sigma_v96(energy_ev, 2.542d+00, 1.541d+02, 5.742d+01, 6.614d+00, 1.115d+00, 1.641d+01, 5.124d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: F+3
+@prods: F+4, E
+@limits: 8.714d+01, 7.709d+02
+@rate: sigma_v96(energy_ev, 7.744d-01, 3.165d+00, 1.099d+02, 9.203d+00, 6.812d+00, 9.531d+01, 9.781d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: F+4
+@prods: F+5, E
+@limits: 1.142d+02, 8.091d+02
+@rate: sigma_v96(energy_ev, 7.286d-01, 4.690d-01, 1.400d+02, 9.718d+00, 2.570d-01, 1.506d+02, 2.574d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: F+5
+@prods: F+6, E
+@limits: 1.572d+02, 8.502d+02
+@rate: sigma_v96(energy_ev, 4.008d+00, 1.157d+04, 1.848d+00, 2.446d+01, 2.411d+01, 2.071d-02, 3.998d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: F+6
+@prods: F+7, E
+@limits: 1.852d+02, 8.905d+02
+@rate: sigma_v96(energy_ev, 2.563d+00, 6.930d+01, 7.547d+01, 6.448d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: F+7
+@prods: F+8, E
+@limits: 9.539d+02, 5.000d+04
+@rate: sigma_v96(energy_ev, 1.131d+02, 1.039d+02, 2.657d+01, 2.255d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: F+8
+@prods: F+9, E
+@limits: 1.103d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 3.485d+01, 6.759d+02, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ne
+@prods: Ne+, E
+@limits: 2.156d+01, 8.701d+02
+@rate: sigma_v96(energy_ev, 4.870d+00, 4.287d+03, 5.798d+00, 8.355d+00, 2.434d-01, 4.236d-02, 5.873d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ne+
+@prods: Ne+2, E
+@limits: 4.096d+01, 8.831d+02
+@rate: sigma_v96(energy_ev, 1.247d+01, 1.583d+03, 3.935d+00, 7.810d+00, 6.558d-02, 1.520d+00, 1.084d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ne+2
+@prods: Ne+3, E
+@limits: 6.346d+01, 9.131d+02
+@rate: sigma_v96(energy_ev, 7.753d-01, 5.708d+00, 6.725d+01, 1.005d+01, 4.633d-01, 7.654d+01, 2.023d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ne+3
+@prods: Ne+4, E
+@limits: 9.712d+01, 9.480d+02
+@rate: sigma_v96(energy_ev, 5.566d+00, 1.685d+03, 6.409d+02, 3.056d+00, 8.290d-03, 5.149d+00, 6.687d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ne+4
+@prods: Ne+5, E
+@limits: 1.262d+02, 9.873d+02
+@rate: sigma_v96(energy_ev, 1.248d+00, 2.430d+00, 1.066d+02, 8.999d+00, 6.855d-01, 9.169d+01, 3.702d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ne+5
+@prods: Ne+6, E
+@limits: 1.579d+02, 1.031d+03
+@rate: sigma_v96(energy_ev, 1.499d+00, 9.854d-01, 1.350d+02, 8.836d+00, 1.656d+00, 1.042d+02, 1.435d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ne+6
+@prods: Ne+7, E
+@limits: 2.073d+02, 1.078d+03
+@rate: sigma_v96(energy_ev, 4.888d+00, 1.198d+04, 1.788d+00, 2.550d+01, 2.811d+01, 2.536d-02, 4.417d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ne+7
+@prods: Ne+8, E
+@limits: 2.391d+02, 1.125d+03
+@rate: sigma_v96(energy_ev, 1.003d+01, 5.631d+01, 3.628d+01, 5.585d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ne+8
+@prods: Ne+9, E
+@limits: 1.196d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 1.586d+02, 6.695d+01, 3.352d+01, 2.002d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ne+9
+@prods: Ne+10, E
+@limits: 1.362d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 4.304d+01, 5.475d+02, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Na
+@prods: Na+, E
+@limits: 5.139d+00, 3.814d+01
+@rate: sigma_v96(energy_ev, 6.139d+00, 1.601d+00, 6.148d+03, 3.839d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Na+
+@prods: Na+2, E
+@limits: 4.729d+01, 1.074d+03
+@rate: sigma_v96(energy_ev, 8.203d+00, 1.040d+03, 8.259d+00, 7.362d+00, 2.328d+00, 3.375d+00, 4.010d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Na+2
+@prods: Na+3, E
+@limits: 7.162d+01, 1.110d+03
+@rate: sigma_v96(energy_ev, 1.069d+01, 1.885d+03, 3.613d+00, 9.803d+00, 8.579d-02, 3.725d+00, 2.279d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Na+3
+@prods: Na+4, E
+@limits: 9.892d+01, 1.143d+03
+@rate: sigma_v96(energy_ev, 6.690d-01, 2.330d+00, 1.205d+02, 9.714d+00, 7.365d-01, 1.383d+02, 4.260d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Na+4
+@prods: Na+5, E
+@limits: 1.384d+02, 1.185d+03
+@rate: sigma_v96(energy_ev, 5.408d+00, 2.346d+01, 2.913d+01, 8.260d+00, 9.275d-01, 2.204d+01, 7.577d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Na+5
+@prods: Na+6, E
+@limits: 1.722d+02, 1.230d+03
+@rate: sigma_v96(energy_ev, 4.846d+01, 7.101d+01, 3.945d+01, 2.832d+00, 1.285d-02, 9.603d-04, 6.378d-03)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Na+6
+@prods: Na+7, E
+@limits: 2.085d+02, 1.281d+03
+@rate: sigma_v96(energy_ev, 2.096d+00, 1.609d+00, 2.473d+02, 7.681d+00, 1.895d+00, 9.940d+01, 3.278d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Na+7
+@prods: Na+8, E
+@limits: 2.642d+02, 1.335d+03
+@rate: sigma_v96(energy_ev, 1.535d+02, 7.215d+03, 3.886d-01, 8.476d+00, 9.121d-01, 1.667d-01, 1.766d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Na+8
+@prods: Na+9, E
+@limits: 2.999d+02, 1.386d+03
+@rate: sigma_v96(energy_ev, 1.391d+01, 4.729d+01, 3.889d+01, 5.265d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Na+9
+@prods: Na+10, E
+@limits: 1.465d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 2.268d+02, 3.995d+01, 5.315d+01, 1.678d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Na+10
+@prods: Na+11, E
+@limits: 1.649d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 5.211d+01, 4.525d+02, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg
+@prods: Mg+, E
+@limits: 7.646d+00, 5.490d+01
+@rate: sigma_v96(energy_ev, 1.197d+01, 1.372d+08, 2.228d-01, 1.574d+01, 2.805d-01, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg+
+@prods: Mg+2, E
+@limits: 1.504d+01, 6.569d+01
+@rate: sigma_v96(energy_ev, 8.139d+00, 3.278d+00, 4.341d+07, 3.610d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg+2
+@prods: Mg+3, E
+@limits: 8.014d+01, 1.317d+03
+@rate: sigma_v96(energy_ev, 1.086d+01, 5.377d+02, 9.779d+00, 7.117d+00, 2.604d+00, 4.860d+00, 3.722d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg+3
+@prods: Mg+4, E
+@limits: 1.093d+02, 1.356d+03
+@rate: sigma_v96(energy_ev, 2.912d+01, 1.394d+03, 2.895d+00, 6.487d+00, 4.326d-02, 9.402d-01, 1.135d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg+4
+@prods: Mg+5, E
+@limits: 1.413d+02, 1.400d+03
+@rate: sigma_v96(energy_ev, 9.762d-01, 1.728d+00, 9.184d+01, 1.006d+01, 8.090d-01, 1.276d+02, 3.979d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg+5
+@prods: Mg+6, E
+@limits: 1.865d+02, 1.449d+03
+@rate: sigma_v96(energy_ev, 1.711d+00, 2.185d+00, 9.350d+01, 9.202d+00, 6.325d-01, 1.007d+02, 1.729d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg+6
+@prods: Mg+7, E
+@limits: 2.249d+02, 1.501d+03
+@rate: sigma_v96(energy_ev, 3.570d+00, 3.104d+00, 6.060d+01, 8.857d+00, 1.422d+00, 5.452d+01, 2.078d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg+7
+@prods: Mg+8, E
+@limits: 2.660d+02, 1.558d+03
+@rate: sigma_v96(energy_ev, 4.884d-01, 6.344d-02, 5.085d+02, 9.385d+00, 6.666d-01, 5.348d+02, 3.997d-03)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg+8
+@prods: Mg+9, E
+@limits: 3.282d+02, 1.618d+03
+@rate: sigma_v96(energy_ev, 3.482d+01, 9.008d+02, 1.823d+00, 1.444d+01, 2.751d+00, 5.444d+00, 7.918d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg+9
+@prods: Mg+10, E
+@limits: 3.675d+02, 1.675d+03
+@rate: sigma_v96(energy_ev, 1.452d+01, 4.427d+01, 3.826d+01, 5.460d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg+10
+@prods: Mg+11, E
+@limits: 1.762d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 2.042d+02, 6.140d+01, 2.778d+01, 2.161d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Mg+11
+@prods: Mg+12, E
+@limits: 1.963d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 6.203d+01, 3.802d+02, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al
+@prods: Al+, E
+@limits: 5.986d+00, 8.040d+01
+@rate: sigma_v96(energy_ev, 1.381d+01, 7.195d+00, 1.621d+03, 3.642d+00, 3.166d-01, 2.041d-01, 4.753d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+
+@prods: Al+2, E
+@limits: 1.883d+01, 8.997d+01
+@rate: sigma_v96(energy_ev, 2.048d-01, 6.948d-02, 5.675d+02, 9.049d+00, 4.615d-01, 9.149d+01, 6.565d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+2
+@prods: Al+3, E
+@limits: 2.845d+01, 1.026d+02
+@rate: sigma_v96(energy_ev, 1.027d+01, 4.915d+00, 1.990d+06, 3.477d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+3
+@prods: Al+4, E
+@limits: 1.200d+02, 1.588d+03
+@rate: sigma_v96(energy_ev, 3.130d+00, 1.513d+01, 1.674d+01, 1.180d+01, 5.342d+00, 3.994d+01, 4.803d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+4
+@prods: Al+5, E
+@limits: 1.538d+02, 1.634d+03
+@rate: sigma_v96(energy_ev, 2.414d+01, 2.925d+02, 6.973d+00, 6.724d+00, 1.000d-01, 3.495d+00, 2.701d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+5
+@prods: Al+6, E
+@limits: 1.905d+02, 1.688d+03
+@rate: sigma_v96(energy_ev, 3.483d-01, 1.962d-02, 1.856d+01, 2.084d+01, 8.839d+00, 5.675d-02, 2.768d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+6
+@prods: Al+7, E
+@limits: 2.414d+02, 1.739d+03
+@rate: sigma_v96(energy_ev, 2.636d+00, 1.889d+02, 1.338d+02, 6.204d+00, 1.836d+00, 3.552d+01, 8.223d-03)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+7
+@prods: Al+8, E
+@limits: 2.846d+02, 1.799d+03
+@rate: sigma_v96(energy_ev, 4.866d-01, 2.350d-01, 7.216d+02, 8.659d+00, 2.773d-01, 5.704d+02, 1.580d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+8
+@prods: Al+9, E
+@limits: 3.301d+02, 1.862d+03
+@rate: sigma_v96(energy_ev, 1.842d+00, 4.982d-01, 2.568d+02, 8.406d+00, 6.945d-01, 1.719d+02, 6.595d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+9
+@prods: Al+10, E
+@limits: 3.994d+02, 1.929d+03
+@rate: sigma_v96(energy_ev, 8.044d+00, 1.774d+04, 1.653d+00, 2.655d+01, 2.953d+01, 2.538d-02, 1.203d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+10
+@prods: Al+11, E
+@limits: 4.421d+02, 1.992d+03
+@rate: sigma_v96(energy_ev, 2.355d+01, 3.388d+01, 3.432d+01, 5.085d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+11
+@prods: Al+12, E
+@limits: 2.086d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 2.738d+02, 4.036d+01, 3.567d+01, 1.915d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Al+12
+@prods: Al+13, E
+@limits: 2.304d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 7.281d+01, 3.239d+02, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si
+@prods: Si+, E
+@limits: 8.152d+00, 1.060d+02
+@rate: sigma_v96(energy_ev, 2.317d+01, 2.506d+01, 2.057d+01, 3.546d+00, 2.837d-01, 1.672d-05, 4.207d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+
+@prods: Si+2, E
+@limits: 1.635d+01, 1.186d+02
+@rate: sigma_v96(energy_ev, 2.556d+00, 4.140d+00, 1.337d+01, 1.191d+01, 1.570d+00, 6.634d+00, 1.272d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+2
+@prods: Si+3, E
+@limits: 3.349d+01, 1.311d+02
+@rate: sigma_v96(energy_ev, 1.659d-01, 5.790d-04, 1.474d+02, 1.336d+01, 8.626d-01, 9.613d+01, 6.442d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+3
+@prods: Si+4, E
+@limits: 4.514d+01, 1.466d+02
+@rate: sigma_v96(energy_ev, 1.288d+01, 6.083d+00, 1.356d+06, 3.353d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+4
+@prods: Si+5, E
+@limits: 1.668d+02, 1.887d+03
+@rate: sigma_v96(energy_ev, 7.761d-01, 8.863d-01, 1.541d+02, 9.980d+00, 1.303d+00, 2.009d+02, 4.537d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+5
+@prods: Si+6, E
+@limits: 2.051d+02, 1.946d+03
+@rate: sigma_v96(energy_ev, 6.305d+01, 7.293d+01, 1.558d+02, 2.400d+00, 2.989d-03, 1.115d+00, 8.051d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+6
+@prods: Si+7, E
+@limits: 2.465d+02, 2.001d+03
+@rate: sigma_v96(energy_ev, 3.277d-01, 6.680d-02, 4.132d+01, 1.606d+01, 3.280d+00, 1.149d-02, 6.396d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+7
+@prods: Si+8, E
+@limits: 3.032d+02, 2.058d+03
+@rate: sigma_v96(energy_ev, 7.655d-01, 3.477d-01, 3.733d+02, 8.986d+00, 1.476d-03, 3.850d+02, 8.999d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+8
+@prods: Si+9, E
+@limits: 3.511d+02, 2.125d+03
+@rate: sigma_v96(energy_ev, 3.343d-01, 1.465d-01, 1.404d+03, 8.503d+00, 1.646d+00, 1.036d+03, 2.936d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+9
+@prods: Si+10, E
+@limits: 4.014d+02, 2.194d+03
+@rate: sigma_v96(energy_ev, 8.787d-01, 1.950d-01, 7.461d+02, 8.302d+00, 4.489d-01, 4.528d+02, 1.015d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+10
+@prods: Si+11, E
+@limits: 4.761d+02, 2.268d+03
+@rate: sigma_v96(energy_ev, 1.205d+01, 1.992d+04, 1.582d+00, 2.425d+01, 2.392d+01, 1.990d-02, 1.007d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+11
+@prods: Si+12, E
+@limits: 5.235d+02, 2.336d+03
+@rate: sigma_v96(energy_ev, 3.560d+01, 2.539d+01, 3.307d+01, 4.728d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+12
+@prods: Si+13, E
+@limits: 2.438d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 2.752d+02, 4.754d+01, 2.848d+01, 2.135d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Si+13
+@prods: Si+14, E
+@limits: 2.673d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 8.447d+01, 2.793d+02, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S
+@prods: S+, E
+@limits: 1.036d+01, 1.700d+02
+@rate: sigma_v96(energy_ev, 1.808d+01, 4.564d+04, 1.000d+00, 1.361d+01, 6.385d-01, 9.935d-01, 2.486d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+
+@prods: S+2, E
+@limits: 2.333d+01, 1.846d+02
+@rate: sigma_v96(energy_ev, 8.787d+00, 3.136d+02, 3.442d+00, 1.281d+01, 7.354d-01, 2.782d+00, 1.788d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+2
+@prods: S+3, E
+@limits: 3.483d+01, 1.995d+02
+@rate: sigma_v96(energy_ev, 2.027d+00, 6.666d+00, 5.454d+01, 8.611d+00, 4.109d+00, 1.568d+01, 9.421d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+3
+@prods: S+4, E
+@limits: 4.731d+01, 2.164d+02
+@rate: sigma_v96(energy_ev, 2.173d+00, 2.606d+00, 6.641d+01, 8.655d+00, 1.863d+00, 1.975d+01, 3.361d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+4
+@prods: S+5, E
+@limits: 7.268d+01, 2.350d+02
+@rate: sigma_v96(energy_ev, 1.713d-01, 5.072d-04, 1.986d+02, 1.307d+01, 7.880d-01, 9.424d+01, 6.265d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+5
+@prods: S+6, E
+@limits: 8.805d+01, 2.557d+02
+@rate: sigma_v96(energy_ev, 1.413d+01, 9.139d+00, 1.656d+03, 3.626d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+6
+@prods: S+7, E
+@limits: 2.809d+02, 2.569d+03
+@rate: sigma_v96(energy_ev, 3.757d-01, 5.703d-01, 1.460d+02, 1.135d+01, 1.503d+00, 2.222d+02, 4.606d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+7
+@prods: S+8, E
+@limits: 3.282d+02, 2.641d+03
+@rate: sigma_v96(energy_ev, 1.462d+01, 3.161d+01, 1.611d+01, 8.642d+00, 1.153d-03, 1.869d+01, 3.037d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+8
+@prods: S+9, E
+@limits: 3.791d+02, 2.705d+03
+@rate: sigma_v96(energy_ev, 1.526d-01, 9.646d+03, 1.438d+03, 5.977d+00, 1.492d+00, 1.615d-03, 4.049d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+9
+@prods: S+10, E
+@limits: 4.471d+02, 2.782d+03
+@rate: sigma_v96(energy_ev, 1.040d+01, 5.364d+01, 3.641d+01, 7.090d+00, 2.310d+00, 1.775d+01, 1.663d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+10
+@prods: S+11, E
+@limits: 5.048d+02, 2.859d+03
+@rate: sigma_v96(energy_ev, 6.485d+00, 1.275d+01, 6.583d+01, 7.692d+00, 1.678d+00, 3.426d+01, 1.370d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+11
+@prods: S+12, E
+@limits: 5.647d+02, 2.941d+03
+@rate: sigma_v96(energy_ev, 2.443d+00, 3.490d-01, 5.411d+02, 7.769d+00, 7.033d-01, 2.279d+02, 1.172d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+12
+@prods: S+13, E
+@limits: 6.517d+02, 3.029d+03
+@rate: sigma_v96(energy_ev, 1.474d+01, 2.294d+04, 1.529d+00, 2.568d+01, 2.738d+01, 2.203d-02, 1.073d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+13
+@prods: S+14, E
+@limits: 7.072d+02, 3.107d+03
+@rate: sigma_v96(energy_ev, 3.310d+01, 2.555d+01, 3.821d+01, 5.037d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+14
+@prods: S+15, E
+@limits: 3.224d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 4.390d+02, 2.453d+01, 4.405d+01, 1.765d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: S+15
+@prods: S+16, E
+@limits: 3.494d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 1.104d+02, 2.139d+02, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar
+@prods: Ar+, E
+@limits: 1.576d+01, 2.492d+02
+@rate: sigma_v96(energy_ev, 1.709d+01, 2.106d+01, 2.645d+02, 4.796d+00, 4.185d-01, 1.688d+00, 8.943d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+
+@prods: Ar+2, E
+@limits: 2.763d+01, 2.662d+02
+@rate: sigma_v96(energy_ev, 2.494d+01, 2.503d+01, 1.272d+02, 4.288d+00, 5.108d-01, 9.299d-01, 7.195d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+2
+@prods: Ar+3, E
+@limits: 4.074d+01, 2.801d+02
+@rate: sigma_v96(energy_ev, 1.417d+01, 3.580d+01, 3.776d+01, 5.742d+00, 6.316d-01, 2.384d+00, 1.794d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+3
+@prods: Ar+4, E
+@limits: 5.981d+01, 2.987d+02
+@rate: sigma_v96(energy_ev, 6.953d+00, 2.035d+01, 1.400d+01, 9.595d+00, 8.842d-01, 7.501d+00, 1.806d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+4
+@prods: Ar+5, E
+@limits: 7.502d+01, 3.200d+02
+@rate: sigma_v96(energy_ev, 1.031d+01, 9.946d+00, 7.444d+01, 6.261d+00, 4.885d-01, 6.406d+00, 3.659d-03)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+5
+@prods: Ar+6, E
+@limits: 9.101d+01, 3.426d+02
+@rate: sigma_v96(energy_ev, 5.440d-01, 1.080d+00, 9.419d+02, 7.582d+00, 1.107d+01, 1.700d+02, 1.587d+01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+6
+@prods: Ar+7, E
+@limits: 1.243d+02, 3.667d+02
+@rate: sigma_v96(energy_ev, 2.966d-02, 3.693d+00, 9.951d+03, 7.313d+00, 1.363d-02, 4.383d-04, 2.513d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+7
+@prods: Ar+8, E
+@limits: 1.435d+02, 3.925d+02
+@rate: sigma_v96(energy_ev, 3.884d+00, 3.295d+01, 7.082d+02, 4.645d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+8
+@prods: Ar+9, E
+@limits: 4.225d+02, 3.361d+03
+@rate: sigma_v96(energy_ev, 1.926d-01, 8.279d-01, 2.392d+02, 1.121d+01, 1.434d+00, 3.814d+01, 4.649d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+9
+@prods: Ar+10, E
+@limits: 4.787d+02, 3.446d+03
+@rate: sigma_v96(energy_ev, 1.040d+01, 8.204d+00, 1.495d+01, 1.115d+01, 9.203d-04, 3.804d+01, 6.390d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+10
+@prods: Ar+11, E
+@limits: 5.390d+02, 3.523d+03
+@rate: sigma_v96(energy_ev, 1.257d-01, 1.760d+03, 1.579d+03, 6.714d+00, 1.975d+00, 3.286d-03, 3.226d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+11
+@prods: Ar+12, E
+@limits: 6.183d+02, 3.613d+03
+@rate: sigma_v96(energy_ev, 5.310d+00, 7.018d-01, 1.001d+02, 8.939d+00, 4.987d-01, 1.099d+02, 2.202d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+12
+@prods: Ar+13, E
+@limits: 6.861d+02, 3.702d+03
+@rate: sigma_v96(energy_ev, 3.209d-01, 2.459d-02, 2.285d+03, 8.810d+00, 6.692d-01, 2.068d+03, 2.113d+01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+13
+@prods: Ar+14, E
+@limits: 7.558d+02, 3.798d+03
+@rate: sigma_v96(energy_ev, 1.557d+00, 4.997d-02, 5.031d+02, 8.966d+00, 2.938d-01, 4.552d+02, 6.459d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+14
+@prods: Ar+15, E
+@limits: 8.548d+02, 3.898d+03
+@rate: sigma_v96(energy_ev, 1.888d+01, 2.571d+04, 1.475d+00, 2.634d+01, 2.909d+01, 2.445d-02, 1.054d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+15
+@prods: Ar+16, E
+@limits: 9.180d+02, 3.988d+03
+@rate: sigma_v96(energy_ev, 4.154d+01, 2.135d+01, 4.118d+01, 4.945d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+16
+@prods: Ar+17, E
+@limits: 4.121d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 4.468d+02, 3.108d+01, 3.039d+01, 2.092d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ar+17
+@prods: Ar+18, E
+@limits: 4.426d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 1.399d+02, 1.690d+02, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca
+@prods: Ca+, E
+@limits: 6.113d+00, 3.443d+01
+@rate: sigma_v96(energy_ev, 1.278d+01, 5.370d+05, 3.162d-01, 1.242d+01, 4.477d-01, 1.012d-03, 1.851d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+
+@prods: Ca+2, E
+@limits: 1.187d+01, 4.090d+01
+@rate: sigma_v96(energy_ev, 1.553d+01, 1.064d+07, 7.790d-01, 2.130d+01, 6.453d-01, 2.161d-03, 6.706d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+2
+@prods: Ca+3, E
+@limits: 5.091d+01, 3.731d+02
+@rate: sigma_v96(energy_ev, 2.436d+01, 3.815d+01, 2.931d+02, 3.944d+00, 3.126d-01, 1.802d+00, 1.233d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+3
+@prods: Ca+4, E
+@limits: 6.727d+01, 3.944d+02
+@rate: sigma_v96(energy_ev, 4.255d+00, 7.736d+00, 1.355d+01, 1.236d+01, 1.369d+00, 1.467d+01, 3.298d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+4
+@prods: Ca+5, E
+@limits: 8.451d+01, 4.175d+02
+@rate: sigma_v96(energy_ev, 6.882d-01, 1.523d-01, 1.502d+02, 1.061d+01, 8.227d+00, 1.210d+02, 3.876d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+5
+@prods: Ca+6, E
+@limits: 1.088d+02, 4.423d+02
+@rate: sigma_v96(energy_ev, 9.515d+00, 7.642d+01, 8.973d+01, 5.141d+00, 2.471d+00, 4.829d+00, 5.824d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+6
+@prods: Ca+7, E
+@limits: 1.272d+02, 4.687d+02
+@rate: sigma_v96(energy_ev, 8.080d-01, 4.760d-01, 3.682d+02, 8.634d+00, 5.720d-01, 1.487d+02, 1.283d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+7
+@prods: Ca+8, E
+@limits: 1.472d+02, 4.967d+02
+@rate: sigma_v96(energy_ev, 1.366d+00, 6.641d-01, 3.188d+02, 8.138d+00, 2.806d-01, 1.039d+02, 3.329d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+8
+@prods: Ca+9, E
+@limits: 1.883d+02, 5.270d+02
+@rate: sigma_v96(energy_ev, 5.520d-02, 2.076d+02, 1.790d+04, 5.893d+00, 1.843d-03, 2.826d-04, 1.657d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+9
+@prods: Ca+10, E
+@limits: 2.113d+02, 5.569d+02
+@rate: sigma_v96(energy_ev, 1.605d+01, 1.437d+01, 6.989d+02, 3.857d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+10
+@prods: Ca+11, E
+@limits: 5.919d+02, 4.265d+03
+@rate: sigma_v96(energy_ev, 2.288d-01, 9.384d-01, 2.549d+02, 1.103d+01, 1.390d+00, 2.478d+01, 3.100d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+11
+@prods: Ca+12, E
+@limits: 6.572d+02, 4.362d+03
+@rate: sigma_v96(energy_ev, 2.345d+01, 1.227d+01, 1.312d+01, 9.771d+00, 6.842d-04, 2.417d+01, 5.469d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+12
+@prods: Ca+13, E
+@limits: 7.267d+02, 4.453d+03
+@rate: sigma_v96(energy_ev, 1.008d+01, 1.849d+03, 1.792d+04, 2.868d+00, 2.410d+02, 6.138d-03, 6.931d+01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+13
+@prods: Ca+14, E
+@limits: 8.177d+02, 4.555d+03
+@rate: sigma_v96(energy_ev, 9.980d+00, 1.116d+00, 5.918d+01, 9.005d+00, 3.879d+00, 7.104d+01, 5.311d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+14
+@prods: Ca+15, E
+@limits: 8.946d+02, 4.659d+03
+@rate: sigma_v96(energy_ev, 1.309d+02, 5.513d+01, 3.828d+02, 2.023d+00, 9.084d-02, 1.833d-02, 9.359d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+15
+@prods: Ca+16, E
+@limits: 9.745d+02, 4.767d+03
+@rate: sigma_v96(energy_ev, 4.293d+00, 1.293d+00, 1.691d+01, 1.438d+01, 3.461d-05, 9.363d-01, 4.589d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+16
+@prods: Ca+17, E
+@limits: 1.087d+03, 4.880d+03
+@rate: sigma_v96(energy_ev, 2.618d+01, 2.028d+04, 1.456d+00, 2.560d+01, 2.803d+01, 2.402d-02, 9.323d-03)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+17
+@prods: Ca+18, E
+@limits: 1.157d+03, 4.982d+03
+@rate: sigma_v96(energy_ev, 9.472d+01, 1.105d+01, 3.818d+01, 4.192d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+18
+@prods: Ca+19, E
+@limits: 5.129d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 6.297d+02, 1.936d+01, 3.921d+01, 1.862d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Ca+19
+@prods: Ca+20, E
+@limits: 5.470d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 1.729d+02, 1.369d+02, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe
+@prods: Fe+, E
+@limits: 7.902d+00, 6.600d+01
+@rate: sigma_v96(energy_ev, 5.461d-02, 3.062d-01, 2.671d+07, 7.923d+00, 2.069d+01, 1.382d+02, 2.481d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+
+@prods: Fe+2, E
+@limits: 1.619d+01, 7.617d+01
+@rate: sigma_v96(energy_ev, 1.761d-01, 4.365d+03, 6.298d+03, 5.204d+00, 1.141d+01, 9.272d+01, 1.075d+02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+2
+@prods: Fe+3, E
+@limits: 3.065d+01, 8.705d+01
+@rate: sigma_v96(energy_ev, 1.698d-01, 6.107d+00, 1.555d+03, 8.055d+00, 8.698d+00, 1.760d+02, 1.847d+01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+3
+@prods: Fe+4, E
+@limits: 5.480d+01, 1.067d+02
+@rate: sigma_v96(energy_ev, 2.544d+01, 3.653d+02, 8.913d+00, 6.538d+00, 5.602d-01, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+4
+@prods: Fe+5, E
+@limits: 7.501d+01, 1.288d+02
+@rate: sigma_v96(energy_ev, 7.256d-01, 1.523d-03, 3.736d+01, 1.767d+01, 5.064d+01, 8.871d+01, 5.280d-02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+5
+@prods: Fe+6, E
+@limits: 9.906d+01, 1.527d+02
+@rate: sigma_v96(energy_ev, 2.656d+00, 5.259d-01, 1.450d+01, 1.632d+01, 1.558d+01, 3.361d+01, 3.743d-03)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+6
+@prods: Fe+7, E
+@limits: 1.250d+02, 1.783d+02
+@rate: sigma_v96(energy_ev, 5.059d+00, 2.420d+04, 4.850d+04, 2.374d+00, 2.516d-03, 4.546d-01, 2.683d+01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+7
+@prods: Fe+8, E
+@limits: 1.511d+02, 2.055d+02
+@rate: sigma_v96(energy_ev, 7.098d-02, 1.979d+01, 1.745d+04, 6.750d+00, 2.158d+02, 2.542d+03, 4.672d+02)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+8
+@prods: Fe+9, E
+@limits: 2.336d+02, 9.211d+02
+@rate: sigma_v96(energy_ev, 6.741d+00, 2.687d+01, 1.807d+02, 6.290d+00, 2.387d-04, 2.494d+01, 8.251d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+9
+@prods: Fe+10, E
+@limits: 2.621d+02, 9.590d+02
+@rate: sigma_v96(energy_ev, 6.886d+01, 6.470d+01, 2.062d+01, 4.111d+00, 2.778d-04, 1.190d-05, 6.570d-03)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+10
+@prods: Fe+11, E
+@limits: 2.902d+02, 9.983d+02
+@rate: sigma_v96(energy_ev, 8.284d+00, 3.281d+00, 5.360d+01, 8.571d+00, 3.279d-01, 2.971d+01, 5.220d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+11
+@prods: Fe+12, E
+@limits: 3.308d+02, 1.039d+03
+@rate: sigma_v96(energy_ev, 6.295d+00, 1.738d+00, 1.130d+02, 8.037d+00, 3.096d-01, 4.671d+01, 1.425d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+12
+@prods: Fe+13, E
+@limits: 3.610d+02, 1.081d+03
+@rate: sigma_v96(energy_ev, 1.317d-01, 2.791d-03, 2.487d+03, 9.791d+00, 6.938d-01, 2.170d+03, 6.852d-03)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+13
+@prods: Fe+14, E
+@limits: 3.922d+02, 1.125d+03
+@rate: sigma_v96(energy_ev, 8.509d-01, 1.454d-01, 1.239d+03, 8.066d+00, 4.937d-01, 4.505d+02, 2.504d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+14
+@prods: Fe+15, E
+@limits: 4.570d+02, 1.181d+03
+@rate: sigma_v96(energy_ev, 5.555d-02, 2.108d+02, 2.045d+04, 6.033d+00, 1.885d-03, 2.706d-04, 1.628d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+15
+@prods: Fe+16, E
+@limits: 4.893d+02, 1.216d+03
+@rate: sigma_v96(energy_ev, 2.873d+01, 1.207d+01, 5.150d+02, 3.846d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+16
+@prods: Fe+17, E
+@limits: 1.262d+03, 7.651d+03
+@rate: sigma_v96(energy_ev, 3.444d-01, 1.452d+00, 3.960d+02, 1.013d+01, 1.264d+00, 2.891d+01, 3.404d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+17
+@prods: Fe+18, E
+@limits: 1.358d+03, 7.769d+03
+@rate: sigma_v96(energy_ev, 3.190d+01, 2.388d+00, 2.186d+01, 9.589d+00, 2.902d-02, 3.805d+01, 4.805d-01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+18
+@prods: Fe+19, E
+@limits: 1.456d+03, 7.918d+03
+@rate: sigma_v96(energy_ev, 7.519d-04, 6.066d-05, 1.606d+06, 8.813d+00, 4.398d+00, 1.915d+06, 3.140d+01)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+19
+@prods: Fe+20, E
+@limits: 1.582d+03, 8.041d+03
+@rate: sigma_v96(energy_ev, 2.011d+01, 4.455d-01, 4.236d+01, 9.724d+00, 2.757d+00, 6.847d+01, 3.989d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+20
+@prods: Fe+21, E
+@limits: 1.689d+03, 8.184d+03
+@rate: sigma_v96(energy_ev, 9.243d+00, 1.098d+01, 7.637d+01, 7.962d+00, 1.748d+00, 4.446d+01, 3.512d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+21
+@prods: Fe+22, E
+@limits: 1.799d+03, 8.350d+03
+@rate: sigma_v96(energy_ev, 9.713d+00, 7.204d-02, 1.853d+02, 8.843d+00, 9.551d-03, 1.702d+02, 4.263d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+22
+@prods: Fe+23, E
+@limits: 1.950d+03, 8.484d+03
+@rate: sigma_v96(energy_ev, 4.575d+01, 2.580d+04, 1.358d+00, 2.604d+01, 2.723d+01, 3.582d-02, 8.712d-03)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+23
+@prods: Fe+24, E
+@limits: 2.046d+03, 8.638d+03
+@rate: sigma_v96(energy_ev, 7.326d+01, 1.276d+01, 4.914d+01, 4.941d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+24
+@prods: Fe+25, E
+@limits: 8.829d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 1.057d+03, 1.195d+01, 5.769d+01, 1.718d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+#photoionization rate from verner+96
+@type: photoion
+@reacts: Fe+25
+@prods: Fe+26, E
+@limits: 9.278d+03, 5.000d+04
+@rate: sigma_v96(energy_ev, 2.932d+02, 8.099d+01, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
+
+######################################
+######################################
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: H+, E
+@prods: H
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.982d-11, 0.7480d0, 3.148d+00, 7.036d+05)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: He+, E
+@prods: He
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.294d-11, 0.6910d0, 1.554d+01, 3.676d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: He+2, E
+@prods: He+
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.891d-10, 0.7524d0, 9.370d+00, 2.774d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Li+, E
+@prods: Li
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.036d-11, 0.3880d0, 1.077d+02, 1.177d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Li+2, E
+@prods: Li+
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.112d-10, 0.6926d0, 2.437d+01, 8.323d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Li+3, E
+@prods: Li+2
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.039d-10, 0.7539d0, 1.871d+01, 6.209d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Be+2, E
+@prods: Be+
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.338d-11, 0.4211d0, 3.647d+02, 1.215d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Be+3, E
+@prods: Be+2
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.317d-10, 0.6691d0, 8.473d+01, 1.412d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Be+4, E
+@prods: Be+3
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.290d-10, 0.7557d0, 3.000d+01, 1.093d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: B+3, E
+@prods: B+2
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.487d-11, 0.4644d0, 5.371d+02, 1.465d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: B+4, E
+@prods: B+3
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.922d-10, 0.6717d0, 1.272d+02, 1.975d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: B+5, E
+@prods: B+4
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.437d-10, 0.7560d0, 4.576d+01, 1.706d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: C+4, E
+@prods: C+3
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.540d-11, 0.5247d0, 5.014d+02, 1.479d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: C+5, E
+@prods: C+4
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.765d-10, 0.6858d0, 1.535d+02, 2.556d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: C+6, E
+@prods: C+5
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.556d-10, 0.7567d0, 6.523d+01, 2.446d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: N+5, E
+@prods: N+4
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.169d-10, 0.5470d0, 6.793d+02, 1.650d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: N+6, E
+@prods: N+5
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.910d-10, 0.6988d0, 1.611d+02, 3.271d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: N+7, E
+@prods: N+6
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.586d-10, 0.7563d0, 9.015d+01, 3.338d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O+6, E
+@prods: O+5
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.053d-10, 0.6019d0, 4.772d+02, 1.711d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O+7, E
+@prods: O+6
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.897d-10, 0.7048d0, 1.906d+02, 4.093d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O+8, E
+@prods: O+7
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.616d-10, 0.7563d0, 1.191d+02, 4.352d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: F+7, E
+@prods: F+6
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.739d-10, 0.6188d0, 5.033d+02, 2.064d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: F+8, E
+@prods: F+7
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.602d-10, 0.7052d0, 2.476d+02, 5.077d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: F+9, E
+@prods: F+8
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 9.712d-10, 0.7566d0, 1.499d+02, 5.498d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne+8, E
+@prods: Ne+7
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.200d-10, 0.6198d0, 6.329d+02, 2.616d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne+9, E
+@prods: Ne+8
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.161d-10, 0.7029d0, 3.274d+02, 6.243d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne+10, E
+@prods: Ne+9
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.085d-09, 0.7570d0, 1.834d+02, 6.776d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Na+, E
+@prods: Na
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.641d-12, 0.1749d0, 3.077d+02, 2.617d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Na+9, E
+@prods: Na+8
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.873d-10, 0.6295d0, 7.000d+02, 2.989d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Na+10, E
+@prods: Na+9
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.833d-10, 0.7018d0, 4.060d+02, 7.491d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Na+11, E
+@prods: Na+10
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.163d-09, 0.7558d0, 2.328d+02, 8.262d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mg+2, E
+@prods: Mg+
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.920d-11, 0.3028d0, 4.849d+02, 5.890d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mg+10, E
+@prods: Mg+9
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.284d-10, 0.6287d0, 8.748d+02, 3.586d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mg+11, E
+@prods: Mg+10
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.510d-10, 0.7020d0, 4.921d+02, 8.643d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mg+12, E
+@prods: Mg+11
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.317d-09, 0.7574d0, 2.585d+02, 9.769d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Al+3, E
+@prods: Al+2
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.753d-11, 0.3585d0, 6.848d+02, 9.035d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Al+11, E
+@prods: Al+10
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.881d-10, 0.6326d0, 9.941d+02, 4.085d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Al+12, E
+@prods: Al+11
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.182d-10, 0.7008d0, 5.875d+02, 1.007d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Al+13, E
+@prods: Al+12
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.419d-09, 0.7578d0, 3.057d+02, 1.143d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Si+4, E
+@prods: Si+3
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.942d-11, 0.3930d0, 8.962d+02, 1.213d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Si+12, E
+@prods: Si+11
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.373d-10, 0.6337d0, 1.164d+03, 4.677d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Si+13, E
+@prods: Si+12
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.722d-10, 0.6996d0, 7.098d+02, 1.155d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Si+14, E
+@prods: Si+13
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.517d-09, 0.7574d0, 3.601d+02, 1.329d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: P+5, E
+@prods: P+4
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.721d-10, 0.5429d0, 2.848d+02, 3.975d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: P+13, E
+@prods: P+12
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.876d-10, 0.6354d0, 1.341d+03, 5.292d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: P+14, E
+@prods: P+13
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 9.142d-10, 0.6961d0, 8.682d+02, 1.335d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: P+15, E
+@prods: P+14
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.586d-09, 0.7560d0, 4.327d+02, 1.534d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: S+6, E
+@prods: S+5
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.502d-10, 0.6266d0, 1.532d+02, 1.755d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: S+14, E
+@prods: S+13
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.571d-10, 0.6400d0, 1.452d+03, 5.796d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: S+15, E
+@prods: S+14
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 9.692d-10, 0.6945d0, 1.017d+03, 1.517d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: S+16, E
+@prods: S+15
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.729d-09, 0.7568d0, 4.725d+02, 1.746d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cl+7, E
+@prods: Cl+6
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.502d-10, 0.5580d0, 5.303d+02, 4.558d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cl+15, E
+@prods: Cl+14
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.076d-10, 0.6397d0, 1.653d+03, 6.555d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cl+16, E
+@prods: Cl+15
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.021d-09, 0.6932d0, 1.184d+03, 1.695d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cl+17, E
+@prods: Cl+16
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.791d-09, 0.7565d0, 5.591d+02, 1.972d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ar+8, E
+@prods: Ar+7
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.862d-10, 0.5621d0, 7.002d+02, 4.885d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ar+16, E
+@prods: Ar+15
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.538d-10, 0.6388d0, 1.889d+03, 7.306d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ar+17, E
+@prods: Ar+16
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.087d-09, 0.6936d0, 1.329d+03, 1.880d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ar+18, E
+@prods: Ar+17
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.913d-09, 0.7567d0, 6.175d+02, 2.212d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: K+9, E
+@prods: K+8
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.757d-10, 0.5364d0, 1.204d+03, 7.013d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: K+17, E
+@prods: K+16
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.182d-10, 0.6411d0, 2.044d+03, 8.057d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: K+18, E
+@prods: K+17
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.145d-09, 0.6921d0, 1.503d+03, 2.098d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: K+19, E
+@prods: K+18
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.033d-09, 0.7569d0, 6.797d+02, 2.463d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ca+10, E
+@prods: Ca+9
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.273d-10, 0.6281d0, 5.329d+02, 3.188d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ca+18, E
+@prods: Ca+17
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.577d-10, 0.6403d0, 2.334d+03, 8.850d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ca+19, E
+@prods: Ca+18
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.179d-09, 0.6893d0, 1.757d+03, 2.344d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ca+20, E
+@prods: Ca+19
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.129d-09, 0.7570d0, 7.591d+02, 2.739d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Sc+11, E
+@prods: Sc+10
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.890d-10, 0.5645d0, 1.391d+03, 6.295d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Sc+19, E
+@prods: Sc+18
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 9.162d-10, 0.6413d0, 2.543d+03, 9.690d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Sc+20, E
+@prods: Sc+19
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.265d-09, 0.6902d0, 1.877d+03, 2.555d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Sc+21, E
+@prods: Sc+20
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.262d-09, 0.7578d0, 8.186d+02, 3.000d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ti+12, E
+@prods: Ti+11
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.207d-10, 0.5646d0, 1.688d+03, 6.872d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ti+20, E
+@prods: Ti+19
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 9.844d-10, 0.6440d0, 2.708d+03, 1.044d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ti+21, E
+@prods: Ti+20
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.322d-09, 0.6885d0, 2.092d+03, 2.829d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ti+22, E
+@prods: Ti+21
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.370d-09, 0.7574d0, 9.002d+02, 3.307d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: V+13, E
+@prods: V+12
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.605d-10, 0.5659d0, 1.949d+03, 7.419d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: V+21, E
+@prods: V+20
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.020d-09, 0.6427d0, 3.057d+03, 1.140d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: V+22, E
+@prods: V+21
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.375d-09, 0.6885d0, 2.321d+03, 3.056d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: V+23, E
+@prods: V+22
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.415d-09, 0.7565d0, 1.032d+03, 3.635d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cr+14, E
+@prods: Cr+13
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.975d-10, 0.5655d0, 2.257d+03, 8.072d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cr+22, E
+@prods: Cr+21
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.091d-09, 0.6445d0, 3.225d+03, 1.229d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cr+23, E
+@prods: Cr+22
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.422d-09, 0.6874d0, 2.589d+03, 3.336d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cr+24, E
+@prods: Cr+23
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.537d-09, 0.7571d0, 1.108d+03, 3.954d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mn+15, E
+@prods: Mn+14
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.349d-10, 0.5658d0, 2.577d+03, 8.710d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mn+23, E
+@prods: Mn+22
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.151d-09, 0.6451d0, 3.461d+03, 1.334d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mn+24, E
+@prods: Mn+23
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.488d-09, 0.6867d0, 2.802d+03, 3.623d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mn+25, E
+@prods: Mn+24
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.618d-09, 0.7565d0, 1.225d+03, 4.307d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Fe+16, E
+@prods: Fe+15
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.688d-10, 0.6173d0, 1.653d+03, 6.161d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Fe+24, E
+@prods: Fe+23
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.198d-09, 0.6443d0, 3.789d+03, 1.437d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Fe+25, E
+@prods: Fe+24
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.542d-09, 0.6859d0, 3.073d+03, 3.926d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Fe+26, E
+@prods: Fe+25
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.735d-09, 0.7568d0, 1.314d+03, 4.659d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Co+17, E
+@prods: Co+16
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.850d-10, 0.5598d0, 3.538d+03, 1.052d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Co+25, E
+@prods: Co+24
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.211d-09, 0.6406d0, 4.357d+03, 1.572d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Co+26, E
+@prods: Co+25
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.589d-09, 0.6846d0, 3.373d+03, 4.267d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Co+27, E
+@prods: Co+26
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.809d-09, 0.7565d0, 1.444d+03, 5.042d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ni+18, E
+@prods: Ni+17
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.347d-10, 0.5631d0, 3.780d+03, 1.116d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ni+26, E
+@prods: Ni+25
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.288d-09, 0.6440d0, 4.506d+03, 1.651d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ni+27, E
+@prods: Ni+26
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.676d-09, 0.6861d0, 3.530d+03, 4.538d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ni+28, E
+@prods: Ni+27
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.002d-09, 0.7581d0, 1.467d+03, 5.409d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cu+19, E
+@prods: Cu+18
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.619d-10, 0.5602d0, 4.322d+03, 1.210d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cu+27, E
+@prods: Cu+26
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.372d-09, 0.6472d0, 4.627d+03, 1.740d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cu+28, E
+@prods: Cu+27
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.686d-09, 0.6824d0, 4.031d+03, 4.948d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cu+29, E
+@prods: Cu+28
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.022d-09, 0.7564d0, 1.666d+03, 5.855d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Zn+20, E
+@prods: Zn+19
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.002d-10, 0.5612d0, 4.726d+03, 1.287d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Zn+28, E
+@prods: Zn+27
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.412d-09, 0.6454d0, 5.053d+03, 1.891d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Zn+29, E
+@prods: Zn+28
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.758d-09, 0.6834d0, 4.254d+03, 5.258d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Zn+30, E
+@prods: Zn+29
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.127d-09, 0.7567d0, 1.779d+03, 6.246d+08)
+
+
+######################################
+######################################
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: H, E
+@prods: H+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 13.6d0, 0d0, 0.291d-07, 0.2320d0, 0.39d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: He, E
+@prods: He+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 24.6d0, 0d0, 0.175d-07, 0.1800d0, 0.35d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: He+, E
+@prods: He+2,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 54.4d0, 1d0, 0.205d-08, 0.2650d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Li, E
+@prods: Li+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 5.4d0, 0d0, 0.139d-06, 0.4380d0, 0.41d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Li+, E
+@prods: Li+2,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 75.6d0, 1d0, 0.201d-08, 0.2090d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Li+2, E
+@prods: Li+3,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 122.4d0, 1d0, 0.960d-09, 0.5820d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Be, E
+@prods: Be+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 9.3d0, 0d0, 0.102d-06, 0.3750d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Be+, E
+@prods: Be+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 18.2d0, 1d0, 0.208d-07, 0.4390d0, 0.21d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Be+2, E
+@prods: Be+3,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 153.9d0, 0d0, 0.267d-08, 0.6120d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Be+3, E
+@prods: Be+4,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 217.7d0, 1d0, 0.427d-09, 0.6580d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: B, E
+@prods: B+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 8.3d0, 0d0, 0.649d-07, 0.2000d0, 0.26d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: B+, E
+@prods: B+2,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 25.2d0, 1d0, 0.124d-07, 0.2670d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: B+2, E
+@prods: B+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 37.9d0, 1d0, 0.327d-08, 0.2950d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: B+3, E
+@prods: B+4,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 259.4d0, 1d0, 0.495d-09, 0.4890d0, 0.09d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: B+4, E
+@prods: B+5,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 340.2d0, 1d0, 0.219d-09, 0.6570d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: C, E
+@prods: C+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 11.3d0, 0d0, 0.685d-07, 0.1930d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: C+, E
+@prods: C+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 24.4d0, 1d0, 0.186d-07, 0.2860d0, 0.24d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: C+2, E
+@prods: C+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 47.9d0, 1d0, 0.635d-08, 0.4270d0, 0.21d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: C+3, E
+@prods: C+4,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 64.5d0, 1d0, 0.150d-08, 0.4160d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: C+4, E
+@prods: C+5,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 392.1d0, 1d0, 0.299d-09, 0.6660d0, 0.02d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: C+5, E
+@prods: C+6,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 490.0d0, 1d0, 0.123d-09, 0.6200d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: N, E
+@prods: N+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 14.5d0, 0d0, 0.482d-07, 0.0652d0, 0.42d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: N+, E
+@prods: N+2,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 29.6d0, 0d0, 0.298d-07, 0.3100d0, 0.30d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: N+2, E
+@prods: N+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 47.5d0, 1d0, 0.810d-08, 0.3500d0, 0.24d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: N+3, E
+@prods: N+4,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 77.5d0, 1d0, 0.371d-08, 0.5490d0, 0.18d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: N+4, E
+@prods: N+5,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 97.9d0, 0d0, 0.151d-08, 0.0167d0, 0.74d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: N+5, E
+@prods: N+6,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 552.1d0, 0d0, 0.371d-09, 0.5460d0, 0.29d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: N+6, E
+@prods: N+7,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 667.0d0, 1d0, 0.777d-10, 0.6240d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: O, E
+@prods: O+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 13.6d0, 0d0, 0.359d-07, 0.0730d0, 0.34d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: O+, E
+@prods: O+2,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 35.1d0, 1d0, 0.139d-07, 0.2120d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: O+2, E
+@prods: O+3,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 54.9d0, 1d0, 0.931d-08, 0.2700d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: O+3, E
+@prods: O+4,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 77.4d0, 0d0, 0.102d-07, 0.6140d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: O+4, E
+@prods: O+5,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 113.9d0, 1d0, 0.219d-08, 0.6300d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: O+5, E
+@prods: O+6,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 138.1d0, 0d0, 0.195d-08, 0.3600d0, 0.54d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: O+6, E
+@prods: O+7,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 739.3d0, 0d0, 0.212d-09, 0.3960d0, 0.35d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: O+7, E
+@prods: O+8,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 871.4d0, 1d0, 0.521d-10, 0.6290d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: F, E
+@prods: F+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 17.4d0, 1d0, 0.700d-07, 0.1780d0, 0.29d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: F+, E
+@prods: F+2,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 35.0d0, 0d0, 0.541d-07, 0.5710d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: F+2, E
+@prods: F+3,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 62.7d0, 1d0, 0.937d-08, 0.3190d0, 0.20d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: F+3, E
+@prods: F+4,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 87.1d0, 1d0, 0.492d-08, 0.3230d0, 0.24d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: F+4, E
+@prods: F+5,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 114.2d0, 0d0, 0.706d-08, 0.6840d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: F+5, E
+@prods: F+6,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 157.2d0, 1d0, 0.128d-08, 0.6480d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: F+6, E
+@prods: F+7,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 185.2d0, 1d0, 0.561d-09, 0.7380d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: F+7, E
+@prods: F+8,E, E
+@limits: 4.641808d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 953.9d0, 0d0, 0.166d-09, 0.5420d0, 0.29d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: F+8, E
+@prods: F+9,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1103.1d0, 1d0, 0.374d-10, 0.6590d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ne, E
+@prods: Ne+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 21.6d0, 1d0, 0.150d-07, 0.0329d0, 0.43d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ne+, E
+@prods: Ne+2,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 41.0d0, 0d0, 0.198d-07, 0.2950d0, 0.20d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ne+2, E
+@prods: Ne+3,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 63.5d0, 1d0, 0.703d-08, 0.0677d0, 0.39d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ne+3, E
+@prods: Ne+4,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 97.1d0, 1d0, 0.424d-08, 0.0482d0, 0.58d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ne+4, E
+@prods: Ne+5,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 126.2d0, 1d0, 0.279d-08, 0.3050d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ne+5, E
+@prods: Ne+6,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 157.9d0, 0d0, 0.345d-08, 0.5810d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ne+6, E
+@prods: Ne+7,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 207.3d0, 1d0, 0.956d-09, 0.7490d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ne+7, E
+@prods: Ne+8,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 239.1d0, 1d0, 0.473d-09, 0.9920d0, 0.04d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ne+8, E
+@prods: Ne+9,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1196.0d0, 1d0, 0.392d-10, 0.2620d0, 0.20d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ne+9, E
+@prods: Ne+10,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1360.6d0, 1d0, 0.277d-10, 0.6610d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Na, E
+@prods: Na+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 5.1d0, 1d0, 0.101d-06, 0.2750d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Na+, E
+@prods: Na+2,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 47.3d0, 1d0, 0.735d-08, 0.0560d0, 0.35d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Na+2, E
+@prods: Na+3,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 71.6d0, 1d0, 0.810d-08, 0.1480d0, 0.32d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Na+3, E
+@prods: Na+4,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 98.9d0, 0d0, 0.114d-07, 0.5530d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Na+4, E
+@prods: Na+5,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 138.4d0, 1d0, 0.263d-08, 0.2300d0, 0.29d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Na+5, E
+@prods: Na+6,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 172.2d0, 1d0, 0.185d-08, 0.3630d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Na+6, E
+@prods: Na+7,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 208.5d0, 0d0, 0.282d-08, 0.6740d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Na+7, E
+@prods: Na+8,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 264.2d0, 1d0, 0.672d-09, 0.7520d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Na+8, E
+@prods: Na+9,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 299.9d0, 1d0, 0.280d-09, 0.7810d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Na+9, E
+@prods: Na+10,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1465.1d0, 1d0, 0.463d-10, 0.5580d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Na+10, E
+@prods: Na+11,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1648.7d0, 1d0, 0.216d-10, 0.7430d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg, E
+@prods: Mg+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 7.6d0, 0d0, 0.621d-06, 0.5920d0, 0.39d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg+, E
+@prods: Mg+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 15.2d0, 0d0, 0.192d-07, 0.0027d0, 0.85d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg+2, E
+@prods: Mg+3,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 80.1d0, 1d0, 0.556d-08, 0.1070d0, 0.30d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg+3, E
+@prods: Mg+4,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 109.3d0, 1d0, 0.435d-08, 0.1590d0, 0.31d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg+4, E
+@prods: Mg+5,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 141.3d0, 0d0, 0.710d-08, 0.6580d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg+5, E
+@prods: Mg+6,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 186.5d0, 1d0, 0.170d-08, 0.2420d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg+6, E
+@prods: Mg+7,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 224.9d0, 1d0, 0.122d-08, 0.3430d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg+7, E
+@prods: Mg+8,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 266.0d0, 0d0, 0.220d-08, 0.8970d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg+8, E
+@prods: Mg+9,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 328.2d0, 1d0, 0.486d-09, 0.7510d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg+9, E
+@prods: Mg+10,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 367.5d0, 1d0, 0.235d-09, 1.0300d0, 0.10d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg+10, E
+@prods: Mg+11,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1761.8d0, 1d0, 0.206d-10, 0.1960d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mg+11, E
+@prods: Mg+12,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1962.7d0, 1d0, 0.175d-10, 0.8350d0, 0.11d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al, E
+@prods: Al+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 6.0d0, 1d0, 0.228d-06, 0.3870d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+, E
+@prods: Al+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 18.8d0, 0d0, 0.118d-06, 2.2100d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+2, E
+@prods: Al+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 28.5d0, 1d0, 0.440d-08, 0.1060d0, 0.24d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+3, E
+@prods: Al+4,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 120.0d0, 0d0, 0.175d-07, 0.8720d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+4, E
+@prods: Al+5,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 153.8d0, 1d0, 0.261d-08, 0.1590d0, 0.31d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+5, E
+@prods: Al+6,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 198.5d0, 1d0, 0.185d-08, 0.1520d0, 0.36d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+6, E
+@prods: Al+7,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 241.4d0, 1d0, 0.114d-08, 0.2280d0, 0.29d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+7, E
+@prods: Al+8,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 284.6d0, 1d0, 0.800d-09, 0.4170d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+8, E
+@prods: Al+9,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 390.2d0, 1d0, 0.583d-09, 0.4970d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+9, E
+@prods: Al+10,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 399.4d0, 0d0, 0.493d-09, 0.7060d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+10, E
+@prods: Al+11,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 442.0d0, 1d0, 0.977d-10, 0.2780d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+11, E
+@prods: Al+12,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2086.6d0, 0d0, 0.394d-10, 0.2860d0, 0.36d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Al+12, E
+@prods: Al+13,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2304.1d0, 1d0, 0.138d-10, 0.8350d0, 0.11d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si, E
+@prods: Si+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 8.2d0, 1d0, 0.188d-06, 0.3760d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+, E
+@prods: Si+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 16.4d0, 1d0, 0.643d-07, 0.6320d0, 0.20d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+2, E
+@prods: Si+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 33.5d0, 1d0, 0.201d-07, 0.4730d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+3, E
+@prods: Si+4,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 54.0d0, 1d0, 0.494d-08, 0.1720d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+4, E
+@prods: Si+5,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 166.8d0, 1d0, 0.176d-08, 0.1020d0, 0.31d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+5, E
+@prods: Si+6,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 205.3d0, 1d0, 0.174d-08, 0.1800d0, 0.29d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+6, E
+@prods: Si+7,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 246.5d0, 1d0, 0.123d-08, 0.5180d0, 0.07d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+7, E
+@prods: Si+8,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 303.5d0, 1d0, 0.827d-09, 0.2390d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+8, E
+@prods: Si+9,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 351.1d0, 1d0, 0.601d-09, 0.3050d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+9, E
+@prods: Si+10,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 401.4d0, 1d0, 0.465d-09, 0.6660d0, 0.04d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+10, E
+@prods: Si+11,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 476.4d0, 1d0, 0.263d-09, 0.6660d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+11, E
+@prods: Si+12,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 523.5d0, 1d0, 0.118d-09, 0.7340d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+12, E
+@prods: Si+13,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2437.7d0, 0d0, 0.336d-10, 0.3360d0, 0.37d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Si+13, E
+@prods: Si+14,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2673.2d0, 1d0, 0.119d-10, 0.9890d0, 0.08d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P, E
+@prods: P+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 10.5d0, 1d0, 0.199d-06, 0.5350d0, 0.24d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+, E
+@prods: P+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 19.8d0, 1d0, 0.588d-07, 0.5370d0, 0.21d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+2, E
+@prods: P+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 30.2d0, 1d0, 0.296d-07, 0.8650d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+3, E
+@prods: P+4,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 51.4d0, 1d0, 0.101d-07, 0.5460d0, 0.20d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+4, E
+@prods: P+5,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 65.0d0, 1d0, 0.236d-08, 0.1920d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+5, E
+@prods: P+6,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 220.4d0, 0d0, 0.666d-08, 1.0000d0, 0.18d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+6, E
+@prods: P+7,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 263.2d0, 1d0, 0.124d-08, 0.2150d0, 0.26d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+7, E
+@prods: P+8,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 309.4d0, 0d0, 0.227d-08, 0.7340d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+8, E
+@prods: P+9,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 371.7d0, 1d0, 0.614d-09, 0.2560d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+9, E
+@prods: P+10,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 424.5d0, 1d0, 0.469d-09, 0.3420d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+10, E
+@prods: P+11,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 479.6d0, 0d0, 0.614d-09, 0.3340d0, 0.39d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+11, E
+@prods: P+12,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 560.4d0, 0d0, 0.322d-09, 0.8500d0, 0.12d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+12, E
+@prods: P+13,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 611.9d0, 1d0, 0.932d-10, 0.7340d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+13, E
+@prods: P+14,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2816.9d0, 0d0, 0.379d-10, 0.8050d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: P+14, E
+@prods: P+15,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 3069.9d0, 1d0, 0.973d-11, 0.9910d0, 0.08d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S, E
+@prods: S+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 10.4d0, 1d0, 0.549d-07, 0.1000d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+, E
+@prods: S+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 23.3d0, 1d0, 0.681d-07, 0.6930d0, 0.21d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+2, E
+@prods: S+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 34.8d0, 1d0, 0.214d-07, 0.3530d0, 0.24d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+3, E
+@prods: S+4,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 47.3d0, 1d0, 0.166d-07, 1.0300d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+4, E
+@prods: S+5,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 72.6d0, 1d0, 0.612d-08, 0.5800d0, 0.19d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+5, E
+@prods: S+6,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 88.1d0, 1d0, 0.133d-08, 0.0688d0, 0.35d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+6, E
+@prods: S+7,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 280.9d0, 0d0, 0.493d-08, 1.1300d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+7, E
+@prods: S+8,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 328.2d0, 1d0, 0.873d-09, 0.1930d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+8, E
+@prods: S+9,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 379.1d0, 0d0, 0.135d-08, 0.4310d0, 0.32d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+9, E
+@prods: S+10,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 447.1d0, 1d0, 0.459d-09, 0.2420d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+10, E
+@prods: S+11,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 504.8d0, 1d0, 0.349d-09, 0.3050d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+11, E
+@prods: S+12,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 564.7d0, 0d0, 0.523d-09, 0.4280d0, 0.35d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+12, E
+@prods: S+13,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 651.6d0, 0d0, 0.259d-09, 0.8540d0, 0.12d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+13, E
+@prods: S+14,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 707.2d0, 1d0, 0.750d-10, 0.7340d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+14, E
+@prods: S+15,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 3223.9d0, 0d0, 0.267d-10, 0.5720d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: S+15, E
+@prods: S+16,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 3494.2d0, 1d0, 0.632d-11, 0.5850d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl, E
+@prods: Cl+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 13.0d0, 1d0, 0.169d-06, 0.4300d0, 0.24d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+, E
+@prods: Cl+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 23.8d0, 1d0, 0.696d-07, 0.6700d0, 0.20d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+2, E
+@prods: Cl+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 39.6d0, 1d0, 0.340d-07, 0.8650d0, 0.18d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+3, E
+@prods: Cl+4,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 53.5d0, 1d0, 0.110d-07, 0.3280d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+4, E
+@prods: Cl+5,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 67.8d0, 1d0, 0.111d-07, 1.3700d0, 0.10d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+5, E
+@prods: Cl+6,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 97.0d0, 1d0, 0.317d-08, 0.3300d0, 0.24d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+6, E
+@prods: Cl+7,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 114.2d0, 1d0, 0.101d-08, 0.1960d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+7, E
+@prods: Cl+8,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 348.3d0, 0d0, 0.211d-08, 0.3130d0, 0.37d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+8, E
+@prods: Cl+9,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 400.1d0, 1d0, 0.632d-09, 0.1730d0, 0.30d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+9, E
+@prods: Cl+10,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 455.6d0, 0d0, 0.948d-09, 0.3440d0, 0.36d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+10, E
+@prods: Cl+11,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 529.3d0, 1d0, 0.369d-09, 0.2730d0, 0.26d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+11, E
+@prods: Cl+12,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 592.0d0, 1d0, 0.285d-09, 0.3430d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+12, E
+@prods: Cl+13,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 656.7d0, 0d0, 0.481d-09, 0.6580d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+13, E
+@prods: Cl+14,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 749.8d0, 1d0, 0.131d-09, 0.6230d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+14, E
+@prods: Cl+15,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 809.4d0, 1d0, 0.613d-10, 0.7360d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+15, E
+@prods: Cl+16,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 3658.4d0, 0d0, 0.190d-10, 0.3790d0, 0.36d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cl+16, E
+@prods: Cl+17,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 3946.3d0, 1d0, 0.514d-11, 0.5530d0, 0.18d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar, E
+@prods: Ar+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 15.8d0, 1d0, 0.599d-07, 0.1360d0, 0.26d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+, E
+@prods: Ar+2,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 27.6d0, 1d0, 0.607d-07, 0.5440d0, 0.21d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+2, E
+@prods: Ar+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 40.9d0, 1d0, 0.343d-07, 0.8340d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+3, E
+@prods: Ar+4,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 52.3d0, 0d0, 0.300d-07, 1.0300d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+4, E
+@prods: Ar+5,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 75.0d0, 1d0, 0.873d-08, 0.3660d0, 0.31d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+5, E
+@prods: Ar+6,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 91.0d0, 1d0, 0.578d-08, 0.3140d0, 0.34d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+6, E
+@prods: Ar+7,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 124.3d0, 1d0, 0.298d-08, 0.7030d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+7, E
+@prods: Ar+8,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 143.5d0, 1d0, 0.725d-09, 0.2070d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+8, E
+@prods: Ar+9,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 422.4d0, 1d0, 0.140d-08, 0.6960d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+9, E
+@prods: Ar+10,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 478.7d0, 1d0, 0.478d-09, 0.1640d0, 0.31d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+10, E
+@prods: Ar+11,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 539.0d0, 0d0, 0.802d-09, 0.4390d0, 0.32d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+11, E
+@prods: Ar+12,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 618.3d0, 1d0, 0.288d-09, 0.2590d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+12, E
+@prods: Ar+13,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 686.1d0, 1d0, 0.232d-09, 0.3620d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+13, E
+@prods: Ar+14,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 755.7d0, 0d0, 0.333d-09, 0.4120d0, 0.36d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+14, E
+@prods: Ar+15,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 854.8d0, 1d0, 0.127d-09, 0.9100d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+15, E
+@prods: Ar+16,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 918.0d0, 1d0, 0.521d-10, 0.7810d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+16, E
+@prods: Ar+17,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 4120.7d0, 0d0, 0.166d-10, 0.4350d0, 0.33d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ar+17, E
+@prods: Ar+18,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 4426.2d0, 1d0, 0.432d-11, 0.5540d0, 0.18d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K, E
+@prods: K+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 4.3d0, 1d0, 0.202d-06, 0.2720d0, 0.31d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+, E
+@prods: K+2,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 31.6d0, 1d0, 0.401d-07, 0.3710d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+2, E
+@prods: K+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 45.8d0, 1d0, 0.150d-07, 0.4330d0, 0.21d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+3, E
+@prods: K+4,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 60.9d0, 1d0, 0.194d-07, 0.8890d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+4, E
+@prods: K+5,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 82.7d0, 1d0, 0.695d-08, 0.4940d0, 0.18d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+5, E
+@prods: K+6,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 99.4d0, 1d0, 0.411d-08, 0.5400d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+6, E
+@prods: K+7,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 117.6d0, 1d0, 0.223d-08, 0.5190d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+7, E
+@prods: K+8,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 154.7d0, 1d0, 0.215d-08, 0.8280d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+8, E
+@prods: K+9,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 175.8d0, 0d0, 0.161d-08, 0.6420d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+9, E
+@prods: K+10,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 504.0d0, 1d0, 0.107d-08, 0.6950d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+10, E
+@prods: K+11,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 564.7d0, 1d0, 0.378d-09, 0.1730d0, 0.30d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+11, E
+@prods: K+12,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 629.4d0, 0d0, 0.624d-09, 0.4180d0, 0.33d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+12, E
+@prods: K+13,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 714.6d0, 1d0, 0.229d-09, 0.2450d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+13, E
+@prods: K+14,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 786.6d0, 1d0, 0.186d-09, 0.3440d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+14, E
+@prods: K+15,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 861.1d0, 0d0, 0.269d-09, 0.3960d0, 0.37d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+15, E
+@prods: K+16,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 968.0d0, 1d0, 0.106d-09, 0.9120d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+16, E
+@prods: K+17,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1053.4d0, 1d0, 0.424d-10, 0.7370d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+17, E
+@prods: K+18,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 4610.9d0, 0d0, 0.138d-10, 0.4160d0, 0.34d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: K+18, E
+@prods: K+19,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 4934.1d0, 1d0, 0.367d-11, 0.5550d0, 0.18d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca, E
+@prods: Ca+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 6.1d0, 0d0, 0.440d-06, 0.8480d0, 0.33d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+, E
+@prods: Ca+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 11.9d0, 0d0, 0.522d-07, 0.1510d0, 0.34d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+2, E
+@prods: Ca+3,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 50.9d0, 1d0, 0.206d-07, 0.4180d0, 0.20d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+3, E
+@prods: Ca+4,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 67.3d0, 1d0, 0.172d-07, 0.6380d0, 0.19d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+4, E
+@prods: Ca+5,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 84.5d0, 1d0, 0.126d-07, 1.0100d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+5, E
+@prods: Ca+6,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 108.8d0, 1d0, 0.472d-08, 0.5260d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+6, E
+@prods: Ca+7,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 127.2d0, 1d0, 0.289d-08, 0.5480d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+7, E
+@prods: Ca+8,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 147.2d0, 1d0, 0.164d-08, 0.5520d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+8, E
+@prods: Ca+9,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 188.3d0, 1d0, 0.157d-08, 0.7990d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+9, E
+@prods: Ca+10,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 211.3d0, 1d0, 0.432d-09, 0.2320d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+10, E
+@prods: Ca+11,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 591.9d0, 0d0, 0.947d-09, 0.3110d0, 0.38d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+11, E
+@prods: Ca+12,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 657.2d0, 1d0, 0.298d-09, 0.1630d0, 0.31d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+12, E
+@prods: Ca+13,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 726.6d0, 0d0, 0.478d-09, 0.3590d0, 0.36d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+13, E
+@prods: Ca+14,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 817.6d0, 1d0, 0.186d-09, 0.2440d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+14, E
+@prods: Ca+15,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 894.5d0, 1d0, 0.156d-09, 0.3640d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+15, E
+@prods: Ca+16,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 974.0d0, 0d0, 0.216d-09, 0.3570d0, 0.39d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+16, E
+@prods: Ca+17,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1087.0d0, 1d0, 0.770d-10, 0.6550d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+17, E
+@prods: Ca+18,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1157.0d0, 1d0, 0.358d-10, 0.7360d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+18, E
+@prods: Ca+19,E, E
+@limits: 3.481356d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 5128.9d0, 0d0, 0.128d-10, 0.5200d0, 0.30d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ca+19, E
+@prods: Ca+20,E, E
+@limits: 3.481356d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 5469.9d0, 1d0, 0.308d-11, 0.5280d0, 0.19d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc, E
+@prods: Sc+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 6.6d0, 1d0, 0.316d-06, 0.2040d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+, E
+@prods: Sc+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 12.8d0, 1d0, 0.861d-07, 0.1810d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+2, E
+@prods: Sc+3,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 24.8d0, 1d0, 0.508d-07, 0.3570d0, 0.24d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+3, E
+@prods: Sc+4,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 73.5d0, 1d0, 0.100d-07, 0.4530d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+4, E
+@prods: Sc+5,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 91.9d0, 1d0, 0.676d-08, 0.4600d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+5, E
+@prods: Sc+6,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 110.7d0, 1d0, 0.527d-08, 0.5610d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+6, E
+@prods: Sc+7,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 138.0d0, 1d0, 0.340d-08, 0.5600d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+7, E
+@prods: Sc+8,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 158.1d0, 1d0, 0.218d-08, 0.6120d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+8, E
+@prods: Sc+9,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 180.0d0, 1d0, 0.126d-08, 0.6100d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+9, E
+@prods: Sc+10,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 225.1d0, 1d0, 0.124d-08, 0.8520d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+10, E
+@prods: Sc+11,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 249.8d0, 1d0, 0.362d-09, 0.3490d0, 0.05d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+11, E
+@prods: Sc+12,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 687.4d0, 1d0, 0.552d-09, 0.3750d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+12, E
+@prods: Sc+13,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 756.7d0, 1d0, 0.564d-09, 0.8730d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+13, E
+@prods: Sc+14,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 830.8d0, 1d0, 0.450d-09, 1.0500d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+14, E
+@prods: Sc+15,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 927.5d0, 1d0, 0.273d-09, 0.8660d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+15, E
+@prods: Sc+16,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1009.0d0, 1d0, 0.156d-09, 0.7150d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+16, E
+@prods: Sc+17,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1094.0d0, 0d0, 0.181d-09, 1.1400d0, 0.36d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+17, E
+@prods: Sc+18,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1213.0d0, 1d0, 0.429d-10, 0.7840d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+18, E
+@prods: Sc+19,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1288.0d0, 0d0, 0.221d-10, 0.0270d0, 0.82d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+19, E
+@prods: Sc+20,E, E
+@limits: 3.481356d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 5674.9d0, 1d0, 0.451d-11, 0.9180d0, 0.04d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Sc+20, E
+@prods: Sc+21,E, E
+@limits: 3.481356d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 6033.8d0, 0d0, 0.203d-11, 0.0170d0, 0.70d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti, E
+@prods: Ti+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 6.8d0, 1d0, 0.160d-06, 0.3600d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+, E
+@prods: Ti+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 13.6d0, 0d0, 0.214d-06, 0.8800d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+2, E
+@prods: Ti+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 27.5d0, 1d0, 0.285d-07, 0.2270d0, 0.21d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+3, E
+@prods: Ti+4,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 43.3d0, 1d0, 0.348d-07, 0.3900d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+4, E
+@prods: Ti+5,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 99.3d0, 1d0, 0.100d-07, 0.5790d0, 0.18d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+5, E
+@prods: Ti+6,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 119.5d0, 1d0, 0.701d-08, 0.6380d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+6, E
+@prods: Ti+7,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 140.8d0, 1d0, 0.495d-08, 0.7170d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+7, E
+@prods: Ti+8,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 170.4d0, 1d0, 0.299d-08, 0.6930d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+8, E
+@prods: Ti+9,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 192.1d0, 1d0, 0.210d-08, 0.7220d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+9, E
+@prods: Ti+10,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 215.9d0, 1d0, 0.162d-08, 0.7650d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+10, E
+@prods: Ti+11,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 265.0d0, 1d0, 0.111d-08, 0.8850d0, 0.12d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+11, E
+@prods: Ti+12,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 291.5d0, 0d0, 0.909d-09, 0.9720d0, 0.06d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+12, E
+@prods: Ti+13,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 787.8d0, 1d0, 0.441d-09, 0.3590d0, 0.29d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+13, E
+@prods: Ti+14,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 863.1d0, 1d0, 0.439d-09, 0.7810d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+14, E
+@prods: Ti+15,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 941.9d0, 1d0, 0.373d-09, 1.0500d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+15, E
+@prods: Ti+16,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1044.0d0, 1d0, 0.228d-09, 0.8580d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+16, E
+@prods: Ti+17,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1131.0d0, 1d0, 0.134d-09, 0.7570d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+17, E
+@prods: Ti+18,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1221.0d0, 0d0, 0.155d-09, 1.1500d0, 0.36d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+18, E
+@prods: Ti+19,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1346.0d0, 1d0, 0.380d-10, 0.8350d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+19, E
+@prods: Ti+20,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1426.0d0, 0d0, 0.189d-10, 0.0280d0, 0.82d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+20, E
+@prods: Ti+21,E, E
+@limits: 3.481356d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 6249.1d0, 1d0, 0.401d-11, 0.9680d0, 0.03d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ti+21, E
+@prods: Ti+22,E, E
+@limits: 3.481356d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 6625.0d0, 1d0, 0.162d-11, 0.6570d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V, E
+@prods: V+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 6.7d0, 0d0, 0.882d-06, 0.3590d0, 0.32d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+, E
+@prods: V+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 14.7d0, 0d0, 0.311d-06, 0.4320d0, 0.29d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+2, E
+@prods: V+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 29.3d0, 1d0, 0.350d-07, 0.2470d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+3, E
+@prods: V+4,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 46.7d0, 0d0, 0.532d-07, 1.1100d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+4, E
+@prods: V+5,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 65.3d0, 1d0, 0.898d-08, 0.1400d0, 0.37d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+5, E
+@prods: V+6,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 128.1d0, 1d0, 0.587d-08, 0.5170d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+6, E
+@prods: V+7,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 150.6d0, 1d0, 0.511d-08, 0.6790d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+7, E
+@prods: V+8,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 173.4d0, 1d0, 0.371d-08, 0.7610d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+8, E
+@prods: V+9,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 205.8d0, 1d0, 0.224d-08, 0.7110d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+9, E
+@prods: V+10,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 230.5d0, 1d0, 0.165d-08, 0.7640d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+10, E
+@prods: V+11,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 256.0d0, 1d0, 0.126d-08, 0.7620d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+11, E
+@prods: V+12,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 308.0d0, 1d0, 0.886d-09, 0.8860d0, 0.12d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+12, E
+@prods: V+13,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 336.3d0, 0d0, 0.389d-09, 0.1420d0, 0.39d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+13, E
+@prods: V+14,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 896.0d0, 1d0, 0.380d-09, 0.4090d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+14, E
+@prods: V+15,E, E
+@limits: 4.641808d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 976.0d0, 0d0, 0.484d-09, 0.1730d0, 0.57d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+15, E
+@prods: V+16,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1060.0d0, 1d0, 0.249d-09, 0.6500d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+16, E
+@prods: V+17,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1168.0d0, 0d0, 0.591d-09, 1.6100d0, 0.18d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+17, E
+@prods: V+18,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1260.0d0, 0d0, 0.502d-09, 2.1200d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+18, E
+@prods: V+19,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1355.0d0, 1d0, 0.538d-10, 0.1370d0, 0.40d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+19, E
+@prods: V+20,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1486.0d0, 1d0, 0.556d-10, 0.7080d0, 0.10d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+20, E
+@prods: V+21,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1571.0d0, 0d0, 0.284d-10, 0.0240d0, 0.79d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+21, E
+@prods: V+22,E, E
+@limits: 1.160452d+07, 1.160452d+09
+@rate: colion_v96(Tgas, 6851.3d0, 0d0, 0.254d-10, 2.9200d0, 0.09d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: V+22, E
+@prods: V+23,E, E
+@limits: 1.160452d+07, 1.160452d+09
+@rate: colion_v96(Tgas, 7246.1d0, 0d0, 0.132d-10, 3.5100d0, 0.07d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr, E
+@prods: Cr+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 6.8d0, 1d0, 0.103d-06, 0.2170d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+, E
+@prods: Cr+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 16.5d0, 0d0, 0.245d-06, 0.3810d0, 0.32d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+2, E
+@prods: Cr+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 31.0d0, 0d0, 0.109d-06, 0.5180d0, 0.27d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+3, E
+@prods: Cr+4,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 49.1d0, 1d0, 0.152d-07, 0.1820d0, 0.30d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+4, E
+@prods: Cr+5,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 69.5d0, 0d0, 0.325d-07, 1.3600d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+5, E
+@prods: Cr+6,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 90.6d0, 1d0, 0.550d-08, 0.1430d0, 0.37d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+6, E
+@prods: Cr+7,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 160.2d0, 1d0, 0.513d-08, 0.6570d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+7, E
+@prods: Cr+8,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 184.7d0, 1d0, 0.385d-08, 0.7220d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+8, E
+@prods: Cr+9,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 209.3d0, 1d0, 0.281d-08, 0.7590d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+9, E
+@prods: Cr+10,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 244.4d0, 1d0, 0.176d-08, 0.7320d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+10, E
+@prods: Cr+11,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 271.0d0, 1d0, 0.130d-08, 0.7640d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+11, E
+@prods: Cr+12,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 298.0d0, 1d0, 0.102d-08, 0.8100d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+12, E
+@prods: Cr+13,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 354.8d0, 1d0, 0.719d-09, 0.8870d0, 0.12d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+13, E
+@prods: Cr+14,E, E
+@limits: 5.802259d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 384.2d0, 1d0, 0.161d-09, 0.1500d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+14, E
+@prods: Cr+15,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1011.0d0, 1d0, 0.464d-09, 0.9710d0, 0.12d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+15, E
+@prods: Cr+16,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1097.0d0, 1d0, 0.331d-09, 0.9240d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+16, E
+@prods: Cr+17,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1185.0d0, 1d0, 0.249d-09, 0.9310d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+17, E
+@prods: Cr+18,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1299.0d0, 1d0, 0.168d-09, 0.9100d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+18, E
+@prods: Cr+19,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1396.0d0, 1d0, 0.101d-09, 0.8050d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+19, E
+@prods: Cr+20,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1496.0d0, 0d0, 0.117d-09, 1.2100d0, 0.35d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+20, E
+@prods: Cr+21,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1634.0d0, 1d0, 0.291d-10, 0.8840d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+21, E
+@prods: Cr+22,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1721.0d0, 0d0, 0.145d-10, 0.0350d0, 0.80d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+22, E
+@prods: Cr+23,E, E
+@limits: 3.481356d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 7482.0d0, 1d0, 0.307d-11, 0.9670d0, 0.03d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Cr+23, E
+@prods: Cr+24,E, E
+@limits: 1.160452d+07, 1.160452d+09
+@rate: colion_v96(Tgas, 7894.8d0, 1d0, 0.146d-11, 0.1830d0, 0.39d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn, E
+@prods: Mn+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 7.4d0, 1d0, 0.856d-07, 0.1320d0, 0.26d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+, E
+@prods: Mn+2,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 15.6d0, 0d0, 0.118d-06, 0.3590d0, 0.19d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+2, E
+@prods: Mn+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 33.7d0, 0d0, 0.854d-07, 0.3970d0, 0.32d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+3, E
+@prods: Mn+4,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 51.2d0, 1d0, 0.180d-07, 0.2720d0, 0.18d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+4, E
+@prods: Mn+5,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 72.4d0, 1d0, 0.822d-08, 0.1610d0, 0.32d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+5, E
+@prods: Mn+6,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 95.0d0, 0d0, 0.215d-07, 1.5400d0, 0.11d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+6, E
+@prods: Mn+7,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 119.3d0, 1d0, 0.365d-08, 0.1470d0, 0.37d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+7, E
+@prods: Mn+8,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 194.5d0, 1d0, 0.391d-08, 0.6990d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+8, E
+@prods: Mn+9,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 221.8d0, 1d0, 0.292d-08, 0.7190d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+9, E
+@prods: Mn+10,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 248.3d0, 1d0, 0.223d-08, 0.8060d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+10, E
+@prods: Mn+11,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 286.0d0, 1d0, 0.139d-08, 0.7350d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+11, E
+@prods: Mn+12,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 314.4d0, 1d0, 0.104d-08, 0.7610d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+12, E
+@prods: Mn+13,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 343.6d0, 1d0, 0.828d-09, 0.8090d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+13, E
+@prods: Mn+14,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 403.0d0, 1d0, 0.560d-09, 0.7870d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+14, E
+@prods: Mn+15,E, E
+@limits: 5.802259d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 435.2d0, 1d0, 0.152d-09, 0.2990d0, 0.08d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+15, E
+@prods: Mn+16,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1133.0d0, 1d0, 0.403d-09, 1.0400d0, 0.11d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+16, E
+@prods: Mn+17,E, E
+@limits: 5.802259d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1244.0d0, 1d0, 0.274d-09, 0.9230d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+17, E
+@prods: Mn+18,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1317.0d0, 1d0, 0.218d-09, 0.9900d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+18, E
+@prods: Mn+19,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1437.0d0, 1d0, 0.149d-09, 0.9680d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+19, E
+@prods: Mn+20,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1539.0d0, 1d0, 0.870d-10, 0.8020d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+20, E
+@prods: Mn+21,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1644.0d0, 0d0, 0.102d-09, 1.2200d0, 0.35d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+21, E
+@prods: Mn+22,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1788.0d0, 1d0, 0.254d-10, 0.8830d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+22, E
+@prods: Mn+23,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1880.0d0, 0d0, 0.128d-10, 0.0330d0, 0.81d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+23, E
+@prods: Mn+24,E, E
+@limits: 4.641808d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 8141.0d0, 1d0, 0.277d-11, 1.0100d0, 0.02d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Mn+24, E
+@prods: Mn+25,E, E
+@limits: 1.160452d+07, 1.160452d+09
+@rate: colion_v96(Tgas, 8571.9d0, 1d0, 0.132d-11, 0.2190d0, 0.37d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe, E
+@prods: Fe+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 7.9d0, 0d0, 0.252d-06, 0.7010d0, 0.25d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+, E
+@prods: Fe+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 16.2d0, 1d0, 0.221d-07, 0.0330d0, 0.45d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+2, E
+@prods: Fe+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 30.6d0, 0d0, 0.410d-07, 0.3660d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+3, E
+@prods: Fe+4,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 54.8d0, 0d0, 0.353d-07, 0.2430d0, 0.39d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+4, E
+@prods: Fe+5,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 75.0d0, 1d0, 0.104d-07, 0.2850d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+5, E
+@prods: Fe+6,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 99.0d0, 1d0, 0.123d-07, 0.4110d0, 0.21d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+6, E
+@prods: Fe+7,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 125.0d0, 1d0, 0.947d-08, 0.4580d0, 0.21d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+7, E
+@prods: Fe+8,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 151.1d0, 1d0, 0.471d-08, 0.2800d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+8, E
+@prods: Fe+9,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 233.6d0, 1d0, 0.302d-08, 0.6970d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+9, E
+@prods: Fe+10,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 262.1d0, 1d0, 0.234d-08, 0.7640d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+10, E
+@prods: Fe+11,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 290.0d0, 1d0, 0.176d-08, 0.8050d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+11, E
+@prods: Fe+12,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 331.0d0, 1d0, 0.114d-08, 0.7730d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+12, E
+@prods: Fe+13,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 361.0d0, 1d0, 0.866d-09, 0.8050d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+13, E
+@prods: Fe+14,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 392.0d0, 1d0, 0.661d-09, 0.7620d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+14, E
+@prods: Fe+15,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 457.0d0, 1d0, 0.441d-09, 0.6980d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+15, E
+@prods: Fe+16,E, E
+@limits: 8.123163d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 489.3d0, 1d0, 0.118d-09, 0.2110d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+16, E
+@prods: Fe+17,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1262.0d0, 1d0, 0.361d-09, 1.1600d0, 0.09d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+17, E
+@prods: Fe+18,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1360.0d0, 1d0, 0.245d-09, 0.9780d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+18, E
+@prods: Fe+19,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1470.0d0, 1d0, 0.187d-09, 0.9880d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+19, E
+@prods: Fe+20,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1582.0d0, 1d0, 0.133d-09, 1.0300d0, 0.12d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+20, E
+@prods: Fe+21,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1690.0d0, 1d0, 0.784d-10, 0.8480d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+21, E
+@prods: Fe+22,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1800.0d0, 0d0, 0.890d-10, 1.2000d0, 0.35d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+22, E
+@prods: Fe+23,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1960.0d0, 1d0, 0.229d-10, 0.9360d0, 0.12d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+23, E
+@prods: Fe+24,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2046.0d0, 0d0, 0.112d-10, 0.0340d0, 0.81d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+24, E
+@prods: Fe+25,E, E
+@limits: 4.641808d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 8828.0d0, 1d0, 0.246d-11, 1.0200d0, 0.02d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Fe+25, E
+@prods: Fe+26,E, E
+@limits: 4.641808d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 9277.7d0, 1d0, 0.979d-12, 0.6640d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co, E
+@prods: Co+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 7.9d0, 1d0, 0.889d-07, 0.1270d0, 0.24d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+, E
+@prods: Co+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 17.1d0, 1d0, 0.565d-07, 0.1940d0, 0.23d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+2, E
+@prods: Co+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 33.5d0, 1d0, 0.306d-07, 0.2010d0, 0.22d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+3, E
+@prods: Co+4,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 51.3d0, 0d0, 0.227d-07, 0.5740d0, 0.10d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+4, E
+@prods: Co+5,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 79.5d0, 0d0, 0.193d-07, 0.1950d0, 0.42d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+5, E
+@prods: Co+6,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 102.0d0, 0d0, 0.127d-07, 0.1260d0, 0.47d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+6, E
+@prods: Co+7,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 129.0d0, 1d0, 0.358d-08, 0.1940d0, 0.29d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+7, E
+@prods: Co+8,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 158.0d0, 0d0, 0.117d-07, 1.9800d0, 0.07d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+8, E
+@prods: Co+9,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 186.1d0, 1d0, 0.178d-08, 0.1120d0, 0.42d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+9, E
+@prods: Co+10,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 275.0d0, 1d0, 0.241d-08, 0.7390d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+10, E
+@prods: Co+11,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 305.0d0, 1d0, 0.186d-08, 0.7620d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+11, E
+@prods: Co+12,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 336.0d0, 1d0, 0.141d-08, 0.8040d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+12, E
+@prods: Co+13,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 379.0d0, 1d0, 0.954d-09, 0.8130d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+13, E
+@prods: Co+14,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 411.0d0, 1d0, 0.712d-09, 0.8030d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+14, E
+@prods: Co+15,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 444.0d0, 1d0, 0.534d-09, 0.7180d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+15, E
+@prods: Co+16,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 512.0d0, 1d0, 0.362d-09, 0.6580d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+16, E
+@prods: Co+17,E, E
+@limits: 8.123163d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 546.6d0, 1d0, 0.105d-09, 0.2520d0, 0.12d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+17, E
+@prods: Co+18,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1397.0d0, 1d0, 0.310d-09, 1.1700d0, 0.09d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+18, E
+@prods: Co+19,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1486.0d0, 1d0, 0.156d-09, 0.5720d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+19, E
+@prods: Co+20,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1603.0d0, 1d0, 0.132d-09, 0.6820d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+20, E
+@prods: Co+21,E, E
+@limits: 3.481356d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1735.0d0, 1d0, 0.908d-10, 0.5110d0, 0.17d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+21, E
+@prods: Co+22,E, E
+@limits: 2.320904d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1846.0d0, 0d0, 0.345d-09, 2.8400d0, 0.11d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+22, E
+@prods: Co+23,E, E
+@limits: 3.481356d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1962.0d0, 1d0, 0.501d-10, 0.7140d0, 0.11d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+23, E
+@prods: Co+24,E, E
+@limits: 3.481356d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2119.0d0, 1d0, 0.192d-10, 0.1170d0, 0.42d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+24, E
+@prods: Co+25,E, E
+@limits: 3.481356d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2219.0d0, 1d0, 0.195d-10, 1.2000d0, 0.00d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+25, E
+@prods: Co+26,E, E
+@limits: 1.160452d+07, 1.160452d+09
+@rate: colion_v96(Tgas, 9544.0d0, 0d0, 0.168d-10, 3.5200d0, 0.05d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Co+26, E
+@prods: Co+27,E, E
+@limits: 2.320904d+07, 1.160452d+10
+@rate: colion_v96(Tgas, 10012.1d0, 1d0, 0.145d-11, 0.6350d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni, E
+@prods: Ni+,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 7.6d0, 0d0, 0.165d-06, 0.4520d0, 0.28d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+, E
+@prods: Ni+2,E, E
+@limits: 1.160452d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 18.2d0, 0d0, 0.842d-07, 0.6190d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+2, E
+@prods: Ni+3,E, E
+@limits: 2.320904d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 35.3d0, 1d0, 0.189d-07, 0.2200d0, 0.21d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+3, E
+@prods: Ni+4,E, E
+@limits: 3.481356d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 54.9d0, 1d0, 0.148d-07, 0.2160d0, 0.21d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+4, E
+@prods: Ni+5,E, E
+@limits: 4.641808d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 76.0d0, 0d0, 0.113d-07, 0.5180d0, 0.09d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+5, E
+@prods: Ni+6,E, E
+@limits: 5.802260d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 108.0d0, 0d0, 0.116d-07, 0.1850d0, 0.44d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+6, E
+@prods: Ni+7,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 133.0d0, 0d0, 0.868d-08, 0.1380d0, 0.46d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+7, E
+@prods: Ni+8,E, E
+@limits: 8.123163d+04, 2.320904d+08
+@rate: colion_v96(Tgas, 162.0d0, 1d0, 0.245d-08, 0.1630d0, 0.32d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+8, E
+@prods: Ni+9,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 193.0d0, 0d0, 0.924d-08, 2.2500d0, 0.05d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+9, E
+@prods: Ni+10,E, E
+@limits: 1.160452d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 225.0d0, 0d0, 0.241d-08, 0.0270d0, 0.79d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+10, E
+@prods: Ni+11,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 321.0d0, 1d0, 0.192d-08, 0.7380d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+11, E
+@prods: Ni+12,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 352.0d0, 1d0, 0.150d-08, 0.7610d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+12, E
+@prods: Ni+13,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 384.0d0, 1d0, 0.116d-08, 0.8030d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+13, E
+@prods: Ni+14,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 430.0d0, 1d0, 0.808d-09, 0.8560d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+14, E
+@prods: Ni+15,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 464.0d0, 1d0, 0.609d-09, 0.8500d0, 0.13d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+15, E
+@prods: Ni+16,E, E
+@limits: 2.320904d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 499.0d0, 1d0, 0.448d-09, 0.7180d0, 0.15d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+16, E
+@prods: Ni+17,E, E
+@limits: 3.481356d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 571.3d0, 1d0, 0.300d-09, 0.6220d0, 0.18d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+17, E
+@prods: Ni+18,E, E
+@limits: 8.123163d+05, 2.320904d+08
+@rate: colion_v96(Tgas, 607.0d0, 1d0, 0.790d-10, 0.1600d0, 0.19d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+18, E
+@prods: Ni+19,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1541.0d0, 1d0, 0.278d-09, 1.2500d0, 0.08d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+19, E
+@prods: Ni+20,E, E
+@limits: 8.123163d+05, 1.160452d+09
+@rate: colion_v96(Tgas, 1648.0d0, 1d0, 0.192d-09, 1.0400d0, 0.12d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+20, E
+@prods: Ni+21,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1756.0d0, 1d0, 0.151d-09, 1.1100d0, 0.12d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+21, E
+@prods: Ni+22,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 1894.0d0, 1d0, 0.105d-09, 1.0900d0, 0.11d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+22, E
+@prods: Ni+23,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2011.0d0, 1d0, 0.604d-10, 0.8490d0, 0.14d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+23, E
+@prods: Ni+24,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2131.0d0, 0d0, 0.691d-10, 1.2100d0, 0.35d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+24, E
+@prods: Ni+25,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2295.0d0, 1d0, 0.184d-10, 0.9910d0, 0.11d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+25, E
+@prods: Ni+26,E, E
+@limits: 1.160452d+06, 1.160452d+09
+@rate: colion_v96(Tgas, 2399.0d0, 0d0, 0.903d-11, 0.0420d0, 0.79d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+26, E
+@prods: Ni+27,E, E
+@limits: 2.320904d+07, 1.160452d+10
+@rate: colion_v96(Tgas, 10290.0d0, 1d0, 0.261d-11, 0.5680d0, 0.16d0)
+
+#collisional ionization rate from verner+96
+@type: colion
+@reacts: Ni+27, E
+@prods: Ni+28,E, E
+@limits: 2.320904d+07, 1.160452d+10
+@rate: colion_v96(Tgas, 10775.3d0, 1d0, 0.139d-11, 0.7290d0, 0.13d0)
+
+
+######################################
+######################################
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: C+, E
+@prods: C
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 0.0108d0, -0.1075d0, 0.2810d0, -0.0193d0, -0.1127d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: C+2, E
+@prods: C+
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 1.8267d0, 4.1012d0, 4.8443d0, 0.2261d0, 0.5960d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: C+3, E
+@prods: C+2
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 2.3196d0, 10.7328d0, 6.8830d0, -0.1824d0, 0.4101d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: N+2, E
+@prods: N+
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 0.0320d0, -0.6624d0, 4.3191d0, 0.0003d0, 0.5946d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: N+3, E
+@prods: N+2
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, -0.8806d0, 11.2406d0, 30.7066d0, -1.1721d0, 0.6127d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: N+4, E
+@prods: N+3
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 0.4134d0, -4.6319d0, 25.9172d0, -2.2290d0, 0.2360d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O+, E
+@prods: O
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, -0.0001d0, 0.0001d0, 0.0956d0, 0.0193d0, 0.4106d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O+, E
+@prods: O
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 0.3715d0, -0.0239d0, -0.0597d0, 0.0678d0, 0.7993d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O+2, E
+@prods: O+
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, -0.0036d0, 0.7519d0, 1.5252d0, -0.0838d0, 0.2769d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O+3, E
+@prods: O+2
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 0.0000d0, 21.8790d0, 16.2730d0, -0.7020d0, 1.1899d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O+4, E
+@prods: O+3
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, -0.3648d0, 7.2698d0, 17.2187d0, 9.8335d0, -0.0166d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O+4, E
+@prods: O+3
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, -2.5053d0, 3.4903d0, 67.4128d0, -3.4450d0, 0.8501d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O+5, E
+@prods: O+4
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, -2.8425d0, 0.2283d0, 40.4072d0, -3.4956d0, 1.7558d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne+2, E
+@prods: Ne+
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 0.0129d0, -0.1779d0, 0.9353d0, -0.0682d0, 0.4516d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne+3, E
+@prods: Ne+2
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 3.6781d0, 14.1481d0, 17.1175d0, -0.5017d0, 0.2313d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne+4, E
+@prods: Ne+3
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, -0.0254d0, 5.5365d0, 17.0727d0, -0.7225d0, 0.1702d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne+5, E
+@prods: Ne+4
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, -0.0141d0, 33.8479d0, 43.1608d0, -1.6072d0, 0.1942d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne+6, E
+@prods: Ne+5
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 19.9280d0, 235.0536d0, 152.5096d0, 9.1413d0, 0.1282d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne+7, E
+@prods: Ne+6
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 5.4751d0, 203.9751d0, 86.9016d0, -7.4568d0, 2.5145d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mg+, E
+@prods: Mg
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 1.2044d0, -4.6836d0, 7.6620d0, -0.5930d0, 1.6260d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Al+, E
+@prods: Al
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 0.0219d0, -0.4528d0, 2.5427d0, -0.1678d0, 0.2276d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Al+2, E
+@prods: Al+
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 0.7086d0, -3.1083d0, 7.0422d0, 0.5998d0, 0.4194d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Si+, E
+@prods: Si
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, -0.0219d0, 0.4364d0, 0.0684d0, -0.0032d0, 0.1342d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Si+2, E
+@prods: Si+
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 3.2163d0, -12.0571d0, 16.2118d0, -0.5886d0, 0.5613d0)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Si+3, E
+@prods: Si+2
+@limits: 2.73d0, 1d5
+@rate: radrec_low_v96(Tgas, 0.1203d0, -2.6900d0, 19.1943d0, -0.1479d0, 0.1118d0)
+

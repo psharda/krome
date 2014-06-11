@@ -109,6 +109,7 @@ class krome():
 	anytabsizes = [] #sizes of the tables
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
+	fdbase = "data/kromeauto.dat"
 	version = "14.03"
 	codename = "Beastie Boyle"
 
@@ -205,6 +206,7 @@ class krome():
 			If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
+		self.parser.add_argument("-listAutomatics", action="store_true", help="list all the automatic reactions available")
 		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
 		self.parser.add_argument("-mergeTlimits", action="store_true", help="use the same reaction index for equivalent\
 			reactions (same reactants and products) that have different temperature limits")
@@ -303,6 +305,9 @@ class krome():
 		elif(args.test=="slowmanifold"):
 			[argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_SM"
+		elif(args.test=="auto"):
+			[argv.append(x) for x in ["-photoBins=10","-useN"]]
+			filename = "networks/react_auto"
 		elif(args.test=="shock1Dcool"):
 			[argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
 			filename = "networks/react_primordial"
@@ -427,6 +432,23 @@ class krome():
 					sys.exit()
 
 			args = self.parser.parse_args() #return updated namespace
+
+		#list all the automatic reactions available from the fdbase file and exit
+		if(args.listAutomatics):
+			fhauto = open(self.fdbase,"rb")
+			icounta = 0
+			reasa = prodsa = typea = ""
+			for row in fhauto:
+				srow = row.strip()
+				if("@type:" in srow):
+					reasa = prodsa = typea = ""
+				if(reasa!="" and prodsa!="" and typea!=""):
+					icounta += 1
+					print str(icounta)+". ("+typea+") "+reasa+" -> "+prodsa
+				if("@reacts:" in srow): reasa = " + ".join([x.strip() for x in srow.replace("@reacts:","").split(",")])
+				if("@prods:" in srow): prodsa = " + ".join([x.strip() for x in srow.replace("@prods:","").split(",")])
+				if("@type:" in srow): typea = srow.replace("@type:","").strip()
+			sys.exit()
 		
 		#get a citation and exit
 		if(args.quote):
@@ -1764,12 +1786,73 @@ class krome():
 			print " where indexes are arbitrary"
 			sys.exit()
 
+		#check for automatic reactions
+		autoFound = False
+		for rea in reacts:
+			if(rea.krate.lower().strip()!="auto" and rea.kphrate.lower().strip()!="auto"): continue
+			autoFound = True
+			break
+		
+		#search auto reaction in the database
+		if(autoFound):
+			autoreacts = [] #dbase array contains dictionary with reaction data
+			fdbase = self.fdbase
+			print "Automatic reactions found, loading "+fdbase
+			fhdbase = open(fdbase,"rb") #open the database
+			#load the database into an array of dictionaries
+			for row in fhdbase:
+				srow = row.strip()
+				if(srow==""): continue #skip blank
+				if(srow[0]=="#"): continue #skip comments
+				#each reaction block starts with @type, init the reaction dictionary
+				if("@type:" in srow):
+					myrea = dict()
+				myrea.update(at_extract(srow)) #append to the dictionary
+				#each reaction block ends with @rate, append to the main database array
+				if("@rate:" in srow):
+					autoreacts.append(myrea)
+			#loop on the reactions to find auto
+			for i in range(len(reacts)):
+				rea = reacts[i]
+				if(rea.krate.lower().strip()!="auto" and rea.kphrate.lower().strip()!="auto"): continue
+				dbFound = False
+				#loop on autoreactions
+				for autorea in autoreacts:
+					autop = [x.strip() for x in autorea["prods"].split(",")] #list of prods
+					autor = [x.strip() for x in autorea["reacts"].split(",")] #list of reacts
+					if(sorted([x.name for x in rea.reactants])!=sorted(autor)): continue
+					if(sorted([x.name for x in rea.products])!=sorted(autop)): continue
+					dbFound = True
+					#handle photochemistry
+					print "##########################"
+					print rea.kphrate, rea.krate
+					if(rea.kphrate=="auto"):
+						reacts[i].kphrate = autorea["rate"]
+					else:
+						reacts[i].krate = autorea["rate"]
+
+					reacts[i].Tmin = autorea["limits"].split(",")[0].strip()
+					reacts[i].Tmax = autorea["limits"].split(",")[1].strip()
+					print "automatic reaction found!",rea.verbatim
+					break
+				#error if automatic reactions not found
+				if(not(dbFound)):
+					print "ERROR: reaction not found in the automatc database!"
+					print rea.verbatim,[x.name for x in rea.reactants]
+					print "you can:"
+					print "1. remove it from your network"
+					print "2. provide a non-automatic reaction rate"
+					print "3. add to the databse "+fdbase
+					sys.exit()
+
 
 		#count reactions with unique index
 		idxs = []
 		nrea = 0
 		for rea in reacts:
-			if(rea.idx in idxs): continue #skip reactions same index
+			if(rea.idx in idxs):
+				print "skipping "+rea.verbatim+" since index already used!"
+				continue #skip reactions same index
 			idxs.append(rea.idx)
 			nrea += 1
 
@@ -2071,7 +2154,7 @@ class krome():
 		fout.close()
 
 		#dump species to gnuplot initialization
-		fout = open("species.gps","w")
+		fout = open(self.buildFolder+"species.gps","w")
 		fout.write("#This file is a script to initialize the species index in krome gnuplot\n")
 		idx = 0
 		fout.write("\n")

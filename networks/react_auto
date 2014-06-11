@@ -1,0 +1,11 @@
+@photo_start
+@format:idx,R,P,P,rate
+1,C,C+,E,auto
+@photo_stop
+
+@format:idx,R,R,P,rate
+2,C+,E,C,auto
+
+@format:idx,R,R,P,P,P,rate
+3,C,E,C+,E,E,auto
+
