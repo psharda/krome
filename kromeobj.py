@@ -107,6 +107,7 @@ class krome():
 	anytabfiles = [] #file name for the tables
 	anytabpaths = [] #paths for the tables
 	anytabsizes = [] #sizes of the tables
+	coolLevels = [] #levels employed for cooling, if empty uses all
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
 	fdbase = "data/kromeauto.dat"
@@ -177,6 +178,8 @@ class krome():
 			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI).\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
+		self.parser.add_argument("-coolLevels", metavar='LIST', help="use only the levels listed in LIST, e.g. -coolLevels=0,1,2,3 Note\
+			that levels are zero-based (i.e. ground state is zero).")
 		self.parser.add_argument("-coolingQuench", metavar='TCRIT', help="quenches the cooling when T<TCRIT with a tanh \
 		 function.")
 		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line,\
@@ -308,6 +311,9 @@ class krome():
 		elif(args.test=="auto"):
 			[argv.append(x) for x in ["-photoBins=10","-useN"]]
 			filename = "networks/react_auto"
+		elif(args.test=="chianti"):
+			[argv.append(x) for x in ["-photoBins=10","-useN","-coolFile=tools/coolChianti.dat","-cooling=CII"]]
+			filename = "networks/react_chianti"
 		elif(args.test=="shock1Dcool"):
 			[argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
 			filename = "networks/react_primordial"
@@ -435,6 +441,9 @@ class krome():
 
 		#list all the automatic reactions available from the fdbase file and exit
 		if(args.listAutomatics):
+			if(not(file_exists(self.fdbase))):
+				print "ERROR: file "+self.fdbase+" not found!"
+				sys.exit()
 			fhauto = open(self.fdbase,"rb")
 			icounta = 0
 			reasa = prodsa = typea = ""
@@ -920,6 +929,11 @@ class krome():
 			self.use_thermo = True
 
 			print "Reading option -cooling ("+(",".join(myCools))+")"
+
+		if(args.coolLevels):
+			self.coolLevels = [int(x) for x in args.coolLevels.split(",")]
+			if(len(self.coolLevels)<2): die("ERROR: coolLevels must contain at least 2 levels!")
+			print "Reading option -coolLevels ("+(", ".join([str(x) for x in self.coolLevels]))+")"
 
 		#cooling quenching
 		if(args.coolingQuench):
@@ -1789,7 +1803,10 @@ class krome():
 		#check for automatic reactions
 		autoFound = False
 		for rea in reacts:
-			if(rea.krate.lower().strip()!="auto" and rea.kphrate.lower().strip()!="auto"): continue
+			print rea.krate,rea.kphrate
+			if(rea.kphrate!=None):
+				if(rea.kphrate.lower().strip()!="auto"): continue
+			if(rea.krate.lower().strip()!="auto"): continue
 			autoFound = True
 			break
 		
@@ -1798,6 +1815,10 @@ class krome():
 			autoreacts = [] #dbase array contains dictionary with reaction data
 			fdbase = self.fdbase
 			print "Automatic reactions found, loading "+fdbase
+			if(not(file_exists(fdbase))):
+				print "ERROR: file "+fdbase+" not found!"
+				sys.exit()
+
 			fhdbase = open(fdbase,"rb") #open the database
 			#load the database into an array of dictionaries
 			for row in fhdbase:
@@ -1824,8 +1845,6 @@ class krome():
 					if(sorted([x.name for x in rea.products])!=sorted(autop)): continue
 					dbFound = True
 					#handle photochemistry
-					print "##########################"
-					print rea.kphrate, rea.krate
 					if(rea.kphrate=="auto"):
 						reacts[i].kphrate = autorea["rate"]
 					else:
@@ -1835,7 +1854,7 @@ class krome():
 					reacts[i].Tmax = autorea["limits"].split(",")[1].strip()
 					print "automatic reaction found!",rea.verbatim
 					break
-				#error if automatic reactions not found
+				#error if automatic reaction not found
 				if(not(dbFound)):
 					print "ERROR: reaction not found in the automatc database!"
 					print rea.verbatim,[x.name for x in rea.reactants]
@@ -2144,7 +2163,7 @@ class krome():
 	###############################################
 	def dumpNetwork(self):
 		#dump species to log file
-		fout = open("species.log","w")
+		fout = open(self.buildFolder+"species.log","w")
 		fout.write("#This file contains a list of the species used with their indexes\n")
 		fout.write("\n")
 		idx = 0
@@ -2159,7 +2178,7 @@ class krome():
 		idx = 0
 		fout.write("\n")
 		fout.write("\n")
-		fout.write("if(!exists(\"nkrome\")) print \"ERROR: first you must set the value of the nkrome offset\"\n")
+		fout.write("if(!exists(\"nkrome\")) print \"ERROR: first you must set the value of the offset nkrome\"\n")
 		inits = []
 		for mol in self.specs:
 			idx += 1
@@ -2171,12 +2190,12 @@ class krome():
 		fout.close()
 
 		#dump heating and cooling index initialization for gnuplot
-		fout = open("heatcool.gps","w")
+		fout = open(self.buildFolder+"heatcool.gps","w")
 		fout.write("#This file is a script to initialize the heating and cooling index in krome gnuplot\n")
 		idx = 0
 		fout.write("\n")
 		fout.write("\n")
-		fout.write("if(!exists(\"nkrome_heatcool\")) print \"ERROR: first you must set the value of the nkrome_heatcool offset\"\n")
+		fout.write("if(!exists(\"nkrome_heatcool\")) print \"ERROR: first you must set the value of the offset nkrome_heatcool\"\n")
 		idxcools = get_cooling_index_list()
 		idxheats = get_heating_index_list()
 		inits = []
@@ -2192,7 +2211,7 @@ class krome():
 
 	
 		#dump reactions to log file
-		fout = open("reactions.log","w")
+		fout = open(self.buildFolder+"reactions.log","w")
 		idx = 0
 		for rea in self.reacts:
 			idx += 1
@@ -2200,7 +2219,7 @@ class krome():
 		fout.close()	
 		
 		#dump network to dot file
-		fout = open("network.dot","w")
+		fout = open(self.buildFolder+"network.dot","w")
 		ntw = dict()
 		dot = "digraph{\n"
 		for rea in self.reacts:
@@ -2215,6 +2234,7 @@ class krome():
 		fout.close
 	
 	##############################################
+	#write the C header if needed
 	def simpleCHeader(self):
 		if(not(self.wrapC)): return
 		fout = open("krome.h","w")
@@ -2236,6 +2256,7 @@ class krome():
 		fout.close()
 
 	###############################################
+	#show info about ODE system
 	def showODE(self):
 		dustArraySize = self.dustArraySize
 		specs = self.specs
@@ -2645,6 +2666,7 @@ class krome():
 		nkrates = 0
 		fcn_levs = [] #list of fcn_i functions produced
 		zcoolants = self.zcoolants
+		#loop on the files
 		for fname in self.coolFile:
 			if(not(file_exists(fname))):
 				print "ERROR: file "+fname+" not found!"
@@ -2727,6 +2749,9 @@ class krome():
 				if("level" in srow):
 					nlev = int(srow.split(":")[0].replace("level","").strip()) #level number
 					energy, gmult = srow.split(":")[1].split(",") #get energy and degenerancy factor
+					cond1 = (len(self.coolLevels)!=0)
+					cond2 = not(int(nlev) in self.coolLevels)
+					if(cond1 and cond2): continue #skip if levels are not listed in requested levels
 					levels[nlev] = {"energy":float(energy), "gmult":float(gmult)} #store energy and degenerancy
 					continue
 			
@@ -2927,7 +2952,7 @@ class krome():
 							full_cool += "call mylin3("+Avar+"(:,:), "+Bvar+"(:))\n"
 						else:
 							#LAPACK are called for more than 3 levels
-							full_cool += "call mydgesv("+Avar+"(:,:), "+Bvar+"(:))\n"
+							full_cool += "call mydgesv("+str(nlev)+", "+Avar+"(:,:), "+Bvar+"(:))\n"
 							self.needLAPACK = True
 
 					if(use_escape):
@@ -3112,6 +3137,10 @@ class krome():
 					nkrates += 1
 					#read collider, starting level, end level, rate F90 expression
 					coll, lev_up, lev_down, rate = [x.strip() for x in srow.split(",",3)]
+					cond1 = (len(self.coolLevels)!=0)
+					cond2 = not(int(lev_up) in self.coolLevels)
+					cond3 = not(int(lev_down) in self.coolLevels)
+					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels
 					coll = coll.replace("+","j").replace("-","k") #collider name for variable
 					var_excitation = "g"+lev_up+lev_down+cur_metal+"_"+coll #excitation variable, g10C_Hp
 					var_excitation_rev = "g"+lev_down+lev_up+cur_metal+"_"+coll #dexcitation variable, g01C_Hp
@@ -3127,7 +3156,12 @@ class krome():
 				#read Aij
 				if(len(row.split(","))==3):
 					lup, ldown, Aij = [x.strip() for x in srow.split(",",4)]
+					cond1 = (len(self.coolLevels)!=0)
+					cond2 = not(int(lup) in self.coolLevels)
+					cond3 = not(int(ldown) in self.coolLevels)
+					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels
 					Aijs[(int(lup),int(ldown))] = Aij
+
 
 		#copy local arrays and dictionaries to class attributes
 		self.coolZ_functions = coolZ_functions

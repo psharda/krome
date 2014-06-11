@@ -1,0 +1,15 @@
+reset
+set logscale
+nkrome=3
+load 'species.gps'
+
+#set yrange [0.006:1.1]
+set key l b
+
+set xlabel "log(time/yr)"
+set ylabel "Tgas/K"
+set format x "%L"
+
+plot './fort.66' u 2:($1==1?$3:1/0) w l t "T (j21=1e-3)",\
+'' u 2:($1==2?$3:1/0) w l t "T (j21=1e-1)",\
+'' u 2:($1==3?$3:1/0) w l t "T (j21=1e0)"

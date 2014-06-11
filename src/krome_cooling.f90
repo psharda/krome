@@ -902,27 +902,20 @@ contains
 
 #IFKROME_useLAPACK
   !*********************************
-  subroutine mydgesv(A,B)
+  subroutine mydgesv(n,A,B)
     !driver for LAPACK dgesv
-    real*8::A(:,:),B(:)
-    real*8,allocatable::tmp(:)
-    integer::n,info,i
-    integer,allocatable::ipiv(:)
-    n=size(B)
-    allocate(tmp(n))
-    allocate(ipiv(n))
+    integer::n,info,i,ipiv(n)
+    real*8::A(n,n),B(n)
+ 
     call dgesv(n,1,A,n,ipiv,B,n,info)
-    if(info .ne. 0) then
-       print *,"ERROR: problem with dgesv, info: ",info
-       do i=1,n
-          tmp(:)=A(i,:)
-          write(*,*) tmp(:)
-       end do
-       write(*,*) "B:",B(:)
+    if(info > 0) then
+       print *,"ERROR: matrix exactly singular, U(i,i) where i=",info
        stop
     end if
-    deallocate(tmp)
-    deallocate(ipiv)
+    if(info<0) then
+       print *,"ERROR: input error position ",info
+       stop
+    end if
   end subroutine mydgesv
 #ENDIFKROME
 
