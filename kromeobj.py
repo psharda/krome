@@ -178,8 +178,8 @@ class krome():
 			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM (e.g. -cooling=ATOMIC,CII,OI,FeI).\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
-		self.parser.add_argument("-coolLevels", metavar='LIST', help="use only the levels listed in LIST, e.g. -coolLevels=0,1,2,3 Note\
-			that levels are zero-based (i.e. ground state is zero).")
+		self.parser.add_argument("-coolLevels", metavar='MAXLEV', help="use only the levels up to MAXLEV (included), e.g. -coolLevels=3\
+			Note that levels are zero-based (i.e. ground state is zero).")
 		self.parser.add_argument("-coolingQuench", metavar='TCRIT', help="quenches the cooling when T<TCRIT with a tanh \
 		 function.")
 		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line,\
@@ -312,7 +312,8 @@ class krome():
 			[argv.append(x) for x in ["-photoBins=10","-useN"]]
 			filename = "networks/react_auto"
 		elif(args.test=="chianti"):
-			[argv.append(x) for x in ["-photoBins=10","-useN","-coolFile=tools/coolChianti.dat","-cooling=CII"]]
+			[argv.append(x) for x in ["-photoBins=10","-useN","-cooling=CVI, CIII, CV, CIV, CII"]]
+			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
 			filename = "networks/react_chianti"
 		elif(args.test=="shock1Dcool"):
 			[argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
@@ -931,8 +932,8 @@ class krome():
 			print "Reading option -cooling ("+(",".join(myCools))+")"
 
 		if(args.coolLevels):
-			self.coolLevels = [int(x) for x in args.coolLevels.split(",")]
-			if(len(self.coolLevels)<2): die("ERROR: coolLevels must contain at least 2 levels!")
+			self.coolLevels = [int(x) for x in range(int(args.coolLevels)+1)]
+			if(int(args.coolLevels)<1): die("ERROR: coolLevels must be at least 1 (two levels)!")
 			print "Reading option -coolLevels ("+(", ".join([str(x) for x in self.coolLevels]))+")"
 
 		#cooling quenching
@@ -1803,7 +1804,6 @@ class krome():
 		#check for automatic reactions
 		autoFound = False
 		for rea in reacts:
-			print rea.krate,rea.kphrate
 			if(rea.kphrate!=None):
 				if(rea.kphrate.lower().strip()!="auto"): continue
 			if(rea.krate.lower().strip()!="auto"): continue

@@ -1498,8 +1498,8 @@ def get_quote(qall=False):
 	 " I mean 'computers'.  I doubt scientists will ever be able to talk to us.)","Dave Barry"],
 	["Most software today is very much like an Egyptian pyramid with millions of bricks piled on top of each other, with no structural\
 	 integrity, but just done by brute force and thousands of slaves.","Alan Kay"],
-	["No matter how slick the demo is in rehearsal, when you do it in front of a live audience, the probability of a flawless\
-	 presentation is inversely proportional to the number of people watching, raised to the power of the amount of money involved.",\
+	["No matter how slick the demo is in rehearsal, when you do it in front of a live audience, the probability of a flawless "\
+	 + "presentation is inversely proportional to the number of people watching, raised to the power of the amount of money involved.",\
 	"Mark Gibbs"],
 	["Controlling complexity is the essence of computer programming.","Brian Kernigan"],
 	["Software suppliers are trying to make their software packages more 'user-friendly'...  Their best approach so far has been to take"\

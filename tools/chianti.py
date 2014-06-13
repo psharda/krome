@@ -1,3 +1,6 @@
+#!/usr/bin/python
+#!python
+
 import sys
 from os.path import exists as file_exists
 from math import log,log10,exp,sqrt
@@ -5,7 +8,7 @@ from scipy.interpolate import interp1d as interp_spline
 from os import listdir
 from os.path import isfile, join,isdir
 
-
+foutname = "coolChianti.dat"
 path = "chianti/"
 flist = []
 dirs = [ f for f in listdir(path) if isdir(join(path,f)) ]
@@ -13,6 +16,8 @@ for dr in dirs:
 	mypath = path+dr+"/"
 	dirs2 = [f for f in listdir(mypath) if isdir(join(mypath,f)) ]
 	flist += [mypath+x for x in dirs2]
+
+#flist = ["chianti/c/c_2"]
 
 ##################################
 #return boolean true if argument is number
@@ -33,7 +38,7 @@ def format_double(snum):
 	return snum+"d0"
 
 
-fout = open("coolChianti.dat","w")
+fout = open(foutname,"w")
 
 #o_4.elvlc  o_4.psplups  o_4.splups  o_4.wgfa
 for fff in flist:
@@ -43,8 +48,7 @@ for fff in flist:
 	apre = pre.split("_")
 	nion = int(apre[1])-1
 	if(nion==0):
-		print "skipping "+pre
-		continue
+		post = ""
 	if(nion==1):
 		post = "+"
 	elif(nion>1):
@@ -103,6 +107,7 @@ for fff in flist:
 		
 
 	#****SPLUPS****
+	#method: Burgess+Tully 1992 A&A
 	if(not(file_exists(spl))): sys.exit("ERROR: "+spl+" does not exists!")
 	print "reading "+spl
 	fh = open(spl,"rb") #open file
@@ -113,7 +118,10 @@ for fff in flist:
 		if(srow[0]=="%"): break #if comment breaks
 		if(srow=="-1"): break #if end data breaks
 		arow = [row[j*3:(j+1)*3] for j in range(5)]
-		arow += [x for x in row[15:].strip().split(" ") if is_number(x)] #keep only columns with numbers
+		for j in range(len(row[15:])/10):
+			block = [row[15+j*10:15+(j+1)*10].strip()]
+			if(block!=[""]): arow += block
+		#arow += [x for x in row[15:].strip().split(" ") if is_number(x)] #keep only columns with numbers
 		levLow = int(arow[2])
 		levUp = int(arow[3])
 		ty = int(arow[4]) #type
@@ -126,8 +134,8 @@ for fff in flist:
 		aTgas = []
 		aRate = []
 		for i in range(imax):
-			Tmin = 4e0 #log
-			Tmax = 8e0 #log
+			Tmin = 3e0 #as log(T/K)
+			Tmax = log10(400000) #as log(T/K)
 			if(Tmin>Tmax): sys.exit("ERROR: Tmin>Tmax! dE:"+str(dE)+" Tgas:"+str(Tmax) )
 			Tgas = 1e1**(float(i)/(imax-1)*(Tmax-Tmin)+Tmin)
 			#Tgas = kte*dE*1.57888e5 #floating is 1/kboltzman_Ry
@@ -159,9 +167,9 @@ for fff in flist:
 			Te = Tgas * 8.6173324e-5 #K->eV
 			TRy = Tgas * 1.3806488e-16 * 4.58742e10 #K->erg->Ry
 			wi = gmult[levLow] #mult level for starting level
-			rate = 8.63e-6/sqrt(Te) * ups / wi * exp(-dE/TRy) #cm3/s
+			rate = 8.629e-6/sqrt(Te) * ups / wi * exp(-dE/TRy) #cm3/s 8.63e-6, 8.01140884e-8
 			aTgas.append(format_double("%e" % Tgas))
-			aRate.append(format_double("%e" % rate))
+			aRate.append(format_double("%e" % max(rate,1e-40)))
 
 		sTgas = ", ".join(aTgas)
 		sRate = ", ".join(aRate)
@@ -170,5 +178,8 @@ for fff in flist:
 	fout.write("\nendmetal\n")
 
 
-		
+print "Stored in "+foutname
+print "You can use it with KROME with the option -coolFile=path/"+foutname
+print " where the path is relative to the ./krome script."
+
 
