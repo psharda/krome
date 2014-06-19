@@ -7,9 +7,12 @@ from math import log,log10,exp,sqrt
 from scipy.interpolate import interp1d as interp_spline
 from os import listdir
 from os.path import isfile, join,isdir
+import numpy as np
+import matplotlib.pyplot as plt
 
 foutname = "coolChianti.dat"
 path = "chianti/"
+plotpre = "c_2"
 flist = []
 dirs = [ f for f in listdir(path) if isdir(join(path,f)) ]
 for dr in dirs:
@@ -42,6 +45,7 @@ fout = open(foutname,"w")
 
 #o_4.elvlc  o_4.psplups  o_4.splups  o_4.wgfa
 for fff in flist:
+	print "*****************"
 	pre = fff.split("/")[-1]
 	fout.write("\n#############\n")
 	fout.write("#"+pre+"\n")
@@ -69,6 +73,7 @@ for fff in flist:
 	nparts = 10 #default size for ELVLC file (0=automatic)
 	fh = open(elv,"rb") #open file
 	gmult = dict()
+	maxlev = 0 #maximum number of levels found
 	#loop on file
 	fout.write("#level n: energy (K), degeneracy g\n")
 	for row in fh:
@@ -82,7 +87,10 @@ for fff in flist:
 		Enrg = float(arow[7]) #(observed), arow[8] (theoretical), unit: Ry
 		level = int(arow[0])
 		gmult[level] = int(arow[5]) #multeplicity
+		maxlev = max(maxlev,level)
 		fout.write("level "+str(level-1)+": "+str("%e" % (Enrg*1.57888e5))+", "+str(gmult[level])+"\n")
+		if(plotpre in pre): l = plt.axhline(y=level,ls="--")
+	print "levels found:",maxlev
 
 		
 
@@ -91,6 +99,7 @@ for fff in flist:
 	print "reading "+wgf
 	fh = open(wgf,"rb") #open file
 	fout.write("\n#Aij (1/s)\n")
+	itrans = 0
 	for row in fh:
 		srow = row.strip()
 		if(srow==""): continue #skip blank
@@ -102,8 +111,10 @@ for fff in flist:
 		levLow = int(arow[0])
 		levUp = int(arow[1])
 		Aij = float(arow[4])
+		if(plotpre in pre): l = plt.axvline(x=itrans, ymin=float(levLow-1.)/(maxlev+1), ymax=float(levUp-1.)/(maxlev+1))
 		fout.write(str(levUp-1)+", "+str(levLow-1)+", "+str("%e" % Aij)+"\n")
-
+		itrans += 1
+	print "transitions found:",itrans
 		
 
 	#****SPLUPS****
@@ -112,18 +123,21 @@ for fff in flist:
 	print "reading "+spl
 	fh = open(spl,"rb") #open file
 	fout.write("\n#collider, level_up, level_down, rate\n")
+	itrans = 0
 	for row in fh:
 		srow = row.strip()
 		if(srow==""): continue #skip blank
 		if(srow[0]=="%"): break #if comment breaks
 		if(srow=="-1"): break #if end data breaks
 		arow = [row[j*3:(j+1)*3] for j in range(5)]
+		itrans += 1
 		for j in range(len(row[15:])/10):
 			block = [row[15+j*10:15+(j+1)*10].strip()]
 			if(block!=[""]): arow += block
 		#arow += [x for x in row[15:].strip().split(" ") if is_number(x)] #keep only columns with numbers
 		levLow = int(arow[2])
 		levUp = int(arow[3])
+		if(plotpre in pre): l = plt.axvline(x=itrans+.5, ymin=float(levLow-1.)/(maxlev+1), ymax=float(levUp-1.)/(maxlev+1),color="r")
 		ty = int(arow[4]) #type
 		dE = float(arow[6]) #Ry
 		cc = float(arow[7]) #scaling factor
@@ -171,12 +185,14 @@ for fff in flist:
 			aTgas.append(format_double("%e" % Tgas))
 			aRate.append(format_double("%e" % max(rate,1e-40)))
 
+
 		sTgas = ", ".join(aTgas)
 		sRate = ", ".join(aRate)
 		krate = "flin((/"+sTgas+"/), (/"+sRate+"/), Tgas)"
 		fout.write("\ne, "+str(levUp-1)+", "+str(levLow-1)+", "+krate+"\n")
 	fout.write("\nendmetal\n")
 
+plt.show()
 
 print "Stored in "+foutname
 print "You can use it with KROME with the option -coolFile=path/"+foutname

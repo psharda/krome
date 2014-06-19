@@ -33,15 +33,20 @@ program test
      x(:) = 1d-40 !default abundances
      x(krome_idx_C) = .5d0
      x(krome_idx_Cj) = .5d0
+     x(krome_idx_O) = .5d0
+     x(krome_idx_Oj) = .5d0
      x(krome_idx_e) = krome_get_electrons(x(:))
 
      Tgas = 1d5 !gas temperature (K)
      dt = spy !initial time-step (s)
      t = 0d0 !start time (s)
 
+     call krome_equilibrium(x(:),Tgas)
+     print *,x(:)
      do 
         dt = dt * 1.1d0 !increase time-step
         t = t + dt !advance time
+        x(krome_idx_e) = krome_get_electrons(x(:))
         call krome(x(:), Tgas, dt) !call KROME
         write(66,'(I5,99E17.8)') j, t/spy, Tgas, x(:) !dump
         if(t>1d8*spy) exit !exit when 1d6 years is reached

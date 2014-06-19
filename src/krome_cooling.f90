@@ -695,7 +695,7 @@ contains
 
     !note: change upper and lower limit for rate tables here
     coolTab_logTlow = log10(3d0)
-    coolTab_logTup = log10(1d4)
+    coolTab_logTup = log10(1d8)
 
     !pre compute this value since used jmax times
     inv_coolTab_idx = (jmax-1) / (coolTab_logTup-coolTab_logTlow)
@@ -902,18 +902,21 @@ contains
 
 #IFKROME_useLAPACK
   !*********************************
-  subroutine mydgesv(n,A,B)
+  subroutine mydgesv(n,A,B, parent_name)
     !driver for LAPACK dgesv
     integer::n,info,i,ipiv(n)
     real*8::A(n,n),B(n)
- 
+    character(len=*)::parent_name
+    
     call dgesv(n,1,A,n,ipiv,B,n,info)
     if(info > 0) then
        print *,"ERROR: matrix exactly singular, U(i,i) where i=",info
+       print *,' (called by "'//trim(parent_name)//'" function)'
        stop
     end if
     if(info<0) then
        print *,"ERROR: input error position ",info
+       print *,' (called by "'//trim(parent_name)//'" function)'
        stop
     end if
   end subroutine mydgesv

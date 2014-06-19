@@ -409,6 +409,8 @@ contains
     radrec_low_v96 = 1d-12 * (a*invt + b + c*t + d*t**2) &
          * t**(-1.5) * exp(-f*invt)
 
+    radrec_low_v96 = max(0d0,radrec_low_v96)
+    
   end function radrec_low_v96
 
   !***************************

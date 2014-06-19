@@ -312,7 +312,8 @@ class krome():
 			[argv.append(x) for x in ["-photoBins=10","-useN"]]
 			filename = "networks/react_auto"
 		elif(args.test=="chianti"):
-			[argv.append(x) for x in ["-photoBins=10","-useN","-cooling=CVI, CIII, CV, CIV, CII"]]
+			[argv.append(x) for x in ["-photoBins=10","-useN"]]
+			[argv.append(x) for x in ["-cooling=OI,OII,OIII,OIV"]]
 			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
 			filename = "networks/react_chianti"
 		elif(args.test=="shock1Dcool"):
@@ -386,6 +387,7 @@ class krome():
 			print "ERROR: test \""+args.test+"\" not present!"
 			print "Available tests are: "+tests
 			sys.exit()
+
 		self.filename = filename
 		self.test_name = args.test
 
@@ -393,6 +395,14 @@ class krome():
 	def argparsing(self,argv):
 
 		args = self.parser.parse_args() #return namespace from argv
+
+		#list arguments if test
+		if(args.test):
+			print "This TEST is running with the following arguments:"
+			for k in args.__dict__:
+				arg = args.__dict__[k]
+				if(arg): print " -"+k+" = "+str(arg)
+			print
 
 		#use custom option file (load options from a file and append to argv)
 		if(args.options):
@@ -2952,7 +2962,8 @@ class krome():
 							full_cool += "call mylin3("+Avar+"(:,:), "+Bvar+"(:))\n"
 						else:
 							#LAPACK are called for more than 3 levels
-							full_cool += "call mydgesv("+str(nlev)+", "+Avar+"(:,:), "+Bvar+"(:))\n"
+							full_cool += "call mydgesv("+str(nlev)+", "+Avar+"(:,:), "\
+								+ Bvar+"(:), \""+function_name+"\")\n"
 							self.needLAPACK = True
 
 					if(use_escape):
@@ -3040,7 +3051,11 @@ class krome():
 							except:
 								pass
 						full_cool += function_name + " = " + function_name + " - &\n (" + (" &\n + ".join(heats)) + ")\n"
-
+					else:
+						#if no induced heating controls the limits
+						full_cool += "\nif("+function_name+"<0d0) then\n print *, \"ERROR: "\
+							+function_name+"<0!\"\nstop\nendif\n" 
+					
 					#insert the end of the function
 					full_cool += "\n end function "+function_name+"\n"
 
