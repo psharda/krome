@@ -1,18 +1,26 @@
+#!/usr/bin/python
+#!python
+
 import sys
 from os.path import exists as file_exists
 from math import log,log10,exp,sqrt
 from scipy.interpolate import interp1d as interp_spline
 from os import listdir
 from os.path import isfile, join,isdir
+import numpy as np
+import matplotlib.pyplot as plt
 
-
+foutname = "coolChianti.dat"
 path = "chianti/"
+plotpre = "c_2"
 flist = []
 dirs = [ f for f in listdir(path) if isdir(join(path,f)) ]
 for dr in dirs:
 	mypath = path+dr+"/"
 	dirs2 = [f for f in listdir(mypath) if isdir(join(mypath,f)) ]
 	flist += [mypath+x for x in dirs2]
+
+#flist = ["chianti/c/c_2"]
 
 ##################################
 #return boolean true if argument is number
@@ -33,18 +41,18 @@ def format_double(snum):
 	return snum+"d0"
 
 
-fout = open("coolChianti.dat","w")
+fout = open(foutname,"w")
 
 #o_4.elvlc  o_4.psplups  o_4.splups  o_4.wgfa
 for fff in flist:
+	print "*****************"
 	pre = fff.split("/")[-1]
 	fout.write("\n#############\n")
 	fout.write("#"+pre+"\n")
 	apre = pre.split("_")
 	nion = int(apre[1])-1
 	if(nion==0):
-		print "skipping "+pre
-		continue
+		post = ""
 	if(nion==1):
 		post = "+"
 	elif(nion>1):
@@ -65,6 +73,7 @@ for fff in flist:
 	nparts = 10 #default size for ELVLC file (0=automatic)
 	fh = open(elv,"rb") #open file
 	gmult = dict()
+	maxlev = 0 #maximum number of levels found
 	#loop on file
 	fout.write("#level n: energy (K), degeneracy g\n")
 	for row in fh:
@@ -78,7 +87,10 @@ for fff in flist:
 		Enrg = float(arow[7]) #(observed), arow[8] (theoretical), unit: Ry
 		level = int(arow[0])
 		gmult[level] = int(arow[5]) #multeplicity
+		maxlev = max(maxlev,level)
 		fout.write("level "+str(level-1)+": "+str("%e" % (Enrg*1.57888e5))+", "+str(gmult[level])+"\n")
+		if(plotpre in pre): l = plt.axhline(y=level,ls="--")
+	print "levels found:",maxlev
 
 		
 
@@ -87,6 +99,7 @@ for fff in flist:
 	print "reading "+wgf
 	fh = open(wgf,"rb") #open file
 	fout.write("\n#Aij (1/s)\n")
+	itrans = 0
 	for row in fh:
 		srow = row.strip()
 		if(srow==""): continue #skip blank
@@ -98,24 +111,33 @@ for fff in flist:
 		levLow = int(arow[0])
 		levUp = int(arow[1])
 		Aij = float(arow[4])
+		if(plotpre in pre): l = plt.axvline(x=itrans, ymin=float(levLow-1.)/(maxlev+1), ymax=float(levUp-1.)/(maxlev+1))
 		fout.write(str(levUp-1)+", "+str(levLow-1)+", "+str("%e" % Aij)+"\n")
-
+		itrans += 1
+	print "transitions found:",itrans
 		
 
 	#****SPLUPS****
+	#method: Burgess+Tully 1992 A&A
 	if(not(file_exists(spl))): sys.exit("ERROR: "+spl+" does not exists!")
 	print "reading "+spl
 	fh = open(spl,"rb") #open file
 	fout.write("\n#collider, level_up, level_down, rate\n")
+	itrans = 0
 	for row in fh:
 		srow = row.strip()
 		if(srow==""): continue #skip blank
 		if(srow[0]=="%"): break #if comment breaks
 		if(srow=="-1"): break #if end data breaks
 		arow = [row[j*3:(j+1)*3] for j in range(5)]
-		arow += [x for x in row[15:].strip().split(" ") if is_number(x)] #keep only columns with numbers
+		itrans += 1
+		for j in range(len(row[15:])/10):
+			block = [row[15+j*10:15+(j+1)*10].strip()]
+			if(block!=[""]): arow += block
+		#arow += [x for x in row[15:].strip().split(" ") if is_number(x)] #keep only columns with numbers
 		levLow = int(arow[2])
 		levUp = int(arow[3])
+		if(plotpre in pre): l = plt.axvline(x=itrans+.5, ymin=float(levLow-1.)/(maxlev+1), ymax=float(levUp-1.)/(maxlev+1),color="r")
 		ty = int(arow[4]) #type
 		dE = float(arow[6]) #Ry
 		cc = float(arow[7]) #scaling factor
@@ -126,8 +148,8 @@ for fff in flist:
 		aTgas = []
 		aRate = []
 		for i in range(imax):
-			Tmin = 4e0 #log
-			Tmax = 8e0 #log
+			Tmin = 3e0 #as log(T/K)
+			Tmax = log10(400000) #as log(T/K)
 			if(Tmin>Tmax): sys.exit("ERROR: Tmin>Tmax! dE:"+str(dE)+" Tgas:"+str(Tmax) )
 			Tgas = 1e1**(float(i)/(imax-1)*(Tmax-Tmin)+Tmin)
 			#Tgas = kte*dE*1.57888e5 #floating is 1/kboltzman_Ry
@@ -159,9 +181,10 @@ for fff in flist:
 			Te = Tgas * 8.6173324e-5 #K->eV
 			TRy = Tgas * 1.3806488e-16 * 4.58742e10 #K->erg->Ry
 			wi = gmult[levLow] #mult level for starting level
-			rate = 8.63e-6/sqrt(Te) * ups / wi * exp(-dE/TRy) #cm3/s
+			rate = 8.629e-6/sqrt(Te) * ups / wi * exp(-dE/TRy) #cm3/s 8.63e-6, 8.01140884e-8
 			aTgas.append(format_double("%e" % Tgas))
-			aRate.append(format_double("%e" % rate))
+			aRate.append(format_double("%e" % max(rate,1e-40)))
+
 
 		sTgas = ", ".join(aTgas)
 		sRate = ", ".join(aRate)
@@ -169,6 +192,10 @@ for fff in flist:
 		fout.write("\ne, "+str(levUp-1)+", "+str(levLow-1)+", "+krate+"\n")
 	fout.write("\nendmetal\n")
 
+plt.show()
 
-		
+print "Stored in "+foutname
+print "You can use it with KROME with the option -coolFile=path/"+foutname
+print " where the path is relative to the ./krome script."
+
 

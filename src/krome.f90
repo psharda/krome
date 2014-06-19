@@ -205,6 +205,7 @@ contains
     use krome_constants
     implicit none
     integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
+    integer::i,imax
     real*8::tloc,x(:),Tgas,n(nspec),dt
 #KROME_iwork_array
     real*8::atol(nspec),rtol(nspec)
@@ -234,11 +235,19 @@ contains
     n(nmols+1:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
+    
+    imax = 1000
 
-    !solve ODE
-    CALL DLSODES(fcn_tconst, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
-         ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, jcn_dummy, MF)
-
+    do i=1,imax
+       !solve ODE
+       CALL DLSODES(fcn_tconst, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
+            ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, jcn_dummy, MF)
+       if(istate==2) then
+          exit
+       else
+          istate=1
+       end if
+    end do
     !check errors
     if(istate.ne.2) then
        print *,"ERROR: no equilibrium found!"
