@@ -3054,7 +3054,17 @@ class krome():
 					else:
 						#if no induced heating controls the limits
 						full_cool += "\nif("+function_name+"<0d0) then\n print *, \"ERROR: "\
-							+function_name+"<0!\"\nstop\nendif\n" 
+							+function_name+"<0!\", "+function_name+"\n"
+						full_cool += "\n!check negative abundances\nif(minval(B"+cur_metal+")<0d0) then\n"
+						full_cool += " print *,\"ERROR: some levels population < 0d0!\"\n"
+						full_cool += " print *,\" total population (cm-3):\", n(idx_"+cur_metal+")\n"
+						full_cool += " print *,\" temperature (K):\", n(idx_"+cur_metal+")\n"
+						full_cool += " do i=1,size(B"+cur_metal+")\n"
+						full_cool += "  if(B"+cur_metal+"(i)<0d0) print *,i,B"+cur_metal+"(i)\n"
+						full_cool += " end do\n"
+						full_cool += " stop\n"
+						full_cool += "end if\n"
+						full_cool += "stop\nendif\n" 
 					
 					#insert the end of the function
 					full_cool += "\n end function "+function_name+"\n"

@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 
 foutname = "coolChianti.dat"
 path = "chianti/"
-plotpre = "c_2"
+plotpre = "none" #"c_2"
 flist = []
-dirs = [ f for f in listdir(path) if isdir(join(path,f)) ]
+dirs = [f for f in listdir(path) if isdir(join(path,f))]
 for dr in dirs:
 	mypath = path+dr+"/"
-	dirs2 = [f for f in listdir(mypath) if isdir(join(mypath,f)) ]
+	dirs2 = [f for f in listdir(mypath) if isdir(join(mypath,f))]
 	flist += [mypath+x for x in dirs2]
 
 #flist = ["chianti/c/c_2"]
@@ -39,6 +39,94 @@ def format_double(snum):
 	if("d" in snum): return snum
 	if("e" in snum): return snum.replace("e","d")	
 	return snum+"d0"
+
+######################################
+def read_kex(fname,collname):
+	#****SPLUPS****
+	#method: Burgess+Tully 1992 A&A
+	if(not(file_exists(fname))): 
+		print("WARNING: no data for coolision with "+collname+", "+fname+" does not exists!")
+		return
+	if(collname=="e"):
+		iblocks = 5 #number of integer blocks of size 3 characters
+		boff = 0 #block offset, since H+ collision misses the 2 initial integers
+	elif(collname=="H+"):
+		iblocks = 3 #number of integer blocks of size 3 characters
+		boff = 2 #block offset, since H+ collision misses the 2 initial integers
+	else:
+		sys.exit("ERROR: ",collname+" collider not recognized in read_kex!")
+	
+	print "reading "+fname
+	fh = open(fname,"rb") #open file
+	fout.write("\n#collider, level_up, level_down, rate\n")
+	itrans = 0
+	for row in fh:
+		srow = row.strip()
+		if(srow==""): continue #skip blank
+		if(srow[0]=="%"): break #if comment breaks
+		if(srow=="-1"): break #if end data breaks
+		arow = [row[j*3:(j+1)*3] for j in range(iblocks)]
+		itrans += 1
+		for j in range(len(row[iblocks*3:])/10):
+			block = [row[iblocks*3+j*10:iblocks*3+(j+1)*10].strip()]
+			if(block!=[""]): arow += block
+		#arow += [x for x in row[15:].strip().split(" ") if is_number(x)] #keep only columns with numbers
+		levLow = int(arow[2-boff])
+		levUp = int(arow[3-boff])
+		if(plotpre in pre): l = plt.axvline(x=itrans+.5, ymin=float(levLow-1.)/(maxlev+1), ymax=float(levUp-1.)/(maxlev+1),color="r")
+		ty = int(arow[4-boff]) #type
+		dE = float(arow[6-boff]) #Ry
+		cc = float(arow[7-boff]) #scaling factor
+		spli = [float(x) for x in arow[8-boff:]] #read spline
+		xx = [float(x)/(len(spli)-1) for x in range(len(spli))] #normalized x value for spline
+		imax = int(1e1) #number of Tgas bins
+		ff = interp_spline(xx, spli, kind='cubic') #function from spline interpolation
+		aTgas = []
+		aRate = []
+		for i in range(imax):
+			Tmin = 3e0 #as log(T/K)
+			Tmax = log10(400000) #as log(T/K)
+			if(Tmin>Tmax): sys.exit("ERROR: Tmin>Tmax! dE:"+str(dE)+" Tgas:"+str(Tmax) )
+			Tgas = 1e1**(float(i)/(imax-1)*(Tmax-Tmin)+Tmin)
+			#Tgas = kte*dE*1.57888e5 #floating is 1/kboltzman_Ry
+			kte = Tgas/dE/1.57888e5
+			#prepare xt
+			if(ty in [1, 4]):
+				xt = 1e0-log(cc)/log(kte+cc)
+			elif(ty in [2,3,5,6]):
+				xt = kte/(kte+cc)
+			else:
+				sys.exit("ERROR: unknown type "+str(ty))
+
+			sups = ff(xt) #read interpolated value
+			#prepare ups
+			if(ty==1):
+				ups = sups * log(kte+exp(1e0))
+			elif(ty==2):
+				ups = sups
+			elif(ty==3):
+				ups = sups/(kte+1e0)			
+			elif(ty==4):
+				ups = sups*log(kte+cc)			
+			elif(ty==5):
+				ups = sups/kte			
+			elif(ty==6):
+				ups = 1e1**sups
+			else:
+				sys.exit("ERROR: unknown type "+str(ty))
+			Te = Tgas * 8.6173324e-5 #K->eV
+			TRy = Tgas * 1.3806488e-16 * 4.58742e10 #K->erg->Ry
+			wi = gmult[levLow] #mult level for starting level
+			rate = 8.629e-6/sqrt(Te) * ups / wi * exp(-dE/TRy) #cm3/s 8.63e-6, 8.01140884e-8
+			aTgas.append(format_double("%e" % Tgas))
+			aRate.append(format_double("%e" % max(rate,1e-40)))
+
+
+		sTgas = ", ".join(aTgas)
+		sRate = ", ".join(aRate)
+		krate = "flin((/"+sTgas+"/), (/"+sRate+"/), Tgas)"
+		fout.write("\n"+collname+", "+str(levUp-1)+", "+str(levLow-1)+", "+krate+"\n")
+
 
 
 fout = open(foutname,"w")
@@ -117,83 +205,17 @@ for fff in flist:
 	print "transitions found:",itrans
 		
 
-	#****SPLUPS****
-	#method: Burgess+Tully 1992 A&A
-	if(not(file_exists(spl))): sys.exit("ERROR: "+spl+" does not exists!")
-	print "reading "+spl
-	fh = open(spl,"rb") #open file
-	fout.write("\n#collider, level_up, level_down, rate\n")
-	itrans = 0
-	for row in fh:
-		srow = row.strip()
-		if(srow==""): continue #skip blank
-		if(srow[0]=="%"): break #if comment breaks
-		if(srow=="-1"): break #if end data breaks
-		arow = [row[j*3:(j+1)*3] for j in range(5)]
-		itrans += 1
-		for j in range(len(row[15:])/10):
-			block = [row[15+j*10:15+(j+1)*10].strip()]
-			if(block!=[""]): arow += block
-		#arow += [x for x in row[15:].strip().split(" ") if is_number(x)] #keep only columns with numbers
-		levLow = int(arow[2])
-		levUp = int(arow[3])
-		if(plotpre in pre): l = plt.axvline(x=itrans+.5, ymin=float(levLow-1.)/(maxlev+1), ymax=float(levUp-1.)/(maxlev+1),color="r")
-		ty = int(arow[4]) #type
-		dE = float(arow[6]) #Ry
-		cc = float(arow[7]) #scaling factor
-		spli = [float(x) for x in arow[8:]] #read spline
-		xx = [float(x)/(len(spli)-1) for x in range(len(spli))] #normalized x value for spline
-		imax = int(1e1) #number of Tgas bins
-		ff = interp_spline(xx, spli, kind='cubic') #function from spline interpolation
-		aTgas = []
-		aRate = []
-		for i in range(imax):
-			Tmin = 3e0 #as log(T/K)
-			Tmax = log10(400000) #as log(T/K)
-			if(Tmin>Tmax): sys.exit("ERROR: Tmin>Tmax! dE:"+str(dE)+" Tgas:"+str(Tmax) )
-			Tgas = 1e1**(float(i)/(imax-1)*(Tmax-Tmin)+Tmin)
-			#Tgas = kte*dE*1.57888e5 #floating is 1/kboltzman_Ry
-			kte = Tgas/dE/1.57888e5
-			#prepare xt
-			if(ty in [1, 4]):
-				xt = 1e0-log(cc)/log(kte+cc)
-			elif(ty in [2,3,5,6]):
-				xt = kte/(kte+cc)
-			else:
-				sys.exit("ERROR: unknown type "+str(ty))
 
-			sups = ff(xt) #read interpolated value
-			#prepare ups
-			if(ty==1):
-				ups = sups * log(kte+exp(1e0))
-			elif(ty==2):
-				ups = sups
-			elif(ty==3):
-				ups = sups/(kte+1e0)			
-			elif(ty==4):
-				ups = sups*log(kte+cc)			
-			elif(ty==5):
-				ups = sups/kte			
-			elif(ty==6):
-				ups = 1e1**sups
-			else:
-				sys.exit("ERROR: unknown type "+str(ty))
-			Te = Tgas * 8.6173324e-5 #K->eV
-			TRy = Tgas * 1.3806488e-16 * 4.58742e10 #K->erg->Ry
-			wi = gmult[levLow] #mult level for starting level
-			rate = 8.629e-6/sqrt(Te) * ups / wi * exp(-dE/TRy) #cm3/s 8.63e-6, 8.01140884e-8
-			aTgas.append(format_double("%e" % Tgas))
-			aRate.append(format_double("%e" % max(rate,1e-40)))
+	read_kex(spl,"e")
+
+	read_kex(pspl,"H+")
 
 
-		sTgas = ", ".join(aTgas)
-		sRate = ", ".join(aRate)
-		krate = "flin((/"+sTgas+"/), (/"+sRate+"/), Tgas)"
-		fout.write("\ne, "+str(levUp-1)+", "+str(levLow-1)+", "+krate+"\n")
 	fout.write("\nendmetal\n")
 
 plt.show()
-
+print
+print "*********************"
 print "Stored in "+foutname
 print "You can use it with KROME with the option -coolFile=path/"+foutname
 print " where the path is relative to the ./krome script."
