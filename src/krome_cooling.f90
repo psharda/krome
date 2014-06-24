@@ -1,6 +1,6 @@
 module KROME_cooling
 #KROME_header
-  integer,parameter::coolTab_n=int(1e3)
+  integer,parameter::coolTab_n=int(1e4)
 #KROME_nZrate
   real*8::coolTab(nZrate,coolTab_n),coolTab_logTlow, coolTab_logTup
   real*8::coolTab_T(coolTab_n),inv_coolTab_T(coolTab_n-1),inv_coolTab_idx
@@ -650,6 +650,7 @@ contains
     implicit none
     real*8::inTgas, coolingZ_rates(nZrate),k(nZrate)
     real*8::Tgas
+    integer::i
 #KROME_coolingZ_declare_custom_vars
 
     Tgas = inTgas
@@ -659,6 +660,26 @@ contains
 #KROME_coolingZ_rates
 
     coolingZ_rates(:) = k(:)
+
+    !check rates > 1
+    if(maxval(k)>1d0) then
+       print *,"ERROR: found rate >1d0 in coolingZ_rates!"
+       print *," Tgas =",Tgas
+       do i=1,nZrate
+          if(k(i)>1d0) print *,i,k(i)
+       end do
+       stop
+    end if
+
+    !check rates <0
+    if(maxval(k)<0d0) then
+       print *,"ERROR: found rate <0d0 in coolingZ_rates!"
+       print *," Tgas =",Tgas
+       do i=1,nZrate
+          if(k(i)<0d0) print *,i,k(i)
+       end do
+       stop
+    end if
 
   end function coolingZ_rates
 
