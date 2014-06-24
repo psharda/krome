@@ -206,7 +206,7 @@ class krome():
                         adiabatic index accurately taking into account both contributions, or REDUCED to use only H2 and CO as diatomic\
 			molecules (faster). Finally a custom F90 expression e.g. -gamma=\"1d0\"\
 			can also be used. Default value is 5/3.",metavar="OPTION")
-		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be LENZUNI or OMUKAI")
+		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be RIPAMONTI or OMUKAI")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH, CR, PHOTOAV.\
 			If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
@@ -339,19 +339,19 @@ class krome():
 			filename = "networks/react_primordial_photoH2"
 		elif(args.test=="collapse"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=LENZUNI","-useN","-gamma=FULL"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial3"
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=LENZUNI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
 			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseZ_UV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
-			[argv.append(x) for x in ["-H2opacity=LENZUNI","-useN","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
 			filename = "networks/react_primordialZ2_UV"
 		elif(args.test=="collapseZ_induced"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
-			[argv.append(x) for x in ["-H2opacity=LENZUNI","-useN","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
 			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,ATOMIC", "-heating=COMPRESS,CHEM"]]
@@ -359,7 +359,7 @@ class krome():
 			filename = "networks/react_primordial_UV"
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST,HD", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=LENZUNI","-useN","-gamma=FULL","-dust=1,C","-dustOptions=H2"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-dust=1,C","-dustOptions=H2"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="stars"):
 			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck"]]
@@ -614,7 +614,7 @@ class krome():
 			print "Reading option -reverse"
 		#use H2opacity following
 		if(args.H2opacity):
-			opacities = ["LENZUNI", "OMUKAI"]
+			opacities = ["RIPAMONTI", "OMUKAI"]
 			if(not(args.H2opacity in opacities)):
 				print "ERROR: H2opacity must be one of "+(", ".join(opacities))+"."
 				sys.exit()
@@ -4152,7 +4152,7 @@ class krome():
 				#replace pragma for total metals
 				row = row.replace("#KROME_tot_metals", self.totMetals)
 				
-				if(self.H2opacity=="LENZUNI"):
+				if(self.H2opacity=="RIPAMONTI"):
 					#thick case (note that 1.25d-10 = 1/8e9)
 					row = row.replace("#KROME_H2opacity", "&\n* min(1.d0, (1.25d-10 * sum(n(1:nmols)))**(-.45))")
 				elif(self.H2opacity=="OMUKAI"):

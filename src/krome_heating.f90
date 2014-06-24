@@ -83,8 +83,8 @@ contains
     xe = min(n(idx_e)/ntot,1d0)
 
     !prepares logs for xrays
-    ncolH = 1.8d21*(max(n(idx_H),1d-40)*1d-3)**(2./3.)
-    ncolHe = 1.8d21*(max(n(idx_He),1d-40)*1d-3)**(2./3.)
+    ncolH = num2col(n(idx_H))
+    ncolHe = num2col(n(idx_He))
     logH = log10(ncolH)
     logHe = log10(ncolHe)
 

@@ -28,8 +28,8 @@ contains
 
 #IFKROME_useXrays
     !prepares logs for xrays
-    ncolH = 1.8d21*(max(n(idx_H),1d-40)*1d-3)**(2./3.)
-    ncolHe = 1.8d21*(max(n(idx_He),1d-40)*1d-3)**(2./3.)
+    ncolH = num2col(n(idx_H))
+    ncolHe = num2col(n(idx_He))
     logH = log10(ncolH)
     logHe = log10(ncolHe)
 #ENDIFKROME
@@ -79,6 +79,25 @@ contains
     conserve(:) = no(:)
 
   end function conserve
+
+  !***************************
+  !number density to column density conversion
+  function num2col(n)
+    implicit none
+    real*8::num2col,n
+
+    num2col = 1.8d21*(max(n,1d-40)*1d-3)**(2./3.)
+  
+  end function num2col
+  
+  !***********************
+  function col2num(n)
+    implicit none
+    real*8::col2num,n
+
+    col2num = 1d3 * (n/1.8d21)**1.5
+
+  end function col2num
 
   !**************************
   !shielding function for H2O+ and H3O+
