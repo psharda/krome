@@ -327,6 +327,25 @@ contains
   end function cooling_dH
 #ENDIFKROME
 
+
+  !*****************************
+  !escape opacity for H2 cooling. 
+  !courtesy of Kazu Omukai (2014)
+  function H2opacity_omukai(Tgas, ntot)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::H2opacity_omukai,Tgas,ntot,lTgas,lntot
+
+    lTgas = log10(Tgas)
+    lntot = log10(ntot)
+
+    H2opacity_omukai = 1d1**(fit_anytab2D(arrH2esc_ntot(:), &
+         arrH2esc_Tgas(:), arrH2esc(:,:), xmulH2esc, &
+         ymulH2esc,lntot,lTgas))
+    
+  end function H2opacity_omukai
+
 #IFKROME_useCoolingH2GP
   !*******************************
   function cooling_H2GP(n, Tgas)

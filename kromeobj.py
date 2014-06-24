@@ -50,7 +50,7 @@ class krome():
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
-	useCoolingCompton = useCoolingExpansion = useH2opacity = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS  = False
+	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS  = False
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
@@ -70,6 +70,7 @@ class krome():
 	srcFolder = "src/"
 	TminAuto = 1e99
 	TmaxAuto = 0e0
+	H2opacity = "" #H2 opacity model
 	checkMode = "ALL" #conservation check mode (ALL | [CHARGE],[MASS]| NONE)
 	RTOL = 1e-4 #default relative tolerance
 	ATOL = 1e-20 #default absolute tolerance
@@ -205,6 +206,7 @@ class krome():
                         adiabatic index accurately taking into account both contributions, or REDUCED to use only H2 and CO as diatomic\
 			molecules (faster). Finally a custom F90 expression e.g. -gamma=\"1d0\"\
 			can also be used. Default value is 5/3.",metavar="OPTION")
+		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be LENZUNI or OMUKAI")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH, CR, PHOTOAV.\
 			If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
@@ -270,7 +272,6 @@ class krome():
 		self.parser.add_argument("-useFileIdx", action="store_true", help="use the reaction index in the reaction file instead of\
 			using the automatic progressive index starting from 1. Useful with rate coefficients that depends on other\
 			coefficients, e.g. k(10) = 1d-2*k(3)")
-		self.parser.add_argument("-useH2opacity", action="store_true",help="use H2 opacity for H2 cooling")
 		self.parser.add_argument("-useIERR", action="store_true",help="use ierr in the interface with KROME to return errors instead\
 			of stopping the exectution")
 		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
@@ -338,19 +339,19 @@ class krome():
 			filename = "networks/react_primordial_photoH2"
 		elif(args.test=="collapse"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL"]]
+			[argv.append(x) for x in ["-H2opacity=LENZUNI","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial3"
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
+			[argv.append(x) for x in ["-H2opacity=LENZUNI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
 			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseZ_UV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
-			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
+			[argv.append(x) for x in ["-H2opacity=LENZUNI","-useN","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
 			filename = "networks/react_primordialZ2_UV"
 		elif(args.test=="collapseZ_induced"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
-			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
+			[argv.append(x) for x in ["-H2opacity=LENZUNI","-useN","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
 			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,ATOMIC", "-heating=COMPRESS,CHEM"]]
@@ -358,7 +359,7 @@ class krome():
 			filename = "networks/react_primordial_UV"
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST,HD", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-useH2opacity","-useN","-gamma=FULL","-dust=1,C","-dustOptions=H2"]]
+			[argv.append(x) for x in ["-H2opacity=LENZUNI","-useN","-gamma=FULL","-dust=1,C","-dustOptions=H2"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="stars"):
 			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck"]]
@@ -612,9 +613,13 @@ class krome():
 			self.useReverse = True
 			print "Reading option -reverse"
 		#use H2opacity following
-		if(args.useH2opacity):
-			self.useH2opacity = True
-			print "Reading option -useH2opacity"
+		if(args.H2opacity):
+			opacities = ["LENZUNI", "OMUKAI"]
+			if(not(args.H2opacity in opacities)):
+				print "ERROR: H2opacity must be one of "+(", ".join(opacities))+"."
+				sys.exit()
+			self.H2opacity = args.H2opacity.strip()
+			print "Reading option -H2opacity="+self.H2opacity
 
                 #determine H2shielding types 
 		if(args.shielding):
@@ -4147,9 +4152,11 @@ class krome():
 				#replace pragma for total metals
 				row = row.replace("#KROME_tot_metals", self.totMetals)
 				
-				if(self.useH2opacity):
+				if(self.H2opacity=="LENZUNI"):
 					#thick case (note that 1.25d-10 = 1/8e9)
-					row = row.replace("#KROME_H2opacity", "* min(1.d0, (1.25d-10 * sum(n(1:nmols)))**(-.45))") 
+					row = row.replace("#KROME_H2opacity", "&\n* min(1.d0, (1.25d-10 * sum(n(1:nmols)))**(-.45))")
+				elif(self.H2opacity=="OMUKAI"):
+					row = row.replace("#KROME_H2opacity", "&\n* H2opacity_omukai(Tgas, sum(n(1:nmols)))")
 				else:
 					#thin case
 					row = row.replace("#KROME_H2opacity", "") 
@@ -4935,6 +4942,11 @@ class krome():
 			if(srow == "#IFKROME_noierr" and (self.useIERR)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
+			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+
+
 			ierr = ""
 			if(self.useIERR): ierr = ",ierr"
 			if(self.useDust):
@@ -5037,6 +5049,11 @@ class krome():
 			print "- copying optical data for dust..."
 			shutil.copyfile("data/optC.dat", buildFolder+"optC.dat")
 			shutil.copyfile("data/optSi.dat", buildFolder+"optSi.dat")
+
+		#copy OMUKAI datafile
+		if(self.H2opacity=="OMUKAI"):
+			shutil.copyfile("data/escape_H2.dat", buildFolder+"escape_H2.dat")
+			
 
 		print "- copying anytab files..."
 		for i in range(len(self.anytabvars)):
