@@ -771,10 +771,17 @@ contains
           xx = x(i)
           yy = y(i)
           zz = fit_anytab2D(x(:),y(:),z(:,:),xmul,ymul,xx,yy)
-          if(abs(zz-z(i,j))/z(i,j)>1e-3) then
-             print *,"ERROR in anytab2D fitting check!"
-             print *," from",trim(fname)
-             stop
+          if(abs(z(i,j))>1d-40) then
+             if(abs(zz-z(i,j))/z(i,j)>1d0) then
+                print *,"ERROR in anytab2D fitting check!"
+                print *," from ",trim(fname)
+                print *," value (x,y)",xx,yy
+                print *," value (i,j)",i,j
+                print *," expected",zz
+                print *," found",z(i,j)
+                print *," error",abs(zz-z(i,j))/z(i,j)
+                stop
+             end if
           end if
        end do
     end do

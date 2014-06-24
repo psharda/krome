@@ -323,8 +323,6 @@ contains
     end do
 
     write(fnum,*) "**********************"
-
-    
     
     !RATE COEFFIECIENTS
     k(:) = coe_tab(n(:))
@@ -359,7 +357,6 @@ contains
     end do
     write(fnum,*) "**********************"
     write(fnum,*)
-  
 
     !SOLVER
     FMTr = "(a30,E16.7e3)"
@@ -425,6 +422,16 @@ contains
 #ENDIFKROME
 
 #KROME_init_anytab
+
+#IFKROME_useH2esc_omukai
+    call init_anytab2D("escape_H2.dat",arrH2esc_ntot(:), &
+         arrH2esc_Tgas(:), arrH2esc(:,:), xmulH2esc, &
+         ymulH2esc)
+    call test_anytab2D("escape_H2.dat",arrH2esc_ntot(:), &
+         arrH2esc_Tgas(:), arrH2esc(:,:), xmulH2esc, &
+         ymulH2esc)
+
+#ENDIFKROME
 
   end subroutine krome_init
 
