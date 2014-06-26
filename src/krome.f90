@@ -430,8 +430,10 @@ contains
     call test_anytab2D("escape_H2.dat",arrH2esc_ntot(:), &
          arrH2esc_Tgas(:), arrH2esc(:,:), xmulH2esc, &
          ymulH2esc)
-
 #ENDIFKROME
+
+    !init phys common variables
+    phys_Tcmb = 2.73d0
 
   end subroutine krome_init
 
