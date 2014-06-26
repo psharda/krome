@@ -54,5 +54,8 @@ module krome_commons
   !commons for H2_opacity
   real*8::arrH2esc_Tgas(13),arrH2esc_ntot(10),arrH2esc(10,13)
   real*8::xmulH2esc,ymulH2esc
+
+  !physical commons
+  real*8::phys_Tcmb,phys_zredshift
   
 end module krome_commons

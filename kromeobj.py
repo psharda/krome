@@ -57,7 +57,7 @@ class krome():
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
-	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = False
+	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = useCoolCMBFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
@@ -262,6 +262,8 @@ class krome():
 			if the T limits for a given reaction are 10. and 1d4 the option -Tlmit GE,LE will provide (Tgas>=10. AND Tgas<=1d4) as\
 			the reaction range of validity. Operators opLow and opHigh must be one of the following: LE, GE, LT, GT.")
 		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
+		self.parser.add_argument("-useCoolCMBFloor", action="store_true", help="include a cooling floor given by the CMB temperature.\
+			note that you must define Tcmb by using the subroutine krome_get_Tcmb(your_Tcmb) before calling krome.")
 		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size\
 			NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION\
 			must be explicitly included in krome_user_commons module.", metavar="FUNCTION")
@@ -580,6 +582,15 @@ class krome():
 		if(args.usePhotoOpacity):
 			self.usePhotoOpacity = True
 			print "Reading option -usePhotoOpacity (now obsolete, you can remove it)"
+
+		#use cooling CMB floor 
+		if(args.useCoolCMBFloor):
+			self.useCoolCMBFloor = True
+			if(not(args.cooling)):
+				print "ERROR: option -useCoolCMBFloor needs at least one active cooling option. See -cooling="
+				sys.exit()
+			print "Reading option -useCoolCMBFloor"
+
 
 		#use photo-induced cooling transitions 
 		if(args.usePhotoInduced):
@@ -4446,6 +4457,15 @@ class krome():
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
+
+			#include cooling cmb floor if necessary
+			if("#KROME_cool_cmb_floor" in srow):
+				if(self.useCoolCMBFloor):
+					srow = srow.replace("#KROME_cool_cmb_floor"," + cooling(n(:), phys_Tcmb)")
+				else:
+					srow = srow.replace("#KROME_cool_cmb_floor","")
+				fout.write(srow+"\n") #print a blank line
+				continue
 
 			if(srow == "#KROME_ODE"):
 				if(self.use_implicit_RHS):
