@@ -1008,7 +1008,7 @@ class krome():
 
 		#use custom function for coefficient instead of coe_tab()
 		if(args.useCustomCoe):
-			self.customCoeFunction = args.useCustomCoe
+			self.customCoeFunction = args.useCustomCoe.replace("\"","")
 			self.useCustomCoe = True
 			print "Reading option -useCustomCoe (Expression="+str(self.customCoeFunction)+")"
 
@@ -1357,8 +1357,8 @@ class krome():
 		idxFound = tminFound = tmaxFound = rateFound = True
 		qeffFound = False
 		group = "__DEFAULT__" #default group for reactions
-		specs = []
-		reacts = []
+		specs = [] #list of species as mol objects
+		reacts = [] #list of reactions as react objects
 		reags = [] #list of reagents for already found
 		prods = [] #list of prods for already found
 		idxs = [] #list of index for already found
