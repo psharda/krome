@@ -583,13 +583,22 @@ contains
     !default HD cooling value
     cooling_HD = 0.0d0 !erg/cm3/s
 
+    !this function does not have limits on density
+    ! and temperature, even if the original paper do.
+    ! However, we extrapolate the limits.
+
     !exit on low temperature
-    if(Tgas<1d2) return
+    if(Tgas<2.73d0) return
+    !extrapolate higher temperature limit
+    Tgas = min(Tgas,1d4)
 
     !calculate density
     dd = n(idx_H) !sum(n(1:nmols))
-    !exit if density is out of Lipovka bounds
-    if(dd<1d0 .or. dd>1d8) return 
+    !exit if density is out of Lipovka bounds (uncomment if needed)
+    !if(dd<1d0 .or. dd>1d8) return
+
+    !extrapolate density limits
+    dd = min(max(dd,1d-2),1d10)
 
     !POLYNOMIAL COEFFICIENT: TABLE 1 LIPOVKA 
     c(0,:) = (/-42.56788d0, 0.92433d0, 0.54962d0, -0.07676d0, 0.00275d0/)
