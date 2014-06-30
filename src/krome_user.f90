@@ -17,8 +17,29 @@ contains
 
 #KROME_user_commons_functions
 
-#KROME_cooling_functions
+  !**********************
+  !set the physical common value Tcmb to arg
+  subroutine krome_set_Tcmb(arg)
+    use krome_commons
+    implicit none
+    real*8::arg
 
+    phys_Tcmb = arg
+
+  end subroutine krome_set_Tcmb
+
+  !**********************
+  !get the physical common value Tcmb to arg
+  function krome_get_Tcmb()
+    use krome_commons
+    implicit none
+    real*8::krome_get_Tcmb
+
+    krome_get_Tcmb = phys_Tcmb
+
+  end function krome_get_Tcmb
+
+#KROME_cooling_functions
   
 #IFKROME_usePhotoBins
   !************************
