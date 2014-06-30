@@ -41,6 +41,16 @@ contains
     xe = n(idx_e) / get_Hnuclei(n(:))
     phiH = .3908d0*(1e0-xe**.4092)**1.7592
     phiHe = .0554d0*(1e0-xe**.4614)**1.666
+
+    !factor to keep into account for the mean
+    ! value of phi as in Wolfire+1995 appendix A
+    ! i.e. in Mathematica format:
+    ! Integrate[(x/a - 1) (1/x^1.5), {x, 2000, 10000}]
+    ! / Integrate[1/x^1.5, {x, 2000, 10000}]
+    ! with a=13.6 eV for H and a=24.6 eV for He
+    phiH = 327.832286034056d0 * phiH 
+    phiHe = 180.793458763612d0 * phiHe
+
     ratexH = 1d1**user_xray_H
     ratexHe = 1d1**user_xray_He
 #ENDIFKROME
