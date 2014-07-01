@@ -316,7 +316,7 @@ class krome():
 			filename = "networks/react_auto"
 		elif(args.test=="chianti"):
 			[argv.append(x) for x in ["-photoBins=10","-useN"]]
-			[argv.append(x) for x in ["-cooling=OI,OII,OIII,OIV"]]
+			[argv.append(x) for x in ["-cooling=OIV"]]
 			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
 			filename = "networks/react_chianti"
 		elif(args.test=="shock1Dcool"):
@@ -2188,6 +2188,14 @@ class krome():
 
 	###############################################
 	def dumpNetwork(self):
+
+		buildFolder = self.buildFolder
+		#create build folder if not exists
+		#(this block is also in prepareBuild method)
+		if(not(os.path.exists(buildFolder))):
+			os.mkdir(buildFolder)
+			print "Created "+buildFolder
+		
 		#dump species to log file
 		fout = open(self.buildFolder+"species.log","w")
 		fout.write("#This file contains a list of the species used with their indexes\n")
@@ -3074,9 +3082,10 @@ class krome():
 						full_cool += "\n!check negative abundances\nif(minval(B"+cur_metal+")<0d0) then\n"
 						full_cool += " print *,\"ERROR: some levels population < 0d0!\"\n"
 						full_cool += " print *,\" total population (cm-3):\", n(idx_"+cur_metal+")\n"
-						full_cool += " print *,\" temperature (K):\", n(idx_"+cur_metal+")\n"
+						full_cool += " print *,\" temperature (K):\", Tgas\n"
+						full_cool += " print *,\" level population so far (cm-3):\"\n"
 						full_cool += " do i=1,size(B"+cur_metal+")\n"
-						full_cool += "  if(B"+cur_metal+"(i)<0d0) print *,i,B"+cur_metal+"(i)\n"
+						full_cool += "  print *,i,B"+cur_metal+"(i)\n"
 						full_cool += " end do\n"
 						full_cool += " stop\n"
 						full_cool += "end if\n"
