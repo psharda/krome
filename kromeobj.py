@@ -960,7 +960,7 @@ class krome():
 		if(args.coolLevels):
 			self.coolLevels = [int(x) for x in range(int(args.coolLevels)+1)]
 			if(int(args.coolLevels)<1): die("ERROR: coolLevels must be at least 1 (two levels)!")
-			print "Reading option -coolLevels ("+(", ".join([str(x) for x in self.coolLevels]))+")"
+			print "Reading option -coolLevels ("+str(self.coolLevels[0])+" to "+str(self.coolLevels[-1])+")"
 
 		#cooling quenching
 		if(args.coolingQuench):
@@ -2691,7 +2691,7 @@ class krome():
 
 	#######################################
 	#this function loads the cooling functions from a file
-	# and prepares all the necessary stuff. It's a little bit complex :)
+	# and prepares all the necessary stuff. It's a bit complex :)
 	def createZcooling(self):
 
 		vars_cool = [] #variables
@@ -2700,23 +2700,25 @@ class krome():
 		nkrates = 0
 		fcn_levs = [] #list of fcn_i functions produced
 		zcoolants = self.zcoolants
-		#loop on the files
+		#loop on the files indicated in the options
 		for fname in self.coolFile:
+			#check if given gile exists
 			if(not(file_exists(fname))):
 				print "ERROR: file "+fname+" not found!"
 				sys.exit()
 	
-			use_escape = False
-			skip = False
-			inmetal = False
-			skip_metal = False
-			needOrthoPara = False
-			#read file
+			use_escape = False #flag to use escape
+			skip = False #flag to skip large comments
+			inmetal = False #flag to determine if the metal block in the file is consistent
+			skip_metal = False #flag to skip a given metal in the file (i.e. not selected with -cooling option)
+			needOrthoPara = False #flag to prepare ortho/para variables for H2
+			#read the file fname
 			print "******************"
 			print "Reading coolants from "+fname+"..."
 			fh = open(fname,"rb")
 			for row in fh:
 				srow = row.strip()
+				#this initial block avoid blank lines and comments
 				if(srow==""): continue #skip blank lines
 				if(srow[0]=="#"): continue #skip lines with coments
 				if(srow[:1]=="//"): continue #comments
@@ -2726,27 +2728,30 @@ class krome():
 					continue
 				srow = srow.split("#")[0] #skip comments
 				if(skip): continue
+				#end metal statement end the metal block and 
 				if((srow=="endmetal" or srow=="end metal") and skip_metal):
 					inmetal = False
 					skip_metal = False
 					continue
-				if(skip_metal): continue #skip metals that are not present in the cooling options
-				#read variables and store to vars_cool
+				if(skip_metal): continue #skip metals that are not present in the -cooling options
+
+				#read escape statement in the file and set the escape flag to true if equal to yes
 				if("escape:" in srow):
 					srow = srow.replace("escape:","").strip()
 					if(srow.lower()=="yes"): use_escape = True
 					continue
 
-				#read variables and store to vars_cool
+				#read additional variables and store to vars_cool list
 				if("@var:" in srow):
 					srow = srow.replace("@var:","").strip()
 					vars_cool.append([x.strip() for x in srow.split("=")]) #read extra variables
 					continue
-				#read metal name
+
+				#read metal name, prepare function header, and init variables
 				if("metal:" in srow):
 					inmetal = True #flag reading metal
-					real_variables = []
-					kkrates = []
+					real_variables = [] #list of real variables
+					kkrates = [] #list of de-excitation rates
 					#modify the name of the metal (e.g. C+ becomes CII)
 					metal_name = srow.replace("metal:","").strip()
 					if("+" in metal_name):
@@ -2755,6 +2760,8 @@ class krome():
 						mname = metal_name.replace("-","") + "m"+int_to_roman(metal_name.count("-")+1)
 					else:
 						mname = metal_name+"I" #is not an ion
+
+					#check if the name of the metal is NOT in the list, and then set skip to true
 					if(not(mname.upper() in [x.upper() for x in zcoolants])): skip_metal = True
 
 					function_name = "cooling"+mname #name of the cooling function
@@ -2762,10 +2769,10 @@ class krome():
 					excitation_rates = [] #list of excitation rates written in F90 for cur_metal 
 					transitions = [] #list of transitions
 					colliders = [] #list of colliders names
-					Aijs = dict() #init dictionary for Einsten's
-					Bijs = dict() #init dictionary for Bij
-					levels = dict() #init dictionary for levels
-					#prepares the header of the function
+					Aijs = dict() #init dictionary for Einsten's coefficients
+					Bijs = dict() #init dictionary for Bij coefficients
+					levels = dict() #init dictionary for levels (a dictionary of dictionaries, see below)
+					#prepares the header of the function ()
 					full_cool = "\n"
 					full_cool += "!########## " + cur_metal + " #########\n"
 					full_cool += "function "+function_name+"(n,inTgas,k)\n"
@@ -2774,26 +2781,29 @@ class krome():
 					full_cool += "use krome_photo\n"
 					full_cool += "implicit none\n"
 					full_cool += "real*8::"+function_name+",n(:),inTgas,Tgas,k(:),invTgas\n"
-					full_cool += "integer::i\n"				
-					full_cool += "#KROME_replace_with_declarations\n\n"
+					full_cool += "integer::i\n"
+					#this KROME pragma will be replaced with necessary real variables at the end
+					full_cool += "#KROME_replace_with_declarations\n\n" 
+					full_cool += function_name+" = 0d0\n" #default for cooling is zero
+					full_cool += "if(n(idx_"+cur_metal+")<1d-10) return\n\n" #skip calculation if coolant density is low
 					full_cool += "Tgas = inTgas\n"
 					full_cool += "invTgas = 1d0/Tgas\n"
 
-				#read the levels
+				#read a level from the file as "level number: energy, degenerancy (e.g. level 2: 63.e0, 5)
 				if("level" in srow):
 					nlev = int(srow.split(":")[0].replace("level","").strip()) #level number
 					energy, gmult = srow.split(":")[1].split(",") #get energy and degenerancy factor
-					cond1 = (len(self.coolLevels)!=0)
-					cond2 = not(int(nlev) in self.coolLevels)
-					if(cond1 and cond2): continue #skip if levels are not listed in requested levels
-					levels[nlev] = {"energy":float(energy), "gmult":float(gmult)} #store energy and degenerancy
+					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
+					cond2 = not(int(nlev) in self.coolLevels) #condition2: the level should be in the list
+					if(cond1 and cond2): continue #skip if levels are not listed in requested levels (both conditions)
+					levels[nlev] = {"energy":float(energy), "gmult":float(gmult)} #store energy and degenerancy in a dictionary
 					continue
 			
-				#end of metals block
+				#end of metals block (prepare all the machinery here)
 				if(srow=="endmetal" or srow=="end metal"):
-					#check end metal
+					#check if end metal statement
 					if(not(inmetal)):
-						print "ERROR: end metal statement without metal: statement!"
+						print "ERROR: in "+fname+" \"end metal\" statement without \"metal:\" statement!"
 						sys.exit()
 					inmetal = False #in metal block flag
 
@@ -2801,32 +2811,38 @@ class krome():
 					if(needOrthoPara):
 						full_cool += "H2or = "+str(ortho2para/(1e0+ortho2para)) + " * n(idx_H2)\n"
 						full_cool += "H2pa = "+str(1e0/(1e0+ortho2para)) + " * n(idx_H2)\n"
+						#this commented lines are for the user who want to change the ortho/para at runtime
 						full_cool += "!explicit if needed\n"
 						full_cool += "!H2or = o2p / (1d0 + o2p) * n(idx_H2)\n"
 						full_cool += "!H2pa = 1d0 / (1d0 + o2p) * n(idx_H2)\n"
 			
-					#write de-excitation rates
+					#write all de-excitation rates in the function 
 					full_cool += "\n!de-excitation rates\n"
 					for x in kkrates:
 						full_cool += x + "\n"
 					full_cool += "\n"
 
-					#prepares conversion factor to ji from ij
+					#prepares conversion factor to ji from ij (de-excitation to excitation)
 					full_cool += "!excitation rates\n"
-					trfound = []
+					trfound = [] #store transition found to avoid repetitions
+					#loop on transitions
 					for tr in transitions:
-						ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
+						#prepare transition variable, e.g. gC_g10to01
+						ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"])
+						#compute gj/gi ratio
 						ij2ji = ij2jivar + " = " + str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"])\
 							+ "d0"
+						#compute exponential part
 						ij2ji += " * exp(-" +str(float(levels[tr["up"]]["energy"]) - levels[tr["down"]]["energy"])\
 							+ "*invTgas)"
-						#skip already found transitions					
+
+						#if transition not found write, otherwise skip				
 						if(not([tr["up"], tr["down"]] in trfound)):
 							full_cool += ij2ji + "\n"
-							real_variables.append(ij2jivar)
-							trfound.append([tr["up"], tr["down"]])
+							real_variables.append(ij2jivar) #append variable to list of real vars
+							trfound.append([tr["up"], tr["down"]]) #add the transition to found
 
-					#prepares Bij and Bji if needed
+					#prepares Bij and Bji pre-factor if escape is needed
 					if(use_escape):
 							full_cool += "\n"
 							full_cool += "!prepares Bij and Bji for escape probability\n"
@@ -2834,38 +2850,52 @@ class krome():
 							full_cool += "preB = .5d0*(clight*planck_erg)**2/boltzmann_erg**3\n"
 							real_variables.append("preB")
 
-					nlev = len(levels)
+					nlev = len(levels) #nlev is the number of levels
+					#loop on transitions to compute escape, i.e. Bij and Bji
 					for tr in transitions:
 						if(not(use_escape)): break #Bij and Bji only needed for escape
-						hasAij = False
+						hasAij = False #flag for transition with Aij available (otherwise no way to get Bij)
+						#try to read Aij, if present hasAij become true otherwise ignore
 						try:
-							bAij = Aijs[(tr["up"],tr["down"])]
+							bAij = Aijs[(tr["up"],tr["down"])] #read the Aij
 							hasAij = True
 						except:
 							pass
 				
+						#if transition has Aij prepares Bij and Bji
 						if(hasAij):
+							#varaible names
 							varBji = "B"+str(tr["up"])+str(tr["down"])
 							varBij = "B"+str(tr["down"])+str(tr["up"])
+							#if already present skip
 							if(varBji in real_variables): continue
+							#energy difference to the -3
 							nrg3 = str(pow(float(levels[tr["up"]]["energy"]) - (levels[tr["down"]]["energy"]),-3))
+							#degenerancy level ratio
 							gji = str(float(levels[tr["up"]]["gmult"]) / levels[tr["down"]]["gmult"]) + "d0"
+							#store the value in a transition matrix common for the cooling module (for nleq solver)
 							Bescji = "Besc"+str(nlev)+"("+str(tr["up"]+1)+","+str(tr["down"]+1)+")"
 							Bescij = "Besc"+str(nlev)+"("+str(tr["down"]+1)+","+str(tr["up"]+1)+")"
 							full_cool += Bescji + " = preB * " + nrg3 + " * " + bAij + "\n"
 							full_cool += Bescij + " = " + Bescji + " * " + gji + "\n"
+							#append both variable names to the var list
 							real_variables.append(varBji)
 							real_variables.append(varBij)
 
 	 
 				
 					#prepares rate conversion using conversion factor computed above
+					# i.e. exitation = conversion * de-excitation
 					full_cool += "\n"
+					#loop on the transitions
 					for tr in transitions:
 						coll = tr["coll"]
-						ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"]) 
+						#conversion factor variable
+						ij2jivar = "g"+cur_metal+"_g"+str(tr["up"])+str(tr["down"])+"to"+str(tr["down"])+str(tr["up"])
+						#variable names for excitation and de-excitation
 						varup = "g"+str(tr["up"])+str(tr["down"])+cur_metal+"_"+coll
 						vardown = "g"+str(tr["down"])+str(tr["up"])+cur_metal+"_"+coll
+						#store variable names
 						real_variables.append(varup)
 						real_variables.append(vardown)
 						full_cool += vardown + " = " + varup +" * " + ij2jivar + "\n"
@@ -2882,6 +2912,7 @@ class krome():
 						real_variables.append(varM) #add to double variable list
 						#check if variable is unique
 						if(not(varM in varMexist)):
+							#include photoiduced transition if needed
 							try:
 								betas = ""
 								if(self.usePhotoInduced):
@@ -2892,7 +2923,8 @@ class krome():
 									h_erg = 6.6260755e-27 #erg*s
 									c_speed = 2.9979245800e10 #cm/s
 									nuE = deltaE*boltz_eV/h_eV #1/s
-									fAij = Aijs[(tr["up"],tr["down"])].replace("d","e")
+									fAij = Aijs[(tr["up"],tr["down"])].replace("d","e") #Aij in f90 double
+									#compute gg
 									gg = float(levels[tr["up"]]["gmult"]) / float(levels[tr["down"]]["gmult"])
 									betaI = gg * float(fAij) * c_speed**2/2e0/h_eV/nuE**3 #cm2/eV/s
 									betas = " &\n+ "+format_double(betaI) + " * get_photoIntensity("\
@@ -2964,7 +2996,7 @@ class krome():
 				
 						#build the other rows of A
 						for ilev, lev in levels.iteritems():
-							if(ilev==0): continue
+							if(ilev==0): continue #skip first level (linear dependent)
 							Arow = ["" for i in range(nlev)]
 							for k,v in MMij.iteritems():
 								if(ilev==v[0]): Arow[v[0]] += "-"+k
@@ -2990,6 +3022,7 @@ class krome():
 								+ Bvar+"(:), \""+function_name+"\")\n"
 							self.needLAPACK = True
 
+					#if beta escape needed prepare common matrix with Mij terms without Aij coefficients
 					if(use_escape):
 						full_cool += "\n"
 						full_cool += "!init common Matrix without Aij terms\n"
@@ -3007,6 +3040,7 @@ class krome():
 						full_cool += "call nleq_wrap("+Bvar+"(:))\n"
 						self.useNLEQ = True
 
+					#with beta escape fill common beta matrix (for nleq1)
 					if(use_escape):
 						full_cool += "\n"
 						full_cool += "!scale to beta\n"
@@ -3076,7 +3110,7 @@ class krome():
 								pass
 						full_cool += function_name + " = " + function_name + " - &\n (" + (" &\n + ".join(heats)) + ")\n"
 					else:
-						#if no induced heating controls the limits
+						#if no induced heating controls the cooling (should be positive)
 						full_cool += "\nif("+function_name+"<0d0) then\n print *, \"ERROR: "\
 							+function_name+"<0!\", "+function_name+"\n"
 						full_cool += "\n!check negative abundances\nif(minval(B"+cur_metal+")<0d0) then\n"
