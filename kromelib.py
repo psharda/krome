@@ -294,15 +294,15 @@ def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpath
 	anytabxmul = mytabvar+"_anytabxmul"
 	anytabymul = mytabvar+"_anytabymul"
 	tabf =  "fit_anytab2D("+anytabx+", &\n"+anytaby+", &\n"+anytabz+", &\n"+anytabxmul+", &\n"+anytabymul+", &\n"+mytabxxyy+")"
-	ivarcoe = len(coevars)
-	coevars[mytabvar] = [ivarcoe,tabf]
+	if(not(mytabvar in coevars)):
+		coevars[mytabvar] = [len(coevars),tabf]
 
 	print "Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]"
 
 #############################
 def addVarCoe(mytabvar,tabf,coevars):
-	ivarcoe = len(coevars)
-	coevars[mytabvar] = [ivarcoe,tabf]
+	if(not(mytabvar in coevars)):
+		coevars[mytabvar] = [len(coevars),tabf]
 
 #############################
 #cooling index list

@@ -332,7 +332,7 @@ contains
     real*8::n(:),Tgas,mu,rhogas
     real*8::m(nspec),get_jeans_length
     m(:) = get_mass()
-    rhogas = sum(n(1:nmols)*m(1:nmols))
+    rhogas = sum(n(1:nmols)*m(1:nmols)) + 1d-40
     mu = 1.22d0
     get_jeans_length = sqrt(pi*boltzmann_erg*Tgas/rhogas&
          /p_mass/gravity/mu)

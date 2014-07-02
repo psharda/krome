@@ -1768,19 +1768,21 @@ class krome():
 			ivarcoe = len(self.coevars)
 			fake_ivarcoe = 0
 			fake_coevars = dict()
+			addVarCoe("ncolH","num2col(n(idx_H))",self.coevars)
+			addVarCoe("ncolHe","num2col(n(idx_He))",self.coevars)
+			addVarCoe("logHe","log10(ncolHe)",self.coevars)
+			addVarCoe("logH","log10(ncolH)",self.coevars)
+			addVarCoe("xe","n(idx_e) / (get_Hnuclei(n(:)) + 1d-40)",self.coevars)
+
 			#updates anytab arrays
 			if(x.reactants[0].name=="H"):
 				mytabvar = "user_xray_H"
 				mytabpath = "data/ratexH.dat"
 				mytabxxyy = "logH,logHe-logH"
 
-				addVarCoe("ncolH","num2col(n(idx_H))",self.coevars)
-				addVarCoe("logH","log10(ncolH)",self.coevars)
-
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
 					self.anytabsizes,self.coevars)
 
-				addVarCoe("xe","n(idx_e) / get_Hnuclei(n(:))",self.coevars)
 				addVarCoe("phiH",".3908d0*(1e0-xe**.4092)**1.7592 * 327.832286034056d0",self.coevars)
 				addVarCoe("ratexH"," 1d1**user_xray_H",self.coevars)
 
@@ -1800,8 +1802,6 @@ class krome():
 				mytabpath = "data/ratexHe.dat"
 				mytabxxyy = "logH,logHe-logH"
 
-				addVarCoe("ncolHe","num2col(n(idx_He))",self.coevars)
-				addVarCoe("logHe","log10(ncolHe)",self.coevars)
 
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
 					self.anytabsizes,self.coevars)
@@ -1826,8 +1826,6 @@ class krome():
 				print " remove it from the chemical network or provide non-automatic rate."
 				print " Note that you should also provide the heating tab if needed."
 				sys.exit()
-		for k,v in self.coevars.iteritems():
-			print k,v
 
 		#check if both (H and He) xray reactions are found, since tables are H and He dependant
 		if(xrayHeFound!=xrayHFound):
