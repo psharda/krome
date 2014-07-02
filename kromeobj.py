@@ -2763,6 +2763,12 @@ class krome():
 				if("level" in srow):
 					srow = srow.replace("level","").replace(":",",") #use only comma to separate and remove "level"
 					arow = srow.split(",") #split line using comma
+
+					#skip if levels are not requested (-coolLevels)
+					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
+					cond2 = not(int(arow[0]) in self.coolLevels) #condition2: the level should be in the list
+					if(cond1 and cond2): continue #skip if levels are not listed in requested levels (both conditions)
+
 					#add level data to the dictionary
 					levels_data[int(arow[0])] = {"energy":float(arow[1]), "g":float(arow[2])}
 					continue
@@ -2771,6 +2777,13 @@ class krome():
 				if(len(srow.split(","))==3):
 					arow = srow.split(",")
 					trans_name = arow[0].strip()+"->"+arow[1].strip() #prepare the key as up->down (e.g. "4->1")
+
+					#skip if levels are not requested (-coolLevels)
+					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
+					cond2 = not(int(arow[0]) in self.coolLevels) #condition2: the up level should be in the list
+					cond3 = not(int(arow[1]) in self.coolLevels) #condition3: the low level should be in the list
+					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels (both conditions)
+
 					#store data
 					trans_data[trans_name] = {"up":int(arow[0]), "down":int(arow[1]), "Aij":float(arow[2])}
 					continue
@@ -2781,6 +2794,13 @@ class krome():
 					arow[3] = (",".join(arow[3:])) #join the last element to cope with comma separated f90 functions
 					#key for the transition as up->down_collider (e.g. "6->1_H")
 					trans_name = arow[1].strip()+"->"+arow[2].strip()+"_"+arow[0].strip()
+
+					#skip if levels are not requested (-coolLevels)
+					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
+					cond2 = not(int(arow[1]) in self.coolLevels) #condition2: the up level should be in the list
+					cond3 = not(int(arow[2]) in self.coolLevels) #condition3: the low level should be in the list
+					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels (both conditions)
+
 					#store data
 					rate_data[trans_name] = {"up":int(arow[1]), "down":int(arow[2]), "collider":arow[0].strip(),\
 						"rate":arow[3].strip()}
@@ -2828,6 +2848,7 @@ class krome():
 			#define an integer 1-based index for all the reaction found so far
 			for k in rate_data:
 				rate_data[k]["idx"] = index_count+1
+				self.coolZ_rates.append("k("+str(index_count+1)+") = "+rate_data[k]["rate"])
 				index_count += 1
 
 			#evaluate connection level matrix
@@ -2874,15 +2895,16 @@ class krome():
 				for ilev in level_list:
 					#loop on the number of levels (j index, i<->j)						
 					for jlev in level_list:
-						A_name = "A("+str(ilev+1)+","+str(jlev+1)+")" #Ax=b matrix element name
 						#no transitions from the same level
 						if(ilev==jlev): continue
 						#k->j transitions (de-populate k level: Akj, Ckj)
 						if(klev==ilev):
+							A_name = "A("+str(klev+1)+","+str(ilev+1)+")" #Ax=b matrix element name
 							trans_name = str(ilev)+"->"+str(jlev) #transition key k->j
 							#loop on rate data to find keys that contain the transition name (rates k->j)
 							for r_key in rate_data:
-								if(trans_name in r_key):
+								r_key_part = r_key.split("_")[0]
+								if(trans_name==r_key_part):
 									full_A_matrix += "!"+str(klev)+" -> "+str(jlev)+\
 										", (de)excitation, collision: "+rate_data[r_key]["collider"]+"\n"
 									full_A_matrix += A_name +" = "+A_name+" - k("+\
@@ -2896,10 +2918,12 @@ class krome():
 								#print trans_data[trans_name]
 						#i->k transitions (populate k level: Aik, Cik)
 						if(klev==jlev):
+							A_name = "A("+str(klev+1)+","+str(ilev+1)+")" #Ax=b matrix element name
 							trans_name = str(ilev)+"->"+str(jlev) #transition key i->k
 							#loop on rate data to find keys that contain the transition name (rates i->k)
 							for r_key in rate_data:
-								if(trans_name in r_key):
+								r_key_part = r_key.split("_")[0]
+								if(trans_name==r_key_part):
 									full_A_matrix += "!"+str(ilev)+" -> "+str(klev)+\
 										", (de)excitation, collision: "+rate_data[r_key]["collider"]+"\n"
 									full_A_matrix += A_name +" = "+A_name+" + k("+\
@@ -2926,17 +2950,40 @@ class krome():
 			#PART 2.4: prepare the function
 			nlev = max(levels_data)+1
 			function_name = "cooling"+metal_name
-			full_function = "function "+function_name+"(n,inTgas,k)\n"
+			full_function = "!************************************\n"
+			full_function += "function "+function_name+"(n,inTgas,k)\n"
+			full_function += "use krome_commons\n"
+			full_function += "implicit none\n"
+			full_function += "integer::i\n"
 			full_function += "real*8::"+function_name+",n(:),inTgas,k(:)\n"
 			full_function += "real*8::A("+str(nlev)+","+str(nlev)+"),B("+str(nlev)+")\n"
 			full_function += full_A_matrix
 			full_function += "!build matrix B\n"
 			full_function += "B(:) = 0d0\n"
 			full_function += "B("+str(idx_linear_dep_level+1)+") = 1d0\n\n"
-			full_function += "mydgesv("+str(nlev)+", A(:,:), B(:), \""+function_name+"\")\n\n"
+			if(nlev>3):
+				full_function += "call mydgesv("+str(nlev)+", A(:,:), B(:), \""+function_name+"\")\n\n"
+				self.needLAPACK = True
+			elif(nlev==2):
+				full_function += "call mylin2(A(:,:), B(:))\n\n"
+			elif(nlev==3):
+				full_function += "call mylin3(A(:,:), B(:))\n\n"
+			else:
+				sys.exit("ERROR: strange number of levels for linear system in Zcooling: "+str(nlev))
+
+			full_function += "!check if B has negative values\n"
+			full_function += "if(minval(B)<0d0)then\n"
+			full_function += " do i=1,size(B)\n"
+			full_function += "  print *,i,B(i)\n"
+			full_function += " end do\n"
+			full_function += " stop\n"
+			full_function += "end if\n\n"
+
 			full_function += function_name + " = " +full_B_vector+"\n\n"
 			full_function += function_name + " = " +function_name+" * n(idx_"+metal_name_f90+")\n\n"
 			full_function += "end function "+function_name+"\n\n"
+			
+			self.coolZ_functions.append([function_name,full_function])
 			#print full_function
 
 	#######################################
@@ -4470,7 +4517,7 @@ class krome():
 				
 
 			elif(row.strip() == "#KROME_nZrate"):
-					fout.write("integer,parameter::nZrate="+str(self.coolZ_nkrates)+"\n")
+					fout.write("integer,parameter::nZrate="+str(len(self.coolZ_rates))+"\n")
 			elif(row.strip() == "#KROME_coolingZ_call_functions"):
 				for x in self.coolZ_functions:
 					fout.write("cool = cool + "+x[0]+"(n(:),inTgas,k(:))\n")
@@ -4496,6 +4543,7 @@ class krome():
 					#thick case (note that 1.25d-10 = 1/8e9)
 					row = row.replace("#KROME_H2opacity", "&\n* min(1.d0, (1.25d-10 * sum(n(1:nmols)))**(-.45))")
 				elif(self.H2opacity=="OMUKAI"):
+					#thick case using table provided by Omukai (priv. comm. 2014)
 					row = row.replace("#KROME_H2opacity", "&\n* H2opacity_omukai(Tgas, sum(n(1:nmols)))")
 				else:
 					#thin case

@@ -677,12 +677,13 @@ contains
   function coolingZ_rates(inTgas)
     use krome_commons
     implicit none
-    real*8::inTgas, coolingZ_rates(nZrate),k(nZrate)
-    real*8::Tgas
+    real*8::inTgas,coolingZ_rates(nZrate),k(nZrate)
+    real*8::Tgas,invT
     integer::i
 #KROME_coolingZ_declare_custom_vars
 
     Tgas = inTgas
+    invT = 1d0/Tgas
 
 #KROME_coolingZ_custom_vars
 
@@ -701,7 +702,7 @@ contains
     end if
 
     !check rates <0
-    if(maxval(k)<0d0) then
+    if(minval(k)<0d0) then
        print *,"ERROR: found rate <0d0 in coolingZ_rates!"
        print *," Tgas =",Tgas
        do i=1,nZrate
