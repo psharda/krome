@@ -1774,21 +1774,15 @@ class krome():
 				mytabpath = "data/ratexH.dat"
 				mytabxxyy = "logH,logHe-logH"
 
-				ivarcoe += 1
-				addVarCoe("ncolH","num2col(n(idx_H))",self.coevars,ivarcoe)
-				ivarcoe += 1
-				addVarCoe("logH","log10(ncolH)",self.coevars,ivarcoe)
+				addVarCoe("ncolH","num2col(n(idx_H))",self.coevars)
+				addVarCoe("logH","log10(ncolH)",self.coevars)
 
-				ivarcoe += 1
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
-					self.anytabsizes,self.coevars,ivarcoe)
+					self.anytabsizes,self.coevars)
 
-				ivarcoe += 1
-				addVarCoe("xe","n(idx_e) / get_Hnuclei(n(:))",self.coevars,ivarcoe)
-				ivarcoe += 1
-				addVarCoe("phiH",".3908d0*(1e0-xe**.4092)**1.7592 * 327.832286034056d0",self.coevars,ivarcoe)
-				ivarcoe += 1
-				addVarCoe("ratexH"," 1d1**user_xray_H",self.coevars,ivarcoe)
+				addVarCoe("xe","n(idx_e) / get_Hnuclei(n(:))",self.coevars)
+				addVarCoe("phiH",".3908d0*(1e0-xe**.4092)**1.7592 * 327.832286034056d0",self.coevars)
+				addVarCoe("ratexH"," 1d1**user_xray_H",self.coevars)
 
 				xrayHFound = True
 				x.krate = "ratexH * (1d0+phiH) + n(idx_He)/(n(idx_H)+1d-40) * ratexHe * phiH"
@@ -1799,26 +1793,21 @@ class krome():
 				mytabpath = "data/heatxH.dat"
 				mytabxxyy = "logH,logHe-logH"
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
-					self.anytabsizes,fake_coevars,fake_ivarcoe)
+					self.anytabsizes,fake_coevars)
 
 			elif(x.reactants[0].name.lower()=="he"):
 				mytabvar = "user_xray_He"
 				mytabpath = "data/ratexHe.dat"
 				mytabxxyy = "logH,logHe-logH"
 
-				ivarcoe += 1
-				addVarCoe("ncolHe","num2col(n(idx_He))",self.coevars,ivarcoe)
-				ivarcoe += 1
-				addVarCoe("logHe","log10(ncolHe)",self.coevars,ivarcoe)
+				addVarCoe("ncolHe","num2col(n(idx_He))",self.coevars)
+				addVarCoe("logHe","log10(ncolHe)",self.coevars)
 
-				ivarcoe += 1
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
-					self.anytabsizes,self.coevars,ivarcoe)
+					self.anytabsizes,self.coevars)
 
-				ivarcoe += 1
-				addVarCoe("phiHe",".0554d0*(1e0-xe**.4614)**1.666 * 180.793458763612d0",self.coevars,ivarcoe)
-				ivarcoe += 1
-				addVarCoe("ratexHe"," 1d1**user_xray_He",self.coevars,ivarcoe)
+				addVarCoe("phiHe",".0554d0*(1e0-xe**.4614)**1.666 * 180.793458763612d0",self.coevars)
+				addVarCoe("ratexHe"," 1d1**user_xray_He",self.coevars)
 
 				x.krate = "ratexHe * (1d0+phiHe) + n(idx_H)/(n(idx_He)+1d-40) * ratexH * phiHe"
 				xrayHeFound = True
@@ -1829,7 +1818,7 @@ class krome():
 				mytabpath = "data/heatxHe.dat"
 				mytabxxyy = "logH,logHe-logH"
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
-					self.anytabsizes,fake_coevars,fake_ivarcoe)
+					self.anytabsizes,fake_coevars)
 
 			else:
 				print "ERROR: xray reaction not tabulated!"

@@ -253,7 +253,7 @@ class reaction():
 
 #################################
 #create tabvar (probably not the best interface ever)
-def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpaths,anytabsizes,coevars,ivarcoe):
+def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpaths,anytabsizes,coevars):
 	if(mytabvar.split("_")[0].lower()!="user"):
 		print "ERROR: to avoid conflicts common variables with @tabvar should begin with user_"
 		print " you provided: "+mytabvar
@@ -294,12 +294,14 @@ def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpath
 	anytabxmul = mytabvar+"_anytabxmul"
 	anytabymul = mytabvar+"_anytabymul"
 	tabf =  "fit_anytab2D("+anytabx+", &\n"+anytaby+", &\n"+anytabz+", &\n"+anytabxmul+", &\n"+anytabymul+", &\n"+mytabxxyy+")"
+	ivarcoe = len(coevars)
 	coevars[mytabvar] = [ivarcoe,tabf]
 
 	print "Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]"
 
 #############################
-def addVarCoe(mytabvar,tabf,coevars,ivarcoe):
+def addVarCoe(mytabvar,tabf,coevars):
+	ivarcoe = len(coevars)
 	coevars[mytabvar] = [ivarcoe,tabf]
 
 #############################
