@@ -253,7 +253,7 @@ class reaction():
 
 #################################
 #create tabvar (probably not the best interface ever)
-def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpaths,anytabsizes,coevars,ivarcoe):
+def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpaths,anytabsizes,coevars):
 	if(mytabvar.split("_")[0].lower()!="user"):
 		print "ERROR: to avoid conflicts common variables with @tabvar should begin with user_"
 		print " you provided: "+mytabvar
@@ -294,10 +294,15 @@ def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpath
 	anytabxmul = mytabvar+"_anytabxmul"
 	anytabymul = mytabvar+"_anytabymul"
 	tabf =  "fit_anytab2D("+anytabx+", &\n"+anytaby+", &\n"+anytabz+", &\n"+anytabxmul+", &\n"+anytabymul+", &\n"+mytabxxyy+")"
-	coevars[mytabvar] = [ivarcoe,tabf]
-	ivarcoe += 1 #count variables to sort
+	if(not(mytabvar in coevars)):
+		coevars[mytabvar] = [len(coevars),tabf]
 
 	print "Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]"
+
+#############################
+def addVarCoe(mytabvar,tabf,coevars):
+	if(not(mytabvar in coevars)):
+		coevars[mytabvar] = [len(coevars),tabf]
 
 #############################
 #cooling index list

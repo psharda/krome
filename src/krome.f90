@@ -412,6 +412,8 @@ contains
     call coolingZ_init_tabs()
 #ENDIFKROME
 
+#KROME_init_anytab
+
 #IFKROME_useTabs
     call make_ktab()
     call check_tabs()
@@ -420,8 +422,6 @@ contains
 #IFKROME_useStars
     call stars_init()
 #ENDIFKROME
-
-#KROME_init_anytab
 
 #IFKROME_useH2esc_omukai
     call init_anytab2D("escape_H2.dat",arrH2esc_ntot(:), &
@@ -434,6 +434,7 @@ contains
 
     !init phys common variables
     phys_Tcmb = 2.73d0
+    phys_zredshift = 0d0
 
   end subroutine krome_init
 

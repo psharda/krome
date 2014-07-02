@@ -29,7 +29,7 @@ contains
   end subroutine krome_set_Tcmb
 
   !**********************
-  !get the physical common value Tcmb to arg
+  !get the physical common value Tcmb
   function krome_get_Tcmb()
     use krome_commons
     implicit none
@@ -38,6 +38,28 @@ contains
     krome_get_Tcmb = phys_Tcmb
 
   end function krome_get_Tcmb
+
+  !**********************
+  !set the physical common value zredshift to arg
+  subroutine krome_set_zredshift(arg)
+    use krome_commons
+    implicit none
+    real*8::arg
+
+    phys_zredshift = arg
+    
+  end subroutine krome_set_zredshift
+
+  !**********************
+  !get the physical common value zredshift
+  function krome_get_zredshift()
+    use krome_commons
+    implicit none
+    real*8::krome_get_zredshift
+
+    krome_get_zredshift = phys_zredshift
+
+  end function krome_get_zredshift
 
 #KROME_cooling_functions
   
