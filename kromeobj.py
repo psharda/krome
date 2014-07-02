@@ -2697,6 +2697,16 @@ class krome():
 			return arg_metal.replace("-","") + "m"+int_to_roman(arg_metal.count("-")+1)
 		else:
 			return arg_metal+"I" #is not an ion
+
+	###################################
+	def convertMetal2F90(self,arg_metal):
+		if("+" in arg_metal):
+			return arg_metal.replace("+","j")
+		elif("-" in arg_metal):
+			return arg_metal.replace("-","k")
+		else:
+			return arg_metal #is not an ion
+	
 		
 	#####################################
 	#alternative for reading cooling data from file
@@ -2720,6 +2730,7 @@ class krome():
 				if("metal:" in srow):
 					srow = srow.replace("metal:","").strip()
 					metal_name = self.convertMetal2Roman(srow) #metal name in roman format (e.g. C+ as CII)
+					metal_name_f90 = self.convertMetal2F90(srow) #metal name in f90 format (e.g. C+ as Cj)
 					levels_data = dict() #data of the levels (energy, degeneration), key=level number
 					trans_data = dict() #transition data (up, down, Aij), key=up->down (e.g. "4->2")
 					rate_data = dict() #rate data (up,dowm,rate,collider), key=up->down_coolider (e.g. "4->2_H")
@@ -2880,26 +2891,31 @@ class krome():
 								#print trans_data[trans_name]
 
 			#PART 2.3: prepare the cooling
+			full_B_vector = []
 			for k,t_data in trans_data.iteritems():
-				Aij_fmt = ("%e" % t_data["Aij"]).replace("e","d")
-				deltaE = levels_data[r_data["up"]]["energy"] - levels_data[r_data["down"]]["energy"]
-				deltaE = ("%e" % deltaE).replace("e","d") #f90ish format for deltaE
-
-				"B("+str(t_data["up"]+1)") * "+Aij_fmt+" * "
+				Aij_fmt = ("%e" % t_data["Aij"]).replace("e","d") #f90ish format for Aij
+				deltaE = levels_data[t_data["up"]]["energy"] - levels_data[t_data["down"]]["energy"]
+				deltaE_fmt = ("%e" % deltaE).replace("e","d") #f90ish format for deltaE
+				#put all togheter
+				full_B_vector.append("B("+str(t_data["up"]+1)+") * "+Aij_fmt+" * "+deltaE_fmt)
+			full_B_vector = (" &\n + ".join(full_B_vector))
 
 
 			#PART 2.4: prepare the function
-			nlev = max(level_data)+1
-			function_name = "cooling"+cur_metal
+			nlev = max(levels_data)+1
+			function_name = "cooling"+metal_name
 			full_function = "function "+function_name+"(n,inTgas,k)\n"
 			full_function += "real*8::"+function_name+",n(:),inTgas,k(:)\n"
 			full_function += "real*8::A("+str(nlev)+","+str(nlev)+"),B("+str(nlev)+")\n"
 			full_function += full_A_matrix
+			full_function += "!build matrix B\n"
 			full_function += "B(:) = 0d0\n"
-			full_function += "B("+str(idx_linear_dep_level+1)+") = 1d0\n"
-			full_function += "mydgesv("+str(nlev)+", A(:,:), B(:), \""+function_name+"\")\n"
-		
-			full_function += "end function "+function_name+"\n"
+			full_function += "B("+str(idx_linear_dep_level+1)+") = 1d0\n\n"
+			full_function += "mydgesv("+str(nlev)+", A(:,:), B(:), \""+function_name+"\")\n\n"
+			full_function += function_name + " = " +full_B_vector+"\n\n"
+			full_function += function_name + " = " +function_name+" * n(idx_"+metal_name_f90+")\n\n"
+			full_function += "end function "+function_name+"\n\n"
+			#print full_function
 
 	#######################################
 	#this function loads the cooling functions from a file
