@@ -256,8 +256,8 @@ contains
 
     !note that redhsift is defined in krome_user_commons and 
     ! must be provided by the user
-    cooling_compton = 5.65d-36 * (1.d0 + user_redshift)**4 &
-         * (Tgas - 2.73d0 * (1.d0 + user_redshift)) * n(idx_e) !erg/s/cm3
+    cooling_compton = 5.65d-36 * (1.d0 + phys_zredshift)**4 &
+         * (Tgas - 2.73d0 * (1.d0 + phys_zredshift)) * n(idx_e) !erg/s/cm3
 
   end function cooling_compton
 #ENDIFKROME
@@ -958,20 +958,55 @@ contains
   subroutine mydgesv(n,A,B, parent_name)
     !driver for LAPACK dgesv
     integer::n,info,i,ipiv(n)
-    real*8::A(n,n),B(n)
+    real*8::A(n,n),B(n),Ain(n,n),Bin(n),tmp(n)
     character(len=*)::parent_name
-    
+    Ain(:,:) = A(:,:)
+    Bin(:) = B(:)
     call dgesv(n,1,A,n,ipiv,B,n,info)
+    
+    !write some info about the error and stop
     if(info > 0) then
        print *,"ERROR: matrix exactly singular, U(i,i) where i=",info
        print *,' (called by "'//trim(parent_name)//'" function)'
+       
+       !dump the input matrix to a file
+       open(97,name="ERROR_dump_dgesv.dat",status="replace")
+       !dump matrix A
+       write(97,*) "Input matrix A line by line:"
+       do i=1,n
+          tmp(:) = Ain(i,:)
+          write(97,'(I5,999E17.8e3)') i,tmp(:)
+       end do
+
+       !dump matrix B
+       write(97,*)
+       write(97,*) "Input vector B element by element"
+       do i=1,n
+          write(97,*) i, Bin(i)
+       end do
+
+       !dump info on matrix A rows
+       write(97,*)
+       write(97,*) "Info on matrix A rows"
+       write(97,'(a5,99a17)') "idx","minval","maxval"
+       do i=1,n
+           write(97,'(I5,999E17.8e3)') i, minval(Ain(i,:)), &
+                maxval(Ain(i,:))
+       end do
+       close(97)
+
+       print *,"Input A and B dumped in ERROR_dump_dgesv.dat"
+
        stop
     end if
+    
+    !if error print some info and stop
     if(info<0) then
        print *,"ERROR: input error position ",info
        print *,' (called by "'//trim(parent_name)//'" function)'
        stop
     end if
+
   end subroutine mydgesv
 #ENDIFKROME
 

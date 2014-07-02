@@ -11,8 +11,7 @@ contains
     implicit none
     real*8::coe(nrea),k(nrea),Tgas,n(nspec),t
 #KROME_shortcut_variables
-    real*8::small,nmax,fsh,xe,phiH,phiHe,ratexH,ratexHe
-    real*8::logH,logHe,ncolH,ncolHe
+    real*8::small,nmax
     integer::i
 #KROME_initcoevars
     !Tgas is in K
@@ -26,44 +25,7 @@ contains
 
 #KROME_Tshortcuts
 
-#IFKROME_useXrays
-    !prepares logs for xrays
-    ncolH = num2col(n(idx_H))
-    ncolHe = num2col(n(idx_He))
-    logH = log10(ncolH)
-    logHe = log10(ncolHe)
-#ENDIFKROME
-
 #KROME_coevars
-
-#IFKROME_useXrays
-    !prepares varibles for xray photochemistry
-    xe = n(idx_e) / get_Hnuclei(n(:))
-    phiH = .3908d0*(1e0-xe**.4092)**1.7592
-    phiHe = .0554d0*(1e0-xe**.4614)**1.666
-
-    !factor to keep into account for the mean
-    ! value of phi as in Wolfire+1995 appendix A
-    ! i.e. in Mathematica format:
-    ! Integrate[(x/a - 1) (1/x^1.5), {x, 2000, 10000}]
-    ! / Integrate[1/x^1.5, {x, 2000, 10000}]
-    ! with a=13.6 eV for H and a=24.6 eV for He
-    phiH = 327.832286034056d0 * phiH 
-    phiHe = 180.793458763612d0 * phiHe
-
-    ratexH = 1d1**user_xray_H
-    ratexHe = 1d1**user_xray_He
-#ENDIFKROME
-
-#IFKROME_useShieldingDB96
-    !compute shielding from Draine+Bertoldi 1996
-    fsh = calc_H2shieldDB96(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useShieldingWG11
-    !compute shielding from Wolcott+Greene 2011
-    fsh =  calc_H2shieldWG11(n(:), Tgas)
-#ENDIFKROME
 
     k(:) = small !inizialize coefficients
 
@@ -74,6 +36,26 @@ contains
   end function coe
 
 #KROME_metallicity_functions
+
+  !***********************
+  !shielding function selected with -shield option
+  function krome_fshield(n,Tgas)
+    implicit none
+    real*8::krome_fshield,n(:),Tgas
+
+    krome_fshield = 1d0 !default shielding value
+
+#IFKROME_useShieldingDB96
+    !compute shielding from Draine+Bertoldi 1996
+    krome_fshield = calc_H2shieldDB96(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useShieldingWG11
+    !compute shielding from Wolcott+Greene 2011
+    krome_fshield =  calc_H2shieldWG11(n(:), Tgas)
+#ENDIFKROME
+
+  end function krome_fshield
 
   !*********************
   function conserve(n,ni)

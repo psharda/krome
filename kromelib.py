@@ -295,9 +295,12 @@ def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpath
 	anytabymul = mytabvar+"_anytabymul"
 	tabf =  "fit_anytab2D("+anytabx+", &\n"+anytaby+", &\n"+anytabz+", &\n"+anytabxmul+", &\n"+anytabymul+", &\n"+mytabxxyy+")"
 	coevars[mytabvar] = [ivarcoe,tabf]
-	ivarcoe += 1 #count variables to sort
 
 	print "Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]"
+
+#############################
+def addVarCoe(mytabvar,tabf,coevars,ivarcoe):
+	coevars[mytabvar] = [ivarcoe,tabf]
 
 #############################
 #cooling index list

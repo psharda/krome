@@ -434,6 +434,7 @@ contains
 
     !init phys common variables
     phys_Tcmb = 2.73d0
+    phys_zredshift = 0d0
 
   end subroutine krome_init
 

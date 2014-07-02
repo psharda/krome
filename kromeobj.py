@@ -1666,7 +1666,7 @@ class krome():
 			else:
 				myrea.ifrate = area[0] #store prepending if condition
 				myrea.krate = area[1] #get reaction rate written in F90 style
-			if("fsh" in myrea.krate.lower()): fsh_found = True
+			if("krome_fshield" in myrea.krate.lower()): fsh_found = True
 			
 			if(qeffFound): myrea.qeff = arow[iqeff]
 
@@ -1713,6 +1713,8 @@ class krome():
 				print "ERROR: unbalanced brakets in reaction "+str(myrea.idx)
 				print " "+myrea.verbatim
 				print " rate = "+myrea.krate
+				print " this is the corresponding line in the reaction file"
+				print srow
 				sys.exit()
 
 			myrea.isCR = inCRblock #is a CR reaction
@@ -1737,8 +1739,8 @@ class krome():
 	
 		if((self.useShieldingDB96 or self.useShieldingWG11) and not(fsh_found)):
 			print
-			print "WARNING: no fsh variable found in rate coefficient"
-			print " even if shielding options enabled."
+			print "WARNING: no krome_fshield(n(:),Tgas) variable found in rate coefficient"
+			print " even if shielding option is enabled."
 			print " Please check your network file!"
 			a = raw_input("Any key to continue q to quit... ")
 			if(a=="q"): print sys.exit()
@@ -1771,8 +1773,23 @@ class krome():
 				mytabvar = "user_xray_H"
 				mytabpath = "data/ratexH.dat"
 				mytabxxyy = "logH,logHe-logH"
+
+				ivarcoe += 1
+				addVarCoe("ncolH","num2col(n(idx_H))",self.coevars,ivarcoe)
+				ivarcoe += 1
+				addVarCoe("logH","log10(ncolH)",self.coevars,ivarcoe)
+
+				ivarcoe += 1
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
 					self.anytabsizes,self.coevars,ivarcoe)
+
+				ivarcoe += 1
+				addVarCoe("xe","n(idx_e) / get_Hnuclei(n(:))",self.coevars,ivarcoe)
+				ivarcoe += 1
+				addVarCoe("phiH",".3908d0*(1e0-xe**.4092)**1.7592 * 327.832286034056d0",self.coevars,ivarcoe)
+				ivarcoe += 1
+				addVarCoe("ratexH"," 1d1**user_xray_H",self.coevars,ivarcoe)
+
 				xrayHFound = True
 				x.krate = "ratexH * (1d0+phiH) + n(idx_He)/(n(idx_H)+1d-40) * ratexHe * phiH"
 				print "H xray ionization found!"
@@ -1788,8 +1805,21 @@ class krome():
 				mytabvar = "user_xray_He"
 				mytabpath = "data/ratexHe.dat"
 				mytabxxyy = "logH,logHe-logH"
+
+				ivarcoe += 1
+				addVarCoe("ncolHe","num2col(n(idx_He))",self.coevars,ivarcoe)
+				ivarcoe += 1
+				addVarCoe("logHe","log10(ncolHe)",self.coevars,ivarcoe)
+
+				ivarcoe += 1
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
 					self.anytabsizes,self.coevars,ivarcoe)
+
+				ivarcoe += 1
+				addVarCoe("phiHe",".0554d0*(1e0-xe**.4614)**1.666 * 180.793458763612d0",self.coevars,ivarcoe)
+				ivarcoe += 1
+				addVarCoe("ratexHe"," 1d1**user_xray_He",self.coevars,ivarcoe)
+
 				x.krate = "ratexHe * (1d0+phiHe) + n(idx_H)/(n(idx_He)+1d-40) * ratexH * phiHe"
 				xrayHeFound = True
 				print "He xray ionization found!"
@@ -1807,6 +1837,8 @@ class krome():
 				print " remove it from the chemical network or provide non-automatic rate."
 				print " Note that you should also provide the heating tab if needed."
 				sys.exit()
+		for k,v in self.coevars.iteritems():
+			print k,v
 
 		#check if both (H and He) xray reactions are found, since tables are H and He dependant
 		if(xrayHeFound!=xrayHFound):
@@ -2770,14 +2802,17 @@ class krome():
 				#end of data, hence store
 				if(("endmetal" in srow) or ("end metal" in srow)):
 					#store all the data for the given metal_name
-					cooling_data[metal_name] = {"levels_data":levels_data, "trans_data":trans_data, "rate_data":rate_data}
+					cooling_data[metal_name] = {"levels_data":levels_data, "trans_data":trans_data, "rate_data":rate_data,\
+						"metal_name_f90":metal_name_f90}
 					#pprint(cooling_data)
 
 
 		#PART2: use data to prepare cooling routine
 		index_count = 0 #1-based index for all the rates of the cooling
-		#prepare the functions for the cooling looping on metal (which are the key of the cooling_data dictionary)
+		#prepare the functions for the cooling looping on metals (which are the key of the cooling_data dictionary)
 		for cur_metal,cool_data in cooling_data.iteritems():
+			metal_name = cur_metal #alias for metal name
+			metal_name_f90 = cool_data["metal_name_f90"] #name in f90 style
 			level_list = cool_data["levels_data"].keys() #store the list of the levels as integer values (e.g. [0,1,3])
 			#make a local copy of the dictionaries (easy to handle)
 			levels_data = cooling_data[cur_metal]["levels_data"]
