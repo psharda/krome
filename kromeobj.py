@@ -2762,7 +2762,7 @@ class krome():
 				#if level pragma found read level data
 				if("level" in srow):
 					srow = srow.replace("level","").replace(":",",") #use only comma to separate and remove "level"
-					arow = srow.split(",") #split line using comma
+					arow = [x.replace("d","e") for x in srow.split(",")] #split using comma and floating format conversion
 
 					#skip if levels are not requested (-coolLevels)
 					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
@@ -2775,7 +2775,7 @@ class krome():
 				
 				#if 3 elemets is transistion data
 				if(len(srow.split(","))==3):
-					arow = srow.split(",")
+					arow = [x.replace("d","e") for x in srow.split(",")] #split using comma and floating format conversion
 					trans_name = arow[0].strip()+"->"+arow[1].strip() #prepare the key as up->down (e.g. "4->1")
 
 					#skip if levels are not requested (-coolLevels)
@@ -2851,32 +2851,7 @@ class krome():
 				self.coolZ_rates.append("k("+str(index_count+1)+") = "+rate_data[k]["rate"])
 				index_count += 1
 
-			#evaluate connection level matrix
-			connection_matrix = dict()
-			for k,r_data in rate_data.iteritems():
-				#add down levels to up
-				if(r_data["up"] in connection_matrix):
-					if(not(r_data["down"] in connection_matrix[r_data["up"]])):
-						connection_matrix[r_data["up"]].append(r_data["down"])
-				else:
-					connection_matrix[r_data["up"]] = [r_data["down"]]
-				#add up levels to down
-				if(r_data["down"] in connection_matrix):
-					if(not(r_data["up"] in connection_matrix[r_data["down"]])):
-						connection_matrix[r_data["down"]].append(r_data["up"])
-				else:
-					connection_matrix[r_data["down"]] = [r_data["up"]]
-
-			#loop on connectivity matrix to search for a level connected to ALL the others
-			# this is necessary to ensure removing a linear dependent level
-			idx_linear_dep_level = -1 #default level value to rise error if not found (see below)
-			for level_number, connections in connection_matrix.iteritems():
-				if(len(connections)==len(connection_matrix)-1):
-					idx_linear_dep_level = level_number
-					break
-			#error if dependent level is not found
-			if(idx_linear_dep_level<0): sys.exit("ERRROR: no suitable level for linear dependency!")
-			
+			idx_linear_dep_level = 0 #ground level will be removed (for linear dependency)
 
 			#PART 2.2: prepare A matrix for Ax=B system
 			#loop on the number of levels (k index, lines of the A matrix)
@@ -2908,8 +2883,8 @@ class krome():
 									full_A_matrix += "!"+str(klev)+" -> "+str(jlev)+\
 										", (de)excitation, collision: "+rate_data[r_key]["collider"]+"\n"
 									full_A_matrix += A_name +" = "+A_name+" - k("+\
-										str(rate_data[r_key]["idx"])+\
-										") * n(idx_"+rate_data[r_key]["collider"]+")\n\n"
+										str(rate_data[r_key]["idx"])+") * n(idx_"+\
+										self.convertMetal2F90(rate_data[r_key]["collider"])+")\n\n"
 							#search transitions k->j
 							if(trans_name in trans_data):
 								full_A_matrix += "!"+str(klev)+" -> "+str(jlev)+", radiative\n"
@@ -2927,8 +2902,8 @@ class krome():
 									full_A_matrix += "!"+str(ilev)+" -> "+str(klev)+\
 										", (de)excitation, collision: "+rate_data[r_key]["collider"]+"\n"
 									full_A_matrix += A_name +" = "+A_name+" + k("+\
-										str(rate_data[r_key]["idx"])+\
-										") * n(idx_"+rate_data[r_key]["collider"]+")\n\n"
+										str(rate_data[r_key]["idx"])+") * n(idx_"+\
+										self.convertMetal2F90(rate_data[r_key]["collider"])+")\n\n"
 							#search transitions i->k
 							if(trans_name in trans_data):
 								full_A_matrix += "!"+str(ilev)+" -> "+str(klev)+", radiative\n"
