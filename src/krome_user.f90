@@ -324,6 +324,28 @@ contains
     
   end subroutine krome_set_photoBin_J21log
 
+  !*****************************
+  function krome_get_opacity(x)
+    use krome_commons
+    use krome_photo
+    use krome_subs
+    implicit none
+    real*8::x(:),tau,krome_get_opacity(nPhotoBins)
+    integer::i,j
+
+    !loop on frequency bins
+    do j=1,nPhotoBins
+       tau = 0d0
+       !loop on species
+       do i=1,nPhotoRea
+          !calc opacity as column_density * cross_section
+          tau = tau + num2col(x(i)) * photoBinJTab(i,j)
+       end do
+       krome_get_opacity(j) = tau !store
+    end do
+    
+  end function krome_get_opacity
+
 #ENDIFKROME
 
   !***************************
