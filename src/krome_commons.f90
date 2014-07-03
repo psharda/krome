@@ -56,6 +56,6 @@ module krome_commons
   real*8::xmulH2esc,ymulH2esc
 
   !physical commons
-  real*8::phys_Tcmb,phys_zredshift
+#KROME_phys_commons
   
 end module krome_commons

@@ -433,8 +433,7 @@ contains
 #ENDIFKROME
 
     !init phys common variables
-    phys_Tcmb = 2.73d0
-    phys_zredshift = 0d0
+#KROME_init_phys_variables
 
   end subroutine krome_init
 

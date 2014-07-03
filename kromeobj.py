@@ -109,6 +109,7 @@ class krome():
 	anytabpaths = [] #paths for the tables
 	anytabsizes = [] #sizes of the tables
 	coolLevels = [] #levels employed for cooling, if empty uses all
+	physVariables = [] #list of the phys variables (list of [variable_name, default_value_string])
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
 	fdbase = "data/kromeauto.dat"
@@ -1927,6 +1928,15 @@ class krome():
 		self.TminAuto = TminAuto
 		self.TmaxAuto = TmaxAuto
 		print "done!"
+	#####################################################
+	#define the phys_ variables (will be used in krome_commons and 
+	# in krome_user to create the get and set functions) 
+	def definePhysVariables(self):
+		#variables are list [name, default_value_string]
+		#note that phys_ will be prepended 
+		self.physVariables = [["Tcmb", "2.73d0"],
+			["zredshift", "0d0"],
+			["orthoParaRatio", "3d0"]]
 	
 	#####################################################
 	def photo_warnings(self):
@@ -2731,6 +2741,7 @@ class krome():
 	#alternative for reading cooling data from file
 	def createZcooling(self):
 		cooling_data = dict() #structure with all the data
+		needOrthoPara = False #need extra variables for ortho/para H2
 		#PART1: read the data from file
 		for fname in self.coolFile:
 			#read the file fname
@@ -2804,8 +2815,18 @@ class krome():
 					#store data
 					rate_data[trans_name] = {"up":int(arow[1]), "down":int(arow[2]), "collider":arow[0].strip(),\
 						"rate":arow[3].strip()}
+
+					#check if para/ortho needed
+					if(arow[0].strip()=="H2or" or arow[0].strip()=="H2pa"): needOrthoPara = True
+
 					continue
-				
+
+				#read @var
+				if("@var:" in srow):
+					srow = srow.replace("@var:","").strip()
+					self.coolZ_vars_cool.append([x.strip() for x in srow.split("=")]) #read extra variables
+					continue
+
 				#end of data, hence store
 				if(("endmetal" in srow) or ("end metal" in srow)):
 					#store all the data for the given metal_name
@@ -3638,6 +3659,9 @@ class krome():
 
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
+			elif(srow == "#KROME_phys_commons"):
+				for x in self.physVariables:
+					fout.write("real*8::phys_"+x[0]+"\n")
 			elif(srow == "#KROME_cool_index"):
 				idxcool = get_cooling_index_list()
 				for x in idxcool:
@@ -4025,7 +4049,7 @@ class krome():
 				maxqeff = 0e0
 				for x in reacts:
 					maxqeff = max(maxqeff,x.qeff)
-				#if 0e0 is the largest compress the array, else write it explicitely
+				#if 0e0 is the largest then compress the array, else write it explicitely
 				if(maxqeff==0e0):
 					fout.write("get_qeff(:) = 0e0\n")
 				else:
@@ -5083,7 +5107,30 @@ class krome():
 				idxheat = get_heating_index_list()
 				for x in idxheat:
 					fout.write("real*8,parameter::krome_"+x+"\n")
+			elif(srow=="#KROME_print_phys_variables"):
+					for x in self.physVariables:
+						fout.write("print *, \""+x[0]+":\", phys_"+x[0]+"\n")
+			elif(srow=="#KROME_set_get_phys_functions"):
+				for x in self.physVariables:
+					#set subroutine
+					funcname = "krome_set_"+x[0]
+					fout.write("!*******************\n")
+					fout.write("subroutine "+funcname+"(arg)\n")
+					fout.write(" use krome_commons\n")
+					fout.write(" implicit none\n")
+					fout.write(" real*8::arg\n")
+					fout.write(" phys_"+x[0]+" = arg\n")
+					fout.write("end subroutine "+funcname+"\n\n")
 
+					#get function
+					funcname = "krome_get_"+x[0]
+					fout.write("!*******************\n")
+					fout.write("function "+funcname+"()\n")
+					fout.write(" use krome_commons\n")
+					fout.write(" implicit none\n")
+					fout.write(" real*8::"+funcname+"\n")
+					fout.write(funcname+" = phys_"+x[0]+"\n")
+					fout.write("end function "+funcname+"\n\n")
 
 			elif(srow == "#KROME_cooling_functions"):
 				for x in self.coolZ_functions:
@@ -5371,7 +5418,10 @@ class krome():
 						+anytaby+","+anytabz+",&\n"+anytabxmul+","\
 						+anytabymul+")\n"
 				fout.write(stab+"\n")
-					
+
+			elif(srow == "#KROME_init_phys_variables"):
+				for x in self.physVariables:
+					fout.write("phys_"+x[0]+" = "+x[1]+"\n")					
 			elif(srow == "#KROME_rwork_array"):
 				fout.write("\treal*8::rwork("+str(self.lrw)+")\n")
 			elif(srow == "#KROME_iwork_array"):

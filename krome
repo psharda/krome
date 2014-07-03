@@ -71,6 +71,9 @@ krome.safe_check()
 #read thermochemistry data from file
 krome.load_thermochemistry()
 
+#load the phys variables
+krome.definePhysVariables()
+
 #prepares mass an species dictionaries
 krome.prepare_massdict()
 
