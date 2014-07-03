@@ -2741,7 +2741,6 @@ class krome():
 	#alternative for reading cooling data from file
 	def createZcooling(self):
 		cooling_data = dict() #structure with all the data
-		needOrthoPara = False #need extra variables for ortho/para H2
 		#PART1: read the data from file
 		for fname in self.coolFile:
 			#read the file fname
@@ -2765,6 +2764,7 @@ class krome():
 					trans_data = dict() #transition data (up, down, Aij), key=up->down (e.g. "4->2")
 					rate_data = dict() #rate data (up,dowm,rate,collider), key=up->down_coolider (e.g. "4->2_H")
 					skip_metal = False
+					needOrthoPara = False #need extra variables for ortho/para H2
 					#check if the metal name is in the self.zcoolant list to skip it
 					if(not(metal_name.upper() in [x.upper() for x in self.zcoolants])): skip_metal = True
 					continue
@@ -2824,14 +2824,15 @@ class krome():
 				#read @var
 				if("@var:" in srow):
 					srow = srow.replace("@var:","").strip()
-					self.coolZ_vars_cool.append([x.strip() for x in srow.split("=")]) #read extra variables
+					#read extra variables as [variable_name, expression]
+					self.coolZ_vars_cool.append([x.strip() for x in srow.split("=")])
 					continue
 
 				#end of data, hence store
 				if(("endmetal" in srow) or ("end metal" in srow)):
 					#store all the data for the given metal_name
 					cooling_data[metal_name] = {"levels_data":levels_data, "trans_data":trans_data, "rate_data":rate_data,\
-						"metal_name_f90":metal_name_f90}
+						"metal_name_f90":metal_name_f90, "needOrthoPara":needOrthoPara}
 					#pprint(cooling_data)
 
 
@@ -2847,7 +2848,8 @@ class krome():
 			trans_data = cooling_data[cur_metal]["trans_data"]
 			rate_data = cooling_data[cur_metal]["rate_data"]
 			rate_data_rev = dict() #init a dictionary to store the inverse reactions
-			#PART2.1: prepare excitation rates for de-excitations
+
+			#PART2.1: prepare excitation rates from de-excitations
 			#loop on rates to prepare the reverse (excitation rates)
 			for trans_name, r_data in rate_data.iteritems():
 				#inverse transition name
@@ -2858,7 +2860,7 @@ class krome():
 				deltaE = levels_data[r_data["up"]]["energy"] - levels_data[r_data["down"]]["energy"]
 				deltaE = ("%e" % deltaE).replace("e","d") #f90ish format for deltaE
 				#build reverse as Rji = Rij*gi/gj*exp(-deltaE/T)
-				rate_rev = r_data["rate"]+" * "+str(float(g_up)/float(g_down))+"d0 * exp(-"+deltaE+" * invT)"
+				rate_rev = "("+r_data["rate"]+") * "+str(float(g_up)/float(g_down))+"d0 * exp(-"+deltaE+" * invT)"
 				#store the data for the reverse reaction
 				rate_data_rev[trans_name_rev] = {"rate": rate_rev, "collider":r_data["collider"], "up":r_data["down"],\
 					"down":r_data["up"]}
@@ -2953,7 +2955,11 @@ class krome():
 			full_function += "integer::i\n"
 			full_function += "real*8::"+function_name+",n(:),inTgas,k(:)\n"
 			full_function += "real*8::A("+str(nlev)+","+str(nlev)+"),B("+str(nlev)+")\n"
-			full_function += full_A_matrix
+			if(cool_data["needOrthoPara"]): 
+				full_function += "real*8::H2or,H2pa\n\n"
+				full_function += "H2or = n(idx_H2) * phys_orthoParaRatio / (phys_orthoParaRatio+1d0)\n"
+				full_function += "H2pa = n(idx_H2) / (phys_orthoParaRatio+1d0)\n\n"
+			full_function += full_A_matrix.replace("n(idx_H2or)","H2or").replace("n(idx_H2pa)","H2pa")
 			full_function += "!build matrix B\n"
 			full_function += "B(:) = 0d0\n"
 			full_function += "B("+str(idx_linear_dep_level+1)+") = 1d0\n\n"
@@ -3665,11 +3671,11 @@ class krome():
 			elif(srow == "#KROME_cool_index"):
 				idxcool = get_cooling_index_list()
 				for x in idxcool:
-					fout.write("real*8,parameter::"+x+"\n")
+					fout.write("integer,parameter::"+x+"\n")
 			elif(srow == "#KROME_heat_index"):
 				idxheat = get_heating_index_list()
 				for x in idxheat:
-					fout.write("real*8,parameter::"+x+"\n")
+					fout.write("integer,parameter::"+x+"\n")
 			elif(srow == "#KROME_implicit_arr_r"):
 				for j in range(self.maxnreag):
 					fout.write("integer::arr_r"+str(j+1)+"(nrea)\n")
