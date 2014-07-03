@@ -317,7 +317,7 @@ class krome():
 			filename = "networks/react_auto"
 		elif(args.test=="chianti"):
 			[argv.append(x) for x in ["-photoBins=10","-useN"]]
-			[argv.append(x) for x in ["-cooling=OII"]]
+			[argv.append(x) for x in ["-cooling=OI,OII,OIII,OIV,OV"]]
 			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
 			filename = "networks/react_chianti"
 		elif(args.test=="shock1Dcool"):
@@ -346,6 +346,7 @@ class krome():
 			filename = "networks/react_primordial3"
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
+			#[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
 			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseZ_UV"):
@@ -2741,6 +2742,8 @@ class krome():
 	#alternative for reading cooling data from file
 	def createZcooling(self):
 		cooling_data = dict() #structure with all the data
+		index_count = 0 #1-based index for all the rates of the cooling
+		TgasUpperLimit = TgasLowerLimit = "" #temperature limits for ALL the reactions (empty=no limits)
 		#PART1: read the data from file
 		for fname in self.coolFile:
 			#read the file fname
@@ -2812,13 +2815,26 @@ class krome():
 					cond3 = not(int(arow[2]) in self.coolLevels) #condition3: the low level should be in the list
 					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels (both conditions)
 
+					#increase the number of the reactions found
+					index_count += 1
+
+					#store the reaction rate in the list
+					rate_comment = "!"+arow[1].strip()+"->"+arow[2].strip()+", "+metal_name+" - "+arow[0].strip()+"\n"
+					self.coolZ_rates.append(rate_comment+"k("+str(index_count)+") = "+arow[3].strip())
+
 					#store data
 					rate_data[trans_name] = {"up":int(arow[1]), "down":int(arow[2]), "collider":arow[0].strip(),\
-						"rate":arow[3].strip()}
+						"rate":index_count}
 
 					#check if para/ortho needed
 					if(arow[0].strip()=="H2or" or arow[0].strip()=="H2pa"): needOrthoPara = True
 
+					continue
+
+				#check for if conditions on the rate (note that index_count is not incremented)
+				if(srow[:3].lower()=="if("):
+					arow = srow.split(":")
+					self.coolZ_rates.append(arow[0].strip()+" k("+str(index_count)+") = "+arow[1].strip())
 					continue
 
 				#read @var
@@ -2827,6 +2843,12 @@ class krome():
 					#read extra variables as [variable_name, expression]
 					self.coolZ_vars_cool.append([x.strip() for x in srow.split("=")])
 					continue
+
+				#look for @TgasUpperLimit
+				if("@tgasupperlimit:" in srow.lower()):
+					TgasUpperLimit = srow.split(":")[1].strip()
+					#append the upper limit for the temperature as the first reaction rate
+					self.coolZ_rates.append("if(Tgas.ge."+TgasUpperLimit+") return\n")
 
 				#end of data, hence store
 				if(("endmetal" in srow) or ("end metal" in srow)):
@@ -2837,7 +2859,6 @@ class krome():
 
 
 		#PART2: use data to prepare cooling routine
-		index_count = 0 #1-based index for all the rates of the cooling
 		#prepare the functions for the cooling looping on metals (which are the key of the cooling_data dictionary)
 		for cur_metal,cool_data in cooling_data.iteritems():
 			metal_name = cur_metal #alias for metal name
@@ -2848,6 +2869,7 @@ class krome():
 			trans_data = cooling_data[cur_metal]["trans_data"]
 			rate_data = cooling_data[cur_metal]["rate_data"]
 			rate_data_rev = dict() #init a dictionary to store the inverse reactions
+			print "Prepearing "+cur_metal+" (levels: "+str(len(levels_data))+", transitions: "+str(len(rate_data))+")"
 
 			#PART2.1: prepare excitation rates from de-excitations
 			#loop on rates to prepare the reverse (excitation rates)
@@ -2857,22 +2879,21 @@ class krome():
 				g_up = levels_data[r_data["up"]]["g"] #upper level
 				g_down = levels_data[r_data["down"]]["g"] #lower level
 				#delta energy Ej-Ei
-				deltaE = levels_data[r_data["up"]]["energy"] - levels_data[r_data["down"]]["energy"]
+				deltaE = abs(levels_data[r_data["up"]]["energy"] - levels_data[r_data["down"]]["energy"])
 				deltaE = ("%e" % deltaE).replace("e","d") #f90ish format for deltaE
-				#build reverse as Rji = Rij*gi/gj*exp(-deltaE/T)
-				rate_rev = "("+r_data["rate"]+") * "+str(float(g_up)/float(g_down))+"d0 * exp(-"+deltaE+" * invT)"
+				#increase the number of the reactions found
+				index_count += 1
+				#build reverse as Rji = Rij*gi/gj*exp(-deltaE/T)					
+				rate_comment = "!"+str(r_data["up"])+"<-"+str(r_data["down"])+", "+metal_name+" - "+r_data["collider"]+"\n"
+				myrate = "k("+str(r_data["rate"])+") * "+str(float(g_up)/float(g_down))+"d0 * exp(-"+deltaE+" * invT)"
+				self.coolZ_rates.append(rate_comment+"k("+str(index_count)+") = " + myrate)
 				#store the data for the reverse reaction
-				rate_data_rev[trans_name_rev] = {"rate": rate_rev, "collider":r_data["collider"], "up":r_data["down"],\
+				rate_data_rev[trans_name_rev] = {"rate": index_count, "collider":r_data["collider"], "up":r_data["down"],\
 					"down":r_data["up"]}
 
 			#merge excitation and de-excitation dictionary
 			rate_data = dict(rate_data.items() + rate_data_rev.items())
 			
-			#define an integer 1-based index for all the reaction found so far
-			for k in rate_data:
-				rate_data[k]["idx"] = index_count+1
-				self.coolZ_rates.append("k("+str(index_count+1)+") = "+rate_data[k]["rate"])
-				index_count += 1
 
 			idx_linear_dep_level = 0 #ground level will be removed (for linear dependency)
 
@@ -2906,7 +2927,7 @@ class krome():
 									full_A_matrix += "!"+str(klev)+" -> "+str(jlev)+\
 										", (de)excitation, collision: "+rate_data[r_key]["collider"]+"\n"
 									full_A_matrix += A_name +" = "+A_name+" - k("+\
-										str(rate_data[r_key]["idx"])+") * n(idx_"+\
+										str(rate_data[r_key]["rate"])+") * n(idx_"+\
 										self.convertMetal2F90(rate_data[r_key]["collider"])+")\n\n"
 							#search transitions k->j
 							if(trans_name in trans_data):
@@ -2925,7 +2946,7 @@ class krome():
 									full_A_matrix += "!"+str(ilev)+" -> "+str(klev)+\
 										", (de)excitation, collision: "+rate_data[r_key]["collider"]+"\n"
 									full_A_matrix += A_name +" = "+A_name+" + k("+\
-										str(rate_data[r_key]["idx"])+") * n(idx_"+\
+										str(rate_data[r_key]["rate"])+") * n(idx_"+\
 										self.convertMetal2F90(rate_data[r_key]["collider"])+")\n\n"
 							#search transitions i->k
 							if(trans_name in trans_data):
@@ -2938,7 +2959,7 @@ class krome():
 			full_B_vector = []
 			for k,t_data in trans_data.iteritems():
 				Aij_fmt = ("%e" % t_data["Aij"]).replace("e","d") #f90ish format for Aij
-				deltaE = levels_data[t_data["up"]]["energy"] - levels_data[t_data["down"]]["energy"]
+				deltaE = abs(levels_data[t_data["up"]]["energy"] - levels_data[t_data["down"]]["energy"])
 				deltaE_fmt = ("%e" % deltaE).replace("e","d") #f90ish format for deltaE
 				#put all togheter
 				full_B_vector.append("B("+str(t_data["up"]+1)+") * "+Aij_fmt+" * "+deltaE_fmt)
@@ -2959,10 +2980,15 @@ class krome():
 				full_function += "real*8::H2or,H2pa\n\n"
 				full_function += "H2or = n(idx_H2) * phys_orthoParaRatio / (phys_orthoParaRatio+1d0)\n"
 				full_function += "H2pa = n(idx_H2) / (phys_orthoParaRatio+1d0)\n\n"
+			#note that in the A matrix the ortho para variables are replaced with the correct one
+			full_function += function_name +" = 0d0\n\n"
+			full_function += "if(n(idx_"+metal_name_f90+")<1d-15) return\n\n"
+			full_function += "A(:,:) = 0d0\n\n"
 			full_function += full_A_matrix.replace("n(idx_H2or)","H2or").replace("n(idx_H2pa)","H2pa")
 			full_function += "!build matrix B\n"
 			full_function += "B(:) = 0d0\n"
-			full_function += "B("+str(idx_linear_dep_level+1)+") = 1d0\n\n"
+			full_function += "B("+str(idx_linear_dep_level+1)+") = n(idx_"+metal_name_f90+")\n\n"
+			#choose the correct solver depending on the number of levels
 			if(nlev>3):
 				full_function += "call mydgesv("+str(nlev)+", A(:,:), B(:), \""+function_name+"\")\n\n"
 				self.needLAPACK = True
@@ -2974,7 +3000,10 @@ class krome():
 				sys.exit("ERROR: strange number of levels for linear system in Zcooling: "+str(nlev))
 
 			full_function += "!check if B has negative values\n"
-			full_function += "if(minval(B)<0d0)then\n"
+			full_function += "if(minval(B)<-1d-40)then\n"
+			full_function += " print *,\"ERROR: minval(B)<0d0 in "+function_name+"\"\n"
+			full_function += " print *,\"Tgas =\",inTgas\n"
+			full_function += " print *,\"B(:) unrolled:\"\n"
 			full_function += " do i=1,size(B)\n"
 			full_function += "  print *,i,B(i)\n"
 			full_function += " end do\n"
@@ -2982,10 +3011,11 @@ class krome():
 			full_function += "end if\n\n"
 
 			full_function += function_name + " = " +full_B_vector+"\n\n"
-			full_function += function_name + " = " +function_name+" * n(idx_"+metal_name_f90+")\n\n"
+			#full_function += function_name + " = " +function_name+" * n(idx_"+metal_name_f90+")\n\n"
 			full_function += "end function "+function_name+"\n\n"
-			
+
 			self.coolZ_functions.append([function_name,full_function])
+
 			#print full_function
 
 	#######################################
@@ -3304,19 +3334,7 @@ class krome():
 							transition_map[trdown] = [trup]
 						max_level = max(max(max_level,trup),trdown)
 
-					#search connectivity map for most connected level (then removed for linear independency)
-					linear_dep_level = -1 #default value to rise error
-					for level_number, level_map in transition_map.iteritems():
-						#number of levels should be the same of the max level (ground=0)
-						if(len(level_map)==max_level):
-							linear_dep_level = level_number
-							break
-					#if connected level not found rise error
-					if(linear_dep_level<0):
-						print "ERROR: I can't find a level connected with all the others!"
-						print " linear matrix rows could not be linearly independent."
-						print " check the input of the file "+fname
-						sys.exit()
+					linear_dep_level = 0 #default value to rise error
 
 					#if no beta escape the system is linear and can be easily solved (mylin and/or lapack)
 					if(not(use_escape)):
@@ -4539,7 +4557,7 @@ class krome():
 					fout.write(x[1]+"\n")
 			elif(row.strip() == "#KROME_coolingZ_rates"):
 				for x in self.coolZ_rates:
-					fout.write(x+"\n")
+					fout.write(x+"\n\n")
 			else:
 				#replace pragma for total metals
 				row = row.replace("#KROME_tot_metals", self.totMetals)

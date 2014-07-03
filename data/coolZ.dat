@@ -5,6 +5,8 @@
 @var:invTgas = 1d0/Tgas
 @var:lnT = log(Tgas)
 
+@TgasUpperLimit:1d4
+
 ##############
 #CARBON
 metal:C
