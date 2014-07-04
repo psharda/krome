@@ -2973,7 +2973,7 @@ class krome():
 			full_function += "function "+function_name+"(n,inTgas,k)\n"
 			full_function += "use krome_commons\n"
 			full_function += "implicit none\n"
-			full_function += "integer::i\n"
+			full_function += "integer::i, hasnegative\n"
 			full_function += "real*8::"+function_name+",n(:),inTgas,k(:)\n"
 			full_function += "real*8::A("+str(nlev)+","+str(nlev)+"),B("+str(nlev)+")\n"
 			if(cool_data["needOrthoPara"]): 
@@ -2999,8 +2999,20 @@ class krome():
 			else:
 				sys.exit("ERROR: strange number of levels for linear system in Zcooling: "+str(nlev))
 
+			full_function += "!sanitize negative values\n"
+			full_function += "hasnegative = 0\n"
+			full_function += "do i=1,"+str(nlev)+"\n"
+			full_function += " if(B(i)<0) then\n"
+			full_function += "  if(abs(B(i)/n(idx_"+metal_name_f90+"))>1d-10) then\n"
+			full_function += "   hasnegative = 1\n"
+			full_function += "  else\n"
+			full_function += "   B(i) = 1d-40\n"
+			full_function += "  end if\n"
+			full_function += " end if\n"
+			full_function += "end do\n\n"
+
 			full_function += "!check if B has negative values\n"
-			full_function += "if(minval(B)<-1d-40)then\n"
+			full_function += "if(hasnegative>0)then\n"
 			full_function += " print *,\"ERROR: minval(B)<0d0 in "+function_name+"\"\n"
 			full_function += " print *,\"ntot_"+metal_name+" =\", n(idx_"+metal_name_f90+")\n"
 			full_function += " print *,\"Tgas =\", inTgas\n"
