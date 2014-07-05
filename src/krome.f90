@@ -293,7 +293,7 @@ contains
     else
       fname = "KROME_ERROR_REPORT"
     endif
-    open(fnum,FILE=trim(fname),status="unknown",position="append")
+    open(fnum,FILE=trim(fname),status="replace")
     tt = 0d0
     names(:) = get_names()
     rnames(:) = get_rnames()

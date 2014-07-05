@@ -2900,17 +2900,13 @@ class krome():
 			#PART 2.2: prepare A matrix for Ax=B system
 			#loop on the number of levels (k index, lines of the A matrix)
 			nlev = max(level_list)
-			full_A_matrix = ""
 			collider_list = [] #list of the collider found
+			Amatrix = [["0d0" for i in range(nlev+1)] for j in range(nlev+1)]
 			for klev in level_list[:]:
 				#if level is suitable for linear depenency use as conservation equation
 				if(klev==idx_linear_dep_level):
-					full_A_matrix += "!*******\n"
-					full_A_matrix += "!mass conservation equation\n"
-					full_A_matrix += "A(1,:) = 1d0\n\n"
+					Amatrix[klev] = ["1d0" for i in range(nlev+1)]
 					continue
-				full_A_matrix += "!*******\n"
-				full_A_matrix += "!transitions for level "+str(klev)+"\n\n"
 				#loop on the number of levels (i index, i<->j)
 				for ilev in level_list:
 					#loop on the number of levels (j index, i<->j)						
@@ -2925,18 +2921,16 @@ class krome():
 							for r_key in rate_data:
 								r_key_part = r_key.split("_")[0]
 								if(trans_name==r_key_part):
-									full_A_matrix += "!"+str(klev)+" -> "+str(jlev)+\
-										", (de)excitation, collision: "+rate_data[r_key]["collider"]+"\n"
-									full_A_matrix += A_name +" = "+A_name+" - k("+\
-										str(rate_data[r_key]["rate"])+") * coll_"+\
-										self.convertMetal2F90(rate_data[r_key]["collider"])+"\n\n"
+									matrix_rate = " &\n- k("+str(rate_data[r_key]["rate"])+") * coll_"+\
+										self.convertMetal2F90(rate_data[r_key]["collider"])
+									Amatrix[klev][ilev] += matrix_rate
 									collider_list.append(rate_data[r_key]["collider"])
 							#search transitions k->j
 							if(trans_name in trans_data):
-								full_A_matrix += "!"+str(klev)+" -> "+str(jlev)+", radiative\n"
 								Aij_fmt = ("%e" % trans_data[trans_name]["Aij"]).replace("e","d")
-								full_A_matrix += A_name +" = "+A_name+" - "+Aij_fmt+"\n\n"
-								#print trans_data[trans_name]
+								matrix_rate = " &\n- " + Aij_fmt
+								Amatrix[klev][ilev] += matrix_rate
+
 						#i->k transitions (populate k level: Aik, Cik)
 						if(klev==jlev):
 							A_name = "A("+str(klev+1)+","+str(ilev+1)+")" #Ax=b matrix element name
@@ -2945,17 +2939,15 @@ class krome():
 							for r_key in rate_data:
 								r_key_part = r_key.split("_")[0]
 								if(trans_name==r_key_part):
-									full_A_matrix += "!"+str(ilev)+" -> "+str(klev)+\
-										", (de)excitation, collision: "+rate_data[r_key]["collider"]+"\n"
-									full_A_matrix += A_name +" = "+A_name+" + k("+\
-										str(rate_data[r_key]["rate"])+") * coll_"+\
-										self.convertMetal2F90(rate_data[r_key]["collider"])+"\n\n"
+									matrix_rate = " &\n+ k("+str(rate_data[r_key]["rate"])+") * coll_"+\
+										self.convertMetal2F90(rate_data[r_key]["collider"])
+									Amatrix[klev][ilev] += matrix_rate
 									collider_list.append(rate_data[r_key]["collider"])
 							#search transitions i->k
 							if(trans_name in trans_data):
-								full_A_matrix += "!"+str(ilev)+" -> "+str(klev)+", radiative\n"
 								Aij_fmt = ("%e" % trans_data[trans_name]["Aij"]).replace("e","d")
-								full_A_matrix += A_name +" = "+A_name+" + "+Aij_fmt+"\n\n"
+								matrix_rate = " &\n+ "+Aij_fmt
+								Amatrix[klev][ilev] += matrix_rate
 								#print trans_data[trans_name]
 
 			#PART 2.3: prepare the cooling
@@ -2995,6 +2987,8 @@ class krome():
 			for x in collider_list:
 				full_function += "real*8::coll_"+x+"\n"
 
+			full_function += "\n!colliders should be >0\n"
+
 			#initialization of colliders (replace ortho/para H2)
 			for x in collider_list:
 				xn = "n(idx_"+x+")"
@@ -3002,31 +2996,48 @@ class krome():
 				if(x=="H2pa"): xn = "n(idx_H2) / (phys_orthoParaRatio+1d0)"
 				full_function += "coll_"+x+" = max("+xn+", 0d0)\n" #collider must be positive
 
+			full_function += "\n!deafault cooling value\n"
 			full_function += function_name +" = 0d0\n\n" #default
 			full_function += "if(n(idx_"+metal_name_f90+")<1d-15) return\n\n" #if low coolant abundance skip all
 			full_function += "A(:,:) = 0d0\n\n" #init A matrix to zero
-			full_function += full_A_matrix #full A matrix
-			full_function += "!build matrix B\n"
-			full_function += "B(:) = 0d0\n" #default B matrix
-			full_function += "B("+str(idx_linear_dep_level+1)+") = n(idx_"+metal_name_f90+")\n\n" #conservation equation RHS
-			full_function += "Ain(:,:) = A(:,:)\n\n" #store initial matrix for debug purposes
 
-			
+			#write the initialization of first column of the A matrix 
+			# (will be used by the f90 to reduce the size of the problem)
+			for j in range(nlev):
+				if(Amatrix[j][0]!="0d0"):
+					matrix_element = Amatrix[j][0].replace("0d0 &\n","")
+					full_function += "A("+str(j+1)+",1) = "+matrix_element+"\n"
+
+
 			#the size of the problem can be reduced up to the last non-zero row of the left triangular matrix
 			# only interesting with more levels
 			if(nlev>3):
 				full_function += "!reduce the size of the problem if possible\n" #reverse is faster
 				full_function += "nmax = 1\n"
 				full_function += "do i="+str(nlev)+",2,-1\n"
-				full_function += " if(sum(A(i,1:i-1))>0d0) then\n"
+				full_function += " if(A(i,1)>0d0) then\n"
 				full_function += "  nmax = i\n" #store new size of the problem
 				full_function += "  exit\n" #break loop
 				full_function += " end if\n"
 				full_function += "end do\n\n"
 
-			#control if the problem is not 1-level
-			full_function += "!no need to solve a 1-level problem\n"
-			full_function += "if(nmax==1) return\n\n"
+				#control if the problem is not 1-level
+				full_function += "!no need to solve a 1-level problem\n"
+				full_function += "if(nmax==1) return\n\n"
+
+
+			#write the A matrix column-wise. A(:,1) matrix column computed above
+			for i in range(1,nlev):
+				for j in range(nlev):
+					if(Amatrix[j][i]!="0d0"):
+						matrix_element = Amatrix[j][i].replace("0d0 &\n","")
+						full_function += "A("+str(j+1)+","+str(i+1)+") = "+matrix_element+"\n"
+
+			full_function += "\n!build matrix B\n"
+			full_function += "B(:) = 0d0\n" #default B matrix
+			full_function += "B("+str(idx_linear_dep_level+1)+") = n(idx_"+metal_name_f90+")\n\n" #conservation equation RHS
+			full_function += "Ain(:,:) = A(:,:)\n\n" #store initial matrix for debug purposes
+
 
 			#choose the correct solver depending on the number of levels
 			if(nlev>3):
