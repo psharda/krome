@@ -2901,6 +2901,7 @@ class krome():
 			#loop on the number of levels (k index, lines of the A matrix)
 			nlev = max(level_list)
 			full_A_matrix = ""
+			collider_list = [] #list of the collider found
 			for klev in level_list[:]:
 				#if level is suitable for linear depenency use as conservation equation
 				if(klev==idx_linear_dep_level):
@@ -2927,8 +2928,9 @@ class krome():
 									full_A_matrix += "!"+str(klev)+" -> "+str(jlev)+\
 										", (de)excitation, collision: "+rate_data[r_key]["collider"]+"\n"
 									full_A_matrix += A_name +" = "+A_name+" - k("+\
-										str(rate_data[r_key]["rate"])+") * n(idx_"+\
-										self.convertMetal2F90(rate_data[r_key]["collider"])+")\n\n"
+										str(rate_data[r_key]["rate"])+") * coll_"+\
+										self.convertMetal2F90(rate_data[r_key]["collider"])+"\n\n"
+									collider_list.append(rate_data[r_key]["collider"])
 							#search transitions k->j
 							if(trans_name in trans_data):
 								full_A_matrix += "!"+str(klev)+" -> "+str(jlev)+", radiative\n"
@@ -2946,8 +2948,9 @@ class krome():
 									full_A_matrix += "!"+str(ilev)+" -> "+str(klev)+\
 										", (de)excitation, collision: "+rate_data[r_key]["collider"]+"\n"
 									full_A_matrix += A_name +" = "+A_name+" + k("+\
-										str(rate_data[r_key]["rate"])+") * n(idx_"+\
-										self.convertMetal2F90(rate_data[r_key]["collider"])+")\n\n"
+										str(rate_data[r_key]["rate"])+") * coll_"+\
+										self.convertMetal2F90(rate_data[r_key]["collider"])+"\n\n"
+									collider_list.append(rate_data[r_key]["collider"])
 							#search transitions i->k
 							if(trans_name in trans_data):
 								full_A_matrix += "!"+str(ilev)+" -> "+str(klev)+", radiative\n"
@@ -2965,32 +2968,61 @@ class krome():
 				full_B_vector.append("B("+str(t_data["up"]+1)+") * "+Aij_fmt+" * "+deltaE_fmt)
 			full_B_vector = (" &\n + ".join(full_B_vector))
 
+			#uniqe collider_list
+			ucollider_list = []
+			for x in collider_list:
+				x = x.replace("+","j").replace("-","k")
+				if(x in ucollider_list): continue
+				ucollider_list.append(x)
+			collider_list = ucollider_list
 
-			#PART 2.4: prepare the function
-			nlev = max(levels_data)+1
-			function_name = "cooling"+metal_name
+
+			#PART 2.4: prepare the function for cooling
+			nlev = max(levels_data)+1 #maximum number of levels
+			function_name = "cooling"+metal_name #name of the function
 			full_function = "!************************************\n"
 			full_function += "function "+function_name+"(n,inTgas,k)\n"
 			full_function += "use krome_commons\n"
 			full_function += "implicit none\n"
-			full_function += "integer::i, hasnegative\n"
+
+			#declaration of varaibles
+			full_function += "integer::i, hasnegative, nmax\n"
 			full_function += "real*8::"+function_name+",n(:),inTgas,k(:)\n"
-			full_function += "real*8::A("+str(nlev)+","+str(nlev)+"),B("+str(nlev)+")\n"
-			if(cool_data["needOrthoPara"]): 
-				full_function += "real*8::H2or,H2pa\n\n"
-				full_function += "H2or = n(idx_H2) * phys_orthoParaRatio / (phys_orthoParaRatio+1d0)\n"
-				full_function += "H2pa = n(idx_H2) / (phys_orthoParaRatio+1d0)\n\n"
-			#note that in the A matrix the ortho para variables are replaced with the correct one
-			full_function += function_name +" = 0d0\n\n"
-			full_function += "if(n(idx_"+metal_name_f90+")<1d-15) return\n\n"
-			full_function += "A(:,:) = 0d0\n\n"
-			full_function += full_A_matrix.replace("n(idx_H2or)","H2or").replace("n(idx_H2pa)","H2pa")
+			full_function += "real*8::A("+str(nlev)+","+str(nlev)+"),Ain("+str(nlev)+","+str(nlev)+")\n"
+			full_function += "real*8::B("+str(nlev)+"),tmp("+str(nlev)+")\n"
+
+			#declaration of alias variable for colliders
+			for x in collider_list:
+				full_function += "real*8::coll_"+x+"\n"
+
+			#initialization of colliders (replace ortho/para H2)
+			for x in collider_list:
+				xn = "n(idx_"+x+")"
+				if(x=="H2or"): xn = "n(idx_H2) * phys_orthoParaRatio / (phys_orthoParaRatio+1d0)"
+				if(x=="H2pa"): xn = "n(idx_H2) / (phys_orthoParaRatio+1d0)"
+				full_function += "coll_"+x+" = max("+xn+", 0d0)\n" #collider must be positive
+
+			full_function += function_name +" = 0d0\n\n" #default
+			full_function += "if(n(idx_"+metal_name_f90+")<1d-15) return\n\n" #if low coolant abundance skip all
+			full_function += "A(:,:) = 0d0\n\n" #init A matrix to zero
+			full_function += full_A_matrix #full A matrix
 			full_function += "!build matrix B\n"
-			full_function += "B(:) = 0d0\n"
-			full_function += "B("+str(idx_linear_dep_level+1)+") = n(idx_"+metal_name_f90+")\n\n"
+			full_function += "B(:) = 0d0\n" #default B matrix
+			full_function += "B("+str(idx_linear_dep_level+1)+") = n(idx_"+metal_name_f90+")\n\n" #conservation equation RHS
+			full_function += "Ain(:,:) = A(:,:)\n\n" #store initial matrix for debug purposes
+
+			#the size of the problem can be reduced up to the last non-zero row of the left triangular matrix
+			full_function += "!reduce the size of the problem if possible\n" #reverse is faster
+			full_function += "do i="+str(nlev)+",2,-1\n"
+			full_function += " if(sum(A(i,1:i-1))>0d0) then\n"
+			full_function += "  nmax = i\n" #store new size of the problem
+			full_function += "  exit\n" #break loop
+			full_function += " end if\n"
+			full_function += "end do\n\n"
+
 			#choose the correct solver depending on the number of levels
 			if(nlev>3):
-				full_function += "call mydgesv("+str(nlev)+", A(:,:), B(:), \""+function_name+"\")\n\n"
+				full_function += "call mydgesv(nmax, A(:,:), B(:), \""+function_name+"\")\n\n"
 				self.needLAPACK = True
 			elif(nlev==2):
 				full_function += "call mylin2(A(:,:), B(:))\n\n"
@@ -2999,10 +3031,11 @@ class krome():
 			else:
 				sys.exit("ERROR: strange number of levels for linear system in Zcooling: "+str(nlev))
 
+			#negative small values can be flushed to 1d-40
 			full_function += "!sanitize negative values\n"
 			full_function += "hasnegative = 0\n"
 			full_function += "do i=1,"+str(nlev)+"\n"
-			full_function += " if(B(i)<0) then\n"
+			full_function += " if(B(i)<0d0) then\n"
 			full_function += "  if(abs(B(i)/n(idx_"+metal_name_f90+"))>1d-10) then\n"
 			full_function += "   hasnegative = 1\n"
 			full_function += "  else\n"
@@ -3011,6 +3044,7 @@ class krome():
 			full_function += " end if\n"
 			full_function += "end do\n\n"
 
+			#when negative value are found print some stuff and stop
 			full_function += "!check if B has negative values\n"
 			full_function += "if(hasnegative>0)then\n"
 			full_function += " print *,\"ERROR: minval(B)<0d0 in "+function_name+"\"\n"
@@ -3022,18 +3056,23 @@ class krome():
 			full_function += " end do\n"
 			full_function += " print *,\"A(:,:) min/max:\"\n"
 			full_function += " do i=1,size(B)\n"
-			full_function += "  print *, i, minval(A(i,:)), maxval(A(i,:))\n"
+			full_function += "  print *, i, minval(Ain(i,:)), maxval(Ain(i,:))\n"
+			full_function += " end do\n\n"
+			full_function += " print *,\"A(:,:)\"\n"
+			full_function += " do i=1,size(B)\n"
+			full_function += "  tmp(:) = Ain(i,:)\n"
+			full_function += "  print '(I5,99E17.8)', i, tmp(:)\n"
 			full_function += " end do\n"
 			full_function += " stop\n"
 			full_function += "end if\n\n"
 
+			#when the population for each level is known compute the cooling (see above) 
 			full_function += function_name + " = " +full_B_vector+"\n\n"
-			#full_function += function_name + " = " +function_name+" * n(idx_"+metal_name_f90+")\n\n"
 			full_function += "end function "+function_name+"\n\n"
 
+			#append the function to the list of the functions
 			self.coolZ_functions.append([function_name,full_function])
 
-			#print full_function
 
 	#######################################
 	#this function loads the cooling functions from a file

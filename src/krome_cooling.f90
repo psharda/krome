@@ -953,43 +953,70 @@ contains
 
 #IFKROME_useLAPACK
   !*********************************
-  subroutine mydgesv(n,A,B, parent_name)
+  subroutine mydgesv(n,Ain,Bin, parent_name)
     !driver for LAPACK dgesv
     integer::n,info,i,ipiv(n)
-    real*8::A(n,n),B(n),Ain(n,n),Bin(n),tmp(n)
+    real*8,allocatable::tmp(:)
+    real*8::A(n,n),B(n),Ain(:,:),Bin(:),suml,sumr,tmpn(n)
     character(len=*)::parent_name
-    Ain(:,:) = A(:,:)
-    Bin(:) = B(:)
+    A(:,:) = Ain(1:n,1:n)
+    B(:) = Bin(1:n)
     call dgesv(n,1,A,n,ipiv,B,n,info)
-    
+    Bin(1:n) = B(:)
+
     !write some info about the error and stop
     if(info > 0) then
+       allocate(tmp(size(Bin)))
        print *,"ERROR: matrix exactly singular, U(i,i) where i=",info
        print *,' (called by "'//trim(parent_name)//'" function)'
        
        !dump the input matrix to a file
        open(97,name="ERROR_dump_dgesv.dat",status="replace")
+       !dump size of the problem
+       write(97,*) "size of the problem:",n
+       write(97,*)
+
        !dump matrix A
        write(97,*) "Input matrix A line by line:"
-       do i=1,n
+       do i=1,size(Ain,1)
           tmp(:) = Ain(i,:)
           write(97,'(I5,999E17.8e3)') i,tmp(:)
        end do
 
+       !dump matrix A
+       write(97,*)
+       write(97,*) "Workin matrix A line by line:"
+       do i=1,n
+          tmpn(:) = Ain(i,1:n)
+          write(97,'(I5,999E17.8e3)') i,tmpn(:)
+       end do
+
        !dump matrix B
        write(97,*)
-       write(97,*) "Input vector B element by element"
+       write(97,*) "Input/output vector B element by element"
        do i=1,n
-          write(97,*) i, Bin(i)
+          write(97,*) i, Bin(i),B(i)
        end do
 
        !dump info on matrix A rows
        write(97,*)
        write(97,*) "Info on matrix A rows"
        write(97,'(a5,99a17)') "idx","minval","maxval"
-       do i=1,n
+       do i=1,size(Ain,1)
            write(97,'(I5,999E17.8e3)') i, minval(Ain(i,:)), &
                 maxval(Ain(i,:))
+       end do
+
+       !dump info on matrix sum left and right
+       write(97,*)
+       write(97,*) "Info on matrix A, sum left/right"
+       write(97,'(a5,99a17)') "idx","left","right"
+       suml = 0d0
+       sumr = 0d0
+       do i=1,size(Ain,1)
+          if(i>1) suml = sum(Ain(i,:i-1))
+          if(i<n) sumr = sum(Ain(i,i+1:))
+          write(97,'(I5,999E17.8e3)') i, suml, sumr
        end do
        close(97)
 
