@@ -3011,14 +3011,22 @@ class krome():
 			full_function += "B("+str(idx_linear_dep_level+1)+") = n(idx_"+metal_name_f90+")\n\n" #conservation equation RHS
 			full_function += "Ain(:,:) = A(:,:)\n\n" #store initial matrix for debug purposes
 
+			
 			#the size of the problem can be reduced up to the last non-zero row of the left triangular matrix
-			full_function += "!reduce the size of the problem if possible\n" #reverse is faster
-			full_function += "do i="+str(nlev)+",2,-1\n"
-			full_function += " if(sum(A(i,1:i-1))>0d0) then\n"
-			full_function += "  nmax = i\n" #store new size of the problem
-			full_function += "  exit\n" #break loop
-			full_function += " end if\n"
-			full_function += "end do\n\n"
+			# only interesting with more levels
+			if(nlev>3):
+				full_function += "!reduce the size of the problem if possible\n" #reverse is faster
+				full_function += "nmax = 1\n"
+				full_function += "do i="+str(nlev)+",2,-1\n"
+				full_function += " if(sum(A(i,1:i-1))>0d0) then\n"
+				full_function += "  nmax = i\n" #store new size of the problem
+				full_function += "  exit\n" #break loop
+				full_function += " end if\n"
+				full_function += "end do\n\n"
+
+			#control if the problem is not 1-level
+			full_function += "!no need to solve a 1-level problem\n"
+			full_function += "if(nmax==1) return\n\n"
 
 			#choose the correct solver depending on the number of levels
 			if(nlev>3):
