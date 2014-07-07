@@ -4495,6 +4495,7 @@ class krome():
 
 	################################
 	def makeCooling(self):
+		from math import sqrt
 		buildFolder = self.buildFolder
 		reacts = self.reacts
 		specs = self.specs
@@ -4531,15 +4532,28 @@ class krome():
 					dH_cool += "*"+(str(abs(rea.dH))).replace("e","d")+"\n"
 
 
-		#bremsstrahlung for all the ions as charge**2*n_ion
+		#bremsstrahlung (free-free) for all the ions as charge**2*n_ion
 		bms_ions = "bms_ions ="
 		#look for ions (charge>0)
 		for x in specs:
 			charge = x.charge #store species charge
+			if(not(x.is_atom)): continue #only atoms for free-free
 			if(charge>0):
 				mult = "" #multiplication factor
 				if(charge>1): mult = str(charge*charge)+".d0*" #multipy by the square of the charge
 				bms_ions += " +"+mult+"n("+x.fidx+")" #add Z^2*abundance
+
+
+		#load data for free-bound
+		fhfb = open("data/ip.dat","rb")
+		fbdata = []
+		for row in fhfb:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow[0]=="#"): continue
+			arow = [x for x in srow.split(" ") if x!=""]
+			#Z: atomic number, ion: ionization degree (e.g. HII=1), energy_eV: ioniz potential, n0: principal quantum number 
+			fbdata.append({"Z":int(arow[0]), "ion":int(arow[1]), "energy_eV":float(arow[5]), "n0":int(arow[6])})
 
 		skip = skip_nleq = False
 		useCoolingZ = self.useCoolingZ
@@ -4614,7 +4628,43 @@ class krome():
 					fout.write("print *,\"ERROR: unknown case in fcn subroutine!\", n\n")
 					fout.write("stop\n")
 					fout.write("end if\n")
-				
+			#prepare free-bound calculation
+			elif(row.strip()=="#KROME_FB_cooling_data"):
+				for x in self.specs:
+					charge = x.charge #species charge
+					Zatom = x.zatom #species atomic number
+					if(not(x.is_atom)): continue #skip molecules
+					if(charge<=0): continue #skip neutral and anions
+					#search the data in the table loaded above
+					dataFound = False
+					for dataip in fbdata:
+						if(dataip["Z"]==Zatom and dataip["ion"]==charge):
+							mydataip = dataip #store the line
+							dataFound = True #update found flag
+							break #break the loop 
+					#raise error if no data found
+					if(not(dataFound)): sys.exit("ERROR: no data found for "+x.name)
+					#start calculation (precompute most of the known stuff)
+					n0 = mydataip["n0"] #principal quantum number
+					ion = mydataip["ion"] #ionization degree (charge)
+					E_eV = mydataip["energy_eV"] #ionization potential eV
+					z0 = sqrt(E_eV/1.359808e1)*n0
+					E0 = E_eV/1e3 #keV
+					En1 = (ion)**2*1.359808e1/(n0+1)**2/1e3 #keV
+					l0 = 911.9e0*(n0/z0)**2 #angstrom
+					ln1 = 911.9e0/ion**2*(float(n0+1))**2 #angstrom
+					dzion = Zatom-ion
+					if(dzion>22):
+						zeta0 = -dzion+55e0
+					elif(dzion<=22 and dzion>8):
+						zeta0 = -dzion+27e0
+					elif(dzion<=8 and dzion>0):
+						zeta0 = -dzion+9e0
+					else:
+						zeta0 = -dzion+1e0
+					print x.name
+					print "f2 = "+format_double(.9*zeta0*z0**4/n0**5)+"*exp("+format_double(0.1578e0*z0**2/n0**2)+"*invT6)"
+					print "gfb = "+"0.1578d0*n("+x.fidx+")*f2*invT6"
 
 			elif(row.strip() == "#KROME_nZrate"):
 					fout.write("integer,parameter::nZrate="+str(len(self.coolZ_rates))+"\n")
