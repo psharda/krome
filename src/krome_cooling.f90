@@ -70,6 +70,10 @@ contains
     cools(idx_cool_exp) = cooling_expansion(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingFF
+    cools(idx_cool_ff) = cooling_ff(n(:), Tgas)
+#ENDIFKROME
+
     get_cooling_array(:) = cools(:)
 
     !remove the comment below to write cooling contributions to fort.44
@@ -520,10 +524,9 @@ contains
     use krome_commons
     use krome_subs
     real*8::Tgas,cooling_atomic,n(:)
-    real*8::temp,gaunt_factor,T5,cool,bms_ions
+    real*8::temp,T5,cool
 
 
-    gaunt_factor = 1.5d0
     temp = max(Tgas,10.d0) !K
     T5 = temp/1.d5 !K
     cool = 0.d0 !erg/cm3/s
@@ -557,13 +560,28 @@ contains
     cool = cool+ 5.54d-17*temp**(-.397)/(1.d0+sqrt(T5))&
          *exp(-4.73638d5/temp)*n(idx_e)*n(idx_Hej)
 
+    cooling_atomic = max(cool, 0.d0)  !erg/cm3/s
+
+  end function cooling_Atomic
+
+  !**************************
+  !free-free cooling (bremsstrahlung for all ions)
+  ! using mean Gaunt factor value (Cen+1992)
+  function cooling_ff(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::n(:),Tgas,cool,cooling_ff,gaunt_factor,bms_ions
+
+    gaunt_factor = 1.5d0 !mean value
+
     !BREMSSTRAHLUNG: all ions
 #KROME_brem_ions
-    cool = cool+ 1.42d-27*gaunt_factor*sqrt(temp)&
+    cool = 1.42d-27*gaunt_factor*sqrt(Tgas)&
          *bms_ions*n(idx_e)
 
-    cooling_atomic = max(cool, 0.d0)  !erg/cm3/s
-  end function cooling_Atomic
+    cooling_ff = max(cool, 0.d0)  !erg/cm3/s
+
+  end function cooling_ff
 #ENDIFKROME
 
 #IFKROME_useCoolingHD

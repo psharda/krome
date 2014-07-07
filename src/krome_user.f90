@@ -526,7 +526,7 @@ contains
     use krome_commons
     implicit none
     real*8::x(:),n(nspec),inTgas
-    real*8::krome_get_cooling_array(11),Tgas
+    real*8::krome_get_cooling_array(ncools),Tgas
 
     n(:) = 0d0
     n(1:nmols) = x(:)
