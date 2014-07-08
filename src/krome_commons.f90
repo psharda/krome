@@ -19,6 +19,9 @@ module krome_commons
   integer,parameter::ktab_n=int(1e3)
   real*8::ktab(nrea,ktab_n),ktab_logTlow, ktab_logTup, ktab_T(ktab_n)
   real*8::inv_ktab_T(ktab_n-1), inv_ktab_idx
+
+  !thermo toggle (when >0 do cooling/heating)
+  integer::krome_thermo_toggle
   
   !commons for implicit RHS
 #KROME_implicit_arr_r
@@ -56,6 +59,6 @@ module krome_commons
   real*8::xmulH2esc,ymulH2esc
 
   !physical commons
-  real*8::phys_Tcmb,phys_zredshift
+#KROME_phys_commons
   
 end module krome_commons

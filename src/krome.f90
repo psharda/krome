@@ -293,7 +293,7 @@ contains
     else
       fname = "KROME_ERROR_REPORT"
     endif
-    open(fnum,FILE=trim(fname),status="unknown",position="append")
+    open(fnum,FILE=trim(fname),status="replace")
     tt = 0d0
     names(:) = get_names()
     rnames(:) = get_rnames()
@@ -433,8 +433,7 @@ contains
 #ENDIFKROME
 
     !init phys common variables
-    phys_Tcmb = 2.73d0
-    phys_zredshift = 0d0
+#KROME_init_phys_variables
 
   end subroutine krome_init
 

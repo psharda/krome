@@ -3,13 +3,12 @@ set logscale
 nkrome=3
 load 'species.gps'
 
-#set yrange [0.006:1.1]
-set key l b
+set yrange [1e-21:1e-17]
 
-set xlabel "log(time/yr)"
-set ylabel "Tgas/K"
+set xlabel "log(Tgas/K)"
+set ylabel "cooling (erg*cm3/s)"
 set format x "%L"
 
-plot './fort.66' u 2:($1==1?$3:1/0) w l t "T (j21=1e-3)",\
-'' u 2:($1==2?$3:1/0) w l t "T (j21=1e-1)",\
-'' u 2:($1==3?$3:1/0) w l t "T (j21=1e0)"
+plot './fort.55' u 2:($1==1?$3:1/0) w l t "T (j21=0e0)",\
+'' u 2:($1==2?$3:1/0) w l t "T (j21=1e0)",\
+'' u 2:($1==3?$3:1/0) w l t "T (j21=1e2)"

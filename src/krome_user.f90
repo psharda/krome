@@ -17,51 +17,31 @@ contains
 
 #KROME_user_commons_functions
 
-  !**********************
-  !set the physical common value Tcmb to arg
-  subroutine krome_set_Tcmb(arg)
+  !***********************
+  subroutine krome_print_phys_variables()
     use krome_commons
     implicit none
-    real*8::arg
 
-    phys_Tcmb = arg
+#KROME_print_phys_variables
 
-  end subroutine krome_set_Tcmb
+  end subroutine krome_print_phys_variables
 
-  !**********************
-  !get the physical common value Tcmb
-  function krome_get_Tcmb()
-    use krome_commons
-    implicit none
-    real*8::krome_get_Tcmb
-
-    krome_get_Tcmb = phys_Tcmb
-
-  end function krome_get_Tcmb
-
-  !**********************
-  !set the physical common value zredshift to arg
-  subroutine krome_set_zredshift(arg)
-    use krome_commons
-    implicit none
-    real*8::arg
-
-    phys_zredshift = arg
-    
-  end subroutine krome_set_zredshift
-
-  !**********************
-  !get the physical common value zredshift
-  function krome_get_zredshift()
-    use krome_commons
-    implicit none
-    real*8::krome_get_zredshift
-
-    krome_get_zredshift = phys_zredshift
-
-  end function krome_get_zredshift
+#KROME_set_get_phys_functions
 
 #KROME_cooling_functions
+
+  !****************************
+  subroutine krome_thermo_on()
+    use krome_commons
+    krome_thermo_toggle = 1
+  end subroutine krome_thermo_on
+
+  !****************************
+  subroutine krome_thermo_off()
+    use krome_commons
+    krome_thermo_toggle = 0
+  end subroutine krome_thermo_off
+
   
 #IFKROME_usePhotoBins
   !************************
@@ -357,6 +337,28 @@ contains
     
   end subroutine krome_set_photoBin_J21log
 
+  !*****************************
+  function krome_get_opacity(x)
+    use krome_commons
+    use krome_photo
+    use krome_subs
+    implicit none
+    real*8::x(:),tau,krome_get_opacity(nPhotoBins)
+    integer::i,j
+
+    !loop on frequency bins
+    do j=1,nPhotoBins
+       tau = 0d0
+       !loop on species
+       do i=1,nPhotoRea
+          !calc opacity as column_density * cross_section
+          tau = tau + num2col(x(i)) * photoBinJTab(i,j)
+       end do
+       krome_get_opacity(j) = tau !store
+    end do
+    
+  end function krome_get_opacity
+
 #ENDIFKROME
 
   !***************************
@@ -537,7 +539,7 @@ contains
     use krome_commons
     implicit none
     real*8::x(:),n(nspec),inTgas
-    real*8::krome_get_cooling_array(11),Tgas
+    real*8::krome_get_cooling_array(ncools),Tgas
 
     n(:) = 0d0
     n(1:nmols) = x(:)

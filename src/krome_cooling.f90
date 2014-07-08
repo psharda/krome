@@ -70,6 +70,10 @@ contains
     cools(idx_cool_exp) = cooling_expansion(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingFF
+    cools(idx_cool_ff) = cooling_ff(n(:), Tgas)
+#ENDIFKROME
+
     get_cooling_array(:) = cools(:)
 
     !remove the comment below to write cooling contributions to fort.44
@@ -121,8 +125,52 @@ contains
 
   end function kpla
 
+
+!!$  !******************************
+!!$  function cooling_FB(n,Tgas)
+!!$    !free-bound cooling, as in Mewe+1986, sect2.2
+!!$    ! using the implementation as in Chianti 
+!!$    ! procedure fb_rad_loss.pro (erg/cm3/s)
+!!$    use krome_commons
+!!$    implicit none
+!!$    real*8::coolingFB,n(:),Tgas,T6,cool,gfb,ln1
+!!$    real*8::zetas()
+!!$
+!!$
+!!$    T6 = Tgas*1d-6
+!!$    cool = 0d0
+!!$
+!!$#KROME_FB_cooling_data
+!!$
+!!$
+!!$    n0 = 
+!!$    z0 = sqrt(ionpot/eH)*n0
+!!$
+!!$    e0 = ionpot/8.06554d3/1d3
+!!$    en1 = eH*ion**2/(n0+1d0**2)/8.06554d3/1d3
+!!$
+!!$    l0 = 1d8/(ionpot-ionpot0)
+!!$    ln1 = 1d8/eH/ion**2*(n0+1d0)**2
+!!$    zeta0 = zetas(iz-ion)
+!!$
+!!$    precool = 2.051d-22*sqrt(T6)/143.9d0
+!!$    pregf = 0.1578/T6*nion*ieq
+!!$
+!!$    f2 = 0.9*zeta0*z0**4/n0**5*exp(0.1578*z0**2/n0**2*T6)
+!!$    gf = pregf*f2 
+!!$    cool = cool + precool * exp(-143.9/l0/T6)
+!!$
+!!$    f2 = 0.42d0*n0**(-1.5)*ion**4 * exp(.1578*(ion/(n0+1d0))**2*T6)
+!!$    gfb = pregf*f2
+!!$    cool = cool + precool * gfb * exp(-143.9/ln1/T6)
+!!$    
+!!$    cooling_FB = cool
+!!$
+!!$  end function cooling_FB
+
   !*****************************
   function coolingChem(n,Tgas)
+    implicit none
     real*8::coolingChem,n(:),Tgas
 
     !note that this function is a dummy.
@@ -520,10 +568,9 @@ contains
     use krome_commons
     use krome_subs
     real*8::Tgas,cooling_atomic,n(:)
-    real*8::temp,gaunt_factor,T5,cool,bms_ions
+    real*8::temp,T5,cool
 
 
-    gaunt_factor = 1.5d0
     temp = max(Tgas,10.d0) !K
     T5 = temp/1.d5 !K
     cool = 0.d0 !erg/cm3/s
@@ -557,13 +604,28 @@ contains
     cool = cool+ 5.54d-17*temp**(-.397)/(1.d0+sqrt(T5))&
          *exp(-4.73638d5/temp)*n(idx_e)*n(idx_Hej)
 
+    cooling_atomic = max(cool, 0.d0)  !erg/cm3/s
+
+  end function cooling_Atomic
+
+  !**************************
+  !free-free cooling (bremsstrahlung for all ions)
+  ! using mean Gaunt factor value (Cen+1992)
+  function cooling_ff(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::n(:),Tgas,cool,cooling_ff,gaunt_factor,bms_ions
+
+    gaunt_factor = 1.5d0 !mean value
+
     !BREMSSTRAHLUNG: all ions
 #KROME_brem_ions
-    cool = cool+ 1.42d-27*gaunt_factor*sqrt(temp)&
+    cool = 1.42d-27*gaunt_factor*sqrt(Tgas)&
          *bms_ions*n(idx_e)
 
-    cooling_atomic = max(cool, 0.d0)  !erg/cm3/s
-  end function cooling_Atomic
+    cooling_ff = max(cool, 0.d0)  !erg/cm3/s
+
+  end function cooling_ff
 #ENDIFKROME
 
 #IFKROME_useCoolingHD
@@ -677,12 +739,13 @@ contains
   function coolingZ_rates(inTgas)
     use krome_commons
     implicit none
-    real*8::inTgas, coolingZ_rates(nZrate),k(nZrate)
-    real*8::Tgas
+    real*8::inTgas,coolingZ_rates(nZrate),k(nZrate)
+    real*8::Tgas,invT
     integer::i
 #KROME_coolingZ_declare_custom_vars
 
     Tgas = inTgas
+    invT = 1d0/Tgas
 
 #KROME_coolingZ_custom_vars
 
@@ -701,7 +764,7 @@ contains
     end if
 
     !check rates <0
-    if(maxval(k)<0d0) then
+    if(minval(k)<0d0) then
        print *,"ERROR: found rate <0d0 in coolingZ_rates!"
        print *," Tgas =",Tgas
        do i=1,nZrate
@@ -952,43 +1015,70 @@ contains
 
 #IFKROME_useLAPACK
   !*********************************
-  subroutine mydgesv(n,A,B, parent_name)
+  subroutine mydgesv(n,Ain,Bin, parent_name)
     !driver for LAPACK dgesv
     integer::n,info,i,ipiv(n)
-    real*8::A(n,n),B(n),Ain(n,n),Bin(n),tmp(n)
+    real*8,allocatable::tmp(:)
+    real*8::A(n,n),B(n),Ain(:,:),Bin(:),suml,sumr,tmpn(n)
     character(len=*)::parent_name
-    Ain(:,:) = A(:,:)
-    Bin(:) = B(:)
+    A(:,:) = Ain(1:n,1:n)
+    B(:) = Bin(1:n)
     call dgesv(n,1,A,n,ipiv,B,n,info)
-    
+    Bin(1:n) = B(:)
+
     !write some info about the error and stop
     if(info > 0) then
+       allocate(tmp(size(Bin)))
        print *,"ERROR: matrix exactly singular, U(i,i) where i=",info
        print *,' (called by "'//trim(parent_name)//'" function)'
        
        !dump the input matrix to a file
        open(97,name="ERROR_dump_dgesv.dat",status="replace")
+       !dump size of the problem
+       write(97,*) "size of the problem:",n
+       write(97,*)
+
        !dump matrix A
        write(97,*) "Input matrix A line by line:"
-       do i=1,n
+       do i=1,size(Ain,1)
           tmp(:) = Ain(i,:)
           write(97,'(I5,999E17.8e3)') i,tmp(:)
        end do
 
+       !dump matrix A
+       write(97,*)
+       write(97,*) "Workin matrix A line by line:"
+       do i=1,n
+          tmpn(:) = Ain(i,1:n)
+          write(97,'(I5,999E17.8e3)') i,tmpn(:)
+       end do
+
        !dump matrix B
        write(97,*)
-       write(97,*) "Input vector B element by element"
+       write(97,*) "Input/output vector B element by element"
        do i=1,n
-          write(97,*) i, Bin(i)
+          write(97,*) i, Bin(i),B(i)
        end do
 
        !dump info on matrix A rows
        write(97,*)
        write(97,*) "Info on matrix A rows"
        write(97,'(a5,99a17)') "idx","minval","maxval"
-       do i=1,n
+       do i=1,size(Ain,1)
            write(97,'(I5,999E17.8e3)') i, minval(Ain(i,:)), &
                 maxval(Ain(i,:))
+       end do
+
+       !dump info on matrix sum left and right
+       write(97,*)
+       write(97,*) "Info on matrix A, sum left/right"
+       write(97,'(a5,99a17)') "idx","left","right"
+       suml = 0d0
+       sumr = 0d0
+       do i=1,size(Ain,1)
+          if(i>1) suml = sum(Ain(i,:i-1))
+          if(i<n) sumr = sum(Ain(i,i+1:))
+          write(97,'(I5,999E17.8e3)') i, suml, sumr
        end do
        close(97)
 

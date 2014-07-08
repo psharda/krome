@@ -9,14 +9,13 @@ contains
     use krome_commons
     use krome_user_commons
     implicit none
-    real*8::coe(nrea),k(nrea),Tgas,n(nspec),t
+    real*8::coe(nrea),k(nrea),Tgas,n(nspec)
 #KROME_shortcut_variables
     real*8::small,nmax
     integer::i
 #KROME_initcoevars
     !Tgas is in K
     Tgas = max(n(idx_Tgas), 2.73d0)
-    T = Tgas
 
     !maxn initialization can be removed and small can be
     ! replaced with a proper value according to the environment
