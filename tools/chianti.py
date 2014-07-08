@@ -60,6 +60,7 @@ def read_kex(fname,collname):
 	fh = open(fname,"rb") #open file
 	fout.write("\n#collider, level_up, level_down, rate\n")
 	itrans = 0
+	allrate = dict()
 	for row in fh:
 		srow = row.strip()
 		if(srow==""): continue #skip blank
@@ -84,8 +85,8 @@ def read_kex(fname,collname):
 		aTgas = []
 		aRate = []
 		for i in range(imax):
-			Tmin = 3e0 #as log(T/K)
-			Tmax = log10(400000) #as log(T/K)
+			Tmin = log10(1e3) #as log(T/K)
+			Tmax = log10(1e8) #as log(T/K)
 			if(Tmin>Tmax): sys.exit("ERROR: Tmin>Tmax! dE:"+str(dE)+" Tgas:"+str(Tmax) )
 			Tgas = 1e1**(float(i)/(imax-1)*(Tmax-Tmin)+Tmin)
 			#Tgas = kte*dE*1.57888e5 #floating is 1/kboltzman_Ry
@@ -114,20 +115,26 @@ def read_kex(fname,collname):
 				ups = 1e1**sups
 			else:
 				sys.exit("ERROR: unknown type "+str(ty))
+			ups = max(ups, 0e0)
 			Te = Tgas * 8.6173324e-5 #K->eV
 			TRy = Tgas * 1.3806488e-16 * 4.58742e10 #K->erg->Ry
 			wi = gmult[levLow] #mult level for starting level
-			rate = 8.629e-6/sqrt(Te) * ups / wi * exp(-dE/TRy) #cm3/s 8.63e-6, 8.01140884e-8
+			wj = gmult[levUp]
+			#excitation
+			#rate = 8.629e-6/sqrt(Te) * ups / wi * exp(-dE/TRy) #cm3/s 8.63e-6, 8.01140884e-8
+			#de-excitation
+			rate = 8.629e-6 * ups / sqrt(Tgas) / wj  #cm3/s
 			aTgas.append(format_double("%e" % Tgas))
 			aRate.append(format_double("%e" % max(rate,1e-40)))
 
+		allrate[str(levLow)+"->"+str(levUp)+"_"+collname] = {"aTgas":aTgas, "aRate":aRate}
 
 		sTgas = ", ".join(aTgas)
 		sRate = ", ".join(aRate)
 		krate = "flin((/"+sTgas+"/), (/"+sRate+"/), Tgas)"
 		fout.write("\n"+collname+", "+str(levUp-1)+", "+str(levLow-1)+", "+krate+"\n")
 
-
+	return allrate
 
 fout = open(foutname,"w")
 
@@ -149,6 +156,7 @@ for fff in flist:
 		post = ""
 
 	metal = apre[0].upper()+post
+	print metal
 	fout.write("metal:"+metal+"\n")
 	elv = fff+"/"+pre+".elvlc" #energy file
 	wgf = fff+"/"+pre+".wgfa" #radiative data
@@ -204,12 +212,9 @@ for fff in flist:
 		itrans += 1
 	print "transitions found:",itrans
 		
-
-
+	#read and prepare de-excitation rates for e- and H+ colliders
 	read_kex(spl,"e")
-
 	read_kex(pspl,"H+")
-
 
 	fout.write("\nendmetal\n")
 

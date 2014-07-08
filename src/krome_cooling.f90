@@ -126,47 +126,47 @@ contains
   end function kpla
 
 
-  !******************************
-  function cooling_FB(n,Tgas)
-    !free-bound cooling, as in Mewe+1986, sect2.2
-    ! using the implementation as in Chianti 
-    ! procedure fb_rad_loss.pro (erg/cm3/s)
-    use krome_commons
-    implicit none
-    real*8::coolingFB,n(:),Tgas,T6,cool,gfb,ln1
-    real*8::zetas()
-
-
-    T6 = Tgas*1d-6
-    cool = 0d0
-
-#KROME_FB_cooling_data
-
-
-    n0 = 
-    z0 = sqrt(ionpot/eH)*n0
-
-    e0 = ionpot/8.06554d3/1d3
-    en1 = eH*ion**2/(n0+1d0**2)/8.06554d3/1d3
-
-    l0 = 1d8/(ionpot-ionpot0)
-    ln1 = 1d8/eH/ion**2*(n0+1d0)**2
-    zeta0 = zetas(iz-ion)
-
-    precool = 2.051d-22*sqrt(T6)/143.9d0
-    pregf = 0.1578/T6*nion*ieq
-
-    f2 = 0.9*zeta0*z0**4/n0**5*exp(0.1578*z0**2/n0**2*T6)
-    gf = pregf*f2 
-    cool = cool + precool * exp(-143.9/l0/T6)
-
-    f2 = 0.42d0*n0**(-1.5)*ion**4 * exp(.1578*(ion/(n0+1d0))**2*T6)
-    gfb = pregf*f2
-    cool = cool + precool * gfb * exp(-143.9/ln1/T6)
-    
-    cooling_FB = cool
-
-  end function cooling_FB
+!!$  !******************************
+!!$  function cooling_FB(n,Tgas)
+!!$    !free-bound cooling, as in Mewe+1986, sect2.2
+!!$    ! using the implementation as in Chianti 
+!!$    ! procedure fb_rad_loss.pro (erg/cm3/s)
+!!$    use krome_commons
+!!$    implicit none
+!!$    real*8::coolingFB,n(:),Tgas,T6,cool,gfb,ln1
+!!$    real*8::zetas()
+!!$
+!!$
+!!$    T6 = Tgas*1d-6
+!!$    cool = 0d0
+!!$
+!!$#KROME_FB_cooling_data
+!!$
+!!$
+!!$    n0 = 
+!!$    z0 = sqrt(ionpot/eH)*n0
+!!$
+!!$    e0 = ionpot/8.06554d3/1d3
+!!$    en1 = eH*ion**2/(n0+1d0**2)/8.06554d3/1d3
+!!$
+!!$    l0 = 1d8/(ionpot-ionpot0)
+!!$    ln1 = 1d8/eH/ion**2*(n0+1d0)**2
+!!$    zeta0 = zetas(iz-ion)
+!!$
+!!$    precool = 2.051d-22*sqrt(T6)/143.9d0
+!!$    pregf = 0.1578/T6*nion*ieq
+!!$
+!!$    f2 = 0.9*zeta0*z0**4/n0**5*exp(0.1578*z0**2/n0**2*T6)
+!!$    gf = pregf*f2 
+!!$    cool = cool + precool * exp(-143.9/l0/T6)
+!!$
+!!$    f2 = 0.42d0*n0**(-1.5)*ion**4 * exp(.1578*(ion/(n0+1d0))**2*T6)
+!!$    gfb = pregf*f2
+!!$    cool = cool + precool * gfb * exp(-143.9/ln1/T6)
+!!$    
+!!$    cooling_FB = cool
+!!$
+!!$  end function cooling_FB
 
   !*****************************
   function coolingChem(n,Tgas)

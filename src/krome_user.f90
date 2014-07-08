@@ -29,6 +29,19 @@ contains
 #KROME_set_get_phys_functions
 
 #KROME_cooling_functions
+
+  !****************************
+  subroutine krome_thermo_on()
+    use krome_commons
+    krome_thermo_toggle = 1
+  end subroutine krome_thermo_on
+
+  !****************************
+  subroutine krome_thermo_off()
+    use krome_commons
+    krome_thermo_toggle = 0
+  end subroutine krome_thermo_off
+
   
 #IFKROME_usePhotoBins
   !************************

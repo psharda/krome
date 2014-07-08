@@ -54,7 +54,7 @@ class krome():
 	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
-	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = False
+	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = useCoolCMBFloor = False
@@ -288,6 +288,8 @@ class krome():
 			from density by using the local approximation N = 1.8e21*(n/1000)**(2/3) 1/cm2.")
 		self.parser.add_argument("-usePlainIsotopes", action="store_true", help="use kA format for isotopes instead of [k]A format,\
 			where k is the isotopic number and A is the atom name, e.g. krome looks for 14C instead of [14]C in the reactions file.")
+		self.parser.add_argument("-useThermoToggle", action="store_true", help="include thermal calculation control. Use\
+			krome_thermo_on and krome_thermo_off to switch on/off the thermal processes (i.e. cooling and heating). Default is on.")
 		self.parser.add_argument("-useTabs", action="store_true", help="use tabulated rate coefficients (free parameter: temperature)")
 		self.parser.add_argument("-v", action="store_true", help="print the current version of KROME")
 		self.parser.add_argument("-ver", action="store_true", help="same as -v")
@@ -316,8 +318,8 @@ class krome():
 			[argv.append(x) for x in ["-photoBins=10","-useN"]]
 			filename = "networks/react_auto"
 		elif(args.test=="chianti"):
-			[argv.append(x) for x in ["-photoBins=10","-useN"]]
-			[argv.append(x) for x in ["-cooling=CII,CIII,CIV,CV"]]
+			[argv.append(x) for x in ["-photoBins=10","-useN","-useThermoToggle","-coolLevels=9999"]]
+			[argv.append(x) for x in ["-cooling=CII,CIII,CIV,CV,CVI"]]
 			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
 			filename = "networks/react_chianti"
 		elif(args.test=="shock1Dcool"):
@@ -726,6 +728,10 @@ class krome():
 		if(args.nuclearMult):
 			self.useNuclearMult = True
 			print "Reading option -useNuclearMult"
+
+		#include an if in the ODE for the thermal part
+		if(args.useThermoToggle):
+			self.useThermoToggle = True
 
 		#creates ramses patches
 		if(args.ramses):
@@ -4575,6 +4581,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingFF" and not(self.useCoolingFF)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
+			if(srow == "#IFKROME_use_thermo_toggle" and not(self.useThermoToggle)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
 
