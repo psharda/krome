@@ -1,6 +1,6 @@
 module KROME_cooling
 #KROME_header
-  integer,parameter::coolTab_n=int(1e4)
+  integer,parameter::coolTab_n=int(1e2)
 #KROME_nZrate
   real*8::coolTab(nZrate,coolTab_n),coolTab_logTlow, coolTab_logTup
   real*8::coolTab_T(coolTab_n),inv_coolTab_T(coolTab_n-1),inv_coolTab_idx
@@ -738,6 +738,7 @@ contains
   !********************************
   function coolingZ_rates(inTgas)
     use krome_commons
+    use krome_subs
     implicit none
     real*8::inTgas,coolingZ_rates(nZrate),k(nZrate)
     real*8::Tgas,invT

@@ -124,14 +124,14 @@ def read_kex(fname,collname):
 			#rate = 8.629e-6/sqrt(Te) * ups / wi * exp(-dE/TRy) #cm3/s 8.63e-6, 8.01140884e-8
 			#de-excitation
 			rate = 8.629e-6 * ups / sqrt(Tgas) / wj  #cm3/s
-			aTgas.append(format_double("%e" % Tgas))
-			aRate.append(format_double("%e" % max(rate,1e-40)))
+			aTgas.append(format_double("%e" % log10(Tgas)))
+			aRate.append(format_double("%e" % max(log10(rate+1e-40),-40)))
 
 		allrate[str(levLow)+"->"+str(levUp)+"_"+collname] = {"aTgas":aTgas, "aRate":aRate}
 
 		sTgas = ", ".join(aTgas)
 		sRate = ", ".join(aRate)
-		krate = "flin((/"+sTgas+"/), (/"+sRate+"/), Tgas)"
+		krate = "1d1**fspline((/"+sTgas+"/), (/"+sRate+"/), logTgas)"
 		fout.write("\n"+collname+", "+str(levUp-1)+", "+str(levLow-1)+", "+krate+"\n")
 
 	return allrate
@@ -213,8 +213,15 @@ for fff in flist:
 	print "transitions found:",itrans
 		
 	#read and prepare de-excitation rates for e- and H+ colliders
-	read_kex(spl,"e")
+	arates = read_kex(spl,"e")
 	read_kex(pspl,"H+")
+
+	#print coefficient if needed
+	#if(metal=="C++++"):
+	#	for k,v in arates.iteritems():
+	#		for ii in range(len(v["aTgas"])):
+	#			print k,v["aTgas"][ii],v["aRate"][ii]
+	#		print
 
 	fout.write("\nendmetal\n")
 
