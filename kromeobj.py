@@ -5289,7 +5289,7 @@ class krome():
 					fout.write(" real*8::"+funcname+"\n")
 					fout.write(funcname+" = phys_"+x[0]+"\n")
 					fout.write("end function "+funcname+"\n\n")
-
+			#write the user alias for the cooling functions
 			elif(srow == "#KROME_cooling_functions"):
 				for x in self.coolZ_functions:
 					funcname =  "krome_"+x[0];
