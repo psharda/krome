@@ -1,6 +1,8 @@
 module KROME_cooling
 #KROME_header
   integer,parameter::coolTab_n=int(1e2)
+  !this threshold is employed in the cooling linear solver
+  real*8,parameter::coolz_reduction_threshold=1d-10
 #KROME_nZrate
   real*8::coolTab(nZrate,coolTab_n),coolTab_logTlow, coolTab_logTup
   real*8::coolTab_T(coolTab_n),inv_coolTab_T(coolTab_n-1),inv_coolTab_idx
@@ -741,12 +743,13 @@ contains
     use krome_subs
     implicit none
     real*8::inTgas,coolingZ_rates(nZrate),k(nZrate)
-    real*8::Tgas,invT
+    real*8::Tgas,invT,logTgas
     integer::i
 #KROME_coolingZ_declare_custom_vars
 
     Tgas = inTgas
     invT = 1d0/Tgas
+    logTgas = log10(Tgas)
 
 #KROME_coolingZ_custom_vars
 

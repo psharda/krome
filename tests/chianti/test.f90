@@ -15,7 +15,7 @@ program test
   spy = krome_seconds_per_year !use shorter variable for this constant
 
   j21s(:) = (/0d0,1d0,1d2/) !list of j21 values
-  kmax = 30 !number of temperature intervals
+  kmax = 30  !number of temperature intervals
 
   call krome_init() !init krome (mandatory)
 
@@ -34,7 +34,7 @@ program test
 
         !init abundances
         x(:) = 0d0  !default abundances
-        x(krome_idx_Cjj) = 1d0
+        x(krome_idx_Cj) = 1d0
         x(krome_idx_e) = 1d0!krome_get_electrons(x(:))
 
         Tgas = 1d1**((k-1)*(8.-4.)/(kmax-1)+4.) !gas temperature (K)
@@ -45,7 +45,9 @@ program test
 
         !switch off thermo to get equilibirum at constant temperature
         call krome_thermo_off()
-        do 
+        
+        !equilibrium
+        do
            dt = dt * 1.1d0 !increase time-step
            t = t + dt !advance time
            !electron conservation

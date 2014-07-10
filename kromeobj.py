@@ -318,7 +318,7 @@ class krome():
 			[argv.append(x) for x in ["-photoBins=10","-useN"]]
 			filename = "networks/react_auto"
 		elif(args.test=="chianti"):
-			[argv.append(x) for x in ["-photoBins=10","-useN","-useThermoToggle","-coolLevels=9999"]]
+			[argv.append(x) for x in ["-photoBins=10","-useN","-useThermoToggle","-coolLevels=99999"]]
 			[argv.append(x) for x in ["-cooling=CII,CIII,CIV,CV,CVI"]]
 			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
 			filename = "networks/react_chianti"
@@ -340,7 +340,7 @@ class krome():
 			[argv.append(x) for x in ["-compact"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="map"):
-			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-usePhIoniz"]]
+			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-photoBins=10"]]
 			filename = "networks/react_primordial_photoH2"
 		elif(args.test=="collapse"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
@@ -408,6 +408,7 @@ class krome():
 			for k in args.__dict__:
 				arg = args.__dict__[k]
 				if(arg): print " -"+k+" = "+str(arg)
+			print " -n = "+self.filename
 			print
 
 		#use custom option file (load options from a file and append to argv)
@@ -2787,7 +2788,7 @@ class krome():
 					#skip if levels are not requested (-coolLevels)
 					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
 					cond2 = not(int(arow[0]) in self.coolLevels) #condition2: the level should be in the list
-					if(cond1 and cond2): continue #skip if levels are not listed in requested levels (both conditions)
+					if(cond1 and cond2): continue #skip if levels are not listed in requested levels
 
 					#add level data to the dictionary
 					levels_data[int(arow[0])] = {"energy":float(arow[1]), "g":float(arow[2])}
@@ -2802,10 +2803,20 @@ class krome():
 					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
 					cond2 = not(int(arow[0]) in self.coolLevels) #condition2: the up level should be in the list
 					cond3 = not(int(arow[1]) in self.coolLevels) #condition3: the low level should be in the list
-					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels (both conditions)
+					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels
 
 					#store data
-					trans_data[trans_name] = {"up":int(arow[0]), "down":int(arow[1]), "Aij":float(arow[2])}
+					kboltzmann_eV = 8.617332478e-5 #eV/K
+					hplanck_eV = 4.135667516e-15 #eV*s
+					clight =  2.99792458e10 #cm/s
+					de_eV = kboltzmann_eV * abs(levels_data[int(arow[0])]["energy"] - levels_data[int(arow[1])]["energy"])
+					#compute pre-factor for photo-induced transitions
+					if(de_eV!=0e0):
+						preB = .5e0*(hplanck_eV*clight)**2/(de_eV)**3 #cm2/eV
+					else:
+						preB = 0e0
+					trans_data[trans_name] = {"up":int(arow[0]), "down":int(arow[1]), "Aij":float(arow[2]),\
+						"Bij":float(arow[2])*preB, "denergy_eV":de_eV, "denergy_K":de_eV/kboltzmann_eV}
 					continue
 		
 				#if more than 3 elements is a rate data
@@ -2819,7 +2830,7 @@ class krome():
 					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
 					cond2 = not(int(arow[1]) in self.coolLevels) #condition2: the up level should be in the list
 					cond3 = not(int(arow[2]) in self.coolLevels) #condition3: the low level should be in the list
-					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels (both conditions)
+					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels
 
 					#increase the number of the reactions found
 					index_count += 1
@@ -2907,7 +2918,7 @@ class krome():
 			#loop on the number of levels (k index, lines of the A matrix)
 			nlev = max(level_list)
 			collider_list = [] #list of the collider found
-			Amatrix = [["0d0" for i in range(nlev+1)] for j in range(nlev+1)]
+			Amatrix = [["0d0" for i in range(nlev+1)] for j in range(nlev+1)] #init matrix to 0d0
 			for klev in level_list[:]:
 				#if level is suitable for linear depenency use as conservation equation
 				if(klev==idx_linear_dep_level):
@@ -2923,6 +2934,7 @@ class krome():
 						if(klev==ilev):
 							A_name = "A("+str(klev+1)+","+str(ilev+1)+")" #Ax=b matrix element name
 							trans_name = str(ilev)+"->"+str(jlev) #transition key k->j
+							#compute excitation Cij
 							#loop on rate data to find keys that contain the transition name (rates k->j)
 							for r_key in rate_data:
 								r_key_part = r_key.split("_")[0]
@@ -2931,44 +2943,63 @@ class krome():
 										self.convertMetal2F90(rate_data[r_key]["collider"])
 									Amatrix[klev][ilev] += matrix_rate
 									collider_list.append(rate_data[r_key]["collider"])
-							#search transitions k->j
+							#search transitions k->j (Aij)
 							if(trans_name in trans_data):
 								Aij_fmt = ("%e" % trans_data[trans_name]["Aij"]).replace("e","d")
 								matrix_rate = " &\n- " + Aij_fmt
 								Amatrix[klev][ilev] += matrix_rate
+								#if photoinduced needed compute it
+								if(self.usePhotoInduced and trans_data[trans_name]["Bij"]>0e0):
+									Bij_fmt = ("%e" % trans_data[trans_name]["Bij"]).replace("e","d")
+									de_eVs = ("%e" % trans_data[trans_name]["denergy_eV"]).replace("e","d")
+									matrix_rate = " &\n- "+Bij_fmt+" * get_photoIntensity("+de_eVs+")"
+									Amatrix[klev][ilev] += matrix_rate
 
 						#i->k transitions (populate k level: Aik, Cik)
 						if(klev==jlev):
 							A_name = "A("+str(klev+1)+","+str(ilev+1)+")" #Ax=b matrix element name
 							trans_name = str(ilev)+"->"+str(jlev) #transition key i->k
+							#add collision, i.e. Cij
 							#loop on rate data to find keys that contain the transition name (rates i->k)
 							for r_key in rate_data:
-								r_key_part = r_key.split("_")[0]
+								r_key_part = r_key.split("_")[0] #key without _collider (e.g. 2->1)
 								if(trans_name==r_key_part):
 									matrix_rate = " &\n+ k("+str(rate_data[r_key]["rate"])+") * coll_"+\
 										self.convertMetal2F90(rate_data[r_key]["collider"])
 									Amatrix[klev][ilev] += matrix_rate
 									collider_list.append(rate_data[r_key]["collider"])
+							#add transition, i.e. Aij
 							#search transitions i->k
 							if(trans_name in trans_data):
 								Aij_fmt = ("%e" % trans_data[trans_name]["Aij"]).replace("e","d")
 								matrix_rate = " &\n+ "+Aij_fmt
 								Amatrix[klev][ilev] += matrix_rate
-								#print trans_data[trans_name]
+								#if photoinduced needed compute it
+								if(self.usePhotoInduced and trans_data[trans_name]["Bij"]>0e0):
+									Bij_fmt = ("%e" % trans_data[trans_name]["Bij"]).replace("e","d")
+									de_eVs = ("%e" % trans_data[trans_name]["denergy_eV"]).replace("e","d")
+									matrix_rate = " &\n+ "+Bij_fmt+" * get_photoIntensity("+de_eVs+")"
+									Amatrix[klev][ilev] += matrix_rate
 
 			#PART 2.3: prepare the cooling
 			full_B_vector = []
 			for k,t_data in trans_data.iteritems():
 				Aij_fmt = ("%e" % t_data["Aij"]).replace("e","d") #f90ish format for Aij
-				deltaE = abs(levels_data[t_data["up"]]["energy"] - levels_data[t_data["down"]]["energy"])
+				deltaE = t_data["denergy_K"]
 				deltaE_fmt = ("%e" % deltaE).replace("e","d") #f90ish format for deltaE
+				photoIB = ""
+				if(self.usePhotoInduced and t_data["Bij"]>0e0):
+					Bij_fmt = ("%e" % t_data["Bij"]).replace("e","d")
+					de_eVs = ("%e" % t_data["denergy_eV"]).replace("e","d")
+					photoIB = " &\n + "+Bij_fmt+" * get_photoIntensity("+de_eVs+")"
 				#put all togheter
-				full_B_vector.append("B("+str(t_data["up"]+1)+") * "+Aij_fmt+" * "+deltaE_fmt)
+				full_B_vector.append("B("+str(t_data["up"]+1)+") * ("+Aij_fmt + photoIB +") * "+deltaE_fmt)
 			full_B_vector = (" &\n + ".join(full_B_vector))
 
 			#uniqe collider_list
 			ucollider_list = []
 			for x in collider_list:
+				#replace for f90-friendly name
 				x = x.replace("+","j").replace("-","k")
 				if(x in ucollider_list): continue
 				ucollider_list.append(x)
@@ -2981,6 +3012,7 @@ class krome():
 			full_function = "!************************************\n"
 			full_function += "function "+function_name+"(n,inTgas,k)\n"
 			full_function += "use krome_commons\n"
+			full_function += "use krome_photo\n"
 			full_function += "implicit none\n"
 
 			#declaration of varaibles
@@ -3014,11 +3046,18 @@ class krome():
 					matrix_element = Amatrix[j][0].replace("0d0 &\n","")
 					full_function += "A("+str(j+1)+",1) = "+matrix_element+"\n"
 
+			#write the initialization of diagonal elements of the A matrix 
+			# (will be used by the f90 to reduce the size of the problem)
+			for j in range(1,nlev):
+				if(Amatrix[j][j]!="0d0"):
+					matrix_element = Amatrix[j][j].replace("0d0 &\n","")
+					full_function += "A("+str(j+1)+","+str(j+1)+") = "+matrix_element+"\n"
+
 
 			#the size of the problem can be reduced up to the last non-zero row of the left triangular matrix
 			# only interesting with more levels
 			if(nlev>3):
-				full_function += "!reduce the size of the problem if possible\n" #reverse is faster
+				full_function += "\n!reduce the size of the problem if possible\n" #reverse is faster
 				full_function += "nmax = 1\n"
 				full_function += "do i="+str(nlev)+",2,-1\n"
 				full_function += " if(A(i,1)>0d0) then\n"
@@ -3033,8 +3072,12 @@ class krome():
 
 
 			#write the A matrix column-wise. A(:,1) matrix column computed above
+			# as well as the diagonal elements 
 			for i in range(1,nlev):
 				for j in range(nlev):
+					#skip diagonal elements since already written (see above)
+					if(i==j): continue
+					#skip zero elements
 					if(Amatrix[j][i]!="0d0"):
 						matrix_element = Amatrix[j][i].replace("0d0 &\n","")
 						full_function += "A("+str(j+1)+","+str(i+1)+") = "+matrix_element+"\n"
@@ -4581,7 +4624,6 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingFF" and not(self.useCoolingFF)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
-			if(srow == "#IFKROME_use_thermo_toggle" and not(self.useThermoToggle)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
 
@@ -4982,12 +5024,10 @@ class krome():
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_use_thermo" and (not(self.use_thermo) or not(self.useODEthermo))): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
+			if(srow == "#IFKROME_use_thermo_toggle" and not(self.useThermoToggle)): skip = True
 			if(srow == "#IFKROME_report" and not(self.doReport)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
+
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
@@ -5203,29 +5243,33 @@ class krome():
 		scaleZ = []
 		#looks for H to rescale the metallicity otherwise skips
 		has_H = False
+		sHtot = "Htot = "
 		for mols in specs:
-			if(mols.name=="H"): 
-				has_H = True
-				break
+			if(not("H" in mols.atomcount2)): continue 
+			Hcount = mols.atomcount2["H"]
+			if(Hcount>0): has_H = True
+			if(Hcount==1): sHtot += " &\n + n("+mols.fidx+")"
+			if(Hcount>1): sHtot += " &\n + "+str(Hcount)+"d0 * n("+mols.fidx+")"
 
+		scaleZ.append(sHtot) #Htot= is the first of the list 
 		#creates the metallicity rescaling subroutine
 		for (k,v) in solar.iteritems():
-			if(not(has_H)): break #skip routine if H is not present
+			if(not(has_H)):
+				scaleZ = [] #reset scaleZ since Htot= is no longer needed
+				break #skip routine if H is not present
 			for mols in specs:
 				if(k.upper()==mols.name.upper()):
-					scaleZ.append("n("+mols.fidx+") = max(n(idx_H) * 1d1**(Z+log10("+str(v)+")), 1d-40)")
+					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+log10("+str(v)+")), 1d-40)")
 
 		for row in fh:
 
 			srow = row.strip()
 
 			if(srow == "#IFKROME_usePhotoBins" and self.photoBins<=0): skip = True
-
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
-
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
-
 			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
+
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue

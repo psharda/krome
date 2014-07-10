@@ -728,7 +728,7 @@ contains
     !scale metallicity the metals contained in n(:) 
     ! to Z according to Arnett(1996)
     use krome_commons
-    real*8::n(:),Z
+    real*8::n(:),Z,Htot
 
 #KROME_scaleZ
     
@@ -867,6 +867,31 @@ contains
     write(nfile,*)
 
   end subroutine krome_dump_flux
+
+  !************************
+  subroutine krome_dump_rates(inTmin,inTmax,imax,funit)
+    use krome_commons
+    use krome_subs
+    implicit none
+    integer::funit,i,imax,j
+    real*8::Tmin,Tmax,Tgas,k(nrea),n(nspec),inTmin,inTmax
+    
+    Tmin = log10(inTmin)
+    Tmax = log10(inTmax)
+
+    n(:) = 1d-40
+    do i=1,imax
+       Tgas = 1d1**((i-1)*(Tmax-Tmin)/(imax-1)+Tmin)
+       n(idx_Tgas) = Tgas
+       k(:) = coe(n(:))
+       do j=1,nrea
+          write(funit,'(E17.8e3,I8,E17.8e3)') Tgas,j,k(j)
+       end do
+       write(funit,*)
+    end do
+
+    
+  end subroutine krome_dump_rates
 
   !************************
   !print species informations on screen

@@ -15,6 +15,7 @@ path = "chianti/"
 plotpre = "none" #"c_2"
 flist = []
 dirs = [f for f in listdir(path) if isdir(join(path,f))]
+usemetal = ["c"]
 for dr in dirs:
 	mypath = path+dr+"/"
 	dirs2 = [f for f in listdir(mypath) if isdir(join(mypath,f))]
@@ -156,6 +157,10 @@ for fff in flist:
 		post = ""
 
 	metal = apre[0].upper()+post
+	metal_base = metal.replace("+","").replace("-","").lower()
+	if(not(metal_base in usemetal)):
+		print "skipping "+metal+" since not present in the array ",usemetal
+		continue
 	print metal
 	fout.write("metal:"+metal+"\n")
 	elv = fff+"/"+pre+".elvlc" #energy file
@@ -172,6 +177,7 @@ for fff in flist:
 	maxlev = 0 #maximum number of levels found
 	#loop on file
 	fout.write("#level n: energy (K), degeneracy g\n")
+	Eold = 0e0 #previous energy found
 	for row in fh:
 		srow = row.strip()
 		if(srow==""): continue #skip blank
@@ -179,13 +185,28 @@ for fff in flist:
 		arow = [x for x in srow.split(" ") if is_number(x)] #keep only columns with numbers
 		if(arow[0]=="-1"): break #if end data breaks
 		if(nparts==0): nparts = len(arow) #store number of columns
-		if(len(arow)!=nparts): sys.exit("ERROR: problem with the number of columns for "+elv) #check if number of cols is ok
-		Enrg = float(arow[7]) #(observed), arow[8] (theoretical), unit: Ry
+		if(len(arow)!=nparts):
+			print arow
+			sys.exit("ERROR: problem with the number of columns for "+elv) #check if number of cols is ok
+		Enrg = float(arow[7]) #(observed), arow[9] (theoretical), unit: Ry
+		if(Enrg==0e0): Enrg = float(arow[9]) #if observed not available use theoretical
+		if(Enrg<Eold): Enrg = float(arow[9]) #if lower use theoretical
 		level = int(arow[0])
+		#check if energy data are available
+		if(Enrg==0e0 and level>1):
+			print srow
+			sys.exit("ERROR: reading non strictly positive energy for a non-ground level!")
+		#check energy
+		if(Enrg<Eold):
+			print srow
+			print "old","new",Eold,Enrg
+			print "WARNING: Found energy lower than the previous level!"
+			
 		gmult[level] = int(arow[5]) #multeplicity
 		maxlev = max(maxlev,level)
 		fout.write("level "+str(level-1)+": "+str("%e" % (Enrg*1.57888e5))+", "+str(gmult[level])+"\n")
 		if(plotpre in pre): l = plt.axhline(y=level,ls="--")
+		Eold = Enrg
 	print "levels found:",maxlev
 
 		

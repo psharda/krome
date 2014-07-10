@@ -435,6 +435,9 @@ contains
     !init phys common variables
 #KROME_init_phys_variables
 
+    !default for thermo toggle is ON
+    krome_thermo_toggle = 1
+
   end subroutine krome_init
 
   !****************************

@@ -59,7 +59,7 @@ class molec():
 	Tpoly = [0.e0]*3 #temperature limits
 	idx = 0 #species index
 	enthalpy = 0.e0 #enthalpy of formation
-	atomcount = dict() #dictionary containin the count of atoms including zero (e.g H2O is {"H":2, "O":1})
+	atomcount = dict() #dictionary containin the count of atoms including zero (e.g H2O is {"H":2, "O":1, "C":0, ...})
 	atomcount2 = dict() #dictionary containin the count of atoms without zero species (e.g H2O is {"H":2, "O":1})
 	natoms = 0 #the number of atoms (e.g. diatomic=2)
 	ve_vib = "__NONE__" #vibrational constant in K
