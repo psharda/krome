@@ -2242,6 +2242,7 @@ class krome():
 			idx += 1
 			fout.write(str(idx)+"\t"+mol.name+"\t"+mol.fidx+"\n")
 		fout.close()
+		print "Species list saved in "+self.buildFolder+"species.log"
 
 		#dump species to gnuplot initialization
 		fout = open(self.buildFolder+"species.gps","w")
@@ -2259,6 +2260,7 @@ class krome():
 		fout.write("print \"plot 'your_file' u 1:(column(krome_idx_H2))\"\n")
 		fout.write("print \" the offset is nkrome=\",nkrome\n")
 		fout.close()
+		print "Species index initialization for gnuplot in "+self.buildFolder+"species.gps"
 
 		#dump heating and cooling index initialization for gnuplot
 		fout = open(self.buildFolder+"heatcool.gps","w")
@@ -2279,15 +2281,26 @@ class krome():
 		fout.write("print \"plot 'your_file' u 1:(column(krome_idx_cool_H2))\"\n")
 		fout.write("print \" the offset is nkrome_heatcool=\",nkrome_heatcool\n")
 		fout.close()
+		print "Heating cooling index init for gnuplot in "+self.buildFolder+"heatcool.gps"
 
 	
 		#dump reactions to log file
+		
 		fout = open(self.buildFolder+"reactions.log","w")
-		idx = 0
+		idx = maxprod = maxreag = 0
 		for rea in self.reacts:
 			idx += 1
+			rcount = pcount = 0
+			#search for the maximum number of reactants and products
+			for r in rea.reactants:
+				if(r.name!=""): rcount += 1
+			maxreag = max(maxreag,rcount)
+			for p in rea.products:
+				if(p.name!=""): pcount += 1
+			maxprod = max(maxprod,pcount)
 			fout.write(str(rea.idx)+"\t"+rea.verbatim+"\n")
-		fout.close()	
+		fout.close()
+
 		
 		#dump network to dot file
 		fout = open(self.buildFolder+"network.dot","w")
@@ -2303,6 +2316,7 @@ class krome():
 		dot +="}\n"
 		fout.write(dot)
 		fout.close
+		print "Reactions saved in "+self.buildFolder+"reactions.log"
 	
 	##############################################
 	#write the C header if needed
@@ -2344,7 +2358,6 @@ class krome():
 
 		#if species are few print list of species
 		if(len(specs)<20): print "ODEs list: "+(", ".join([x.name for x in specs]))
-		print "Species list saved in species.log"
 		print
 
 	############################################
@@ -2779,7 +2792,7 @@ class krome():
 					if(not(metal_name.upper() in [x.upper() for x in self.zcoolants])): skip_metal = True
 					continue
 				if(skip_metal): continue #skip the metal if necessary (not included in the self.zcoolant list)
-				
+
 				#if level pragma found read level data
 				if("level" in srow):
 					srow = srow.replace("level","").replace(":",",") #use only comma to separate and remove "level"
@@ -5677,8 +5690,8 @@ class krome():
 		#copy OMUKAI datafile
 		if(self.H2opacity=="OMUKAI"):
 			shutil.copyfile("data/escape_H2.dat", buildFolder+"escape_H2.dat")
-			
 
+		#copy file that contains table as indicated by the anytab reactions
 		print "- copying anytab files..."
 		for i in range(len(self.anytabvars)):
 			shutil.copyfile(self.anytabpaths[i], buildFolder+self.anytabfiles[i])
@@ -5723,6 +5736,11 @@ class krome():
 			shutil.copyfile("solver/opkda2.f", buildFolder+"opkda2.f")
 		#copy non-linear equation solver to build folder
 		if(self.useNLEQ): shutil.copyfile("solver/nleq_all.f", buildFolder+"nleq_all.f")
+
+		#copy utility to list the user functions
+		fname = "tools/list_user_functions.py"
+		if(os.path.exists(fname)):
+			shutil.copyfile(fname, buildFolder+"list_user_functions.py")
 
 
 	#######################################################

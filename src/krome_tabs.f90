@@ -129,7 +129,7 @@ contains
     use krome_commons
     use krome_user_commons
     integer::idx,j
-    real*8::Tgas, coe_tab(nrea),n(nspec),small,t
+    real*8::Tgas, coe_tab(nrea),n(nspec),small
 #KROME_define_vars
 
     Tgas = max(2.73d0,n(idx_Tgas))

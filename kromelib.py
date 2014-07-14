@@ -541,8 +541,7 @@ def parsevar(arg):
 #extend the list slist with the temperature shortcuts 
 # for the reaction rea
 def get_Tshortcut(rea,slist,cvars=[]):
-	shcut = ["t = Tgas !alias for Tgas (K)",
-	"logT = log10(Tgas) !log10 of Tgas (#)",
+	shcut = ["logT = log10(Tgas) !log10 of Tgas (#)",
 	"lnT = log(Tgas) !ln of Tgas (#)",
 	"Te = Tgas*8.617343d-5 !Tgas in eV (eV)",
 	"lnTe = log(Te) !ln of Te (#)",
