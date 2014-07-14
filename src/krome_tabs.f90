@@ -133,7 +133,6 @@ contains
 #KROME_define_vars
 
     Tgas = max(2.73d0,n(idx_Tgas))
-    t = Tgas
     small = 0d0
 
 #KROME_Tshortcuts
