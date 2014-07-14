@@ -376,6 +376,18 @@ contains
   end function krome_get_coef
 
   !****************************
+  !get the mean molecular weight from
+  ! mass fractions
+  function krome_get_mu_x(xin)
+    use krome_commons
+    implicit none
+    real*8::krome_get_mu_x,xin(:)
+    real*8::n(nmols)
+    n(:) = krome_x2n(xin(:),1d0)
+    krome_get_mu_x = krome_get_mu(n(:))
+  end function krome_get_mu_x
+
+  !****************************
   !return the adiabatic index from mass fractions
   ! and temperature in K
   function krome_get_gamma_x(xin,inTgas)
