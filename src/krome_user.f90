@@ -30,18 +30,35 @@ contains
 
 #KROME_cooling_functions
 
+  !***************************
+  !dump the population of the Z cooling levels
+  ! in the nfile file unit, using Tgas as 
+  ! independent variable. alias of
+  ! dump_cooling_pop subroutine
+  subroutine krome_popcool_dump(inTgas,nfile)
+    use krome_cooling
+    implicit none
+    real*8::Tgas,inTgas
+    integer::nfile
+
+    Tgas = inTgas
+    call dump_cooling_pop(Tgas,nfile)
+
+  end subroutine krome_popcool_dump
+
   !****************************
+  !switch on the thermal calculation
   subroutine krome_thermo_on()
     use krome_commons
     krome_thermo_toggle = 1
   end subroutine krome_thermo_on
 
   !****************************
+  !switch off the thermal calculation
   subroutine krome_thermo_off()
     use krome_commons
     krome_thermo_toggle = 0
   end subroutine krome_thermo_off
-
   
 #IFKROME_usePhotoBins
   !************************

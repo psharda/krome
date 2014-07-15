@@ -438,6 +438,9 @@ contains
     !default for thermo toggle is ON
     krome_thermo_toggle = 1
 
+    !get smallest possible value
+    krome_smallest = epsilon(0d0)
+
   end subroutine krome_init
 
   !****************************

@@ -167,6 +167,8 @@ for fff in flist:
 	wgf = fff+"/"+pre+".wgfa" #radiative data
 	spl = fff+"/"+pre+".splups" #collisional (e-) data
 	pspl = fff+"/"+pre+".psplups" #collisional (H+) data
+	rrpfile = fff+"/"+pre+".rrparams"
+	drpfile = fff+"/"+pre+".drparams"
 
 	#****ELVLC****
 	if(not(file_exists(elv))): sys.exit("ERROR: "+elv+" does not exists!")
@@ -174,6 +176,7 @@ for fff in flist:
 	nparts = 10 #default size for ELVLC file (0=automatic)
 	fh = open(elv,"rb") #open file
 	gmult = dict()
+	energy_data = dict()
 	maxlev = 0 #maximum number of levels found
 	#loop on file
 	fout.write("#level n: energy (K), degeneracy g\n")
@@ -203,6 +206,7 @@ for fff in flist:
 			print "WARNING: Found energy lower than the previous level!"
 			
 		gmult[level] = int(arow[5]) #multeplicity
+		energy_data[level] = Enrg*1.57888e5 #K
 		maxlev = max(maxlev,level)
 		fout.write("level "+str(level-1)+": "+str("%e" % (Enrg*1.57888e5))+", "+str(gmult[level])+"\n")
 		if(plotpre in pre): l = plt.axhline(y=level,ls="--")
@@ -215,7 +219,7 @@ for fff in flist:
 	if(not(file_exists(wgf))): sys.exit("ERROR: "+wgf+" does not exists!")
 	print "reading "+wgf
 	fh = open(wgf,"rb") #open file
-	fout.write("\n#Aij (1/s)\n")
+	fout.write("\n#up -> low, Aij (1/s), wavelength (angstrom)\n")
 	itrans = 0
 	for row in fh:
 		srow = row.strip()
@@ -228,8 +232,13 @@ for fff in flist:
 		levLow = int(arow[0])
 		levUp = int(arow[1])
 		Aij = float(arow[4])
+		wvl = float(arow[2])
+		deltaE = 0e0
+		if(abs(energy_data[levUp]-energy_data[levLow])>0e0):
+			deltaE = 6.6260755e-27*2.99792458e10/abs(energy_data[levUp]-energy_data[levLow])/1.3806488e-16 * 1e8 #AA
+		#print deltaE,wvl
 		if(plotpre in pre): l = plt.axvline(x=itrans, ymin=float(levLow-1.)/(maxlev+1), ymax=float(levUp-1.)/(maxlev+1))
-		fout.write(str(levUp-1)+", "+str(levLow-1)+", "+str("%e" % Aij)+"\n")
+		fout.write(str(levUp-1)+" -> "+str(levLow-1)+", "+str("%e" % Aij)+", "+str("%e" % wvl)+"\n")
 		itrans += 1
 	print "transitions found:",itrans
 		

@@ -100,6 +100,7 @@ class krome():
 	coolZ_functions = []
 	coolZ_rates = []
 	coolZ_vars_cool = []
+	coolZ_poplevelvars = [] #population levels variables
 	fcn_levs = [] #list of number of cooling levels found
 	coolZ_nkrates = 0
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
@@ -2808,10 +2809,10 @@ class krome():
 					continue
 				
 				#if 3 elemets is transistion data
-				if(len(srow.split(","))==3):
+				if("->" in srow):
+					srow = srow.replace("->",",") #replace the arrow with a comma (easier to split)
 					arow = [x.replace("d","e") for x in srow.split(",")] #split using comma and floating format conversion
 					trans_name = arow[0].strip()+"->"+arow[1].strip() #prepare the key as up->down (e.g. "4->1")
-
 					#skip if levels are not requested (-coolLevels)
 					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
 					cond2 = not(int(arow[0]) in self.coolLevels) #condition2: the up level should be in the list
@@ -2823,6 +2824,13 @@ class krome():
 					hplanck_eV = 4.135667516e-15 #eV*s
 					clight =  2.99792458e10 #cm/s
 					de_eV = kboltzmann_eV * abs(levels_data[int(arow[0])]["energy"] - levels_data[int(arow[1])]["energy"])
+					#if wavelength in angstrom is available and positive use it to compute delta energy
+					if(len(arow)>3):
+						wvl = float(arow[3])/1e8 #cm
+						de_eV = 0e0
+						if(wvl>0e0):
+							de_eV = hplanck_eV*clight/wvl #eV
+
 					#compute pre-factor for photo-induced transitions
 					if(de_eV!=0e0):
 						preB = .5e0*(hplanck_eV*clight)**2/(de_eV)**3 #cm2/eV
@@ -3112,6 +3120,9 @@ class krome():
 			else:
 				sys.exit("ERROR: strange number of levels for linear system in Zcooling: "+str(nlev))
 
+			full_function += "!store population\n"
+			full_function += "pop_level_"+metal_name+"(:) = B(:)\n"
+
 			#negative small values can be flushed to 1d-40
 			full_function += "!sanitize negative values\n"
 			full_function += "hasnegative = 0\n"
@@ -3153,6 +3164,7 @@ class krome():
 
 			#append the function to the list of the functions
 			self.coolZ_functions.append([function_name,full_function])
+			self.coolZ_poplevelvars.append("pop_level_"+metal_name+"("+str(nlev)+")")
 
 
 	#######################################
@@ -4747,6 +4759,19 @@ class krome():
 			elif(row.strip() == "#KROME_coolingZ_rates"):
 				for x in self.coolZ_rates:
 					fout.write(x+"\n\n")
+			elif(row.strip() == "#KROME_coolingZ_popvars"):
+				if(len(self.coolZ_poplevelvars)>0):
+					for popvar in self.coolZ_poplevelvars:
+						fout.write("real*8::"+popvar+"\n")
+			elif(row.strip() == "#KROME_popvar_dump"):
+				if(len(self.coolZ_poplevelvars)>0):
+					for popvar in self.coolZ_poplevelvars:
+						funct_name = popvar.split("(")[0]
+						metal_name = funct_name.split("_")[-1]
+						fout.write("!"+popvar+"\n")
+						fout.write("do i=1,size("+funct_name+")\n")
+						fout.write(" write(nfile,'(a8,I5,2E17.8e3)') \""+metal_name+"\", i, Tgas, "+funct_name+"(i)\n")
+						fout.write("end do\n\n")
 			else:
 				#replace pragma for total metals
 				row = row.replace("#KROME_tot_metals", self.totMetals)

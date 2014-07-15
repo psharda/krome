@@ -60,5 +60,8 @@ module krome_commons
 
   !physical commons
 #KROME_phys_commons
+
+  !smallest double value (init in krome_init)
+  real*8::krome_smallest
   
 end module krome_commons
