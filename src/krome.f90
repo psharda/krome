@@ -438,7 +438,9 @@ contains
 #KROME_init_phys_variables
 
     !default for thermo toggle is ON
+    !$omp parallel
     krome_thermo_toggle = 1
+    !$omp end parallel
 
   end subroutine krome_init
 

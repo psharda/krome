@@ -23,6 +23,7 @@ module krome_commons
 
   !thermo toggle (when >0 do cooling/heating)
   integer::krome_thermo_toggle
+  !$omp threadprivate(krome_thermo_toggle)
   
   !commons for implicit RHS
 #KROME_implicit_arr_r
