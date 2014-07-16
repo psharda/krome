@@ -4456,8 +4456,9 @@ class krome():
 					phbinx += "photoBinEth("+str(rea.idxph)+") = "+str(rea.Tmin)+" !"+rea.verbatim+"\n"
 				row = phbinx+"\n"
 			#replace pragma with the opacity calculation as N_i*sigma_i for any species
-			elif(srow=="#KROME_photobin_opacity"):
+			elif(srow=="#KROME_photobin_opacity" and self.usePhotoOpacity):
 				phbintau = ""
+				#loop on the species looking for photorates
 				for rea in reacts:
 					if(rea.kphrate==None): continue
 					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+rea.reactants[0].fidx+") !"\

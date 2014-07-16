@@ -82,6 +82,7 @@ contains
   end function num2col
   
   !***********************
+  !column density to number density conversion
   function col2num(n)
     implicit none
     real*8::col2num,n

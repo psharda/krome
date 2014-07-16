@@ -139,7 +139,7 @@ contains
     end if
     loglow = log10(lower)
     logup = log10(upper)
-    dE = 1d1**(abs(upper-lower)/nPhotoBins)
+    dE = 1d1**(abs(logup-loglow)/nPhotoBins)
     do i=1,nPhotoBins
        photoBinEleft(i) = 1d1**((i-1)*(logup-loglow)/nPhotoBins + loglow)
        photoBinEright(i) = 1d1**(i*(logup-loglow)/nPhotoBins + loglow)
@@ -237,16 +237,20 @@ contains
     use krome_constants
     use krome_photo
     implicit none
-    real*8::lower,upper,Tbb,x,xmax
+    real*8::lower,upper,Tbb,x,xmax,xexp,Jlim
     integer::i
     
+    !limit for the black body intensity to check limits
+    Jlim = 1d-3
+
     call krome_set_photoBinE_log(lower,upper)
     
     !eV/cm2/s/Hz/sr
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
+       xexp = min(x/boltzmann_eV/Tbb,3d1)
        photoBinJ(i) = 2d0*x**3/planck_eV**2/clight**2 &
-            / (exp(x/boltzmann_eV/Tbb)-1d0)/planck_eV
+            / (exp(xexp)-1d0)
     end do
 
     !find the maximum using Wien's displacement law
@@ -257,7 +261,7 @@ contains
        print *," is below the lowest energy bin!"
        print *,"max (eV)",xmax
        print *,"lowest (eV)",lower
-       print *,"Tbb",Tbb
+       print *,"Tbb (K)",Tbb
     end if
 
     if(xmax>upper) then
@@ -265,7 +269,21 @@ contains
        print *," is above the highest energy bin!"
        print *,"max (eV)",xmax
        print *,"highest (eV)",upper
-       print *,"Tbb",Tbb
+       print *,"Tbb (K)",Tbb
+    end if
+
+    if(photoBinJ(1)>Jlim) then
+       print *,"WARNING: lower bound of the Planck function"
+       print *," has a flux of (ev/cm2/s/Hz/sr)",photoBinJ(1)
+       print *," which is larger than the limit Jlim",Jlim
+       print *,"Tbb (K)",Tbb
+    end if
+
+    if(photoBinJ(nPhotoBins)>Jlim) then
+       print *,"WARNING: upper bound of the Planck function"
+       print *," has a flux of (ev/cm2/s/Hz/sr)",photoBinJ(nPhotoBins)
+       print *," which is larger than the limit Jlim",Jlim
+       print *,"Tbb (K)",Tbb
     end if
 
     !compute rates
@@ -333,7 +351,7 @@ contains
     real*8::upper,lower
     
     call krome_set_photoBinE_lin(lower,upper)
-    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV
+    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/s/Hz/sr
 
     !compute rates
     call calc_photobins()
@@ -347,7 +365,7 @@ contains
     real*8::upper,lower
     
     call krome_set_photoBinE_log(lower,upper)
-    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV
+    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/s/Hz/sr
 
     !compute rates
     call calc_photobins()
