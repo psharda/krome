@@ -231,6 +231,7 @@ C**End
       INTEGER I, IC, J, JB, JB2, JJ, JJ1, JP1
       DOUBLE PRECISION C, R, S, TP
       CHARACTER*80 MSG
+      !$OMP THREADPRIVATE(/DLS001/)
 C
 C***FIRST EXECUTABLE STATEMENT  DINTDY
       IFLAG = 0
@@ -356,6 +357,7 @@ C**End
      1   MBA, MBAND, MEB1, MEBAND, ML, ML3, MU, NP1
       DOUBLE PRECISION CON, DI, FAC, HL0, R, R0, SRUR, YI, YJ, YJJ,
      1   DVNORM
+      !$OMP THREADPRIVATE(/DLS001/)
 C
 C***FIRST EXECUTABLE STATEMENT  DPREPJ
       NJE = NJE + 1
@@ -535,6 +537,7 @@ C**End
      5   MAXORD, MAXCOR, MSBP, MXNCF, N, NQ, NST, NFE, NJE, NQU
       INTEGER I, MEBAND, ML, MU
       DOUBLE PRECISION DI, HL0, PHL0, R
+      !$OMP THREADPRIVATE(/DLS001/)
 C
 C***FIRST EXECUTABLE STATEMENT  DSOLSY
       IERSL = 0
@@ -608,6 +611,7 @@ C**End
       SAVE LENRLS, LENILS
       COMMON /DLS001/ RLS(218), ILS(37)
       DATA LENRLS/218/, LENILS/37/
+      !$OMP THREADPRIVATE(/DLS001/)
 C
 C***FIRST EXECUTABLE STATEMENT  DSRCOM
       IF (JOB .EQ. 2) GO TO 100
@@ -742,6 +746,7 @@ C**End
      3   ICF, IERPJ, IERSL, JCUR, JSTART, KFLAG, L,
      4   LYH, LEWT, LACOR, LSAVF, LWM, LIWM, METH, MITER,
      5   MAXORD, MAXCOR, MSBP, MXNCF, N, NQ, NST, NFE, NJE, NQU
+      !$OMP THREADPRIVATE(/DLS001/)
 C
 C***FIRST EXECUTABLE STATEMENT  DSTODE
       KFLAG = 0
@@ -1236,6 +1241,7 @@ C----------------------- END OF FUNCTION DVNORM ------------------------
      3   LENYH, LENYHM, LENWK, LREQ, LRAT, LREST, LWMIN, MOSS, MSBJ,
      4   NSLJ, NGP, NLU, NNZ, NSP, NZL, NZU
       INTEGER I, IMAX, LEWTN, LYHD, LYHN
+      !$OMP THREADPRIVATE(/DLS001/,/DLSS01/)
 C-----------------------------------------------------------------------
 C This routine serves as an interface between the driver and
 C Subroutine DPREP.  It is called only if MITER is 1 or 2.
@@ -1310,6 +1316,7 @@ C----------------------- End of Subroutine DIPREP ----------------------
       INTEGER I, IBR, IER, IPIL, IPIU, IPTT1, IPTT2, J, JFOUND, K,
      1   KNEW, KMAX, KMIN, LDIF, LENIGP, LIWK, MAXG, NP1, NZSUT
       DOUBLE PRECISION DQ, DYJ, ERWT, FAC, YJ
+      !$OMP THREADPRIVATE(/DLS001/,/DLSS01/)
 C-----------------------------------------------------------------------
 C This routine performs preprocessing related to the sparse linear
 C systems that must be solved if MITER = 1 or 2.
@@ -1693,6 +1700,7 @@ C----------------------- End of Subroutine CNTNZU ----------------------
       INTEGER I, IMUL, J, JJ, JOK, JMAX, JMIN, K, KMAX, KMIN, NG
       DOUBLE PRECISION CON, DI, FAC, HL0, PIJ, R, R0, RCON, RCONT,
      1   SRUR, DVNORM
+      !$OMP THREADPRIVATE(/DLS001/,/DLSS01/)
 C-----------------------------------------------------------------------
 C DPRJS is called to compute and process the matrix
 C P = I - H*EL(1)*J , where J is an approximation to the Jacobian.
@@ -1890,6 +1898,7 @@ C----------------------- End of Subroutine DPRJS -----------------------
      4   NSLJ, NGP, NLU, NNZ, NSP, NZL, NZU
       INTEGER I
       DOUBLE PRECISION DI, HL0, PHL0, R
+      !$OMP THREADPRIVATE(/DLS001/,/DLSS01/)
 C-----------------------------------------------------------------------
 C This routine manages the solution of the linear system arising from
 C a chord iteration.  It is called if MITER .ne. 0.
@@ -1963,6 +1972,7 @@ C-----------------------------------------------------------------------
       COMMON /DLS001/ RLS(218), ILS(37)
       COMMON /DLSS01/ RLSS(6), ILSS(34)
       DATA LENRLS/218/, LENILS/37/, LENRSS/6/, LENISS/34/
+      !$OMP THREADPRIVATE(/DLS001/,/DLSS01/)
 C
       IF (JOB .EQ. 2) GO TO 100
       DO 10 I = 1,LENRLS
@@ -3835,6 +3845,7 @@ c  ******  solve  lt x = y  by back substitution  **********************
       SAVE SM1
       DATA SM1/0.5D0, 0.575D0, 0.55D0, 0.45D0, 0.35D0, 0.25D0,
      1   0.20D0, 0.15D0, 0.10D0, 0.075D0, 0.050D0, 0.025D0/
+      !$OMP THREADPRIVATE(/DLS001/,/DLSA01/)
 C-----------------------------------------------------------------------
 C DSTODA performs one step of the integration of an initial value
 C problem for a system of ordinary differential equations.
@@ -4460,6 +4471,7 @@ C----------------------- End of Subroutine DSTODA ----------------------
      1   MBA, MBAND, MEB1, MEBAND, ML, ML3, MU, NP1
       DOUBLE PRECISION CON, FAC, HL0, R, R0, SRUR, YI, YJ, YJJ,
      1   DMNORM, DFNORM, DBNORM
+      !$OMP THREADPRIVATE(/DLS001/,/DLSA01/)
 C-----------------------------------------------------------------------
 C DPRJA is called by DSTODA to compute and process the matrix
 C P = I - H*EL(1)*J , where J is an approximation to the Jacobian.
@@ -4693,6 +4705,7 @@ C-----------------------------------------------------------------------
       COMMON /DLS001/ RLS(218), ILS(37)
       COMMON /DLSA01/ RLSA(22), ILSA(9)
       DATA LENRLS/218/, LENILS/37/, LENRLA/22/, LENILA/9/
+      !$OMP THREADPRIVATE(/DLS001/,/DLSA01/)
 C
       IF (JOB .EQ. 2) GO TO 100
       DO 10 I = 1,LENRLS
@@ -4746,6 +4759,7 @@ C----------------------- End of Subroutine DSRCMA ----------------------
       INTEGER I, IFLAG, JFLAG
       DOUBLE PRECISION HMING, T1, TEMP1, TEMP2, X
       LOGICAL ZROOT
+      !$OMP THREADPRIVATE(/DLS001/,/DLSR01/)
 C-----------------------------------------------------------------------
 C This routine checks for the presence of a root in the vicinity of
 C the current T, in a manner depending on the input flag JOB.  It calls
@@ -4894,6 +4908,7 @@ C----------------------- End of Subroutine DRCHEK ----------------------
       DOUBLE PRECISION ALPHA, X2, RDUM3
       COMMON /DLSR01/ ALPHA, X2, RDUM3(3),
      1   IOWND3(3), IMAX, LAST, IDUM3(4)
+      !$OMP THREADPRIVATE(/DLSR01/)
 C-----------------------------------------------------------------------
 C This subroutine finds the leftmost root of a set of arbitrary
 C functions gi(x) (i = 1,...,NG) in an interval (X0,X1).  Only roots
@@ -5131,6 +5146,7 @@ C-----------------------------------------------------------------------
       COMMON /DLSR01/ RLSR(5), ILSR(9)
       DATA LENRLS/218/, LENILS/37/, LENRLA/22/, LENILA/9/
       DATA LENRLR/5/, LENILR/9/
+      !$OMP THREADPRIVATE(/DLS001/,/DLSA01/,/DLSR01/)
 C
       IF (JOB .EQ. 2) GO TO 100
       DO 10 I = 1,LENRLS
@@ -5198,6 +5214,7 @@ C----------------------- End of Subroutine DSRCAR ----------------------
       COMMON /DLPK01/ DELT, EPCON, SQRTN, RSQRTN,
      1   JPRE, JACFLG, LOCWP, LOCIWP, LSAVX, KMP, MAXL, MNEWT,
      2   NNI, NLI, NPS, NCFN, NCFL
+      !$OMP THREADPRIVATE(/DLS001/,/DLPK01/)
 C-----------------------------------------------------------------------
 C DSTODPK performs one step of the integration of an initial value
 C problem for a system of Ordinary Differential Equations.
@@ -5703,6 +5720,7 @@ C----------------------- End of Subroutine DSTODPK ---------------------
       COMMON /DLPK01/ DELT, EPCON, SQRTN, RSQRTN,
      1   JPRE, JACFLG, LOCWP, LOCIWP, LSAVX, KMP, MAXL, MNEWT,
      2   NNI, NLI, NPS, NCFN, NCFL
+      !$OMP THREADPRIVATE(/DLS001/,/DLPK01/)
 C-----------------------------------------------------------------------
 C DPKSET is called by DSTODPK to interface with the user-supplied
 C routine JAC, to compute and process relevant parts of
@@ -5763,6 +5781,7 @@ C----------------------- End of Subroutine DPKSET ----------------------
       COMMON /DLPK01/ DELT, EPCON, SQRTN, RSQRTN,
      1   JPRE, JACFLG, LOCWP, LOCIWP, LSAVX, KMP, MAXL, MNEWT,
      2   NNI, NLI, NPS, NCFN, NCFL
+      !$OMP THREADPRIVATE(/DLS001/,/DLPK01/)
 C-----------------------------------------------------------------------
 C This routine interfaces to one of DSPIOM, DSPIGMR, DPCG, DPCGS, or
 C DUSOL, for the solution of the linear system arising from a Newton
@@ -6135,6 +6154,7 @@ C----------------------- End of Subroutine DSPIOM ----------------------
      3   ICF, IERPJ, IERSL, JCUR, JSTART, KFLAG, L,
      4   LYH, LEWT, LACOR, LSAVF, LWM, LIWM, METH, MITER,
      5   MAXORD, MAXCOR, MSBP, MXNCF, N, NQ, NST, NFE, NJE, NQU
+      !$OMP THREADPRIVATE(/DLS001/)
 C-----------------------------------------------------------------------
 C This routine computes the product
 C
@@ -6874,6 +6894,7 @@ C----------------------- End of Subroutine DPCGS -----------------------
      3   ICF, IERPJ, IERSL, JCUR, JSTART, KFLAG, L,
      4   LYH, LEWT, LACOR, LSAVF, LWM, LIWM, METH, MITER,
      5   MAXORD, MAXCOR, MSBP, MXNCF, N, NQ, NST, NFE, NJE, NQU
+      !$OMP THREADPRIVATE(/DLS001/)
 C-----------------------------------------------------------------------
 C This routine computes the product
 C
@@ -7037,6 +7058,7 @@ C-----------------------------------------------------------------------
       COMMON /DLS001/ RLS(218), ILS(37)
       COMMON /DLPK01/ RLSP(4), ILSP(13)
       DATA LENRLS/218/, LENILS/37/, LENRLP/4/, LENILP/13/
+      !$OMP THREADPRIVATE(/DLS001/,/DLPK01/)
 C
       IF (JOB .EQ. 2) GO TO 100
       CALL DCOPY (LENRLS, RLS, 1, RSAV, 1)
@@ -7697,6 +7719,7 @@ C----------------------- End of Subroutine DLHIN -----------------------
       COMMON /DLPK01/ DELT, EPCON, SQRTN, RSQRTN,
      1   JPRE, JACFLG, LOCWP, LOCIWP, LSAVX, KMP, MAXL, MNEWT,
      2   NNI, NLI, NPS, NCFN, NCFL
+      !$OMP THREADPRIVATE(/DLS001/,/DLS002/,/DLPK01/)
 C-----------------------------------------------------------------------
 C DSTOKA performs one step of the integration of an initial value
 C problem for a system of Ordinary Differential Equations.
@@ -8245,6 +8268,7 @@ C----------------------- End of Subroutine DSTOKA ----------------------
       COMMON /DLPK01/ DELT, EPCON, SQRTN, RSQRTN,
      1   JPRE, JACFLG, LOCWP, LOCIWP, LSAVX, KMP, MAXL, MNEWT,
      2   NNI, NLI, NPS, NCFN, NCFL
+      !$OMP THREADPRIVATE(/DLS001/,/DLPK01/)
 C-----------------------------------------------------------------------
 C DSETPK is called by DSTOKA to interface with the user-supplied
 C routine JAC, to compute and process relevant parts of
@@ -8311,6 +8335,7 @@ C-----------------------------------------------------------------------
       COMMON /DLPK01/ RLSP(4), ILSP(13)
       DATA LENRLS/218/, LENILS/37/, LENRLP/4/, LENILP/13/
       DATA LENRLR/5/, LENILR/9/
+      !$OMP THREADPRIVATE(/DLS001/,/DLS002/,/DLSR01/,/DLPK01/)
 C
       IF (JOB .EQ. 2) GO TO 100
       CALL DCOPY (LENRLS, RLS, 1, RSAV, 1)
@@ -8434,6 +8459,7 @@ C----------------------- End of Subroutine DAINVG ----------------------
      3   ICF, IERPJ, IERSL, JCUR, JSTART, KFLAG, L,
      4   LYH, LEWT, LACOR, LSAVF, LWM, LIWM, METH, MITER,
      5   MAXORD, MAXCOR, MSBP, MXNCF, N, NQ, NST, NFE, NJE, NQU
+      !$OMP THREADPRIVATE(/DLS001/)
       INTEGER I, I1, IREDO, IRES, IRET, J, JB, KGO, M, NCF, NEWQ
       DOUBLE PRECISION DCON, DDN, DEL, DELP, DSM, DUP,
      1   ELJH, EL1H, EXDN, EXSM, EXUP,
@@ -8895,6 +8921,7 @@ C----------------------- End of Subroutine DSTODI ----------------------
      3   ICF, IERPJ, IERSL, JCUR, JSTART, KFLAG, L,
      4   LYH, LEWT, LACOR, LSAVF, LWM, LIWM, METH, MITER,
      5   MAXORD, MAXCOR, MSBP, MXNCF, N, NQ, NST, NFE, NJE, NQU
+      !$OMP THREADPRIVATE(/DLS001/)
       INTEGER I, I1, I2, IER, II, IRES, J, J1, JJ, LENP,
      1   MBA, MBAND, MEB1, MEBAND, ML, ML3, MU
       DOUBLE PRECISION CON, FAC, HL0, R, SRUR, YI, YJ, YJJ
@@ -9112,6 +9139,7 @@ C----------------------- End of Subroutine DAIGBT ----------------------
      3   ICF, IERPJ, IERSL, JCUR, JSTART, KFLAG, L,
      4   LYH, LEWT, LACOR, LSAVF, LWM, LIWM, METH, MITER,
      5   MAXORD, MAXCOR, MSBP, MXNCF, N, NQ, NST, NFE, NJE, NQU
+      !$OMP THREADPRIVATE(/DLS001/)
       INTEGER I, IER, IIA, IIB, IIC, IPA, IPB, IPC, IRES, J, J1, J2,
      1   K, K1, LENP, LBLOX, LPB, LPC, MB, MBSQ, MWID, NB
       DOUBLE PRECISION CON, FAC, HL0, R, SRUR
@@ -9479,6 +9507,7 @@ C----------------------- End of Subroutine DSOLBT ----------------------
      2   IPIAN, IPJAN, IPJGP, IPIGP, IPR, IPC, IPIC, IPISP, IPRSP, IPA,
      3   LENYH, LENYHM, LENWK, LREQ, LRAT, LREST, LWMIN, MOSS, MSBJ,
      4   NSLJ, NGP, NLU, NNZ, NSP, NZL, NZU
+      !$OMP THREADPRIVATE(/DLS001/,/DLSS01/)
       INTEGER I, IMAX, LEWTN, LYHD, LYHN
 C-----------------------------------------------------------------------
 C This routine serves as an interface between the driver and
@@ -9551,6 +9580,7 @@ C----------------------- End of Subroutine DIPREPI ---------------------
      2   IPIAN, IPJAN, IPJGP, IPIGP, IPR, IPC, IPIC, IPISP, IPRSP, IPA,
      3   LENYH, LENYHM, LENWK, LREQ, LRAT, LREST, LWMIN, MOSS, MSBJ,
      4   NSLJ, NGP, NLU, NNZ, NSP, NZL, NZU
+      !$OMP THREADPRIVATE(/DLS001/,/DLSS01/)
       INTEGER I, IBR, IER, IPIL, IPIU, IPTT1, IPTT2, J, K, KNEW, KAMAX,
      1   KAMIN, KCMAX, KCMIN, LDIF, LENIGP, LENWK1, LIWK, LJFO, MAXG,
      2   NP1, NZSUT
@@ -9906,6 +9936,7 @@ C----------------------- End of Subroutine DPREPI ----------------------
      2   IPIAN, IPJAN, IPJGP, IPIGP, IPR, IPC, IPIC, IPISP, IPRSP, IPA,
      3   LENYH, LENYHM, LENWK, LREQ, LRAT, LREST, LWMIN, MOSS, MSBJ,
      4   NSLJ, NGP, NLU, NNZ, NSP, NZL, NZU
+      !$OMP THREADPRIVATE(/DLSS01/)
 C-----------------------------------------------------------------------
 C This subroutine computes the initial value of the vector YDOT
 C satisfying
@@ -10009,6 +10040,7 @@ C----------------------- End of Subroutine DAINVGS ---------------------
      2   IPIAN, IPJAN, IPJGP, IPIGP, IPR, IPC, IPIC, IPISP, IPRSP, IPA,
      3   LENYH, LENYHM, LENWK, LREQ, LRAT, LREST, LWMIN, MOSS, MSBJ,
      4   NSLJ, NGP, NLU, NNZ, NSP, NZL, NZU
+      !$OMP THREADPRIVATE(/DLS001/,/DLSS01/)
       INTEGER I, IMUL, IRES, J, JJ, JMAX, JMIN, K, KMAX, KMIN, NG
       DOUBLE PRECISION CON, FAC, HL0, R, SRUR
 C-----------------------------------------------------------------------

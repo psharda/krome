@@ -1051,7 +1051,7 @@ contains
        print *,' (called by "'//trim(parent_name)//'" function)'
        
        !dump the input matrix to a file
-       open(97,name="ERROR_dump_dgesv.dat",status="replace")
+       open(97,file="ERROR_dump_dgesv.dat",status="replace")
        !dump size of the problem
        write(97,*) "size of the problem:",n
        write(97,*)
