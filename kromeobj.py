@@ -2836,8 +2836,15 @@ class krome():
 						preB = .5e0*(hplanck_eV*clight)**2/(de_eV)**3 #cm2/eV
 					else:
 						preB = 0e0
+
+					#compute gi and gj
+					gi = levels_data[(int(arow[0]))]["g"]
+					gj = levels_data[(int(arow[1]))]["g"]
+
+					#append transition dictionary to transition data
 					trans_data[trans_name] = {"up":int(arow[0]), "down":int(arow[1]), "Aij":float(arow[2]),\
-						"Bij":float(arow[2])*preB, "denergy_eV":de_eV, "denergy_K":de_eV/kboltzmann_eV}
+						"Bij":float(arow[2])*preB, "denergy_eV":de_eV, "denergy_K":de_eV/kboltzmann_eV,\
+						"Bji":float(arow[2])*preB/gj*gi}
 					continue
 		
 				#if more than 3 elements is a rate data
@@ -3003,7 +3010,8 @@ class krome():
 									Amatrix[klev][ilev] += matrix_rate
 
 			#PART 2.3: prepare the cooling
-			full_B_vector = []
+			full_B_vector_cool = []
+			full_B_vector_heat = []
 			for k,t_data in trans_data.iteritems():
 				Aij_fmt = ("%e" % t_data["Aij"]).replace("e","d") #f90ish format for Aij
 				deltaE = t_data["denergy_K"]
@@ -3013,9 +3021,21 @@ class krome():
 					Bij_fmt = ("%e" % t_data["Bij"]).replace("e","d")
 					de_eVs = ("%e" % t_data["denergy_eV"]).replace("e","d")
 					photoIB = " &\n + "+Bij_fmt+" * get_photoIntensity("+de_eVs+")"
-				#put all togheter
-				full_B_vector.append("B("+str(t_data["up"]+1)+") * ("+Aij_fmt + photoIB +") * "+deltaE_fmt)
-			full_B_vector = (" &\n + ".join(full_B_vector))
+				#append cooling to final sum over transitions list
+				full_B_vector_cool.append("B("+str(t_data["up"]+1)+") * ("+Aij_fmt + photoIB +") * "+deltaE_fmt)
+
+				#add induced heating if needed
+				if(self.usePhotoInduced and t_data["Bij"]>0e0):
+					Bji_fmt = ("%e" % t_data["Bji"]).replace("e","d")
+					de_eVs = ("%e" % t_data["denergy_eV"]).replace("e","d")
+					photoIB = Bji_fmt+" * get_photoIntensity("+de_eVs+")"
+					full_B_vector_heat.append("B("+str(t_data["up"]+1)+") * "+photoIB +" * "+deltaE_fmt)
+
+			#join the cooling vector as a sum
+			full_B_vector = (" &\n + ".join(full_B_vector_cool))
+			if(len(full_B_vector_heat)>0):
+				full_B_vector += " &\n - " + (" &\n - ".join(full_B_vector_heat))
+
 
 			#uniqe collider_list
 			ucollider_list = []
