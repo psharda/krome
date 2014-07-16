@@ -59,7 +59,7 @@ class molec():
 	Tpoly = [0.e0]*3 #temperature limits
 	idx = 0 #species index
 	enthalpy = 0.e0 #enthalpy of formation
-	atomcount = dict() #dictionary containin the count of atoms including zero (e.g H2O is {"H":2, "O":1})
+	atomcount = dict() #dictionary containin the count of atoms including zero (e.g H2O is {"H":2, "O":1, "C":0, ...})
 	atomcount2 = dict() #dictionary containin the count of atoms without zero species (e.g H2O is {"H":2, "O":1})
 	natoms = 0 #the number of atoms (e.g. diatomic=2)
 	ve_vib = "__NONE__" #vibrational constant in K
@@ -541,8 +541,7 @@ def parsevar(arg):
 #extend the list slist with the temperature shortcuts 
 # for the reaction rea
 def get_Tshortcut(rea,slist,cvars=[]):
-	shcut = ["t = Tgas !alias for Tgas (K)",
-	"logT = log10(Tgas) !log10 of Tgas (#)",
+	shcut = ["logT = log10(Tgas) !log10 of Tgas (#)",
 	"lnT = log(Tgas) !ln of Tgas (#)",
 	"Te = Tgas*8.617343d-5 !Tgas in eV (eV)",
 	"lnTe = log(Te) !ln of Te (#)",

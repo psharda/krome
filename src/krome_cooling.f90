@@ -1,10 +1,13 @@
 module KROME_cooling
 #KROME_header
   integer,parameter::coolTab_n=int(1e2)
+  !this threshold is employed in the cooling linear solver
+  real*8,parameter::coolz_reduction_threshold=1d-10
 #KROME_nZrate
   real*8::coolTab(nZrate,coolTab_n),coolTab_logTlow, coolTab_logTup
   real*8::coolTab_T(coolTab_n),inv_coolTab_T(coolTab_n-1),inv_coolTab_idx
 #KROME_escape_vars
+#KROME_coolingZ_popvars
 contains
 
   !*******************
@@ -607,6 +610,9 @@ contains
     cooling_atomic = max(cool, 0.d0)  !erg/cm3/s
 
   end function cooling_Atomic
+#ENDIFKROME
+
+#IFKROME_useCoolingFF
 
   !**************************
   !free-free cooling (bremsstrahlung for all ions)
@@ -716,6 +722,18 @@ contains
 
   end function flin
 
+  !************************
+  !dump the level populations in a file
+  subroutine dump_cooling_pop(Tgas,nfile)
+    implicit none
+    integer::nfile,i
+    real*8::Tgas
+    
+#KROME_popvar_dump
+    write(nfile,*)
+
+  end subroutine dump_cooling_pop
+
   !***********************
   !metal cooling as in Maio et al. 2007
   ! loaded from data file 
@@ -741,12 +759,13 @@ contains
     use krome_subs
     implicit none
     real*8::inTgas,coolingZ_rates(nZrate),k(nZrate)
-    real*8::Tgas,invT
+    real*8::Tgas,invT,logTgas
     integer::i
 #KROME_coolingZ_declare_custom_vars
 
     Tgas = inTgas
     invT = 1d0/Tgas
+    logTgas = log10(Tgas)
 
 #KROME_coolingZ_custom_vars
 

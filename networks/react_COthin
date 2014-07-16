@@ -5,6 +5,7 @@
 @var: Te = Tgas*8.617343d-5
 @var: invT = 1d0/Tgas
 @var: lnTe = log(Te)
+@var: T = Tgas
 
 @format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
 #Glover+2010 MNRAS

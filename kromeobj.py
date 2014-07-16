@@ -100,6 +100,7 @@ class krome():
 	coolZ_functions = []
 	coolZ_rates = []
 	coolZ_vars_cool = []
+	coolZ_poplevelvars = [] #population levels variables
 	fcn_levs = [] #list of number of cooling levels found
 	coolZ_nkrates = 0
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
@@ -318,7 +319,7 @@ class krome():
 			[argv.append(x) for x in ["-photoBins=10","-useN"]]
 			filename = "networks/react_auto"
 		elif(args.test=="chianti"):
-			[argv.append(x) for x in ["-photoBins=10","-useN","-useThermoToggle","-coolLevels=9999"]]
+			[argv.append(x) for x in ["-photoBins=10","-useN","-useThermoToggle","-coolLevels=99999"]]
 			[argv.append(x) for x in ["-cooling=CII,CIII,CIV,CV,CVI"]]
 			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
 			filename = "networks/react_chianti"
@@ -340,7 +341,7 @@ class krome():
 			[argv.append(x) for x in ["-compact"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="map"):
-			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-usePhIoniz"]]
+			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-photoBins=10"]]
 			filename = "networks/react_primordial_photoH2"
 		elif(args.test=="collapse"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
@@ -408,6 +409,7 @@ class krome():
 			for k in args.__dict__:
 				arg = args.__dict__[k]
 				if(arg): print " -"+k+" = "+str(arg)
+			print " -n = "+self.filename
 			print
 
 		#use custom option file (load options from a file and append to argv)
@@ -2241,6 +2243,7 @@ class krome():
 			idx += 1
 			fout.write(str(idx)+"\t"+mol.name+"\t"+mol.fidx+"\n")
 		fout.close()
+		print "Species list saved in "+self.buildFolder+"species.log"
 
 		#dump species to gnuplot initialization
 		fout = open(self.buildFolder+"species.gps","w")
@@ -2258,6 +2261,7 @@ class krome():
 		fout.write("print \"plot 'your_file' u 1:(column(krome_idx_H2))\"\n")
 		fout.write("print \" the offset is nkrome=\",nkrome\n")
 		fout.close()
+		print "Species index initialization for gnuplot in "+self.buildFolder+"species.gps"
 
 		#dump heating and cooling index initialization for gnuplot
 		fout = open(self.buildFolder+"heatcool.gps","w")
@@ -2278,15 +2282,26 @@ class krome():
 		fout.write("print \"plot 'your_file' u 1:(column(krome_idx_cool_H2))\"\n")
 		fout.write("print \" the offset is nkrome_heatcool=\",nkrome_heatcool\n")
 		fout.close()
+		print "Heating cooling index init for gnuplot in "+self.buildFolder+"heatcool.gps"
 
 	
 		#dump reactions to log file
+		
 		fout = open(self.buildFolder+"reactions.log","w")
-		idx = 0
+		idx = maxprod = maxreag = 0
 		for rea in self.reacts:
 			idx += 1
+			rcount = pcount = 0
+			#search for the maximum number of reactants and products
+			for r in rea.reactants:
+				if(r.name!=""): rcount += 1
+			maxreag = max(maxreag,rcount)
+			for p in rea.products:
+				if(p.name!=""): pcount += 1
+			maxprod = max(maxprod,pcount)
 			fout.write(str(rea.idx)+"\t"+rea.verbatim+"\n")
-		fout.close()	
+		fout.close()
+
 		
 		#dump network to dot file
 		fout = open(self.buildFolder+"network.dot","w")
@@ -2302,6 +2317,7 @@ class krome():
 		dot +="}\n"
 		fout.write(dot)
 		fout.close
+		print "Reactions saved in "+self.buildFolder+"reactions.log"
 	
 	##############################################
 	#write the C header if needed
@@ -2343,7 +2359,6 @@ class krome():
 
 		#if species are few print list of species
 		if(len(specs)<20): print "ODEs list: "+(", ".join([x.name for x in specs]))
-		print "Species list saved in species.log"
 		print
 
 	############################################
@@ -2778,7 +2793,7 @@ class krome():
 					if(not(metal_name.upper() in [x.upper() for x in self.zcoolants])): skip_metal = True
 					continue
 				if(skip_metal): continue #skip the metal if necessary (not included in the self.zcoolant list)
-				
+
 				#if level pragma found read level data
 				if("level" in srow):
 					srow = srow.replace("level","").replace(":",",") #use only comma to separate and remove "level"
@@ -2787,25 +2802,49 @@ class krome():
 					#skip if levels are not requested (-coolLevels)
 					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
 					cond2 = not(int(arow[0]) in self.coolLevels) #condition2: the level should be in the list
-					if(cond1 and cond2): continue #skip if levels are not listed in requested levels (both conditions)
+					if(cond1 and cond2): continue #skip if levels are not listed in requested levels
 
 					#add level data to the dictionary
 					levels_data[int(arow[0])] = {"energy":float(arow[1]), "g":float(arow[2])}
 					continue
 				
 				#if 3 elemets is transistion data
-				if(len(srow.split(","))==3):
+				if("->" in srow):
+					srow = srow.replace("->",",") #replace the arrow with a comma (easier to split)
 					arow = [x.replace("d","e") for x in srow.split(",")] #split using comma and floating format conversion
 					trans_name = arow[0].strip()+"->"+arow[1].strip() #prepare the key as up->down (e.g. "4->1")
-
 					#skip if levels are not requested (-coolLevels)
 					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
 					cond2 = not(int(arow[0]) in self.coolLevels) #condition2: the up level should be in the list
 					cond3 = not(int(arow[1]) in self.coolLevels) #condition3: the low level should be in the list
-					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels (both conditions)
+					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels
 
 					#store data
-					trans_data[trans_name] = {"up":int(arow[0]), "down":int(arow[1]), "Aij":float(arow[2])}
+					kboltzmann_eV = 8.617332478e-5 #eV/K
+					hplanck_eV = 4.135667516e-15 #eV*s
+					clight =  2.99792458e10 #cm/s
+					de_eV = kboltzmann_eV * abs(levels_data[int(arow[0])]["energy"] - levels_data[int(arow[1])]["energy"])
+					#if wavelength in angstrom is available and positive use it to compute delta energy
+					if(len(arow)>3):
+						wvl = float(arow[3])/1e8 #cm
+						de_eV = 0e0
+						if(wvl>0e0):
+							de_eV = hplanck_eV*clight/wvl #eV
+
+					#compute pre-factor for photo-induced transitions
+					if(de_eV!=0e0):
+						preB = .5e0*(hplanck_eV*clight)**2/(de_eV)**3 #cm2/eV
+					else:
+						preB = 0e0
+
+					#compute gi and gj
+					gi = levels_data[(int(arow[0]))]["g"]
+					gj = levels_data[(int(arow[1]))]["g"]
+
+					#append transition dictionary to transition data
+					trans_data[trans_name] = {"up":int(arow[0]), "down":int(arow[1]), "Aij":float(arow[2]),\
+						"Bij":float(arow[2])*preB, "denergy_eV":de_eV, "denergy_K":de_eV/kboltzmann_eV,\
+						"Bji":float(arow[2])*preB/gj*gi}
 					continue
 		
 				#if more than 3 elements is a rate data
@@ -2819,7 +2858,7 @@ class krome():
 					cond1 = (len(self.coolLevels)!=0) #condition1: the list of the requested level should be not empty
 					cond2 = not(int(arow[1]) in self.coolLevels) #condition2: the up level should be in the list
 					cond3 = not(int(arow[2]) in self.coolLevels) #condition3: the low level should be in the list
-					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels (both conditions)
+					if(cond1 and (cond2 or cond3)): continue #skip if levels are not listed in requested levels
 
 					#increase the number of the reactions found
 					index_count += 1
@@ -2907,7 +2946,7 @@ class krome():
 			#loop on the number of levels (k index, lines of the A matrix)
 			nlev = max(level_list)
 			collider_list = [] #list of the collider found
-			Amatrix = [["0d0" for i in range(nlev+1)] for j in range(nlev+1)]
+			Amatrix = [["0d0" for i in range(nlev+1)] for j in range(nlev+1)] #init matrix to 0d0
 			for klev in level_list[:]:
 				#if level is suitable for linear depenency use as conservation equation
 				if(klev==idx_linear_dep_level):
@@ -2923,6 +2962,7 @@ class krome():
 						if(klev==ilev):
 							A_name = "A("+str(klev+1)+","+str(ilev+1)+")" #Ax=b matrix element name
 							trans_name = str(ilev)+"->"+str(jlev) #transition key k->j
+							#compute excitation Cij
 							#loop on rate data to find keys that contain the transition name (rates k->j)
 							for r_key in rate_data:
 								r_key_part = r_key.split("_")[0]
@@ -2931,44 +2971,76 @@ class krome():
 										self.convertMetal2F90(rate_data[r_key]["collider"])
 									Amatrix[klev][ilev] += matrix_rate
 									collider_list.append(rate_data[r_key]["collider"])
-							#search transitions k->j
+							#search transitions k->j (Aij)
 							if(trans_name in trans_data):
 								Aij_fmt = ("%e" % trans_data[trans_name]["Aij"]).replace("e","d")
 								matrix_rate = " &\n- " + Aij_fmt
 								Amatrix[klev][ilev] += matrix_rate
+								#if photoinduced needed compute it
+								if(self.usePhotoInduced and trans_data[trans_name]["Bij"]>0e0):
+									Bij_fmt = ("%e" % trans_data[trans_name]["Bij"]).replace("e","d")
+									de_eVs = ("%e" % trans_data[trans_name]["denergy_eV"]).replace("e","d")
+									matrix_rate = " &\n- "+Bij_fmt+" * get_photoIntensity("+de_eVs+")"
+									Amatrix[klev][ilev] += matrix_rate
 
 						#i->k transitions (populate k level: Aik, Cik)
 						if(klev==jlev):
 							A_name = "A("+str(klev+1)+","+str(ilev+1)+")" #Ax=b matrix element name
 							trans_name = str(ilev)+"->"+str(jlev) #transition key i->k
+							#add collision, i.e. Cij
 							#loop on rate data to find keys that contain the transition name (rates i->k)
 							for r_key in rate_data:
-								r_key_part = r_key.split("_")[0]
+								r_key_part = r_key.split("_")[0] #key without _collider (e.g. 2->1)
 								if(trans_name==r_key_part):
 									matrix_rate = " &\n+ k("+str(rate_data[r_key]["rate"])+") * coll_"+\
 										self.convertMetal2F90(rate_data[r_key]["collider"])
 									Amatrix[klev][ilev] += matrix_rate
 									collider_list.append(rate_data[r_key]["collider"])
+							#add transition, i.e. Aij
 							#search transitions i->k
 							if(trans_name in trans_data):
 								Aij_fmt = ("%e" % trans_data[trans_name]["Aij"]).replace("e","d")
 								matrix_rate = " &\n+ "+Aij_fmt
 								Amatrix[klev][ilev] += matrix_rate
-								#print trans_data[trans_name]
+								#if photoinduced needed compute it
+								if(self.usePhotoInduced and trans_data[trans_name]["Bij"]>0e0):
+									Bij_fmt = ("%e" % trans_data[trans_name]["Bij"]).replace("e","d")
+									de_eVs = ("%e" % trans_data[trans_name]["denergy_eV"]).replace("e","d")
+									matrix_rate = " &\n+ "+Bij_fmt+" * get_photoIntensity("+de_eVs+")"
+									Amatrix[klev][ilev] += matrix_rate
 
 			#PART 2.3: prepare the cooling
-			full_B_vector = []
+			full_B_vector_cool = []
+			full_B_vector_heat = []
 			for k,t_data in trans_data.iteritems():
 				Aij_fmt = ("%e" % t_data["Aij"]).replace("e","d") #f90ish format for Aij
-				deltaE = abs(levels_data[t_data["up"]]["energy"] - levels_data[t_data["down"]]["energy"])
+				deltaE = t_data["denergy_K"]
 				deltaE_fmt = ("%e" % deltaE).replace("e","d") #f90ish format for deltaE
-				#put all togheter
-				full_B_vector.append("B("+str(t_data["up"]+1)+") * "+Aij_fmt+" * "+deltaE_fmt)
-			full_B_vector = (" &\n + ".join(full_B_vector))
+				photoIB = ""
+				if(self.usePhotoInduced and t_data["Bij"]>0e0):
+					Bij_fmt = ("%e" % t_data["Bij"]).replace("e","d")
+					de_eVs = ("%e" % t_data["denergy_eV"]).replace("e","d")
+					photoIB = " &\n + "+Bij_fmt+" * get_photoIntensity("+de_eVs+")"
+				#append cooling to final sum over transitions list
+				full_B_vector_cool.append("B("+str(t_data["up"]+1)+") * ("+Aij_fmt + photoIB +") * "+deltaE_fmt)
+
+				#add induced heating if needed
+				if(self.usePhotoInduced and t_data["Bij"]>0e0):
+					Bji_fmt = ("%e" % t_data["Bji"]).replace("e","d")
+					de_eVs = ("%e" % t_data["denergy_eV"]).replace("e","d")
+					photoIB = Bji_fmt+" * get_photoIntensity("+de_eVs+")"
+					full_B_vector_heat.append("B("+str(t_data["up"]+1)+") * "+photoIB +" * "+deltaE_fmt)
+
+			#join the cooling vector as a sum
+			full_B_vector = (" &\n + ".join(full_B_vector_cool))
+			if(len(full_B_vector_heat)>0):
+				full_B_vector += " &\n - " + (" &\n - ".join(full_B_vector_heat))
+
 
 			#uniqe collider_list
 			ucollider_list = []
 			for x in collider_list:
+				#replace for f90-friendly name
 				x = x.replace("+","j").replace("-","k")
 				if(x in ucollider_list): continue
 				ucollider_list.append(x)
@@ -2981,6 +3053,7 @@ class krome():
 			full_function = "!************************************\n"
 			full_function += "function "+function_name+"(n,inTgas,k)\n"
 			full_function += "use krome_commons\n"
+			full_function += "use krome_photo\n"
 			full_function += "implicit none\n"
 
 			#declaration of varaibles
@@ -3014,11 +3087,18 @@ class krome():
 					matrix_element = Amatrix[j][0].replace("0d0 &\n","")
 					full_function += "A("+str(j+1)+",1) = "+matrix_element+"\n"
 
+			#write the initialization of diagonal elements of the A matrix 
+			# (will be used by the f90 to reduce the size of the problem)
+			for j in range(1,nlev):
+				if(Amatrix[j][j]!="0d0"):
+					matrix_element = Amatrix[j][j].replace("0d0 &\n","")
+					full_function += "A("+str(j+1)+","+str(j+1)+") = "+matrix_element+"\n"
+
 
 			#the size of the problem can be reduced up to the last non-zero row of the left triangular matrix
 			# only interesting with more levels
 			if(nlev>3):
-				full_function += "!reduce the size of the problem if possible\n" #reverse is faster
+				full_function += "\n!reduce the size of the problem if possible\n" #reverse is faster
 				full_function += "nmax = 1\n"
 				full_function += "do i="+str(nlev)+",2,-1\n"
 				full_function += " if(A(i,1)>0d0) then\n"
@@ -3033,8 +3113,12 @@ class krome():
 
 
 			#write the A matrix column-wise. A(:,1) matrix column computed above
+			# as well as the diagonal elements 
 			for i in range(1,nlev):
 				for j in range(nlev):
+					#skip diagonal elements since already written (see above)
+					if(i==j): continue
+					#skip zero elements
 					if(Amatrix[j][i]!="0d0"):
 						matrix_element = Amatrix[j][i].replace("0d0 &\n","")
 						full_function += "A("+str(j+1)+","+str(i+1)+") = "+matrix_element+"\n"
@@ -3055,6 +3139,9 @@ class krome():
 				full_function += "call mylin3(A(:,:), B(:))\n\n"
 			else:
 				sys.exit("ERROR: strange number of levels for linear system in Zcooling: "+str(nlev))
+
+			full_function += "!store population\n"
+			full_function += "pop_level_"+metal_name+"(:) = B(:)\n"
 
 			#negative small values can be flushed to 1d-40
 			full_function += "!sanitize negative values\n"
@@ -3097,6 +3184,7 @@ class krome():
 
 			#append the function to the list of the functions
 			self.coolZ_functions.append([function_name,full_function])
+			self.coolZ_poplevelvars.append("pop_level_"+metal_name+"("+str(nlev)+")")
 
 
 	#######################################
@@ -4581,7 +4669,6 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingFF" and not(self.useCoolingFF)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
-			if(srow == "#IFKROME_use_thermo_toggle" and not(self.useThermoToggle)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
 
@@ -4692,6 +4779,19 @@ class krome():
 			elif(row.strip() == "#KROME_coolingZ_rates"):
 				for x in self.coolZ_rates:
 					fout.write(x+"\n\n")
+			elif(row.strip() == "#KROME_coolingZ_popvars"):
+				if(len(self.coolZ_poplevelvars)>0):
+					for popvar in self.coolZ_poplevelvars:
+						fout.write("real*8::"+popvar+"\n")
+			elif(row.strip() == "#KROME_popvar_dump"):
+				if(len(self.coolZ_poplevelvars)>0):
+					for popvar in self.coolZ_poplevelvars:
+						funct_name = popvar.split("(")[0]
+						metal_name = funct_name.split("_")[-1]
+						fout.write("!"+popvar+"\n")
+						fout.write("do i=1,size("+funct_name+")\n")
+						fout.write(" write(nfile,'(a8,I5,2E17.8e3)') \""+metal_name+"\", i, Tgas, "+funct_name+"(i)\n")
+						fout.write("end do\n\n")
 			else:
 				#replace pragma for total metals
 				row = row.replace("#KROME_tot_metals", self.totMetals)
@@ -4982,12 +5082,10 @@ class krome():
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_use_thermo" and (not(self.use_thermo) or not(self.useODEthermo))): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
+			if(srow == "#IFKROME_use_thermo_toggle" and not(self.useThermoToggle)): skip = True
 			if(srow == "#IFKROME_report" and not(self.doReport)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
+
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
@@ -5203,29 +5301,33 @@ class krome():
 		scaleZ = []
 		#looks for H to rescale the metallicity otherwise skips
 		has_H = False
+		sHtot = "Htot = "
 		for mols in specs:
-			if(mols.name=="H"): 
-				has_H = True
-				break
+			if(not("H" in mols.atomcount2)): continue 
+			Hcount = mols.atomcount2["H"]
+			if(Hcount>0): has_H = True
+			if(Hcount==1): sHtot += " &\n + n("+mols.fidx+")"
+			if(Hcount>1): sHtot += " &\n + "+str(Hcount)+"d0 * n("+mols.fidx+")"
 
+		scaleZ.append(sHtot) #Htot= is the first of the list 
 		#creates the metallicity rescaling subroutine
 		for (k,v) in solar.iteritems():
-			if(not(has_H)): break #skip routine if H is not present
+			if(not(has_H)):
+				scaleZ = [] #reset scaleZ since Htot= is no longer needed
+				break #skip routine if H is not present
 			for mols in specs:
 				if(k.upper()==mols.name.upper()):
-					scaleZ.append("n("+mols.fidx+") = max(n(idx_H) * 1d1**(Z+log10("+str(v)+")), 1d-40)")
+					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+log10("+str(v)+")), 1d-40)")
 
 		for row in fh:
 
 			srow = row.strip()
 
 			if(srow == "#IFKROME_usePhotoBins" and self.photoBins<=0): skip = True
-
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
-
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
-
 			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
+
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
@@ -5633,8 +5735,8 @@ class krome():
 		#copy OMUKAI datafile
 		if(self.H2opacity=="OMUKAI"):
 			shutil.copyfile("data/escape_H2.dat", buildFolder+"escape_H2.dat")
-			
 
+		#copy file that contains table as indicated by the anytab reactions
 		print "- copying anytab files..."
 		for i in range(len(self.anytabvars)):
 			shutil.copyfile(self.anytabpaths[i], buildFolder+self.anytabfiles[i])
@@ -5679,6 +5781,11 @@ class krome():
 			shutil.copyfile("solver/opkda2.f", buildFolder+"opkda2.f")
 		#copy non-linear equation solver to build folder
 		if(self.useNLEQ): shutil.copyfile("solver/nleq_all.f", buildFolder+"nleq_all.f")
+
+		#copy utility to list the user functions
+		fname = "tools/list_user_functions.py"
+		if(os.path.exists(fname)):
+			shutil.copyfile(fname, buildFolder+"list_user_functions.py")
 
 
 	#######################################################

@@ -30,18 +30,35 @@ contains
 
 #KROME_cooling_functions
 
+  !***************************
+  !dump the population of the Z cooling levels
+  ! in the nfile file unit, using Tgas as 
+  ! independent variable. alias of
+  ! dump_cooling_pop subroutine
+  subroutine krome_popcool_dump(inTgas,nfile)
+    use krome_cooling
+    implicit none
+    real*8::Tgas,inTgas
+    integer::nfile
+
+    Tgas = inTgas
+    call dump_cooling_pop(Tgas,nfile)
+
+  end subroutine krome_popcool_dump
+
   !****************************
+  !switch on the thermal calculation
   subroutine krome_thermo_on()
     use krome_commons
     krome_thermo_toggle = 1
   end subroutine krome_thermo_on
 
   !****************************
+  !switch off the thermal calculation
   subroutine krome_thermo_off()
     use krome_commons
     krome_thermo_toggle = 0
   end subroutine krome_thermo_off
-
   
 #IFKROME_usePhotoBins
   !************************
@@ -374,6 +391,18 @@ contains
     krome_get_coef(:) = coe(n(:))
     
   end function krome_get_coef
+
+  !****************************
+  !get the mean molecular weight from
+  ! mass fractions
+  function krome_get_mu_x(xin)
+    use krome_commons
+    implicit none
+    real*8::krome_get_mu_x,xin(:)
+    real*8::n(nmols)
+    n(:) = krome_x2n(xin(:),1d0)
+    krome_get_mu_x = krome_get_mu(n(:))
+  end function krome_get_mu_x
 
   !****************************
   !return the adiabatic index from mass fractions
@@ -728,7 +757,7 @@ contains
     !scale metallicity the metals contained in n(:) 
     ! to Z according to Arnett(1996)
     use krome_commons
-    real*8::n(:),Z
+    real*8::n(:),Z,Htot
 
 #KROME_scaleZ
     
@@ -867,6 +896,31 @@ contains
     write(nfile,*)
 
   end subroutine krome_dump_flux
+
+  !************************
+  subroutine krome_dump_rates(inTmin,inTmax,imax,funit)
+    use krome_commons
+    use krome_subs
+    implicit none
+    integer::funit,i,imax,j
+    real*8::Tmin,Tmax,Tgas,k(nrea),n(nspec),inTmin,inTmax
+    
+    Tmin = log10(inTmin)
+    Tmax = log10(inTmax)
+
+    n(:) = 1d-40
+    do i=1,imax
+       Tgas = 1d1**((i-1)*(Tmax-Tmin)/(imax-1)+Tmin)
+       n(idx_Tgas) = Tgas
+       k(:) = coe(n(:))
+       do j=1,nrea
+          write(funit,'(E17.8e3,I8,E17.8e3)') Tgas,j,k(j)
+       end do
+       write(funit,*)
+    end do
+
+    
+  end subroutine krome_dump_rates
 
   !************************
   !print species informations on screen

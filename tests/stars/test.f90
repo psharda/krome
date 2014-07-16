@@ -32,7 +32,6 @@ program test
   close(33)
 
   print *,"running..."
-  rho_old = 1d0
   tt = 0d0 !absolute time (s)
   open(44,file="phy_params.dat",status="old")
   read(44,*) !skip header
@@ -42,7 +41,7 @@ program test
      Tgas = 1d1**datar2(5)
      rho = 1d1**datar2(7)
      dtin = (1d1**datar2(2))*krome_seconds_per_year - tt
-     call krome(x(:), rhogas, Tgas, dtin)
+     call krome(x(:), rho, Tgas, dtin)
      write(66,'(99E17.8e3)') tt/krome_seconds_per_year, rho, x(:)
      tt = tt + dtin
   end do

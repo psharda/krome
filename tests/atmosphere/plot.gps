@@ -5,5 +5,5 @@ set title "H2O"
 set xlabel "time"
 set ylabel "height (km)"
 set pm3d map
-set xrange [1e3:2e4]
+set xrange [2e3:1.9e4]
 splot 'fort.55' u 1:($2/1e5):n 
