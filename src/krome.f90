@@ -1,6 +1,8 @@
 module krome_main
 
   integer::krome_call_to_fex
+  !$omp threadprivate(krome_call_to_fex)
+
 contains
 
 #KROME_header

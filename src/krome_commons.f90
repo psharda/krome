@@ -13,6 +13,7 @@ module krome_commons
 
   real*8::arr_k(nrea)
   real*8::jac_nold(nspec),jac_dnold(nspec),jac_dn(nspec)
+  !$omp threadprivate(jac_nold,jac_dnold,jac_dn)
     
   !commons for rate tables
   !modify ktab_n according to the requested precision
@@ -46,7 +47,8 @@ module krome_commons
 #KROME_opt_variables
 
   !mpi rank of process. If 0, ignored
-  integer::krome_mpi_rank=0
+  integer::krome_mpi_rank=0, krome_omp_thread
+  !$omp threadprivate(krome_omp_thread)
 
   !user-defined commons variables from the reaction file
 #KROME_user_commons

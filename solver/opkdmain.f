@@ -1239,6 +1239,8 @@ C-----------------------------------------------------------------------
      5   MAXORD, MAXCOR, MSBP, MXNCF, N, NQ, NST, NFE, NJE, NQU
 C
       DATA  MORD(1),MORD(2)/12,5/, MXSTP0/500/, MXHNL0/10/
+      !$OMP THREADPRIVATE(/DLS001/)
+      !$OMP THREADPRIVATE(MORD,MXSTP0,MXHNL0)
 C-----------------------------------------------------------------------
 C Block A.
 C This code block is executed on every call.
@@ -3058,6 +3060,8 @@ C LENRAT = 1 for single precision and 2 for double precision.  If the
 C true ratio is not an integer, use the next smaller integer (.ge. 1).
 C-----------------------------------------------------------------------
       DATA LENRAT/2/
+      !$OMP THREADPRIVATE(/DLS001/,/DLSS01/)
+      !$OMP THREADPRIVATE(LENRAT,MORD,MXSTP0,MXHNL0)
 C-----------------------------------------------------------------------
 C Block A.
 C This code block is executed on every call.
@@ -4759,6 +4763,8 @@ C
      1   INSUFR, INSUFI, IXPR, IOWNS2(2), JTYP, MUSED, MXORDN, MXORDS
 C
       DATA MORD(1),MORD(2)/12,5/, MXSTP0/500/, MXHNL0/10/
+      !$OMP THREADPRIVATE(/DLS001/,/DLSA01/)
+      !$OMP THREADPRIVATE(MORD,MXSTP0,MXHNL0)
 C-----------------------------------------------------------------------
 C Block A.
 C This code block is executed on every call.
@@ -6520,6 +6526,8 @@ C
      1   LG0, LG1, LGX, IOWNR3(2), IRFND, ITASKC, NGC, NGE
 C
       DATA MORD(1),MORD(2)/12,5/, MXSTP0/500/, MXHNL0/10/
+      !$OMP THREADPRIVATE(/DLS001/,/DLSA01/,/DLSR01/)
+      !$OMP THREADPRIVATE(MORD,MXSTP0,MXHNL0)
 C-----------------------------------------------------------------------
 C Block A.
 C This code block is executed on every call.
@@ -8353,6 +8361,8 @@ C
      2   NNI, NLI, NPS, NCFN, NCFL
 C
       DATA MORD(1),MORD(2)/12,5/, MXSTP0/500/, MXHNL0/10/
+      !$OMP THREADPRIVATE(/DLS001/,/DLPK01/)
+      !$OMP THREADPRIVATE(MORD,MXSTP0,MXHNL0)
 C-----------------------------------------------------------------------
 C Block A.
 C This code block is executed on every call.
@@ -10205,6 +10215,8 @@ C
      2   NNI, NLI, NPS, NCFN, NCFL
 C
       DATA MORD(1),MORD(2)/12,5/, MXSTP0/500/, MXHNL0/10/
+      !$OMP THREADPRIVATE(/DLS001/,/DLS002/,/DLSR01/,/DLPK01/)
+      !$OMP THREADPRIVATE(MORD,MXSTP0,MXHNL0)
 C-----------------------------------------------------------------------
 C Block A.
 C This code block is executed on every call.
@@ -12056,6 +12068,8 @@ C-----------------------------------------------------------------------
      5   MAXORD, MAXCOR, MSBP, MXNCF, N, NQ, NST, NFE, NJE, NQU
 C
       DATA MORD(1),MORD(2)/12,5/, MXSTP0/500/, MXHNL0/10/
+      !$OMP THREADPRIVATE(/DLS001/)
+      !$OMP THREADPRIVATE(MORD,MXSTP0,MXHNL0)
 C-----------------------------------------------------------------------
 C Block A.
 C This code block is executed on every call.
@@ -13858,6 +13872,8 @@ C-----------------------------------------------------------------------
      5   MAXORD, MAXCOR, MSBP, MXNCF, N, NQ, NST, NFE, NJE, NQU
 C
       DATA MORD(1),MORD(2)/12,5/, MXSTP0/500/, MXHNL0/10/
+      !$OMP THREADPRIVATE(/DLS001/)
+      !$OMP THREADPRIVATE(MORD,MXSTP0,MXHNL0)
 C-----------------------------------------------------------------------
 C Block A.
 C This code block is executed on every call.
@@ -15845,6 +15861,8 @@ C LENRAT = 1 for single precision and 2 for double precision.  If the
 C true ratio is not an integer, use the next smaller integer (.ge. 1),
 C-----------------------------------------------------------------------
       DATA LENRAT/2/
+      !$OMP THREADPRIVATE(/DLS001/,/DLSS01/)
+      !$OMP THREADPRIVATE(LENRAT,MORD,MXSTP0,MXHNL0)
 C-----------------------------------------------------------------------
 C Block A.
 C This code block is executed on every call.
