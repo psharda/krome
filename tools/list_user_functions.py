@@ -1,10 +1,22 @@
+import sys
 #this python script returns the list and the information on the functions
 # in the krome_user.f90 file
 # the details are taken from the block of comments before the function when present
 # Grassi+KROME Team 11Jul2014
 
-
 #NO NEED TO MODIFY THIS SCRIPT
+listNamesOnly = False
+argv = sys.argv
+if(len(argv)>1):
+	if("-h" in argv):
+		print "usage: python "+argv[0]+" [OPTIONS]"
+		print "\t-n list names only"
+		print "\t-h show this help and exit"
+		sys.exit()
+	listNamesOnly = ("-n" in argv)
+		
+
+
 fh = open("krome_user.f90","rb")
 
 inpartF = ["function","(",")"]
@@ -30,7 +42,7 @@ for row in fh:
 		if(storecom==""): storecom = "  [no comments available]\n"
 		icount += 1
 		print str(icount)+") "+srow
-		print storecom
+		if(not(listNamesOnly)): print storecom
 		continue
 
 	if(("end function" in srow) or ("end subroutine" in srow)):

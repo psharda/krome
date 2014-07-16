@@ -12,8 +12,9 @@ set key Left
 set key reverse
 set grid
 
-plot './fort.22' u 2:($1==2.73?$3:1/0) w l t "Tbb=2.73 K",\
-'' u 2:($1==3e1?$3:1/0) w l t "Tbb=3e1 K",\
-'' u 2:($1==3e2?$3:1/0) w l t "Tbb=3e2 K",\
-'' u 2:($1==3e3?$3:1/0) w l t "Tbb=3e3 K"
+plot './fort.22' u 3:($1==1?$4:1/0) every 100 t "no radiation",\
+'' u 3:($1==2?$4:1/0) w l t "Tbb=2.73 K",\
+'' u 3:($1==3?$4:1/0) w l t "Tbb=3e1 K",\
+'' u 3:($1==4?$4:1/0) w l t "Tbb=3e2 K",\
+'' u 3:($1==5?$4:1/0) w l t "Tbb=3e3 K"
 

@@ -236,6 +236,7 @@ contains
     use krome_commons
     use krome_constants
     use krome_photo
+    use krome_subs
     implicit none
     real*8::lower,upper,Tbb,x,xmax,xexp,Jlim
     integer::i
@@ -248,9 +249,7 @@ contains
     !eV/cm2/s/Hz/sr
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
-       xexp = min(x/boltzmann_eV/Tbb,3d1)
-       photoBinJ(i) = 2d0*x**3/planck_eV**2/clight**2 &
-            / (exp(xexp)-1d0)
+       photoBinJ(i) = planckBB(x,Tbb)
     end do
 
     !find the maximum using Wien's displacement law
@@ -290,6 +289,47 @@ contains
     call calc_photobins()
     
   end subroutine krome_set_photoBin_BBlog
+
+  !*************************************
+  !set the BB spectrum and the limits using bisection
+  subroutine krome_set_photoBin_BBlog_auto(Tbb)
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    implicit none
+    real*8::Tbb,xlow,xup,eps,xmax,J0,J1,x0,x1,xm,Jm
+    eps = 1d-6
+
+    !Rayleigh–Jeans approximation for the minimum energy
+    xlow = planck_eV*clight*sqrt(.5d0/Tbb/boltzmann_eV*eps)
+
+    !find energy of the Wien maximum (eV)
+    xmax = Tbb / 2.8977721d-1 * clight * planck_eV
+
+    !bisection to find the maximum
+    x0 = xmax
+    x1 = 2.9d2*Tbb*boltzmann_eV 
+    J0 = planckBB(x0,Tbb) - eps 
+    J1 = planckBB(x1,Tbb) - eps
+    if(J0<0d0.or.J1>0d0) then
+       print *,"ERROR: problems with auto planck bisection!"
+       stop
+    end if
+    
+    do 
+       xm = 0.5d0*(x0+x1)
+       Jm = planckBB(xm,Tbb) - eps
+       if(Jm>0d0) x0 = xm
+       if(Jm<0d0) x1 = xm
+       if(abs(Jm)<eps*1d-3) exit
+    end do
+    xup = xm
+
+    !initialize BB radiation using the values found
+    call krome_set_photoBin_BBlog(xlow,xup,Tbb)
+
+
+  end subroutine krome_set_photoBin_BBlog_auto
 
   !**************************
   subroutine krome_set_photoBin_draineLin(lower,upper)
@@ -373,6 +413,10 @@ contains
   end subroutine krome_set_photoBin_J21log
 
   !*****************************
+  !get the opacity exp(-tau) correpsonding the x(:)
+  ! chemical composition. The column density
+  ! is computed using the expression in the 
+  ! num2col(x) function
   function krome_get_opacity(x)
     use krome_commons
     use krome_photo
@@ -394,6 +438,20 @@ contains
     
   end function krome_get_opacity
 
+  !*******************************
+  !dump the Jflux profile to the file
+  ! with unit number nfile
+  subroutine krome_dump_Jflux(nfile)
+    use krome_commons
+    implicit none
+    integer::i,nfile
+    
+    do i=1,nPhotoBins
+       write(nfile,*) photoBinEmid(i),photoBinJ(i)
+    end do
+    
+  end subroutine krome_dump_Jflux
+  
 #ENDIFKROME
 
   !***************************

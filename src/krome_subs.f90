@@ -36,6 +36,42 @@ contains
 
 #KROME_metallicity_functions
 
+  !**********************
+  !planck function in erg/s/cm2/Hz/sr
+  ! x is the energy in eV, Tbb the black body
+  ! temperature in K
+  function planckBB(x,Tbb)
+    use krome_constants
+    implicit none
+    real*8::Tbb,x,xexp,planckBB
+
+    !exponent
+    xexp = x/boltzmann_eV/Tbb
+
+    !default value
+    planckBB = 0d0
+
+    !limit exp overflow
+    if(xexp<3d2.and.x>1d-10) then
+       planckBB = 2d0*x**3/planck_eV**2/clight**2 &
+            / (exp(xexp)-1d0)
+    end if
+    
+  end function planckBB
+
+  !*********************
+  !sign: return 1d0 if x>=0d0, 
+  ! else return -1d0
+  function get_sgn(x)
+    implicit none
+    real*8::x,get_sgn
+
+    get_sgn = 1d0
+    if(x==0d0) return
+    get_sgn = x/abs(x)
+
+  end function get_sgn
+  
   !***********************
   !shielding function selected with -shield option
   function krome_fshield(n,Tgas)
