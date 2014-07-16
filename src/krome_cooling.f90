@@ -468,8 +468,8 @@ contains
     logt35 = logt34 * logt3
 
     !dumping function to extend 6e3 and 1e4 limits
-    dump63 = 1d0/ (1d0 + exp((temp-1d4)*8d-4))
-    dump14 = 1d0/ (1d0 + exp((temp-3d4)*2d-4))
+    dump63 = 1d0/ (1d0 + exp(min((temp-1d4)*8d-4,3d2)))
+    dump14 = 1d0/ (1d0 + exp(min((temp-3d4)*2d-4,3d2)))
 
     !//H2-H
     if(temp>1d1 .and. temp<=1d2) then

@@ -349,7 +349,7 @@ class krome():
 			filename = "networks/react_primordial3"
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1"]]
 			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseZ_UV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
@@ -4799,7 +4799,7 @@ class krome():
 				
 				if(self.H2opacity=="RIPAMONTI"):
 					#thick case (note that 1.25d-10 = 1/8e9)
-					row = row.replace("#KROME_H2opacity", "&\n* min(1.d0, (1.25d-10 * sum(n(1:nmols)))**(-.45))")
+					row = row.replace("#KROME_H2opacity", "&\n* min(1.d0, max(1.25d-10 * sum(n(1:nmols)),1d-40)**(-.45))")
 				elif(self.H2opacity=="OMUKAI"):
 					#thick case using table provided by Omukai (priv. comm. 2014)
 					row = row.replace("#KROME_H2opacity", "&\n* H2opacity_omukai(Tgas, sum(n(1:nmols)))")
