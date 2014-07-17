@@ -1415,6 +1415,7 @@ class krome():
 			if(srow[0]=="#"): continue #looks for comment line
 			if(srow[0:1]=="//"): continue #looks for comment line
 			if(srow[0:1]=="/*"): isComment = True #start multiline comment
+
 			#end multiline comment
 			if("*/" in srow):
 				isComment = False
@@ -1731,7 +1732,7 @@ class krome():
 			myrea.group = group #add the group to the reaction
 			myrea.canUseTabs = not(noTabNext) #check if this reaction can use tabs or not
 			if(myrea.krate.count("(")!=myrea.krate.count(")")):
-				print "ERROR: unbalanced brakets in reaction "+str(myrea.idx)
+				print "ERROR: unbalanced brackets in reaction "+str(myrea.idx)
 				print " "+myrea.verbatim
 				print " rate = "+myrea.krate
 				print " this is the corresponding line in the reaction file"
@@ -1871,10 +1872,13 @@ class krome():
 		autoFound = False
 		for rea in reacts:
 			if(rea.kphrate!=None):
-				if(rea.kphrate.lower().strip()!="auto"): continue
-			if(rea.krate.lower().strip()!="auto"): continue
-			autoFound = True
-			break
+				if(rea.kphrate.lower().strip()=="auto"):
+					autoFound = True
+					break
+			if(rea.krate!=None):
+				if(rea.krate.lower().strip()=="auto"):
+					autoFound = True
+					break
 		
 		#search auto reaction in the database
 		if(autoFound):
@@ -1903,12 +1907,15 @@ class krome():
 			#loop on the reactions to find auto
 			for i in range(len(reacts)):
 				rea = reacts[i]
-				if(rea.krate.lower().strip()!="auto" and rea.kphrate.lower().strip()!="auto"): continue
+				if(rea.kphrate==None):
+					if(rea.krate.lower().strip()!="auto"): continue
+				else:
+					if(rea.krate.lower().strip()!="auto" and rea.kphrate.lower().strip()!="auto"): continue
 				dbFound = False
 				#loop on autoreactions
 				for autorea in autoreacts:
-					autop = [x.strip() for x in autorea["prods"].split(",")] #list of prods
-					autor = [x.strip() for x in autorea["reacts"].split(",")] #list of reacts
+					autop = [x.upper().strip() for x in autorea["prods"].split(",")] #list of prods
+					autor = [x.upper().strip() for x in autorea["reacts"].split(",")] #list of reacts
 					if(sorted([x.name for x in rea.reactants])!=sorted(autor)): continue
 					if(sorted([x.name for x in rea.products])!=sorted(autop)): continue
 					dbFound = True

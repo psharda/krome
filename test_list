@@ -2,16 +2,17 @@ ALL TESTS WITH PEDANTIC (excpet wrapC and atmosphere)
 
 atmosphere/			OK
 auto/				OK
-chianti/			OK, very similar to gnat+ferland (2011), same as chainti.py. different physics.
+chianti/			OK, very similar to gnat+ferland (2011), same as chainti.py. but different physics.
 cloud/				OK
 collapse/			OK
+collapseCO/			reasonable. problem: no benchmark
 collapseUV/			OK
-collapseZ/			crash in the very end of the Z=-1 curve due to H2 cooling dumping overflow [FIX!] 
+collapseZ/			OK
 collapseZ_induced/		not-so-strange thermal history. should be compared with a benchmark.
 collapseZ_UV/			same as above. strange behaviour for J21=1e-2 at lower density
 compact/			OK
 dust/				OK. I've commented some parts that depends on the Jflux() function, which is no longer valid
-					Note that the dust optical part should be rewritten!
+					Note that the dust optical part should be completely rewritten!
 lamda/				no benchmark
 lotkav/				OK
 map/				should be fixed with the new photobin approach

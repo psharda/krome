@@ -5,6 +5,13 @@
 @limits: 1.360d+01, 5.000d+04
 @rate: sigma_v96(energy_ev, 4.298d-01, 5.475d+04, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
 
+#photoionization rate from verner+96 (same as H)
+@type: photoion
+@reacts: D
+@prods: D+, E
+@limits: 1.360d+01, 5.000d+04
+@rate: sigma_v96(energy_ev, 4.298d-01, 5.475d+04, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
+
 #photoionization rate from verner+96
 @type: photoion
 @reacts: He
