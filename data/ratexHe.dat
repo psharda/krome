@@ -1,7 +1,7 @@
 # KROME file, 17Jul2014, XRAY He rate
 # Xray rate including primary and secondary He ionization in 1/s
 # first line indicates the size of the table (30x30)
-# then first column is the parameter log10(nH), where nH is the H number density in cm-3
+# then first column is the parameter log10(nH), where nH is the H column density in cm-2
 # second column is log10(xHe), where xHe = nHe/nH both in cm-3
 # third column is log10(rate), where rate is in units of 1/s
            30,          30
