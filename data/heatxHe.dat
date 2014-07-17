@@ -1,3 +1,9 @@
+# KROME file, 17Jul2014, XRAY He Heating
+# Xray heating for primary and secondary He ionization in eV/cm3/s
+# first line indicates the size of the table (30x30)
+# then first column is the parameter log10(nH), where nH is the H number density in cm-3
+# second column is log10(xHe), where xHe = nHe/nH both in cm-3
+# third column is log10(heating), where heating is in units of eV/cm3/s
            30,          30
    0.16000000E+02   0.00000000E+00  -0.13940166E+02
    0.16000000E+02  -0.17241380E+00  -0.13940166E+02

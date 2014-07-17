@@ -30,6 +30,7 @@ contains
 
 #KROME_cooling_functions
 
+#IFKROME_use_coolingZ
   !***************************
   !dump the population of the Z cooling levels
   ! in the nfile file unit, using Tgas as 
@@ -45,6 +46,8 @@ contains
     call dump_cooling_pop(Tgas,nfile)
 
   end subroutine krome_popcool_dump
+#ENDIFKROME
+
 
   !****************************
   !switch on the thermal calculation

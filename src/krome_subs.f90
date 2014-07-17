@@ -763,6 +763,7 @@ contains
   !********************************************
   subroutine init_anytab2D(filename,x,y,z,xmul,ymul)
     character(len=*)::filename
+    character(len=20)::row_string
     real*8::x(:),y(:),z(:,:),rout(3),xmul,ymul
     integer::i,j,ios
 
@@ -787,8 +788,14 @@ contains
        stop
     end if
 
+    !skip the comments and the first line with the sizes of the data
+    ! which are already known from the pre-processing
+    do
+       read(51,*) row_string
+       if(row_string(1:1)/="#") exit
+    end do
+
     !loop to read file
-    read(51,*) !skip header
     do i=1,size(x)
        do j=1,size(y)
           read(51,*,iostat=ios) rout(:)

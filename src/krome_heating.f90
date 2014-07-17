@@ -73,6 +73,7 @@ contains
   !heating from xrays in erg/s/cm3
   function heat_XRay(n,Tgas,k)
     use krome_commons
+    use krome_constants
     use krome_subs
     implicit none
     real*8::n(:),Tgas,heat_Xray,k(:),ntot
@@ -109,6 +110,8 @@ contains
     heat_Xray = ratexH * n(idx_H)
     heat_Xray = heat_Xray + ratexHe * n(idx_He)
     heat_Xray = heat_Xray * .9971d0 * (1d0-(1d0-xe**.2663)**1.3163)
+
+    heat_Xray = eV_to_erg * heat_Xray
 
   end function heat_XRay
 #ENDIFKROME

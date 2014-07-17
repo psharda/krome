@@ -5341,6 +5341,7 @@ class krome():
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
 			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
+			if(srow == "#IFKROME_use_coolingZ" and not(self.useCoolingZ)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
