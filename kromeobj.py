@@ -113,7 +113,7 @@ class krome():
 	physVariables = [] #list of the phys variables (list of [variable_name, default_value_string])
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
-	fdbase = "data/kromeauto.dat"
+	fdbase = "data/database/"
 	version = "14.03"
 	codename = "Beastie Boyle"
 
@@ -463,24 +463,30 @@ class krome():
 
 			args = self.parser.parse_args() #return updated namespace
 
-		#list all the automatic reactions available from the fdbase file and exit
+		#list all the automatic reactions available from the files in the fdbase folder and exit
 		if(args.listAutomatics):
+			os.path.isdir(self.fdbase)
 			if(not(file_exists(self.fdbase))):
-				print "ERROR: file "+self.fdbase+" not found!"
+				print "ERROR: database directory "+self.fdbase+" not found!"
 				sys.exit()
-			fhauto = open(self.fdbase,"rb")
-			icounta = 0
-			reasa = prodsa = typea = ""
-			for row in fhauto:
-				srow = row.strip()
-				if("@type:" in srow):
-					reasa = prodsa = typea = ""
-				if(reasa!="" and prodsa!="" and typea!=""):
-					icounta += 1
-					print str(icounta)+". ("+typea+") "+reasa+" -> "+prodsa
-				if("@reacts:" in srow): reasa = " + ".join([x.strip() for x in srow.replace("@reacts:","").split(",")])
-				if("@prods:" in srow): prodsa = " + ".join([x.strip() for x in srow.replace("@prods:","").split(",")])
-				if("@type:" in srow): typea = srow.replace("@type:","").strip()
+			file_list = [ f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f)) ]
+			for fname in file_list:
+				fname = self.fdbase+fname
+				print "retriving reactions in "+fname
+				fhauto = open(fname,"rb")
+				icounta = 0
+				reasa = prodsa = typea = ""
+				for row in fhauto:
+					srow = row.strip()
+					if("@type:" in srow):
+						reasa = prodsa = typea = ""
+					if(reasa!="" and prodsa!="" and typea!=""):
+						icounta += 1
+						print str(icounta)+". ("+typea+") "+reasa+" -> "+prodsa
+					if("@reacts:" in srow): reasa = " + ".join([x.strip() for x in srow.replace("@reacts:","").split(",")])
+					if("@prods:" in srow): prodsa = " + ".join([x.strip() for x in srow.replace("@prods:","").split(",")])
+					if("@type:" in srow): typea = srow.replace("@type:","").strip()
+				print
 			sys.exit()
 		
 		#get a citation and exit
@@ -1874,24 +1880,26 @@ class krome():
 		if(autoFound):
 			autoreacts = [] #dbase array contains dictionary with reaction data
 			fdbase = self.fdbase
-			print "Automatic reactions found, loading "+fdbase
-			if(not(file_exists(fdbase))):
-				print "ERROR: file "+fdbase+" not found!"
+			print "Automatic reactions found, searching in "+fdbase
+			if(not(os.path.isdir(fdbase))):
+				print "ERROR: folder "+fdbase+" not found!"
 				sys.exit()
-
-			fhdbase = open(fdbase,"rb") #open the database
-			#load the database into an array of dictionaries
-			for row in fhdbase:
-				srow = row.strip()
-				if(srow==""): continue #skip blank
-				if(srow[0]=="#"): continue #skip comments
-				#each reaction block starts with @type, init the reaction dictionary
-				if("@type:" in srow):
-					myrea = dict()
-				myrea.update(at_extract(srow)) #append to the dictionary
-				#each reaction block ends with @rate, append to the main database array
-				if("@rate:" in srow):
-					autoreacts.append(myrea)
+			file_list = [f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))]
+			for fname in file_list:
+				fname = fdbase + fname
+				fhdbase = open(fname,"rb") #open the database
+				#load the database into an array of dictionaries
+				for row in fhdbase:
+					srow = row.strip()
+					if(srow==""): continue #skip blank
+					if(srow[0]=="#"): continue #skip comments
+					#each reaction block starts with @type, init the reaction dictionary
+					if("@type:" in srow):
+						myrea = dict()
+					myrea.update(at_extract(srow)) #append to the dictionary
+					#each reaction block ends with @rate, append to the main database array
+					if("@rate:" in srow):
+						autoreacts.append(myrea)
 			#loop on the reactions to find auto
 			for i in range(len(reacts)):
 				rea = reacts[i]

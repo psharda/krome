@@ -23,7 +23,7 @@ inpartF = ["function","(",")"]
 inpartS = ["subroutine","(",")"]
 infun = issub = False
 storecom = ""
-icount = 0
+flist = []
 for row in fh:
 	srow = row.strip()
 	if(srow==""): continue
@@ -39,14 +39,20 @@ for row in fh:
 			issub = False
 			break
 	if(isfun or issub):
-		if(storecom==""): storecom = "  [no comments available]\n"
-		icount += 1
-		print str(icount)+") "+srow
-		if(not(listNamesOnly)): print storecom
+		if(storecom==""): storecom = "[no comments available]"
+		ffname = srow
+		flist.append([ffname,storecom.strip()])
 		continue
 
 	if(("end function" in srow) or ("end subroutine" in srow)):
 		storecom = ""
 
 	if(srow[0]=="!" and not("*******" in srow)): storecom += "  "+srow[1:].strip()+"\n"
+
+flist = sorted(flist,key=lambda x:x[0])
+icount = 0
+for x in flist:
+	print str(icount+1)+") "+x[0]
+	print "  "+x[1]+"\n"
+	icount += 1
 
