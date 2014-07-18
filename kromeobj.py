@@ -2948,6 +2948,8 @@ class krome():
 				deltaE = ("%e" % deltaE).replace("e","d") #f90ish format for deltaE
 				#increase the number of the reactions found
 				index_count += 1
+				#store the size of the k(:) array
+				self.coolZ_nkrates = index_count
 				#build reverse as Rji = Rij*gi/gj*exp(-deltaE/T)					
 				rate_comment = "!"+str(r_data["up"])+"<-"+str(r_data["down"])+", "+metal_name+" - "+r_data["collider"]+"\n"
 				myrate = "k("+str(r_data["rate"])+") * "+str(float(g_up)/float(g_down))+"d0 * exp(-"+deltaE+" * invT)"
@@ -4782,7 +4784,7 @@ class krome():
 					print "gfb = "+"0.1578d0*n("+x.fidx+")*f2*invT6"
 
 			elif(row.strip() == "#KROME_nZrate"):
-					fout.write("integer,parameter::nZrate="+str(len(self.coolZ_rates))+"\n")
+					fout.write("integer,parameter::nZrate="+str(self.coolZ_nkrates)+"\n")
 			elif(row.strip() == "#KROME_coolingZ_call_functions"):
 				for x in self.coolZ_functions:
 					fout.write("cool = cool + "+x[0]+"(n(:),inTgas,k(:))\n")
