@@ -4806,6 +4806,9 @@ class krome():
 				if(len(self.coolZ_poplevelvars)>0):
 					for popvar in self.coolZ_poplevelvars:
 						fout.write("real*8::"+popvar+"\n")
+					for popvar in self.coolZ_poplevelvars:
+						funct_name = popvar.split("(")[0]
+						fout.write("!$omp threadprivate("+funct_name+")\n")
 			elif(row.strip() == "#KROME_popvar_dump"):
 				if(len(self.coolZ_poplevelvars)>0):
 					for popvar in self.coolZ_poplevelvars:

@@ -11,20 +11,25 @@ program test_krome
   use krome_user
   use krome_user_commons
   integer,parameter::rstep = 500000
-  integer::i,jz
+  integer::i,jz,imax(5)
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt
   real*8::ntot,rho,zs(5)
 
+  real*8::result(krome_nmols+3,10000,5)
+
   !INITIALIZE KROME PARAMETERS AND DUST 
   call krome_init()
+  call krome_set_user_redshift(0d0)
 
   zs = (/-99.d0, -4.d0, -3d0, -2d0, -1d0/) !list of metallicities
+  !$omp parallel do schedule(dynamic,1) default(none) &
+  !$omp   private(jz,ntot,Tgas,x,dd,i,dd1,rho,tff,dt,dtH,deldd) &
+  !$omp   shared(zs,imax,result)
   do jz = 1,size(zs)
 
      !INITIAL CONDITIONS
-     call krome_set_user_redshift(0d0)
      ntot           = 0.1d0  !total density in 1/cm3
      Tgas           = 3d2    !temperature in kelvin
 
@@ -53,7 +58,7 @@ program test_krome
      dd = ntot
 
      print *,"solving..."
-     print '(a5,2a11)',"step","n(cm-3)","Tgas(K)"
+     print '(2a5,2a11)',"z","step","n(cm-3)","Tgas(K)"
 
      !loop over the hydro time-step
      do i = 1,rstep
@@ -78,13 +83,21 @@ program test_krome
         call krome(x(:),Tgas,dt)
 
         !dump Tgas and normalized abundances
-        write(22,'(99E17.8e3)') zs(jz),dd,Tgas,x(:)/dd 
-        if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas !print every 100 steps
+        result(:,i,jz) = (/ zs(jz), dd, Tgas, x(:)/dd /)
+        if(mod(i,100)==0) print '(2I5,99E11.3)',jz,i,dd,Tgas !print every 100 steps
 
      end do
+     imax(jz) = i - 1
+  end do
+
+  do jz = 1,size(zs)
+  do i = 1,imax(jz)
+     write(22,'(99E17.8e3)') result(:,i,jz)
      write(22,*)
      write(55,*)
   end do
+  end do
+
   print *,"To plot type in gnuplot:"
   print *,"gnuplot> load 'plot.gps'"
   print *,"That's all! have a nice day!"
