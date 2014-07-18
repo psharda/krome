@@ -809,6 +809,7 @@ contains
     do j=1,nZrate
        k(j) = (Tgas-coolTab_T(idx)) * inv_coolTab_T(idx) * &
             (coolTab(j,idx+1)-coolTab(j,idx)) + coolTab(j,idx)
+       k(j) = max(k(j), 0d0)
     end do
 
     coolingZ_rate_tabs(:) = k(:)

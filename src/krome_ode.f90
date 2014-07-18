@@ -122,7 +122,7 @@ contains
     npd = neq
     k(:) = coe_tab(n(:))
     pd(:,:) = 0d0
-    krome_gamma = gamma_index(n)
+    krome_gamma = gamma_index(n(:))
 
 #KROME_JAC_PDX
 

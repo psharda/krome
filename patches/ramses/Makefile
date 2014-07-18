@@ -1,7 +1,8 @@
 ############################################################################
 # If you have problems with this makefile, contact Romain.Teyssier@cea.fr
 # Note that some parts of this code have been modified by KROME.
-# If you have problems with them >>>DO NOT<<< contact Romain.Teyssier@cea.fr but post your question on:
+# If you have problems with them >>>DO NOT<<< contact Romain.Teyssier@cea.fr 
+# but post your question on:
 #  https://groups.google.com/forum/#!forum/kromeusers
 #############################################################################
 # Compilation time parameters

@@ -5979,7 +5979,8 @@ class krome():
 		#Makefile
 		fname = "Makefile"
 		#note that makefile will be copied in the build folder
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["#this must be NDIM+"+str(chemCount+3)], False)
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],\
+			["#this must be NDIM+"+str(ramses_offset)+"+"+str(chemCount)], False)
 
 		#move the krome files into the ramses patch folder
 		shutil.move(buildFolder+"krome_all.f90", ramsesFolder+"krome_all.f90")
@@ -6337,6 +6338,7 @@ class krome():
 				name = uname.replace("-","M") #anions
 			else:
 				name = (uname+"I").replace("+","I") #neutral and ions
+			name = name.title()
 			extname = name+"Density"
 			if(name=="EI"): 
 				name = "De" #electron is special
