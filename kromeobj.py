@@ -391,9 +391,9 @@ class krome():
 			[argv.append(x) for x in ["-useN","-customODE=tests/lotkav/lotkav"]]
 			filename = "networks/react_dummy"
 		elif(args.test=="lamda"):
-			[argv.append(x) for x in ["-useN","-coolFile=data/coolZ.dat,tools/coolCO_12_13.dat", "-cooling=CII,CI,OI,CoI,13coI"]]
-			[argv.append(x) for x in ["-usePlainIsotopes"]]
-			filename = "networks/react_primordialZ"
+			[argv.append(x) for x in ["-useN","-coolFile=data/coolO2.dat", "-cooling=O2I"]]
+			[argv.append(x) for x in ["-useThermoToggle"]]
+			filename = "networks/react_COthin"
 		else:
 			tests = ", ".join(os.walk('tests').next()[1])
 			print "ERROR: test \""+args.test+"\" not present!"

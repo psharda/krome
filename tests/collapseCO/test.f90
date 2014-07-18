@@ -32,7 +32,6 @@ program test_krome
 
      x(KROME_idx_H)  = ntot          !H
      x(KROME_idx_H2) = 1.d-6*ntot    !H2
-     x(KROME_idx_E)  = 1.d-4*ntot    !E
      x(KROME_idx_Hj) = 1.d-4*ntot    !H+
      x(KROME_idx_HE) = 0.0775d0*ntot !He
 
@@ -45,6 +44,7 @@ program test_krome
      x(krome_idx_Cj) = x(krome_idx_C) !carbon is fully ionized
      x(krome_idx_C)  = 1d-40
 
+     x(krome_idx_e) = krome_get_electrons(x(:))
      !list abundances
      call krome_get_info(x(:),Tgas)
 
