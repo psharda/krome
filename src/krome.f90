@@ -1,6 +1,8 @@
 module krome_main
 
   integer::krome_call_to_fex
+  !$omp threadprivate(krome_call_to_fex)
+
 contains
 
 #KROME_header
@@ -436,7 +438,9 @@ contains
 #KROME_init_phys_variables
 
     !default for thermo toggle is ON
+    !$omp parallel
     krome_thermo_toggle = 1
+    !$omp end parallel
 
     !get smallest possible value
     krome_smallest = epsilon(0d0)

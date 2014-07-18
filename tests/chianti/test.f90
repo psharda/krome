@@ -30,6 +30,7 @@ program test
      print *,"running with j21=",j21
 
      !loop on temeprature values
+     !$omp parallel do private(k,x,Tgas,dt,t) schedule(dynamic,1)
      do k=1,kmax
 
         !init abundances

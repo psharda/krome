@@ -269,6 +269,8 @@ def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpath
 	fhtab = open(mytabpath,"rb")
 	for tabrow in fhtab:
 		stabrow = tabrow.strip()
+		if(stabrow==""): continue
+		if(stabrow[0]=="#"): continue		
 		if("," in stabrow): 
 			mytabsize = [xx.strip() for xx in stabrow.split(",")]
 		else:

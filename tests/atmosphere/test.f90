@@ -102,6 +102,7 @@ program test
      end do
 
      !do chemistry
+     !$omp parallel do private(i, dtin, x) schedule(dynamic,2)
      do i=1,nmax
         x(:) = n(i,:)
         dtin = dt

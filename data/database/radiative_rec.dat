@@ -1,0 +1,751 @@
+######################################
+######################################
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: H+, E
+@prods: H
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.982d-11, 0.7480d0, 3.148d+00, 7.036d+05)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: He+, E
+@prods: He
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.294d-11, 0.6910d0, 1.554d+01, 3.676d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: He++, E
+@prods: He+
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.891d-10, 0.7524d0, 9.370d+00, 2.774d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Li+, E
+@prods: Li
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.036d-11, 0.3880d0, 1.077d+02, 1.177d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Li++, E
+@prods: Li+
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.112d-10, 0.6926d0, 2.437d+01, 8.323d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Li+++, E
+@prods: Li++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.039d-10, 0.7539d0, 1.871d+01, 6.209d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Be++, E
+@prods: Be+
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.338d-11, 0.4211d0, 3.647d+02, 1.215d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Be+++, E
+@prods: Be++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.317d-10, 0.6691d0, 8.473d+01, 1.412d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Be++++, E
+@prods: Be+++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.290d-10, 0.7557d0, 3.000d+01, 1.093d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: B+++, E
+@prods: B++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.487d-11, 0.4644d0, 5.371d+02, 1.465d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: B++++, E
+@prods: B+++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.922d-10, 0.6717d0, 1.272d+02, 1.975d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: B+++++, E
+@prods: B++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.437d-10, 0.7560d0, 4.576d+01, 1.706d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: C++++, E
+@prods: C+++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.540d-11, 0.5247d0, 5.014d+02, 1.479d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: C+++++, E
+@prods: C++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.765d-10, 0.6858d0, 1.535d+02, 2.556d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: C++++++, E
+@prods: C+++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.556d-10, 0.7567d0, 6.523d+01, 2.446d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: N+++++, E
+@prods: N++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.169d-10, 0.5470d0, 6.793d+02, 1.650d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: N++++++, E
+@prods: N+++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.910d-10, 0.6988d0, 1.611d+02, 3.271d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: N+++++++, E
+@prods: N++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.586d-10, 0.7563d0, 9.015d+01, 3.338d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O++++++, E
+@prods: O+++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.053d-10, 0.6019d0, 4.772d+02, 1.711d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O+++++++, E
+@prods: O++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.897d-10, 0.7048d0, 1.906d+02, 4.093d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: O++++++++, E
+@prods: O+++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.616d-10, 0.7563d0, 1.191d+02, 4.352d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: F+++++++, E
+@prods: F++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.739d-10, 0.6188d0, 5.033d+02, 2.064d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: F++++++++, E
+@prods: F+++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.602d-10, 0.7052d0, 2.476d+02, 5.077d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: F+++++++++, E
+@prods: F++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 9.712d-10, 0.7566d0, 1.499d+02, 5.498d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne++++++++, E
+@prods: Ne+++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.200d-10, 0.6198d0, 6.329d+02, 2.616d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne+++++++++, E
+@prods: Ne++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.161d-10, 0.7029d0, 3.274d+02, 6.243d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ne++++++++++, E
+@prods: Ne+++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.085d-09, 0.7570d0, 1.834d+02, 6.776d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Na+, E
+@prods: Na
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.641d-12, 0.1749d0, 3.077d+02, 2.617d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Na+++++++++, E
+@prods: Na++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.873d-10, 0.6295d0, 7.000d+02, 2.989d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Na++++++++++, E
+@prods: Na+++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.833d-10, 0.7018d0, 4.060d+02, 7.491d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Na+++++++++++, E
+@prods: Na++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.163d-09, 0.7558d0, 2.328d+02, 8.262d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mg++, E
+@prods: Mg+
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.920d-11, 0.3028d0, 4.849d+02, 5.890d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mg++++++++++, E
+@prods: Mg+++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.284d-10, 0.6287d0, 8.748d+02, 3.586d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mg+++++++++++, E
+@prods: Mg++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.510d-10, 0.7020d0, 4.921d+02, 8.643d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mg++++++++++++, E
+@prods: Mg+++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.317d-09, 0.7574d0, 2.585d+02, 9.769d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Al+++, E
+@prods: Al++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.753d-11, 0.3585d0, 6.848d+02, 9.035d+06)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Al+++++++++++, E
+@prods: Al++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.881d-10, 0.6326d0, 9.941d+02, 4.085d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Al++++++++++++, E
+@prods: Al+++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.182d-10, 0.7008d0, 5.875d+02, 1.007d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Al+++++++++++++, E
+@prods: Al++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.419d-09, 0.7578d0, 3.057d+02, 1.143d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Si++++, E
+@prods: Si+++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.942d-11, 0.3930d0, 8.962d+02, 1.213d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Si++++++++++++, E
+@prods: Si+++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.373d-10, 0.6337d0, 1.164d+03, 4.677d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Si+++++++++++++, E
+@prods: Si++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.722d-10, 0.6996d0, 7.098d+02, 1.155d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Si++++++++++++++, E
+@prods: Si+++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.517d-09, 0.7574d0, 3.601d+02, 1.329d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: P+++++, E
+@prods: P++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.721d-10, 0.5429d0, 2.848d+02, 3.975d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: P+++++++++++++, E
+@prods: P++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.876d-10, 0.6354d0, 1.341d+03, 5.292d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: P++++++++++++++, E
+@prods: P+++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 9.142d-10, 0.6961d0, 8.682d+02, 1.335d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: P+++++++++++++++, E
+@prods: P++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.586d-09, 0.7560d0, 4.327d+02, 1.534d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: S++++++, E
+@prods: S+++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.502d-10, 0.6266d0, 1.532d+02, 1.755d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: S++++++++++++++, E
+@prods: S+++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.571d-10, 0.6400d0, 1.452d+03, 5.796d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: S+++++++++++++++, E
+@prods: S++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 9.692d-10, 0.6945d0, 1.017d+03, 1.517d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: S++++++++++++++++, E
+@prods: S+++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.729d-09, 0.7568d0, 4.725d+02, 1.746d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cl+++++++, E
+@prods: Cl++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.502d-10, 0.5580d0, 5.303d+02, 4.558d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cl+++++++++++++++, E
+@prods: Cl++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.076d-10, 0.6397d0, 1.653d+03, 6.555d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cl++++++++++++++++, E
+@prods: Cl+++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.021d-09, 0.6932d0, 1.184d+03, 1.695d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cl+++++++++++++++++, E
+@prods: Cl++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.791d-09, 0.7565d0, 5.591d+02, 1.972d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ar++++++++, E
+@prods: Ar+++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.862d-10, 0.5621d0, 7.002d+02, 4.885d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ar++++++++++++++++, E
+@prods: Ar+++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.538d-10, 0.6388d0, 1.889d+03, 7.306d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ar+++++++++++++++++, E
+@prods: Ar++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.087d-09, 0.6936d0, 1.329d+03, 1.880d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ar++++++++++++++++++, E
+@prods: Ar+++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.913d-09, 0.7567d0, 6.175d+02, 2.212d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: K+++++++++, E
+@prods: K++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.757d-10, 0.5364d0, 1.204d+03, 7.013d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: K+++++++++++++++++, E
+@prods: K++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.182d-10, 0.6411d0, 2.044d+03, 8.057d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: K++++++++++++++++++, E
+@prods: K+++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.145d-09, 0.6921d0, 1.503d+03, 2.098d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: K+++++++++++++++++++, E
+@prods: K++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.033d-09, 0.7569d0, 6.797d+02, 2.463d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ca++++++++++, E
+@prods: Ca+++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.273d-10, 0.6281d0, 5.329d+02, 3.188d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ca++++++++++++++++++, E
+@prods: Ca+++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 8.577d-10, 0.6403d0, 2.334d+03, 8.850d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ca+++++++++++++++++++, E
+@prods: Ca++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.179d-09, 0.6893d0, 1.757d+03, 2.344d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ca++++++++++++++++++++, E
+@prods: Ca+++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.129d-09, 0.7570d0, 7.591d+02, 2.739d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Sc+++++++++++, E
+@prods: Sc++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.890d-10, 0.5645d0, 1.391d+03, 6.295d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Sc+++++++++++++++++++, E
+@prods: Sc++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 9.162d-10, 0.6413d0, 2.543d+03, 9.690d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Sc++++++++++++++++++++, E
+@prods: Sc+++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.265d-09, 0.6902d0, 1.877d+03, 2.555d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Sc+++++++++++++++++++++, E
+@prods: Sc++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.262d-09, 0.7578d0, 8.186d+02, 3.000d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ti++++++++++++, E
+@prods: Ti+++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.207d-10, 0.5646d0, 1.688d+03, 6.872d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ti++++++++++++++++++++, E
+@prods: Ti+++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 9.844d-10, 0.6440d0, 2.708d+03, 1.044d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ti+++++++++++++++++++++, E
+@prods: Ti++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.322d-09, 0.6885d0, 2.092d+03, 2.829d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ti++++++++++++++++++++++, E
+@prods: Ti+++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.370d-09, 0.7574d0, 9.002d+02, 3.307d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: V+++++++++++++, E
+@prods: V++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.605d-10, 0.5659d0, 1.949d+03, 7.419d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: V+++++++++++++++++++++, E
+@prods: V++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.020d-09, 0.6427d0, 3.057d+03, 1.140d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: V++++++++++++++++++++++, E
+@prods: V+++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.375d-09, 0.6885d0, 2.321d+03, 3.056d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: V+++++++++++++++++++++++, E
+@prods: V++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.415d-09, 0.7565d0, 1.032d+03, 3.635d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cr++++++++++++++, E
+@prods: Cr+++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 4.975d-10, 0.5655d0, 2.257d+03, 8.072d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cr++++++++++++++++++++++, E
+@prods: Cr+++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.091d-09, 0.6445d0, 3.225d+03, 1.229d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cr+++++++++++++++++++++++, E
+@prods: Cr++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.422d-09, 0.6874d0, 2.589d+03, 3.336d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cr++++++++++++++++++++++++, E
+@prods: Cr+++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.537d-09, 0.7571d0, 1.108d+03, 3.954d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mn+++++++++++++++, E
+@prods: Mn++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.349d-10, 0.5658d0, 2.577d+03, 8.710d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mn+++++++++++++++++++++++, E
+@prods: Mn++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.151d-09, 0.6451d0, 3.461d+03, 1.334d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mn++++++++++++++++++++++++, E
+@prods: Mn+++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.488d-09, 0.6867d0, 2.802d+03, 3.623d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Mn+++++++++++++++++++++++++, E
+@prods: Mn++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.618d-09, 0.7565d0, 1.225d+03, 4.307d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Fe++++++++++++++++, E
+@prods: Fe+++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.688d-10, 0.6173d0, 1.653d+03, 6.161d+07)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Fe++++++++++++++++++++++++, E
+@prods: Fe+++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.198d-09, 0.6443d0, 3.789d+03, 1.437d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Fe+++++++++++++++++++++++++, E
+@prods: Fe++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.542d-09, 0.6859d0, 3.073d+03, 3.926d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Fe++++++++++++++++++++++++++, E
+@prods: Fe+++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.735d-09, 0.7568d0, 1.314d+03, 4.659d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Co+++++++++++++++++, E
+@prods: Co++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 5.850d-10, 0.5598d0, 3.538d+03, 1.052d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Co+++++++++++++++++++++++++, E
+@prods: Co++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.211d-09, 0.6406d0, 4.357d+03, 1.572d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Co++++++++++++++++++++++++++, E
+@prods: Co+++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.589d-09, 0.6846d0, 3.373d+03, 4.267d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Co+++++++++++++++++++++++++++, E
+@prods: Co++++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 2.809d-09, 0.7565d0, 1.444d+03, 5.042d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ni++++++++++++++++++, E
+@prods: Ni+++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.347d-10, 0.5631d0, 3.780d+03, 1.116d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ni++++++++++++++++++++++++++, E
+@prods: Ni+++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.288d-09, 0.6440d0, 4.506d+03, 1.651d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ni+++++++++++++++++++++++++++, E
+@prods: Ni++++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.676d-09, 0.6861d0, 3.530d+03, 4.538d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Ni++++++++++++++++++++++++++++, E
+@prods: Ni+++++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.002d-09, 0.7581d0, 1.467d+03, 5.409d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cu+++++++++++++++++++, E
+@prods: Cu++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 6.619d-10, 0.5602d0, 4.322d+03, 1.210d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cu+++++++++++++++++++++++++++, E
+@prods: Cu++++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.372d-09, 0.6472d0, 4.627d+03, 1.740d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cu++++++++++++++++++++++++++++, E
+@prods: Cu+++++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.686d-09, 0.6824d0, 4.031d+03, 4.948d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Cu+++++++++++++++++++++++++++++, E
+@prods: Cu++++++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.022d-09, 0.7564d0, 1.666d+03, 5.855d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Zn++++++++++++++++++++, E
+@prods: Zn+++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 7.002d-10, 0.5612d0, 4.726d+03, 1.287d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Zn++++++++++++++++++++++++++++, E
+@prods: Zn+++++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.412d-09, 0.6454d0, 5.053d+03, 1.891d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Zn+++++++++++++++++++++++++++++, E
+@prods: Zn++++++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 1.758d-09, 0.6834d0, 4.254d+03, 5.258d+08)
+
+#radiative recombination rate from verner+96
+@type: radrec
+@reacts: Zn++++++++++++++++++++++++++++++, E
+@prods: Zn+++++++++++++++++++++++++++++
+@limits: 3d0, 1d10
+@rate: radrec_v96(Tgas, 3.127d-09, 0.7567d0, 1.779d+03, 6.246d+08)
+

@@ -113,7 +113,7 @@ class krome():
 	physVariables = [] #list of the phys variables (list of [variable_name, default_value_string])
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
-	fdbase = "data/kromeauto.dat"
+	fdbase = "data/database/"
 	version = "14.03"
 	codename = "Beastie Boyle"
 
@@ -349,8 +349,13 @@ class krome():
 			filename = "networks/react_primordial3"
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=REDUCED","-ATOL=1d-40","-maxord=1"]]
 			filename = "networks/react_primordialZ2"
+		elif(args.test=="collapseCO"):
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM", "-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=REDUCED","-ATOL=1d-10","-maxord=1","-useTabs"]]
+			[argv.append(x) for x in ["-coolingQuench=10"]]
+			filename = "networks/react_COthin"
 		elif(args.test=="collapseZ_UV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
@@ -386,9 +391,9 @@ class krome():
 			[argv.append(x) for x in ["-useN","-customODE=tests/lotkav/lotkav"]]
 			filename = "networks/react_dummy"
 		elif(args.test=="lamda"):
-			[argv.append(x) for x in ["-useN","-coolFile=data/coolZ.dat,tools/coolCO_12_13.dat", "-cooling=CII,CI,OI,CoI,13coI"]]
-			[argv.append(x) for x in ["-usePlainIsotopes"]]
-			filename = "networks/react_primordialZ"
+			[argv.append(x) for x in ["-useN","-coolFile=data/coolO2.dat", "-cooling=O2I"]]
+			[argv.append(x) for x in ["-useThermoToggle"]]
+			filename = "networks/react_COthin"
 		else:
 			tests = ", ".join(os.walk('tests').next()[1])
 			print "ERROR: test \""+args.test+"\" not present!"
@@ -458,24 +463,30 @@ class krome():
 
 			args = self.parser.parse_args() #return updated namespace
 
-		#list all the automatic reactions available from the fdbase file and exit
+		#list all the automatic reactions available from the files in the fdbase folder and exit
 		if(args.listAutomatics):
+			os.path.isdir(self.fdbase)
 			if(not(file_exists(self.fdbase))):
-				print "ERROR: file "+self.fdbase+" not found!"
+				print "ERROR: database directory "+self.fdbase+" not found!"
 				sys.exit()
-			fhauto = open(self.fdbase,"rb")
-			icounta = 0
-			reasa = prodsa = typea = ""
-			for row in fhauto:
-				srow = row.strip()
-				if("@type:" in srow):
-					reasa = prodsa = typea = ""
-				if(reasa!="" and prodsa!="" and typea!=""):
-					icounta += 1
-					print str(icounta)+". ("+typea+") "+reasa+" -> "+prodsa
-				if("@reacts:" in srow): reasa = " + ".join([x.strip() for x in srow.replace("@reacts:","").split(",")])
-				if("@prods:" in srow): prodsa = " + ".join([x.strip() for x in srow.replace("@prods:","").split(",")])
-				if("@type:" in srow): typea = srow.replace("@type:","").strip()
+			file_list = [ f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f)) ]
+			for fname in file_list:
+				fname = self.fdbase+fname
+				print "retriving reactions in "+fname
+				fhauto = open(fname,"rb")
+				icounta = 0
+				reasa = prodsa = typea = ""
+				for row in fhauto:
+					srow = row.strip()
+					if("@type:" in srow):
+						reasa = prodsa = typea = ""
+					if(reasa!="" and prodsa!="" and typea!=""):
+						icounta += 1
+						print str(icounta)+". ("+typea+") "+reasa+" -> "+prodsa
+					if("@reacts:" in srow): reasa = " + ".join([x.strip() for x in srow.replace("@reacts:","").split(",")])
+					if("@prods:" in srow): prodsa = " + ".join([x.strip() for x in srow.replace("@prods:","").split(",")])
+					if("@type:" in srow): typea = srow.replace("@type:","").strip()
+				print
 			sys.exit()
 		
 		#get a citation and exit
@@ -1404,6 +1415,7 @@ class krome():
 			if(srow[0]=="#"): continue #looks for comment line
 			if(srow[0:1]=="//"): continue #looks for comment line
 			if(srow[0:1]=="/*"): isComment = True #start multiline comment
+
 			#end multiline comment
 			if("*/" in srow):
 				isComment = False
@@ -1720,7 +1732,7 @@ class krome():
 			myrea.group = group #add the group to the reaction
 			myrea.canUseTabs = not(noTabNext) #check if this reaction can use tabs or not
 			if(myrea.krate.count("(")!=myrea.krate.count(")")):
-				print "ERROR: unbalanced brakets in reaction "+str(myrea.idx)
+				print "ERROR: unbalanced brackets in reaction "+str(myrea.idx)
 				print " "+myrea.verbatim
 				print " rate = "+myrea.krate
 				print " this is the corresponding line in the reaction file"
@@ -1860,42 +1872,50 @@ class krome():
 		autoFound = False
 		for rea in reacts:
 			if(rea.kphrate!=None):
-				if(rea.kphrate.lower().strip()!="auto"): continue
-			if(rea.krate.lower().strip()!="auto"): continue
-			autoFound = True
-			break
+				if(rea.kphrate.lower().strip()=="auto"):
+					autoFound = True
+					break
+			if(rea.krate!=None):
+				if(rea.krate.lower().strip()=="auto"):
+					autoFound = True
+					break
 		
 		#search auto reaction in the database
 		if(autoFound):
 			autoreacts = [] #dbase array contains dictionary with reaction data
 			fdbase = self.fdbase
-			print "Automatic reactions found, loading "+fdbase
-			if(not(file_exists(fdbase))):
-				print "ERROR: file "+fdbase+" not found!"
+			print "Automatic reactions found, searching in "+fdbase
+			if(not(os.path.isdir(fdbase))):
+				print "ERROR: folder "+fdbase+" not found!"
 				sys.exit()
-
-			fhdbase = open(fdbase,"rb") #open the database
-			#load the database into an array of dictionaries
-			for row in fhdbase:
-				srow = row.strip()
-				if(srow==""): continue #skip blank
-				if(srow[0]=="#"): continue #skip comments
-				#each reaction block starts with @type, init the reaction dictionary
-				if("@type:" in srow):
-					myrea = dict()
-				myrea.update(at_extract(srow)) #append to the dictionary
-				#each reaction block ends with @rate, append to the main database array
-				if("@rate:" in srow):
-					autoreacts.append(myrea)
+			file_list = [f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))]
+			for fname in file_list:
+				fname = fdbase + fname
+				fhdbase = open(fname,"rb") #open the database
+				#load the database into an array of dictionaries
+				for row in fhdbase:
+					srow = row.strip()
+					if(srow==""): continue #skip blank
+					if(srow[0]=="#"): continue #skip comments
+					#each reaction block starts with @type, init the reaction dictionary
+					if("@type:" in srow):
+						myrea = dict()
+					myrea.update(at_extract(srow)) #append to the dictionary
+					#each reaction block ends with @rate, append to the main database array
+					if("@rate:" in srow):
+						autoreacts.append(myrea)
 			#loop on the reactions to find auto
 			for i in range(len(reacts)):
 				rea = reacts[i]
-				if(rea.krate.lower().strip()!="auto" and rea.kphrate.lower().strip()!="auto"): continue
+				if(rea.kphrate==None):
+					if(rea.krate.lower().strip()!="auto"): continue
+				else:
+					if(rea.krate.lower().strip()!="auto" and rea.kphrate.lower().strip()!="auto"): continue
 				dbFound = False
 				#loop on autoreactions
 				for autorea in autoreacts:
-					autop = [x.strip() for x in autorea["prods"].split(",")] #list of prods
-					autor = [x.strip() for x in autorea["reacts"].split(",")] #list of reacts
+					autop = [x.upper().strip() for x in autorea["prods"].split(",")] #list of prods
+					autor = [x.upper().strip() for x in autorea["reacts"].split(",")] #list of reacts
 					if(sorted([x.name for x in rea.reactants])!=sorted(autor)): continue
 					if(sorted([x.name for x in rea.products])!=sorted(autop)): continue
 					dbFound = True
@@ -2928,6 +2948,8 @@ class krome():
 				deltaE = ("%e" % deltaE).replace("e","d") #f90ish format for deltaE
 				#increase the number of the reactions found
 				index_count += 1
+				#store the size of the k(:) array
+				self.coolZ_nkrates = index_count
 				#build reverse as Rji = Rij*gi/gj*exp(-deltaE/T)					
 				rate_comment = "!"+str(r_data["up"])+"<-"+str(r_data["down"])+", "+metal_name+" - "+r_data["collider"]+"\n"
 				myrate = "k("+str(r_data["rate"])+") * "+str(float(g_up)/float(g_down))+"d0 * exp(-"+deltaE+" * invT)"
@@ -4456,8 +4478,9 @@ class krome():
 					phbinx += "photoBinEth("+str(rea.idxph)+") = "+str(rea.Tmin)+" !"+rea.verbatim+"\n"
 				row = phbinx+"\n"
 			#replace pragma with the opacity calculation as N_i*sigma_i for any species
-			elif(srow=="#KROME_photobin_opacity"):
+			elif(srow=="#KROME_photobin_opacity" and self.usePhotoOpacity):
 				phbintau = ""
+				#loop on the species looking for photorates
 				for rea in reacts:
 					if(rea.kphrate==None): continue
 					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+rea.reactants[0].fidx+") !"\
@@ -4761,7 +4784,7 @@ class krome():
 					print "gfb = "+"0.1578d0*n("+x.fidx+")*f2*invT6"
 
 			elif(row.strip() == "#KROME_nZrate"):
-					fout.write("integer,parameter::nZrate="+str(len(self.coolZ_rates))+"\n")
+					fout.write("integer,parameter::nZrate="+str(self.coolZ_nkrates)+"\n")
 			elif(row.strip() == "#KROME_coolingZ_call_functions"):
 				for x in self.coolZ_functions:
 					fout.write("cool = cool + "+x[0]+"(n(:),inTgas,k(:))\n")
@@ -4783,6 +4806,9 @@ class krome():
 				if(len(self.coolZ_poplevelvars)>0):
 					for popvar in self.coolZ_poplevelvars:
 						fout.write("real*8::"+popvar+"\n")
+					for popvar in self.coolZ_poplevelvars:
+						funct_name = popvar.split("(")[0]
+						fout.write("!$omp threadprivate("+funct_name+")\n")
 			elif(row.strip() == "#KROME_popvar_dump"):
 				if(len(self.coolZ_poplevelvars)>0):
 					for popvar in self.coolZ_poplevelvars:
@@ -4798,7 +4824,7 @@ class krome():
 				
 				if(self.H2opacity=="RIPAMONTI"):
 					#thick case (note that 1.25d-10 = 1/8e9)
-					row = row.replace("#KROME_H2opacity", "&\n* min(1.d0, (1.25d-10 * sum(n(1:nmols)))**(-.45))")
+					row = row.replace("#KROME_H2opacity", "&\n* min(1.d0, max(1.25d-10 * sum(n(1:nmols)),1d-40)**(-.45))")
 				elif(self.H2opacity=="OMUKAI"):
 					#thick case using table provided by Omukai (priv. comm. 2014)
 					row = row.replace("#KROME_H2opacity", "&\n* H2opacity_omukai(Tgas, sum(n(1:nmols)))")
@@ -5327,6 +5353,7 @@ class krome():
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
 			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
+			if(srow == "#IFKROME_use_coolingZ" and not(self.useCoolingZ)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -5957,7 +5984,8 @@ class krome():
 		#Makefile
 		fname = "Makefile"
 		#note that makefile will be copied in the build folder
-		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],["#this must be NDIM+"+str(chemCount+3)], False)
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],\
+			["#this must be NDIM+"+str(ramses_offset)+"+"+str(chemCount)], False)
 
 		#move the krome files into the ramses patch folder
 		shutil.move(buildFolder+"krome_all.f90", ramsesFolder+"krome_all.f90")
@@ -6315,6 +6343,7 @@ class krome():
 				name = uname.replace("-","M") #anions
 			else:
 				name = (uname+"I").replace("+","I") #neutral and ions
+			name = name.title()
 			extname = name+"Density"
 			if(name=="EI"): 
 				name = "De" #electron is special

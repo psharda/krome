@@ -82,13 +82,14 @@ contains
   subroutine calc_photoBins_thick(n)
     use krome_commons
     use krome_constants
+    use krome_subs
     implicit none
     integer::i,j
     real*8::dE,kk,Jval,E,Eth,n(:),ncol(nmols),tau
     
     !get column density from number density
     do i=1,nmols
-       ncol(i) = 1.8d21*(max(n(i),0d0)*1d-3)**(2./3.) !1/cm2
+       ncol(i) = num2col(n(i))
     end do
     
     !init rates and heating
@@ -104,11 +105,14 @@ contains
        !loop on reactions
        do i=1,nPhotoRea
           Eth = photoBinEth(i) !reaction energy treshold, eV
-          kk = photoBinJTab(i,j)*Jval/E*dE * exp(-tau) !approx bin integral
-          photoBinRates(i) = photoBinRates(i) + kk
+          if(E>Eth) then
+             !approx bin integral
+             kk = 4d0*pi*photoBinJTab(i,j)*Jval/E*dE * exp(-tau) 
+             photoBinRates(i) = photoBinRates(i) + kk
 #IFKROME_photobin_heat
-          if(E>Eth) photoBinHeats(i) = photoBinHeats(i) + kk*(E-Eth)
+             photoBinHeats(i) = photoBinHeats(i) + kk*(E-Eth)
 #ENDIFKROME_photobin_heat
+          end if
        end do
     end do
 
@@ -121,8 +125,6 @@ contains
 #ENDIFKROME_photobin_heat
 
   end subroutine calc_photoBins_thick
-
-  !***************************
 
 #ENDIFKROME  
 

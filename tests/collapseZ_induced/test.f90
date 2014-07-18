@@ -15,14 +15,16 @@ program test_krome
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt
-  real*8::ntot,rho,zs(4)
+  real*8::ntot,rho,zs(5)
 
-  !INITIALIZE KROME PARAMETERS AND DUST 
+  !INITIALIZE KROME
   call krome_init()
-
-  zs = (/2.73d0, 3d1, 3d2, 3d3/) !list of scaling factor for radiation
+  
+  !black body (BB) temperatures (first is a dummy)
+  zs = (/2.73d0, 2.73d0, 3d1, 3d2, 3d3/)
   do jz = 1,size(zs)
-
+     print *,""
+     print *,"****************"
      !INITIAL CONDITIONS
      call krome_set_user_redshift(0d0)
      ntot           = 0.1d0  !total density in 1/cm3
@@ -32,29 +34,26 @@ program test_krome
      x(:) = 1.d-40
 
      x(KROME_idx_Hj)  = ntot          !H
-     x(KROME_idx_H2) = 1.d-6*ntot    !H2
-     !x(KROME_idx_E)  = 1.d-4*ntot    !E
-     !x(KROME_idx_Hj) = 1.d-4*ntot    !H+
+     x(KROME_idx_H2)  = 1.d-6*ntot    !H2
      x(KROME_idx_HEj) = 0.0775d0*ntot !He
 
      !rescale metallicity for neutral metals (C,Fe,Si,O)
      call krome_scale_Z(x(:), -3d0)
 
-     x(krome_idx_Cj) = x(krome_idx_C) !carbon is fully ionized
-     x(krome_idx_C)  = 1d-40
+     x(krome_idx_Cj)  = x(krome_idx_C)  !carbon is fully ionized
+     x(krome_idx_C)   = 1d-40
      x(krome_idx_Sij) = x(krome_idx_Si) !silicon is fully ionized
      x(krome_idx_Si)  = 1d-40
      x(krome_idx_Fej) = x(krome_idx_Fe) !iron is fully ionized
      x(krome_idx_Fe)  = 1d-40
 
      x(krome_idx_E) = krome_get_electrons(x)
-     !list abundances
-     call krome_get_info(x(:),Tgas)
 
-     !init photorates (limits in eV)
-     call krome_set_photoBin_BBlog(1d-5, 1d-1, zs(jz))
+     !init BB radiation from temperature with automatic limits
+     call krome_set_photoBin_BBlog_auto(zs(jz))
 
-
+     !first is primordial
+     if(jz==1) call krome_photoBin_scale(0d0)
      dd = ntot
 
      print *,"solving..."
@@ -84,7 +83,7 @@ program test_krome
         call krome(x(:),Tgas,dt)
 
         !dump Tgas and normalized abundances
-        write(22,'(99E17.8e3)') zs(jz),dd,Tgas,x(:)/dd 
+        write(22,'(I8,99E17.8e3)') jz,zs(jz),dd,Tgas,x(:)/dd 
         if(mod(i,100)==0) then 
            print '(I5,99E11.3)',i,dd,Tgas !print every 100 steps
         end if

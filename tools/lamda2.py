@@ -45,7 +45,7 @@ fh.close()
 
 #MOLECULE
 rdx = 1
-data["molecule"] = rows[rdx]
+data["molecule"] = read_line(rows[rdx])[0]
 
 #WEIGHT
 rdx += 2
@@ -134,7 +134,7 @@ fout.write("#Aij (1/s)\n")
 for i in range(len(data["rads"])):
 	aup = int(data["rads"][i]["up"])-1
 	alow = int(data["rads"][i]["low"])-1
-	fout.write(str(aup)+", "+str(alow)+", "+data["rads"][i]["Aij"]+"\n")
+	fout.write(str(aup)+" -> "+str(alow)+", "+data["rads"][i]["Aij"]+"\n")
 
 #function to format numbers to F90 format (x.xdx)
 def fmt_f90(xarg):
@@ -160,7 +160,7 @@ for p in data["partners"]:
 		clow = str(int(myc["low"])-1)
 		xvals = "(/"+(", ".join([fmt_f90(x)  for x in pdata["temps"]]))+"/)"
 		yvals = "(/"+(", ".join([fmt_f90(x) for x in myc["rates"]]))+"/)"
-		fout.write(p+", "+cup+", "+clow+", flin("+xvals+", "+yvals+", Tgas)\n")
+		fout.write(p+", "+cup+", "+clow+", fspline("+xvals+", "+yvals+", Tgas)\n")
 
 fout.write("end metal\n")
 

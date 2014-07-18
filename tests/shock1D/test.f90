@@ -323,6 +323,7 @@ program sedov
 
      !DO CHEMISTRY: CALL KROME PACKAGE
      !REMEMBER xx in fraction, density in g/cm3
+     !$omp parallel do private(xx, rhogas, ix) schedule(dynamic,2)
      do ix = 1, nx
         xx(:) = x(ix,:) !use local array
         rhogas = rho(ix) !get density
