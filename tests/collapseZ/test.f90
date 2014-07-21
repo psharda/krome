@@ -91,11 +91,11 @@ program test_krome
   end do
 
   do jz = 1,size(zs)
-  do i = 1,imax(jz)
-     write(22,'(99E17.8e3)') result(:,i,jz)
+     do i = 1,imax(jz)
+        write(22,'(99E17.8e3)') result(:,i,jz)
+     end do
      write(22,*)
      write(55,*)
-  end do
   end do
 
   print *,"To plot type in gnuplot:"

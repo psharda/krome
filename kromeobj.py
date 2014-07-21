@@ -3898,6 +3898,7 @@ class krome():
 			elif(srow == "#KROME_user_commons"):
 				if(len(self.commonvars)>0):
 					fout.write("real*8::"+(",".join(self.commonvars))+"\n")
+					fout.write("!$omp threadprivate("+(",".join(self.commonvars))+")\n")
 			elif(srow == "#KROME_photobins_array"):
 				if(self.photoBins>0):
 					fout.write("real*8::photoBinJ(nPhotoBins) !intensity per bin, erg/s/sr/Hz/cm2\n")
