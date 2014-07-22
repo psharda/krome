@@ -23,7 +23,7 @@ program test
   !loop on j21 values
   do j=1,size(j21s)
 
-     !$omp parallel
+     !$omp parallel private(j21)
 
      !init radiation field between 1d1 and 1d2 using 1/E profile
      call krome_set_photoBin_J21log(1d1, 1d2)
