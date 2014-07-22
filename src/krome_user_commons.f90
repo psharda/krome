@@ -10,7 +10,7 @@ module krome_user_commons
   real*8::krome_J21,user_tff
   real*8::krome_invdvdz !inverse of |velocity gradient| 1/abs(dv/dz)
 
-  !$omp threadprivate(user_tff,krome_invdvdz)
+  !$omp threadprivate(krome_J21,user_tff,krome_invdvdz)
 
 contains 
 
