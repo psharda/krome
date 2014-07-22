@@ -51,11 +51,12 @@ class molec():
 	ename = "" #exploded name (e.g. H2C4=CCCCHH)
 	fname = "" #f90 name (e.g. H+=Hj, D-=Dk)
 	phname = "" #compact name for photoionizations (e.g. Fe++++=Fej4)
+	coolname = "" #name for cooling, e.g. CIV
 	fidx = "idx_" #index for fortran (e.g. H+=idx_Hj, D-=idx_Dk)
 	is_atom = False #flag to identify atoms
 	chempot = 0. #chemical potential (J/mol)
-	poly1 = [0.e0]*7 #nasa polynomials (200-1000K)
-	poly2 = [0.e0]*7 #nasa polynomials (1000-5000K)
+	poly1 = [0.e0]*7 #nasa polynomials (usually 200-1000K)
+	poly2 = [0.e0]*7 #nasa polynomials (usually 1000-5000K)
 	Tpoly = [0.e0]*3 #temperature limits
 	idx = 0 #species index
 	enthalpy = 0.e0 #enthalpy of formation
@@ -689,7 +690,7 @@ def parser(name, mass_dic, atoms, thermo_data):
 	mass = 0. #init mass
 	is_atom = True #atom flag
 	founds = 0 #atoms found
-
+	
 	#if you change these check the same values in kromeobj
 	#(employed here for computing number of neutrons)
 	me = 9.10938188e-28 #electron mass (g)
@@ -796,6 +797,11 @@ def parser(name, mass_dic, atoms, thermo_data):
 	mymol.charge = 0 #charge
 	mymol.zatom = zatom #atomic number
 	mymol.fname = name.replace("+","j").replace("-","k") #f90 name
+	#cooling name is only for atoms, e.g. CIV
+	mymol.coolname = name
+	if(is_atom):
+		mymol.coolname = getRomanName(name)
+
 	mymol.is_atom = is_atom #atom flag
 	f90idx = "idx_"+name.replace("+","j").replace("-","k").replace("(","_").replace(")","").replace("[","").replace("]","_") #f90 index
 	if(f90idx.endswith("_")): f90idx = f90idx[:-1] #remove last underscore if any
@@ -827,7 +833,10 @@ def parser(name, mass_dic, atoms, thermo_data):
 		mymol.Tpoly = thermo_data[mymol.name][0:3] #(K) [min,med,max] T interval limits
 
 	#compute enthaly @300K using NASA poly
-	p = mymol.poly1 #copy polynomials
+	if(mymol.Tpoly[1]<3e2):
+		p = mymol.poly1 #copy polynomials in the lower range
+	else:
+		p = mymol.poly2 #copy poly in the upper range
 	Tgas = 300. #K
 	polyH = p[0] + p[1]*0.5*Tgas + p[2]*Tgas**2/3. + p[3]*Tgas**3*0.25 + p[4]*Tgas**4*0.2 + p[5]/Tgas
 	mymol.enthalpy = polyH*8.314472e-3*Tgas*0.01036410e0 #eV
@@ -844,6 +853,22 @@ def parser(name, mass_dic, atoms, thermo_data):
 		print "************************************************"
 		sys.exit()
 	return mymol
+
+###################################
+#convert the name of a species to roman name, e.g. C++ to CIII
+# also for anion: C- to CmI
+def getRomanName(argmetal):
+	#cation
+	if("+" in argmetal):
+		mname = argmetal.replace("+","") + int_to_roman(argmetal.count("+")+1)
+	#anion
+	elif("-" in argmetal):
+		mname = argmetal.replace("-","") + "m"+int_to_roman(argmetal.count("-")+1)
+	#neutral
+	else:
+		mname = argmetal+"I"
+	return mname
+
 
 ######################################
 def get_file_list():

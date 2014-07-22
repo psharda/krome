@@ -395,7 +395,7 @@ class krome():
 			[argv.append(x) for x in ["-useN","-customODE=tests/lotkav/lotkav"]]
 			filename = "networks/react_dummy"
 		elif(args.test=="lamda"):
-			[argv.append(x) for x in ["-useN","-coolFile=data/coolO2.dat", "-cooling=O2I"]]
+			[argv.append(x) for x in ["-useN","-coolFile=data/coolO2.dat", "-cooling=O2"]]
 			[argv.append(x) for x in ["-useThermoToggle"]]
 			filename = "networks/react_COthin"
 		else:
@@ -908,15 +908,9 @@ class krome():
 					if(inComment): continue
 					#look for the metal name
 					if("metal:" in srow):
-						metal_name = srow.split(":")[1].strip().capitalize() #metal name starts with capital letter
-						#metal name in roman style (e.j. C+ -> CII)
-						if("+" in metal_name):
-							mname = metal_name.replace("+","") + int_to_roman(metal_name.count("+")+1)
-						elif("-" in metal_name):
-							mname = metal_name.replace("-","") + "m"+int_to_roman(metal_name.count("-")+1)
-						else:
-							mname = metal_name+"I" #is not an ion
-
+						metal_name = srow.split(":")[1].strip()
+						mol = parser(metal_name,self.mass_dic,self.atoms,self.thermodata)
+						mname = mol.coolname
 						if(mname in allCools):
 							print "ERROR: conflict name for "+mname+", which is already present!"
 							sys.exit()
@@ -957,7 +951,7 @@ class krome():
 					#print "Option "+met["flag"]+" will load data from "+fname
 					self.useCoolingZ = True
 					self.Zcools.append(met["name"]) #append metal name to the list of the requested species
-					self.zcoolants.append(met["flag"]) #append roman metal name to the list of the coolants
+					self.zcoolants.append(met["flag"]) #append cooling name to the list of the coolants
 					#add also neutral in case of ions
 					if("+" in met["name"]):
 						neutral_name = met["name"].replace("+","")
@@ -1327,13 +1321,13 @@ class krome():
 		for i in range(10):
 			mass_dic['FK'+str(i)] = 1.
 
-		#exited levels of some molecules add here if needed
+		#excited levels of some molecules. add here if needed
 		for i in range(9):
 			mass_dic['CH2_'+str(i+1)] = 6.*(menp) + 2.*(me+mp)
 			mass_dic['SO2_'+str(i+1)] = 16.*(menp) + 2.*8.*(menp)
 
 		#build isotopes (including some non-esistent) as [n]A
-		#with -usePlainIsotopes build as nA
+		# with -usePlainIsotopes build as nA
 		atoms_iso = ["H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar","K","Ca","Fe","Co","Ni"]
 		atoms_p = [i+1 for i in range(20)] + [26,27,28]
 		if(len(atoms_iso)!=len(atoms_p)): 
@@ -1345,13 +1339,15 @@ class krome():
 				if(self.usePlainIsotopes): iso_name = str(i)+aiso
 				mass_dic[iso_name] = protons*(me+mp) + ((i-protons)*mn)
 
-		#sort dictionaries
+		#prepare mass dictionary
 		self.mass_dic = dict([[k.upper(),v] for (k,v) in mass_dic.iteritems()])
+		#sort dictionary, longest first. note that even if it is called 
+		# atoms, this contains also other chemical formula parts, as GRAIN, PAH, and so on... 
 		self.atoms = sorted(mass_dic, key = lambda x: len(x),reverse=True)
 
 	
 	#################################################
-	#@profile
+	#read the reaction file 
 	def read_file(self):
 		skipDup = self.skipDup
 		filename = self.filename
@@ -1409,16 +1405,16 @@ class krome():
 		if(line_count>1000): print "Found "+str(line_count)+" lines! It takes a while..."
 
 		fsh_found = False #search for fsh variable for shielding if needed
-		#star proper reading
-		fh = open(filename,"rb") #OPEN FILE
+		#start reading file stored in the loop above
 		isComment = False #flag for comment block
 		noTabNext = False #flag for use tabs for the next reaction 
 		for row in allrows:
 			srow = row.strip() #stripped row
 			if(srow.strip()==""): continue #looks for blank line
 			if(srow[0]=="#"): continue #looks for comment line
-			if(srow[0:1]=="//"): continue #looks for comment line
-			if(srow[0:1]=="/*"): isComment = True #start multiline comment
+			if(len(srow)>1):
+				if(srow[0:2]=="//"): continue #looks for comment line
+				if(srow[0:2]=="/*"): isComment = True #start multiline comment
 
 			#end multiline comment
 			if("*/" in srow):
@@ -1608,7 +1604,9 @@ class krome():
 				if(a=="q"): print sys.exit()
 				continue #check line format (N elements, 4=idx+Tmin+Tmax+rate)
 			found_one = True #flag to determine at least one reaction found
-			rcount += 1 #count the totoal number of reaction found
+			rcount += 1 #count the total number of reaction found
+			printStep = int(line_count/10)
+			if((line_count>1000) and (rcount%printStep==0)): print str(round(rcount*1e2/line_count))+"%"
 
 			myrea = reaction() #create object reaction
 
@@ -2806,7 +2804,8 @@ class krome():
 				#read metal name from file and init data structures
 				if("metal:" in srow):
 					srow = srow.replace("metal:","").strip()
-					metal_name = self.convertMetal2Roman(srow) #metal name in roman format (e.g. C+ as CII)
+					mol = parser(srow,self.mass_dic, self.atoms, self.thermodata)
+					metal_name = mol.coolname
 					metal_name_f90 = self.convertMetal2F90(srow) #metal name in f90 format (e.g. C+ as Cj)
 					levels_data = dict() #data of the levels (energy, degeneration), key=level number
 					trans_data = dict() #transition data (up, down, Aij), key=up->down (e.g. "4->2")
@@ -3915,6 +3914,8 @@ class krome():
 					fout.write("real*8::photoBinRates(nPhotoRea) !photo rates, 1/s\n")
 					fout.write("real*8::photoBinHeats(nPhotoRea) !photo heating, erg/s\n")
 					fout.write("real*8::photoBinEth(nPhotoRea) !energy treshold, eV\n")
+					fout.write("!$omp threadprivate(photoBinJ,photoBinEleft,photoBinEright,photoBinEmid,photoBinEdelta, &\n")
+					fout.write("!$omp               photoBinEidelta,photoBinJTab,photoBinRates,photoBinHeats,photoBinEth)\n")
 			#write the anytab common variables
 			elif(srow == "#KROME_vars_anytab"):
 				stab = ""

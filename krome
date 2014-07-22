@@ -56,6 +56,12 @@ krome = krome()
 #check prerequisites
 krome.checkPrereq()
 
+#prepares mass an species dictionaries
+krome.prepare_massdict()
+
+#read thermochemistry data from file
+krome.load_thermochemistry()
+
 #init argaprser
 krome.init_argparser()
 
@@ -68,14 +74,8 @@ krome.argparsing(argv)
 #check if build folder is empty
 krome.safe_check()
 
-#read thermochemistry data from file
-krome.load_thermochemistry()
-
 #load the phys variables
 krome.definePhysVariables()
-
-#prepares mass an species dictionaries
-krome.prepare_massdict()
 
 #read reaction file
 krome.read_file()

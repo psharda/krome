@@ -15,9 +15,10 @@ program test
 
   imax = 10
   jmax = 10
+  print '(a8,a12)',"%","ntot"
   do j=1,jmax
      ntot = 1d1**((j-1)*(9d0-3d0)/(jmax-1)+3d0)
-     print *,j,ntot
+     print '(F8.1,E12.3)',j*1d2/jmax,ntot
      do i=1,imax
         Tgas = 1d1**((i-1)*(4d0-1d0)/(imax-1)+1d0)
 
@@ -51,7 +52,7 @@ program test
            write(66,'(99E17.8e3)') t/spy,Tgas,x(:)
            if(t>1d8*spy) exit
         end do
-        write(44,'(99E17.8e3)') ntot,Tgas,krome_coolingO2I(x(:),Tgas)
+        write(44,'(99E17.8e3)') ntot,Tgas,krome_coolingO2(x(:),Tgas)
         write(55,'(99E17.8e3)') Tgas, x(:)
      end do
      write(44,*)
