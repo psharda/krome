@@ -66,5 +66,8 @@ module krome_commons
 
   !smallest double value (init in krome_init)
   real*8::krome_smallest
+
+  !xrayJ21 for tabulated heating and rate
+  real*8::J21xray
   
 end module krome_commons

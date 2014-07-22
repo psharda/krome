@@ -90,9 +90,8 @@
 #Photoionization of H, He by Xrays, Shull+1985, Inayoshi+2012 
 @XRAY_start
 @format:idx,R,P,P,Tmin,Tmax,rate
-@common:user_J21x
-24,H,H+,E,NONE,NONE,auto*user_J21x
-25,He,He+,E,NONE,NONE,auto*user_J21x
+24,H,H+,E,NONE,NONE,auto
+25,He,He+,E,NONE,NONE,auto
 @XRAY_stop
 
 #H2 photodissociation, T4 spectrum

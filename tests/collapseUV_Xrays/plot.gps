@@ -11,15 +11,18 @@ set format x "%L"
 set key b r
 set key Left
 set key reverse
-set yrange [1.e1:2e4]
+set key below
+set yrange [7e1:2e4]
 set xrange [:1e8]
 set ylabel "log(T/K)"
 set xlabel "log(density [cm-3])"
-plot './fort.22' u 2:($1==1.e-1?$3:1/0) t "J21=0.1" w l,\
-'' u 2:($1==5.e0?$3:1/0) t "J21=5" w l,\
-'' u 2:($1==1.e1?$3:1/0) t "J21=10" w l,\
-'' u 2:($1==2.e1?$3:1/0) t "J21=20" w l,\
-'' u 2:($1==5.e1?$3:1/0) t "J21=50" w l,\
-'' u 2:($1==1.e2?$3:1/0) t "J21=100" w l,\
-'' u 2:($1==0.e0?$3:1/0) t "J21=0" w l
+n=100
+plot './fort.22' u 3:($1==1&&$2==1?$4:1/0) t "J21x=1e-6 J21=0" w l,\
+'' u 3:($1==1&&$2==2?$4:1/0) t "J21x=1e-6 J21=5" w l,\
+'' u 3:($1==1&&$2==3?$4:1/0) t "J21x=1e-6 J21=10" w l,\
+'' u 3:($1==1&&$2==4?$4:1/0) t "J21x=1e-6 J21=50" w l,\
+'' u 3:($1==2&&$2==1?$4:1/0) every n t "J21x=1e-2 J21=0",\
+'' u 3:($1==2&&$2==2?$4:1/0) every n t "J21x=1e-2 J21=5",\
+'' u 3:($1==2&&$2==3?$4:1/0) every n t "J21x=1e-2 J21=10",\
+'' u 3:($1==2&&$2==4?$4:1/0) every n t "J21x=1e-2 J21=50"
 

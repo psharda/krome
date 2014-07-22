@@ -1824,7 +1824,7 @@ class krome():
 
 				xrayHFound = True
 				autoRateXray = "ratexH * (1d0+phiH) + n(idx_He)/(n(idx_H)+1d-40) * ratexHe * phiH"
-				x.krate = x.krate.replace("auto",autoRateXray)
+				x.krate = autoRateXray + "* J21xray"
 				print "H xray ionization found!"
 
 				#heating tabs H
@@ -1846,7 +1846,7 @@ class krome():
 				addVarCoe("ratexHe"," 1d1**user_xray_He",self.coevars)
 
 				autoRateXRay = "ratexHe * (1d0+phiHe) + n(idx_H)/(n(idx_He)+1d-40) * ratexH * phiHe"
-				x.krate = x.krate.replace("auto",autoRateXray)
+				x.krate = autoRateXray + "* J21xray"
 				xrayHeFound = True
 				print "He xray ionization found!"
 
@@ -4226,14 +4226,14 @@ class krome():
 				if(self.columnDensityMethod=="DEFAULT"):
 					fout.write("col2num = 1d3 * (ncalc/1.8d21)**1.5\n")
 				elif(self.columnDensityMethod=="JEANS"):
-					fout.write("col2num = ncalc/get_jeans_length(n(:),Tgas)\n")
+					fout.write("col2num = 2d0 * ncalc / get_jeans_length(n(:),Tgas)\n")
 				else:
 					sys.exit("ERROR: method "+self.columnDensityMethod+" unknown for col2num")
 			elif(srow == "#KROME_num2col_method"):
 				if(self.columnDensityMethod=="DEFAULT"):
 					fout.write("num2col = 1.8d21*(max(ncalc,1d-40)*1d-3)**(2./3.)\n")
 				elif(self.columnDensityMethod=="JEANS"):
-					fout.write("num2col = ncalc*get_jeans_length(n(:),Tgas)\n")
+					fout.write("num2col = 0.5d0 * ncalc * get_jeans_length(n(:),Tgas)\n")
 				else:
 					sys.exit("ERROR: method "+self.columnDensityMethod+" unknown for num2col")
 			elif(srow == "#KROME_metallicity_functions"):
@@ -4994,26 +4994,12 @@ class krome():
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			else:
 				if(row.strip() == "#IFKROME_useHeatingCR" and not(self.useHeatingCR)): skip = True
-				if(row.strip() == "#ENDIFKROME"): skip = False
-
 				if(row.strip() == "#IFKROME_useHeatingdH" and (not(self.useHeatingdH) or len(dH_varsa)==0)): skip = True
-				if(row.strip() == "#ENDIFKROME"): skip = False
-
 				if(row.strip() == "#IFKROME_useHeatingCompress" and not(self.useHeatingCompress)): skip = True
-				if(row.strip() == "#ENDIFKROME"): skip = False
-
 				if(row.strip() == "#IFKROME_useHeatingPhoto" and not(self.useHeatingPhoto)): skip = True
-				if(row.strip() == "#ENDIFKROME"): skip = False
-
 				if(row.strip() == "#IFKROME_useHeatingPhotoAv" and not(self.useHeatingPhotoAv)): skip = True
-				if(row.strip() == "#ENDIFKROME"): skip = False
-
 				if(row.strip() == "#IFKROME_useHeatingPhotoDust" and not(self.useHeatingPhotoDust)): skip = True
-				if(row.strip() == "#ENDIFKROME"): skip = False
-
 				if(row.strip() == "#IFKROME_useHeatingXRay" and not(self.useHeatingXRay)): skip = True
-				if(row.strip() == "#ENDIFKROME"): skip = False
-
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
 				if(row.strip() == "#IFKROME_useHeatingChem" and skipBool): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
@@ -5387,6 +5373,7 @@ class krome():
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
 			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
 			if(srow == "#IFKROME_use_coolingZ" and not(self.useCoolingZ)): skip = True
+			if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 

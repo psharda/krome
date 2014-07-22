@@ -104,8 +104,8 @@ contains
          logH,logHe-logH)
 
     !prepares varibles for xray photochemistry
-    ratexH = 1d1**xheat_H
-    ratexHe = 1d1**xheat_He
+    ratexH = 1d1**xheat_H * J21xray
+    ratexHe = 1d1**xheat_He * J21xray
     
     heat_Xray = ratexH * n(idx_H)
     heat_Xray = heat_Xray + ratexHe * n(idx_He)
