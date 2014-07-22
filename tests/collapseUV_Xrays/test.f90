@@ -19,80 +19,76 @@ program test_krome
   use krome_photo
 
   integer,parameter::rstep = 500000
-  integer::i,j
+  integer::i,j,k
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt,f(krome_nmols)
-  real*8::ntot,rho,j21s(7),mass(krome_nspec)
-  real*8::cool(12), heat(8)
+  real*8::ntot,rho,j21s(4),mass(krome_nspec)
+  real*8::cool(12), heat(8),j21xs(2)
 
+  j21xs = (/1d-6,1d-2/)
+  do k=1,size(j21xs) 
+     call krome_init()
+     !preset J21 value for X-rays
+     call krome_set_J21xray(j21xs(k))
+     print *,"J21 Xray = ",j21xs(k)
+     !preset J21 values for UV flux
+     j21s = (/0.0d0, 5d0, 1d1, 5d1/)
+     do j=1,size(j21s)
 
-  call krome_init()
-  !preset J21 value for X-rays
-  call krome_set_user_J21x(1d-2)
+        !INITIAL CONDITIONS
+        call krome_set_zredshift(15d0)
+        ntot = 1.d-1            !total density in 1/cm3
+        Tgas = 1.6d2            !temperature in kelvin
 
-  !preset J21 values for UV flux
-  j21s = (/0.0d0, 1d-1, 5d0, 1d1, 2d1, 5d1, 1d2/)
-  do j=1,size(j21s)
+        !INITIALIZE KROME J21 parameter
+        call krome_set_user_J21(j21s(j))
 
-     !INITIAL CONDITIONS
-     call krome_set_zredshift(15d0)
-     ntot = 1.d-1            !total density in 1/cm3
-     Tgas = 1.6d2            !temperature in kelvin
+        !species initialization in 1/cm3
+        x(:) = 1.d-40
 
-     !INITIALIZE KROME J21 parameter
-     call krome_set_user_J21(j21s(j))
+        x(KROME_idx_H)         = 0.9999*ntot    !H
+        x(KROME_idx_H2)        = 2.0e-6*ntot    !H2
+        x(KROME_idx_Hj)        = 2.0e-3*ntot    !1.0e-4*ntot    !H+
+        x(KROME_idx_He)        = 0.0775*ntot    !He
+        x(KROME_idx_E) = krome_get_electrons(x(:))
 
-     !species initialization in 1/cm3
-     x(:) = 1.d-40
+        mass(:) = get_mass()
+        dd = ntot
 
-     x(KROME_idx_H)         = 0.9999*ntot    !H
-     x(KROME_idx_H2)        = 2.0e-6*ntot    !H2
-     x(KROME_idx_Hj)        = 2.0e-3*ntot    !1.0e-4*ntot    !H+
-     x(KROME_idx_He)        = 0.0775*ntot    !He
-     x(KROME_idx_E) = krome_get_electrons(x(:))
+        print *,"solving for J21=",j21s(j)
+        print '(a5,2a11)',"step","n(cm-3)","Tgas(K)"
 
-     mass(:) = get_mass()
-     dd = ntot
+        !loop over the hydro time-step
+        do i = 1,rstep
 
-     print *,"solving for J21=",j21s(j)
-     print '(a5,2a11)',"step","n(cm-3)","Tgas(K)"
+           dd1 = dd
 
-     !loop over the hydro time-step
-     do i = 1,rstep
+           !***CALCULATE THE FREE FALL TIME***!
+           rho = krome_get_rho(x(:))
+           tff = sqrt(3.0d0 * pi / (32.0d0*gravity*rho))
+           user_tff = tff
+           dtH = 0.01d0 * tff        !TIME-STEP
+           deldd = (dd/tff) * dtH
+           dd = dd + deldd        !UPDATE DENSITY
 
-        dd1 = dd
+           x(:) = x(:) * dd / dd1  
 
-        !***CALCULATE THE FREE FALL TIME***!
-        rho = krome_get_rho(x(:))
-        tff = sqrt(3.0d0 * pi / (32.0d0*gravity*rho))
-        user_tff = tff
-        dtH = 0.01d0 * tff        !TIME-STEP
-        deldd = (dd/tff) * dtH
-        dd = dd + deldd        !UPDATE DENSITY
+           dt = dtH 
 
-        x(:) = x(:) * dd / dd1  
+           if(dd.gt.1d8) exit
 
-        dt = dtH 
+           !solve the chemistry
+           call krome(x(:),Tgas,dt)
 
-        if(dd.gt.1d8) exit
+           write(22,'(2I5,99E17.8e3)') k,j,dd,Tgas
+           if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas
 
-        !store the heating/cooling contributions
-        cool = krome_get_cooling_array(x, Tgas)
-        heat = krome_get_heating_array(x, Tgas)
-
-
-        !solve the chemistry
-        call krome(x(:),Tgas,dt)
-
-        write(22,'(99E17.8e3)') j21s(j),dd,Tgas
-        write(23,'(99E17.8e3)') j21s(j),dd, cool
-        write(24,'(99E17.8e3)') j21s(j),dd, heat 
-        if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas
+        end do
+        write(22,*)
 
      end do
      write(22,*)
-     print *,""
   end do
   print *,"To plot type in gnuplot:"
   print *,"gnuplot> load 'plot.gps'"

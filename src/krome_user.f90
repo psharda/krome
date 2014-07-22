@@ -18,6 +18,7 @@ contains
 #KROME_user_commons_functions
 
   !***********************
+  !print the current values of the phys variables
   subroutine krome_print_phys_variables()
     use krome_commons
     implicit none
@@ -27,6 +28,21 @@ contains
   end subroutine krome_print_phys_variables
 
 #KROME_set_get_phys_functions
+
+
+#IFKROME_useXrays
+  !****************************
+  !set the value of J21xrays for tabulated
+  ! heating and rate
+  subroutine krome_set_J21xray(xarg)
+    use krome_commons
+    implicit none
+    real*8::xarg
+    
+    J21xray = xarg
+    
+  end subroutine krome_set_J21xray
+#ENDIFKROME_useXrays
 
 #KROME_cooling_functions
 
