@@ -82,10 +82,10 @@ contains
 
     ntot = get_Hnuclei(n(:))
     xe = min(n(idx_e)/ntot,1d0)
-
+    n(idx_Tgas) = Tgas
     !prepares logs for xrays
-    ncolH = num2col(n(idx_H))
-    ncolHe = num2col(n(idx_He))
+    ncolH = num2col(n(idx_H),n(:))
+    ncolHe = num2col(n(idx_He),n(:))
     logH = log10(ncolH)
     logHe = log10(ncolHe)
 

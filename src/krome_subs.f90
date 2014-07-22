@@ -109,21 +109,25 @@ contains
 
   !***************************
   !number density to column density conversion
-  function num2col(n)
+  function num2col(ncalc,n)
+    use krome_commons
     implicit none
-    real*8::num2col,n
+    real*8::num2col,ncalc,n(:),Tgas
+    Tgas = n(idx_Tgas)
 
-    num2col = 1.8d21*(max(n,1d-40)*1d-3)**(2./3.)
+#KROME_num2col_method
   
   end function num2col
   
   !***********************
   !column density to number density conversion
-  function col2num(n)
+  function col2num(ncalc,n)
+    use krome_commons
     implicit none
-    real*8::col2num,n
-
-    col2num = 1d3 * (n/1.8d21)**1.5
+    real*8::col2num,ncalc,n(:),Tgas
+    Tgas = n(idx_Tgas)
+    
+#KROME_col2num_method
 
   end function col2num
 

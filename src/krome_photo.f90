@@ -89,7 +89,7 @@ contains
     
     !get column density from number density
     do i=1,nmols
-       ncol(i) = num2col(n(i))
+       ncol(i) = num2col(n(i),n(:))
     end do
     
     !init rates and heating

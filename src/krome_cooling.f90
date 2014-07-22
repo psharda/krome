@@ -384,14 +384,15 @@ contains
   ! calculated by Turner, Kirby-Docken, & Dalgarno 1977, ApJS, 35, 281 
   ! and the excitation energies for the levels of Borysow, 
   ! Frommhold & Moraldi (1989), ApJ, 336, 495.
-  function H2opacity_omukai(Tgas, ntot)
+  function H2opacity_omukai(Tgas, n)
     use krome_commons
     use krome_subs
     implicit none
-    real*8::H2opacity_omukai,Tgas,ntot,lTgas,lntot
+    real*8::H2opacity_omukai,Tgas,ntot,lTgas,lntot,n(:)
 
+    ntot = sum(n(1:nmols))
     lTgas = log10(Tgas)
-    lntot = log10(num2col(ntot))
+    lntot = log10(num2col(ntot,n(:)))
 
     H2opacity_omukai = 1d1**(fit_anytab2D(arrH2esc_ntot(:), &
          arrH2esc_Tgas(:), arrH2esc(:,:), xmulH2esc, &
