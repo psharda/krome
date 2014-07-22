@@ -289,8 +289,8 @@ contains
     ! in the reaction file using @common: and initialized
     ! using the interface subroutine
     cooling_expansion = 3.d0*ntot*boltzmann_erg*Tgas*user_hubble0 & 
-         * (1.d0 + user_redshift) &
-         * sqrt(user_omega0 * user_redshift + 1.d0) !erg/s/cm3
+         * (1.d0 + phys_zredshift) &
+         * sqrt(user_omega0 * phys_zredshift + 1.d0) !erg/s/cm3
 
   end function cooling_expansion
 #ENDIFKROME
