@@ -1,0 +1,21 @@
+!#########################################################################
+!This is a simple one-zone collapse test following
+! the chemical and thermal evolution of a primordial cloud irradiated
+! by both a UV flux below the Lyman limit (13.6 eV) and a X-ray flux
+! between 2-10 keV. 
+!For further details we remind to Inayoshi, MNRAS, 416, 2748-2759, 2011.
+!Note that the results are different compared to Inayoshi+, 2011 as
+! the cross-sections employed here for H and He photoionization are
+! from Verner+ 1996, while Inayoshi+ adopted older outdated cross-sections.
+!The dynamics is described by the Larson-Penston-type similar solution.
+!The test produce results for five different values of the UV flux
+! expressed in terms of J21 (erg/cm2/s/Hz/sr) ranging from 0 to 100.
+!The X-rays flux also expressed in terms of J21_xr ranges from 1d-6-1e-2.
+!The following cooling/heating processes are included in the test:
+! H2 cooling from Glover&Abel 2008, atomic cooling from Cen 1992, 
+! compton cooling, chemical heating, and heating coming from x-rays.
+!##########################################################################
+
+! For further questions please contact the KROME developers
+! via the user mailing list at 
+! https://groups.google.com/forum/#!forum/kromeusers 

@@ -3,7 +3,8 @@
 ! the chemical and thermal evolution of a primordial cloud.
 !The dynamics is described by the Larson-Penston-type
 ! similar solution and includes cooling and heating processes.
-!For additional details look also to Omukai 2000.
+!For additional details look also to Omukai 2000 and
+! the KROME paper.
 !################################################################
 program test_krome
 

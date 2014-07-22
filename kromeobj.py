@@ -368,6 +368,10 @@ class krome():
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,ATOMIC,FF", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial_UV"
+                elif(args.test=="collapseUV_Xrays"):
+			[argv.append(x) for x in ["-cooling=H2,CIE,ATOMIC,DISS,HD,FF,COMPTON,CHEM", "-heating=COMPRESS,CHEM,XRAY"]]
+			[argv.append(x) for x in ["-useN","-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
+			filename = "networks/react_xrays"
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST,HD", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-dust=1,C","-dustOptions=H2"]]
