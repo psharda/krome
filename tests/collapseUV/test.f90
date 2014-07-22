@@ -12,23 +12,29 @@ program test_krome
   use krome_user_commons
 
   integer,parameter::rstep = 500000
-  integer::i,j
+  integer::i,j,imax(5)
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt
   real*8::ntot,rho,j21s(4)
 
+  real*8::result(5,10000,4)
+
   !preset J21 values
   j21s = (/0.d0, 1d0, 1d2, 1d5/)
-  do j=1,size(j21s)
 
-     !INITIAL CONDITIONS
-     krome_redshift = 15d0    !redshift
+  !INITIAL CONDITIONS
+  krome_redshift = 15d0    !redshift
+
+  !INITIALIZE KROME PARAMETERS AND DUST 
+  call krome_init()
+
+  !$omp parallel do schedule(dynamic,1) default(none) &
+  !$omp   private(ntot,Tgas,x,dd,i,j,dd1,rho,tff,dt,dtH,deldd) &
+  !$omp   shared(j21s,imax,result)
+  do j=1,size(j21s)
      ntot           = 1.d0    !total density in 1/cm3
      Tgas           = 1d2     !temperature in kelvin
-
-     !INITIALIZE KROME PARAMETERS AND DUST 
-     call krome_init()
 
      krome_J21 = j21s(j) !common for J21
 
@@ -68,13 +74,21 @@ program test_krome
         !solve the chemistry
         call krome(x(:),Tgas,dt)
 
-        write(22,'(99E17.8e3)') j21s(j),dd,Tgas,x(KROME_idx_H2)/dd,x(KROME_idx_H)/dd
-        if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas
+        result(:,i,j) = (/ j21s(j),dd,Tgas,x(KROME_idx_H2)/dd,x(KROME_idx_H)/dd /)
+        if(mod(i,100)==0) print '(2I5,99E11.3)',j,i,dd,Tgas
 
      end do
-     write(22,*)
+     imax(j) = i - 1
      print *,""
   end do
+
+  do j = 1,size(j21s)
+     do i = 1,imax(j)
+        write(22,'(99E17.8e3)') result(:,i,j)
+     end do
+     write(22,*)
+  end do
+
   print *,"To plot type in gnuplot:"
   print *,"gnuplot> load 'plot.gps'"
   print *,"That's all! have a nice day!"

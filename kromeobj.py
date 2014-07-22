@@ -3910,6 +3910,8 @@ class krome():
 					fout.write("real*8::photoBinRates(nPhotoRea) !photo rates, 1/s\n")
 					fout.write("real*8::photoBinHeats(nPhotoRea) !photo heating, erg/s\n")
 					fout.write("real*8::photoBinEth(nPhotoRea) !energy treshold, eV\n")
+					fout.write("!$omp threadprivate(photoBinJ,photoBinEleft,photoBinEright,photoBinEmid,photoBinEdelta, &\n")
+					fout.write("!$omp               photoBinEidelta,photoBinJTab,photoBinRates,photoBinHeats,photoBinEth)\n")
 			#write the anytab common variables
 			elif(srow == "#KROME_vars_anytab"):
 				stab = ""

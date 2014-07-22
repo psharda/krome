@@ -9,28 +9,34 @@ program test
   use krome_main !use krome (mandatory)
   use krome_user !use utility (for krome_idx_* constants and others)
   implicit none
-  real*8::Tgas,dt,x(krome_nmols),rho,spy,t,j21s(3),j21
-  integer::j,k,kmax
+  real*8::Tgas,dt,x(krome_nmols),spy,t,j21s(3),j21
+  integer, parameter :: kmax=30, imaxx=5000
+  integer::i,j,k,imax(kmax)
+  real :: res66(2+krome_nmols,imaxx,kmax), res55(2,kmax), res77(1+krome_nmols,kmax) ! temp arrs for output
 
   spy = krome_seconds_per_year !use shorter variable for this constant
 
   j21s(:) = (/0d0,1d0,1d2/) !list of j21 values
-  kmax = 30  !number of temperature intervals
 
   call krome_init() !init krome (mandatory)
 
   !loop on j21 values
   do j=1,size(j21s)
 
+     !$omp parallel private(j21)
+
      !init radiation field between 1d1 and 1d2 using 1/E profile
      call krome_set_photoBin_J21log(1d1, 1d2)
 
      j21 = j21s(j) !select J21 value
      call krome_photoBin_scale(j21) !scale radiation according to j21
+
+     !$omp end parallel 
+
      print *,"running with j21=",j21
 
-     !loop on temeprature values
-     !$omp parallel do private(k,x,Tgas,dt,t) schedule(dynamic,1)
+     !loop on temperature values
+     !$omp parallel do private(i,k,x,Tgas,dt,t) schedule(dynamic,1)
      do k=1,kmax
 
         !init abundances
@@ -48,21 +54,34 @@ program test
         call krome_thermo_off()
         
         !equilibrium
+        i=0
         do
+           i=i+1
            dt = dt * 1.1d0 !increase time-step
            t = t + dt !advance time
            !electron conservation
            x(krome_idx_e) = krome_get_electrons(x(:))
            call krome(x(:), Tgas, dt) !call KROME
-           write(66,'(I5,99E17.8)') j, t/spy, Tgas, x(:) !dump
+           if (i <= imaxx) then
+             res66(:,i,k) = (/ t/spy, Tgas, x(:) /)
+             imax(k) = i
+           endif
            if(t>1d8*spy) exit !exit when 1d8 years reached
         end do
 
         !write the abundances of the species and corresponding cooling
-        write(77,'(I5,999E17.8e3)') j,Tgas,x(:)
-        write(55,'(I5,999E17.8e3)') j,Tgas,krome_get_cooling(x,Tgas)
-        write(66,*)
+        res77(:,k) = (/ Tgas, x(:) /)
+        res55(:,k) = (/ Tgas, krome_get_cooling(x,Tgas) /)
      end do
+
+     do k=1,kmax
+        do i=1, imax(k)
+           write(66,'(I5,99E17.8)') j, res66(:,i,k) !dump
+        enddo
+        write(77,'(I5,999E17.8e3)') j, res77(:,k)
+        write(55,'(I5,999E17.8e3)') j, res55(:,k)
+        write(66,*)
+     enddo
      write(55,*)
      write(77,*)
      write(66,*)
