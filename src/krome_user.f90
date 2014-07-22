@@ -420,13 +420,16 @@ contains
   ! chemical composition. The column density
   ! is computed using the expression in the 
   ! num2col(x) function
-  function krome_get_opacity(x)
+  function krome_get_opacity(x,Tgas)
     use krome_commons
     use krome_photo
     use krome_subs
     implicit none
-    real*8::x(:),tau,krome_get_opacity(nPhotoBins)
+    real*8::x(:),tau,krome_get_opacity(nPhotoBins),Tgas,n(nspec)
     integer::i,j
+
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
 
     !loop on frequency bins
     do j=1,nPhotoBins
@@ -434,7 +437,7 @@ contains
        !loop on species
        do i=1,nPhotoRea
           !calc opacity as column_density * cross_section
-          tau = tau + num2col(x(i)) * photoBinJTab(i,j)
+          tau = tau + num2col(x(i),n(:)) * photoBinJTab(i,j)
        end do
        krome_get_opacity(j) = tau !store
     end do

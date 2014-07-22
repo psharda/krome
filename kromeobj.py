@@ -111,6 +111,7 @@ class krome():
 	anytabsizes = [] #sizes of the tables
 	coolLevels = [] #levels employed for cooling, if empty uses all
 	physVariables = [] #list of the phys variables (list of [variable_name, default_value_string])
+	columnDensityMethod = "DEFAULT"
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
 	fdbase = "data/database/"
@@ -170,6 +171,9 @@ class krome():
 			for a given species.")
 		self.parser.add_argument("-clean", action="store_true", help="clean all in /build (including krome_user_commons.f90 that\
 			is normally kept by default) before creating new f90 files.")
+		self.parser.add_argument("-columnDensityMethod", metavar="method", help="use an alternative method to \
+			N=1.8e21*(n*1e-3)**(2./3.) for column density calculation (N) from number density (n). Option available JEANS,\
+			which employs Jeans length (l) as N=n*l.")
 		self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
 		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global\
 			neutrality. Works with some limitations, please read the manual.")
@@ -369,8 +373,9 @@ class krome():
 			[argv.append(x) for x in ["-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial_UV"
                 elif(args.test=="collapseUV_Xrays"):
-			[argv.append(x) for x in ["-cooling=H2,CIE,ATOMIC,DISS,HD,FF,COMPTON,CHEM", "-heating=COMPRESS,CHEM,XRAY"]]
+			[argv.append(x) for x in ["-cooling=H2,CIE,DISS,HD,FF,COMPTON,CHEM", "-heating=COMPRESS,CHEM,XRAY"]]
 			[argv.append(x) for x in ["-useN","-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
+			[argv.append(x) for x in ["-columnDensityMethod=JEANS"]]
 			filename = "networks/react_xrays"
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST,HD", "-heating=COMPRESS,CHEM"]]
@@ -399,7 +404,7 @@ class krome():
 			[argv.append(x) for x in ["-useThermoToggle"]]
 			filename = "networks/react_COthin"
 		else:
-			tests = ", ".join(os.walk('tests').next()[1])
+			tests = ", ".join(sorted(os.walk('tests').next()[1]))
 			print "ERROR: test \""+args.test+"\" not present!"
 			print "Available tests are: "+tests
 			sys.exit()
@@ -563,6 +568,13 @@ class krome():
 		if(args.useN):
 			self.useX = False
 			print "Reading option -useN"
+
+		#method for column density calculation
+		if(args.columnDensityMethod):
+			allMethods = ["JEANS"]
+			if(not(args.columnDensityMethod in allMethods)):
+				sys.exit("ERROR: method for -columnDensityMethod must be one of "+(",".join(allMethods)))
+			self.columnDensityMethod = args.columnDensityMethod
 
 		#use rate tables
 		if(args.useTabs):
@@ -1792,8 +1804,8 @@ class krome():
 			ivarcoe = len(self.coevars)
 			fake_ivarcoe = 0
 			fake_coevars = dict()
-			addVarCoe("ncolH","num2col(n(idx_H))",self.coevars)
-			addVarCoe("ncolHe","num2col(n(idx_He))",self.coevars)
+			addVarCoe("ncolH","num2col(n(idx_H),n(:))",self.coevars)
+			addVarCoe("ncolHe","num2col(n(idx_He),n(:))",self.coevars)
 			addVarCoe("logHe","log10(ncolHe)",self.coevars)
 			addVarCoe("logH","log10(ncolH)",self.coevars)
 			addVarCoe("xe","n(idx_e) / (get_Hnuclei(n(:)) + 1d-40)",self.coevars)
@@ -1811,7 +1823,8 @@ class krome():
 				addVarCoe("ratexH"," 1d1**user_xray_H",self.coevars)
 
 				xrayHFound = True
-				x.krate = "ratexH * (1d0+phiH) + n(idx_He)/(n(idx_H)+1d-40) * ratexHe * phiH"
+				autoRateXray = "ratexH * (1d0+phiH) + n(idx_He)/(n(idx_H)+1d-40) * ratexHe * phiH"
+				x.krate = x.krate.replace("auto",autoRateXray)
 				print "H xray ionization found!"
 
 				#heating tabs H
@@ -1826,14 +1839,14 @@ class krome():
 				mytabpath = "data/ratexHe.dat"
 				mytabxxyy = "logH,logHe-logH"
 
-
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
 					self.anytabsizes,self.coevars)
 
 				addVarCoe("phiHe",".0554d0*(1e0-xe**.4614)**1.666 * 180.793458763612d0",self.coevars)
 				addVarCoe("ratexHe"," 1d1**user_xray_He",self.coevars)
 
-				x.krate = "ratexHe * (1d0+phiHe) + n(idx_H)/(n(idx_He)+1d-40) * ratexH * phiHe"
+				autoRateXRay = "ratexHe * (1d0+phiHe) + n(idx_H)/(n(idx_He)+1d-40) * ratexH * phiHe"
+				x.krate = x.krate.replace("auto",autoRateXray)
 				xrayHeFound = True
 				print "He xray ionization found!"
 
@@ -4209,6 +4222,20 @@ class krome():
 					fout.write("if(arr_p"+str(i+1)+"(i) == idx_found) found = .true.\n") 
 			elif(srow == "#KROME_conserve"):
 				fout.write(krome_conserve+"\n")
+			elif(srow == "#KROME_col2num_method"):
+				if(self.columnDensityMethod=="DEFAULT"):
+					fout.write("col2num = 1d3 * (ncalc/1.8d21)**1.5\n")
+				elif(self.columnDensityMethod=="JEANS"):
+					fout.write("col2num = ncalc/get_jeans_length(n(:),Tgas)\n")
+				else:
+					sys.exit("ERROR: method "+self.columnDensityMethod+" unknown for col2num")
+			elif(srow == "#KROME_num2col_method"):
+				if(self.columnDensityMethod=="DEFAULT"):
+					fout.write("num2col = 1.8d21*(max(ncalc,1d-40)*1d-3)**(2./3.)\n")
+				elif(self.columnDensityMethod=="JEANS"):
+					fout.write("num2col = ncalc*get_jeans_length(n(:),Tgas)\n")
+				else:
+					sys.exit("ERROR: method "+self.columnDensityMethod+" unknown for num2col")
 			elif(srow == "#KROME_metallicity_functions"):
 				solar = get_solar_abundances() #get solar abundances
 				ffs = "" #metallicity functions
@@ -4833,7 +4860,7 @@ class krome():
 					row = row.replace("#KROME_H2opacity", "&\n* min(1.d0, max(1.25d-10 * sum(n(1:nmols)),1d-40)**(-.45))")
 				elif(self.H2opacity=="OMUKAI"):
 					#thick case using table provided by Omukai (priv. comm. 2014)
-					row = row.replace("#KROME_H2opacity", "&\n* H2opacity_omukai(Tgas, sum(n(1:nmols)))")
+					row = row.replace("#KROME_H2opacity", "&\n* H2opacity_omukai(Tgas, n(:))")
 				else:
 					#thin case
 					row = row.replace("#KROME_H2opacity", "") 

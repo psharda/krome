@@ -25,37 +25,37 @@ program test_krome
   real*8::x(krome_nmols),Tgas,dt,f(krome_nmols)
   real*8::ntot,rho,j21s(7),mass(krome_nspec)
   real*8::cool(12), heat(8)
-  
 
+
+  call krome_init()
   !preset J21 value for X-rays
-  user_krome_J21xr = 1.0d-2
+  call krome_set_user_J21x(1d-2)
+
   !preset J21 values for UV flux
   j21s = (/0.0d0, 1d-1, 5d0, 1d1, 2d1, 5d1, 1d2/)
   do j=1,size(j21s)
 
      !INITIAL CONDITIONS
-     krome_redshift = 15d0   !redshift
+     call krome_set_zredshift(15d0)
      ntot = 1.d-1            !total density in 1/cm3
      Tgas = 1.6d2            !temperature in kelvin
 
-     !INITIALIZE KROME PARAMETERS AND DUST 
-     krome_J21 = j21s(j) !common for J21
-     call krome_init()
+     !INITIALIZE KROME J21 parameter
+     call krome_set_user_J21(j21s(j))
 
      !species initialization in 1/cm3
      x(:) = 1.d-40
 
      x(KROME_idx_H)         = 0.9999*ntot    !H
      x(KROME_idx_H2)        = 2.0e-6*ntot    !H2
-     x(KROME_idx_E)         = 2.0e-3*ntot    !1.0e-4*ntot    !E
      x(KROME_idx_Hj)        = 2.0e-3*ntot    !1.0e-4*ntot    !H+
-     x(KROME_idx_HE)        = 0.0775*ntot    !He
-
+     x(KROME_idx_He)        = 0.0775*ntot    !He
+     x(KROME_idx_E) = krome_get_electrons(x(:))
 
      mass(:) = get_mass()
      dd = ntot
 
-     print *,"solving for J21=",krome_j21
+     print *,"solving for J21=",j21s(j)
      print '(a5,2a11)',"step","n(cm-3)","Tgas(K)"
 
      !loop over the hydro time-step

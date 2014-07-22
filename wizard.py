@@ -191,6 +191,11 @@ if(adv.strip()!=""):
 	fullcmd.append(ask("-useFileIdx", "n", "use the index found in the file (otherwise automatic)", "yn"))
 	fullcmd.append(ask("-noTlimits", "n", "do not use temeperature limits", "yn"))
 	fullcmd.append(ask("-mergeTlimits", "n", "reactions with same reactants and products use the same index", "yn"))
+	fullcmd.append(ask("-useTabs", "n", "use interpolated tables for the rate coefficents", "yn"))
+	fullcmd.append(ask("-reverse", "n", "create reverse reactions using NASA polynomials", "yn"))
+	fullcmd.append(ask("-listAutomatics", "n", "list all the automatic species (large output)", "yn"))
+	fullcmd.append(ask("-iRHS", "n", "implicit loop for reaction instead of explicit fex", "yn"))
+	fullcmd.append(ask("-usePlainIsotopes ", "n", "use kA format instead of [k]A format, e.g. 13CO instead of [13]CO", "yn"))
 
 
 adv = ask("-adv", "n","do you want to use advanced DEBUG options?","yn")
@@ -211,14 +216,6 @@ adv = ask("-adv", "n","do you want to use DUST options?","yn")
 if(adv.strip()!=""):
 	fullcmd.append(ask("-dust", "ignore", "set the number of dust bins and the type(s), e.g. 10,C,Si", "arg"))
 	fullcmd.append(ask("-dustOptions", 0, "include dust-related processes", "list",dustList,dustHelp))
-
-adv = ask("-adv", "n","do you want to use advanced NETWORK options?","yn")
-if(adv.strip()!=""):
-	fullcmd.append(ask("-useTabs", "n", "use interpolated tables for the rate coefficents", "yn"))
-	fullcmd.append(ask("-reverse", "n", "create reverse reactions using NASA polynomials", "yn"))
-	fullcmd.append(ask("-listAutomatics", "n", "list all the automatic species (large output)", "yn"))
-	fullcmd.append(ask("-iRHS", "n", "implicit loop for reaction instead of explicit fex", "yn"))
-	fullcmd.append(ask("-usePlainIsotopes ", "n", "use kA format instead of [k]A format, e.g. 13CO instead of [13]CO", "yn"))
 
 adv = ask("-adv", "n","do you want to use PHOTOCHEMISTRY options?","yn")
 if(adv.strip()!=""):

@@ -1,3 +1,4 @@
+#XRAY chemical network, see reactions 24 and 25
 @var: T = Tgas
 
 #UPDATED primordial rates, 2014
@@ -83,21 +84,23 @@
 22,H-,H+,,H2+,E,,,NONE,NONE,1.d-8*Tgas**(-0.4d0)
 
 #Photo-detachment from Wishart 1979, Shang 2010, T4 spectrum
-23,H-,,,H,E,,,NONE,NONE,2.d-7*krome_J21
+@common:user_J21
+23,H-,,,H,E,,,NONE,NONE,2.d-7*user_J21
 
 #Photoionization of H, He by Xrays, Shull+1985, Inayoshi+2012 
 @XRAY_start
 @format:idx,R,P,P,Tmin,Tmax,rate
-24,H,H+,E,NONE,NONE,auto
-25,He,He+,E,NONE,NONE,auto
+@common:user_J21x
+24,H,H+,E,NONE,NONE,auto*user_J21x
+25,He,He+,E,NONE,NONE,auto*user_J21x
 @XRAY_stop
 
 #H2 photodissociation, T4 spectrum
 @format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
-26,H2,,,H,H,,,1d1,1d8,3.d-12*krome_J21*krome_fshield(n,Tgas)
+26,H2,,,H,H,,,1d1,1d8,3.d-12*user_J21*krome_fshield(n,Tgas)
 
 #H2+ photodissociation on a different spectrum
-27,H2+,,,H+,H,,,NONE,NONE,1.58853d-10*krome_J21
+27,H2+,,,H+,H,,,NONE,NONE,1.58853d-10*user_J21
 
 # fit by Coppola et al. (2011) !NEW!
 29,H2+,E,,H,H,,,NONE,NONE,1.d6*(4.2278d-14-2.3088d-17*Tgas+7.3428d-21*Tgas**2-7.5474d-25*Tgas**3+3.3468d-29*Tgas**4-5.528d-34*Tgas**5)
