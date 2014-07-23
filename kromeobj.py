@@ -381,6 +381,10 @@ class krome():
 			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST,HD", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-dust=1,C","-dustOptions=H2"]]
 			filename = "networks/react_primordial"
+                elif(args.test=="earlyUniverse"):
+			[argv.append(x) for x in ["-cooling=H2GP98,COMPTON,EXPANSION"]]
+			[argv.append(x) for x in ["-useN","-useFileIdx"]]
+			filename = "networks/react_GP98"
 		elif(args.test=="stars"):
 			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck"]]
 			filename = "networks/react_star"
@@ -3982,8 +3986,9 @@ class krome():
 		constants.append(["N_avogadro","6.0221d23","#"]) 
 		constants.append(["Rgas_J","8.3144621d0","J/K/mol"]) 
 		constants.append(["Rgas_kJ","8.3144621d-3","kJ/K/mol"])
-		constants.append(["hubble","0.67d0","dimensionless"])
+		constants.append(["hubble","0.704d0","dimensionless"])
 		constants.append(["Omega0","1.0d0","dimensionless"])
+		constants.append(["Omegab","0.0456d0","dimensionless"])
 		constants.append(["Hubble0","1.d2*hubble*km_to_cm*cm_to_Mpc","1/s"])
 
 
