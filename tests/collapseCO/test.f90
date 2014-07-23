@@ -11,21 +11,21 @@ program test_krome
   use krome_user
   use krome_user_commons
   integer,parameter::rstep = 500000
-  integer::i,jz,imax(5)
+  integer::i,jz,imax(3)
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt
-  real*8::ntot,rho,zs(5)
+  real*8::ntot,rho,zs(3)
 
-  real*8::result(krome_nmols+3,10000,5)
+  real*8::result(krome_nmols+3,10000,size(zs))
 
   !INITIALIZE KROME PARAMETERS AND DUST 
   call krome_init()
 
-  zs = (/-99.d0, -4.d0, -3d0, -2d0, -1d0/) !list of metallicities
+  zs = (/-99.d0, -3d0, -1d0/) !list of metallicities
   !$omp parallel do schedule(dynamic,1) default(none) &
-  !$omp   private(jz,ntot,Tgas,x,dd,i,dd1,rho,tff,dt,dtH,deldd) &
-  !$omp   shared(zs,imax,result)
+  !$omp  private(jz,ntot,Tgas,x,dd,i,dd1,rho,tff,dt,dtH,deldd) &
+  !$omp  shared(zs,imax,result)
   do jz = 1,size(zs)
 
      !INITIAL CONDITIONS
@@ -76,7 +76,7 @@ program test_krome
         dt = dtH 
 
         if(dd.gt.1d18) exit !quit after 1e18 1/cm3
-        
+
         !local approximation for Av
         call krome_set_user_Av((dd*1d-3)**(2./3.))
 
@@ -85,7 +85,8 @@ program test_krome
 
         !dump Tgas and normalized abundances
         result(:,i,jz) = (/ zs(jz), dd, Tgas, x(:)/dd /)
-        if(mod(i,100)==0) print '(2I5,99E11.3)',jz,i,dd,Tgas !print every 100 steps
+        !print every 100 steps
+        if(mod(i,100)==0) print '(2I5,99E11.3)',jz,i,dd,Tgas
 
      end do
      imax(jz) = i - 1

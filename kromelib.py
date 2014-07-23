@@ -344,25 +344,43 @@ def get_heating_index_list():
 ####################################
 #solar metallicities
 def get_solar_abundances():
-	#solar abundances from Anders+Grevesse 1989
+	#solar abundances from Tab.1 in Asplund+2009
+	# following their definition
+	#  log10(epsilon) = log10(n/nH) + 12
+	# where n is the number densiity of the given element, 
+	# while nH is the number density of H
 	solar_abs = {
-		"Li":"2.046595d-9",
-		"C" :"3.620072d-4",
-		"N" :"1.121864d-4",
-		"O" :"8.530466d-4",
-		"F" :"3.021505d-8",
-		"Ne":"1.232975d-4",
-		"Na":"2.057348d-6",
-		"Mg":"3.849462d-5",
-		"Al":"3.043011d-6",
-		"Si":"3.584229d-5",
-		"P" :"3.727599d-7",
-		"S" :"1.845878d-5",
-		"Cl":"1.878136d-7",
-		"Ca":"2.189964d-6",
-		"Fe":"3.225806d-5"
+		"D":12.00e0,
+		"He":10.93e0,
+		"Li":1.05e0,
+		"Be":1.38e0,
+		"B":2.70e0,
+		"C":8.43e0,
+		"N":7.83e0,
+		"O":8.69e0,
+		"F":4.56e0,
+		"Ne":7.93e0,
+		"Na":6.24e0,
+		"Mg":7.60e0,
+		"Al":6.45e0,
+		"Si":7.51e0,
+		"P":5.41e0,
+		"S":7.12e0,
+		"Cl":5.50e0,
+		"Ar":6.40e0,
+		"K":5.03e0,
+		"Ca":6.34e0,
+		"Ti":4.95e0,
+		"Mn":5.43e0,
+		"Fe":7.50e0,
+		"Ni":6.22e0
 		}
-	return solar_abs
+
+	solar_out = dict()
+	for k,v in solar_abs.iteritems():
+		solar_out[k] = str(1e1**(v-12e0))
+
+	return solar_out
 
 
 
