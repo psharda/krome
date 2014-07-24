@@ -64,7 +64,7 @@ program test_krome
      if(redshift>2.243d3)then
         u = 1d1**(20.99d0 - log10(krome_Omegab * krome_hubble**2 &
              * (1d0 + redshift)**1.5) &
-             - 2.5050d4 / (10 + redshift))
+             - 2.5050d4 / (1d0 + redshift))
         x(krome_idx_H) = 0.924*dd / (2d0+u)
         x(krome_idx_D) = 4.3d-5*dd / (2d0+u)
      endif
