@@ -107,6 +107,59 @@ contains
 
   end function conserve
 
+
+  !***************************
+  !Ref: Sasaki & Takahara (1993)
+  !This function evaluate the recombination rate
+  ! for H+ + e --> H + gamma and the same
+  ! for D+ + e --> D + gamma
+  function elec_recomb_ST93(nabund,nelec,ntot,nucleiH)
+    use krome_commons
+    use krome_constants
+    implicit none
+    real*8::nabund,nelec
+    real*8::nucleiH,elec_recomb_ST93
+    real*8::al,ak,rc2,r2c  
+    real*8::a0,b0,c0,d0,e0
+    real*8::a1,b1,c1,d1,e1,f1,g1,h1
+    real*8::ntot,ratio
+
+    al = 8.227d0
+    ak = 22.06d0 / (hubble  *(1d0 + phys_zredshift) &
+         * sqrt(1d0 + Omega0 * phys_zredshift))
+    !Rc2 evaluation
+    rc2 = 8.76d-11 * (1d0 + phys_zredshift)**(-0.58)
+    !R2c evaluation
+    r2c = (1.80d10 * user_Trad)**(1.5) &
+         * exp(-3.9472d4 / user_Trad) * rc2
+
+    !coefficients
+    a0 = nucleiH * rc2
+    b0 = ak * al * nucleiH
+    c0 = ak * rc2 * nucleiH * nucleiH
+    d0 = r2c * exp(-1.18416d5/user_Trad)
+    e0 = ak * r2c * nucleiH
+
+    !polynomial terms
+    a1 = -d0 * (1d0 + b0)
+    b1 = d0 * (1d0 + 2d0 * b0)
+    c1 = a0 + b0 * (a0 - d0)
+    d1 = -a0 * b0
+    e1 = a0 * c0
+    f1 = 1d0 + b0 + e0
+    g1 = -(b0 + e0)
+    h1 = c0
+
+    ratio = nabund / ntot
+
+    elec_recomb_ST93 = ntot*(a1 + b1*ratio + c1*ratio**2 + d1*ratio**3 &
+         + e1*ratio**4) / (f1 + g1*ratio + h1*ratio**2)
+
+    elec_recomb_ST93 = elec_recomb_ST93 / (nabund * nelec)
+
+  end function elec_recomb_ST93
+  
+
   !***************************
   !number density to column density conversion
   function num2col(ncalc,n)

@@ -111,6 +111,7 @@ class krome():
 	anytabsizes = [] #sizes of the tables
 	coolLevels = [] #levels employed for cooling, if empty uses all
 	physVariables = [] #list of the phys variables (list of [variable_name, default_value_string])
+	kModifier = [] #modifier lines that will be appended after the rate calculation 
 	columnDensityMethod = "DEFAULT"
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
@@ -1215,6 +1216,11 @@ class krome():
 						print "ERROR: variable line must be @var:variable=F90_expression"
 						print "found: "+srow
 						sys.exit()
+					#check if the current @var is allowed
+					notAllowedVars = ["k","tgas","energy_ev"]
+					for nav in notAllowedVars:
+						if(nav.lower()==arow[0].lower()):
+							sys.exit("ERROR: you can't use "+nav+" as an @var variable")
 					print "var: "+arow[0]
 					self.coevarsODE[arow[0]] = [ivarcoe,arow[1]]
 					ivarcoe += 1 #count variables to sort
@@ -1403,6 +1409,7 @@ class krome():
 		inCRblock = False #block of CR reactions
 		inPhotoBlock = False #block of photo reactions with xsection function
 		inXRayBlock = False #block of xray reactions
+		inModifierBlock = False #block of modifier expression for the computed coefficients
 		noTabBlockStored = noTabNextBlock #store the noTabNextBlock array before inPhotoBlock to restore it
 
 		#read the size of the file in lines (skip blank and comments)
@@ -1438,6 +1445,20 @@ class krome():
 				continue
 			if(isComment): continue #skip if in comment block
 
+
+			#search for final expression to modify the coefficients (stop)
+			if(srow.lower()=="@modifier_stop" or srow.lower()=="@modifier_end"):
+				inModifierBlock = False
+				continue #SKIP (not a reaction)
+
+			#store coefficient modifier
+			if(inModifierBlock):
+				if("@" in srow):
+					print srow
+					sys.exit("ERROR: @ expressions are not allowed inside the @modifier block!")
+				self.kModifier.append(srow)
+				continue #skip: modifier line is not a reaction
+
 			#search for group indication
 			if("@group:" in srow):
 				group = srow.replace("group:","").strip().replace(" ","_")
@@ -1453,12 +1474,17 @@ class krome():
 					print "ERROR: variable line must be @var:variable=F90_expression"
 					print "found: "+srow
 					sys.exit()
+				#check if the current @var is allowed
+				notAllowedVars = ["k","tgas","energy_ev"]
+				for nav in notAllowedVars:
+					if(nav.lower()==arow[0].lower()):
+						sys.exit("ERROR: you can't use "+nav+" as an @var variable")
+
 				if(arow[0] in self.coevars): continue #skip already found variables
 				self.coevars[arow[0]] = [ivarcoe,arow[1]]
 				ivarcoe += 1 #count variables to sort
 				continue #SKIP: a variable line is not a reaction line
 
-		
 			#search for common variables
 			if("@common:" in srow):
 				arow = srow.replace("@common:","").split(",")
@@ -1609,7 +1635,11 @@ class krome():
 				inXRayBlock = False
 				noTabNext = noTabNextBlock = noTabBlockStored #restore the noTabNextBlock value before entering inXRayBlock
 				continue #SKIP (not a reaction)
-			
+
+			#search for final expression to modify the coefficients (start)
+			if(srow.lower()=="@modifier_start" or srow.lower()=="@modifier_begin"):
+				inModifierBlock = True
+				continue #SKIP (not a reaction)
 
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
 			arow = [x.strip() for x in arow] #strip single elements
@@ -4565,6 +4595,26 @@ class krome():
 				klist = sorted(klist, key=lambda x: x[1])
 				klist = "".join([x[0] for x in klist])
 
+		#prepares the reaction modifiers
+		#tokenize to replace k(:) with coe_tab(:)
+		import tokenize,cStringIO
+		kModifierFull = "" #string that will contans all the lines of the rate modifier
+		for kmod in self.kModifier:
+			#string to tokenizable object
+			src = cStringIO.StringIO(kmod).readline
+			#tokenize
+			tokenized = tokenize.generate_tokens(src)
+			kmodTok = "" #string with the k->coe_tab replaced
+			for tok in tokenized:
+				if(tok[1]=="k"): 
+					kmodTok += "coe_tab"
+				else:
+					kmodTok += tok[1]
+			#comments are not tokenized
+			if(kmod[0]=="!"): kmodTok = kmod
+			#append the correct string
+			kModifierFull += kmodTok+"\n"
+
 
 		#replace pragmas
 		skip = False
@@ -4584,6 +4634,7 @@ class krome():
 			row = row.replace("#KROME_define_vars",kvars)
 			row = row.replace("#KROME_init_vars",klist)
 			row = row.replace("#KROME_noTabReactions",noTabReactions)
+			row = row.replace("#KROME_rateModifier", kModifierFull)
 
 			if(row.strip() == "#KROME_Tshortcuts"):
 				ssc = ""

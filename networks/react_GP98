@@ -1,14 +1,33 @@
 #**************************************
 #GP98 rates
 #Format: idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
+#note that this network requires -useFileIdx, since 
+# there are reactions that depend on others rates.
 #**************************************
+#this common variable allows to set the Trad
+@common:user_Trad
+
+#this modifier block allow to change the reaction rates after their calculation.
+# it can be anywhere in this file, but KROME will put it after the rate calculation.
+# feel free to add any fortran expression (including comments)
+@modifier_start
+ !stop reactions with He at higher redshift.
+ !phys_zredshit is the internal name for redshift
+ !k is the rate array, where the number corresponds to the index
+ ! note that in this case using -useFileIdx is definitely safer.
+ if(phys_zredshift>2.243d3) then
+   k(1:22) = 0d0
+   k(39:62) = 0d0
+ end if
+@modifier_stop
+
 #--------------------------------------
 #Hydrogen
 #--------------------------------------
-#H1
+#H1, employing Sasaki & Takahara 1993, already embedded in KROME
 @var:nucleiH = get_Hnuclei(n)
 @var:ntotH = nucleiH
-1,H+,E,,H,,,,NONE,NONE,elec_recomb(n(idx_Hj),n(idx_E),ntotH,nucleiH)
+1,H+,E,,H,,,,NONE,NONE,elec_recomb_ST93(n(idx_Hj), n(idx_E), ntotH, nucleiH)
 
 #H3
 2,H,E,,H-,,,,NONE,NONE,1.4d-18*Tgas**(0.928d0)*exp(-Tgas/16200.d0)
@@ -117,9 +136,9 @@
 #--------------------------------------
 #Deuterium
 #--------------------------------------
-#D1
+#D1, see comment of H1
 @var:ntotD = ntotH*4.3d-5/0.924d0
-39,D+,E,,D,,,,NONE,NONE,elec_recomb(n(idx_Dj),n(idx_E),ntotD,nucleiH)
+39,D+,E,,D,,,,NONE,NONE,elec_recomb_ST93(n(idx_Dj),n(idx_E),ntotD,nucleiH)
 
 #D2
 #41,D,g,,D+,E,,,NONE,NONE,k(40)
