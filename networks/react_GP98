@@ -17,7 +17,7 @@
  ! note that in this case using -useFileIdx is definitely safer.
  if(phys_zredshift>2.243d3) then
    k(1:22) = 0d0
-   k(39:62) = 0d0
+   k(27:62) = 0d0
  end if
 @modifier_stop
 
