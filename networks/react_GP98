@@ -1,0 +1,212 @@
+#**************************************
+#GP98 rates
+#Format: idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
+#note that this network requires -useFileIdx, since 
+# there are reactions that depend on others rates.
+#**************************************
+#this common variable allows to set the Trad
+@common:user_Trad
+
+#this modifier block allow to change the reaction rates after their calculation.
+# it can be anywhere in this file, but KROME will put it after the rate calculation.
+# feel free to add any fortran expression (including comments)
+@modifier_start
+ !stop reactions with He at higher redshift.
+ !phys_zredshit is the internal name for redshift
+ !k is the rate array, where the number corresponds to the index
+ ! note that in this case using -useFileIdx is definitely safer.
+ if(phys_zredshift>2.243d3) then
+   k(1:22) = 0d0
+   k(39:62) = 0d0
+ end if
+@modifier_stop
+
+#--------------------------------------
+#Hydrogen
+#--------------------------------------
+#H1, employing Sasaki & Takahara 1993, already embedded in KROME
+@var:nucleiH = get_Hnuclei(n)
+@var:ntotH = nucleiH
+1,H+,E,,H,,,,NONE,NONE,elec_recomb_ST93(n(idx_Hj), n(idx_E), ntotH, nucleiH)
+
+#H3
+2,H,E,,H-,,,,NONE,NONE,1.4d-18*Tgas**(0.928d0)*exp(-Tgas/16200.d0)
+
+#H4
+3,H-,g,,H,E,,,NONE,NONE,1.1d-1*user_Trad**(2.13)*exp(-8823.d0/user_Trad)
+
+#H5
+4,H-,H,,H2,E,,,NONE,.LT.300.d0,1.5d-9
+5,H-,H,,H2,E,,,.GE.300.d0,1.d8,4.d-9*Tgas**(-0.17)
+
+#H6
+6,H-,H+,,H2+,E,,,NONE,.LE.8000.d0,6.9d-9*Tgas**(-0.35)
+7,H-,H+,,H2+,E,,,>8000.d0,1.d8,9.6d-7*Tgas**(-0.9)
+
+#H7
+8,H-,H+,,H,H,,,NONE,NONE,5.7d-6*Tgas**(-0.5d0)+6.3d-8-9.2d-11*Tgas**(0.5d0)+4.4d-13*Tgas
+
+#H8
+9,H,H+,,H2+,,,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
+
+#H9
+10,H2+,g,,H,H+,,,NONE,NONE,1.63d7*exp(-3.2400d4/user_Trad)
+
+#H10
+11,H2+,H,,H2,H+,,,NONE,NONE,6.4d-10
+
+#H11
+12,H2+,E,,H,H,,,NONE,NONE,2.0d-7*Tgas**(-0.5d0)
+
+#H12 
+13,H2+,g,,H+,H+,E,,NONE,NONE,9.0d1*user_Trad**(1.48d0)*exp(-3.35000d5/user_Trad)
+
+#H13
+14,H2+,H2,,H3+,H,,,NONE,NONE,2.d-9
+
+#H15
+15,H2,H+,,H2+,H,,,NONE,.LE.1.d4,3.0d-10*exp(-2.1050d4*invTgas)
+16,H2,H+,,H2+,H,,,>1.d4,NONE,1.5d-10*exp(-1.4000d4*invTgas)
+
+#H16
+17,H2,E,,H,H-,,,NONE,NONE,2.7d-8*Tgas**(-1.27d0)*exp(-4.3000d4*invTgas)
+
+#H17
+18,H2,E,,H,H,E,,NONE,NONE,4.4d-10*Tgas**(0.35d0)*exp(-1.02000d5*invTgas)
+
+#H18
+19,H2,g,,H2+,E,,,NONE,NONE,2.9d2*user_Trad**(1.56d0)*exp(-1.78500d5/user_Trad)
+
+#H19
+20,H3+,H,,H2+,H2,,,NONE,NONE,7.7d-9*exp(-1.7560d4*invTgas)
+
+#H20
+21,H3+,E,,H2,H,,,2.73d0,NONE,4.6d-6*Tgas**(-0.65d0)
+
+#H21
+22,H2,H+,,H3+,,,,2.73d0,NONE,1.d-16
+
+#--------------------------------------
+#Helium
+#--------------------------------------
+#He1
+23,HE++,E,,HE+,,,,NONE,NONE,1.891d-10*(sqrt(Tgas/9.37d0)*(1.d0+sqrt(Tgas/9.37d0))**(0.2476d0)*(1.d0+sqrt(Tgas/2.774d6))**(1.7524d0))**(-1.d0)
+
+#He2
+24,HE+,g,,HE++,E,,,NONE,NONE,if(user_Trad.gt.1d3): 5.0d1*user_Trad**(1.63d0)*exp(-5.9d5/user_Trad)
+
+#He3
+25,HE+,E,,HE,,,,NONE,NONE,3.294d-11*(sqrt(Tgas/15.54d0)*(1.d0+sqrt(Tgas/15.54d0))**(0.309d0)*(1.d0+sqrt(Tgas/3.676d7))**(1.691d0))**(-1.d0)
+
+#He4
+26,HE,g,,HE+,E,,,NONE,NONE,if(user_Trad.gt.1d3): 1.0d4*user_Trad**(1.23d0)*exp(-2.8d5/user_Trad)
+
+#He5
+27,HE,H+,,HE+,H,,,.GE.1.d4,NONE,4.0d-37*Tgas**(4.74d0)
+
+#He6
+28,HE+,H,,HE,H+,,,.GE.6.d3,NONE,3.7d-25*Tgas**(2.06d0)*(1.d0+9.9d0*exp(-Tgas/2.570d3))
+
+#He8
+29,HE,H+,,HEH+,,,,2.73d0,.LE.1.d3,7.6d-18*Tgas**(-0.5d0) + 5.d-21
+30,HE,H+,,HEH+,,,,>1.d3,NONE,3.45d-16*Tgas**(-1.06) + 5.d-21
+
+#He9 TBC
+31,HE,H2+,,HEH+,H,,,NONE,NONE,3.0d-10*exp(-6.717d3*invTgas)
+
+#He10
+32,HE+,H,,HEH+,,,,NONE,.LT.4.d3,1.6d-14*Tgas**(-0.33d0)
+33,HE+,H,,HEH+,,,,.GE.4.d3,NONE,1.d-15
+
+#He11
+34,HEH+,H,,HE,H2+,,,NONE,NONE,9.1d-10
+
+#He12
+35,HEH+,E,,HE,H,,,NONE,NONE,1.7d-7*Tgas**(-0.5d0)
+
+#He13
+36,HEH+,H2,,H3+,HE,,,NONE,NONE,1.3d-9
+
+#He14
+37,HEH+,g,,HE,H+,,,NONE,NONE,6.8d-1*user_Trad**(1.5d0)*exp(-2.2750d4/user_Trad)
+
+#He15
+38,HEH+,g,,HE+,H,,,NONE,NONE,7.8d3*user_Trad**(1.2d0)*exp(-2.4d5/user_Trad)
+
+#--------------------------------------
+#Deuterium
+#--------------------------------------
+#D1, see comment of H1
+@var:ntotD = ntotH*4.3d-5/0.924d0
+39,D+,E,,D,,,,NONE,NONE,elec_recomb_ST93(n(idx_Dj),n(idx_E),ntotD,nucleiH)
+
+#D2
+#41,D,g,,D+,E,,,NONE,NONE,k(40)
+
+#D3
+40,D,H+,,D+,H,,,NONE,NONE,3.7d-10*Tgas**(0.28d0)*exp(-43.d0*invTgas)
+
+#D4
+41,D+,H,,D,H+,,,NONE,NONE,3.7d-10*Tgas**(0.28d0)
+
+#D5
+42,D,H,,HD,,,,NONE,NONE,1.d-25
+
+#D6
+43,D,H2,,H,HD,,,.GE.250.d0,NONE,9.0d-11*exp(-3.876d3*invTgas)
+
+#D7
+44,HD+,H,,H+,HD,,,NONE,NONE,6.4d-10
+
+#D8
+45,D+,H2,,H+,HD,,,NONE,NONE,2.1d-9
+
+#D9
+46,HD,H,,H2,D,,,.GE.2.d2,NONE,3.2d-11*exp(-3.624d3*invTgas)
+
+#D10
+47,HD,H+,,H2,D+,,,NONE,NONE,1.0d-9*exp(-4.64d2*invTgas)
+
+#D11 TBC
+48,HD,H3+,,H2,H2D+,,,NONE,NONE,(2.1d0-0.4d0*log10(Tgas))*1.d-9
+
+#D12
+49,D,H+,,HD+,,,,NONE,NONE,k(9)
+
+#D13
+50,D+,H,,HD+,,,,NONE,NONE,k(49)
+
+#D14
+51,HD+,g,,H,D+,,,NONE,NONE,k(10)
+
+#D15
+52,HD+,g,,H+,D,,,NONE,NONE,k(10)
+
+#D16
+53,HD+,E,,H,D,,,NONE,NONE,7.2d-8*Tgas**(-0.5d0)
+
+#D17
+54,HD+,H2,,H2D+,H,,,NONE,NONE,2.d-9
+
+#D18
+55,HD+,H2,,H3+,D,,,NONE,NONE,2.d-9
+
+#D19
+56,D,H3+,,H2D+,H,,,NONE,NONE,1.d-9
+
+#D20
+57,H2D+,E,,H,H,D,,NONE,NONE,1.0d-6*Tgas**(-0.5d0)*0.73
+
+#D21
+58,H2D+,E,,H2,D,,,NONE,NONE,1.0d-6*Tgas**(-0.5d0)*0.07
+
+#D22
+59,H2D+,E,,HD,H,,,NONE,NONE,1.0d-6*Tgas**(-0.5d0)*0.20
+
+#D23
+60,H2D+,H2,,H3+,HD,,,NONE,.LE.1.d2,4.7d-9*exp(-2.15d2*invTgas)
+61,H2D+,H2,,H3+,HD,,,>1.d2,NONE,5.5d-10
+
+#D24
+62,H2D+,H,,H3+,D,,,NONE,NONE,1.0d-9*exp(-5.98d2*invTgas)
+

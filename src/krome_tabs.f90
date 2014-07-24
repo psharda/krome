@@ -150,7 +150,7 @@ contains
     idx = (log10(Tgas)-ktab_logTlow) * inv_ktab_idx + 1
     idx = max(idx,1)
     idx = min(idx,ktab_n-1)
-    coe_tab(:) = 0.d0
+    coe_tab(:) = 0d0
     do j=1,nrea
        coe_tab(j) = (Tgas-ktab_T(idx)) * inv_ktab_T(idx) *&
             (ktab(j,idx+1)-ktab(j,idx)) + ktab(j,idx)
@@ -158,6 +158,8 @@ contains
 
     #KROME_noTabReactions
 #ENDIFKROME
+
+#KROME_rateModifier
 
   end function coe_tab
 
