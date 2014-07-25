@@ -5316,6 +5316,7 @@ class krome():
 				if(len(coevarsODE)==0): continue
 				kvars = "real*8::"+(",".join([x for x in coevarsODE.keys()]))
 				fout.write(kvars+"\n")
+
 			elif(srow == "#KROME_coevars"):
 				if(len(coevarsODE)==0): continue
 				klist = [[k+" = "+v[1]+"\n",v[0]] for k,v in coevarsODE.iteritems()] #this mess is to sort dict
@@ -5328,24 +5329,30 @@ class krome():
 				for dType in dustTypes:
 					dustSumVar.append("dSumDust"+dType)
 				fout.write("\t real*8::" + (",".join(dustSumVar)) + "\n")
+
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
+
 			elif(srow == "#KROME_implicit_variables"):
 				fout.write("real*8::rr\n")
 				ris = (",".join(["r"+str(i+1) for i in range(self.maxnreag)]))
 				pis = (",".join(["p"+str(i+1) for i in range(self.maxnprod)]))
 				rpis = ",".join([x for x in ["i",ris,pis] if(len(x)>0)])
 				fout.write("integer::"+rpis+"\n")
+
 			elif(srow == "#KROME_report_flux"):
 				report_flux = ("*".join(["n(arr_r"+str(j+1)+"(i))" for j in range(self.maxnreag)]))
 		 		fout.write("write(fnum,'(I5,E12.3e3,a2,a50)') i,k(i)*"+report_flux+",'',rnames(i)\n")
 
 			elif(srow == "#KROME_odeConstant" and self.useODEConstant):
 				fout.write("dn(:) = dn(:) "+self.ODEConstant+" \n") #add the string contains an ODE expression
+
 			elif(srow == "#KROME_odeDust"):
 				fout.write("dn(:) =  krome_dust \n")
+
 			elif(srow == "#KROME_dust_H2"):
 				fout.write(dustH2+"\n")
+
 			elif(srow == "#KROME_JAC_PDX"):
 				if(not(self.doJacobian)): continue
 				spdj = ""

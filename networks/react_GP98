@@ -37,7 +37,7 @@
 #H1, employing Sasaki & Takahara 1993, already embedded in KROME
 @var:nucleiH = get_Hnuclei(n)
 @var:ntotH = nucleiH
-1,H+,E,,H,,,,NONE,NONE,elec_recomb_ST93(n(idx_Hj), n(idx_E), ntotH, nucleiH)
+1,H+,E,,H,,,,NONE,NONE,elec_recomb_ST93(n(idx_Hj), n(idx_E), ntotH, nucleiH, user_Trad)
 
 #H3
 2,H,E,,H-,,,,NONE,NONE,1.4d-18*Tgas**(0.928d0)*exp(-Tgas/16200.d0)
@@ -148,7 +148,7 @@
 #--------------------------------------
 #D1, see comment of H1
 @var:ntotD = ntotH*4.3d-5/0.924d0
-39,D+,E,,D,,,,NONE,NONE,elec_recomb_ST93(n(idx_Dj),n(idx_E),ntotD,nucleiH)
+39,D+,E,,D,,,,NONE,NONE,elec_recomb_ST93(n(idx_Dj), n(idx_E), ntotD, nucleiH, user_Trad)
 
 #D2
 #41,D,g,,D+,E,,,NONE,NONE,k(40)

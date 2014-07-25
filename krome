@@ -56,8 +56,6 @@ krome = krome()
 #check prerequisites
 krome.checkPrereq()
 
-#prepares mass an species dictionaries
-krome.prepare_massdict()
 
 #read thermochemistry data from file
 krome.load_thermochemistry()
@@ -70,6 +68,9 @@ krome.select_test(argv)
 
 #read argv options
 krome.argparsing(argv)
+
+#prepares mass an species dictionaries
+krome.prepare_massdict()
 
 #check if build folder is empty
 krome.safe_check()
