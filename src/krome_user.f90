@@ -87,22 +87,6 @@ contains
   end subroutine krome_calc_photobins
 
   !****************************
-  ! set the frequency per photo bin
-  ! eV
-  subroutine krome_set_photobinJ(phbin)
-    use krome_commons
-    use krome_photo
-    implicit none
-    real*8::phbin(:)
-    photoBinJ(:) = phbin(:)
-    
-    !compute rates
-    call calc_photobins()
-
-  end subroutine krome_set_photobinJ
-
-
-  !****************************
   ! set the energy per photo bin
   ! erg/s/cm2/sr/Hz
   subroutine krome_set_photoBinJ(phbin)

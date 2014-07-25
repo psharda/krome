@@ -15,32 +15,29 @@ program test
   call krome_init()
 
   !read second line as initial conditions (first line header)
-  open(33,file="chemistry.dat",status="old")
+  open(33,file="chem.dat",status="old")
   read(33,*) !skip header
   x(:) = 0.d0 !default abundances
   read(33,*) datar(:) !read file line
-  x(krome_idx_H) = datar(3)
-  x(krome_idx_3He) = datar(5)
-  x(krome_idx_4He) = datar(6)
-  x(krome_idx_12C) = datar(7)
-  x(krome_idx_14N) = datar(8)
-  x(krome_idx_16O) = datar(9)
-  x(krome_idx_6Li) = datar(11)
-  x(krome_idx_7Li) = datar(12)
-  x(krome_idx_9Be) = datar(13)
-  x(krome_idx_11B) = datar(14)
+  x(krome_idx_H) = datar(2)
+  !x(krome_idx_H2) = datar(3)
+  x(krome_idx_3He) = datar(4)
+  x(krome_idx_4He) = datar(5)
+  x(krome_idx_12C) = datar(6)
+  x(krome_idx_14N) = datar(7)
+  x(krome_idx_16O) = datar(8)
   close(33)
 
   print *,"running..."
   tt = 0d0 !absolute time (s)
-  open(44,file="phy_params.dat",status="old")
+  open(44,file="physcond.dat",status="old")
   read(44,*) !skip header
   do
      read(44,*,iostat=ios) datar2(:)
      if(ios.ne.0) exit
-     Tgas = 1d1**datar2(5)
-     rho = 1d1**datar2(7)
-     dtin = (1d1**datar2(2))*krome_seconds_per_year - tt
+     Tgas = 1d1**datar2(2)
+     rho = 1d1**datar2(3)
+     dtin = (1d1**datar2(1))*krome_seconds_per_year - tt
      call krome(x(:), rho, Tgas, dtin)
      write(66,'(99E17.8e3)') tt/krome_seconds_per_year, rho, x(:)
      tt = tt + dtin

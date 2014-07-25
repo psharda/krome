@@ -141,11 +141,11 @@ contains
   !This function evaluate the recombination rate
   ! for H+ + e --> H + gamma and the same
   ! for D+ + e --> D + gamma
-  function elec_recomb_ST93(nabund,nelec,ntot,nucleiH)
+  function elec_recomb_ST93(nabund,nelec,ntot,nucleiH,Trad)
     use krome_commons
     use krome_constants
     implicit none
-    real*8::nabund,nelec
+    real*8::nabund,nelec,Trad
     real*8::nucleiH,elec_recomb_ST93
     real*8::al,ak,rc2,r2c  
     real*8::a0,b0,c0,d0,e0
@@ -158,14 +158,14 @@ contains
     !Rc2 evaluation
     rc2 = 8.76d-11 * (1d0 + phys_zredshift)**(-0.58)
     !R2c evaluation
-    r2c = (1.80d10 * user_Trad)**(1.5) &
-         * exp(-3.9472d4 / user_Trad) * rc2
+    r2c = (1.80d10 * Trad)**(1.5) &
+         * exp(-3.9472d4 / Trad) * rc2
 
     !coefficients
     a0 = nucleiH * rc2
     b0 = ak * al * nucleiH
     c0 = ak * rc2 * nucleiH * nucleiH
-    d0 = r2c * exp(-1.18416d5/user_Trad)
+    d0 = r2c * exp(-1.18416d5/Trad)
     e0 = ak * r2c * nucleiH
 
     !polynomial terms
