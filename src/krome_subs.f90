@@ -59,6 +59,34 @@ contains
     
   end function planckBB
 
+  !****************************
+  !tanh smoothing function that 
+  ! increses when xarg increases.
+  ! xpos is the position of the transition point.
+  ! slope is the steepness of the curve.
+  function smooth_increase(xarg,xpos,slope)
+    implicit none
+    real*8::smooth_increase,xarg,xpos,slope
+    
+    smooth_increase = .5d0 * (tanh(slope * (xarg - xpos)) &
+         + 1d0)
+    
+  end function smooth_increase
+
+  !****************************
+  !tanh smoothing function that 
+  ! decreses when xarg increases.
+  ! xpos is the position of the transition point.
+  ! slope is the steepness of the curve.
+  function smooth_decrease(xarg,xpos,slope)
+    implicit none
+    real*8::smooth_decrease,xarg,xpos,slope
+    
+    smooth_decrease = .5d0 * (tanh(-slope * (xarg - xpos)) &
+         + 1d0)
+    
+  end function smooth_decrease
+
   !*********************
   !sign: return 1d0 if x>=0d0, 
   ! else return -1d0

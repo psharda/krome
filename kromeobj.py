@@ -111,7 +111,8 @@ class krome():
 	anytabsizes = [] #sizes of the tables
 	coolLevels = [] #levels employed for cooling, if empty uses all
 	physVariables = [] #list of the phys variables (list of [variable_name, default_value_string])
-	kModifier = [] #modifier lines that will be appended after the rate calculation 
+	kModifier = [] #modifier lines that will be appended after the rate calculation
+	odeModifier = [] #modifier lines that will be appended after the ODE calculation
 	columnDensityMethod = "DEFAULT"
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
@@ -1409,7 +1410,8 @@ class krome():
 		inCRblock = False #block of CR reactions
 		inPhotoBlock = False #block of photo reactions with xsection function
 		inXRayBlock = False #block of xray reactions
-		inModifierBlock = False #block of modifier expression for the computed coefficients
+		inReactionModifierBlock = False #block of modifier expression for the computed coefficients
+		inOdeModifierBlock = False #block of modifier expression for the ODE dn/dT
 		noTabBlockStored = noTabNextBlock #store the noTabNextBlock array before inPhotoBlock to restore it
 
 		#read the size of the file in lines (skip blank and comments)
@@ -1447,17 +1449,31 @@ class krome():
 
 
 			#search for final expression to modify the coefficients (stop)
-			if(srow.lower()=="@modifier_stop" or srow.lower()=="@modifier_end"):
-				inModifierBlock = False
+			if(srow.lower()=="@reactionmodifier_stop" or srow.lower()=="@reactionmodifier_end"):
+				inReactionModifierBlock = False
+				continue #SKIP (not a reaction)
+
+			#search for final expression to modify the ODE (stop)
+			if(srow.lower()=="@odemodifier_stop" or srow.lower()=="@odemodifier_end"):
+				inOdeModifierBlock = False
 				continue #SKIP (not a reaction)
 
 			#store coefficient modifier
-			if(inModifierBlock):
+			if(inReactionModifierBlock):
 				if("@" in srow):
 					print srow
-					sys.exit("ERROR: @ expressions are not allowed inside the @modifier block!")
+					sys.exit("ERROR: @ expressions are not allowed inside the @reactionModifier block!")
 				self.kModifier.append(srow)
 				continue #skip: modifier line is not a reaction
+
+			#store ode modifier
+			if(inOdeModifierBlock):
+				if("@" in srow):
+					print srow
+					sys.exit("ERROR: @ expressions are not allowed inside the @ODEModifier block!")
+				self.odeModifier.append(srow)
+				continue #skip: modifier line is not a reaction
+
 
 			#search for group indication
 			if("@group:" in srow):
@@ -1637,8 +1653,13 @@ class krome():
 				continue #SKIP (not a reaction)
 
 			#search for final expression to modify the coefficients (start)
-			if(srow.lower()=="@modifier_start" or srow.lower()=="@modifier_begin"):
-				inModifierBlock = True
+			if(srow.lower()=="@reactionmodifier_start" or srow.lower()=="@reactionmodifier_begin"):
+				inReactionModifierBlock = True
+				continue #SKIP (not a reaction)
+
+			#search for final expression to modify the coefficients (start)
+			if(srow.lower()=="@odemodifier_start" or srow.lower()=="@odemodifier_begin"):
+				inOdeModifierBlock = True
 				continue #SKIP (not a reaction)
 
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
@@ -4606,7 +4627,7 @@ class krome():
 			tokenized = tokenize.generate_tokens(src)
 			kmodTok = "" #string with the k->coe_tab replaced
 			for tok in tokenized:
-				if(tok[1]=="k"): 
+				if(tok[1]=="k"):
 					kmodTok += "coe_tab"
 				else:
 					kmodTok += tok[1]
@@ -5283,6 +5304,13 @@ class krome():
 					getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+", n(:))\n"
 					getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")
 				fout.write(getTdust+"\n")
+
+			elif(srow == "#KROME_ODEModifier"):
+				#write the ODE modifiers
+				odeModifierFull = "" #string that will contans all the lines of the ode modifier
+				for kmod in self.odeModifier:
+					#append the correct string
+					fout.write(kmod+"\n")
 
 			elif(srow == "#KROME_initcoevars"):
 				if(len(coevarsODE)==0): continue
