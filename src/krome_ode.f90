@@ -64,6 +64,8 @@ contains
     end if
 #ENDIFKROME
 
+#KROME_ODEModifier
+
 #KROME_odeConstant
 
 #IFKROME_report

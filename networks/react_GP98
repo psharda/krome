@@ -7,19 +7,29 @@
 #this common variable allows to set the Trad
 @common:user_Trad
 
-#this modifier block allow to change the reaction rates after their calculation.
-# it can be anywhere in this file, but KROME will put it after the rate calculation.
+#this modifier block allows to change the ODE after their calculation.
+# it can be anywhere in this file, but KROME will put it after the ODE calculation.
 # feel free to add any fortran expression (including comments)
-@modifier_start
- !stop reactions with He at higher redshift.
- !phys_zredshit is the internal name for redshift
- !k is the rate array, where the number corresponds to the index
- ! note that in this case using -useFileIdx is definitely safer.
+@ODEmodifier_start
+ !differential equations for non-He species are set to zero
+ ! before redhisft 2.243d3.
+ ! phys_zredshit is the internal name for redshift
+ ! dn(:) is the ODE array, where the index are self-explanatory
  if(phys_zredshift>2.243d3) then
-   k(1:22) = 0d0
-   k(27:62) = 0d0
+	 dn(idx_E) = 0d0
+	 dn(idx_H) = 0d0
+	 dn(idx_H2) = 0d0
+	 dn(idx_Hj) = 0d0
+	 dn(idx_H2j) = 0d0
+	 dn(idx_Hk) = 0d0
+	 dn(idx_D) = 0d0
+	 dn(idx_Dj) = 0d0
+	 dn(idx_HD) = 0d0
+	 dn(idx_HDj) = 0d0
+	 dn(idx_H2Dj) = 0d0
+	 dn(idx_H3j) = 0d0
  end if
-@modifier_stop
+@ODEmodifier_stop
 
 #--------------------------------------
 #Hydrogen
