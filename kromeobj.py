@@ -611,6 +611,14 @@ class krome():
 		if(args.usePlainIsotopes):
 			self.usePlainIsotopes = True
 			print "Reading option -usePlainIsotopes"
+			#replace square brackets
+			copydic = dict()
+			for k,v in self.mass_dic.iteritems():
+				copydic[k.replace("[","").replace("]","")] = v
+			self.mass_dic = copydic
+			self.atoms = [x.replace("[","").replace("]","") for x in self.atoms]
+			
+			
 		#use photoionization from Verner et al. 1996 (no longer working)
 		if(args.usePhIoniz):
 			self.usePhIoniz = True

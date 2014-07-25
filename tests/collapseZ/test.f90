@@ -17,7 +17,7 @@ program test_krome
   real*8::x(krome_nmols),Tgas,dt
   real*8::ntot,rho,zs(5)
 
-  real*8::result(krome_nmols+3,10000,5)
+  real*8::results(krome_nmols+3,10000,5)
 
   !INITIALIZE KROME PARAMETERS AND DUST 
   call krome_init()
@@ -26,7 +26,7 @@ program test_krome
   zs = (/-99.d0, -4.d0, -3d0, -2d0, -1d0/) !list of metallicities
   !$omp parallel do schedule(dynamic,1) default(none) &
   !$omp   private(jz,ntot,Tgas,x,dd,i,dd1,rho,tff,dt,dtH,deldd) &
-  !$omp   shared(zs,imax,result)
+  !$omp   shared(zs,imax,results)
   do jz = 1,size(zs)
 
      !INITIAL CONDITIONS
@@ -79,20 +79,23 @@ program test_krome
 
         if(dd.gt.1d18) exit !quit after 1e18 1/cm3
 
+        x(krome_idx_e) = krome_get_electrons(x(:))
         !solve the chemistry
         call krome(x(:),Tgas,dt)
 
         !dump Tgas and normalized abundances
-        result(:,i,jz) = (/ zs(jz), dd, Tgas, x(:)/dd /)
-        if(mod(i,100)==0) print '(2I5,99E11.3)',jz,i,dd,Tgas !print every 100 steps
-
+        results(:,i,jz) = (/ zs(jz), dd, Tgas, x(:)/dd /)
+        if(mod(i,100)==0) then
+           print '(2I5,99E11.3)',jz,i,dd,Tgas !print every 100 steps
+        end if
      end do
      imax(jz) = i - 1
   end do
 
+  !dump all the results stored during the runs
   do jz = 1,size(zs)
      do i = 1,imax(jz)
-        write(22,'(99E17.8e3)') result(:,i,jz)
+        write(22,'(99E17.8e3)') results(:,i,jz)
      end do
      write(22,*)
      write(55,*)
