@@ -16,7 +16,6 @@ if(len(argv)>1):
 	listNamesOnly = ("-n" in argv)
 		
 
-
 fh = open("krome_user.f90","rb")
 
 inpartF = ["function","(",")"]

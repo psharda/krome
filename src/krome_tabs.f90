@@ -132,7 +132,7 @@ contains
     real*8::Tgas, coe_tab(nrea),n(nspec),small
 #KROME_define_vars
 
-    Tgas = max(2.73d0,n(idx_Tgas))
+    Tgas = max(n(idx_Tgas),phys_Tcmb)
     small = 0d0
 
 #KROME_Tshortcuts

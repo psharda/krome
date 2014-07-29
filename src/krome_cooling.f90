@@ -207,7 +207,7 @@ contains
 
 #IFKROME_useCoolingCIE
   !*******************************
-  function cooling_CIE(n, Tgas)
+  function cooling_CIE(n, inTgas)
     !CIE cooling: fit from Ripamponti&Abel2004 (RA04) data
     ! The fit is valid from 100K-1e6K.
     ! Original data are from 400K to 7000K.
@@ -216,7 +216,7 @@ contains
     ! Above 1e5 we employ a cubic extrapolation.
     use krome_commons
     use krome_constants
-    real*8::cooling_CIE,n(:),Tgas
+    real*8::cooling_CIE,n(:),Tgas,inTgas
     real*8::x,x2,x3,x4,x5
     real*8::a0,a1,a2,a3,a4,a5
     real*8::b0,b1,b2,b3,b4,b5
@@ -229,7 +229,7 @@ contains
     end if
 
     !temperature limit
-    Tgas = max(Tgas, 2.73d0) 
+    Tgas = max(inTgas, phys_Tcmb) 
 
     !prepares variables
     x = log10(Tgas)
@@ -637,14 +637,14 @@ contains
   !HD COOLING LIPOVKA ET AL. MNRAS, 361, 850, (2005)
   !UNITS=erg/cm3/s
   !*******************************
-  function cooling_HD(n, Tgas)
+  function cooling_HD(n, inTgas)
     use krome_commons
     use krome_subs
     implicit none
     integer::i,j
     integer, parameter::ns=4
     real*8::cooling_HD
-    real*8::n(:),Tgas,logTgas,lognH
+    real*8::n(:),Tgas,logTgas,lognH,inTgas
     real*8::c(0:ns,0:ns),logW,W,dd,lhj
 
     !default HD cooling value
@@ -655,9 +655,9 @@ contains
     ! However, we extrapolate the limits.
 
     !exit on low temperature
-    if(Tgas<2.73d0) return
+    if(Tgas<phys_Tcmb) return
     !extrapolate higher temperature limit
-    Tgas = min(Tgas,1d4)
+    Tgas = min(inTgas,1d4)
 
     !calculate density
     dd = n(idx_H) !sum(n(1:nmols))
