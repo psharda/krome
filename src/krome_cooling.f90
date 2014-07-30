@@ -827,7 +827,7 @@ contains
     jmax = coolTab_n !size of the cooling tables (number of saples)
 
     !note: change upper and lower limit for rate tables here
-    coolTab_logTlow = log10(3d0)
+    coolTab_logTlow = log10(2d0)
     coolTab_logTup = log10(1d8)
 
     !pre compute this value since used jmax times
@@ -838,7 +838,7 @@ contains
        !compute Tgas for the given point
        Tgas = 1d1**((j-1)*(coolTab_logTup-coolTab_logTlow) &
             /(jmax-1) + coolTab_logTlow)
-       !produce cooling function for the given Tgas
+       !produce cooling rates for the given Tgas
        coolTab(:,j) = coolingZ_rates(Tgas)
        !store Tgas into the array
        coolTab_T(j) = Tgas
