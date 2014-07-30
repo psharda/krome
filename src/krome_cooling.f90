@@ -13,7 +13,7 @@ contains
     implicit none
     real*8::n(:),Tgas,cooling
 
-    cooling = sum(get_cooling_array(n(:),Tgas)) #KROME_coolingQuench
+    cooling = sum(get_cooling_array(n(:),Tgas))
     
   end function cooling
 

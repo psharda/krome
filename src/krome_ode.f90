@@ -56,7 +56,7 @@ contains
        krome_gamma = gamma_index(n(:))
        
        dn(idx_Tgas) = (heating(n(:), Tgas, k(:), nH2dust) &
-            - cooling(n(:), Tgas)#KROME_cool_cmb_floor) &
+            - cooling(n(:), Tgas)#KROME_coolingQuench#KROME_coolCMBfloor) &
             * (krome_gamma - 1.d0) / boltzmann_erg / sum(n(1:nmols))
 #ENDIFKROME
        

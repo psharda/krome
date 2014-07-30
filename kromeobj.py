@@ -4242,15 +4242,6 @@ class krome():
 				fout.write(srow.replace("#KROME_small",mysmall)+"\n")
 				continue
 
-			#replace quenching function for cooling
-			if("#KROME_coolingQuench" in srow):
-				if(self.coolingQuench<0e0):
-					fout.write(srow.replace("#KROME_coolingQuench","")+"\n")
-				else:
-					qfunc = " &\n * 0.5d0 * (tanh(Tgas - "+format_double(self.coolingQuench)+") + 1d0)"
-					fout.write(srow.replace("#KROME_coolingQuench",qfunc)+"\n")
-				continue
-
 			if(row.strip() == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(row.strip() == "#KROME_escape_vars"):
@@ -4631,13 +4622,26 @@ class krome():
 
 			if(skip): continue
 
+			coolPragmaFound = False
 			#include cooling cmb floor if necessary
-			if("#KROME_cool_cmb_floor" in srow):
+			if("#KROME_coolCMBfloor" in srow):
+				coolPragmaFound = True
 				if(self.useCoolCMBFloor):
-					srow = srow.replace("#KROME_cool_cmb_floor"," + cooling(n(:), phys_Tcmb)")
+					srow = srow.replace("#KROME_coolCMBfloor"," + cooling(n(:), phys_Tcmb)")
 				else:
-					srow = srow.replace("#KROME_cool_cmb_floor","")
-				fout.write(srow+"\n") #print a blank line
+					srow = srow.replace("#KROME_coolCMBfloor","")
+				
+			#replace quenching function for cooling
+			if("#KROME_coolingQuench" in srow):
+				coolPragmaFound = True
+				if(self.coolingQuench<0e0):
+					fout.write(srow.replace("#KROME_coolingQuench","")+"\n")
+				else:
+					qfunc = " &\n * 0.5d0 * (tanh(Tgas - "+format_double(self.coolingQuench)+") + 1d0)"
+					srow = srow.replace("#KROME_coolingQuench",qfunc)
+			#quench and cmbfloor are on the same line so write the replacements togheter
+			if(coolPragmaFound):
+				fout.write(srow+"\n")
 				continue
 
 			if(srow == "#KROME_ODE"):
@@ -4701,6 +4705,7 @@ class krome():
 							fout.write("!"+specs[inw].name+"\n")
 							fout.write("\t" + x + "\n")
 							inw += 1
+
 			#replace the pragma with the computation of the photorates using the opacity computed with
 			# the approximation of Glover+2009 Eqn.2
 			elif(srow == "#KROME_photobins_compute_thick" and self.usePhotoOpacity):
