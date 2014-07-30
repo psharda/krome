@@ -13,9 +13,10 @@ import matplotlib.pyplot as plt
 foutname = "coolChianti.dat"
 path = "chianti/"
 plotpre = "none" #"c_2"
+levLimit = 20
 flist = []
 dirs = [f for f in listdir(path) if isdir(join(path,f))]
-usemetal = ["c"]
+usemetal = ["c","o","ne","fe"]
 for dr in dirs:
 	mypath = path+dr+"/"
 	dirs2 = [f for f in listdir(mypath) if isdir(join(mypath,f))]
@@ -75,6 +76,7 @@ def read_kex(fname,collname):
 		#arow += [x for x in row[15:].strip().split(" ") if is_number(x)] #keep only columns with numbers
 		levLow = int(arow[2-boff])
 		levUp = int(arow[3-boff])
+		if(levLow>levLimit or levUp>levLimit): continue
 		if(plotpre in pre): l = plt.axvline(x=itrans+.5, ymin=float(levLow-1.)/(maxlev+1), ymax=float(levUp-1.)/(maxlev+1),color="r")
 		ty = int(arow[4-boff]) #type
 		dE = float(arow[6-boff]) #Ry
@@ -171,7 +173,13 @@ for fff in flist:
 	drpfile = fff+"/"+pre+".drparams"
 
 	#****ELVLC****
-	if(not(file_exists(elv))): sys.exit("ERROR: "+elv+" does not exists!")
+	if(not(file_exists(elv))):
+		"WARNING: "+elv+"doesn't exist, skipping..."
+		continue
+	if(not(file_exists(wgf))):
+		"WARNING: "+wgf+"doesn't exist, skipping..."
+		continue
+
 	print "reading "+elv
 	nparts = 10 #default size for ELVLC file (0=automatic)
 	fh = open(elv,"rb") #open file
@@ -188,7 +196,7 @@ for fff in flist:
 		arow = [x for x in srow.split(" ") if is_number(x)] #keep only columns with numbers
 		if(arow[0]=="-1"): break #if end data breaks
 		if(nparts==0): nparts = len(arow) #store number of columns
-		if(len(arow)!=nparts):
+		if(len(arow)<nparts):
 			print arow
 			sys.exit("ERROR: problem with the number of columns for "+elv) #check if number of cols is ok
 		Enrg = float(arow[7]) #(observed), arow[9] (theoretical), unit: Ry
@@ -200,23 +208,25 @@ for fff in flist:
 			print srow
 			sys.exit("ERROR: reading non strictly positive energy for a non-ground level!")
 		#check energy
-		if(Enrg<Eold):
-			print srow
-			print "old","new",Eold,Enrg
-			print "WARNING: Found energy lower than the previous level!"
+		#if(Enrg<Eold):
+		#	print srow
+		#	print "old","new",Eold,Enrg
+		#	print "WARNING: Found energy lower than the previous level!"
 			
 		gmult[level] = int(arow[5]) #multeplicity
-		energy_data[level] = Enrg*1.57888e5 #K
+		Enrg_K = Enrg*1.57888e5
+		if(level>levLimit): continue
+		energy_data[level] = Enrg_K #K
 		maxlev = max(maxlev,level)
 		fout.write("level "+str(level-1)+": "+str("%e" % (Enrg*1.57888e5))+", "+str(gmult[level])+"\n")
 		if(plotpre in pre): l = plt.axhline(y=level,ls="--")
 		Eold = Enrg
 	print "levels found:",maxlev
+	print "max energy (K):",("%e" % energy_data[maxlev])
 
 		
 
 	#****WGFA****
-	if(not(file_exists(wgf))): sys.exit("ERROR: "+wgf+" does not exists!")
 	print "reading "+wgf
 	fh = open(wgf,"rb") #open file
 	fout.write("\n#up -> low, Aij (1/s), wavelength (angstrom)\n")
@@ -231,6 +241,7 @@ for fff in flist:
 		arow += [x for x in row[10:].strip().split(" ") if is_number(x)] #keep only columns with numbers
 		levLow = int(arow[0])
 		levUp = int(arow[1])
+		if(levLow>levLimit or levUp>levLimit): continue
 		Aij = float(arow[4])
 		wvl = float(arow[2])
 		deltaE = 0e0
