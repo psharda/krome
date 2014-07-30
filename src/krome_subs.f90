@@ -734,7 +734,7 @@ contains
     !print to screen
     print *,"***************"
     do i=1,nbest
-       print '(I4,a1,a50,E17.8)',i," ",name(idx(i)),flux(idx(i))
+       print '(I8,a1,a50,E17.8)',idx(i)," ",name(idx(i)),flux(idx(i))
     end do
 
   end subroutine print_best_flux
@@ -745,18 +745,19 @@ contains
     ! that contains the species with index idx_found
     use krome_commons
     implicit none
-    real*8::n(nspec),Tgas,flux(nrea)
+    real*8::n(nspec),Tgas,flux(nrea),maxflux
     integer::nbest,idx(nrea),i,nbestin,idx_found
     character*50::name(nrea)
     logical::found
 
     nbest = min(nbestin,nrea) !cannot exceed the number of reactions
-
+    maxflux = 0d0
     flux(:) = get_flux(n(:),Tgas) !get fluxes
     name(:) = get_rnames() !get reaction names
     do i=1,nrea
        found = .false.
        #KROME_arr_reactprod
+       maxflux = max(maxflux,flux(i))
        if(.not.found) flux(i) = 0d0
     end do
 
@@ -766,7 +767,8 @@ contains
     !print to screen
     print *,"***************"
     do i=1,nbest
-       print '(I4,a1,a50,E17.8)',i," ",name(idx(i)),flux(idx(i))
+       print '(I8,a1,a50,2E17.8)',idx(i)," ",name(idx(i)),flux(idx(i)),&
+            flux(idx(i))/maxflux
     end do
 
   end subroutine print_best_flux_spec
