@@ -4635,10 +4635,11 @@ class krome():
 			if("#KROME_coolingQuench" in srow):
 				coolPragmaFound = True
 				if(self.coolingQuench<0e0):
-					fout.write(srow.replace("#KROME_coolingQuench","")+"\n")
+					srow = srow.replace("#KROME_coolingQuench","")
 				else:
 					qfunc = " &\n * 0.5d0 * (tanh(Tgas - "+format_double(self.coolingQuench)+") + 1d0)"
 					srow = srow.replace("#KROME_coolingQuench",qfunc)
+
 			#quench and cmbfloor are on the same line so write the replacements togheter
 			if(coolPragmaFound):
 				fout.write(srow+"\n")
