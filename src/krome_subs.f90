@@ -7,6 +7,7 @@ contains
   !compute reaction rates cm^3(n-1)/s
   function coe(n)
     use krome_commons
+    use krome_constants
     use krome_user_commons
     implicit none
     real*8::coe(nrea),k(nrea),Tgas,n(nspec)

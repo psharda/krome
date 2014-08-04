@@ -1,5 +1,9 @@
 ## Small thermonuclear network for stars, mainly from NACRE99
 ## Note that qeff and curly species are used.
+@reactionModifier_start
+ k(:) = k(:) / N_avogadro
+@reactionModifier_stop
+
 
 @var: T = Tgas
 @var: T9 = T * 1.0d-9
