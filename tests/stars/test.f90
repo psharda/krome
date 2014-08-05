@@ -41,7 +41,7 @@ program test
      data_pre(1) = time
      data_pre(2) = T_new
      data_pre(3) = rho_new
-     write(*,*)datar2(1:3), dtin
+     !write(*,*) datar2(1:3), dtin
 
      Tgas = 1d1**datar2(2)
      rho = 1d1**datar2(3)

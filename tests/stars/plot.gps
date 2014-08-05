@@ -1,0 +1,11 @@
+reset
+set logscale y
+set xlabel "log(t/yr)"
+set ylabel "abundances"
+
+set xrange [4:]
+set yrange [1e-10:]
+set key b
+
+
+plot './fort.66' u 1:4 w l t "H", '' u 1:5 w l t "2H", '' u 1:6 w l t "3He", '' u 1:7 w l t "4He"
