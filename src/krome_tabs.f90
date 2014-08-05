@@ -126,6 +126,7 @@ contains
   function coe_tab(n)
     !interface to tabs
     use krome_subs
+    use krome_constants
     use krome_commons
     use krome_user_commons
     integer::idx,j
