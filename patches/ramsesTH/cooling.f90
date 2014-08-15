@@ -11,7 +11,7 @@ END MODULE cooling_mod
 SUBROUTINE read_cooling_namelist
   USE amr_commons, only: myid, chemistry
   USE cooling_mod
-  USE krome_user_commons, only : krome_set_user_Tdust, krome_set_user_crate
+  USE krome_user, only : krome_set_user_Tdust, krome_set_user_crate
   implicit none
   integer :: verbose  ! Local-var hack. A nice name in the namelist, but confilcts with global var "verbose"
   namelist /cool/ do_cool,do_radtrans,chemistry,verbose,crate,Av_rho,Tdust
@@ -21,8 +21,12 @@ SUBROUTINE read_cooling_namelist
   if (myid==1) write (*,cool)
 
   c_verbose = verbose ! write back to module value
+
+  ! Make sure these are set. They are threadprivate.
+  !$omp parallel
   call krome_set_user_Tdust(Tdust) ! Store it in the internal KROME structure
   call krome_set_user_crate(crate) ! Store it in the internal KROME structure
+  !$omp end parallel
 
 END SUBROUTINE read_cooling_namelist
 
