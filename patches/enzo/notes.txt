@@ -1,0 +1,28 @@
+------------Step-by-step how to include/compile KROME in ENZO----------------
+
+	1) copy the dir krome in src/enzo/
+
+        2) NOTE: two of the routines will overwrite the original
+           enzo routines, i.e.:
+
+		- Grid_SolveRateAndCoolEquations.C
+		- InitializeRateData.C
+
+ 	   which are used to solve the chemistry. 
+
+        3) A new routine to identify the baryon fields is created by KROME:
+		
+		- Grid_IdentifySpeciesFieldsKrome
+
+
+        4) add the definition of IdentifySpeciesFieldsKrome
+            in the header enzo file Grid.h (follow the instructions in GridKrome.h)
+
+        5a) run ./krome_enzo.sh to set the enzo Makefile
+            compatibility with the new krome files.
+
+  	5b) run ./kromebuild.sh inside src/enzo/krome
+
+	6) make enzo as usual in src/enzo
+
+------------------------------end--------------------------------------------

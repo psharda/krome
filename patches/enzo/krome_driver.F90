@@ -1,23 +1,17 @@
-  #include "fortran.def"
-  #include "phys_const.def"
-  #include "error.def"
-  
   !KROME_DRIVER
   
   subroutine krome_driver(d, e, ge, u, v, w, &
-       #KROME_args
-       in, jn, kn, imethod, &
+       #KROME_args in, jn, kn, imethod, &
        idual, idim, &
        is, js, ks, ie, je, ke, &
-       dt, aye, temstart, &
+       dt, aye, &
        utem, uxyz, uaye, urho, utim, & 
        gamma, fh, dtoh)
     
     
     !     SOLVE MULTI-SPECIES RATE EQUATIONS AND RADIATIVE COOLING
-    !     RE-WRITTEN FROM THE ORIGINAL ENZO SOLVE_RATE SUBROUTINE 
     !     
-    !     2013, KROME DEVELOPERS to interface the package with ENZO
+    !     2014, KROME DEVELOPERS to interface the package with ENZO
     !     
     !     PURPOSE:
     !     Solve the multi-species rate and cool equations via KROME.
@@ -31,7 +25,6 @@
     !     idual    - dual energy formalism flag (0 = off, 1 = on)
     !     idim     - dimensionality (rank) of problem
     !     imethod  - Hydro method (0 = PPMDE, 2 = ZEUS-type)
-    !     temstart - start of temperature range for rate table
     !     
     !     fh       - Hydrogen mass fraction (typically 0.76)
     !     dtoh     - Deuterium to H mass ratio
@@ -45,7 +38,7 @@
     !     utem     - temperature(-like) units
     !     
     !     OUTPUTS:
-    !     update chemical rate densities (HI, HII, etc) and energy
+    !     update chemical abundances densities (HI, HII, etc) and energy
     !     
     !     PARAMETERS:
     !     mh      - H mass in cgs units
@@ -54,16 +47,16 @@
     !     USE KROME
     use krome_main
     use krome_user
+    use krome_constants
 
     implicit none
-#include "fortran_types.def"
 
-    real*8,parameter::mh=mass_h
+    real*8,parameter::mh=p_mass !mass_h
     real*8::dom,factor,tgas,tgasold,krome_x(krome_nmols)
-    real*8::dt,dt_hydro,rhogas,idom,edot,krome_tiny
+    real*8::dt,dt_hydro,idom,edot,krome_tiny
     real*8::d(in,jn,kn),e(in,jn,kn),ge(in,jn,kn)
     real*8::u(in,jn,kn),v(in,jn,kn),w(in,jn,kn)
-    real*8::aye,temstart,utem,uxyz,uaye,urho,utim,gamma,fh,dtoh
+    real*8::aye,utem,uxyz,uaye,urho,utim,gamma,fh,dtoh
     integer::in,jn,kn,imethod,idual,is,js,ks,ie,je,ke,idim
     integer::i,j,k
 
@@ -78,7 +71,7 @@
     factor = aye**(-3)
 
     !check minimal value and comoving->proper
-    krome_tiny = 1d-20
+    krome_tiny = 1d-30
     do k = ks+1, ke+1
        do j = js+1, je+1
           do i = is+1, ie+1  
@@ -96,14 +89,14 @@
        do j = js+1, je+1
           do i = is+1, ie+1
 
-             rhogas = #KROME_sum
+             !rhogas = #KROME_sum to be removed
 
              !convert to number densities
 #KROME_dom
              call evaluate_tgas(d(i,j,k), e(i,j,k), ge(i,j,k),&
                   u(i,j,k), v(i,j,k), w(i,j,k),& 
                   krome_x(:),imethod,idual,idim,tgas,&
-                  temstart,utem,rhogas)
+                  utem)
 
              !store old tgas
              tgasold = tgas

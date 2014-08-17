@@ -7,12 +7,11 @@ subroutine init_flow
   use hydro_commons, ONLY: nvar, uold
   !KROME: add the main module to call krome_init
   use krome_main
-
   implicit none
 
   integer::ilevel,ivar
   
-  if(verbose)write(*,*)'Entering init_flow'
+  if(verbose) write(*,*)'Entering init_flow'
 
   !KROME: initialize KROME. This call is mandatory.
   call krome_init()
@@ -195,12 +194,10 @@ subroutine init_flow_fine(ilevel)
               read(ilun) ! skip first line
               do i3=1,n3(ilevel)
                  read(ilun) ((init_plane(i1,i2),i1=1,n1(ilevel)),i2=1,n2(ilevel))
-                 if(ncache>0)then
-                    if(i3.ge.i3_min.and.i3.le.i3_max)then
-                       init_array(i1_min:i1_max,i2_min:i2_max,i3) = &
-                            & init_plane(i1_min:i1_max,i2_min:i2_max)
-                    end if
-                 endif
+                 if(i3.ge.i3_min.and.i3.le.i3_max)then
+                    init_array(i1_min:i1_max,i2_min:i2_max,i3) = &
+                         & init_plane(i1_min:i1_max,i2_min:i2_max)
+                 end if
               end do
               close(ilun)
            else
@@ -233,22 +230,22 @@ subroutine init_flow_fine(ilevel)
            ! In most cases, this is zero (you can change that if necessary)
            if(myid==1)write(*,*)'File '//TRIM(filename)//' not found'
            if(myid==1)write(*,*)'Initialize corresponding variable to default value'
-           if(ncache>0)then
-              init_array=0d0
-              ! Default value for metals
-              if(cosmo.and.ivar==imetal.and.metal)init_array=z_ave*0.02 ! from solar units
-              ! Default value for ionization fraction
-              xval=sqrt(omega_m)/(h0/100.*omega_b) ! From the book of Peebles p. 173
-              if(cosmo.and.ivar==ixion.and.aton)init_array=1.2d-5*xval
-           endif
-        endif
+           init_array=0d0
+           ! Default value for metals
+           if(cosmo.and.ivar==imetal.and.metal)init_array=z_ave*0.02 ! from solar units
+           ! Default value for ionization fraction
+           xval=sqrt(omega_m)/(h0/100.*omega_b) ! From the book of Peebles p. 173
+           if(cosmo.and.ivar==ixion.and.aton)init_array=1.2d-5*xval
+	   ! Initial values for chemical abundances (mass fraction).
 
-
-        ! Initial values for chemical abundances (mass fraction).
-        ! KROME: initialize the species according to the default values suggested by KROME
-        if(krome_chem) then
+	   ! KROME: initialize the species according to the default values suggested by KROME
+	   ! If you want to change the default values refer to ndef dictionary contained 
+	   !   in the ramses_patch(self) function in kromeobj.py. Be careful!
+	   ! The default for Tgas distribution is 1.356d-2/aexp**2 with T in K
+           if(chemistry) then
 #KROME_init_array
-        end if
+           end if
+        endif
 
         if(ncache>0)then
 
@@ -375,15 +372,13 @@ subroutine init_flow_fine(ilevel)
                  uold(ind_cell(i),ivar+1)=vv(i)
               end do
            end do
-#if NVAR > NDIM + 2
            ! Compute passive variable density
-           do ivar=ndim+3,nvar
+           do ivar=ndim+4,nvar
               do i=1,ngrid
                  rr=uold(ind_cell(i),1)
                  uold(ind_cell(i),ivar)=rr*uold(ind_cell(i),ivar)
               end do
            enddo
-#endif
         end do
         ! End loop over cells
         
@@ -464,11 +459,9 @@ subroutine region_condinit(x,q,dx,nn)
   q(1:nn,4)=0.0d0
 #endif
   q(1:nn,ndim+2)=smallr*smallc**2/gamma
-#if NVAR > NDIM + 2
   do ivar=ndim+3,nvar
      q(1:nn,ivar)=0.0d0
   end do
-#endif
 
   ! Loop over initial conditions regions
   do k=1,nregion
@@ -505,16 +498,6 @@ subroutine region_condinit(x,q,dx,nn)
               q(i,4)=w_region(k)
 #endif
               q(i,ndim+2)=p_region(k)
-#if NENER>0
-              do ivar=1,nener
-                 q(i,ndim+2+ivar)=prad_region(k,ivar)
-              enddo
-#endif
-#if NVAR>NDIM+2+NENER
-              do ivar=ndim+3+nener,nvar
-                 q(i,ivar)=var_region(k,ivar-ndim-2-nener)
-              end do
-#endif
            end if
         end do
      end if
@@ -545,16 +528,6 @@ subroutine region_condinit(x,q,dx,nn)
            q(i,4)=q(i,4)+w_region(k)*r
 #endif
            q(i,ndim+2)=q(i,ndim+2)+p_region(k)*r/vol
-#if NENER>0
-           do ivar=1,nener
-              q(i,ndim+2+ivar)=q(i,ndim+2+ivar)+prad_region(k,ivar)*r/vol
-           enddo
-#endif
-#if NVAR>NDIM+2+NENER
-           do ivar=ndim+3+nener,nvar
-              q(i,ivar)=var_region(k,ivar-ndim-2-nener)
-           end do
-#endif
         end do
      end if
   end do

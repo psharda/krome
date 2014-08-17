@@ -1,5 +1,19 @@
 #!/bin/sh
 
+#First copy the new files into ../src/enzo
+
+echo "copying Grid_SolveRateAndCoolEquations.C"
+
+cp Grid_SolveRateAndCoolEquations.C ../
+
+echo "copying Grid_IdentifySpeciesFieldsKrome.C"
+
+cp Grid_IdentifySpeciesFieldsKrome.C ../
+
+echo "copying InitializeRateData.C"
+
+cp InitializeRateData.C ../
+
 #script to compile KROME in ENZO
 #WARNING: THIS IS NOT A MAKEFILE!
 fc=ifort

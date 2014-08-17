@@ -19,14 +19,6 @@ module amr_parameters
   integer,parameter::MAXOUT=1000
   integer,parameter::MAXLEVEL=100
   
-  ! Define integer types (for particle IDs mostly)
-  integer,parameter::i4b=4
-#ifndef LONGINT
-  integer,parameter::i8b=4  ! default long int are short int
-#else
-  integer,parameter::i8b=8  ! long int are long int
-#endif
-
   ! Number of dimensions
 #ifndef NDIM
   integer,parameter::ndim=1
@@ -54,7 +46,6 @@ module amr_parameters
   logical::cosmo   =.false.   ! Cosmology activated
   logical::star    =.false.   ! Star formation activated
   logical::sink    =.false.   ! Sink particles activated
-  logical::rt      =.false.   ! Radiative transfer activated
   logical::debug   =.false.   ! Debug mode activated
   logical::static  =.false.   ! Static mode activated
   logical::tracer  =.false.   ! Tracer particles activated
@@ -93,7 +84,6 @@ module amr_parameters
   integer::noutput=1          ! Total number of outputs
   integer::foutput=1000000    ! Frequency of outputs
   integer::output_mode=0      ! Output mode (for hires runs)
-  logical::gadget_output=.false. ! Output in gadget format
 
   ! Lightcone parameters
   real(dp)::thetay_cone=12.5
@@ -109,10 +99,7 @@ module amr_parameters
   real(dp)::h0     =1.0D0     ! Hubble constant in km/s/Mpc
   real(dp)::aexp   =1.0D0     ! Current expansion factor
   real(dp)::hexp   =0.0D0     ! Current Hubble parameter
-  real(dp)::texp   =0.0D0     ! Current proper time
-  real(dp)::n_sink = -1.d0      ! Sink particle density threshold in H/cc
-  real(dp)::rho_sink = -1.D0  ! Sink particle density threshold in g/cc
-  real(dp)::d_sink            ! Sink particle density threshold in user units
+  real(dp)::n_sink =1D30      ! Sink particle density threshold in H/cc
   real(dp)::m_star =-1.0      ! Star particle mass in units of mass_sph
   real(dp)::n_star =0.1D0     ! Star formation density threshold in H/cc
   real(dp)::t_star =0.0D0     ! Star formation time scale in Gyr
@@ -133,51 +120,27 @@ module amr_parameters
   real(dp)::z_reion=8.5D0     ! Reionization redshift
   real(dp)::T2_start          ! Starting gas temperature
   real(dp)::t_delay=1.0D1     ! Feedback time delay in Myr
-  real(dp)::t_diss =20.0D0    ! Dissipation timescale for feedback
   real(dp)::J21    =0.0D0     ! UV flux at threshold in 10^21 units
   real(dp)::a_spec =1.0D0     ! Slope of the UV spectrum
   real(dp)::beta_fix=0.0D0    ! Pressure fix parameter
-  real(dp)::kappa_IR=0d0      ! IR dust opacity
-  real(dp)::ind_rsink=4.0d0   ! Number of cells defining the radius of the sphere where AGN feedback is active
-  real(dp)::ir_eff=0.75       ! efficiency of the IR feedback (only when ir_feedback=.true.)
-
-
+  real(dp)::rsink_max=10      ! Sink isolation criterion in kpc
+  real(dp)::msink_max=1d5     ! Maximum seed mass in solar masses
   logical ::self_shielding=.false.
   logical ::pressure_fix=.false.
   logical ::nordlund_fix=.true.
   logical ::cooling=.false.
-  logical ::neq_chem=.false.   ! Non-equilbrium chemistry activated
-  logical ::krome_chem=.false. ! Non-equilibrium chemistry with KROME 
+  logical ::chemistry=.false. ! Activate Chemical Evolution with KROME 
   logical ::isothermal=.false.
   logical ::metal=.false.
+  logical ::bondi=.true.      ! Activate Bondi accretion onto sink particle 
   logical ::haardt_madau=.false.
   logical ::delayed_cooling=.false.
   logical ::smbh=.false.
   logical ::agn=.false.
-  logical ::use_proper_time=.false.
-  logical ::ir_feedback=.false. ! Activate ir feedback from accreting sinks
-
 
   ! Output times
   real(dp),dimension(1:MAXOUT)::aout=1.1       ! Output expansion factors
   real(dp),dimension(1:MAXOUT)::tout=0.0       ! Output times
-
-  ! Movie
-  integer::imovout=0             ! Increment for output times
-  integer::imov=1                ! Initialize
-  real(kind=8)::tendmov=0.,aendmov=0.
-  real(kind=8),allocatable,dimension(:)::amovout,tmovout
-  logical::movie=.false.
-  integer::nx_frame=512
-  integer::ny_frame=512
-  integer::levelmax_frame=0
-  integer::ivar_frame=1
-  real(kind=8),dimension(1:4)::xcentre_frame=0d0
-  real(kind=8),dimension(1:4)::ycentre_frame=0d0
-  real(kind=8),dimension(1:4)::zcentre_frame=0d0
-  real(kind=8),dimension(1:4)::deltax_frame=0d0
-  real(kind=8),dimension(1:4)::deltay_frame=0d0
-  real(kind=8),dimension(1:4)::deltaz_frame=0d0
 
   ! Refinement parameters for each level
   real(dp),dimension(1:MAXLEVEL)::m_refine =-1.0 ! Lagrangian threshold

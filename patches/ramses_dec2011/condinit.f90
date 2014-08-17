@@ -5,7 +5,7 @@
 subroutine condinit(x,u,dx,nn)
   use amr_parameters
   use hydro_parameters
-  use krome_user                          ! Krome user module
+  use krome_user
   implicit none
   integer ::nn                            ! Number of cells
   real(dp)::dx                            ! Cell size
@@ -22,11 +22,11 @@ subroutine condinit(x,u,dx,nn)
   ! If nvar >= ndim+3, remaining variables are treated as passive
   ! scalars in the hydro solver.
   ! U(:,:) and Q(:,:) are in user units.
+  ! Q(i,ndim+3) = 
   !================================================================
   integer::ivar
   real(dp),dimension(1:nvector,1:nvar),save::q   ! Primitive variables
 
-  ! Call built-in initial condition generator
   call region_condinit(x,q,dx,nn)
 
   ! Add here, if you wish, some user-defined initial conditions
@@ -52,27 +52,22 @@ subroutine condinit(x,u,dx,nn)
 #if NDIM>2
   u(1:nn,ndim+2)=u(1:nn,ndim+2)+0.5*q(1:nn,1)*q(1:nn,4)**2
 #endif
-  ! thermal pressure -> total fluid energy
+  ! pressure -> total fluid energy
   u(1:nn,ndim+2)=u(1:nn,ndim+2)+q(1:nn,ndim+2)/(gamma-1.0d0)
-#if NENER>0
-  ! radiative pressure -> radiative energy
-  ! radiative energy -> total fluid energy
-  do ivar=1,nener
-     u(1:nn,ndim+2+ivar)=q(1:nn,ndim+2+ivar)/(gamma_rad(ivar)-1.0d0)
-     u(1:nn,ndim+2)=u(1:nn,ndim+2)+u(1:nn,ndim+2+ivar)
-  enddo
-#endif
+  ! passive scalars !ADD HERE THE CHEMICAL SPECIES INITIALIZATION
+  ! IF WE CONSIDER HI, E, HII, HeI, H2I, HeII, H2II, HeIII, HM
+  ! MASS FRACTION OF EACH SPECIES (in this case for a neutral gas):
 
-  if(krome_chem)then
+!KROME: default initialization created with krome. If you want to change the default values refer to 
+! ndef dictionary contained in the ramses_patch(self) function in kromeobj.py. Be careful!
+  if(chemistry)then
 #KROME_init_chem
   endif
 
-#if NVAR>NDIM+2+NENER
-!KROME: passive scalars, these include only the chemical species. 
-! the gas temperature is not included.
-  do ivar=ndim+3+nener, nvar 
-     u(1:nn,ivar)=q(1:nn,1)*q(1:nn,ivar)
+!KROME: scale species by the density. Modified the upper limit of the do
+! in order to include krome species
+  do ivar=ndim+4,ndim+3+krome_nmols
+     u(1:nn,ivar)=q(1:nn,ivar)*q(1:nn,1) 
   end do
-#endif
-
+  
 end subroutine condinit
