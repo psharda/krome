@@ -33,7 +33,8 @@ fh = open(fname_make_config_assemble,"rb")
 fout = open("tmp1.krome","w")
 for row in fh:
 	fout.write(row)
-	if("$(OBJS_ECUDA_LIB) \\" in row): fout.write("$(OBJS_KROME) \\\n")
+	if("$(OBJS_ECUDA_LIB) \\" in row): 
+		fout.write("               $(OBJS_KROME) \\\n")
 fh.close()
 fout.close()
 move("tmp1.krome","../"+fname_make_config_assemble)
