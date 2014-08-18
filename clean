@@ -27,14 +27,24 @@ for root, dirnames, filenames in os.walk('.'):
 			print "removing ./"+fname
 			hasrm = True
 
-#clear build
+#clear build (files)
 for root, dirs, files in os.walk("./build/"):
 	path = root
+	#add slash ad the end of path if needed
+	if(path[len(path)-1]!="/"): path += "/"
 	for x in files:
-		#add slash ad the end of path if needed
-		if(path[len(path)-1]!="/"): path += "/"
 		print "removing ./"+path+x
-		os.remove(path+"/"+x)
+		os.remove(path+x)
+		hasrm = True
+
+#clear build (dirs)
+for root, dirs, files in os.walk("./build/"):
+	path = root
+	#add slash ad the end of path if needed
+	if(path[len(path)-1]!="/"): path += "/"
+	for x in dirs:
+		print "removing ./"+path+x
+		os.rmdir(path+x)
 		hasrm = True
 
 #add README file in build if not present

@@ -246,7 +246,7 @@ print "or use the option file"
 print " "+outFileName
 fh = open(outFileName,"w")
 fh.write("#This option file has been automatically generated\n")
-fh.write(time.asctime(time.localtime(time.time()))+"\n\n")
+fh.write("#"+time.asctime(time.localtime(time.time()))+"\n\n")
 for opt in fullcmd:
 	fh.write(opt+"\n\n")
 	

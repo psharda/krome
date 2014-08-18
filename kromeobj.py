@@ -6076,7 +6076,7 @@ class krome():
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
                 fname = "notes.txt"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
-                fname = "krome_enzo.sh"
+                fname = "krome_enzo.py"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
 
                 if(self.useDvodeF90):
