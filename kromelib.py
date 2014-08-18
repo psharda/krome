@@ -800,6 +800,8 @@ def parser(name, mass_dic, atoms, thermo_data):
 			mymol.atomcount2[k] = v
 			if(k!="+" and k!="-"): natoms += v
 
+	#print name,mymol.atomcount2
+
 	mymol.natoms = natoms #number of atoms (e.g. diatom=2)
 
 	#get vibrational constant in K

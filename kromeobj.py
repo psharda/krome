@@ -6125,7 +6125,7 @@ class krome():
 	def patches(self):
 		if(self.doFlash): self.flash_patch()
 		if(self.doRamses): self.ramses_patch()
-		if(self.doRamses2011): self.ramses_patch()
+		#if(self.doRamses2011): self.ramses_patch()
 		if(self.doRamsesTH): self.ramsesTH_patch()
 		if(self.doEnzo): self.enzo_patch()
 		return
@@ -6145,8 +6145,8 @@ class krome():
 		#check for large reaction set
 		if(len(reacts)>500 and not(self.use_implicit_RHS)):
 			print
-			print "WARNING: "+str(len(reacts))+" reactions found! Using implicit RHS (option -iRHS) could be more efficient"
-			print "  and also allows faster compilation."
+			print "WARNING: "+str(len(reacts))+" reactions found! Using implicit RHS (option -iRHS)" 
+			print "could be more efficient and also allows faster compilation."
 			a = raw_input("Any key to continue q to quit... ")
 			if(a=="q"): print sys.exit()
 
