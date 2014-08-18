@@ -117,7 +117,7 @@ class krome():
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
 	fdbase = "data/database/"
-	version = "14.03"
+	version = "14.08.dev"
 	codename = "Beastie Boyle"
 
 	#########################################
@@ -422,6 +422,15 @@ class krome():
 	def argparsing(self,argv):
 
 		args = self.parser.parse_args() #return namespace from argv
+
+		#use short header for f90 files
+		if(args.v or args.ver or args.version):
+			print "You are using KROME "+self.version+" \""+self.codename+"\""
+			print " - Better Science Through Chemistry -"
+			print
+			#print "MD5: "+GetHashofDirs()
+			sys.exit()
+
 
 		#list arguments if test
 		if(args.test):
@@ -747,11 +756,6 @@ class krome():
 			self.isdry = True
 			print "Reading option -dry"
 
-		#use short header for f90 files
-		if(args.v or args.ver or args.version):
-			print "You are using KROME "+self.version+" \""+self.codename+"\""
-			#print "MD5: "+GetHashofDirs()
-			sys.exit()
 
 		#skip reaction mass / charge check
 		if((args.nomassCheck and args.nochargeCheck) or args.noCheck):
@@ -1307,7 +1311,7 @@ class krome():
 					thermo[spec] = coef #append coefficients to the dictionary
 		fth.close()
 		self.thermodata = thermo
-		print "Thermochemistry data loaded!"
+		#print "Thermochemistry data loaded!"
 
 
 
