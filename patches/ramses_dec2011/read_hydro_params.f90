@@ -15,17 +15,14 @@ subroutine read_hydro_params(nml_ok)
 
   !--------------------------------------------------
   ! Namelist definitions
+  ! KROME: Add chemistry flag
   !--------------------------------------------------
   namelist/init_params/filetype,initfile,multiple,nregion,region_type &
        & ,x_center,y_center,z_center,aexp_ini &
        & ,length_x,length_y,length_z,exp_region &
-#if NENER>0
-       & ,prad_region &
-#endif
        & ,d_region,u_region,v_region,w_region,p_region
   namelist/hydro_params/gamma,courant_factor,smallr,smallc &
        & ,niter_riemann,slope_type,difmag &
-       & ,gamma_rad &
        & ,pressure_fix,beta_fix,scheme,riemann
   namelist/refine_params/x_refine,y_refine,z_refine,r_refine &
        & ,a_refine,b_refine,exp_refine,jeans_refine,mass_cut_refine &
@@ -36,13 +33,13 @@ subroutine read_hydro_params(nml_ok)
        & ,ibound_min,ibound_max,jbound_min,jbound_max &
        & ,kbound_min,kbound_max &
        & ,d_bound,u_bound,v_bound,w_bound,p_bound
-  namelist/physics_params/cooling,haardt_madau,metal,isothermal &
+  namelist/physics_params/cooling,haardt_madau,metal,isothermal,bondi &
        & ,m_star,t_star,n_star,T2_star,g_star,del_star,eps_star,jeans_ncells &
-       & ,eta_sn,yield,rbubble,f_ek,ndebris,f_w,mass_gmc,kappa_IR &
-       & ,J21,a_spec,z_ave,z_reion,ind_rsink,delayed_cooling &
-       & ,self_shielding,smbh,agn &
-       & ,units_density,units_time,units_length,neq_chem,ir_feedback,ir_eff,t_diss
-       & ,krome_chem
+       & ,eta_sn,yield,rbubble,f_ek,ndebris,f_w,mass_gmc &
+       & ,J21,a_spec,z_ave,z_reion,n_sink,bondi,delayed_cooling &
+       & ,self_shielding,smbh,agn,rsink_max,msink_max &
+       & ,units_density,units_time,units_length &
+       & ,chemistry
 
   ! Read namelist file
   rewind(1)
@@ -92,24 +89,22 @@ subroutine read_hydro_params(nml_ok)
   endif
 
   !--------------------------------------------------
-  ! Check for non-thermal energies
+  ! Check for chemical species KROME 
   !--------------------------------------------------
-#if NENER>0
-  if(nvar<(ndim+2+nener))then
-     if(myid==1)write(*,*)'Error: non-thermal energy need nvar >= ndim+2+nener'
-     if(myid==1)write(*,*)'Modify NENER and recompile'
+  if(chemistry.and.nvar<(ndim+3))then
+     if(myid==1)write(*,*)'Error: chemistry needs nvar >= ndim+3'
+     if(myid==1)write(*,*)'Modify hydro_parameters.f90 and recompile'
      nml_ok=.false.
   endif
-#endif
 
   !--------------------------------------------------
-  ! Check ind_rsink
+  ! Check for chemistry cooling consistency 
   !--------------------------------------------------
-  if(ind_rsink<=0.0d0)then
-     if(myid==1)write(*,*)'Error in the namelist'
-     if(myid==1)write(*,*)'Check ind_rsink'
+  if(chemistry.and..not.cooling)then
+     if(myid==1)write(*,*)'Error: chemistry=.true. needs cooling=.true.'
+     if(myid==1)write(*,*)'Modify namelist.nml and recompile'
      nml_ok=.false.
-  end if
+  endif
 
   !-------------------------------------------------
   ! This section deals with hydro boundary conditions
@@ -266,14 +261,13 @@ subroutine read_hydro_params(nml_ok)
   !-----------------------------------
   ! Sort out passive variable indices
   !-----------------------------------
-  imetal=nener+ndim+3
+  imetal=ndim+3
   idelay=imetal
   if(metal)idelay=imetal+1
   ixion=idelay
   if(delayed_cooling)ixion=idelay+1
   ichem=ixion
   if(aton)ichem=ixion+1
-  ! Last variable is ichem
 
 end subroutine read_hydro_params
 

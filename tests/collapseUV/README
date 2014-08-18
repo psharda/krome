@@ -1,4 +1,4 @@
-!#######################################################################
+!******************************************************************************
 !This is a simple one-zone collapse test following
 ! the chemical and thermal evolution of a primordial cloud.
 !The dynamics is described by the Larson-Penston-type
@@ -7,4 +7,4 @@
 !The test employes different values of the UV flux in terms of
 ! J21 (erg/cm2/s/Hz/sr) ranging from 0 to 1d5.
 !A T5 (1e5 K) black-body spectrum is assumed for the photodissociation of H2.
-!#######################################################################
+!******************************************************************************

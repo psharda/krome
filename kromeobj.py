@@ -355,7 +355,7 @@ class krome():
 			filename = "networks/react_primordial3"
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=REDUCED","-ATOL=1d-40","-maxord=1"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
 			filename = "networks/react_primordialZ2"
 		elif(args.test=="collapseCO"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM", "-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
@@ -5400,9 +5400,8 @@ class krome():
 		fh.close()
 		fw.close()
 			
-
-	#########################################
-	def ramses_patch(self):
+        #########################################
+	def ramses_patch2011(self):
 		pfold = "patches/ramses/"
 		ramsesFolder = self.buildFolder+"krome_ramses_patch/" 
 		buildFolder = self.buildFolder
@@ -5511,6 +5510,136 @@ class krome():
 		fname = "output_hydro.f90"
 		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
 		indentF90(ramsesFolder+fname)
+
+		#read_hydro_params
+		fname = "read_hydro_params.f90"
+		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
+		indentF90(ramsesFolder+fname)
+
+		#Makefile
+		fname = "Makefile"
+		#note that makefile will be copied in the build folder
+		self.replacein(pfold+fname,buildFolder+fname,["#KROME_nvar"],\
+			["#this must be NDIM+"+str(ramses_offset)+"+"+str(chemCount)], False)
+
+		#move the krome files into the ramses patch folder
+		shutil.move(buildFolder+"krome_all.f90", ramsesFolder+"krome_all.f90")
+		shutil.move(buildFolder+"krome_user_commons.f90", ramsesFolder+"krome_user_commons.f90")
+		shutil.move(buildFolder+"opkda1.f", ramsesFolder+"opkda1.f")
+		shutil.move(buildFolder+"opkda2.f", ramsesFolder+"opkda2.f")
+		shutil.move(buildFolder+"opkdmain.f", ramsesFolder+"opkdmain.f")
+
+
+	#########################################
+	def ramses_patch(self):
+		pfold = "patches/ramses/"
+		ramsesFolder = self.buildFolder+"krome_ramses_patch/" 
+		buildFolder = self.buildFolder
+		if(not(os.path.exists(ramsesFolder))): os.makedirs(ramsesFolder)
+		specs = self.specs
+		ramses_offset = str(self.ramses_offset)
+
+		#some initial abundances. if not found set default
+		# all in 1/cm3, except for T which is K
+		ndef = {"H": 7.5615e-1,
+			"E": 4.4983e-8,
+			"H+": 8.1967e-5,
+			"HE": 2.4375e-1,
+			"H2": 1.5123e-6,
+#			"Tgas" : 200,
+			"default":1e-40
+		}
+
+		excl = ["CR","g","Tgas","dummy"] #avoid specials
+
+		#count species excluding what is conteinted in excl list
+		chemCount = 0
+		for x in specs:
+			if(x.name in excl): continue
+			chemCount += 1
+
+		#amr_parameters
+		#just copy the file fname to the build/ramses folder
+		fname = "amr_parameters.f90"
+		self.replacein(pfold+fname, ramsesFolder+fname, ["aaa"], ["aaa"])
+		indentF90(ramsesFolder+fname)
+
+		#condinit
+		#prepares the initial conditions and copy fname
+		cheminit = " q(1:nn,ndim+3) = "+str(ndef["Tgas"])+"     !Set temperature in K\n"
+		ichem = 0
+		fname = "condinit.f90"
+		#loop on species
+		for x in specs:
+			#skip species in exl list
+			if(x.name in excl): continue
+			ichem += 1
+			#check if species is in init array (ndef) else default
+			if(x.name in ndef):
+				sdef = str(ndef[x.name]) #default value from array
+			else:
+				sdef = str(ndef["default"]) #default values if not present in array
+			cheminit += "q(1:nn,ndim+3+"+str(ichem)+")  = "+sdef+"  !"+x.name+"\n"
+		#replace initialization
+		self.replacein(pfold+fname, ramsesFolder+fname, ["#KROME_init_chem"], [cheminit])
+		indentF90(ramsesFolder+fname)
+
+		#cooling_fine
+		#prepare the array for krome and back (ramses->krome->ramses)
+		# updateueq: copy from ramses 2dim array to 1dim array for krome (unoneq<-uold)
+		# scaleueq: scale array from code units (RAMSES) to 1/cm3 (KROME) (unoneq<-unoneq)
+		# bkscaleueq: scale array from 1/cm3 (KROME) to code units (RAMSES) (unoneq->unoneq)
+		# bkupdateueq: copy from 1dim array of krome to 2dim array of ramses (unoneq->uold)
+		updateueq = scaleueq = bkscaleueq = bkupdateueq = ""
+		ichem = 0
+		fname = "cooling_fine.f90"
+		for x in specs:
+			ichem += 1
+			if(not(x.name in excl)):
+				updateueq += "unoneq("+str(ichem)+") = uold(ind_leaf(i),ndim+"+ramses_offset+"+"+str(ichem)+") !"+x.name+"\n"
+				if(x.mass>0e0): scaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
+				bkscaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
+				bkupdateueq += "uold(ind_leaf(i),ndim+"+ramses_offset+"+"+str(ichem)+") = unoneq("+str(ichem)+")\n"
+		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
+		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
+		#replace pragmas (org) with expressions (new)
+		self.replacein(pfold+fname, ramsesFolder+fname, org, new)
+		indentF90(ramsesFolder+fname)
+
+		#cooling_module/deprecated
+		# simply copy the cooling_module into build/ramses
+		#fname = "cooling_module.f90"
+		#self.replacein(pfold+fname,ramsesFolder+fname, [], [])
+		#indentF90(ramsesFolder+fname)
+
+		#hydro_parameters/really needed?
+		# simply copy the hydro_parameters into build/ramses
+		# extend nvar according to KROME species
+		#fname = "hydro_parameters.f90"
+		#self.replacein(pfold+fname, ramsesFolder+fname, [], [])
+		#indentF90(ramsesFolder+fname)
+
+		#init_flow_fine
+		fname = "init_flow_fine.f90"
+		init_array = "if(ivar==ndim+"+ramses_offset+")  init_array = 1.356d-2/aexp**2 ! T in K\n"
+		ichem = 0
+		for x in specs:
+			if(x.name in excl): continue
+			ichem += 1
+			#check if species is contained in the ndef array (see above)
+			if(x.name in ndef):
+				sdef = str(ndef[x.name]) #default value from array
+			else:
+				sdef = str(ndef["default"]) #default value if not present in array
+			init_array += "if(ivar==ndim+"+ramses_offset+"+"+str(ichem)+")  init_array = "+sdef+"  !"+x.name+"\n"
+		#replace pragma and copy the file to the build/ramses
+		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_init_array"],[init_array])
+		indentF90(ramsesFolder+fname)
+		
+		#output_hydro/deprecated
+		#fname = "output_hydro.f90"
+		#self.replacein(pfold+fname,ramsesFolder+fname,[],[])
+		#indentF90(ramsesFolder+fname)
 
 		#read_hydro_params
 		fname = "read_hydro_params.f90"
@@ -5879,7 +6008,6 @@ class krome():
 				name = uname.replace("-","M") #anions
 			else:
 				name = (uname+"I").replace("+","I") #neutral and ions
-			name = name.title()
 			extname = name+"Density"
 			if(name=="EI"): 
 				name = "De" #electron is special
@@ -5914,10 +6042,10 @@ class krome():
 			krome_solve_numa.append(name+"Num")
 			krome_solve_identifya.append(name+"Num")
 			
-			#4. Grid.h
+			#4. GridKrome.h
 			krome_grid_identifya.append("int &"+name+"Num")
 
-		if(speciesCount%4!=0): krome_driver_args += "&"
+		if(speciesCount%3!=0): krome_driver_args += "&"
 		krome_driver_sum = (" &\n".join(krome_driver_suma))
 
 		krome_identify_identify = self.linebreakerC((", ".join(krome_identify_identifya)), ",")
@@ -5935,9 +6063,9 @@ class krome():
 
 		#1. replace
 		fname = "krome_driver.F90"
-		prags = ["#KROME_args","#KROME_rprec","#KROME_scale","#KROME_minval","#KROME_dom","#KROME_mod","#KROME_sum"]
+		prags = ["#KROME_args","#KROME_rprec","#KROME_scale","#KROME_minval","#KROME_dom","#KROME_mod"]
 		reps = [krome_driver_args,krome_driver_rprec,krome_driver_scale,krome_driver_minval]
-		reps += [krome_driver_dom,krome_driver_mod,krome_driver_sum]
+		reps += [krome_driver_dom,krome_driver_mod]
 		self.replacein(patchFolder+fname, enzoFolder+fname, prags, reps)
 		indentF90(enzoFolder+fname)
 
@@ -5954,8 +6082,8 @@ class krome():
 		reps = [krome_solve_args, krome_solve_num, krome_solve_identify, krome_solve_baryon]
 		self.replacein(patchFolder+fname, enzoFolder+fname, prags, reps, False)
 
-		#4. replace in Grid.h
-		fname = "Grid.h"
+		#4. replace in GridKrome.h
+		fname = "GridKrome.h"
 		self.replacein(patchFolder+fname, enzoFolder+fname, ["#KROME_identify"], [krome_grid_identify], False)
 
 		#5. copy others
@@ -5965,8 +6093,11 @@ class krome():
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
 		fname = "krome_initab.F90"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
-		fname = "Make.config.objects"
+                fname = "notes.txt"
 		shutil.copy(patchFolder+fname, enzoFolder+fname)
+                fname = "krome_enzo.sh"
+		shutil.copy(patchFolder+fname, enzoFolder+fname)
+
                 if(self.useDvodeF90):
                         fname = "kromebuild_dvode.sh"
 		        shutil.copy(patchFolder+fname, enzoFolder+"kromebuild.sh")
@@ -5994,6 +6125,7 @@ class krome():
 	def patches(self):
 		if(self.doFlash): self.flash_patch()
 		if(self.doRamses): self.ramses_patch()
+		if(self.doRamses2011): self.ramses_patch()
 		if(self.doRamsesTH): self.ramsesTH_patch()
 		if(self.doEnzo): self.enzo_patch()
 		return

@@ -1,9 +1,8 @@
 /***********************************************************************
 /
-/  GRID CLASS (SOLVE THE COOLING/HEATING AND RATE EQUATIONS)
+/  GRID CLASS (SOLVE THE COOLING/HEATING AND RATE EQUATIONS WITH KROME)
 /
-/  RE-ARRANGED BY KROME DEVELOPERS, 2013
-/  FROM THE ORIGINAL ENZO ROUTINE
+/  KROME DEVELOPERS, 2014
 /
 ************************************************************************/
 
@@ -19,27 +18,21 @@
 #include "CosmologyParameters.h"
 #include "Gadget.h"
 
-/* This parameter controls whether the cooling function recomputes
-   the metal cooling rates.  It is reset by RadiationFieldUpdate. */
-
-extern int RadiationFieldRecomputeMetalRates;
-
 /* function prototypes */
 
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
-int RadiationFieldCalculateRates(FLOAT Time);
 int FindField(int field, int farray[], int numfields);
 double ReturnWallTime();
 extern "C" void FORTRAN_NAME(krome_driver)(
 	float *d, float *e, float *ge, float *u, float *v, float *w, 
- #KROME_args int *in, int *jn, int *kn,
+        #KROME_args int *in, int *jn, int *kn,
 	hydro_method *imethod,
         int *idual, int *idim,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke, 
-	float *dt, float *aye, float *temstart, 
+	float *dt, float *aye,  
 	float *utem, float *uxyz, float *uaye, float *urho, float *utim,
 	float *gamma, float *fh, float *dtoh);
 
@@ -57,12 +50,10 @@ int grid::SolveRateAndCoolEquations(int RTCoupledSolverIntermediateStep)
   if (NumberOfBaryonFields == 0)
     return SUCCESS;
 
-  this->DebugCheck("SolveRadiativeCooling");
-
   /* Declarations */
 
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, B1Num, B2Num, B3Num;
-  #KROME_num
+      #KROME_num
 
   FLOAT a = 1.0, dadt;
     
@@ -82,13 +73,6 @@ int grid::SolveRateAndCoolEquations(int RTCoupledSolverIntermediateStep)
             ENZO_FAIL("Error in grid->IdentifySpeciesFields.");
     }
 
-  /* Find photo-ionization fields */
-  /* NOT NEEDED BY KROME_DRIVER*/
-/*  int kphHINum, kphHeINum, kphHeIINum, kdissH2INum;
-  int gammaNum;
-  IdentifyRadiativeTransferFields(kphHINum, gammaNum, kphHeINum, 
-				  kphHeIINum, kdissH2INum);
-*/
 
   /* Compute size of the current grid. */
 
@@ -143,80 +127,23 @@ int grid::SolveRateAndCoolEquations(int RTCoupledSolverIntermediateStep)
 
   float afloat = float(a);
 
-  /* Metal cooling codes. */
-
-  int MetalNum = 0, SNColourNum = 0;
-  int MetalFieldPresent = FALSE;
-
-  // First see if there's a metal field (so we can conserve species in
-  // the solver)
-  MetalNum = FindField(Metallicity, FieldType, NumberOfBaryonFields);
-  SNColourNum = FindField(SNColour, FieldType, NumberOfBaryonFields);
-  MetalFieldPresent = (MetalNum != -1 || SNColourNum != -1);
-
-  // Double check if there's a metal field when we have metal cooling
-  if (MetalCooling && MetalFieldPresent == FALSE) {
-    if (debug)
-      fprintf(stderr, "Warning: No metal field found.  Turning OFF MetalCooling.\n");
-    MetalCooling = FALSE;
-    MetalNum = 0;
-  }
-
-  /* If both metal fields (Pop I/II and III) exist, create a field
-     that contains their sum */
-
-  float *MetalPointer;
-  float *TotalMetals = NULL;
-
-  if (MetalNum != -1 && SNColourNum != -1) {
-    TotalMetals = new float[size];
-    for (i = 0; i < size; i++)
-      TotalMetals[i] = BaryonField[MetalNum][i] + BaryonField[SNColourNum][i];
-    MetalPointer = TotalMetals;
-  } // ENDIF both metal types
-  else {
-    if (MetalNum != -1)
-      MetalPointer = BaryonField[MetalNum];
-    else if (SNColourNum != -1)
-      MetalPointer = BaryonField[SNColourNum];
-  } // ENDELSE both metal types
-
-  /* Calculate the rates due to the radiation field. */
-
-  if (!GadgetEquilibriumCooling) {
-    if (RadiationFieldCalculateRates(Time+0.5*dtFixed) == FAIL) {
-        ENZO_FAIL("Error in RadiationFieldCalculateRates.");
-    }
-  }
-
   float dtCool = dtFixed;
 
   /* Call the fortran routine to solve cooling equations. */
 
-  int ierr = 0;
 
   FORTRAN_NAME(krome_driver)(
     density, totalenergy, gasenergy, velocity1, velocity2, velocity3,
- #KROME_baryon
+    #KROME_baryon
     GridDimension, GridDimension+1, GridDimension+2, 
     &HydroMethod, 
     &DualEnergyFormalism,
     &GridRank, GridStartIndex, GridStartIndex+1, GridStartIndex+2, 
     GridEndIndex, GridEndIndex+1, GridEndIndex+2,
-    &dtCool, &afloat, &CoolData.TemperatureStart, 
+    &dtCool, &afloat, 
     &TemperatureUnits, &LengthUnits, &aUnits, &DensityUnits, &TimeUnits,
     &Gamma,
     &CoolData.HydrogenFractionByMass, &CoolData.DeuteriumToHydrogenRatio);
-
-  if (ierr) {
-      fprintf(stdout, "GridLeftEdge = %"FSYM" %"FSYM" %"FSYM"\n",
-	      GridLeftEdge[0], GridLeftEdge[1], GridLeftEdge[2]);
-      fprintf(stdout, "GridRightEdge = %"FSYM" %"FSYM" %"FSYM"\n",
-	      GridRightEdge[0], GridRightEdge[1], GridRightEdge[2]);
-      fprintf(stdout, "GridDimension = %"ISYM" %"ISYM" %"ISYM"\n",
-	      GridDimension[0], GridDimension[1], GridDimension[2]);
-      ENZO_FAIL("Error in FORTRAN rate/cool solver!\n");
-  }
 
   if (HydroMethod == MHD_RK) {
     float B2, v2;
@@ -238,8 +165,6 @@ int grid::SolveRateAndCoolEquations(int RTCoupledSolverIntermediateStep)
     
     delete totalenergy;
   }
-
-  delete [] TotalMetals;
 
   return SUCCESS;
 

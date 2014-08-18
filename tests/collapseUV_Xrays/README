@@ -1,4 +1,4 @@
-!#########################################################################
+!***************************************************************************
 !This is a simple one-zone collapse test following
 ! the chemical and thermal evolution of a primordial cloud irradiated
 ! by both a UV flux below the Lyman limit (13.6 eV) and a X-ray flux
@@ -14,7 +14,7 @@
 !The following cooling/heating processes are included in the test:
 ! H2 cooling from Glover&Abel 2008, atomic cooling from Cen 1992, 
 ! compton cooling, chemical heating, and heating coming from x-rays.
-!##########################################################################
+!***************************************************************************
 
 ! For further questions please contact the KROME developers
 ! via the user mailing list at 

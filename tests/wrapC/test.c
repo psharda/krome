@@ -1,6 +1,6 @@
 /*
-  The aim of the present code is to show an simple example
-  on how call krome from a C program. Note that in krome.h
+  The aim of the present code is to show a simple example
+  on how to call Krome from a C program. Note that in krome.h
   we provide some useful common variables similar to the one
   found in krome_user.f90
  */
