@@ -33,7 +33,7 @@ fh = open(fname_make_config_assemble,"rb")
 fout = open("tmp1.krome","w")
 for row in fh:
 	fout.write(row)
-	if(row.strip()=="$(OBJS_ECUDA_LIB)"): fout.write("$(OBJS_KROME)\n")
+	if("$(OBJS_ECUDA_LIB) \\" in row): fout.write("$(OBJS_KROME) \\\n")
 fh.close()
 fout.close()
 move("tmp1.krome","../"+fname_make_config_assemble)
@@ -48,13 +48,13 @@ for row in fh:
 		inBlock = True
 		fout.write(row)
 		continue
+	fout.write(row)
 	if(inBlock and (";" in row)):
 		inBlock = False
 		fh2 = open(fname_gridkrome_h,"rb")
 		for row2 in fh2:
 			fout.write(row2)
 		fh2.close()
-	fout.write(row)
 fh.close()
 fout.close()
 
