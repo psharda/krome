@@ -90,7 +90,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
   !KROME: additional variables requested by KROME
   real*8::unoneq(krome_nmols), Tgas
-  real*8::mu_noneq,mu_noneq_old,T2old,t2gas
+  real*8::mu_noneq,mu_noneq_old,iscale_d,T2old,t2gas
 
   ! Mesh spacing in that level
   dx=0.5D0**ilevel
@@ -303,6 +303,9 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
      ! Compute non-eq chemical/thermal evolution with Krome
      if(krome_chem)then
+
+        !scale_d inverse
+        iscale_d = 1d0/scale_d
 
         do i=1,nleaf
 

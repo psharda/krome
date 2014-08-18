@@ -5546,7 +5546,6 @@ class krome():
 			"H+": 8.1967e-5,
 			"HE": 2.4375e-1,
 			"H2": 1.5123e-6,
-#			"Tgas" : 200,
 			"default":1e-40
 		}
 
@@ -5566,7 +5565,7 @@ class krome():
 
 		#condinit
 		#prepares the initial conditions and copy fname
-		cheminit = " q(1:nn,ndim+3) = "+str(ndef["Tgas"])+"     !Set temperature in K\n"
+                cheminit = "\n"
 		ichem = 0
 		fname = "condinit.f90"
 		#loop on species
@@ -5579,7 +5578,7 @@ class krome():
 				sdef = str(ndef[x.name]) #default value from array
 			else:
 				sdef = str(ndef["default"]) #default values if not present in array
-			cheminit += "q(1:nn,ndim+3+"+str(ichem)+")  = "+sdef+"  !"+x.name+"\n"
+			cheminit += "q(1:nn,ndim+"+ramses_offset+"+"+str(ichem)+")  = "+sdef+"  !"+x.name+"\n"
 		#replace initialization
 		self.replacein(pfold+fname, ramsesFolder+fname, ["#KROME_init_chem"], [cheminit])
 		indentF90(ramsesFolder+fname)
@@ -5598,7 +5597,7 @@ class krome():
 			if(not(x.name in excl)):
 				updateueq += "unoneq("+str(ichem)+") = uold(ind_leaf(i),ndim+"+ramses_offset+"+"+str(ichem)+") !"+x.name+"\n"
 				if(x.mass>0e0): scaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
-				bkscaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*"+str(x.mass)+"/scale_d !"+x.name+"\n"
+				bkscaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*"+str(x.mass)+"*iscale_d !"+x.name+"\n"
 				bkupdateueq += "uold(ind_leaf(i),ndim+"+ramses_offset+"+"+str(ichem)+") = unoneq("+str(ichem)+")\n"
 		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
 		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
@@ -5606,22 +5605,9 @@ class krome():
 		self.replacein(pfold+fname, ramsesFolder+fname, org, new)
 		indentF90(ramsesFolder+fname)
 
-		#cooling_module/deprecated
-		# simply copy the cooling_module into build/ramses
-		#fname = "cooling_module.f90"
-		#self.replacein(pfold+fname,ramsesFolder+fname, [], [])
-		#indentF90(ramsesFolder+fname)
-
-		#hydro_parameters/really needed?
-		# simply copy the hydro_parameters into build/ramses
-		# extend nvar according to KROME species
-		#fname = "hydro_parameters.f90"
-		#self.replacein(pfold+fname, ramsesFolder+fname, [], [])
-		#indentF90(ramsesFolder+fname)
-
 		#init_flow_fine
 		fname = "init_flow_fine.f90"
-		init_array = "if(ivar==ndim+"+ramses_offset+")  init_array = 1.356d-2/aexp**2 ! T in K\n"
+		init_array = "\n"
 		ichem = 0
 		for x in specs:
 			if(x.name in excl): continue
@@ -5636,11 +5622,6 @@ class krome():
 		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_init_array"],[init_array])
 		indentF90(ramsesFolder+fname)
 		
-		#output_hydro/deprecated
-		#fname = "output_hydro.f90"
-		#self.replacein(pfold+fname,ramsesFolder+fname,[],[])
-		#indentF90(ramsesFolder+fname)
-
 		#read_hydro_params
 		fname = "read_hydro_params.f90"
 		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
