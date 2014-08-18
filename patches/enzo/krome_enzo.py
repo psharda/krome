@@ -23,7 +23,7 @@ fh.write("       krome_enzo_patch/evaluate_tgas.o\\\n")
 fh.write("       krome_enzo_patch/krome_driver.o\\\n")
 fh.close()
 
-copyfile("./"+fname_make_config_objects, "../"+fname_make_config_objects)
+move("./"+fname_make_config_objects, "../"+fname_make_config_objects)
 
 #fname_make_config_assemble
 print "patching ",fname_make_config_assemble
