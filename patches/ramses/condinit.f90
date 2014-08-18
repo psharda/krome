@@ -70,7 +70,7 @@ subroutine condinit(x,u,dx,nn)
 #if NVAR>NDIM+2+NENER
 !KROME: passive scalars, these include only the chemical species. 
 ! the gas temperature is not included.
-  do ivar=ndim+3+nener, nvar 
+  do ivar=ndim+3+nener, nvar
      u(1:nn,ivar)=q(1:nn,1)*q(1:nn,ivar)
   end do
 #endif
