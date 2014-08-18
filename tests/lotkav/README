@@ -1,0 +1,9 @@
+!***********************************************************************************
+! This test solve the standard Lotka-Volterra equations.
+! It is mainly aimed at showing how in KROME you can add
+! arbitrary ordinary differential equations to your
+! ODE system.
+! The Lotka–Volterra equations, are first-order, non-linear, differential equations 
+! used to describe the dynamics of biological systems in which two species interact, 
+! one as a predator and the other as prey.
+!************************************************************************************

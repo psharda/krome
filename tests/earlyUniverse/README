@@ -1,0 +1,10 @@
+!************************************************************
+! This test is aimed to reproduce the evolution
+! of the primordial gas based on the Galli&Palla 1998 paper
+! within the framework of Friedmann cosmological models 
+! from redshift z=10^4 to z=0.
+! It includes the evaluation of H+ recombination based on 
+! Sasaki & Takahara (1993) paper.
+! For additional details see Galli&Palla A&A, 335, 403, 1998. 
+!************************************************************
+

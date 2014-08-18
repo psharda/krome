@@ -1,0 +1,6 @@
+!****************************************************************
+!This test consists of a gas with an initial population of dust,
+! both silicon and carbon based, with 10 bins each.
+!The gas-to-dust ratio is 10^-5 and the dust distribution
+! follows an MRN power-law.
+!****************************************************************
