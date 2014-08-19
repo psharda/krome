@@ -532,6 +532,7 @@ contains
 
   !*******************************
   !radiative recombination rates low-temp fit, Verner+96
+  ! unit: cm3/s
   function radrec_low_v96(Tgas,a,b,c,d,f)
     implicit none
     real*8::Tgas,a,b,c,d,f,radrec_low_v96,t,invt

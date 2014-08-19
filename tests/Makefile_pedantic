@@ -18,21 +18,24 @@ ifeq ($(fc),ifort)
 	pswitch = $(hswitch) -pg
 	nswitch = $(std) -O0
 	switch =  $(nswitch) -warn nounused
+	switcho = switch
 else
-	switch = -O3
+	switch = -ffpe-trap=invalid,zero,overflow -fbacktrace -fbounds-check
+	switch+= -ffree-line-length-none
+	switcho =
 	nowarn = 
 endif
 
 all:
 
 ifneq ($(wildcard opkdmain.f),) 
-	$(fc) -c opkda2.f $(switch) $(nowarn)
-	$(fc) -c opkda1.f $(switch) $(nowarn)
-	$(fc) -c opkdmain.f $(switch) $(nowarn)
+	$(fc) -c opkda2.f $(switcho) $(nowarn)
+	$(fc) -c opkda1.f $(switcho) $(nowarn)
+	$(fc) -c opkdmain.f $(switcho) $(nowarn)
 endif
 
 ifneq ($(wildcard dvode_f90_m.f90),) 
-	$(fc) -c dvode_f90_m.f90 $(switch) $(nowarn)
+	$(fc) -c dvode_f90_m.f90 $(switcho) $(nowarn)
 endif
 
 ifneq ($(wildcard nleq_all.f),) 

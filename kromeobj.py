@@ -3739,8 +3739,9 @@ class krome():
 				fout.write(truncF90(self.implicit_arrays,60,","))
 			elif(srow == "#KROME_initcoevars"):
 				if(len(coevars)==0): continue
-				kvars = "real*8::"+(",".join([x for x in coevars.keys()]))
-				fout.write(kvars+"\n")
+				for x in coevars.keys():
+					kvars = "real*8::"+x
+					fout.write(kvars+"\n")
 			elif(srow == "#KROME_coevars"):
 				if(len(coevars)==0): continue
 				klist = [[k+" = "+v[1]+"\n",v[0]] for k,v in coevars.iteritems()] #this mess is to sort dict

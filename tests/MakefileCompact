@@ -9,9 +9,10 @@ ifeq ($(fc),ifort)
 	pswitch = $(hswitch) -pg
 	nswitch = $(std) -O0
 	switch =  $(hswitch)
+	nowarn = -nowarn
 else
-	switch += -ffpe-trap=invalid,zero,overflow -g
-	switch += -fbacktrace -O3
+	switch = -O3
+	nowarn = 
 endif
 
 
@@ -19,9 +20,9 @@ endif
 prj = krome
 
 all:
-	$(fc) -c opkda2.f $(switch) -nowarn
-	$(fc) -c opkda1.f $(switch) -nowarn
-	$(fc) -c opkdmain.f $(switch) -nowarn
+	$(fc) -c opkda2.f $(switch) $(nowarn)
+	$(fc) -c opkda1.f $(switch) $(nowarn)
+	$(fc) -c opkdmain.f $(switch) $(nowarn)
 	$(fc) -c krome_user_commons.f90 $(switch)
 	$(fc) -c krome_all.f90 $(switch) 
 	$(fc) -c test.f90 $(switch) 

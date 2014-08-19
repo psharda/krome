@@ -922,7 +922,6 @@ def get_file_list():
 	files.append("src/krome_commons.f90")
 	files.append("data")
 	files.append("data/crossSect.dat")
-	files.append("data/COself.dat")
 	files.append("data/heatxH.dat")
 	files.append("data/optSi.dat")
 	files.append("data/ip.dat")
@@ -932,7 +931,6 @@ def get_file_list():
 	files.append("data/heatxHe.dat")
 	files.append("data/coolO2.dat")
 	files.append("data/thermo30.dat")
-	files.append("data/H2self.dat")
 	files.append("data/coolZ.dat")
 	files.append("data/ratexH.dat")
 	files.append("data/database")
@@ -1114,6 +1112,37 @@ def lend(aarg,line):
 	return False
 
 ###############################
+#reduce the length of the lines
+def cutlines(all_row):
+	#check line length
+	maxlen = 80
+	arowl = []
+	for line in all_row:
+		if(len(line.split("!")[0])>maxlen):
+			erow = line.strip().split(",") #explode using commma
+			sall = "" #string
+			subrow1 = [] #first line
+			subrow2 = [] #second line
+			#loop over comma separated parts
+			for i in range(len(erow)):
+				sall += erow[i]+"," #concatenate string
+				#append to the first or the second line depending on the length
+				if(len(sall)>maxlen-4):
+					subrow2.append(erow[i])
+				else:
+					subrow1.append(erow[i])
+
+			#join first and second line
+			if(subrow1.join().strip()!=""):
+				arowl.append((",".join(subrow1)).strip()+", &\n")
+			if(subrow2.join().strip()!=""):
+				arowl.append((",".join(subrow2))+"\n")
+		else:
+			arowl.append(line) #append lines of regular length
+	return arowl
+
+
+###############################
 #this function indent f90 file and remove multiple blank lines
 def indentF90(filename):
 	import os
@@ -1151,9 +1180,17 @@ def indentF90(filename):
 		if(lbeg(["if"],srow) and "then" in srow): nind += 1 #check if line stats with if and has then
 	fh.close()
 
+	#arowl = []
+	#for j in range(50):
+	#	arowl = cutlines(arow)
+	#	if(len(arow)==len(arowl)): break
+	#	arow = arowl[:]
+
+	arowl = arow[:]
+
 	#write the new file
 	fh = open(filename,"w")
-	for x in arow:
+	for x in arowl:
 		fh.write(x)
 	fh.close()
 

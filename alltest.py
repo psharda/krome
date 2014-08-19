@@ -1,14 +1,16 @@
 #this script runs all tests and/or produces or checks md5
 from subprocess import call
-import os,sys,hashlib,glob,platform
+import os,sys,hashlib,glob,platform,shutil
 tests = ["atmosphere", "auto","chianti","collapseCO","collapseUV_Xrays","collapseZ_induced"]
 tests += ["collapse", "collapseZ", "dust", "map", "shock1D","compact","earlyUniverse","lamda"]
 tests += ["cloud","collapseUV","compact","lotkav","reverse","wrapC"]
 tests += ["shock1Dcool","slowmanifold"]
 
-first = "lamda" #start from this test (empty string start from first test)
+
+first = "auto" #start from this test (empty string start from first test)
 if(first.strip()==""): first = tests[0]
 
+compiler="gfortran" #ifort or gfortran
 mode = "eyeball" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"": check hash
 
 #read hastable if needed
@@ -48,12 +50,30 @@ if(mode!=""):
 run = False #run flag
 for test in tests:
 	if(test==first): run = True #run the first test
+	if((compiler=="gfortran") and (test=="wrapC")): continue
 	if(not(run)): continue #skip if test is before first
 	print "test "+test
 	#call krome
 	call(["./krome", "-test="+test, "-pedantic", "-unsafe", "-sh"])
 	#move to build directory
 	os.chdir("build/")
+	fh = open("Makefile","rb")
+	fout2 = open("tmp","w")
+	if(compiler=="gfortran"):
+		for row in fh:
+			if(row.strip()=="fc = ifort"):
+				fout2.write("fc = gfortran\n")
+			else:
+				fout2.write(row)
+		fh.close()
+		fout2.close()
+		shutil.move("tmp","Makefile")
+	elif(compiler=="ifort"):
+		pass
+	else:
+		print "ERRROR: unknown compiler",compiler
+		sys.exit()
+	
 	#make clean
 	call(["make","clean"])
 	#compile
