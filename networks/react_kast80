@@ -1,4 +1,5 @@
 #reactions from Kasting&Donahue1980 (planetary atmosphere)
+@var:T=Tgas
 @format:idx,R,R,R,P,P,P,rate
 1,H2O,O(1D),,OH,OH,,2.1d-10
 2,H2,O(1D),,OH,H,,1.d-10

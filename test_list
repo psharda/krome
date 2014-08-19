@@ -5,9 +5,9 @@ auto/				OK
 chianti/			OK, very similar to gnat+ferland (2011), same as chainti.py. but slightly different physics.
 cloud/				OK
 collapse/			OK
-collapseCO/			reasonable. problem: no benchmark
+collapseCO/			problem: no benchmark
 collapseUV/			OK
-collapseZ/			OK
+collapseZ/			OK, but high density plateau to solve
 collapseZ_induced/		not-so-strange thermal history. should be compared with a benchmark.
 collapseZ_UV/			same as above. strange behaviour for J21=1e-2 at lower density
 compact/			OK
@@ -18,7 +18,7 @@ lotkav/				OK
 map/				OK
 reverse/			OK
 shock1D/			OK
-shock1Dcool/			cooling ineffective. why?
+shock1Dcool/			OK
 shock1Dphoto/			should be fixed with the new photobin approach
 slowmanifold/			OK
 stars/				not working. we can replace with some CNO cycle to compute energy released at constant density

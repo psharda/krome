@@ -655,7 +655,7 @@ contains
     ! However, we extrapolate the limits.
 
     !exit on low temperature
-    if(Tgas<phys_Tcmb) return
+    if(inTgas<phys_Tcmb) return
     !extrapolate higher temperature limit
     Tgas = min(inTgas,1d4)
 

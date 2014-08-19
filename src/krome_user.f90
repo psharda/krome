@@ -42,7 +42,7 @@ contains
     J21xray = xarg
     
   end subroutine krome_set_J21xray
-#ENDIFKROME_useXrays
+#ENDIFKROME
 
 #KROME_cooling_functions
 

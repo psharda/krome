@@ -73,24 +73,23 @@
 
 #DEUTERIUM CHEMISTRY
 #Galli & Palla 2002 from Wolf Savin 2001
-#30,H+,D,,H,D+,,,.GE.5d1,NONE,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
+30,H+,D,,H,D+,,,.GE.5d1,NONE,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
 
 #Galli & Palla 2002 from Wolf Savin 2001
-#31,H,D+,,H+,D,,,.GE.5d1,NONE,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
-#
+31,H,D+,,H+,D,,,.GE.5d1,NONE,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
+
 ##Galli&Palla 2002 from Gerlich 1982 
-#32,H2,D+,,HD,H+,,,NONE,NONE,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
-#
+32,H2,D+,,HD,H+,,,NONE,NONE,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
+
 ##Galli & Palla 2002, from Garlich 1982 with modification by Gay et al. 2011
-#33,HD,H+,,H2,D+,,,NONE,NONE,1.0d-9 *exp(-4.57d2*invT)
-#
+33,HD,H+,,H2,D+,,,NONE,NONE,1.0d-9 *exp(-4.57d2*invT)
+
 ##Glover et al. 2009, from data by Mielke et al. 2003
-#34,H2,D,,HD,H,,,NONE,.LE.2.d3,10**(-56.4737+5.88886*log10(Tgas)+7.19692*(log10(Tgas))**2+2.25069*(log10(Tgas))**3-2.16903*(log10(Tgas))**4+0.317887*(log10(Tgas))**5)
-#35,H2,D,,HD,H,,,.GT.2d3,NONE,3.17d-10*exp(-5207.*invT)
-#
+34,H2,D,,HD,H,,,NONE,.LE.2.d3,10**(-56.4737+5.88886*log10(Tgas)+7.19692*(log10(Tgas))**2+2.25069*(log10(Tgas))**3-2.16903*(log10(Tgas))**4+0.317887*(log10(Tgas))**5)
+35,H2,D,,HD,H,,,.GT.2d3,NONE,3.17d-10*exp(-5207.*invT)
+
 ##Galli & Palla 2002, from Shavitt 1959 (lower limit from Shavitt)
-#36,HD,H,,H2,D,,,>2e2,NONE,5.25d-11*exp(-4430.*invT+1.739d5*(invT)**2)
-#
+36,HD,H,,H2,D,,,>2e2,NONE,5.25d-11*exp(-4430.*invT+1.739d5*(invT)**2)
+
 ##ENZO
-#37,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)
-#
+37,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)

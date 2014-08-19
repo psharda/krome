@@ -1,4 +1,6 @@
-reset 
+reset
+nkrome=2
+load 'species.gps'
 set logscale
 set autoscale
 set format x "%L"
@@ -16,5 +18,5 @@ plot './fort.77' u 3:4 w l t "C  (a=2.5e-5 cm)",\
  './fort.78' u 3:4 w l t "Si (a=2.5e-5 cm)",\
  './fort.79' u 3:4 w l t "C  (a=5e-7 cm)",\
  './fort.80' u 3:4 w l t "Si (a=5e-7 cm)",\
-'fort.66' u 2:15 w l t "C  (gas)",\
-'fort.66' u 2:16 w l t "Si (gas)"
+'fort.66' u 2:(column(krome_idx_C)) w l t "C  (gas)",\
+'fort.66' u 2:(column(krome_idx_Si)) w l t "Si (gas)"

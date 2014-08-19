@@ -1,3 +1,4 @@
+#this script runs all tests and/or produces or checks md5
 from subprocess import call
 import os,sys,hashlib,glob,platform
 tests = ["atmosphere", "auto","chianti","collapseCO","collapseUV_Xrays","collapseZ_induced"]
@@ -5,7 +6,7 @@ tests += ["collapse", "collapseZ", "dust", "map", "shock1D","compact","earlyUniv
 tests += ["cloud","collapseUV","compact","lotkav","reverse","wrapC"]
 tests += ["shock1Dcool","slowmanifold"]
 
-first = "lamda" #start from this test (empty=first_test)
+first = "lamda" #start from this test (empty string start from first test)
 if(first.strip()==""): first = tests[0]
 
 mode = "eyeball" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"": check hash

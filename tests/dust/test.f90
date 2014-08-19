@@ -34,7 +34,6 @@ program test_krome
   x(KROME_idx_H)     = 1d0 * xH  !H
   x(KROME_idx_Hj)    = 1.d-4 * xH   !H+
   x(KROME_idx_H2)    = 1.d-5 *xH   !H2
-  x(KROME_idx_HD)    = 1.d-8 *xH   !HD
   x(KROME_idx_C)     = 1.d-6 *xH    !C
   x(KROME_idx_Si)    = 1.d-6 *xH    !Si
 
@@ -49,7 +48,7 @@ program test_krome
   dt = 1d-4*spy !time-step (s)
   t = 0.d0 !initial time (s)
   tend = 1d8*spy !end time (s)
-  !write inital values
+  !write initial values
   write(66,'(999E12.3e3)') t/spy,Tgas,x(:)
   !loop over time-steps
   do
