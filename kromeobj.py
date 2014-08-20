@@ -3896,7 +3896,7 @@ class krome():
 							rotpart = "2d0"
 							if(mol.be_rot!="__NONE__" and (gtype=="EXACT" or gtype=="ROT")):
 								if(mol.name=="H2"):
-									rotpart = "gamma_rotop(Tgas, 3d0)"
+									rotpart = "gamma_rotop(Tgas, phys_orthoParaRatio)"
 								else:
 									rotpart = "gamma_rot(Tgas, "+format_double(mol.be_rot)+")"
 							di_vars.append(mol.fname)

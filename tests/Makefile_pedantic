@@ -18,7 +18,7 @@ ifeq ($(fc),ifort)
 	pswitch = $(hswitch) -pg
 	nswitch = $(std) -O0
 	switch =  $(nswitch) -warn nounused
-	switcho = switch
+	switcho = $(switch)
 else
 	switch = -ffpe-trap=invalid,zero,overflow -fbacktrace -fbounds-check
 	switch+= -ffree-line-length-none
