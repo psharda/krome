@@ -20,7 +20,7 @@ ifeq ($(fc),ifort)
 	switch =  $(hswitch)
 else
 	switch = -O3 -ffree-line-length-none
-	nowarn = 
+	nowarn = -w
 endif
 
 all:

@@ -23,7 +23,7 @@ else
 	switch = -ffpe-trap=invalid,zero,overflow -fbacktrace -fbounds-check
 	switch+= -ffree-line-length-none
 	switcho =
-	nowarn = 
+	nowarn = -w
 endif
 
 all:
