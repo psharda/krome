@@ -1,0 +1,35 @@
+reset
+set logscale
+set ylabel "cool and heat [erg/cm3/s]"
+set key below
+load 'heatcool.gps'
+if(!exists("krome_fnum_cool")) print "ERROR: set the filename containing the cooling (krome_fnum_cool=?)"
+if(!exists("krome_fnum_heat")) print "ERROR: set the filename containing the heating (krome_fnum_heat=?)"
+if(!exists("krome_ivar")) print "ERROR: set the position of independent variable (krome_ivar=?)"
+print "NOTE: this is a template, remove the cooling/heating you don't need."
+plot krome_fnum_cool u (column(krome_ivar)):(column(krome_idx_cool_H2)) t "cool H2" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_cool_H2GP)) t "cool H2GP" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_cool_atomic)) t "cool atomic" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_cool_HD)) t "cool HD" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_cool_Z)) t "cool Z" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_cool_dH)) t "cool dH" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_cool_dust)) t "cool dust" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_cool_compton)) t "cool compton" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_cool_CIE)) t "cool CIE" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_cool_cont)) t "cool cont" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_cool_exp)) t "cool expansion" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_cool_ff)) t "cool free-free" w l,\
+ krome_fnum_heat u (column(krome_ivar)):(-(column(krome_idx_heat_chem))) t "cool chem" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_heat_chem)) t "heat chem" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_heat_compress)) t "heat compress" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_heat_photo)) t "heat photo" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_heat_dH)) t "heat dH" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_heat_Av)) t "heat Av" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_heat_CR)) t "heat CR" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_heat_dust)) t "heat dust" w l,\
+ '' u (column(krome_ivar)):(column(krome_idx_heat_xray)) t "heat xray" w l
+
+
+
+
+

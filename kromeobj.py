@@ -409,6 +409,9 @@ class krome():
 			[argv.append(x) for x in ["-useN","-coolFile=data/coolO2.dat", "-cooling=O2"]]
 			[argv.append(x) for x in ["-useThermoToggle"]]
 			filename = "networks/react_COthin"
+		elif(args.test=="hello"):
+			[argv.append(x) for x in ["-useN"]]
+			filename = "networks/react_hello"
 		else:
 			tests = ", ".join(sorted(os.walk('tests').next()[1]))
 			print "ERROR: test \""+args.test+"\" not present!"

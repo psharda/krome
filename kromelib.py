@@ -1277,7 +1277,9 @@ def get_quote(qall=False):
 	["One size never fits all","Memorandum RFC 1925"],
 	["No matter how hard you push and no matter what the priority,you can't increase the speed of light","Memorandum RFC 1925"],
 	["Chemistry has been termed by the physicist as the messy part of physics", "Frederick Soddy "],
-	["Don't worry if it doesn't work right. If everything did, you'd be out of a job.", "Mosher's Law"]
+	["Don't worry if it doesn't work right. If everything did, you'd be out of a job.", "Mosher's Law"],
+	["Beware of bugs in the above code; I have only proved it correct, not tried it.", "Donald Knuth"],
+	["Given enough eyeballs, all bugs are shallow.", "Eric S. Raymond"]
 	]
 	qrange = 1
 	print 

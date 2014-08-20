@@ -1,0 +1,5 @@
+#this is a simple network to show the a three-species evolution
+# which employs fake species (FK1, FK2, and FK3)
+@format:idx,R,P,P,rate
+1,FK1,FK2,,1d0
+2,FK2,FK3,,0.5d0
