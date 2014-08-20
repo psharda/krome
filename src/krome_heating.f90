@@ -145,7 +145,7 @@ contains
 #IFKROME_useHeatingPhotoAv
   !******************************
   function heat_photoAv(n,Tgas,k)
-    !heating from  photoreactions using rate approximation erg/s/cm3
+    !heating from photoreactions using rate approximation (erg/s/cm3)
     use krome_commons
     use krome_user_commons
     use krome_subs
@@ -298,7 +298,7 @@ contains
     use krome_subs
     real*8::heat_compress,n(:), dd, Tgas
 
-    dd = get_Hnuclei(n(:)) !sum(n(1:nmols)) !total number density
+    dd = sum(n(1:nmols)) !total number density
 
     !COMPRESSIONAL HEATING
     heat_compress = dd * boltzmann_erg * Tgas / user_tff !erg/s/cm3

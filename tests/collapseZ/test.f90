@@ -21,7 +21,7 @@ program test_krome
 
   !INITIALIZE KROME PARAMETERS AND DUST 
   call krome_init()
-  call krome_set_user_redshift(0d0)
+  call krome_set_zredshift(0d0)
 
   zs = (/-99.d0, -4.d0, -3d0, -2d0, -1d0/) !list of metallicities
   !$omp parallel do schedule(dynamic,1) default(none) &
@@ -63,23 +63,22 @@ program test_krome
      !loop over the hydro time-step
      do i = 1,rstep
 
-        dd1=dd
+        dd1 = dd
 
         !***CALCULATE THE FREE FALL TIME***!
         rho = krome_get_rho(x(:))
-        tff = sqrt(3.0d0 * 3.1415d0 / (32.0d0*6.67e-8*rho))
+        tff = sqrt(3d0 * 3.1415d0 / (32d0*6.67d-8*rho))
         user_tff = tff
-        dtH = 0.01d0 * tff        !TIME-STEP
+        dtH = 0.01d0 * tff !TIME-STEP
         deldd = (dd/tff) * dtH
-        dd = dd + deldd        !UPDATE DENSITY
+        dd = dd + deldd !UPDATE DENSITY
 
-        x(:) = x(:)*dd/dd1 !rescale abundances
+        x(:) = x(:) * dd / dd1 !rescale abundances
 
         dt = dtH 
 
-        if(dd.gt.1d18) exit !quit after 1e18 1/cm3
+        if(dd.gt.1d17) exit !quit after 1e18 1/cm3
 
-        x(krome_idx_e) = krome_get_electrons(x(:))
         !solve the chemistry
         call krome(x(:),Tgas,dt)
 
