@@ -22,7 +22,7 @@ program test_krome
   !INITIALIZE KROME PARAMETERS AND DUST 
   call krome_init()
 
-  zs = (/-99.d0, -3d0, -1d0/) !list of metallicities
+  zs = (/-99.d0, -2d0, -1d0/) !list of metallicities
   !$omp parallel do schedule(dynamic,1) default(none) &
   !$omp  private(jz,ntot,Tgas,x,dd,i,dd1,rho,tff,dt,dtH,deldd) &
   !$omp  shared(zs,imax,result)
@@ -38,7 +38,7 @@ program test_krome
      x(KROME_idx_H)  = ntot          !H
      x(KROME_idx_H2) = 1.d-6*ntot    !H2
      x(KROME_idx_Hj) = 1.d-4*ntot    !H+
-     x(KROME_idx_HE) = 0.0775d0*ntot !He
+     x(KROME_idx_He) = 0.0775d0*ntot !He
 
      !set cosmic rays
      call krome_set_user_crate(1.3d-17)
@@ -50,13 +50,12 @@ program test_krome
      x(krome_idx_C)  = 1d-40
 
      x(krome_idx_e) = krome_get_electrons(x(:))
-     !list abundances
-     call krome_get_info(x(:),Tgas)
+
 
      dd = ntot
-
-     print *,"solving..."
-     print '(a5,2a11)',"step","n(cm-3)","Tgas(K)"
+     print *,""
+     print *,"solving for ",zs(jz)
+     print '(2a5,2a11)',"Zstep","step","n(cm-3)","Tgas(K)"
 
      !loop over the hydro time-step
      do i = 1,rstep
@@ -75,7 +74,7 @@ program test_krome
 
         dt = dtH 
 
-        if(dd.gt.1d18) exit !quit after 1e18 1/cm3
+        if(dd.gt.1d10) exit !quit after 1e10 1/cm3
 
         !local approximation for Av
         call krome_set_user_Av((dd*1d-3)**(2./3.))

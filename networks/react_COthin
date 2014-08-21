@@ -204,8 +204,11 @@
 #Glover+2010
 102,C,H2+,CH+,H,NONE,NONE,2.4d-9
 
-#Glover+2010
-103,C,H3+,CH+,H2,NONE,NONE,2d-9
+#O'Connor+2014 (http://arxiv.org/abs/1408.4696), original range 10-1e4 K, here extended
+103,C,H3+,CH+,H2,NONE,NONE,(1.0218d-9 + 7.2733d-11*sqrt(Tgas) + 5.9203d-14*Tgas)/(Tgas**0.1667 + 4.4914d-2*sqrt(Tgas) - 5.9203d-14*Tgas + 2.6397d-6*Tgas**1.5)
+
+#additional channel from O'Connor+2014 (http://arxiv.org/abs/1408.4696), original range 10-1e4 K, here extended
+103,C,H3+,CH2+,H,NONE,NONE,(8.5145d-10)/(Tgas**(.1667) + 9.5666d-4*sqrt(Tgas) - 4.404d-5*Tgas + 2.3496d-6 * Tgas**1.5)
 
 #Glover+2010
 104,C+,H2,CH+,H,NONE,NONE,1d-10*exp(-4640d0*invT)
