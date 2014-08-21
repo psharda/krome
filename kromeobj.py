@@ -373,9 +373,10 @@ class krome():
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
 			filename = "networks/react_primordialZ2"
 			test_status = "dev" #under developement
-		elif(args.test=="collapseUV"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,ATOMIC,FF", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-useN","-gamma=FULL"]]
+                elif(args.test=="collapseUV"):
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,FF,DISS,ATOMIC", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-useN","-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
+			[argv.append(x) for x in ["-columnDensityMethod=JEANS"]]
 			filename = "networks/react_primordial_UV"
                 elif(args.test=="collapseUV_Xrays"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,DISS,HD,FF,COMPTON,CHEM", "-heating=COMPRESS,CHEM,XRAY"]]
@@ -389,7 +390,7 @@ class krome():
                 elif(args.test=="earlyUniverse"):
 			[argv.append(x) for x in ["-cooling=H2GP98,COMPTON,EXPANSION"]]
 			[argv.append(x) for x in ["-useN","-useFileIdx"]]
-			filename = "networks/react_GP98"
+			filename = "networks/react_earlyUniverse"
 		elif(args.test=="stars"):
 			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck"]]
 			filename = "networks/react_star"

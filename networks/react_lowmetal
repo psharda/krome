@@ -60,7 +60,7 @@
 #
 #32,D,H-,,HD,E,,,NONE,1e8,1.5d-9*(T32)**(-0.1d0)
 
-#THREE-BODY REACTIONS
+#THREE-BODY REACTIONS, Forrey 2013
 33,H,H,H,H2,H,,,NONE,NONE,6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0)
 34,H2,H,H,H2,H2,,,NONE,NONE,(6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0))/8.d0
 

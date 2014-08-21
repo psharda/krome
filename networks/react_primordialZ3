@@ -118,6 +118,7 @@
 29,He,H+,He+,H,NONE,.LE.1d4,1.26d-9*Tgas**(-0.75d0)*exp(-1.275d5*invT)
 30,He,H+,He+,H,>1d4,NONE,4.d-37*Tgas**(4.74d0)
 
+#Metals reactins from the reduced network of Omukai 2005
 @format:idx,Tmin,Tmax,R,R,P,P,rate
 1,NONE,NONE,O+,H,H+,O,6.80d-10 
 2,NONE,NONE,H+,O,O+,H,7.00d-10*exp(-232.*invT) 
