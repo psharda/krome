@@ -88,7 +88,7 @@ contains
 
   !****************************
   ! set the energy per photo bin
-  ! erg/s/cm2/sr/Hz
+  ! eV/s/cm2/sr/Hz
   subroutine krome_set_photoBinJ(phbin)
     use krome_commons
     use krome_photo

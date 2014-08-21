@@ -339,6 +339,7 @@ class krome():
 		elif(args.test=="shock1Dphoto"):
 			[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium"]]
 			filename = "networks/react_primordial_photo"
+			test_status = "dev" #under developement
 		elif(args.test=="shock1Dlarge"):
 			[argv.append(x) for x in ["-iRHS"]]
 			filename = "networks/react_WH2008"
