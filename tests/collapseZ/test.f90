@@ -77,7 +77,7 @@ program test_krome
 
         dt = dtH 
 
-        if(dd.gt.1d17) exit !quit after 1e18 1/cm3
+        if(dd>1d18) exit !quit after 1e18 1/cm3
 
         !solve the chemistry
         call krome(x(:),Tgas,dt)
