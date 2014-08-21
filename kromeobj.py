@@ -62,6 +62,7 @@ class krome():
 	humanFlux = True
 	typeGamma = "DEFAULT"
 	test_name = "default"
+	test_status = "OK"
 	is_test = False
 	TlimitOpLow = "GE"
 	TlimitOpHigh = "LT"
@@ -308,13 +309,14 @@ class krome():
 	def select_test(self,argv):
 		parser = self.parser
 		args = parser.parse_args()
+		all_status = ["OK","dev"]
+		test_status = "OK"
 
 		if(args.test):
 			self.is_test = True
 		else:
 			return
-		#test_name = (arg.strip().replace("-test=",""))
-		#print "Reading option -test (test="+test_name+")"
+
 		if(args.test=="cloud"):
 			[argv.append(x) for x in ["-useN","-iRHS","-skipJacobian","-useCustomCoe=\"myCoe(:)\""]]
 			filename = "networks/react_cloud"
@@ -370,6 +372,7 @@ class krome():
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
 			filename = "networks/react_primordialZ2"
+			test_status = "dev" #under developement
 		elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,ATOMIC,FF", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-useN","-gamma=FULL"]]
@@ -390,9 +393,7 @@ class krome():
 		elif(args.test=="stars"):
 			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck"]]
 			filename = "networks/react_star"
-		elif(args.test=="coolCO"):
-			[argv.append(x) for x in [""]]
-			filename = "networks/react_dummy"
+			test_status = "dev" #under developement
 		elif(args.test=="reverse"):
 			[argv.append(x) for x in ["-useN","-reverse"]]
 			filename = "networks/react_NO"
@@ -418,8 +419,12 @@ class krome():
 			print "Available tests are: "+tests
 			sys.exit()
 
-		self.filename = filename
-		self.test_name = args.test
+		#check if the status of the test is valid
+		if(not(test_status in all_status)): sys.exit("ERROR: status "+test_status+" not recognized!")
+
+		self.filename = filename #add the network filename
+		self.test_name = args.test #copy the name of the test
+		self.test_status = test_status #developement status of the test
 
 	##########################################
 	def argparsing(self,argv):
@@ -435,6 +440,18 @@ class krome():
 			sys.exit()
 
 
+		#print a warning if the test is under developement
+		if(args.test and self.test_status=="dev"):
+			print "************************************************"
+			print "WARNING: the tets \""+self.test_name+"\" is currently"
+			print " UNDER DEVELOPEMENT and its results colud be"
+			print " horribly wrong. Do you want to proceed?"
+			print "************************************************"
+			a = raw_input("Any key to ignore q to quit... ")
+			if(a=="q"): print sys.exit()
+			print
+			
+
 		#list arguments if test
 		if(args.test):
 			print "This TEST is running with the following arguments:"
@@ -443,7 +460,7 @@ class krome():
 				if(arg): print " -"+k+" = "+str(arg)
 			print " -n = "+self.filename
 			print
-
+		
 		#use custom option file (load options from a file and append to argv)
 		if(args.options):
 			fopt = args.options.strip() #get filename
