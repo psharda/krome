@@ -368,6 +368,7 @@ class krome():
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
 			filename = "networks/react_primordialZ2_UV"
+			test_status = "dev" #under developement
 		elif(args.test=="collapseZ_induced"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]

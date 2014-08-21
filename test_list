@@ -5,11 +5,11 @@ auto/				OK
 chianti/			OK. very similar to gnat+ferland (2011), same as chainti.py. but slightly different physics.
 cloud/				OK
 collapse/			OK
-collapseCO/			problem: no benchmark
+collapseCO/			OK, no benchmark, but reasonable
 collapseUV/			OK
 collapseZ/			OK, but high density plateau to solve
-collapseZ_induced/		not-so-strange thermal history. should be compared with a benchmark.
-collapseZ_UV/			same as above. strange behaviour for J21=1e-2 at lower density
+collapseZ_induced/		not-so-strange thermal history. should be compared with a benchmark.  [under developement]
+collapseZ_UV/			several problems. should checked carefully.  [under developement]
 compact/			OK
 dust/				OK. I've commented some parts that depends on the Jflux() function, which is no longer valid
 					Note that the dust optical part should be completely rewritten!
@@ -21,5 +21,5 @@ shock1D/			OK
 shock1Dcool/			OK
 shock1Dphoto/			should be fixed with the new photobin approach
 slowmanifold/			OK
-stars/				close to OK. fix missing
+stars/				close to be OK. fix missing [under developement]
 wrapC/				OK
