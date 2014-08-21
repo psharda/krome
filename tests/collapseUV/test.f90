@@ -24,7 +24,7 @@ program test_krome
   j21s = (/0.d0, 1d0, 1d2, 1d5/)
 
   !INITIAL CONDITIONS
-  krome_redshift = 15d0    !redshift
+  call krome_set_zredshift(15.0d0) !redshift
 
   !INITIALIZE KROME PARAMETERS AND DUST 
   call krome_init()
@@ -36,7 +36,7 @@ program test_krome
      ntot           = 1.d0    !total density in 1/cm3
      Tgas           = 1d2     !temperature in kelvin
 
-     krome_J21 = j21s(j) !common for J21
+     call krome_set_user_J21(j21s(j)) !common for J21
 
      !species initialization in 1/cm3
      x(:) = 1.d-40
