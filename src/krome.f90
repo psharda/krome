@@ -448,13 +448,16 @@ contains
   end subroutine krome_init
 
   !****************************
-  function krome_get_coe(n)
+  function krome_get_coe(x,Tgas)
     !krome_get_coe: public interface to obtain rate coefficients
     use krome_commons
     use krome_subs
     use krome_tabs
     implicit none
-    real*8::krome_get_coe(nrea),n(:)
+    real*8::krome_get_coe(nrea),n(nspec),x(:),Tgas
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
     krome_get_coe(:) = coe_tab(n(:))
   end function krome_get_coe
 

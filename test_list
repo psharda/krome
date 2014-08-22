@@ -7,7 +7,7 @@ cloud/				OK
 collapse/			OK
 collapseCO/			OK, no benchmark, but reasonable
 collapseUV/			OK
-collapseZ/			OK, but high density plateau to solve
+collapseZ/			OK
 collapseZ_induced/		not-so-strange thermal history. should be compared with a benchmark.  [under developement]
 collapseZ_UV/			several problems. should checked carefully.  [under developement]
 compact/			OK
