@@ -1,17 +1,20 @@
 #this script runs all tests and/or produces or checks md5
 from subprocess import call
 import os,sys,hashlib,glob,platform,shutil
-tests = ["atmosphere", "auto","chianti","collapseCO","collapseUV_Xrays","collapseZ_induced"]
-tests += ["collapse", "collapseZ", "dust", "map", "shock1D","compact","earlyUniverse","lamda"]
-tests += ["cloud","collapseUV","compact","lotkav","reverse","wrapC"]
-tests += ["shock1Dcool","slowmanifold"]
 
+testpath = "tests/"
 
-first = "auto" #start from this test (empty string start from first test)
+#import the list of tests from testpath
+tests = [x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath]
+
+#list of test to be skipped (e.g. under developement)
+skiptests = ["stars","collapseZ_induced","collapseZ_UV","shock1Dphoto","atmosphere"]
+
+first = "" #start from this test (empty string start from first test)
 if(first.strip()==""): first = tests[0]
 
-compiler="gfortran" #ifort or gfortran
-mode = "eyeball" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"": check hash
+compiler="ifort" #ifort or gfortran
+mode = "eyeball" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
 
 #read hastable if needed
 if(mode=="hash"):
@@ -45,12 +48,13 @@ for ff in glob.glob("*"):
 os.chdir("..")
 
 #open output file for MD5
-if(mode!=""): 
+if(mode!="check"): 
 	fout = open("outtest.log","w")
 run = False #run flag
 for test in tests:
 	if(test==first): run = True #run the first test
 	if((compiler=="gfortran") and (test=="wrapC")): continue
+	if(test in skiptests): continue
 	if(not(run)): continue #skip if test is before first
 	print "test "+test
 	#call krome
@@ -94,9 +98,10 @@ for test in tests:
 	for fort in glob.glob("fort.*"):
 		md5 = hashlib.md5(open(fort).read()).hexdigest()
 		hashall.append([test,fort,md5])
-		if(mode!=""): fout.write(test+" "+fort+" "+md5+"\n")
+		print test,fort,md5
+		if(mode!="check"): fout.write(test+" "+fort+" "+md5+"\n")
 	#control the hash found
-	if(mode==""):
+	if(mode=="check"):
 		for hashblock in hashall:
 			if(hashblock not in hashtab):
 				print "ERROR with "+(",".join(hashblock))

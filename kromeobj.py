@@ -446,9 +446,12 @@ class krome():
 		#print a warning if the test is under developement
 		if(args.test and self.test_status=="dev"):
 			print "************************************************"
-			print "WARNING: the tets \""+self.test_name+"\" is currently"
-			print " UNDER DEVELOPEMENT and its results colud be"
-			print " horribly wrong. Do you want to proceed?"
+			print "WARNING: the test \""+self.test_name+"\" is currently"
+			print " UNDER DEVELOPEMENT and its results could be"
+			print " horribly wrong. "
+			print " Some details about the test can be found in the"
+			print " test_list file in the main KROME directory."
+			print " Do you want to proceed?"
 			print "************************************************"
 			a = raw_input("Any key to ignore q to quit... ")
 			if(a=="q"): print sys.exit()
