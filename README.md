@@ -1,3 +1,5 @@
+## This is the [KROME](https://bitbucket.org/tgrassi/krome/overview) repository.
+
 KROME is a nice and friendly package to model chemistry and microphysics 
  for a wide range of astrophysical simulations. 
  Given a chemical network (in CSV-like format) it automatically 
@@ -15,9 +17,9 @@ KROME is available on
  [https://bitbucket.org/tgrassi/krome](https://bitbucket.org/tgrassi/krome)
 
 you can quickly clone by:
-
+```
 git clone git@bitbucket.org:tgrassi/krome.git
-
+```
 To get support or receive news about KROME please refer 
  to our user mailing list: 
  https://groups.google.com/forum/#!forum/kromeusers
@@ -26,12 +28,12 @@ More information on the wiki
  https://bitbucket.org/tgrassi/krome/wiki/Home
 
 Written and developed by Tommaso Grassi
- tommasograssi@gmail.com
+ [tommasograssi@gmail.com](mailto:tommasograssi@gmail.com)
  Starplan, Copenhagen.
  Niels Bohr Institute, Copenhagen.
 
 Co-developer Stefano Bovino
- sbovino@astro.physik.uni-goettingen.de
+ [sbovino@astro.physik.uni-goettingen.de](mailto:sbovino@astro.physik.uni-goettingen.de)
  Institut fuer Astrophysik, Goettingen.
 
 Contributors (alphabetically): F.A. Gianturco, T.Haugbølle, J. Prieto,
