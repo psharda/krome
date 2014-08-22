@@ -21,7 +21,7 @@ program test_krome
 
   !INITIALIZE KROME PARAMETERS AND DUST 
   call krome_init()
-  call krome_set_zredshift(0d0)
+  call krome_set_zredshift(15d0)
 
   zs = (/-99.d0, -4.d0, -3d0, -2d0, -1d0/) !list of metallicities
   !$omp parallel do schedule(dynamic,1) default(none) &
@@ -47,10 +47,6 @@ program test_krome
 
      x(krome_idx_Cj) = x(krome_idx_C) !carbon is fully ionized
      x(krome_idx_C)  = 1d-40
-     x(krome_idx_Sij) = x(krome_idx_Si) !silicon is fully ionized
-     x(krome_idx_Si)  = 1d-40
-     x(krome_idx_Fej) = x(krome_idx_Fe) !iron is fully ionized
-     x(krome_idx_Fe)  = 1d-40
 
      !list abundances
      call krome_get_info(x(:),Tgas)

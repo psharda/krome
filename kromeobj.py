@@ -357,8 +357,8 @@ class krome():
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial3"
 		elif(args.test=="collapseZ"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1"]]
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
 			filename = "networks/react_primordialZ3"
 		elif(args.test=="collapseCO"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM", "-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
@@ -708,7 +708,7 @@ class krome():
 		if(args.H2opacity):
 			opacities = ["RIPAMONTI", "OMUKAI"]
 			if(not(args.H2opacity in opacities)):
-				print "ERROR: H2opacity must be one of "+(", ".join(opacities))+"."
+				print "ERROR: H2opacity must be one of the following "+(", ".join(opacities))+"."
 				sys.exit()
 			self.H2opacity = args.H2opacity.strip()
 			print "Reading option -H2opacity="+self.H2opacity
