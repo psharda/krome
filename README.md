@@ -10,9 +10,13 @@ KROME is a nice and friendly package to model chemistry and microphysics
  in gpl-3.0.txt.
 
 KROME is available on 
- http://www.kromepackage.org 
- and 
- https://bitbucket.org/tgrassi/krome
+ [http://www.kromepackage.org](http://www.kromepackage.org)
+ and
+ [https://bitbucket.org/tgrassi/krome](https://bitbucket.org/tgrassi/krome)
+
+you can quickly clone by:
+
+git clone git@bitbucket.org:tgrassi/krome.git
 
 To get support or receive news about KROME please refer 
  to our user mailing list: 
@@ -30,7 +34,7 @@ Co-developer Stefano Bovino
  sbovino@astro.physik.uni-goettingen.de
  Institut fuer Astrophysik, Goettingen.
 
-Others (alphabetically): F.A. Gianturco, T.Haugbølle, J. Prieto,
+Contributors (alphabetically): F.A. Gianturco, T.Haugbølle, J. Prieto,
  D.R.G. Schleicher, D. Seifried, E. Simoncini, E. Tognelli 
 
 
@@ -52,4 +56,3 @@ Additional notes: this version of KROME is a developer version,
  http://kromepackage.org/test/
  More information on the "tested" version here
  https://bitbucket.org/tgrassi/krome/wiki/stable_version
-
