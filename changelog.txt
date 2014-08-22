@@ -1,0 +1,48 @@
+This file (22Aug2014) is the changelog that contains the main modifications
+ from the krome_stable version to the krome_dev version.
+  - mylin (instead lapack for metal cooling levels < 3)
+  - metals from file
+  - metals excitation/de-excitation now tabulated
+  - print flux utility
+  - network file flexibility (e.g. NONE for reaction rates T limits)
+  - tokens for reaction networks file preparation (see Wiki)
+  - ierr for solver
+  - automatic check on network to add reverse if needed
+  - adiabatic index evaluation improvement (ROT, VIB, FULL, standard)
+  - mean molecular weight
+  - option check thermochemistry
+  - md5 to check tests
+  - new RAMSES, ENZO patches
+  - check consistency
+  - shielding=WG11, DB96, H2 self-shielding from Wolcott&Greene 2011 and Draine & Bertoldi 1996
+  - collisional dissociation by Martin 1996
+  - networks update (mostly primordial, now almost state-of-art)
+  - cooling expansion for early Universe evolution (added early Universe test based on Galli & Palla 1998)
+  - CO network
+  - error dump improved (KROME_ERROR_REPORT)
+  - Cosmic rays heating
+  - photo-heating with Av-approximation (check react_COthin) 
+  - isotopes fix
+  - additional functions (e.g. to evaluate metallicity)
+  - cooling quenching
+  - H2 cooling improved (extended limits)
+  - utility to write and plot cooling e heating functions
+  - new photochemistry module based on bins
+  - X-rays physics (secondary ionisation and heating)
+  - automatic database for some reactions-types (e.g. atomic photoionisations)
+  - H2 Omukai opacity
+  - num2col e col2num functions to evaluate column density (based on jeans or on 2/3 expression)
+  - options filename, new option to use an external file with the KROME options listed
+  - nuclearMult, option for nuclear multiplicity factor
+  - usePlainIsotopes, allow the use of isotopes like 6Li
+  - improved clean utility
+  - documentation now based on the bitbucket Wiki
+  - chianti database interface to KROME
+  - Thread-safety improvement, solver + openMP
+  - new tests available
+  - Makefile slightly improved
+  - Full gfortran compatibility
+  - updated solar abundances (Asplund 2009)
+  - wizard.py script to run KROME with ease
+  - improved krome_user module with a series of useful functions
+
