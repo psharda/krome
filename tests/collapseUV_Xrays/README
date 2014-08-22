@@ -8,14 +8,11 @@
 ! the cross-sections employed here for H and He photoionization are
 ! from Verner+ 1996, while Inayoshi+ adopted older outdated cross-sections.
 !The dynamics is described by the Larson-Penston-type similar solution.
-!The test produce results for five different values of the UV flux
-! expressed in terms of J21 (erg/cm2/s/Hz/sr) ranging from 0 to 100.
-!The X-rays flux also expressed in terms of J21_xr ranges from 1d-6-1e-2.
+!The test produce results for four different values of the UV flux
+! expressed in terms of J21 (erg/cm2/s/Hz/sr) ranging from 0 to 3000.
+!The X-rays flux also expressed in terms of J21_xr is fixed to 0.1.
 !The following cooling/heating processes are included in the test:
 ! H2 cooling from Glover&Abel 2008, atomic cooling from Cen 1992, 
 ! compton cooling, chemical heating, and heating coming from x-rays.
+!The test reprpoduces the results reported in Latif+, 2014
 !***************************************************************************
-
-! For further questions please contact the KROME developers
-! via the user mailing list at 
-! https://groups.google.com/forum/#!forum/kromeusers 

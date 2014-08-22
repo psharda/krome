@@ -1,0 +1,6 @@
+!**********************************************
+!A test to interface LAMDA database
+! with KROME. In this test the cooling
+! functions are evaluated employing the data 
+! provided by LAMDA database.
+!**********************************************

@@ -1,0 +1,5 @@
+!**********************************************************************
+!C language compatibility: 
+! if you desire to interface KROME with a C program follow this example
+!You need Intel ICC to run it (free for Unix systems). 
+!**********************************************************************

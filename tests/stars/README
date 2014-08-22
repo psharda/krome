@@ -1,0 +1,6 @@
+!**********************************************************************
+!This test checks the chemical evolution of a stellar interior
+! following an already-computed density and temperature evolution
+! with FRANEC (e.g. see Tognelli+2011), and evolving the chemistry
+! alongside these physical conditions.
+!**********************************************************************
