@@ -28,12 +28,12 @@ More information on the wiki
  https://bitbucket.org/tgrassi/krome/wiki/Home
 
 Written and developed by Tommaso Grassi
- tommasograssi@gmail.com
+ [tommasograssi@gmail.com](mailto:tommasograssi@gmail.com)
  Starplan, Copenhagen.
  Niels Bohr Institute, Copenhagen.
 
 Co-developer Stefano Bovino
- sbovino@astro.physik.uni-goettingen.de
+ [sbovino@astro.physik.uni-goettingen.de](mailto:sbovino@astro.physik.uni-goettingen.de)
  Institut fuer Astrophysik, Goettingen.
 
 Contributors (alphabetically): F.A. Gianturco, T.Haugbølle, J. Prieto,
