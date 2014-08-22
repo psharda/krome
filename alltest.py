@@ -2,11 +2,13 @@
 from subprocess import call
 from subprocess import Popen, PIPE
 import os,sys,hashlib,glob,platform,shutil,time
+import ftplib
 
 testpath = "tests/"
 
 #import the list of tests from testpath
 tests = [x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath]
+#tests = ["hello"]
 
 #list of test to be skipped (e.g. under developement)
 skiptests = ["stars","collapseZ_induced","collapseZ_UV","shock1Dphoto","atmosphere"]
@@ -16,7 +18,7 @@ first = ""
 if(first.strip()==""): first = tests[0]
 
 compiler="ifort" #ifort or gfortran
-mode = "hash" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
+mode = "check" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
 
 #read hastable if needed
 if(mode=="check"):
@@ -68,6 +70,7 @@ if(mode!="check"):
 	fout = open("outtest.log","w")
 else:
 	fout = open("outcheck.log","w")
+	fout.write("changesetREF: "+changesetREF+"\n")
 
 #write the changeset to file
 fout.write("changeset: "+changeset+"\n")
@@ -155,8 +158,22 @@ for test in tests:
 	#back to krome main directory
 	os.chdir("..")
 	print "DONE!"
+fout.close()
 
-
-	
-	
+#copy the results to kromepackage.org using FTP
+import traceback
+if(mode=="check"):
+	filename = "outcheck.log"
+	if(not(os.path.isfile(filename))): sys.exit("ERROR: "+filename+" not present. Nothing to copy.")
+	if(not(os.path.isfile("../ftplogin.dat"))): sys.exit("ERROR: ftplogin.dat not present. Can't connect.")
+	print "copying "+filename+" using FTP..."
+	usr,psw = [x.strip() for x in open("../ftplogin.dat","rb").read().split()]
+	ftp = ftplib.FTP("kromepackage.org",usr, psw)
+	try:
+		ftp.cwd("/test")
+		ftp.storbinary("STOR "+filename, file(filename,"rb"))
+	except:
+		traceback.print_exc()
+	ftp.quit()
+	print "DONE!"
 
