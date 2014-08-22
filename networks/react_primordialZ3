@@ -1,6 +1,15 @@
 #UPDATED primordial rates, 2014
 @var:T=Tgas
 
+#This modifier turns off the reactions involving metals when
+# the density (its internal name is sum(n(1:nmols)) is greater than 1e14 1/cm3.
+#This is necessary to cope with the solver instability at higher density.
+#Note that metals do not participate to the thermal history of the collapse
+# at higher density and hence they can be neglected in that range.
+@reactionModifier_begin
+if(sum(n(1:nmols))>1d14) k(51:71) = 0d0
+@reactionModifier_end
+
 #Janev 1987
 1,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
 
@@ -68,7 +77,6 @@
 #Martin et al 1996
 #@noTabNext
 17,H2,H,,H,H,H,,NONE,NONE,dissH2_Martin96(n,Tgas)
-#17,H2,H,,H,H,H,,NONE,NONE,1.0670825d-10*Te**2.012d0/(exp(4.463d0*invTe)*(1.d0+0.2472d0*Te)**3.512d0)
 
 #Janev 1987
 18,H-,E,,H,E,E,,NONE,NONE,exp(-18.01849334273d0+2.360852208681d0*lnTe-0.2827443061704d0*lnTe**2+0.01623316639567d0*lnTe**3-0.03365012031362999d0*lnTe**4+0.01178329782711d0*lnTe**5-0.001656194699504d0*lnTe**6+0.0001068275202678d0*lnTe**7-2.631285809207d-6*lnTe**8)
@@ -89,27 +97,21 @@
 #Dalgarno & Lepp 1987
 24,H2+,H-,,H,H2,,,NONE,NONE,5.d-7*sqrt(1.d2*invT)
 
-33,H,H,H,H2,H,,,NONE,.LE.3e2,1.3d-32*(T32)**(-0.38d0)
-34,H,H,H,H2,H,,,>3e2,NONE,1.3d-32*(T32)**(-1.00d0)
-#
-#35,H2,H,H,H2,H2,,,NONE,.LE.3e2,1.3d-32*(T32)**(-0.38d0) / 8.d0
-#36,H2,H,H,H2,H2,,,>3e2,NONE,1.3d-32*(T32)**(-1.00d0) / 8.d0
-
 #Forrey 2013 !NEW! 
-#25,H,H,H,H2,H,,,NONE,NONE,6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0)
+25,H,H,H,H2,H,,,NONE,NONE,6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0)
 
 #Glover&Abel 2008 
-#26,H2,H,H,H2,H2,,,NONE,NONE,(6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0))/8.d0
+26,H2,H,H,H2,H2,,,NONE,NONE,(6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0))/8.d0
 #
 #Omukai 2001
-#@var:invT = 1d0/Tgas
-#@var:Hnuclei = get_Hnuclei(n(:))
-#@var:kl21 = 1.18d-10*exp(-6.95d4*invT)
-#@var:kh21 = 8.125d-8*T**(-0.5d0)*exp(-5.2d4*invT)*(1.d0-exp(-6d3*invT))
-#@var:ncr21 = 1d1**(4.845d0-1.3d0*log10(T*1d-4)+1.62d0*(log10(T*1d-4))**2)
-#@var:a21=1.d0/(1.d0+(Hnuclei/ncr21))
-#@noTabNext
-#27,H2,H2,,H,H,H2,,NONE,NONE,kh21**(1.-a21)*kl21**a21
+@var:invT = 1d0/Tgas
+@var:Hnuclei = get_Hnuclei(n(:))
+@var:kl21 = 1.18d-10*exp(-6.95d4*invT)
+@var:kh21 = 8.125d-8*T**(-0.5d0)*exp(-5.2d4*invT)*(1.d0-exp(-6d3*invT))
+@var:ncr21 = 1d1**(4.845d0-1.3d0*log10(T*1d-4)+1.62d0*(log10(T*1d-4))**2)
+@var:a21=1.d0/(1.d0+(Hnuclei/ncr21))
+@noTabNext
+27,H2,H2,,H,H,H2,,NONE,NONE,kh21**(1.-a21)*kl21**a21
 
 #NEW REACTION FROM YOSHIDA 2006, FOR HELIUM CHARGE TRANSFER
 @format:idx,R,R,P,P,Tmin,Tmax,rate
@@ -162,5 +164,3 @@
 @format:idx,Tmin,Tmax,R,R,P,P,P,rate
 41,NONE,NONE,H3O+,E,OH,H,H,6.50d-7*(T32)**(-0.50)
 42,NONE,NONE,OH+,E,O,H,,6.3d-9*(T32)**(-0.48)
-
-
