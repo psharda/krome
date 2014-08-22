@@ -1,3 +1,5 @@
+## This is the [KROME](https://bitbucket.org/tgrassi/krome/overview) repository.
+
 KROME is a nice and friendly package to model chemistry and microphysics 
  for a wide range of astrophysical simulations. 
  Given a chemical network (in CSV-like format) it automatically 
