@@ -17,9 +17,9 @@ KROME is available on
  [https://bitbucket.org/tgrassi/krome](https://bitbucket.org/tgrassi/krome)
 
 you can quickly clone by:
-
+```
 git clone git@bitbucket.org:tgrassi/krome.git
-
+```
 To get support or receive news about KROME please refer 
  to our user mailing list: 
  https://groups.google.com/forum/#!forum/kromeusers
