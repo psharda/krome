@@ -1,6 +1,7 @@
 #this script runs all tests and/or produces or checks md5
 from subprocess import call
-import os,sys,hashlib,glob,platform,shutil
+from subprocess import Popen, PIPE
+import os,sys,hashlib,glob,platform,shutil,time
 
 testpath = "tests/"
 
@@ -10,18 +11,25 @@ tests = [x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath]
 #list of test to be skipped (e.g. under developement)
 skiptests = ["stars","collapseZ_induced","collapseZ_UV","shock1Dphoto","atmosphere"]
 
-first = "" #start from this test (empty string start from first test)
+#start from this test (empty string start from first test)
+first = ""
 if(first.strip()==""): first = tests[0]
 
 compiler="ifort" #ifort or gfortran
-mode = "eyeball" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
+mode = "check" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
 
 #read hastable if needed
-if(mode=="hash"):
+if(mode=="check"):
 	hashtab = []
-	fh = open("outtest.log","rb")
+	changeset = "unknown"
+	if(not(os.path.isfile("outtest.md5"))): sys.exit("ERROR: file outtest.md5 not present!")
+	fh = open("outtest.md5","rb")
 	for row in fh:
 		srow = row.strip()
+		#load reference changeset name
+		if("changeset:" in srow):
+			changesetREF = srow.replace("changeset:","")
+			continue 
 		arow = srow.split(" ")
 		hashtab.append(arow)
 
@@ -47,9 +55,23 @@ for ff in glob.glob("*"):
 	os.remove(ff)
 os.chdir("..")
 
-#open output file for MD5
+#get changeset
+masterfile = ".git/refs/heads/master" #name of the git master file
+changeset = "unknown"
+#if git master file exists grep the changeset
+if(os.path.isfile(masterfile)):
+	changeset = open(masterfile,"rb").read()
+	changeset = changeset[:7]
+
+#open output file for MD5 or results
 if(mode!="check"): 
 	fout = open("outtest.log","w")
+else:
+	fout = open("outcheck.log","w")
+
+#write the changeset to file
+fout.write("changeset: "+changeset+"\n")
+
 run = False #run flag
 for test in tests:
 	if(test==first): run = True #run the first test
@@ -57,10 +79,14 @@ for test in tests:
 	if(test in skiptests): continue
 	if(not(run)): continue #skip if test is before first
 	print "test "+test
+
 	#call krome
 	call(["./krome", "-test="+test, "-pedantic", "-unsafe", "-sh"])
+
 	#move to build directory
 	os.chdir("build/")
+
+	#change Makefile to gfortran if needed
 	fh = open("Makefile","rb")
 	fout2 = open("tmp","w")
 	if(compiler=="gfortran"):
@@ -80,10 +106,13 @@ for test in tests:
 	
 	#make clean
 	call(["make","clean"])
+
 	#compile
 	call(["make"])
+
 	#run executable
 	call(["./krome"])
+
 	#run zenity notification when exectutable ends (LINUX USERS ONLY)
 	if("linux" in platform.system().lower()):
 		notifier = "zenity"
@@ -100,20 +129,29 @@ for test in tests:
 		hashall.append([test,fort,md5])
 		print test,fort,md5
 		if(mode!="check"): fout.write(test+" "+fort+" "+md5+"\n")
-	#control the hash found
+
+	#control the hash found if needed
 	if(mode=="check"):
+		print "checking..."
+		testOK = True
 		for hashblock in hashall:
 			if(hashblock not in hashtab):
 				print "ERROR with "+(",".join(hashblock))
+				testOK = False
 				for x in hashall:
 					print x
 				sys.exit()
+		print "Is OK?",testOK
+		fout.write(test+" "+str(testOK)+" "+str(time.time())+"\n")
+		
 
-	#gnuplot if you want graphical result
+	#call gnuplot if you want graphical result
 	if(mode=="eyeball"): call(["gnuplot"])
+
 	#clear directory
 	for ff in glob.glob("*"):
 		os.remove(ff)
+
 	#back to krome main directory
 	os.chdir("..")
 	print "DONE!"
