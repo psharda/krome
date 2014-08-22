@@ -436,10 +436,14 @@ class krome():
 
 		#use short header for f90 files
 		if(args.v or args.ver or args.version):
+			masterfile = ".git/refs/heads/master" #name of the git master file
 			print "You are using KROME "+self.version+" \""+self.codename+"\""
-			print " - Better Science Through Chemistry -"
-			print
-			#print "MD5: "+GetHashofDirs()
+			#if git master file existst grep the changeset
+			if(file_exists(masterfile)):
+				changeset = open(masterfile,"rb").read()
+				print "[changeset: "+changeset[:7]+"]"
+				print
+			print " Bye!"
 			sys.exit()
 
 
