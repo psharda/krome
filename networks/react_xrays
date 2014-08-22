@@ -140,26 +140,26 @@
 
 #DEUTERIUM CHEMISTRY
 #Galli & Palla 2002 from Wolf Savin 2001
-34,H+,D,,H,D+,,,.GE.5d1,NONE,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
-
-#Galli & Palla 2002 from Wolf Savin 2001
-35,H,D+,,H+,D,,,.GE.5d1,NONE,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
-
-#Galli&Palla 2002 from Gerlich 1982 
-36,H2,D+,,HD,H+,,,NONE,NONE,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
-
-#Galli & Palla 2002, from Garlich 1982 with modification by Gay et al. 2011
-37,HD,H+,,H2,D+,,,NONE,NONE,1.0d-9 *exp(-4.57d2*invT)
-
-#Glover et al. 2009, from data by Mielke et al. 2003
-38,H2,D,,HD,H,,,NONE,.LE.2.d3,10**(-56.4737+5.88886*log10(Tgas)+7.19692*(log10(Tgas))**2+2.25069*(log10(Tgas))**3-2.16903*(log10(Tgas))**4+0.317887*(log10(Tgas))**5)
-39,H2,D,,HD,H,,,.GT.2d3,NONE,3.17d-10*exp(-5207.*invT)
-
-#Galli & Palla 2002, from Shavitt 1959
-40,HD,H,,H2,D,,,>2e2,NONE,5.25d-11*exp(-4430.*invT+1.739d5*(invT)**2)
-
-#ENZO
-41,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)
+#34,H+,D,,H,D+,,,.GE.5d1,NONE,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
+#
+##Galli & Palla 2002 from Wolf Savin 2001
+#35,H,D+,,H+,D,,,.GE.5d1,NONE,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
+#
+##Galli&Palla 2002 from Gerlich 1982 
+#36,H2,D+,,HD,H+,,,NONE,NONE,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
+#
+##Galli & Palla 2002, from Garlich 1982 with modification by Gay et al. 2011
+#37,HD,H+,,H2,D+,,,NONE,NONE,1.0d-9 *exp(-4.57d2*invT)
+#
+##Glover et al. 2009, from data by Mielke et al. 2003
+#38,H2,D,,HD,H,,,NONE,.LE.2.d3,10**(-56.4737+5.88886*log10(Tgas)+7.19692*(log10(Tgas))**2+2.25069*(log10(Tgas))**3-2.16903*(log10(Tgas))**4+0.317887*(log10(Tgas))**5)
+#39,H2,D,,HD,H,,,.GT.2d3,NONE,3.17d-10*exp(-5207.*invT)
+#
+##Galli & Palla 2002, from Shavitt 1959
+#40,HD,H,,H2,D,,,>2e2,NONE,5.25d-11*exp(-4430.*invT+1.739d5*(invT)**2)
+#
+##ENZO
+#41,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)
 
 #NEW REACTION FROM YOSHIDA 2006, FOR HELIUM CHARGE TRANSFER
 @format:idx,R,R,P,P,Tmin,Tmax,rate
@@ -169,26 +169,26 @@
 44,He,H+,He+,H,>1d4,NONE,4.d-37*Tgas**(4.74d0)
 
 #ADDITIONAL DEUTERIUM RATES FROM GP98, SLD98
-45,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
-
-46,H,D,HD,,NONE,NONE,1.0d-25
-
-47,HD+,H,HD,H+,NONE,NONE,6.4d-10
-
-48,H+,D,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
-
-49,H,D+,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
-
-50,HD+,E,H,D,NONE,NONE,7.2d-8*invsqrT
-
-51,D,E,D-,,NONE,NONE,3d-16*(Tgas/300)**(0.95d0)*exp(-Tgas/9.320d3)
-
-52,D+,D-,D,D,NONE,NONE,5.7d-8*(Tgas/300)**(-0.5d0)
-
-53,D-,H+,D,H,NONE,NONE,4.6d-8*(Tgas/300)**(-0.5d0)
-
-54,H-,D,D-,H,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
-
-55,D-,H,H-,D,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
-
-56,D-,H,HD,E,NONE,NONE,1.5d-9*(Tgas/300)**(-0.1d0)
+#45,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
+#
+#46,H,D,HD,,NONE,NONE,1.0d-25
+#
+#47,HD+,H,HD,H+,NONE,NONE,6.4d-10
+#
+#48,H+,D,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
+#
+#49,H,D+,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
+#
+#50,HD+,E,H,D,NONE,NONE,7.2d-8*invsqrT
+#
+#51,D,E,D-,,NONE,NONE,3d-16*(Tgas/300)**(0.95d0)*exp(-Tgas/9.320d3)
+#
+#52,D+,D-,D,D,NONE,NONE,5.7d-8*(Tgas/300)**(-0.5d0)
+#
+#53,D-,H+,D,H,NONE,NONE,4.6d-8*(Tgas/300)**(-0.5d0)
+#
+#54,H-,D,D-,H,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
+#
+#55,D-,H,H-,D,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
+#
+#56,D-,H,HD,E,NONE,NONE,1.5d-9*(Tgas/300)**(-0.1d0)
