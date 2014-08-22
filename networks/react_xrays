@@ -1,5 +1,6 @@
 #XRAY chemical network, see reactions 24 and 25
 @var: T = Tgas
+@var:Trad=2d4
 
 #UPDATED primordial rates, 2014
 #Janev 1987
@@ -83,9 +84,14 @@
 #Poulart 1978 
 22,H-,H+,,H2+,E,,,NONE,NONE,1.d-8*Tgas**(-0.4d0)
 
-#Photo-detachment from Wishart 1979, Shang 2010, T4 spectrum
+#Photo-detachment from Miyake 2010 including the resonance at 11 eV 
+#T4 spectrum, see Latif+, 2014
 @common:user_J21
-23,H-,,,H,E,,,NONE,NONE,2.d-7*user_J21
+@var:aHM = 9.08944e-2
+@var:bHM = 3.27940e-5
+@var:cHM = 5.98490e-1
+@var:OffsetHM = +1.09867e1
+23,H-,,,H,E,,,NONE,NONE,10**((aHM + bHM*Trad)**(-1/cHM) - OffsetHM)*user_J21
 
 #Photoionization of H, He by Xrays, Shull+1985, Inayoshi+2012 
 @XRAY_start
@@ -94,12 +100,21 @@
 25,He,He+,E,NONE,NONE,auto
 @XRAY_stop
 
-#H2 photodissociation, T4 spectrum
+#H2 photodissociation, T4 spectrum, see Latif+, 2014
 @format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
-26,H2,,,H,H,,,1d1,1d8,3.d-12*user_J21*krome_fshield(n,Tgas)
+@var:aH2 = 1.17350e-1
+@var:bH2 = 2.49580e-4
+@var:cH2 = 3.48559e-9
+@var:OffsetH2 = 1.1902e1
+23,H2,,,H,H,,,NONE,NONE,10**((1.0 / (aH2 + bH2*Trad + cH2*Trad**2 ) - OffsetH2))*user_J21*krome_fshield(n,Tgas)
 
-#H2+ photodissociation on a different spectrum
-27,H2+,,,H+,H,,,NONE,NONE,1.58853d-10*user_J21
+
+#H2+ photodissociation, T4 spectrum, see Latif+, 2014 
+@var:aH2j = -3.83012e6 
+@var:bH2j = 5.06447e2 
+@var:cH2j = 6.20988e-1 
+@var:OffsetH2j = 3.68778e-12
+27,H2+,,,H+,H,,,NONE,NONE,((aH2j + bH2j*Trad)**(-1/cH2j) + OffsetH2j)*user_J21
 
 # fit by Coppola et al. (2011) !NEW!
 29,H2+,E,,H,H,,,NONE,NONE,1.d6*(4.2278d-14-2.3088d-17*Tgas+7.3428d-21*Tgas**2-7.5474d-25*Tgas**3+3.3468d-29*Tgas**4-5.528d-34*Tgas**5)
