@@ -145,7 +145,7 @@ for test in tests:
 					print x
 				sys.exit()
 		print "Is OK?",testOK
-		fout.write(test+" "+str(testOK)+" "+str(time.time())+"\n")
+		fout.write(test+" "+str(testOK)+" "+str(time.time())+" regular\n")
 		
 
 	#call gnuplot if you want graphical result
@@ -162,7 +162,7 @@ for test in tests:
 #add skipped tests as failed
 if(mode=="check"):
 	for test in skiptests:
-		fout.write(test+" "+str(False)+" "+str(time.time())+"\n")
+		fout.write(test+" "+str(False)+" "+str(time.time())+" skipped\n")
 fout.close()
 
 #copy the results to kromepackage.org using FTP
