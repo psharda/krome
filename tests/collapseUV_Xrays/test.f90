@@ -8,6 +8,7 @@
 ! the cross-sections employed here for H and He photoionization are
 ! from Verner+ 1996, while Inayoshi+ adopted older outdated cross-sections.
 !The dynamics is described by the Larson-Penston-type similar solution.
+! For a direct benchmark see Fig. 3 of Latif+ 2014.
 !##########################################################################
 program test_krome
 
@@ -19,77 +20,75 @@ program test_krome
   use krome_photo
 
   integer,parameter::rstep = 500000
-  integer::i,j,k
+  integer::i,j
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt,f(krome_nmols)
   real*8::ntot,rho,j21s(4),mass(krome_nspec)
-  real*8::cool(12), heat(8),j21xs(2)
+  real*8::cool(12), heat(8),j21xs
 
-  j21xs = (/1d-6,1d-2/)
-  do k=1,size(j21xs) 
-     call krome_init()
-     !preset J21 value for X-rays
-     call krome_set_J21xray(j21xs(k))
-     print *,"J21 Xray = ",j21xs(k)
-     !preset J21 values for UV flux
-     j21s = (/0.0d0, 5d0, 1d1, 5d1/)
-     do j=1,size(j21s)
+  j21xs = 1d-1
+  call krome_init()
+  !preset J21 value for X-rays
+  call krome_set_J21xray(j21xs)
+  print *,"J21 Xray = ",j21xs
+  !preset J21 values for UV flux
+  j21s = (/0.0d0, 1d1, 1d3, 3d3/)
+  do j=1,size(j21s)
 
-        !INITIAL CONDITIONS
-        call krome_set_zredshift(15d0)
-        ntot = 1.d-1            !total density in 1/cm3
-        Tgas = 1.6d2            !temperature in kelvin
+     !INITIAL CONDITIONS
+     call krome_set_zredshift(15d0)
+     ntot = 1.d-1            !total density in 1/cm3
+     Tgas = 1.6d2            !temperature in kelvin
 
-        !INITIALIZE KROME J21 parameter
-        call krome_set_user_J21(j21s(j))
+     !INITIALIZE KROME J21 parameter
+     call krome_set_user_J21(j21s(j))
 
-        !species initialization in 1/cm3
-        x(:) = 1.d-40
+     !species initialization in 1/cm3
+     x(:) = 1.d-40
 
-        x(KROME_idx_H)         = 0.9999*ntot    !H
-        x(KROME_idx_H2)        = 2.0e-6*ntot    !H2
-        x(KROME_idx_Hj)        = 2.0e-3*ntot    !1.0e-4*ntot    !H+
-        x(KROME_idx_He)        = 0.0775*ntot    !He
-        x(KROME_idx_E) = krome_get_electrons(x(:))
+     x(KROME_idx_H)         = 0.9999*ntot    !H
+     x(KROME_idx_H2)        = 2.0e-6*ntot    !H2
+     x(KROME_idx_Hj)        = 2.0e-3*ntot    !1.0e-4*ntot    !H+
+     x(KROME_idx_He)        = 0.0775*ntot    !He
+     x(KROME_idx_E) = krome_get_electrons(x(:))
 
-        mass(:) = get_mass()
-        dd = ntot
+     mass(:) = get_mass()
+     dd = ntot
 
-        print *,"solving for J21=",j21s(j)
-        print '(a5,2a11)',"step","n(cm-3)","Tgas(K)"
+     print *,"solving for J21=",j21s(j)
+     print '(a5,2a11)',"step","n(cm-3)","Tgas(K)"
 
-        !loop over the hydro time-step
-        do i = 1,rstep
+     !loop over the hydro time-step
+     do i = 1,rstep
 
-           dd1 = dd
+        dd1 = dd
 
-           !***CALCULATE THE FREE FALL TIME***!
-           rho = krome_get_rho(x(:))
-           tff = sqrt(3.0d0 * pi / (32.0d0*gravity*rho))
-           user_tff = tff
-           dtH = 0.01d0 * tff        !TIME-STEP
-           deldd = (dd/tff) * dtH
-           dd = dd + deldd        !UPDATE DENSITY
+        !***CALCULATE THE FREE FALL TIME***!
+        rho = krome_get_rho(x(:))
+        tff = sqrt(3.0d0 * pi / (32.0d0*gravity*rho))
+        user_tff = tff
+        dtH = 0.01d0 * tff        !TIME-STEP
+        deldd = (dd/tff) * dtH
+        dd = dd + deldd        !UPDATE DENSITY
 
-           x(:) = x(:) * dd / dd1  
+        x(:) = x(:) * dd / dd1  
 
-           dt = dtH 
+        dt = dtH 
 
-           if(dd.gt.1d8) exit
+        if(dd.gt.1d8) exit
 
-           !solve the chemistry
-           call krome(x(:),Tgas,dt)
+        !solve the chemistry
+        call krome(x(:),Tgas,dt)
 
-           write(22,'(2I5,99E17.8e3)') k,j,dd,Tgas
-           if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas
-
-        end do
-        write(22,*)
+        write(22,'(I5,99E17.8e3)') j,dd,Tgas
+        if(mod(i,100)==0) print '(I5,99E11.3)',i,dd,Tgas
 
      end do
      write(22,*)
+
   end do
+  write(22,*)
   print *,"To plot type in gnuplot:"
   print *,"gnuplot> load 'plot.gps'"
   print *,"That's all! have a nice day!"
