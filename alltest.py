@@ -158,6 +158,11 @@ for test in tests:
 	#back to krome main directory
 	os.chdir("..")
 	print "DONE!"
+
+#add skipped tests as failed
+if(mode=="check"):
+	for test in skiptests:
+		fout.write(test+" "+str(False)+" "+str(time.time())+"\n")
 fout.close()
 
 #copy the results to kromepackage.org using FTP
