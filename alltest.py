@@ -16,7 +16,7 @@ first = ""
 if(first.strip()==""): first = tests[0]
 
 compiler="ifort" #ifort or gfortran
-mode = "check" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
+mode = "hash" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
 
 #read hastable if needed
 if(mode=="check"):
