@@ -359,7 +359,7 @@ class krome():
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
-			filename = "networks/react_primordialZ3"
+			filename = "networks/react_primordialZ"
 		elif(args.test=="collapseCO"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM", "-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=REDUCED","-ATOL=1d-10","-maxord=1","-useTabs"]]
@@ -368,12 +368,12 @@ class krome():
 		elif(args.test=="collapseZ_UV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
-			filename = "networks/react_primordialZ2_UV"
+			filename = "networks/react_primordialZ_UV"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseZ_induced"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
-			filename = "networks/react_primordialZ2"
+			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
                 elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,FF,DISS,ATOMIC", "-heating=COMPRESS,CHEM"]]
