@@ -143,7 +143,7 @@ for test in tests:
 				testOK = False
 				for x in hashall:
 					print x
-				sys.exit()
+				#sys.exit()
 		print "Is OK?",testOK
 		fout.write(test+" "+str(testOK)+" "+str(time.time())+" regular\n")
 		
