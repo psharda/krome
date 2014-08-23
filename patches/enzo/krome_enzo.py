@@ -38,6 +38,7 @@ for row in fh:
 fh.close()
 fout.close()
 move("tmp1.krome","../"+fname_make_config_assemble)
+os.remove("./"+fname_make_config_assemble)
 
 #fname_grid_h
 print "patching ",fname_grid_h
