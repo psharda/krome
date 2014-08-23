@@ -1,6 +1,11 @@
 !**********************************************
-!A test to interface LAMDA database
-! with KROME. In this test the cooling
-! functions are evaluated employing the data 
-! provided by LAMDA database.
+! This test uses the data from the LAMDA database
+! to compute the cooling from the O2 molecule.
+! It consists in a set of runs with different
+! densities and temperatures. The chemistry is
+! solved to the equilibrium, then the cooling
+! is computed. The cooling function is not
+! a table, but is computed on the fly using
+! the atomic data provided by LAMDA.
+! http://home.strw.leidenuniv.nl/~moldata/
 !**********************************************
