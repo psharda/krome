@@ -68,20 +68,20 @@ if(mode=="check"):
 		arow = srow.split(" ")
 		hashtab.append(arow)
 
-print "************************************************"
-print "WARNING: this script will ERASE all the contents"
-print " in the ./build folder!"
-print "************************************************"
-a = raw_input("Any key to continue q to quit... ")
-if(a=="q"): print sys.exit()
+#print "************************************************"
+#print "WARNING: this script will ERASE all the contents"
+#print " in the ./build folder!"
+#print "************************************************"
+#a = raw_input("Any key to continue q to quit... ")
+#if(a=="q"): print sys.exit()
 
-print
-print "************************************************"
-print "WARNING: these tests run with -O0 option and all"
-print " the check flags enabled, so they are very slow!"
-print "************************************************"
-a = raw_input("Any key to continue q to quit... ")
-if(a=="q"): print sys.exit()
+#print
+#print "************************************************"
+#print "WARNING: these tests run with -O0 option and all"
+#print " the check flags enabled, so they are very slow!"
+#print "************************************************"
+#a = raw_input("Any key to continue q to quit... ")
+#if(a=="q"): print sys.exit()
 
 
 os.chdir("build/")
