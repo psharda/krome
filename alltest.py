@@ -24,6 +24,9 @@ mode = "check" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot
 
 #check if a new test is needed
 if(mode=="check"):
+	#synchronize
+	call(["git", "pull", "origin"])
+
 	changesetFOLDER = "" #changeset of the current folder
 	proc = Popen(['git','show'],stdout=PIPE) #use git show to retrive local info
 	#loop on the output
@@ -48,8 +51,6 @@ if(mode=="check"):
 	if(changesetSERVER==changesetFOLDER):
 		sys.exit("SERVER and local FOLDER has the same changeset. No need to check.")
 
-	#synchronize
-	call(["git", "pull", "origin"])
 
 
 #read hastable if needed
