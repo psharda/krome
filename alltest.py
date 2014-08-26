@@ -1,8 +1,10 @@
 #this script runs all tests and/or produces or checks md5
+#it is employed to run automatic tests
+#no need to run or modify by the user
 from subprocess import call
 from subprocess import Popen, PIPE
 import os,sys,hashlib,glob,platform,shutil,time
-import ftplib
+import ftplib,urllib
 
 testpath = "tests/"
 
@@ -19,6 +21,36 @@ if(first.strip()==""): first = tests[0]
 
 compiler="ifort" #ifort or gfortran
 mode = "check" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
+
+#check if a new test is needed
+if(mode=="check"):
+	changesetFOLDER = "" #changeset of the current folder
+	proc = Popen(['git','show'],stdout=PIPE) #use git show to retrive local info
+	#loop on the output
+	for line in iter(proc.stdout.readline,''):
+		lstrip = line.rstrip()
+		#grep the commit line
+		if("commit" in lstrip):
+			changesetFOLDER = lstrip.replace("commit","").strip()[:7]
+			break
+	#check if the changeset is retrieved
+	if(changesetFOLDER==""): sys.exit("ERROR: check mode enabled and git show command does not work properly")
+
+	#retireve the changeset on the SERVER
+	changesetSERVER = ""
+	content = urllib.urlopen('http://kromepackage.org/test/outcheck.log')
+	for line in iter(content.readlines()):
+		if("changeset:" in line): changesetSERVER = line.replace("changeset:","").strip()
+	#check if the server changeset is retrieved
+	if(changesetSERVER==""): sys.exit("ERROR: check mode enabled and url not retrieved")
+
+	#check if the server and the folder have the same changeset. If so no need to check.
+	if(changesetSERVER==changesetFOLDER):
+		sys.exit("SERVER and local FOLDER has the same changeset. No need to check.")
+
+	#synchronize
+	call(["git", "pull", "origin"])
+
 
 #read hastable if needed
 if(mode=="check"):

@@ -21,7 +21,7 @@
 # sbovino@astro.physik.uni-goettingen.de
 # Institut fuer Astrophysik, Goettingen.
 #
-# Others (alphabetically): F.A. Gianturco, T. Haugboelle, 
+# Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle, 
 # J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
 # E. Tognelli
 #
