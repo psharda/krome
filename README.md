@@ -24,7 +24,7 @@ KROME is available on
 
 you can quickly clone by:
 ```
-git clone git@bitbucket.org:tgrassi/krome.git
+git clone https://bitbucket.org/tgrassi/krome.git
 ```
 
 ---
