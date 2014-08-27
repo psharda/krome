@@ -42,7 +42,7 @@ program test_krome
 
      !set cosmic rays
      call krome_set_user_crate(1.3d-17)
-     call krome_set_user_Tdust(10.)
+     call krome_set_user_Tdust(1d1)
 
      !rescale metallicity for neutral metals (C,Fe,Si,O)
      call krome_scale_Z(x(:), zs(jz))
