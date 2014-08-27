@@ -21,7 +21,7 @@
 # sbovino@astro.physik.uni-goettingen.de
 # Institut fuer Astrophysik, Goettingen.
 #
-# Others (alphabetically): F.A. Gianturco, T. Haugboelle, 
+# Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle, 
 # J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
 # E. Tognelli
 #
@@ -3171,6 +3171,11 @@ class krome():
 					de_eVs = ("%e" % t_data["denergy_eV"]).replace("e","d")
 					photoIB = Bji_fmt+" * get_photoIntensity("+de_eVs+")"
 					full_B_vector_heat.append("B("+str(t_data["up"]+1)+") * "+photoIB +" * "+deltaE_fmt)
+
+			if(len(full_B_vector_cool)==0 and len(full_B_vector_heat)==0):
+				error = "ERROR: not enough data to write "+metal_name+"cooling!"
+				error += " (trans data size:"+str(len(trans_data))+")"
+				sys.exit(error)
 
 			#join the cooling vector as a sum
 			full_B_vector = (" &\n + ".join(full_B_vector_cool))

@@ -21,8 +21,9 @@
 # sbovino@astro.physik.uni-goettingen.de
 # Institut fuer Astrophysik, Goettingen.
 #
-# Others (alphabetically): F.A. Gianturco, J.Prieto,
-# D.R.G. Schleicher, D. Seifried, E. Simoncini 
+# Others (alphabetically): D.Galli, F.A. Gianturco, T. Haugboelle,
+# J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini,
+# E.Tognelli
 #
 #
 # KROME is provided "as it is", without any warranty. 
@@ -1012,7 +1013,7 @@ def get_licence_header(version, codename, short=False):
   	!! sbovino@astro.physik.uni-goettingen.de
 	!! Institut fuer Astrophysik, Goettingen.
 	!!
-	!!Others (alphabetically): F.A. Gianturco, T. Haugboelle, 
+	!!Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle, 
 	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
 	!! E. Tognelli
 	!!
@@ -1037,7 +1038,7 @@ def get_licence_header(version, codename, short=False):
 	!!Written and developed by Tommaso Grassi
 	!!
 	!!Co-developer Stefano Bovino
-	!!Others (alphabetically): F.A. Gianturco, T. Haugboelle, 
+	!!Others (alphabetically): D.Galli, F.A. Gianturco, T. Haugboelle, 
 	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
 	!! E. Tognelli.
 	!!KROME is provided \"as it is\", without any warranty.

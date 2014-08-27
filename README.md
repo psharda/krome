@@ -24,7 +24,7 @@ KROME is available on
 
 you can quickly clone by:
 ```
-git clone git@bitbucket.org:tgrassi/krome.git
+git clone https://bitbucket.org/tgrassi/krome.git
 ```
 
 ---
@@ -53,7 +53,7 @@ Co-developer Stefano Bovino
  Institut fuer Astrophysik, Goettingen.
 ```
 
-Contributors (alphabetically): F.A. Gianturco, T.Haugbølle, J. Prieto,
+Contributors (alphabetically): D. Galli, F.A. Gianturco, T.Haugbølle, J. Prieto,
  D.R.G. Schleicher, D. Seifried, E. Simoncini, E. Tognelli 
 
 ---
