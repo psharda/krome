@@ -10,6 +10,7 @@ contains
 
   !*******************
   function cooling(n,Tgas)
+    use krome_commons
     implicit none
     real*8::n(:),Tgas,cooling
 
@@ -75,27 +76,24 @@ contains
     cools(idx_cool_ff) = cooling_ff(n(:), Tgas)
 #ENDIFKROME
 
+    cools(idx_cool_custom) = cooling_custom(n(:),Tgas)
+
     get_cooling_array(:) = cools(:)
-
-    !remove the comment below to write cooling contributions to fort.44
-    !write(44,'(99E17.8e3)') sum(n(1:nmols)),Tgas,cools(:)
-
-    !gnuplot command (every n=100, and m=1 for density or m=2 for 
-    ! temperature following the write(44,...) command above) 
-    !plot 'fort.44' u m:3 every n w l t "H2",\
-    ! '' u m:4 every n w l t "H2GP",\
-    ! '' u m:5 every n w l t "atomic",\
-    ! '' u m:6 every n w l t "HD",\
-    ! '' u m:7 every n w l t "Z",\
-    ! '' u m:8 every n w l t "enthalpy",\
-    ! '' u m:9 every n w l t "dust",\
-    ! '' u m:10 every n w l t "compton",\
-    ! '' u m:11 every n w l t "CIE",\
-    ! '' u m:12 every n w l t "Cont",\
-    ! '' u m:13 every n w l t "Exp"
 
   end function get_cooling_array
 
+  !*****************************
+  function cooling_custom(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::n(:),Tgas,cooling_custom
+#KROME_custom_cooling_var_define
+
+    cooling_custom = 0d0
+#KROME_custom_cooling_var
+#KROME_custom_cooling_expr
+
+  end function cooling_custom
 
   !**********************************
   function kpla(n,Tgas)
@@ -260,8 +258,8 @@ contains
     use krome_commons
     real*8::cooling_compton,n(:),Tgas
 
-    !note that redhsift is defined in krome_user_commons and 
-    ! must be provided by the user
+    !note that redhsift is a common variable and
+    ! should be provided by the user, otherwise the default is zero
     cooling_compton = 5.65d-36 * (1.d0 + phys_zredshift)**4 &
          * (Tgas - 2.73d0 * (1.d0 + phys_zredshift)) * n(idx_e) !erg/s/cm3
 
