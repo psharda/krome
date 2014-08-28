@@ -1,4 +1,8 @@
-program smith
+!***************
+!this test shows how to use custom cooling functions
+!check the network react_customCool for details
+!***************
+program test
   use krome_main
   use krome_user
   implicit none
@@ -24,4 +28,4 @@ program smith
   print *,"plot in gnuplot typing"
   print *, "gnuplot> load 'plot.gps'"
   
-end program smith
+end program test
