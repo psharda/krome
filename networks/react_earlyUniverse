@@ -47,11 +47,11 @@
 
 #H5
 4,H-,H,,H2,E,,,NONE,.LT.300.d0,1.5d-9
-5,H-,H,,H2,E,,,.GE.300.d0,1.d8,4.d-9*Tgas**(-0.17)
+5,H-,H,,H2,E,,,.GE.300.d0,NONE,4.d-9*Tgas**(-0.17)
 
 #H6
 6,H-,H+,,H2+,E,,,NONE,.LE.8000.d0,6.9d-9*Tgas**(-0.35)
-7,H-,H+,,H2+,E,,,>8000.d0,1.d8,9.6d-7*Tgas**(-0.9)
+7,H-,H+,,H2+,E,,,>8000.d0,NONE,9.6d-7*Tgas**(-0.9)
 
 #H7
 8,H-,H+,,H,H,,,NONE,NONE,5.7d-6*Tgas**(-0.5d0)+6.3d-8-9.2d-11*Tgas**(0.5d0)+4.4d-13*Tgas
@@ -91,10 +91,10 @@
 20,H3+,H,,H2+,H2,,,NONE,NONE,7.7d-9*exp(-1.7560d4*invTgas)
 
 #H20
-21,H3+,E,,H2,H,,,2.73d0,NONE,4.6d-6*Tgas**(-0.65d0)
+21,H3+,E,,H2,H,,,NONE,NONE,4.6d-6*Tgas**(-0.65d0)
 
 #H21
-22,H2,H+,,H3+,,,,2.73d0,NONE,1.d-16
+22,H2,H+,,H3+,,,,NONE,NONE,1.d-16
 
 #--------------------------------------
 #Helium
@@ -118,7 +118,7 @@
 28,HE+,H,,HE,H+,,,.GE.6.d3,NONE,3.7d-25*Tgas**(2.06d0)*(1.d0+9.9d0*exp(-Tgas/2.570d3))
 
 #He8
-29,HE,H+,,HEH+,,,,2.73d0,.LE.1.d3,7.6d-18*Tgas**(-0.5d0) + 5.d-21
+29,HE,H+,,HEH+,,,,NONE,.LE.1.d3,7.6d-18*Tgas**(-0.5d0) + 5.d-21
 30,HE,H+,,HEH+,,,,>1.d3,NONE,3.45d-16*Tgas**(-1.06) + 5.d-21
 
 #He9 TBC
@@ -149,9 +149,6 @@
 #D1, see comment of H1
 @var:ntotD = ntotH*4.3d-5/0.924d0
 39,D+,E,,D,,,,NONE,NONE,elec_recomb_ST93(n(idx_Dj), n(idx_E), ntotD, nucleiH, user_Trad)
-
-#D2
-#41,D,g,,D+,E,,,NONE,NONE,k(40)
 
 #D3
 40,D,H+,,D+,H,,,NONE,NONE,3.7d-10*Tgas**(0.28d0)*exp(-43.d0*invTgas)
