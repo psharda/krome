@@ -86,9 +86,11 @@ subroutine KromeChemistry(blockCount, blockList, dt)
      ! Get a pointer to solution data
      call Grid_getBlkPtr(blockID,solnData)
 
-     do k = blkLimitsGC(LOW,KAXIS), blkLimitsGC(HIGH,KAXIS)
-        do j = blkLimitsGC(LOW,JAXIS), blkLimitsGC(HIGH,JAXIS)
-           do i = blkLimitsGC(LOW,IAXIS), blkLimitsGC(HIGH,IAXIS)
+     ! do the chemistry only in active cells -> speeds up the calculation
+     ! this works as long as you update the guard cells before you use them the next time, which - by default - is done anyway
+     do k = blkLimits(LOW,KAXIS), blkLimits(HIGH,KAXIS)
+        do j = blkLimits(LOW,JAXIS), blkLimits(HIGH,JAXIS)
+           do i = blkLimits(LOW,IAXIS), blkLimits(HIGH,IAXIS)
               
               tmp = solnData(TEMP_VAR,i,j,k)
               rho = solnData(DENS_VAR,i,j,k)
@@ -115,7 +117,7 @@ subroutine KromeChemistry(blockCount, blockList, dt)
      
      call Grid_releaseBlkPtr(blockID,solnData)
 
-     call Eos_wrapped(MODE_DENS_TEMP,blkLimitsGC,blockID)
+     call Eos_wrapped(MODE_DENS_TEMP,blkLimits,blockID)
 
   enddo
   

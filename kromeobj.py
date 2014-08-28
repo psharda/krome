@@ -84,6 +84,7 @@ class krome():
 	constantList = []
 	dummy = molec()
 	coevars = dict() #variables in function coe() (krome_subs.f90)
+	coolVars = dict() #variables for custom cooling (krome_cooling.f90)
 	coevarsODE = dict() #variables in function fex() (krome_ode.f90)
 	commonvars = [] #list of common variables
 	implicit_arrays = totMetals = ""
@@ -117,7 +118,8 @@ class krome():
 	columnDensityMethod = "DEFAULT"
 	ramses_offset = 3 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
-	fdbase = "data/database/"
+	customCoolList = [] #list of the custom cooling functions
+	fdbase = "data/database/" #database of reaction folder for auto reactions
 	version = "14.08.dev"
 	codename = "Beastie Boyle"
 
@@ -416,6 +418,9 @@ class krome():
 		elif(args.test=="hello"):
 			[argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_hello"
+		elif(args.test=="customCooling"):
+			[argv.append(x) for x in ["-useN"]]
+			filename = "networks/react_customCool"
 		else:
 			tests = ", ".join(sorted(os.walk('tests').next()[1]))
 			print "ERROR: test \""+args.test+"\" not present!"
@@ -1441,6 +1446,7 @@ class krome():
 		iTmax = 9 #position of tmax
 		irate = 10 #position of the rate in F90 style
 		ivarcoe = 0 #number variable to order dictionary (dictionaries are not ordered by definition!)
+		ivarCool = 0 #same as above but for custom cooling variables
 		TminAuto = self.TminAuto
 		TmaxAuto = self.TmaxAuto
 		hasFormat = False
@@ -1461,6 +1467,7 @@ class krome():
 		inReactionModifierBlock = False #block of modifier expression for the computed coefficients
 		inOdeModifierBlock = False #block of modifier expression for the ODE dn/dT
 		noTabBlockStored = noTabNextBlock #store the noTabNextBlock array before inPhotoBlock to restore it
+		inCoolingBlock = False #block for custom cooling expression
 
 		#read the size of the file in lines (skip blank and comments)
 		# to have a rough idea of the size
@@ -1531,6 +1538,13 @@ class krome():
 				if(not(group in self.groups)): groups.append(group)
 				continue
 
+			#search for custom cooling and append to the list
+			if(("@cooling:" in srow) and (inCoolingBlock)):
+				customCool = srow.replace("@cooling:","").strip() #remove token
+				if(customCool[0]=="+"): customCool = customCool[1:] #remove initial + sign if present
+				self.customCoolList.append(customCool) #append cooling
+				continue #not a reaction
+
 			#search for variables
 			if("@var:" in srow):
 				arow = srow.replace("@var:","").split("=")
@@ -1539,14 +1553,20 @@ class krome():
 					print "found: "+srow
 					sys.exit()
 				#check if the current @var is allowed
-				notAllowedVars = ["k","tgas","energy_ev"]
+				notAllowedVars = ["k","tgas","energy_ev","n"]
 				for nav in notAllowedVars:
 					if(nav.lower()==arow[0].lower()):
 						sys.exit("ERROR: you can't use "+nav+" as an @var variable")
 
-				if(arow[0] in self.coevars): continue #skip already found variables
-				self.coevars[arow[0]] = [ivarcoe,arow[1]]
-				ivarcoe += 1 #count variables to sort
+				#check if the variable belongs to cooling or rate coefficient variables
+				if(not(inCoolingBlock)):
+					if(arow[0] in self.coevars): continue #skip already found variables
+					self.coevars[arow[0]] = [ivarcoe,arow[1]]
+					ivarcoe += 1 #count variables for later sorting
+				else:
+					if(arow[0] in self.coolVars): continue #skip already found variables
+					self.coolVars[arow[0]] = [ivarCool,arow[1]]
+					ivarCool += 1 #count variables for later sorting
 				continue #SKIP: a variable line is not a reaction line
 
 			#search for common variables
@@ -1642,6 +1662,17 @@ class krome():
 					sys.exit()
 			
 				continue #SKIP format line (it is not a reaction line)
+
+			#custom cooling block start
+			if(srow.lower()=="@cooling_start" or srow.lower()=="@cooling_begin"):
+				inCoolingBlock = True
+				self.use_cooling = True
+				continue #SKIP (not a reaction)
+
+			#custom cooling block end
+			if(srow.lower()=="@cooling_end" or srow.lower()=="@cooling_stop"):
+				inCoolingBlock = False
+				continue #SKIP (not a reaction)
 
 			#if requested the next reaction will not uses tabs
 			if(srow.lower()=="@notabnext" or srow.lower()=="@notab_next"):
@@ -4378,6 +4409,19 @@ class krome():
 						fout.write("do i=1,size("+funct_name+")\n")
 						fout.write(" write(nfile,'(a8,I5,2E17.8e3)') \""+metal_name+"\", i, Tgas, "+funct_name+"(i)\n")
 						fout.write("end do\n\n")
+
+			elif("#KROME_custom_cooling_expr" in row.strip()):
+				coolAll = ""
+				if(len(self.customCoolList)!=0): coolAll = " cooling_custom = " + ("+ &\n".join(self.customCoolList))
+				fout.write(row.replace("#KROME_custom_cooling_expr",coolAll))
+			elif(row.strip()=="#KROME_custom_cooling_var_define"):
+				vardef = ""
+				if(len(self.coolVars)>0): vardef = "real*8::"+(",".join(self.coolVars))
+				fout.write(vardef+"\n")
+			elif(row.strip()=="#KROME_custom_cooling_var"):
+				klist = [[k+" = "+v[1]+"\n",v[0]] for k,v in self.coolVars.iteritems()] #this mess is to sort dict
+				klist = sorted(klist, key=lambda x: x[1])
+				fout.write("".join([x[0] for x in klist]))
 			else:
 				#replace pragma for total metals
 				row = row.replace("#KROME_tot_metals", self.totMetals)
