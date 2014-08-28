@@ -116,7 +116,7 @@ class krome():
 	kModifier = [] #modifier lines that will be appended after the rate calculation
 	odeModifier = [] #modifier lines that will be appended after the ODE calculation
 	columnDensityMethod = "DEFAULT"
-	ramses_offset = 3 #offset in the array for ramses
+	ramses_offset = 2 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
 	customCoolList = [] #list of the custom cooling functions
 	fdbase = "data/database/" #database of reaction folder for auto reactions

@@ -1,0 +1,21 @@
+#This is a simple network taken from Dyson's book
+@format:idx,R,P,P,rate
+1,H2,H2+,e,1d-17
+
+@format:idx,R,R,P,P,rate
+@var: T32 = Tgas/3d2
+2,H2,H2+,H3+,H,1d-9
+
+#3,H3+,CO,HCO+,H2,1d-9
+#Take reaction 3 from KIDA database
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+@var: invT = 1./Tgas
+3,CO,H3+,H2,HCO+,1d1,NONE,1.88055d-9*(1d0 + 0.02427d0*(3d2*invT)**.5 + 1.79558d0*invT)
+30,H2+,E,H,H,2.73d0,.LE.6.17e2,1.d-8
+31,H2+,E,H,H,>6.17e2,1e8,1.32d-6*Tgas**(-0.76d0)
+5,H3+,H,H2+,H2,NONE,NONE,7.7d-9*T32*.042*exp(-17560d0*invT)
+
+@ODEmodifier_start
+dn(idx_H2) = 0d0
+dn(idx_CO) = 0d0
+@ODEmodifier_stop
