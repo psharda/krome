@@ -11,6 +11,7 @@ collapseZ/			OK
 collapseZ_induced/		not-so-strange thermal history. should be compared with a benchmark.  [under developement]
 collapseZ_UV/			several problems. should checked carefully.  [under developement]
 compact/			OK
+customCooling/			OK
 dust/				OK. I've commented some parts that depends on the Jflux() function, which is no longer valid
 					Note that the dust optical part should be completely rewritten!
 lamda/				OK. compared with http://bit.ly/1wEnZCd - note: different chemistry.
