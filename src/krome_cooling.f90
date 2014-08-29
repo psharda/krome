@@ -85,6 +85,8 @@ contains
   !*****************************
   function cooling_custom(n,Tgas)
     use krome_commons
+    use krome_subs
+    use krome_constants
     implicit none
     real*8::n(:),Tgas,cooling_custom
 #KROME_custom_cooling_var_define

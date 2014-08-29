@@ -325,7 +325,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
            ! KROME: do chemistry
            ! unoneq (abundances in 1/cm3), Tgas (temperature, K), dtcool (time-step, s)
-           call krom.e(unoneq(:), tgas, dtcool)
+           call krome(unoneq(:), tgas, dtcool)
 
            !KROME: compute mu with the chemistry updated
            mu_noneq = krome_get_mu(unoneq(:))
