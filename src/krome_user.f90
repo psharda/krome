@@ -259,12 +259,12 @@ contains
     implicit none
     real*8::lower,upper,Tbb,x,xmax,xexp,Jlim
     integer::i
-    
+
     !limit for the black body intensity to check limits
     Jlim = 1d-3
 
     call krome_set_photoBinE_log(lower,upper)
-    
+
     !eV/cm2/s/Hz/sr
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
@@ -274,39 +274,40 @@ contains
     !find the maximum using Wien's displacement law
     xmax = Tbb/2.8977721d-1 * clight * planck_eV !eV
 
-    if(xmax<lower) then
-       print *,"WARNING: maximum of the Planck function"
-       print *," is below the lowest energy bin!"
-       print *,"max (eV)",xmax
-       print *,"lowest (eV)",lower
-       print *,"Tbb (K)",Tbb
-    end if
-
-    if(xmax>upper) then
-       print *,"WARNING: maximum of the Planck function"
-       print *," is above the highest energy bin!"
-       print *,"max (eV)",xmax
-       print *,"highest (eV)",upper
-       print *,"Tbb (K)",Tbb
-    end if
-
-    if(photoBinJ(1)>Jlim) then
-       print *,"WARNING: lower bound of the Planck function"
-       print *," has a flux of (ev/cm2/s/Hz/sr)",photoBinJ(1)
-       print *," which is larger than the limit Jlim",Jlim
-       print *,"Tbb (K)",Tbb
-    end if
-
-    if(photoBinJ(nPhotoBins)>Jlim) then
-       print *,"WARNING: upper bound of the Planck function"
-       print *," has a flux of (ev/cm2/s/Hz/sr)",photoBinJ(nPhotoBins)
-       print *," which is larger than the limit Jlim",Jlim
-       print *,"Tbb (K)",Tbb
-    end if
+    !activate warnings if needed
+!!$    if(xmax<lower) then
+!!$       print *,"WARNING: maximum of the Planck function"
+!!$       print *," is below the lowest energy bin!"
+!!$       print *,"max (eV)",xmax
+!!$       print *,"lowest (eV)",lower
+!!$       print *,"Tbb (K)",Tbb
+!!$    end if
+!!$
+!!$    if(xmax>upper) then
+!!$       print *,"WARNING: maximum of the Planck function"
+!!$       print *," is above the highest energy bin!"
+!!$       print *,"max (eV)",xmax
+!!$       print *,"highest (eV)",upper
+!!$       print *,"Tbb (K)",Tbb
+!!$    end if
+!!$
+!!$    if(photoBinJ(1)>Jlim) then
+!!$       print *,"WARNING: lower bound of the Planck function"
+!!$       print *," has a flux of (ev/cm2/s/Hz/sr)",photoBinJ(1)
+!!$       print *," which is larger than the limit Jlim",Jlim
+!!$       print *,"Tbb (K)",Tbb
+!!$    end if
+!!$
+!!$    if(photoBinJ(nPhotoBins)>Jlim) then
+!!$       print *,"WARNING: upper bound of the Planck function"
+!!$       print *," has a flux of (ev/cm2/s/Hz/sr)",photoBinJ(nPhotoBins)
+!!$       print *," which is larger than the limit Jlim",Jlim
+!!$       print *,"Tbb (K)",Tbb
+!!$    end if
 
     !compute rates
     call calc_photobins()
-    
+
   end subroutine krome_set_photoBin_BBlog
 
   !*************************************
@@ -432,7 +433,7 @@ contains
   end subroutine krome_set_photoBin_J21log
 
   !*****************************
-  !get the opacity exp(-tau) correpsonding the x(:)
+  !get the opacity exp(-tau) correpsonding the to x(:)
   ! chemical composition. The column density
   ! is computed using the expression in the 
   ! num2col(x) function
@@ -459,6 +460,36 @@ contains
     end do
     
   end function krome_get_opacity
+
+ !*****************************
+  !get the opacity exp(-tau) correpsonding to the x(:)
+  ! chemical composition. The column density
+  ! is computed using the size of the cell
+  function krome_get_opacity_size(x,Tgas,csize)
+    use krome_commons
+    use krome_photo
+    use krome_subs
+    implicit none
+    real*8::x(:),tau,krome_get_opacity_size(nPhotoBins),Tgas
+    real*8::csize,n(nspec)
+    integer::i,j
+
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
+
+    !loop on frequency bins
+    do j=1,nPhotoBins
+       tau = 0d0
+       !loop on species
+       do i=1,nPhotoRea
+          !calc opacity as column_density * cross_section
+          !where column_density is density*cell_size
+          tau = tau + x(i) * csize * photoBinJTab(i,j)
+       end do
+       krome_get_opacity_size(j) = tau !store
+    end do
+    
+  end function krome_get_opacity_size
 
   !*******************************
   !dump the Jflux profile to the file
