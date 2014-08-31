@@ -48,8 +48,8 @@ if(mode=="check"):
 	if(changesetSERVER==""): sys.exit("ERROR: check mode enabled and url not retrieved")
 
 	#check if the server and the folder have the same changeset. If so no need to check.
-	if(changesetSERVER==changesetFOLDER):
-		sys.exit("SERVER and local FOLDER has the same changeset. No need to check.")
+	#if(changesetSERVER==changesetFOLDER):
+	#	sys.exit("SERVER and local FOLDER has the same changeset. No need to check.")
 
 
 
