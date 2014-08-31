@@ -115,6 +115,7 @@ class krome():
 	physVariables = [] #list of the phys variables (list of [variable_name, default_value_string])
 	kModifier = [] #modifier lines that will be appended after the rate calculation
 	odeModifier = [] #modifier lines that will be appended after the ODE calculation
+	photoPartners = [] #list of the reactants of photoreactions 
 	columnDensityMethod = "DEFAULT"
 	ramses_offset = 2 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
@@ -383,7 +384,7 @@ class krome():
 			[argv.append(x) for x in ["-columnDensityMethod=JEANS"]]
 			filename = "networks/react_primordial_UV"
                 elif(args.test=="collapseUV_Xrays"):
-			[argv.append(x) for x in ["-cooling=H2,CIE,DISS,FF,COMPTON,CHEM", "-heating=COMPRESS,CHEM,XRAY"]]
+			[argv.append(x) for x in ["-cooling=H2,CIE,ATOMIC,FF,COMPTON", "-heating=COMPRESS,CHEM,XRAY"]]
 			[argv.append(x) for x in ["-useN","-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
 			[argv.append(x) for x in ["-columnDensityMethod=JEANS"]]
 			filename = "networks/react_xrays"
@@ -1870,6 +1871,8 @@ class krome():
 			if(inPhotoBlock):
 				self.nPhotoRea += 1
 				myrea.idxph = self.nPhotoRea
+				#add the photo reactant to the partner array
+				self.photoPartners.append(myrea.reactants[0])
 
 			myrea.build_verbatim() #build reaction as string (e.g. A+B->C)
 			#myrea.reactants = sorted(myrea.reactants, key=lambda r:r.idx) #sort reactants
@@ -1942,7 +1945,7 @@ class krome():
 			addVarCoe("ncolHe","num2col(n(idx_He),n(:))",self.coevars)
 			addVarCoe("logHe","log10(ncolHe)",self.coevars)
 			addVarCoe("logH","log10(ncolH)",self.coevars)
-			addVarCoe("xe","n(idx_e) / (get_Hnuclei(n(:)) + 1d-40)",self.coevars)
+			addVarCoe("xe","min(n(idx_e) / (get_Hnuclei(n(:)) + 1d-40), 1d0)",self.coevars)
 
 			#updates anytab arrays
 			if(x.reactants[0].name=="H"):
@@ -1957,7 +1960,7 @@ class krome():
 				addVarCoe("ratexH"," 1d1**user_xray_H",self.coevars)
 
 				xrayHFound = True
-				autoRateXray = "ratexH * (1d0+phiH) + n(idx_He)/(n(idx_H)+1d-40) * ratexHe * phiH"
+				autoRateXray = "(ratexH * (1d0+phiH) + n(idx_He)/(n(idx_H)+1d-40) * ratexHe * phiH)"
 				x.krate = autoRateXray + "* J21xray"
 				print "H xray ionization found!"
 
@@ -1976,11 +1979,11 @@ class krome():
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
 					self.anytabsizes,self.coevars)
 
-				addVarCoe("phiHe",".0554d0*(1e0-xe**.4614)**1.666 * 180.793458763612d0",self.coevars)
+				addVarCoe("phiHe",".0554d0*(1d0-xe**.4614)**1.666 * 180.793458763612d0",self.coevars)
 				addVarCoe("ratexHe"," 1d1**user_xray_He",self.coevars)
 
-				autoRateXRay = "ratexHe * (1d0+phiHe) + n(idx_H)/(n(idx_He)+1d-40) * ratexH * phiHe"
-				x.krate = autoRateXray + "* J21xray"
+				autoRateXRay = "(ratexHe * (1d0+phiHe) + n(idx_H)/(n(idx_He)+1d-40) * ratexH * phiHe)"
+				x.krate = autoRateXRay + "* J21xray"
 				xrayHeFound = True
 				print "He xray ionization found!"
 
@@ -3471,8 +3474,10 @@ class krome():
 					fout.write("real*8::photoBinRates(nPhotoRea) !photo rates, 1/s\n")
 					fout.write("real*8::photoBinHeats(nPhotoRea) !photo heating, erg/s\n")
 					fout.write("real*8::photoBinEth(nPhotoRea) !energy treshold, eV\n")
+					fout.write("real*8::photoPartners(nPhotoRea) !index of the photoreactants\n")
 					fout.write("!$omp threadprivate(photoBinJ,photoBinEleft,photoBinEright,photoBinEmid,photoBinEdelta, &\n")
-					fout.write("!$omp               photoBinEidelta,photoBinJTab,photoBinRates,photoBinHeats,photoBinEth)\n")
+					fout.write("!$omp    photoBinEidelta,photoBinJTab,photoBinRates,photoBinHeats,photoBinEth,photoPartners)\n")
+		
 			#write the anytab common variables
 			elif(srow == "#KROME_vars_anytab"):
 				stab = ""
@@ -4060,9 +4065,10 @@ class krome():
 			elif(srow=="#KROME_photobin_opacity" and self.usePhotoOpacity):
 				phbintau = ""
 				#loop on the species looking for photorates
-				for rea in reacts:
+				for i in range(len(reacts)):
+					rea = reacts[i]
 					if(rea.kphrate==None): continue
-					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+rea.reactants[0].fidx+") !"\
+					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+self.photoPartners[i].fidx+") !"\
 						+rea.verbatim+"\n"
 				row = phbintau+"\n"
 
@@ -5325,7 +5331,13 @@ class krome():
 						+anytaby+","+anytabz+",&\n"+anytabxmul+","\
 						+anytabymul+")\n"
 				fout.write(stab+"\n")
-
+			#dump photopartners
+			elif(srow == "#KROME_photopartners"):
+				photoPartnersList = ""
+				if(len(self.photoPartners)>0):
+					for i in range(len(self.photoPartners)):
+						photoPartnersList += "photoPartners("+str(i+1)+") = "+self.photoPartners[i].fidx+"\n"
+				fout.write(photoPartnersList+"\n")
 			elif(srow == "#KROME_init_phys_variables"):
 				for x in self.physVariables:
 					fout.write("phys_"+x[0]+" = "+x[1]+"\n")					

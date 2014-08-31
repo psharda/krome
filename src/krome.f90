@@ -442,8 +442,11 @@ contains
     krome_thermo_toggle = 1
     !$omp end parallel
 
-    !get smallest possible value
-    krome_smallest = epsilon(0d0)
+    !init photo reactants indexes
+#KROME_photopartners
+
+    !get machine precision
+    krome_epsilon = epsilon(0d0)
 
   end subroutine krome_init
 

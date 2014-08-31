@@ -1179,13 +1179,8 @@ def indentF90(filename):
 		is_blank = (srow=="") #flag for blank line mode
 		if(lbeg(tokenopen, srow)): nind += 1 #check if the line ends with one of tokenclose
 		if(lbeg(["if"],srow) and "then" in srow): nind += 1 #check if line stats with if and has then
+		if(srow=="do"): nind += 1
 	fh.close()
-
-	#arowl = []
-	#for j in range(50):
-	#	arowl = cutlines(arow)
-	#	if(len(arow)==len(arowl)): break
-	#	arow = arowl[:]
 
 	arowl = arow[:]
 
