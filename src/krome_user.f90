@@ -228,15 +228,16 @@ contains
     krome_get_photoBin_rates(:) = photoBinRates(:)
   end function krome_get_photoBin_rates
 
- !*********************************
+  !*********************************
+  !returns an array with the integrated photo heatings (erg/s)
   function krome_get_photoBin_heats()
-    !returns an array with the integrated photo heatings (erg/s)
     use krome_commons
     real*8::krome_get_photoBin_heats(nPhotoRea)
     krome_get_photoBin_heats(:) = photoBinHeats(:)
   end function krome_get_photoBin_heats
 
   !****************************
+  !multiply all the bins by a factor xscale
   subroutine krome_photoBin_scale(xscale)
     use krome_commons
     use krome_photo
@@ -249,6 +250,22 @@ contains
     call calc_photobins()
 
   end subroutine krome_photoBin_scale
+
+  !****************************
+  !multiply all the bins by an array xscale(:)
+  ! of size krome_nPhotoBins
+  subroutine krome_photoBin_scale_array(xscale)
+    use krome_commons
+    use krome_photo
+    implicit none
+    real*8::xscale(:)
+
+    photoBinJ(:) = photoBinJ(:) * xscale(:)
+
+    !compute rates
+    call calc_photobins()
+
+  end subroutine krome_photoBin_scale_array
 
   !**********************************
   subroutine krome_set_photoBin_BBlog(lower,upper,Tbb)
@@ -335,7 +352,7 @@ contains
        print *,"ERROR: problems with auto planck bisection!"
        stop
     end if
-    
+
     do 
        xm = 0.5d0*(x0+x1)
        Jm = planckBB(xm,Tbb) - eps
@@ -360,7 +377,7 @@ contains
     integer::i
 
     call krome_set_photoBinE_lin(lower,upper)
-    
+
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
        !eV/cm2/sr/s/Hz
@@ -378,7 +395,7 @@ contains
   end subroutine krome_set_photoBin_draineLin
 
 
- !**************************
+  !**************************
   subroutine krome_set_photoBin_draineLog(lower,upper)
     use krome_commons
     use krome_photo
@@ -387,7 +404,7 @@ contains
     integer::i
 
     call krome_set_photoBinE_log(lower,upper)
-    
+
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
        !eV/cm2/sr/s/Hz
@@ -409,7 +426,7 @@ contains
     use krome_commons
     use krome_photo
     real*8::upper,lower
-    
+
     call krome_set_photoBinE_lin(lower,upper)
     photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/s/Hz/sr
 
@@ -417,19 +434,19 @@ contains
     call calc_photobins()
 
   end subroutine krome_set_photoBin_J21lin
-  
+
   !**************************
   subroutine krome_set_photoBin_J21log(lower,upper)
     use krome_commons
     use krome_photo
     real*8::upper,lower
-    
+
     call krome_set_photoBinE_log(lower,upper)
     photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/s/Hz/sr
 
     !compute rates
     call calc_photobins()
-    
+
   end subroutine krome_set_photoBin_J21log
 
   !*****************************
@@ -458,10 +475,10 @@ contains
        end do
        krome_get_opacity(j) = tau !store
     end do
-    
+
   end function krome_get_opacity
 
- !*****************************
+  !*****************************
   !get the opacity exp(-tau) correpsonding to the x(:)
   ! chemical composition. The column density
   ! is computed using the size of the cell
@@ -488,7 +505,7 @@ contains
        end do
        krome_get_opacity_size(j) = tau !store
     end do
-    
+
   end function krome_get_opacity_size
 
   !*******************************
@@ -498,13 +515,13 @@ contains
     use krome_commons
     implicit none
     integer::i,nfile
-    
+
     do i=1,nPhotoBins
        write(nfile,*) photoBinEmid(i),photoBinJ(i)
     end do
-    
+
   end subroutine krome_dump_Jflux
-  
+
 #ENDIFKROME
 
   !***************************
@@ -518,7 +535,7 @@ contains
     n(idx_Tgas) = Tgas
 
     krome_get_coef(:) = coe(n(:))
-    
+
   end function krome_get_coef
 
   !****************************
@@ -545,9 +562,9 @@ contains
     Tgas = inTgas
     x(:) = krome_x2n(xin(:),1d0)
     krome_get_gamma_x = krome_get_gamma(x(:),Tgas)
-    
+
   end function krome_get_gamma_x
-  
+
 
   !***************************
   !normalize mass fractions and
@@ -592,7 +609,7 @@ contains
     use krome_commons
     implicit none
     real*8::n(nmols),rhogas,krome_n2x(nmols)
-    
+
     krome_n2x(:) = n(:) * krome_get_mass() / rhogas
 
   end function krome_n2x
@@ -605,7 +622,7 @@ contains
     use krome_commons
     implicit none
     real*8::x(nmols),rhogas,krome_x2n(nmols)
-    
+
     !compute densities from fractions
     krome_x2n(:) = rhogas * x(:) * krome_get_imass()
 
@@ -732,7 +749,7 @@ contains
     x(1:nmols) = n(:)
     if(present(nfile_in)) nfile = nfile_in
     call dump_cool(x(:),Tgas,nfile)
-    
+
   end subroutine krome_dump_cooling
 
 #ENDIFKROME
@@ -744,7 +761,7 @@ contains
     implicit none
     real*8::x(:),xi(:)
     real*8::n(krome_nspec),ni(krome_nspec),krome_conserve(krome_nmols)
-    
+
     n(:) = 0d0
     ni(:) = 0d0
     n(1:krome_nmols) = x(1:krome_nmols)
@@ -778,7 +795,7 @@ contains
 
     zatoms(:) = get_zatoms()
     krome_get_zatoms(:) = zatoms(1:nmols)
-    
+
   end function krome_get_zatoms
 
   !****************************
@@ -829,9 +846,9 @@ contains
     real*8::n(nspec),x(:),krome_get_Hnuclei
     n(:) = 0d0
     n(1:nmols) = x(:)
-    
+
     krome_get_Hnuclei = get_Hnuclei(n(:))
-    
+
   end function krome_get_Hnuclei
 
   !*****************
@@ -880,7 +897,7 @@ contains
     m(:) = krome_get_mass()
     krome_get_rho = sum(m(:)*n(:))
   end function krome_get_rho
-  
+
   !*************************
   subroutine krome_scale_Z(n,Z)
     !scale metallicity the metals contained in n(:) 
@@ -889,7 +906,7 @@ contains
     real*8::n(:),Z,Htot
 
 #KROME_scaleZ
-    
+
   end subroutine krome_scale_Z
 
   !***********************
@@ -931,7 +948,7 @@ contains
     n(idx_Tgas) = Tgas
     call print_best_flux_spec(n,Tgas,nbest,idx_find)
   end subroutine krome_print_best_flux_spec
-  
+
   !*******************************
   !get the fluxes of all the reactions in 1/cm3/s
   function krome_get_flux(n,Tgas)
@@ -951,9 +968,9 @@ contains
     use krome_subs
     implicit none
     real*8::krome_get_qeff(nrea)
-    
+
     krome_get_qeff(:) = get_qeff()
-    
+
   end function krome_get_qeff
 
 #IFKROME_useStars
@@ -972,7 +989,7 @@ contains
     integer,allocatable::zz(:)
     real*8,optional::y_in(:)
     integer,optional::zz_in(:)
-    
+
     !check if extened abundances and zatom array are present
     if(present(y_in)) then
        ny = size(y_in)
@@ -988,7 +1005,7 @@ contains
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
-    
+
     krome_stars_coe(:) = stars_coe(n(:),rho,Tgas,y(:),zz(:))
     deallocate(y,zz)
   end function krome_stars_coe
@@ -1008,7 +1025,7 @@ contains
     krome_stars_energy(:) = stars_energy(n(:),rho,Tgas,k(:))
 
   end function krome_stars_energy
-    
+
 #ENDIFKROME
 
   !************************
@@ -1033,7 +1050,7 @@ contains
     implicit none
     integer::funit,i,imax,j
     real*8::Tmin,Tmax,Tgas,k(nrea),n(nspec),inTmin,inTmax
-    
+
     Tmin = log10(inTmin)
     Tmax = log10(inTmax)
 
@@ -1048,7 +1065,7 @@ contains
        write(funit,*)
     end do
 
-    
+
   end subroutine krome_dump_rates
 
   !************************
@@ -1072,5 +1089,5 @@ contains
 
     print '(a14,E11.3)',"Tgas",Tgas
   end subroutine krome_get_info
-  
+
 end module krome_user
