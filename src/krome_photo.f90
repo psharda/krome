@@ -117,7 +117,7 @@ contains
     end do
 
     !converts to 1/s
-    photoBinRates(:) = 4d0*pi*photoBinRates(:) * iplanck_eV
+    photoBinRates(:) = photoBinRates(:) * iplanck_eV
 
 #IFKROME_photobin_heat
     !converts to erg/s
