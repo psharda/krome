@@ -38,7 +38,7 @@ contains
 #KROME_metallicity_functions
 
   !**********************
-  !planck function in erg/s/cm2/Hz/sr
+  !planck function in eV/s/cm2/Hz/sr
   ! x is the energy in eV, Tbb the black body
   ! temperature in K
   function planckBB(x,Tbb)
