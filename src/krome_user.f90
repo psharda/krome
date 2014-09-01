@@ -38,9 +38,9 @@ contains
     use krome_commons
     implicit none
     real*8::xarg
-    
+
     J21xray = xarg
-    
+
   end subroutine krome_set_J21xray
 #ENDIFKROME
 
@@ -64,6 +64,89 @@ contains
   end subroutine krome_popcool_dump
 #ENDIFKROME
 
+#IFKROME_useDust
+
+  !*************************
+  !this subroutine sets the dust distribution in the range
+  ! alow_arg, aup_arg, using power law with exponent phi_arg.
+  ! All these arguments are optional.
+  subroutine krome_set_dust_distribution(alow_arg,aup_arg,phi_arg)
+    use krome_dust
+    real*8,optional::alow_arg,aup_arg,phi_arg
+    real*8::alow,aup,phi
+
+    !default values
+    alow = 5d-7 !lower size (cm)
+    aup = 2.5d-5 !upper size (cm)
+    phi = -3.5d0 !MNR distribution exponent (with its sign)
+
+    if(present(alow_arg)) alow = alow_arg
+    if(present(aup_arg)) aup = aup_arg
+    if(present(phi_arg)) phi = phi_arg
+
+    call set_dust_distribution(alow,aup,phi)
+
+  end subroutine krome_set_dust_distribution
+  !*****************************
+  !this function returns an array of size krome_ndust
+  ! that contains the amount of dust per bin in 1/cm3.
+  function krome_get_dust_distribution()
+    use krome_commons
+    implicit none
+    real*8::krome_get_dust_distribution(ndust)
+
+    krome_get_dust_distribution(:) = xdust(:)
+
+  end function krome_get_dust_distribution
+
+  !******************************
+  !this function returns an array of size krome_ndust
+  ! that contains the size of the dust bins in cm
+  function krome_get_dust_size()
+    use krome_commons
+    implicit none
+    real*8::krome_get_dust_size(ndust)
+
+    krome_get_dust_size(:) = krome_dust_asize(:)
+
+  end function krome_get_dust_size
+
+  !************************
+  !this function sets the default temperature
+  ! for all the dust bins.
+  subroutine krome_set_defaultTdust(arg)
+    use krome_commons
+    implicit none
+    real*8::arg
+
+    krome_dust_T(:) = arg
+
+  end subroutine krome_set_defaultTdust
+
+  !****************************
+  subroutine krome_scale_dust_distribution(xscale)
+    use krome_commons
+    implicit none
+    real*8::xscale
+
+    xdust(:) = xdust(:) * xscale
+
+  end subroutine krome_scale_dust_distribution
+
+  !***************************
+  subroutine krome_scale_dust_gas_ratio(dust_to_gas_ratio,x)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::dust_to_gas_ratio,x(:),rho_gas
+
+    rho_gas = sum(x(:)*get_mass())
+    xdust(:) = dust_to_gas_ratio * rho_gas / krome_grain_rho &
+         / krome_dust_asize3(:)
+    
+  end subroutine krome_scale_dust_gas_ratio
+
+#ENDIFKROME
 
   !****************************
   !switch on the thermal calculation
@@ -78,7 +161,7 @@ contains
     use krome_commons
     krome_thermo_toggle = 0
   end subroutine krome_thermo_off
-  
+
 #IFKROME_usePhotoBins
   !************************
   subroutine krome_calc_photobins()
@@ -95,7 +178,7 @@ contains
     implicit none
     real*8::phbin(:)
     photoBinJ(:) = phbin(:)
-    
+
     !compute rates
     call calc_photobins()
 
@@ -117,7 +200,7 @@ contains
 
     !initialize xsecs table
     call init_photoBins()
-    
+
   end subroutine krome_set_photobinE_lr
 
   !********************************
@@ -143,7 +226,7 @@ contains
 
   end subroutine krome_set_photobinE_lin
 
- !********************************
+  !********************************
   ! set the energy (eV) of the photobin
   ! logarithmic from lowest to highest energy value
   subroutine krome_set_photobinE_log(lower,upper)
@@ -166,7 +249,7 @@ contains
     end do
     photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
-    
+
     !initialize xsecs table
     call init_photoBins()
 
@@ -204,7 +287,7 @@ contains
     krome_get_photoBinE_mid(:) = photoBinEmid(:)
   end function krome_get_photoBinE_mid
 
- !*********************************
+  !*********************************
   function krome_get_photoBinE_delta()
     !returns an array with the middle energy limits (eV)
     use krome_commons
@@ -212,7 +295,7 @@ contains
     krome_get_photoBinE_delta(:) = photoBinEdelta(:)
   end function krome_get_photoBinE_delta
 
- !*********************************
+  !*********************************
   function krome_get_photoBinE_idelta()
     !returns an array with the middle energy limits (eV)
     use krome_commons
@@ -220,7 +303,7 @@ contains
     krome_get_photoBinE_idelta(:) = photoBinEidelta(:)
   end function krome_get_photoBinE_idelta
 
- !*********************************
+  !*********************************
   function krome_get_photoBin_rates()
     !returns an array with the integrated photo rates (1/s)
     use krome_commons
@@ -243,9 +326,9 @@ contains
     use krome_photo
     implicit none
     real*8::xscale
-    
+
     photoBinJ(:) = photoBinJ(:) * xscale
-    
+
     !compute rates
     call calc_photobins()
 
@@ -938,7 +1021,7 @@ contains
 
   end subroutine krome_print_best_flux
   !**********************
-  !print the nbest fluxes
+  !print the nbest fluxes for a given species
   subroutine krome_print_best_flux_spec(xin,Tgas,nbest,idx_find)
     use krome_subs
     use krome_commons

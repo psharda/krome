@@ -8,22 +8,15 @@ program test_krome
 
   use krome_main
   use krome_user
-  use krome_user_commons
-  use krome_dust
-  use krome_constants
 
-  integer,parameter::nx=krome_nmols,nd=10*2
-  real*8::x(nx),Tgas,t,dt,spy,xH,tend,vgas,xi(nx)
-  real*8::xdust(nd),adust(nd),dust_to_gas(2),xdusti(nd)
+  integer,parameter::nd=krome_ndust
+  real*8::x(krome_nmols),Tgas,t,dt,spy,xH,tend,vgas,xi(krome_nmols)
+  real*8::xdust(nd),adust(nd),xdusti(nd)
   integer::i
 
   spy = 365.*24.*3600. !seconds per year
   Tgas = 1d1 !gas temperature (K)
   xH = 1d0 !Hydrogen density
-
-  !total abundance of dust (C, Si)
-  !ndust(:) = (/1d-3, 1d-4/) !cm-3
-  dust_to_gas(:) = 1d-5
 
   !initialize krome
   call krome_init()
@@ -40,10 +33,14 @@ program test_krome
   !compute electrons (globally neutral)
   x(KROME_idx_E) = krome_get_electrons(x(:))
 
-  !initialize dust (xdust=amount per bin, adust=bin size,
-  ! ndust=total dust abundance per type, )
-  call krome_init_dust(xdust(:), adust(:), dust_to_gas(:),x(:))
-  xdusti(:) = xdust(:) !store initial dust amount
+  call krome_set_dust_distribution()
+
+  !scale dust using dust/gas ratio
+  call krome_scale_dust_gas_ratio(1d-5, x(:))
+
+  !store intial dust distribution
+  xdusti(:) = krome_get_dust_distribution()
+
   xi(:) = x(:) !store the initial amount of species
   dt = 1d-4*spy !time-step (s)
   t = 0.d0 !initial time (s)
@@ -57,12 +54,13 @@ program test_krome
      !Tgas = (1d5-1d2) /(1.d0+exp(-25.*(log10(t/spy+1d0)-7.5))) + 1d2
      print '(a10,E11.3,a10,E11.3,a3)',"time:",t/spy,"yr, Tgas:",Tgas,"K"
 
-     call krome(x(:),Tgas,dt,xdust(:)) !###call KROME###
+     call krome(x(:),Tgas,dt) !###call KROME###
 
      t = t + dt !increase time
      dt = max(1d2,t/3.d0) !increase time-step
      write(66,'(999E12.3e3)') t/spy,Tgas,x(:)/xi(:) !dump species
      !dump dust
+     xdust(:) = krome_get_dust_distribution()
      write(77,'(999E12.3e3)') t/spy,adust(nd),Tgas,xdust(nd)/xdusti(nd)
      write(78,'(999E12.3e3)') t/spy,adust(nd/2),Tgas,xdust(nd/2)/xdusti(nd/2)
      write(79,'(999E12.3e3)') t/spy,adust(1),Tgas,xdust(1)/xdusti(1)
