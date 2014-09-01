@@ -10,9 +10,9 @@ contains
   !********************************
   !KROME main (interface to the solver library)
 #IFKROME_useX
-  subroutine krome(x,rhogas,Tgas,dt#KROME_dust_arguments)
+  subroutine krome(x,rhogas,Tgas,dt)!#KROME_dust_arguments)
 #ELSEKROME
-  subroutine krome(x,Tgas,dt#KROME_dust_arguments)
+  subroutine krome(x,Tgas,dt)!#KROME_dust_arguments)
 #ENDIFKROME
     use krome_commons
     use krome_subs
@@ -20,7 +20,7 @@ contains
     use krome_reduction
     use krome_dust
     real*8::dt,x(nmols),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin
-    real*8::rrmax,totmass,xdust(ndust),n_old(nspec),ni(nspec)
+    real*8::rrmax,totmass,n_old(nspec),ni(nspec)
     integer::icount,i,ierr,icount_max
     
     !DLSODES variables
@@ -458,10 +458,12 @@ contains
     use krome_tabs
     implicit none
     real*8::krome_get_coe(nrea),n(nspec),x(:),Tgas
+
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
     krome_get_coe(:) = coe_tab(n(:))
+
   end function krome_get_coe
 
   !****************************

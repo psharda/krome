@@ -2,34 +2,27 @@ module krome_dust
 
 #IFKROME_useDust
 contains
-  subroutine krome_init_dust(xdust,adust,dtg,ngas,alow_arg,aup_arg,phi_arg)
-    !krome_init_dust: initialize the dust ditribution (xdust)
-    ! and the dust bin mean sizes (adust). Arguments are
-    ! dtg(dust_gas_ratio__types) the total abundance per 
-    ! each bin size, alow_arg the size of the smallest
-    ! bin size, aup_arg the largest, phi_arg the exponent
-    ! of the MRN power law. The last three parameters
+
+  subroutine set_dust_distribution(alow,aup,phi)
+    !krome_init_dust: initialize the dust ditribution
+    ! and the dust bin mean sizes. Arguments are
+    ! alow the size of the smallest
+    ! bin size, aup the largest, phi the exponent
+    ! of the MRN power law. These parameters
     ! are optional and can be omitted during the call.
     use krome_commons
     use krome_subs
     implicit none
-    real*8,optional::alow_arg,aup_arg,phi_arg
     real*8::rhogas,dmass,ngas(nmols),n(nspec)
-    real*8::iphi1,c,phi1,abin(ndust+1),mass(nspec),xdust(ndust),myc
+    real*8::iphi1,c,phi1,abin(ndust+1),mass(nspec),myc
     real*8::alow,aup,phi,dtg(ndustTypes),adust(ndust),Tbb,myx,a0,a1
     integer::i,j,ilow,iup,imax,nd
 
 #KROME_dustPartnerIndex
 
-    !default values
-    alow = 5d-7 !lower size (cm)
-    aup = 2.5d-5 !upper size (cm)
-    phi = -3.5d0 !MNR distribution exponent (with its sign)
     phi1 = phi + 1.d0
     iphi1 = 1.d0/phi1
-    if(present(alow_arg)) alow = alow_arg
-    if(present(aup_arg)) aup = aup_arg
-    if(present(phi_arg)) phi = phi_arg
+
     mass(:) = get_mass()
     nd = ndust/ndustTypes
     krome_grain_rho = 2.3d0 !dust grain density g/cm3 (graphite fits all)
@@ -58,15 +51,13 @@ contains
           krome_dust_aspan(i+ilow-1) = abin(i+1) - abin(i) !bin span
        end do
 
-       !amount of dust per bin computed using the dust to gas ratio (dtg)
-       ! of the jth dust type.
-       xdust(ilow:iup) = rhogas * dtg(j) / adust(ilow:iup)**3 &
-            / krome_grain_rho / nd 
+       !amount of dust per bin
+       xdust(ilow:iup) = 1d0 / nd
 
        !evaluate dust-parnter ratio (e.g. 1dust=1e2 C atoms)
        krome_dust_partner_ratio(ilow:iup) = adust(ilow:iup)**3 &
-            * krome_grain_rho  / mass(krome_dust_partner_idx(j))
-       krome_dust_partner_ratio_inv(ilow:iup) = 1.d0 &
+            * krome_grain_rho / mass(krome_dust_partner_idx(j))
+       krome_dust_partner_ratio_inv(ilow:iup) = 1d0 &
             / krome_dust_partner_ratio(ilow:iup)
     end do
 
@@ -80,7 +71,8 @@ contains
        krome_dust_partner_mass(j) =  mass(krome_dust_partner_idx(j))
     end do
 
-    krome_dust_T(:) = 2.73d0 !defualt dust temperature
+    !default dust temperature
+    krome_dust_T(:) = 3d2
 
     !init optical properties
 #KROME_init_Qabs
@@ -90,8 +82,7 @@ contains
 
     print *,"Dust initialized!"
 
-  end subroutine krome_init_dust
-
+  end subroutine set_dust_distribution
 
   !*****************************
   function dustCool(adust2,nndust,Tgas,Tdust,ntot)

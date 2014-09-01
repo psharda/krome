@@ -39,6 +39,7 @@ module krome_commons
   real*8::krome_dust_asize(ndust),krome_dust_T(ndust)
   real*8::krome_dust_asize2(ndust),krome_dust_aspan(ndust)
   real*8::krome_dust_asize3(ndust),krome_grain_rho
+  real*8::xdust(ndust)
   integer::krome_dust_partner_idx(ndustTypes)
 
   !commons for frequency bins

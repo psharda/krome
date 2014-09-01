@@ -4970,6 +4970,7 @@ class krome():
 				if(k.upper()==mols.name.upper()):
 					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+log10("+str(v)+")), 1d-40)")
 
+		#loop on source to pre-process pragmas
 		for row in fh:
 
 			srow = row.strip()
@@ -4980,6 +4981,7 @@ class krome():
 			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
 			if(srow == "#IFKROME_use_coolingZ" and not(self.useCoolingZ)): skip = True
 			if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
+			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
