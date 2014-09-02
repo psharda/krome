@@ -87,6 +87,7 @@ contains
     call set_dust_distribution(alow,aup,phi)
 
   end subroutine krome_set_dust_distribution
+
   !*****************************
   !this function returns an array of size krome_ndust
   ! that contains the amount of dust per bin in 1/cm3.
@@ -139,10 +140,12 @@ contains
     use krome_subs
     implicit none
     real*8::dust_to_gas_ratio,x(:),rho_gas
+    integer::nd
 
+    nd = ndust / ndustTypes
     rho_gas = sum(x(:)*get_mass())
     xdust(:) = dust_to_gas_ratio * rho_gas / krome_grain_rho &
-         / krome_dust_asize3(:)
+         / krome_dust_asize3(:) / nd
     
   end subroutine krome_scale_dust_gas_ratio
 

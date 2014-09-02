@@ -72,7 +72,7 @@ contains
     end do
 
     !default dust temperature
-    krome_dust_T(:) = 3d2
+    krome_dust_T(:) = 3d1
 
     !init optical properties
 #KROME_init_Qabs
