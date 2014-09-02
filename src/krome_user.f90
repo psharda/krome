@@ -139,11 +139,12 @@ contains
     use krome_commons
     use krome_subs
     implicit none
-    real*8::dust_to_gas_ratio,x(:),rho_gas
+    real*8::dust_to_gas_ratio,x(:),rho_gas,m(nspec)
     integer::nd
 
     nd = ndust / ndustTypes
-    rho_gas = sum(x(:)*get_mass())
+    m(:) = get_mass()
+    rho_gas = sum(x(:)*m(1:nmols))
     xdust(:) = dust_to_gas_ratio * rho_gas / krome_grain_rho &
          / krome_dust_asize3(:) / nd
     
