@@ -1024,6 +1024,22 @@ contains
     call print_best_flux(n,Tgas,nbest)
 
   end subroutine krome_print_best_flux
+
+  !print the best fluxes greater than a fraction frac
+  ! of the maximum flux
+  !*********************
+  subroutine krome_print_best_flux_frac(xin,Tgas,frac)
+    use krome_subs
+    use krome_commons
+    implicit none
+    real*8::x(nmols),xin(nmols),n(nspec),Tgas,frac
+    x(:) = xin(:)
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
+    call print_best_flux_frac(n,Tgas,frac)
+
+  end subroutine krome_print_best_flux_frac
+  
   !**********************
   !print the nbest fluxes for a given species
   subroutine krome_print_best_flux_spec(xin,Tgas,nbest,idx_find)
