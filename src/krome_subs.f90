@@ -742,6 +742,35 @@ contains
   end subroutine print_best_flux
 
   !******************************
+  subroutine print_best_flux_frac(n,Tgas,frac)
+    !print the first nbestin fluxes 
+    use krome_commons
+    implicit none
+    real*8::n(nspec),Tgas,flux(nrea),frac
+    integer::idx(nrea),i
+    character*50::name(nrea)
+
+    if(frac>1d0) then
+       print *,"ERROR: fraction in krome_print_best_flux should be <=1!"
+       stop
+    end if
+
+    flux(:) = get_flux(n(:),Tgas) !get fluxes
+    name(:) = get_rnames() !get reaction names
+
+    !call the sorting algorithm (bubblesort)
+    idx(:) = idx_sort(flux(:))
+
+    !print to screen
+    print *,"***************"
+    do i=1,nrea
+       if(flux(idx(i))<flux(idx(1))*frac) exit
+       print '(I8,a1,a50,E17.8)',idx(i)," ",name(idx(i)),flux(idx(i))
+    end do
+
+  end subroutine print_best_flux_frac
+
+  !******************************
   subroutine print_best_flux_spec(n,Tgas,nbestin,idx_found)
     !print the first nbestin fluxes for the reactions
     ! that contains the species with index idx_found
