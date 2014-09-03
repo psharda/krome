@@ -1121,9 +1121,9 @@ class krome():
 			self.dustTypes = adust[1:]
 			self.dustTypesSize = len(self.dustTypes)
 			print "Reading option -dust (size="+str(self.dustArraySize)+", type(s)="+(",".join(self.dustTypes))+")"
-			if(not(hasDustOptions)):
-				print "ERROR: -dust flag needs to define -dustOptions=[see help])"
-				sys.exit()
+			#if(not(hasDustOptions)):
+			#	print "ERROR: -dust flag needs to define -dustOptions=[see help])"
+			#	sys.exit()
 		#dust options
 		if(args.dustOptions):
 			if(not(self.useDust)): die("ERROR: you need -dust=[see help] to activate dust options!")
@@ -1387,9 +1387,10 @@ class krome():
 			'PAH+': 30*6*(menp)-me,
 			'O(1D)':8.*(menp),
 			'O(3P)':8.*(menp),
-			'CR':0.,
-			'M':0.,
-			'g':0.,
+			'_dust':0e0,
+			'CR':0e0,
+			'M':0e0,
+			'g':0e0,
 			'E':me,
 			'-':me,
 			'+':-me}
@@ -1553,6 +1554,16 @@ class krome():
 					print "ERROR: variable line must be @var:variable=F90_expression"
 					print "found: "+srow
 					sys.exit()
+				
+
+				#look for array definition in var token
+				var_array_size = "0" #size of the array can be a variable
+				if("[" in arow[0]):
+					arow[0] = arow[0].replace(" ","") #replace spaces
+					var_array_size = arow[0].split("[")[1].split("]")[0] #grep inside brackets
+					arow[0] = arow[0].replace("["+var_array_size+"]","") #replace braketes and content
+					arow[0] = arow[0]+"("+var_array_size+")" #set variable definition
+
 				#check if the current @var is allowed
 				notAllowedVars = ["k","tgas","energy_ev","n"]
 				for nav in notAllowedVars:
@@ -1625,10 +1636,10 @@ class krome():
 				srow = srow.replace("@format:","") #remove 
 				#print "Found custom format: "+srow
 				arow = srow.split(",") #split format line
-				#check format (at least 6 elements)
-				if(len(arow)<5):
-					print "ERROR: format line must contains at least 5 elements"
-					print " idx,R,P,P,rate"
+				#check format (at least 4 elements)
+				if(len(arow)<4):
+					print "ERROR: format line must contains at least 4 elements"
+					print " idx,R,P,rate"
 					print " You provided "+str(len(arow))+" elements:"
 					print " "+srow
 					sys.exit()
@@ -3810,14 +3821,23 @@ class krome():
 				fout.write(truncF90(self.implicit_arrays,60,","))
 			elif(srow == "#KROME_initcoevars"):
 				if(len(coevars)==0): continue
+				#write initialization of variables
 				for x in coevars.keys():
-					kvars = "real*8::"+x
+					kvars = "real*8::"+x+" !preproc from coevar"
 					fout.write(kvars+"\n")
 			elif(srow == "#KROME_coevars"):
 				if(len(coevars)==0): continue
-				klist = [[k+" = "+v[1]+"\n",v[0]] for k,v in coevars.iteritems()] #this mess is to sort dict
+				klist = [[[k,v[1]],v[0]] for k,v in coevars.iteritems()] #this mess is to sort dict
 				klist = sorted(klist, key=lambda x: x[1])
-				fout.write("".join([x[0] for x in klist]))
+				#write the variables
+				for x in klist:
+					varName = x[0][0].strip()
+					varExpr = x[0][1].strip()
+					#check array variables
+					if("(" in varName): varName = varName.split("(")[0]+"(:)"
+					#write vars
+					fout.write("!preprocessed from coevars\n")
+					fout.write(varName+" = "+varExpr+"\n")
 			elif(srow == "#KROME_masses"):
 				for x in specs:
 					massrow = "\tget_mass("+str(x.idx)+") = " + str(x.mass).replace("e","d") + "\t!" + x.name + "\n"

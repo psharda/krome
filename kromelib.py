@@ -55,6 +55,7 @@ class molec():
 	coolname = "" #name for cooling, e.g. CIV
 	fidx = "idx_" #index for fortran (e.g. H+=idx_Hj, D-=idx_Dk)
 	is_atom = False #flag to identify atoms
+	is_surface = False #flag for species on surface
 	chempot = 0. #chemical potential (J/mol)
 	poly1 = [0.e0]*7 #nasa polynomials (usually 200-1000K)
 	poly2 = [0.e0]*7 #nasa polynomials (usually 1000-5000K)
@@ -752,6 +753,10 @@ def parser(name, mass_dic, atoms, thermo_data):
 	for k,v in zdic_copy.iteritems():
 		for i in range(2,56):
 			zdic[str(i)+k] = v
+
+	#look for species on grain surface
+	if("_dust" in name):
+		mymol.is_surface = True
 
 	#check for fake species
 	if("FK" in name):
