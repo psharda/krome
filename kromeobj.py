@@ -5036,12 +5036,12 @@ class krome():
 			elif(srow == "#KROME_cool_index"):
 				idxcool = get_cooling_index_list()
 				for x in idxcool:
-					fout.write("real*8,parameter::krome_"+x+"\n")
+					fout.write("integer,parameter::krome_"+x+"\n")
 
 			elif(srow == "#KROME_heat_index"):
 				idxheat = get_heating_index_list()
 				for x in idxheat:
-					fout.write("real*8,parameter::krome_"+x+"\n")
+					fout.write("integer,parameter::krome_"+x+"\n")
 			elif(srow=="#KROME_print_phys_variables"):
 					for x in self.physVariables:
 						fout.write("print *, \""+x[0]+":\", phys_"+x[0]+"\n")
