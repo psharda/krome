@@ -21,7 +21,7 @@ ifeq ($(fc),ifort)
 	switcho = $(switch)
 else
 	switch = -ffpe-trap=invalid,zero,overflow -fbacktrace -fbounds-check
-	switch+= -ffree-line-length-none
+	switch+= -ffree-line-length-none -fimplicit-none
 	switcho =
 	nowarn = -w
 endif
