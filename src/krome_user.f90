@@ -375,10 +375,10 @@ contains
        photoBinJ(i) = planckBB(x,Tbb)
     end do
 
-    !find the maximum using Wien's displacement law
-    xmax = Tbb/2.8977721d-1 * clight * planck_eV !eV
-
-    !activate warnings if needed
+    !uncomment this below for additional control
+!!$    !find the maximum using Wien's displacement law
+!!$    xmax = Tbb/2.8977721d-1 * clight * planck_eV !eV
+!!$
 !!$    if(xmax<lower) then
 !!$       print *,"WARNING: maximum of the Planck function"
 !!$       print *," is below the lowest energy bin!"
@@ -540,7 +540,8 @@ contains
   !get the opacity exp(-tau) correpsonding the to x(:)
   ! chemical composition. The column density
   ! is computed using the expression in the 
-  ! num2col(x) function
+  ! num2col(x) function.
+  ! An array of size krome_nPhotoBins is returned.
   function krome_get_opacity(x,Tgas)
     use krome_commons
     use krome_photo
@@ -569,7 +570,8 @@ contains
   !*****************************
   !get the opacity exp(-tau) correpsonding to the x(:)
   ! chemical composition. The column density
-  ! is computed using the size of the cell
+  ! is computed using the size of the cell (csize)
+  ! An array of size krome_nPhotoBins is returned.
   function krome_get_opacity_size(x,Tgas,csize)
     use krome_commons
     use krome_photo
