@@ -480,20 +480,18 @@ contains
 
 
   !*******************************
-  function krome_H2_dust(nndust,Tdust,n,H2_eps_f,myvgas)
+  function krome_H2_dust(nndust,Tgas,Tdust,nH,H2_eps_f,myvgas)
     !H2 formed on dust (1/cm3/s)
     use krome_constants
     use krome_commons
     real*8::H2_dust, krome_H2_dust,Tgas,Tdust(:)
-    real*8::myvgas,H2_eps,nndust(:),n(:),H2_eps_f
+    real*8::myvgas,H2_eps,nndust(:),nH,H2_eps_f
     integer::i
 
-    Tgas = n(idx_Tgas)
-    
     H2_dust = 0.d0 
     do i = 1,size(Tdust)
        H2_eps = H2_eps_f(Tgas, Tdust(i))
-       H2_dust = H2_dust + 0.5d0 * n(idx_H) * myvgas * nndust(i) &
+       H2_dust = H2_dust + 0.5d0 * nH * myvgas * nndust(i) &
             * krome_dust_asize2(i) &
             * pi * H2_eps * stick(Tgas, Tdust(i))
     end do

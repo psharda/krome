@@ -4715,8 +4715,8 @@ class krome():
 			for dType in self.dustTypes:
 				ilow = nmols + iType * self.dustArraySize + 1
 				iup = nmols + (iType + 1) * self.dustArraySize
-				dustH2 += "nH2dust = nH2dust + krome_H2_dust(n(" + str(ilow) + ":" + str(iup) + ")," 
-				dustH2 += " krome_dust_T(" + str(ilow-nmols) + ":" + str(iup-nmols) + "), n(:), H2_eps_"+dType+", vgas)\n"
+				dustH2 += "nH2dust = nH2dust + krome_H2_dust(n(" + str(ilow) + ":" + str(iup) + "), Tgas," 
+				dustH2 += " krome_dust_T(" + str(ilow-nmols) + ":" + str(iup-nmols) + "), n(idx_H), H2_eps_"+dType+", vgas)\n"
 				iType += 1
 
 		#replace pragma with built strings 
