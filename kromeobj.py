@@ -4230,6 +4230,7 @@ class krome():
 				dustPartnerIdx += "krome_dust_partner_idx("+str(itype)+") = idx_"+dType+"\n"
 				if(useDustT):
 					dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")" #,dust_opt_Qabs_"+dType
+					dustOptInt += "call dust_init_intBB()"
 
 		skip = False
 		for row in fh:
@@ -4242,7 +4243,7 @@ class krome():
 			row = row.replace("#KROME_dust_seed", self.dustSeed)
 			row = row.replace("#KROME_dustPartnerIndex", dustPartnerIdx)
 			row = row.replace("#KROME_init_Qabs", dustQabs)
-			row = row.replace("#KROME_opt_integral", "call dust_init_intBB()")
+			row = row.replace("#KROME_opt_integral", dustOptInt)
 		 
 			if(row[0]!="#"): fout.write(row)
 
