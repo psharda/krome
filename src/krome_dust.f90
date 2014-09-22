@@ -249,7 +249,7 @@ contains
     implicit none
     real*8::krome_dust_grow,nndust,natom,Tgas,Tdust,vgas,adust,seed
     
-    seed = 1d-12 !1/cm3
+    seed = #KROME_dust_seed !1/cm3
     krome_dust_grow = 1d-4 * pi * adust**2 * (max(nndust,0.d0) + seed) &
          * max(natom,0.d0) * krome_dust_stick(Tgas,Tdust) * vgas
         

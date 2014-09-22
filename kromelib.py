@@ -67,6 +67,7 @@ class molec():
 	natoms = 0 #the number of atoms (e.g. diatomic=2)
 	ve_vib = "__NONE__" #vibrational constant in K
 	be_rot = "__NONE__" #rotational constant in K
+	links = 0 #number of reactions involved
 
 	def __init__(self):
 		self.poly1 = [0.e0]*7
