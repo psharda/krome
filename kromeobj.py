@@ -2102,6 +2102,12 @@ class krome():
 					print "3. add to the databse "+fdbase
 					sys.exit()
 
+		#update number of connection per species
+		for rea in reacts:
+			for r in rea.reactants:
+				specs[r.idx-1].links += 1
+			for p in rea.products:
+				specs[p.idx-1].links += 1
 
 		#count reactions with unique index
 		idxs = []
@@ -2556,7 +2562,7 @@ class krome():
 		dummy = self.dummy
 
 		#create explicit differentials
-		dns = ["dn("+str(sp.idx)+") = 0.d0" for sp in specs] #initialize
+		dns = ["dn("+sp.fidx+") = 0.d0" for sp in specs] #initialize
 		idxs = [] #already employed indexes
 		for rea in reacts:
 			if(rea.idx in idxs): continue #skip if already employed index
