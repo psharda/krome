@@ -98,6 +98,7 @@ class krome():
 	customODEs = [] #custom ODEs
 	nrea = 0 #number of reactions
 	nPhotoRea = 0 #number of photoreactions (for photobin array)
+	dustSeed = "0d0"
 	full_cool = vars_cool = ""
 	coolZ_functions = []
 	coolZ_rates = []
@@ -207,6 +208,8 @@ class krome():
 		self.parser.add_argument("-dustOptions", help="activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular\
 			hydrogen formation on dust, and (T) dust temperature. The last option provide a template for the FEX routine.",\
 			metavar="OPTIONS")
+		self.parser.add_argument("-dustSeed", help="set the dust seed in 1/cm3 for dust growth. Default is zero. Any F90 expression \
+			is allowed for SEED.", metavar="SEED")
 		self.parser.add_argument("-enzo", action="store_true", help="create patches for ENZO")
 		self.parser.add_argument("-flash", action="store_true", help="create patches for FLASH")
 		self.parser.add_argument("-forceMF21", action="store_true", help="force explicit sparsity and Jacobian")
@@ -1134,6 +1137,12 @@ class krome():
 			if("H2" in dustOptions): self.useDustH2 = True
 			if("T" in dustOptions): self.useDustT = True
 			print "Reading option -dustOptions (options="+(",".join(dustOptions))+")"
+
+		#dust seed value
+		if(args.dustSeed):
+			if(not(self.useDust)): die("ERROR: you need -dust=[see help] to activate dust seed!")
+			self.dustSeed = args.dustSeed.strip()
+			print "Reading option -dustSeed (seed="+self.dustSeed+")"
 
 		#project name folder
 		if(args.project):
@@ -4231,6 +4240,7 @@ class krome():
 
 			if(skip): continue
 
+			row = row.replace("#KROME_dust_seed", self.dustSeed)
 			row = row.replace("#KROME_dustPartnerIndex", dustPartnerIdx)
 			row = row.replace("#KROME_init_Qabs", dustQabs)
 			row = row.replace("#KROME_opt_integral", dustOptInt)
