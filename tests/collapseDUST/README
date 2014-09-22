@@ -1,0 +1,7 @@
+!***************************************************************
+!This is a simple one-zone collapse test following
+! the chemical and thermal evolution of a metal-enriched cloud.
+!The dynamics is described by the Larson-Penston-type
+! similar solution and includes cooling and heating processes.
+!For additional details look also to Omukai 2005.
+!***************************************************************

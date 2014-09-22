@@ -150,6 +150,16 @@ contains
     
   end subroutine krome_scale_dust_gas_ratio
 
+  !***********************
+  function krome_get_Tdust()
+    use krome_commons
+    implicit none
+    real*8::krome_get_Tdust(ndust)
+
+    krome_get_Tdust(:) = krome_dust_T(:)
+
+  end function krome_get_Tdust
+
 #ENDIFKROME
 
   !****************************
