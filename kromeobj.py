@@ -362,6 +362,12 @@ class krome():
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial3"
+		elif(args.test=="collapseDUST"):
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-dust=1,C","-dustOptions=T"]]
+			filename = "networks/react_primordialZ"
+			test_status = "dev" #under developement
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
@@ -391,10 +397,6 @@ class krome():
 			[argv.append(x) for x in ["-useN","-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
 			[argv.append(x) for x in ["-columnDensityMethod=JEANS"]]
 			filename = "networks/react_xrays"
-		elif(args.test=="collapseDUST"):
-			[argv.append(x) for x in ["-cooling=ATOMIC,H2,COMPTON,CIE,DUST,HD", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-dust=1,C","-dustOptions=H2"]]
-			filename = "networks/react_primordial"
                 elif(args.test=="earlyUniverse"):
 			[argv.append(x) for x in ["-cooling=H2GP98,COMPTON,EXPANSION"]]
 			[argv.append(x) for x in ["-useN","-useFileIdx"]]
@@ -4227,10 +4229,8 @@ class krome():
 				itype += 1 #increase index
 				dustPartnerIdx += "krome_dust_partner_idx("+str(itype)+") = idx_"+dType+"\n"
 				if(useDustT):
-					dustQabs += "call init_Qabs(\"opt"+dType+".dat\",dust_opt_Qabs_"+dType
-					dustQabs += ",dust_opt_asize_"+dType+", &\n dust_opt_nu_"+dType+")\n"
-					dustOptInt += "call dustOptIntegral(dust_opt_Em_"+dType+",dust_opt_Tbb_"+dType+","
-					dustOptInt += "dust_opt_asize_"+dType+",&\n dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+")\n"
+					dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")" #,dust_opt_Qabs_"+dType
+					dustOptInt += "call dust_init_intBB()"
 
 		skip = False
 		for row in fh:
@@ -4845,16 +4845,7 @@ class krome():
 				fout.write("\n")
 
 			elif(srow == "#KROME_calc_Tdust" and self.useDustT):
-				getTdust = "nd = " + str(self.dustArraySize) + "\n"
-				itype = 0 #dust type index
-				#loop in dust types
-				for dType in self.dustTypes:
-					itype += 1 #increase index
-					getTdust += "krome_dust_T(nd*("+str(itype-1)+")+1:nd*"+str(itype) + ") = getTdust("
-					getTdust += "dust_opt_Tbb_"+dType+", dust_opt_Em_"+dType+",&\n dust_opt_asize_"+dType+","
-					getTdust += " dust_opt_nu_"+dType+", dust_opt_Qabs_"+dType+", n(:))\n"
-					getTdust = getTdust.replace("nd*(0)+1","1").replace("nd*1","nd").replace("nd*(1)","nd")
-				fout.write(getTdust+"\n")
+				fout.write("call compute_Tdust(Tgas, ntot)"+"\n")
 
 			elif(srow == "#KROME_ODEModifier"):
 				#write the ODE modifiers

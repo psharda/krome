@@ -272,25 +272,11 @@ contains
   !*******************************
   function cooling_dust(n,Tgas)
     !cooling from dust in erg/cm3/s
-    use krome_dust
     use krome_commons
-    use krome_constants
     implicit none
-    real*8::cooling_dust,n(:),Tgas,cool,ntot
-    integer::i,idust
+    real*8::cooling_dust,n(:),Tgas
 
-    !total gas density 1/cm3
-    ntot = sum(n(1:nmols))
-
-    cool = 0.d0 !cooling in erg/s/cm3
-    !loop on dust to evaluate cooling following Hollenbach and McKee 1979
-    do i=nmols+1,nmols+ndust
-       idust = i - nmols !index of dust
-       cool = cool + dustCool(krome_dust_asize2(idust), n(i), Tgas,&
-            krome_dust_T(idust), ntot)
-    end do
-
-    cooling_dust = cool !erg/s/cm3
+    cooling_dust = dust_cooling !erg/s/cm3
 
   end function cooling_dust
 #ENDIFKROME

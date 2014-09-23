@@ -1,0 +1,36 @@
+fc = ifort
+#fc = gfortran
+
+ifeq ($(fc),ifort)
+	std = -check all -traceback -fpe0  -ftz -ftrapuv -warn all -u
+	fswitch = $(std) -O3 -ipo -ip -unroll 
+	hswitch =  -O3 -ipo -ip -unroll
+	pswitch = $(hswitch) -pg
+	nswitch = $(std) -O0
+	switch =  $(fswitch)
+else
+	switch += -ffpe-trap=invalid,zero,overflow -g
+	switch += -fbacktrace -O3
+endif
+
+
+
+prj = krome
+
+all:
+	$(fc) -c dvode_f90_m.f90 $(switch)
+	$(fc) -c krome_commons.f90 $(switch) 
+	$(fc) -c krome_constants.f90 $(switch)
+	$(fc) -c krome_user_commons.f90 $(switch) 
+	$(fc) -c krome_subs.f90 $(switch) 
+	$(fc) -c krome_tabs.f90 $(switch) 	
+	$(fc) -c krome_cooling.f90 $(switch) 
+	$(fc) -c krome_ode.f90 $(switch) -nowarn
+	$(fc) -c krome_user.f90 $(switch)
+	$(fc) -c krome.f90 $(switch) 
+	$(fc) -c test.f90 $(switch) 
+
+	$(fc) -o $(prj) *.o $(switch) $(lib)
+
+clean: 
+	rm -f *.o $(prj) *~ *.mod *_genmod.f90 *.i90
