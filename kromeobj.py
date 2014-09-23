@@ -350,7 +350,7 @@ class krome():
 			[argv.append(x) for x in ["-iRHS"]]
 			filename = "networks/react_WH2008"
 		elif(args.test=="dust"):
-			[argv.append(x) for x in ["-dust=10,C,Si","-useN","-dustOptions=GROWTH,SPUTTER"]]
+			[argv.append(x) for x in ["-dust=10,C,Si","-useN","-dustOptions=GROWTH,SPUTTER","-dustSeed=\"1d-12\""]]
 			filename = "networks/react_primordial"
 		elif(args.test=="compact"):
 			[argv.append(x) for x in ["-compact"]]
@@ -1143,7 +1143,7 @@ class krome():
 		#dust seed value
 		if(args.dustSeed):
 			if(not(self.useDust)): die("ERROR: you need -dust=[see help] to activate dust seed!")
-			self.dustSeed = args.dustSeed.strip()
+			self.dustSeed = args.dustSeed.strip().replace("\"","")
 			print "Reading option -dustSeed (seed="+self.dustSeed+")"
 
 		#project name folder
