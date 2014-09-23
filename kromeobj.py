@@ -4845,7 +4845,7 @@ class krome():
 				fout.write("\n")
 
 			elif(srow == "#KROME_calc_Tdust" and self.useDustT):
-				fout.write("call compute_Tdust(Tgas, ntot)"+"\n")
+				fout.write("call compute_Tdust(n(:),Tgas)"+"\n")
 
 			elif(srow == "#KROME_ODEModifier"):
 				#write the ODE modifiers
