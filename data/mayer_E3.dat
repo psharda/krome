@@ -1,6 +1,6 @@
 # KROME file, 23Sept2014, Opacity Mayer
 # Tab.E3 Mayer+2005
-# first line indicates the size of the table (30x30)
+# first line indicates the size of the table (15x23)
 # then first column is log10(rho), where rho is the density in g/cm3
 # second column is log10(T), where T is the temperature in K
 # third column is log10(opacity), in units of cm2/g
