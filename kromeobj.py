@@ -365,7 +365,7 @@ class krome():
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
-			[argv.append(x) for x in ["-dust=1,C","-dustOptions=T"]]
+			[argv.append(x) for x in ["-dust=1,C","-dustOptions=T,H2"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseZ"):
@@ -4583,7 +4583,7 @@ class krome():
 						if(self.useTlimits and hasTlim): HChem += "end if\n\n"
 						break
 			if(self.useDustH2):
-				HChemDust += "HChem = HChem + nH2dust * (0.2d0/h2heatfac + 4.2d0)\n"
+				HChemDust += "HChem = HChem + nH2dust * (4.2d0*h2heatfac + 0.2d0)\n"
 
 		#build heating terms for photoionization
 		pheatvars = []

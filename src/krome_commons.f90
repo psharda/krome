@@ -42,7 +42,7 @@ module krome_commons
   real*8,allocatable::dust_Qabs(:,:),dust_Qabs_E(:),dust_intBB(:,:)
   real*8::xdust(ndust)
   integer::krome_dust_partner_idx(ndustTypes),dust_Qabs_nE
-  integer,parameter::dust_nT=100
+  integer,parameter::dust_nT=int(1e3)
   real*8::dust_intBB_Tbb(dust_nT),dust_cooling
   
   !commons for frequency bins
@@ -73,5 +73,10 @@ module krome_commons
 
   !xrayJ21 for tabulated heating and rate
   real*8::J21xray
+
+  !commons for Mayer opacity table
+  integer,parameter::mayern=15,mayerm=23
+  real*8::mayer_x(mayern),mayer_y(mayerm)
+  real*8::mayer_z(mayern,mayerm),mayer_xmul,mayer_ymul
   
 end module krome_commons

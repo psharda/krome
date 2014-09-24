@@ -881,7 +881,7 @@ contains
   !********************************************
   subroutine init_anytab2D(filename,x,y,z,xmul,ymul)
     character(len=*)::filename
-    character(len=20)::row_string
+    character(len=60)::row_string
     real*8::x(:),y(:),z(:,:),rout(3),xmul,ymul
     integer::i,j,ios
 
@@ -909,9 +909,19 @@ contains
     !skip the comments and the first line with the sizes of the data
     ! which are already known from the pre-processing
     do
-       read(51,*) row_string
+       read(51,'(a)') row_string
        if(row_string(1:1)/="#") exit
     end do
+
+    !check if first line is OK
+    if(scan(row_string,",")==0) then
+       print *,"ERROR: file "//filename//" should"
+       print *," contain the number of rows and "
+       print *," columns in the format"
+       print *,"  RR, CC"
+       print *,row_string
+       stop
+    end if
 
     !loop to read file
     do i=1,size(x)
@@ -926,8 +936,8 @@ contains
     end do
     close(51)
 
-    xmul = (size(x)-1)/(x(size(x))-x(1))
-    ymul = (size(y)-1)/(y(size(y))-y(1))
+    xmul = x(2)-x(1)
+    ymul = y(2)-y(1)
 
   end subroutine init_anytab2D
 
@@ -938,25 +948,22 @@ contains
     real*8::x(:),y(:),z(:,:),xmul,ymul,xx,yy,zz
     character(len=*)::fname
 
+    open(91,file=fname//".fit",status="replace")
+    open(92,file=fname//".org",status="replace")
     do i=1,size(x)
        do j=1,size(y)
           xx = x(i)
-          yy = y(i)
+          yy = y(j)
           zz = fit_anytab2D(x(:),y(:),z(:,:),xmul,ymul,xx,yy)
-          if(abs(z(i,j))>1d-40) then
-             if(abs(zz-z(i,j))/z(i,j)>1d0) then
-                print *,"ERROR in anytab2D fitting check!"
-                print *," from ",trim(fname)
-                print *," value (x,y)",xx,yy
-                print *," value (i,j)",i,j
-                print *," expected",zz
-                print *," found",z(i,j)
-                print *," error",abs(zz-z(i,j))/z(i,j)
-                stop
-             end if
-          end if
+          write(91,*) xx,yy,zz
+          write(92,*) x(i),y(j),z(i,j)
        end do
+       write(91,*)
+       write(92,*)
     end do
+    print *,"original file wrote in",fname//".org"
+    print *,"fit test file wrote in",fname//".fit"
+
   end subroutine test_anytab2D
 
   !******************************
@@ -966,19 +973,15 @@ contains
     integer::ipos,i1,i2
 
     ipos = (yy-y(1)) * ymul + 1
-    i1 = min(max(ipos,1),size(y))
-    i2 = min(max(ipos+1,1),size(y))
+    i1 = min(max(ipos,1),size(y)-1)
+    i2 = i1 + 1
     zleft(:) = z(:,i1)
     zright(:) = z(:,i2)
 
     zl = fit_anytab1D(x(:),zleft(:),xmul,xx)
-    if(i1==i2) then
-       fit_anytab2D = zl
-       return
-    end if
     zr = fit_anytab1D(x(:),zright(:),xmul,xx)
 
-    fit_anytab2D = (yy-y(i1))/(y(i2)-y(i1))*(zr-zl)+zl
+    fit_anytab2D = (yy-y(i1))*ymul*(zr-zl)+zl
 
   end function fit_anytab2D
 
@@ -988,19 +991,14 @@ contains
     integer::ipos,i1,i2
 
     ipos = (xx-x(1)) * xmul + 1
-    i1 = min(max(ipos,1),size(x))
-    i2 = min(max(ipos+1,1),size(x))
-    if(i1==i2) then
-       fit_anytab1D = z(i1)
-       return
-    end if
+    i1 = min(max(ipos,1),size(x)-1)
+    i2 = i1 + 1
 
-    p = (xx-x(i1))/(x(i2)-x(i1))
+    p = (xx-x(i1)) * xmul
 
     fit_anytab1D = p * (z(i2) - z(i1)) + z(i1)
 
   end function fit_anytab1D
-
   
   !*****************************
   !spline interpolation at t using array  x,y (size n) as data
