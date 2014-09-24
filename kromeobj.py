@@ -363,8 +363,8 @@ class krome():
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial3"
 		elif(args.test=="collapseDUST"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
 			[argv.append(x) for x in ["-dust=1,C","-dustOptions=T,H2"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
@@ -3492,7 +3492,7 @@ class krome():
 					fout.write("!$omp threadprivate("+(",".join(self.commonvars))+")\n")
 			elif(srow == "#KROME_photobins_array"):
 				if(self.photoBins>0):
-					fout.write("real*8::photoBinJ(nPhotoBins) !intensity per bin, erg/s/sr/Hz/cm2\n")
+					fout.write("real*8::photoBinJ(nPhotoBins) !intensity per bin, eV/s/sr/Hz/cm2\n")
 					fout.write("real*8::photoBinEleft(nPhotoBins) !left limit of the freq bin, eV\n")
 					fout.write("real*8::photoBinEright(nPhotoBins) !right limit of the freq bin, eV\n")
 					fout.write("real*8::photoBinEmid(nPhotoBins) !middle point of the freq bin, eV\n")
@@ -4232,12 +4232,16 @@ class krome():
 					dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")" #,dust_opt_Qabs_"+dType
 					dustOptInt += "call dust_init_intBB()"
 
-		skip = False
+		skip = skipPhotoDust = False
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
+			if(srow == "#IFKROME_usePhotoDust" and not(self.photoBins>0)): skipPhotoDust = True
+			if(srow == "#ENDIFKROME_usePhotoDust"): skipPhotoDust = False
+
+			if(skipPhotoDust): continue
 			if(skip): continue
 
 			row = row.replace("#KROME_dust_seed", self.dustSeed)

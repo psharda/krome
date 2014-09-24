@@ -85,6 +85,8 @@ contains
   end subroutine set_dust_distribution
 
   !****************************
+  !load the Qabs from the file fname
+  ! for the dust type jtype-th
   subroutine dust_load_Qabs(fname,jtype)
     use krome_commons
     use krome_constants
@@ -120,7 +122,7 @@ contains
        Qabs = rout(3) !dimensionless
        asize = rout(1) !cm
        nE = nE + 1 !increase energy index
-       Qabs_E_tmp(nE) = E
+       Qabs_E_tmp(nE) = E !store energy found
        !loop on dust size to get Qabs
        do i=(jtype-1)*nd+1,jtype*nd
           !interpolate Qabs from asize
@@ -148,6 +150,7 @@ contains
     allocate(dust_Qabs_E(nE))
     allocate(dust_intBB(ndust,dust_nT))
 
+    !store the number of energies in the common
     dust_Qabs_nE = nE
 
     !copy temp Qabs to common Qabs
@@ -171,8 +174,9 @@ contains
     do k=1,ndust
        !loop on Tbb
        do i=1,dust_nT
-          Tbb = 1d1**((i-1)*4d0/(dust_nT-1))
-          dust_intBB_Tbb(i) = Tbb
+          !increase Tbb (TbbMax is log and common)
+          Tbb = 1d1**((i-1)*TbbMax/(dust_nT-1))
+          dust_intBB_Tbb(i) = Tbb !store Tbb
           intBB = 0d0
           !integral Q(E,a)*B(E,Tbb)
           do j=2,dust_Qabs_nE
@@ -188,7 +192,80 @@ contains
 
   end subroutine dust_init_intBB
 
+  !*************************
+  !return the Qabs for the dust bin jdust
+  ! and for the given energy in eV
+  function get_Qabs(energy,jdust)
+    use krome_commons
+    implicit none
+    integer::jdust,j
+    real*8::get_Qabs,energy
+
+    !loop to find the energy and interpolate
+    do j=2,dust_Qabs_nE
+       if(energy<dust_Qabs_E(j)) then
+          get_Qabs = (energy - dust_Qabs_E(j-1)) &
+               / (dust_Qabs_E(j) - dust_Qabs_E(j-1)) &
+               * (dust_Qabs(jdust,j) - dust_Qabs(jdust,j-1)) &
+               + dust_Qabs(jdust,j-1)
+          !when found return
+          return
+       end if
+    end do
+
+    !raise an error if nothing found
+    print *,"ERROR: no value found for get_Qabs"
+    print *,"energy (eV):", energy
+    print *,"jdust:",jdust
+    stop
+
+  end function get_Qabs
+
+#IFKROME_usePhotoDust
+  !***********************
+  !compute the integral J(E)*Qabs(E) over the photobins
+  ! for the dust bin jdust
+  function get_int_JQabs(jdust)
+    use krome_commons
+    use krome_constants
+    implicit none
+    real*8::get_int_JQabs,intJ
+    integer::i,j,jdust
+
+    !loop over photo bins
+    intJ = 0d0
+    do i=1,nPhotoBins
+       intJ = intJ + photobinJ(i) * get_Qabs(photoBinEmid(i),jdust) &
+            * photoBinEdelta(i)
+    end do
+
+    !returns erg/cm2/s
+    get_int_JQabs = intJ * iplanck_eV * eV_to_erg
+
+  end function get_int_JQabs
+#ENDIFKROME_usePhotoDust
+
   !*******************************
+  !returns the integral in erg/s/cm2 of the BB at
+  ! temperature Tbb multiplied by Qabs for the
+  ! dust bin jdust
+  function get_dust_Qabs(jdust,Tbb)
+    use krome_commons
+    implicit none
+    integer::jdust,ibb
+    real*8::Tbb,get_dust_Qabs
+
+    ibb = (dust_nT-1)*log10(Tbb) / TbbMax + 1
+
+    get_dust_Qabs = (Tbb - dust_intBB_Tbb(ibb)) &
+         / (dust_intBB_Tbb(ibb+1) - dust_intBB_Tbb(ibb)) &
+         * (dust_intBB(jdust,ibb+1) - dust_intBB(jdust,ibb)) &
+         +  dust_intBB(jdust,ibb)
+
+  end function get_dust_Qabs
+
+  !*******************************
+  !compute beta escape using the planck opacity
   function besc(n,Tgas)
     use krome_commons
     use krome_subs
@@ -206,6 +283,8 @@ contains
   end function besc
 
   !********************************
+  !planck opacity for the dust in the
+  ! bin jdust for a given temperature Tdust
   function kpla_dust(Tdust,jdust)
     use krome_commons
     use krome_constants
@@ -213,6 +292,7 @@ contains
     real*8::kpla_dust,Tdust,intBB
     integer::i,jdust
 
+    !loop on the temperatures to find the corresponding interval
     do i=1,dust_nT
        if(dust_intBB_Tbb(i)>Tdust) then
           intBB = (Tdust-dust_intBB_Tbb(i-1)) &
@@ -229,14 +309,15 @@ contains
   end function kpla_dust
   
   !*********************************
-  !This subroutine compute the dust temperature for each bin
+  !This subroutine computes the dust temperature for each bin
+  ! and copies the cooling in the common variable
   subroutine compute_Tdust(n,Tgas)
     use krome_commons
     use krome_constants
     implicit none
     integer::i,j1,j2,jmid
     real*8::Td1,Td2,fact,vgas,ntot,n(:),be
-    real*8::f1,f2,fmid,pre,Tdmid,Tgas,dustCooling
+    real*8::f1,f2,fmid,pre,Tdmid,Tgas,dustCooling,intCMB
 
     !compute dust cooling pre-factor (HM79)
     fact = 0.5d0
@@ -252,17 +333,18 @@ contains
     do i=1,ndust
        j1 = 1 !first index
        j2 = dust_nT !last index
+       intCMB = get_dust_Qabs(i,phys_Tcmb)
        do 
           !compute Tdust in j1 and j2
           Td1 = dust_intBB_Tbb(j1)
           Td2 = dust_intBB_Tbb(j2)
           !f(x) evaluated at j1 and j2
-          f1 = dust_intBB(i,j1) * be - pre * (Tgas-Td1)
-          f2 = dust_intBB(i,j2) * be - pre * (Tgas-Td2)
+          f1 = dust_intBB(i,j1) * be - pre * (Tgas-Td1) - intCMB
+          f2 = dust_intBB(i,j2) * be - pre * (Tgas-Td2) - intCMB
           !next j value
           jmid = (j1+j2) / 2
           Tdmid = dust_intBB_Tbb(jmid)
-          fmid = dust_intBB(i,jmid) * be - pre * (Tgas-Tdmid)
+          fmid = dust_intBB(i,jmid) * be - pre * (Tgas-Tdmid) - intCMB
           !check signs and assign jmid
           if(f1*fmid<0d0) then
              f2 = fmid
@@ -274,17 +356,20 @@ contains
           !when contiguous break loop
           if(abs(j1-j2)<2) exit
        end do
-       dustCooling = dustCooling + 4d0 * pi * dust_intBB(i,jmid) * be &
+       !compute the cooling (avoid the difference Tgas-Tdust)
+       dustCooling = dustCooling + (dust_intBB(i,jmid) * be - intCMB) &
             * xdust(i) * krome_dust_asize2(i)
        !store temperature
        krome_dust_T(i) = .5d0 * (dust_intBB_Tbb(j1) + dust_intBB_Tbb(j2))
     end do
 
-    dust_cooling = dustCooling
+    !copy (isotropic) cooling
+    dust_cooling = 4d0 * pi * dustCooling
     
   end subroutine compute_Tdust
   
   !*****************************
+  !computes the dust cooling using the temperature difference
   function dustCool(adust2,nndust,Tgas,Tdust,ntot)
     use krome_constants
     real*8::dustCool,adust2,Tgas,nndust,ntot,fact,vgas,Tdust

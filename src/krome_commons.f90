@@ -44,6 +44,8 @@ module krome_commons
   integer::krome_dust_partner_idx(ndustTypes),dust_Qabs_nE
   integer,parameter::dust_nT=int(1e3)
   real*8::dust_intBB_Tbb(dust_nT),dust_cooling
+  !logarithm of the maximum BB temperature in integral tables
+  real*8,parameter::TbbMax=4d0
   
   !commons for frequency bins
 #KROME_photobins_array

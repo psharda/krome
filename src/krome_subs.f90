@@ -936,8 +936,8 @@ contains
     end do
     close(51)
 
-    xmul = x(2)-x(1)
-    ymul = y(2)-y(1)
+    xmul = 1d0/(x(2)-x(1))
+    ymul = 1d0/(y(2)-y(1))
 
   end subroutine init_anytab2D
 

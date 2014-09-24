@@ -22,7 +22,7 @@ program test_krome
   call krome_init()
   call krome_set_zredshift(15d0)
 
-  zs = (/-3d0, -2d0, -1d0/) !list of metallicities
+  zs = (/-5d0, -4d0, -2d0/) !list of metallicities
 
   do jz = 1,size(zs)*2
 
@@ -46,6 +46,7 @@ program test_krome
      x(KROME_idx_HE) = 0.0775d0*ntot !He
      print *,"jscale=",jscale
      call krome_scale_dust_gas_ratio(1d-2*1d1**zs(jz2)*jscale,x(:))
+     print *,krome_get_dust_distribution()
      call krome_set_defaultTdust(2.73d0)
 
      !rescale metallicity for neutral metals (C,Fe,Si,O)
@@ -77,10 +78,17 @@ program test_krome
 
         x(:) = x(:) * dd / dd1 !rescale abundances
 
+        x(krome_idx_e) = krome_get_electrons(x(:))
         dt = dtH 
 
         if(dd>1d18) exit !quit after 1e10 1/cm3
         call krome_scale_dust_distribution(dd/dd1)
+
+        !dust evaporation
+        if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)
+
+        write(33,'(99E17.8e3)') dd,krome_get_cooling_array(x(:),Tgas)
+        write(34,'(99E17.8e3)') dd,krome_get_heating_array(x(:),Tgas)
         !solve the chemistry
         call krome(x(:),Tgas,dt)
 
@@ -90,6 +98,8 @@ program test_krome
            print '(2I5,99E11.3)',jz,i,dd,Tgas,krome_get_Tdust()
         end if
      end do
+     write(33,*)
+     write(34,*)
      write(66,*)
   end do
 
