@@ -39,13 +39,15 @@ module krome_commons
   real*8::krome_dust_asize(ndust),krome_dust_T(ndust)
   real*8::krome_dust_asize2(ndust),krome_dust_aspan(ndust)
   real*8::krome_dust_asize3(ndust),krome_grain_rho
-  real*8,allocatable::dust_Qabs(:,:),dust_Qabs_E(:),dust_intBB(:,:)
+  real*8,allocatable::dust_Qabs(:,:),dust_Qabs_E(:)
+  real*8,allocatable::dust_intBB(:,:),dust_intBB_sigma(:,:)
   real*8::xdust(ndust)
   integer::krome_dust_partner_idx(ndustTypes),dust_Qabs_nE
   integer,parameter::dust_nT=int(1e3)
   real*8::dust_intBB_Tbb(dust_nT),dust_cooling
   !logarithm of the maximum BB temperature in integral tables
-  real*8,parameter::TbbMax=4d0
+  real*8,parameter::TbbMax=1d4,TbbMin=1d0
+  real*8,parameter::TbbMult=(dust_nT-1)/(Tbbmax-Tbbmin)
   
   !commons for frequency bins
 #KROME_photobins_array

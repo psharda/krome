@@ -10,8 +10,8 @@ set xlabel "log(n/cm-3)"
 set key b r
 set grid
 
-n=100
+n=1
 plot 'fort.66' u 2:($1==0?$3:1/0) w l t "Tgas",\
  '' u 2:($1==0?$4:1/0) w l t "Tdust",\
- '' u 2:($1==1?$3:1/0) every n t "Tgas",\
- '' u 2:($1==1?$4:1/0) every n t "Tdust" 
+ '' u 2:($1==1?$3:1/0) every n w l t "Tgas",\
+ '' u 2:($1==1?$4:1/0) every n w l t "Tdust" 

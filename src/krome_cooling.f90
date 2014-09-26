@@ -45,7 +45,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
-    cools(idx_cool_Z) = cooling_Z(n(:), Tgas)
+    cools(idx_cool_Z) = cooling_Z(n(:), Tgas) #KROME_CMBfloorZ
 #ENDIFKROME
 
 #IFKROME_useCoolingdH
@@ -179,14 +179,13 @@ contains
     real*8::b0,b1,b2,b3,b4,b5
     real*8::cool,tauCIE,logcool
 
+    cooling_CIE = 0d0
     !under 1e-12 1/cm3 cooling is zero
-    if(n(idx_H2)<1d-12) then
-       cooling_CIE = 0.d0
-       return
-    end if
+    if(n(idx_H2)<1d-12) return
 
+    Tgas = inTgas
     !temperature limit
-    Tgas = max(inTgas, phys_Tcmb) 
+    if(Tgas<phys_Tcmb) return
 
     !prepares variables
     x = log10(Tgas)

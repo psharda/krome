@@ -377,9 +377,20 @@ contains
     get_mu = sum(n(1:nmols)*m(1:nmols)) &
          / sum(n(1:nmols)) * ip_mass
 
-    !get_mu = 1.22d0
-
   end function get_mu
+
+  !***************************
+  !get mean molecular weight in grams
+  function get_mu_rho(n,rhogas)
+    use krome_commons
+    use krome_constants
+    implicit none
+    real*8::get_mu_rho,rhogas,n(:)
+
+    !ip_mass is 1/proton_mass_in_g
+    get_mu_rho = rhogas / sum(n(1:nmols)) * ip_mass
+
+  end function get_mu_rho
 
   !************************
   !get species masses (g)
@@ -455,7 +466,7 @@ contains
     real*8::m(nspec),get_jeans_length
     m(:) = get_mass()
     rhogas = max(sum(n(1:nmols)*m(1:nmols)),1d-40)
-    mu = get_mu(n(:))
+    mu = get_mu_rho(n(:),rhogas)
     get_jeans_length = sqrt(pi*boltzmann_erg*Tgas/rhogas&
          /p_mass/gravity/mu)
 

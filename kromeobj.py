@@ -279,6 +279,7 @@ class krome():
 		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
 		self.parser.add_argument("-useCoolCMBFloor", action="store_true", help="include a cooling floor given by the CMB temperature.\
 			note that you must define Tcmb by using the subroutine krome_get_Tcmb(your_Tcmb) before calling krome.")
+		self.parser.add_argument("-useCoolCMBFloorZ", action="store_true", help="as -useCoolCMBFloor, but for metals only.")
 		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size\
 			NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION\
 			must be explicitly included in krome_user_commons module.", metavar="FUNCTION")
@@ -365,7 +366,7 @@ class krome():
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
-			[argv.append(x) for x in ["-dust=1,C","-dustOptions=T,H2"]]
+			[argv.append(x) for x in ["-dust=1,C","-dustOptions=T,H2","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseZ"):
@@ -689,6 +690,14 @@ class krome():
 				print "ERROR: option -useCoolCMBFloor needs at least one active cooling option. See -cooling="
 				sys.exit()
 			print "Reading option -useCoolCMBFloor"
+
+		#use cooling CMB floor Z 
+		if(args.useCoolCMBFloorZ):
+			self.useCoolCMBFloorZ = True
+			if(not(args.cooling)):
+				print "ERROR: option -useCoolCMBFloorZ needs at least one active cooling option. See -cooling="
+				sys.exit()
+			print "Reading option -useCoolCMBFloorZ"
 
 
 		#use photo-induced cooling transitions 
@@ -3462,6 +3471,13 @@ class krome():
 					fout.write("\tinteger,parameter::ndustTypes=" + str(self.dustTypesSize) + "\n")
 					fout.write("\tinteger,parameter::nPhotoBins=" + str(self.photoBins) + "\n")
 					fout.write("\tinteger,parameter::nPhotoRea=" + str(self.nPhotoRea) + "\n")
+					idust = 0
+					for dType in self.dustTypes:
+						nd = ndust/self.dustTypesSize
+						fout.write("\tinteger,parameter::idx_dust_"+dType+"_low=nmols+"+str(nd*idust+1)+"\n")
+						fout.write("\tinteger,parameter::idx_dust_"+dType+"_up=nmols+"+str(nd*(idust+1))+"\n")
+						idust += 1					
+
 
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
@@ -4357,6 +4373,13 @@ class krome():
 				mysmall = "1d-40/("+("*".join(["nmax"]*maxprod))+")"
 				if(maxprod==0): mysmall = "0d0"
 				fout.write(srow.replace("#KROME_small",mysmall)+"\n")
+				continue
+
+			#replace Z cooling floor
+			if("#KROME_CMBfloorZ" in srow):
+				CMBfloorZ = ""
+				if(self.useCoolCMBFloorZ): CMBfloorZ = "- cooling_Z(n(:),phys_Tcmb)"
+				fout.write(srow.replace("#KROME_CMBfloorZ", CMBfloorZ)+"\n")
 				continue
 
 			if(row.strip() == "#KROME_header"):

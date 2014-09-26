@@ -99,7 +99,7 @@ contains
 
     !if already loaded quit subroutine
     if(allocated(dust_Qabs)) return
-    
+
     !number of dust bins per type
     nd = ndust/ndustTypes
 
@@ -149,6 +149,7 @@ contains
     allocate(dust_Qabs(ndust,nE))
     allocate(dust_Qabs_E(nE))
     allocate(dust_intBB(ndust,dust_nT))
+    allocate(dust_intBB_sigma(ndust,dust_nT))
 
     !store the number of energies in the common
     dust_Qabs_nE = nE
@@ -156,7 +157,7 @@ contains
     !copy temp Qabs to common Qabs
     dust_Qabs(:,:) = Qabs_tmp(:,1:nE)
     dust_Qabs_E(:) = Qabs_E_tmp(1:nE)
-    
+
   end subroutine dust_load_Qabs
 
   !***********************
@@ -175,7 +176,8 @@ contains
        !loop on Tbb
        do i=1,dust_nT
           !increase Tbb (TbbMax is log and common)
-          Tbb = 1d1**((i-1)*TbbMax/(dust_nT-1))
+          !Tbb = 1d1**((i-1)*TbbMax/(dust_nT-1))
+          Tbb = (i-1) / TbbMult  + TbbMin
           dust_intBB_Tbb(i) = Tbb !store Tbb
           intBB = 0d0
           !integral Q(E,a)*B(E,Tbb)
@@ -187,6 +189,8 @@ contains
           end do
           !integral / hplanck (erg/s/cm2)
           dust_intBB(k,i) = intBB * pi * iplanck_eV * eV_to_erg
+          dust_intBB_sigma(k,i) = pi * dust_intBB(k,i) &
+               / (stefboltz_erg*Tbb**4)
        end do
     end do
 
@@ -249,36 +253,40 @@ contains
   !returns the integral in erg/s/cm2 of the BB at
   ! temperature Tbb multiplied by Qabs for the
   ! dust bin jdust
-  function get_dust_Qabs(jdust,Tbb)
+  function get_dust_intBB(jdust,Tbb)
     use krome_commons
     implicit none
     integer::jdust,ibb
-    real*8::Tbb,get_dust_Qabs
+    real*8::Tbb,get_dust_intBB
 
-    ibb = (dust_nT-1)*log10(Tbb) / TbbMax + 1
+    !ibb = (dust_nT - 1) * log10(Tbb) / TbbMax + 1
+    ibb = (Tbb-TbbMin) * TbbMult + 1
 
-    get_dust_Qabs = (Tbb - dust_intBB_Tbb(ibb)) &
+    get_dust_intBB = (Tbb - dust_intBB_Tbb(ibb)) &
          / (dust_intBB_Tbb(ibb+1) - dust_intBB_Tbb(ibb)) &
          * (dust_intBB(jdust,ibb+1) - dust_intBB(jdust,ibb)) &
          +  dust_intBB(jdust,ibb)
 
-  end function get_dust_Qabs
+  end function get_dust_intBB
 
   !*******************************
   !compute beta escape using the planck opacity
-  function besc(n,Tgas)
+  function besc(n,Tgas,lj)
     use krome_commons
     use krome_subs
     implicit none
-    real*8::n(:),besc,Tgas,tau
+    real*8::n(:),besc,Tgas,tau,lj
     integer::j
 
+    besc = 1d0
     tau = 0d0
     do j=1,ndust
        tau = tau + xdust(j) * kpla_dust(krome_dust_T(j),j)
     end do
-    tau = tau * get_jeans_length(n(:),Tgas)
-    besc = min(1d0,(tau+1d-40)**-2)
+    tau = tau * lj
+    
+    if(tau<1d0) return
+    besc = tau**-2
 
   end function besc
 
@@ -290,33 +298,32 @@ contains
     use krome_constants
     implicit none
     real*8::kpla_dust,Tdust,intBB
-    integer::i,jdust
+    integer::jdust,ibb
 
+    !ibb = (dust_nT - 1) * log10(Tdust) / TbbMax + 1
+    ibb = (Tdust-TbbMin) * TbbMult + 1
     !loop on the temperatures to find the corresponding interval
-    do i=1,dust_nT
-       if(dust_intBB_Tbb(i)>Tdust) then
-          intBB = (Tdust-dust_intBB_Tbb(i-1)) &
-               / (dust_intBB_Tbb(i)-dust_intBB_Tbb(i-1)) &
-               * (dust_intBB(jdust,i)-dust_intBB(jdust,i-1)) &
-               + dust_intBB(jdust,i-1)
-          exit
-       end if
-    end do
+    
+    intBB = (Tdust-dust_intBB_Tbb(ibb-1)) &
+         / (dust_intBB_Tbb(ibb)-dust_intBB_Tbb(ibb-1)) &
+         * (dust_intBB_sigma(jdust,ibb)-dust_intBB_sigma(jdust,ibb-1)) &
+         + dust_intBB_sigma(jdust,ibb-1)
+    
 
-    kpla_dust = intBB / (stefboltz_erg*Tdust**4) * pi &
-         * krome_dust_asize2(jdust)
+    kpla_dust = intBB * krome_dust_asize2(jdust)
 
   end function kpla_dust
-  
+
   !*********************************
   !This subroutine computes the dust temperature for each bin
   ! and copies the cooling in the common variable
   subroutine compute_Tdust(n,Tgas)
     use krome_commons
     use krome_constants
+    use krome_subs
     implicit none
     integer::i,j1,j2,jmid
-    real*8::Td1,Td2,fact,vgas,ntot,n(:),be
+    real*8::Td1,Td2,fact,vgas,ntot,n(:),be,ljeans
     real*8::f1,f2,fmid,pre,Tdmid,Tgas,dustCooling,intCMB
 
     !compute dust cooling pre-factor (HM79)
@@ -324,7 +331,8 @@ contains
     ntot = sum(n(1:nmols))
     vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
     pre = fact*vgas*boltzmann_erg * ntot
-    be = besc(n(:),Tgas)
+    ljeans = get_jeans_length(n(:),Tgas)
+    be = besc(n(:),Tgas,ljeans)
 
     !init dust cooling
     dustCooling = 0d0 
@@ -333,41 +341,41 @@ contains
     do i=1,ndust
        j1 = 1 !first index
        j2 = dust_nT !last index
-       intCMB = get_dust_Qabs(i,phys_Tcmb)
+       Td1 = dust_intBB_Tbb(j1)
+       Td2 = dust_intBB_Tbb(j2)-1d0
+       intCMB = get_dust_intBB(i,phys_Tcmb)
        do 
           !compute Tdust in j1 and j2
-          Td1 = dust_intBB_Tbb(j1)
-          Td2 = dust_intBB_Tbb(j2)
           !f(x) evaluated at j1 and j2
-          f1 = dust_intBB(i,j1) * be - pre * (Tgas-Td1) - intCMB
-          f2 = dust_intBB(i,j2) * be - pre * (Tgas-Td2) - intCMB
+          f1 = (get_dust_intBB(i,Td1) - intCMB) * be - pre * (Tgas-Td1)
+          f2 = (get_dust_intBB(i,Td2) - intCMB) * be - pre * (Tgas-Td2)
           !next j value
-          jmid = (j1+j2) / 2
-          Tdmid = dust_intBB_Tbb(jmid)
-          fmid = dust_intBB(i,jmid) * be - pre * (Tgas-Tdmid) - intCMB
+          
+          Tdmid = .5d0 * (Td1 + Td2)
+          krome_dust_T(i) = Tdmid
+          be = besc(n(:),Tgas,ljeans)
+          fmid = (get_dust_intBB(i,Tdmid) - intCMB) * be - pre * (Tgas-Tdmid)
+
           !check signs and assign jmid
           if(f1*fmid<0d0) then
-             f2 = fmid
-             j2 = jmid
+             Td2 = Tdmid
           else
-             f1 = fmid
-             j1 = jmid
+             Td1 = Tdmid
           end if
           !when contiguous break loop
-          if(abs(j1-j2)<2) exit
+          if(abs(Td1-Td2)<1d-8) exit
        end do
-       !compute the cooling (avoid the difference Tgas-Tdust)
-       dustCooling = dustCooling + (dust_intBB(i,jmid) * be - intCMB) &
-            * xdust(i) * krome_dust_asize2(i)
        !store temperature
-       krome_dust_T(i) = .5d0 * (dust_intBB_Tbb(j1) + dust_intBB_Tbb(j2))
+       
+       !compute the cooling (avoid the difference Tgas-Tdust)
+       dustCooling = dustCooling + (get_dust_intBB(i,krome_dust_T(i)) &
+            -intCMB) * be * n(nmols+i) * krome_dust_asize2(i)
     end do
-
     !copy (isotropic) cooling
     dust_cooling = 4d0 * pi * dustCooling
-    
+
   end subroutine compute_Tdust
-  
+
   !*****************************
   !computes the dust cooling using the temperature difference
   function dustCool(adust2,nndust,Tgas,Tdust,ntot)

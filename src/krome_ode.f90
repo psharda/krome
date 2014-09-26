@@ -31,7 +31,7 @@ contains
     n(idx_dummy) = 1.d0
 
     dn(:) = 0.d0 !initialize differentials
-    Tgas = max(n(idx_Tgas), phys_Tcmb) !get temperature
+    Tgas = n(idx_Tgas) !max(n(idx_Tgas), phys_Tcmb) !get temperature
     
     k(:) = coe_tab(n(:)) !compute coefficients
 

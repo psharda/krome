@@ -16,12 +16,13 @@ program test_krome
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt
-  real*8::ntot,rho,zs(nz)
+  real*8::ntot,rho,zs(nz),zred
 
+  zred = 19d0
   !INITIALIZE KROME PARAMETERS AND DUST 
   call krome_init()
-  call krome_set_zredshift(15d0)
-
+  call krome_set_zredshift(zred)
+  call krome_set_Tcmb(2.73d0*(zred+1d0))
   zs = (/-5d0, -4d0, -2d0/) !list of metallicities
 
   do jz = 1,size(zs)*2
@@ -47,7 +48,7 @@ program test_krome
      print *,"jscale=",jscale
      call krome_scale_dust_gas_ratio(1d-2*1d1**zs(jz2)*jscale,x(:))
      print *,krome_get_dust_distribution()
-     call krome_set_defaultTdust(2.73d0)
+     call krome_set_defaultTdust((zred+1d0)*2.73d0)
 
      !rescale metallicity for neutral metals (C,Fe,Si,O)
      call krome_scale_Z(x(:), zs(jz2))
