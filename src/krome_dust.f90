@@ -92,13 +92,10 @@ contains
     use krome_constants
     implicit none
     character(*)::fname
-    integer::ios,nE,i,jtype,nd
+    integer::ios,nE,i,jtype,nd,nlow,nup
     integer,parameter::nEmax=int(1e4)
     real*8::rout(5),E,asize,Qabs,asize_old,Qabs_old
     real*8::Qabs_tmp(ndust,nEmax),Qabs_E_tmp(nEmax),asize0
-
-    !if already loaded quit subroutine
-    if(allocated(dust_Qabs)) return
 
     !number of dust bins per type
     nd = ndust/ndustTypes
@@ -145,17 +142,22 @@ contains
 
     close(32)
 
-    !allocate common Qabs
-    allocate(dust_Qabs(ndust,nE))
-    allocate(dust_Qabs_E(nE))
-    allocate(dust_intBB(ndust,dust_nT))
-    allocate(dust_intBB_sigma(ndust,dust_nT))
+    !if not allocated allocate
+    if(not(allocated(dust_Qabs))) then
+       !allocate common Qabs
+       allocate(dust_Qabs(ndust,nE))
+       allocate(dust_Qabs_E(nE))
+       allocate(dust_intBB(ndust,dust_nT))
+       allocate(dust_intBB_sigma(ndust,dust_nT))
+    end if
 
     !store the number of energies in the common
     dust_Qabs_nE = nE
 
     !copy temp Qabs to common Qabs
-    dust_Qabs(:,:) = Qabs_tmp(:,1:nE)
+    nlow = (jtype-1)*nd+1
+    nup = jtype*nd
+    dust_Qabs(nlow:nup,:) = Qabs_tmp(nlow:nup,1:nE)
     dust_Qabs_E(:) = Qabs_E_tmp(1:nE)
 
   end subroutine dust_load_Qabs
@@ -308,7 +310,6 @@ contains
          / (dust_intBB_Tbb(ibb)-dust_intBB_Tbb(ibb-1)) &
          * (dust_intBB_sigma(jdust,ibb)-dust_intBB_sigma(jdust,ibb-1)) &
          + dust_intBB_sigma(jdust,ibb-1)
-    
 
     kpla_dust = intBB * krome_dust_asize2(jdust)
 
@@ -341,6 +342,11 @@ contains
     do i=1,ndust
        j1 = 1 !first index
        j2 = dust_nT !last index
+       !no need to compute Tdust when small amount of dust
+       if(n(nmols+1)<1d-18*ntot) then
+          krome_dust_T(i) = Tgas
+          cycle
+       end if
        Td1 = dust_intBB_Tbb(j1)
        Td2 = dust_intBB_Tbb(j2)-1d0
        intCMB = get_dust_intBB(i,phys_Tcmb)
@@ -427,6 +433,18 @@ contains
          * exp(-7.d-3 * Tgas)
 
   end function krome_dust_stick
+
+  !******************
+  !dust evaporation following Stahler+1981, eqn.5
+  ! ebind: binding energy in K
+  function dust_evap(adust,nndust,Tdust,ebind)
+    implicit none
+    real*8::dust_evap,adust,nndust,Tdust,ebind
+    
+    !l0*nu0=1.8d5 cm/s from Stahler+1981
+    dust_evap = 3d0 * 1.8d5 * exp(-ebind/Tdust) / adust * nndust
+    
+  end function dust_evap
 
   !***************
   function krome_dust_sput(Tgas,adust,natom,nndust)

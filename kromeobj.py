@@ -51,13 +51,12 @@ class krome():
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
-	#useCoolingZC = useCoolingZCp = useCoolingZSi = useCoolingZSip = useCoolingZO = useCoolingZOp = useCoolingZFe = useCoolingZFep = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
-	useDustGrowth = useDustSputter = useDustH2 = useDustT = checkThermochem = needLAPACK = useCoolCMBFloor = False
+	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolCMBFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
@@ -118,6 +117,7 @@ class krome():
 	odeModifier = [] #modifier lines that will be appended after the ODE calculation
 	photoPartners = [] #list of the reactants of photoreactions 
 	columnDensityMethod = "DEFAULT"
+	compiler = "ifort" #default compiler
 	ramses_offset = 2 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
 	customCoolList = [] #list of the custom cooling functions
@@ -196,6 +196,7 @@ class krome():
 			Note that levels are zero-based (i.e. ground state is zero).")
 		self.parser.add_argument("-coolingQuench", metavar='TCRIT', help="quenches the cooling when T<TCRIT with a tanh \
 		 function.")
+		self.parser.add_argument("-compiler", metavar='COMPILER', help="changes the Makefile according to the selected COMPILER.")
 		self.parser.add_argument("-customATOL", help="file with the list of the individual ATOLs in the form SPECIES ATOL in each line,\
 			e.g. H2 1d-20, see also -ATOL", metavar="filename")
 		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
@@ -206,7 +207,7 @@ class krome():
 			bins and 10 dust silicon dust bins. Note: requires a call to the krome_init_dust subroutine.\
 			See -test=dust for an example.")
 		self.parser.add_argument("-dustOptions", help="activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular\
-			hydrogen formation on dust, and (T) dust temperature. The last option provide a template for the FEX routine.",\
+			hydrogen formation on dust, (EVAP) thermal evaporation, and (T) dust temperature including CMB coupling.",\
 			metavar="OPTIONS")
 		self.parser.add_argument("-dustSeed", help="set the dust seed in 1/cm3 for dust growth. Default is zero. Any F90 expression \
 			is allowed for SEED.", metavar="SEED")
@@ -366,7 +367,7 @@ class krome():
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
-			[argv.append(x) for x in ["-dust=1,C","-dustOptions=T,H2","-useCoolCMBFloorZ"]]
+			[argv.append(x) for x in ["-dust=1,C,Si","-dustOptions=T,H2","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseZ"):
@@ -598,6 +599,10 @@ class krome():
 			self.coolFile = args.coolFile.split(",")
 			print "Reading option -coolFile (filename="+str(",".join(self.coolFile))+")"
 
+		#read compiler name
+		if(args.compiler):
+			self.compiler = args.compiler.strip()
+			print "Reading option -compiler (COMPILER="+self.compiler+")"
 
 		#use f90 solver
 		if(args.useDvodeF90):
@@ -708,8 +713,6 @@ class krome():
 				print " where N is the number of photon bins employed."
 				sys.exit()
 			print "Reading option -usePhotoInduced"
-
-
 
 		#use equilibrium check to break loops earlier
 		if(args.useEquilibrium):
@@ -1147,6 +1150,7 @@ class krome():
 			if("SPUTTER" in dustOptions): self.useDustSputter = True
 			if("H2" in dustOptions): self.useDustH2 = True
 			if("T" in dustOptions): self.useDustT = True
+			if("EVAP" in dustOptions): self.useDustEvap = True
 			print "Reading option -dustOptions (options="+(",".join(dustOptions))+")"
 
 		#dust seed value
@@ -2663,7 +2667,9 @@ class krome():
 		#add dust to ODEs
 		if(self.useDust):
 			j = 0
+			ebinds = {"C":7.374e0, "Si":4.630e0} #binding energies in eV
 			for dType in dustTypes:
+				ebind = ebinds[dType] / 8.6173324e-5 #eV->K
 				for i in range(dustArraySize):
 					myndust = dustArraySize*dustTypesSize
 					j += 1
@@ -2674,6 +2680,9 @@ class krome():
 					if(self.useDustSputter):
 						dns[nmols+j-1] += " &\n- krome_dust_sput(Tgas,krome_dust_asize("
 						dns[nmols+j-1] += str(j)+"),ntot,n("+str(nmols+j)+"))"
+					if(self.useDustEvap):
+						dns[nmols+j-1] += " &\n- dust_evap(krome_dust_asize("
+						dns[nmols+j-1] += str(j)+"),n("+str(nmols+j)+"), krome_dust_T("+str(j)+"),"+format_double(ebind)+")"
 
 		#find the maximum number of products and reactants
 		maxnprod = maxnreag = 0
@@ -4244,9 +4253,8 @@ class krome():
 			for dType in self.dustTypes:
 				itype += 1 #increase index
 				dustPartnerIdx += "krome_dust_partner_idx("+str(itype)+") = idx_"+dType+"\n"
-				if(useDustT):
-					dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")" #,dust_opt_Qabs_"+dType
-					dustOptInt += "call dust_init_intBB()"
+				if(useDustT): dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")\n" #,dust_opt_Qabs_"+dType
+			if(useDustT): dustOptInt += "call dust_init_intBB()"
 
 		skip = skipPhotoDust = False
 		for row in fh:
@@ -5466,15 +5474,19 @@ class krome():
 				print "- copying "+fdir+" to "+buildFolder
 			#if Makefile is not present in the tests directory use the default Makefile
 			if(not(os.path.exists("tests/"+test_name+"/Makefile"))):
+				foundList = ["#KROME_compiler"]
+				repList = [self.compiler]
 				if(self.useDvodeF90):
 					shutil.copyfile("tests/MakefileF90", buildFolder+"Makefile")
 				elif(self.buildCompact):
-					shutil.copyfile("tests/MakefileCompact", buildFolder+"Makefile")
+					self.replacein("tests/MakefileCompact", buildFolder+"Makefile", foundList, repList)
 				else:
 					if(self.pedanticMakefile):
-						shutil.copyfile("tests/Makefile_pedantic", buildFolder+"Makefile")
+						self.replacein("tests/Makefile_pedantic", buildFolder+"Makefile", foundList, repList)
+						#shutil.copyfile("tests/Makefile_pedantic", buildFolder+"Makefile")
 					else:
-						shutil.copyfile("tests/Makefile", buildFolder+"Makefile")
+						self.replacein("tests/Makefile", buildFolder+"Makefile", foundList, repList)
+						#shutil.copyfile("tests/Makefile", buildFolder+"Makefile")
 
 			#test_file = "tests/"+test_name+"/test.f90"
 			#plot_file = "tests/"+test_name+"/plot.gps"
