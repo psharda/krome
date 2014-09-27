@@ -43,7 +43,7 @@ module krome_commons
   real*8,allocatable::dust_intBB(:,:),dust_intBB_sigma(:,:)
   real*8::xdust(ndust)
   integer::krome_dust_partner_idx(ndustTypes),dust_Qabs_nE
-  integer,parameter::dust_nT=int(1d3)
+  integer,parameter::dust_nT=int(1e4)
   real*8::dust_intBB_Tbb(dust_nT),dust_cooling
   !logarithm of the maximum BB temperature in integral tables
   real*8,parameter::TbbMax=1d4,TbbMin=1d0
