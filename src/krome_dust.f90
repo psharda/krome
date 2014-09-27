@@ -273,19 +273,27 @@ contains
 
   !*******************************
   !compute beta escape using the planck opacity
-  function besc(n,Tgas,lj)
+  function besc(n,Tgas,lj,rhogas)
     use krome_commons
     use krome_subs
     implicit none
-    real*8::n(:),besc,Tgas,tau,lj
+    real*8::n(:),besc,Tgas,tau,lj,tau_d,tau_g,rhogas,Tff
     integer::j
 
     besc = 1d0
-    tau = 0d0
+    tau_d = 0d0
     do j=1,ndust
-       tau = tau + xdust(j) * kpla_dust(krome_dust_T(j),j)
+       Tff = krome_dust_T(j)
+       !when temperature difference is small
+       ! Tgas can be used instead of Tdust
+       if(abs(krome_dust_T(j)-Tgas)<3d0) Tff = Tgas
+       tau_d = tau_d + xdust(j) * kpla_dust(Tff,j)
     end do
-    tau = tau * lj
+
+    tau_g = 0d0
+    !tau_g = rhogas * 1d1**fit_anytab2D(mayer_x(:), mayer_y(:), mayer_z(:,:), &
+    !     mayer_xmul, mayer_ymul,log10(rhogas),log10(Tgas))
+    tau = (tau_d + tau_g) * lj
     
     if(tau<1d0) return
     besc = tau**-2
@@ -306,10 +314,10 @@ contains
     ibb = (Tdust-TbbMin) * TbbMult + 1
     !loop on the temperatures to find the corresponding interval
     
-    intBB = (Tdust-dust_intBB_Tbb(ibb-1)) &
-         / (dust_intBB_Tbb(ibb)-dust_intBB_Tbb(ibb-1)) &
-         * (dust_intBB_sigma(jdust,ibb)-dust_intBB_sigma(jdust,ibb-1)) &
-         + dust_intBB_sigma(jdust,ibb-1)
+    intBB = (Tdust-dust_intBB_Tbb(ibb)) &
+         / (dust_intBB_Tbb(ibb+1)-dust_intBB_Tbb(ibb)) &
+         * (dust_intBB_sigma(jdust,ibb+1)-dust_intBB_sigma(jdust,ibb)) &
+         + dust_intBB_sigma(jdust,ibb)
 
     kpla_dust = intBB * krome_dust_asize2(jdust)
 
@@ -324,16 +332,21 @@ contains
     use krome_subs
     implicit none
     integer::i,j1,j2,jmid
-    real*8::Td1,Td2,fact,vgas,ntot,n(:),be,ljeans
+    real*8::Td1,Td2,fact,vgas,ntot,n(:),be,ljeans,rhogas
     real*8::f1,f2,fmid,pre,Tdmid,Tgas,dustCooling,intCMB
+    real*8::m(nspec)
 
     !compute dust cooling pre-factor (HM79)
     fact = 0.5d0
     ntot = sum(n(1:nmols))
+    m(:) = get_mass()
+    rhogas = sum(n(1:nmols)*m(1:nmols))
     vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
-    pre = fact*vgas*boltzmann_erg * ntot
-    ljeans = get_jeans_length(n(:),Tgas)
-    be = besc(n(:),Tgas,ljeans)
+    pre = 0.5d0*fact*vgas*boltzmann_erg * ntot
+    !jeans length cm
+    ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
+    !escape
+    be = besc(n(:),Tgas,ljeans,rhogas)
 
     !init dust cooling
     dustCooling = 0d0 
@@ -347,35 +360,38 @@ contains
           krome_dust_T(i) = Tgas
           cycle
        end if
+       !get initial temperatures
        Td1 = dust_intBB_Tbb(j1)
        Td2 = dust_intBB_Tbb(j2)-1d0
+       !compute Tcmb
        intCMB = get_dust_intBB(i,phys_Tcmb)
+       !bisection method
        do 
-          !compute Tdust in j1 and j2
+
           !f(x) evaluated at j1 and j2
           f1 = (get_dust_intBB(i,Td1) - intCMB) * be - pre * (Tgas-Td1)
           f2 = (get_dust_intBB(i,Td2) - intCMB) * be - pre * (Tgas-Td2)
-          !next j value
           
+          !compute Tdmid
           Tdmid = .5d0 * (Td1 + Td2)
           krome_dust_T(i) = Tdmid
-          be = besc(n(:),Tgas,ljeans)
           fmid = (get_dust_intBB(i,Tdmid) - intCMB) * be - pre * (Tgas-Tdmid)
 
-          !check signs and assign jmid
+          !check signs and assign Tdmid
           if(f1*fmid<0d0) then
              Td2 = Tdmid
           else
              Td1 = Tdmid
           end if
-          !when contiguous break loop
+          !convergence criterium
           if(abs(Td1-Td2)<1d-8) exit
        end do
-       !store temperature
        
+       !be = besc(n(:),Tgas,ljeans,rhogas)
+
        !compute the cooling (avoid the difference Tgas-Tdust)
        dustCooling = dustCooling + (get_dust_intBB(i,krome_dust_T(i)) &
-            -intCMB) * be * n(nmols+i) * krome_dust_asize2(i)
+            - intCMB) * be * n(nmols+i) * krome_dust_asize2(i)
     end do
     !copy (isotropic) cooling
     dust_cooling = 4d0 * pi * dustCooling

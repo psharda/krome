@@ -472,6 +472,21 @@ contains
 
   end function get_jeans_length
 
+  !********************************
+  function get_jeans_length_rho(n,Tgas,rhogas)
+    !get jeans length in cm
+    use krome_constants
+    use krome_commons
+    implicit none
+    real*8::n(:),Tgas,mu,rhogas
+    real*8::get_jeans_length_rho
+
+    mu = get_mu_rho(n(:),rhogas)
+    get_jeans_length_rho = sqrt(pi*boltzmann_erg*Tgas/rhogas&
+         /p_mass/gravity/mu)
+
+  end function get_jeans_length_rho
+
 #IFKROME_useShieldingDB96
   !************************
   !calculate the self-shielding factor, following Draine&Bertoldi 1996 

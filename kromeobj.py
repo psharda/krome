@@ -367,7 +367,7 @@ class krome():
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
-			[argv.append(x) for x in ["-dust=1,C,Si","-dustOptions=T,H2","-useCoolCMBFloorZ"]]
+			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=T,H2","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseZ"):
@@ -5458,6 +5458,9 @@ class krome():
 		#copy OMUKAI datafile
 		if(self.H2opacity=="OMUKAI"):
 			shutil.copyfile("data/escape_H2.dat", buildFolder+"escape_H2.dat")
+
+		#copy Mayer opacity file
+		shutil.copyfile("data/mayer_E2.dat", buildFolder+"mayer_E2.dat")
 
 		#copy file that contains table as indicated by the anytab reactions
 		print "- copying anytab files..."

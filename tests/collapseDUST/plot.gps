@@ -11,7 +11,9 @@ set key b r
 set grid
 
 n=1
-plot 'fort.66' u 2:($1==0?$3:1/0) w l t "Tgas",\
- '' u 2:($1==0?$4:1/0) w l t "Tdust",\
- '' u 2:($1==1?$3:1/0) every n w l t "Tgas",\
- '' u 2:($1==1?$4:1/0) every n w l t "Tdust" 
+nbins=5
+plot 'fort.66' u 2:($1==1?$3:1/0) every n w l t "Tgas",\
+ '' u 2:($1==1?column(3+1):1/0) every n w l t "Tdust C",\
+ '' u 2:($1==1?column(3+nbins):1/0) every n w l t "Tdust C-",\
+ '' u 2:($1==1?column(3+nbins+1):1/0) every n w l t "Tdust Si",\
+ '' u 2:($1==1?column(3+2*nbins):1/0) every n w l t "Tdust Si-"
