@@ -286,7 +286,7 @@ contains
        Tff = krome_dust_T(j)
        !when temperature difference is small
        ! Tgas can be used instead of Tdust
-       if(abs(krome_dust_T(j)-Tgas)<3d0) Tff = Tgas
+       if(abs(krome_dust_T(j)-Tgas)<5d0) Tff = Tgas
        tau_d = tau_d + xdust(j) * kpla_dust(Tff,j)
     end do
 
