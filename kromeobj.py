@@ -5479,13 +5479,13 @@ class krome():
 				if(self.useDvodeF90):
 					shutil.copyfile("tests/MakefileF90", buildFolder+"Makefile")
 				elif(self.buildCompact):
-					self.replacein("tests/MakefileCompact", buildFolder+"Makefile", foundList, repList)
+					self.replacein("tests/MakefileCompact", buildFolder+"Makefile", foundList, repList, False)
 				else:
 					if(self.pedanticMakefile):
-						self.replacein("tests/Makefile_pedantic", buildFolder+"Makefile", foundList, repList)
+						self.replacein("tests/Makefile_pedantic", buildFolder+"Makefile", foundList, repList, False)
 						#shutil.copyfile("tests/Makefile_pedantic", buildFolder+"Makefile")
 					else:
-						self.replacein("tests/Makefile", buildFolder+"Makefile", foundList, repList)
+						self.replacein("tests/Makefile", buildFolder+"Makefile", foundList, repList, False)
 						#shutil.copyfile("tests/Makefile", buildFolder+"Makefile")
 
 			#test_file = "tests/"+test_name+"/test.f90"
