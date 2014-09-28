@@ -56,6 +56,7 @@ class molec():
 	fidx = "idx_" #index for fortran (e.g. H+=idx_Hj, D-=idx_Dk)
 	is_atom = False #flag to identify atoms
 	is_surface = False #flag for species on surface
+	parentDustBin = 0 #for surface species: belongs to this dust bin (1-based)
 	chempot = 0. #chemical potential (J/mol)
 	poly1 = [0.e0]*7 #nasa polynomials (usually 200-1000K)
 	poly2 = [0.e0]*7 #nasa polynomials (usually 1000-5000K)
@@ -101,6 +102,8 @@ class reaction():
 	ifrate = "" #if condition on rate, e.g. if(Tgas>1d2):
 	isCR = False #flag this reaction as CR
 	isXRay = False #flag this reaction as XRay
+	isSurface = False #flag this reaction as Surface reaction
+
 	#method: constructor to initialize lists
 	def __init__(self):
 		self.reactants = []
@@ -702,8 +705,8 @@ def is_number(s):
 
 ##################################
 #parse molecule name using dictionary and atoms list
-def parser(name, mass_dic, atoms, thermo_data):
-
+def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
+	
 	mymol = molec() #oggetto molec
 	namecp = name.upper()
 	if(namecp=="E-"): namecp = "E" #avoid double negative charge
@@ -711,6 +714,7 @@ def parser(name, mass_dic, atoms, thermo_data):
 	mass = 0. #init mass
 	is_atom = True #atom flag
 	founds = 0 #atoms found
+	mymol.parentDustBin = dustIdx #this species belongs to this dust bin (1-based) 
 	
 	#if you change these check the same values in kromeobj
 	#(employed here for computing number of neutrons)
@@ -756,7 +760,7 @@ def parser(name, mass_dic, atoms, thermo_data):
 			zdic[str(i)+k] = v
 
 	#look for species on grain surface
-	if("_dust" in name):
+	if("_dust" in name.lower()):
 		mymol.is_surface = True
 
 	#check for fake species
@@ -771,6 +775,12 @@ def parser(name, mass_dic, atoms, thermo_data):
 		mymol.fidx = "idx_"+name #f90 index
 		mymol.neutrons = 0 #number of neutrons
 		return mymol
+
+	#when belongs to dust+idx remove _dust in the name
+	if(dustIdx>0 and not(mymol.is_surface)):
+		print "ERROR: in parser, dustIdx>0 with a non-surface species"
+		print dustIdx,name
+		sys.exit()
 	
 	zatom = 0 #atomic number init
 	#loop over charcters
@@ -817,6 +827,9 @@ def parser(name, mass_dic, atoms, thermo_data):
 	#get rotational constant in K
 	if(get_be_rot(name)):
 		mymol.be_rot = get_be_rot(name)
+
+	#when dust index changes the name	
+	if(dustIdx>0): name = name+"_"+str(dustIdx)
 
 	mymol.name = name #name
 	mymol.mass = mass #mass (g)
