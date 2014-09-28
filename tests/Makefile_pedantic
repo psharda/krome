@@ -1,5 +1,4 @@
-fc = ifort
-#fc = gfortran
+fc = #KROME_compiler
 prj = krome #exe name
 lib = -llapack #libraries
 
