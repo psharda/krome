@@ -8,7 +8,7 @@ ifeq ($(GREP),)
 endif
 
 
-ifeq ($(fc),ifort)
+ifneq (,$(findstring ifort,$(fc)))
 	std = -check all -traceback -fpe0 -ftz -ftrapuv -warn all -u
 	nowarn = -nowarn
 	sswitch = $(std)
