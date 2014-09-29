@@ -4,7 +4,14 @@
 from subprocess import call
 from subprocess import Popen, PIPE
 import os,sys,hashlib,glob,platform,shutil,time
-import ftplib,urllib
+import ftplib,urllib,sys
+
+argv = sys.argv
+
+compiler="ifort" #ifort or gfortran
+
+if("-compiler" in argv):
+	compiler = argv[argv.index("-compiler")+1]
 
 testpath = "tests/"
 
@@ -19,7 +26,7 @@ skiptests = ["stars","collapseZ_induced","collapseZ_UV","shock1Dphoto","atmosphe
 first = ""
 if(first.strip()==""): first = tests[0]
 
-compiler="ifort" #ifort or gfortran
+
 mode = "check" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
 
 ################
@@ -119,28 +126,10 @@ for test in tests:
 	print "test "+test
 
 	#call krome
-	call(["./krome", "-test="+test, "-pedantic", "-unsafe", "-sh"])
+	call(["./krome", "-test="+test, "-pedantic", "-unsafe", "-sh","-compiler",compiler])
 
 	#move to build directory
 	os.chdir("build/")
-
-	#change Makefile to gfortran if needed
-	fh = open("Makefile","rb")
-	fout2 = open("tmp","w")
-	if(compiler=="gfortran"):
-		for row in fh:
-			if(row.strip()=="fc = ifort"):
-				fout2.write("fc = gfortran\n")
-			else:
-				fout2.write(row)
-		fh.close()
-		fout2.close()
-		shutil.move("tmp","Makefile")
-	elif(compiler=="ifort"):
-		pass
-	else:
-		print "ERRROR: unknown compiler",compiler
-		sys.exit()
 	
 	#make clean
 	call(["make","clean"])
@@ -152,13 +141,13 @@ for test in tests:
 	call(["./krome"])
 
 	#run zenity notification when exectutable ends (LINUX USERS ONLY)
-	if("linux" in platform.system().lower()):
-		notifier = "zenity"
-		fpath = "/usr/bin/"+notifier
-		#check if notifier zenity exists
-		if(os.path.isfile(fpath) and os.access(fpath, os.X_OK)):
-			call(["killall","notification-daemon"])
-			call([notifier,"--notification","--text", "\""+test+" done!\"", "--timeout","2"])
+	#if("linux" in platform.system().lower()):
+	#	notifier = "zenity"
+	#	fpath = "/usr/bin/"+notifier
+	#	#check if notifier zenity exists
+	#	if(os.path.isfile(fpath) and os.access(fpath, os.X_OK)):
+	#		call(["killall","notification-daemon"])
+	#		call([notifier,"--notification","--text", "\""+test+" done!\"", "--timeout","2"])
 
 	hashall = []
 	#hash and store MD5 for fort files
