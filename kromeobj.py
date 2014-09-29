@@ -39,7 +39,7 @@
 
 # THIS FILE CONTAINS THE KROME CLASS
 
-import os,glob,shutil,argparse,re
+import os,glob,shutil,argparse,re,copy
 from kromelib import *
 from os import listdir
 from os.path import isfile, join
@@ -58,6 +58,7 @@ class krome():
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolCMBFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
+	useCoolCMBFloorZ = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -1494,6 +1495,7 @@ class krome():
 		inOdeModifierBlock = False #block of modifier expression for the ODE dn/dT
 		noTabBlockStored = noTabNextBlock #store the noTabNextBlock array before inPhotoBlock to restore it
 		inCoolingBlock = False #block for custom cooling expression
+		inSurfaceBlock = False #block for reaction on surface
 
 		#read the size of the file in lines (skip blank and comments)
 		# to have a rough idea of the size
@@ -1777,6 +1779,16 @@ class krome():
 				inOdeModifierBlock = True
 				continue #SKIP (not a reaction)
 
+			#search for surface chemistry reactions (start)
+			if(srow.lower()=="@surface_start" or srow.lower()=="@surface_begin"):
+				inSurfaceBlock = True
+				continue #SKIP (not a reaction)
+
+			#search for surface chemistry reactions (stop)
+			if(srow.lower()=="@surface_stop" or srow.lower()=="@surface_end"):
+				inSurfaceBlock = False
+				continue #SKIP (not a reaction)
+
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
 			arow = [x.strip() for x in arow] #strip single elements
 			if(len(arow)!=format_items):
@@ -1909,6 +1921,10 @@ class krome():
 				#add the photo reactant to the partner array
 				self.photoPartners.append(myrea.reactants[0])
 
+			#this reaction is on surface
+			if(inSurfaceBlock):
+				myrea.isSurface = True
+
 			myrea.build_verbatim() #build reaction as string (e.g. A+B->C)
 			#myrea.reactants = sorted(myrea.reactants, key=lambda r:r.idx) #sort reactants
 			#myrea.products = sorted(myrea.products, key=lambda p:p.idx) #sort products
@@ -1944,7 +1960,88 @@ class krome():
 			if(not(skip_append)): reacts.append(myrea)
 			del myrea,row
 			if(not(noTabNextBlock)): noTabNext = False #return to default value when outside a block
+			#END LOOP ON FILE
 	
+		#after loop on file post-process special reactions
+
+		
+		if(False):
+			#when dust is enabled remove surface molecules that 
+			# added later as bin-based
+			uspecs = []
+			if(self.dustArraySize>0):
+				for x in specs:
+					if(x.is_surface): continue
+					uspecs.append(x)
+			specs = uspecs[:] #copy list with non-surafce species only
+
+			#extend surface species using bins
+			for rea in reacts:
+				if(not(rea.isSurface)): continue
+				foundSurface = False		
+				#append _binNumber to surface species name and update specs list
+				for x in rea.reactants+rea.products:
+					if(x.is_surface):
+						foundSurface = True #flag to control if surface species is found
+						for idust in range(self.dustArraySize):
+							mol = parser(x.name,mass_dic,atoms,thermodata,idust+1)
+							if(mol in specs): continue
+							mol.idx = len(specs)+1
+							specs.append(mol) #append bin-based surface species to species list
+				#surface reaction must have surface species
+				if(not(foundSurface)):
+					print "ERROR: surface reaction without surface species found!"
+					print rea.verbatim
+					sys.exit()
+			for i in range(len(specs)):
+				specs[i].idx = i+1
+
+			ureacts = []
+			for rea in reacts:
+				#rea.idx = len(ureacts)+1
+				#rea.build_RHS()
+				#if(not(rea.isSurface)): 
+				#	ureacts.append(rea)
+				#	continue
+
+				for idust in range(self.dustArraySize):
+					ureactants = []
+					rea2 = copy.copy(rea)
+					print rea2.verbatim
+					for rr in rea2.reactants:
+						rr = copy.copy(rr)
+						if(rr.is_surface):
+							rr.name = rr.name+"_"+str(idust+1)
+							rr.parentDustBin = idust+1
+							for sp in specs:
+								if(sp.name==rr.name):
+									rr.idx = sp.idx
+									break
+						ureactants.append(rr)
+					uproducts = []
+					for pp in rea2.products:
+						pp = copy.copy(pp)
+						if(pp.is_surface):
+							pp.name = pp.name+"_"+str(idust+1)
+							pp.parentDustBin = idust+1
+							for sp in specs:
+								if(sp.name==pp.name):
+									pp.idx = sp.idx
+									break
+
+						print pp.name
+						uproducts.append(pp)
+					rea2.reactants = ureactants[:]
+					rea2.products = uproducts[:]
+					rea2.idx = len(ureacts)+1
+					rea2.build_verbatim()
+					rea2.build_RHS()
+					ureacts.append(rea2)
+					if(not(rea.isSurface)): break
+
+			reacts = ureacts[:]
+
+		#shielding reactions requires fsh variable
 		if((self.useShieldingDB96 or self.useShieldingWG11) and not(fsh_found)):
 			print
 			print "WARNING: no krome_fshield(n(:),Tgas) variable found in rate coefficient"
@@ -1956,6 +2053,11 @@ class krome():
 		if(noTabNextBlock): 
 			print "ERROR: block of skipped reaction still open!"
 			print "Add @noTab_stop or @noTab_end"
+			sys.exit()
+
+		if(inSurfaceBlock): 
+			print "ERROR: block of surface reactions still open!"
+			print "Add @surface_stop or @surface_end"
 			sys.exit()
 
 		if(skipDup): 
@@ -2334,11 +2436,11 @@ class krome():
 				for i in range(dustArraySize):
 						#create the object named dust_type_index
 						mymol = molec()
-						mymol.name = "dust_"+dType+"_"+str(i)
+						mymol.name = "dust_"+dType+"_"+str(i+1)
 						mymol.charge = 0
 						mymol.mass = 0.e0
-						mymol.ename = "dust_"+dType+"_"+str(i)
-						mymol.fidx = "idx_dust_"+dType+"_"+str(i)
+						mymol.ename = "dust_"+dType+"_"+str(i+1)
+						mymol.fidx = "idx_dust_"+dType+"_"+str(i+1)
 						mymol.idx = len(specs)+1
 						specs.append(mymol)
 			print "Dust added:",self.dustArraySize*self.dustTypesSize

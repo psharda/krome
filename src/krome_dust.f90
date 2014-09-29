@@ -143,7 +143,7 @@ contains
     close(32)
 
     !if not allocated allocate
-    if(not(allocated(dust_Qabs))) then
+    if(.not.(allocated(dust_Qabs))) then
        !allocate common Qabs
        allocate(dust_Qabs(ndust,nE))
        allocate(dust_Qabs_E(nE))
