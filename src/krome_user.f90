@@ -160,7 +160,121 @@ contains
 
   end function krome_get_Tdust
 
+  !***************************
+  !this subroutine sets as a scalar (xarg) all the 
+  ! surface species for the given idx_base in the
+  ! species array x:
+  ! e.g. krome_set_surface(x(:),1d3,krome_idx_OH_dust)
+  subroutine krome_set_surface(x,xarg,idx_base)
+    use krome_commons
+    implicit none
+    integer::idx_base
+    real*8::xarg,x(nmols)
+
+    x(idx_base:idx_base+ndust-1) = xarg
+
+  end subroutine krome_set_surface
+
+  !***************************
+  !this subroutine sets as a scalar (xarg) all the 
+  ! surface species for the given idx_base in the
+  ! species array x, normalized by the amount of dust
+  ! in each bin:
+  ! e.g. krome_set_surface_norm(x(:),1d3,krome_idx_OH_dust)
+  subroutine krome_set_surface_norm(x,xarg,idx_base)
+    use krome_commons
+    implicit none
+    integer::idx_base
+    real*8::xarg,x(nmols)
+
+    x(idx_base:idx_base+ndust-1) = xarg*xdust(:)/sum(xdust(:))
+
+  end subroutine krome_set_surface_norm
+
+  !***************************
+  !this subroutine sets as a vector (xarr) all the 
+  ! surface species for the given idx_base in the
+  ! species array x. The size of the array xarr is ndust.
+  ! e.g. krome_set_surface_array(x(:),arr(:),krome_idx_OH_dust)
+  subroutine krome_set_surface_array(x,xarr,idx_base)
+    use krome_commons
+    implicit none
+    integer::idx_base
+    real*8::xarr(ndust),x(nmols)
+
+    x(idx_base:idx_base+ndust-1) = xarr(:)
+
+  end subroutine krome_set_surface_array
+  
+  !***************************
+  !this function gets the total amount of surface
+  ! species for the given idx_base in the
+  ! species array x.
+  ! e.g. xx = krome_get_surface(x(:),krome_idx_OH_dust)
+  function krome_get_surface(x,idx_base)
+    use krome_commons
+    implicit none
+    integer::idx_base
+    real*8::krome_get_surface,x(nmols)
+
+    krome_get_surface = sum(x(idx_base:idx_base+ndust-1))
+
+  end function krome_get_surface
 #ENDIFKROME
+
+  !*****************************
+  !dump the data for restart (UNDER DEVELOPEMENT!)
+  !arguments: the species array and the gas temperature
+  subroutine krome_store(x,Tgas,dt)
+    use krome_commons
+    implicit none
+    integer::nfile,i
+    real*8::x(:),Tgas,dt
+
+    nfile = 92
+
+    open(nfile,file="krome_dump.dat",status="replace")
+    !dump temperature
+    write(nfile,*) Tgas
+    write(nfile,*) dt
+    !dump species
+    do i=1,nmols
+       write(nfile,*) x(i)
+    end do
+    !dump dust 
+    do i=1,ndust
+       write(nfile,*) xdust(i)
+    end do
+    close(nfile)
+
+  end subroutine krome_store
+  
+  !*****************************
+  !restore the data from a dump (UNDER DEVELOPEMENT!)
+  !arguments: the species array and the gas temperature
+  subroutine krome_restore(x,Tgas,dt)
+    use krome_commons
+    implicit none
+    integer::nfile,i
+    real*8::x(:),Tgas,dt
+
+    nfile = 92
+
+    open(nfile,file="krome_dump.dat",status="old")
+    !restore temperature
+    read(nfile,*) Tgas
+    read(nfile,*) dt
+    !restore species
+    do i=1,nmols
+       read(nfile,*) x(i)
+    end do
+    !restore dust 
+    do i=1,ndust
+       read(nfile,*) xdust(i)
+    end do
+    close(nfile)
+
+  end subroutine krome_restore
 
   !****************************
   !switch on the thermal calculation
