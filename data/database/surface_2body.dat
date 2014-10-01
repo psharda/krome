@@ -1,0 +1,122 @@
+@var:[ndust] ice_fraction = dust_ice_fraction_array(krome_dust_asize2(:),n(nmols+1:nmols+ndust),n(idx_H2O_dust_1:idx_H2O_dust_1+nmols))
+@var:[nspec] m = get_mass()
+
+#2-body rate on surface (H + H -> H2) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,H_dust
+@prods: H2_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_H),0d0,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,6.5d2,5d2,5d2,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + O -> OH) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,O_dust
+@prods: OH_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_O),0d0,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,1.7d3,5d2,1.7d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + OH -> H2O) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,OH_dust
+@prods: H2O_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_OH),0d0,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,3.5d3,5d2,1.36d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + O3 -> OH + O2) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,O3_dust
+@prods: OH_dust,O2_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_O3),4.8d2,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,1.8d3,5d2,2.1d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + H2O2 -> OH + H2O) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,H2O2_dust
+@prods: OH_dust,H2O_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_H2O2),1d3,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,5d3,5d2,6d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + O2 -> HO2) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,O2_dust
+@prods: HO2_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_O2),2d2,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,9d2,5d2,1.25d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + H2O -> OH + H2) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,H2O_dust
+@prods: OH_dust,H2_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_H2O),9.6d3,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,4.8d3,5d2,4.8d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + HO2 -> OH + OH) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,HO2_dust
+@prods: OH_dust,OH_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_HO2),0d0,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,4.3d3,5d2,4d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + CO -> HCO) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,CO_dust
+@prods: HCO_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_CO),6d2,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,1.3d3,5d2,1.1d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + HCO -> H2CO) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,HCO_dust
+@prods: H2CO_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_HCO),0d0,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,3.1d3,5d2,1.1d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + H2CO -> CH3O) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,H2CO_dust
+@prods: CH3O_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_H2CO),4d2,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,3.1d3,5d2,1.1d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + CH3O -> CH3OH) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,CH3O_dust
+@prods: CH3OH_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_CH3O),0d0,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,3.1d3,5d2,1.1d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + HCO -> CO + H2) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,HCO_dust
+@prods: CO_dust,H2_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_HCO),4d2,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,3.1d3,5d2,1.1d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + H2CO -> HCO + H2) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,H2CO_dust
+@prods: HCO_dust,H2_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_H2CO),2.25d3,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,3.1d3,5d2,1.1d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + CH3O -> H2CO + H2) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,CH3O_dust
+@prods: H2CO_dust,H2_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_CH3O),1.5d2,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,3.1d3,5d2,1.1d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + CH3OH -> CH3O + H2) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,CH3OH_dust
+@prods: CH3O_dust,H2_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_CH3OH),3d3,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,3.1d3,5d2,1.1d3,krome_dust_T(auto_jdust-nmols))
+
+#2-body rate on surface (H + CO2 -> CO + OH) from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+@type: surf2body
+@reacts: H_dust,CO2_dust
+@prods: CO_dust,OH_dust
+@limits:
+@rate: dust_2body_rate(m(idx_H),m(idx_CO2),1d4,krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),6.5d2,2.3d3,5d2,2.3d3,krome_dust_T(auto_jdust-nmols))
+

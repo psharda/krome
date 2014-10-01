@@ -404,6 +404,18 @@ contains
   end function get_mass
 
   !************************
+    !get sqrt of the inverse of the masses (1/sqrt(g))
+  function get_imass_sqrt()
+    use krome_commons
+    implicit none
+    real*8::get_imass_sqrt(nspec)
+
+#KROME_imasses_sqrt
+
+  end function get_imass_sqrt
+
+
+  !************************
   !get inverse of the species masses (1/g)
   function get_imass()
     use krome_commons
@@ -634,6 +646,92 @@ contains
     dissH2_Martin96 = k_CID 
 
   end function dissH2_Martin96
+
+  !**********************
+  !adsorpion rate Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
+  function dust_adsorption_rate(nmol,nndust,ims,stick,adust2,sqrTgas)
+    use krome_constants
+    implicit none
+    real*8::dust_adsorption_rate,nmol,nndust,ims,stick,adust2,sqrTgas
+    
+    dust_adsorption_rate = nndust * pi * adust2 &
+         * pre_kvgas_sqrt * ims * sqrTgas &
+         * stick
+    
+  end function dust_adsorption_rate
+
+  !*****************************
+  !desorption rate Cazaux+2010, Hocuk+2014
+  function dust_desorption_rate(fice,Eice,Ebare,Tdust)
+    implicit none
+    real*8::dust_desorption_rate
+    real*8::fice,Eice,Ebare,Tdust,nu0,invTd,fbare
+    
+    nu0 = 1d12 !1/s
+    invTd = 1d0 / Tdust
+    fbare = 1d0 - fice
+    dust_desorption_rate = nu0 * (fbare * exp(-Ebare*invTd) &
+         + fice * exp(-Eice*invTd))
+
+  end function dust_desorption_rate
+  
+  !**************************
+  function dust_2body_rate(m1,m2,Ea,asize2,nndust,fice,Eice1,Eice2,Ebare1,Ebare2,Tdust)
+    use krome_constants
+    implicit none
+    real*8::m1,m2,Ea,asize2,nndust,fice,Eice1,Eice2,Ebare1,Ebare2,Tdust
+    real*8::nu0,mred,a,p,dust_2body_rate,fbare,Td23,iapp2
+
+    iapp2 = (3d8)**-2 !1/cm2
+    Td23 = -2.d0/3d0/Tdust
+    fbare = 1d0-fice
+    a = 1d-8 !cm
+    nu0 = 1d12 ! 1/s
+    mred = m1*m2/(m1+m2)
+    p = exp(-a/pi/planck_erg*sqrt(2d0*mred*boltzmann_erg*Ea))
+    dust_2body_rate = nu0*fbare*(exp(Td23*Ebare1)+exp(Td23*Ebare2)) &
+         + nu0*fice*(exp(Td23*Eice1)+exp(Td23*Eice2))
+
+    dust_2body_rate = dust_2body_rate * p * nndust * pi * asize2 * 4d0 * iapp2
+
+  end function dust_2body_rate
+
+  !****************************
+  !returns an array with the sticking coefficient for each bin
+  ! following Hollenbach+McKee 1979
+  function dust_stick_array(Tgas,Tdust)
+    use krome_commons
+    implicit none
+    real*8::dust_stick_array(ndust),Tgas,Tdust(ndust)
+    real*8::Tg100,Td100
+    integer::i
+
+    Tg100 = Tgas * 1d-2
+    do i=1,ndust
+       Td100 = Tdust(i) * 1d-2
+       dust_stick_array(i) = 1d0/(1d0+.4d0*sqrt(Tg100+Td100) &
+            + .2d0*Tg100 + 0.08d0*Tg100**2) 
+    end do
+
+  end function dust_stick_array
+
+  !***************************
+  function dust_ice_fraction_array(adust2,nndust,nH2O)
+    use krome_constants
+    use krome_commons
+    implicit none
+    integer::i
+    real*8::dust_ice_fraction_array(ndust)
+    real*8::adust2(:),nndust(:),nH2O(:),phi,iapp2
+
+    iapp2 = (3d8)**-2 !1/cm2
+
+    do i=1,ndust
+       phi = adust2(i)*nndust(i)*4d0/iapp2*pi
+       dust_ice_fraction_array(i) = min(nH2O(i) / phi, 1d0)
+    end do
+
+  end function dust_ice_fraction_array
 
   !***************************
   !get the index of the specie name

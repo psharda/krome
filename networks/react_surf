@@ -1,0 +1,13 @@
+#THIS IS A TEST NETWORK: DO NOT USE!
+
+@ghost:H
+
+@surface_start
+@format:idx,R,P,rate
+ 1,O2,O2_dust,auto
+ 2,O2_dust,O2,auto
+ 3,H2O_dust,H2O_dust,0d0
+@format:idx,R,R,P,rate
+ 4,O2_dust,H_dust,HO2_dust,auto
+@surface_stop
+

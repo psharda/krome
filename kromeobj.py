@@ -1583,17 +1583,12 @@ class krome():
 				
 
 				#look for array definition in var token
-				var_array_size = "0" #size of the array can be a variable
-				if("[" in arow[0]):
-					arow[0] = arow[0].replace(" ","") #replace spaces
-					var_array_size = arow[0].split("[")[1].split("]")[0] #grep inside brackets
-					arow[0] = arow[0].replace("["+var_array_size+"]","") #replace braketes and content
-					arow[0] = arow[0]+"("+var_array_size+")" #set variable definition
+				arow[0] = coeVarArray(arow[0])
 
 				#check if the current @var is allowed
 				notAllowedVars = ["k","tgas","energy_ev","n"]
 				for nav in notAllowedVars:
-					if(nav.lower()==arow[0].lower()):
+					if(nav.lower()==arow[0].split("(")[0].strip().lower()):
 						sys.exit("ERROR: you can't use "+nav+" as an @var variable")
 
 				#check if the variable belongs to cooling or rate coefficient variables
@@ -1964,82 +1959,6 @@ class krome():
 	
 		#after loop on file post-process special reactions
 
-		
-		if(False):
-			#when dust is enabled remove surface molecules that 
-			# added later as bin-based
-			uspecs = []
-			if(self.dustArraySize>0):
-				for x in specs:
-					if(x.is_surface): continue
-					uspecs.append(x)
-			specs = uspecs[:] #copy list with non-surafce species only
-
-			#extend surface species using bins
-			for rea in reacts:
-				if(not(rea.isSurface)): continue
-				foundSurface = False		
-				#append _binNumber to surface species name and update specs list
-				for x in rea.reactants+rea.products:
-					if(x.is_surface):
-						foundSurface = True #flag to control if surface species is found
-						for idust in range(self.dustArraySize):
-							mol = parser(x.name,mass_dic,atoms,thermodata,idust+1)
-							if(mol in specs): continue
-							mol.idx = len(specs)+1
-							specs.append(mol) #append bin-based surface species to species list
-				#surface reaction must have surface species
-				if(not(foundSurface)):
-					print "ERROR: surface reaction without surface species found!"
-					print rea.verbatim
-					sys.exit()
-			for i in range(len(specs)):
-				specs[i].idx = i+1
-
-			ureacts = []
-			for rea in reacts:
-				#rea.idx = len(ureacts)+1
-				#rea.build_RHS()
-				#if(not(rea.isSurface)): 
-				#	ureacts.append(rea)
-				#	continue
-
-				for idust in range(self.dustArraySize):
-					ureactants = []
-					rea2 = copy.copy(rea)
-					print rea2.verbatim
-					for rr in rea2.reactants:
-						rr = copy.copy(rr)
-						if(rr.is_surface):
-							rr.name = rr.name+"_"+str(idust+1)
-							rr.parentDustBin = idust+1
-							for sp in specs:
-								if(sp.name==rr.name):
-									rr.idx = sp.idx
-									break
-						ureactants.append(rr)
-					uproducts = []
-					for pp in rea2.products:
-						pp = copy.copy(pp)
-						if(pp.is_surface):
-							pp.name = pp.name+"_"+str(idust+1)
-							pp.parentDustBin = idust+1
-							for sp in specs:
-								if(sp.name==pp.name):
-									pp.idx = sp.idx
-									break
-
-						print pp.name
-						uproducts.append(pp)
-					rea2.reactants = ureactants[:]
-					rea2.products = uproducts[:]
-					rea2.idx = len(ureacts)+1
-					rea2.build_verbatim()
-					rea2.build_RHS()
-					ureacts.append(rea2)
-					if(not(rea.isSurface)): break
-
-			reacts = ureacts[:]
 
 		#shielding reactions requires fsh variable
 		if((self.useShieldingDB96 or self.useShieldingWG11) and not(fsh_found)):
@@ -2178,22 +2097,33 @@ class krome():
 				print "ERROR: folder "+fdbase+" not found!"
 				sys.exit()
 			file_list = [f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))]
+			extraVars = dict() #dict of the extra varaibles, with key=filename
 			for fname in file_list:
 				fname = fdbase + fname
+				if("~" in fname): continue
+				extraVars[fname] = []
 				fhdbase = open(fname,"rb") #open the database
 				#load the database into an array of dictionaries
 				for row in fhdbase:
 					srow = row.strip()
 					if(srow==""): continue #skip blank
+					if(srow=="#BREAK DATABASE"): break
 					if(srow[0]=="#"): continue #skip comments
+					#serach for extra variables and append
+					if("@var" in srow):
+						extraVars[fname].append(srow)
 					#each reaction block starts with @type, init the reaction dictionary
 					if("@type:" in srow):
 						myrea = dict()
+						myrea["autoFname"] = fname
 					myrea.update(at_extract(srow)) #append to the dictionary
 					#each reaction block ends with @rate, append to the main database array
 					if("@rate:" in srow):
 						autoreacts.append(myrea)
+
+			
 			#loop on the reactions to find auto
+			necessaryExtraVars = []
 			for i in range(len(reacts)):
 				rea = reacts[i]
 				if(rea.kphrate==None):
@@ -2207,15 +2137,26 @@ class krome():
 					autor = [x.upper().strip() for x in autorea["reacts"].split(",")] #list of reacts
 					if(sorted([x.name for x in rea.reactants])!=sorted(autor)): continue
 					if(sorted([x.name for x in rea.products])!=sorted(autop)): continue
+					#if there are necessay variables in the datafile that contains this reaction,
+					# it appends to the list of the necessaryExtraVars
+					extraVar = extraVars[autorea["autoFname"]]
+					if(len(extraVar)>0):
+						for ev in extraVar:
+							if(ev in necessaryExtraVars): continue
+							necessaryExtraVars.append(ev)
+
 					dbFound = True
 					#handle photochemistry
 					if(rea.kphrate=="auto"):
 						reacts[i].kphrate = autorea["rate"]
 					else:
 						reacts[i].krate = autorea["rate"]
-
-					reacts[i].Tmin = autorea["limits"].split(",")[0].strip()
-					reacts[i].Tmax = autorea["limits"].split(",")[1].strip()
+					if(autorea["limits"].strip()!=""):
+						reacts[i].Tmin = autorea["limits"].split(",")[0].strip()
+						reacts[i].Tmax = autorea["limits"].split(",")[1].strip()
+					else:
+						reacts[i].Tmin = "2.73d0"
+						reacts[i].Tmax = "1d8"
 					print "automatic reaction found!",rea.verbatim
 					break
 				#error if automatic reaction not found
@@ -2227,6 +2168,73 @@ class krome():
 					print "2. provide a non-automatic reaction rate"
 					print "3. add to the databse "+fdbase
 					sys.exit()
+
+			#add @var to varcoe if necessary
+			for ev in necessaryExtraVars:
+				ev = ev.replace("@var:","")
+				nameVar, exprVar = [x.strip() for x in ev.split("=")]
+				nameVar = coeVarArray(nameVar) #check for array
+				if(nameVar in self.coevars): continue
+				self.coevars[nameVar] = [len(self.coevars),exprVar]
+				
+
+		#increase the species to include bin-based surface species 
+		uspecs = []
+		for sp in specs:
+			#if surface add species for each dust bin (append _BinIndex)
+			if(sp.is_surface):
+				#loop on the number of bins (all types)
+				for idust in range(self.dustArraySize*len(self.dustTypes)):
+					sp2 = parser(sp.name,mass_dic,atoms,thermodata,idust+1) #parse the new species
+					sp2.idx = len(uspecs) + 1 #increase species index
+					uspecs.append(sp2) #append to the new array
+			else:
+				#non-surface species only need a new index
+				sp.idx = len(uspecs) + 1
+				uspecs.append(sp)
+		specs = uspecs[:] #copy the extended species list to the old one
+
+
+		#increase the number of reactions to include bin-based surface reactions
+		ureacts = []
+		for rea in reacts:
+			#add reactions when a surface reaction is found
+			if(rea.isSurface):
+				#loop on the number of dust bins (all types)
+				for idust in range(self.dustArraySize*len(self.dustTypes)):
+					rea2 = copy.copy(rea) #make a copy of the reaction
+					dtype = self.dustTypes[idust/self.dustArraySize]
+					jdust = idust-self.dustArraySize*int(idust/self.dustArraySize) + 1
+					rea2.krate = rea2.krate.replace("auto_jdust","idx_dust_"+dtype+"_"+str(jdust))
+
+					ureactants = rea2.reactants[:] #work on a copy of the reactants
+					#loop on reactants
+					for ir in range(len(ureactants)):
+						rr = ureactants[ir]
+						if(not(rr.is_surface)): continue #non-surface reactants remain the same
+						ureactants[ir] = copy.copy(searchSpeciesByName(specs,rr.name+"_"+str(idust+1))) #copy the object with the name species_BinIndex
+					rea2.reactants = ureactants[:] #copy back the list to the list of the reactants
+
+					uproducts = rea2.products[:] #work on a copy of the products
+					#loop on products
+					for ip in range(len(uproducts)):
+						pp = uproducts[ip]
+						if(not(pp.is_surface)): continue #non-surface reactants remains the same
+						uproducts[ip] = copy.copy(searchSpeciesByName(specs,pp.name+"_"+str(idust+1))) #copy the object with the name species_BinIndex
+					rea2.products = uproducts[:] #copy the list of the products to the list of the products of the copied reaction
+
+					rea2.idx = len(ureacts)+1 #reaction index
+					rea2.build_RHS() #prepare RHS
+					rea2.build_verbatim() #prepare verbatim reaction
+					ureacts.append(rea2) #append to the array
+			else:
+				#non-surface reactions only need a new index
+				rea.idx = len(ureacts)+1
+				ureacts.append(rea)
+
+		reacts = ureacts[:] #copy the extended list of reactions to the old one
+
+
 
 		#update number of connection per species
 		for rea in reacts:
@@ -3680,6 +3688,7 @@ class krome():
 		constants.append(["km_to_cm","1d5","km -> cm"]) 
 		constants.append(["cm_to_Mpc","1.d0/3.08d24","cm -> Mpc"]) 
 		constants.append(["kvgas_erg","8.d0*boltzmann_erg/pi/p_mass",""]) 
+		constants.append(["pre_kvgas_sqrt","sqrt(8.d0*boltzmann_erg/pi)",""]) 
 		constants.append(["pre_planck","2.d0*planck_erg/clight**2","erg/cm2*s3"]) 
 		constants.append(["exp_planck","planck_erg / boltzmann_erg","s*K"]) 
 		constants.append(["stefboltz_erg","5.670373d-5","erg/s/cm2/K4"])
@@ -3980,7 +3989,7 @@ class krome():
 					#check array variables
 					if("(" in varName): varName = varName.split("(")[0]+"(:)"
 					#write vars
-					fout.write("!preprocessed from coevars\n")
+					#fout.write("!preprocessed from coevars\n")
 					fout.write(varName+" = "+varExpr+"\n")
 			elif(srow == "#KROME_masses"):
 				for x in specs:
@@ -3991,6 +4000,13 @@ class krome():
 					myimass = 0e0
 					if(x.mass!=0e0): myimass = 1e0/x.mass
 					imassrow = "\tget_imass("+str(x.idx)+") = " + str(myimass).replace("e","d") + "\t!" + x.name + "\n"
+					fout.write(imassrow.replace("0.0","0.d0"))
+			elif(srow == "#KROME_imasses_sqrt"):
+				from math import sqrt
+				for x in specs:
+					myimass = 0e0
+					if(x.mass!=0e0): myimass = 1e0/sqrt(x.mass)
+					imassrow = "\tget_imass_sqrt("+str(x.idx)+") = " + str(myimass).replace("e","d") + "\t!" + x.name + "\n"
 					fout.write(imassrow.replace("0.0","0.d0"))
 			elif(srow == "#KROME_zatoms"):
 				for x in specs:
@@ -6423,13 +6439,15 @@ class krome():
 					fout.write(get_example(nmols,useX))
 					fout.close()
 					indentF90(buildFolder+"test.f90")
+					foundList = ["#KROME_compiler"]
+					repList = [self.compiler]
 					if(self.buildCompact):
-						shutil.copyfile("tests/MakefileCompact", buildFolder+"Makefile")
+						self.replacein("tests/MakefileCompact", buildFolder+"Makefile", foundList, repList, False)
 					else:
 						if(self.pedanticMakefile):
-							shutil.copyfile("tests/Makefile_pedantic", buildFolder+"Makefile")
+							self.replacein("tests/Makefile_pedantic", buildFolder+"Makefile", foundList, repList, False)
 						else:
-							shutil.copyfile("tests/Makefile", buildFolder+"Makefile")
+							self.replacein("tests/Makefile", buildFolder+"Makefile", foundList, repList, False)
 
 		#IF IT IS A TEST
 		else:

@@ -258,6 +258,14 @@ class reaction():
 		if(ndif!=0): kk ="0.d0"  #" * (1.3806488d-2 * Tgas)**("+str(ndif)+")"
 		return kk
 
+#############################################
+#find a species with the given name and return it as an object
+def searchSpeciesByName(speciesList,speciesName):
+	for xsp in speciesList:
+		if(xsp.name==speciesName): return xsp
+
+	sys.exit("ERROR: species "+speciesName+" not found by searchSpeciesByName!")
+
 #################################
 #create tabvar (probably not the best interface ever)
 def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpaths,anytabsizes,coevars):
@@ -661,15 +669,29 @@ def truncF90(mystr, sublen, sep):
 		s += zep + x
 		z += zep + x
 		first = False
-	return s.replace("##","**")	
+	return s.replace("##","**")
+
+
+##################################
+#look for array definition in var token and prepare variable name according to array size
+def coeVarArray(varin):
+	if("[" in varin):
+		varin = varin.replace(" ","") #replace spaces
+		var_array_size = varin.split("[")[1].split("]")[0] #grep inside brackets
+		varin = varin.replace("["+var_array_size+"]","") #replace braketes and content
+		varin = varin+"("+var_array_size+")" #set variable definition
+
+	return varin
+
 
 ################################
 def at_extract(arg):
 	aarg = arg.split(":")
-	if(len(aarg)!=2):
+	if(len(aarg)<2):
 		print "ERROR: @label:value format not respected for"
 		print arg
 		sys.exit()
+	aarg[1] = (":".join(aarg[1:]))
 	aarg[0] = aarg[0].replace("@","")
 	return {aarg[0]:aarg[1]}
 
