@@ -672,23 +672,25 @@ contains
     fbare = 1d0 - fice
     dust_desorption_rate = nu0 * (fbare * exp(-Ebare*invTd) &
          + fice * exp(-Eice*invTd))
+    dust_desorption_rate = min(dust_desorption_rate,1d0)
 
   end function dust_desorption_rate
   
   !**************************
-  function dust_2body_rate(m1,m2,Ea,asize2,nndust,fice,Eice1,Eice2,Ebare1,Ebare2,Tdust)
+  function dust_2body_rate(p,asize2,nndust,fice,Eice1,Eice2,Ebare1,Ebare2,Tdust)
     use krome_constants
     implicit none
-    real*8::m1,m2,Ea,asize2,nndust,fice,Eice1,Eice2,Ebare1,Ebare2,Tdust
-    real*8::nu0,mred,a,p,dust_2body_rate,fbare,Td23,iapp2
+    real*8::asize2,nndust,fice,Eice1,Eice2,Ebare1,Ebare2,Tdust
+    real*8::nu0,p,dust_2body_rate,fbare,Td23,iapp2
+
+    !no need to calculate this if the dust is not present
+    dust_2body_rate = 0d0
+    if(nndust<1d-20) return
 
     iapp2 = (3d8)**-2 !1/cm2
     Td23 = -2.d0/3d0/Tdust
     fbare = 1d0-fice
-    a = 1d-8 !cm
     nu0 = 1d12 ! 1/s
-    mred = m1*m2/(m1+m2)
-    p = exp(-a/pi/planck_erg*sqrt(2d0*mred*boltzmann_erg*Ea))
     dust_2body_rate = nu0*fbare*(exp(Td23*Ebare1)+exp(Td23*Ebare2)) &
          + nu0*fice*(exp(Td23*Eice1)+exp(Td23*Eice2))
 
@@ -725,8 +727,10 @@ contains
     real*8::adust2(:),nndust(:),nH2O(:),phi,iapp2
 
     iapp2 = (3d8)**-2 !1/cm2
-
+    
+    dust_ice_fraction_array(:) = 0d0
     do i=1,ndust
+       if(nndust(i)<1d-20) cycle
        phi = adust2(i)*nndust(i)*4d0/iapp2*pi
        dust_ice_fraction_array(i) = min(nH2O(i) / phi, 1d0)
     end do

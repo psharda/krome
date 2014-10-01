@@ -371,6 +371,12 @@ class krome():
 			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=T,H2","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
+		elif(args.test=="collapseSurface"):
+			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-dust=3,C","-dustOptions=T","-useCoolCMBFloorZ"]]
+			filename = "networks/react_primordialZ_surface"
+			test_status = "dev" #under developement
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
@@ -2157,6 +2163,7 @@ class krome():
 					else:
 						reacts[i].Tmin = "2.73d0"
 						reacts[i].Tmax = "1d8"
+						reacts[i].hasTlimitMax = reacts[i].hasTlimitMin = False 
 					print "automatic reaction found!",rea.verbatim
 					break
 				#error if automatic reaction not found
@@ -5168,8 +5175,16 @@ class krome():
 			if(skip): continue
 
 			if(srow == "#KROME_species"):
+				allBasics = []
 				for x in specs:
+					if(x.is_surface):
+						xbasic = ("_".join(x.fidx.split("_")[:-1]))
+						xname = ("_".join(x.name.split("_")[:-1]))
+						if(not(xbasic in allBasics)):
+							fout.write("\tinteger,parameter::" + "KROME_"+xbasic + " = " + str(x.idx) +"\t!"+xname+"\n")
+							allBasics.append(xbasic)						
 					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
+
 			elif(srow == "#KROME_user_commons_functions"):
 				funcs = ""
 				for x in self.commonvars:

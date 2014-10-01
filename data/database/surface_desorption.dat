@@ -1,4 +1,4 @@
-@var:[ndust] ice_fraction = dust_ice_fraction_array(krome_dust_asize2(:),n(nmols+1:nmols+ndust),n(idx_H2O_dust_1:idx_H2O_dust_1+nmols))
+@var:[ndust] ice_fraction = dust_ice_fraction_array(krome_dust_asize2(:),n(nmols+1:nmols+ndust),n(idx_H2O_dust_1:idx_H2O_dust_1+ndust))
 
 
 #Desorption rate for H from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
