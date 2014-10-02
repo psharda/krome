@@ -82,5 +82,17 @@ module krome_commons
   integer,parameter::mayern=15,mayerm=23
   real*8::mayer_x(mayern),mayer_y(mayerm)
   real*8::mayer_z(mayern,mayerm),mayer_xmul,mayer_ymul
+
+  !commons for exp(-a/T) table
+  integer,parameter::exp_table_na=100,exp_table_nT=100
+  real*8,parameter::exp_table_aMax=1d4,exp_table_aMin=1d0
+  real*8,parameter::exp_table_TMax=1d4,exp_table_TMin=1d0
+  real*8,parameter::exp_table_multa=(exp_table_na-1) / (exp_table_aMax-exp_table_aMin)
+  real*8,parameter::exp_table_multT=(exp_table_nT-1) / (exp_table_TMax-exp_table_TMin)
+  real*8,parameter::exp_table_da=1d0/exp_table_multa
+  real*8,parameter::exp_table_dT=1d0/exp_table_multT
+  
+  real*8::exp_table(exp_table_na,exp_table_nT)
+
   
 end module krome_commons

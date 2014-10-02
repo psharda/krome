@@ -115,30 +115,37 @@ data2b = sorted(data2b,key=lambda x:len(x[1]))
 #	print
 
 
-#for mol in mols:
-#	print "#Desorption rate for "+mol+" from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014"
-#	print "@type: desorption"
-#	print "@reacts: "+mol+"_dust"
-#	print "@prods: "+mol
-#	print "@limits:"
-#	Eice = d90(data[mol][1])
-#	Ebare = d90(data[mol][0])
-#	print "@rate: dust_desorption_rate(fice(auto_jdust),"+Eice+","+Ebare+")"
-#	print
+fout = open("surface_desorption.dat","w")
+fout.write("@var:[ndust] ice_fraction = dust_ice_fraction_array(krome_dust_asize2(:),n(nmols+1:nmols+ndust),n(idx_H2O_dust_1:idx_H2O_dust_1+ndust))\n")
+for mol in mols:
+	fout.write("#Desorption rate for "+mol+" from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014\n")
+	fout.write("@type: desorption\n")
+	fout.write("@reacts: "+mol+"_dust\n")
+	fout.write("@prods: "+mol+"\n")
+	fout.write("@limits:\n")
+	#Eice = d90(data[mol][1])
+	#Ebare = d90(data[mol][0]) #dust_desorption_rate(ice_fraction(auto_jdust-nmols),6.5d2,5d2,krome_dust_T(auto_jdust-nmols))
+	Eice = "Eice_exp(idx_"+mol+"_DUST_auto_idx)"
+	Ebare = "Ebare_exp(idx_"+mol+"_DUST_auto_idx)"
+	fout.write("@rate: dust_desorption_rate(ice_fraction(auto_jdust-nmols),"+Eice+","+Ebare+",krome_dust_T(auto_jdust-nmols))\n")
+	fout.write("\n")
+fout.close()
 
 
-print "@var:[ndust] ice_fraction = dust_ice_fraction_array(krome_dust_asize2(:),n(nmols+1:nmols+ndust),n(idx_H2O_dust_1:idx_H2O_dust_1+nmols))"
-print "@var:[nspec] m = get_mass()"
-print 
-print
+fout = open("surface_2body.dat","w")
+fout.write("@var:[ndust] ice_fraction = dust_ice_fraction_array(krome_dust_asize2(:),n(nmols+1:nmols+ndust),n(idx_H2O_dust_1:idx_H2O_dust_1+nmols))\n")
+fout.write("@var:[nspec] m = get_mass()\n")
+fout.write("@var:[nspec] Eice_exp = get_Eice_exp_array(krome_dust_T(:))\n")
+fout.write("@var:[nspec] Ebare_exp = get_Ebare_exp_array(krome_dust_T(:))\n")
+fout.write("\n\n")
 
 for rea2 in data2b:
 	verb = (" + ".join(rea2[0]))+" -> "+(" + ".join(rea2[1]))
-	print "#2-body rate on surface ("+verb+") from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014"
-	print "@type: surf2body"
-	print "@reacts: "+(",".join([x+"_dust" for x in rea2[0]]))
-	print "@prods: "+(",".join([x+"_dust" for x in rea2[1]]))
-	print "@limits:"
+	fout.write("#2-body rate on surface ("+verb+") from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014\n")
+	fout.write("@type: surf2body\n")
+	fout.write("@reacts: "+(",".join([x+"_dust" for x in rea2[0]]))+"\n")
+	fout.write("@prods: "+(",".join([x+"_dust" for x in rea2[1]]))+"\n")
+	fout.write("@limits:\n")
 	Ea = float(rea2[2]) #K
 	r1,r2 = rea2[0]
 	Eice1 = d90(data[r1][1])
@@ -154,8 +161,11 @@ for rea2 in data2b:
 	P = exp(-aa/3.1415/hplanck*sqrt(2e0*mred*kboltzmann*Ea))
 	#print P
 	P = d90(P)
-	print "@rate: dust_2body_rate("+P+",krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),"+Eice1+","+Eice2+","+Ebare1+","+Ebare2+\
-		",krome_dust_T(auto_jdust-nmols))"
-	print
+	Eice1 = "Eice_exp(idx_"+r1+"_DUST_auto_idx)"
+	Ebare1 = "Ebare_exp(idx_"+r1+"_DUST_auto_idx)"
+	Eice2 = "Eice_exp(idx_"+r2+"_DUST_auto_idx)"
+	Ebare2 = "Ebare_exp(idx_"+r2+"_DUST_auto_idx)"
+	fout.write("@rate: dust_2body_rate("+P+",krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),"+Eice1+","+Eice2+","+Ebare1+","+Ebare2+\
+		",krome_dust_T(auto_jdust-nmols))\n\n")
 
-
+fout.close()
