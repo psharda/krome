@@ -56,6 +56,7 @@ class molec():
 	fidx = "idx_" #index for fortran (e.g. H+=idx_Hj, D-=idx_Dk)
 	is_atom = False #flag to identify atoms
 	is_surface = False #flag for species on surface
+	Ebind_ice = Ebind_bare = 0e0 #binding energy on surface for ice and bare grain
 	parentDustBin = 0 #for surface species: belongs to this dust bin (1-based)
 	chempot = 0. #chemical potential (J/mol)
 	poly1 = [0.e0]*7 #nasa polynomials (usually 200-1000K)

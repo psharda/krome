@@ -662,37 +662,37 @@ contains
 
   !*****************************
   !desorption rate Cazaux+2010, Hocuk+2014
-  function dust_desorption_rate(fice,Eice,Ebare,Tdust)
+  function dust_desorption_rate(fice,expEice,expEbare,Tdust)
     implicit none
     real*8::dust_desorption_rate
-    real*8::fice,Eice,Ebare,Tdust,nu0,invTd,fbare
+    real*8::fice,expEice,expEbare,Tdust,nu0,invTd,fbare
     
     nu0 = 1d12 !1/s
     invTd = 1d0 / Tdust
     fbare = 1d0 - fice
-    dust_desorption_rate = nu0 * (fbare * exp(-Ebare*invTd) &
-         + fice * exp(-Eice*invTd))
+    dust_desorption_rate = nu0 * (fbare * expEbare &
+         + fice * expEice)
     dust_desorption_rate = min(dust_desorption_rate,1d0)
 
   end function dust_desorption_rate
   
   !**************************
-  function dust_2body_rate(p,asize2,nndust,fice,Eice1,Eice2,Ebare1,Ebare2,Tdust)
+  function dust_2body_rate(p,asize2,nndust,fice,expEice1,expEice2,expEbare1,expEbare2,Tdust)
     use krome_constants
     implicit none
-    real*8::asize2,nndust,fice,Eice1,Eice2,Ebare1,Ebare2,Tdust
-    real*8::nu0,p,dust_2body_rate,fbare,Td23,iapp2
+    real*8::asize2,nndust,fice,expEice1,expEice2,expEbare1,expEbare2,Tdust
+    real*8::nu0,p,dust_2body_rate,fbare,Td23,iapp2,pre
 
     !no need to calculate this if the dust is not present
     dust_2body_rate = 0d0
     if(nndust<1d-20) return
 
     iapp2 = (3d8)**-2 !1/cm2
-    Td23 = -2.d0/3d0/Tdust
+    pre = 2d0/3d0
     fbare = 1d0-fice
     nu0 = 1d12 ! 1/s
-    dust_2body_rate = nu0*fbare*(exp(Td23*Ebare1)+exp(Td23*Ebare2)) &
-         + nu0*fice*(exp(Td23*Eice1)+exp(Td23*Eice2))
+    dust_2body_rate = nu0 * fbare * (expEbare1 + expEbare2) &
+         + nu0 * fice * (expEice1 + expEice2)
 
     dust_2body_rate = dust_2body_rate * p * nndust * pi * asize2 * 4d0 * iapp2
 
@@ -736,6 +736,133 @@ contains
     end do
 
   end function dust_ice_fraction_array
+
+  !***********************************
+  subroutine init_exp_table()
+    use krome_commons
+    implicit none
+    integer::i,j
+    real*8::a,T
+
+    do i=1,exp_table_na
+       a = (i-1)*(exp_table_aMax-exp_table_aMin)/(exp_table_na-1) + exp_table_aMin
+       do j=1,exp_table_nT
+          T = (j-1)*(exp_table_TMax-exp_table_TMin)/(exp_table_nT-1) + exp_table_TMin
+          exp_table(i,j) = exp(-a/T)
+       end do
+    end do
+  end subroutine init_exp_table
+
+
+  !*****************************
+  function get_exp_table(a,T)
+    use krome_commons
+    implicit none
+    integer::iT,ia
+    real*8::get_exp_table,a,T
+    real*8::x1a,x2a,x1T,x2T,f1L,f2L,f1R,f2R,fL,fR
+    
+    iT = (T-exp_table_TMin) * exp_table_multT + 1
+    ia = (a-exp_table_aMin) * exp_table_multa + 1
+
+    x1a = (ia-1)*exp_table_da
+    !x2a = x1a + exp_table_da
+
+    x1T = (iT-1)*exp_table_dT
+    !x2T = x1T + exp_table_dT
+
+    f1L = exp_table(ia,iT)
+    f2L = exp_table(ia,iT+1)
+
+    f1R = exp_table(ia+1,iT)
+    f2R = exp_table(ia+1,iT+1)
+
+    fL = (T-x1T) * exp_table_multT * (f2L-f1L) + f1L
+    fR = (T-x1T) * exp_table_multT * (f2R-f1R) + f1R
+
+    get_exp_table = (a-x1a) * exp_table_multa * (fR-fL) + fL
+    
+  end function get_exp_table
+
+  !*****************************
+  function get_Eice_exp_array(Tdust)
+    use krome_commons
+    implicit none
+    integer::i,idx,parents(nspec)
+    real*8::get_Eice_exp_array(nspec),Tdust(ndust),Ebinds(nspec)
+
+    Ebinds(:) = get_Ebind_ice()
+    parents(:) = get_parent_dust_bin()
+    get_Eice_exp_array(:) = 0d0
+    
+    do i=1,nmols
+       if(Ebinds(i)==0d0) cycle
+       idx = parents(i)
+       get_Eice_exp_array(i) = get_exp_table(Ebinds(i),Tdust(idx))
+    end do
+    
+  end function get_Eice_exp_array
+
+  !*****************************
+  function get_Ebare_exp_array(Tdust)
+    use krome_commons
+    implicit none
+    integer::i,idx,parents(nspec)
+    real*8::get_Ebare_exp_array(nspec),Tdust(ndust),Ebinds(nspec)
+
+
+    Ebinds(:) = get_Ebind_bare()
+    parents(:) = get_parent_dust_bin()
+    get_Ebare_exp_array(:) = 0d0
+
+    do i=1,nmols
+       if(Ebinds(i)==0d0) cycle
+       idx = parents(i)
+       get_Ebare_exp_array(i) = get_exp_table(Ebinds(i),Tdust(idx))
+    end do
+
+
+  end function get_Ebare_exp_array
+
+  !************************
+  !returns the binding energy for ice coated grain (K)
+  function get_Ebind_ice()
+    use krome_commons
+    implicit none
+    real*8::get_Ebind_ice(nspec)
+
+    get_Ebind_ice(:) = 0d0
+    
+#KROME_Ebind_ice
+
+  end function get_Ebind_ice
+
+  !************************
+  !returns the binding energy for bare grain (K)
+  function get_Ebind_bare()
+    use krome_commons
+    implicit none
+    real*8::get_Ebind_bare(nspec)
+
+    get_Ebind_bare(:) = 0d0
+
+#KROME_Ebind_bare
+
+  end function get_Ebind_bare
+
+ !************************
+  !returns the index of the parent dust bin (0 if none)
+  function get_parent_dust_bin()
+    use krome_commons
+    implicit none
+    integer::get_parent_dust_bin(nspec)
+
+    get_parent_dust_bin(:) = 0
+
+#KROME_parent_dust_bin
+
+  end function get_parent_dust_bin
+
 
   !***************************
   !get the index of the specie name

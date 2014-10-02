@@ -2185,6 +2185,16 @@ class krome():
 				self.coevars[nameVar] = [len(self.coevars),exprVar]
 				
 
+		#load bare and ice binding energy from file into a dictionary (K)
+		fhbind = open("data/Ebare_ice.dat","rb")
+		Ebind = dict()
+		for row in fhbind:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow[0]=="#"): continue
+			Ebind_spec, Ebind_bare, Ebind_ice = [x for x in srow.split(" ") if x!=""]
+			Ebind[(Ebind_spec+"_DUST").upper()] = {"Ebare": Ebind_bare, "Eice":Ebind_ice}
+
 		#increase the species to include bin-based surface species 
 		uspecs = []
 		for sp in specs:
@@ -2194,6 +2204,10 @@ class krome():
 				for idust in range(self.dustArraySize*len(self.dustTypes)):
 					sp2 = parser(sp.name,mass_dic,atoms,thermodata,idust+1) #parse the new species
 					sp2.idx = len(uspecs) + 1 #increase species index
+					#if binding energy on surface are availble update
+					if(sp.name.upper() in Ebind): 
+						sp2.Ebind_ice = Ebind[sp.name.upper()]["Eice"]
+						sp2.Ebind_bare = Ebind[sp.name.upper()]["Ebare"]
 					uspecs.append(sp2) #append to the new array
 			else:
 				#non-surface species only need a new index
@@ -2213,6 +2227,7 @@ class krome():
 					dtype = self.dustTypes[idust/self.dustArraySize]
 					jdust = idust-self.dustArraySize*int(idust/self.dustArraySize) + 1
 					rea2.krate = rea2.krate.replace("auto_jdust","idx_dust_"+dtype+"_"+str(jdust))
+					rea2.krate = rea2.krate.replace("auto_idx",str(jdust))
 
 					ureactants = rea2.reactants[:] #work on a copy of the reactants
 					#loop on reactants
@@ -3998,6 +4013,18 @@ class krome():
 					#write vars
 					#fout.write("!preprocessed from coevars\n")
 					fout.write(varName+" = "+varExpr+"\n")
+			elif(srow == "#KROME_Ebind_ice"):
+				for x in specs:
+					if(x.Ebind_ice==0e0): continue
+					fout.write("get_Ebind_ice("+str(x.fidx)+") = "+format_double(x.Ebind_ice)+"\n")
+			elif(srow == "#KROME_Ebind_bare"):
+				for x in specs:
+					if(x.Ebind_bare==0e0): continue
+					fout.write("get_Ebind_bare("+str(x.fidx)+") = "+format_double(x.Ebind_bare)+"\n")
+			elif(srow == "#KROME_parent_dust_bin"):
+				for x in specs:
+					if(x.parentDustBin==0): continue
+					fout.write("get_parent_dust_bin("+str(x.fidx)+") = "+str(x.parentDustBin)+"\n")
 			elif(srow == "#KROME_masses"):
 				for x in specs:
 					massrow = "\tget_mass("+str(x.idx)+") = " + str(x.mass).replace("e","d") + "\t!" + x.name + "\n"
