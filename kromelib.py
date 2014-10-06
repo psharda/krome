@@ -46,7 +46,7 @@ import sys
 class molec():
 	name = "" #molecule name
 	charge = 0 #charge (0=neutral)
-	mass = 0. #mass in g
+	mass = 0e0 #mass in g
 	zatom = 0 #atomic number (also for molecules)
 	neutrons = 0 #total number of neutrons
 	ename = "" #exploded name (e.g. H2C4=CCCCHH)

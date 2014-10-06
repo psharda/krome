@@ -77,7 +77,7 @@ class krome():
 	ATOL = 1e-20 #default absolute tolerance
 	coolingQuench = -1e0 #if coolingQuench is negative cooling quench is not enabled, otherwise this is Tcrit
 	dustArraySize = dustTypesSize = photoBins = 0
-	maxord = 0
+	maxord = 0 #default solver maximum order (0=automatic)
 	dustTypes = []
 	specs = []
 	reacts = []
@@ -98,7 +98,7 @@ class krome():
 	customODEs = [] #custom ODEs
 	nrea = 0 #number of reactions
 	nPhotoRea = 0 #number of photoreactions (for photobin array)
-	dustSeed = "0d0"
+	dustSeed = "0d0" #default for dust seed in cm-3
 	full_cool = vars_cool = ""
 	coolZ_functions = []
 	coolZ_rates = []
@@ -373,8 +373,8 @@ class krome():
 			test_status = "dev" #under developement
 		elif(args.test=="collapseSurface"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
-			[argv.append(x) for x in ["-dust=3,C","-dustOptions=T","-useCoolCMBFloorZ"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=REDUCED","-ATOL=1d-10","-maxord=2","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-dust=3,C","-dustOptions=T","-useCoolCMBFloorZ","-useTabs"]]
 			filename = "networks/react_primordialZ_surface"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseZ"):
@@ -1783,11 +1783,14 @@ class krome():
 			#search for surface chemistry reactions (start)
 			if(srow.lower()=="@surface_start" or srow.lower()=="@surface_begin"):
 				inSurfaceBlock = True
+				noTabBlockStored = noTabNextBlock
+				noTabNext = noTabNextBlock = True
 				continue #SKIP (not a reaction)
 
 			#search for surface chemistry reactions (stop)
 			if(srow.lower()=="@surface_stop" or srow.lower()=="@surface_end"):
 				inSurfaceBlock = False
+				noTabNext = noTabNextBlock = noTabBlockStored #restore the noTabNextBlock value before entering inSurfaceBlock
 				continue #SKIP (not a reaction)
 
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
@@ -3617,8 +3620,21 @@ class krome():
 						nd = ndust/self.dustTypesSize
 						fout.write("\tinteger,parameter::idx_dust_"+dType+"_low=nmols+"+str(nd*idust+1)+"\n")
 						fout.write("\tinteger,parameter::idx_dust_"+dType+"_up=nmols+"+str(nd*(idust+1))+"\n")
-						idust += 1					
-
+						idust += 1
+					#serach for first and last surface species
+					firstSurface = 1e99
+					lastSurface = -1e99
+					surfaceFound = False
+					#loop on species to find surface species
+					for x in self.specs:
+						if(x.is_surface):
+							surfaceFound = True
+							firstSurface = min(firstSurface,x.idx)
+							lastSurface = max(lastSurface,x.idx)
+					#write the indexes of the surface species
+					if(surfaceFound):
+						fout.write("\tinteger,parameter::idx_firstSurface="+str(firstSurface)+"\n")
+						fout.write("\tinteger,parameter::idx_lastSurface="+str(lastSurface)+"\n")
 
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
@@ -3767,6 +3783,29 @@ class krome():
 			print "done!"
 		else:
 			print "WARNING: krome_user_commons.f90 already found in "+buildFolder+" : not replaced!"
+
+	############################################
+	def get_Ebareice(self,fmult,specs,functionName):
+		get_Ebareice_out = ""
+		Ebind23list = dict()
+		for x in specs:
+			if(x.Ebind_ice==0e0): continue
+			Ebind_tupla = str(x.Ebind_ice)+"_"+str(x.parentDustBin)
+			if(Ebind_tupla in Ebind23list):
+				get_Ebareice_out += (functionName+"("+str(x.fidx)+") = "+functionName+"("+str(Ebind23list[Ebind_tupla])+")\n")
+				continue
+			get_Ebareice_out += (functionName+"("+str(x.fidx)+") = get_exp_table("+format_double(fmult*float(x.Ebind_ice))+", invTdust("+str(x.parentDustBin)+"))\n")
+			Ebind23list[Ebind_tupla] = x.fidx
+		for x in specs:
+			if(x.Ebind_bare==0e0): continue
+			Ebind_tupla = str(x.Ebind_bare)+"_"+str(x.parentDustBin)
+			if(Ebind_tupla in Ebind23list):
+				get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = "+functionName+"("+str(Ebind23list[Ebind_tupla])+")\n")
+				continue
+			get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = get_exp_table("+format_double(fmult*float(x.Ebind_bare))+", invTdust("+str(x.parentDustBin)+"))\n")
+			Ebind23list[Ebind_tupla] = x.fidx+"+nspec"
+
+		return get_Ebareice_out
 
 	###################################################
 	def makeSubs(self):
@@ -3930,6 +3969,11 @@ class krome():
 				if(maxprod==0): mysmall = "0d0"
 				fout.write(srow.replace("#KROME_small",mysmall)+"\n")
 				continue
+			elif(srow=="#KROME_Ebareice23"):
+				fout.write(self.get_Ebareice(2e0/3e0, self.specs, "get_Ebareice23_exp_array"))
+
+			elif(srow=="#KROME_Ebareice"):
+				fout.write(self.get_Ebareice(1e0, self.specs, "get_Ebareice_exp_array"))
 
 			#write reaction rates in coe function
 			if(srow == "#KROME_krates"):
@@ -4322,7 +4366,10 @@ class krome():
 				#define variables
 				kvars = "real*8::"+(",".join([x.strip() for x in coevars.keys()]))
 				#variables initialization
-				klist = [[k+" = "+v[1]+"\n",v[0]] for k,v in coevars.iteritems()] #this mess is to sort dict
+				klist = []
+				for k,v in coevars.iteritems():
+					if("(" in k): k = k.split("(")[0]+"(:)" #replace array definition with (:) if necessary
+					klist.append([k+" = "+v[1]+"\n",v[0]]) #this mess is to sort dict
 				klist = sorted(klist, key=lambda x: x[1])
 				klist = "".join([x[0] for x in klist])
 

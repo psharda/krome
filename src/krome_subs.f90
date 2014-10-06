@@ -662,13 +662,12 @@ contains
 
   !*****************************
   !desorption rate Cazaux+2010, Hocuk+2014
-  function dust_desorption_rate(fice,expEice,expEbare,Tdust)
+  function dust_desorption_rate(fice,expEice,expEbare,invTd)
     implicit none
     real*8::dust_desorption_rate
-    real*8::fice,expEice,expEbare,Tdust,nu0,invTd,fbare
+    real*8::fice,expEice,expEbare,nu0,invTd,fbare
     
     nu0 = 1d12 !1/s
-    invTd = 1d0 / Tdust
     fbare = 1d0 - fice
     dust_desorption_rate = nu0 * (fbare * expEbare &
          + fice * expEice)
@@ -741,89 +740,62 @@ contains
   subroutine init_exp_table()
     use krome_commons
     implicit none
-    integer::i,j
-    real*8::a,T
+    integer::i
+    real*8::a
 
     do i=1,exp_table_na
        a = (i-1)*(exp_table_aMax-exp_table_aMin)/(exp_table_na-1) + exp_table_aMin
-       do j=1,exp_table_nT
-          T = (j-1)*(exp_table_TMax-exp_table_TMin)/(exp_table_nT-1) + exp_table_TMin
-          exp_table(i,j) = exp(-a/T)
-       end do
+       exp_table(i) = exp(-a)
     end do
   end subroutine init_exp_table
 
 
   !*****************************
-  function get_exp_table(a,T)
+  function get_exp_table(ain,invT)
     use krome_commons
     implicit none
-    integer::iT,ia
-    real*8::get_exp_table,a,T
-    real*8::x1a,x2a,x1T,x2T,f1L,f2L,f1R,f2R,fL,fR
-    
-    iT = (T-exp_table_TMin) * exp_table_multT + 1
+    integer::ia
+    real*8::get_exp_table,a,invT,ain
+    real*8::x1a,f1,f2
+
+    a = ain*invT
+
     ia = (a-exp_table_aMin) * exp_table_multa + 1
-
+    ia = max(ia,1)
+    ia = min(ia,exp_table_na-1)
     x1a = (ia-1)*exp_table_da
-    !x2a = x1a + exp_table_da
+    
+    f1 = exp_table(ia)
+    f2 = exp_table(ia+1)
 
-    x1T = (iT-1)*exp_table_dT
-    !x2T = x1T + exp_table_dT
-
-    f1L = exp_table(ia,iT)
-    f2L = exp_table(ia,iT+1)
-
-    f1R = exp_table(ia+1,iT)
-    f2R = exp_table(ia+1,iT+1)
-
-    fL = (T-x1T) * exp_table_multT * (f2L-f1L) + f1L
-    fR = (T-x1T) * exp_table_multT * (f2R-f1R) + f1R
-
-    get_exp_table = (a-x1a) * exp_table_multa * (fR-fL) + fL
+    get_exp_table = (a-x1a) * exp_table_multa * (f2-f1) + f1
     
   end function get_exp_table
 
   !*****************************
-  function get_Eice_exp_array(Tdust)
+  function get_Ebareice_exp_array(invTdust)
     use krome_commons
     implicit none
-    integer::i,idx,parents(nspec)
-    real*8::get_Eice_exp_array(nspec),Tdust(ndust),Ebinds(nspec)
+    real*8::get_Ebareice_exp_array(2*nspec),invTdust(ndust)
 
-    Ebinds(:) = get_Ebind_ice()
-    parents(:) = get_parent_dust_bin()
-    get_Eice_exp_array(:) = 0d0
-    
-    do i=1,nmols
-       if(Ebinds(i)==0d0) cycle
-       idx = parents(i)
-       get_Eice_exp_array(i) = get_exp_table(Ebinds(i),Tdust(idx))
-    end do
-    
-  end function get_Eice_exp_array
+    get_Ebareice_exp_array(:) = 0d0
 
+#KROME_Ebareice
+
+  end function get_Ebareice_exp_array
+  
   !*****************************
-  function get_Ebare_exp_array(Tdust)
+  function get_Ebareice23_exp_array(invTdust)
     use krome_commons
     implicit none
-    integer::i,idx,parents(nspec)
-    real*8::get_Ebare_exp_array(nspec),Tdust(ndust),Ebinds(nspec)
+    real*8::get_Ebareice23_exp_array(2*nspec),invTdust(ndust)
 
+    get_Ebareice23_exp_array(:) = 0d0
 
-    Ebinds(:) = get_Ebind_bare()
-    parents(:) = get_parent_dust_bin()
-    get_Ebare_exp_array(:) = 0d0
-
-    do i=1,nmols
-       if(Ebinds(i)==0d0) cycle
-       idx = parents(i)
-       get_Ebare_exp_array(i) = get_exp_table(Ebinds(i),Tdust(idx))
-    end do
-
-
-  end function get_Ebare_exp_array
-
+#KROME_Ebareice23
+    
+  end function get_Ebareice23_exp_array
+  
   !************************
   !returns the binding energy for ice coated grain (K)
   function get_Ebind_ice()

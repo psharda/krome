@@ -100,23 +100,36 @@ data2b = sorted(data2b,key=lambda x:len(x[1]))
 
 
 
+#****ADSORPTION****
 #@type: adsorption
 #@reacts: 
 #@prods: H+, E
 #@limits: 1.360d+01, 5.000d+04
 #@rate: sigma_v96(energy_ev, 4.298d-01, 5.475d+04, 3.288d+01, 2.963d+00, 0.000d+00, 0.000d+00, 0.000d+00)
-#for mol in mols:
-#	print "#Adsorption rate for "+mol+" from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014"
-#	print "@type: adsorption"
-#	print "@reacts: "+mol
-#	print "@prods: "+mol+"_dust"
-#	print "@limits:"
-#	print "@rate: dust_adsorption_rate(n(idx_"+mol+"), n(nmols+jdust), imsqrt(idx_"+mol+"),ads_stick(jdust),krome_adust2(jdust),sqrTgas)"
-#	print
+#@rate: dust_adsorption_rate(n(idx_H), n(auto_jdust), imsqrt(idx_H),ads_stick(auto_jdust-nmols),krome_dust_asize2(auto_jdust-nmols),sqrTgas)
+print "writing adsorption..."
+fout = open("surface_adsorption.dat","w")
+fout.write("@var:[nspec] imsqrt = get_imass_sqrt()\n")
+fout.write("@var:[ndust] ads_stick = dust_stick_array(Tgas,krome_dust_T)\n")
+fout.write("@var: sqrTgas = sqrt(Tgas)\n\n")
+for mol in mols:
+	fout.write("#Adsorption rate for "+mol+" from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014\n")
+	fout.write("@type: adsorption\n")
+	fout.write("@reacts: "+mol+"\n")
+	fout.write("@prods: "+mol+"_dust\n")
+	fout.write("@limits:\n")
+	fout.write("@rate: dust_adsorption_rate(n(idx_"+mol+"), n(auto_jdust), imsqrt(idx_"+mol+"),ads_stick(auto_jdust-nmols),krome_dust_asize2(auto_jdust-nmols),sqrTgas)\n")
+	fout.write("\n")
+fout.close()
 
-
+#****DESORPTION****
+print "writing desorption..."
 fout = open("surface_desorption.dat","w")
 fout.write("@var:[ndust] ice_fraction = dust_ice_fraction_array(krome_dust_asize2(:),n(nmols+1:nmols+ndust),n(idx_H2O_dust_1:idx_H2O_dust_1+ndust))\n")
+fout.write("@var:[ndust] invTdust = 1d0/(krome_dust_T(:)+1d-40)\n")
+fout.write("@var:[2*nspec] Ebareice_exp = get_Ebareice_exp_array(invTdust(:))\n")
+fout.write("@var:[nspec] Eice_exp = Ebareice_exp(1:nspec)\n")
+fout.write("@var:[nspec] Ebare_exp = Ebareice_exp(nspec+1:2*nspec)\n")
 for mol in mols:
 	fout.write("#Desorption rate for "+mol+" from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014\n")
 	fout.write("@type: desorption\n")
@@ -127,16 +140,19 @@ for mol in mols:
 	#Ebare = d90(data[mol][0]) #dust_desorption_rate(ice_fraction(auto_jdust-nmols),6.5d2,5d2,krome_dust_T(auto_jdust-nmols))
 	Eice = "Eice_exp(idx_"+mol+"_DUST_auto_idx)"
 	Ebare = "Ebare_exp(idx_"+mol+"_DUST_auto_idx)"
-	fout.write("@rate: dust_desorption_rate(ice_fraction(auto_jdust-nmols),"+Eice+","+Ebare+",krome_dust_T(auto_jdust-nmols))\n")
+	fout.write("@rate: dust_desorption_rate(ice_fraction(auto_jdust-nmols),"+Eice+","+Ebare+",invTdust(auto_jdust-nmols))\n")
 	fout.write("\n")
 fout.close()
 
-
+#****2BODY****
+print "writing 2body..."
 fout = open("surface_2body.dat","w")
+fout.write("@var:[ndust] invTdust = 1d0/(krome_dust_T(:)+1d-40)\n")
 fout.write("@var:[ndust] ice_fraction = dust_ice_fraction_array(krome_dust_asize2(:),n(nmols+1:nmols+ndust),n(idx_H2O_dust_1:idx_H2O_dust_1+nmols))\n")
 fout.write("@var:[nspec] m = get_mass()\n")
-fout.write("@var:[nspec] Eice_exp = get_Eice_exp_array(krome_dust_T(:))\n")
-fout.write("@var:[nspec] Ebare_exp = get_Ebare_exp_array(krome_dust_T(:))\n")
+fout.write("@var:[2*nspec] Ebareice23_exp = get_Ebareice23_exp_array(invTdust(:))\n")
+fout.write("@var:[nspec] Eice23_exp = Ebareice23_exp(1:nspec)\n")
+fout.write("@var:[nspec] Ebare23_exp = Ebareice23_exp(nspec+1:2*nspec)\n")
 fout.write("\n\n")
 
 for rea2 in data2b:
@@ -158,14 +174,16 @@ for rea2 in data2b:
 	m1 = data[r1][2]
 	m2 = data[r2][2]
 	mred = m1*m2/(m1+m2)
+	#tunnelling probability
 	P = exp(-aa/3.1415/hplanck*sqrt(2e0*mred*kboltzmann*Ea))
-	#print P
 	P = d90(P)
 	Eice1 = "Eice_exp(idx_"+r1+"_DUST_auto_idx)"
 	Ebare1 = "Ebare_exp(idx_"+r1+"_DUST_auto_idx)"
 	Eice2 = "Eice_exp(idx_"+r2+"_DUST_auto_idx)"
 	Ebare2 = "Ebare_exp(idx_"+r2+"_DUST_auto_idx)"
 	fout.write("@rate: dust_2body_rate("+P+",krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),"+Eice1+","+Eice2+","+Ebare1+","+Ebare2+\
-		",krome_dust_T(auto_jdust-nmols))\n\n")
+		",invTdust(auto_jdust-nmols))\n\n")
 
 fout.close()
+
+print "done!"
