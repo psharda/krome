@@ -20,7 +20,7 @@ tests = [x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath]
 #tests = ["hello"]
 
 #list of test to be skipped (e.g. under developement)
-skiptests = ["stars","collapseZ_induced","collapseZ_UV","shock1Dphoto","atmosphere","collapseDUST"]
+skiptests = ["stars","collapseZ_induced","collapseZ_UV","shock1Dphoto","atmosphere","collapseDUST","collapseSurface"]
 
 #start from this test (empty string start from first test)
 first = ""
