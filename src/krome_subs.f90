@@ -662,10 +662,10 @@ contains
 
   !*****************************
   !desorption rate Cazaux+2010, Hocuk+2014
-  function dust_desorption_rate(fice,expEice,expEbare,invTd)
+  function dust_desorption_rate(fice,expEice,expEbare)
     implicit none
     real*8::dust_desorption_rate
-    real*8::fice,expEice,expEbare,nu0,invTd,fbare
+    real*8::fice,expEice,expEbare,nu0,fbare
     
     nu0 = 1d12 !1/s
     fbare = 1d0 - fice
@@ -676,24 +676,23 @@ contains
   end function dust_desorption_rate
   
   !**************************
-  function dust_2body_rate(p,asize2,nndust,fice,expEice1,expEice2,expEbare1,expEbare2,Tdust)
+  function dust_2body_rate(p,asize2,nndust,fice,expEice1,expEice2,expEbare1,expEbare2,pesc_ice,pesc_bare)
     use krome_constants
     implicit none
-    real*8::asize2,nndust,fice,expEice1,expEice2,expEbare1,expEbare2,Tdust
-    real*8::nu0,p,dust_2body_rate,fbare,Td23,iapp2,pre
+    real*8::asize2,nndust,fice,expEice1,expEice2,expEbare1,expEbare2
+    real*8::nu0,p,dust_2body_rate,fbare,iapp2,pesc_ice,pesc_bare,phi
 
     !no need to calculate this if the dust is not present
     dust_2body_rate = 0d0
     if(nndust<1d-20) return
 
-    iapp2 = (3d8)**-2 !1/cm2
-    pre = 2d0/3d0
+    iapp2 = (3d-8)**2 !1/cm2
     fbare = 1d0-fice
     nu0 = 1d12 ! 1/s
-    dust_2body_rate = nu0 * fbare * (expEbare1 + expEbare2) &
-         + nu0 * fice * (expEice1 + expEice2)
-
-    dust_2body_rate = dust_2body_rate * p * nndust * pi * asize2 * 4d0 * iapp2
+    dust_2body_rate = fbare * (expEbare1 + expEbare2) * pesc_bare &
+         + fice * (expEice1 + expEice2) * pesc_ice
+    phi = 4d0 * nndust * pi * asize2 / iapp2 
+    dust_2body_rate = dust_2body_rate * p * nu0 / phi
 
   end function dust_2body_rate
 
@@ -725,7 +724,7 @@ contains
     real*8::dust_ice_fraction_array(ndust)
     real*8::adust2(:),nndust(:),nH2O(:),phi,iapp2
 
-    iapp2 = (3d8)**-2 !1/cm2
+    iapp2 = (3d-8)**2 !1/cm2
     
     dust_ice_fraction_array(:) = 0d0
     do i=1,ndust
@@ -747,8 +746,8 @@ contains
        a = (i-1)*(exp_table_aMax-exp_table_aMin)/(exp_table_na-1) + exp_table_aMin
        exp_table(i) = exp(-a)
     end do
-  end subroutine init_exp_table
 
+  end subroutine init_exp_table
 
   !*****************************
   function get_exp_table(ain,invT)
@@ -759,10 +758,11 @@ contains
     real*8::x1a,f1,f2
 
     a = ain*invT
-
+    a = min(a, exp_table_aMax - exp_table_da)
+    
     ia = (a-exp_table_aMin) * exp_table_multa + 1
     ia = max(ia,1)
-    ia = min(ia,exp_table_na-1)
+    
     x1a = (ia-1)*exp_table_da
     
     f1 = exp_table(ia)

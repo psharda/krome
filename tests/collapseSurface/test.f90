@@ -12,24 +12,20 @@ program test_krome
   use krome_user_commons
   integer,parameter::nz=3
   integer,parameter::rstep = 500000
-  integer::i,jz,jz2,jscale
+  integer::i,jz
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt
   real*8::ntot,rho,zs(nz),zred
 
-  zred = 19d0
+  zred = 0d0
   !INITIALIZE KROME PARAMETERS AND DUST 
   call krome_init()
   call krome_set_zredshift(zred)
   call krome_set_Tcmb(2.73d0*(zred+1d0))
   zs = (/-5d0, -4d0, -2d0/) !list of metallicities
 
-  do jz = 1,size(zs)*2
-
-     jz2 = (jz+1)/2
-     jscale = mod(jz,2)
-     if(jscale==0) cycle
+  do jz = 1,size(zs)
 
      call krome_set_dust_distribution()
 
@@ -45,13 +41,12 @@ program test_krome
      x(KROME_idx_E)  = 1.d-4*ntot    !E
      x(KROME_idx_Hj) = 1.d-4*ntot    !H+
      x(KROME_idx_HE) = 0.0775d0*ntot !He
-     print *,"jscale=",jscale
-     call krome_scale_dust_gas_ratio(1d-2*1d1**zs(jz2)*jscale,x(:))
-     print *,krome_get_dust_distribution()
+
+     call krome_scale_dust_gas_ratio(1d-2*1d1**zs(jz),x(:))
      call krome_set_defaultTdust((zred+1d0)*2.73d0)
 
      !rescale metallicity for neutral metals (C,Fe,Si,O)
-     call krome_scale_Z(x(:), zs(jz2))
+     call krome_scale_Z(x(:), zs(jz))
 
      x(krome_idx_Cj) = x(krome_idx_C) !carbon is fully ionized
      x(krome_idx_C)  = 1d-40
@@ -92,7 +87,7 @@ program test_krome
         call krome(x(:),Tgas,dt)
 
         !dump Tgas and normalized abundances
-        write(66,'(I5,99E17.8e3)') jscale,dd,Tgas,krome_get_Tdust()
+        write(66,'(I5,99E17.8e3)') jz,dd,Tgas,krome_get_Tdust()
         if(mod(i,100)==0) then
            print '(2I5,99E11.3)',jz,i,dd,Tgas,krome_get_Tdust()
         end if

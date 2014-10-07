@@ -49,39 +49,39 @@ mlist = sorted([[k,v[2]] for k,v in data.iteritems()], key=lambda x:x[1])
 
 
 data2b=[]
-data2b.append([["H","H"],["H2"],0])
-data2b.append([["H","O"],["OH"],0])
-data2b.append([["H","OH"],["H2O"],0])
-data2b.append([["H","O3"],["OH","O2"],480])
-data2b.append([["H","H2O2"],["OH","H2O"],1000])
-data2b.append([["H","O2"],["HO2"],200])
-data2b.append([["H","H2O"],["OH","H2"],9600])
-data2b.append([["H","HO2"],["OH","OH"],0])
-data2b.append([["H","CO"],["HCO"],600])
-data2b.append([["H","HCO"],["H2CO"],0])
-data2b.append([["H","H2CO"],["CH3O"],400])
-data2b.append([["H","CH3O"],["CH3OH"],0])
-data2b.append([["H","HCO"],["CO","H2"],400])
-data2b.append([["H","H2CO"],["HCO","H2"],2250])
-data2b.append([["H","CH3O"],["H2CO","H2"],150])
-data2b.append([["H","CH3OH"],["CH3O","H2"],3000])
-data2b.append([["H","CO2"],["CO","OH"],10000])
+data2b.append([["H","H"],["H2"],0,0e0])
+data2b.append([["H","O"],["OH"],0,.5])
+data2b.append([["H","OH"],["H2O"],0,.9])
+data2b.append([["H","O3"],["OH","O2"],480,0e0])
+data2b.append([["H","H2O2"],["OH","H2O"],1000,0e0])
+data2b.append([["H","O2"],["HO2"],200,0e0])
+data2b.append([["H","H2O"],["OH","H2"],9600,0e0])
+data2b.append([["H","HO2"],["OH","OH"],0,0e0])
+data2b.append([["H","CO"],["HCO"],600,0e0])
+data2b.append([["H","HCO"],["H2CO"],0,0e0])
+data2b.append([["H","H2CO"],["CH3O"],400,.5])
+data2b.append([["H","CH3O"],["CH3OH"],0,.05])
+data2b.append([["H","HCO"],["CO","H2"],400,.05])
+data2b.append([["H","H2CO"],["HCO","H2"],2250,0e0])
+data2b.append([["H","CH3O"],["H2CO","H2"],150,0e0])
+data2b.append([["H","CH3OH"],["CH3O","H2"],3000,0e0])
+data2b.append([["H","CO2"],["CO","OH"],10000,0e0])
 
-data2b.append([["O","O"],["O2"],0])
-data2b.append([["O","O2"],["O3"],0])
-data2b.append([["O","O3"],["O2","O2"],2300])
-data2b.append([["O","H2"],["H","OH"],0])
-data2b.append([["O","HO2"],["O2","OH"],4640])
-data2b.append([["O","OH"],["O2","H"],0])
-data2b.append([["O","CO"],["CO2"],160])
-data2b.append([["O","HCO"],["CO2","H"],0])
-data2b.append([["O","H2CO"],["CO2","H2"],300])
+data2b.append([["O","O"],["O2"],0,.6])
+data2b.append([["O","O2"],["O3"],0,0e0])
+data2b.append([["O","O3"],["O2","O2"],2300,0e0])
+data2b.append([["O","H2"],["H","OH"],0,0e0])
+data2b.append([["O","HO2"],["O2","OH"],4640,0e0])
+data2b.append([["O","OH"],["O2","H"],0,0e0])
+data2b.append([["O","CO"],["CO2"],160,0e0])
+data2b.append([["O","HCO"],["CO2","H"],0,0e0])
+data2b.append([["O","H2CO"],["CO2","H2"],300,0e0])
 
-data2b.append([["OH","OH"],["H2O2"],0])
-data2b.append([["OH","H2"],["H","H2O"],2100])
-data2b.append([["OH","CO"],["CO2","H"],600])
-data2b.append([["OH","HCO"],["CO2","H2"],0])
-data2b.append([["HO2","H2"],["H","H2O2"],5000])
+data2b.append([["OH","OH"],["H2O2"],0,0e0])
+data2b.append([["OH","H2"],["H","H2O"],2100,0e0])
+data2b.append([["OH","CO"],["CO2","H"],600,0e0])
+data2b.append([["OH","HCO"],["CO2","H2"],0,0e0])
+data2b.append([["HO2","H2"],["H","H2O2"],5000,0e0])
 
 data2b = sorted(data2b,key=lambda x:len(x[1]))
 
@@ -140,7 +140,7 @@ for mol in mols:
 	#Ebare = d90(data[mol][0]) #dust_desorption_rate(ice_fraction(auto_jdust-nmols),6.5d2,5d2,krome_dust_T(auto_jdust-nmols))
 	Eice = "Eice_exp(idx_"+mol+"_DUST_auto_idx)"
 	Ebare = "Ebare_exp(idx_"+mol+"_DUST_auto_idx)"
-	fout.write("@rate: dust_desorption_rate(ice_fraction(auto_jdust-nmols),"+Eice+","+Ebare+",invTdust(auto_jdust-nmols))\n")
+	fout.write("@rate: dust_desorption_rate(ice_fraction(auto_jdust-nmols),"+Eice+","+Ebare+")\n")
 	fout.write("\n")
 fout.close()
 
@@ -157,12 +157,14 @@ fout.write("\n\n")
 
 for rea2 in data2b:
 	verb = (" + ".join(rea2[0]))+" -> "+(" + ".join(rea2[1]))
-	fout.write("#2-body rate on surface ("+verb+") from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014\n")
+	fout.write("#2-body rate surface-surface ("+verb+") from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014\n")
 	fout.write("@type: surf2body\n")
 	fout.write("@reacts: "+(",".join([x+"_dust" for x in rea2[0]]))+"\n")
 	fout.write("@prods: "+(",".join([x+"_dust" for x in rea2[1]]))+"\n")
 	fout.write("@limits:\n")
 	Ea = float(rea2[2]) #K
+	delta_bare = float(rea2[3]) #desorpion probability bare
+	delta_ice = delta_bare / 5e0 #desorpion probability ice
 	r1,r2 = rea2[0]
 	Eice1 = d90(data[r1][1])
 	Ebare1 = d90(data[r1][0])
@@ -181,8 +183,24 @@ for rea2 in data2b:
 	Ebare1 = "Ebare_exp(idx_"+r1+"_DUST_auto_idx)"
 	Eice2 = "Eice_exp(idx_"+r2+"_DUST_auto_idx)"
 	Ebare2 = "Ebare_exp(idx_"+r2+"_DUST_auto_idx)"
+	arg_delta_ice = "1d0-"+d90(delta_ice) 
+	arg_delta_bare = "1d0-"+d90(delta_bare)
+	if(delta_ice==0e0): arg_delta_ice = arg_delta_bare = "1d0" 
 	fout.write("@rate: dust_2body_rate("+P+",krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),"+Eice1+","+Eice2+","+Ebare1+","+Ebare2+\
-		",invTdust(auto_jdust-nmols))\n\n")
+		","+arg_delta_ice+","+arg_delta_bare+")\n\n")
+
+
+	if(delta_ice==0e0): continue 
+	fout.write("#2-body rate surface-gas ("+verb+") from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014\n")
+	fout.write("@type: surf2body\n")
+	fout.write("@reacts: "+(",".join([x+"_dust" for x in rea2[0]]))+"\n")
+	fout.write("@prods: "+(",".join([x for x in rea2[1]]))+"\n")
+	fout.write("@limits:\n")
+	arg_delta_ice = d90(delta_ice) 
+	arg_delta_bare = d90(delta_bare)
+	fout.write("@rate: dust_2body_rate("+P+",krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),"+Eice1+","+Eice2+","+Ebare1+","+Ebare2+\
+		","+arg_delta_ice+","+arg_delta_bare+")\n\n")
+
 
 fout.close()
 

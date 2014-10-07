@@ -373,8 +373,8 @@ class krome():
 			test_status = "dev" #under developement
 		elif(args.test=="collapseSurface"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=REDUCED","-ATOL=1d-10","-maxord=2","-columnDensityMethod=JEANS"]]
-			[argv.append(x) for x in ["-dust=3,C","-dustOptions=T","-useCoolCMBFloorZ","-useTabs"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=REDUCED","-ATOL=1d-20","-maxord=1","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-dust=3,C","-dustOptions=T","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ_surface"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseZ"):
