@@ -140,6 +140,51 @@ contains
     heat_photoDust = 1.3d-24*eps*Ghab*ntot*z*izsun
 
   end function heat_photoDust
+
+  !***************************
+  function heat_NetphotoDust(n,Tgas)
+    !photoelectric effect from dust in erg/s/cm3
+    !including the recombination cooling 
+    !eq. 42 and 44 in Bakes&Tielens, 1994
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    implicit none
+    integer::i
+    real*8::heat_NetphotoDust,n(:),Tgas,ntot,eps
+    real*8::Ghab,z,izsun,psi,recomb_cool,bet
+
+    ntot = get_Hnuclei(n(:))
+    izsun = 1d0/0.02d0 !inverse solar metallicity
+    Ghab = 0d0 !habing flux
+    bet = 0.735d0*(Tgas)**(-0.068)
+
+    do i = 1, nphotoBins
+       Ghab = Ghab + photoBinJ(i)
+    enddo
+
+    !from eq. 20 of Omukai, 2008
+    !see also Bakes&Tielens, 1994
+    Ghab = Ghab * 4d0 * pi / (1.6d-3)
+
+    if(n(idx_e)>0d0) then
+       psi = 2.d0*Ghab*sqrt(Tgas)*n(idx_e)
+    else
+       psi = 0d0
+    end if
+
+    !grains recombination cooling 
+    recomb_cool = 4.65d-30*Tgas**0.94*(Ghab*sqrt(Tgas)/n(idx_e))**bet & 
+                 * n(idx_e)*n(idx_H)
+
+    eps = 4.9d-2/(1d0+4d-3*psi**.73) + &
+         3.7d-2*(Tgas*1d-4)**.7/(1d0+2d-4*psi)
+    z = #KROME_photoDustZ !metallicty
+
+    !net photoelectric heating
+    heat_NetphotoDust = (1.3d-24*eps*Ghab*ntot-recomb_cool)*z*izsun
+
+  end function heat_NetphotoDust
 #ENDIFKROME
 
 #IFKROME_useHeatingPhotoAv
