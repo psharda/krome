@@ -246,7 +246,7 @@ contains
     end do
 
     !returns erg/cm2/s
-    get_int_JQabs = intJ * iplanck_eV * eV_to_erg
+    get_int_JQabs = intJ * iplanck_eV * eV_to_erg * pi
 
   end function get_int_JQabs
 #ENDIFKROME_usePhotoDust
@@ -334,7 +334,7 @@ contains
     integer::i,j1,j2,jmid
     real*8::Td1,Td2,fact,vgas,ntot,n(:),be,ljeans,rhogas
     real*8::f1,f2,fmid,pre,Tdmid,Tgas,dustCooling,intCMB
-    real*8::m(nspec)
+    real*8::m(nspec),intJflux
 
     !compute dust cooling pre-factor (HM79)
     fact = 0.5d0
@@ -351,6 +351,9 @@ contains
     !init dust cooling
     dustCooling = 0d0 
 
+    !init external radiation flux
+    intJflux=0d0
+
     !loop on dust bins
     do i=1,ndust
        j1 = 1 !first index
@@ -365,17 +368,21 @@ contains
        Td2 = dust_intBB_Tbb(j2)-1d0
        !compute Tcmb
        intCMB = get_dust_intBB(i,phys_Tcmb)
+#IFKROME_usePhotoDust
+       !compute external radiation term
+       intJflux   = get_int_JQabs(i)
+#ENDIFKROME_usePhotoDust
        !bisection method
        do 
 
           !f(x) evaluated at j1 and j2
-          f1 = (get_dust_intBB(i,Td1) - intCMB) * be - pre * (Tgas-Td1)
-          f2 = (get_dust_intBB(i,Td2) - intCMB) * be - pre * (Tgas-Td2)
+          f1 = (get_dust_intBB(i,Td1) - intCMB - intJflux) * be - pre * (Tgas-Td1)
+          f2 = (get_dust_intBB(i,Td2) - intCMB - intJflux) * be - pre * (Tgas-Td2)
           
           !compute Tdmid
           Tdmid = .5d0 * (Td1 + Td2)
           krome_dust_T(i) = Tdmid
-          fmid = (get_dust_intBB(i,Tdmid) - intCMB) * be - pre * (Tgas-Tdmid)
+          fmid = (get_dust_intBB(i,Tdmid) - intCMB - intJflux) * be - pre * (Tgas-Tdmid)
 
           !check signs and assign Tdmid
           if(f1*fmid<0d0) then
@@ -391,7 +398,7 @@ contains
 
        !compute the cooling (avoid the difference Tgas-Tdust)
        dustCooling = dustCooling + (get_dust_intBB(i,krome_dust_T(i)) &
-            - intCMB) * be * n(nmols+i) * krome_dust_asize2(i)
+            - intCMB - intJflux) * be * n(nmols+i) * krome_dust_asize2(i)
     end do
     !copy (isotropic) cooling
     dust_cooling = 4d0 * pi * dustCooling
