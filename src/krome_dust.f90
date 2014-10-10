@@ -352,7 +352,7 @@ contains
     dustCooling = 0d0 
 
     !init external radiation flux
-    intJflux=0d0
+    intJflux = 0d0
 
     !loop on dust bins
     do i=1,ndust
@@ -370,19 +370,22 @@ contains
        intCMB = get_dust_intBB(i,phys_Tcmb)
 #IFKROME_usePhotoDust
        !compute external radiation term
-       intJflux   = get_int_JQabs(i)
+       intJflux = get_int_JQabs(i)
 #ENDIFKROME_usePhotoDust
        !bisection method
        do 
 
           !f(x) evaluated at j1 and j2
-          f1 = (get_dust_intBB(i,Td1) - intCMB - intJflux) * be - pre * (Tgas-Td1)
-          f2 = (get_dust_intBB(i,Td2) - intCMB - intJflux) * be - pre * (Tgas-Td2)
+          f1 = (get_dust_intBB(i,Td1) - intCMB - intJflux) * be &
+               - pre * (Tgas - Td1)
+          f2 = (get_dust_intBB(i,Td2) - intCMB - intJflux) * be &
+               - pre * (Tgas - Td2)
           
           !compute Tdmid
           Tdmid = .5d0 * (Td1 + Td2)
           krome_dust_T(i) = Tdmid
-          fmid = (get_dust_intBB(i,Tdmid) - intCMB - intJflux) * be - pre * (Tgas-Tdmid)
+          fmid = (get_dust_intBB(i,Tdmid) - intCMB - intJflux) * be &
+               - pre * (Tgas - Tdmid)
 
           !check signs and assign Tdmid
           if(f1*fmid<0d0) then
