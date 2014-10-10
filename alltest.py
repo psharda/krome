@@ -4,7 +4,7 @@
 from subprocess import call
 from subprocess import Popen, PIPE
 import os,sys,hashlib,glob,platform,shutil,time
-import ftplib,urllib,sys
+import ftplib,urllib2,sys,cookielib
 
 argv = sys.argv
 
@@ -50,7 +50,11 @@ if(mode=="check"):
 
 	#retireve the changeset on the SERVER
 	changesetSERVER = ""
-	content = urllib.urlopen('http://kromepackage.org/test/outcheck.log')
+	#content = urllib2.urlopen('http://kromepackage.org/test/outcheck.log')
+	cj = cookielib.CookieJar()
+	opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+	request = urllib2.Request('http://kromepackage.org/test/outcheck.log')
+	content = opener.open(request)
 	for line in iter(content.readlines()):
 		if("changeset:" in line): changesetSERVER = line.replace("changeset:","").strip()
 	#check if the server changeset is retrieved
