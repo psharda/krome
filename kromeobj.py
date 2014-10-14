@@ -53,7 +53,7 @@ class krome():
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
-	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = False
+	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
 	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolCMBFloor = False
@@ -1087,24 +1087,34 @@ class krome():
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
 			myHeat = [x.strip() for x in myHeat]
-			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","XRAY"]
+			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","PHOTODUSTNET","XRAY"]
 			for hea in myHeat:
 				if(not(hea in allHeats)):
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
 
-			if("COMPRESS" in myHeat): self.useHeatingCompress = True
-			if("PHOTO" in myHeat): self.useHeatingPhoto = True
-			if("CHEM" in myHeat): self.useHeatingChem = True
-			if("DH" in myHeat): self.useHeatingdH = True
-			if("CR" in myHeat): self.useHeatingCR = True
-			if("PHOTOAV" in myHeat): self.useHeatingPhotoAv = True
-			if("PHOTODUST" in myHeat): self.useHeatingPhotoDust = True
-			if("XRAY" in myHeat): self.useHeatingXRay = True
+			if("COMPRESS" in myHeat): self.useHeatingCompress = True #compressional heating
+			if("PHOTO" in myHeat): self.useHeatingPhoto = True #photo heating with photobins
+			if("CHEM" in myHeat): self.useHeatingChem = True #chemical heating
+			if("DH" in myHeat): self.useHeatingdH = True #enthalpic heating (experimental)
+			if("CR" in myHeat): self.useHeatingCR = True #cosmic ray heating
+			if("PHOTOAV" in myHeat): self.useHeatingPhotoAv = True #H2 photodissociation and photo-pumping
+			if("PHOTODUST" in myHeat): self.useHeatingPhotoDust = True #photoelectric heating from dust
+			if("PHOTODUSTNET" in myHeat): self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
+			if("XRAY" in myHeat): self.useHeatingXRay = True #heating from xray reactions rate
 
 			self.use_thermo = True
 			if(self.photoBins<=0 and self.useHeatingPhoto):
 				print "ERROR: if you use photoheating you should include the number of photo-bins"
 				print " by using the option -photoBins=NBINS"
+				sys.exit()
+
+			if(self.useHeatingPhotoDust and self.useHeatingPhotoDustNet):
+				print "ERROR: PHOTODUST and PHOTODUSTNET options are mutually exclusive!"
+				sys.exit()
+
+			if(self.photoBins<=0 and self.useHeatingPhotoDustNet):
+				print "ERROR: PHOTODUSTNET option requires -photoBins=NBINS to set"
+				print " the number of photobins!"
 				sys.exit()
 
 			if("?" in myHeat):
@@ -4846,6 +4856,7 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingPhoto" and not(self.useHeatingPhoto)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingPhotoAv" and not(self.useHeatingPhotoAv)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingPhotoDust" and not(self.useHeatingPhotoDust)): skip = True
+				if(row.strip() == "#IFKROME_useHeatingPhotoDustNet" and not(self.useHeatingPhotoDustNet)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingXRay" and not(self.useHeatingXRay)): skip = True
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
 				if(row.strip() == "#IFKROME_useHeatingChem" and skipBool): skip = True

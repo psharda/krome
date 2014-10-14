@@ -8,9 +8,9 @@ contains
     implicit none
     real*8::n(:), Tgas, k(:), nH2dust
     real*8::heating
-    
+
     heating = sum(get_heating_array(n(:),Tgas,k(:), nH2dust))
-    
+
   end function heating
 
   !*******************************
@@ -51,20 +51,16 @@ contains
     heats(idx_heat_dust) = heat_photoDust(n(:),Tgas)
 #ENDIFKROME
 
+#IFKROME_useHeatingPhotoDustNet
+    heats(idx_heat_dust) = heat_netPhotoDust(n(:),Tgas)
+#ENDIFKROME
+
+
 #IFKROME_useHeatingXRay
     heats(idx_heat_xray) = heat_XRay(n(:),Tgas,k(:))
 #ENDIFKROME
-    
+
     get_heating_array(:) = heats(:)
-
-    !remove the comment below to write heating terms to fort.55
-    !write(55,'(99E17.8e3)') sum(n(1:nmols)),Tgas,heats(:)
-
-    !gnuplot command (n=100, and m=1 for density or m=2 for temperature) 
-    !plot 'fort.55' u m:(abs($3)) every n w l t "chem",\
-    ! '' u m:4 every n w l t "compress",\
-    ! '' u m:5 every n w l t "photo",\
-    ! '' u m:6 every n w l t "enthalpy"
 
   end function get_heating_array
 
@@ -106,7 +102,7 @@ contains
     !prepares varibles for xray photochemistry
     ratexH = 1d1**xheat_H * J21xray
     ratexHe = 1d1**xheat_He * J21xray
-    
+
     heat_Xray = ratexH * n(idx_H)
     heat_Xray = heat_Xray + ratexHe * n(idx_He)
     heat_Xray = heat_Xray * .9971d0 * (1d0-(1d0-xe**.2663)**1.3163)
@@ -130,19 +126,21 @@ contains
     izsun = 1d0/0.02d0 !inverse solar metallicity
     Ghab = 1.69d0 !habing flux, 1.69 is Draine78
     if(n(idx_e)>0d0) then
-       psi = 2.d0*Ghab*sqrt(Tgas)*n(idx_e)
+       psi = 2d0 * Ghab * sqrt(Tgas) / n(idx_e)
     else
        psi = 0d0
     end if
-    eps = 4.9d-2/(1d0+4d-3*psi**.73) + &
-         3.7d-2*(Tgas*1d-4)**.7/(1d0+2d-4*psi)
+    eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
+         3.7d-2 * (Tgas * 1d-4)**.7 / (1d0 + 2d-4 * psi)
     z = #KROME_photoDustZ !metallicty
     heat_photoDust = 1.3d-24*eps*Ghab*ntot*z*izsun
 
   end function heat_photoDust
+#ENDIFKROME
 
+#IFKROME_useHeatingPhotoDustNet
   !***************************
-  function heat_NetphotoDust(n,Tgas)
+  function heat_netPhotoDust(n,Tgas)
     !photoelectric effect from dust in erg/s/cm3
     !including the recombination cooling 
     !eq. 42 and 44 in Bakes&Tielens, 1994
@@ -151,7 +149,7 @@ contains
     use krome_constants
     implicit none
     integer::i
-    real*8::heat_NetphotoDust,n(:),Tgas,ntot,eps
+    real*8::heat_netPhotoDust,n(:),Tgas,ntot,eps
     real*8::Ghab,z,izsun,psi,recomb_cool,bet
 
     ntot = get_Hnuclei(n(:))
@@ -159,32 +157,34 @@ contains
     Ghab = 0d0 !habing flux
     bet = 0.735d0*(Tgas)**(-0.068)
 
-    do i = 1, nphotoBins
-       Ghab = Ghab + photoBinJ(i)
-    enddo
+    !integral over photo bins
+    do i=1,nphotoBins
+       Ghab = Ghab + photoBinJ(i) * photoBinEdelta(i)
+    end do
 
+    !integral -> habing flux
     !from eq. 20 of Omukai, 2008
     !see also Bakes&Tielens, 1994
-    Ghab = Ghab * 4d0 * pi / (1.6d-3)
+    Ghab = Ghab * 4d0 * pi / (1.6d-3) / planck_eV * eV_to_erg
 
     if(n(idx_e)>0d0) then
-       psi = 2.d0*Ghab*sqrt(Tgas)*n(idx_e)
+       psi = 2d0 * Ghab * sqrt(Tgas) / n(idx_e)
     else
        psi = 0d0
     end if
 
     !grains recombination cooling 
     recomb_cool = 4.65d-30*Tgas**0.94*(Ghab*sqrt(Tgas)/n(idx_e))**bet & 
-                 * n(idx_e)*n(idx_H)
+         * n(idx_e)*n(idx_H)
 
-    eps = 4.9d-2/(1d0+4d-3*psi**.73) + &
-         3.7d-2*(Tgas*1d-4)**.7/(1d0+2d-4*psi)
+    eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
+         3.7d-2 * (Tgas * 1d-4)**.7 / (1d0 + 2d-4 * psi)
     z = #KROME_photoDustZ !metallicty
 
     !net photoelectric heating
-    heat_NetphotoDust = (1.3d-24*eps*Ghab*ntot-recomb_cool)*z*izsun
+    heat_netPhotoDust = (1.3d-24*eps*Ghab*ntot-recomb_cool)*z*izsun
 
-  end function heat_NetphotoDust
+  end function heat_netPhotoDust
 #ENDIFKROME
 
 #IFKROME_useHeatingPhotoAv
@@ -202,13 +202,13 @@ contains
     ncrn  = 1.0d6*(Tgas**(-0.5d0))
     ncrd1 = 1.6d0*exp(-(4.0d2/Tgas)**2)
     ncrd2 = 1.4d0*exp(-1.2d4/(Tgas+1.2d3))
-    
+
     yH = n(idx_H)/dd   !dimensionless
     yH2= n(idx_H2)/dd  !dimensionless
-    
+
     ncr = ncrn/(ncrd1*yH+ncrd2*yH2)      !1/cm3
     h2heatfac = 1.0d0/(1.0d0+ncr/dd)     !dimensionless
-    
+
     Rdiss = #KROME_RdissH2
 
     !photodissociation H2 heating
@@ -216,7 +216,7 @@ contains
 
     !UV photo-pumping H2
     heat_photoAv = heat_photoAv + 2.7d-11*Rdiss*h2heatfac*n(idx_H2)
-    
+
   end function heat_photoAv
 #ENDIFKROME
 
@@ -268,7 +268,7 @@ contains
 
   end function heat_dH
 #ENDIFKROME
-  
+
 #IFKROME_useHeatingPhoto
   !**************************
   function photo_heating(n)
@@ -350,5 +350,5 @@ contains
 
   end function heat_compress
 #ENDIFKROME
-  
+
 end module KROME_heating
