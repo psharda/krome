@@ -89,7 +89,6 @@ module krome_commons
   real*8,parameter::exp_table_multa=(exp_table_na-1) &
        / (exp_table_aMax-exp_table_aMin)
   real*8,parameter::exp_table_da=1d0/exp_table_multa
-  
   real*8::exp_table(exp_table_na)
 
   

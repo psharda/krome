@@ -1317,7 +1317,9 @@ def get_quote(qall=False):
 	["Chemistry has been termed by the physicist as the messy part of physics", "Frederick Soddy "],
 	["Don't worry if it doesn't work right. If everything did, you'd be out of a job.", "Mosher's Law"],
 	["Beware of bugs in the above code; I have only proved it correct, not tried it.", "Donald Knuth"],
-	["Given enough eyeballs, all bugs are shallow.", "Eric S. Raymond"]
+	["Given enough eyeballs, all bugs are shallow.", "Eric S. Raymond"],
+	["We make an extreme, but wholly defensible, statement: There are no good, general methods for solving systems of more than one nonlinear equation.",\
+	 "Numerical Recipes in C"]
 	]
 	qrange = 1
 	print 
