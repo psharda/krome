@@ -1429,6 +1429,7 @@ class krome():
 			'O(1D)':8.*(menp),
 			'O(3P)':8.*(menp),
 			'_dust':0e0,
+			'_c_dust':0e0,
 			'CR':0e0,
 			'M':0e0,
 			'g':0e0,
