@@ -5,10 +5,11 @@ mols= ["H","H2","O","O2","O3","OH","CO","CO2","H2O","HO2","H2O2","HCO","H2CO","C
 
 def d90(num):
 	if(num==0): return "0d0"
-	if(num<1e0): return str(round(num,3))+"d0"
+	#if(num<1e0): return str(round(num,3))+"d0"
 	ll = int(log10(num))
 	dex = 1e1**ll
-	ss = str(round(num/dex,2))+"d"+str(ll)	
+	ss = str(round(num/dex,3))+"d"+str(ll)
+	if(num<1e0): ss = str(round(num/dex,4)*1e1)+"d"+str(ll-1)
 	return ss.replace(".0d","d")
 
 mp = 1.67262178e-24 #g 
@@ -36,17 +37,6 @@ data["CH3O"] = [1100,3100,3e0*mH+mO+mC]
 data["CH3OH"] = [1100,3100,4e0*mH+mO+mC]
 
 mlist = sorted([[k,v[2]] for k,v in data.iteritems()], key=lambda x:x[1])
-
-#icount = 0
-#for x in mlist:
-#	icount += 1
-#	print str(icount)+","+x[0]+","+x[0]+"_dust,auto"
-#
-#for x in mlist:
-#	icount += 1
-#	print str(icount)+","+x[0]+"_dust,"+x[0]+",auto"
-#
-
 
 data2b=[]
 data2b.append([["H","H"],["H2"],0,0e0])
@@ -84,20 +74,6 @@ data2b.append([["OH","HCO"],["CO2","H2"],0,0e0])
 data2b.append([["HO2","H2"],["H","H2O2"],5000,0e0])
 
 data2b = sorted(data2b,key=lambda x:len(x[1]))
-
-#icount = 2*len(data)
-#fmtold = 0
-#for rea2 in data2b:
-#	icount += 1
-#	rr1 = [x+"_dust" for x in rea2[0]]
-#	rr2 = [x+"_dust" for x in rea2[1]]
-#	verb = str(icount)+","+(",".join(rr1))+","+(",".join(rr2))+",auto"
-#	fmt = len(rea2[1])
-#	if(fmt!=fmtold): print "@format:idx,R,R,"+(",".join(["P"]*fmt))+",rate"
-#	fmtold = fmt
-#	print verb
-#sys.exit()
-
 
 
 #****ADSORPTION****
@@ -172,12 +148,13 @@ for rea2 in data2b:
 	Ebare2 = d90(data[r2][0])
 	kboltzmann = 1.3806488e-16 #erg/K
 	hplanck = 6.6260755e-27 #erg*s
+	hplanck_bar = hplanck/2e0/3.1415 #erg*s
 	aa = 1e-8 #cm
 	m1 = data[r1][2]
 	m2 = data[r2][2]
 	mred = m1*m2/(m1+m2)
 	#tunnelling probability
-	P = exp(-aa/3.1415/hplanck*sqrt(2e0*mred*kboltzmann*Ea))
+	P = exp(-2e0*aa/hplanck_bar*sqrt(2e0*mred*kboltzmann*Ea))
 	P = d90(P)
 	Eice1 = "Eice_exp(idx_"+r1+"_DUST_auto_idx)"
 	Ebare1 = "Ebare_exp(idx_"+r1+"_DUST_auto_idx)"
@@ -186,8 +163,9 @@ for rea2 in data2b:
 	arg_delta_ice = "1d0-"+d90(delta_ice) 
 	arg_delta_bare = "1d0-"+d90(delta_bare)
 	if(delta_ice==0e0): arg_delta_ice = arg_delta_bare = "1d0" 
-	fout.write("@rate: dust_2body_rate("+P+",krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),"+Eice1+","+Eice2+","+Ebare1+","+Ebare2+\
-		","+arg_delta_ice+","+arg_delta_bare+")\n\n")
+	fout.write("@rate: dust_2body_rate("+P+",krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),"\
+		+Eice1+","+Eice2+","+Ebare1+","+Ebare2\
+		+","+arg_delta_ice+","+arg_delta_bare+")\n\n")
 
 
 	if(delta_ice==0e0): continue 
@@ -198,10 +176,75 @@ for rea2 in data2b:
 	fout.write("@limits:\n")
 	arg_delta_ice = d90(delta_ice) 
 	arg_delta_bare = d90(delta_bare)
-	fout.write("@rate: dust_2body_rate("+P+",krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),"+Eice1+","+Eice2+","+Ebare1+","+Ebare2+\
-		","+arg_delta_ice+","+arg_delta_bare+")\n\n")
+	fout.write("@rate: dust_2body_rate("+P+",krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),"\
+		+Eice1+","+Eice2+","+Ebare1+","+Ebare2\
+		+","+arg_delta_ice+","+arg_delta_bare+")\n\n")
 
 
 fout.close()
+#*************CHEMISORPTION FUNCTIONS*******************
+#eqn. 1+3 from Cazaux+Tielens 2004 (see erratum)
+def Tij1(xvar,Bi,Bj,Bij,Z,Tsys):
 
+	hbar = 1.05457266e-27 #erg*s
+	kb = 1.380658e-16 #erg/K
+	m = 1.6733e-24 #g
+
+	if(xvar>=Bi): return 0e0
+
+	Tij1 = 4e0 *sqrt((xvar-Bij)/xvar) \
+		 / ((1e0+sqrt((xvar-Bij)/xvar))**2 \
+		 + Bi*Bj*(sinh(Z*sqrt(2e0*m*(Bi-xvar)*kb/hbar**2)))**2 \
+		 / (Bi-xvar)/xvar)
+	return exp(-xvar/Tsys)*Tij1 / Tsys
+
+#eqn. 2+3 from Cazaux+Tielens 2004 (see erratum)
+def Tij2(xvar,Bi,Bj,Bij,Z,Tsys):
+
+	hbar = 1.05457266e-27 #erg*s
+	kb = 1.380658e-16 #erg/K
+	m = 1.6733e-24 #g
+
+	if(xvar<=Bi): return 0e0
+
+	Tij2 = 4e0 *sqrt((xvar-Bij)/xvar) \
+		 / ((1e0+sqrt((xvar-Bij)/xvar))**2 \
+		 - Bi*Bj*(sin(Z*sqrt(2e0*m*(xvar-Bi)*kb/hbar**2)))**2 \
+		 / (Bi-xvar)/xvar)
+	return exp(-xvar/Tsys)*Tij2 / Tsys
+
+#*************CHEMISORPTION*******************
+from scipy.integrate import quad
+#data from Iqbal+2012 ApJ
+Ep = 780 #K
+Ec = 1.4e4 #K
+Es = 1e2 #K
+Esp = 1e2 #K
+Esc = 7e3 #K
+alow = 2.5e-8 #cm
+aup = 2e-8 #cm
+nu0 = 1e12 # 1/s
+
+datachemis = []
+datachemis.append(["PP",Ep-Esp,Ep-Esp,0e0,aup])
+datachemis.append(["CC",Ec-Esc,Ec-Esc,0e0,aup])
+datachemis.append(["PC",Ep-Es,Ec-Es,Ep-Ec,alow])
+datachemis.append(["CP",Ec-Es,Ep-Es,Ep-Ec,alow])
+print "computing chemisorption..."
+rateChemis = dict()
+for datac in datachemis:
+	Bi = datac[1]
+	Bj = datac[2]
+	Bij = datac[3]
+	Z = datac[4]
+	imax = 30
+	Tmin = 1e0
+	Tmax = 1e3
+	ydata = []
+	for i in range(imax):
+		Tsys = i*(Tmax-Tmin)/imax+Tmin
+		Ptunnel = quad(Tij1, 1e-40, Bi, args=(Bi,Bj,Bij,Z,Tsys),limit=5000,epsabs=1e-40)[0]
+		Pdiff = quad(Tij2, Bi, -log(1e-40)*Tsys, args=(Bi,Bj,Bij,Z,Tsys),limit=5000,epsabs=1e-40)[0]
+		ydata.append(nu0*(Pdiff+Ptunnel))
+	rateChemis[datac[0]] = {"rate":ydata, "Tmin":Tmin, "dT":(Tmax-Tmin)/imax,"ndata":imax}
 print "done!"
