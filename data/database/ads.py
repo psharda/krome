@@ -168,7 +168,7 @@ for rea2 in data2b:
 		+","+arg_delta_ice+","+arg_delta_bare+")\n\n")
 
 
-	if(delta_ice==0e0): continue 
+	if(delta_ice==0e0): continue
 	fout.write("#2-body rate surface-gas ("+verb+") from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014\n")
 	fout.write("@type: surf2body\n")
 	fout.write("@reacts: "+(",".join([x+"_dust" for x in rea2[0]]))+"\n")
@@ -247,4 +247,33 @@ for datac in datachemis:
 		Pdiff = quad(Tij2, Bi, -log(1e-40)*Tsys, args=(Bi,Bj,Bij,Z,Tsys),limit=5000,epsabs=1e-40)[0]
 		ydata.append(nu0*(Pdiff+Ptunnel))
 	rateChemis[datac[0]] = {"rate":ydata, "Tmin":Tmin, "dT":(Tmax-Tmin)/imax,"ndata":imax}
+
+
+reactChemis = []
+reactChemis.append([["H_dust"],["H_c_dust"],["PC"]])
+reactChemis.append([["H_c_dust"],["H_dust"],["CP"]])
+reactChemis.append([["H_c_dust","H_dust"],["H2_dust"],["CP"]])
+reactChemis.append([["H_c_dust","H_dust"],["H2_dust"],["PC"]])
+reactChemis.append([["H_c_dust","H_c_dust"],["H2_dust"],["CC"]])
+reactChemis.append([["H_c_dust"],["H"],["CG"]])
+fout = open("surface_chemisorption.dat","w")
+fout.write("@var:[ndust] rateChem_PC = dust_get_rateChem_PC(krome_dust_T(:))\n")
+fout.write("@var:[ndust] rateChem_CP = dust_get_rateChem_CP(krome_dust_T(:))\n")
+fout.write("@var:[ndust] rateChem_CC = dust_get_rateChem_CC(krome_dust_T(:))\n")
+fout.write("@var:[ndust] rateChem_CG = dust_get_rateChem_CG(krome_dust_T(:))\n")
+fout.write("@var:[ndust] dust_phi = dust_get_inv_phi(krome_dust_asize2(:),xdust(:))\n\n")
+for rChem in reactChemis:
+	verb = (" + ".join([x.replace("_dust","") for x in rChem[0]]))+" -> "+(" + ".join([x.replace("_dust","") for x in rChem[1]]))
+	fout.write("#rate chemisorption ("+verb+") from Cazaux+2004 (err:Cazaux+2010), Iqbal+2010, Hocuk+2014\n")
+	fout.write("@type: surfChemisorption\n")
+	fout.write("@reacts: "+(",".join(rChem[0]))+"\n")
+	fout.write("@prods: "+(",".join(rChem[1]))+"\n")
+	fout.write("@limits:\n")
+	dust_phi = ""
+	if(len(rChem[0])==2): dust_phi = "*dust_inv_phi(auto_jdust-nmols)"
+	fout.write("@rate: dust_chemisorption_"+rChem[2][0]+"(auto_jdust-nmols)"+dust_phi+"\n\n")
+
+fout.close()
+
+
 print "done!"
