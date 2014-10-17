@@ -366,9 +366,9 @@ class krome():
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL"]]
 			filename = "networks/react_primordial3"
 		elif(args.test=="collapseDUST"):
-			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-cooling=H2,CONT,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
-			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=T,H2","-useCoolCMBFloorZ"]]
+			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=T,H2","-useCoolCMBFloorZ","-conserve"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseSurface"):
@@ -3925,7 +3925,7 @@ class krome():
 				krome_conserve += sdiff + "\n"
 				krome_conserve += "\n"
 	
-		nmax = 30
+		nmax = 50 #originally nmax = 30
 		if(len(specs)>nmax and self.useConserve):
 			print "WARNING: more than "+str(nmax)+" species, -conserve disabled!"
 			krome_conserve = "" #with more than NMAX species conserve only electrons
