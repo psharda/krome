@@ -3,14 +3,19 @@ from math import *
 import sys
 mols= ["H","H2","O","O2","O3","OH","CO","CO2","H2O","HO2","H2O2","HCO","H2CO","CH3O","CH3OH"]
 
-def d90(num):
+def d90(num,nfrac=3):
 	if(num==0): return "0d0"
 	#if(num<1e0): return str(round(num,3))+"d0"
 	ll = int(log10(num))
 	dex = 1e1**ll
-	ss = str(round(num/dex,3))+"d"+str(ll)
-	if(num<1e0): ss = str(round(num/dex,4)*1e1)+"d"+str(ll-1)
-	return ss.replace(".0d","d")
+	if(num<1e0):
+		zrs = "0"*(nfrac+1-len(str(round(num/dex,nfrac+1)).split(".")[1]))
+		ss = str(round(num/dex,nfrac+1)*1e1)+zrs+"d"+str(ll-1)
+	else:
+		zrs = "0"*(nfrac-len(str(round(num/dex,nfrac)).split(".")[1]))
+		ss = str(round(num/dex,nfrac))+zrs+"d"+str(ll)
+
+	return ss #.replace(".0d","d")
 
 mp = 1.67262178e-24 #g 
 me = 9.1093829e-28 #g
@@ -231,6 +236,15 @@ datachemis.append(["CC",Ec-Esc,Ec-Esc,0e0,aup])
 datachemis.append(["PC",Ep-Es,Ec-Es,Ep-Ec,alow])
 datachemis.append(["CP",Ec-Es,Ep-Es,Ep-Ec,alow])
 print "computing chemisorption..."
+print "writing rates in ../. (data)..."
+fout = open("../surface_chemisorption_rates.dat","w")
+fout.write("#Rates for H chemisorption rates. Lines are:\n")
+fout.write("#1. process type (P=physisorbed, C=chemisorbed)\n")
+fout.write("#2. number of temperature interval (linear)\n")
+fout.write("#3. mininum temperature\n")
+fout.write("#4. temperature interval\n")
+fout.write("#data are rate (1/s)\n\n")
+
 rateChemis = dict()
 for datac in datachemis:
 	Bi = datac[1]
@@ -241,13 +255,21 @@ for datac in datachemis:
 	Tmin = 1e0
 	Tmax = 1e3
 	ydata = []
+	fout.write(datac[0]+"\n")
+	fout.write(str(imax)+"\n")
+	fout.write(d90(Tmin)+"\n")
+	fout.write(d90((Tmax-Tmin)/imax)+"\n")
 	for i in range(imax):
 		Tsys = i*(Tmax-Tmin)/imax+Tmin
 		Ptunnel = quad(Tij1, 1e-40, Bi, args=(Bi,Bj,Bij,Z,Tsys),limit=5000,epsabs=1e-40)[0]
 		Pdiff = quad(Tij2, Bi, -log(1e-40)*Tsys, args=(Bi,Bj,Bij,Z,Tsys),limit=5000,epsabs=1e-40)[0]
-		ydata.append(nu0*(Pdiff+Ptunnel))
+		rate_val = nu0*(Pdiff+Ptunnel)
+		ydata.append(rate_val)
+		fout.write(d90(rate_val,7)+"\n")
+	fout.write("\n")
 	rateChemis[datac[0]] = {"rate":ydata, "Tmin":Tmin, "dT":(Tmax-Tmin)/imax,"ndata":imax}
 
+fout.close()
 
 reactChemis = []
 reactChemis.append([["H_dust"],["H_c_dust"],["PC"]])
@@ -256,6 +278,7 @@ reactChemis.append([["H_c_dust","H_dust"],["H2_dust"],["CP"]])
 reactChemis.append([["H_c_dust","H_dust"],["H2_dust"],["PC"]])
 reactChemis.append([["H_c_dust","H_c_dust"],["H2_dust"],["CC"]])
 reactChemis.append([["H_c_dust"],["H"],["CG"]])
+print "writing chemisorption..."
 fout = open("surface_chemisorption.dat","w")
 fout.write("@var:[ndust] rateChem_PC = dust_get_rateChem_PC(krome_dust_T(:))\n")
 fout.write("@var:[ndust] rateChem_CP = dust_get_rateChem_CP(krome_dust_T(:))\n")
