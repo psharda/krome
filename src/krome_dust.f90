@@ -471,7 +471,8 @@ contains
        if(icount==3) then
           dust_rateChem_dx = rout
           dust_rateChem_invdx = 1d0/rout
-          dust_rateChem_xfact = (dust_rateChem_xsteps-1) / dust_rateChem_dx
+          dust_rateChem_xfact = (dust_rateChem_xsteps-1) / dust_rateChem_dx &
+               / dust_rateChem_xsteps
        end if
        !other lines are data
        if(icount>3) then
