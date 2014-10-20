@@ -401,6 +401,7 @@ contains
     use krome_tabs
     use krome_subs
     use krome_reduction
+    use krome_dust
 #IFKROME_useCoolingZ
     use krome_cooling
 #ENDIFKROME
@@ -423,6 +424,10 @@ contains
 
 #IFKROME_useStars
     call stars_init()
+#ENDIFKROME
+
+#IFKROME_useChemisorption
+    call init_chemisorption_rates()
 #ENDIFKROME
 
 #IFKROME_useH2esc_omukai

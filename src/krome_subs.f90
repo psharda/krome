@@ -57,7 +57,7 @@ contains
        planckBB = 2d0*x**3/planck_eV**2/clight**2 &
             / (exp(xexp)-1d0)
     end if
-    
+
   end function planckBB
 
   !****************************
@@ -68,10 +68,10 @@ contains
   function smooth_increase(xarg,xpos,slope)
     implicit none
     real*8::smooth_increase,xarg,xpos,slope
-    
+
     smooth_increase = .5d0 * (tanh(slope * (xarg - xpos)) &
          + 1d0)
-    
+
   end function smooth_increase
 
   !****************************
@@ -82,10 +82,10 @@ contains
   function smooth_decrease(xarg,xpos,slope)
     implicit none
     real*8::smooth_decrease,xarg,xpos,slope
-    
+
     smooth_decrease = .5d0 * (tanh(-slope * (xarg - xpos)) &
          + 1d0)
-    
+
   end function smooth_decrease
 
   !*********************
@@ -100,7 +100,7 @@ contains
     get_sgn = x/abs(x)
 
   end function get_sgn
-  
+
   !***********************
   !shielding function selected with -shield option
   function krome_fshield(n,Tgas)
@@ -187,7 +187,7 @@ contains
     elec_recomb_ST93 = elec_recomb_ST93 / (nabund * nelec)
 
   end function elec_recomb_ST93
-  
+
 
   !***************************
   !number density to column density conversion
@@ -198,9 +198,9 @@ contains
     Tgas = n(idx_Tgas)
 
 #KROME_num2col_method
-  
+
   end function num2col
-  
+
   !***********************
   !column density to number density conversion
   function col2num(ncalc,n)
@@ -208,7 +208,7 @@ contains
     implicit none
     real*8::col2num,ncalc,n(:),Tgas
     Tgas = n(idx_Tgas)
-    
+
 #KROME_col2num_method
 
   end function col2num
@@ -404,7 +404,7 @@ contains
   end function get_mass
 
   !************************
-    !get sqrt of the inverse of the masses (1/sqrt(g))
+  !get sqrt of the inverse of the masses (1/sqrt(g))
   function get_imass_sqrt()
     use krome_commons
     implicit none
@@ -561,7 +561,7 @@ contains
   function radrec_v96(Tgas,a,b,T0,T1)
     implicit none
     real*8::Tgas,a,b,T0,T1,radrec_v96,iT0
-   
+
     iT0 = 1d0/T0
     radrec_v96 = a/(sqrt(Tgas*iT0) + (1d0*sqrt(Tgas*iT0))**(1.-b) &
          * (1d0+sqrt(Tgas/T1))**(1+b))
@@ -582,7 +582,7 @@ contains
          * t**(-1.5) * exp(-f*invt)
 
     radrec_low_v96 = max(0d0,radrec_low_v96)
-    
+
   end function radrec_low_v96
 
   !***************************
@@ -653,11 +653,11 @@ contains
     use krome_constants
     implicit none
     real*8::dust_adsorption_rate,nmol,nndust,ims,stick,adust2,sqrTgas
-    
+
     dust_adsorption_rate = nndust * pi * adust2 &
          * pre_kvgas_sqrt * ims * sqrTgas &
          * stick
-    
+
   end function dust_adsorption_rate
 
   !*****************************
@@ -666,7 +666,7 @@ contains
     implicit none
     real*8::dust_desorption_rate
     real*8::fice,expEice,expEbare,nu0,fbare
-    
+
     nu0 = 1d12 !1/s
     fbare = 1d0 - fice
     dust_desorption_rate = nu0 * (fbare * expEbare &
@@ -674,27 +674,90 @@ contains
     dust_desorption_rate = min(dust_desorption_rate,1d0)
 
   end function dust_desorption_rate
-  
+
   !**************************
-  function dust_2body_rate(p,asize2,nndust,fice,expEice1,expEice2,expEbare1,expEbare2,pesc_ice,pesc_bare)
+  function dust_2body_rate(p,invphi,fice,expEice1,expEice2,expEbare1,expEbare2,pesc_ice,pesc_bare)
     use krome_constants
     implicit none
-    real*8::asize2,nndust,fice,expEice1,expEice2,expEbare1,expEbare2
-    real*8::nu0,p,dust_2body_rate,fbare,iapp2,pesc_ice,pesc_bare,phi
+    real*8::fice,expEice1,expEice2,expEbare1,expEbare2,invphi
+    real*8::nu0,p,dust_2body_rate,fbare,pesc_ice,pesc_bare
 
     !no need to calculate this if the dust is not present
     dust_2body_rate = 0d0
-    if(nndust<1d-20) return
 
-    iapp2 = (3d-8)**2 !1/cm2
     fbare = 1d0-fice
     nu0 = 1d12 ! 1/s
     dust_2body_rate = fbare * (expEbare1 + expEbare2) * pesc_bare &
          + fice * (expEice1 + expEice2) * pesc_ice
-    phi = 4d0 * nndust * pi * asize2 / iapp2 
-    dust_2body_rate = dust_2body_rate * p * nu0 / phi
+    dust_2body_rate = dust_2body_rate * p * nu0 * invphi
 
   end function dust_2body_rate
+
+  !*************************
+  function dust_get_inv_phi(asize2,nndust)
+    use krome_commons
+    use krome_constants
+    implicit none
+    real*8::iapp2,dust_get_inv_phi(ndust),asize2(ndust),nndust(ndust)
+    integer::i
+
+    iapp2 = (3d-8)**2 !1/cm2
+    do i=1,ndust
+       if(nndust(i).le.0d0) dust_get_inv_phi(i) = 0d0
+       dust_get_inv_phi(i) = iapp2 / (4d0 * nndust(i) * pi * asize2(i))
+    end do
+
+  end function dust_get_inv_phi
+
+#IFKROME_useChemisorption
+  !***************************
+  function dust_get_rateChem_PC(Tdust)
+    use krome_commons
+    implicit none
+    real*8::dust_get_rateChem_PC(ndust), Tdust(ndust)
+    integer::i,idx
+
+    do i=1,ndust
+       idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
+       dust_get_rateChem_PC(i) = (Tdust(i)-dust_rateChem_x(i)) * dust_rateChem_invdx &
+            * (dust_rateChem_PC(i+1)-dust_rateChem_PC(i)) &
+            + dust_rateChem_PC(i)
+    end do
+
+  end function dust_get_rateChem_PC
+
+  !***************************
+  function dust_get_rateChem_CP(Tdust)
+    use krome_commons
+    implicit none
+    real*8::dust_get_rateChem_CP(ndust), Tdust(ndust)
+    integer::i,idx
+
+    do i=1,ndust
+       idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
+       dust_get_rateChem_CP(i) = (Tdust(i)-dust_rateChem_x(i)) * dust_rateChem_invdx &
+            * (dust_rateChem_CP(i+1)-dust_rateChem_CP(i)) &
+            + dust_rateChem_CP(i)
+    end do
+
+  end function dust_get_rateChem_CP
+
+  !***************************
+  function dust_get_rateChem_CC(Tdust)
+    use krome_commons
+    implicit none
+    real*8::dust_get_rateChem_CC(ndust), Tdust(ndust)
+    integer::i,idx
+
+    do i=1,ndust
+       idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
+       dust_get_rateChem_CC(i) = (Tdust(i)-dust_rateChem_x(i)) * dust_rateChem_invdx &
+            * (dust_rateChem_CC(i+1)-dust_rateChem_CC(i)) &
+            + dust_rateChem_CC(i)
+    end do
+
+  end function dust_get_rateChem_CC
+#ENDIFKROME
 
   !****************************
   !returns an array with the sticking coefficient for each bin
@@ -716,21 +779,16 @@ contains
   end function dust_stick_array
 
   !***************************
-  function dust_ice_fraction_array(adust2,nndust,nH2O)
+  function dust_ice_fraction_array(invphi,nH2O)
     use krome_constants
     use krome_commons
     implicit none
     integer::i
     real*8::dust_ice_fraction_array(ndust)
-    real*8::adust2(:),nndust(:),nH2O(:),phi,iapp2
+    real*8::invphi(ndust),nH2O(ndust)
 
-    iapp2 = (3d-8)**2 !1/cm2
-    
-    dust_ice_fraction_array(:) = 0d0
     do i=1,ndust
-       if(nndust(i)<1d-20) cycle
-       phi = adust2(i)*nndust(i)*4d0/iapp2*pi
-       dust_ice_fraction_array(i) = min(nH2O(i) / phi, 1d0)
+       dust_ice_fraction_array(i) = min(nH2O(i) * invphi(i), 1d0)
     end do
 
   end function dust_ice_fraction_array
@@ -759,17 +817,17 @@ contains
 
     a = ain*invT
     a = min(a, exp_table_aMax - exp_table_da)
-    
+
     ia = (a-exp_table_aMin) * exp_table_multa + 1
     ia = max(ia,1)
-    
+
     x1a = (ia-1)*exp_table_da
-    
+
     f1 = exp_table(ia)
     f2 = exp_table(ia+1)
 
     get_exp_table = (a-x1a) * exp_table_multa * (f2-f1) + f1
-    
+
   end function get_exp_table
 
   !*****************************
@@ -783,7 +841,7 @@ contains
 #KROME_Ebareice
 
   end function get_Ebareice_exp_array
-  
+
   !*****************************
   function get_Ebareice23_exp_array(invTdust)
     use krome_commons
@@ -793,9 +851,9 @@ contains
     get_Ebareice23_exp_array(:) = 0d0
 
 #KROME_Ebareice23
-    
+
   end function get_Ebareice23_exp_array
-  
+
   !************************
   !returns the binding energy for ice coated grain (K)
   function get_Ebind_ice()
@@ -804,7 +862,7 @@ contains
     real*8::get_Ebind_ice(nspec)
 
     get_Ebind_ice(:) = 0d0
-    
+
 #KROME_Ebind_ice
 
   end function get_Ebind_ice
@@ -822,7 +880,7 @@ contains
 
   end function get_Ebind_bare
 
- !************************
+  !************************
   !returns the index of the parent dust bin (0 if none)
   function get_parent_dust_bin()
     use krome_commons
@@ -1014,7 +1072,7 @@ contains
     name(:) = get_rnames() !get reaction names
     do i=1,nrea
        found = .false.
-       #KROME_arr_reactprod
+#KROME_arr_reactprod
        maxflux = max(maxflux,flux(i))
        if(.not.found) flux(i) = 0d0
     end do
@@ -1226,7 +1284,7 @@ contains
     fit_anytab1D = p * (z(i2) - z(i1)) + z(i1)
 
   end function fit_anytab1D
-  
+
   !*****************************
   !spline interpolation at t using array  x,y (size n) as data
   function fspline(x,y,t)
@@ -1358,7 +1416,7 @@ contains
        ispline = y(1)
        return
     end if
-    
+
     if(u>=x(n)) then
        ispline = y(n)
        return

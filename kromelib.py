@@ -56,6 +56,7 @@ class molec():
 	fidx = "idx_" #index for fortran (e.g. H+=idx_Hj, D-=idx_Dk)
 	is_atom = False #flag to identify atoms
 	is_surface = False #flag for species on surface
+	is_chemisorbed = False #flag for chemisorbed species
 	Ebind_ice = Ebind_bare = 0e0 #binding energy on surface for ice and bare grain
 	parentDustBin = 0 #for surface species: belongs to this dust bin (1-based)
 	chempot = 0. #chemical potential (J/mol)
@@ -798,6 +799,10 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 		mymol.fidx = "idx_"+name #f90 index
 		mymol.neutrons = 0 #number of neutrons
 		return mymol
+
+	#chemisorbed species
+	if("_c_dust" in name.lower()):
+		mymol.is_chemisorbed = True
 
 	#when belongs to dust+idx remove _dust in the name
 	if(dustIdx>0 and not(mymol.is_surface)):

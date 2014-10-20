@@ -294,7 +294,7 @@ contains
     !tau_g = rhogas * 1d1**fit_anytab2D(mayer_x(:), mayer_y(:), mayer_z(:,:), &
     !     mayer_xmul, mayer_ymul,log10(rhogas),log10(Tgas))
     tau = (tau_d + tau_g) * lj
-    
+
     if(tau<1d0) return
     besc = tau**-2
 
@@ -313,7 +313,7 @@ contains
     !ibb = (dust_nT - 1) * log10(Tdust) / TbbMax + 1
     ibb = (Tdust-TbbMin) * TbbMult + 1
     !loop on the temperatures to find the corresponding interval
-    
+
     intBB = (Tdust-dust_intBB_Tbb(ibb)) &
          / (dust_intBB_Tbb(ibb+1)-dust_intBB_Tbb(ibb)) &
          * (dust_intBB_sigma(jdust,ibb+1)-dust_intBB_sigma(jdust,ibb)) &
@@ -380,7 +380,7 @@ contains
                - pre * (Tgas - Td1)
           f2 = (get_dust_intBB(i,Td2) - intCMB - intJflux) * be &
                - pre * (Tgas - Td2)
-          
+
           !compute Tdmid
           Tdmid = .5d0 * (Td1 + Td2)
           krome_dust_T(i) = Tdmid
@@ -396,7 +396,7 @@ contains
           !convergence criterium
           if(abs(Td1-Td2)<1d-8) exit
        end do
-       
+
        !be = besc(n(:),Tgas,ljeans,rhogas)
 
        !compute the cooling (avoid the difference Tgas-Tdust)
@@ -424,6 +424,76 @@ contains
          fact * vgas * (Tgas - Tdust) * ntot
 
   end function dustCool
+
+#IFKROME_useChemisorption
+  !load the chemisorption rates from file
+  !************************
+  subroutine init_chemisorption_rates()
+    use krome_commons
+    implicit none
+    real*8::rout
+    integer::ios,icount
+    character(len=80)::cout
+    character(len=2)::mode
+    logical::allocated
+    allocated = .false. !determine if tables are already allocated
+    mode = "--" !default mode
+    print *,"reading chemisorption rates..."
+    !open rate file
+    open(34,file="surface_chemisorption_rates.dat",status="old")
+    do
+       read(34,*,iostat=ios) cout !read line as a string
+       if(ios==-1) exit !on EOF break loop
+       read(cout,*,iostat=ios) rout !convert to double to check if string
+       !on error evaluate string
+       if(ios.ne.0) then
+          cout = trim(cout) !trim line
+          !look for non-comment string (i.e. mode)
+          if(cout(1:1)/="#") then
+             mode = cout(1:2) !store mode
+             icount = 0 !starts to count lines
+          end if
+          cycle !go to the next line
+       end if
+       icount = icount + 1 !count lines
+       !first line is the number of Tdust steps, hence allocate arrays
+       if(icount==1.and..not.allocated) then
+          dust_rateChem_xsteps = rout
+          allocate(dust_rateChem_PC(dust_rateChem_xsteps))
+          allocate(dust_rateChem_CP(dust_rateChem_xsteps))
+          allocate(dust_rateChem_CC(dust_rateChem_xsteps))
+          allocate(dust_rateChem_x(dust_rateChem_xsteps))
+          allocated = .true.
+       end if
+       !second line is the minimum Tdust
+       if(icount==2) dust_rateChem_xmin = rout
+       !third line is the step in Tdust (linear)
+       if(icount==3) then
+          dust_rateChem_dx = rout
+          dust_rateChem_invdx = 1d0/rout
+          dust_rateChem_xfact = (dust_rateChem_xsteps-1) / dust_rateChem_dx
+       end if
+       !other lines are data
+       if(icount>3) then
+          !different modes are differents processes
+          if(mode=="PC") then
+             dust_rateChem_PC(icount-3) = rout
+          elseif(mode=="CP") then
+             dust_rateChem_CP(icount-3) = rout
+          elseif(mode=="CC") then
+             dust_rateChem_CC(icount-3) = rout
+          else
+             if(icount==4) print *,"WARNING: chemisorption mode "//mode//" skipped!"
+          end if
+          dust_rateChem_x(icount-3) = dust_rateChem_xmin + (icount-3-1) * dust_rateChem_dx
+       end if
+    end do
+    close(34)
+
+    print *,"done!"
+
+  end subroutine init_chemisorption_rates
+#ENDIFKROME
 
   !******************
   function sgn(arg)
@@ -466,10 +536,10 @@ contains
   function dust_evap(adust,nndust,Tdust,ebind)
     implicit none
     real*8::dust_evap,adust,nndust,Tdust,ebind
-    
+
     !l0*nu0=1.8d5 cm/s from Stahler+1981
     dust_evap = 3d0 * 1.8d5 * exp(-ebind/Tdust) / adust * nndust
-    
+
   end function dust_evap
 
   !***************

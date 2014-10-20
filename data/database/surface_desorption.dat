@@ -1,8 +1,10 @@
-@var:[ndust] ice_fraction = dust_ice_fraction_array(krome_dust_asize2(:),n(nmols+1:nmols+ndust),n(idx_H2O_dust_1:idx_H2O_dust_1+ndust))
+@var:[ndust] dust_inv_phi = dust_get_inv_phi(krome_dust_asize2(:),xdust(:))
+
 @var:[ndust] invTdust = 1d0/(krome_dust_T(:)+1d-40)
 @var:[2*nspec] Ebareice_exp = get_Ebareice_exp_array(invTdust(:))
 @var:[nspec] Eice_exp = Ebareice_exp(1:nspec)
 @var:[nspec] Ebare_exp = Ebareice_exp(nspec+1:2*nspec)
+@var:[ndust] ice_fraction = dust_ice_fraction_array(dust_inv_phi(:),n(idx_H2O_dust_1:idx_H2O_dust_1+ndust))
 #Desorption rate for H from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
 @type: desorption
 @reacts: H_dust
