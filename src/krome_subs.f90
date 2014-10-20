@@ -719,9 +719,9 @@ contains
 
     do i=1,ndust
        idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
-       dust_get_rateChem_PC(i) = (Tdust(i)-dust_rateChem_x(i)) * dust_rateChem_invdx &
-            * (dust_rateChem_PC(i+1)-dust_rateChem_PC(i)) &
-            + dust_rateChem_PC(i)
+       dust_get_rateChem_PC(i) = (Tdust(i)-dust_rateChem_x(idx)) * dust_rateChem_invdx &
+            * (dust_rateChem_PC(idx+1)-dust_rateChem_PC(idx)) &
+            + dust_rateChem_PC(idx)
     end do
 
   end function dust_get_rateChem_PC
@@ -735,9 +735,9 @@ contains
 
     do i=1,ndust
        idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
-       dust_get_rateChem_CP(i) = (Tdust(i)-dust_rateChem_x(i)) * dust_rateChem_invdx &
-            * (dust_rateChem_CP(i+1)-dust_rateChem_CP(i)) &
-            + dust_rateChem_CP(i)
+       dust_get_rateChem_CP(i) = (Tdust(i)-dust_rateChem_x(idx)) * dust_rateChem_invdx &
+            * (dust_rateChem_CP(idx+1)-dust_rateChem_CP(idx)) &
+            + dust_rateChem_CP(idx)
     end do
 
   end function dust_get_rateChem_CP
@@ -751,9 +751,9 @@ contains
 
     do i=1,ndust
        idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
-       dust_get_rateChem_CC(i) = (Tdust(i)-dust_rateChem_x(i)) * dust_rateChem_invdx &
-            * (dust_rateChem_CC(i+1)-dust_rateChem_CC(i)) &
-            + dust_rateChem_CC(i)
+       dust_get_rateChem_CC(i) = (Tdust(i)-dust_rateChem_x(idx)) * dust_rateChem_invdx &
+            * (dust_rateChem_CC(idx+1)-dust_rateChem_CC(idx)) &
+            + dust_rateChem_CC(idx)
     end do
 
   end function dust_get_rateChem_CC
