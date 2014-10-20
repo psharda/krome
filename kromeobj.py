@@ -367,13 +367,15 @@ class krome():
 			filename = "networks/react_primordial3"
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1",\
+				"-columnDensityMethod=JEANS"]]
 			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=T,H2","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseSurface"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=REDUCED","-ATOL=1d-20","-maxord=1","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=REDUCED","-ATOL=1d-20","-maxord=1",\
+				"-columnDensityMethod=JEANS"]]
 			[argv.append(x) for x in ["-dust=3,C","-dustOptions=T","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ_surface"
 			test_status = "dev" #under developement
