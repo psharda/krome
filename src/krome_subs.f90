@@ -671,12 +671,12 @@ contains
     fbare = 1d0 - fice
     dust_desorption_rate = nu0 * (fbare * expEbare &
          + fice * expEice)
-    dust_desorption_rate = min(dust_desorption_rate,1d0)
 
   end function dust_desorption_rate
 
   !**************************
-  function dust_2body_rate(p,invphi,fice,expEice1,expEice2,expEbare1,expEbare2,pesc_ice,pesc_bare)
+  function dust_2body_rate(p,invphi,fice,expEice1,expEice2,&
+       expEbare1,expEbare2,pesc_ice,pesc_bare)
     use krome_constants
     implicit none
     real*8::fice,expEice1,expEice2,expEbare1,expEbare2,invphi
