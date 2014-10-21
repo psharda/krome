@@ -58,6 +58,7 @@ class krome():
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolCMBFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
+	useChemisorption = False
 	useCoolCMBFloorZ = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
@@ -2214,6 +2215,7 @@ class krome():
 		#increase the species to include bin-based surface species 
 		uspecs = []
 		for sp in specs:
+			if(sp.is_chemisorbed): self.useChemisorption = True
 			#if surface add species for each dust bin (append _BinIndex)
 			if(sp.is_surface):
 				#loop on the number of bins (all types)
@@ -3965,6 +3967,7 @@ class krome():
                         if(srow == "#IFKROME_useShieldingWG11" and not(self.useShieldingWG11)): skip = True
                         if(srow == "#IFKROME_useShieldingDB96" and not(self.useShieldingDB96)): skip = True
                         if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
+			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 
 		        if(srow == "#ENDIFKROME"): skip = False
 
@@ -4472,6 +4475,9 @@ class krome():
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(srow == "#IFKROME_usePhotoDust" and not(self.photoBins>0)): skipPhotoDust = True
@@ -5523,6 +5529,9 @@ class krome():
 			if(srow == "#IFKROME_useTabs" and not(self.useTabs)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
+			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
 			if(srow == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -5670,6 +5679,12 @@ class krome():
 	def copyOthers(self):
 		buildFolder = self.buildFolder
 		test_name = self.test_name
+
+		#copy surface chemisorption rates
+		if(self.useChemisorption):
+			print "- copying chemisorption rate data..."
+			shutil.copyfile("data/surface_chemisorption_rates.dat", buildFolder+"surface_chemisorption_rates.dat")
+
 		#copy other files to build
 		if(self.useDust):
 			print "- copying optical data for dust..."

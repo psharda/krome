@@ -244,6 +244,14 @@ if(sum(n(1:nmols))>1d14) k(31:71) = 0d0
 @format:idx,R,R,P,P,rate
 138,H_dust,HCO_dust,CO,H2,auto
 
+@format:idx,R,P,rate
+139,H_c_dust,H_dust,auto
+140,H_dust,H_c_dust,auto
+
+@format:idx,R,R,P,rate
+141,H_dust,H_c_dust,H2_dust,auto
+142,H_c_dust,H_c_dust,H2_dust,auto
+
 @surface_stop
 
 

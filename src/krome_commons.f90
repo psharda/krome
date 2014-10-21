@@ -91,5 +91,13 @@ module krome_commons
   real*8,parameter::exp_table_da=1d0/exp_table_multa
   real*8::exp_table(exp_table_na)
 
-  
+#KROME_useChemisorption
+  !commons for chemisorption rate fit
+  real*8,allocatable::dust_rateChem_PC(:),dust_rateChem_CP(:)
+  real*8,allocatable::dust_rateChem_CC(:),dust_rateChem_x(:)
+  real*8::dust_rateChem_xmin,dust_rateChem_dx
+  real*8::dust_rateChem_xfact,dust_rateChem_invdx
+  integer::dust_rateChem_xsteps
+#ENDIFKROME
+
 end module krome_commons

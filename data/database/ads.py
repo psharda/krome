@@ -106,11 +106,12 @@ fout.close()
 #****DESORPTION****
 print "writing desorption..."
 fout = open("surface_desorption.dat","w")
-fout.write("@var:[ndust] ice_fraction = dust_ice_fraction_array(krome_dust_asize2(:),n(nmols+1:nmols+ndust),n(idx_H2O_dust_1:idx_H2O_dust_1+ndust))\n")
+fout.write("@var:[ndust] dust_inv_phi = dust_get_inv_phi(krome_dust_asize2(:),xdust(:))\n\n")
 fout.write("@var:[ndust] invTdust = 1d0/(krome_dust_T(:)+1d-40)\n")
 fout.write("@var:[2*nspec] Ebareice_exp = get_Ebareice_exp_array(invTdust(:))\n")
 fout.write("@var:[nspec] Eice_exp = Ebareice_exp(1:nspec)\n")
 fout.write("@var:[nspec] Ebare_exp = Ebareice_exp(nspec+1:2*nspec)\n")
+fout.write("@var:[ndust] ice_fraction = dust_ice_fraction_array(dust_inv_phi(:),n(idx_H2O_dust_1:idx_H2O_dust_1+ndust))\n")
 for mol in mols:
 	fout.write("#Desorption rate for "+mol+" from Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014\n")
 	fout.write("@type: desorption\n")
@@ -128,12 +129,13 @@ fout.close()
 #****2BODY****
 print "writing 2body..."
 fout = open("surface_2body.dat","w")
+fout.write("@var:[ndust] dust_inv_phi = dust_get_inv_phi(krome_dust_asize2(:),xdust(:))\n\n")
 fout.write("@var:[ndust] invTdust = 1d0/(krome_dust_T(:)+1d-40)\n")
-fout.write("@var:[ndust] ice_fraction = dust_ice_fraction_array(krome_dust_asize2(:),n(nmols+1:nmols+ndust),n(idx_H2O_dust_1:idx_H2O_dust_1+nmols))\n")
 fout.write("@var:[nspec] m = get_mass()\n")
 fout.write("@var:[2*nspec] Ebareice23_exp = get_Ebareice23_exp_array(invTdust(:))\n")
 fout.write("@var:[nspec] Eice23_exp = Ebareice23_exp(1:nspec)\n")
 fout.write("@var:[nspec] Ebare23_exp = Ebareice23_exp(nspec+1:2*nspec)\n")
+fout.write("@var:[ndust] ice_fraction = dust_ice_fraction_array(dust_inv_phi(:),n(idx_H2O_dust_1:idx_H2O_dust_1+nmols))\n")
 fout.write("\n\n")
 
 for rea2 in data2b:
@@ -168,7 +170,7 @@ for rea2 in data2b:
 	arg_delta_ice = "1d0-"+d90(delta_ice) 
 	arg_delta_bare = "1d0-"+d90(delta_bare)
 	if(delta_ice==0e0): arg_delta_ice = arg_delta_bare = "1d0" 
-	fout.write("@rate: dust_2body_rate("+P+",krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),"\
+	fout.write("@rate: dust_2body_rate("+P+",dust_inv_phi(auto_jdust-nmols),ice_fraction(auto_jdust-nmols),"\
 		+Eice1+","+Eice2+","+Ebare1+","+Ebare2\
 		+","+arg_delta_ice+","+arg_delta_bare+")\n\n")
 
@@ -181,7 +183,7 @@ for rea2 in data2b:
 	fout.write("@limits:\n")
 	arg_delta_ice = d90(delta_ice) 
 	arg_delta_bare = d90(delta_bare)
-	fout.write("@rate: dust_2body_rate("+P+",krome_dust_asize2(auto_jdust-nmols),n(auto_jdust),ice_fraction(auto_jdust-nmols),"\
+	fout.write("@rate: dust_2body_rate("+P+",dust_inv_phi(auto_jdust-nmols),ice_fraction(auto_jdust-nmols),"\
 		+Eice1+","+Eice2+","+Ebare1+","+Ebare2\
 		+","+arg_delta_ice+","+arg_delta_bare+")\n\n")
 
@@ -260,7 +262,7 @@ for datac in datachemis:
 	fout.write(d90(Tmin)+"\n")
 	fout.write(d90((Tmax-Tmin)/imax)+"\n")
 	for i in range(imax):
-		Tsys = i*(Tmax-Tmin)/imax+Tmin
+		Tsys = i*(Tmax-Tmin)/(imax-1)+Tmin
 		Ptunnel = quad(Tij1, 1e-40, Bi, args=(Bi,Bj,Bij,Z,Tsys),limit=5000,epsabs=1e-40)[0]
 		Pdiff = quad(Tij2, Bi, -log(1e-40)*Tsys, args=(Bi,Bj,Bij,Z,Tsys),limit=5000,epsabs=1e-40)[0]
 		rate_val = nu0*(Pdiff+Ptunnel)
@@ -277,14 +279,14 @@ reactChemis.append([["H_c_dust"],["H_dust"],["CP"]])
 reactChemis.append([["H_c_dust","H_dust"],["H2_dust"],["CP"]])
 reactChemis.append([["H_c_dust","H_dust"],["H2_dust"],["PC"]])
 reactChemis.append([["H_c_dust","H_c_dust"],["H2_dust"],["CC"]])
-reactChemis.append([["H_c_dust"],["H"],["CG"]])
+#reactChemis.append([["H_c_dust"],["H"],["CG"]])
 print "writing chemisorption..."
 fout = open("surface_chemisorption.dat","w")
 fout.write("@var:[ndust] rateChem_PC = dust_get_rateChem_PC(krome_dust_T(:))\n")
 fout.write("@var:[ndust] rateChem_CP = dust_get_rateChem_CP(krome_dust_T(:))\n")
 fout.write("@var:[ndust] rateChem_CC = dust_get_rateChem_CC(krome_dust_T(:))\n")
-fout.write("@var:[ndust] rateChem_CG = dust_get_rateChem_CG(krome_dust_T(:))\n")
-fout.write("@var:[ndust] dust_phi = dust_get_inv_phi(krome_dust_asize2(:),xdust(:))\n\n")
+#fout.write("@var:[ndust] rateChem_CG = dust_get_rateChem_CG(krome_dust_T(:))\n")
+fout.write("@var:[ndust] dust_inv_phi = dust_get_inv_phi(krome_dust_asize2(:),xdust(:))\n\n")
 for rChem in reactChemis:
 	verb = (" + ".join([x.replace("_dust","") for x in rChem[0]]))+" -> "+(" + ".join([x.replace("_dust","") for x in rChem[1]]))
 	fout.write("#rate chemisorption ("+verb+") from Cazaux+2004 (err:Cazaux+2010), Iqbal+2010, Hocuk+2014\n")
@@ -292,9 +294,9 @@ for rChem in reactChemis:
 	fout.write("@reacts: "+(",".join(rChem[0]))+"\n")
 	fout.write("@prods: "+(",".join(rChem[1]))+"\n")
 	fout.write("@limits:\n")
-	dust_phi = ""
-	if(len(rChem[0])==2): dust_phi = "*dust_inv_phi(auto_jdust-nmols)"
-	fout.write("@rate: dust_chemisorption_"+rChem[2][0]+"(auto_jdust-nmols)"+dust_phi+"\n\n")
+	dust_inv_phi = ""
+	if(len(rChem[0])==2): dust_inv_phi = "*dust_inv_phi(auto_jdust-nmols)"
+	fout.write("@rate: rateChem_"+rChem[2][0]+"(auto_jdust-nmols)"+dust_inv_phi+"\n\n")
 
 fout.close()
 
