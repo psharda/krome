@@ -117,7 +117,7 @@ class krome():
 	physVariables = [] #list of the phys variables (list of [variable_name, default_value_string])
 	kModifier = [] #modifier lines that will be appended after the rate calculation
 	odeModifier = [] #modifier lines that will be appended after the ODE calculation
-	photoPartners = [] #list of the reactants of photoreactions 
+	photoPartners = dict() #dictionary of the reactants of photoreactions (key is reaction index)
 	columnDensityMethod = "DEFAULT"
 	compiler = "ifort" #default compiler
 	ramses_offset = 2 #offset in the array for ramses
@@ -1937,7 +1937,7 @@ class krome():
 				self.nPhotoRea += 1
 				myrea.idxph = self.nPhotoRea
 				#add the photo reactant to the partner array
-				self.photoPartners.append(myrea.reactants[0])
+				self.photoPartners[myrea.idx] = myrea.reactants[0]
 
 			#this reaction is on surface
 			if(inSurfaceBlock):
@@ -4342,7 +4342,7 @@ class krome():
 				for i in range(len(reacts)):
 					rea = reacts[i]
 					if(rea.kphrate==None): continue
-					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+self.photoPartners[i].fidx+") !"\
+					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+self.photoPartners[rea.idx].fidx+") !"\
 						+rea.verbatim+"\n"
 				row = phbintau+"\n"
 
@@ -4471,18 +4471,19 @@ class krome():
 				if(useDustT): dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")\n" #,dust_opt_Qabs_"+dType
 			if(useDustT): dustOptInt += "call dust_init_intBB()"
 
-		skip = skipPhotoDust = False
+		skip = skipPhotoDust = skipChemisorption = False
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
-			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
+			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skipChemisorption = True
+			if(srow == "#ENDIFKROME_useChemisorption"): skipChemisorption = False
 
 			if(srow == "#IFKROME_usePhotoDust" and not(self.photoBins>0)): skipPhotoDust = True
 			if(srow == "#ENDIFKROME_usePhotoDust"): skipPhotoDust = False
 
+			if(skipChemisorption): continue
 			if(skipPhotoDust): continue
 			if(skip): continue
 
@@ -5629,8 +5630,12 @@ class krome():
 			elif(srow == "#KROME_photopartners"):
 				photoPartnersList = ""
 				if(len(self.photoPartners)>0):
-					for i in range(len(self.photoPartners)):
-						photoPartnersList += "photoPartners("+str(i+1)+") = "+self.photoPartners[i].fidx+"\n"
+					listPart = []
+					for phKey,phPart in self.photoPartners.iteritems():
+						listPart.append([phKey,phPart])
+					listPart = sorted(listPart, key=lambda x:x[0])
+					for i in range(len(listPart)):
+						photoPartnersList += "photoPartners("+str(i+1)+") = "+listPart[i][1].fidx+"\n"
 				fout.write(photoPartnersList+"\n")
 			elif(srow == "#KROME_init_phys_variables"):
 				for x in self.physVariables:

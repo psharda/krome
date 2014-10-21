@@ -494,7 +494,7 @@ contains
     print *,"done!"
 
   end subroutine init_chemisorption_rates
-#ENDIFKROME
+#ENDIFKROME_useChemisorption
 
   !******************
   function sgn(arg)
