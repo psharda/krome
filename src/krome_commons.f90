@@ -12,12 +12,10 @@ module krome_commons
 #KROME_heat_index
 
   real*8::arr_k(nrea)
-  real*8::jac_nold(nspec),jac_dnold(nspec),jac_dn(nspec)
-  !$omp threadprivate(jac_nold,jac_dnold,jac_dn)
-    
+
   !commons for rate tables
   !modify ktab_n according to the requested precision
-  integer,parameter::ktab_n=int(1e3)
+  integer,parameter::ktab_n=int(1e5)
   real*8::ktab(nrea,ktab_n),ktab_logTlow, ktab_logTup, ktab_T(ktab_n)
   real*8::inv_ktab_T(ktab_n-1), inv_ktab_idx
 
@@ -84,7 +82,7 @@ module krome_commons
   real*8::mayer_z(mayern,mayerm),mayer_xmul,mayer_ymul
 
   !commons for exp(-a) table
-  integer,parameter::exp_table_na=int(1d4)
+  integer,parameter::exp_table_na=int(1d5)
   real*8,parameter::exp_table_aMax=1d4,exp_table_aMin=0d0
   real*8,parameter::exp_table_multa=(exp_table_na-1) &
        / (exp_table_aMax-exp_table_aMin)
