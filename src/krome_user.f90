@@ -1116,7 +1116,7 @@ contains
   !*************************
   subroutine krome_scale_Z(n,Z)
     !scale metallicity the metals contained in n(:) 
-    ! to Z according to Arnett(1996)
+    ! to Z according to Asplund+2009
     use krome_commons
     real*8::n(:),Z,Htot
 

@@ -120,10 +120,9 @@ contains
     use krome_subs
     implicit none
     real*8::heat_photoDust,n(:),Tgas,ntot,eps
-    real*8::Ghab,z,izsun,psi
+    real*8::Ghab,z,psi
 
     ntot = get_Hnuclei(n(:))
-    izsun = 1d0/0.02d0 !inverse solar metallicity
     Ghab = 1.69d0 !habing flux, 1.69 is Draine78
     if(n(idx_e)>0d0) then
        psi = 2d0 * Ghab * sqrt(Tgas) / n(idx_e)
@@ -132,8 +131,8 @@ contains
     end if
     eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
          3.7d-2 * (Tgas * 1d-4)**.7 / (1d0 + 2d-4 * psi)
-    z = #KROME_photoDustZ !metallicty
-    heat_photoDust = 1.3d-24*eps*Ghab*ntot*z*izsun
+    z = #KROME_photoDustZ !metallicty wrt solar
+    heat_photoDust = 1.3d-24*eps*Ghab*ntot*z
 
   end function heat_photoDust
 #ENDIFKROME
