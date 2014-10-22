@@ -486,6 +486,7 @@ contains
           else
              if(icount==4) print *,"WARNING: chemisorption mode "//mode//" skipped!"
           end if
+          !store the dependent variable (Tdust)
           dust_rateChem_x(icount-3) = dust_rateChem_xmin + (icount-3-1) * dust_rateChem_dx
        end if
     end do

@@ -100,4 +100,7 @@ module krome_commons
   integer::dust_rateChem_xsteps
 #ENDIFKROME
 
+  !stores the last evaluation of the rates in the fex
+  real*8::last_coe(nrea)
+
 end module krome_commons

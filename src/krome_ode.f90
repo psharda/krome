@@ -74,6 +74,7 @@ contains
        write(97,'(999E12.3e3)') tt,dn(:)
 #ENDIFKROME
        
+       last_coe(:) = k(:)
        jac_dnold(:) = jac_dn(:) !store previous dn for explicit jacobian
        jac_nold(:) = n(:) !store previous n for explicit jacobian
        jac_dn(:) = dn(:) !store current n
@@ -100,7 +101,7 @@ contains
     krome_gamma = gamma_index(n(:))
 #ENDIFKROME
     
-    if(j.ne.idx_Tgas) k(:) = coe_tab(n(:)) !compute coefficients
+    k(:) = last_coe(:) !get rate coefficients
     
 #KROME_JAC_PD
     

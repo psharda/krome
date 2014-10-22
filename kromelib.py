@@ -365,6 +365,7 @@ def get_solar_abundances():
 	#  log10(epsilon) = log10(n/nH) + 12
 	# where n is the number densiity of the given element, 
 	# while nH is the number density of H
+	# This function returns log10(n/nH)
 	solar_abs = {
 		"D":12.00e0,
 		"He":10.93e0,
@@ -394,7 +395,7 @@ def get_solar_abundances():
 
 	solar_out = dict()
 	for k,v in solar_abs.iteritems():
-		solar_out[k] = str(1e1**(v-12e0))
+		solar_out[k] = str(v-12e0)
 
 	return solar_out
 

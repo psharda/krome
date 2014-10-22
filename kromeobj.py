@@ -5250,7 +5250,7 @@ class krome():
 				break #skip routine if H is not present
 			for mols in specs:
 				if(k.upper()==mols.name.upper()):
-					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+log10("+str(v)+")), 1d-40)")
+					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+"+str(v)+"), 1d-40)")
 
 		#loop on source to pre-process pragmas
 		for row in fh:
