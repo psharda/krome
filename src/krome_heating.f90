@@ -149,10 +149,9 @@ contains
     implicit none
     integer::i
     real*8::heat_netPhotoDust,n(:),Tgas,ntot,eps
-    real*8::Ghab,z,izsun,psi,recomb_cool,bet
+    real*8::Ghab,z,psi,recomb_cool,bet
 
     ntot = get_Hnuclei(n(:))
-    izsun = 1d0/0.02d0 !inverse solar metallicity
     Ghab = 0d0 !habing flux
     bet = 0.735d0*(Tgas)**(-0.068)
 
@@ -178,10 +177,10 @@ contains
 
     eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
          3.7d-2 * (Tgas * 1d-4)**.7 / (1d0 + 2d-4 * psi)
-    z = #KROME_photoDustZ !metallicty
+    z = #KROME_photoDustZ !metallicty wrt solar
 
     !net photoelectric heating
-    heat_netPhotoDust = (1.3d-24*eps*Ghab*ntot-recomb_cool)*z*izsun
+    heat_netPhotoDust = (1.3d-24*eps*Ghab*ntot-recomb_cool)*z
 
   end function heat_netPhotoDust
 #ENDIFKROME
