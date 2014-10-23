@@ -146,8 +146,6 @@ contains
        end if
 #ENDIFKROME
 
-#KROME_compute_electrons
-
 #IFKROME_useEquilibrium
        !try to determine if the system has reached a steady equilibrium
        equil = .true.
@@ -164,6 +162,8 @@ contains
        n_old(:) = n(:)
 #ENDIFKROME
     end do
+
+#KROME_compute_electrons
 
 #IFKROME_check_mass_conservation
     if(abs(1.d0-totmass/sum(n(:) * mass(:)))>1d-3) then
