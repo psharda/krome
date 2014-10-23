@@ -87,10 +87,6 @@ contains
     n(nmols+1:nmols+ndust) = xdust(:) !get dust abundances
 #ENDIFKROME
 
-
-    jac_nold(:) = n(:) !store initial densities (finite difference for Jacobian)
-    jac_dn(:) = 0.d0
-    jac_dnold(:) = 0.d0
     icount = 0 !count solver iterations
     istate = 1 !init solver state
     tloc = 0.d0 !set starting time
@@ -99,7 +95,6 @@ contains
     mass(:) = get_mass() !get masses
     totmass = sum(n(:) * mass(:)) !calculate total mass
 #ENDIFKROME
-
     !store initial values
     ni(:) = n(:)
 
@@ -122,10 +117,11 @@ contains
        elseif(istate==-5 .or. istate==-4) then
           istate = 3 !wrong sparsity recompute
 #IFKROME_noierr
-       else
-          call XSETF(1)!turn on verbosity
-          got_error = .true.
+       elseif(istate==-3) then
+          n(:) = ni(:)
           istate = 1
+       else
+          got_error = .true.
        end if
        
        if(got_error.or.icount>icount_max) then
@@ -149,6 +145,8 @@ contains
           exit
        end if
 #ENDIFKROME
+
+#KROME_compute_electrons
 
 #IFKROME_useEquilibrium
        !try to determine if the system has reached a steady equilibrium

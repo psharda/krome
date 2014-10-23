@@ -10,7 +10,7 @@ contains
     use krome_constants
     use krome_user_commons
     implicit none
-    real*8::coe(nrea),k(nrea),Tgas,n(nspec)
+    real*8::coe(nrea),k(nrea),Tgas,n(nspec),kmax
 #KROME_shortcut_variables
     real*8::small,nmax
     integer::i
@@ -32,6 +32,16 @@ contains
 #KROME_krates
 
     coe(:) = k(:) !set coefficients to return variable
+
+
+    !!uncomment below to check coefficient values
+    !kmax = 1d0
+    !if(maxval(k)>kmax.or.minval(k)<0d0) then
+    !   print *,"***************"
+    !   do i=1,size(k)
+    !      if(k(i)<0d0.or.k(i)>kmax) print *,i,k(i)
+    !   end do
+    !end if
 
   end function coe
 
@@ -698,13 +708,16 @@ contains
     use krome_commons
     use krome_constants
     implicit none
-    real*8::iapp2,dust_get_inv_phi(ndust),asize2(ndust),nndust(ndust)
+    real*8::iapp2,dust_get_inv_phi(ndust),asize2(ndust)
+    real*8::nndust(ndust),dephi
     integer::i
 
     iapp2 = (3d-8)**2 !1/cm2
     do i=1,ndust
-       if(nndust(i).le.0d0) dust_get_inv_phi(i) = 0d0
-       dust_get_inv_phi(i) = iapp2 / (4d0 * nndust(i) * pi * asize2(i))
+       dust_get_inv_phi(i) = 0d0
+       dephi = (4d0 * nndust(i) * pi * asize2(i))
+       if(dephi.le.0d0) cycle
+       dust_get_inv_phi(i) = iapp2 / dephi
     end do
 
   end function dust_get_inv_phi

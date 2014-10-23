@@ -399,8 +399,6 @@ def get_solar_abundances():
 
 	return solar_out
 
-
-
 ###################################
 #vibrational constant dictionary
 #IRIKURA J. Phys. Chem. Ref. Data, Vol. 36, No. 2, 2007

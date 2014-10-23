@@ -2744,9 +2744,11 @@ class krome():
 			rhs = "kflux("+str(rea.idx)+")"
 			if(self.humanFlux): rhs = rea.RHS
 			for r in rea.reactants:
+				if(r.name=="E"): continue
 				dns[r.idx-1] = dns[r.idx-1].replace(" = 0.d0"," =")
 				dns[r.idx-1] += " -"+rhs
 			for p in rea.products:
+				if(p.name=="E"): continue
 				dns[p.idx-1] = dns[p.idx-1].replace(" = 0.d0"," =")
 				dns[p.idx-1] += " +"+rhs
 				
@@ -3614,10 +3616,19 @@ class krome():
 				optVariables += dType+"(:),dust_opt_Qabs_"+dType+"(:,:)\n"
 				optVariables += "real*8,allocatable::dust_opt_Em_"+dType+"(:,:),dust_opt_Tbb_"+dType+"(:)\n"
 
+
 		#common variables
 		skip = False
 		for row in fh:
 			srow = row.strip()
+
+			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
+			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+
+			if(skip): continue
+
 			if(srow == "#KROME_species_index"):
 				for x in specs:
 					fout.write("\tinteger,parameter::" + x.fidx + "=" + str(x.idx) + "\n")
@@ -3647,9 +3658,9 @@ class krome():
 							firstSurface = min(firstSurface,x.idx)
 							lastSurface = max(lastSurface,x.idx)
 					#write the indexes of the surface species
-					if(surfaceFound):
-						fout.write("\tinteger,parameter::idx_firstSurface="+str(firstSurface)+"\n")
-						fout.write("\tinteger,parameter::idx_lastSurface="+str(lastSurface)+"\n")
+					#if(surfaceFound):
+					#	fout.write("\tinteger,parameter::idx_firstSurface="+str(firstSurface)+"\n")
+					#	fout.write("\tinteger,parameter::idx_lastSurface="+str(lastSurface)+"\n")
 
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
@@ -4048,7 +4059,7 @@ class krome():
 					ff += "nH = get_Hnuclei(n(:))\n"
 					ff += zg[1]+" = "+zg[2]+"\n"
 					ff += zg[1]+" = max("+zg[1]+", 0d0)\n\n"
-					ff += ffname + " = log10("+zg[1]+"/nH+1d-40) - "+solar[zg[0]]+"\n\n" #compute metallicity
+					ff += ffname + " = log10("+zg[1]+"/nH+1d-40) - ("+solar[zg[0]]+")\n\n" #compute metallicity
 					ff += "end function "+ffname+"\n\n"
 					ffs += ff #append function to the others
 				fout.write(ffs+"\n") #replace functions
@@ -4979,6 +4990,15 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome_ode.f90","w")
 
+		#check if electrons are present
+		hasElectrons = False
+		electronIdx = -1
+		for x in self.specs:
+			if(x.name=="E"):
+				hasElectrons = True
+				electronIdx = x.idx #store electron index
+				break
+
 		#string for the function computing dust H2 formation
 		dustH2 = "\n"
 		if(self.useDustH2):
@@ -5120,6 +5140,11 @@ class krome():
 				klist = sorted(klist, key=lambda x: x[1])
 				fout.write("".join([x[0] for x in klist]))
 
+			elif(srow == "#KROME_compute_electrons" and hasElectrons):
+				fout.write("n(idx_e) = 0d0\n")
+				fout.write("n(idx_e) = sum(n(:) * get_charges())\n")
+				fout.write("n(idx_e) = max(n(idx_e),0d0)\n")
+
 			elif(srow == "#KROME_dustSumVariables" and self.useDust):
 				#add partner sum dust variable declarations
 				dustSumVar = []
@@ -5171,12 +5196,14 @@ class krome():
 				if(not(self.doJacobian)): continue
 				#build the Jacobian as J(i,j) = df_i/dx_j
 				for i in range(neq):
+					if(i+1==electronIdx): continue
 					if(i==0): fout.write("if(j=="+str(i+1)+") then\n")
 					if(i>0): fout.write("elseif(j=="+str(i+1)+") then\n")
 					if(i!=Tgas_species.idx-1):
 						spdj = ""
 						has_pdj = False
 						for j in range(neq):
+							if(j+1==electronIdx): continue
 							if(self.jsparse[j][i]==1):
 								has_pdj = True
 								spdj += ("\t" + self.jac[j][i] + "\n")
@@ -5227,8 +5254,6 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome_user.f90","w")
 
-		skip = False
-
 		solar = get_solar_abundances()
 
 		scaleZ = []
@@ -5250,8 +5275,9 @@ class krome():
 				break #skip routine if H is not present
 			for mols in specs:
 				if(k.upper()==mols.name.upper()):
-					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+"+str(v)+"), 1d-40)")
+					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
+		skip = False
 		#loop on source to pre-process pragmas
 		for row in fh:
 
@@ -5514,6 +5540,13 @@ class krome():
 		ATOL = ATOL.replace("e","d")
 		RTOL = RTOL.replace("e","d")
 
+		#check if electrons are present
+		hasElectrons = False
+		for x in self.specs:
+			if(x.name=="E"):
+				hasElectrons = True
+				break
+
 		if(self.buildCompact):
 			fout = open(buildFolder+"krome_all.f90","a")
 		else:
@@ -5525,54 +5558,23 @@ class krome():
 			if(srow == "#IFKROME_useX" and not(self.useX)): skip = True
 			if(srow == "#ELSEKROME" and not(self.useX)): skip = False
 			if(srow == "#ELSEKROME" and self.useX): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
 
 			if(srow == "#IFKROME_useTabs" and not(self.useTabs)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_useFlux" and not(self.useFlux)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_conserve" and not(self.useConserve) and not(self.useConserveE)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_report" and not(self.doReport)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_useTopology" and not(self.useTopology)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_check_mass_conservation" and not(self.checkConserv)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_useEquilibrium" and not(self.useEquilibrium)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_useCoolingZ" and not(self.useCoolingZ)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_ierr" and not(self.useIERR)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_noierr" and (self.useIERR)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
-
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
-
-
 
 			ierr = ""
 			if(self.useIERR): ierr = ",ierr"
@@ -5655,6 +5657,10 @@ class krome():
 				fout.write("IWORK(5) = "+str(self.maxord)+" !maximum integration order\n")
 			elif(srow == "#KROME_MF"):
 				fout.write("MF = "+str(self.solver_MF)+"\n")
+			elif(srow == "#KROME_compute_electrons" and hasElectrons):
+				fout.write("n(idx_e) = 0d0\n")
+				fout.write("n(idx_e) = sum(n(:) * get_charges())\n")
+				fout.write("n(idx_e) = max(n(idx_e),0d0)\n")
 			else:
 				if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):

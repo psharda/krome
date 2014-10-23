@@ -3,7 +3,7 @@ contains
 
 #KROME_header
 
-  subroutine fex(neq,tt,n,dn)
+  subroutine fex(neq,tt,nin,dn)
     use krome_commons
     use krome_constants
     use krome_subs
@@ -17,7 +17,7 @@ contains
     implicit none
     integer::neq
     real*8::tt,dn(neq),n(neq),k(nrea),krome_gamma
-    real*8::gamma,Tgas,vgas,ntot,nH2dust,nd
+    real*8::gamma,Tgas,vgas,ntot,nH2dust,nd,nin(neq)
 #KROME_dustSumVariables
 #KROME_implicit_variables
 #KROME_flux_variables
@@ -25,10 +25,14 @@ contains
 
 #KROME_coevars
 
+    n(:) = nin(:)
+
     nH2dust = 0.d0
     n(idx_CR) = 1.d0
     n(idx_g)  = 1.d0
     n(idx_dummy) = 1.d0
+
+#KROME_compute_electrons
 
     dn(:) = 0.d0 !initialize differentials
     Tgas = max(n(idx_Tgas),2.73d0) !get temperature
@@ -75,9 +79,6 @@ contains
 #ENDIFKROME
        
        last_coe(:) = k(:)
-       jac_dnold(:) = jac_dn(:) !store previous dn for explicit jacobian
-       jac_nold(:) = n(:) !store previous n for explicit jacobian
-       jac_dn(:) = dn(:) !store current n
 
   end subroutine fex
 
@@ -96,6 +97,8 @@ contains
 
     nH2dust = 0.d0
     Tgas = n(idx_Tgas)
+
+#KROME_compute_electrons
 
 #IFKROME_use_thermo
     krome_gamma = gamma_index(n(:))

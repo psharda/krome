@@ -99,7 +99,7 @@ for mol in mols:
 	fout.write("@reacts: "+mol+"\n")
 	fout.write("@prods: "+mol+"_dust\n")
 	fout.write("@limits:\n")
-	fout.write("@rate: dust_adsorption_rate(n(idx_"+mol+"), n(auto_jdust), imsqrt(idx_"+mol+"),ads_stick(auto_jdust-nmols),krome_dust_asize2(auto_jdust-nmols),sqrTgas)\n")
+	fout.write("@rate: dust_adsorption_rate(n(idx_"+mol+"), xdust(auto_jdust-nmols), imsqrt(idx_"+mol+"),ads_stick(auto_jdust-nmols),krome_dust_asize2(auto_jdust-nmols),sqrTgas)\n")
 	fout.write("\n")
 fout.close()
 
@@ -253,9 +253,9 @@ for datac in datachemis:
 	Bj = datac[2]
 	Bij = datac[3]
 	Z = datac[4]
-	imax = 30
+	imax = 300
 	Tmin = 1e0
-	Tmax = 1e3
+	Tmax = 1e4
 	ydata = []
 	fout.write(datac[0]+"\n")
 	fout.write(str(imax)+"\n")
