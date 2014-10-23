@@ -15,7 +15,7 @@ module krome_commons
 
   !commons for rate tables
   !modify ktab_n according to the requested precision
-  integer,parameter::ktab_n=int(1e5)
+  integer,parameter::ktab_n=int(1e3)
   real*8::ktab(nrea,ktab_n),ktab_logTlow, ktab_logTup, ktab_T(ktab_n)
   real*8::inv_ktab_T(ktab_n-1), inv_ktab_idx
 
@@ -31,6 +31,7 @@ module krome_commons
   integer::arr_u(nrea)
   real*8::arr_flux(nrea)
 
+#IFKROME_useDust
   !commons for dust
   real*8::krome_dust_partner_ratio(ndust), krome_dust_partner_ratio_inv(ndust)
   real*8::krome_dust_partner_mass(ndustTypes)
@@ -46,7 +47,8 @@ module krome_commons
   !logarithm of the maximum BB temperature in integral tables
   real*8,parameter::TbbMax=1d4,TbbMin=1d0
   real*8,parameter::TbbMult=(dust_nT-1)/(Tbbmax-Tbbmin)
-  
+#ENDIFKROME
+
   !commons for frequency bins
 #KROME_photobins_array
 
@@ -89,7 +91,7 @@ module krome_commons
   real*8,parameter::exp_table_da=1d0/exp_table_multa
   real*8::exp_table(exp_table_na)
 
-#KROME_useChemisorption
+#IFKROME_useChemisorption
   !commons for chemisorption rate fit
   real*8,allocatable::dust_rateChem_PC(:),dust_rateChem_CP(:)
   real*8,allocatable::dust_rateChem_CC(:),dust_rateChem_x(:)

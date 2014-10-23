@@ -3616,10 +3616,19 @@ class krome():
 				optVariables += dType+"(:),dust_opt_Qabs_"+dType+"(:,:)\n"
 				optVariables += "real*8,allocatable::dust_opt_Em_"+dType+"(:,:),dust_opt_Tbb_"+dType+"(:)\n"
 
+
 		#common variables
 		skip = False
 		for row in fh:
 			srow = row.strip()
+
+			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
+			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+
+			if(skip): continue
+
 			if(srow == "#KROME_species_index"):
 				for x in specs:
 					fout.write("\tinteger,parameter::" + x.fidx + "=" + str(x.idx) + "\n")
@@ -4983,6 +4992,7 @@ class krome():
 
 		#check if electrons are present
 		hasElectrons = False
+		electronIdx = -1
 		for x in self.specs:
 			if(x.name=="E"):
 				hasElectrons = True
@@ -5244,8 +5254,6 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome_user.f90","w")
 
-		skip = False
-
 		solar = get_solar_abundances()
 
 		scaleZ = []
@@ -5267,8 +5275,9 @@ class krome():
 				break #skip routine if H is not present
 			for mols in specs:
 				if(k.upper()==mols.name.upper()):
-					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+"+str(v)+"), 1d-40)")
+					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
+		skip = False
 		#loop on source to pre-process pragmas
 		for row in fh:
 

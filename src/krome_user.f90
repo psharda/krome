@@ -241,10 +241,12 @@ contains
     do i=1,nmols
        write(nfile,*) x(i)
     end do
-    !dump dust 
+#IFKROME_useDust
+    !dump dust
     do i=1,ndust
        write(nfile,*) xdust(i)
     end do
+#ENDIFKROME
     close(nfile)
 
   end subroutine krome_store
@@ -268,10 +270,12 @@ contains
     do i=1,nmols
        read(nfile,*) x(i)
     end do
+#IFKROME_useDust
     !restore dust 
     do i=1,ndust
        read(nfile,*) xdust(i)
     end do
+#ENDIFKROME
     close(nfile)
 
   end subroutine krome_restore
