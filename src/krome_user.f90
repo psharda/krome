@@ -1129,27 +1129,28 @@ contains
   end subroutine krome_scale_Z
 
   !***********************
-  function krome_get_electrons(n)
+  !get the number of electrons by
+  ! balancing the charge
+  function krome_get_electrons(x)
     !get the total number of electrons from
     ! the number denisities of all the species
     use krome_commons
-    real*8::n(:),ee,krome_get_electrons,x(size(n))
-    x(:) = n(:)
-#KROME_zero_electrons
-    ee = sum(x(:) * krome_get_charges())
-    krome_get_electrons = max(0.d0, ee)
+    use krome_subs
+    real*8::x(:),n(nspec),krome_get_electrons
+    n(1:nmols) = x(:)
+    n(nmols+1:nspec) = 0d0
+    krome_get_electrons = get_electrons(n(:))
   end function krome_get_electrons
 
   !**********************
-  !print the nbest fluxes
+  !print the first nbest fluxes
   subroutine krome_print_best_flux(xin,Tgas,nbest)
     use krome_subs
     use krome_commons
     implicit none
     real*8::x(nmols),xin(nmols),n(nspec),Tgas
     integer::nbest
-    x(:) = xin(:)
-    n(1:nmols) = x(:)
+    n(1:nmols) = xin(:)
     n(idx_Tgas) = Tgas
     call print_best_flux(n,Tgas,nbest)
 
@@ -1162,9 +1163,8 @@ contains
     use krome_subs
     use krome_commons
     implicit none
-    real*8::x(nmols),xin(nmols),n(nspec),Tgas,frac
-    x(:) = xin(:)
-    n(1:nmols) = x(:)
+    real*8::xin(nmols),n(nspec),Tgas,frac
+    n(1:nmols) = xin(:)
     n(idx_Tgas) = Tgas
     call print_best_flux_frac(n,Tgas,frac)
 
@@ -1176,10 +1176,9 @@ contains
     use krome_subs
     use krome_commons
     implicit none
-    real*8::x(nmols),xin(nmols),n(nspec),Tgas
+    real*8::xin(nmols),n(nspec),Tgas
     integer::nbest,idx_find
-    x(:) = xin(:)
-    n(1:nmols) = x(:)
+    n(1:nmols) = xin(:)
     n(idx_Tgas) = Tgas
     call print_best_flux_spec(n,Tgas,nbest,idx_find)
   end subroutine krome_print_best_flux_spec

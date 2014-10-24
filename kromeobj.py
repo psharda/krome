@@ -2750,11 +2750,11 @@ class krome():
 			rhs = "kflux("+str(rea.idx)+")"
 			if(self.humanFlux): rhs = rea.RHS
 			for r in rea.reactants:
-				if(r.name=="E" and not(self.useComputeElectrons)): continue
+				if(r.name=="E" and self.useComputeElectrons): continue
 				dns[r.idx-1] = dns[r.idx-1].replace(" = 0.d0"," =")
 				dns[r.idx-1] += " -"+rhs
 			for p in rea.products:
-				if(p.name=="E" and not(self.useComputeElectrons)): continue
+				if(p.name=="E" and self.useComputeElectrons): continue
 				dns[p.idx-1] = dns[p.idx-1].replace(" = 0.d0"," =")
 				dns[p.idx-1] += " +"+rhs
 				
