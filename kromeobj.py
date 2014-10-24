@@ -58,7 +58,7 @@ class krome():
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolCMBFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
-	useChemisorption = False
+	useComputeElectrons = useChemisorption = False
 	useCoolCMBFloorZ = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
@@ -184,6 +184,8 @@ class krome():
 			N=1.8e21*(n*1e-3)**(2./3.) for column density calculation (N) from number density (n). Option available JEANS,\
 			which employs Jeans length (l) as N=n*l.")
 		self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
+		self.parser.add_argument("-computeElectrons", action="store_true", help="computes electrons by balancing charges instead of\
+			 using the differential de/dt.")
 		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global\
 			neutrality. Works with some limitations, please read the manual.")
 		self.parser.add_argument("-conserveE", action="store_true", help="conserves the charge global neutrality only.")
@@ -686,8 +688,12 @@ class krome():
 				copydic[k.replace("[","").replace("]","")] = v
 			self.mass_dic = copydic
 			self.atoms = [x.replace("[","").replace("]","") for x in self.atoms]
-			
-			
+
+		#compute electrons by balancing the charge
+		if(args.computeElectrons):
+			self.useComputeElectrons = True
+			print "Reading option -computeElectrons"
+
 		#use photoionization from Verner et al. 1996 (no longer working)
 		if(args.usePhIoniz):
 			self.usePhIoniz = True
@@ -2744,11 +2750,11 @@ class krome():
 			rhs = "kflux("+str(rea.idx)+")"
 			if(self.humanFlux): rhs = rea.RHS
 			for r in rea.reactants:
-				if(r.name=="E"): continue
+				if(r.name=="E" and not(self.useComputeElectrons)): continue
 				dns[r.idx-1] = dns[r.idx-1].replace(" = 0.d0"," =")
 				dns[r.idx-1] += " -"+rhs
 			for p in rea.products:
-				if(p.name=="E"): continue
+				if(p.name=="E" and not(self.useComputeElectrons)): continue
 				dns[p.idx-1] = dns[p.idx-1].replace(" = 0.d0"," =")
 				dns[p.idx-1] += " +"+rhs
 				
@@ -4002,6 +4008,17 @@ class krome():
 			elif(srow=="#KROME_Ebareice"):
 				fout.write(self.get_Ebareice(1e0, self.specs, "get_Ebareice_exp_array"))
 
+			elif(srow=="#KROME_electrons_balance"):
+				chargeBalance = []
+				for x in specs:
+					if(x.name=="E"): continue
+					mult = ""
+					if(abs(x.charge)>1): mult = str(abs(x.charge))+"d0*"
+					if(x.charge>0): chargeBalance.append(" + "+mult+"n("+x.fidx+")")
+					if(x.charge<0): chargeBalance.append(" - "+mult+"n("+x.fidx+")")
+				if(len(chargeBalance)>0):
+					fout.write("get_electrons = "+(" &\n".join(chargeBalance))+"\n")
+
 			#write reaction rates in coe function
 			if(srow == "#KROME_krates"):
 				for x in reacts:
@@ -5140,10 +5157,8 @@ class krome():
 				klist = sorted(klist, key=lambda x: x[1])
 				fout.write("".join([x[0] for x in klist]))
 
-			elif(srow == "#KROME_compute_electrons" and hasElectrons):
-				fout.write("n(idx_e) = 0d0\n")
-				fout.write("n(idx_e) = sum(n(:) * get_charges())\n")
-				fout.write("n(idx_e) = max(n(idx_e),0d0)\n")
+			elif(srow == "#KROME_compute_electrons" and hasElectrons and self.useComputeElectrons):
+				fout.write("n(idx_e) = get_electrons(n(:))\n")
 
 			elif(srow == "#KROME_dustSumVariables" and self.useDust):
 				#add partner sum dust variable declarations
@@ -5196,14 +5211,14 @@ class krome():
 				if(not(self.doJacobian)): continue
 				#build the Jacobian as J(i,j) = df_i/dx_j
 				for i in range(neq):
-					if(i+1==electronIdx): continue
+					if(i+1==electronIdx and self.useComputeElectrons): continue
 					if(i==0): fout.write("if(j=="+str(i+1)+") then\n")
 					if(i>0): fout.write("elseif(j=="+str(i+1)+") then\n")
 					if(i!=Tgas_species.idx-1):
 						spdj = ""
 						has_pdj = False
 						for j in range(neq):
-							if(j+1==electronIdx): continue
+							if(j+1==electronIdx and self.useComputeElectrons): continue
 							if(self.jsparse[j][i]==1):
 								has_pdj = True
 								spdj += ("\t" + self.jac[j][i] + "\n")
@@ -5657,10 +5672,8 @@ class krome():
 				fout.write("IWORK(5) = "+str(self.maxord)+" !maximum integration order\n")
 			elif(srow == "#KROME_MF"):
 				fout.write("MF = "+str(self.solver_MF)+"\n")
-			elif(srow == "#KROME_compute_electrons" and hasElectrons):
-				fout.write("n(idx_e) = 0d0\n")
-				fout.write("n(idx_e) = sum(n(:) * get_charges())\n")
-				fout.write("n(idx_e) = max(n(idx_e),0d0)\n")
+			elif(srow == "#KROME_compute_electrons" and hasElectrons and self.useComputeElectrons):
+				fout.write("n(idx_e) = get_electrons(n(:))\n")
 			else:
 				if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):

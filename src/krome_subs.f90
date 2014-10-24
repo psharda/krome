@@ -934,6 +934,18 @@ contains
   end function get_index
 
   !************************
+  !get electrons by balancing charges
+  function get_electrons(n)
+    use krome_commons
+    implicit none
+    real*8::get_electrons,n(nspec)
+
+#KROME_electrons_balance
+    get_electrons = max(get_electrons,0d0)
+
+  end function get_electrons
+
+  !************************
   !get species charges
   function get_charges()
     use krome_commons
