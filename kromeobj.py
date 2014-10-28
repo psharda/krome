@@ -58,7 +58,7 @@ class krome():
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolCMBFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
-	useComputeElectrons = useChemisorption = False
+	useComputeElectrons = useChemisorption = usedTdust = False
 	useCoolCMBFloorZ = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
@@ -211,7 +211,8 @@ class krome():
 			bins and 10 dust silicon dust bins. Note: requires a call to the krome_init_dust subroutine.\
 			See -test=dust for an example.")
 		self.parser.add_argument("-dustOptions", help="activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular\
-			hydrogen formation on dust, (EVAP) thermal evaporation, and (T) dust temperature including CMB coupling.",\
+			hydrogen formation on dust, (EVAP) thermal evaporation, (T) dust temperature including CMB/radiation coupling,\
+			and (dT) to use dTdust/dt differential.",\
 			metavar="OPTIONS")
 		self.parser.add_argument("-dustSeed", help="set the dust seed in 1/cm3 for dust growth. Default is zero. Any F90 expression \
 			is allowed for SEED.", metavar="SEED")
@@ -1177,6 +1178,9 @@ class krome():
 			if("H2" in dustOptions): self.useDustH2 = True
 			if("T" in dustOptions): self.useDustT = True
 			if("EVAP" in dustOptions): self.useDustEvap = True
+			if("dT" in dustOptions): self.usedTdust = True
+			if(self.useDustT and self.usedTdust):
+				sys.exit("ERROR: options T and dT for dust are mutually exclusive!")
 			print "Reading option -dustOptions (options="+(",".join(dustOptions))+")"
 
 		#dust seed value
@@ -1987,8 +1991,6 @@ class krome():
 			#END LOOP ON FILE
 	
 		#after loop on file post-process special reactions
-
-
 		#shielding reactions requires fsh variable
 		if((self.useShieldingDB96 or self.useShieldingWG11) and not(fsh_found)):
 			print
@@ -2498,6 +2500,22 @@ class krome():
 						mymol.idx = len(specs)+1
 						specs.append(mymol)
 			print "Dust added:",self.dustArraySize*self.dustTypesSize
+
+			#add dust temperature as a species
+			if(self.usedTdust):
+				for dType in dustTypes:
+					for i in range(dustArraySize):
+							#create the object named dust_type_Tdust_index
+							mymol = molec()
+							mymol.name = "dust_"+dType+"_Tdust_"+str(i+1)
+							mymol.charge = 0
+							mymol.mass = 0.e0
+							mymol.ename = "dust_"+dType+"_Tdust_"+str(i+1)
+							mymol.fidx = "idx_dust_"+dType+"_Tdust_"+str(i+1)
+							mymol.idx = len(specs)+1
+							specs.append(mymol)
+				print "Dust temperature added:",self.dustArraySize*self.dustTypesSize
+
 		self.specs = specs
 
 	###################################
@@ -2578,6 +2596,7 @@ class krome():
 	def countSpecies(self):
 		#evaluate the number of chemical species (excluding, dust, dummies, Tgas)
 		self.nmols = len(self.specs)-4-self.dustArraySize*self.dustTypesSize
+		if(self.usedTdust): self.nmols -= self.dustArraySize*self.dustTypesSize
 		#print found values
 		print
 		print "ODEs needed:", len(self.specs)
@@ -3960,7 +3979,7 @@ class krome():
 
 		#charge conservation
 		if(has_electrons and self.useConserveE):
-			consE = "n(idx_E) = max("
+			consE = "no(idx_E) = max("
 			for x in specs:
 				if(x.name=="E"): continue #skip electron
 				if(x.charge==0): continue #skip neutrals
@@ -4480,6 +4499,7 @@ class krome():
 	def makeDust(self):
 		buildFolder = self.buildFolder
 		useDustT = self.useDustT
+		usedTdust = self.usedTdust
 		#********* DUST ****************
 		print "- writing krome_dust.f90...",
 		fh = open(self.srcFolder+"krome_dust.f90")
@@ -4496,10 +4516,10 @@ class krome():
 			for dType in self.dustTypes:
 				itype += 1 #increase index
 				dustPartnerIdx += "krome_dust_partner_idx("+str(itype)+") = idx_"+dType+"\n"
-				if(useDustT): dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")\n" #,dust_opt_Qabs_"+dType
-			if(useDustT): dustOptInt += "call dust_init_intBB()"
+				if(useDustT or usedTdust): dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")\n" #,dust_opt_Qabs_"+dType
+			if(useDustT or usedTdust): dustOptInt += "call dust_init_intBB()"
 
-		skip = skipPhotoDust = skipChemisorption = False
+		skip = skipPhotoDust = skipChemisorption = skipdTdust = False
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
@@ -4511,7 +4531,11 @@ class krome():
 			if(srow == "#IFKROME_usePhotoDust" and not(self.photoBins>0)): skipPhotoDust = True
 			if(srow == "#ENDIFKROME_usePhotoDust"): skipPhotoDust = False
 
+			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skipdTdust = True
+			if(srow == "#ENDIFKROME_usedTdust"): skipdTdust = False
+
 			if(skipChemisorption): continue
+			if(skipdTdust): continue
 			if(skipPhotoDust): continue
 			if(skip): continue
 
@@ -4589,7 +4613,7 @@ class krome():
 			#Z: atomic number, ion: ionization degree (e.g. HII=1), energy_eV: ioniz potential, n0: principal quantum number 
 			fbdata.append({"Z":int(arow[0]), "ion":int(arow[1]), "energy_eV":float(arow[5]), "n0":int(arow[6])})
 
-		skip = skip_nleq = False
+		skip = skip_nleq = skip_dTdust = False
 		useCoolingZ = self.useCoolingZ
 		#loop on source to replace pragmas
 		for row in fh:
@@ -4611,11 +4635,14 @@ class krome():
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
+			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip_dTdust = True
 
+
+			if(srow == "#ENDIFKROME_usedTdust"): skip_dTdust = False
 			if(srow == "#ENDIFKROME_use_NLEQ"): skip_nleq = False
 			if(srow == "#ENDIFKROME"): skip = False
 
-			if(skip or skip_nleq): continue
+			if(skip or skip_nleq or skip_dTdust): continue
 
 			#replace the small value for rates according to the maximum number of products 
 			if("#KROME_small" in srow):
@@ -5020,11 +5047,14 @@ class krome():
 		dustH2 = "\n"
 		if(self.useDustH2):
 			iType = 0
+			ndust = self.dustArraySize*len(self.dustTypes)
 			for dType in self.dustTypes:
 				ilow = nmols + iType * self.dustArraySize + 1
 				iup = nmols + (iType + 1) * self.dustArraySize
-				dustH2 += "nH2dust = nH2dust + krome_H2_dust(n(" + str(ilow) + ":" + str(iup) + "), Tgas," 
-				dustH2 += " krome_dust_T(" + str(ilow-nmols) + ":" + str(iup-nmols) + "), n(idx_H), H2_eps_"+dType+", vgas)\n"
+				dustH2 += "nH2dust = nH2dust + krome_H2_dust(n(" + str(ilow) + ":" + str(iup) + "), Tgas,"
+				dustT = " krome_dust_T(" + str(ilow-nmols) + ":" + str(iup-nmols) + ")"
+				if(self.usedTdust): dustT = " n(" + str(ilow+ndust) + ":" + str(iup+ndust) + ")"
+				dustH2 += dustT+", n(idx_H), H2_eps_"+dType+", vgas)\n"
 				iType += 1
 
 		#replace pragma with built strings 
@@ -5035,6 +5065,7 @@ class krome():
 			if(srow == "#IFKROME_use_thermo_toggle" and not(self.useThermoToggle)): skip = True
 			if(srow == "#IFKROME_report" and not(self.doReport)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
+			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -5136,7 +5167,7 @@ class krome():
 				fout.write("real*8::kflux("+str(len(self.reacts))+")\n")
 				fout.write("\n")
 
-			elif(srow == "#KROME_calc_Tdust" and self.useDustT):
+			elif(srow == "#KROME_calc_Tdust" and self.useDustT and not(self.usedTdust)):
 				fout.write("call compute_Tdust(n(:),Tgas)"+"\n")
 
 			elif(srow == "#KROME_ODEModifier"):
@@ -5574,6 +5605,7 @@ class krome():
 			if(srow == "#ELSEKROME" and not(self.useX)): skip = False
 			if(srow == "#ELSEKROME" and self.useX): skip = True
 
+			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip = True
 			if(srow == "#IFKROME_useTabs" and not(self.useTabs)): skip = True
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True

@@ -87,6 +87,11 @@ contains
     n(nmols+1:nmols+ndust) = xdust(:) !get dust abundances
 #ENDIFKROME
 
+#IFKROME_usedTdust
+    n(nmols+ndust+1:nmols+2*ndust) = krome_dust_T(:)
+    call compute_Tdust(n(:),Tgas)
+#ENDIFKROME
+
     icount = 0 !count solver iterations
     istate = 1 !init solver state
     tloc = 0.d0 !set starting time
@@ -191,6 +196,10 @@ contains
 
 #IFKROME_useDust
     xdust(:) = n(nmols+1:nmols+ndust)
+#ENDIFKROME
+
+#IFKROME_usedTdust
+    krome_dust_T(:) = n(nmols+ndust+1:nmols+2*ndust)
 #ENDIFKROME
 
     Tgas = n(idx_Tgas) !get new temperature

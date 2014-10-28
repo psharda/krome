@@ -68,6 +68,10 @@ contains
     end if
 #ENDIFKROME
 
+#IFKROME_usedTdust
+    dn(nmols+ndust+1:nmols+2*ndust) = get_dTdust(n(:),dn(idx_Tgas),vgas,ntot)
+#ENDIFKROME
+
 #KROME_ODEModifier
 
 #KROME_odeConstant

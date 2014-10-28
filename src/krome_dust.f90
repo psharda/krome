@@ -18,6 +18,8 @@ contains
     real*8::alow,aup,phi,dtg(ndustTypes),adust(ndust),Tbb,myx,a0,a1
     integer::i,j,ilow,iup,imax,nd
 
+    print *,"Initializing dust..."
+
 #KROME_dustPartnerIndex
 
     phi1 = phi + 1.d0
@@ -148,7 +150,9 @@ contains
        allocate(dust_Qabs(ndust,nE))
        allocate(dust_Qabs_E(nE))
        allocate(dust_intBB(ndust,dust_nT))
+       allocate(dust_intBB_dT(ndust,dust_nT))
        allocate(dust_intBB_sigma(ndust,dust_nT))
+       dust_intBB_Tbb(:) = 0d0 !default
     end if
 
     !store the number of energies in the common
@@ -171,7 +175,10 @@ contains
     use krome_constants
     implicit none
     integer::i,j,k
-    real*8::Tbb,E,intBB,dE
+    real*8::Tbb,E,intBB,dE,intBB_dT
+
+    !if already initialized no need to reload
+    if(dust_intBB_Tbb(1)/=dust_intBB_Tbb(dust_nT)) return
 
     !loop on dust bins
     do k=1,ndust
@@ -182,15 +189,24 @@ contains
           Tbb = (i-1) / TbbMult  + TbbMin
           dust_intBB_Tbb(i) = Tbb !store Tbb
           intBB = 0d0
-          !integral Q(E,a)*B(E,Tbb)
+          intBB_dT = 0d0
+          !integral Q(E,a)*B(E,Tbb) and Q*dB/dTdust
           do j=2,dust_Qabs_nE
              dE = dust_Qabs_E(j) - dust_Qabs_E(j-1)
-             intBB = intBB + 0.5d0 * dE * (planckBB(dust_Qabs_E(j),Tbb) &
+             intBB = intBB + 0.5d0 * dE &
+                  * (planckBB(dust_Qabs_E(j),Tbb) &
                   * dust_Qabs(k,j) + planckBB(dust_Qabs_E(j-1),Tbb) &
-                  * dust_Qabs(k,j-1)) 
+                  * dust_Qabs(k,j-1))
+             intBB_dT = intBB_dT + 0.5d0 * dE &
+                  * (planckBB_dT(dust_Qabs_E(j),Tbb) &
+                  * dust_Qabs(k,j) + planckBB_dT(dust_Qabs_E(j-1),Tbb) &
+                  * dust_Qabs(k,j-1))
           end do
           !integral / hplanck (erg/s/cm2)
           dust_intBB(k,i) = intBB * pi * iplanck_eV * eV_to_erg
+          !integral / hplanck (erg/s/cm2/K)
+          dust_intBB_dT(k,i) = intBB_dT * pi * iplanck_eV * eV_to_erg
+          !normalized integral
           dust_intBB_sigma(k,i) = pi * dust_intBB(k,i) &
                / (stefboltz_erg*Tbb**4)
        end do
@@ -261,7 +277,6 @@ contains
     integer::jdust,ibb
     real*8::Tbb,get_dust_intBB
 
-    !ibb = (dust_nT - 1) * log10(Tbb) / TbbMax + 1
     ibb = (Tbb-TbbMin) * TbbMult + 1
 
     get_dust_intBB = (Tbb - dust_intBB_Tbb(ibb)) &
@@ -270,6 +285,25 @@ contains
          +  dust_intBB(jdust,ibb)
 
   end function get_dust_intBB
+
+  !*******************************
+  !returns the integral in erg/s/cm2/K of the dBB/dTdust
+  ! at temperature Tbb multiplied by Qabs for the
+  ! dust bin jdust
+  function get_dust_intBB_dT(jdust,Tbb)
+    use krome_commons
+    implicit none
+    integer::jdust,ibb
+    real*8::Tbb,get_dust_intBB_dT
+
+    ibb = (Tbb-TbbMin) * TbbMult + 1
+
+    get_dust_intBB_dT = (Tbb - dust_intBB_Tbb(ibb)) &
+         / (dust_intBB_Tbb(ibb+1) - dust_intBB_Tbb(ibb)) &
+         * (dust_intBB_dT(jdust,ibb+1) - dust_intBB_dT(jdust,ibb)) &
+         +  dust_intBB_dT(jdust,ibb)
+
+  end function get_dust_intBB_dT
 
   !*******************************
   !compute beta escape using the planck opacity
@@ -284,9 +318,12 @@ contains
     tau_d = 0d0
     do j=1,ndust
        Tff = krome_dust_T(j)
+#IFKROME_usedTdust
+       Tff = n(nmols+ndust+j)
+#ENDIFKROME_usedTdust
        !when temperature difference is small
        ! Tgas can be used instead of Tdust
-       if(abs(krome_dust_T(j)-Tgas)<5d0) Tff = Tgas
+       if(abs(Tff-Tgas)<5d0) Tff = Tgas
        tau_d = tau_d + xdust(j) * kpla_dust(Tff,j)
     end do
 
@@ -322,6 +359,35 @@ contains
     kpla_dust = intBB * krome_dust_asize2(jdust)
 
   end function kpla_dust
+
+#IFKROME_usedTdust
+  !***********************************
+  !dust temperture differential
+  function get_dTdust(n,dTgas,vgas,ntot)
+    use krome_commons
+    use krome_constants
+    use krome_subs
+    implicit none
+    real*8::get_dTdust(ndust),n(:),dTgas,intBB,pre
+    real*8::vgas,ntot,Tgas,rhogas,ljeans,be,m(nspec)
+    real*8::fact
+    integer::i
+
+    fact = 0.5d0
+    m(:) = get_mass()
+    Tgas = n(idx_Tgas)
+    pre = 0.5d0*fact*vgas*boltzmann_erg*ntot
+    rhogas = sum(n(1:nmols)*m(1:nmols))
+    ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
+    be = besc(n(:),Tgas,ljeans,rhogas)
+
+    do i=1,ndust
+       intBB = get_dust_intBB_dT(i,n(nmols+ndust+i)) * be
+       get_dTdust(i) = pre * dTgas / (pre + intBB)
+    end do
+
+  end function get_dTdust
+#ENDIFKROME_usedTdust
 
   !*********************************
   !This subroutine computes the dust temperature for each bin
@@ -360,6 +426,10 @@ contains
        j2 = dust_nT !last index
        !no need to compute Tdust when small amount of dust
        if(n(nmols+1)<1d-18*ntot) then
+#IFKROME_usedTdust
+          n(nmols+ndust+i) = Tgas
+          cycle
+#ENDIFKROME_usedTdust
           krome_dust_T(i) = Tgas
           cycle
        end if
@@ -383,6 +453,9 @@ contains
 
           !compute Tdmid
           Tdmid = .5d0 * (Td1 + Td2)
+#IFKROME_usedTdust
+          n(nmols+ndust+i) = Tdmid
+#ENDIFKROME_usedTdust
           krome_dust_T(i) = Tdmid
           fmid = (get_dust_intBB(i,Tdmid) - intCMB - intJflux) * be &
                - pre * (Tgas - Tdmid)
@@ -397,12 +470,21 @@ contains
           if(abs(Td1-Td2)<1d-8) exit
        end do
 
-       !be = besc(n(:),Tgas,ljeans,rhogas)
+#IFKROME_usedTdust
+       !no need to compute cooling if dTdust/dT enabled
+       cycle
+#ENDIFKROME_usedTdust
 
        !compute the cooling (avoid the difference Tgas-Tdust)
        dustCooling = dustCooling + (get_dust_intBB(i,krome_dust_T(i)) &
             - intCMB - intJflux) * be * n(nmols+i) * krome_dust_asize2(i)
     end do
+
+#IFKROME_usedTdust
+    !no need to compute cooling if dTdust/dT enabled
+    return
+#ENDIFKROME_usedTdust
+
     !copy (isotropic) cooling
     dust_cooling = 4d0 * pi * dustCooling
 
