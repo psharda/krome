@@ -70,6 +70,27 @@ contains
 
   end function planckBB
 
+  !********************
+  !planck function dTdust differential
+  ! in eV/s/cm2/Hz/sr/K, where
+  ! x is the energy in eV, Tbb the black body
+  ! temperature in K
+  function planckBB_dT(x,Tbb)
+    use krome_constants
+    real*8::a,b,x,Tbb,xexp,planckBB_dT
+
+    b = 1d0/boltzmann_eV
+    xexp = b*x/Tbb
+
+    planckBB_dT = 0d0
+
+    if(xexp<3d2) then
+       a = 2d0/planck_eV**2/clight**2
+       planckBB_dT = a*b*x**4/Tbb/Tbb * exp(xexp)/(exp(xexp)-1d0)**2
+    end if
+
+  end function planckBB_dT
+
   !****************************
   !tanh smoothing function that 
   ! increses when xarg increases.

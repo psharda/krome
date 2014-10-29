@@ -271,9 +271,35 @@ contains
   !*******************************
   function cooling_dust(n,Tgas)
     !cooling from dust in erg/cm3/s
+    use krome_constants
     use krome_commons
+    use krome_subs
+    use krome_dust
     implicit none
     real*8::cooling_dust,n(:),Tgas
+#IFKROME_usedTdust
+    real*8::rhogas,ljeans,be,pre,ntot,vgas
+    real*8::m(nspec),intCMB,fact
+    integer::i
+    fact = 0.5d0
+    cooling_dust = 0d0
+    m(:) = get_mass()
+    Tgas = n(idx_Tgas)
+    vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
+    ntot = sum(n(1:nmols))
+    pre = 0.5d0*fact*vgas*boltzmann_erg*ntot
+    rhogas = sum(n(1:nmols)*m(1:nmols))
+    ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
+    be = besc(n(:),Tgas,ljeans,rhogas)
+
+    do i=1,ndust
+       intCMB = get_dust_intBB(i,phys_Tcmb)
+       cooling_dust = cooling_dust + (get_dust_intBB(i,n(nmols+ndust+i)) &
+            - intCMB) * be * n(nmols+i) * krome_dust_asize2(i)
+    end do
+    cooling_dust = 4d0*pi*cooling_dust !erg/s/cm3
+    return
+#ENDIFKROME_usedTdust
 
     cooling_dust = dust_cooling !erg/s/cm3
 

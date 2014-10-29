@@ -40,6 +40,7 @@ module krome_commons
   real*8::krome_dust_asize3(ndust),krome_grain_rho
   real*8,allocatable::dust_Qabs(:,:),dust_Qabs_E(:)
   real*8,allocatable::dust_intBB(:,:),dust_intBB_sigma(:,:)
+  real*8,allocatable::dust_intBB_dT(:,:)
   real*8::xdust(ndust)
   integer::krome_dust_partner_idx(ndustTypes),dust_Qabs_nE
   integer,parameter::dust_nT=int(1e4)
