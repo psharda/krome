@@ -3958,6 +3958,15 @@ class krome():
 					mult = (str(x.atomcount2[k])+"d0*" if x.atomcount2[k]>1 else "") #multiplication factor
 					aadd.append(mult+"n("+x.fidx+")") #append species density with factor
 					sdiff += "no("+x.fidx+") = n("+x.fidx+") * factor\n" #rescaling
+				#add dust to conservation when needed
+				idust = 0
+				for dType in self.dustTypes:
+					if(dType==k):
+						ilow = str(self.dustArraySize * idust + 1)
+						iup = str(self.dustArraySize * (idust+1))
+						aadd.append("sum(n(nmols+"+ilow+":nmols+"+iup+")*krome_dust_partner_ratio("\
+							+ilow+":"+iup+"))")
+					idust += 1
 				sadd = "ntot = " + (" &\n + ".join(aadd)) #current total density of the species k
 				saddi = "nitot = " + (" &\n + ".join([y.replace("n(","ni(") for y in aadd])) #initial total density of the species k
 				#prepare replacing string
@@ -3968,9 +3977,9 @@ class krome():
 				krome_conserve += sdiff + "\n"
 				krome_conserve += "\n"
 	
-		nmax = 50 #originally nmax = 30
+		nmax = 60 #max number of species for conservation
 		if(len(specs)>nmax and self.useConserve):
-			print "WARNING: more than "+str(nmax)+" species, -conserve disabled!"
+			print "WARNING: more than "+str(nmax)+" species (i.e. "+str(len(specs))+"), -conserve disabled!"
 			krome_conserve = "" #with more than NMAX species conserve only electrons
 
 		has_electrons = False #check if electrons are present
