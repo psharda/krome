@@ -43,7 +43,7 @@ module krome_commons
   real*8,allocatable::dust_intBB_dT(:,:)
   real*8::xdust(ndust)
   integer::krome_dust_partner_idx(ndustTypes),dust_Qabs_nE
-  integer,parameter::dust_nT=int(1e4)
+  integer,parameter::dust_nT=int(1e5)
   real*8::dust_intBB_Tbb(dust_nT),dust_cooling
   !logarithm of the maximum BB temperature in integral tables
   real*8,parameter::TbbMax=1d4,TbbMin=1d0
@@ -103,5 +103,11 @@ module krome_commons
 
   !stores the last evaluation of the rates in the fex
   real*8::last_coe(nrea)
+
+#IFKROME_usePreDustExp
+  !store the exponentials at constant Tdust
+  real*8::dust_Ebareice_exp(2*nspec)
+  real*8::dust_Ebareice23_exp(2*nspec)
+#ENDIFKROME
 
 end module krome_commons

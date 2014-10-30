@@ -15,7 +15,7 @@ contains
     use krome_dust
 #ENDIFKROME
     implicit none
-    integer::neq
+    integer::neq,idust
     real*8::tt,dn(neq),n(neq),k(nrea),krome_gamma
     real*8::gamma,Tgas,vgas,ntot,nH2dust,nd,nin(neq)
 #KROME_dustSumVariables
@@ -35,8 +35,12 @@ contains
 #KROME_compute_electrons
 
     dn(:) = 0.d0 !initialize differentials
-    Tgas = max(n(idx_Tgas),2.73d0) !get temperature
-    
+    n(idx_Tgas) = max(n(idx_tgas),2.73d0)
+    n(idx_Tgas) = min(n(idx_tgas),1d8)
+    Tgas = n(idx_Tgas) !get temperature
+
+#KROME_Tdust_limits
+
     k(:) = coe_tab(n(:)) !compute coefficients
 
 #KROME_photobins_compute_thick

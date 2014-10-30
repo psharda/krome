@@ -680,10 +680,10 @@ contains
 
   !**********************
   !adsorpion rate Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
-  function dust_adsorption_rate(nmol,nndust,ims,stick,adust2,sqrTgas)
+  function dust_adsorption_rate(nndust,ims,stick,adust2,sqrTgas)
     use krome_constants
     implicit none
-    real*8::dust_adsorption_rate,nmol,nndust,ims,stick,adust2,sqrTgas
+    real*8::dust_adsorption_rate,nndust,ims,stick,adust2,sqrTgas
 
     dust_adsorption_rate = nndust * pi * adust2 &
          * pre_kvgas_sqrt * ims * sqrTgas &
