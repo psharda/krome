@@ -58,7 +58,7 @@ class krome():
 	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolCMBFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
-	useComputeElectrons = useChemisorption = usedTdust = False
+	useComputeElectrons = useChemisorption = usedTdust = useSurface = False
 	useCoolCMBFloorZ = False
 	humanFlux = True
 	typeGamma = "DEFAULT"
@@ -373,14 +373,14 @@ class krome():
 			[argv.append(x) for x in ["-cooling=H2,CONT,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1",\
 				"-columnDensityMethod=JEANS"]]
-			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=T,H2","-useCoolCMBFloorZ"]]
+			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=dT,H2","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseSurface"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=REDUCED","-ATOL=1d-20","-maxord=1",\
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=REDUCED","-ATOL=1d-20","-maxord=2",\
 				"-columnDensityMethod=JEANS"]]
-			[argv.append(x) for x in ["-dust=3,C","-dustOptions=T","-useCoolCMBFloorZ"]]
+			[argv.append(x) for x in ["-dust=3,C","-dustOptions=dT","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ_surface"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseZ"):
@@ -1806,7 +1806,7 @@ class krome():
 
 			#search for surface chemistry reactions (start)
 			if(srow.lower()=="@surface_start" or srow.lower()=="@surface_begin"):
-				inSurfaceBlock = True
+				inSurfaceBlock = self.useSurface = True
 				noTabBlockStored = noTabNextBlock
 				noTabNext = noTabNextBlock = True
 				continue #SKIP (not a reaction)
@@ -2260,7 +2260,8 @@ class krome():
 					for ir in range(len(ureactants)):
 						rr = ureactants[ir]
 						if(not(rr.is_surface)): continue #non-surface reactants remain the same
-						ureactants[ir] = copy.copy(searchSpeciesByName(specs,rr.name+"_"+str(idust+1))) #copy the object with the name species_BinIndex
+						#copy the object with the name species_BinIndex
+						ureactants[ir] = copy.copy(searchSpeciesByName(specs,rr.name+"_"+str(idust+1)))
 					rea2.reactants = ureactants[:] #copy back the list to the list of the reactants
 
 					uproducts = rea2.products[:] #work on a copy of the products
@@ -2268,7 +2269,8 @@ class krome():
 					for ip in range(len(uproducts)):
 						pp = uproducts[ip]
 						if(not(pp.is_surface)): continue #non-surface reactants remains the same
-						uproducts[ip] = copy.copy(searchSpeciesByName(specs,pp.name+"_"+str(idust+1))) #copy the object with the name species_BinIndex
+						#copy the object with the name species_BinIndex
+						uproducts[ip] = copy.copy(searchSpeciesByName(specs,pp.name+"_"+str(idust+1)))
 					rea2.products = uproducts[:] #copy the list of the products to the list of the products of the copied reaction
 
 					rea2.idx = len(ureacts)+1 #reaction index
@@ -3649,6 +3651,7 @@ class krome():
 
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
+			if(srow == "#IFKROME_usePreDustExp" and not(self.usedTdust and self.useSurface)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 
@@ -5213,10 +5216,16 @@ class krome():
 		 		fout.write("write(fnum,'(I5,E12.3e3,a2,a50)') i,k(i)*"+report_flux+",'',rnames(i)\n")
 
 			elif(srow == "#KROME_odeConstant" and self.useODEConstant):
-				fout.write("dn(:) = dn(:) "+self.ODEConstant+" \n") #add the string contains an ODE expression
+				fout.write("dn(:) = dn(:) "+self.ODEConstant+"\n") #add the string contains an ODE expression
 
 			elif(srow == "#KROME_odeDust"):
-				fout.write("dn(:) =  krome_dust \n")
+				fout.write("dn(:) =  krome_dust\n")
+
+			elif(srow == "#KROME_Tdust_limits" and self.usedTdust):
+				fout.write("do idust=1,ndust\n")
+				fout.write(" n(nmols+ndust+idust) = min(n(nmols+ndust+idust),TbbMax-1d0)\n")
+				fout.write(" n(nmols+ndust+idust) = max(n(nmols+ndust+idust),0d0)\n")
+				fout.write("end do\n")
 
 			elif(srow == "#KROME_dust_H2"):
 				fout.write(dustH2+"\n")
@@ -5621,6 +5630,7 @@ class krome():
 			if(srow == "#IFKROME_ierr" and not(self.useIERR)): skip = True
 			if(srow == "#IFKROME_noierr" and (self.useIERR)): skip = True
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
+			if(srow == "#IFKROME_usePreDustExp" and not(self.usedTdust and self.useSurface)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			ierr = ""

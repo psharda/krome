@@ -20,7 +20,7 @@ contains
     use krome_reduction
     use krome_dust
     real*8::dt,x(nmols),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin
-    real*8::rrmax,totmass,n_old(nspec),ni(nspec)
+    real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
     integer::icount,i,ierr,icount_max
     
     !DLSODES variables
@@ -90,6 +90,16 @@ contains
 #IFKROME_usedTdust
     n(nmols+ndust+1:nmols+2*ndust) = krome_dust_T(:)
     call compute_Tdust(n(:),Tgas)
+    krome_dust_T(:) = n(nmols+ndust+1:nmols+2*ndust)
+#ENDIFKROME
+
+#IFKROME_usePreDustExp
+    !pre-calculates exponent
+    invTdust(:) = 1d0/(krome_dust_T(:)+1d-40)
+    dust_Ebareice_exp(:) = &
+         get_Ebareice_exp_array(invTdust(:))
+    dust_Ebareice23_exp(:) = &
+         get_Ebareice23_exp_array(invTdust(:))
 #ENDIFKROME
 
     icount = 0 !count solver iterations
@@ -195,10 +205,12 @@ contains
 #ENDIFKROME
 
 #IFKROME_useDust
+    !returns dust abundance
     xdust(:) = n(nmols+1:nmols+ndust)
 #ENDIFKROME
 
 #IFKROME_usedTdust
+    !returns dust temperature
     krome_dust_T(:) = n(nmols+ndust+1:nmols+2*ndust)
 #ENDIFKROME
 

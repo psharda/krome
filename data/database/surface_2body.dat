@@ -1,8 +1,7 @@
 @var:[ndust] dust_inv_phi = dust_get_inv_phi(krome_dust_asize2(:),xdust(:))
 
-@var:[ndust] invTdust = 1d0/(krome_dust_T(:)+1d-40)
 @var:[nspec] m = get_mass()
-@var:[2*nspec] Ebareice23_exp = get_Ebareice23_exp_array(invTdust(:))
+@var:[2*nspec] Ebareice23_exp = dust_Ebareice23_exp(:)
 @var:[nspec] Eice23_exp = Ebareice23_exp(1:nspec)
 @var:[nspec] Ebare23_exp = Ebareice23_exp(nspec+1:2*nspec)
 @var:[ndust] ice_fraction = dust_ice_fraction_array(dust_inv_phi(:),n(idx_H2O_dust_1:idx_H2O_dust_1+nmols))
