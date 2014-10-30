@@ -458,12 +458,14 @@ contains
          ymulH2esc)
 #ENDIFKROME
 
+#IFKROME_useMayerOpacity
     call init_anytab2D("mayer_E2.dat",mayer_x(:), &
          mayer_y(:), mayer_z(:,:), mayer_xmul, &
          mayer_ymul)
     call test_anytab2D("mayer_E2.dat",mayer_x(:), &
          mayer_y(:), mayer_z(:,:), mayer_xmul, &
          mayer_ymul)
+#ENDIFKROME
 
     !initialize the table for exp(-a/T) function
     call init_exp_table()

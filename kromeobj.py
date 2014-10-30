@@ -3650,8 +3650,10 @@ class krome():
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#IFKROME_usePreDustExp" and not(self.usedTdust and self.useSurface)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
+			if(srow == "#IFKROME_useOmukaiOpacity" and self.H2opacity!="OMUKAI"): skip = True
+			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
 
+			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
 
@@ -5625,6 +5627,7 @@ class krome():
 			if(srow == "#IFKROME_noierr" and (self.useIERR)): skip = True
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
 			if(srow == "#IFKROME_usePreDustExp" and not(self.usedTdust and self.useSurface)): skip = True
+			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			ierr = ""
@@ -5756,7 +5759,8 @@ class krome():
 			shutil.copyfile("data/escape_H2.dat", buildFolder+"escape_H2.dat")
 
 		#copy Mayer opacity file
-		shutil.copyfile("data/mayer_E2.dat", buildFolder+"mayer_E2.dat")
+		if(self.usedTdust or self.useDustT):
+			shutil.copyfile("data/mayer_E2.dat", buildFolder+"mayer_E2.dat")
 
 		#copy file that contains table as indicated by the anytab reactions
 		print "- copying anytab files..."
