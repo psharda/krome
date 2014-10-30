@@ -1072,8 +1072,6 @@ class krome():
 				if("dust=" in aa): self.hasDust = True
 			if(self.useCoolingDust and not(self.hasDust)):
 				die("ERROR: to include dust cooling you need dust (use -dust=[see help]).")
-			#if(("CHEM" in myCools) and ("ATOMIC" in myCools)):
-			#	die("ERROR: CHEM and ATOMIC cooling are mutually exclusive!")
 			if(("CIE" in myCools) and ("CONT" in myCools)):
 				die("ERROR: CIE and CONT cooling are mutually exclusive!")
 
@@ -4854,10 +4852,6 @@ class krome():
 				RPK.append([["H2","H","H"], ["H2","H2"], "4.48d0*h2heatfac","H"])
 				RPK.append([["H-","H"], ["H2","E"], "3.53d0*h2heatfac","H"])
 				RPK.append([["H2+","H"], ["H2","H+"], "1.83d0*h2heatfac","H"])
-			#if(self.useCoolingChem):
-			#	RPK.append([["H","E"], ["H+","E","E"], "-13.6d0","C"])
-			#	RPK.append([["HE","E"], ["HE+","E","E"], "-24.6d0","C"])
-			#	RPK.append([["HE+","E"], ["HE++","E","E"], "-79.d0","C"])
 			if(self.useCoolingChem or self.useCoolingDISS):
 				RPK.append([["H2","H"], ["H","H","H"], "-4.48d0","C"])
 				RPK.append([["H2","E"], ["H","H","E"], "-4.48d0","C"])
