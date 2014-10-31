@@ -3650,8 +3650,10 @@ class krome():
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#IFKROME_usePreDustExp" and not(self.usedTdust and self.useSurface)): skip = True
-			if(srow == "#ENDIFKROME"): skip = False
+			if(srow == "#IFKROME_useOmukaiOpacity" and self.H2opacity!="OMUKAI"): skip = True
+			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
 
+			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
 
@@ -3956,6 +3958,15 @@ class krome():
 					mult = (str(x.atomcount2[k])+"d0*" if x.atomcount2[k]>1 else "") #multiplication factor
 					aadd.append(mult+"n("+x.fidx+")") #append species density with factor
 					sdiff += "no("+x.fidx+") = n("+x.fidx+") * factor\n" #rescaling
+				#add dust to conservation when needed
+				idust = 0
+				for dType in self.dustTypes:
+					if(dType==k):
+						ilow = str(self.dustArraySize * idust + 1)
+						iup = str(self.dustArraySize * (idust+1))
+						aadd.append("sum(n(nmols+"+ilow+":nmols+"+iup+")*krome_dust_partner_ratio("\
+							+ilow+":"+iup+"))")
+					idust += 1
 				sadd = "ntot = " + (" &\n + ".join(aadd)) #current total density of the species k
 				saddi = "nitot = " + (" &\n + ".join([y.replace("n(","ni(") for y in aadd])) #initial total density of the species k
 				#prepare replacing string
@@ -3966,9 +3977,9 @@ class krome():
 				krome_conserve += sdiff + "\n"
 				krome_conserve += "\n"
 	
-		nmax = 50 #originally nmax = 30
+		nmax = 60 #max number of species for conservation
 		if(len(specs)>nmax and self.useConserve):
-			print "WARNING: more than "+str(nmax)+" species, -conserve disabled!"
+			print "WARNING: more than "+str(nmax)+" species (i.e. "+str(len(specs))+"), -conserve disabled!"
 			krome_conserve = "" #with more than NMAX species conserve only electrons
 
 		has_electrons = False #check if electrons are present
@@ -5625,6 +5636,7 @@ class krome():
 			if(srow == "#IFKROME_noierr" and (self.useIERR)): skip = True
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
 			if(srow == "#IFKROME_usePreDustExp" and not(self.usedTdust and self.useSurface)): skip = True
+			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			ierr = ""
@@ -5756,7 +5768,8 @@ class krome():
 			shutil.copyfile("data/escape_H2.dat", buildFolder+"escape_H2.dat")
 
 		#copy Mayer opacity file
-		shutil.copyfile("data/mayer_E2.dat", buildFolder+"mayer_E2.dat")
+		if(self.usedTdust or self.useDustT):
+			shutil.copyfile("data/mayer_E2.dat", buildFolder+"mayer_E2.dat")
 
 		#copy file that contains table as indicated by the anytab reactions
 		print "- copying anytab files..."

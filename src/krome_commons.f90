@@ -66,9 +66,11 @@ module krome_commons
   !commons for anytab
 #KROME_vars_anytab
 
+#IFKROME_useOmukaiOpacity
   !commons for H2_opacity
-  real*8::arrH2esc_Tgas(13),arrH2esc_ntot(10),arrH2esc(10,13)
+  real*8::arrH2esc_Tgas(20),arrH2esc_ntot(10),arrH2esc(10,20)
   real*8::xmulH2esc,ymulH2esc
+#ENDIFKROME
 
   !physical commons
 #KROME_phys_commons
@@ -79,10 +81,12 @@ module krome_commons
   !xrayJ21 for tabulated heating and rate
   real*8::J21xray
 
+#IFKROME_useMayerOpacity
   !commons for Mayer opacity table
   integer,parameter::mayern=15,mayerm=23
   real*8::mayer_x(mayern),mayer_y(mayerm)
   real*8::mayer_z(mayern,mayerm),mayer_xmul,mayer_ymul
+#ENDIFKROME
 
   !commons for exp(-a) table
   integer,parameter::exp_table_na=int(1d5)
