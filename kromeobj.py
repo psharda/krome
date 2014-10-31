@@ -4646,6 +4646,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingFF" and not(self.useCoolingFF)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
+			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
 			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip_dTdust = True
 

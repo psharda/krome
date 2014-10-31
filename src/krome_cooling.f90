@@ -344,7 +344,7 @@ contains
   end function cooling_dH
 #ENDIFKROME
 
-
+#IFKROME_useH2esc_omukai
   !*****************************
   !escape opacity for H2 cooling. 
   ! courtesy of Kazu Omukai (2014)
@@ -367,6 +367,7 @@ contains
          ymulH2esc,lntot,lTgas))
     
   end function H2opacity_omukai
+#ENDIFKROME
 
 #IFKROME_useCoolingH2GP
   !*******************************
