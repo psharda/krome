@@ -270,6 +270,7 @@ class krome():
 		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files")
                 self.parser.add_argument("-shielding", metavar="TYPE", help="use H2 self-shielding, TYPE can be DB96 for Draine+Bertoldi 1996,\
                         WG11 for the more accurate Wolcott+Greene 2011")
+		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
 		self.parser.add_argument("-skipJacobian", action="store_true", help="do not write Jacobian in krome_ode.f90 file. Useful\
 			to reduce compilation time when Jacobian is not needed (MF=222).")
@@ -351,7 +352,7 @@ class krome():
 		elif(args.test=="shock1Dphoto"):
 			[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium"]]
 			filename = "networks/react_primordial_photo"
-			test_status = "dev" #under developement
+			test_status = "dev" #under development
 		elif(args.test=="shock1Dlarge"):
 			[argv.append(x) for x in ["-iRHS"]]
 			filename = "networks/react_WH2008"
@@ -374,14 +375,14 @@ class krome():
 				"-columnDensityMethod=JEANS"]]
 			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=dT,H2","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ"
-			test_status = "dev" #under developement
+			test_status = "dev" #under development
 		elif(args.test=="collapseSurface"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=REDUCED","-ATOL=1d-20","-maxord=2",\
 				"-columnDensityMethod=JEANS"]]
 			[argv.append(x) for x in ["-dust=3,C","-dustOptions=dT","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ_surface"
-			test_status = "dev" #under developement
+			test_status = "dev" #under development
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
@@ -391,16 +392,17 @@ class krome():
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=REDUCED","-ATOL=1d-10","-maxord=1","-useTabs"]]
 			[argv.append(x) for x in ["-coolingQuench=10"]]
 			filename = "networks/react_COthin"
+			test_status = "dev" #under development
 		elif(args.test=="collapseZ_UV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
 			filename = "networks/react_primordialZ_UV"
-			test_status = "dev" #under developement
+			test_status = "dev" #under development
 		elif(args.test=="collapseZ_induced"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
 			filename = "networks/react_primordialZ"
-			test_status = "dev" #under developement
+			test_status = "dev" #under development
                 elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,FF,DISS,ATOMIC", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
@@ -418,12 +420,13 @@ class krome():
 		elif(args.test=="stars"):
 			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck"]]
 			filename = "networks/react_star"
-			test_status = "dev" #under developement
+			test_status = "dev" #under development
 		elif(args.test=="reverse"):
 			[argv.append(x) for x in ["-reverse"]]
 			filename = "networks/react_NO"
 		elif(args.test=="atmosphere"):
 			filename = "networks/react_kast80"
+			test_status = "dev" #under development
 		elif(args.test=="wrapC"):
 			filename = "networks/react_primordial2"
 		elif(args.test=="lotkav"):
@@ -448,7 +451,7 @@ class krome():
 
 		self.filename = filename #add the network filename
 		self.test_name = args.test #copy the name of the test
-		self.test_status = test_status #developement status of the test
+		self.test_status = test_status #development status of the test
 
 	##########################################
 	def argparsing(self,argv):
@@ -467,12 +470,17 @@ class krome():
 			print " Bye!"
 			sys.exit()
 
+		#EXIT if development test found and skipDevTest enabled
+		if(args.skipDevTest and self.test_status=="dev"):
+			fh = open("build/dev.skip","w")
+			fh.close()
+			sys.exit("THIS IS A DEV TEST (and skipDevTest enabled): KROME ENDS!")
 
-		#print a warning if the test is under developement
+		#print a warning if the test is under development
 		if(args.test and self.test_status=="dev"):
 			print "************************************************"
 			print "WARNING: the test \""+self.test_name+"\" is currently"
-			print " UNDER DEVELOPEMENT and its results could be"
+			print " UNDER DEVELOPMENT and its results could be"
 			print " horribly wrong. "
 			print " Some details about the test can be found in the"
 			print " test_list file in the main KROME directory."
@@ -1248,7 +1256,7 @@ class krome():
 		if(args.RTOL):
 			self.RTOL = args.RTOL
 			print "Reading option -rtol (rtol="+str(self.RTOL)+")"
-
+			
 		#maxord
 		if(args.maxord):
 			self.maxord = min(max(1,int(args.maxord)),5)
