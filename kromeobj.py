@@ -54,8 +54,8 @@ class krome():
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
-	pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
-	useX = has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
+	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
+	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolCMBFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = False
@@ -298,7 +298,7 @@ class krome():
 			coefficients, e.g. k(10) = 1d-2*k(3)")
 		self.parser.add_argument("-useIERR", action="store_true",help="use ierr in the interface with KROME to return errors instead\
 			of stopping the exectution")
-		self.parser.add_argument("-useN", action="store_true",help="use number densities (1/cm3) as input/ouput instead of fractions (#)")
+		self.parser.add_argument("-useXmass", action="store_true",help="use mass fractions as input/ouput instead of number densities (1/cm3)")
 		self.parser.add_argument("-useODEConstant", help="postpone an expression to each ODE. EXPRESSION must be a valid f90\
 			expression (e.g. *3.d0 or +1.d-10)", metavar="EXPRESSION")
 		self.parser.add_argument("-usePhIoniz", action="store_true", help="includes photochemistry (obsolete)")
@@ -331,16 +331,15 @@ class krome():
 			return
 
 		if(args.test=="cloud"):
-			[argv.append(x) for x in ["-useN","-iRHS","-skipJacobian","-useCustomCoe=\"myCoe(:)\""]]
+			[argv.append(x) for x in ["-iRHS","-skipJacobian","-useCustomCoe=\"myCoe(:)\""]]
 			filename = "networks/react_cloud"
 		elif(args.test=="slowmanifold"):
-			[argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_SM"
 		elif(args.test=="auto"):
-			[argv.append(x) for x in ["-photoBins=10","-useN"]]
+			[argv.append(x) for x in ["-photoBins=10"]]
 			filename = "networks/react_auto"
 		elif(args.test=="chianti"):
-			[argv.append(x) for x in ["-photoBins=10","-useN","-useThermoToggle","-coolLevels=99999"]]
+			[argv.append(x) for x in ["-photoBins=10","-useThermoToggle","-coolLevels=99999"]]
 			[argv.append(x) for x in ["-cooling=CII,CIII,CIV,CV,CVI"]]
 			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
 			filename = "networks/react_chianti"
@@ -357,7 +356,7 @@ class krome():
 			[argv.append(x) for x in ["-iRHS"]]
 			filename = "networks/react_WH2008"
 		elif(args.test=="dust"):
-			[argv.append(x) for x in ["-dust=10,C,Si","-useN","-dustOptions=GROWTH,SPUTTER","-dustSeed=\"1d-12\""]]
+			[argv.append(x) for x in ["-dust=10,C,Si","-dustOptions=GROWTH,SPUTTER","-dustSeed=\"1d-12\""]]
 			filename = "networks/react_primordial"
 		elif(args.test=="compact"):
 			[argv.append(x) for x in ["-compact"]]
@@ -367,80 +366,76 @@ class krome():
 			filename = "networks/react_primordial_photoH2"
 		elif(args.test=="collapse"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL"]]
 			filename = "networks/react_primordial3"
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=H2,CONT,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=EXACT","-ATOL=1d-40","-maxord=1",\
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=EXACT","-ATOL=1d-40","-maxord=1",\
 				"-columnDensityMethod=JEANS"]]
 			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=dT,H2","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseSurface"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=REDUCED","-ATOL=1d-20","-maxord=2",\
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=REDUCED","-ATOL=1d-20","-maxord=2",\
 				"-columnDensityMethod=JEANS"]]
 			[argv.append(x) for x in ["-dust=3,C","-dustOptions=dT","-useCoolCMBFloorZ"]]
 			filename = "networks/react_primordialZ_surface"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-useN","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
 			filename = "networks/react_primordialZ"
 		elif(args.test=="collapseCO"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM", "-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=REDUCED","-ATOL=1d-10","-maxord=1","-useTabs"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=REDUCED","-ATOL=1d-10","-maxord=1","-useTabs"]]
 			[argv.append(x) for x in ["-coolingQuench=10"]]
 			filename = "networks/react_COthin"
 		elif(args.test=="collapseZ_UV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
 			filename = "networks/react_primordialZ_UV"
 			test_status = "dev" #under developement
 		elif(args.test=="collapseZ_induced"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-useN","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under developement
                 elif(args.test=="collapseUV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,FF,DISS,ATOMIC", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-useN","-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
+			[argv.append(x) for x in ["-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
 			[argv.append(x) for x in ["-columnDensityMethod=JEANS"]]
 			filename = "networks/react_primordial_UV"
                 elif(args.test=="collapseUV_Xrays"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,ATOMIC,FF,COMPTON", "-heating=COMPRESS,CHEM,XRAY"]]
-			[argv.append(x) for x in ["-useN","-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
+			[argv.append(x) for x in ["-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
 			[argv.append(x) for x in ["-columnDensityMethod=JEANS"]]
 			filename = "networks/react_xrays"
                 elif(args.test=="earlyUniverse"):
 			[argv.append(x) for x in ["-cooling=H2GP98,COMPTON,EXPANSION"]]
-			[argv.append(x) for x in ["-useN","-useFileIdx"]]
+			[argv.append(x) for x in ["-useFileIdx"]]
 			filename = "networks/react_earlyUniverse"
 		elif(args.test=="stars"):
 			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck"]]
 			filename = "networks/react_star"
 			test_status = "dev" #under developement
 		elif(args.test=="reverse"):
-			[argv.append(x) for x in ["-useN","-reverse"]]
+			[argv.append(x) for x in ["-reverse"]]
 			filename = "networks/react_NO"
 		elif(args.test=="atmosphere"):
-			[argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_kast80"
 		elif(args.test=="wrapC"):
-			[argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_primordial2"
 		elif(args.test=="lotkav"):
-			[argv.append(x) for x in ["-useN","-customODE=tests/lotkav/lotkav"]]
+			[argv.append(x) for x in ["-customODE=tests/lotkav/lotkav"]]
 			filename = "networks/react_dummy"
 		elif(args.test=="lamda"):
-			[argv.append(x) for x in ["-useN","-coolFile=data/coolO2.dat", "-cooling=O2"]]
+			[argv.append(x) for x in ["-coolFile=data/coolO2.dat", "-cooling=O2"]]
 			[argv.append(x) for x in ["-useThermoToggle"]]
 			filename = "networks/react_COthin"
 		elif(args.test=="hello"):
-			[argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_hello"
 		elif(args.test=="customCooling"):
-			[argv.append(x) for x in ["-useN"]]
 			filename = "networks/react_customCool"
 		else:
 			tests = ", ".join(sorted(os.walk('tests').next()[1]))
@@ -642,10 +637,6 @@ class krome():
 			if(self.useDvodeF90):
 				self.solver_MF = 227
 			print "Reading option -forceMF222"
-		#use numeric density instead of fractions as input
-		if(args.useN):
-			self.useX = False
-			print "Reading option -useN"
 
 		#method for column density calculation
 		if(args.columnDensityMethod):
@@ -863,8 +854,8 @@ class krome():
 			if(self.is_test):
 				print "ERROR: -test option and -ramses are incompatible!"
 				sys.exit()
-			if(self.useX):
-				print "ERROR: the patch for RAMSES requires the -useN option!"
+			if(args.useXmass):
+				print "ERROR: the patch for RAMSES requires number densities, please remove -useXmass option!"
 				sys.exit()
 			if(args.heating):
 				if("COMPR" in args.heating):
@@ -883,8 +874,8 @@ class krome():
 				die("ERROR: the patch for RAMSES TH requires the -compact option!")
 			if(self.is_test):
 				die("ERROR: -test option and -ramsesTH are incompatible!")
-			if(self.useX):
-				die("ERROR: the patch for RAMSES TH requires the -useN option!")
+			if(args.useXmass):
+				die("ERROR: the patch for RAMSES TH requires number densities, please remove -useXmass option!")
 			if(args.heating):
 				if("COMPR" in args.heating):
 					die("ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse! Remove it")
@@ -903,8 +894,8 @@ class krome():
 			if(self.is_test):
 				print "ERROR: -test option and -flash are incompatible!"
 				sys.exit()
-			if(self.useX):
-				print "ERROR: the patch for FLASH requires the -useN option!"
+			if(args.useXmass):
+				print "ERROR: the patch for FLASH requires number densities, please remove -useXmass option!"
 				sys.exit()
 			if(args.heating):
 				if("COMPR" in args.heating):
@@ -926,8 +917,8 @@ class krome():
 			if(self.is_test):
 				print "ERROR: -test option and -enzo are incompatible!"
 				sys.exit()
-			if(self.useX):
-				print "ERROR: the patch for ENZO -useN option!"
+			if(args.useXmass):
+				print "ERROR: the patch for ENZO requires number densities, please remove -useXmass option"
 				sys.exit()
 			if(args.heating):
 				if("COMPR" in args.heating):
@@ -1132,6 +1123,11 @@ class krome():
 
 			print "Reading option -heating ("+(",".join(myHeat))+")"
 	
+                #use mass fraction instead of number densities
+		if(args.useXmass):
+			self.useX = True
+			print "Reading option -useXmass"
+     
 		#force rwork size
 		if(args.forceRWORK):
 			myrwork = args.forceRWORK
