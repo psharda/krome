@@ -1,22 +1,20 @@
-changeset: 27dcbe4
-compact fort.33 cfb40601747c6c240990038050364daa
+changeset: f9a498f
+compact fort.33 91f1030f92c5891688cca0721f9e94d1
 compact fort.34 88e14e3c12ffd6588a1524e24aa226ee
 compact fort.23 3f1eb48618af4688564970d4bdbd1abe
 compact fort.24 015062340b74694bebd119a0409d322e
 compact fort.22 0443c7da947ac456dcc9b8e7b9a8572b
 map fort.66 192b37a14724dc9665b8e68160b9cdf8
 collapse fort.22 af2baf606a3e36ea23b32eb685327b02
-cloud fort.66 f049b8a52c59d73025000f950fadfc6b
-collapseUV fort.22 77115f557fb406aa8d43900178e15ad6
+cloud fort.66 76c95f6fb343977753ec28a3fe8fba28
+collapseUV fort.22 ad5e9225939ba446a6f46f1d7795d751
 customCooling fort.44 b330e09a3e61d31147ab6e3803c26c00
-collapseUV_Xrays fort.22 221182d14f9a610b6017485497617bf7
+collapseUV_Xrays fort.22 fbfc591c70ae1adfdd1cc8083eff4fb5
 earlyUniverse fort.22 2c26ea82ef63168cf135828d11907688
 hello fort.66 ae03da282e918158e9b97037cd81c6f3
 collapseZ fort.55 f8a9b722b8b7291bb9b641ac2e28a1e4
-collapseZ fort.22 a2beecb7300707fde70b4ddb2585add9
+collapseZ fort.22 90cca2400aea8f0c8d4a64ee7672a8c3
 auto fort.66 941845c6a99dbb8236ae12e16484a381
-collapseCO fort.55 010845330ff5c8439e0a9b24de156554
-collapseCO fort.22 a6a98919dce614ba8416b42eabb35767
 slowmanifold fort.77 d5854cf7627dc3f29c0213256d933a20
 slowmanifold fort.66 a1fdbcab746107c4c834cc84a1f7c06b
 shock1Dcool fort.33 a53fc6d4f8ac7fddc7b453333ccd1cfc

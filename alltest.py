@@ -19,9 +19,6 @@ testpath = "tests/"
 tests = [x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath]
 #tests = ["hello"]
 
-#list of test to be skipped (e.g. under developement)
-skiptests = ["stars","collapseZ_induced","collapseZ_UV","shock1Dphoto","atmosphere","collapseDUST","collapseSurface"]
-
 #start from this test (empty string start from first test)
 first = ""
 if(first.strip()==""): first = tests[0]
@@ -125,12 +122,18 @@ run = False #run flag
 for test in tests:
 	if(test==first): run = True #run the first test
 	if((compiler=="gfortran") and (test=="wrapC")): continue
-	if(test in skiptests): continue
 	if(not(run)): continue #skip if test is before first
 	print "test "+test
 
+	#clear directory
+	for ff in glob.glob("build/*"):
+		os.remove(ff)
+
 	#call krome
-	call(["./krome", "-test="+test, "-pedantic", "-unsafe", "-sh","-compiler",compiler])
+	call(["./krome", "-test="+test,"-skipDevTest", "-pedantic", "-unsafe", "-sh","-compiler",compiler])
+
+	#skip development test
+	if(os.path.isfile("build/dev.skip")): continue
 
 	#move to build directory
 	os.chdir("build/")
@@ -188,9 +191,9 @@ for test in tests:
 	print "DONE!"
 
 #add skipped tests as failed
-if(mode=="check"):
-	for test in skiptests:
-		fout.write(test+" "+str(False)+" "+str(time.time())+" skipped\n")
+#if(mode=="check"):
+#	for test in skiptests:
+#		fout.write(test+" "+str(False)+" "+str(time.time())+" skipped\n")
 fout.close()
 
 #copy the results to kromepackage.org using FTP
