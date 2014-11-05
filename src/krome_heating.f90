@@ -60,9 +60,36 @@ contains
     heats(idx_heat_xray) = heat_XRay(n(:),Tgas,k(:))
 #ENDIFKROME
 
+#IFKROME_useHeatingVisc
+    heats(idx_heat_visc) = heat_Visc(n(:),Tgas)
+#ENDIFKROME
+
+
     get_heating_array(:) = heats(:)
 
   end function get_heating_array
+
+#IFKROME_useHeatingVisc
+  !*************************
+  !heating from viscosity in erg/s/cm3
+  function heat_Visc(n,Tgas)
+    use krome_commons
+    use krome_constants
+    use krome_user_commons
+    implicit none
+    real*8::n(:),Tgas,heat_Visc,ntot
+    real*8::m(nspec)
+
+    ntot = get_Hnuclei(n(:))
+    n(idx_Tgas) = Tgas
+    m(:) = get_mass()
+    rhogas = max(sum(n(1:nmols)*m(1:nmols)),1d-40)
+
+    heat_Visc = 9d0/4d0 * user_nu * rhogas * user_omega * user_omega
+
+  end function heat_Visc
+#ENDIFKROME
+
 
 #IFKROME_useHeatingXRay
   !*************************
