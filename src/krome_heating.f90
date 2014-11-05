@@ -74,13 +74,11 @@ contains
   !heating from viscosity in erg/s/cm3
   function heat_Visc(n,Tgas)
     use krome_commons
-    use krome_constants
     use krome_user_commons
     implicit none
-    real*8::n(:),Tgas,heat_Visc,ntot
+    real*8::n(:),Tgas,heat_Visc
     real*8::m(nspec)
 
-    ntot = get_Hnuclei(n(:))
     n(idx_Tgas) = Tgas
     m(:) = get_mass()
     rhogas = max(sum(n(1:nmols)*m(1:nmols)),1d-40)
