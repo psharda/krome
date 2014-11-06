@@ -345,7 +345,7 @@ def get_cooling_index_list():
 #heating index list
 def get_heating_index_list():
 	idxhea = {"chem":1,"compress":2, "compr":2, "photo":3, "dH":4, "enthalpic":4, "photoAv":5, "Av":5,\
-		"CR":6, "dust":7, "xray":8}
+		"CR":6, "dust":7, "xray":8, "visc":9}
 
 	idxshea = []
 	maxv = 0

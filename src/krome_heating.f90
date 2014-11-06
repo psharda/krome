@@ -75,9 +75,10 @@ contains
   function heat_Visc(n,Tgas)
     use krome_commons
     use krome_user_commons
+    use krome_subs
     implicit none
     real*8::n(:),Tgas,heat_Visc
-    real*8::m(nspec)
+    real*8::m(nspec),rhogas
 
     n(idx_Tgas) = Tgas
     m(:) = get_mass()
