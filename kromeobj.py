@@ -299,7 +299,10 @@ class krome():
 			coefficients, e.g. k(10) = 1d-2*k(3)")
 		self.parser.add_argument("-useIERR", action="store_true",help="use ierr in the interface with KROME to return errors instead\
 			of stopping the exectution")
-		self.parser.add_argument("-useXmass", action="store_true",help="use mass fractions as input/ouput instead of number densities (1/cm3)")
+		self.parser.add_argument("-useN", action="store_true",help="use number densities as input/ouput instead of\
+			 mass fractions. This is the default.")
+		self.parser.add_argument("-useX", action="store_true",help="use mass fractions as input/ouput instead of number densities\
+			 (1/cm3)")
 		self.parser.add_argument("-useODEConstant", help="postpone an expression to each ODE. EXPRESSION must be a valid f90\
 			expression (e.g. *3.d0 or +1.d-10)", metavar="EXPRESSION")
 		self.parser.add_argument("-usePhIoniz", action="store_true", help="includes photochemistry (obsolete)")
@@ -862,8 +865,8 @@ class krome():
 			if(self.is_test):
 				print "ERROR: -test option and -ramses are incompatible!"
 				sys.exit()
-			if(args.useXmass):
-				print "ERROR: the patch for RAMSES requires number densities, please remove -useXmass option!"
+			if(args.useX):
+				print "ERROR: the patch for RAMSES requires number densities, please remove -useX option!"
 				sys.exit()
 			if(args.heating):
 				if("COMPR" in args.heating):
@@ -882,8 +885,8 @@ class krome():
 				die("ERROR: the patch for RAMSES TH requires the -compact option!")
 			if(self.is_test):
 				die("ERROR: -test option and -ramsesTH are incompatible!")
-			if(args.useXmass):
-				die("ERROR: the patch for RAMSES TH requires number densities, please remove -useXmass option!")
+			if(args.useX):
+				die("ERROR: the patch for RAMSES TH requires number densities, please remove -useX option!")
 			if(args.heating):
 				if("COMPR" in args.heating):
 					die("ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse! Remove it")
@@ -902,8 +905,8 @@ class krome():
 			if(self.is_test):
 				print "ERROR: -test option and -flash are incompatible!"
 				sys.exit()
-			if(args.useXmass):
-				print "ERROR: the patch for FLASH requires number densities, please remove -useXmass option!"
+			if(args.useX):
+				print "ERROR: the patch for FLASH requires number densities, please remove -useX option!"
 				sys.exit()
 			if(args.heating):
 				if("COMPR" in args.heating):
@@ -925,8 +928,8 @@ class krome():
 			if(self.is_test):
 				print "ERROR: -test option and -enzo are incompatible!"
 				sys.exit()
-			if(args.useXmass):
-				print "ERROR: the patch for ENZO requires number densities, please remove -useXmass option"
+			if(args.useX):
+				print "ERROR: the patch for ENZO requires number densities, please remove -useX option"
 				sys.exit()
 			if(args.heating):
 				if("COMPR" in args.heating):
@@ -1132,10 +1135,15 @@ class krome():
 
 			print "Reading option -heating ("+(",".join(myHeat))+")"
 	
-                #use mass fraction instead of number densities
-		if(args.useXmass):
+                #use number densities instead of mass fractions (default, retrocompatibility)
+		if(args.useN):
+			self.usex = False
+			print "Reading option -useN"
+
+                #use mass fractions instead of number densities
+		if(args.useX):
 			self.useX = True
-			print "Reading option -useXmass"
+			print "Reading option -useX"
      
 		#force rwork size
 		if(args.forceRWORK):

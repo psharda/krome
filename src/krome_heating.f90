@@ -55,7 +55,6 @@ contains
     heats(idx_heat_dust) = heat_netPhotoDust(n(:),Tgas)
 #ENDIFKROME
 
-
 #IFKROME_useHeatingXRay
     heats(idx_heat_xray) = heat_XRay(n(:),Tgas,k(:))
 #ENDIFKROME
@@ -64,29 +63,31 @@ contains
     heats(idx_heat_visc) = heat_Visc(n(:),Tgas)
 #ENDIFKROME
 
-
     get_heating_array(:) = heats(:)
 
   end function get_heating_array
 
 #IFKROME_useHeatingVisc
   !*************************
-  !heating from viscosity in erg/s/cm3
-  function heat_Visc(n,Tgas)
+  !heating from viscosity (erg/s/cm3)
+  ! requires user_nu (kinematic viscosity) and
+  ! user_omega (keplerian orbital frequency)
+  ! both from krome_user_commons
+  function heat_visc(n,Tgas)
     use krome_commons
     use krome_user_commons
     use krome_subs
     implicit none
-    real*8::n(:),Tgas,heat_Visc
+    real*8::n(:),Tgas,heat_visc
     real*8::m(nspec),rhogas
-
+    
     n(idx_Tgas) = Tgas
     m(:) = get_mass()
     rhogas = max(sum(n(1:nmols)*m(1:nmols)),1d-40)
-
-    heat_Visc = 9d0/4d0 * user_nu * rhogas * user_omega * user_omega
-
-  end function heat_Visc
+    
+    heat_visc = 9d0/4d0 * user_nu * rhogas * user_omega * user_omega
+    
+  end function heat_visc
 #ENDIFKROME
 
 
