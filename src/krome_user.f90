@@ -138,15 +138,15 @@ contains
   subroutine krome_scale_dust_gas_ratio(dust_to_gas_ratio,x)
     use krome_commons
     use krome_subs
+    use krome_constants
     implicit none
-    real*8::dust_to_gas_ratio,x(:),rho_gas,m(nspec)
-    integer::nd
+    real*8::dust_to_gas_ratio,x(:),rho_gas,m(nspec),r0
 
-    nd = ndust / ndustTypes
     m(:) = get_mass()
     rho_gas = sum(x(:)*m(1:nmols))
-    xdust(:) = dust_to_gas_ratio * rho_gas / krome_grain_rho &
-         / krome_dust_asize3(:) / nd
+    r0 = 4d0/3d0*pi*sum(krome_dust_asize3(:)*xdust(:)) &
+         * krome_grain_rho / rho_gas
+    xdust(:) = xdust(:) / r0 * dust_to_gas_ratio
     
   end subroutine krome_scale_dust_gas_ratio
 
