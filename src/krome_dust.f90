@@ -588,7 +588,6 @@ contains
     sgn = -1.d0
   end function sgn
 
-
   !*********************
   function krome_dust_grow(nndust,natom,Tgas,Tdust,vgas,adust)
     !krome_dust_grow: compute dust formation in cm3/s 
@@ -603,6 +602,60 @@ contains
 
   end function krome_dust_grow
 
+  !***********************
+  function krome_dust_growth_array(Tdust,adust2,nndust,natom,vgas,Tgas)
+    use krome_commons
+    use krome_constants
+    implicit none
+    integer,parameter::nd=ndust/ndustTypes
+    real*8::krome_dust_growth_array(nd),Tdust(nd),Tgas
+    real*8::adust2(nd),nndust(nd),seed,natom,vgas,pre,ss
+    integer::i
+
+    seed = #KROME_dust_seed !1/cm3
+    pre = pi * vgas * max(natom,0d0)
+    do i=1,nd
+       ss = krome_dust_stick(Tgas,Tdust(i))
+       krome_dust_growth_array(i) = pre * adust2(i) &
+            * (max(nndust(i),0.d0) + seed) * ss
+    end do
+
+  end function krome_dust_growth_array
+
+  !***********************
+  function krome_dust_growth_flux(n,ngas,mgas,vgas,Tgas,Tdust)
+    use krome_commons
+    use krome_constants
+    implicit none
+    integer,parameter::nd=ndust/ndustTypes
+    real*8::krome_dust_growth_flux(ndust),ngas,dflux,ss
+    real*8::fluxold,pre,mgas,vgas,n(nspec),Tdust(ndust)
+    real*8::Tgas
+    integer::i,j,idx
+
+    !multiplication factor
+    pre = ngas * mgas * vgas / 4d0 / 1.22d0
+    !loop on types
+    do j=0,ndustTypes-1
+       fluxold = 0d0 !no growth for first bin
+       !loop on bins
+       do i=1,nd-1
+          idx = nd*j+i !bin index for type j
+          dflux = fluxold !store old flux
+          ss = krome_dust_stick(Tgas,Tdust(idx)) !sticking
+          !compute new flux
+          fluxold = n(nmols+idx) * ss / krome_dust_aspan(idx)
+          ! flux from the old bin - flux of this bin
+          dflux = dflux - fluxold
+          !get growth from flux
+          krome_dust_growth_flux(idx) = pre * dflux
+       end do
+       !growth of the last bin (can only grow)
+       krome_dust_growth_flux(idx+1) = pre * dflux
+    end do
+
+  end function krome_dust_growth_flux
+
   !*******************
   function krome_dust_stick(Tgas,Tdust)
     !krome_dust_stick: sticking coefficient (Leitch-Devlin & Williams 1985)
@@ -611,6 +664,7 @@ contains
 
     krome_dust_stick = 1.9d-2 * Tgas * (1.7d-3 * Tdust + .4d0) &
          * exp(-7.d-3 * Tgas)
+    krome_dust_stick = min(krome_dust_stick,1d0)
 
   end function krome_dust_stick
 
