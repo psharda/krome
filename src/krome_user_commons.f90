@@ -7,7 +7,7 @@ module krome_user_commons
   !for rate calculation (e.g. optical depth, CR rate, 
   !pressure, density, ...)
   real*8::tau,zrate,pah_size,gas_dust_ratio,krome_redshift
-  real*8::krome_J21,krome_J21xr,user_tff
+  real*8::krome_J21,krome_J21xr,user_tff,user_omega,user_nu
   real*8::krome_invdvdz !inverse of |velocity gradient| 1/abs(dv/dz)
 
   !$omp threadprivate(user_tff,krome_invdvdz)
