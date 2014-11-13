@@ -157,29 +157,34 @@ contains
 
   !************************
   !load the xsecs from file
-  subroutine load_xsec(fname,xsec_val,xsec_Emin,xsec_n,xsec_dE)
+  subroutine load_xsec(fname,xsec_val,xsec_Emin,xsec_n,xsec_idE)
     implicit none
     real*8,allocatable::xsec_val(:)
     real*8::xsec_Emin,xsec_dE,xsec_val_tmp(int(1e6)),rout(2)
-    real*8::xsec_E_tmp(size(xsec_val_tmp))
+    real*8::xsec_E_tmp(size(xsec_val_tmp)),xsec_idE
     integer::xsec_n,ios
     character(*)::fname
 
-    xsec_n = 0
+    xsec_n = 0 !number of lines found
+    !open file
     open(33,file=fname,status="old",iostat=ios)
+    !check if file exists
     if(ios.ne.0) then
        print *,"ERROR: problems loading "//fname
        stop
     end if
 
+    !read file line-by-line
     do
-       read(33,*,iostat=ios) rout(:)
+       read(33,*,iostat=ios) rout(:) !read line
        if(ios<0) exit !eof
        if(ios/=0) cycle !skip blanks
-       xsec_n = xsec_n + 1
-       xsec_val_tmp(xsec_n) = rout(2)
-       xsec_E_tmp(xsec_n) = rout(1)
+       xsec_n = xsec_n + 1 !increase line number
+       xsec_val_tmp(xsec_n) = rout(2) !read intensity value
+       xsec_E_tmp(xsec_n) = rout(1) !read energy value
+       !compute the dE for the first interval
        if(xsec_n==2) xsec_dE = xsec_E_tmp(2)-xsec_E_tmp(1)
+       !check if all the intervals have the same spacing
        if(xsec_n>2) then
           if(xsec_E_tmp(xsec_n)-xsec_E_tmp(xsec_n-1)/=xsec_dE) then
              print *,"ERROR: spacing problem in file "//fname
@@ -191,23 +196,30 @@ contains
     end do
     close(33)
 
+    !store the minimum energy
     xsec_Emin = xsec_E_tmp(1)
+    !allocate the array with the values
     allocate(xsec_val(xsec_n))
+    !copy the values from the temp array to the allocated one
     xsec_val(:) = xsec_val_tmp(1:xsec_n)
+    !store the inverse of the delta energy
+    xsec_idE = 1d0 / xsec_dE
 
   end subroutine load_xsec
 
   !**********************
   !linear interpolation for the photo xsec
-  function xsec_interp(energy,xsec_val,xsec_Emin,xsec_n,xsec_dE)
+  function xsec_interp(energy,xsec_val,xsec_Emin,xsec_n,xsec_idE)
     implicit none
     real*8::xsec_interp
-    real*8::energy,xsec_val(:),xsec_Emin,xsec_dE
+    real*8::energy,xsec_val(:),xsec_Emin,xsec_idE
     integer::xsec_n,idx
 
-    idx = (energy-xsec_Emin) / xsec_dE + 1
+    !retrive index
+    idx = (energy-xsec_Emin) * xsec_idE + 1
 
-    xsec_interp = (energy-xsec_Emin) / xsec_dE &
+    !linear interpolation
+    xsec_interp = (energy-xsec_Emin) * xsec_idE &
          * (xsec_val(idx+1)-xsec_val(idx)) + xsec_val(idx)
 
   end function xsec_interp

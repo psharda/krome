@@ -133,7 +133,7 @@ class reaction():
 		if("@xsecFile=" in self.krate):
 			sidx = str(self.idx)
 			args = "xsec"+sidx+"_val(:), xsec"+sidx+"_Emin,"
-			args += " xsec"+sidx+"_n, xsec"+sidx+"_dE"
+			args += " xsec"+sidx+"_n, xsec"+sidx+"_idE"
 			self.kphrate = "xsec_interp(energy_eV, "+args+")"
 			self.xsecFile = self.krate.replace("@xsecFile=","").strip()
 		self.krate = "photoBinRates("+str(self.idxph)+")"

@@ -3721,7 +3721,7 @@ class krome():
 					srow += "!xsec for "+rea.verbatim+"\n"
 					srow += "real*8,allocatable::xsec"+sidx+"_val(:)\n"
 					srow += "real*8::xsec"+sidx+"_Emin\n"
-					srow += "real*8::xsec"+sidx+"_dE\n"
+					srow += "real*8::xsec"+sidx+"_idE\n"
 					srow += "integer::xsec"+sidx+"_n\n"
 					fout.write(srow+"\n")
 			elif(srow == "#KROME_cool_index"):
@@ -4411,7 +4411,7 @@ class krome():
 					if(not(rea.hasXsecFile)): continue
 					sidx = str(rea.idx)
 					row += "call load_xsec(\""+rea.xsecFile+"\", xsec"+sidx+"_val, xsec"+sidx+"_Emin,"
-					row += " xsec"+sidx+"_n, xsec"+sidx+"_dE)\n"
+					row += " xsec"+sidx+"_n, xsec"+sidx+"_idE)\n"
 
 			#replace pragma with the initialization of the photorate table in bins
 			if(srow=="#KROME_photobin_xsecs"):
