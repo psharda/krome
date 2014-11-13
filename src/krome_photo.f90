@@ -180,8 +180,8 @@ contains
        if(ios<0) exit !eof
        if(ios/=0) cycle !skip blanks
        xsec_n = xsec_n + 1 !increase line number
-       xsec_val_tmp(xsec_n) = rout(2) !read intensity value
-       xsec_E_tmp(xsec_n) = rout(1) !read energy value
+       xsec_val_tmp(xsec_n) = rout(2) !read xsec value cm2
+       xsec_E_tmp(xsec_n) = rout(1) !read energy value eV
        !compute the dE for the first interval
        if(xsec_n==2) xsec_dE = xsec_E_tmp(2)-xsec_E_tmp(1)
        !check if all the intervals have the same spacing
