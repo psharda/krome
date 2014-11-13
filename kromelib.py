@@ -105,6 +105,8 @@ class reaction():
 	isCR = False #flag this reaction as CR
 	isXRay = False #flag this reaction as XRay
 	isSurface = False #flag this reaction as Surface reaction
+	hasXsecFile = False #photo cross section is loaded from file
+	xsecFile = "" #cross section file
 
 	#method: constructor to initialize lists
 	def __init__(self):
@@ -128,6 +130,12 @@ class reaction():
 		if(not("krome_kph_auto" in self.krate) and not(photoBlock)): return
 		myr = self.reactants
 		self.kphrate = self.krate.replace("krome_kph_auto=","")
+		if("@xsecFile=" in self.krate):
+			sidx = str(self.idx)
+			args = "xsec"+sidx+"_val(:), xsec"+sidx+"_Emin,"
+			args += " xsec"+sidx+"_n, xsec"+sidx+"_dE"
+			self.kphrate = "xsec_interp(energy_eV, "+args+")"
+			self.xsecFile = self.krate.replace("@xsecFile=","").strip()
 		self.krate = "photoBinRates("+str(self.idxph)+")"
 		#if(self.krate.strip()=="krome_kph_auto"): 
 		#	self.krate = "krome_kph_"+myr[0].phname

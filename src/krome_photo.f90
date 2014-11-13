@@ -54,6 +54,8 @@ contains
        stop
     end if
 
+#KROME_load_xsecs_from_file
+
     !tabulate the xsecs into a bin-based array
     do j=1,nPhotoBins
        energy_eV = photoBinEmid(j) !energy of the bin in eV
@@ -152,5 +154,62 @@ contains
          * (1.d0+sqrt(y/ya))**(-P)
     heat_v96 = 1d-18 * sigma_0 * Fy * (energy_eV - Eth) !cm2*eV
   end function heat_v96
+
+  !************************
+  !load the xsecs from file
+  subroutine load_xsec(fname,xsec_val,xsec_Emin,xsec_n,xsec_dE)
+    implicit none
+    real*8,allocatable::xsec_val(:)
+    real*8::xsec_Emin,xsec_dE,xsec_val_tmp(int(1e6)),rout(2)
+    real*8::xsec_E_tmp(size(xsec_val_tmp))
+    integer::xsec_n,ios
+    character(*)::fname
+
+    xsec_n = 0
+    open(33,file=fname,status="old",iostat=ios)
+    if(ios.ne.0) then
+       print *,"ERROR: problems loading "//fname
+       stop
+    end if
+
+    do
+       read(33,*,iostat=ios) rout(:)
+       if(ios<0) exit !eof
+       if(ios/=0) cycle !skip blanks
+       xsec_n = xsec_n + 1
+       xsec_val_tmp(xsec_n) = rout(2)
+       xsec_E_tmp(xsec_n) = rout(1)
+       if(xsec_n==2) xsec_dE = xsec_E_tmp(2)-xsec_E_tmp(1)
+       if(xsec_n>2) then
+          if(xsec_E_tmp(xsec_n)-xsec_E_tmp(xsec_n-1)/=xsec_dE) then
+             print *,"ERROR: spacing problem in file "//fname
+             print *," energy points should be equally spaced!"
+             print *,"Point number: ",xsec_n
+             stop
+          end if
+       end if
+    end do
+    close(33)
+
+    xsec_Emin = xsec_E_tmp(1)
+    allocate(xsec_val(xsec_n))
+    xsec_val(:) = xsec_val_tmp(1:xsec_n)
+
+  end subroutine load_xsec
+
+  !**********************
+  !linear interpolation for the photo xsec
+  function xsec_interp(energy,xsec_val,xsec_Emin,xsec_n,xsec_dE)
+    implicit none
+    real*8::xsec_interp
+    real*8::energy,xsec_val(:),xsec_Emin,xsec_dE
+    integer::xsec_n,idx
+
+    idx = (energy-xsec_Emin) / xsec_dE + 1
+
+    xsec_interp = (energy-xsec_Emin) / xsec_dE &
+         * (xsec_val(idx+1)-xsec_val(idx)) + xsec_val(idx)
+
+  end function xsec_interp
 
 end module krome_photo
