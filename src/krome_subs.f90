@@ -1237,7 +1237,7 @@ contains
        stop
     end if
 
-    !skip the comments and the first line with the sizes of the data
+    !skip the comments and the first line and the sizes of the data
     ! which are already known from the pre-processing
     do
        read(51,'(a)') row_string

@@ -310,6 +310,7 @@ contains
     implicit none
     real*8::phbin(:)
     photoBinJ(:) = phbin(:)
+    photoBinJ_org(:) = phbin(:) !for restore
 
     !compute rates
     call calc_photobins()
@@ -482,6 +483,74 @@ contains
 
   end subroutine krome_photoBin_scale_array
 
+  !********************************
+  !restore the original flux (undo any rescale)
+  subroutine krome_photoBin_restore
+    use krome_commons
+    implicit none
+
+    photoBinJ(:) = photoBinJ_org(:)
+
+  end subroutine krome_photoBin_restore
+
+  !********************************
+  !load the radiation bins from the file fname
+  ! data should be a 3-column file with
+  ! energy Left (eV), energy Right (eV)
+  ! intensity (eV/cm2/sr).
+  ! This subroutine sets also the bin-size
+  subroutine krome_load_photoBin_file(fname)
+    use krome_commons
+    implicit none
+    integer::ios,icount
+    character(*)::fname
+    real*8::tmp_El(nPhotoBins),tmp_Er(nPhotoBins)
+    real*8::rout(3),tmp_J(nPhotoBins)
+
+    !open file and check for errors
+    open(33,file=fname,status="old",iostat=ios)
+    if(ios.ne.0) then
+       print *,"ERROR: problem opening "//fname//"!"
+       print *," (e.g. file not found)"
+       stop
+    end if
+
+    icount = 0 !count valid line
+    !loop on file
+    do
+       read(33,*,iostat=ios) rout(:)
+       if(ios==-1) exit !EOF
+       if(ios.ne.0) cycle !skip comments
+       icount = icount + 1
+       if(icount>nPhotoBins) exit !can't load more than nPhotoBins
+       tmp_El(icount) = rout(1) !energy L eV
+       tmp_Er(icount) = rout(2) !energy R eV
+       !check if left interval is before right
+       if(tmp_El(icount)>tmp_Er(icount)) then
+          print *,"ERROR: in file "//fname//" left"
+          print *, " interval larger than right one!"
+          print *,tmp_El(icount),tmp_Er(icount)
+          stop
+       end if
+       tmp_J(icount) = rout(3) !intensity eV/cm2/sr
+    end do
+    close(33)
+
+    !file data lines should be the same number of the photobins
+    if(icount/=nPhotoBins) then
+       print *,"ERROR: the number of data lines in the file"
+       print *," "//fname//" should be equal to the number of"
+       print *," photobins ",nPhotoBins
+       print *,"Found",icount
+       stop
+    end if
+
+    !initialize inteval and indensity according to data
+    call krome_set_photobinE_lr(tmp_El(:),tmp_Er(:))
+    call krome_set_photoBinJ(tmp_J(:))
+
+  end subroutine krome_load_photoBin_file
+
   !**********************************
   subroutine krome_set_photoBin_BBlog(lower,upper,Tbb)
     use krome_commons
@@ -580,7 +649,6 @@ contains
     !initialize BB radiation using the values found
     call krome_set_photoBin_BBlog(xlow,xup,Tbb)
 
-
   end subroutine krome_set_photoBin_BBlog_auto
 
   !**************************
@@ -608,7 +676,6 @@ contains
     call calc_photobins()
 
   end subroutine krome_set_photoBin_draineLin
-
 
   !**************************
   subroutine krome_set_photoBin_draineLog(lower,upper)

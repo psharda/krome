@@ -3748,7 +3748,8 @@ class krome():
 					fout.write("!$omp threadprivate("+(",".join(self.commonvars))+")\n")
 			elif(srow == "#KROME_photobins_array"):
 				if(self.photoBins>0):
-					fout.write("real*8::photoBinJ(nPhotoBins) !intensity per bin, eV/s/sr/Hz/cm2\n")
+					fout.write("real*8::photoBinJ(nPhotoBins) !intensity per bin, eV/sr/cm2\n")
+					fout.write("real*8::photoBinJ_org(nPhotoBins) !intensity per bin stored, eV/sr/cm2\n")
 					fout.write("real*8::photoBinEleft(nPhotoBins) !left limit of the freq bin, eV\n")
 					fout.write("real*8::photoBinEright(nPhotoBins) !right limit of the freq bin, eV\n")
 					fout.write("real*8::photoBinEmid(nPhotoBins) !middle point of the freq bin, eV\n")
@@ -5792,6 +5793,10 @@ class krome():
 	def copyOthers(self):
 		buildFolder = self.buildFolder
 		test_name = self.test_name
+
+		#make a backup copy of the test before overwrite
+		if(file_exists(buildFolder+"test.f90")):
+			shutil.copyfile(buildFolder+"test.f90", buildFolder+"test.f90.bak")
 
 		#copy surface chemisorption rates
 		if(self.useChemisorption):
