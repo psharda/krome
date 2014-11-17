@@ -216,8 +216,12 @@ contains
     real*8::energy,xsec_val(:),xsec_Emin,xsec_idE
     integer::xsec_n,idx
 
+    xsec_interp = 0d0
     !retrive index
     idx = (energy-xsec_Emin) * xsec_idE + 1
+
+    !out of the limits is zero
+    if(idx<1.or.idx>xsec_n-1) return
 
     !linear interpolation
     xsec_interp = (energy-xsec_Emin) * xsec_idE &
