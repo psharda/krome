@@ -3722,8 +3722,8 @@ class krome():
 					srow += "real*8,allocatable::xsec"+sidx+"_val(:)\n"
 					srow += "real*8::xsec"+sidx+"_Emin\n"
 					srow += "real*8::xsec"+sidx+"_idE\n"
-					srow += "integer::xsec"+sidx+"_n\n"
-					fout.write(srow+"\n")
+					srow += "integer::xsec"+sidx+"_n\n\n"
+				fout.write(srow+"\n")
 			elif(srow == "#KROME_cool_index"):
 				idxcool = get_cooling_index_list()
 				for x in idxcool:
