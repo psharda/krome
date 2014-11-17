@@ -54,6 +54,8 @@ contains
        stop
     end if
 
+#KROME_load_xsecs_from_file
+
     !tabulate the xsecs into a bin-based array
     do j=1,nPhotoBins
        energy_eV = photoBinEmid(j) !energy of the bin in eV
@@ -152,5 +154,79 @@ contains
          * (1.d0+sqrt(y/ya))**(-P)
     heat_v96 = 1d-18 * sigma_0 * Fy * (energy_eV - Eth) !cm2*eV
   end function heat_v96
+
+  !************************
+  !load the xsecs from file
+  subroutine load_xsec(fname,xsec_val,xsec_Emin,xsec_n,xsec_idE)
+    implicit none
+    real*8,allocatable::xsec_val(:)
+    real*8::xsec_Emin,xsec_dE,xsec_val_tmp(int(1e6)),rout(2)
+    real*8::xsec_E_tmp(size(xsec_val_tmp)),xsec_idE,diff
+    integer::xsec_n,ios
+    character(*)::fname
+
+    xsec_n = 0 !number of lines found
+    !open file
+    open(33,file=fname,status="old",iostat=ios)
+    !check if file exists
+    if(ios.ne.0) then
+       print *,"ERROR: problems loading "//fname
+       stop
+    end if
+
+    !read file line-by-line
+    do
+       read(33,*,iostat=ios) rout(:) !read line
+       if(ios<0) exit !eof
+       if(ios/=0) cycle !skip blanks
+       xsec_n = xsec_n + 1 !increase line number
+       xsec_val_tmp(xsec_n) = rout(2) !read xsec value cm2
+       xsec_E_tmp(xsec_n) = rout(1) !read energy value eV
+       !compute the dE for the first interval
+       if(xsec_n==2) xsec_dE = xsec_E_tmp(2)-xsec_E_tmp(1)
+       !check if all the intervals have the same spacing
+       if(xsec_n>2) then
+          diff = xsec_E_tmp(xsec_n)-xsec_E_tmp(xsec_n-1)
+          if(abs(diff/xsec_dE-1d0)<1d-6) then
+             print *,"ERROR: spacing problem in file "//fname
+             print *," energy points should be equally spaced!"
+             print *,"Point number: ",xsec_n
+             stop
+          end if
+       end if
+    end do
+    close(33)
+
+    !store the minimum energy
+    xsec_Emin = xsec_E_tmp(1)
+    !allocate the array with the values
+    allocate(xsec_val(xsec_n))
+    !copy the values from the temp array to the allocated one
+    xsec_val(:) = xsec_val_tmp(1:xsec_n)
+    !store the inverse of the delta energy
+    xsec_idE = 1d0 / xsec_dE
+
+  end subroutine load_xsec
+
+  !**********************
+  !linear interpolation for the photo xsec
+  function xsec_interp(energy,xsec_val,xsec_Emin,xsec_n,xsec_idE)
+    implicit none
+    real*8::xsec_interp
+    real*8::energy,xsec_val(:),xsec_Emin,xsec_idE
+    integer::xsec_n,idx
+
+    xsec_interp = 0d0
+    !retrive index
+    idx = (energy-xsec_Emin) * xsec_idE + 1
+
+    !out of the limits is zero
+    if(idx<1.or.idx>xsec_n-1) return
+
+    !linear interpolation
+    xsec_interp = (energy-xsec_Emin) * xsec_idE &
+         * (xsec_val(idx+1)-xsec_val(idx)) + xsec_val(idx)
+
+  end function xsec_interp
 
 end module krome_photo

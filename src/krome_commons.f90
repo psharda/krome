@@ -114,4 +114,7 @@ module krome_commons
   real*8::dust_Ebareice23_exp(2*nspec)
 #ENDIFKROME
 
+  !xsecs from file variables
+ #KROME_xsecs_from_file
+
 end module krome_commons

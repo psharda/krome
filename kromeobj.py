@@ -477,7 +477,7 @@ class krome():
 		if(args.skipDevTest and self.test_status=="dev"):
 			fh = open("build/dev.skip","w")
 			fh.close()
-			sys.exit("THIS IS A DEV TEST (and skipDevTest enabled): KROME ENDS!")
+			sys.exit("THIS IS A DEV TEST (and -skipDevTest enabled): KROME ENDS!")
 
 		#print a warning if the test is under development
 		if(args.test and self.test_status=="dev"):
@@ -1960,6 +1960,11 @@ class krome():
 				#add the photo reactant to the partner array
 				self.photoPartners[myrea.idx] = myrea.reactants[0]
 
+			#check for xsec from file
+			if("@xsecFile=" in myrea.krate):
+				if(not(inPhotoBlock)): sys.exit("ERROR: @xsecFile token requires a photorate block!")
+				myrea.hasXsecFile = True
+
 			#this reaction is on surface
 			if(inSurfaceBlock):
 				myrea.isSurface = True
@@ -1987,7 +1992,7 @@ class krome():
 			skip_append = False
 			if(skipDup):
 				myrea.build_pseudo_hash() #build pseudo_hash
-				if(myrea.pseudo_hash in pseudo_hash_list): 
+				if(myrea.pseudo_hash in pseudo_hash_list):
 					skip_append = True
 					skipped_dupl += 1
 					fdup.write(str(myrea.idx)+" "+myrea.verbatim+"\n")
@@ -2011,17 +2016,17 @@ class krome():
 			a = raw_input("Any key to continue q to quit... ")
 			if(a=="q"): print sys.exit()
 
-		if(noTabNextBlock): 
+		if(noTabNextBlock):
 			print "ERROR: block of skipped reaction still open!"
 			print "Add @noTab_stop or @noTab_end"
 			sys.exit()
 
-		if(inSurfaceBlock): 
+		if(inSurfaceBlock):
 			print "ERROR: block of surface reactions still open!"
 			print "Add @surface_stop or @surface_end"
 			sys.exit()
 
-		if(skipDup): 
+		if(skipDup):
 			fdup.close()
 			print "Skipped duplicated reactions:",skipped_dupl
 
@@ -2242,7 +2247,7 @@ class krome():
 					sp2 = parser(sp.name,mass_dic,atoms,thermodata,idust+1) #parse the new species
 					sp2.idx = len(uspecs) + 1 #increase species index
 					#if binding energy on surface are availble update
-					if(sp.name.upper() in Ebind): 
+					if(sp.name.upper() in Ebind):
 						sp2.Ebind_ice = Ebind[sp.name.upper()]["Eice"]
 						sp2.Ebind_bare = Ebind[sp.name.upper()]["Ebare"]
 					uspecs.append(sp2) #append to the new array
@@ -2849,7 +2854,7 @@ class krome():
 					if(row1==row2):
 						isequal = True
 						break
-				if(not(isequal)): 
+				if(not(isequal)):
 					xvarM_u.append(xvarM[i])
 			if(len(xvar)==len(xvarM_u)): print "NOTE: this system can be solved algebrically to the equilibrium"
 			#print str(len(xvar))+" variables and "+str(len(xvarM_u))+ " equations"
@@ -3708,6 +3713,17 @@ class krome():
 			elif(srow == "#KROME_phys_commons"):
 				for x in self.physVariables:
 					fout.write("real*8::phys_"+x[0]+"\n")
+			elif(srow == "#KROME_xsecs_from_file"):
+				srow = ""
+				for rea in reacts:
+					if(not(rea.hasXsecFile)): continue
+					sidx = str(rea.idx)
+					srow += "!xsec for "+rea.verbatim+"\n"
+					srow += "real*8,allocatable::xsec"+sidx+"_val(:)\n"
+					srow += "real*8::xsec"+sidx+"_Emin\n"
+					srow += "real*8::xsec"+sidx+"_idE\n"
+					srow += "integer::xsec"+sidx+"_n\n\n"
+				fout.write(srow+"\n")
 			elif(srow == "#KROME_cool_index"):
 				idxcool = get_cooling_index_list()
 				for x in idxcool:
@@ -3732,7 +3748,8 @@ class krome():
 					fout.write("!$omp threadprivate("+(",".join(self.commonvars))+")\n")
 			elif(srow == "#KROME_photobins_array"):
 				if(self.photoBins>0):
-					fout.write("real*8::photoBinJ(nPhotoBins) !intensity per bin, eV/s/sr/Hz/cm2\n")
+					fout.write("real*8::photoBinJ(nPhotoBins) !intensity per bin, eV/sr/cm2\n")
+					fout.write("real*8::photoBinJ_org(nPhotoBins) !intensity per bin stored, eV/sr/cm2\n")
 					fout.write("real*8::photoBinEleft(nPhotoBins) !left limit of the freq bin, eV\n")
 					fout.write("real*8::photoBinEright(nPhotoBins) !right limit of the freq bin, eV\n")
 					fout.write("real*8::photoBinEmid(nPhotoBins) !middle point of the freq bin, eV\n")
@@ -3946,7 +3963,7 @@ class krome():
 						acount[a].append(x)
 					else:
 						acount[a] = [x]
-				if(afound>1): 
+				if(afound>1):
 					has_multiple = True #flag for shared atoms
 					multi.append(x.name)
 			#if species with shared atoms warns the user (also in the subs file)
@@ -3998,7 +4015,7 @@ class krome():
 		has_electrons = False #check if electrons are present
 		#check if electrons are present
 		for x in specs:
-			if(x.name=="E"): 
+			if(x.name=="E"):
 				has_electrons = True #check if electrons are present
 				break
 
@@ -4346,7 +4363,7 @@ class krome():
 					gamma = header + gamma
 					is_multiline = True
 					
-				else: 
+				else:
 					#user-defined gamma
 					gamma = self.typeGamma
 
@@ -4388,6 +4405,14 @@ class krome():
 			if(row.strip() == "#ENDIFKROME_photobin_heat"): skip_heat = False
 
 			if(skip or skip_heat): continue
+			#replace pragma with the initialization of the photorate table in bins
+			if(srow=="#KROME_load_xsecs_from_file"):
+				row = ""
+				for rea in reacts:
+					if(not(rea.hasXsecFile)): continue
+					sidx = str(rea.idx)
+					row += "call load_xsec(\""+rea.xsecFile+"\", xsec"+sidx+"_val, xsec"+sidx+"_Emin,"
+					row += " xsec"+sidx+"_n, xsec"+sidx+"_idE)\n"
 
 			#replace pragma with the initialization of the photorate table in bins
 			if(srow=="#KROME_photobin_xsecs"):
@@ -4417,7 +4442,9 @@ class krome():
 					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+self.photoPartners[rea.idx].fidx+") !"\
 						+rea.verbatim+"\n"
 				row = phbintau+"\n"
-
+			if(row.strip()==""):
+				fout.write("\n")
+				continue
 			if(row[0]!="#"): fout.write(row)
 
 		if(not(self.buildCompact)):
@@ -4441,7 +4468,7 @@ class krome():
 		noTabReactions = ""
 		sclist = [] #list of the temperature shortcuts
 		for rea in self.reacts:
-			if(not(rea.canUseTabs)): 
+			if(not(rea.canUseTabs)):
 				noTabReactions += "coe_tab("+str(rea.idx)+") = "+rea.krate+"\n"
 				countNoTab += 1
 				sclist = get_Tshortcut(rea,sclist,coevars) #add shotcut if needed
@@ -4988,7 +5015,7 @@ class krome():
 								dustZ = zz
 								break
 						if(zFound): break
-					if(not(zFound)): 
+					if(not(zFound)):
 						row = row.replace("#KROME_photoDustZ","0d0")
 					else:
 						row = row.replace("#KROME_photoDustZ","1d1**get_metallicity"+zz+"(n(:))")
@@ -5004,7 +5031,7 @@ class krome():
 							rdh2Found = True
 							break
 					#check if rate photodissiocation rate is present in the network
-					if(not(rdh2Found)): 
+					if(not(rdh2Found)):
 						print "ERROR: if you use PHOTOAV heating you should have"
 						print " H2 photodissiocation rate in your chemical network!"
 						sys.exit()			
@@ -5766,6 +5793,10 @@ class krome():
 	def copyOthers(self):
 		buildFolder = self.buildFolder
 		test_name = self.test_name
+
+		#make a backup copy of the test before overwrite
+		if(file_exists(buildFolder+"test.f90")):
+			shutil.copyfile(buildFolder+"test.f90", buildFolder+"test.f90.bak")
 
 		#copy surface chemisorption rates
 		if(self.useChemisorption):
