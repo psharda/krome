@@ -571,6 +571,7 @@ contains
        x = photoBinEmid(i) !eV
        photoBinJ(i) = planckBB(x,Tbb)
     end do
+    photoBinJ_org(:) = photoBinJ(:)
 
     !uncomment this below for additional control
 !!$    !find the maximum using Wien's displacement law
@@ -672,6 +673,8 @@ contains
        end if
     end do
 
+    photoBinJ_org(:) = photoBinJ(:)
+
     !compute rates
     call calc_photobins()
 
@@ -698,6 +701,8 @@ contains
        end if
     end do
 
+    photoBinJ_org(:) = photoBinJ(:)
+
     !compute rates
     call calc_photobins()
 
@@ -711,6 +716,7 @@ contains
 
     call krome_set_photoBinE_lin(lower,upper)
     photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/s/Hz/sr
+    photoBinJ_org(:) = photoBinJ(:)
 
     !compute rates
     call calc_photobins()
@@ -725,6 +731,7 @@ contains
 
     call krome_set_photoBinE_log(lower,upper)
     photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/s/Hz/sr
+    photoBinJ_org(:) = photoBinJ(:)
 
     !compute rates
     call calc_photobins()
