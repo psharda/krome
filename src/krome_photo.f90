@@ -161,7 +161,7 @@ contains
     implicit none
     real*8,allocatable::xsec_val(:)
     real*8::xsec_Emin,xsec_dE,xsec_val_tmp(int(1e6)),rout(2)
-    real*8::xsec_E_tmp(size(xsec_val_tmp)),xsec_idE
+    real*8::xsec_E_tmp(size(xsec_val_tmp)),xsec_idE,diff
     integer::xsec_n,ios
     character(*)::fname
 
@@ -186,7 +186,8 @@ contains
        if(xsec_n==2) xsec_dE = xsec_E_tmp(2)-xsec_E_tmp(1)
        !check if all the intervals have the same spacing
        if(xsec_n>2) then
-          if(xsec_E_tmp(xsec_n)-xsec_E_tmp(xsec_n-1)/=xsec_dE) then
+          diff = xsec_E_tmp(xsec_n)-xsec_E_tmp(xsec_n-1)
+          if(abs(diff/xsec_dE-1d0)<1d-6) then
              print *,"ERROR: spacing problem in file "//fname
              print *," energy points should be equally spaced!"
              print *,"Point number: ",xsec_n
