@@ -229,6 +229,9 @@ contains
     xsec_interp = (energy-xsec_Emin) * xsec_idE &
          * (xsec_val(idx+1)-xsec_val(idx)) + xsec_val(idx)
 
+    !avoid negative xsec values when outside the limits
+    xsec_interp = max(xsec_interp,0d0)
+
   end function xsec_interp
 
 end module krome_photo
