@@ -467,9 +467,13 @@ contains
          mayer_ymul)
 #ENDIFKROME
 
+#IFKROME_useCoolingCO
+    !initialize CO cooling
+    call init_coolingCO()
+#ENDIFKROME
+
     !initialize the table for exp(-a/T) function
     call init_exp_table()
-    
 
     !init phys common variables
 #KROME_init_phys_variables
