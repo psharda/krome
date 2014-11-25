@@ -363,7 +363,7 @@ class krome():
 			[argv.append(x) for x in ["-dust=10,C,Si","-dustOptions=GROWTH,SPUTTER","-dustSeed=\"1d-12\""]]
 			filename = "networks/react_primordial"
 		elif(args.test=="compact"):
-			[argv.append(x) for x in ["-compact"]]
+			[argv.append(x) for x in ["-compact","-useX"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="map"):
 			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-photoBins=10"]]
