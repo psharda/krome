@@ -367,7 +367,7 @@ class krome():
 			[argv.append(x) for x in ["-compact","-useX"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="map"):
-			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-photoBins=10"]]
+			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-photoBins=10","-useX"]]
 			filename = "networks/react_primordial_photoH2"
 		elif(args.test=="collapse"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
