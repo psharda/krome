@@ -348,12 +348,13 @@ class krome():
 			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
 			filename = "networks/react_chianti"
 		elif(args.test=="shock1Dcool"):
-			[argv.append(x) for x in ["-cooling=H2,HD,Z,DH"]]
+			[argv.append(x) for x in ["-cooling=H2,HD,Z,DH","-useX"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="shock1D"):
+			[argv.append(x) for x in ["-useX"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="shock1Dphoto"):
-			[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium"]]
+			[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium","-useX"]]
 			filename = "networks/react_primordial_photo"
 			test_status = "dev" #under development
 		elif(args.test=="shock1Dlarge"):
