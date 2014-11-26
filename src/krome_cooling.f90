@@ -15,7 +15,7 @@ contains
     real*8::n(:),Tgas,cooling
 
     cooling = sum(get_cooling_array(n(:),Tgas))
-    
+
   end function cooling
 
   !*******************************
@@ -93,13 +93,21 @@ contains
     use krome_commons
     use krome_subs
     implicit none
-    integer,parameter::imax=40,jmax=40,kmax=80
+    integer,parameter::imax=80,jmax=80,kmax=80
     integer::i,j,k
     real*8::cooling_CO,n(:),inTgas,Tgas
     real*8::ntot,v1,v2,v3,yH2,prev1,prev2
     real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
     real*8::x1(imax),x2(jmax),x3(kmax)
-    real*8::rhogas,kgas,lj,tau,beta,m(nspec)
+    real*8::v1min,v1max,v2min,v2max,v3min,v3max
+
+    !local copy of limits
+    v1min = coolCOx1min
+    v1max = coolCOx1max
+    v2min = coolCOx2min
+    v2max = coolCOx2max
+    v3min = coolCOx3min
+    v3max = coolCOx3max
 
     !local copy of variables arrays
     x1(:) = coolCOx1(:)
@@ -108,23 +116,31 @@ contains
 
     !total density
     ntot = sum(n(1:nmols))
-    !local variables
-    v3 = n(idx_CO)
-    yH2 = n(idx_H2)/ntot
-    v2 = (1d0-yH2)*n(idx_H)
-    v1 = n(idx_Tgas)
 
+    !local variables
+    v3 = num2col(n(idx_CO),n(:)) !CO column density
+    yH2 = n(idx_H2)/ntot !H2 fraction
+    v2 = (1d0-yH2)*n(idx_H)
+    v1 = n(idx_Tgas) !Tgas
+
+    !logs of variables
+    v1 = log10(v1)
+    v2 = log10(v2)
+    v3 = log10(v3)
+
+    !default value
     cooling_CO = 0d0
 
     !check limits
-    if(v1>1d4 .or. v1<1d0) return
-    if(v2>1d10 .or. v2<1d-4) return
-    if(v3>1d15 .or. v3<1d-20) return
+    if(v1>v1max .or. v1<v1min) return
+    if(v2>v2max .or. v2<v2min) return
+    if(v3>v3max .or. v3<v3min) return
 
-    !gets position of variables into array
-    i = log10(v1)/4d0*(imax-1)+1
-    j = (log10(v2)+4d0)*(jmax-1)/(1d1+4d0)+1
-    k = (log10(v3)+2d1)*(kmax-1)/(15d0+2d1)+1
+
+    !gets position of variable in the array
+    i = (v1-v1min)/(v1max-v1min)*(imax-1)+1
+    j = (v2-v2min)/(v2max-v2min)*(jmax-1)+1
+    k = (v3-v3min)/(v3max-v3min)*(kmax-1)+1
 
     !precompute shared variables
     prev1 = (v1-x1(i))/(x1(i+1)-x1(i))
@@ -151,16 +167,9 @@ contains
     xLd = (v3-x3(k))/(x3(k+1)-x3(k))*(vv34 - &
          vv12) + vv12
 
-    m(:) = get_mass()
-    rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
-    kgas = kpla(n(:),Tgas) !planck opacity cm2/g (Omukai+2000)
-    lj = get_jeans_length(n(:), Tgas) !cm
-    tau = lj * kgas * rhogas + 1d-40 !opacity
-    beta = min(1.d0,tau**(-2)) !beta escape (always <1.)
-
     !CO cooling in erg/s/cm3
-    cooling_CO = xLd * (1d0-yH2) &
-         * n(idx_H) * n(idx_CO) * beta
+    cooling_CO = 1d1**xLd * (1d0-yH2) &
+         * n(idx_H) * n(idx_CO)
 
   end function cooling_CO
 
@@ -180,18 +189,24 @@ contains
     end if
 
     do
-       read(33,*,iostat=ios) rout(:) !read line
+       read(33,*,iostat=ios) iout(:),rout(:) !read line
+       !print *,ios
        if(ios<0) exit !eof
        if(ios/=0) cycle !skip blanks
-       read(33,*) iout(:),rout(:)
        coolCOx1(iout(1)) = rout(1)
        coolCOx2(iout(2)) = rout(2)
        coolCOx3(iout(3)) = rout(3)
        coolCOy(iout(3),iout(2),iout(1)) = rout(4)
     end do
 
-  end subroutine init_coolingCO
+    coolCOx1min = minval(coolCOx1)
+    coolCOx1max = maxval(coolCOx1)
+    coolCOx2min = minval(coolCOx2)
+    coolCOx2max = maxval(coolCOx2)
+    coolCOx3min = minval(coolCOx3)
+    coolCOx3max = maxval(coolCOx3)
 
+  end subroutine init_coolingCO
 #ENDIFKROME
 
   !*****************************
@@ -480,7 +495,7 @@ contains
     H2opacity_omukai = 1d1**(fit_anytab2D(arrH2esc_ntot(:), &
          arrH2esc_Tgas(:), arrH2esc(:,:), xmulH2esc, &
          ymulH2esc,lntot,lTgas))
-    
+
   end function H2opacity_omukai
 #ENDIFKROME
 
@@ -525,7 +540,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingH2
-    
+
   !ALL THE COOLING FUNCTIONS ARE FROM GLOVER & ABEL, MNRAS 388, 1627, 2008
   !FOR LOW DENSITY REGIME: CONSIDER AN ORTHO-PARA RATIO OF 3:1
   !EACH SINGLE FUNCTION IS IN erg/s
@@ -571,7 +586,7 @@ contains
             -3.7209846D0*logt32 +5.9369081D0*logt33 &
             -5.5108049D0*logt34 +1.5538288D0*logt35)*n(idx_H) &
             * dump63
-       
+
     end if
 
     !//H2-Hp, extended from 1e4 to 1e6
@@ -811,7 +826,7 @@ contains
     implicit none
     integer::nfile,i
     real*8::Tgas
-    
+
 #KROME_popvar_dump
     write(nfile,*)
 
@@ -963,7 +978,7 @@ contains
           print *,"ERROR in nleq1: can't find a solution after attempt",ptype
           stop
        end if
-       
+
        x(:) = xi(:) !restore initial guess
 
        !if damping error or negative solutions
@@ -1135,7 +1150,7 @@ contains
        allocate(tmp(size(Bin)))
        print *,"ERROR: matrix exactly singular, U(i,i) where i=",info
        print *,' (called by "'//trim(parent_name)//'" function)'
-       
+
        !dump the input matrix to a file
        open(97,file="ERROR_dump_dgesv.dat",status="replace")
        !dump size of the problem
@@ -1169,8 +1184,8 @@ contains
        write(97,*) "Info on matrix A rows"
        write(97,'(a5,99a17)') "idx","minval","maxval"
        do i=1,size(Ain,1)
-           write(97,'(I5,999E17.8e3)') i, minval(Ain(i,:)), &
-                maxval(Ain(i,:))
+          write(97,'(I5,999E17.8e3)') i, minval(Ain(i,:)), &
+               maxval(Ain(i,:))
        end do
 
        !dump info on matrix sum left and right
@@ -1190,7 +1205,7 @@ contains
 
        stop
     end if
-    
+
     !if error print some info and stop
     if(info<0) then
        print *,"ERROR: input error position ",info
