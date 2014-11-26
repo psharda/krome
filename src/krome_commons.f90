@@ -116,8 +116,11 @@ module krome_commons
 
 #IFKROME_useCoolingCO
   !data for CO cooling
-  real*8::coolCOx1(40),coolCOx2(40),coolCOx3(80)
-  real*8::coolCOy(80,40,40)
+  real*8::coolCOx1(80),coolCOx2(80),coolCOx3(80)
+  real*8::coolCOy(80,80,80)
+  real*8::coolCOx1min,coolCOx1max
+  real*8::coolCOx2min,coolCOx2max
+  real*8::coolCOx3min,coolCOx3max
 #ENDIFKROME
 
   !xsecs from file variables
