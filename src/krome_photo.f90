@@ -187,10 +187,12 @@ contains
        !check if all the intervals have the same spacing
        if(xsec_n>2) then
           diff = xsec_E_tmp(xsec_n)-xsec_E_tmp(xsec_n-1)
-          if(abs(diff/xsec_dE-1d0)<1d-6) then
+          if(abs(diff/xsec_dE-1d0)>1d-6) then
              print *,"ERROR: spacing problem in file "//fname
              print *," energy points should be equally spaced!"
              print *,"Point number: ",xsec_n
+             print *,"Found ",diff
+             print *,"Should be",xsec_dE
              stop
           end if
        end if
@@ -226,6 +228,9 @@ contains
     !linear interpolation
     xsec_interp = (energy-xsec_Emin) * xsec_idE &
          * (xsec_val(idx+1)-xsec_val(idx)) + xsec_val(idx)
+
+    !avoid negative xsec values when outside the limits
+    xsec_interp = max(xsec_interp,0d0)
 
   end function xsec_interp
 

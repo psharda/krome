@@ -114,6 +114,12 @@ module krome_commons
   real*8::dust_Ebareice23_exp(2*nspec)
 #ENDIFKROME
 
+#IFKROME_useCoolingCO
+  !data for CO cooling
+  real*8::coolCOx1(40),coolCOx2(40),coolCOx3(80)
+  real*8::coolCOy(80,40,40)
+#ENDIFKROME
+
   !xsecs from file variables
  #KROME_xsecs_from_file
 

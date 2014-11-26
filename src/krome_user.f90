@@ -493,6 +493,17 @@ contains
 
   end subroutine krome_photoBin_restore
 
+  !**********************
+  !store flux to be restored with the subroutine
+  ! krome_photoBin_restore later
+  subroutine krome_photoBin_store()
+    use krome_commons
+    implicit none
+
+    photoBinJ_org(:) = photoBinJ(:)
+    
+  end subroutine krome_photoBin_store
+
   !********************************
   !load the radiation bins from the file fname
   ! data should be a 3-column file with

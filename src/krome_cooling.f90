@@ -76,11 +76,123 @@ contains
     cools(idx_cool_ff) = cooling_ff(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingCO
+    cools(idx_cool_CO) = cooling_CO(n(:), Tgas)
+#ENDIFKROME
+
     cools(idx_cool_custom) = cooling_custom(n(:),Tgas)
 
     get_cooling_array(:) = cools(:)
 
   end function get_cooling_array
+
+#IFKROME_useCoolingCO
+  !***************************
+  !CO cooling: courtesy of K.Omukai (Nov2014)
+  function cooling_CO(n,inTgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    integer,parameter::imax=40,jmax=40,kmax=80
+    integer::i,j,k
+    real*8::cooling_CO,n(:),inTgas,Tgas
+    real*8::ntot,v1,v2,v3,yH2,prev1,prev2
+    real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
+    real*8::x1(imax),x2(jmax),x3(kmax)
+    real*8::rhogas,kgas,lj,tau,beta,m(nspec)
+
+    !local copy of variables arrays
+    x1(:) = coolCOx1(:)
+    x2(:) = coolCOx2(:)
+    x3(:) = coolCOx3(:)
+
+    !total density
+    ntot = sum(n(1:nmols))
+    !local variables
+    v3 = n(idx_CO)
+    yH2 = n(idx_H2)/ntot
+    v2 = (1d0-yH2)*n(idx_H)
+    v1 = n(idx_Tgas)
+
+    cooling_CO = 0d0
+
+    !check limits
+    if(v1>1d4 .or. v1<1d0) return
+    if(v2>1d10 .or. v2<1d-4) return
+    if(v3>1d15 .or. v3<1d-20) return
+
+    !gets position of variables into array
+    i = log10(v1)/4d0*(imax-1)+1
+    j = (log10(v2)+4d0)*(jmax-1)/(1d1+4d0)+1
+    k = (log10(v3)+2d1)*(kmax-1)/(15d0+2d1)+1
+
+    !precompute shared variables
+    prev1 = (v1-x1(i))/(x1(i+1)-x1(i))
+    prev2 = (v2-x2(j))/(x2(j+1)-x2(j))
+    !linear interpolation on x1 for x2,x3
+    vv1 = prev1 * (coolCOy(k,j,i+1) - &
+         coolCOy(k,j,i)) + coolCOy(k,j,i)
+    !linear interpolation on x1 for x2+dx2,x3
+    vv2 = prev1 * (coolCOy(k,j+1,i+1) - &
+         coolCOy(k,j+1,i)) + coolCOy(k,j+1,i)
+    !linear interpolation on x2 for x3
+    vv12 = prev2 * (vv2 - vv1) + vv1
+
+    !linear interpolation on x1 for x2,x3+dx3
+    vv3 = prev1 * (coolCOy(k+1,j,i+1) - &
+         coolCOy(k+1,j,i)) + coolCOy(k+1,j,i)
+    !linear interpolation on x1 for x2+dx2,x3+dx3
+    vv4 = prev1 * (coolCOy(k+1,j+1,i+1) - &
+         coolCOy(k+1,j+1,i)) + coolCOy(k+1,j+1,i)
+    !linear interpolation on x2 for x3+dx3
+    vv34 = prev2 * (vv4 - vv3) + vv3
+
+    !linear interpolation on x3
+    xLd = (v3-x3(k))/(x3(k+1)-x3(k))*(vv34 - &
+         vv12) + vv12
+
+    m(:) = get_mass()
+    rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
+    kgas = kpla(n(:),Tgas) !planck opacity cm2/g (Omukai+2000)
+    lj = get_jeans_length(n(:), Tgas) !cm
+    tau = lj * kgas * rhogas + 1d-40 !opacity
+    beta = min(1.d0,tau**(-2)) !beta escape (always <1.)
+
+    !CO cooling in erg/s/cm3
+    cooling_CO = xLd * (1d0-yH2) &
+         * n(idx_H) * n(idx_CO) * beta
+
+  end function cooling_CO
+
+  !************************
+  subroutine init_coolingCO()
+    use krome_commons
+    implicit none
+    integer::ios,iout(3)
+    real*8::rout(4)
+
+    print *,"load CO cooling..."
+    open(33,file="coolCO.dat",status="old",iostat=ios)
+    !check if file exists
+    if(ios.ne.0) then
+       print *,"ERROR: problems loading coolCO.dat!"
+       stop
+    end if
+
+    do
+       read(33,*,iostat=ios) rout(:) !read line
+       if(ios<0) exit !eof
+       if(ios/=0) cycle !skip blanks
+       read(33,*) iout(:),rout(:)
+       coolCOx1(iout(1)) = rout(1)
+       coolCOx2(iout(2)) = rout(2)
+       coolCOx3(iout(3)) = rout(3)
+       coolCOy(iout(3),iout(2),iout(1)) = rout(4)
+    end do
+
+  end subroutine init_coolingCO
+
+#ENDIFKROME
 
   !*****************************
   function cooling_custom(n,Tgas)
@@ -107,9 +219,10 @@ contains
     use krome_commons
     implicit none
     real*8::kpla,rhogas,Tgas,n(:),y
-    real*8::a0,a1
+    real*8::a0,a1,m(nspec)
 
-    rhogas = sum(n(:)*get_mass()) !g/cm3
+    m(:) = get_mass()
+    rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
 
     kpla = 0.d0
     !opacity is zero under 1e-12 g/cm3
@@ -149,8 +262,10 @@ contains
     use krome_subs
     implicit none
     real*8::n(:),Tgas,cooling_Continuum,kgas,rhogas
-    real*8::lj,tau,beta
-    rhogas = sum(n(:)*get_mass()) !g/cm3
+    real*8::lj,tau,beta,m(nspec)
+
+    m(:) = get_mass()
+    rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
     kgas = kpla(n(:),Tgas) !planck opacity cm2/g (Omukai+2000)
     lj = get_jeans_length(n(:), Tgas) !cm
     tau = lj * kgas * rhogas + 1d-40 !opacity
