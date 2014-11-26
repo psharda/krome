@@ -5679,6 +5679,7 @@ class krome():
 			if(srow == "#IFKROME_useEquilibrium" and not(self.useEquilibrium)): skip = True
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
 			if(srow == "#IFKROME_useCoolingZ" and not(self.useCoolingZ)): skip = True
+			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
 			if(srow == "#IFKROME_ierr" and not(self.useIERR)): skip = True
 			if(srow == "#IFKROME_noierr" and (self.useIERR)): skip = True
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
