@@ -90,6 +90,7 @@ contains
   !***************************
   !CO cooling: courtesy of K.Omukai (Nov2014)
   ! method: Neufeld+Kaufman 1993 (bit.ly/1vnjcXV, see eqn.5).
+  ! see also Omukai+2010 (bit.ly/1HIaGcn)
   ! H and H2 collisions
   function cooling_CO(n,inTgas)
     use krome_commons
@@ -103,6 +104,7 @@ contains
     real*8::v1,v2,v3,prev1,prev2,cH
     real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
     real*8::x1(imax),x2(jmax),x3(kmax)
+    real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
     real*8::v1min,v1max,v2min,v2max,v3min,v3max
 
     !local copy of limits
@@ -117,6 +119,10 @@ contains
     x1(:) = coolCOx1(:)
     x2(:) = coolCOx2(:)
     x3(:) = coolCOx3(:)
+
+    ixd1(:) = coolCOixd1(:)
+    ixd2(:) = coolCOixd2(:)
+    ixd3(:) = coolCOixd3(:)
 
     !local variables
     v3 = num2col(n(idx_CO),n(:)) !CO column density
@@ -137,15 +143,15 @@ contains
     if(v2>v2max .or. v2<v2min) return
     if(v3>v3max .or. v3<v3min) return
 
-
     !gets position of variable in the array
-    i = (v1-v1min)/(v1max-v1min)*(imax-1)+1
-    j = (v2-v2min)/(v2max-v2min)*(jmax-1)+1
-    k = (v3-v3min)/(v3max-v3min)*(kmax-1)+1
+    i = (v1-v1min)*coolCOdvn1+1
+    j = (v2-v2min)*coolCOdvn2+1
+    k = (v3-v3min)*coolCOdvn3+1
 
     !precompute shared variables
-    prev1 = (v1-x1(i))/(x1(i+1)-x1(i))
-    prev2 = (v2-x2(j))/(x2(j+1)-x2(j))
+    prev1 = (v1-x1(i))*ixd1(i)
+    prev2 = (v2-x2(j))*ixd2(j)
+
     !linear interpolation on x1 for x2,x3
     vv1 = prev1 * (coolCOy(k,j,i+1) - &
          coolCOy(k,j,i)) + coolCOy(k,j,i)
@@ -165,7 +171,7 @@ contains
     vv34 = prev2 * (vv4 - vv3) + vv3
 
     !linear interpolation on x3
-    xLd = (v3-x3(k))/(x3(k+1)-x3(k))*(vv34 - &
+    xLd = (v3-x3(k))*ixd3(k)*(vv34 - &
          vv12) + vv12
 
     !CO cooling in erg/s/cm3
@@ -177,7 +183,7 @@ contains
   subroutine init_coolingCO()
     use krome_commons
     implicit none
-    integer::ios,iout(3)
+    integer::ios,iout(3),i
     real*8::rout(4)
 
     print *,"load CO cooling..."
@@ -190,7 +196,6 @@ contains
 
     do
        read(33,*,iostat=ios) iout(:),rout(:) !read line
-       !print *,ios
        if(ios<0) exit !eof
        if(ios/=0) cycle !skip blanks
        coolCOx1(iout(1)) = rout(1)
@@ -199,12 +204,28 @@ contains
        coolCOy(iout(3),iout(2),iout(1)) = rout(4)
     end do
 
+    !store inverse of the differences
+    ! to speed up interpolation
+    do i=1,coolCOn1-1
+       coolCOixd1(i) = 1d0/(coolCOx1(i+1)-coolCOx1(i))
+    end do
+    do i=1,coolCOn2-1
+       coolCOixd2(i) = 1d0/(coolCOx2(i+1)-coolCOx2(i))
+    end do
+    do i=1,coolCOn3-1
+       coolCOixd3(i) = 1d0/(coolCOx3(i+1)-coolCOx3(i))
+    end do
+
     coolCOx1min = minval(coolCOx1)
     coolCOx1max = maxval(coolCOx1)
     coolCOx2min = minval(coolCOx2)
     coolCOx2max = maxval(coolCOx2)
     coolCOx3min = minval(coolCOx3)
     coolCOx3max = maxval(coolCOx3)
+
+    coolCOdvn1 = (coolCOn1-1)/(coolCOx1max-coolCOx1min)
+    coolCOdvn2 = (coolCOn2-1)/(coolCOx2max-coolCOx2min)
+    coolCOdvn3 = (coolCOn3-1)/(coolCOx3max-coolCOx3min)
 
   end subroutine init_coolingCO
 #ENDIFKROME
