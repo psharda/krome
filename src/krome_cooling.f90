@@ -89,14 +89,18 @@ contains
 #IFKROME_useCoolingCO
   !***************************
   !CO cooling: courtesy of K.Omukai (Nov2014)
+  ! method: Neufeld+Kaufman 1993 (bit.ly/1vnjcXV, see eqn.5).
+  ! H and H2 collisions
   function cooling_CO(n,inTgas)
     use krome_commons
     use krome_subs
     implicit none
-    integer,parameter::imax=80,jmax=80,kmax=80
+    integer,parameter::imax=coolCOn1
+    integer,parameter::jmax=coolCOn2
+    integer,parameter::kmax=coolCOn3
     integer::i,j,k
     real*8::cooling_CO,n(:),inTgas,Tgas
-    real*8::ntot,v1,v2,v3,yH2,prev1,prev2
+    real*8::v1,v2,v3,prev1,prev2,cH
     real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
     real*8::x1(imax),x2(jmax),x3(kmax)
     real*8::v1min,v1max,v2min,v2max,v3min,v3max
@@ -114,13 +118,10 @@ contains
     x2(:) = coolCOx2(:)
     x3(:) = coolCOx3(:)
 
-    !total density
-    ntot = sum(n(1:nmols))
-
     !local variables
     v3 = num2col(n(idx_CO),n(:)) !CO column density
-    yH2 = n(idx_H2)/ntot !H2 fraction
-    v2 = (1d0-yH2)*n(idx_H)
+    cH = n(idx_H) + n(idx_H2)
+    v2 = cH
     v1 = n(idx_Tgas) !Tgas
 
     !logs of variables
@@ -128,7 +129,7 @@ contains
     v2 = log10(v2)
     v3 = log10(v3)
 
-    !default value
+    !default value erg/s/cm3
     cooling_CO = 0d0
 
     !check limits
@@ -168,8 +169,7 @@ contains
          vv12) + vv12
 
     !CO cooling in erg/s/cm3
-    cooling_CO = 1d1**xLd * (1d0-yH2) &
-         * n(idx_H) * n(idx_CO)
+    cooling_CO = 1d1**xLd * cH * n(idx_CO)
 
   end function cooling_CO
 
