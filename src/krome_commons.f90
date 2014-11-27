@@ -116,9 +116,9 @@ module krome_commons
 
 #IFKROME_useCoolingCO
   !data for CO cooling
-  integer,parameter::coolCOn1=80
-  integer,parameter::coolCOn2=80
-  integer,parameter::coolCOn3=80
+  integer,parameter::coolCOn1=40
+  integer,parameter::coolCOn2=40
+  integer,parameter::coolCOn3=40
   real*8::coolCOx1(coolCOn1),coolCOx2(coolCOn2),coolCOx3(coolCOn3)
   real*8::coolCOixd1(coolCOn1-1),coolCOixd2(coolCOn2-1),coolCOixd3(coolCOn3-1)
   real*8::coolCOy(coolCOn1,coolCOn2,coolCOn3)
