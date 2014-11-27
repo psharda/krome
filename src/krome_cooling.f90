@@ -89,6 +89,7 @@ contains
 #IFKROME_useCoolingCO
   !***************************
   !CO cooling: courtesy of K.Omukai (Nov2014)
+  ! method: Neufeld+Kauffman 1993
   function cooling_CO(n,inTgas)
     use krome_commons
     use krome_subs
@@ -96,7 +97,7 @@ contains
     integer,parameter::imax=80,jmax=80,kmax=80
     integer::i,j,k
     real*8::cooling_CO,n(:),inTgas,Tgas
-    real*8::ntot,v1,v2,v3,yH2,prev1,prev2
+    real*8::ntot,v1,v2,v3,prev1,prev2
     real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
     real*8::x1(imax),x2(jmax),x3(kmax)
     real*8::v1min,v1max,v2min,v2max,v3min,v3max
@@ -119,8 +120,7 @@ contains
 
     !local variables
     v3 = num2col(n(idx_CO),n(:)) !CO column density
-    yH2 = n(idx_H2)/ntot !H2 fraction
-    v2 = (1d0-yH2)*n(idx_H)
+    v2 = n(idx_H2) !H2 density
     v1 = n(idx_Tgas) !Tgas
 
     !logs of variables
@@ -168,8 +168,7 @@ contains
          vv12) + vv12
 
     !CO cooling in erg/s/cm3
-    cooling_CO = 1d1**xLd * (1d0-yH2) &
-         * n(idx_H) * n(idx_CO)
+    cooling_CO = 1d1**xLd * n(idx_H2) * n(idx_CO)
 
   end function cooling_CO
 
