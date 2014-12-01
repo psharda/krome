@@ -3771,7 +3771,14 @@ class krome():
 					fout.write("real*8::photoPartners(nPhotoRea) !index of the photoreactants\n")
 					fout.write("!$omp threadprivate(photoBinJ,photoBinEleft,photoBinEright,photoBinEmid,photoBinEdelta, &\n")
 					fout.write("!$omp    photoBinEidelta,photoBinJTab,photoBinRates,photoBinHeats,photoBinEth,photoPartners)\n")
-		
+
+			elif(srow == "#KROME_var_parts" and self.typeGamma=="POP"):
+				spec_parts = ["H2even","H2odd","CO"]
+				for spec_part in spec_parts:
+					spart = "real*8,allocatable::zpart"+spec_part+"(:)\n"
+					spart +="real*8::zpartMin"+spec_part+", zpartdT"+spec_part+"\n"
+					fout.write(spart)
+
 			#write the anytab common variables
 			elif(srow == "#KROME_vars_anytab"):
 				stab = ""
@@ -4265,6 +4272,14 @@ class krome():
 				fout.write(shortcutVars)
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
+
+			elif(srow == "#KROME_load_parts" and self.typeGamma=="POP"):
+				spec_parts = ["H2even","H2odd","CO"]
+				for spec_part in spec_parts:
+					spart = "call load_part(\""+spec_part+".dat\", zpart"+spec_part+"(:), zpartMin"\
+						+spec_part+", zpartdT"+spec_part+")"
+					fout.write(spart+"\n")
+				
 			elif(srow == "#KROME_gamma"):
 				is_multiline = False #flag for multiline gamma
 				#computes the adiabatic index if needed or uses a user-defined expression 

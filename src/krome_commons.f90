@@ -129,6 +129,17 @@ module krome_commons
 #ENDIFKROME
 
   !xsecs from file variables
- #KROME_xsecs_from_file
+#KROME_xsecs_from_file
+
+  !partition function from file
+  integer,parameter::zpart_nCO=641
+  integer,parameter::zpart_nH2even=2000
+  integer,parameter::zpart_nH2odd=2000
+  real*8::zpart_CO(zpart_nCO),minpart_CO,partdT_CO
+  real*8::zpart_H2even(zpart_nH2even),minpart_H2even,partdT_H2even
+  real*8::zpart_H2odd(zpart_nH2odd),minpart_H2odd,partdT_H2odd
+
+  !partition functions common vars
+#KROME_var_parts
 
 end module krome_commons
