@@ -3772,7 +3772,7 @@ class krome():
 					fout.write("!$omp threadprivate(photoBinJ,photoBinEleft,photoBinEright,photoBinEmid,photoBinEdelta, &\n")
 					fout.write("!$omp    photoBinEidelta,photoBinJTab,photoBinRates,photoBinHeats,photoBinEth,photoPartners)\n")
 
-			elif(srow == "#KROME_var_parts" and self.typeGamma=="POP"):
+			elif(srow == "#KROME_var_parts" and self.typeGamma=="POPOVAS"):
 				spec_parts = ["H2even","H2odd","CO"]
 				for spec_part in spec_parts:
 					spart = "real*8,allocatable::zpart"+spec_part+"(:)\n"
@@ -4273,10 +4273,10 @@ class krome():
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 
-			elif(srow == "#KROME_load_parts" and self.typeGamma=="POP"):
+			elif(srow == "#KROME_load_parts" and self.typeGamma=="POPOVAS"):
 				spec_parts = ["H2even","H2odd","CO"]
 				for spec_part in spec_parts:
-					spart = "call load_part(\""+spec_part+".dat\", zpart"+spec_part+"(:), zpartMin"\
+					spart = "call load_part(\"part"+spec_part+".dat\", zpart"+spec_part+", zpartMin"\
 						+spec_part+", zpartdT"+spec_part+")"
 					fout.write(spart+"\n")
 				
@@ -4307,7 +4307,7 @@ class krome():
 					gammaD = "(3.d0*("+(" + ".join(gammaDm)) + ") + 5.d0*("+(" + ".join(gammaDb)) + "))"
 					gamma = gammaN + " / &\n" +gammaD
 
-				elif(self.typeGamma=="EXACT" or self.typeGamma=="VIB" or self.typeGamma=="ROT" or self.typeGamma=="REDUCED"):
+				elif(self.typeGamma in ["EXACT", "VIB","ROT","REDUCED","POPOVAS"]):
 					#extends Omukai+Nishi1998 eqs.5,6,7
 					# and Boley+2007 (+erratum!) eqs.2,3
 					header = "real*8::Tgas,invTgas,x,expx,ysum,gsum,mosum,gvib\n"
@@ -4330,6 +4330,7 @@ class krome():
 							gtype = self.typeGamma
 							#skip every diatoms except H2 and CO if REDUCED
 							if(gtype=="REDUCED" and (mol.name!="H2" and mol.name!="CO")): continue 
+							if(gtype=="POPOVAS" and (mol.name!="H2" and mol.name!="CO")): continue
 							#warning if vibrational constant not found
 							if(mol.ve_vib=="__NONE__" and (gtype=="EXACT" or gtype=="VIB")):
 								print "WARNING: no vibrational constant for "+mol.name+" in gamma calculation!"
@@ -4352,11 +4353,21 @@ class krome():
 								vibpart = "gvib"
 							#prepare the rotational part
 							rotpart = "2d0"
-							if(mol.be_rot!="__NONE__" and (gtype=="EXACT" or gtype=="ROT")):
+							if(mol.be_rot!="__NONE__" and (gtype=="EXACT" or gtype=="ROT" or gtype=="REDUCED")):
 								if(mol.name=="H2"):
-									rotpart = "gamma_rotop(Tgas, phys_orthoParaRatio)"
+									rotpart = "2d0*gamma_rotop(Tgas, phys_orthoParaRatio)"
 								else:
-									rotpart = "gamma_rot(Tgas, "+format_double(mol.be_rot)+")"
+									rotpart = "2d0*gamma_rot(Tgas, "+format_double(mol.be_rot)+")"
+							#rotational partition functions from A.Popovas (2014) Thesis
+							if(gtype=="POPOVAS"):
+								if(mol.name=="H2"):
+									rotpart = "2d0*gamma_pop_H2(zpartH2even(:),zpartH2odd(:),zpartMinH2even,zpartdTH2even,Tgas,phys_orthoParaRatio)"
+								elif(mol.name=="CO"):
+									rotpart = "2d0*gamma_pop(zpartCO(:),zpartMinCO,zpartdTCO,Tgas)"
+								else:
+									print "ERROR: trying to load "+mol.name+" partition function!"
+									sys.exit()
+
 							di_vars.append(mol.fname)
 							gi_vars.append("gi_"+mol.fname)
 							gi = "gi_"+mol.fname+" = 0.5d0*(3d0 + "+rotpart+" + "+vibpart+")\n"
@@ -5839,6 +5850,14 @@ class krome():
 		if(self.useCoolingCO):
 			print "- copying coolCO.dat..."
 			shutil.copyfile("data/coolCO.dat", buildFolder+"coolCO.dat")
+
+		#copy partition function files
+		if(self.typeGamma=="POPOVAS"):
+			partFiles = ["H2even","H2odd","CO"]
+			for fbase in partFiles:
+				fname = "part"+fbase+".dat"
+				print "- copying "+fname+"..."
+				shutil.copyfile("data/partition/"+fname, buildFolder+fname)
 
 		#copy OMUKAI datafile
 		if(self.H2opacity=="OMUKAI"):

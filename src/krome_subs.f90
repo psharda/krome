@@ -33,7 +33,6 @@ contains
 
     coe(:) = k(:) !set coefficients to return variable
 
-
     !!uncomment below to check coefficient values
     !kmax = 1d0
     !if(maxval(k)>kmax.or.minval(k)<0d0) then
@@ -167,7 +166,6 @@ contains
 
   end function conserve
 
-
   !***************************
   !Ref: Sasaki & Takahara (1993)
   !This function evaluate the recombination rate
@@ -218,7 +216,6 @@ contains
     elec_recomb_ST93 = elec_recomb_ST93 / (nabund * nelec)
 
   end function elec_recomb_ST93
-
 
   !***************************
   !number density to column density conversion
@@ -320,49 +317,126 @@ contains
   end subroutine load_part
 
   !**************************
-  function gamma_pop(array_part,dT_part,min_part,Tgas)
+  !compute 1/(gamma-1) at Tgasin using the partition function
+  ! provided in the array_part with a temperature step dT_part
+  ! and a minimum Tgas value min_part
+  function gamma_pop(array_part,dT_part,min_part,Tgasin)
     implicit none
-    real*8::gamma_pop,emed1,emed2,Tgas2,logz1
-    real*8::array_part(:),dT_part,min_part,Tgas,Cv
-    integer::idx,nsize
+    real*8::array_part(:),dT_part
+    real*8::min_part,Tgas,gamma_pop,Tgas2,Tgasin
+    real*8::logz,logz1,logz2,emed1,emed2,Cv,inTgas,T2,T1,Cv1,Cv2
+    integer::idx
 
-    nsize = size(array_part)
-    Tgas2 = Tgas**2
-    idx = (Tgas-min_part)*(nsize-1)/dT_part
+    !temperature above minimum data point
+    inTgas = max(Tgasin,min_part)
+
+    !data index
+    idx = (inTgas-min_part)/dT_part+1
+    !corresponding Tgas
+    Tgas = (idx-1)*dT_part+min_part
+    !store Tgas
+    T1 = Tgas
+    
+    !ln of partition functions (3 points forward)
+    logz = log(array_part(idx))
     logz1 = log(array_part(idx+1))
-    emed1 = Tgas2*(logz1-log(array_part(idx)))/dT_part
-    emed2 = Tgas2*(log(array_part(idx+2))-logz1)/dT_part
+    logz2 = log(array_part(idx+2))
 
-    Cv = (emed2-emed1)/dT_part
-    gamma_pop = 1d0/Cv + 1d0
+    !derivative for mean energy (2 points forward)
+    emed1 = Tgas**2*(logz1-logz)/dT_part
+    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
+
+    !derivative for 1/(gamma-1)
+    Cv1 = (emed2-emed1)/dT_part
+    
+    !next point temperature
+    Tgas = (idx)*dT_part+min_part
+    !store Tgas
+    T2 = Tgas
+    !ln of partition functions
+    logz = logz1
+    logz1 = logz2
+    logz2 = log(array_part(idx+3))
+
+    !derivative for mean energy
+    emed1 = Tgas**2*(logz1-logz)/dT_part
+    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
+
+    !derivative for 1/(gamma-1)
+    Cv2 = (emed2-emed1)/dT_part
+
+    !interpolation for 1/(gamma-1)
+    Cv = (Cv2-Cv1)*(inTgas-T1)/(T2-T1)+Cv1
+    
+    !returns result
+    gamma_pop = Cv
 
   end function gamma_pop
 
-  !*****************************+
+  !*****************************
+  !compute 1/(gamma-1) at Tgasin using the partition function
+  ! provided in the array_part with a temperature step dT_part
+  ! and a minimum Tgas value min_part, for H2 with a ortho/para
+  ! ratio of opratio. Needs even and odd partition functions.
   function gamma_pop_H2(array_part_even,array_part_odd,dT_part,&
-       min_part,Tgas,opratio)
+       min_part,Tgasin,opratio)
     implicit none
-    real*8::array_part_even(:),array_part_odd(:),dT_part
-    real*8::min_part,Tgas,opratio,gamma_pop_H2,Tgas2,a,b
-    real*8::logz,logz1,logz2,emed1,emed2,Cv
-    integer::idx,nsize
+    real*8::array_part_even(:),array_part_odd(:),dT_part,zcut(4)
+    real*8::min_part,Tgas,opratio,gamma_pop_H2,Tgas2,a,b,Tgasin
+    real*8::logz,logz1,logz2,emed1,emed2,Cv,inTgas,T2,T1,Cv1,Cv2
+    integer::idx
 
-    nsize = size(array_part)
-    Tgas2 = Tgas**2
-    idx = (Tgas-min_part)*(nsize-1)/dT_part
+    !Tgas above the data limit
+    inTgas = max(Tgasin,min_part)
 
+    !exponents for ortho/para ratio
     a = opratio/(opratio+1d0) !exponent zo
     b = 1d0-a !exponent zp
 
-    logz = log(array_part_even(idx)**b+(3d0*array_part_odd(idx))**a)
-    logz1 = log(array_part_even(idx+1)**b+(3d0*array_part_odd(idx+1))**a)
-    logz2 = log(array_part_even(idx+2)**b+(3d0*array_part_odd(idx+2))**a)
-    emed1 = Tgas2*(logz1-logz)/dT_part
-    emed2 = Tgas2*(logz2-logz1)/dT_part
+    !index in the data for the given Tgas
+    idx = (inTgas-min_part)/dT_part+1
+    !get the corresponding Tgas
+    Tgas = (idx-1)*dT_part+min_part
+    !store Tgas
+    T1 = Tgas
 
-    Cv = (emed2-emed1)/dT_part
-    gamma_pop = 1d0/Cv + 1d0
+    !needed for ortho partition function (see Boley+2007)
+    zcut(1) = exp(2d0*85.4/Tgas)
+    zcut(2) = exp(2d0*85.4/(Tgas+dT_part))
+    zcut(3) = exp(2d0*85.4/(Tgas+2d0*dT_part))
+    zcut(4) = exp(2d0*85.4/(Tgas+3d0*dT_part))
 
+    !ln of the composite partition function
+    logz = log(array_part_even(idx)**b*(3d0*array_part_odd(idx)*zcut(1))**a)
+    logz1 = log(array_part_even(idx+1)**b*(3d0*array_part_odd(idx+1)*zcut(2))**a)
+    logz2 = log(array_part_even(idx+2)**b*(3d0*array_part_odd(idx+2)*zcut(3))**a)
+    !derivative for mean energy
+    emed1 = Tgas**2*(logz1-logz)/dT_part
+    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
+
+    !get 1/(gamma-1) for the left point
+    Cv1 = (emed2-emed1)/dT_part
+
+    !Tgas of the right point
+    Tgas = (idx)*dT_part+min_part
+    !store Tgas
+    T2 = Tgas
+    !ln of the composite function
+    logz = logz1
+    logz1 = logz2
+    logz2 = log(array_part_even(idx+3)**b*(3d0*array_part_odd(idx+3)*zcut(4))**a)
+    !derivative for the mean energy
+    emed1 = Tgas**2*(logz1-logz)/dT_part
+    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
+    
+    !get 1/(gamma-1) for the right point
+    Cv2 = (emed2-emed1)/dT_part
+
+    !interpolation of 1/(gamma-1)
+    Cv = (Cv2-Cv1)*(inTgas-T1)/(T2-T1)+Cv1
+
+    !returns the result
+    gamma_pop_H2 = Cv
   end function gamma_pop_H2
 
   !**************************
