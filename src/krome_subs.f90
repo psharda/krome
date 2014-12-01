@@ -275,6 +275,96 @@ contains
 
   end function fselfH2
 
+  !********************
+  subroutine load_parts()
+    use krome_commons
+    implicit none
+
+#KROME_load_parts
+
+  end subroutine load_parts
+
+  !*************************
+  subroutine load_part(fname,array_part,min_part,dT_part)
+    character(len=*)::fname
+    integer::ios,icount,i,cv
+    real*8,allocatable::array_part(:),emed(:)
+    real*8::min_part,dT_part,Told,array_tmp(int(1e5)),rout(2)
+
+    open(33,file=trim(fname),status="old",iostat=ios)
+    if(ios.ne.0) then
+       print *,"ERROR: partition function not found"
+       print *," in file "//fname
+       stop
+    end if
+
+    print *,"loading partition function from "//fname
+    icount = 0
+    min_part = 1d99
+    Told = 0d0
+    do
+       read(33,*,iostat=ios) rout(:)
+       if(ios<0) exit
+       if(ios.ne.0) cycle
+       icount = icount + 1
+       min_part = min(min_part,rout(1))
+       array_tmp(icount) = rout(2)
+       dT_part = rout(1) - Told
+       Told = rout(1)
+    end do
+    close(33)
+
+    allocate(array_part(icount),emed(icount))
+    array_part(:) = array_tmp(1:icount)
+
+  end subroutine load_part
+
+  !**************************
+  function gamma_pop(array_part,dT_part,min_part,Tgas)
+    implicit none
+    real*8::gamma_pop,emed1,emed2,Tgas2,logz1
+    real*8::array_part(:),dT_part,min_part,Tgas,Cv
+    integer::idx,nsize
+
+    nsize = size(array_part)
+    Tgas2 = Tgas**2
+    idx = (Tgas-min_part)*(nsize-1)/dT_part
+    logz1 = log(array_part(idx+1))
+    emed1 = Tgas2*(logz1-log(array_part(idx)))/dT_part
+    emed2 = Tgas2*(log(array_part(idx+2))-logz1)/dT_part
+
+    Cv = (emed2-emed1)/dT_part
+    gamma_pop = 1d0/Cv + 1d0
+
+  end function gamma_pop
+
+  !*****************************+
+  function gamma_pop_H2(array_part_even,array_part_odd,dT_part,&
+       min_part,Tgas,opratio)
+    implicit none
+    real*8::array_part_even(:),array_part_odd(:),dT_part
+    real*8::min_part,Tgas,opratio,gamma_pop_H2,Tgas2,a,b
+    real*8::logz,logz1,logz2,emed1,emed2,Cv
+    integer::idx,nsize
+
+    nsize = size(array_part)
+    Tgas2 = Tgas**2
+    idx = (Tgas-min_part)*(nsize-1)/dT_part
+
+    a = opratio/(opratio+1d0) !exponent zo
+    b = 1d0-a !exponent zp
+
+    logz = log(array_part_even(idx)**b+(3d0*array_part_odd(idx))**a)
+    logz1 = log(array_part_even(idx+1)**b+(3d0*array_part_odd(idx+1))**a)
+    logz2 = log(array_part_even(idx+2)**b+(3d0*array_part_odd(idx+2))**a)
+    emed1 = Tgas2*(logz1-logz)/dT_part
+    emed2 = Tgas2*(logz2-logz1)/dT_part
+
+    Cv = (emed2-emed1)/dT_part
+    gamma_pop = 1d0/Cv + 1d0
+
+  end function gamma_pop_H2
+
   !**************************
   !function to get the partition function
   ! of H2 at Tgas with a orto-para ratio

@@ -475,6 +475,10 @@ contains
     !initialize the table for exp(-a/T) function
     call init_exp_table()
 
+#IFKROME_useGammaPop
+    call load_parts()
+#ENDIFKROME
+
     !init phys common variables
 #KROME_init_phys_variables
 
