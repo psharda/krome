@@ -123,7 +123,11 @@ for test in tests:
 	if(test==first): run = True #run the first test
 	if((compiler=="gfortran") and (test=="wrapC")): continue
 	if(not(run)): continue #skip if test is before first
-	print "test "+test
+	print
+	print "#########################################################################################################"
+	print "                                          test: "+test
+	print "#########################################################################################################"
+	print
 
 	#clear directory
 	for ff in glob.glob("build/*"):
