@@ -990,6 +990,7 @@ contains
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = inTgas
+#KROME_Tdust_copy
     k(:) = coe(n(:))
     Tgas = inTgas
     nH2dust = 0d0
@@ -1023,6 +1024,7 @@ contains
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = inTgas
+#KROME_Tdust_copy
     Tgas = inTgas
     krome_get_cooling_array(:) = get_cooling_array(n(:),Tgas)
 

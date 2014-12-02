@@ -5471,11 +5471,12 @@ class krome():
 				idxcool = get_cooling_index_list()
 				for x in idxcool:
 					fout.write("integer,parameter::krome_"+x+"\n")
-
 			elif(srow == "#KROME_heat_index"):
 				idxheat = get_heating_index_list()
 				for x in idxheat:
 					fout.write("integer,parameter::krome_"+x+"\n")
+			elif(srow=="#KROME_Tdust_copy" and (self.useDustT or self.usedTdust)):
+					fout.write("n(nmols+ndust+1:nmols+2*ndust) = krome_dust_T(:)\n")
 			elif(srow=="#KROME_print_phys_variables"):
 					for x in self.physVariables:
 						fout.write("print *, \""+x[0]+":\", phys_"+x[0]+"\n")
