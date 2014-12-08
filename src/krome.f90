@@ -428,6 +428,14 @@ contains
     use krome_stars
 #ENDIFKROME
 
+    !init phys common variables
+#KROME_init_phys_variables
+
+    !default for thermo toggle is ON
+    !$omp parallel
+    krome_thermo_toggle = 1
+    !$omp end parallel
+
     call load_arrays
 
 #IFKROME_useCoolingZ
@@ -478,14 +486,6 @@ contains
 #IFKROME_useGammaPop
     call load_parts()
 #ENDIFKROME
-
-    !init phys common variables
-#KROME_init_phys_variables
-
-    !default for thermo toggle is ON
-    !$omp parallel
-    krome_thermo_toggle = 1
-    !$omp end parallel
 
     !init photo reactants indexes
 #KROME_photopartners
