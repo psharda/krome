@@ -23,7 +23,7 @@ subroutine cooling_fine(ilevel)
   ! Operator splitting step for cooling source term by vector sweeps
   if (do_cool) then
      ncache=active(ilevel)%ngrid
-     !!$omp parallel do private(igrid,ngrid,i,ind_grid)
+     !$omp parallel do private(igrid,ngrid,i,ind_grid)
      do igrid=1,ncache,nvector
         ngrid=MIN(nvector,ncache-igrid+1)
         do i=1,ngrid
@@ -50,7 +50,6 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   use cooling_mod
   use krome_main !mandatory
   use krome_user !array sizes and utils
-  use krome_user_commons, only : krome_set_user_Av
   implicit none
   integer::ilevel,ngrid
   integer,dimension(1:nvector)::ind_grid
