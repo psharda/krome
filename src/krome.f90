@@ -421,9 +421,7 @@ contains
     use krome_subs
     use krome_reduction
     use krome_dust
-#IFKROME_useCoolingZ
     use krome_cooling
-#ENDIFKROME
 #IFKROME_useStars
     use krome_stars
 #ENDIFKROME
@@ -478,6 +476,11 @@ contains
 #IFKROME_useCoolingCO
     !initialize CO cooling
     call init_coolingCO()
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIE
+    !initialize metal CIE cooling
+    call init_coolingZCIE()
 #ENDIFKROME
 
     !initialize the table for exp(-a/T) function

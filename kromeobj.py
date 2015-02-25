@@ -51,7 +51,7 @@ class krome():
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
-	useCoolingCO = False
+	useCoolingCO = useCoolingZCIE = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
@@ -194,7 +194,7 @@ class krome():
 			also tools/lamda2.py script for a LAMDA<->KROME converter. Default FILENAME is data/coolZ.dat, which contains\
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
-			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -cooling=ATOMIC,CII,OI,FeI).\
+			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO, Z_CIE(e.g. -cooling=ATOMIC,CII,OI,FeI).\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
 		self.parser.add_argument("-coolLevels", metavar='MAXLEV', help="use only the levels up to MAXLEV (included), e.g. -coolLevels=3\
@@ -996,7 +996,7 @@ class krome():
 			myCools = args.cooling.split(",")
 			myCools = [x.strip() for x in myCools]
 			#list of all cooling (excluded from file)
-			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE","CONT","CHEM","DISS","Z","CO"]
+			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE","CONT","CHEM","DISS","Z","CO","Z_CIE"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
@@ -1059,6 +1059,7 @@ class krome():
 			if("CONT" in myCools): self.useCoolingCont = True
 			if("Z" in myCools): self.useCoolingZ = True
 			if("CO" in myCools): self.useCoolingCO = True
+			if("Z_CIE" in myCools): self.useCoolingZCIE = True
 
 			#loop over metals loaded from file and search for them in the cooling flags provided by the user
 			for met in fileCools:
@@ -3679,6 +3680,7 @@ class krome():
 			if(srow == "#IFKROME_useOmukaiOpacity" and self.H2opacity!="OMUKAI"): skip = True
 			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
+			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -4720,6 +4722,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingFF" and not(self.useCoolingFF)): skip = True
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
+			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
@@ -5712,6 +5715,7 @@ class krome():
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
 			if(srow == "#IFKROME_useCoolingZ" and not(self.useCoolingZ)): skip = True
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
+			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_ierr" and not(self.useIERR)): skip = True
 			if(srow == "#IFKROME_noierr" and (self.useIERR)): skip = True
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
@@ -5851,6 +5855,11 @@ class krome():
 		if(self.useCoolingCO):
 			print "- copying coolCO.dat..."
 			shutil.copyfile("data/coolCO.dat", buildFolder+"coolCO.dat")
+
+                #copy cooling Z_CIE Shen+ 2010 
+		if(self.useCoolingZCIE):
+			print "- copying coolZ_CIE.dat..."
+			shutil.copyfile("data/coolZ_CIE.dat", buildFolder+"coolZ_CIE.dat")
 
 		#copy partition function files
 		if(self.typeGamma=="POPOVAS"):

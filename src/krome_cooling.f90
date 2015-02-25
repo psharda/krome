@@ -80,6 +80,10 @@ contains
     cools(idx_cool_CO) = cooling_CO(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingZCIE
+    cools(idx_cool_ZCIE) = cooling_ZCIE(n(:), Tgas)
+#ENDIFKROME
+
     cools(idx_cool_custom) = cooling_custom(n(:),Tgas)
 
     get_cooling_array(:) = cools(:)
@@ -100,6 +104,7 @@ contains
     integer,parameter::jmax=coolCOn2
     integer,parameter::kmax=coolCOn3
     integer::i,j,k
+    real*8,parameter::eps=1d-5
     real*8::cooling_CO,n(:),inTgas,Tgas
     real*8::v1,v2,v3,prev1,prev2,cH
     real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
@@ -128,7 +133,7 @@ contains
     v3 = num2col(n(idx_CO),n(:)) !CO column density
     cH = n(idx_H) + n(idx_H2)
     v2 = cH
-    v1 = n(idx_Tgas) !Tgas
+    v1 = inTgas !Tgas
 
     !logs of variables
     v1 = log10(v1)
@@ -139,9 +144,13 @@ contains
     cooling_CO = 0d0
 
     !check limits
-    if(v1>v1max .or. v1<v1min) return
-    if(v2>v2max .or. v2<v2min) return
-    if(v3>v3max .or. v3<v3min) return
+    if(v1>=v1max) v1 = v1max*(1d0-eps)
+    if(v2>=v2max) v2 = v2max*(1d0-eps)
+    if(v3>=v3max) v3 = v3max*(1d0-eps)
+
+    if(v1<v1min) return
+    if(v2<v2min) return
+    if(v3<v3min) return
 
     !gets position of variable in the array
     i = (v1-v1min)*coolCOdvn1+1
@@ -229,6 +238,154 @@ contains
 
   end subroutine init_coolingCO
 #ENDIFKROME
+
+#IFKROME_useCoolingZCIE
+  !***************************
+  !Metal line cooling CIE: courtesy of P. Capelo (Jan2015)
+  ! method: CLOUDY 7.02, see also Shen+2010.
+  function cooling_ZCIE(n,inTgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    integer,parameter::imax=coolZCIEn1
+    integer,parameter::jmax=coolZCIEn2
+    integer,parameter::kmax=coolZCIEn3
+    integer::i,j,k
+    real*8::cooling_ZCIE,n(:),inTgas,Tgas
+    real*8::v1,v2,v3,prev1,prev2,cH
+    real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
+    real*8::x1(imax),x2(jmax),x3(kmax)
+    real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
+    real*8::v1min,v1max,v2min,v2max,v3min,v3max
+    real*8,parameter::eps=1d-5
+
+    !local copy of limits
+    v1min = coolZCIEx1min
+    v1max = coolZCIEx1max
+    v2min = coolZCIEx2min
+    v2max = coolZCIEx2max
+    v3min = coolZCIEx3min
+    v3max = coolZCIEx3max
+
+    !local copy of variables arrays
+    x1(:) = coolZCIEx1(:)
+    x2(:) = coolZCIEx2(:)
+    x3(:) = coolZCIEx3(:)
+
+    ixd1(:) = coolZCIEixd1(:)
+    ixd2(:) = coolZCIEixd2(:)
+    ixd3(:) = coolZCIEixd3(:)
+
+    !local variables
+    cH = n(idx_H) + n(idx_H2) 
+    v1 = inTgas         !Tgas
+    v2 = cH             !total H number density
+    v3 = phys_zredshift !redshift is linear
+
+    !logs of variables
+    v1 = log10(v1)
+    v2 = log10(v2)
+
+    !default value erg/s/cm3
+    cooling_ZCIE = 0d0
+
+    !check limits
+    !check limits
+    if(v1>=v1max) v1 = v1max*(1d0-eps)
+    if(v2>=v2max) v2 = v2max*(1d0-eps)
+    if(v3>=v3max) v3 = v3max*(1d0-eps)
+
+    if(v1<v1min) return
+    if(v2<v2min) return
+    if(v3<v3min) return
+
+    !gets position of variable in the array
+    i = (v1-v1min)*coolZCIEdvn1+1
+    j = (v2-v2min)*coolZCIEdvn2+1
+    k = (v3-v3min)*coolZCIEdvn3+1
+
+    !precompute shared variables
+    prev1 = (v1-x1(i))*ixd1(i)
+    prev2 = (v2-x2(j))*ixd2(j)
+
+    !linear interpolation on x1 for x2,x3
+    vv1 = prev1 * (coolZCIEy(k,j,i+1) - &
+         coolZCIEy(k,j,i)) + coolZCIEy(k,j,i)
+    !linear interpolation on x1 for x2+dx2,x3
+    vv2 = prev1 * (coolZCIEy(k,j+1,i+1) - &
+         coolZCIEy(k,j+1,i)) + coolZCIEy(k,j+1,i)
+    !linear interpolation on x2 for x3
+    vv12 = prev2 * (vv2 - vv1) + vv1
+
+    !linear interpolation on x1 for x2,x3+dx3
+    vv3 = prev1 * (coolZCIEy(k+1,j,i+1) - &
+         coolZCIEy(k+1,j,i)) + coolZCIEy(k+1,j,i)
+    !linear interpolation on x1 for x2+dx2,x3+dx3
+    vv4 = prev1 * (coolZCIEy(k+1,j+1,i+1) - &
+         coolZCIEy(k+1,j+1,i)) + coolZCIEy(k+1,j+1,i)
+    !linear interpolation on x2 for x3+dx3
+    vv34 = prev2 * (vv4 - vv3) + vv3
+
+    !linear interpolation on x3
+    xLd = (v3-x3(k))*ixd3(k)*(vv34 - &
+         vv12) + vv12
+
+    !Z cooling in erg/s/cm3
+    cooling_ZCIE = 1d1**xLd * cH * cH
+
+  end function cooling_ZCIE
+
+  !************************
+  subroutine init_coolingZCIE()
+    use krome_commons
+    implicit none
+    integer::ios,iout(3),i
+    real*8::rout(4)
+
+    print *,"load Z_CIE cooling..."
+    open(33,file="coolZ_CIE.dat",status="old",iostat=ios)
+    !check if file exists
+    if(ios.ne.0) then
+       print *,"ERROR: problems loading coolZ_CIE.dat!"
+       stop
+    end if
+
+    do
+       read(33,*,iostat=ios) iout(:),rout(:) !read line
+       if(ios<0) exit !eof
+       if(ios/=0) cycle !skip blanks
+       coolZCIEx1(iout(1)) = rout(1)
+       coolZCIEx2(iout(2)) = rout(2)
+       coolZCIEx3(iout(3)) = rout(3)
+       coolZCIEy(iout(3),iout(2),iout(1)) = rout(4)
+    end do
+
+    !store inverse of the differences
+    ! to speed up interpolation
+    do i=1,coolZCIEn1-1
+       coolZCIEixd1(i) = 1d0/(coolZCIEx1(i+1)-coolZCIEx1(i))
+    end do
+    do i=1,coolZCIEn2-1
+      coolZCIEixd2(i) = 1d0/(coolZCIEx2(i+1)-coolZCIEx2(i))
+    end do
+    do i=1,coolZCIEn3-1
+       coolZCIEixd3(i) = 1d0/(coolZCIEx3(i+1)-coolZCIEx3(i))
+    end do
+
+    coolZCIEx1min = minval(coolZCIEx1)
+    coolZCIEx1max = maxval(coolZCIEx1)
+    coolZCIEx2min = minval(coolZCIEx2)
+    coolZCIEx2max = maxval(coolZCIEx2)
+    coolZCIEx3min = minval(coolZCIEx3)
+    coolZCIEx3max = maxval(coolZCIEx3)
+
+    coolZCIEdvn1 = (coolZCIEn1-1)/(coolZCIEx1max-coolZCIEx1min)
+    coolZCIEdvn2 = (coolZCIEn2-1)/(coolZCIEx2max-coolZCIEx2min)
+    coolZCIEdvn3 = (coolZCIEn3-1)/(coolZCIEx3max-coolZCIEx3min)
+
+  end subroutine init_coolingZCIE
+#ENDIFKROME
+
 
   !*****************************
   function cooling_custom(n,Tgas)
