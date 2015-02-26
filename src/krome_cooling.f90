@@ -340,7 +340,7 @@ contains
     use krome_commons
     implicit none
     integer::ios,iout(3),i
-    real*8::rout(4)
+    real*8::rout(5)
 
     print *,"load Z_CIE cooling..."
     open(33,file="coolZ_CIE.dat",status="old",iostat=ios)
@@ -358,6 +358,7 @@ contains
        coolZCIEx2(iout(2)) = rout(2)
        coolZCIEx3(iout(3)) = rout(3)
        coolZCIEy(iout(3),iout(2),iout(1)) = rout(4)
+       heatZCIEy(iout(3),iout(2),iout(1)) = rout(5)
     end do
 
     !store inverse of the differences

@@ -130,12 +130,13 @@ module krome_commons
 
 #IFKROME_useCoolingZCIE
   !data for metal CIE cooling
-  integer,parameter::coolZCIEn1=142
-  integer,parameter::coolZCIEn2=121
-  integer,parameter::coolZCIEn3=91
+  integer,parameter::coolZCIEn1=61 
+  integer,parameter::coolZCIEn2=61
+  integer,parameter::coolZCIEn3=61
   real*8::coolZCIEx1(coolZCIEn1),coolZCIEx2(coolZCIEn2),coolZCIEx3(coolZCIEn3)
   real*8::coolZCIEixd1(coolZCIEn1-1),coolZCIEixd2(coolZCIEn2-1),coolZCIEixd3(coolZCIEn3-1)
   real*8::coolZCIEy(coolZCIEn3,coolZCIEn2,coolZCIEn1)
+  real*8::heatZCIEy(coolZCIEn3,coolZCIEn2,coolZCIEn1)
   real*8::coolZCIEx1min,coolZCIEx1max
   real*8::coolZCIEx2min,coolZCIEx2max
   real*8::coolZCIEx3min,coolZCIEx3max
