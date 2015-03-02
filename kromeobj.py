@@ -1447,6 +1447,7 @@ class krome():
 			'Ne':10.*(menp),
 			'Mg':12.*(menp),
 			'Na':(me+mp)*11+mn*12,
+			'Al':(me+mp)*13+mn*14,
 			'Si':14.*(menp),
 			'P':15.*(menp)+mn,
 			'S':(menp)*16,
@@ -1462,6 +1463,9 @@ class krome():
 			'O(3P)':8.*(menp),
 			'_dust':0e0,
 			'_c_dust':0e0,
+			'_grain':0e0,
+			'l_':0e0,
+			'c_':0e0,
 			'CR':0e0,
 			'M':0e0,
 			'g':0e0,
@@ -3675,7 +3679,7 @@ class krome():
 
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
-			if(srow == "#IFKROME_usePreDustExp" and not(self.usedTdust and self.useSurface)): skip = True
+			if(srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT) and self.useSurface)): skip = True
 			if(srow == "#IFKROME_useOmukaiOpacity" and self.H2opacity!="OMUKAI"): skip = True
 			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
@@ -5715,7 +5719,7 @@ class krome():
 			if(srow == "#IFKROME_ierr" and not(self.useIERR)): skip = True
 			if(srow == "#IFKROME_noierr" and (self.useIERR)): skip = True
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
-			if(srow == "#IFKROME_usePreDustExp" and not(self.usedTdust and self.useSurface)): skip = True
+			if(srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT) and self.useSurface)): skip = True
 			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 

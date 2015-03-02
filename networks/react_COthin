@@ -45,7 +45,7 @@
 18,H-,H,,H2,E,,>1160,1e8,exp(-20.06913897587003d0+0.2289800603272916d0*lnTe+0.03599837721023835d0*lnTe**2-0.004555120027032095d0*lnTe**3-0.0003105115447124016d0*lnTe**4+0.0001073294010367247d0*lnTe**5-8.36671960467864d-6*lnTe**6+2.238306228891639d-7*lnTe**7)
 19,H,H+,,H2+,g,,2.73d0,.LE.6.7e3,1.85d-23*Tgas**1.8d0
 20,H,H+,,H2+,g,,>6.7e3,1e8,5.81d-16*(Tgas/5.62d4)**(-0.6657d0*log10(Tgas/5.62d4))
-#21,H2+,H,,H2,H+,,2.73d0,1e8,6.0d-10
+21,H2+,H,,H2,H+,,2.73d0,1e8,6.0d-10
 22,H2,H+,,H2+,H,,>3.48e3,1e8,exp(-24.24914687731536d0+3.400824447095291d0*lnTe-3.898003964650152d0*lnTe**2+2.045587822403071d0*lnTe**3-0.5416182856220388d0*lnTe**4+0.0841077503763412d0*lnTe**5-0.007879026154483455d0*lnTe**6+0.0004138398421504563d0*lnTe**7-9.36345888928611d-6*lnTe**8)
 23,H2,E,,H,H,E,2.73d0,1e8,5.6d-11*exp(-102124.d0*invT)*Tgas**0.5d0
 24,H2,H,,H,H,H,2.73d0,1e8,1.0670825d-10*Te**2.012d0*exp(-4.463d0*invTe)/(1.d0+0.2472d0*Te)**3.512d0
@@ -178,6 +178,9 @@
 91,O,OH,H,O2,NONE,2d2,2.42d-12
 92,O,OH,H,O2,2d2,350,6.2d-14*(T32)**(2.62)*exp(-945d0*invT)
 93,O,OH,H,O2,350,NONE,1.38d-12
+
+#Glover+2010
+93,OH,OH,H2O,O,NONE,NONE,1.65d-12*(T32)**1.14*exp(-5d1*invT)
 
 #Glover+2010
 94,H2O,H,H2,OH,NONE,NONE,1.59d-11*(T32)*1.2*exp(-9610.*invT)
@@ -322,6 +325,8 @@
 153,CH2,He+,He,H,CH+,NONE,1.5d2,9.65d-10*(0.62d0 + 0.672147d0*(3d2*invT)**.5)
 154,CH2,He+,He,H,CH+,1.5d2,NONE,9.65d-10*(1d0 + 0.136347d0*(3d2*invT)**.5 + 56.6625498765d0*invT)
 
+155,C2,He+,C+,C,He,NONE,NONE,1.6d-9
+
 #KIDA, constant below 10K
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 155,OH,H+,OH+,H,NONE,1d1,3.75d-8
@@ -423,6 +428,10 @@
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
 209,H2,H+,H,H,H+,NONE,NONE,3d-11*T32**(.5)*exp(-52000d0*invT)
 
+@format:idx,R,R,P,Tmin,Tmax,rate
+209,H2,H+,H3+,NONE,NONE,1d-16
+
+
 #G+10
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 210,C,E,C-,,NONE,NONE,2.25d-15
@@ -522,4 +531,24 @@
 @format:idx,R,P,P,P,rate
 279,H2,H,H+,E,9.3d-1*user_crate
 @CR_stop
+
+
+#3body catalysis
+@var:ntot=sum(n(1:nmols))
+@format:idx,R,R,P,Tmin,Tmax,rate
+280,C,C,C2,NONE,5d3,5.99d-33*(Tgas/5d3)**-1.6*ntot
+281,C,C,C2,5d3,NONE,5.99d-33*(Tgas/5d3)**-0.64*exp(5255./Tgas)*ntot
+
+282,C,O,CO,NONE,2d3,6.16d-29*(Tgas/3d2)**-3.08*ntot
+283,C,O,CO,2d3,NONE,2.14d-29*(Tgas/3d2)**-3.08*exp(2114./Tgas)*ntot
+
+284,C+,O,CO+,NONE,2d3,6.16d-27*(Tgas/3d2)**-3.08*ntot
+285,C+,O,CO+,2d3,NONE,2.14d-27*(Tgas/3d2)**-3.08*exp(2114./Tgas)*ntot
+
+286,C,O+,CO+,NONE,2d3,6.16d-27*(Tgas/3d2)**-3.08*ntot
+287,C,O+,CO+,2d3,NONE,2.14d-27*(Tgas/3d2)**-3.08*exp(2114./Tgas)*ntot
+
+288,H,O,OH,NONE,NONE,4.33d-32*(T32)**-1*ntot
+289,OH,H,H2O,NONE,NONE,2.56d-31*(T32)**-2*ntot
+290,O,O,O2,NONE,NONE,9.2d-34*(T32)**-1*ntot
 

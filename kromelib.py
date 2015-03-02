@@ -667,6 +667,8 @@ def truncF90(mystr, sublen, sep):
 	#split (&\n) the string mystr in parts smaller tha sublen using sep as separator
 	if(mystr.strip()==""): return mystr
 	mystr = mystr.replace("**","##")
+	mystr = mystr.replace("(/","###")
+	mystr = mystr.replace("/)","####")
 	astr = mystr.split(sep)
 	s = z = ""
 	first = True
@@ -679,7 +681,7 @@ def truncF90(mystr, sublen, sep):
 		s += zep + x
 		z += zep + x
 		first = False
-	return s.replace("##","**")
+	return s.replace("####","/)").replace("###","(/").replace("##","**")
 
 
 ##################################

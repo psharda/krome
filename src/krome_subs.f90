@@ -737,6 +737,15 @@ contains
   end function calc_H2shieldWG11
 #ENDIFKROME
 
+  !**********************
+  function troe_falloff(k0,kinf,Fc,m)
+    implicit none
+    real*8::troe_falloff,k0,kinf,Fc,m,rm,xexp
+    rm = k0*m/kinf
+    xexp = 1d0/(1d0+log10(rm)**2)
+    troe_falloff = k0*m/(1d0*rm)*Fc**xexp
+  end function troe_falloff
+
   !******************************
   !collisional ionization rate from Verner+96
   ! unit: cm3/s
