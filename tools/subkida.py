@@ -7,7 +7,7 @@
 #convert from KIDA file to KROME network (including a set of option to chose a subset)
 
 #input filename (provided by KIDA website)
-fname = "kida_reac_2013-10-26_1.dat"
+fname = "kida.uva.2014.dat"
 #output filename for KROME
 foutname = "react_subkida"
 #filename for multiple reactions (same reactants and same products)
@@ -19,8 +19,8 @@ use = [] #use atoms (can be empty, e=electron)
 maxatoms = 999 #maximum number of atoms
 ions = True #use ions
 anions = True #use anions
-Tmin = 1. #minimum temperature
-Tmax = 99999. #maximum temperature
+Tmin = -1e99 #minimum temperature
+Tmax = 1e99 #maximum temperature
 exclude = [] #species to exclude (can be empty)
 excludein = [] #exclude species that contain a specific case-sensitive string (can be empty, e.g. l- for linear mols)
 multiple = False #include multiple reactions (same reactants and same products)
@@ -41,8 +41,8 @@ recom = [1,2,3] #recomandations to include (see above)
 processes = [1,2,3,4,5] #processes included (see above)
 
 #variables for cosmic rays and photochemistry
-CRvar = "crflux" #name of the CR flux variable
-Avvar = "Av" #name of the Av variable
+CRvar = "user_crflux" #name of the CR flux variable
+Avvar = "user_Av" #name of the Av variable
 
 # This script is a part of KROME.
 # KROME is a nice and friendly chemistry package for a wide range of 
@@ -197,6 +197,7 @@ if(maxatoms<100): fout.write("#maxatoms="+str(maxatoms)+"\n")
 if(not(ions)): fout.write("#no ions\n")
 if(not(anions)): fout.write("#no anions\n")
 fout.write("#Tmin="+str(Tmin)+" Tmax="+str(Tmax)+"\n")
+fout.write("@common:"+CRvar+","+Avvar+"\n")
 fout.write("@format:idx,R,R,R,P,P,P,P,P,Tmin,Tmax,rate\n")
 rems = ["Photon","CRP","CRPHOT","CR",""]
 for row in fh:
@@ -204,6 +205,7 @@ for row in fh:
 	srow = row.strip()
 	if(srow==""): continue #skip empty lines
 	if(srow[0]=="#"): continue #skip comments
+	if(srow[0]=="!"): continue #skip comments
 	p = 0
 	arow = dict()
 	for i in range(len(fmt)):
@@ -249,6 +251,7 @@ for row in fh:
 		continue #WARNING: 3body not supported!
 	else:
 		print "ERROR: Formula not found!",arow["formula"]
+
 	KK = KK.replace("--","+").replace("++","+").replace("-+","-").replace("+-","-")
 	krow = (RR+","+PP+","+TT+","+KK+"\n")
 	for x in rems:
@@ -341,7 +344,18 @@ for row in fh:
 		nhist[arow["num"]] = [arow["subnum"]]
 		trange[arow["num"]] = [float(arow["tmin"]), float(arow["tmax"])]
 
-
+	#@format:idx,R,R,R,P,P,P,P,P,Tmin,Tmax,rate
+	akrow = krow.split(",")
+	akrow_new = []
+	for prt in akrow:
+		if(len(prt)>2):
+			if(prt[:2]=="c-" or prt[:2]=="l-"):
+				lprt = list(prt)
+				lprt[1] = "_"
+				prt = "".join(lprt)
+		akrow_new.append(prt)
+	krow = (",".join(akrow_new))
+	
 	okcount += 1
 	if(isMult): fmult.write(str(okcount)+","+krow)
 	fout.write(str(okcount)+","+krow)
