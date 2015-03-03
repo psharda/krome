@@ -253,13 +253,14 @@ contains
     use krome_subs
     implicit none
     real*8::cooling_ZCIENOUV,n(:),inTgas
-    real*8::cH,Tgas,xLd
+    real*8::cH,Tgas,xLd,logcH
 
-    Tgas = inTgas
     cH = n(idx_H) + n(idx_H2) 
+    Tgas = log10(inTgas)
+    logcH = log10(cH)
 
     xLd = fit_anytab2D(CoolZNOUV_x(:), CoolZNOUV_y(:), CoolZNOUV_z(:,:), &
-                 CoolZNOUV_xmul, CoolZNOUV_ymul,phys_zredshift,Tgas)
+                 CoolZNOUV_xmul, CoolZNOUV_ymul,logcH,Tgas)
 
     cooling_ZCIENOUV = 10**xLd * cH * cH
 
