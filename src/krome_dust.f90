@@ -3,7 +3,7 @@ module krome_dust
 #IFKROME_useDust
 contains
 
-  subroutine set_dust_distribution(alow,aup,phi)
+  subroutine set_dust_distribution(ngas,dust_gas_ratio,alow,aup,phi)
     !krome_init_dust: initialize the dust ditribution
     ! and the dust bin mean sizes. Arguments are
     ! alow the size of the smallest
@@ -12,18 +12,24 @@ contains
     ! are optional and can be omitted during the call.
     use krome_commons
     use krome_subs
+    use krome_constants
     implicit none
-    real*8::rhogas,dmass,ngas(nmols),n(nspec)
-    real*8::iphi1,c,phi1,abin(ndust+1),mass(nspec),myc
+    real*8::rhogas,dmass,ngas(nmols),dust_gas_ratio,d2g
+    real*8::iphi1,c,phi1,abin(ndust+1),mass(nspec),myc,phi4
     real*8::alow,aup,phi,dtg(ndustTypes),adust(ndust),Tbb,myx,a0,a1
+    real*8::alogmin,alogmax
     integer::i,j,ilow,iup,imax,nd
 
-    print *,"Initializing dust..."
+    d2g = dust_gas_ratio
 
 #KROME_dustPartnerIndex
 
     phi1 = phi + 1.d0
+    phi4 = phi + 4.d0
     iphi1 = 1.d0/phi1
+
+    alogmin = log10(alow)
+    alogmax = log10(aup)
 
     mass(:) = get_mass()
     nd = ndust/ndustTypes
@@ -31,30 +37,24 @@ contains
 
     rhogas = sum(mass(1:nmols)*ngas(:)) !total gas density g/cm3
 
-    !WARNING: this algorithm evaluates the bin sizes in order to
-    ! have the same amount of dust per each bin, following MNR
-    ! distribution. change according to your needs
+    !loop on dust types
     do j=1,ndustTypes
+       !integration constant
+       myc = rhogas*d2g/(4d0*pi/3d0*krome_grain_rho*(aup**phi4-alow**phi4)/phi4)
        ilow = nd * (j - 1) + 1 !lower index
        iup = nd * j !upper index
 
-       abin(1) = alow !lower limit size
-       abin(nd+1) = aup !upper limit
-       myc = (aup**phi1-alow**phi1) / phi1 !distribution total integral
-
-       !loop to find limits (analitically)
-       do i=2,nd
-          abin(i) = (myc*phi1/nd + abin(i-1)**phi1)**iphi1
+       !loop to find limits
+       do i=1,nd+1
+          abin(i) = 1d1**((i-1)*(alogmax-alogmin)/ndust+alogmin)
        end do
 
-       !loop to find mean size 
+       !loop to find mean size, span, and dust number density 
        do i=1,nd
           adust(i+ilow-1) = (abin(i)+abin(i+1)) * 0.5d0 !mean bin size
           krome_dust_aspan(i+ilow-1) = abin(i+1) - abin(i) !bin span
+          xdust(i+ilow-1) = myc*(abin(i+1)**phi1-abin(i)**phi1)/phi1
        end do
-
-       !amount of dust per bin
-       xdust(ilow:iup) = 1d0 / nd
 
        !evaluate dust-parnter ratio (e.g. 1dust=1e2 C atoms)
        krome_dust_partner_ratio(ilow:iup) = adust(ilow:iup)**3 &
@@ -81,8 +81,6 @@ contains
 
     !init integral Qabs(nu)*B(nu)*dnu
 #KROME_opt_integral
-
-    print *,"Dust initialized!"
 
   end subroutine set_dust_distribution
 
@@ -179,6 +177,8 @@ contains
 
     !if already initialized no need to reload
     if(dust_intBB_Tbb(1)/=dust_intBB_Tbb(dust_nT)) return
+    
+    print *,"Computing dust tables..."
 
     !loop on dust bins
     do k=1,ndust
@@ -589,72 +589,15 @@ contains
   end function sgn
 
   !*********************
-  function krome_dust_grow(nndust,natom,Tgas,Tdust,vgas,adust)
-    !krome_dust_grow: compute dust formation in cm3/s 
-    ! (Grassi2012, eqn.25)
-    use krome_constants
+  function krome_dust_growth(natom,Tgas,Tdust,vgas,atom_mass,rho0)
+    !krome_dust_growth: compute dust growth in cm/s 
     implicit none
-    real*8::krome_dust_grow,nndust,natom,Tgas,Tdust,vgas,adust,seed
+    real*8::krome_dust_growth,natom,Tgas,Tdust,vgas,atom_mass,rho0
 
-    seed = #KROME_dust_seed !1/cm3
-    krome_dust_grow = 1d-4 * pi * adust**2 * (max(nndust,0.d0) + seed) &
-         * max(natom,0.d0) * krome_dust_stick(Tgas,Tdust) * vgas
+    krome_dust_growth = krome_dust_stick(Tgas,Tdust) * vgas * &
+         atom_mass / 4d0 / rho0 * natom
 
-  end function krome_dust_grow
-
-  !***********************
-  function krome_dust_growth_array(Tdust,adust2,nndust,natom,vgas,Tgas)
-    use krome_commons
-    use krome_constants
-    implicit none
-    integer,parameter::nd=ndust/ndustTypes
-    real*8::krome_dust_growth_array(nd),Tdust(nd),Tgas
-    real*8::adust2(nd),nndust(nd),seed,natom,vgas,pre,ss
-    integer::i
-
-    seed = #KROME_dust_seed !1/cm3
-    pre = pi * vgas * max(natom,0d0)
-    do i=1,nd
-       ss = krome_dust_stick(Tgas,Tdust(i))
-       krome_dust_growth_array(i) = pre * adust2(i) &
-            * (max(nndust(i),0.d0) + seed) * ss
-    end do
-
-  end function krome_dust_growth_array
-
-  !***********************
-  function krome_dust_growth_flux(n,ngas,mgas,vgas,Tgas,Tdust)
-    use krome_commons
-    use krome_constants
-    implicit none
-    integer,parameter::nd=ndust/ndustTypes
-    real*8::krome_dust_growth_flux(ndust),ngas,dflux,ss
-    real*8::fluxold,pre,mgas,vgas,n(nspec),Tdust(ndust)
-    real*8::Tgas
-    integer::i,j,idx
-
-    !multiplication factor
-    pre = ngas * mgas * vgas / 4d0 / 1.22d0
-    !loop on types
-    do j=0,ndustTypes-1
-       fluxold = 0d0 !no growth for first bin
-       !loop on bins
-       do i=1,nd-1
-          idx = nd*j+i !bin index for type j
-          dflux = fluxold !store old flux
-          ss = krome_dust_stick(Tgas,Tdust(idx)) !sticking
-          !compute new flux
-          fluxold = n(nmols+idx) * ss / krome_dust_aspan(idx)
-          ! flux from the old bin - flux of this bin
-          dflux = dflux - fluxold
-          !get growth from flux
-          krome_dust_growth_flux(idx) = pre * dflux
-       end do
-       !growth of the last bin (can only grow)
-       krome_dust_growth_flux(idx+1) = pre * dflux
-    end do
-
-  end function krome_dust_growth_flux
+  end function krome_dust_growth
 
   !*******************
   function krome_dust_stick(Tgas,Tdust)
@@ -669,14 +612,18 @@ contains
   end function krome_dust_stick
 
   !******************
-  !dust evaporation following Stahler+1981, eqn.5
+  !dust evaporation following Evans+93: cm/s
   ! ebind: binding energy in K
-  function dust_evap(adust,nndust,Tdust,ebind)
+  function dust_evap(Tdust,ebind,amass,asize2,rho0)
+    use krome_constants
     implicit none
-    real*8::dust_evap,adust,nndust,Tdust,ebind
-
-    !l0*nu0=1.8d5 cm/s from Stahler+1981
-    dust_evap = 3d0 * 1.8d5 * exp(-ebind/Tdust) / adust * nndust
+    real*8::dust_evap,Tdust,ebind,nu0,amass
+    real*8::asize2,rho0
+    
+    dust_evap = 0d0 !default
+    nu0 = 1d12 !1/s
+    if(asize2<=0d0) return
+    dust_evap = nu0 * amass/4d0/pi/asize2/rho0 * exp(-ebind/Tdust)
 
   end function dust_evap
 

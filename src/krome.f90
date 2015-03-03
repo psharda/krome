@@ -83,8 +83,8 @@ contains
 
     n(idx_Tgas) = Tgas !put temperature in the input array
     
-#IFKROME_useDust
-    n(nmols+1:nmols+ndust) = xdust(:) !get dust abundances
+#IFKROME_useDustSizeEvol
+    n(nmols+1:nmols+ndust) = krome_dust_asize(:) !set dust sizes
 #ENDIFKROME
 
 #IFKROME_usedTdust
@@ -204,9 +204,11 @@ contains
     x(:) = n(1:nmols)
 #ENDIFKROME
 
-#IFKROME_useDust
+#IFKROME_useDustSizeEvol
     !returns dust abundance
-    xdust(:) = n(nmols+1:nmols+ndust)
+    krome_dust_asize(:) = n(nmols+1:nmols+ndust)
+    krome_dust_asize2(:) = n(nmols+1:nmols+ndust)**2
+    krome_dust_asize3(:) = n(nmols+1:nmols+ndust)**3
 #ENDIFKROME
 
 #IFKROME_usedTdust

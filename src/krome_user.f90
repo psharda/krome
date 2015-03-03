@@ -70,10 +70,10 @@ contains
   !this subroutine sets the dust distribution in the range
   ! alow_arg, aup_arg, using power law with exponent phi_arg.
   ! All these arguments are optional.
-  subroutine krome_set_dust_distribution(alow_arg,aup_arg,phi_arg)
+  subroutine krome_set_dust_distribution(x,dust_gas_ratio,alow_arg,aup_arg,phi_arg)
     use krome_dust
     real*8,optional::alow_arg,aup_arg,phi_arg
-    real*8::alow,aup,phi
+    real*8::alow,aup,phi,dust_gas_ratio,x(:)
 
     !default values
     alow = 5d-7 !lower size (cm)
@@ -84,7 +84,7 @@ contains
     if(present(aup_arg)) aup = aup_arg
     if(present(phi_arg)) phi = phi_arg
 
-    call set_dust_distribution(alow,aup,phi)
+    call set_dust_distribution(x(:),dust_gas_ratio,alow,aup,phi)
 
   end subroutine krome_set_dust_distribution
 
@@ -115,14 +115,26 @@ contains
   !************************
   !this function sets the default temperature
   ! for all the dust bins.
-  subroutine krome_set_defaultTdust(arg)
+  subroutine krome_set_Tdust(arg)
     use krome_commons
     implicit none
     real*8::arg
 
     krome_dust_T(:) = arg
 
-  end subroutine krome_set_defaultTdust
+  end subroutine krome_set_Tdust
+
+  !************************
+  !this function sets the temperature
+  ! for all the dust bins as an array.
+  subroutine krome_set_Tdust_array(arr)
+    use krome_commons
+    implicit none
+    real*8::arr(:)
+
+    krome_dust_T(:) = arr(:)
+
+  end subroutine krome_set_Tdust_array
 
   !****************************
   subroutine krome_scale_dust_distribution(xscale)
@@ -133,22 +145,6 @@ contains
     xdust(:) = xdust(:) * xscale
 
   end subroutine krome_scale_dust_distribution
-
-  !***************************
-  subroutine krome_scale_dust_gas_ratio(dust_to_gas_ratio,x)
-    use krome_commons
-    use krome_subs
-    use krome_constants
-    implicit none
-    real*8::dust_to_gas_ratio,x(:),rho_gas,m(nspec),r0
-
-    m(:) = get_mass()
-    rho_gas = sum(x(:)*m(1:nmols))
-    r0 = 4d0/3d0*pi*sum(krome_dust_asize3(:)*xdust(:)) &
-         * krome_grain_rho / rho_gas
-    xdust(:) = xdust(:) / r0 * dust_to_gas_ratio
-    
-  end subroutine krome_scale_dust_gas_ratio
 
   !***********************
   function krome_get_Tdust()

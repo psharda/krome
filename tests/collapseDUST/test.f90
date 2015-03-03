@@ -31,8 +31,6 @@ program test_krome
      jscale = mod(jz,2)
      if(jscale==0) cycle
 
-     call krome_set_dust_distribution()
-
      !INITIAL CONDITIONS
      ntot           = 0.1d0  !total density in 1/cm3
      Tgas           = 3d2    !temperature in kelvin
@@ -46,7 +44,8 @@ program test_krome
      x(KROME_idx_Hj) = 1.d-4*ntot    !H+
      x(KROME_idx_HE) = 0.0775d0*ntot !He
      print *,"jscale=",jscale
-     call krome_scale_dust_gas_ratio(1d-2*1d1**zs(jz2)*jscale,x(:))
+     call krome_set_dust_distribution(x(:),1d-2*1d1**zs(jz2)*jscale)
+
      print *,krome_get_dust_distribution()
      call krome_set_defaultTdust((zred+1d0)*2.73d0)
 
@@ -88,8 +87,6 @@ program test_krome
         !dust evaporation
         if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)
 
-        write(33,'(99E17.8e3)') dd,krome_get_cooling_array(x(:),Tgas)
-        write(34,'(99E17.8e3)') dd,krome_get_heating_array(x(:),Tgas)
         !solve the chemistry
         call krome(x(:),Tgas,dt)
 
@@ -99,8 +96,6 @@ program test_krome
            print '(2I5,99E11.3)',jz,i,dd,Tgas,krome_get_Tdust()
         end if
      end do
-     write(33,*)
-     write(34,*)
      write(66,*)
   end do
 

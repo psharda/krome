@@ -1,22 +1,17 @@
 reset
-nkrome=2
-load 'species.gps'
 set logscale
 set autoscale
 set format x "%L"
 set format y "%L"
 set format z "%L"
 set xlabel "log(T/K)"
-set ylabel "log(n/ni)"
-set yrange[1e-1:]
-set grid
+set ylabel "log(mass density [g/cm3])"
 set key reverse
 set key Left
-set key l t
+set key b
 
-plot './fort.77' u 3:4 w l t "C  (a=2.5e-5 cm)",\
- './fort.78' u 3:4 w l t "Si (a=2.5e-5 cm)",\
- './fort.79' u 3:4 w l t "C  (a=5e-7 cm)",\
- './fort.80' u 3:4 w l t "Si (a=5e-7 cm)",\
-'fort.66' u 2:(column(krome_idx_C)) w l t "C  (gas)",\
-'fort.66' u 2:(column(krome_idx_Si)) w l t "Si (gas)"
+plot 'fort.77' u 2:($1==0?$3:1/0) w l t "dust C",\
+ '' u 2:($1==1?$3:1/0) w l t "dust Si",\
+ 'fort.66' w l t "gas C",\
+ '' u 1:3 w l t "gas Si"
+
