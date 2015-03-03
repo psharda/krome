@@ -84,6 +84,10 @@ contains
     cools(idx_cool_ZCIE) = cooling_ZCIE(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingZCIENOUV
+    cools(idx_cool_ZCIENOUV) = cooling_ZCIENOUV(n(:), Tgas)
+#ENDIFKROME
+
     cools(idx_cool_custom) = cooling_custom(n(:),Tgas)
 
     get_cooling_array(:) = cools(:)
@@ -239,10 +243,33 @@ contains
   end subroutine init_coolingCO
 #ENDIFKROME
 
+
+#IFKROME_useCoolingZCIENOUV
+  !***************************
+  !Metal line cooling CIE
+  ! method: CLOUDY 7.02, NOUV
+  function cooling_ZCIENOUV(n,inTgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::cooling_ZCIENOUV,n(:),inTgas
+    real*8::cH,Tgas,xLd
+
+    Tgas = inTgas
+    cH = n(idx_H) + n(idx_H2) 
+
+    xLd = fit_anytab2D(CoolZNOUV_x(:), CoolZNOUV_y(:), CoolZNOUV_z(:,:), &
+                 CoolZNOUV_xmul, CoolZNOUV_ymul,phys_zredshift,Tgas)
+
+    cooling_ZCIENOUV = 10**xLd * cH * cH
+
+   end function cooling_ZCIENOUV
+#ENDIFKROME
+
 #IFKROME_useCoolingZCIE
   !***************************
-  !Metal line cooling CIE: courtesy of P. Capelo (Jan2015)
-  ! method: CLOUDY 7.02, see also Shen+2010.
+  !Metal line cooling CIE
+  ! method: CLOUDY 7.02
   function cooling_ZCIE(n,inTgas)
     use krome_commons
     use krome_subs
@@ -342,11 +369,11 @@ contains
     integer::ios,iout(3),i
     real*8::rout(5)
 
-    print *,"load Z_CIE cooling..."
-    open(33,file="coolZ_CIE.dat",status="old",iostat=ios)
+    print *,"load Z_CIE2012 cooling..."
+    open(33,file="coolZ_CIE2012.dat",status="old",iostat=ios)
     !check if file exists
     if(ios.ne.0) then
-       print *,"ERROR: problems loading coolZ_CIE.dat!"
+       print *,"ERROR: problems loading coolZ_CIE2012.dat!"
        stop
     end if
 

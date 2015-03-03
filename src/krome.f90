@@ -485,6 +485,16 @@ contains
     call init_coolingZCIE()
 #ENDIFKROME
 
+#IFKROME_useCoolingZCIENOUV
+  !initialize metal CIE cooling no UV case
+  call init_anytab2D("coolZ_CIE2012NOUV.dat",CoolZNOUV_x(:), &
+        CoolZNOUV_y(:), CoolZNOUV_z(:,:), CoolZNOUV_xmul, &
+        CoolZNOUV_ymul)
+  call test_anytab2D("coolZ_CIE2012NOUV.dat",CoolZNOUV_x(:), &
+        CoolZNOUV_y(:), CoolZNOUV_z(:,:), CoolZNOUV_xmul, &
+        CoolZNOUV_ymul)
+#ENDIFKROME
+
     !initialize the table for exp(-a/T) function
     call init_exp_table()
 

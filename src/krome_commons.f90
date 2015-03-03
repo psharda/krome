@@ -88,6 +88,12 @@ module krome_commons
   real*8::mayer_z(mayern,mayerm),mayer_xmul,mayer_ymul
 #ENDIFKROME
 
+#IFKROME_useCoolingZCIENOUV
+  integer,parameter::CoolZNOUVn=131,CoolZNOUVm=162
+  real*8::CoolZNOUV_x(CoolZNOUVn),CoolZNOUV_y(CoolZNOUVm)
+  real*8::CoolZNOUV_z(CoolZNOUVn,CoolZNOUVm),CoolZNOUV_xmul,CoolZNOUV_ymul
+#ENDIFKROME
+
   !commons for exp(-a) table
   integer,parameter::exp_table_na=int(1d5)
   real*8,parameter::exp_table_aMax=1d4,exp_table_aMin=0d0
@@ -130,9 +136,9 @@ module krome_commons
 
 #IFKROME_useCoolingZCIE
   !data for metal CIE cooling
-  integer,parameter::coolZCIEn1=61 
-  integer,parameter::coolZCIEn2=61
-  integer,parameter::coolZCIEn3=61
+  integer,parameter::coolZCIEn1=81 
+  integer,parameter::coolZCIEn2=81
+  integer,parameter::coolZCIEn3=81
   real*8::coolZCIEx1(coolZCIEn1),coolZCIEx2(coolZCIEn2),coolZCIEx3(coolZCIEn3)
   real*8::coolZCIEixd1(coolZCIEn1-1),coolZCIEixd2(coolZCIEn2-1),coolZCIEixd3(coolZCIEn3-1)
   real*8::coolZCIEy(coolZCIEn3,coolZCIEn2,coolZCIEn1)
