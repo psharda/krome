@@ -326,15 +326,21 @@ def SWRI2KROME(build_folder,reactant,products):
 	clight = 2.99792458e10 #cm/s
 	hplanck = 4.135667516e-15 #eV*s
 
-	#prepare data for interpolation
+	#prepare data for interpolation and dump original data for comparison
 	xdata = []
 	ydata = []
+	foutorg = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".org","w")
+	#reverse array to have increasing energy
 	for row in okrow[::-1]:
-		xdata.append(clight*hplanck/(float(row[0])*1e-8)) #AA->eV
-		ydata.append(float(row[data_col])) #cross section cm2
+		xenergy = clight*hplanck/(float(row[0])*1e-8) #AA->eV
+		xsec = float(row[data_col]) #cross section cm2
+		xdata.append(xenergy)
+		ydata.append(xsec)
+		foutorg.write(str(xenergy)+" "+str(xsec)+"\n")
+	foutorg.close()
 	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
 
-	#write the file to the build folder (reverse array to have increasing energy)
+	#write the file to the build folder
 	foutx = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".dat","w")
 	imax = 100
 	for i in range(imax):

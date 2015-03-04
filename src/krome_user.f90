@@ -385,8 +385,9 @@ contains
   end subroutine krome_set_photobinE_log
 
   !*********************************
+  !returns an array containing the flux for each photo bin
+  ! in eV/cm2/sr
   function krome_get_photoBinJ()
-    !returns an array containing the flux for each photo bin
     use krome_commons
     real*8::krome_get_photoBinJ(nPhotoBins)
     krome_get_photoBinJ(:) = photoBinJ(:)
@@ -401,44 +402,57 @@ contains
   end function krome_get_photoBinE_left
 
   !*********************************
+  !returns an array with the right energy limits (eV)
   function krome_get_photoBinE_right()
-    !returns an array with the right energy limits (eV)
     use krome_commons
     real*8::krome_get_photoBinE_right(nPhotoBins)
     krome_get_photoBinE_right(:) = photoBinEright(:)
   end function krome_get_photoBinE_right
 
   !*********************************
+  !returns an array with the middle energy limits (eV)
   function krome_get_photoBinE_mid()
-    !returns an array with the middle energy limits (eV)
     use krome_commons
     real*8::krome_get_photoBinE_mid(nPhotoBins)
     krome_get_photoBinE_mid(:) = photoBinEmid(:)
   end function krome_get_photoBinE_mid
 
   !*********************************
+  !returns an array with the middle energy limits (eV)
   function krome_get_photoBinE_delta()
-    !returns an array with the middle energy limits (eV)
     use krome_commons
     real*8::krome_get_photoBinE_delta(nPhotoBins)
     krome_get_photoBinE_delta(:) = photoBinEdelta(:)
   end function krome_get_photoBinE_delta
 
   !*********************************
+  !returns an array with the middle energy limits (eV)
   function krome_get_photoBinE_idelta()
-    !returns an array with the middle energy limits (eV)
     use krome_commons
     real*8::krome_get_photoBinE_idelta(nPhotoBins)
     krome_get_photoBinE_idelta(:) = photoBinEidelta(:)
   end function krome_get_photoBinE_idelta
 
   !*********************************
+  !returns an array with the integrated photo rates (1/s)
   function krome_get_photoBin_rates()
-    !returns an array with the integrated photo rates (1/s)
     use krome_commons
     real*8::krome_get_photoBin_rates(nPhotoRea)
     krome_get_photoBin_rates(:) = photoBinRates(:)
   end function krome_get_photoBin_rates
+
+  !*********************************
+  !returns an array of size nPhotoBins containing
+  ! the cross section (cm2) of the idx-th photoreaction
+  function krome_get_xsec(idx)
+    use krome_commons
+    implicit none
+    real*8::krome_get_xsec(nPhotoBins)
+    integer::idx
+    
+    krome_get_xsec(:) = photoBinJTab(idx,:)
+    
+  end function krome_get_xsec
 
   !*********************************
   !returns an array with the integrated photo heatings (erg/s)
@@ -557,6 +571,29 @@ contains
     call krome_set_photoBinJ(tmp_J(:))
 
   end subroutine krome_load_photoBin_file
+
+
+  !**********************************
+  subroutine krome_set_photoBin_BBlin(lower,upper,Tbb)
+    use krome_commons
+    use krome_constants
+    use krome_photo
+    use krome_subs
+    implicit none
+    real*8::lower,upper,Tbb,x
+    integer::i
+
+    call krome_set_photoBinE_lin(lower,upper)
+
+    !eV/cm2/sr
+    do i=1,nPhotoBins
+       x = photoBinEmid(i) !eV
+       photoBinJ(i) = planckBB(x,Tbb)
+    end do
+    photoBinJ_org(:) = photoBinJ(:)
+
+  end subroutine krome_set_photoBin_BBlin
+
 
   !**********************************
   subroutine krome_set_photoBin_BBlog(lower,upper,Tbb)
