@@ -262,7 +262,7 @@ contains
     xLd = fit_anytab2D(CoolZNOUV_x(:), CoolZNOUV_y(:), CoolZNOUV_z(:,:), &
                  CoolZNOUV_xmul, CoolZNOUV_ymul,logcH,Tgas)
 
-    cooling_ZCIENOUV = 10**xLd * cH * cH
+    cooling_ZCIENOUV = 10**xLd * cH * cH * total_Z
 
    end function cooling_ZCIENOUV
 #ENDIFKROME
@@ -359,7 +359,7 @@ contains
          vv12) + vv12
 
     !Z cooling in erg/s/cm3
-    cooling_ZCIE = 1d1**xLd * cH * cH
+    cooling_ZCIE = 1d1**xLd * cH * cH * total_Z
 
   end function cooling_ZCIE
 

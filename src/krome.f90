@@ -431,6 +431,10 @@ contains
     !init phys common variables
 #KROME_init_phys_variables
 
+    !init metallicity default
+    !assuming solar
+    total_Z = 1d0
+
     !default for thermo toggle is ON
     !$omp parallel
     krome_thermo_toggle = 1
