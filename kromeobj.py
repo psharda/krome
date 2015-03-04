@@ -1974,8 +1974,14 @@ class krome():
 
 			#check for xsec from file
 			if("@xsecFile=" in myrea.krate):
-				if(not(inPhotoBlock)): sys.exit("ERROR: @xsecFile token requires a photorate block!")
+				if(not(inPhotoBlock)):
+					print "ERROR: @xsecFile token requires a photorate block!"
+					print " (i.e. @photo_start, @photo_stop tokes)"
+					sys.exit()
 				myrea.hasXsecFile = True
+				#if file is SWRI convert to KROME
+				if(myrea.krate.strip()=="@xsecFile=SWRI"):
+					SWRI2KROME(self.buildFolder,myrea.reactants[0],myrea.products)
 
 			#this reaction is on surface
 			if(inSurfaceBlock):

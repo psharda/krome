@@ -41,7 +41,8 @@
 # KROME PYTHON SCRIPT
 
 
-import sys
+import sys,os
+from scipy import interpolate
 ##################################
 class molec():
 	name = "" #molecule name
@@ -136,6 +137,10 @@ class reaction():
 			args += " xsec"+sidx+"_n, xsec"+sidx+"_idE"
 			self.kphrate = "xsec_interp(energy_eV, "+args+")"
 			self.xsecFile = self.krate.replace("@xsecFile=","").strip()
+			if(self.xsecFile.upper()=="SWRI"):
+				RR = self.reactants[0].name
+				PP = ("_".join([x.name for x in self.products]))
+				self.xsecFile = "swri_"+RR+"__"+PP+".dat"
 		self.krate = "photoBinRates("+str(self.idxph)+")"
 		#if(self.krate.strip()=="krome_kph_auto"): 
 		#	self.krate = "krome_kph_"+myr[0].phname
@@ -275,6 +280,69 @@ def searchSpeciesByName(speciesList,speciesName):
 		if(xsp.name==speciesName): return xsp
 
 	sys.exit("ERROR: species "+speciesName+" not found by searchSpeciesByName!")
+
+
+###############################
+#convert a SWRI datafile to KROME format in the build folder
+def SWRI2KROME(build_folder,reactant,products):
+	prods = [x.name for x in products]
+	data_folder = "data/database/swri_xsecs/" 
+	fname = data_folder+reactant.name+".dat"
+	if(not(os.path.exists(fname))):
+		print "ERROR: file "+fname+" doesn't exist!"
+		print "Species "+reactant.name+" doesn't have a SWRI file."
+		print "Search on http://phidrates.space.swri.edu"
+		print " and copy to "+data_folder
+		sys.exit()
+	#read data from the file and store the data and the header
+	fswri = open(fname,"rb")
+	okrow = []
+	for row in fswri:
+		srow = row.strip()
+		if(srow==""): continue
+		arow = [x.strip() for x in srow.split(" ") if x!=""]
+		if(arow[0]=="Lambda"):
+			lastLambda = arow[:]
+			okrow = []
+			continue
+		okrow.append(arow)
+	fswri.close()
+
+	#write branches slash separated and include electrons if needed
+	lastLambda = [sorted((x.replace("+","+/E/")).split("/")) for x in lastLambda]
+	#remove empty prdoducts if any
+	lastLambda = [[y for y in x if y!=""] for x in lastLambda]
+	
+
+	#search the column that contains the given branch
+	psort = sorted(prods)
+	if(not(psort in lastLambda)):
+		print "ERROR: products "+(" ".join(psort))+" aren't in the SWRI file "+data_folder
+		print "Available:",lastLambda[2:]
+		sys.exit()
+	data_col = lastLambda.index(psort)
+
+	#some constants to convert AA to eV
+	clight = 2.99792458e10 #cm/s
+	hplanck = 4.135667516e-15 #eV*s
+
+	#prepare data for interpolation
+	xdata = []
+	ydata = []
+	for row in okrow[::-1]:
+		xdata.append(clight*hplanck/(float(row[0])*1e-8)) #AA->eV
+		ydata.append(float(row[data_col])) #cross section cm2
+	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
+
+	#write the file to the build folder (reverse array to have increasing energy)
+	foutx = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".dat","w")
+	imax = 100
+	for i in range(imax):
+		emax = min(max(xdata),4e1)
+		xenergy = i*(emax-min(xdata))/(imax-1)+min(xdata)
+		foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
+		
+	foutx.close()
 
 #################################
 #create tabvar (probably not the best interface ever)
