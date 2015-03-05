@@ -141,6 +141,10 @@ class reaction():
 				RR = self.reactants[0].name
 				PP = ("_".join([x.name for x in self.products]))
 				self.xsecFile = "swri_"+RR+"__"+PP+".dat"
+			if(self.xsecFile.upper()=="LEIDEN"):
+				RR = self.reactants[0].name
+				PP = ("_".join([x.name for x in self.products]))
+				self.xsecFile = "leiden_"+RR+"__"+PP+".dat"
 		self.krate = "photoBinRates("+str(self.idxph)+")"
 		#if(self.krate.strip()=="krome_kph_auto"): 
 		#	self.krate = "krome_kph_"+myr[0].phname
@@ -281,14 +285,95 @@ def searchSpeciesByName(speciesList,speciesName):
 
 	sys.exit("ERROR: species "+speciesName+" not found by searchSpeciesByName!")
 
+###############################
+#convert a LEIDEN datafile to KROME format in the build folder
+# see http://home.strw.leidenuniv.nl/~ewine/photo/
+def LEIDEN2KROME(build_folder,reactant,products):
+	prods = [x.name for x in products]
+	data_folder = "data/database/leiden_xsecs/"
+	fname1 = data_folder+reactant.name+"__"+("_".join(prods))+".dat"
+	fname2 = data_folder+reactant.name+"__"+("_".join(prods[::-1]))+".dat"
+
+	if(os.path.exists(fname1)):
+		fname = fname1
+	elif(os.path.exists(fname2)):
+		fname = fname2
+	else:
+		print
+		print "ERROR: file "+fname1+" OR"
+		print " file "+fname2+" don't exist!"
+		print "Species "+reactant.name+" doesn't have a LEIDEN file."
+		print "Search on http://home.strw.leidenuniv.nl/~ewine/photo/index.php?file=pd.php"
+		print " and copy to "+data_folder
+		print "The file should be in the format R__P_P.dat, "
+		print " where R is the reactant name and P the products,"
+		print " e.g. "+fname1
+		sys.exit()
+
+	#read data from the file and store the data and the header
+	fleiden = open(fname,"rb")
+	rowCont = []
+	rowLine = []
+	icount = 0
+	for row in fleiden:
+		srow = row.strip()
+		if(srow==""): continue
+		icount += 1
+		if(icount==1): continue #skip title
+		if(icount==2):
+			nCont = int(srow) #number of continuum lines
+			continue #skip title
+		arow = [x.strip() for x in srow.split(" ") if x!=""]
+		if(icount>4+nCont): rowCont.append(arow)
+		if(icount>2 and icount<2+nCont): rowCont.append(arow)
+	fleiden.close()
+
+	if(len(rowCont)==0):
+		print "ERROR: "+reactant.name+" photodissociation doesn't have continuum data!"
+		sys.exit()
+
+
+	print "automatic reaction from LEIDEN database found: "+reactant.name+" -> "+(" + ".join(prods))
+
+	#some constants to convert AA to eV
+	clight = 2.99792458e10 #cm/s
+	hplanck = 4.135667516e-15 #eV*s
+
+	#prepare data for interpolation and dump original data for comparison
+	xdata = []
+	ydata = []
+	foutorg = open(build_folder+"leiden_"+reactant.name+"__"+("_".join(prods))+".org","w")
+	#reverse array to have increasing energy
+	for row in rowCont[::-1]:
+		xenergy = clight*hplanck/(float(row[1])*1e-8) #AA->eV
+		xsec = float(row[2]) #cross section cm2
+		xdata.append(xenergy)
+		ydata.append(xsec)
+		foutorg.write(str(xenergy)+" "+str(xsec)+"\n")
+	foutorg.close()
+	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
+
+
+	#write the file to the build folder
+	foutx = open(build_folder+"leiden_"+reactant.name+"__"+("_".join(prods))+".dat","w")
+	imax = 100
+	for i in range(imax):
+		emax = min(max(xdata),4e1)
+		xenergy = i*(emax-min(xdata))/(imax-1)+min(xdata)
+		foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
+		
+	foutx.close()
+	
+
 
 ###############################
 #convert a SWRI datafile to KROME format in the build folder
-def SWRI2KROME(build_folder,reactant,products):
+def SWRI2KROME(build_folder,reactant,products,Eth):
 	prods = [x.name for x in products]
 	data_folder = "data/database/swri_xsecs/" 
 	fname = data_folder+reactant.name+".dat"
 	if(not(os.path.exists(fname))):
+		print
 		print "ERROR: file "+fname+" doesn't exist!"
 		print "Species "+reactant.name+" doesn't have a SWRI file."
 		print "Search on http://phidrates.space.swri.edu"
@@ -322,6 +407,8 @@ def SWRI2KROME(build_folder,reactant,products):
 		sys.exit()
 	data_col = lastLambda.index(psort)
 
+	print "automatic reaction from SWRI database found: "+reactant.name+" -> "+(" + ".join(psort))
+
 	#some constants to convert AA to eV
 	clight = 2.99792458e10 #cm/s
 	hplanck = 4.135667516e-15 #eV*s
@@ -330,15 +417,24 @@ def SWRI2KROME(build_folder,reactant,products):
 	xdata = []
 	ydata = []
 	foutorg = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".org","w")
+	Eth = 1e99 #default threshold energy
 	#reverse array to have increasing energy
+	xsec_old = 0e0
 	for row in okrow[::-1]:
+		if(float(row[0])<=0e0): continue
 		xenergy = clight*hplanck/(float(row[0])*1e-8) #AA->eV
 		xsec = float(row[data_col]) #cross section cm2
 		xdata.append(xenergy)
 		ydata.append(xsec)
+		#find threshold for photoionization
+		if(xsec==0e0 and xsec_old!=0e0):
+			if("E" in products): Eth = xenergy_old
 		foutorg.write(str(xenergy)+" "+str(xsec)+"\n")
+		xsec_old = xsec
+		xenergy_old = xenergy
 	foutorg.close()
 	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
+
 
 	#write the file to the build folder
 	foutx = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".dat","w")
