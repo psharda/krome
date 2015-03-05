@@ -425,7 +425,7 @@ contains
        j1 = 1 !first index
        j2 = dust_nT !last index
        !no need to compute Tdust when small amount of dust
-       if(n(nmols+1)<1d-18*ntot) then
+       if(xdust(i)<1d-18*ntot) then
 #IFKROME_usedTdust
           n(nmols+ndust+i) = Tgas
           cycle

@@ -232,8 +232,9 @@ class krome():
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH, CR, PHOTOAV,VISCOUS.\
 			If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
-		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems)")
-		self.parser.add_argument("-listAutomatics", action="store_true", help="list all the automatic reactions available")
+		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems).")
+		self.parser.add_argument("-listAutomatics", action="store_true", help="list all the automatic reactions available.")
+		self.parser.add_argument("-listSWRI", action="store_true", help="list all the photo reactions available in the SWRI database.")
 		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
 		self.parser.add_argument("-mergeTlimits", action="store_true", help="use the same reaction index for equivalent\
 			reactions (same reactants and products) that have different temperature limits")
@@ -584,6 +585,30 @@ class krome():
 						typea = srow.replace("@type:","").strip()
 				print
 			sys.exit()
+
+		#list all the reactions availbale from the SWRI database files
+		if(args.listSWRI):
+			swriPath = "data/database/swri_xsecs/"
+			if(not(file_exists(swriPath))):
+				print "ERROR: database directory "+swriPath+" not found!"
+				sys.exit()
+			print "List of the reactions present in the SWRI datafiles (-listSWRI option):"
+			file_list = [f for f in listdir(swriPath) if isfile(join(swriPath,f))]
+			for fname in file_list:
+				if("~" in fname): continue
+				swriR = fname.replace(".dat","")
+				fswri = open(swriPath+fname,"rb")
+				for row in fswri:
+					srow = row.strip()
+					if(srow==""): continue
+					arow = [x for x in srow.split(" ") if x!=""]
+					if(arow[0]=="Lambda"): storeLambda = arow
+				print "in "+fname
+				for branch in storeLambda[2:]:
+					print " "+swriR+" -> "+" + ".join([x for x in branch.replace("+","+/E/").split("/") if x!=""])
+
+			sys.exit()
+
 		
 		#get a citation and exit
 		if(args.quote):
@@ -1981,7 +2006,10 @@ class krome():
 				myrea.hasXsecFile = True
 				#if file is SWRI convert to KROME
 				if(myrea.krate.strip()=="@xsecFile=SWRI"):
-					SWRI2KROME(self.buildFolder,myrea.reactants[0],myrea.products)
+					SWRI2KROME(self.buildFolder,myrea.reactants[0],myrea.products,myrea.Tmin)
+				#if file is LEIDEN convert to KROME
+				if(myrea.krate.strip()=="@xsecFile=LEIDEN"):
+					LEIDEN2KROME(self.buildFolder,myrea.reactants[0],myrea.products)
 
 			#this reaction is on surface
 			if(inSurfaceBlock):
@@ -5458,7 +5486,7 @@ class krome():
 				if(k.upper()==mols.name.upper()):
 					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
-		skip = False
+		skip = skipDustOpacity = False
 		#loop on source to pre-process pragmas
 		for row in fh:
 
@@ -5471,10 +5499,13 @@ class krome():
 			if(srow == "#IFKROME_use_coolingZ" and not(self.useCoolingZ)): skip = True
 			if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
+			if(srow == "#IFKROME_dust_opacity" and not(self.useDust)): skipDustOpacity = True
 
 			if(srow == "#ENDIFKROME"): skip = False
+			if(srow == "#ENDIFKROME_dust_opacity"): skipDustOpacity = False
 
 			if(skip): continue
+			if(skipDustOpacity): continue
 
 			if(srow == "#KROME_species"):
 				allBasics = []
@@ -5560,7 +5591,6 @@ class krome():
 					fout.write("k(:) = coolingZ_rate_tabs(inTgas)\n")
 					fout.write(funcname+" = "+x[0]+"(n(:),n(idx_Tgas),k(:)) *  boltzmann_erg\n")
 					fout.write("end function "+funcname+"\n")
-
 			elif(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(srow == "#KROME_zero_electrons"):

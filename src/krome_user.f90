@@ -70,7 +70,7 @@ contains
   !this subroutine sets the dust distribution in the range
   ! alow_arg, aup_arg, using power law with exponent phi_arg.
   ! All these arguments are optional.
-  subroutine krome_set_dust_distribution(x,dust_gas_ratio,alow_arg,aup_arg,phi_arg)
+  subroutine krome_init_dust_distribution(x,dust_gas_ratio,alow_arg,aup_arg,phi_arg)
     use krome_dust
     real*8,optional::alow_arg,aup_arg,phi_arg
     real*8::alow,aup,phi,dust_gas_ratio,x(:)
@@ -100,6 +100,18 @@ contains
 
   end function krome_get_dust_distribution
 
+  !*****************************
+  !this function sets the dust distribution with an array
+  ! that contains the amount of dust per bin in 1/cm3.
+  subroutine krome_set_dust_distribution(arg)
+    use krome_commons
+    implicit none
+    real*8::arg(ndust)
+
+    xdust(:) = arg(:)
+
+  end subroutine krome_set_dust_distribution
+
   !******************************
   !this function returns an array of size krome_ndust
   ! that contains the size of the dust bins in cm
@@ -111,6 +123,20 @@ contains
     krome_get_dust_size(:) = krome_dust_asize(:)
 
   end function krome_get_dust_size
+
+  !******************************
+  !this function returns an array of size krome_ndust
+  ! that contains the size of the dust bins in cm
+  subroutine krome_set_dust_size(arg)
+    use krome_commons
+    implicit none
+    real*8::arg(ndust)
+
+    krome_dust_asize(:) = arg(:)
+    krome_dust_asize2(:) = arg(:)**2
+    krome_dust_asize3(:) = arg(:)**3
+
+  end subroutine krome_set_dust_size
 
   !************************
   !this function sets the default temperature
@@ -790,6 +816,7 @@ contains
   ! An array of size krome_nPhotoBins is returned.
   function krome_get_opacity(x,Tgas)
     use krome_commons
+    use krome_constants
     use krome_photo
     use krome_subs
     implicit none
@@ -820,11 +847,13 @@ contains
   ! An array of size krome_nPhotoBins is returned.
   function krome_get_opacity_size(x,Tgas,csize)
     use krome_commons
+    use krome_constants
     use krome_photo
     use krome_subs
+    use krome_dust
     implicit none
     real*8::x(:),tau,krome_get_opacity_size(nPhotoBins),Tgas
-    real*8::csize,n(nspec)
+    real*8::csize,n(nspec),energy
     integer::i,j,idx
 
     n(1:nmols) = x(:)
@@ -838,9 +867,17 @@ contains
           !calc opacity as column_density * cross_section
           !where column_density is density*cell_size
           idx = photoPartners(i)
-          tau = tau + x(idx) * csize * photoBinJTab(i,j)
+          tau = tau + x(idx) * photoBinJTab(i,j)
        end do
-       krome_get_opacity_size(j) = tau !store
+
+#IFKROME_dust_opacity
+       energy = photoBinEmid(j)
+       do i=1,ndust
+          tau = tau + pi*krome_dust_asize2(i)*xdust(i) * get_Qabs(energy,i)
+       end do
+#ENDIFKROME_dust_opacity
+
+       krome_get_opacity_size(j) = tau * csize !store
     end do
 
   end function krome_get_opacity_size
