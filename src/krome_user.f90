@@ -70,7 +70,8 @@ contains
   !this subroutine sets the dust distribution in the range
   ! alow_arg, aup_arg, using power law with exponent phi_arg.
   ! All these arguments are optional.
-  subroutine krome_init_dust_distribution(x,dust_gas_ratio,alow_arg,aup_arg,phi_arg)
+  subroutine krome_init_dust_distribution(x,dust_gas_ratio,alow_arg,&
+       aup_arg,phi_arg)
     use krome_dust
     real*8,optional::alow_arg,aup_arg,phi_arg
     real*8::alow,aup,phi,dust_gas_ratio,x(:)
@@ -86,7 +87,7 @@ contains
 
     call set_dust_distribution(x(:),dust_gas_ratio,alow,aup,phi)
 
-  end subroutine krome_set_dust_distribution
+  end subroutine krome_init_dust_distribution
 
   !*****************************
   !this function returns an array of size krome_ndust

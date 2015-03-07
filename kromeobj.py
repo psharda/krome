@@ -5247,14 +5247,17 @@ class krome():
 								fout.write("!partner species sum with evaporation control for "+dType+" dust\n")
 								fout.write("do i=1,"+str(self.dustArraySize)+"\n")
 								fout.write(" if(dn(nmols+"+offset+"i)>-1d0 .and. n(nmols+"+offset+"i)>1d-40) then\n")
-								fout.write(sumTypeVar+" = "+sumTypeVar + " + 4d0*pi*dn(nmols+"+offset+"i)*n(nmols+"+offset+"i)**2*krome_grain_rho / krome_dust_partner_mass("\
+								fout.write(sumTypeVar+" = "+sumTypeVar \
+									+ " + 4d0*pi*dn(nmols+"+offset+"i)*n(nmols+"\
+									+offset+"i)**2*krome_grain_rho / krome_dust_partner_mass("\
 									+str(iType+1)+")*xdust("+offset+"i)\n")
 								fout.write(" else\n")
+								fout.write(sumTypeVar+" = "+sumTypeVar + " + 4d0*pi/3d0*n(nmols+"\
+									+offset+"i)**3*krome_grain_rho / krome_dust_partner_mass("\
+									+str(iType+1)+")*xdust("+offset+"i)\n")
 								fout.write("   n(nmols+"+offset+"i) = 0d0\n")
 								fout.write("   dn(nmols+"+offset+"i) = 0d0\n")
 								fout.write("   xdust("+offset+"i) = 0d0\n")
-								fout.write(sumTypeVar+" = "+sumTypeVar + " + 4d0*pi/3d0*n(nmols+"+offset+"i)**3*krome_grain_rho / krome_dust_partner_mass("\
-									+str(iType+1)+")*xdust("+offset+"i)\n")
 								fout.write(" end if\n")
 								fout.write("end do\n\n")
 								iType += 1

@@ -40,7 +40,7 @@ program test_krome
   do i=1,imax
      x(:) = xi(:)
      !re-init dust
-     call krome_set_dust_distribution(x(:),1d-2)
+     call krome_init_dust_distribution(x(:),1d-2)
      Tgas = 1d1**((i-1)*(4d0-1d0) / (imax-1) + 1d0)
      call krome_set_Tdust(Tgas) !Tdust is coupled with Tgas
      if(mod(i,10)==0) print *,Tgas !print every 10
