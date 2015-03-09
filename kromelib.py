@@ -42,7 +42,6 @@
 
 
 import sys,os
-from scipy import interpolate
 ##################################
 class molec():
 	name = "" #molecule name
@@ -289,6 +288,13 @@ def searchSpeciesByName(speciesList,speciesName):
 #convert a LEIDEN datafile to KROME format in the build folder
 # see http://home.strw.leidenuniv.nl/~ewine/photo/
 def LEIDEN2KROME(build_folder,reactant,products):
+	try:
+		from scipy import interpolate
+	except:
+		print "ERROR: scipy not installed!"
+		print " This module is necessary to use LEIDEN xsecs."
+		sys.exit()
+
 	prods = [x.name for x in products]
 	data_folder = "data/database/leiden_xsecs/"
 	fname1 = data_folder+reactant.name+"__"+("_".join(prods))+".dat"
@@ -369,6 +375,13 @@ def LEIDEN2KROME(build_folder,reactant,products):
 ###############################
 #convert a SWRI datafile to KROME format in the build folder
 def SWRI2KROME(build_folder,reactant,products,Eth):
+	try:
+		from scipy import interpolate
+	except:
+		print "ERROR: scipy not installed!"
+		print " This module is necessary to use SWRI xsecs."
+		sys.exit()
+
 	prods = [x.name for x in products]
 	data_folder = "data/database/swri_xsecs/" 
 	fname = data_folder+reactant.name+".dat"
