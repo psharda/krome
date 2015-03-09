@@ -2911,10 +2911,8 @@ class krome():
 		if(self.useDust):
 			j = 0
 			iType = 0
-			ebinds = {"C":7.374e0, "Si":4.630e0} #binding energies in eV
 			for dType in dustTypes:
 				iType += 1
-				ebind = ebinds[dType] / 8.6173324e-5 #eV->K
 				for i in range(dustArraySize):
 					myndust = dustArraySize*dustTypesSize
 					j += 1
@@ -2922,13 +2920,13 @@ class krome():
 					#******growth / sputtering******
 					if(self.useDustGrowth):
 						dns[nmols+j-1] += " + krome_dust_growth(n(idx_"+dType+"),Tgas,krome_dust_T("+str(j)+"),"
-						dns[nmols+j-1] += "vgas,"+partner_mass+",krome_grain_rho)"
+						dns[nmols+j-1] += "vgas,"+partner_mass+",krome_grain_rho("+str(iType)+"))"
 					if(self.useDustSputter):
 						dns[nmols+j-1] += " &\n- krome_dust_sput(Tgas,krome_dust_asize("
 						dns[nmols+j-1] += str(j)+"),ntot,n("+str(nmols+j)+"))"
 					if(self.useDustEvap):
-						dns[nmols+j-1] += " &\n- dust_evap(krome_dust_T("+str(j)+"),"+format_double(ebind)
-						dns[nmols+j-1] += ","+partner_mass+",n("+str(nmols+j)+")**2,krome_grain_rho)"
+						dns[nmols+j-1] += " &\n- dust_evap(krome_dust_T("+str(j)+"),krome_dust_Tevap("+str(j)+")"
+						dns[nmols+j-1] += ","+partner_mass+",n("+str(nmols+j)+")**2,krome_grain_rho("+str(iType)+"))"
 					dns[nmols+j-1] = dns[nmols+j-1].replace("= 0.d0 +", "=") 
 
 		#find the maximum number of products and reactants
@@ -4642,13 +4640,25 @@ class krome():
 			fout = open(buildFolder+"krome_dust.f90","w")
 
 
-		dustPartnerIdx = dustQabs = dustOptInt = "" 
+		dustPartnerIdx = dustQabs = dustOptInt = ""
+		dustGrainDensity = dustEvaporationTemperature = ""
+		dustBulkDensity = {"C":2.25e0, "Si":3.13e0} #bulk density in g/cm3 (Zhukovska PhD.Th., Tab.4.1)
+		dustTEvap = {"C":8.888e4, "Si":6.056e4} #evaporation density in K (Evans+93, Tab.5.1)
 		if(self.useDust):
 			itype = 0 #dust type index
 			#loop in dust types
 			for dType in self.dustTypes:
 				itype += 1 #increase index
 				dustPartnerIdx += "krome_dust_partner_idx("+str(itype)+") = idx_"+dType+"\n"
+				dustGrainDensity += "krome_grain_rho("+str(itype)+") = "+format_double(dustBulkDensity[dType])+"\n"
+				i1mult = str(itype-1)+"*nd+1"
+				i2mult = str(itype)+"*nd"
+				if(itype==1):
+					i1mult = "1"
+					i2mult = "nd"
+				if(itype==2):
+					i1mult = "nd+1"
+				dustEvaporationTemperature += "krome_dust_Tevap("+i1mult+":"+i2mult+") = "+format_double(dustTEvap[dType])+"\n"
 				if(useDustT or usedTdust): dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")\n" #,dust_opt_Qabs_"+dType
 			if(useDustT or usedTdust): dustOptInt += "call dust_init_intBB()"
 
@@ -4672,6 +4682,8 @@ class krome():
 			if(skipPhotoDust): continue
 			if(skip): continue
 
+			row = row.replace("#KROME_dust_grain_density", dustGrainDensity)
+			row = row.replace("#KROME_dust_evaporation_temperature", dustEvaporationTemperature)
 			row = row.replace("#KROME_dust_seed", self.dustSeed)
 			row = row.replace("#KROME_dustPartnerIndex", dustPartnerIdx)
 			row = row.replace("#KROME_init_Qabs", dustQabs)
@@ -5255,11 +5267,11 @@ class krome():
 								fout.write(" if(dn(nmols+"+offset+"i)>-1d0 .and. n(nmols+"+offset+"i)>1d-40) then\n")
 								fout.write(sumTypeVar+" = "+sumTypeVar \
 									+ " + 4d0*pi*dn(nmols+"+offset+"i)*n(nmols+"\
-									+offset+"i)**2*krome_grain_rho / krome_dust_partner_mass("\
+									+offset+"i)**2*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
 									+str(iType+1)+")*xdust("+offset+"i)\n")
 								fout.write(" else\n")
 								fout.write(sumTypeVar+" = "+sumTypeVar + " + 4d0*pi/3d0*n(nmols+"\
-									+offset+"i)**3*krome_grain_rho / krome_dust_partner_mass("\
+									+offset+"i)**3*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
 									+str(iType+1)+")*xdust("+offset+"i)\n")
 								fout.write("   n(nmols+"+offset+"i) = 0d0\n")
 								fout.write("   dn(nmols+"+offset+"i) = 0d0\n")
@@ -5276,8 +5288,8 @@ class krome():
 								kpart = "krome_dust_partner_ratio(" + str(ilow-nmols) + ":" + str(iup-nmols) + ")"
 								limits = str(ilow) + ":" + str(iup) #absolute limits
 								limits_rel = str(ilow-nmols) + ":" + str(iup-nmols) #realtive limits
-								fout.write("dSumDust"+dType + " = sum(4d0*pi*n("+limits+")**2*dn("+limits+")*krome_grain_rho / "\
-									+"krome_dust_partner_mass("+str(iType+1)+") * xdust("+limits_rel+"))\n")
+								fout.write("dSumDust"+dType + " = sum(4d0*pi*n("+limits+")**2*dn("+limits+")*krome_grain_rho("\
+									+str(iType+1)+") / "+"krome_dust_partner_mass("+str(iType+1)+") * xdust("+limits_rel+"))\n")
 								iType += 1
 						fout.write("\n") #print a blank line
 

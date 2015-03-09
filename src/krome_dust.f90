@@ -33,14 +33,20 @@ contains
 
     mass(:) = get_mass()
     nd = ndust/ndustTypes
-    krome_grain_rho = 2.3d0 !dust grain density g/cm3 (graphite fits all)
+
+    !dust grain density (g/cm3)
+#KROME_dust_grain_density
+
+    !dust evaporation temperature (K)
+#KROME_dust_evaporation_temperature
 
     rhogas = sum(mass(1:nmols)*ngas(:)) !total gas density g/cm3
 
     !loop on dust types
     do j=1,ndustTypes
        !integration constant
-       myc = rhogas*d2g/(4d0*pi/3d0*krome_grain_rho*(aup**phi4-alow**phi4)/phi4)
+       myc = rhogas*d2g/(4d0*pi/3d0*krome_grain_rho(j) &
+            *(aup**phi4-alow**phi4)/phi4)
        ilow = nd * (j - 1) + 1 !lower index
        iup = nd * j !upper index
 
@@ -357,6 +363,7 @@ contains
 #IFKROME_usedTdust
        Tff = n(nmols+ndust+j)
 #ENDIFKROME_usedTdust
+       if(xdust(j)<1d-20) cycle
        !when temperature difference is small
        ! Tgas can be used instead of Tdust
        if(abs(Tff-Tgas)<5d0) Tff = Tgas
@@ -684,7 +691,7 @@ contains
     !yield contains thermal speed (y*vgas)
     logy = exp(-a0 * logT) / (a1 + a2 * logT) + a3
     y = 1d1**logy
-    mgrain = adust**3 *krome_grain_rho / (p_mass)
+    mgrain = adust**3 *2.3d0 / (p_mass)
     krome_dust_sput = y*natom*nndust*adust**2 / mgrain
 
     if(krome_dust_sput>1.d0) then
