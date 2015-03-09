@@ -189,7 +189,7 @@ contains
        open(33,file="KROME_dust_intBB.dat",status="old")
        nread = 0
        do
-          read(33,*,iostat=ios) k,i,rout(4)
+          read(33,*,iostat=ios) k,i,rout(:)
           if(ios.ne.0) exit
           nread = nread + 1
           dust_intBB_Tbb(i) = rout(1)
