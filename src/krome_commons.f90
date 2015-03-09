@@ -37,7 +37,8 @@ module krome_commons
   real*8::krome_dust_partner_mass(ndustTypes)
   real*8::krome_dust_asize(ndust),krome_dust_T(ndust)
   real*8::krome_dust_asize2(ndust),krome_dust_aspan(ndust)
-  real*8::krome_dust_asize3(ndust),krome_grain_rho
+  real*8::krome_dust_asize3(ndust),krome_grain_rho(ndustTypes)
+  real*8::krome_dust_Tevap(ndust)
   real*8,allocatable::dust_Qabs(:,:),dust_Qabs_E(:)
   real*8,allocatable::dust_intBB(:,:),dust_intBB_sigma(:,:)
   real*8,allocatable::dust_intBB_dT(:,:)

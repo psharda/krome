@@ -536,19 +536,19 @@
 #3body catalysis
 @var:ntot=sum(n(1:nmols))
 @format:idx,R,R,P,Tmin,Tmax,rate
-280,C,C,C2,NONE,5d3,5.99d-33*(Tgas/5d3)**-1.6*ntot
-281,C,C,C2,5d3,NONE,5.99d-33*(Tgas/5d3)**-0.64*exp(5255./Tgas)*ntot
+280,C,C,C2,NONE,5d3,5.99d-33*(Tgas/5d3)**(-1.6)*ntot
+281,C,C,C2,5d3,NONE,5.99d-33*(Tgas/5d3)**(-0.64)*exp(5255./Tgas)*ntot
 
-282,C,O,CO,NONE,2d3,6.16d-29*(Tgas/3d2)**-3.08*ntot
-283,C,O,CO,2d3,NONE,2.14d-29*(Tgas/3d2)**-3.08*exp(2114./Tgas)*ntot
+282,C,O,CO,NONE,2d3,6.16d-29*(Tgas/3d2)**(-3.08)*ntot
+283,C,O,CO,2d3,NONE,2.14d-29*(Tgas/3d2)**(-3.08)*exp(2114./Tgas)*ntot
 
-284,C+,O,CO+,NONE,2d3,6.16d-27*(Tgas/3d2)**-3.08*ntot
-285,C+,O,CO+,2d3,NONE,2.14d-27*(Tgas/3d2)**-3.08*exp(2114./Tgas)*ntot
+284,C+,O,CO+,NONE,2d3,6.16d-27*(Tgas/3d2)**(-3.08)*ntot
+285,C+,O,CO+,2d3,NONE,2.14d-27*(Tgas/3d2)**(-3.08)*exp(2114./Tgas)*ntot
 
-286,C,O+,CO+,NONE,2d3,6.16d-27*(Tgas/3d2)**-3.08*ntot
-287,C,O+,CO+,2d3,NONE,2.14d-27*(Tgas/3d2)**-3.08*exp(2114./Tgas)*ntot
+286,C,O+,CO+,NONE,2d3,6.16d-27*(Tgas/3d2)**(-3.08)*ntot
+287,C,O+,CO+,2d3,NONE,2.14d-27*(Tgas/3d2)**(-3.08)*exp(2114./Tgas)*ntot
 
-288,H,O,OH,NONE,NONE,4.33d-32*(T32)**-1*ntot
-289,OH,H,H2O,NONE,NONE,2.56d-31*(T32)**-2*ntot
-290,O,O,O2,NONE,NONE,9.2d-34*(T32)**-1*ntot
+288,H,O,OH,NONE,NONE,4.33d-32*(T32)**(-1)*ntot
+289,OH,H,H2O,NONE,NONE,2.56d-31*(T32)**(-2)*ntot
+290,O,O,O2,NONE,NONE,9.2d-34*(T32)**(-1)*ntot
 

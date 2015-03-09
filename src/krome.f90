@@ -349,13 +349,15 @@ contains
     
     !RATE COEFFIECIENTS
     k(:) = coe_tab(n(:))
+    idx(:) = idx_sort(k(:))
     kmax = maxval(k)
     write(fnum,*)
-    write(fnum,*) "Rate coefficients at Tgas",n(idx_Tgas)
+    write(fnum,*) "Rate coefficients (sorted) at Tgas",n(idx_Tgas)
     write(fnum,*) "**********************"
     write(fnum,'(a5,2a12,a10)') "#","k","k %","  name"
     write(fnum,*) "**********************"    
-    do i=1,nrea
+    do j=1,nrea
+       i = idx(j)
        kperc = 0.d0
        if(kmax>0.d0) kperc = k(i)*1d2/kmax
        write(fnum,'(I5,2E12.3e3,a2,a50)') i,k(i),kperc,"  ", rnames(i)
@@ -368,7 +370,7 @@ contains
     rrmax = fex_check(n(:), n(idx_Tgas))
     idx(:) = idx_sort(arr_flux(:))
     write(fnum,*)
-    write(fnum,*) "Reaction magnitude (sorted) [k*n1*n2*n3]"
+    write(fnum,*) "Reaction magnitude (sorted) [k*n1*n2*n3*...]"
     write(fnum,*) "**********************"
     write(fnum,'(a5,2a12,a10)') "#","flux","flux %","  name"
     write(fnum,*) "**********************"    
