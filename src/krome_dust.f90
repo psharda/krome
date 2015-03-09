@@ -172,14 +172,46 @@ contains
     use krome_commons
     use krome_constants
     implicit none
-    integer::i,j,k
-    real*8::Tbb,E,intBB,dE,intBB_dT
+    integer::i,j,k,ios,nread
+    real*8::Tbb,E,intBB,dE,intBB_dT,rout(4)
+    logical::exists
 
     !if already initialized no need to reload
     if(dust_intBB_Tbb(1)/=dust_intBB_Tbb(dust_nT)) return
-    
+
+
+    !check if tables are already computed
+    inquire(file="KROME_dust_intBB.dat", exist=exists)
+
+    !if tables are already present load from file
+    if(exists) then
+       print *,"Loading dust tables from file..."
+       open(33,file="KROME_dust_intBB.dat",status="old")
+       nread = 0
+       do
+          read(33,*,iostat=ios) k,i,rout(4)
+          if(ios.ne.0) exit
+          nread = nread + 1
+          dust_intBB_Tbb(i) = rout(1)
+          dust_intBB(k,i) = rout(2)
+          dust_intBB_dT(k,i) = rout(3)
+          dust_intBB_sigma(k,i) = rout(4)
+       end do
+       close(33)
+       
+       !check if the number of data loaded is OK
+       if(nread/=dust_nT*ndust) then
+          print *,"ERROR: the size of the file KROME_dust_intBB.dat"
+          print *," seems to be wrong. Delete it and restart the "
+          print *," executable."
+          stop
+       end if
+       return
+    end if
+
     print *,"Computing dust tables..."
 
+    open(33,file="KROME_dust_intBB.dat",status="replace")
     !loop on dust bins
     do k=1,ndust
        !loop on Tbb
@@ -209,8 +241,12 @@ contains
           !normalized integral
           dust_intBB_sigma(k,i) = pi * dust_intBB(k,i) &
                / (stefboltz_erg*Tbb**4)
+          !write the data on a file
+          write(33,'(2I8,99E17.8e3)') k, i, dust_intBB_Tbb(i), dust_intBB(k,i), &
+               dust_intBB_dT(k,i), dust_intBB_sigma(k,i)
        end do
     end do
+    close(33)
 
   end subroutine dust_init_intBB
 
