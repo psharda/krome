@@ -56,7 +56,7 @@ class krome():
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
-	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = True
+	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolCMBFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
@@ -245,6 +245,8 @@ class krome():
 			-nomassCheck -nochargeCheck options.")
 		self.parser.add_argument("-noExample", action="store_true", help="do not write test.f90 and Makefile in the build directory")
 		self.parser.add_argument("-nomassCheck", action="store_true", help="skip reaction mass check")
+		self.parser.add_argument("-noRecCheck", action="store_true", help="skip recombination check (species that do not recombine with electrons).")
+		self.parser.add_argument("-noSinkCheck", action="store_true", help="skip sink check (species that are only formed)")
 		self.parser.add_argument("-noTlimits", action="store_true", help="ignore rate coefficient temperature limits.")
 		self.parser.add_argument("-nuclearMult", action="store_true", help="keep into account reactants multeplicity, and modify\
 			fluxes according to this. Intended for nuclear networks.")
@@ -876,7 +878,19 @@ class krome():
 			self.checkMode = "ALL"
 		else:
 			print "ERROR: problem with -nomassCheck and/or -nochargeCheck and/or -noCheck"
+
 			sys.exit()
+
+		#skip recombination check
+		if(args.noRecCheck):
+			self.recCheck = False
+			print "Reading option -noRecCheck"
+
+		#skip sink check
+		if(args.noSinkCheck):
+			self.sinkCheck = False
+			print "Reading option -noSinkCheck"
+
 
 		#use nuclear multeplicity flux/(1.+delta_ij)
 		if(args.nuclearMult):
@@ -2366,6 +2380,49 @@ class krome():
 				continue #skip reactions same index
 			idxs.append(rea.idx)
 			nrea += 1
+
+
+		#check sinks (species that are only formed)
+		if(self.sinkCheck):
+			print "asdhask"
+			allR = []
+			allP = []
+			for rea in reacts:
+				for RR in rea.reactants:
+					if(not(RR in allR)): allR.append(RR.name)
+				for PP in rea.products:
+					if(not(PP in allP)): allP.append(PP.name)
+			sinks = []
+			sources = []
+			for PP in allP:
+				if(not(PP in allR)): sinks.append(PP)
+			for RR in allR:
+				if(not(RR in allP)): sources.append(RR)
+			if(len(sinks)>0):
+				print "ERROR: sinks found, check your network ("+(", ".join(sinks))+")!"
+				print " Disable this control with -noSinkCheck"
+				sys.exit()
+
+			if(len(sources)>0):
+				print "ERROR: sources found, check your network ("+(", ".join(sources))+")!"
+				print " Disable this control with -noSinkCheck"
+				sys.exit()
+
+		#check recombination (ion species that never recombine with electrons)
+		if(self.recCheck):
+			for sp in specs:
+				if(sp.charge>0):
+					found = False
+					for rea in reacts:
+						RR = sorted([x.name for x in rea.reactants])
+						if(RR==sorted([sp.name,"E"])):
+							found = True
+							break
+					if(not(found)):
+						print "ERROR: "+sp.name+" never recombines, check your network!"
+						print " Disable this control with -noRecCheck"
+						sys.exit()
+
 
 		#copy local to global vars
 		self.nrea = nrea
@@ -4167,6 +4224,7 @@ class krome():
 					fout.write("if(arr_p"+str(i+1)+"(i) == idx_found) found = .true.\n") 
 			elif(srow == "#KROME_conserve"):
 				fout.write(krome_conserve+"\n")
+
 			elif(srow == "#KROME_col2num_method"):
 				if(self.columnDensityMethod=="DEFAULT"):
 					fout.write("col2num = 1d3 * (ncalc/1.8d21)**1.5\n")

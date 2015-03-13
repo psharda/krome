@@ -241,9 +241,8 @@
 112,CH3+,O,HOC+,H2,NONE,NONE,2.5d-10
 113,CH3+,O,HCO+,H2,NONE,NONE,2.5d-10
 
-#KIDA, including additional channel
+#KIDA
 114,C2,O+,CO+,C,NONE,NONE,4.8d-10
-115,C2,O+,O,C2+,NONE,NONE,4.8d-10
 
 #KIDA
 116,O+,H2,H,OH+,NONE,NONE,1.69d-9
@@ -420,7 +419,6 @@
 203,C-,O,CO,E,NONE,NONE,5d-10
 204,O-,H,OH,E,NONE,NONE,7d-10
 205,O-,H2,H2O,E,NONE,NONE,7d-10
-206,O-,H2,OH-,H,NONE,NONE,3d-11
 207,O-,C,CO,E,NONE,NONE,5d-10
 
 #KIDA, including additional channel
@@ -521,13 +519,9 @@
 269,O2,O2+,E,1.17d2*user_crate
 270,OH,O,H,5.1d2*user_crate
 271,CH2,CH2+,E,5d2*user_crate
-272,CO2,CO,O,1.71d3*user_crate
 273,H2O,OH,H,9.7d2*user_crate
 274,HCO,CO,H,4.21d2*user_crate
 275,HCO,HCO+,E,1.17d3*user_crate
-276,CH3,CH2,H,5d2*user_crate
-277,CH3,CH3+,E,5d2*user_crate
-278,CH4,CH2,H2,2.34d3*user_crate
 @format:idx,R,P,P,P,rate
 279,H2,H,H+,E,9.3d-1*user_crate
 @CR_stop
