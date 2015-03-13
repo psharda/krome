@@ -495,6 +495,61 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		
 	foutx.close()
 
+################################
+def listA(arg):
+	
+	parts = []
+	part = ""
+	for a in list(arg):
+		if(a.islower()):
+			part += a
+		else:
+			if(part!=""): parts.append(part)
+			part = a
+	parts.append(part)
+	return parts
+
+################################
+def generateCustom(readCustomFile):
+	from random import random as rand
+
+	fhcustom = open(readCustomFile,"rb")
+	custom = dict()
+	for row in fhcustom:
+		srow = row.strip()
+		if(srow.strip()==""): continue
+		if(srow[0]=="#"): continue
+		custom[srow.split(":")[0].strip()] = srow.split(":")[1].strip()
+	
+	amols = ["H","H2","H+","H-","He","He+","H2+","E"]
+	emols = ["H","HH","H+","H-","He","He+","HH+","-"]
+
+	fhtmp = "custom"+str(rand()*1e8)+".tmp"
+	combs = []
+	for mol1 in emols:
+		cc = "".join(sorted(listA(mol1)))
+		combs.append([cc,[mol1]])
+		for mol2 in emols:
+			cc = "".join(sorted(listA(mol1)+listA(mol2)))
+			if("++" in cc): continue
+			if("--" in cc): continue
+			cc = cc.replace("+-","")
+			combs.append([cc,sorted([mol1,mol2])])
+			for mol3 in emols:
+				cc = "".join(sorted(listA(mol1)+listA(mol2)+listA(mol3)))
+				if("+-" in cc): continue
+				if("++" in cc): continue
+				if("--" in cc): continue
+				combs.append([cc,sorted([mol1,mol2,mol3])])
+	custRea = []
+	for RR in combs:
+		for PP in combs:
+			if(RR[0]==PP[0] and RR[1]!=PP[1]):
+				cRea = sorted([RR,PP])
+				if(not(cRea in custRea)): custRea.append(cRea)
+	for x in custRea:
+		print x[0][1],x[1][1]
+
 #################################
 #read operators and set attributes
 def readTOpt(rea):

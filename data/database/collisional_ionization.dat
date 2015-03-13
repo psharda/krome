@@ -3,13 +3,6 @@
 
 #collisional ionization rate from verner+96
 @type: colion
-@reacts: He+, E
-@prods: He++,E, E
-@limits: 3.481356d+04, 2.320904d+08
-@rate: colion_v96(Tgas, 54.4d0, 1d0, 0.205d-08, 0.2650d0, 0.25d0)
-
-#collisional ionization rate from verner+96
-@type: colion
 @reacts: Li, E
 @prods: Li+,E, E
 @limits: 1.160452d+04, 2.320904d+08
