@@ -107,6 +107,8 @@ class reaction():
 	isSurface = False #flag this reaction as Surface reaction
 	hasXsecFile = False #photo cross section is loaded from file
 	xsecFile = "" #cross section file
+	photoForm = []
+	photoDestroy = []
 
 	#method: constructor to initialize lists
 	def __init__(self):
@@ -363,8 +365,8 @@ def LEIDEN2KROME(build_folder,reactant,products):
 	#write the file to the build folder
 	foutx = open(build_folder+"leiden_"+reactant.name+"__"+("_".join(prods))+".dat","w")
 	imax = 100
+	emax = min(max(xdata),4e1)
 	for i in range(imax):
-		emax = min(max(xdata),4e1)
 		xenergy = i*(emax-min(xdata))/(imax-1)+min(xdata)
 		foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
 		
@@ -406,11 +408,35 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		okrow.append(arow)
 	fswri.close()
 
+	#replace states, e.g. C1D->C
+	lold = lastLambda[:]
+	for state in ["1D","1S","3P"]:
+		lastLambda = [x.replace(state,"") for x in lastLambda]
+
+	#check columns with same products (after state replacing)
+	match = [] #index matching
+	founds = []
+	for i in range(len(lastLambda)-1):
+		match.append([])
+		for j in range(i+1,len(lastLambda)):
+			if(lastLambda[i]==lastLambda[j] and not(j in founds)):
+				match[i].append(j)
+				founds.append(j)
+
+	#merge (sum) columns with same products (after state replacing)
+	removecol = []
+	for j in range(len(match)):
+		columns = match[j]
+		if(len(columns)==0): continue #skip empty matches
+		for icol in columns:
+			removecol.append(icol)
+			for i in range(len(okrow)):
+				okrow[i][j] = float(okrow[i][j])+float(okrow[i][icol])
+
 	#write branches slash separated and include electrons if needed
 	lastLambda = [sorted((x.replace("+","+/E/")).split("/")) for x in lastLambda]
 	#remove empty prdoducts if any
 	lastLambda = [[y for y in x if y!=""] for x in lastLambda]
-	
 
 	#search the column that contains the given branch
 	psort = sorted(prods)
@@ -418,7 +444,8 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		print "ERROR: products "+(" ".join(psort))+" aren't in the SWRI file "+data_folder
 		print "Available:",lastLambda[2:]
 		sys.exit()
-	data_col = lastLambda.index(psort)
+	data_col = lastLambda.index(psort) #first column matching
+	if(data_col in removecol): sys.exit("ERROR: problem with SWRI column merging!")
 
 	print "automatic reaction from SWRI database found: "+reactant.name+" -> "+(" + ".join(psort))
 
@@ -433,12 +460,15 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	Eth = 1e99 #default threshold energy
 	#reverse array to have increasing energy
 	xsec_old = 0e0
+	xmin = xmax = None
 	for row in okrow[::-1]:
 		if(float(row[0])<=0e0): continue
 		xenergy = clight*hplanck/(float(row[0])*1e-8) #AA->eV
 		xsec = float(row[data_col]) #cross section cm2
 		xdata.append(xenergy)
 		ydata.append(xsec)
+		if(xsec>1e-28 and xmin==None): xmin = xenergy
+		if(xsec>1e-28): xmax = xenergy
 		#find threshold for photoionization
 		if(xsec==0e0 and xsec_old!=0e0):
 			if("E" in products): Eth = xenergy_old
@@ -448,13 +478,19 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	foutorg.close()
 	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
 
+	if(xmax==None or xmin==None or xmax<=xmin):
+		print "ERROR: problem with loading cross section for"
+		print reactant.name+" -> "+(" + ".join(psort))
+		print "xmin:",xmin,"xmax:",xmax
+		sys.exit()
 
 	#write the file to the build folder
 	foutx = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".dat","w")
 	imax = 100
+	emax = min(xmax,2e1)
+	emin = xmin
 	for i in range(imax):
-		emax = min(max(xdata),4e1)
-		xenergy = i*(emax-min(xdata))/(imax-1)+min(xdata)
+		xenergy = i*(emax-emin)/(imax-1)+emin
 		foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
 		
 	foutx.close()

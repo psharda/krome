@@ -165,6 +165,9 @@ contains
     integer::xsec_n,ios
     character(*)::fname
 
+    !if file already loaded skip subroutine
+    if(allocated(xsec_val)) return
+
     xsec_n = 0 !number of lines found
     !open file
     open(33,file=fname,status="old",iostat=ios)

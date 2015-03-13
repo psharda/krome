@@ -4163,6 +4163,7 @@ class krome():
 					fout.write("if(arr_p"+str(i+1)+"(i) == idx_found) found = .true.\n") 
 			elif(srow == "#KROME_conserve"):
 				fout.write(krome_conserve+"\n")
+
 			elif(srow == "#KROME_col2num_method"):
 				if(self.columnDensityMethod=="DEFAULT"):
 					fout.write("col2num = 1d3 * (ncalc/1.8d21)**1.5\n")
