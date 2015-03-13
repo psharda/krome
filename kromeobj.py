@@ -47,6 +47,7 @@ from os.path import isfile, join
 class krome():
 	#set defaults
 	solver_MF = 222
+	usingCustom = False
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
@@ -1588,6 +1589,10 @@ class krome():
 		noTabBlockStored = noTabNextBlock #store the noTabNextBlock array before inPhotoBlock to restore it
 		inCoolingBlock = False #block for custom cooling expression
 		inSurfaceBlock = False #block for reaction on surface
+
+		if(self.usingCustom):
+			filename = generateCustom(filename)
+			sys.exit()
 
 		#read the size of the file in lines (skip blank and comments)
 		# to have a rough idea of the size
