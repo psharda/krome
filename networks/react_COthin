@@ -528,6 +528,7 @@
 
 
 #3body catalysis
+@noTab_start
 @var:ntot=sum(n(1:nmols))
 @format:idx,R,R,P,Tmin,Tmax,rate
 280,C,C,C2,NONE,5d3,5.99d-33*(Tgas/5d3)**(-1.6)*ntot
@@ -545,4 +546,6 @@
 288,H,O,OH,NONE,NONE,4.33d-32*(T32)**(-1)*ntot
 289,OH,H,H2O,NONE,NONE,2.56d-31*(T32)**(-2)*ntot
 290,O,O,O2,NONE,NONE,9.2d-34*(T32)**(-1)*ntot
+
+@noTab_stop
 
