@@ -2256,6 +2256,12 @@ class krome():
 					#if the reaction is found but was already found
 					# it means that there are more temperature ranges
 					if(dbFound):
+						if(autorea["limits"].strip()==""):
+							print "ERROR: two reactions found with overlapping limits"
+							print autorea["reacts"],"->",autorea["prods"]
+							print " Found in files "+autorea["autoFname"]+" and "
+							print " "+reaFound["autoFname"]
+							sys.exit()
 						copyRea = copy.copy(rea)
 						copyRea.Tmin = autorea["limits"].split(",")[0].strip()
 						copyRea.Tmax = autorea["limits"].split(",")[1].strip()
@@ -2265,6 +2271,7 @@ class krome():
 						continue
 
 					dbFound = True
+					reaFound = autorea
 					if(rea.kphrate=="auto"):
 						reacts[i].kphrate = autorea["rate"]
 					else:
