@@ -2195,7 +2195,7 @@ class krome():
 					autoFound = True
 					break
 		
-		#search auto reaction in the database
+		#load auto reaction from the database
 		if(autoFound):
 			autoreacts = [] #dbase array contains dictionary with reaction data
 			fdbase = self.fdbase
@@ -2223,6 +2223,7 @@ class krome():
 					if("@type:" in srow):
 						myrea = dict()
 						myrea["autoFname"] = fname
+						myrea["limits"] = ""
 					myrea.update(at_extract(srow)) #append to the dictionary
 					#each reaction block ends with @rate, append to the main database array
 					if("@rate:" in srow):
@@ -2231,6 +2232,7 @@ class krome():
 			
 			#loop on the reactions to find auto
 			necessaryExtraVars = []
+			reaMultiTrange = []
 			for i in range(len(reacts)):
 				rea = reacts[i]
 				if(rea.kphrate==None):
@@ -2251,9 +2253,18 @@ class krome():
 						for ev in extraVar:
 							if(ev in necessaryExtraVars): continue
 							necessaryExtraVars.append(ev)
+					#if the reaction is found but was already found
+					# it means that there are more temperature ranges
+					if(dbFound):
+						copyRea = copy.copy(rea)
+						copyRea.Tmin = autorea["limits"].split(",")[0].strip()
+						copyRea.Tmax = autorea["limits"].split(",")[1].strip()
+						copyRea.krate = autorea["rate"]
+						copyRea = readTOpt(copyRea)
+						reaMultiTrange.append(copyRea)
+						continue
 
 					dbFound = True
-					#handle photochemistry
 					if(rea.kphrate=="auto"):
 						reacts[i].kphrate = autorea["rate"]
 					else:
@@ -2261,12 +2272,13 @@ class krome():
 					if(autorea["limits"].strip()!=""):
 						reacts[i].Tmin = autorea["limits"].split(",")[0].strip()
 						reacts[i].Tmax = autorea["limits"].split(",")[1].strip()
+						reacts[i] = readTOpt(reacts[i])
 					else:
 						reacts[i].Tmin = "2.73d0"
 						reacts[i].Tmax = "1d8"
-						reacts[i].hasTlimitMax = reacts[i].hasTlimitMin = False 
-					print "automatic reaction found!",rea.verbatim
-					break
+						reacts[i].hasTlimitMax = reacts[i].hasTlimitMin = False
+						break #no more reactions needed
+
 				#error if automatic reaction not found
 				if(not(dbFound)):
 					print "ERROR: reaction not found in the automatc database!"
@@ -2276,6 +2288,11 @@ class krome():
 					print "2. provide a non-automatic reaction rate"
 					print "3. add to the databse "+fdbase
 					sys.exit()
+
+			#append auto reactions found with different ranges of temperature
+			if(len(reaMultiTrange)>0):
+				for rea in reaMultiTrange:
+					reacts.append(rea)
 
 			#add @var to varcoe if necessary
 			for ev in necessaryExtraVars:
@@ -2420,6 +2437,25 @@ class krome():
 						print "ERROR: "+sp.name+" never recombines, check your network!"
 						print " Disable this control with -noRecCheck"
 						sys.exit()
+
+		#reverse report
+		fhrev = open(self.buildFolder+"krome_reverse.log","w")
+		fhrev.write("#reverse report\n")
+		for rea in reacts:
+			RR = sorted([x.name for x in rea.reactants])
+			PP = sorted([x.name for x in rea.products])
+			reverseFound = "NO REVERSE FOUND"
+			for rea2 in reacts:
+				RR2 = sorted([x.name for x in rea2.reactants])
+				PP2 = sorted([x.name for x in rea2.products])
+				if(RR==PP2 and PP==RR2):
+					reverseFound = rea2.verbatim
+					break
+			numFwd = str(rea.idx) + (" "*(5-len(str(rea.idx))))
+			verbFwd = rea.verbatim + (" "*(50-len(rea.verbatim)))
+			fhrev.write(numFwd+verbFwd+reverseFound+"\n")
+
+		fhrev.close()
 
 
 		#copy local to global vars

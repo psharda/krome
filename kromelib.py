@@ -496,6 +496,19 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	foutx.close()
 
 #################################
+#read operators and set attributes
+def readTOpt(rea):
+	ops = ["GT","LT","GE","LE",">","<"]
+	for op in ops:
+		if(op in rea.Tmin):
+			rea.Tmin = rea.Tmin.replace(op,"").replace(".","")
+			rea.TminOp = op.replace(">","GT").replace("<","LT")
+		if(op in rea.Tmax):
+			rea.Tmax = rea.Tmax.replace(op,"").replace(".","")
+			rea.TmaxOp = op.replace(">","GT").replace("<","LT")
+	return rea
+
+#################################
 #create tabvar (probably not the best interface ever)
 def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpaths,anytabsizes,coevars):
 	if(mytabvar.split("_")[0].lower()!="user"):
