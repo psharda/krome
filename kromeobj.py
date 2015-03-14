@@ -229,8 +229,8 @@ class krome():
 			molecules (faster). Finally a custom F90 expression e.g. -gamma=\"1d0\"\
 			can also be used. Default value is 5/3.",metavar="OPTION")
 		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be RIPAMONTI or OMUKAI")
-		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM, DH, CR, PHOTOAV,VISCOUS.\
-			If you want a complete list of the available heating options type -heating=?")
+		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM\
+			, DH, CR, PHOTOAV,VISCOUS. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems).")
 		self.parser.add_argument("-listAutomatics", action="store_true", help="list all the automatic reactions available.")
@@ -245,7 +245,8 @@ class krome():
 			-nomassCheck -nochargeCheck options.")
 		self.parser.add_argument("-noExample", action="store_true", help="do not write test.f90 and Makefile in the build directory")
 		self.parser.add_argument("-nomassCheck", action="store_true", help="skip reaction mass check")
-		self.parser.add_argument("-noRecCheck", action="store_true", help="skip recombination check (species that do not recombine with electrons).")
+		self.parser.add_argument("-noRecCheck", action="store_true", help="skip recombination check (species that do not\
+			 recombine with electrons).")
 		self.parser.add_argument("-noSinkCheck", action="store_true", help="skip sink check (species that are only formed)")
 		self.parser.add_argument("-noTlimits", action="store_true", help="ignore rate coefficient temperature limits.")
 		self.parser.add_argument("-nuclearMult", action="store_true", help="keep into account reactants multeplicity, and modify\
@@ -294,6 +295,10 @@ class krome():
 		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size\
 			NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION\
 			must be explicitly included in krome_user_commons module.", metavar="FUNCTION")
+		self.parser.add_argument("-useAutoNetwork", action="store_true", help="Use a set of instruction to build an automatic network\
+			instead of a pre-made one. This option changes the behaviour of -n FILENAME into -n INSTRUCTIONS. See\
+			custom.dat for an example. In this case you should use -n custom.dat -useAutoNetwork")
+
 		self.parser.add_argument("-useDvodeF90", action="store_true", help="use Dvode implementation in F90 (slower)")
 		self.parser.add_argument("-useEquilibrium", action="store_true", help="check if the solver has reached the equilbirum.\
 			If so break the solver's loop and return the values found. It is useful when the system oscillates around\
@@ -715,6 +720,12 @@ class krome():
 		if(args.clean):
 			self.cleanBuild = True
 			print "Reading option -clean"
+
+		#perform a clean build
+		if(args.useAutoNetwork):
+			self.useCustom = True
+			print "Reading option -useAutoNetwork"
+
 		#build isotopes automatically
 		if(args.usePlainIsotopes):
 			self.usePlainIsotopes = True
@@ -1551,7 +1562,6 @@ class krome():
 		atoms = self.atoms
 		mass_dic = self.mass_dic
 		thermodata = self.thermodata
-		print "Reading from file \""+filename+"\"..."
 		spec_names = [] #string
 		idx_list = [] #store reaction index in case of -useFileIdx
 		pseudo_hash_list = []
@@ -1591,9 +1601,12 @@ class krome():
 		inCoolingBlock = False #block for custom cooling expression
 		inSurfaceBlock = False #block for reaction on surface
 
-		if(self.usingCustom):
+		#generate a custom reaction network and replace filename with the custom one
+		if(self.useCustom):
 			filename = generateCustom(filename)
-			sys.exit()
+
+		print "Reading from file \""+filename+"\"..."
+
 
 		#read the size of the file in lines (skip blank and comments)
 		# to have a rough idea of the size
@@ -2223,6 +2236,7 @@ class krome():
 					if(srow=="#BREAK DATABASE"): break
 					if(srow[0]=="#"): continue #skip comments
 					#serach for extra variables and append
+					if("@photorates:" in srow): continue 
 					if("@var" in srow):
 						extraVars[fname].append(srow)
 					#each reaction block starts with @type, init the reaction dictionary
@@ -2412,7 +2426,6 @@ class krome():
 
 		#check sinks (species that are only formed)
 		if(self.sinkCheck):
-			print "asdhask"
 			allR = []
 			allP = []
 			for rea in reacts:
