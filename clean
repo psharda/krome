@@ -6,7 +6,7 @@ os.chdir(".")
 
 hasrm = False
 #clean all files with given extention in the root folder
-for x in [".log","~",".pyc",".dot",".gps"]:
+for x in [".log","~",".pyc",".dot",".gps",".tmp"]:
 	for files in glob.glob("*"+x):
 		os.unlink(files)
 		print "removing ./"+files
