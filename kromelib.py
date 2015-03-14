@@ -512,43 +512,168 @@ def listA(arg):
 ################################
 def generateCustom(readCustomFile):
 	from random import random as rand
+	from os import listdir
+	from os.path import isfile,join
 
-	fhcustom = open(readCustomFile,"rb")
+
+	#defaults
 	custom = dict()
+	custom["atoms"] = ["E","H","He"]
+	custom["anions"] = "yes"
+	custom["cations"] = "yes"
+	custom["maxatoms"] = "99"
+	custom["maxrea"] = "99"
+	custom["maxprod"] = "99"
+
+	#read custom file and store the info in a dict
+	fhcustom = open(readCustomFile,"rb")
 	for row in fhcustom:
 		srow = row.strip()
 		if(srow.strip()==""): continue
 		if(srow[0]=="#"): continue
-		custom[srow.split(":")[0].strip()] = srow.split(":")[1].strip()
+		if("," in srow):
+			custom[srow.split(":")[0].strip()] = [x.strip() for x in srow.split(":")[1].split(",")]
+		else:
+			custom[srow.split(":")[0].strip()] = srow.split(":")[1].strip()
 	
-	amols = ["H","H2","H+","H-","He","He+","H2+","E"]
-	emols = ["H","HH","H+","H-","He","He+","HH+","-"]
+	#species available
+	amols_org = ["H","H2","H+","H-","He","He+","H2+","E"]
+	#exploded species
+	emols_org = ["H","HH","H+","H-","He","He+","HH+","-"]
 
-	fhtmp = "custom"+str(rand()*1e8)+".tmp"
+	amols = []
+	emols = []
+	#prepare restricted set according to the options
+	for i in range(len(amols_org)):
+		#skip anions and cations if reqired
+		if(("+" in emols_org[i]) and custom["cations"]=="no"): continue
+		if(("-" in emols_org[i]) and custom["anions"]=="no"): continue
+		thisMol = emols_org[i].replace("+","").replace("-","")
+		if(thisMol==""): thisMol = "E" #fix electron for parsing
+		countAtoms = 0 #number of atoms found
+		#atoms are sorted for replacing
+		for at in sorted(custom["atoms"],key=lambda x:len(x))[::-1]:
+			#replace until atom is found in the exploded species
+			while(at in thisMol):
+				countAtoms += 1
+				thisMol = thisMol.replace(at,"",1)
+		#check max number of atoms per species
+		if(countAtoms>int(custom["maxatoms"])): continue
+		#check residuals from replacing
+		if(is_number(thisMol) or thisMol==""):
+			amols.append(amols_org[i])
+			emols.append(emols_org[i])
+
+	#check number of species found
+	if(len(amols)==0):
+		print "ERROR: no species available for custom reactions,"
+		print " check options in "+readCustomFile+" file."
+		sys.exit()
+	print "Search custom reactions with the following species"
+	print amols
+
+	#random temporary file name
+	tmpFname = "cstm"+str(int(rand()*1e8))+".tmp"
+	#build product/reactant combinations
 	combs = []
 	for mol1 in emols:
-		cc = "".join(sorted(listA(mol1)))
-		combs.append([cc,[mol1]])
+		cc = "".join(sorted(listA(mol1))) #exploded 1body combination
+		combs.append([cc,[mol1]]) #single prod/react
 		for mol2 in emols:
-			cc = "".join(sorted(listA(mol1)+listA(mol2)))
-			if("++" in cc): continue
-			if("--" in cc): continue
-			cc = cc.replace("+-","")
-			combs.append([cc,sorted([mol1,mol2])])
+			if(int(custom["maxprod"])<2): continue
+			if(int(custom["maxrea"])<2): continue
+			cc = "".join(sorted(listA(mol1)+listA(mol2))) #exploded 2body combination
+			if("++" in cc): continue #exclude cation-cation reactions
+			if("--" in cc): continue #exclude anion-anion reactions
+			cc = cc.replace("+-","") #neutralize
+			combs.append([cc,sorted([mol1,mol2])]) #double prod/react
 			for mol3 in emols:
+				if(int(custom["maxprod"])<3): continue
+				if(int(custom["maxrea"])<3): continue
+				#exploded 3body combination
 				cc = "".join(sorted(listA(mol1)+listA(mol2)+listA(mol3)))
-				if("+-" in cc): continue
-				if("++" in cc): continue
-				if("--" in cc): continue
-				combs.append([cc,sorted([mol1,mol2,mol3])])
+				if("+-" in cc): continue #exclude cation-anion 3body
+				if("++" in cc): continue #exclude cation-cation reactions
+				if("--" in cc): continue #exclude anion-anion reactions
+				combs.append([cc,sorted([mol1,mol2,mol3])]) #triple prod/react
+
+	#build reactions from product/reactant combinations
 	custRea = []
+	#loop on reactants
 	for RR in combs:
+		#loop on products
 		for PP in combs:
+			#if exploded are the same but species are not the same
 			if(RR[0]==PP[0] and RR[1]!=PP[1]):
 				cRea = sorted([RR,PP])
+				#if not already present add
 				if(not(cRea in custRea)): custRea.append(cRea)
-	for x in custRea:
-		print x[0][1],x[1][1]
+
+	#search reactions in the database
+	autoreacts = [] #dbase array contains dictionary with reaction data
+	fdbase = "data/database/"
+	file_list = [f for f in listdir(fdbase) if isfile(join(fdbase,f))]
+	extraVars = dict() #dict of the extra varaibles, with key=filename
+	for fname in file_list:
+		if(fname in "~"): continue #skip temp files
+		fhauto = open(fdbase+fname,"rb")
+		for row in fhauto:
+			srow = row.strip()
+			if(srow.strip()==""): continue
+			if(srow=="#BREAK DATABASE"): break #skip non database files
+			if(srow[0]=="#"): continue
+			if("@type:" in srow): autorea = dict() #begin reaction
+			autorea.update(at_extract(srow))
+			if("@rate:" in srow): autoreacts.append(autorea) #end reaction
+
+	reaFound = []
+	#search created reactions in the database
+	for crea in custRea:
+		#prepare custom products/reactants
+		CC1 = sorted(crea[0][1])
+		CC1 = [amols[emols.index(x)] for x in CC1]
+		CC2 = sorted(crea[1][1])
+		CC2 = [amols[emols.index(x)] for x in CC2]
+		#loop into the databse
+		for autorea in autoreacts:
+			#prepare database products and reactants
+			PP = sorted([x.strip() for x in autorea["prods"].split(",")])
+			RR = sorted([x.strip() for x in autorea["reacts"].split(",")])
+			#append new reactions found
+			if(RR==CC1 and PP==CC2 and not([CC1,CC2] in reaFound)): reaFound.append([CC1,CC2])
+			if(RR==CC2 and PP==CC1 and not([CC2,CC1] in reaFound)): reaFound.append([CC2,CC1])
+
+	#check number of reactions found
+	if(len(reaFound)==0):
+		print "ERROR: no custom reactions found,"
+		print " check options in "+readCustomFile+" file."
+		sys.exit()
+
+	print "Custom reactions found:",len(reaFound)
+
+
+	#sort reactions according to their format
+	reaFound = sorted(reaFound, key=lambda x:10*len(x[0])+len(x[1]))
+	idx = 0
+	fmtHashOld = 0
+	fhTmp = open(tmpFname,"w")
+	print "writing custom reactions on file "+tmpFname
+	fhTmp.write("#this is an automatically-generated network with the options below\n")
+	for k,v in custom.iteritems():
+		if(len(v)>1): v = (",".join(v))
+		fhTmp.write("#"+k+": "+v+"\n")
+	#write results into a network file
+	for rea in reaFound:
+		fmtHash = 10*len(rea[0])+len(rea[1]) #format hash
+		#new format hash requires new format token
+		if(fmtHashOld!=fmtHash): fhTmp.write("\n@format:idx,"+("R,"*len(rea[0]))+("P,"*len(rea[1]))+"rate\n")
+		fhTmp.write(str(idx+1)+","+(",".join(rea[0]+rea[1]))+",auto\n")
+		fmtHashOld = fmtHash
+		idx += 1
+	fhTmp.close()
+
+	#this function returns the name of the custom file
+	return tmpFname
 
 #################################
 #read operators and set attributes
