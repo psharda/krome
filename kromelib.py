@@ -524,6 +524,7 @@ def generateCustom(readCustomFile):
 	custom["maxatoms"] = "99"
 	custom["maxrea"] = "99"
 	custom["maxprod"] = "99"
+	custom["photorates"] = "no"
 
 	#read custom file and store the info in a dict
 	fhcustom = open(readCustomFile,"rb")
@@ -615,13 +616,18 @@ def generateCustom(readCustomFile):
 	file_list = [f for f in listdir(fdbase) if isfile(join(fdbase,f))]
 	extraVars = dict() #dict of the extra varaibles, with key=filename
 	for fname in file_list:
-		if(fname in "~"): continue #skip temp files
+		if("~" in fname): continue #skip temp files
 		fhauto = open(fdbase+fname,"rb")
 		for row in fhauto:
 			srow = row.strip()
 			if(srow.strip()==""): continue
 			if(srow=="#BREAK DATABASE"): break #skip non database files
 			if(srow[0]=="#"): continue
+			#skip phtorates if not needed
+			if("@photorates:yes" in srow.lower().replace(" ","")):
+				if(custom["photorates"]!="yes"): break
+				continue
+			if("@var:" in srow): continue
 			if("@type:" in srow): autorea = dict() #begin reaction
 			autorea.update(at_extract(srow))
 			if("@rate:" in srow): autoreacts.append(autorea) #end reaction
@@ -660,7 +666,7 @@ def generateCustom(readCustomFile):
 	print "writing custom reactions on file "+tmpFname
 	fhTmp.write("#this is an automatically-generated network with the options below\n")
 	for k,v in custom.iteritems():
-		if(len(v)>1): v = (",".join(v))
+		if(not(isinstance(v, basestring))): v = (",".join(v))
 		fhTmp.write("#"+k+": "+v+"\n")
 	#write results into a network file
 	for rea in reaFound:

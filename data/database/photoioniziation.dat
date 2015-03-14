@@ -1,3 +1,7 @@
+###########
+###########
+@photorates:yes
+
 #photoionization rate from verner+96
 @type: photoion
 @reacts: H
