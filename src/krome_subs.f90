@@ -796,30 +796,30 @@ contains
   ! for high-density regime and in the presence of UV backgrounds.
   ! if necessary it must be included in the reaction file as
   ! H2,H,,H,H,H,,NONE,NONE,dissH2_Martin96(n,Tgas)
-  function dissH2_Martin96(n, Tgas)
+  function dissH2_Martin96(Tgas)
     use krome_commons
     integer::i
     real*8::n(nspec),Tgas,dissH2_Martin96
     real*8::CDrates,logTv(4),k_CIDm(21,2),k_CID,invT,logT,n_c1,n_c2,n_H
     real*8::logk_h1,logk_h2,logk_l1,logk_l2,logn_c1,logn_c2,p,logk_CID
     real*8::logT2,logT3
-
+    
     !k_CID = collision-induced dissociation + dissociative tunneling
-
+    
     !Collisional dissociation of H2
     k_CIDm(:,1) = (/-178.4239d0, -68.42243d0, 43.20243d0, -4.633167d0, &
-         69.70086d0, 40870.38d0, -23705.70d0, 128.8953d0, -53.91334d0, &
-         5.313317d0, -19.73427d0, 16780.95d0, -25786.11d0, 14.82123d0, &
-         -4.890915d0, 0.4749030d0, -133.8283d0, -1.164408d0, 0.8227443d0,&
-         0.5864073d0, -2.056313d0/)
-
+        69.70086d0, 40870.38d0, -23705.70d0, 128.8953d0, -53.91334d0, &
+        5.315517d0, -19.73427d0, 16780.95d0, -25786.11d0, 14.82123d0, &
+        -4.890915d0, 0.4749030d0, -133.8283d0, -1.164408d0, 0.8227443d0,&
+        0.5864073d0, -2.056313d0/)
+    
     !Dissociative tunneling of H2
     k_CIDm(:,2) = (/-142.7664d0, 42.70741d0, -2.027365d0, -0.2582097d0, &
-         21.36094d0, 27535.31d0, -21467.79d0, 60.34928d0, -27.43096d0, &
-         2.676150d0, -11.28215d0, 14254.55d0, -23125.20d0, 9.305564d0, &
-         -2.464009d0, 0.1985955d0, 743.0600d0, -1.174242d0, 0.7502286d0, &
-         0.2358848d0, 2.937507d0/)
-
+        21.36094d0, 27535.31d0, -21467.79d0, 60.34928d0, -27.43096d0, &
+        2.676150d0, -11.28215d0, 14254.55d0, -23125.20d0, 9.305564d0, &
+        -2.464009d0, 0.1985955d0, 743.0600d0, -1.174242d0, 0.7502286d0, &
+        0.2358848d0, 2.937507d0/)
+    
     n_H  = get_Hnuclei(n(:))
     logT = log10(Tgas)
     invT = 1.0d0/Tgas
@@ -828,28 +828,29 @@ contains
     logTv = (/1.d0, logT, logT2, logT3/)
     k_CID = 0.d0
     do i=1,2
-       logk_h1 = k_CIDm(1,i)*logTv(1) + k_CIDm(2,i)*logTv(2) + &
-            k_CIDm(3,i)*logTv(3) + k_CIDm(4,i)*logTv(4) + &
-            k_CIDm(5,i)*log10(1.d0+k_CIDm(6,i)*invT)
-       logk_h2 = k_CIDm(7,i)*invT
-       logk_l1 = k_CIDm(8,i)*logTv(1) + k_CIDm(9,i)*logTv(2) + &
-            k_CIDm(10,i)*logTv(3) + k_CIDm(11,i)*log10(1.d0+k_CIDm(12,i)*invT)
-       logk_l2 = k_CIDm(13,i)*invT      
-       logn_c1 = k_CIDm(14,i)*logTv(1) + k_CIDm(15,i)*logTv(2) &
-            + k_CIDm(16,i)*logTv(3) + k_CIDm(17,i)*invT
-       logn_c2 = k_CIDm(18,i) + logn_c1
-       p = k_CIDm(19,i) + k_CIDm(20,i)*exp(-Tgas*1.850d-3) &
-            + k_CIDm(21,i)*exp(-Tgas*4.40d-2)
-       n_c1 = 1d1**(-logn_c1)
-       n_c2 = 1d1**(-logn_c2)
-       logk_CID = logk_h1 - (logk_h1 - logk_l1) / (1.d0 + (n_H*n_c1)**p) &
-            + logk_h2 - (logk_h2 - logk_l2) / (1.d0 + (n_H*n_c2)**p)
-       k_CID = k_CID + 1.d1**logk_CID
+      logk_h1 = k_CIDm(1,i)*logTv(1) + k_CIDm(2,i)*logTv(2) + &
+          k_CIDm(3,i)*logTv(3) + k_CIDm(4,i)*logTv(4) + &
+          k_CIDm(5,i)*log10(1.d0+k_CIDm(6,i)*invT)
+      logk_h2 = k_CIDm(7,i)*invT
+      logk_l1 = k_CIDm(8,i)*logTv(1) + k_CIDm(9,i)*logTv(2) + &
+          k_CIDm(10,i)*logTv(3) + k_CIDm(11,i)*log10(1.d0+k_CIDm(12,i)*invT)
+      logk_l2 = k_CIDm(13,i)*invT
+      logn_c1 = k_CIDm(14,i)*logTv(1) + k_CIDm(15,i)*logTv(2) &
+          + k_CIDm(16,i)*logTv(3) + k_CIDm(17,i)*invT
+      logn_c2 = k_CIDm(18,i) + logn_c1
+      p = k_CIDm(19,i) + k_CIDm(20,i)*exp(-Tgas/1.850d3) &
+          + k_CIDm(21,i)*exp(-Tgas/4.40d2)
+      n_c1 = 1d1**(logn_c1)
+      n_c2 = 1d1**(logn_c2)
+      logk_CID = logk_h1 - (logk_h1 - logk_l1) / (1.d0 + (n_H/n_c1)**p) &
+          + logk_h2 - (logk_h2 - logk_l2) / (1.d0 + (n_H/n_c2)**p)
+      k_CID = k_CID + 1.d1**logk_CID
     enddo
-
-    dissH2_Martin96 = k_CID 
-
+    
+    dissH2_Martin96 = k_CID
+    
   end function dissH2_Martin96
+
 
   !**********************
   !adsorpion rate Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014

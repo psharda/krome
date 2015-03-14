@@ -111,9 +111,9 @@
 29,He,H+,He+,H,NONE,.LE.1d4,1.26d-9*Tgas**(-0.75d0)*exp(-1.275d5*invT)
 30,He,H+,He+,H,>1d4,NONE,4.d-37*Tgas**(4.74d0)
 
-#@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
-##DEUTERIUM CHEMISTRY
-##Galli&Palla 2002 from Gerlich 1982 
+@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
+#DEUTERIUM CHEMISTRY
+#Galli&Palla 2002 from Gerlich 1982 
 31,H2,D+,,HD,H+,,,NONE,NONE,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
 
 #Galli & Palla 2002, from Garlich 1982 with modification by Gay et al. 2011
