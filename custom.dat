@@ -1,0 +1,8 @@
+#custom file options
+atoms: H,E,He
+maxatoms: 99
+cations: yes
+anions: yes
+maxrea: 99
+maxprod: 99
+
