@@ -247,7 +247,8 @@ contains
 #IFKROME_useCoolingZCIENOUV
   !***************************
   !Metal line cooling CIE
-  ! method: CLOUDY 7.02, NOUV
+  ! method: CLOUDY 10, NOUV
+  ! tables kindly provided by Sijing Shen.
   function cooling_ZCIENOUV(n,inTgas)
     use krome_commons
     use krome_subs
@@ -270,7 +271,10 @@ contains
 #IFKROME_useCoolingZCIE
   !***************************
   !Metal line cooling CIE
-  ! method: CLOUDY 7.02
+  ! method: CLOUDY 10, including the 
+  ! extragalactic (quasars + galaxies) UV flux
+  ! by Haardt&Madau 2012.
+  !Tables kindly provided by Sijing Shen.
   function cooling_ZCIE(n,inTgas)
     use krome_commons
     use krome_subs

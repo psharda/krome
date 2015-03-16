@@ -1,3 +1,5 @@
+# The following table contains the metal cooling by Shen et al. 2013, ApJ 765, 89.
+#  originally implemented in GASOLINE and kindly provided by Sijing Shen.
 # NO UV Metal line cooling 
 # log10(nH)        log10(Tgas)      log10(Lamda)  
                     131, 162
