@@ -1,0 +1,218 @@
+#################
+#################
+
+#WARNING: this database is incomplete because it is under construction
+
+#Glover+2009
+@type: 3body
+@reacts: H,H,O
+@prods: H,OH
+@rate: 4.33d-32*(T32)**(-1)*n(idx_H)
+
+@type: electronic recombination
+@reacts: H2O+,E
+@prods: H,H,O
+@rate: 3.05d-7*T32**(-.5)
+
+@type: 3body
+@reacts: H,H,OH
+@prods: H,H2O
+@rate: 2.56d-31*(T32)**(-2)**n(idx_H)
+
+@type: dissociative recombination
+@reacts: H3O+,E
+@prods: H,H,OH
+@limits: 1d1,3d2
+@rate: 2.6d-7*(T32)**(-.5)
+
+@type: 3body
+@reacts: OH,H,H2
+@prods: H2O,H2
+@rate: 2.56d-31*(T32)**(-2)*n(idx_H2)
+
+@type: 3body
+@reacts: O,H,H2
+@prods: OH,H2
+@rate: 4.33d-32*(T32)**(-1)*n(idx_H2)
+
+@type: dissociative recombination
+@reacts: H3O+,E
+@prods: H,H2,O
+@rate: 5.6d-9*T32**(-.5)
+
+@type: 3body
+@reacts: OH,H,H2
+@prods: H2O,H2
+@rate: 2.56d-31*(T32)**(-2)*n(idx_H2)
+
+@type: 3body
+@reacts: H,O,He
+@prods: OH,He
+@rate: 4.33d-32/(T32)*n(idx_He)
+
+@type: mutual neutralization
+@reacts: H-,O+
+@prods: O,H
+@rate: 2.3d-7*(T32)**(-.5)
+
+@type: dissociative recombination
+@reacts: OH+
+@prods: O,H
+@rate: 6.3d-9*(T32)**(-.48)
+
+@type: radiative association
+@reacts: H,O
+@prods: OH
+@rate: 9.9d-19*(T32)**(-.38)
+
+@type: 3body
+@reacts: H,O,H
+@prods: OH,H
+@rate: 4.33d-32/(T32)*n(idx_H)
+
+@type: 3body
+@reacts: H,O,O2
+@prods: OH,O2
+@rate: 4.33d-32/(T32)*n(idx_O2)
+
+@type: 3body
+@reacts: OH,H,O
+@prods: H2O,O
+@rate: 2.56d-31*(T32)**(-2)*n(idx_O)
+
+
+@type: 3body
+@reacts: OH,H,O2
+@prods: H2O,O2
+@rate: 2.56d-31*(T32)**(-2)*n(idx_O2)
+
+@type: 3body
+@reacts: OH,H,OH
+@prods: H2O,OH
+@rate: 2.56d-31*(T32)**(-2)*n(idx_OH)
+
+@type: 3body
+@reacts: OH,H,H2O
+@prods: H2O,H2O
+@rate: 2.56d-31*(T32)**(-2)*n(idx_H2O)
+
+@type: 3body
+@reacts: H,O,OH
+@prods: OH,OH
+@rate: 4.33d-32/(T32)*n(idx_OH)
+
+
+@type: dissociative recombination
+@reacts: H3O+,O-
+@prods: H,O,H2O
+@rate: 3.76d-8*(T32)**(-.5)
+
+@type: 3body
+@reacts: H,O,H2O
+@prods: OH,H2O
+@rate: 4.33d-32/(T32)*n(idx_H2O)
+
+#Glover+2009
+@type: charge exchange
+@reacts: H,O+
+@prods: O,H+
+@rate: 4.99d-11*Tgas**(0.405) + 7.54d-10*invT**(0.458)
+
+#Glover+2009
+@type: charge exchange
+@reacts: H+,O
+@prods: O+,H
+@rate: (1.08d-11*Tgas**0.517 + 4.0d-10*Tgas**(0.00669))*exp(-2.27d2*invT)
+
+@type: associative detachment
+@reacts: H,O-
+@prods: OH,E
+#@limits:10,280
+@rate: 5d-10 
+
+@type: bimolecular
+@reacts: H,OH
+@prods: O,H2
+@rate: 6.86d-14*(T32)**2.8*exp(-1.95d3*invT)
+
+@type: bimolecular
+@reacts: H2,O
+@prods: OH,H
+@rate: 6.34d-12*exp(-4d3*invT)
+
+@type: mutual neutralization
+@reacts: H+,OH-
+@prods: OH,H
+@rate: 7.51d-8*(T32)**(-.5)
+
+@type: dissociative recombination
+@reacts: H2O+,E
+@prods: H,OH
+@rate: 8.6d-8*(T32)**(-.5)
+
+@type: radiative association
+@reacts: H,OH
+@prods: H2O
+@rate: 4d-18**(T32)**(-2) 
+
+@type: mutual neutralization
+@reacts: H3O+,OH-
+@prods: H,OH,H2O
+@rate: 3.76d-8*(T32)**(-.5)
+
+@type: bimolecular
+@reacts: H2,O+
+@prods: H,OH+
+#@limits:10,280
+@rate: 1.6d-9 
+
+@type: charge exchange
+@reacts: H+,OH
+@prods: H,OH+
+@rate: 2.5d-9(0.62d0+2.6219d0/(T32)**(.5))
+
+@type: bimolecular
+@reacts: H2+,O
+@prods: H,OH+
+#@limits:10,280
+@rate: 1.5d-9 
+
+@type: bimolecular
+@reacts: H2,O-
+@prods: H,OH-
+#@limits:10,280
+@rate: 3d-11 
+
+@type: associative detachment
+@reacts: H,OH-
+@prods: H2O,E
+#@limits:10,280
+@rate: 1.4d-9
+
+@type: bimolecular
+@reacts: H,H2O
+@prods: H2,OH
+#@limits:10,280
+@rate: 3d-11
+
+@type: bimolecular
+@reacts: H2,OH
+@prods: H,H2O
+@rate: 2.1d-12*(T32)**(1.52)*exp(-1.74*invT)
+
+@type: electronic recombination
+@reacts: H3O+,E
+@prods: H,H2O
+@rate: 1.1d-7*(T32)**(-.5) 
+
+@type: bimolecular
+@reacts: H2,OH+
+@prods: H,H2O+
+#@limits:10,280
+@rate: 1.1d-9
+
+@type: charge exchange
+@reacts: H2O,H+
+@prods: H,H2O+
+@rate: 7.3d-9**(T32)**(-.5)
+
