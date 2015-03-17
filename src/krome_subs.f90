@@ -796,7 +796,7 @@ contains
   ! for high-density regime and in the presence of UV backgrounds.
   ! if necessary it must be included in the reaction file as
   ! H2,H,,H,H,H,,NONE,NONE,dissH2_Martin96(n,Tgas)
-  function dissH2_Martin96(Tgas)
+  function dissH2_Martin96(n,Tgas)
     use krome_commons
     integer::i
     real*8::n(nspec),Tgas,dissH2_Martin96
