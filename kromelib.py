@@ -509,6 +509,12 @@ def listA(arg):
 	parts.append(part)
 	return parts
 
+####################
+def fillSpaces(instring,columns):
+	astring = str(instring)
+	if(columns<len(astring)): return ("#"*columns)
+	return astring+(" "*(columns-len(astring)))
+
 ################################
 def generateCustom(readCustomFile):
 	from random import random as rand
@@ -539,8 +545,60 @@ def generateCustom(readCustomFile):
 	
 	#species available
 	amols_org = ["H","H2","H+","H-","He","He+","H2+","E"]
+	amols_org += ["O", "O+", "O-", "O2", "OH", "OH+", "OH-"]
+	amols_org += ["H2O", "H2O+", "H3O+"]
+
 	#exploded species
 	emols_org = ["H","HH","H+","H-","He","He+","HH+","-"]
+	emols_org += ["O", "O+", "O-", "O2", "OH", "OH+", "OH-"]
+	emols_org += ["HHO", "HHO+", "HHHO+"]
+
+	eV2kJmol = 96.4869e0 #eV -> kJ/mol
+	#enthalpy data (DH: enthalpy of fomration (kJ/mol), EA: electron affinity (eV)
+	#IE: ionization energy (eV) - note: @298K
+	HData = dict()
+	HData["H"] = {"DH":218e0, "IE":13.59844e0, "EA":0.754195e0}
+	HData["H2"] = {"DH":0e0, "IE":15.42593e0}
+	HData["He"] = {"DH":0e0, "IE":24.58741e0}
+	HData["H2+"] = {"DH":1497e0}
+	HData["E"] = {"DH":6.2e0} #5/2RT @298K
+	HData["O"] = {"DH":249.18e0, "IE":13.61806e0, "EA":1.439157e0}
+	HData["O2"] = {"DH":0e0, "IE":12.0697e0, "IE":0.4480e0}
+	HData["OH"] = {"DH":38.99e0, "IE":13.017e0, "EA":1.82767e0}
+	HData["H2O"] = {"DH":-241.826e0, "IE":12.621e0, "EA":12.65e0}
+	HData["H3O+"] = {"DH":603.417e0}
+
+	#compute missing DH data using http://webbook.nist.gov/chemistry/ion/#DH prescriptions
+	for species in amols_org:
+		#if DH is present no need to compute it
+		if(species in HData): continue
+		HData[species] = dict()
+		#find neutral
+		neutral = species.replace("+","").replace("-","")
+		#check if neutral DH exists
+		if(not(neutral in HData)):
+			sys.exit("ERROR: cannot compute DH for "+species+" since "+neutral+" is missing!")
+		#do calculation for cation
+		if("+" in species):
+			#check if neutral's IE exists
+			if(not("IE" in HData[neutral])):
+				sys.exit("ERROR: cannot compute DH for "+species+" since IE "+neutral+" is missing!")
+			#DH(cation) = DH(neutral) + ionization energy - electron entalphy
+			HData[species]["DH"] = HData[neutral]["DH"] + HData[neutral]["IE"]*eV2kJmol - HData["E"]["DH"]
+			continue
+		#do calculation for anion
+		if("-" in species):
+			#check if neutral's EA exists
+			if(not("EA" in HData[neutral])):
+				sys.exit("ERROR: cannot compute DH for "+species+" since EA "+neutral+" is missing!")
+			#DH(anion) = DH(neutral) - electron affinity + electron entalphy
+			HData[species]["DH"] = HData[neutral]["DH"] - HData[neutral]["EA"]*eV2kJmol + HData["E"]["DH"]
+			continue
+		#if DH doesn't exist for neutral no way to get it
+		sys.exit("ERROR: cannot compute DH for "+species+", it only works for cations/anions")
+
+	for k,v in HData.iteritems():
+		print k,v
 
 	amols = []
 	emols = []
@@ -574,7 +632,10 @@ def generateCustom(readCustomFile):
 	print amols
 
 	#random temporary file name
-	tmpFname = "cstm"+str(int(rand()*1e8))+".tmp"
+	tmpNumber = "network" #str(int(rand()*1e8))
+	tmpFname = "cstm"+tmpNumber+".tmp"
+	tmpFnameAll = "cstm"+tmpNumber+"_all.tmp"
+
 	#build product/reactant combinations
 	combs = []
 	for mol1 in emols:
@@ -593,9 +654,9 @@ def generateCustom(readCustomFile):
 				if(int(custom["maxrea"])<3): continue
 				#exploded 3body combination
 				cc = "".join(sorted(listA(mol1)+listA(mol2)+listA(mol3)))
-				if("+-" in cc): continue #exclude cation-anion 3body
-				if("++" in cc): continue #exclude cation-cation reactions
-				if("--" in cc): continue #exclude anion-anion reactions
+				#cc = cc.replace("+-","")
+				if("+" in cc): continue #exclude cation 3body
+				if("-" in cc): continue #exclude anion 3body
 				combs.append([cc,sorted([mol1,mol2,mol3])]) #triple prod/react
 
 	#build reactions from product/reactant combinations
@@ -604,6 +665,8 @@ def generateCustom(readCustomFile):
 	for RR in combs:
 		#loop on products
 		for PP in combs:
+			#3body->3body ignored
+			if(len(RR[1])==3 and len(PP[1])==3): continue
 			#if exploded are the same but species are not the same
 			if(RR[0]==PP[0] and RR[1]!=PP[1]):
 				cRea = sorted([RR,PP])
@@ -633,21 +696,50 @@ def generateCustom(readCustomFile):
 			if("@rate:" in srow): autoreacts.append(autorea) #end reaction
 
 	reaFound = []
+	fhTmpAll = open(tmpFnameAll,"w")
+	fhTmpAll.write("#Reactions automatically found using custom instructions file "+readCustomFile+"\n")
+	fhTmpAll.write(fillSpaces("#IDX",5) + fillSpaces("REACTANS",20) + "    " + fillSpaces("PRODUCTS",20)\
+		+ fillSpaces("ENTHALPY (K)",18) + fillSpaces("FOUND IN DBASE",16)+"<1e4 K\n")
+	kJmol2K = 120.274e0 #kJ/mol -> K
 	#search created reactions in the database
+	iCount = 0
 	for crea in custRea:
 		#prepare custom products/reactants
 		CC1 = sorted(crea[0][1])
 		CC1 = [amols[emols.index(x)] for x in CC1]
 		CC2 = sorted(crea[1][1])
 		CC2 = [amols[emols.index(x)] for x in CC2]
+		inDatabaseFwd = inDatabaseRev = False
+		DHCC1 = sum([HData[x]["DH"] for x in CC1])
+		DHCC2 = sum([HData[x]["DH"] for x in CC2])
 		#loop into the databse
 		for autorea in autoreacts:
 			#prepare database products and reactants
 			PP = sorted([x.strip() for x in autorea["prods"].split(",")])
 			RR = sorted([x.strip() for x in autorea["reacts"].split(",")])
 			#append new reactions found
-			if(RR==CC1 and PP==CC2 and not([CC1,CC2] in reaFound)): reaFound.append([CC1,CC2])
-			if(RR==CC2 and PP==CC1 and not([CC2,CC1] in reaFound)): reaFound.append([CC2,CC1])
+			if(RR==CC1 and PP==CC2 and not([CC1,CC2] in reaFound)):
+				reaFound.append([CC1,CC2])
+				inDatabaseFwd = True
+			if(RR==CC2 and PP==CC1 and not([CC2,CC1] in reaFound)):
+				reaFound.append([CC2,CC1])
+				inDatabaseRev = True
+		#write all the reactions even if not in the database
+		RRall = (" + ".join(CC1))
+		PPall = (" + ".join(CC2))
+		DH = (DHCC2-DHCC1) * kJmol2K #enthalpy products - reactants
+		fav = (" *" if (DH<1e4) else "")
+		fhTmpAll.write(fillSpaces(iCount+1,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
+			+ fillSpaces(DH,18) + fillSpaces(inDatabaseFwd,16)+fav+"\n")
+		RRall = (" + ".join(CC2))
+		PPall = (" + ".join(CC1))
+		DH = (DHCC1-DHCC2) * kJmol2K #enthalpy products - reactants
+		fav = (" *" if (DH<1e4) else "")
+		fhTmpAll.write(fillSpaces(iCount+2,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
+			+ fillSpaces(DH,18) + fillSpaces(inDatabaseRev,16)+fav+"\n")
+		iCount += 2
+
+	fhTmpAll.close()
 
 	#check number of reactions found
 	if(len(reaFound)==0):

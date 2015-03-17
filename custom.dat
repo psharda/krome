@@ -1,8 +1,20 @@
 #custom file options
-atoms: H,E,He
+
+#atoms employed to build molecules
+atoms: H,E,He,O
+
+#maximum number of atoms per molecule
 maxatoms: 99
+
+#use cations
 cations: yes
+
+#use anions
 anions: yes
-maxrea: 99
-maxprod: 99
+
+#maximum number of reactants per reaction
+maxrea: 3
+
+#maximum number of products per reaction
+maxprod: 3
 
