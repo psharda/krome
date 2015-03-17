@@ -560,15 +560,20 @@ def generateCustom(readCustomFile):
 	amols_org = ["H","H2","H+","H-","He","He+","H2+","H3+","E"]
 	amols_org += ["O", "O+", "O-", "O2", "OH", "OH+", "OH-"]
 	amols_org += ["H2O", "H2O+", "H3O+"]
+	amols_org += ["C", "C+", "C-", "C2", "CH", "CH+", "CH2"]
+	amols_org += ["CH2+", "CH3+"]
 
 	#exploded species
 	emols_org = ["H","HH","H+","H-","He","He+","HH+","HHH3+","-"]
 	emols_org += ["O", "O+", "O-", "O2", "OH", "OH+", "OH-"]
 	emols_org += ["HHO", "HHO+", "HHHO+"]
+	emols_org += ["C", "C+", "C-", "CC", "CH", "CH+", "CHH"]
+	emols_org += ["CHH+", "CHHH+"]
 
 	eV2kJmol = 96.4869e0 #eV -> kJ/mol
 	#enthalpy data (DH: enthalpy of fomration (kJ/mol), EA: electron affinity (eV)
 	#IE: ionization energy (eV) - note: @298K
+	#see http://webbook.nist.gov/chemistry/
 	HData = dict()
 	HData["H"] = {"DH":218e0, "IE":13.59844e0, "EA":0.754195e0}
 	HData["H2"] = {"DH":0e0, "IE":15.42593e0}
@@ -581,6 +586,12 @@ def generateCustom(readCustomFile):
 	HData["H2O"] = {"DH":-241.826e0, "IE":12.621e0, "EA":12.65e0}
 	HData["H3O+"] = {"DH":603.417e0}
 	HData["H3+"] = {"DH":1.1e3} #from pag.37 Chemistry of the Elements (N. N. Greenwood,A. Earnshaw)
+	HData["C"] = {"DH":716.68e0, "IE":11.26030e0, "EA":1.262114e0}
+	HData["C2"] = {"DH":837.74e0, "IE":11.4e0, "EA":3.273e0}
+	HData["CH"] = {"DH":594.13e0, "IE":10.64e0, "EA":1.26e0}
+	HData["CH2"] = {"DH":386.39e0, "IE":10.396e0, "EA":0.652e0}
+	HData["CH3"] = {"DH":145.59e0, "IE":9.84e0, "EA":0.08e0}
+
 
 	#compute missing DH data using http://webbook.nist.gov/chemistry/ion/#DH prescriptions
 	for species in amols_org:
