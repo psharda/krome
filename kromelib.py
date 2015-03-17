@@ -520,6 +520,7 @@ def generateCustom(readCustomFile):
 	from random import random as rand
 	from os import listdir
 	from os.path import isfile,join
+	from math import log10
 
 
 	#defaults
@@ -531,6 +532,11 @@ def generateCustom(readCustomFile):
 	custom["maxrea"] = "99"
 	custom["maxprod"] = "99"
 	custom["photorates"] = "no"
+	custom["include"] = []
+	custom["exclude"] = []
+
+	#list of tokens where an array is expected
+	arrayTokens = ["atoms","include","exclude"]
 
 	#read custom file and store the info in a dict
 	fhcustom = open(readCustomFile,"rb")
@@ -538,18 +544,25 @@ def generateCustom(readCustomFile):
 		srow = row.strip()
 		if(srow.strip()==""): continue
 		if(srow[0]=="#"): continue
-		if("," in srow):
+		isArray = False
+		#search for if this is an array token
+		for arr in arrayTokens:
+			if(arr in srow.split(":")):
+				isArray = True
+				break
+		#read data according to array or value
+		if(isArray):
 			custom[srow.split(":")[0].strip()] = [x.strip() for x in srow.split(":")[1].split(",")]
 		else:
 			custom[srow.split(":")[0].strip()] = srow.split(":")[1].strip()
-	
+
 	#species available
-	amols_org = ["H","H2","H+","H-","He","He+","H2+","E"]
+	amols_org = ["H","H2","H+","H-","He","He+","H2+","H3+","E"]
 	amols_org += ["O", "O+", "O-", "O2", "OH", "OH+", "OH-"]
 	amols_org += ["H2O", "H2O+", "H3O+"]
 
 	#exploded species
-	emols_org = ["H","HH","H+","H-","He","He+","HH+","-"]
+	emols_org = ["H","HH","H+","H-","He","He+","HH+","HHH3+","-"]
 	emols_org += ["O", "O+", "O-", "O2", "OH", "OH+", "OH-"]
 	emols_org += ["HHO", "HHO+", "HHHO+"]
 
@@ -567,6 +580,7 @@ def generateCustom(readCustomFile):
 	HData["OH"] = {"DH":38.99e0, "IE":13.017e0, "EA":1.82767e0}
 	HData["H2O"] = {"DH":-241.826e0, "IE":12.621e0, "EA":12.65e0}
 	HData["H3O+"] = {"DH":603.417e0}
+	HData["H3+"] = {"DH":1.1e3} #from pag.37 Chemistry of the Elements (N. N. Greenwood,A. Earnshaw)
 
 	#compute missing DH data using http://webbook.nist.gov/chemistry/ion/#DH prescriptions
 	for species in amols_org:
@@ -597,9 +611,6 @@ def generateCustom(readCustomFile):
 		#if DH doesn't exist for neutral no way to get it
 		sys.exit("ERROR: cannot compute DH for "+species+", it only works for cations/anions")
 
-	for k,v in HData.iteritems():
-		print k,v
-
 	amols = []
 	emols = []
 	#prepare restricted set according to the options
@@ -607,6 +618,8 @@ def generateCustom(readCustomFile):
 		#skip anions and cations if reqired
 		if(("+" in emols_org[i]) and custom["cations"]=="no"): continue
 		if(("-" in emols_org[i]) and custom["anions"]=="no"): continue
+		#skip species if required
+		if(amols_org[i] in custom["exclude"]): continue
 		thisMol = emols_org[i].replace("+","").replace("-","")
 		if(thisMol==""): thisMol = "E" #fix electron for parsing
 		countAtoms = 0 #number of atoms found
@@ -622,6 +635,17 @@ def generateCustom(readCustomFile):
 		if(is_number(thisMol) or thisMol==""):
 			amols.append(amols_org[i])
 			emols.append(emols_org[i])
+
+	#include additional molecules
+	for mol in custom["include"]:
+		if(mol==""): continue
+		if(mol in custom["exclude"]): sys.exit("ERROR: "+mol+" present in exclude AND in include on file "+readCustomFile)
+		if(not(mol in amols_org)):
+			print "ERROR: can't recognize this molecule: "+mol
+			print " you should add this to the automatic list or correct any typo."
+			sys.exit()
+		amols.append(mol)
+		emols.append(emols_org[amols.index(mol)])
 
 	#check number of species found
 	if(len(amols)==0):
@@ -665,8 +689,12 @@ def generateCustom(readCustomFile):
 	for RR in combs:
 		#loop on products
 		for PP in combs:
+			JRR = ("".join(sorted("".join(RR[1]))))
+			JPP = ("".join(sorted("".join(PP[1]))))
 			#3body->3body ignored
 			if(len(RR[1])==3 and len(PP[1])==3): continue
+			#anion-cation->cation-anion ignored
+			if(("+-" in JRR) and ("+-" in JPP)): continue
 			#if exploded are the same but species are not the same
 			if(RR[0]==PP[0] and RR[1]!=PP[1]):
 				cRea = sorted([RR,PP])
@@ -695,11 +723,17 @@ def generateCustom(readCustomFile):
 			autorea.update(at_extract(srow))
 			if("@rate:" in srow): autoreacts.append(autorea) #end reaction
 
+	DHlimit = 1e4 #enthalpy limit to accept a reaction, K
+	sDHlimit = str(round(DHlimit/1e1**int(log10(DHlimit)),2))+"d"+str(int(log10(DHlimit)))
 	reaFound = []
 	fhTmpAll = open(tmpFnameAll,"w")
 	fhTmpAll.write("#Reactions automatically found using custom instructions file "+readCustomFile+"\n")
+	fhTmpAll.write("#This file also indicates the reactions found in the database (True/False), \n")
+	fhTmpAll.write("# satisfying the enthalpy upper limit of "+str(sDHlimit)+" K (*), and that should be checked\n")
+	fhTmpAll.write("# because are NOT in the database AND have an enthalpy below that the limit (#).\n")
 	fhTmpAll.write(fillSpaces("#IDX",5) + fillSpaces("REACTANS",20) + "    " + fillSpaces("PRODUCTS",20)\
-		+ fillSpaces("ENTHALPY (K)",18) + fillSpaces("FOUND IN DBASE",16)+"<1e4 K\n")
+		+ fillSpaces("ENTHALPY (K)",18) + fillSpaces("FOUND IN DBASE",16)+fillSpaces("<"+str(sDHlimit)+"K",9)+"check\n")
+
 	kJmol2K = 120.274e0 #kJ/mol -> K
 	#search created reactions in the database
 	iCount = 0
@@ -728,15 +762,17 @@ def generateCustom(readCustomFile):
 		RRall = (" + ".join(CC1))
 		PPall = (" + ".join(CC2))
 		DH = (DHCC2-DHCC1) * kJmol2K #enthalpy products - reactants
-		fav = (" *" if (DH<1e4) else "")
+		fav = (" *" if (DH<DHlimit) else "")
+		check = (" #" if(DH<DHlimit and not(inDatabaseFwd)) else "")
 		fhTmpAll.write(fillSpaces(iCount+1,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
-			+ fillSpaces(DH,18) + fillSpaces(inDatabaseFwd,16)+fav+"\n")
+			+ fillSpaces(DH,18) + fillSpaces(inDatabaseFwd,16) + fillSpaces(fav,9) + check + "\n")
 		RRall = (" + ".join(CC2))
 		PPall = (" + ".join(CC1))
 		DH = (DHCC1-DHCC2) * kJmol2K #enthalpy products - reactants
-		fav = (" *" if (DH<1e4) else "")
+		fav = (" *" if (DH<DHlimit) else "")
+		check = (" #" if(DH<DHlimit and not(inDatabaseRev)) else "")
 		fhTmpAll.write(fillSpaces(iCount+2,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
-			+ fillSpaces(DH,18) + fillSpaces(inDatabaseRev,16)+fav+"\n")
+			+ fillSpaces(DH,18) + fillSpaces(inDatabaseRev,16) + fillSpaces(fav,9) + check + "\n")
 		iCount += 2
 
 	fhTmpAll.close()

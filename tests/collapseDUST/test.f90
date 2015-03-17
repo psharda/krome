@@ -44,7 +44,7 @@ program test_krome
      x(KROME_idx_Hj) = 1.d-4*ntot    !H+
      x(KROME_idx_HE) = 0.0775d0*ntot !He
      print *,"jscale=",jscale
-     call krome_set_dust_distribution(x(:),1d-2*1d1**zs(jz2)*jscale)
+     call krome_init_dust_distribution(x(:),1d-2*1d1**zs(jz2)*jscale)
 
      print *,krome_get_dust_distribution()
      call krome_set_defaultTdust((zred+1d0)*2.73d0)

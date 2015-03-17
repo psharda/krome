@@ -1,6 +1,7 @@
 #custom file options
 
 #atoms employed to build molecules
+#comma separated, can't be empty
 atoms: H,E,He,O
 
 #maximum number of atoms per molecule
@@ -12,9 +13,18 @@ cations: yes
 #use anions
 anions: yes
 
-#maximum number of reactants per reaction
+#maximum number of reactants per reaction (1<=N<=3)
 maxrea: 3
 
-#maximum number of products per reaction
+#maximum number of products per reaction (1<=N<=3)
 maxprod: 3
+
+#species to exclude (included by other tokens)
+#comma separated, can be empty
+exclude:
+
+#additional species to include (excluded by other tokens)
+#comma separated, can be empty
+#this command overrides all the others (except "exclude:")
+include:
 
