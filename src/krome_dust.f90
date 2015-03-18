@@ -64,7 +64,7 @@ contains
 
        !evaluate dust-parnter ratio (e.g. 1dust=1e2 C atoms)
        krome_dust_partner_ratio(ilow:iup) = adust(ilow:iup)**3 &
-            * krome_grain_rho / mass(krome_dust_partner_idx(j))
+            * krome_grain_rho(j) / mass(krome_dust_partner_idx(j))
        krome_dust_partner_ratio_inv(ilow:iup) = 1d0 &
             / krome_dust_partner_ratio(ilow:iup)
     end do
@@ -248,8 +248,8 @@ contains
           dust_intBB_sigma(k,i) = pi * dust_intBB(k,i) &
                / (stefboltz_erg*Tbb**4)
           !write the data on a file
-          write(33,'(2I8,99E17.8e3)') k, i, dust_intBB_Tbb(i), dust_intBB(k,i), &
-               dust_intBB_dT(k,i), dust_intBB_sigma(k,i)
+          write(33,'(2I8,99E17.8e3)') k, i, dust_intBB_Tbb(i), &
+               dust_intBB(k,i), dust_intBB_dT(k,i), dust_intBB_sigma(k,i)
        end do
     end do
     close(33)
@@ -520,7 +520,7 @@ contains
 
        !compute the cooling (avoid the difference Tgas-Tdust)
        dustCooling = dustCooling + (get_dust_intBB(i,krome_dust_T(i)) &
-            - intCMB - intJflux) * be * n(nmols+i) * krome_dust_asize2(i)
+            - intCMB - intJflux) * be * xdust(i) * krome_dust_asize2(i)
     end do
 
 #IFKROME_usedTdust
