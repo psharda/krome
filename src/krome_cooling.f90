@@ -56,6 +56,10 @@ contains
     cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingDustNoTdust
+    cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useCoolingCompton
     cools(idx_cool_compton) = cooling_compton(n(:), Tgas)
 #ENDIFKROME
@@ -607,6 +611,33 @@ contains
 
   end function cooling_compton
 #ENDIFKROME
+
+#IFKROME_useCoolingDustNoTdust
+  !*******************************
+  function cooling_dust(n,Tgas)
+    !cooling from dust in erg/cm3/s
+    use krome_constants
+    use krome_commons
+    use krome_dust
+    implicit none
+    real*8::cooling_dust,n(:),Tgas
+    real*8::pre,ntot,vgas,fact
+    integer::i
+    fact = 0.5d0
+    Tgas = n(idx_Tgas)
+    vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
+    ntot = sum(n(1:nmols))
+    pre = 2d0*fact*vgas*boltzmann_erg*ntot
+
+    cooling_dust = 0d0
+    do i=1,ndust
+       cooling_dust = cooling_dust &
+            + pre * xdust(i) * krome_dust_asize2(i)
+    end do
+
+  end function cooling_dust
+#ENDIFKROME
+
 
 #IFKROME_useCoolingDust
   !*******************************
