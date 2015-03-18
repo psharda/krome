@@ -4879,10 +4879,13 @@ class krome():
 
 			srow = row.strip()
 
+
+			usingTd = (self.usedTdust or self.useDustT)
 			#cooling pragmas
 			if(srow == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
 			if(srow == "#IFKROME_useCoolingdH" and (not(self.useCoolingdH) or len(dH_varsa)==0)): skip = True
-			if(srow == "#IFKROME_useCoolingDust" and not(self.useCoolingDust)): skip = True
+			if(srow == "#IFKROME_useCoolingDust" and (not(self.useCoolingDust) or not(usingTd))): skip = True
+			if(srow == "#IFKROME_useCoolingDustNoTdust" and (usingTd or not(self.useCoolingDust))): skip = True
 			if(srow == "#IFKROME_useCoolingAtomic" and not(self.useCoolingAtomic)): skip = True
 			if(srow == "#IFKROME_useCoolingH2" and not(self.useCoolingH2)): skip = True
 			if(srow == "#IFKROME_useCoolingH2GP" and not(self.useCoolingH2GP98)): skip = True
