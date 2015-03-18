@@ -47,7 +47,7 @@ program test_krome
      call krome_init_dust_distribution(x(:),1d-2*1d1**zs(jz2)*jscale)
 
      print *,krome_get_dust_distribution()
-     call krome_set_defaultTdust((zred+1d0)*2.73d0)
+     call krome_set_Tdust((zred+1d0)*2.73d0)
 
      !rescale metallicity for neutral metals (C,Fe,Si,O)
      call krome_scale_Z(x(:), zs(jz2))

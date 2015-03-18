@@ -442,7 +442,8 @@ contains
     cooling_dust = 0d0
     do i=1,ndust
        cooling_dust = cooling_dust &
-            + pre * xdust(i) * krome_dust_asize2(i)
+            + pre * xdust(i) * krome_dust_asize2(i) &
+            * (Tgas-krome_dust_T(i))
     end do
 
   end function cooling_dust
@@ -477,7 +478,7 @@ contains
     do i=1,ndust
        intCMB = get_dust_intBB(i,phys_Tcmb)
        cooling_dust = cooling_dust + (get_dust_intBB(i,n(nmols+ndust+i)) &
-            - intCMB) * be * n(nmols+i) * krome_dust_asize2(i)
+            - intCMB) * be * xdust(i) * krome_dust_asize2(i)
     end do
     cooling_dust = 4d0*pi*cooling_dust !erg/s/cm3
     return

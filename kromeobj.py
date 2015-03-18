@@ -5312,9 +5312,12 @@ class krome():
 			for dType in self.dustTypes:
 				ilow = nmols + iType * self.dustArraySize + 1
 				iup = nmols + (iType + 1) * self.dustArraySize
-				dustH2 += "nH2dust = nH2dust + krome_H2_dust(n(" + str(ilow) + ":" + str(iup) + "), Tgas,"
-				dustT = " krome_dust_T(" + str(ilow-nmols) + ":" + str(iup-nmols) + ")"
-				if(self.usedTdust): dustT = " xdust(" + str(ilow) + ":" + str(iup) + ")"
+				limits = str(ilow) + ":" + str(iup) #absolute limits
+				limits_rel = str(ilow-nmols) + ":" + str(iup-nmols) #realtive limits
+				limits_tdust = str(ilow+ndust) + ":" + str(iup+ndust) #realtive limits
+				dustH2 += "nH2dust = nH2dust + krome_H2_dust(xdust(" + limits_rel + "), Tgas,"
+				dustT = " krome_dust_T(" + limits_rel + ")"
+				if(self.usedTdust): dustT = " n(" + limits_tdust + ")"
 				dustH2 += dustT+", n(idx_H), H2_eps_"+dType+", vgas)\n"
 				iType += 1
 
@@ -5403,8 +5406,9 @@ class krome():
 								kpart = "krome_dust_partner_ratio(" + str(ilow-nmols) + ":" + str(iup-nmols) + ")"
 								limits = str(ilow) + ":" + str(iup) #absolute limits
 								limits_rel = str(ilow-nmols) + ":" + str(iup-nmols) #realtive limits
-								fout.write("dSumDust"+dType + " = sum(4d0*pi*n("+limits+")**2*dn("+limits+")*krome_grain_rho("\
-									+str(iType+1)+") / "+"krome_dust_partner_mass("+str(iType+1)+") * xdust("+limits_rel+"))\n")
+								fout.write("dSumDust"+dType + " = sum(4d0*pi*n("+limits+")**2*dn("+\
+									limits+")*krome_grain_rho("+str(iType+1)+") / "+\
+									"krome_dust_partner_mass("+str(iType+1)+") * xdust("+limits_rel+"))\n")
 								iType += 1
 						fout.write("\n") #print a blank line
 
