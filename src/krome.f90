@@ -231,7 +231,7 @@ contains
     implicit none
     integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
     integer::i,imax
-    real*8::tloc,x(:),Tgas,n(nspec),dt
+    real*8::tloc,x(:),Tgas,n(nspec),ni(nspec),dt
 #KROME_iwork_array
     real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
@@ -260,6 +260,9 @@ contains
     n(nmols+1:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
+
+    !store previous values
+    ni(:) = n(:)
     
     imax = 1000
 
@@ -278,6 +281,13 @@ contains
        print *,"ERROR: no equilibrium found!"
        stop
     end if
+
+    !avoid negative species
+    do i=1,nspec
+       n(i) = max(n(i),0.d0)
+    end do
+
+    n(:) = conserve(n(:),ni(:)) 
     x(:) = n(1:nmols)
 
   end subroutine krome_equilibrium
