@@ -61,12 +61,13 @@ contains
           krome_dust_aspan(i+ilow-1) = abin(i+1) - abin(i) !bin span
           xdust(i+ilow-1) = myc*(abin(i+1)**phi1-abin(i)**phi1)/phi1
        end do
-
+#IFKROME_useDustEvol
        !evaluate dust-parnter ratio (e.g. 1dust=1e2 C atoms)
        krome_dust_partner_ratio(ilow:iup) = adust(ilow:iup)**3 &
             * krome_grain_rho(j) / mass(krome_dust_partner_idx(j))
        krome_dust_partner_ratio_inv(ilow:iup) = 1d0 &
             / krome_dust_partner_ratio(ilow:iup)
+#ENDIFKROME_useDustEvol
     end do
 
     krome_dust_asize(:) = adust(:) !store mean size
