@@ -74,11 +74,12 @@ contains
     krome_dust_asize2(:) = adust(:)**2 !store mean size square
     krome_dust_asize3(:) = adust(:)**3 !store mean size cube
 
-
+#IFKROME_useDustEvol
     !compute the mass of the dust partner
     do j=1,ndustTypes
        krome_dust_partner_mass(j) =  mass(krome_dust_partner_idx(j))
     end do
+#ENDIFKROME_useDustEvol
 
     !default dust temperature
     krome_dust_T(:) = 3d1
