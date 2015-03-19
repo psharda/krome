@@ -61,23 +61,25 @@ contains
           krome_dust_aspan(i+ilow-1) = abin(i+1) - abin(i) !bin span
           xdust(i+ilow-1) = myc*(abin(i+1)**phi1-abin(i)**phi1)/phi1
        end do
-
+#IFKROME_useDustEvol
        !evaluate dust-parnter ratio (e.g. 1dust=1e2 C atoms)
        krome_dust_partner_ratio(ilow:iup) = adust(ilow:iup)**3 &
-            * krome_grain_rho / mass(krome_dust_partner_idx(j))
+            * krome_grain_rho(j) / mass(krome_dust_partner_idx(j))
        krome_dust_partner_ratio_inv(ilow:iup) = 1d0 &
             / krome_dust_partner_ratio(ilow:iup)
+#ENDIFKROME_useDustEvol
     end do
 
     krome_dust_asize(:) = adust(:) !store mean size
     krome_dust_asize2(:) = adust(:)**2 !store mean size square
     krome_dust_asize3(:) = adust(:)**3 !store mean size cube
 
-
+#IFKROME_useDustEvol
     !compute the mass of the dust partner
     do j=1,ndustTypes
        krome_dust_partner_mass(j) =  mass(krome_dust_partner_idx(j))
     end do
+#ENDIFKROME_useDustEvol
 
     !default dust temperature
     krome_dust_T(:) = 3d1
@@ -248,8 +250,8 @@ contains
           dust_intBB_sigma(k,i) = pi * dust_intBB(k,i) &
                / (stefboltz_erg*Tbb**4)
           !write the data on a file
-          write(33,'(2I8,99E17.8e3)') k, i, dust_intBB_Tbb(i), dust_intBB(k,i), &
-               dust_intBB_dT(k,i), dust_intBB_sigma(k,i)
+          write(33,'(2I8,99E17.8e3)') k, i, dust_intBB_Tbb(i), &
+               dust_intBB(k,i), dust_intBB_dT(k,i), dust_intBB_sigma(k,i)
        end do
     end do
     close(33)
@@ -520,7 +522,7 @@ contains
 
        !compute the cooling (avoid the difference Tgas-Tdust)
        dustCooling = dustCooling + (get_dust_intBB(i,krome_dust_T(i)) &
-            - intCMB - intJflux) * be * n(nmols+i) * krome_dust_asize2(i)
+            - intCMB - intJflux) * be * xdust(i) * krome_dust_asize2(i)
     end do
 
 #IFKROME_usedTdust

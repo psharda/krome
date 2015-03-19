@@ -1244,7 +1244,7 @@ class krome():
 		if(args.dustOptions):
 			if(not(self.useDust)): die("ERROR: you need -dust=[see help] to activate dust options!")
 			dustopt = args.dustOptions
-			dustOptions = dustopt.split(",")
+			dustOptions = [x.strip() for x in dustopt.split(",")]
 			if("GROWTH" in dustOptions): self.useDustGrowth = True
 			if("SPUTTER" in dustOptions): self.useDustSputter = True
 			if("H2" in dustOptions): self.useDustH2 = True
@@ -2665,8 +2665,9 @@ class krome():
 					if(mol.name.lower()==dType.lower()):
 						dTypeFound = True
 						break
+				useDustEvol = (self.useDustEvap or self.useDustGrowth or self.useDustSputter)
 				#if not found add to specs parsing the name (e.g. Si)
-				if(not(dTypeFound)):
+				if(not(dTypeFound) and useDustEvol):
 						print "Add species \""+dType+"\" (request by dust type)"
 						mymol = parser(dType,self.mass_dic,self.atoms,self.thermodata)
 						mymol.idx = len(specs)+1
@@ -4056,7 +4057,8 @@ class krome():
 			if(Ebind_tupla in Ebind23list):
 				get_Ebareice_out += (functionName+"("+str(x.fidx)+") = "+functionName+"("+str(Ebind23list[Ebind_tupla])+")\n")
 				continue
-			get_Ebareice_out += (functionName+"("+str(x.fidx)+") = get_exp_table("+format_double(fmult*float(x.Ebind_ice))+", invTdust("+str(x.parentDustBin)+"))\n")
+			get_Ebareice_out += (functionName+"("+str(x.fidx)+") = get_exp_table("+format_double(fmult*float(x.Ebind_ice))\
+				+", invTdust("+str(x.parentDustBin)+"))\n")
 			Ebind23list[Ebind_tupla] = x.fidx
 		for x in specs:
 			if(x.Ebind_bare==0e0): continue
@@ -4064,7 +4066,8 @@ class krome():
 			if(Ebind_tupla in Ebind23list):
 				get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = "+functionName+"("+str(Ebind23list[Ebind_tupla])+")\n")
 				continue
-			get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = get_exp_table("+format_double(fmult*float(x.Ebind_bare))+", invTdust("+str(x.parentDustBin)+"))\n")
+			get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = get_exp_table("+format_double(fmult*float(x.Ebind_bare))+", invTdust("\
+				+str(x.parentDustBin)+"))\n")
 			Ebind23list[Ebind_tupla] = x.fidx+"+nspec"
 
 		return get_Ebareice_out
@@ -4168,15 +4171,18 @@ class krome():
 					sdiff += "no("+x.fidx+") = n("+x.fidx+") * factor\n" #rescaling
 				#add dust to conservation when needed
 				idust = 0
+				useDustEvol = (self.useDustEvap or self.useDustGrowth or self.useDustSputter)
 				for dType in self.dustTypes:
+					if(not(useDustEvol)): break
 					if(dType==k):
 						ilow = str(self.dustArraySize * idust + 1)
 						iup = str(self.dustArraySize * (idust+1))
 						aadd.append("sum(n(nmols+"+ilow+":nmols+"+iup+")*krome_dust_partner_ratio("\
 							+ilow+":"+iup+"))")
 					idust += 1
-				sadd = "ntot = " + (" &\n + ".join(aadd)) #current total density of the species k
-				saddi = "nitot = " + (" &\n + ".join([y.replace("n(","ni(") for y in aadd])) #initial total density of the species k
+				if(len(aadd)>0):
+					sadd = "ntot = " + (" &\n + ".join(aadd)) #current total density of the species k
+					saddi = "nitot = " + (" &\n + ".join([y.replace("n(","ni(") for y in aadd])) #initial total density of the species k
 				#prepare replacing string
 				krome_conserve += "\n!********** "+k+" **********\n"
 				krome_conserve += sadd + "\n"
@@ -4524,7 +4530,8 @@ class krome():
 							#rotational partition functions from A.Popovas (2014) Thesis
 							if(gtype=="POPOVAS"):
 								if(mol.name=="H2"):
-									rotpart = "2d0*gamma_pop_H2(zpartH2even(:),zpartH2odd(:),zpartMinH2even,zpartdTH2even,Tgas,phys_orthoParaRatio)"
+									rotpart = "2d0*gamma_pop_H2(zpartH2even(:),zpartH2odd"+\
+										+"(:),zpartMinH2even,zpartdTH2even,Tgas,phys_orthoParaRatio)"
 								elif(mol.name=="CO"):
 									rotpart = "2d0*gamma_pop(zpartCO(:),zpartMinCO,zpartdTCO,Tgas)"
 								else:
@@ -4763,6 +4770,7 @@ class krome():
 		dustGrainDensity = dustEvaporationTemperature = ""
 		dustBulkDensity = {"C":2.25e0, "Si":3.13e0} #bulk density in g/cm3 (Zhukovska PhD.Th., Tab.4.1)
 		dustTEvap = {"C":8.888e4, "Si":6.056e4} #evaporation density in K (Evans+93, Tab.5.1)
+		useDustEvol = (self.useDustEvap or self.useDustGrowth or self.useDustSputter)
 		if(self.useDust):
 			itype = 0 #dust type index
 			#loop in dust types
@@ -4780,8 +4788,9 @@ class krome():
 				dustEvaporationTemperature += "krome_dust_Tevap("+i1mult+":"+i2mult+") = "+format_double(dustTEvap[dType])+"\n"
 				if(useDustT or usedTdust): dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")\n" #,dust_opt_Qabs_"+dType
 			if(useDustT or usedTdust): dustOptInt += "call dust_init_intBB()"
+		if(not(useDustEvol)): dustPartnerIdx = ""
 
-		skip = skipPhotoDust = skipChemisorption = skipdTdust = False
+		skip = skipPhotoDust = skipChemisorption = skipdTdust = skipDustEvol = False
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
@@ -4789,6 +4798,9 @@ class krome():
 
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skipChemisorption = True
 			if(srow == "#ENDIFKROME_useChemisorption"): skipChemisorption = False
+
+			if(srow == "#IFKROME_useDustEvol" and not(useDustEvol)): skipDustEvol = True
+			if(srow == "#ENDIFKROME_useDustEvol"): skipDustEvol = False
 
 			if(srow == "#IFKROME_usePhotoDust" and not(self.photoBins>0)): skipPhotoDust = True
 			if(srow == "#ENDIFKROME_usePhotoDust"): skipPhotoDust = False
@@ -4799,6 +4811,7 @@ class krome():
 			if(skipChemisorption): continue
 			if(skipdTdust): continue
 			if(skipPhotoDust): continue
+			if(skipDustEvol): continue
 			if(skip): continue
 
 			row = row.replace("#KROME_dust_grain_density", dustGrainDensity)
@@ -5319,9 +5332,12 @@ class krome():
 			for dType in self.dustTypes:
 				ilow = nmols + iType * self.dustArraySize + 1
 				iup = nmols + (iType + 1) * self.dustArraySize
-				dustH2 += "nH2dust = nH2dust + krome_H2_dust(n(" + str(ilow) + ":" + str(iup) + "), Tgas,"
-				dustT = " krome_dust_T(" + str(ilow-nmols) + ":" + str(iup-nmols) + ")"
-				if(self.usedTdust): dustT = " xdust(" + str(ilow) + ":" + str(iup) + ")"
+				limits = str(ilow) + ":" + str(iup) #absolute limits
+				limits_rel = str(ilow-nmols) + ":" + str(iup-nmols) #realtive limits
+				limits_tdust = str(ilow+ndust) + ":" + str(iup+ndust) #realtive limits
+				dustH2 += "nH2dust = nH2dust + krome_H2_dust(xdust(" + limits_rel + "), Tgas,"
+				dustT = " krome_dust_T(" + limits_rel + ")"
+				if(self.usedTdust): dustT = " n(" + limits_tdust + ")"
 				dustH2 += dustT+", n(idx_H), H2_eps_"+dType+", vgas)\n"
 				iType += 1
 
@@ -5375,45 +5391,47 @@ class krome():
 						for x in dnw[nmols:nmols+ndust]:
 							fout.write("\t" + x + "\n")
 						fout.write("\n") #print a blank line
-
-						if(self.useDustEvap):
-							#print evaporation control
-							iType = 0
-							for dType in dustTypes:
-								offset = ""
-								if(iType>0): offset = str(iType*self.dustArraySize)+"+"
-								sumTypeVar = "dSumDust"+dType
-								fout.write(sumTypeVar+" = 0d0\n")
-								fout.write("!partner species sum with evaporation control for "+dType+" dust\n")
-								fout.write("do i=1,"+str(self.dustArraySize)+"\n")
-								fout.write(" if(dn(nmols+"+offset+"i)>-1d0 .and. n(nmols+"+offset+"i)>1d-40) then\n")
-								fout.write(sumTypeVar+" = "+sumTypeVar \
-									+ " + 4d0*pi*dn(nmols+"+offset+"i)*n(nmols+"\
-									+offset+"i)**2*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
-									+str(iType+1)+")*xdust("+offset+"i)\n")
-								fout.write(" else\n")
-								fout.write(sumTypeVar+" = "+sumTypeVar + " + 4d0*pi/3d0*n(nmols+"\
-									+offset+"i)**3*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
-									+str(iType+1)+")*xdust("+offset+"i)\n")
-								fout.write("   n(nmols+"+offset+"i) = 0d0\n")
-								fout.write("   dn(nmols+"+offset+"i) = 0d0\n")
-								fout.write("   xdust("+offset+"i) = 0d0\n")
-								fout.write(" end if\n")
-								fout.write("end do\n\n")
-								iType += 1
-						else:
-							#print sums for different partners (with no evaporation)
-							iType = 0
-							for dType in dustTypes:
-								ilow = nmols + iType * dustArraySize + 1 #lower index for dust in specs array
-								iup = nmols + (iType + 1) * dustArraySize #upper index for dust in specs array
-								kpart = "krome_dust_partner_ratio(" + str(ilow-nmols) + ":" + str(iup-nmols) + ")"
-								limits = str(ilow) + ":" + str(iup) #absolute limits
-								limits_rel = str(ilow-nmols) + ":" + str(iup-nmols) #realtive limits
-								fout.write("dSumDust"+dType + " = sum(4d0*pi*n("+limits+")**2*dn("+limits+")*krome_grain_rho("\
-									+str(iType+1)+") / "+"krome_dust_partner_mass("+str(iType+1)+") * xdust("+limits_rel+"))\n")
-								iType += 1
-						fout.write("\n") #print a blank line
+						useDustEvol = (self.useDustEvap or self.useDustGrowth or self.useDustSputter)
+						if(useDustEvol):
+							if(self.useDustEvap):
+								#print evaporation control
+								iType = 0
+								for dType in dustTypes:
+									offset = ""
+									if(iType>0): offset = str(iType*self.dustArraySize)+"+"
+									sumTypeVar = "dSumDust"+dType
+									fout.write(sumTypeVar+" = 0d0\n")
+									fout.write("!partner species sum with evaporation control for "+dType+" dust\n")
+									fout.write("do i=1,"+str(self.dustArraySize)+"\n")
+									fout.write(" if(dn(nmols+"+offset+"i)>-1d0 .and. n(nmols+"+offset+"i)>1d-40) then\n")
+									fout.write(sumTypeVar+" = "+sumTypeVar \
+										+ " + 4d0*pi*dn(nmols+"+offset+"i)*n(nmols+"\
+										+offset+"i)**2*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
+										+str(iType+1)+")*xdust("+offset+"i)\n")
+									fout.write(" else\n")
+									fout.write(sumTypeVar+" = "+sumTypeVar + " + 4d0*pi/3d0*n(nmols+"\
+										+offset+"i)**3*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
+										+str(iType+1)+")*xdust("+offset+"i)\n")
+									fout.write("   n(nmols+"+offset+"i) = 0d0\n")
+									fout.write("   dn(nmols+"+offset+"i) = 0d0\n")
+									fout.write("   xdust("+offset+"i) = 0d0\n")
+									fout.write(" end if\n")
+									fout.write("end do\n\n")
+									iType += 1
+							else:
+								#print sums for different partners (with no evaporation)
+								iType = 0
+								for dType in dustTypes:
+									ilow = nmols + iType * dustArraySize + 1 #lower index for dust in specs array
+									iup = nmols + (iType + 1) * dustArraySize #upper index for dust in specs array
+									kpart = "krome_dust_partner_ratio(" + str(ilow-nmols) + ":" + str(iup-nmols) + ")"
+									limits = str(ilow) + ":" + str(iup) #absolute limits
+									limits_rel = str(ilow-nmols) + ":" + str(iup-nmols) #realtive limits
+									fout.write("dSumDust"+dType + " = sum(4d0*pi*n("+limits+")**2*dn("+\
+										limits+")*krome_grain_rho("+str(iType+1)+") / "+\
+										"krome_dust_partner_mass("+str(iType+1)+") * xdust("+limits_rel+"))\n")
+									iType += 1
+							fout.write("\n") #print a blank line
 
 						#print mols ODEs and look for dust partners to add summations
 						# and H2 formation on dust and H depletion
