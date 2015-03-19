@@ -4057,7 +4057,8 @@ class krome():
 			if(Ebind_tupla in Ebind23list):
 				get_Ebareice_out += (functionName+"("+str(x.fidx)+") = "+functionName+"("+str(Ebind23list[Ebind_tupla])+")\n")
 				continue
-			get_Ebareice_out += (functionName+"("+str(x.fidx)+") = get_exp_table("+format_double(fmult*float(x.Ebind_ice))+", invTdust("+str(x.parentDustBin)+"))\n")
+			get_Ebareice_out += (functionName+"("+str(x.fidx)+") = get_exp_table("+format_double(fmult*float(x.Ebind_ice))\
+				+", invTdust("+str(x.parentDustBin)+"))\n")
 			Ebind23list[Ebind_tupla] = x.fidx
 		for x in specs:
 			if(x.Ebind_bare==0e0): continue
@@ -4065,7 +4066,8 @@ class krome():
 			if(Ebind_tupla in Ebind23list):
 				get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = "+functionName+"("+str(Ebind23list[Ebind_tupla])+")\n")
 				continue
-			get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = get_exp_table("+format_double(fmult*float(x.Ebind_bare))+", invTdust("+str(x.parentDustBin)+"))\n")
+			get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = get_exp_table("+format_double(fmult*float(x.Ebind_bare))+", invTdust("\
+				+str(x.parentDustBin)+"))\n")
 			Ebind23list[Ebind_tupla] = x.fidx+"+nspec"
 
 		return get_Ebareice_out
@@ -4171,14 +4173,14 @@ class krome():
 				idust = 0
 				useDustEvol = (self.useDustEvap or self.useDustGrowth or self.useDustSputter)
 				for dType in self.dustTypes:
-					if(not(userDustEvol)): break
+					if(not(useDustEvol)): break
 					if(dType==k):
 						ilow = str(self.dustArraySize * idust + 1)
 						iup = str(self.dustArraySize * (idust+1))
 						aadd.append("sum(n(nmols+"+ilow+":nmols+"+iup+")*krome_dust_partner_ratio("\
 							+ilow+":"+iup+"))")
 					idust += 1
-				if(len(aad)>0):
+				if(len(aadd)>0):
 					sadd = "ntot = " + (" &\n + ".join(aadd)) #current total density of the species k
 					saddi = "nitot = " + (" &\n + ".join([y.replace("n(","ni(") for y in aadd])) #initial total density of the species k
 				#prepare replacing string
@@ -4528,7 +4530,8 @@ class krome():
 							#rotational partition functions from A.Popovas (2014) Thesis
 							if(gtype=="POPOVAS"):
 								if(mol.name=="H2"):
-									rotpart = "2d0*gamma_pop_H2(zpartH2even(:),zpartH2odd(:),zpartMinH2even,zpartdTH2even,Tgas,phys_orthoParaRatio)"
+									rotpart = "2d0*gamma_pop_H2(zpartH2even(:),zpartH2odd"+\
+										+"(:),zpartMinH2even,zpartdTH2even,Tgas,phys_orthoParaRatio)"
 								elif(mol.name=="CO"):
 									rotpart = "2d0*gamma_pop(zpartCO(:),zpartMinCO,zpartdTCO,Tgas)"
 								else:
