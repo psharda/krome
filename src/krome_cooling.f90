@@ -60,6 +60,10 @@ contains
     cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingDustTabs
+    cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useCoolingCompton
     cools(idx_cool_compton) = cooling_compton(n(:), Tgas)
 #ENDIFKROME
@@ -420,6 +424,24 @@ contains
          * (Tgas - 2.73d0 * (1.d0 + phys_zredshift)) * n(idx_e) !erg/s/cm3
 
   end function cooling_compton
+#ENDIFKROME
+
+#IFKROME_useCoolingDustTabs
+  !****************************
+  function cooling_dust(n,Tgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::n(:),Tgas,ntot,cooling_dust
+
+    ntot = sum(n(1:nmols))
+    Tgas = n(idx_Tgas)
+
+    cooling_dust = 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
+         dust_tab_cool(:,:), dust_mult_ngas, dust_mult_Tgas, &
+         log10(ntot), log10(Tgas))
+
+  end function cooling_dust
 #ENDIFKROME
 
 #IFKROME_useCoolingDustNoTdust

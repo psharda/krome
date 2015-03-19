@@ -64,6 +64,24 @@ contains
   end subroutine krome_popcool_dump
 #ENDIFKROME
 
+#IFKROME_useTabsTdust
+  !*****************************
+  !get averaged Tdust from tables
+  function krome_get_Tdust(x,Tgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::x(nmols),Tgas, krome_get_Tdust,ntot
+
+    ntot = sum(x(1:nmols))
+    krome_get_Tdust = 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
+         dust_tab_Tdust(:,:), dust_mult_ngas, dust_mult_Tgas, &
+         log10(ntot), log10(Tgas))
+
+  end function krome_get_Tdust
+
+#ENDIFKROME
+
 #IFKROME_useDust
 
   !*************************

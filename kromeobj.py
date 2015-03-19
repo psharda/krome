@@ -51,7 +51,7 @@ class krome():
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
-	useCoolingCO = useCustom = False
+	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
@@ -214,6 +214,10 @@ class krome():
 		self.parser.add_argument("-dustOptions", help="activate dust options: (GROWTH) dust growth, (SPUTTER) sputtering, (H2) molecular\
 			hydrogen formation on dust, (EVAP) thermal evaporation, (T) dust temperature including CMB/radiation coupling,\
 			and (dT) to use dTdust/dt differential.",\
+			metavar="OPTIONS")
+		self.parser.add_argument("-dustTabs", help="activate dust dust tables for: (H2) molecular\
+			hydrogen formation on dust, and/or (COOL) cooling. Note that this tables depends on the environment (radiation, metallicity,\
+			dust type, dust power law characteristics, ...). For more informations check the header of the file data/dust_tabs_COOLH2.dat",
 			metavar="OPTIONS")
 		self.parser.add_argument("-dustSeed", help="set the dust seed in 1/cm3 for dust growth. Default is zero. Any F90 expression \
 			is allowed for SEED.", metavar="SEED")
@@ -385,8 +389,8 @@ class krome():
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=H2,CONT,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=EXACT","-ATOL=1d-40","-maxord=1",\
-				"-columnDensityMethod=JEANS"]]
-			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=dT,H2","-useCoolCMBFloorZ"]]
+				"-columnDensityMethod=JEANS","-useCoolCMBFloorZ"]]
+			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=dT,H2"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under development
 		elif(args.test=="collapseSurface"):
@@ -1222,8 +1226,9 @@ class krome():
 			print "Reading option -useODEConstant (Constant="+str(self.ODEConstant)+")"
 
 		#dust
-		hasDustOptions = False
+		hasDustOptions = hasDustTabs = False
 		if(args.dustOptions): hasDustOptions = True
+		if(args.dustTabs): hasDustTabs = True
 		if(args.dust):
 			dustopt = args.dust
 			adust = dustopt.split(",")
@@ -1234,12 +1239,17 @@ class krome():
 			self.dustTypes = adust[1:]
 			self.dustTypesSize = len(self.dustTypes)
 			print "Reading option -dust (size="+str(self.dustArraySize)+", type(s)="+(",".join(self.dustTypes))+")"
-			#if(not(hasDustOptions)):
-			#	print "ERROR: -dust flag needs to define -dustOptions=[see help])"
+			#if(not(hasDustOptions) and not(hasDustTabs)):
+			#	print "ERROR: -dust flag needs to define -dustOptions=[see help] or -dustTabs=[see help])"
 			#	sys.exit()
+
 		#dust options
+		dustOptions = []
 		if(args.dustOptions):
-			if(not(self.useDust)): die("ERROR: you need -dust=[see help] to activate dust options!")
+			allOptions = ["H2","GROWTH","SPUTTER","T","EVAP","dT"]
+			if(not(self.useDust)): die("ERROR: you need -dust=[see help] to activate -dustOptions!")
+			for opt in allOptions:
+				if(not(opt in allOptions)): sys.exit("ERROR: option "+opt+" in -dustOptions unknown!")
 			dustopt = args.dustOptions
 			dustOptions = [x.strip() for x in dustopt.split(",")]
 			if("GROWTH" in dustOptions): self.useDustGrowth = True
@@ -1251,6 +1261,18 @@ class krome():
 			if(self.useDustT and self.usedTdust):
 				sys.exit("ERROR: options T and dT for dust are mutually exclusive!")
 			print "Reading option -dustOptions (options="+(",".join(dustOptions))+")"
+
+		#dust tabs
+		if(args.dustTabs):
+			allTabs = ["H2","COOL"]
+			if(self.useDust): die("ERROR: -dustTabs and -dust options are not compatible!")
+			dustTabs = [x.strip() for x in args.dustTabs.split(",")]
+			for dTab in dustTabs:
+				if(not(dTab in allTabs)): sys.exit("ERROR: option "+dTab+" in -dustTabs unknown!")
+			if("H2" in dustTabs): self.dustTabsH2 = True
+			if("COOL" in dustTabs): self.dustTabsCool = True
+			self.useDustTabs = True
+			print "Reading option -dustTabs (options="+(",".join(dustTabs))+")"
 
 		#dust seed value
 		if(args.dustSeed):
@@ -4889,16 +4911,14 @@ class krome():
 		useCoolingZ = self.useCoolingZ
 		#loop on source to replace pragmas
 		for row in fh:
-
 			srow = row.strip()
-
-
 			usingTd = (self.usedTdust or self.useDustT)
 			#cooling pragmas
 			if(srow == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
 			if(srow == "#IFKROME_useCoolingdH" and (not(self.useCoolingdH) or len(dH_varsa)==0)): skip = True
 			if(srow == "#IFKROME_useCoolingDust" and (not(self.useCoolingDust) or not(usingTd))): skip = True
 			if(srow == "#IFKROME_useCoolingDustNoTdust" and (usingTd or not(self.useCoolingDust))): skip = True
+			if(srow == "#IFKROME_useCoolingDustTabs" and not(self.dustTabsCool)): skip = True
 			if(srow == "#IFKROME_useCoolingAtomic" and not(self.useCoolingAtomic)): skip = True
 			if(srow == "#IFKROME_useCoolingH2" and not(self.useCoolingH2)): skip = True
 			if(srow == "#IFKROME_useCoolingH2GP" and not(self.useCoolingH2GP98)): skip = True
@@ -4913,7 +4933,6 @@ class krome():
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
 			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip_dTdust = True
-
 
 			if(srow == "#ENDIFKROME_usedTdust"): skip_dTdust = False
 			if(srow == "#ENDIFKROME_use_NLEQ"): skip_nleq = False
@@ -5164,7 +5183,7 @@ class krome():
 						HChem += headchem + tklim + "HChem = HChem + k("+str(rea.idx)+") * ("+kref[i] + "*"+rmult+")\n"
 						if(self.useTlimits and hasTlim): HChem += "end if\n\n"
 						break
-			if(self.useDustH2):
+			if(self.useDustH2 or self.dustTabsH2):
 				HChemDust += "HChem = HChem + nH2dust * (4.2d0*h2heatfac + 0.2d0)\n"
 
 		#build heating terms for photoionization
@@ -5334,6 +5353,14 @@ class krome():
 				dustH2 += dustT+", n(idx_H), H2_eps_"+dType+", vgas)\n"
 				iType += 1
 
+		#H2 on dust from tables
+		if(self.dustTabsH2):
+			dustH2 = "ntot = sum(n(1:nmols))\n"
+			dustH2 += "nH2dust = n(idx_H) * 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &\n\
+				dust_tab_H2(:,:), dust_mult_ngas, dust_mult_Tgas, &\n\
+				log10(ntot), log10(Tgas))"
+
+
 		#replace pragma with built strings 
 		skip = False
 		for row in fh:
@@ -5376,7 +5403,7 @@ class krome():
 					fout.write(get_implicit_ode(self.maxnreag, self.maxnprod)+"\n")
 				else:
 					#add dust ODE and partner specie RHS terms
-					if(self.useDust):
+					if(self.useDust or self.dustTabsH2):
 						ndust = self.dustArraySize*self.dustTypesSize #number of dust ODEs
 						#nmols = len(specs)-4-ndust #number of mols ODEs
 
@@ -5431,8 +5458,8 @@ class krome():
 						idnw = 0
 						for x in dnw[:nmols]:
 							for dType in dustTypes:
-								if(dType==specs[idnw].name): x += " - dSumDust"+dType
-							if(self.useDustH2):
+								if(dType==specs[idnw].name and useDustEvol): x += " - dSumDust"+dType
+							if(self.useDustH2 or self.dustTabsH2):
 								if("H"==specs[idnw].name): x += " - 2d0*nH2dust"
 								if("H2"==specs[idnw].name): x += " + nH2dust"
 							fout.write("\t" + x + "\n")
@@ -5653,6 +5680,7 @@ class krome():
 			if(srow == "#IFKROME_use_coolingZ" and not(self.useCoolingZ)): skip = True
 			if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
+			if(srow == "#IFKROME_useTabsTdust" and not(self.useDustTabs)): skip = True
 			if(srow == "#IFKROME_dust_opacity" and not(self.useDust)): skipDustOpacity = True
 
 			if(srow == "#ENDIFKROME"): skip = False
@@ -5944,6 +5972,7 @@ class krome():
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
 			if(srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT) and self.useSurface)): skip = True
 			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
+			if(srow == "#IFKROME_useDustTabs" and not(self.useDustTabs)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			ierr = ""
@@ -6094,6 +6123,19 @@ class krome():
 		#copy Mayer opacity file
 		if(self.usedTdust or self.useDustT):
 			shutil.copyfile("data/mayer_E2.dat", buildFolder+"mayer_E2.dat")
+
+		#copy H2 dust tables
+		if(self.dustTabsH2):
+			shutil.copyfile("data/dust_table_H2.dat", buildFolder+"dust_table_H2.dat")
+
+		#copy cool dust tables
+		if(self.dustTabsCool):
+			shutil.copyfile("data/dust_table_cool.dat", buildFolder+"dust_table_cool.dat")
+
+		#copy averaged Tdust dust tables
+		if(self.dustTabsH2 and self.dustTabsCool):
+			shutil.copyfile("data/dust_table_Tdust.dat", buildFolder+"dust_table_Tdust.dat")
+
 
 		#copy file that contains table as indicated by the anytab reactions
 		print "- copying anytab files..."

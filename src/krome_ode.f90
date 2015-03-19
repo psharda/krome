@@ -51,8 +51,9 @@ contains
 
     #KROME_calc_Tdust
 
-    #KROME_dust_H2
 #ENDIFKROME
+
+#KROME_dust_H2
 
 #KROME_ODE
 
