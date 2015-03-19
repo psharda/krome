@@ -2511,6 +2511,7 @@ class krome():
 		self.TminAuto = TminAuto
 		self.TmaxAuto = TmaxAuto
 		print "done!"
+
 	#####################################################
 	#define the phys_ variables (will be used in krome_commons and 
 	# in krome_user to create the get and set functions) 
@@ -2519,7 +2520,8 @@ class krome():
 		#note that phys_ will be prepended 
 		self.physVariables = [["Tcmb", "2.73d0"],
 			["zredshift", "0d0"],
-			["orthoParaRatio", "3d0"]]
+			["orthoParaRatio", "3d0"],
+			["metallicity", "0d0"]]
 	
 	#####################################################
 	def photo_warnings(self):
@@ -4340,6 +4342,7 @@ class krome():
 					ff += zg[1]+" = "+zg[2]+"\n"
 					ff += zg[1]+" = max("+zg[1]+", 0d0)\n\n"
 					ff += ffname + " = log10("+zg[1]+"/nH+1d-40) - ("+solar[zg[0]]+")\n\n" #compute metallicity
+					ff += "phys_metallicity = "+ffname + "\n\n" #set Z in the physvariable
 					ff += "end function "+ffname+"\n\n"
 					ffs += ff #append function to the others
 				fout.write(ffs+"\n") #replace functions
@@ -5358,7 +5361,7 @@ class krome():
 			dustH2 = "ntot = sum(n(1:nmols))\n"
 			dustH2 += "nH2dust = n(idx_H) * 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &\n\
 				dust_tab_H2(:,:), dust_mult_ngas, dust_mult_Tgas, &\n\
-				log10(ntot), log10(Tgas))"
+				log10(ntot), log10(Tgas)) * 1d1**phys_metallicity"
 
 
 		#replace pragma with built strings 
