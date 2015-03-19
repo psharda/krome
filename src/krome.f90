@@ -224,6 +224,8 @@ contains
   !*********************************
   !integrates to equilibrium using constant temperature
   subroutine krome_equilibrium(x,Tgas)
+    use krome_ode
+    use krome_subs
     use krome_commons
     use krome_constants
     implicit none
@@ -252,7 +254,7 @@ contains
 
     mf = 222 !internally evaluated sparsity and jacobian
     tloc = 0d0 !initial time
-    dt = seconds_per_year * 1d8
+    dt = seconds_per_year * 1d10
     
     !copy into array
     n(nmols+1:) = 0d0
