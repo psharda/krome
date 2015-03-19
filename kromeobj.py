@@ -1241,7 +1241,7 @@ class krome():
 		if(args.dustOptions):
 			if(not(self.useDust)): die("ERROR: you need -dust=[see help] to activate dust options!")
 			dustopt = args.dustOptions
-			dustOptions = dustopt.split(",")
+			dustOptions = [x.strip() for x in dustopt.split(",")]
 			if("GROWTH" in dustOptions): self.useDustGrowth = True
 			if("SPUTTER" in dustOptions): self.useDustSputter = True
 			if("H2" in dustOptions): self.useDustH2 = True
@@ -2662,8 +2662,9 @@ class krome():
 					if(mol.name.lower()==dType.lower()):
 						dTypeFound = True
 						break
+				useDustEvol = (self.useDustEvap or self.useDustGrowth or self.useDustSputter)
 				#if not found add to specs parsing the name (e.g. Si)
-				if(not(dTypeFound)):
+				if(not(dTypeFound) and useDustEvol):
 						print "Add species \""+dType+"\" (request by dust type)"
 						mymol = parser(dType,self.mass_dic,self.atoms,self.thermodata)
 						mymol.idx = len(specs)+1
