@@ -1,8 +1,7 @@
 module krome_dust
-
-#IFKROME_useDust
 contains
 
+#IFKROME_useDust
   subroutine set_dust_distribution(ngas,dust_gas_ratio,alow,aup,phi)
     !krome_init_dust: initialize the dust ditribution
     ! and the dust bin mean sizes. Arguments are
@@ -470,7 +469,7 @@ contains
        j1 = 1 !first index
        j2 = dust_nT !last index
        !no need to compute Tdust when small amount of dust
-       if(xdust(i)<1d-18*ntot) then
+       if(xdust(i)<1d-30*ntot) then
 #IFKROME_usedTdust
           n(nmols+ndust+i) = Tgas
           cycle
@@ -779,4 +778,20 @@ contains
   end function stick
 
 #ENDIFKROME
+
+  !***********************
+  subroutine init_dust_tabs()
+    use krome_commons
+    use krome_subs
+    implicit none
+
+    call init_anytab2D("dust_table_cool.dat",dust_tab_ngas(:), dust_tab_Tgas(:), &
+         dust_tab_cool(:,:), dust_mult_ngas, dust_mult_Tgas)
+    call init_anytab2D("dust_table_Tdust.dat",dust_tab_ngas(:), dust_tab_Tgas(:), &
+         dust_tab_Tdust(:,:), dust_mult_ngas, dust_mult_Tgas)
+    call init_anytab2D("dust_table_H2.dat",dust_tab_ngas(:), dust_tab_Tgas(:), &
+         dust_tab_H2(:,:), dust_mult_ngas, dust_mult_Tgas)
+
+  end subroutine init_dust_tabs
+
 end module krome_dust

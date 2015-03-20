@@ -64,6 +64,24 @@ contains
   end subroutine krome_popcool_dump
 #ENDIFKROME
 
+#IFKROME_useTabsTdust
+  !*****************************
+  !get averaged Tdust from tables
+  function krome_get_Tdust(x,Tgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::x(nmols),Tgas, krome_get_Tdust,ntot
+
+    ntot = sum(x(1:nmols))
+    krome_get_Tdust = 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
+         dust_tab_Tdust(:,:), dust_mult_ngas, dust_mult_Tgas, &
+         log10(ntot), log10(Tgas))
+
+  end function krome_get_Tdust
+
+#ENDIFKROME
+
 #IFKROME_useDust
 
   !*************************
@@ -599,6 +617,55 @@ contains
 
   end subroutine krome_load_photoBin_file
 
+  !**********************************
+  subroutine krome_set_photoBin_HMlog(lower_in,upper_in)
+    use krome_commons
+    use krome_photo
+    use krome_subs
+    implicit none
+    real*8::z(59),energy(500),HM(59,500)
+    real*8::z_mul,energy_mul,x,lower,upper
+    real*8,parameter::limit_lower = 0.1237d0
+    real*8,parameter::limit_upper = 4.997d7
+    real*8,parameter::limit_redshift = 15.660d0
+    real*8,optional::lower_in,upper_in
+    integer::i
+
+    lower = limit_lower
+    upper = limit_upper
+    if(present(lower_in)) lower = lower_in
+    if(present(upper_in)) upper = upper_in
+
+    if(phys_zredshift>limit_redshift) then
+       print *,"ERROR: redshift out of range in HM"
+       print *,"redshift:",phys_zredshift
+       print *,"limit:",limit_redshift
+       stop
+    end if
+
+    if(lower<limit_lower .or. upper>limit_upper) then
+       print *,"ERROR: upper or lower limit out of range in HM."
+       print *,"lower limit (eV):",limit_lower
+       print *,"upper limit (eV):",limit_upper
+       stop
+    end if
+
+    call krome_set_photoBinE_log(lower,upper)
+
+    call init_anytab2D("krome_HMflux.dat", z(:), energy(:), &
+         HM(:,:), z_mul, energy_mul)
+
+    do i=1,nPhotoBins
+       x = log10(photoBinEmid(i)) !log(eV)
+       photoBinJ(i) = 1d1**fit_anytab2D(z(:), energy(:), HM(:,:), &
+            z_mul, energy_mul, phys_zredshift, x)
+    end do
+
+    photoBinJ_org(:) = photoBinJ(:)
+
+    call calc_photobins()
+
+  end subroutine krome_set_photoBin_HMlog
 
   !**********************************
   subroutine krome_set_photoBin_BBlin(lower,upper,Tbb)
@@ -618,6 +685,8 @@ contains
        photoBinJ(i) = planckBB(x,Tbb)
     end do
     photoBinJ_org(:) = photoBinJ(:)
+
+    call calc_photobins()
 
   end subroutine krome_set_photoBin_BBlin
 
