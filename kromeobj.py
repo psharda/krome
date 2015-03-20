@@ -62,6 +62,7 @@ class krome():
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
 	useCoolCMBFloorZ = False
 	humanFlux = True
+	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
 	test_name = "default"
 	test_status = "OK"
@@ -1264,11 +1265,36 @@ class krome():
 
 		#dust tabs
 		if(args.dustTabs):
-			allTabs = ["H2","COOL"]
+			tabModes = ["HM2012"] #modes
+			tabOpts = ["H2","COOL"] #options
+			allTabs = tabOpts + tabModes #all possible options
+
 			if(self.useDust): die("ERROR: -dustTabs and -dust options are not compatible!")
 			dustTabs = [x.strip() for x in args.dustTabs.split(",")]
+			modeFound = optFound = False
 			for dTab in dustTabs:
-				if(not(dTab in allTabs)): sys.exit("ERROR: option "+dTab+" in -dustTabs unknown!")
+				if(not(dTab in allTabs)):
+					print "ERROR: option (or mode) "+dTab+" in -dustTabs unknown!"
+					print "Available options:", tabOpts
+					print "Available modes:",tabModes
+					sys.exit()
+				if(dTab in tabOpts): optFound = True
+				if(dTab in tabModes):
+					modeFound = True
+					self.dustTableMode = dTab
+
+			#error if mode not found
+			if(not(modeFound)):
+				print "ERROR: you should indicate a mode when you use -dustTabs option"
+				print "Available modes:",tabModes
+				sys.exit()
+
+			#error if option not found
+			if(not(optFound)):
+				print "ERROR: you should indicate options when you use -dustTabs option"
+				print "Available options:",tabOpts
+				sys.exit()
+
 			if("H2" in dustTabs): self.dustTabsH2 = True
 			if("COOL" in dustTabs): self.dustTabsCool = True
 			self.useDustTabs = True
@@ -6133,15 +6159,18 @@ class krome():
 
 		#copy H2 dust tables
 		if(self.dustTabsH2):
-			shutil.copyfile("data/dust_table_H2.dat", buildFolder+"dust_table_H2.dat")
+			dtableFname = "dust_table_"+self.dustTableMode+"_H2.dat"
+			shutil.copyfile("data/dust_tables/"+dtableFname, buildFolder+"dust_table_H2.dat")
 
 		#copy cool dust tables
 		if(self.dustTabsCool):
-			shutil.copyfile("data/dust_table_cool.dat", buildFolder+"dust_table_cool.dat")
+			dtableFname = "dust_table_"+self.dustTableMode+"_cool.dat"
+			shutil.copyfile("data/dust_tables/"+dtableFname, buildFolder+"dust_table_cool.dat")
 
 		#copy averaged Tdust dust tables
 		if(self.dustTabsH2 and self.dustTabsCool):
-			shutil.copyfile("data/dust_table_Tdust.dat", buildFolder+"dust_table_Tdust.dat")
+			dtableFname = "dust_table_"+self.dustTableMode+"_Tdust.dat"
+			shutil.copyfile("data/dust_tables/"+dtableFname, buildFolder+"dust_table_Tdust.dat")
 
 
 		#copy file that contains table as indicated by the anytab reactions
