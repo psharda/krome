@@ -6127,6 +6127,10 @@ class krome():
 		if(self.usedTdust or self.useDustT):
 			shutil.copyfile("data/mayer_E2.dat", buildFolder+"mayer_E2.dat")
 
+		#copy HM2012 flux file
+		if(self.photoBins>0):
+			shutil.copyfile("data/krome_HMflux.dat", buildFolder+"krome_HMflux.dat")
+
 		#copy H2 dust tables
 		if(self.dustTabsH2):
 			shutil.copyfile("data/dust_table_H2.dat", buildFolder+"dust_table_H2.dat")
