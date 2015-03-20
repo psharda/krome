@@ -627,6 +627,7 @@ contains
     real*8::z_mul,energy_mul,x,lower,upper
     real*8,parameter::limit_lower = 0.1237d0
     real*8,parameter::limit_upper = 4.997d7
+    real*8,parameter::limit_redshift = 15.660d0
     real*8,optional::lower_in,upper_in
     integer::i
 
@@ -634,6 +635,13 @@ contains
     upper = limit_upper
     if(present(lower_in)) lower = lower_in
     if(present(upper_in)) upper = upper_in
+
+    if(phys_zredshift>limit_redshift) then
+       print *,"ERROR: redshift out of range in HM"
+       print *,"redshift:",phys_zredshift
+       print *,"limit:",limit_redshift
+       stop
+    end if
 
     if(lower<limit_lower .or. upper>limit_upper) then
        print *,"ERROR: upper or lower limit out of range in HM."
