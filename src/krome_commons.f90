@@ -82,6 +82,9 @@ module krome_commons
   !xrayJ21 for tabulated heating and rate
   real*8::J21xray
 
+  !total metallicity relative to solar Z/Z_solar 
+  real*8::total_Z
+
 #IFKROME_useMayerOpacity
   !commons for Mayer opacity table
   integer,parameter::mayern=15,mayerm=23
