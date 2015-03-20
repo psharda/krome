@@ -467,6 +467,10 @@ contains
     call check_tabs()
 #ENDIFKROME
 
+#IFKROME_useDustTabs
+    call init_dust_tabs()
+#ENDIFKROME
+
 #IFKROME_useStars
     call stars_init()
 #ENDIFKROME
