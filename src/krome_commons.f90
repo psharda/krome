@@ -92,11 +92,6 @@ module krome_commons
   real*8::mayer_z(mayern,mayerm),mayer_xmul,mayer_ymul
 #ENDIFKROME
 
-#IFKROME_useCoolingZCIENOUV
-  integer,parameter::CoolZNOUVn=131,CoolZNOUVm=162
-  real*8::CoolZNOUV_x(CoolZNOUVn),CoolZNOUV_y(CoolZNOUVm)
-  real*8::CoolZNOUV_z(CoolZNOUVn,CoolZNOUVm),CoolZNOUV_xmul,CoolZNOUV_ymul
-#ENDIFKROME
 
   !commons for exp(-a) table
   integer,parameter::exp_table_na=int(1d5)
