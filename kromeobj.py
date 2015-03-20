@@ -218,7 +218,8 @@ class krome():
 			metavar="OPTIONS")
 		self.parser.add_argument("-dustTabs", help="activate dust dust tables for: (H2) molecular\
 			hydrogen formation on dust, and/or (COOL) cooling. Note that this tables depends on the environment (radiation, metallicity,\
-			dust type, dust power law characteristics, ...). For more informations check the header of the file data/dust_tabs_COOLH2.dat",
+			dust type, dust power law characteristics, ...). To change enviroment you have to indicate a mode. Details are in the folder\
+			data/dust_tabs/ in the headers of the files. e.g. -dustTabs=H2,HM2012",
 			metavar="OPTIONS")
 		self.parser.add_argument("-dustSeed", help="set the dust seed in 1/cm3 for dust growth. Default is zero. Any F90 expression \
 			is allowed for SEED.", metavar="SEED")
