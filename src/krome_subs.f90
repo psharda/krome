@@ -748,19 +748,26 @@ contains
 
   !***********************
   !see http://kida.obs.u-bordeaux1.fr/help
-  function KIDA3body(ka0,kb0,kc0,kaInf,kbInf,kcInf,kaFc,kbFc,kcFc,kdFc,npart,Tgas)
+  function KIDA3body(ka0,kb0,kc0,kaInf,kbInf,kcInf,kaFc,kbFc,&
+       kcFc,kdFc,npart,Tgas,pmin,pmax)
     implicit none
     real*8::ka0,kb0,kc0,kaInf,kbInf,kcInf,kaFc,kbFc,kcFc,kdFc
     real*8::KIDA3body,kinf,p,f,npart,Tgas,fc,fexp,invT
-    real*8::k0,cc,dd,nn
+    real*8::k0,cc,dd,nn,pmin,pmax
+
+    KIDA3body = 0d0
 
     invT = 1d0/Tgas
     k0 = ka0*(Tgas/3d2)**kb0*exp(-kc0*invT)
     kinf = kainf*(Tgas/3d2)**kbinf*exp(-kcinf*invT)
+
+    p = k0*npart/kinf
+    if(p<pmin) return
+    if(p>pmax) return
+
     fc = (1d0-kaFc)*exp(-Tgas/kbFc) + kaFc*exp(-Tgas/kbFc) &
          + exp(-kdFc*invT)
 
-    p = k0*npart/kinf
     cc = -0.4d0 - 0.67d0 *log10(fc)
     dd = 0.14d0
     nn = 0.75d0 - 1.27d0*log10(fc)
