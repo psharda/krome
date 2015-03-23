@@ -17,6 +17,30 @@ contains
 
 #KROME_user_commons_functions
 
+  !**********************
+  !convert number density (cm-3) into column
+  ! density (cm-2) using the specific density
+  ! column method (see help for option
+  ! -columnDensityMethod)
+  ! num is the number density, x(:) is the species
+  ! array, Tgas is the gas temperature
+  ! If the method is not JEANS, x(:) and Tgas
+  ! are dummy variables
+  function krome_num2col(num,x,Tgas)
+    use krome_subs
+    use krome_commons
+    implicit none
+    real*8::x(nmols),num,Tgas
+    real*8::n(nspec),krome_num2col
+
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
+
+    krome_num2col = num2col(num,n(:))
+
+  end function krome_num2col
+
   !***********************
   !print the current values of the phys variables
   subroutine krome_print_phys_variables()
