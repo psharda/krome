@@ -496,8 +496,8 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	foutx.close()
 
 ################################
+#split molecule name assuming elements written as He
 def listA(arg):
-	
 	parts = []
 	part = ""
 	for a in list(arg):
@@ -562,6 +562,8 @@ def generateCustom(readCustomFile):
 	amols_org += ["H2O", "H2O+", "H3O+"]
 	amols_org += ["C", "C+", "C-", "C2", "CH", "CH+", "CH2"]
 	amols_org += ["CH2+", "CH3+"]
+	amols_org += ["HCO+", "HOC+"]
+
 
 	#exploded species
 	emols_org = ["H","HH","H+","H-","He","He+","HH+","HHH3+","-"]
@@ -569,6 +571,7 @@ def generateCustom(readCustomFile):
 	emols_org += ["HHO", "HHO+", "HHHO+"]
 	emols_org += ["C", "C+", "C-", "CC", "CH", "CH+", "CHH"]
 	emols_org += ["CHH+", "CHHH+"]
+	emols_org += ["HCO+", "HOC+"]
 
 	eV2kJmol = 96.4869e0 #eV -> kJ/mol
 	#enthalpy data (DH: enthalpy of fomration (kJ/mol), EA: electron affinity (eV)
@@ -591,6 +594,8 @@ def generateCustom(readCustomFile):
 	HData["CH"] = {"DH":594.13e0, "IE":10.64e0, "EA":1.26e0}
 	HData["CH2"] = {"DH":386.39e0, "IE":10.396e0, "EA":0.652e0}
 	HData["CH3"] = {"DH":145.59e0, "IE":9.84e0, "EA":0.08e0}
+	HData["HCO"] = {"DH":43.51e0, "IE":8.12e0, "EA":0.313e0}
+	HData["HOC"] = {"DH":43.51e0, "IE":8.12e0, "EA":0.313e0} #TODO: check
 
 
 	#compute missing DH data using http://webbook.nist.gov/chemistry/ion/#DH prescriptions
@@ -646,6 +651,7 @@ def generateCustom(readCustomFile):
 		if(is_number(thisMol) or thisMol==""):
 			amols.append(amols_org[i])
 			emols.append(emols_org[i])
+
 
 	#include additional molecules
 	for mol in custom["include"]:
@@ -731,8 +737,10 @@ def generateCustom(readCustomFile):
 				continue
 			if("@var:" in srow): continue
 			if("@type:" in srow): autorea = dict() #begin reaction
-			autorea.update(at_extract(srow))
+			autorea[srow.split(":")[0].replace("@","").strip()] = srow.split(":")[1].strip()
 			if("@rate:" in srow): autoreacts.append(autorea) #end reaction
+
+
 
 	DHlimit = 1e4 #enthalpy limit to accept a reaction, K
 	sDHlimit = str(round(DHlimit/1e1**int(log10(DHlimit)),2))+"d"+str(int(log10(DHlimit)))
@@ -745,15 +753,17 @@ def generateCustom(readCustomFile):
 	fhTmpAll.write(fillSpaces("#IDX",5) + fillSpaces("REACTANS",20) + "    " + fillSpaces("PRODUCTS",20)\
 		+ fillSpaces("ENTHALPY (K)",18) + fillSpaces("FOUND IN DBASE",16)+fillSpaces("<"+str(sDHlimit)+"K",9)+"check\n")
 
+
+
 	kJmol2K = 120.274e0 #kJ/mol -> K
 	#search created reactions in the database
 	iCount = 0
 	for crea in custRea:
 		#prepare custom products/reactants
-		CC1 = sorted(crea[0][1])
-		CC1 = [amols[emols.index(x)] for x in CC1]
-		CC2 = sorted(crea[1][1])
-		CC2 = [amols[emols.index(x)] for x in CC2]
+		CC1 = crea[0][1]
+		CC1 = sorted([amols[emols.index(x)] for x in CC1])
+		CC2 = crea[1][1]
+		CC2 = sorted([amols[emols.index(x)] for x in CC2])
 		inDatabaseFwd = inDatabaseRev = False
 		DHCC1 = sum([HData[x]["DH"] for x in CC1])
 		DHCC2 = sum([HData[x]["DH"] for x in CC2])

@@ -4345,14 +4345,14 @@ class krome():
 
 			elif(srow == "#KROME_col2num_method"):
 				if(self.columnDensityMethod=="DEFAULT"):
-					fout.write("col2num = 1d3 * (ncalc/1.8d21)**1.5\n")
+					fout.write("col2num = 1d3 * (ncalc/1.87d21)**1.5\n")
 				elif(self.columnDensityMethod=="JEANS"):
 					fout.write("col2num = 2d0 * ncalc / get_jeans_length(n(:),Tgas)\n")
 				else:
 					sys.exit("ERROR: method "+self.columnDensityMethod+" unknown for col2num")
 			elif(srow == "#KROME_num2col_method"):
 				if(self.columnDensityMethod=="DEFAULT"):
-					fout.write("num2col = 1.8d21*(max(ncalc,1d-40)*1d-3)**(2./3.)\n")
+					fout.write("num2col = 1.87d21*(max(ncalc,1d-40)*1d-3)**(2./3.)\n")
 				elif(self.columnDensityMethod=="JEANS"):
 					fout.write("num2col = 0.5d0 * ncalc * get_jeans_length(n(:),Tgas)\n")
 				else:
