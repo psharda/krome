@@ -2,15 +2,15 @@
 
 #atoms employed to build molecules
 #comma separated, can't be empty
-atoms: H,E,He,O
+atoms: H,E,C,O,He,N
 
 #maximum number of atoms per molecule
-maxatoms: 99
+maxatoms: 4
 
-#use cations
+#use cations, e.g. CO+
 cations: yes
 
-#use anions
+#use anions, e.g. H-
 anions: yes
 
 #maximum number of reactants per reaction (1<=N<=3)
@@ -20,11 +20,15 @@ maxrea: 3
 maxprod: 3
 
 #species to exclude (included by other tokens)
-#comma separated, can be empty
+#comma separated, empty=ignore
 exclude:
 
 #additional species to include (excluded by other tokens)
-#comma separated, can be empty
+#comma separated, empty=ignore
 #this command overrides all the others (except "exclude:")
 include:
 
+#species that should be present in all the reactions
+# (at least one of the listed species)
+#comma separated, empty=ignore
+present:
