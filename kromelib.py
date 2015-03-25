@@ -595,7 +595,7 @@ def generateCustom(readCustomFile):
 	HData["CH2"] = {"DH":386.39e0, "IE":10.396e0, "EA":0.652e0}
 	HData["CH3"] = {"DH":145.59e0, "IE":9.84e0, "EA":0.08e0}
 	HData["HCO"] = {"DH":43.51e0, "IE":8.12e0, "EA":0.313e0}
-	HData["HOC"] = {"DH":43.51e0, "IE":8.12e0, "EA":0.313e0} #TODO: check
+	HData["HOC+"] = {"DH":978.7e0} #using reactions 1-2 in Li+2008, J. Chem. Phys.129, 244306 (2008)
 
 
 	#compute missing DH data using http://webbook.nist.gov/chemistry/ion/#DH prescriptions
