@@ -566,6 +566,9 @@ def generateCustom(readCustomFile):
 	amols_org += ["C", "C+", "C-", "C2", "CH", "CH+", "CH2"]
 	amols_org += ["CH2+", "CH3+"]
 	amols_org += ["HCO+", "HOC+","HCO","CO","CO+"]
+	amols_org += ["N","NO","CN","N2","HCN","HNC","HNO"]
+	amols_org += ["NH","NH2","NH3"]
+	amols_org += ["N+","NH+","NH2+","NH3+","NH4+","HCN+"]
 
 	#exploded species
 	emols_org = ["H","HH","H+","H-","He","He+","HH+","HHH3+","-"]
@@ -574,6 +577,9 @@ def generateCustom(readCustomFile):
 	emols_org += ["C", "C+", "C-", "CC", "CH", "CH+", "CHH"]
 	emols_org += ["CHH+", "CHHH+"]
 	emols_org += ["HCO+", "HOC+","HCO","CO","CO+"]
+	emols_org += ["N","NO","CN","NN","HCN","HNC","HNO"]
+	emols_org += ["NH","NHH","NHHH"]
+	emols_org += ["N+","NH+","NHH+","NHHH+","NHHHH+","HCN+"]
 
 	eV2kJmol = 96.4869e0 #eV -> kJ/mol
 	#enthalpy data (DH: enthalpy of fomration (kJ/mol), EA: electron affinity (eV)
@@ -597,8 +603,19 @@ def generateCustom(readCustomFile):
 	HData["CH2"] = {"DH":386.39e0, "IE":10.396e0, "EA":0.652e0}
 	HData["CH3"] = {"DH":145.59e0, "IE":9.84e0, "EA":0.08e0}
 	HData["HCO"] = {"DH":43.51e0, "IE":8.12e0, "EA":0.313e0}
-	HData["HOC+"] = {"DH":978.7e0} #using reactions 1-2 in Li+2008, J. Chem. Phys.129, 244306 (2008)
+	HData["HOC+"] = {"DH":978.7e0} #using reactions 1-2 in Li+2008, J. Chem. Phys.129, 244306
 	HData["CO"] = {"DH":-110.53e0, "IE":14.014e0, "EA":1.32608e0}
+	HData["N"] = {"DH":472.68e0, "IE":14.534e0}
+	HData["NO"] = {"DH":90.29e0, "IE":9.264e0}
+	HData["CN"] = {"DH":435.14e0, "IE":13.598e0}
+	HData["N2"] = {"DH":0e0, "IE":15.581e0}
+	HData["HCN"] = {"DH":135.15e0, "IE":13.6e0, "EA":0.00156e0}
+	HData["HNC"] = {"DH":207.94} #Wenthold 2000, J. Phys. Chem. A 104, 5612
+	HData["HNO"] = {"DH":99.58e0, "IE":10.1e0, "EA":0.338e0}
+	HData["NH"] = {"DH":376.56e0, "IE":13.49e0, "EA":0.37e0}
+	HData["NH2"] = {"DH":190.37e0, "IE":10.78e0, "EA":0.7710e0}
+	HData["NH3"] = {"DH":-45.9e0, "IE":10.07e0}
+	HData["NH4+"] = {"DH":-132.5e0} #(aq) D.Ebbing, S.D.Gammon, General Chemistry, Enhanced Edition
 
 	#convert array present into exploded version
 	custom["present"] = [emols_org[amols_org.index(x)] for x in custom["present"]]
@@ -712,25 +729,27 @@ def generateCustom(readCustomFile):
 	print "building automatic reactions... (it may take a while)"
 	time0 = time.time()
 	custRea = []
+	lenPresent = len(custom["present"])
 	#loop on reactants
 	countRR = 0
 	for RR in combs:
-		if((countRR % 500)==1): print "time to go (s):",round((time.time()-time0)/countRR*(len(combs)-countRR),2)
+		if((countRR % 5000)==1): print "time to go (s):",round((time.time()-time0)/countRR*(len(combs)-countRR),2)
 		countRR += 1
+		JRR = ("".join(sorted("".join(RR[1]))))
+		lenRR = len(RR[1])
 		#loop on products
 		for PP in combs:
-			JRR = ("".join(sorted("".join(RR[1]))))
-			JPP = ("".join(sorted("".join(PP[1]))))
-			#3body->3body ignored
-			if(len(RR[1])==3 and len(PP[1])==3): continue
-			#anion-cation->cation-anion ignored
-			if(("+-" in JRR) and ("+-" in JPP)): continue
 			#check if exploded are the same
 			if(RR[0]!=PP[0]): continue
+			#3body->3body ignored
+			if(lenRR==3 and len(PP[1])==3): continue
+			#anion-cation->cation-anion ignored
+			JPP = ("".join(sorted("".join(PP[1]))))
+			if(("+-" in JRR) and ("+-" in JPP)): continue
 			#check if reactant/products are different (avoid A+B->A+B)
 			if(RR[1]==PP[1]): continue
 			#check "present" statement
-			if(len(custom["present"])>0):
+			if(lenPresent>0):
 				allSpecies = RR[1]+PP[1] #all the species R+P
 				anyFound = False
 				#loop on species
@@ -780,9 +799,8 @@ def generateCustom(readCustomFile):
 	fhTmpAll.write("# satisfying the enthalpy upper limit of "+str(sDHlimit)+" K (*), and that should be checked\n")
 	fhTmpAll.write("# because are NOT in the database AND have an enthalpy below that the limit (#).\n")
 	fhTmpAll.write(fillSpaces("#IDX",5) + fillSpaces("REACTANS",20) + "    " + fillSpaces("PRODUCTS",20)\
-		+ fillSpaces("ENTHALPY (K)",18) + fillSpaces("Kf/Kr",18) + fillSpaces("FOUND IN DBASE",16)\
+		+ fillSpaces("ENTHALPY (K)",18) + fillSpaces("FOUND IN DBASE",16)\
 		+ fillSpaces("<"+str(sDHlimit)+"K",9) + "check\n")
-
 
 	print "automatic reactions found:",len(custRea)*2 #including reverse
 	print "writing automatic reactions to file..."
@@ -810,25 +828,38 @@ def generateCustom(readCustomFile):
 			if(RR==CC2 and PP==CC1 and not([CC2,CC1] in reaFound)):
 				reaFound.append([CC2,CC1])
 				inDatabaseRev = True
+		JJ1 = ("".join(CC1))
+		JJ2 = ("".join(CC2))
 		#write all the reactions even if not in the database
 		RRall = (" + ".join(CC1))
 		PPall = (" + ".join(CC2))
+		rtype = ""
+		if(("+" in JJ1) and ("-" in JJ1) and (len(CC2)==3)): rtype = "+-3prods"
+		if(list(set(CC1).intersection(CC2))): rtype = "catal"
 		DH = (DHCC2-DHCC1) * kJmol2K #enthalpy products - reactants
 		fav = (" *" if (DH<DHlimit) else "")
 		check = (" #" if(DH<DHlimit and not(inDatabaseFwd)) else "")
-		fhTmpAll.write(fillSpaces(iCount+1,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
-			+ fillSpaces(DH,18) + fillSpaces(inDatabaseFwd,16)\
-			+ fillSpaces(fav,9) + check + "\n")
+		if(len(CC1)<3 or rtype=="catal"):
+			if(inDatabaseFwd or (DH<DHlimit)):
+				fhTmpAll.write(fillSpaces(iCount+1,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
+					+ fillSpaces(DH,18) + fillSpaces(inDatabaseFwd,16)\
+					+ fillSpaces(fav,9) + fillSpaces(check,3) + rtype + "\n")
+				iCount += 1
 
 		RRall = (" + ".join(CC2))
 		PPall = (" + ".join(CC1))
+		rtype = ""
+		if(("+" in JJ2) and ("-" in JJ2) and (len(CC1)==3)): rtype = "+-3prods"
+		if(list(set(CC2).intersection(CC1))): rtype = "catal"
 		DH = (DHCC1-DHCC2) * kJmol2K #enthalpy products - reactants
 		fav = (" *" if (DH<DHlimit) else "")
 		check = (" #" if(DH<DHlimit and not(inDatabaseRev)) else "")
-		fhTmpAll.write(fillSpaces(iCount+2,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
-			+ fillSpaces(DH,18) + fillSpaces(inDatabaseRev,16)\
-			+ fillSpaces(fav,9) + check + "\n")
-		iCount += 2
+		if(len(CC2)<3 or rtype=="catal"):
+			if(inDatabaseRev or (DH<DHlimit)):
+				fhTmpAll.write(fillSpaces(iCount+2,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
+					+ fillSpaces(DH,18) + fillSpaces(inDatabaseRev,16)\
+					+ fillSpaces(fav,9) + fillSpaces(check,3) + rtype + "\n")
+				iCount += 1
 
 	fhTmpAll.close()
 
