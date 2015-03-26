@@ -176,8 +176,8 @@ class krome():
 		self.parser.add_argument("-compact", action="store_true", help="creates a single fortran file with all the modules instead of\
 			various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact)")
 		self.parser.add_argument("-checkConserv", action="store_true", help="check mass conservation during integration (slower)")
-		self.parser.add_argument("-checkReverse", action="store_true", help="check network for reverse reactions. Write warning on\
-			screen if any.")
+		self.parser.add_argument("-checkReverse", action="store_true", help="check network for reverse reactions including thermochemistry.\
+			Output written in build/krome_reverse.log file.")
 		self.parser.add_argument("-checkThermochem", action="store_true", help="print a warning when thermochemistry data are not found\
 			for a given species.")
 		self.parser.add_argument("-clean", action="store_true", help="clean all in /build (including krome_user_commons.f90 that\
@@ -2511,24 +2511,42 @@ class krome():
 						print " Disable this control with -noRecCheck"
 						sys.exit()
 
-		#reverse report
-		fhrev = open(self.buildFolder+"krome_reverse.log","w")
-		fhrev.write("#reverse report\n")
-		for rea in reacts:
-			RR = sorted([x.name for x in rea.reactants])
-			PP = sorted([x.name for x in rea.products])
-			reverseFound = "NO REVERSE FOUND"
-			for rea2 in reacts:
-				RR2 = sorted([x.name for x in rea2.reactants])
-				PP2 = sorted([x.name for x in rea2.products])
-				if(RR==PP2 and PP==RR2):
-					reverseFound = rea2.verbatim
-					break
-			numFwd = str(rea.idx) + (" "*(5-len(str(rea.idx))))
-			verbFwd = rea.verbatim + (" "*(50-len(rea.verbatim)))
-			fhrev.write(numFwd+verbFwd+reverseFound+"\n")
+		#write reverse report tp file
+		if(self.checkReverse):
+			DHthreshold = 3e3 #enthalpy of formation threshold (K)
+			kJmol2K = 120.274e0 #kJ/mol -> K
+			fhrev = open(self.buildFolder+"krome_reverse.log","w")
+			fhrev.write("#REVERSE REPORT\n")
+			fhrev.write("#This file shows the reactions in the network file and indicates if the reverse reaction is present.\n")
+			fhrev.write("#The files also reports the reaction enthalpy of formation (K) for the reverse reaction.\n")
+			fhrev.write("#If the difference is below "+str(DHthreshold)+" K and the reverse is not present, the symbol '*'\n")
+			fhrev.write("# is added. It means that the reverse reaction is probably important.\n")
+			for rea in reacts:
+				RR = sorted([x.name for x in rea.reactants])
+				PP = sorted([x.name for x in rea.products])
+				#join the reactants and the products names to check for mutual neutralization
+				RRPP = ("".join([x.name for x in (rea.products+rea.reactants)]))
+				checkFlag = " *" #check flag
+				#search for neutralization
+				if(("+" in RRPP) and (("-" in RRPP) or ("E" in RRPP))): checkFlag = "  "
+				#single reactants/products are not considered as missing reverse
+				if((len(RR)==1) or (len(PP)==1)): checkFlag = "  "
+				DH = compute_DHreact(PP,RR)*kJmol2K
+				if(DH>DHthreshold): checkFlag = "  "
+				#search for reverse in the network
+				reverseFound = "NO REVERSE FOUND" + checkFlag +" "+str(DH)
+				for rea2 in reacts:
+					RR2 = sorted([x.name for x in rea2.reactants])
+					PP2 = sorted([x.name for x in rea2.products])
+					if(RR==PP2 and PP==RR2):
+						reverseFound = rea2.verbatim
+						break
+				#prepares columns with spaces
+				numFwd = str(rea.idx) + (" "*(5-len(str(rea.idx))))
+				verbFwd = rea.verbatim + (" "*(50-len(rea.verbatim)))
+				fhrev.write(numFwd+verbFwd+reverseFound+"\n")
 
-		fhrev.close()
+			fhrev.close()
 
 
 		#copy local to global vars
@@ -2624,6 +2642,7 @@ class krome():
 	###########################################
 	#check if reactions have their reverse in the chemical network
 	def check_reverse(self):
+		return #no longer supported
 		if(not(self.checkReverse)): return
 		idxRev = []
 		reacts = self.reacts
