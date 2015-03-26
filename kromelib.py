@@ -516,6 +516,88 @@ def fillSpaces(instring,columns):
 	if(columns<len(astring)): return ("#"*columns)
 	return astring+(" "*(columns-len(astring)))
 
+#####################
+def compute_Hdata(arg):
+	eV2kJmol = 96.4869e0 #eV -> kJ/mol
+	#enthalpy data (DH: enthalpy of fomration (kJ/mol), EA: electron affinity (eV)
+	#IE: ionization energy (eV) - note: @298K
+	#see http://webbook.nist.gov/chemistry/
+	xHData = dict()
+	xHData["H"] = {"DH":218e0, "IE":13.59844e0, "EA":0.754195e0}
+	xHData["H2"] = {"DH":0e0, "IE":15.42593e0}
+	xHData["He"] = {"DH":0e0, "IE":24.58741e0}
+	xHData["H2+"] = {"DH":1497e0}
+	xHData["E"] = {"DH":6.2e0} #5/2RT @298K
+	xHData["O"] = {"DH":249.18e0, "IE":13.61806e0, "EA":1.439157e0}
+	xHData["O2"] = {"DH":0e0, "IE":12.0697e0, "EA":0.4480e0}
+	xHData["OH"] = {"DH":38.99e0, "IE":13.017e0, "EA":1.82767e0}
+	xHData["H2O"] = {"DH":-241.826e0, "IE":12.621e0, "EA":12.65e0}
+	xHData["H3O+"] = {"DH":603.417e0}
+	xHData["H3+"] = {"DH":1.1e3} #from pag.37 Chemistry of the Elements (N. N. Greenwood,A. Earnshaw)
+	xHData["C"] = {"DH":716.68e0, "IE":11.26030e0, "EA":1.262114e0}
+	xHData["C2"] = {"DH":837.74e0, "IE":11.4e0, "EA":3.273e0}
+	xHData["CH"] = {"DH":594.13e0, "IE":10.64e0, "EA":1.26e0}
+	xHData["CH2"] = {"DH":386.39e0, "IE":10.396e0, "EA":0.652e0}
+	xHData["CH3"] = {"DH":145.59e0, "IE":9.84e0, "EA":0.08e0}
+	xHData["HCO"] = {"DH":43.51e0, "IE":8.12e0, "EA":0.313e0}
+	xHData["HOC+"] = {"DH":978.7e0} #using reactions 1-2 in Li+2008, J. Chem. Phys.129, 244306
+	xHData["CO"] = {"DH":-110.53e0, "IE":14.014e0, "EA":1.32608e0}
+	xHData["N"] = {"DH":472.68e0, "IE":14.534e0}
+	xHData["NO"] = {"DH":90.29e0, "IE":9.264e0}
+	xHData["CN"] = {"DH":435.14e0, "IE":13.598e0}
+	xHData["N2"] = {"DH":0e0, "IE":15.581e0}
+	xHData["HCN"] = {"DH":135.15e0, "IE":13.6e0, "EA":0.00156e0}
+	xHData["HNC"] = {"DH":207.94} #Wenthold 2000, J. Phys. Chem. A 104, 5612
+	xHData["HNO"] = {"DH":99.58e0, "IE":10.1e0, "EA":0.338e0}
+	xHData["NH"] = {"DH":376.56e0, "IE":13.49e0, "EA":0.37e0}
+	xHData["NH2"] = {"DH":190.37e0, "IE":10.78e0, "EA":0.7710e0}
+	xHData["NH3"] = {"DH":-45.9e0, "IE":10.07e0}
+	xHData["NH4+"] = {"DH":-132.5e0} #(aq) D.Ebbing, S.D.Gammon, General Chemistry, Enhanced Edition
+	xHData["N2H"] = {"DH":251.46e0, "IE":7.8e0} #Cs symmetry, Matus+2006, J. Phys. Chem. A 110, 10116
+	xHData["HCNH"] = {"DH":250e0, "IE":9.41e0} #Cowles+1991, J.Chem.Phys. 94, 3517
+
+	#extend with uppercase species
+	exHData = dict()
+	for k,v in xHData.iteritems():
+		exHData[k.upper()] = v
+	xHData.update(exHData)
+
+	#if DH is present no need to compute it
+	if(arg in xHData): return xHData[arg]
+
+	#find neutral
+	neutral = arg.replace("+","").replace("-","")
+
+	#check if neutral DH exists
+	if(not(neutral in xHData)):
+		sys.exit("ERROR: cannot compute DH for "+arg+" since "+neutral+" is missing!")
+
+	#do calculation for cation
+	if("+" in arg):
+		#check if neutral's IE exists
+		if(not("IE" in xHData[neutral])):
+			sys.exit("ERROR: cannot compute DH for "+arg+" since IE "+neutral+" is missing!")
+		#DH(cation) = DH(neutral) + ionization energy - electron entalphy
+		return {"DH": xHData[neutral]["DH"] + xHData[neutral]["IE"]*eV2kJmol - xHData["E"]["DH"]}
+
+	#do calculation for anion
+	if("-" in arg):
+		#check if neutral's EA exists
+		if(not("EA" in xHData[neutral])):
+			sys.exit("ERROR: cannot compute DH for "+arg+" since EA "+neutral+" is missing!")
+		#DH(anion) = DH(neutral) - electron affinity + electron entalphy
+		return {"DH": xHData[neutral]["DH"] - xHData[neutral]["EA"]*eV2kJmol + xHData["E"]["DH"]}
+
+	#if DH doesn't exist for neutral no way to get it
+	sys.exit("ERROR: cannot compute DH for "+arg+", it only works for cations/anions")
+
+
+################################
+def compute_DHreact(listRR,listPP):
+	DH = 0e0
+	return sum([compute_Hdata(x)["DH"] for x in listPP])\
+		- sum([compute_Hdata(x)["DH"] for x in listRR])
+
 ################################
 def generateCustom(readCustomFile):
 	from random import random as rand
@@ -567,8 +649,8 @@ def generateCustom(readCustomFile):
 	amols_org += ["CH2+", "CH3+"]
 	amols_org += ["HCO+", "HOC+","HCO","CO","CO+"]
 	amols_org += ["N","NO","CN","N2","HCN","HNC","HNO"]
-	amols_org += ["NH","NH2","NH3"]
-	amols_org += ["N+","NH+","NH2+","NH3+","NH4+","HCN+"]
+	amols_org += ["NH","NH2","NH3","N2H+","N2H"]
+	amols_org += ["N+","NH+","NH2+","NH3+","NH4+","HCN+","HCNH+"]
 
 	#exploded species
 	emols_org = ["H","HH","H+","H-","He","He+","HH+","HHH3+","-"]
@@ -578,76 +660,18 @@ def generateCustom(readCustomFile):
 	emols_org += ["CHH+", "CHHH+"]
 	emols_org += ["HCO+", "HOC+","HCO","CO","CO+"]
 	emols_org += ["N","NO","CN","NN","HCN","HNC","HNO"]
-	emols_org += ["NH","NHH","NHHH"]
-	emols_org += ["N+","NH+","NHH+","NHHH+","NHHHH+","HCN+"]
-
-	eV2kJmol = 96.4869e0 #eV -> kJ/mol
-	#enthalpy data (DH: enthalpy of fomration (kJ/mol), EA: electron affinity (eV)
-	#IE: ionization energy (eV) - note: @298K
-	#see http://webbook.nist.gov/chemistry/
-	HData = dict()
-	HData["H"] = {"DH":218e0, "IE":13.59844e0, "EA":0.754195e0}
-	HData["H2"] = {"DH":0e0, "IE":15.42593e0}
-	HData["He"] = {"DH":0e0, "IE":24.58741e0}
-	HData["H2+"] = {"DH":1497e0}
-	HData["E"] = {"DH":6.2e0} #5/2RT @298K
-	HData["O"] = {"DH":249.18e0, "IE":13.61806e0, "EA":1.439157e0}
-	HData["O2"] = {"DH":0e0, "IE":12.0697e0, "EA":0.4480e0}
-	HData["OH"] = {"DH":38.99e0, "IE":13.017e0, "EA":1.82767e0}
-	HData["H2O"] = {"DH":-241.826e0, "IE":12.621e0, "EA":12.65e0}
-	HData["H3O+"] = {"DH":603.417e0}
-	HData["H3+"] = {"DH":1.1e3} #from pag.37 Chemistry of the Elements (N. N. Greenwood,A. Earnshaw)
-	HData["C"] = {"DH":716.68e0, "IE":11.26030e0, "EA":1.262114e0}
-	HData["C2"] = {"DH":837.74e0, "IE":11.4e0, "EA":3.273e0}
-	HData["CH"] = {"DH":594.13e0, "IE":10.64e0, "EA":1.26e0}
-	HData["CH2"] = {"DH":386.39e0, "IE":10.396e0, "EA":0.652e0}
-	HData["CH3"] = {"DH":145.59e0, "IE":9.84e0, "EA":0.08e0}
-	HData["HCO"] = {"DH":43.51e0, "IE":8.12e0, "EA":0.313e0}
-	HData["HOC+"] = {"DH":978.7e0} #using reactions 1-2 in Li+2008, J. Chem. Phys.129, 244306
-	HData["CO"] = {"DH":-110.53e0, "IE":14.014e0, "EA":1.32608e0}
-	HData["N"] = {"DH":472.68e0, "IE":14.534e0}
-	HData["NO"] = {"DH":90.29e0, "IE":9.264e0}
-	HData["CN"] = {"DH":435.14e0, "IE":13.598e0}
-	HData["N2"] = {"DH":0e0, "IE":15.581e0}
-	HData["HCN"] = {"DH":135.15e0, "IE":13.6e0, "EA":0.00156e0}
-	HData["HNC"] = {"DH":207.94} #Wenthold 2000, J. Phys. Chem. A 104, 5612
-	HData["HNO"] = {"DH":99.58e0, "IE":10.1e0, "EA":0.338e0}
-	HData["NH"] = {"DH":376.56e0, "IE":13.49e0, "EA":0.37e0}
-	HData["NH2"] = {"DH":190.37e0, "IE":10.78e0, "EA":0.7710e0}
-	HData["NH3"] = {"DH":-45.9e0, "IE":10.07e0}
-	HData["NH4+"] = {"DH":-132.5e0} #(aq) D.Ebbing, S.D.Gammon, General Chemistry, Enhanced Edition
+	emols_org += ["NH","NHH","NHHH","NNH+","NNH"]
+	emols_org += ["N+","NH+","NHH+","NHHH+","NHHHH+","HCN+","HCNH+"]
 
 	#convert array present into exploded version
 	custom["present"] = [emols_org[amols_org.index(x)] for x in custom["present"]]
 
+
+
 	#compute missing DH data using http://webbook.nist.gov/chemistry/ion/#DH prescriptions
+	HData = dict()
 	for species in amols_org:
-		#if DH is present no need to compute it
-		if(species in HData): continue
-		HData[species] = dict()
-		#find neutral
-		neutral = species.replace("+","").replace("-","")
-		#check if neutral DH exists
-		if(not(neutral in HData)):
-			sys.exit("ERROR: cannot compute DH for "+species+" since "+neutral+" is missing!")
-		#do calculation for cation
-		if("+" in species):
-			#check if neutral's IE exists
-			if(not("IE" in HData[neutral])):
-				sys.exit("ERROR: cannot compute DH for "+species+" since IE "+neutral+" is missing!")
-			#DH(cation) = DH(neutral) + ionization energy - electron entalphy
-			HData[species]["DH"] = HData[neutral]["DH"] + HData[neutral]["IE"]*eV2kJmol - HData["E"]["DH"]
-			continue
-		#do calculation for anion
-		if("-" in species):
-			#check if neutral's EA exists
-			if(not("EA" in HData[neutral])):
-				sys.exit("ERROR: cannot compute DH for "+species+" since EA "+neutral+" is missing!")
-			#DH(anion) = DH(neutral) - electron affinity + electron entalphy
-			HData[species]["DH"] = HData[neutral]["DH"] - HData[neutral]["EA"]*eV2kJmol + HData["E"]["DH"]
-			continue
-		#if DH doesn't exist for neutral no way to get it
-		sys.exit("ERROR: cannot compute DH for "+species+", it only works for cations/anions")
+		HData[species] = compute_Hdata(species)
 
 	amols = []
 	emols = []
@@ -693,7 +717,8 @@ def generateCustom(readCustomFile):
 		sys.exit()
 	print "Search custom reactions using the following species"
 	for i in range(len(amols)/5):
-		print " ".join(amols[i*5:min((i+1)*5,len(amols))])
+		#this simply write 5 species per line
+		print " "+(" ".join(amols[i*5:min((i+1)*5,len(amols))]))
 
 	#random temporary file name
 	tmpNumber = "network" #str(int(rand()*1e8))
@@ -803,11 +828,14 @@ def generateCustom(readCustomFile):
 		+ fillSpaces("<"+str(sDHlimit)+"K",9) + "check\n")
 
 	print "automatic reactions found:",len(custRea)*2 #including reverse
-	print "writing automatic reactions to file..."
+	print "writing automatic reactions to file... (it may also take a while)"
+	time0 = time.time()
 	kJmol2K = 120.274e0 #kJ/mol -> K
 	#search created reactions in the database
-	iCount = 0
+	iCount = cCount = 0
 	for crea in custRea:
+		if((cCount % 500)==1): print "time to go (s):",round((time.time()-time0)/cCount*(len(custRea)-cCount),2)
+		cCount += 1
 		#prepare custom products/reactants
 		CC1 = crea[0][1]
 		CC1 = sorted([amols[emols.index(x)] for x in CC1])
@@ -828,6 +856,7 @@ def generateCustom(readCustomFile):
 			if(RR==CC2 and PP==CC1 and not([CC2,CC1] in reaFound)):
 				reaFound.append([CC2,CC1])
 				inDatabaseRev = True
+			if(inDatabaseRev and inDatabaseFwd): break
 		JJ1 = ("".join(CC1))
 		JJ2 = ("".join(CC2))
 		#write all the reactions even if not in the database
