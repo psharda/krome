@@ -652,6 +652,8 @@ def generateCustom(readCustomFile):
 	amols_org += ["N","NO","CN","N2","HCN","HNC","HNO"]
 	amols_org += ["NH","NH2","NH3","N2H+","N2H"]
 	amols_org += ["N+","NH+","NH2+","NH3+","NH4+","HCN+","HCNH+"]
+	amols_org += ["Al","AlOH","AlO2H2","ALO3H3","AlO2H"]
+	amols_org += ["AlO","AlO2","Al2O","Al2O2","Al2O3"]
 
 	#exploded species
 	emols_org = ["H","HH","H+","H-","He","He+","HH+","HHH3+","-"]
@@ -663,6 +665,8 @@ def generateCustom(readCustomFile):
 	emols_org += ["N","NO","CN","NN","HCN","HNC","HNO"]
 	emols_org += ["NH","NHH","NHHH","NNH+","NNH"]
 	emols_org += ["N+","NH+","NHH+","NHHH+","NHHHH+","HCN+","HCNH+"]
+	emols_org += ["Al","AlOH","AlOOHH","ALOOOHHH","AlOOH"]
+	emols_org += ["AlO","AlOO","AlAlO","AlAlOO","AlAlOOO"]
 
 	#convert array present into exploded version
 	custom["present"] = [emols_org[amols_org.index(x)] for x in custom["present"]]
