@@ -4,7 +4,7 @@
 @reacts: C+,CH
 @prods: C2,H+
 #@limits: 1.0d1, 8.0d2
-@rate: 0.3398d-100.8699d-10*sqrt(3d2/Tgas))
+@rate: 0.3398d-10 + 0.8699d-10*sqrt(3d2/Tgas)
 
 @type: 2body KIDA
 @reacts: C,H2+
@@ -16,19 +16,19 @@
 @reacts: CH,H2+
 @prods: CH2+,H
 #@limits: 1.0d1, 8.0d2
-@rate: 0.8029d-90.2056d-8*sqrt(3d2/Tgas))
+@rate: 0.8029d-9 + 0.2056d-8*sqrt(3d2/Tgas)
 
 @type: ionpol1
 @reacts: CH2,H2+
 @prods: CH3+,H
 #@limits: 1.0d1, 1.49d2
-@rate: 0.7998d-90.8671d-9*sqrt(3d2/Tgas))
+@rate: 0.7998d-9 + 0.8671d-9*sqrt(3d2/Tgas)
 
 @type: ionpol2
 @reacts: CH2,H2+
 @prods: CH3+,H
 #@limits: 1.5d2, 8.0d2
-@rate: 0.129d-80.1759d-9*sqrt(3d2/Tgas))0.2436d-9*(3d2/Tgas))
+@rate: 0.129d-8 + 0.1759d-9*sqrt(3d2/Tgas)*0.2436d-9*(3d2/Tgas)
 
 @type: 2body KIDA
 @reacts: C2,He+
@@ -40,31 +40,31 @@
 @reacts: CH,He+
 @prods: C+,H,He
 #@limits: 1.0d1, 8.0d2
-@rate: 0.6045d-90.1548d-8*sqrt(3d2/Tgas))
+@rate: 0.6045d-9 + 0.1548d-8*sqrt(3d2/Tgas)
 
 @type: ionpol1
 @reacts: CH2,He+
 @prods: C+,H2,He
 #@limits: 1.0d1, 1.49d2
-@rate: 0.5983d-90.6486d-9*sqrt(3d2/Tgas))
+@rate: 0.5983d-9 + 0.6486d-9*sqrt(3d2/Tgas)
 
 @type: ionpol2
 @reacts: CH2,He+
 @prods: C+,H2,He
 #@limits: 1.5d2, 8.0d2
-@rate: 0.965d-90.1316d-9*sqrt(3d2/Tgas))0.1823d-9*(3d2/Tgas))
+@rate: 0.965d-9 + 0.1316d-9*sqrt(3d2/Tgas)*0.1823d-9*(3d2/Tgas)
 
 @type: ionpol1
 @reacts: CH2,He+
 @prods: CH+,H,He
 #@limits: 1.0d1, 1.49d2
-@rate: 0.5983d-90.6486d-9*sqrt(3d2/Tgas))
+@rate: 0.5983d-9 + 0.6486d-9*sqrt(3d2/Tgas)
 
 @type: ionpol2
 @reacts: CH2,He+
 @prods: CH+,H,He
 #@limits: 1.5d2, 8.0d2
-@rate: 0.965d-90.1316d-9*sqrt(3d2/Tgas))0.1823d-9*(3d2/Tgas))
+@rate: 0.965d-9 + 0.1316d-9*sqrt(3d2/Tgas)*0.1823d-9*(3d2/Tgas)
 
 @type: 2body KIDA
 @reacts: CH2+,H2
@@ -178,31 +178,31 @@
 @reacts: CH,H3+
 @prods: CH2+,H2
 #@limits: 1.0d1, 8.0d2
-@rate: 0.1352d-80.3461d-8*sqrt(3d2/Tgas))
+@rate: 0.1352d-8 + 0.3461d-8*sqrt(3d2/Tgas)
 
 @type: ionpol1
 @reacts: CH2,H3+
 @prods: CH3+,H2
 #@limits: 1.0d1, 1.49d2
-@rate: 0.1345d-80.1459d-8*sqrt(3d2/Tgas))
+@rate: 0.1345d-8 + 0.1459d-8*sqrt(3d2/Tgas)
 
 @type: ionpol2
 @reacts: CH2,H3+
 @prods: CH3+,H2
 #@limits: 1.5d2, 8.0d2
-@rate: 0.217d-80.2959d-9*sqrt(3d2/Tgas))0.4099d-9*(3d2/Tgas))
+@rate: 0.217d-8 + 0.2959d-9*sqrt(3d2/Tgas)*0.4099d-9*(3d2/Tgas)
 
 @type: ionpol1
 @reacts: CH2,H+
 @prods: CH+,H2
 #@limits: 1.0d1, 1.49d2
-@rate: 0.1094d-80.1186d-8*sqrt(3d2/Tgas))
+@rate: 0.1094d-8 + 0.1186d-8*sqrt(3d2/Tgas)
 
 @type: ionpol2
 @reacts: CH2,H+
 @prods: CH+,H2
 #@limits: 1.5d2, 8.0d2
-@rate: 0.1765d-80.2407d-9*sqrt(3d2/Tgas))0.3334d-9*(3d2/Tgas))
+@rate: 0.1765d-8 + 0.2407d-9*sqrt(3d2/Tgas)*0.3334d-9*(3d2/Tgas)
 
 @type: 2body KIDA
 @reacts: C,CH+
@@ -310,67 +310,67 @@
 @reacts: CH,H+
 @prods: CH+,H
 #@limits: 1.0d1, 8.0d2
-@rate: 0.2195d-80.5619d-8*sqrt(3d2/Tgas))
+@rate: 0.2195d-8 + 0.5619d-8*sqrt(3d2/Tgas)
 
 @type: ionpol1
 @reacts: C+,CH
 @prods: C,CH+
 #@limits: 1.0d1, 8.0d2
-@rate: 0.4247d-90.1087d-8*sqrt(3d2/Tgas))
+@rate: 0.4247d-9 + 0.1087d-8*sqrt(3d2/Tgas)
 
 @type: ionpol1
 @reacts: C+,CH
 @prods: C,CH+
 #@limits: 1.0d1, 8.0d2
-@rate: 0.4502d-90.1153d-8*sqrt(3d2/Tgas))
+@rate: 0.4502d-9 + 0.1153d-8*sqrt(3d2/Tgas)
 
 @type: ionpol1
 @reacts: C+,CH2
 @prods: C,CH2+
 #@limits: 1.0d1, 1.49d2
-@rate: 0.4154d-90.4503d-9*sqrt(3d2/Tgas))
+@rate: 0.4154d-9 + 0.4503d-9*sqrt(3d2/Tgas)
 
 @type: ionpol2
 @reacts: C+,CH2
 @prods: C,CH2+
 #@limits: 1.5d2, 8.0d2
-@rate: 0.67d-90.9135d-10*sqrt(3d2/Tgas))0.1265d-9*(3d2/Tgas))
+@rate: 0.67d-9 + 0.9135d-10*sqrt(3d2/Tgas)*0.1265d-9*(3d2/Tgas)
 
 @type: ionpol1
 @reacts: CH,H2+
 @prods: CH+,H2
 #@limits: 1.0d1, 8.0d2
-@rate: 0.8029d-90.2056d-8*sqrt(3d2/Tgas))
+@rate: 0.8029d-9 + 0.2056d-8*sqrt(3d2/Tgas)
 
 @type: ionpol1
 @reacts: CH2,H2+
 @prods: CH2+,H2
 #@limits: 1.0d1, 1.49d2
-@rate: 0.7998d-90.8671d-9*sqrt(3d2/Tgas))
+@rate: 0.7998d-9 + 0.8671d-9*sqrt(3d2/Tgas)
 
 @type: ionpol2
 @reacts: CH2,H2+
 @prods: CH2+,H2
 #@limits: 1.5d2, 8.0d2
-@rate: 0.129d-80.1759d-9*sqrt(3d2/Tgas))0.2436d-9*(3d2/Tgas))
+@rate: 0.129d-8 + 0.1759d-9*sqrt(3d2/Tgas)*0.2436d-9*(3d2/Tgas)
 
 @type: ionpol1
 @reacts: CH,He+
 @prods: CH+,He
 #@limits: 1.0d1, 8.0d2
-@rate: 0.6045d-90.1548d-8*sqrt(3d2/Tgas))
+@rate: 0.6045d-9 + 0.1548d-8*sqrt(3d2/Tgas)
 
 @type: ionpol1
 @reacts: CH2,H+
 @prods: CH2+,H
 #@limits: 1.0d1, 1.49d2
-@rate: 0.1094d-80.1186d-8*sqrt(3d2/Tgas))
+@rate: 0.1094d-8 + 0.1186d-8*sqrt(3d2/Tgas)
 
 @type: ionpol2
 @reacts: CH2,H+
 @prods: CH2+,H
 #@limits: 1.5d2, 8.0d2
-@rate: 0.1765d-80.2407d-9*sqrt(3d2/Tgas))0.3334d-9*(3d2/Tgas))
+@rate: 0.1765d-8 + 0.2407d-9*sqrt(3d2/Tgas)*0.3334d-9*(3d2/Tgas)
 
 @type: 2body Glover+2010
 @reacts: C+,H

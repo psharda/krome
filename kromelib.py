@@ -542,6 +542,7 @@ def compute_Hdata(arg):
 	xHData["HCO"] = {"DH":43.51e0, "IE":8.12e0, "EA":0.313e0}
 	xHData["HOC+"] = {"DH":978.7e0} #using reactions 1-2 in Li+2008, J. Chem. Phys.129, 244306
 	xHData["CO"] = {"DH":-110.53e0, "IE":14.014e0, "EA":1.32608e0}
+	xHData["CO2"] = {"DH":-393.51e0, "IE":13.777e0, "EA":-0.599986e0}
 	xHData["N"] = {"DH":472.68e0, "IE":14.534e0}
 	xHData["NO"] = {"DH":90.29e0, "IE":9.264e0}
 	xHData["CN"] = {"DH":435.14e0, "IE":13.598e0}
@@ -647,7 +648,7 @@ def generateCustom(readCustomFile):
 	amols_org += ["H2O", "H2O+", "H3O+"]
 	amols_org += ["C", "C+", "C-", "C2", "CH", "CH+", "CH2"]
 	amols_org += ["CH2+", "CH3+"]
-	amols_org += ["HCO+", "HOC+","HCO","CO","CO+"]
+	amols_org += ["HCO+", "HOC+","HCO","CO","CO+","CO2"]
 	amols_org += ["N","NO","CN","N2","HCN","HNC","HNO"]
 	amols_org += ["NH","NH2","NH3","N2H+","N2H"]
 	amols_org += ["N+","NH+","NH2+","NH3+","NH4+","HCN+","HCNH+"]
@@ -658,15 +659,13 @@ def generateCustom(readCustomFile):
 	emols_org += ["HHO", "HHO+", "HHHO+"]
 	emols_org += ["C", "C+", "C-", "CC", "CH", "CH+", "CHH"]
 	emols_org += ["CHH+", "CHHH+"]
-	emols_org += ["HCO+", "HOC+","HCO","CO","CO+"]
+	emols_org += ["HCO+", "HOC+","HCO","CO","CO+","COO"]
 	emols_org += ["N","NO","CN","NN","HCN","HNC","HNO"]
 	emols_org += ["NH","NHH","NHHH","NNH+","NNH"]
 	emols_org += ["N+","NH+","NHH+","NHHH+","NHHHH+","HCN+","HCNH+"]
 
 	#convert array present into exploded version
 	custom["present"] = [emols_org[amols_org.index(x)] for x in custom["present"]]
-
-
 
 	#compute missing DH data using http://webbook.nist.gov/chemistry/ion/#DH prescriptions
 	HData = dict()
@@ -815,7 +814,7 @@ def generateCustom(readCustomFile):
 
 
 
-	DHlimit = 1e4 #enthalpy limit to accept a reaction, K
+	DHlimit = 3e3 #enthalpy limit to accept a reaction, K
 	sDHlimit = str(round(DHlimit/1e1**int(log10(DHlimit)),2))+"d"+str(int(log10(DHlimit)))
 	reaFound = []
 	fhTmpAll = open(tmpFnameAll,"w")
@@ -865,6 +864,7 @@ def generateCustom(readCustomFile):
 		rtype = ""
 		if(("+" in JJ1) and ("-" in JJ1) and (len(CC2)==3)): rtype = "+-3prods"
 		if(list(set(CC1).intersection(CC2))): rtype = "catal"
+		if(len(CC2)==1): rtype = "form"
 		DH = (DHCC2-DHCC1) * kJmol2K #enthalpy products - reactants
 		fav = (" *" if (DH<DHlimit) else "")
 		check = (" #" if(DH<DHlimit and not(inDatabaseFwd)) else "")
@@ -880,6 +880,7 @@ def generateCustom(readCustomFile):
 		rtype = ""
 		if(("+" in JJ2) and ("-" in JJ2) and (len(CC1)==3)): rtype = "+-3prods"
 		if(list(set(CC2).intersection(CC1))): rtype = "catal"
+		if(len(CC1)==1): rtype = "form"
 		DH = (DHCC1-DHCC2) * kJmol2K #enthalpy products - reactants
 		fav = (" *" if (DH<DHlimit) else "")
 		check = (" #" if(DH<DHlimit and not(inDatabaseRev)) else "")

@@ -167,7 +167,7 @@
 @type: charge exchange
 @reacts: H+,OH
 @prods: H,OH+
-@rate: 2.5d-9(0.62d0+2.6219d0/(T32)**(.5))
+@rate: 2.5d-9*(0.62d0+2.6219d0/(T32)**(.5))
 
 @type: bimolecular
 @reacts: H2+,O
