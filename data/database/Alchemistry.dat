@@ -1,0 +1,96 @@
+##########################
+##########################
+#Numbers refers to Starik+2014, Combustion and Flame 161, 1659
+# REV refers to reverse reactions. Reactions indicated in their Fig.8
+# panel a, including the energetic favourable reverse reactions.
+
+@type: Al-33
+@reacts: Al,H2O
+@prods: AlOH,H
+@rate: 3.25465628522d-10*Tgas**(-0.09)*exp(-3744d0/Tgas)
+
+@type: Al-57
+@reacts: AlOH,OH
+@prods: AlO2H2
+@rate: 4.11813652416d-11*Tgas**(0.16)*exp(23d0/Tgas)
+
+@type: Al-58
+@reacts: AlO2H2,OH
+@prods: AlO3H3
+@rate: 4.21776885942d-11*Tgas**(0.15)*exp(48d0/Tgas)
+
+@type: Al-56REV
+@reacts: AlO2H2
+@prods: AlO2H,H
+@rate: 1.22713826264d-10*Tgas**(0.17)*exp(-revKc(Tgas,(/idx_AlO2H,idx_H/),(/idx_AlOHOH/)))
+
+@type: Al-53REV
+@reacts: AlO2H,H
+@prods: AlO2,H2
+@rate: 7.67168981517d-14*Tgas**(1.39)*exp(-2940d0/Tgas)*exp(-revKc(Tgas,(/idx_AlO2,idx_H2/),(/idx_AlO2H,idx_H/)))
+
+@type: Al-52
+@reacts: AlO2,H2O
+@prods: AlO2H,OH
+@rate: 4.36721736231d-22*Tgas**(3.26)*exp(-3430d0/Tgas)
+
+@type: Al-24
+@reacts: AlO2
+@prods: AlO,O
+@rate: 1.66053892103d-09*exp(-44564.6d0/Tgas)
+
+@type: Al-45
+@reacts: AlOH,O
+@prods: AlO,OH
+@rate: 1.25038580754d-11*Tgas**(0.5)*exp(-4450d0/Tgas)
+
+@type: Al-26REV
+@reacts: AlO,AlO
+@prods: Al2O2
+@rate: 1.66053892103d-09*exp(-59335.7d0/Tgas)*exp(-revKc(Tgas,(/idx_Al2O2/),(/idx_AlO,idx_AlO/)))
+
+@type: Al-25REV
+@reacts: AlO,Al
+@prods: Al2O
+@rate: 1.66053892103d-09*exp(-67035.7/Tgas)*exp(-revKc(Tgas,(/idx_Al2O/),(/idx_AlO,idx_Al/)))
+
+@type: Al-28REV
+@reacts: Al2O,O
+@prods: Al2O2
+@rate: 1.66053892103d-09*exp(-52466.0/Tgas)*exp(-revKc(Tgas,(/idx_Al2O2/),(/idx_Al2O,idx_O/)))
+
+@type: Al-29REV
+@reacts: Al2O2,O
+@prods: Al2O3
+@rate: 4.9816167631d-09*exp(-49144.4/Tgas)*exp(-revKc(Tgas,(/idx_Al2O3/),(/idx_Al2O2,idx_O/)))
+
+@type: Al-31
+@reacts: Al,H2O
+@prods: AlOH,H
+@rate: 3.2546563d-10*Tgas**(-0.09)*exp(-3744d0/Tgas)
+
+@type: Al-53
+@reacts: AlO2,H2
+@prods: AlO2H,H
+@rate: 7.6716898d-14*Tgas**(1.39)*exp(-2940d0/Tgas)
+
+@type: Al-45REV
+@reacts: AlO,OH
+@prods: AlOH,O
+@rate: 1.2503858d-11*Tgas**(.5)*exp(-4450d0/Tgas)*exp(-revKc(Tgas,(/idx_AlOH,idx_O/),(/idx_AlO,idx_OH/)))
+
+@type: Al-31REV
+@reacts: AlOH,H
+@prods: Al,H2O
+@rate: 3.2546563d-10*Tgas**(-0.09)*exp(-3744d0/Tgas)*exp(-revKc(Tgas,(/idx_Al,idx_H2O/),(/idx_AlOH,idx_H/)))
+
+@type: Al-38REV
+@reacts: AlO,H2
+@prods: AlOH,H
+@rate: 4.4170335d-16*Tgas**(0.82)*exp(-7844d0/Tgas)*exp(-revKc(Tgas,(/idx_AlOH,idx_H/),(/idx_AlO,idx_H2/)))
+
+@type: Al-38
+@reacts: AlOH,H
+@prods: AlO,H2
+@rate: 4.4170335d-16*Tgas**(0.82)*exp(-7844d0/Tgas)
+
