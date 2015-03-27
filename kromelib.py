@@ -556,6 +556,17 @@ def compute_Hdata(arg):
 	xHData["NH4+"] = {"DH":-132.5e0} #(aq) D.Ebbing, S.D.Gammon, General Chemistry, Enhanced Edition
 	xHData["N2H"] = {"DH":251.46e0, "IE":7.8e0} #Cs symmetry, Matus+2006, J. Phys. Chem. A 110, 10116
 	xHData["HCNH"] = {"DH":250e0, "IE":9.41e0} #Cowles+1991, J.Chem.Phys. 94, 3517
+	xHData["Al"] = {"DH":250e0}
+	xHData["AlOH"] = {"DH":-179.91e0}
+	xHData["AlO3H3"] = {"DH":-1016.67e0}
+	xHData["AlO2H2"] = {"DH":-507.661e0}
+	xHData["AlO2H"] = {"DH":-355.472e0}
+	xHData["AlO"] = {"DH":42.98e0}
+	xHData["AlO2"] = {"DH":-38.658e0}
+	xHData["Al2O2"] = {"DH":-403.096e0}
+	xHData["Al2O3"] = {"DH":-546.891e0}
+	xHData["Al2O"] = {"DH":-148.611e0}
+
 
 	#extend with uppercase species
 	exHData = dict()
