@@ -22,7 +22,7 @@
 @type: Al-56REV
 @reacts: AlO2H2
 @prods: AlO2H,H
-@rate: 1.22713826264d-10*Tgas**(0.17)*exp(-revKc(Tgas,(/idx_AlO2H,idx_H/),(/idx_AlOHOH/)))
+@rate: 1.22713826264d-10*Tgas**(0.17)*exp(-revKc(Tgas,(/idx_AlO2H,idx_H/),(/idx_AlO2H2/)))
 
 @type: Al-53REV
 @reacts: AlO2H,H
