@@ -1,370 +1,5546 @@
-#################
-#################
-
-#Glover+2009
-@type: 3body
-@reacts: H,H,O
-@prods: H,OH
-@rate: 4.33d-32*(T32)**(-1)*n(idx_H)
-
-@type: electronic recombination
-@reacts: H2O+,E
-@prods: H,H,O
-@rate: 3.05d-7*T32**(-.5)
-
-@type: 3body
-@reacts: H,H,OH
-@prods: H,H2O
-@rate: 2.56d-31*(T32)**(-2)*n(idx_H)
-
-@type: dissociative recombination
-@reacts: H3O+,E
-@prods: H,H,OH
-@limits: 1d1,3d2
-@rate: 2.6d-7*(T32)**(-.5)
-
-@type: 3body
-@reacts: OH,H,H2
-@prods: H2O,H2
-@rate: 2.56d-31*(T32)**(-2)*n(idx_H2)
-
-@type: 3body
-@reacts: O,H,H2
-@prods: OH,H2
-@rate: 4.33d-32*(T32)**(-1)*n(idx_H2)
-
-@type: dissociative recombination
-@reacts: H3O+,E
-@prods: H,H2,O
-@rate: 5.6d-9*T32**(-.5)
-
-@type: 3body
-@reacts: OH,H,H2
-@prods: H2O,H2
-@rate: 2.56d-31*(T32)**(-2)*n(idx_H2)
-
-@type: 3body
-@reacts: H,O,He
-@prods: OH,He
-@rate: 4.33d-32/(T32)*n(idx_He)
-
-@type: mutual neutralization
-@reacts: H-,O+
-@prods: O,H
-@rate: 2.3d-7*(T32)**(-.5)
-
-@type: dissociative recombination
-@reacts: OH+
-@prods: O,H
-@rate: 6.3d-9*(T32)**(-.48)
-
-@type: radiative association
-@reacts: H,O
-@prods: OH
-@rate: 9.9d-19*(T32)**(-.38)
-
-@type: 3body
-@reacts: H,O,H
-@prods: OH,H
-@rate: 4.33d-32/(T32)*n(idx_H)
-
-@type: 3body
-@reacts: H,O,O2
-@prods: OH,O2
-@rate: 4.33d-32/(T32)*n(idx_O2)
-
-@type: 3body
-@reacts: OH,H,O
-@prods: H2O,O
-@rate: 2.56d-31*(T32)**(-2)*n(idx_O)
-
-
-@type: 3body
-@reacts: OH,H,O2
-@prods: H2O,O2
-@rate: 2.56d-31*(T32)**(-2)*n(idx_O2)
-
-@type: 3body
-@reacts: OH,H,OH
-@prods: H2O,OH
-@rate: 2.56d-31*(T32)**(-2)*n(idx_OH)
-
-@type: 3body
-@reacts: OH,H,H2O
-@prods: H2O,H2O
-@rate: 2.56d-31*(T32)**(-2)*n(idx_H2O)
-
-@type: 3body
-@reacts: H,O,OH
-@prods: OH,OH
-@rate: 4.33d-32/(T32)*n(idx_OH)
-
-
-@type: dissociative recombination
-@reacts: H3O+,O-
-@prods: H,O,H2O
-@rate: 3.76d-8*(T32)**(-.5)
-
-@type: 3body
-@reacts: H,O,H2O
-@prods: OH,H2O
-@rate: 4.33d-32/(T32)*n(idx_H2O)
-
-#Glover+2009
-@type: charge exchange
-@reacts: H,O+
-@prods: O,H+
-@rate: 4.99d-11*Tgas**(0.405) + 7.54d-10*invT**(0.458)
-
-#Glover+2009
-@type: charge exchange
-@reacts: H+,O
-@prods: O+,H
-@rate: (1.08d-11*Tgas**0.517 + 4.0d-10*Tgas**(0.00669))*exp(-2.27d2*invT)
-
-@type: associative detachment
-@reacts: H,O-
-@prods: OH,E
-#@limits:10,280
-@rate: 5d-10 
-
-@type: bimolecular
-@reacts: H,OH
-@prods: O,H2
-@rate: 6.86d-14*(T32)**2.8*exp(-1.95d3*invT)
-
-@type: bimolecular
-@reacts: H2,O
-@prods: OH,H
-@rate: 6.34d-12*exp(-4d3*invT)
-
-@type: mutual neutralization
-@reacts: H+,OH-
-@prods: OH,H
-@rate: 7.51d-8*(T32)**(-.5)
-
-@type: dissociative recombination
-@reacts: H2O+,E
-@prods: H,OH
-@rate: 8.6d-8*(T32)**(-.5)
-
-@type: radiative association
-@reacts: H,OH
-@prods: H2O
-@rate: 4d-18**(T32)**(-2) 
-
-@type: mutual neutralization
-@reacts: H3O+,OH-
-@prods: H,OH,H2O
-@rate: 3.76d-8*(T32)**(-.5)
-
-@type: bimolecular
-@reacts: H2,O+
-@prods: H,OH+
-#@limits:10,280
-@rate: 1.6d-9 
-
-@type: charge exchange
-@reacts: H+,OH
-@prods: H,OH+
-@rate: 2.5d-9*(0.62d0+2.6219d0/(T32)**(.5))
-
-@type: bimolecular
-@reacts: H2+,O
-@prods: H,OH+
-#@limits:10,280
-@rate: 1.5d-9 
-
-@type: bimolecular
-@reacts: H2,O-
-@prods: H,OH-
-#@limits:10,280
-@rate: 3d-11 
-
-@type: associative detachment
-@reacts: H,OH-
-@prods: H2O,E
-#@limits:10,280
-@rate: 1.4d-9
-
-@type: bimolecular
-@reacts: H,H2O
-@prods: H2,OH
-#@limits:10,280
-@rate: 3d-11
-
-@type: bimolecular
-@reacts: H2,OH
-@prods: H,H2O
-@rate: 2.1d-12*(T32)**(1.52)*exp(-1.74*invT)
-
-@type: electronic recombination
-@reacts: H3O+,E
-@prods: H,H2O
-@rate: 1.1d-7*(T32)**(-.5) 
-
-@type: bimolecular
-@reacts: H2,OH+
-@prods: H,H2O+
-#@limits:10,280
-@rate: 1.1d-9
-
-@type: charge exchange
-@reacts: H2O,H+
-@prods: H,H2O+
-@rate: 7.3d-9**(T32)**(-.5)
-
-@type: bimolecular
-@reacts: H3O+,H-
-@prods: H,H2,OH
-@rate: 2.3e-7**(T32)**(-.5)
-
-@type: bimolecular
-@reacts: H3O+,H-
-@prods: H2,H2O
-@rate: 2.3e-7**(T32)**(-.5)
-
-
-@type: mutual neutralization
-@reacts: He+,H-
-@prods: He,H
-@rate: 2.3e-7**(T32)**(-.5)
-
-@type: 3body
-@reacts: H,OH,He
-@prods: H2O,He
-@rate: 2.56d-31*(T32)**(-2)*n(idx_He)
-
-@type: mutual neutralization
-@reacts: H+,O-
-@prods: H,O
-@rate: 2.751d-8*(T32)**(-.5)
-
-@type: electron recombination
-@reacts: OH+,E
-@prods: H,O
-@rate: 6.3d-9*(T32)**(-.48)
-
-@type: 3body
-@reacts: H,O,O
-@prods: OH,O
-@rate: 4.33d-32/(T32)*n(idx_O)
-
-@type: charge exchange
-@reacts: H2,OH-
-@prods: H,OH-
-#@limits:10,280
-@rate: 3d-11
-
-@type: bimolecular
-@reacts: OH,H2+
-@prods: H,H2O+
-@rate: 5.611d-10 + 2.37277425d-9*sqrt(3d2/Tgas)
-
-@type: bimolecular
-@reacts: H2O+,H2
-@prods: H,H3O+
-#@limits:10,280
-@rate: 6.1d-10
-
-@type: bimolecular
-@reacts: H2O,H2+
-@prods: H,H3O+
-#@limits:10,280
-@rate: 5.980644d-10 + 2.48770385514d-9*sqrt(3d2/Tgas)
-
-@type: electron recombination
-@reacts: H2O+,E
-@prods: H2,O
-@rate: 3.9d-8*(T32)**(-.5)
-
-@type: associative detachment
-@reacts: H2,O-
-@prods: H2O,E
-#@limits:10,280
-@rate: 7d-10
-
-@type: bimolecular
-@reacts: H2O,H-
-@prods: H2,OH-
-#@limits:300,300
-@rate: 4.8d-9
-
-@type: charge exchange
-@reacts: H2O,H2+
-@prods: H2,H2O+
-@rate: 6.853356d-10 + 2.85071643486d-9*sqrt(3d2/Tgas)
-
-@type: associative detachment
-@reacts: H-,O
-@prods: OH,E
-#@limits:10,280
-@rate: 1d-9
-
-@type: mutual neutralization
-@reacts: He+,O-
-@prods: He,O
-@rate: 7.51d-8**(T32)**(-.5)
-
-@type: electron attachment
-@reacts: O,E
-@prods: O-
-#@limits:10,280
-@rate: 1d-15
-
-@type: mutual neutralization
-@reacts: He+,OH-
-@prods: He,OH
-@rate: 7.51d-8**(T32)**(-.5)
-
-@type: charge exchange
-@reacts: H2O,He+
-@prods: He,H2O+
-@rate: 3.179484d-10 + 1.32253560054d-9*sqrt(3d2/Tgas)
-
-@type: charge exchange
-@reacts: OH,O+
-@prods: O,OH+
-@rate: 2.6195d-10 + 1.107731625d-9*sqrt(3d2/Tgas)
-
-@type: bimolecular
-@reacts: H2O,O
-@prods: OH,OH
-@rate:  1.85d-11*(T32)**(.95)*exp(-8570d0*invT)
-
-@type: bimolecular
+###############
+################
+@type: 2body KIDA
+@reacts: C+,O2
+@prods: CO,O+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.41d-9
+
+@type: 2body KIDA
+@reacts: C+,O2
+@prods: CO,O+
+#@limits: 3.0d2, 3.0d2
+@rate: 0.453d-9
+
+@type: 2body KIDA
+@reacts: C+,O2
+@prods: CO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.75d-9
+
+@type: 2body KIDA
+@reacts: C+,O2
+@prods: CO+,O
+#@limits: 3.0d2, 3.0d2
+@rate: 0.342d-9
+
+@type: ionpol1
+@reacts: C+,SO
+@prods: CS+,O
+#@limits: 1.0d1, 6.43d2
+@rate: 0.217d-9 + 0.4889d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: C+,SO
+@prods: CS+,O
+#@limits: 6.44d2, 8.0d2
+@rate: 0.35d-90.9917d-10*sqrt(3d2/Tgas) + 0.2855d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: C+,C3O
+@prods: C4+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.3799d-9 + 0.1022d-8*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: C6H+,O
+@prods: C5,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C3H5+,O
+@prods: C2H4,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C5H3+,O
+@prods: C4H2,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C6H2+,O
+@prods: C5H,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C7H+,O
+@prods: C6,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C6H3+,O
+@prods: C5H2,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C7H2+,O
+@prods: C6H,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C7H3+,O
+@prods: C6H2,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C8H2+,O
+@prods: C7H,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C9H+,O
+@prods: C8,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C6H5+,O
+@prods: C5H5+,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.6d-10
+
+@type: 2body KIDA
+@reacts: C6H5+,O2
+@prods: C4H5+,CO,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.49d-10
+
+@type: 2body KIDA
+@reacts: C8H3+,O
+@prods: C7H2,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C9H2+,O
+@prods: C8H,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C9H3+,O
+@prods: C8H2,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C-,NO
+@prods: CN-,O
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9
+
+@type: 2body KIDA
+@reacts: C-,O2
+@prods: CO,O-
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-9
+
+@type: 2body KIDA
+@reacts: CCP,O
+@prods: CO,CP
+#@limits: 1.0d1, 2.8d2
+@rate: 0.6d-11
+
+@type: 2body KIDA
+@reacts: CH2,O
+@prods: CO,H,H
+#@limits: 1.0d1, 2.8d2
+@rate: 0.12d-9
+
+@type: 2body KIDA
+@reacts: CH2,O
+@prods: CO,H,H
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: CH2,O
+@prods: CO,H,H
+#@limits: 5.0d1, 2.0d2
+@rate: 0.201d-9
+
+@type: 2body KIDA
+@reacts: CH2,O
+@prods: CO,H,H
+#@limits: 2.9d2, 2.5d3
+@rate: 0.204d-9*exp(-2.7d2*invT)
+
+@type: 2body KIDA
+@reacts: CH2,O
+@prods: CO,H2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.8d-10
+
+@type: 2body KIDA
+@reacts: CH2,O
+@prods: CO,H2
+#@limits: 1.0d1, 3.0d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: CH2,O
+@prods: CO,H2
+#@limits: 2.9d2, 2.5d3
+@rate: 0.136d-9*exp(-2.7d2*invT)
+
+@type: 2body KIDA
+@reacts: CH2,O
+@prods: H,HCO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.2d-11
+
+@type: 2body KIDA
+@reacts: CH2,O
+@prods: H,HCO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.501d-10
+
+@type: 2body KIDA
+@reacts: CH2,O
+@prods: CH,OH
+#@limits: 1.0d1, 3.0d2
+@rate: 0d0
+
+@type: 2body KIDA
+@reacts: CH2,O
+@prods: CH,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.498d-9*exp(-6.0d3*invT)
+
+@type: 2body KIDA
+@reacts: HCO,O
+@prods: CO2,H
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: HCO,O
+@prods: CO2,H
+#@limits: 5.0d1, 2.0d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: HCO,O
+@prods: CO2,H
+#@limits: 3.0d2, 2.5d3
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: HCO,O
+@prods: CO,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: HCO,O
+@prods: CO,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: HCO,O
+@prods: CO,OH
+#@limits: 3.0d2, 2.5d3
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: HCN,O
+@prods: H,OCN
+#@limits: 1.0d1, 2.8d2
+@rate: 0.361d-12*T32**(2.1)*exp(-3.08d3*invT)
+
+@type: 2body KIDA
+@reacts: HCN,O
+@prods: CO,NH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.73d-12*T32**(1.14)*exp(-3.74d3*invT)
+
+@type: 2body KIDA
+@reacts: HCN,O
+@prods: CO,NH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.894d-12*T32**(1.21)*exp(-3.82d3*invT)
+
+@type: 2body KIDA
+@reacts: HCN,O
+@prods: CN,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.621d-9*exp(-1.24d4*invT)
+
+@type: 2body KIDA
+@reacts: HCN,O
+@prods: CN,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.451d-10*T32**(1.58)*exp(-1.34d4*invT)
+
+@type: 2body KIDA
+@reacts: HCP,O
+@prods: CO,PH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.361d-12*T32**(2.1)*exp(-3.08d3*invT)
+
+@type: 2body KIDA
+@reacts: HCS,O
+@prods: H,OCS
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: HCS,O
+@prods: H,OCS
+#@limits: 1.0d1, 3.0d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: HCS,O
+@prods: CS,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: HCS,O
+@prods: CS,OH
+#@limits: 1.0d1, 3.0d2
+@rate: 0d0
+
+@type: 2body KIDA
+@reacts: HCS,O
+@prods: CO,HS
+#@limits: 1.0d1, 3.0d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: HCSi,O
+@prods: CH,SiO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-10
+
+@type: 2body KIDA
+@reacts: H2S,O
+@prods: HS,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.922d-11*exp(-1.8d3*invT)
+
+@type: 2body KIDA
+@reacts: HNO,O
+@prods: NO,OH
+#@limits: 1.0d1, 2.98d2
+@rate: 0.377d-10*T32**(-0.08)
+
+@type: 2body KIDA
+@reacts: HNO,O
+@prods: H,NO2
+#@limits: 1.0d1, 2.98d2
+@rate: 0d0
+
+@type: 2body KIDA
+@reacts: HNO,O
+@prods: NH,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.294d-11*T32**(0.5)*exp(-3.5d3*invT)
+
+@type: 2body KIDA
+@reacts: HPO,O
+@prods: OH,PO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.38d-10
+
+@type: 2body KIDA
+@reacts: NH2,O
+@prods: NH,OH
+#@limits: 1.0d1, 2.98d2
+@rate: 0.7d-11*T32**(-0.1)
+
+@type: 2body KIDA
+@reacts: NH2,O
+@prods: NH,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.116d-10
+
+@type: 2body KIDA
+@reacts: NH2,O
+@prods: H,HNO
+#@limits: 1.0d1, 2.98d2
+@rate: 0.63d-10*T32**(-0.1)
+
+@type: 2body KIDA
+@reacts: NH2,O
+@prods: H2,NO
+#@limits: 1.0d1, 2.98d2
+@rate: 0d0
+
+@type: 2body KIDA
+@reacts: NH2,O
+@prods: H2,NO
+#@limits: 5.0d1, 2.0d2
+@rate: 0.83d-11
+
+@type: 2body KIDA
+@reacts: NO2,O
+@prods: NO,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: NO2,O
+@prods: NO,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.51d-11*exp(2.1d2*invT)
+
+@type: 2body KIDA
+@reacts: NO2,O
+@prods: NO,O2
+#@limits: 2.2d2, 4.2d2
+@rate: 0.55d-11*exp(1.88d2*invT)
+
+@type: 2body KIDA
+@reacts: O,O2H
+@prods: O2,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.53d-10
+
+@type: 2body KIDA
+@reacts: O,O2H
+@prods: O2,OH
+#@limits: 2.0d2, 5.0d2
+@rate: 0.3d-10*exp(2.0d2*invT)
+
+@type: 2body KIDA
+@reacts: O,O2H
+@prods: O2,OH
+#@limits: 2.2d2, 4.0d2
+@rate: 0.27d-10*exp(2.24d2*invT)
+
+@type: 2body KIDA
+@reacts: O,O2H
+@prods: O2,OH
+#@limits: 2.2d2, 1.0d3
+@rate: 0.27d-10*exp(2.24d2*invT)
+
+@type: 2body KIDA
+@reacts: O,OCN
+@prods: CO,NO
+#@limits: 3.02d2, 7.57d2
+@rate: 0.65d-10*T32**(-1.14)
+
+@type: 2body KIDA
+@reacts: O,OCN
+@prods: CN,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.405d-9*T32**(-1.43)*exp(-3.5d3*invT)
+
+@type: 2body KIDA
+@reacts: O,OCN
+@prods: CN,O2
+#@limits: 2.9d2, 4.5d3
+@rate: 0.138d-9*T32**(-0.783)
+
+@type: 2body KIDA
+@reacts: O,OCN
+@prods: CN,O2
+#@limits: 3.02d2, 7.57d2
+@rate: 0d0
+
+@type: 2body KIDA
+@reacts: O,PH2
+@prods: H,HPO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.8d-10
+
+@type: 2body KIDA
+@reacts: O,PH2
+@prods: OH,PH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-10
+
+@type: 2body KIDA
+@reacts: O,PH2
+@prods: H2,PO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: C3,O
+@prods: C2,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-11*exp(-9.0d2*invT)
+
+@type: 2body KIDA
+@reacts: O,c-SiC2
+@prods: CO,SiC
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: O,SiH2
+@prods: H,H,SiO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.12d-9
+
+@type: 2body KIDA
+@reacts: O,SiH2
+@prods: H2,SiO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.8d-10
+
+@type: 2body KIDA
+@reacts: O,SiNC
+@prods: CO,SiN
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: C2H3,O
+@prods: H,H2CCO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.16d-9
+
+@type: 2body KIDA
+@reacts: C2H3,O
+@prods: H,H2CCO
+#@limits: 5.0d1, 2.0d2
+@rate: 0.16d-9
+
+@type: 2body KIDA
+@reacts: C2H3,O
+@prods: C2H2,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.199d-10
+
+@type: 2body KIDA
+@reacts: C2H5,O
+@prods: CH3CHO,H
+#@limits: 1.0d1, 2.8d2
+@rate: 0.133d-9
+
+@type: 2body KIDA
+@reacts: C2H5,O
+@prods: CH3CHO,H
+#@limits: 5.0d1, 2.0d2
+@rate: 0.133d-9
+
+@type: 2body KIDA
+@reacts: C2H5,O
+@prods: CH3CHO,H
+#@limits: 2.98d2, 4.5d2
+@rate: 0.88d-10
+
+@type: 2body KIDA
+@reacts: C2H5,O
+@prods: CH3,H2CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.265d-10
+
+@type: 2body KIDA
+@reacts: C2H5,O
+@prods: CH3,H2CO
+#@limits: 5.0d1, 2.0d2
+@rate: 0.267d-10
+
+@type: 2body KIDA
+@reacts: C2H5,O
+@prods: CH3,H2CO
+#@limits: 2.98d2, 4.5d2
+@rate: 0.66d-10
+
+@type: 2body KIDA
+@reacts: C2H5,O
+@prods: C2H4,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.573d-10
+
+@type: 2body KIDA
+@reacts: C2H5,O
+@prods: C2H4,OH
+#@limits: 2.98d2, 4.5d2
+@rate: 0.44d-10
+
+@type: 2body KIDA
+@reacts: O,c-C3H
+@prods: CCH,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: O,c-C3H
+@prods: CCH,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: O,c-C3H
+@prods: C3O,H
+#@limits: 1.0d1, 3.0d2
+@rate: 0.2d-10
+
+@type: 2body KIDA
+@reacts: O,l-C3H
+@prods: CCH,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: O,l-C3H
+@prods: CCH,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: O,l-C3H
+@prods: C3O,H
+#@limits: 1.0d1, 3.0d2
+@rate: 0.2d-10
+
+@type: 2body KIDA
+@reacts: C3N,O
+@prods: CCN,CO
+#@limits: 1.0d1, 2.98d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: C3O,O
+@prods: CCO,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-11*exp(-9.0d2*invT)
+
+@type: 2body KIDA
+@reacts: C3O,O
+@prods: C3,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: C3P,O
+@prods: CCP,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: C4,O
+@prods: C3,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: C4,O
+@prods: C3,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: CH3,O
+@prods: H,H2CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.14d-9
+
+@type: 2body KIDA
+@reacts: CH3,O
+@prods: H,H2CO
+#@limits: 5.0d1, 2.0d2
+@rate: 0.14d-9
+
+@type: 2body KIDA
+@reacts: CH3,O
+@prods: H,H2CO
+#@limits: 2.98d2, 2.98d2
+@rate: 0.108d-9
+
+@type: 2body KIDA
+@reacts: CH3,O
+@prods: H,H2CO
+#@limits: 2.98d2, 2.98d2
+@rate: 0.112d-9
+
+@type: 2body KIDA
+@reacts: CH3,O
+@prods: CO,H,H2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.18d-9*T32**(0.5)
+
+@type: 2body KIDA
+@reacts: CH3,O
+@prods: CO,H,H2
+#@limits: 5.0d1, 2.0d2
+@rate: 0.195d-10*exp(-2.01d2*invT)
+
+@type: 2body KIDA
+@reacts: CH3,O
+@prods: CO,H,H2
+#@limits: 2.98d2, 2.98d2
+@rate: 0.22d-10
+
+@type: 2body KIDA
+@reacts: CH3,O
+@prods: CO,H,H2
+#@limits: 2.98d2, 2.98d2
+@rate: 0.28d-10
+
+@type: 2body KIDA
+@reacts: H2CN,O
+@prods: H2,OCN
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: H2CN,O
+@prods: H2,OCN
+#@limits: 1.0d1, 3.0d2
+@rate: 0d0
+
+@type: 2body KIDA
+@reacts: H2CN,O
+@prods: HCN,OH
+#@limits: 1.0d1, 3.0d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: H2CN,O
+@prods: HNC,OH
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: HCCP,O
+@prods: CO,HCP
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: O,l-SiC3
+@prods: CO,c-SiC2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: O,SiH3
+@prods: H,H2SiO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.14d-9
+
+@type: 2body KIDA
+@reacts: O,l-C3H2
+@prods: C2H2,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: O,l-C3H2
+@prods: C2H2,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.839d-11*T32**(1.03)*exp(-1.2d3*invT)
+
+@type: 2body KIDA
+@reacts: O,l-C3H2
+@prods: CCH,CO,H
+#@limits: 5.0d1, 2.0d2
+@rate: 0.113d-9
+
+@type: 2body KIDA
+@reacts: C5,O
+@prods: C4,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-11*exp(-9.0d2*invT)
+
+@type: 2body KIDA
+@reacts: C4H,O
+@prods: CO,c-C3H
+#@limits: 1.0d1, 2.8d2
+@rate: 0.85d-11
+
+@type: 2body KIDA
+@reacts: C4H,O
+@prods: CO,c-C3H
+#@limits: 1.0d1, 3.0d2
+@rate: 0.35d-10
+
+@type: 2body KIDA
+@reacts: C4H,O
+@prods: CO,l-C3H
+#@limits: 1.0d1, 2.8d2
+@rate: 0.85d-11
+
+@type: 2body KIDA
+@reacts: C4H,O
+@prods: CO,l-C3H
+#@limits: 1.0d1, 3.0d2
+@rate: 0.35d-10
+
+@type: 2body KIDA
+@reacts: C4N,O
+@prods: C3N,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.6d-11
+
+@type: 2body KIDA
+@reacts: C4N,O
+@prods: C3N,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: C4P,O
+@prods: C3P,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: CH2PH,O
+@prods: CO,H,PH2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: O,SiC4
+@prods: CO,l-SiC3
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: C5H,O
+@prods: C4H,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: C5H,O
+@prods: C4H,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.6d-10
+
+@type: 2body KIDA
+@reacts: C5H,O
+@prods: C5O,H
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: C5N,O
+@prods: C4N,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: C5N,O
+@prods: C4N,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: C5N,O
+@prods: C4,OCN
+#@limits: 1.0d1, 8.0d2
+@rate: 0.2d-10*T32**(0.5)
+
+@type: 2body KIDA
+@reacts: C6,O
+@prods: C5,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: C6,O
+@prods: C5,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: C6H,O
+@prods: C5H,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: C6H,O
+@prods: C5H,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10
+
+@type: 2body KIDA
+@reacts: C7,O
+@prods: C6,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-11*exp(-9.0d2*invT)
+
+@type: 2body KIDA
+@reacts: C7H,O
+@prods: C6H,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: C7H,O
+@prods: C6H,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.6d-10
+
+@type: 2body KIDA
+@reacts: C7H,O
+@prods: C7O,H
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: C7N,O
+@prods: C6N,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: C8,O
+@prods: C7,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: C8,O
+@prods: C7,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: C8H,O
+@prods: C7H,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: C8H,O
+@prods: C7H,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10
+
+@type: 2body KIDA
+@reacts: C9,O
+@prods: C8,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-11*exp(-9.0d2*invT)
+
+@type: 2body KIDA
+@reacts: C9H,O
+@prods: C8H,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: C9H,O
+@prods: C8H,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.6d-10
+
+@type: 2body KIDA
+@reacts: C9H,O
+@prods: C9O,H
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: C9N,O
+@prods: C8N,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: C10,O
+@prods: C9,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: C10,O
+@prods: C9,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: C11,O
+@prods: C10,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: C11,O
+@prods: C10,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10*T32**(0.5)
+
+@type: 2body KIDA
+@reacts: O2,S
+@prods: O,SO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.23d-11
+
+@type: 2body KIDA
+@reacts: O2,S
+@prods: O,SO
+#@limits: 2.5d2, 4.3d2
+@rate: 0.21d-11
+
+@type: 2body KIDA
+@reacts: O2,Si
+@prods: O,SiO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.172d-9*T32**(-0.53)*exp(-1.7d1*invT)
+
+@type: 2body KIDA
+@reacts: F,OH
+@prods: HF,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.16d-9
+
+@type: 2body KIDA
+@reacts: CH,NO
+@prods: HCN,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.12d-10*T32**(-0.13)
+
+@type: 2body KIDA
+@reacts: CH,NO
+@prods: HCN,O
+#@limits: 2.0d2, 4.0d3
+@rate: 0.131d-9
+
+@type: 2body KIDA
+@reacts: CH,O2
+@prods: CO,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.38d-10*T32**(-0.48)
+
+@type: 2body KIDA
+@reacts: CH,O2
+@prods: HCO,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.144d-10*T32**(0.7)*exp(-3.0d3*invT)
+
+@type: 2body KIDA
+@reacts: CN,O2
+@prods: O,OCN
+#@limits: 1.0d1, 2.8d2
+@rate: 0.24d-10*T32**(-0.6)
+
+@type: 2body KIDA
+@reacts: CN,O2
+@prods: O,OCN
+#@limits: 1.3d1, 2.95d2
+@rate: 0.1992d-10*T32**(-0.63)
+
+@type: 2body KIDA
+@reacts: CN,O2
+@prods: CO,NO
+#@limits: 1.3d1, 2.95d2
+@rate: 0.498d-11*T32**(-0.63)
+
+@type: 2body KIDA
+@reacts: CN,O2
+@prods: CO,NO
+#@limits: 2.98d2, 2.98d2
+@rate: 0.607d-11
+
+@type: 2body KIDA
+@reacts: CN,OH
+@prods: HCN,O
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11*exp(-1.0d3*invT)
+
+@type: 2body KIDA
+@reacts: NH,NO
+@prods: H,N2,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.47d-10*T32**(0.5)
+
+@type: 2body KIDA
+@reacts: NH,NO
+@prods: H,N2,O
+#@limits: 2.98d2, 2.98d2
+@rate: 0.469d-10
+
+@type: 2body KIDA
 @reacts: OH,OH
 @prods: H2O,O
-@rate:  6.2d-14*(T32)**(2.62)*exp(945d0*invT)
+#@limits: 1.0d1, 2.8d2
+@rate: 0.165d-11*T32**(1.14)*exp(-5.0d1*invT)
 
-@type: charge exchange
-@reacts: H2O,O+
-@prods: O,H2O+
-@rate: 5.9148d-10 + 2.460315438d-9*sqrt(3d2/Tgas)
+@type: 2body KIDA
+@reacts: OH,OH
+@prods: H2O,O
+#@limits: 5.0d1, 2.0d2
+@rate: 0.634d-13*T32**(2.6)*exp(9.47d2*invT)
 
-@type: bimolecular
+@type: 2body KIDA
+@reacts: OH,OH
+@prods: H2O,O
+#@limits: 2.0d2, 3.5d2
+@rate: 0.62d-13*T32**(2.62)*exp(9.45d2*invT)
+
+@type: 2body KIDA
+@reacts: OH,OH
+@prods: H2O,O
+#@limits: 2.0d2, 3.5d2
+@rate: 0.631d-13*T32**(2.6)*exp(9.45d2*invT)
+
+@type: 2body KIDA
+@reacts: OH,OH
+@prods: H2O,O
+#@limits: 2.0d2, 5.0d2
+@rate: 0.18d-11
+
+@type: 2body KIDA
+@reacts: OH,OH
+@prods: H2O,O
+#@limits: 2.2d2, 3.2d2
+@rate: 0.27d-12*exp(4.46d2*invT)
+
+@type: 2body KIDA
+@reacts: OH,OH
+@prods: H2O,O
+#@limits: 2.33d2, 3.6d2
+@rate: 0.71d-12*exp(2.1d2*invT)
+
+@type: 2body KIDA
+@reacts: OH,OH
+@prods: H2O,O
+#@limits: 2.5d2, 2.4d3
+@rate: 0.549d-13*T32**(2.42)*exp(-9.7d2*invT)
+
+@type: 2body KIDA
+@reacts: CH2,OH
+@prods: CH3,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.144d-10*T32**(0.5)*exp(-3.0d3*invT)
+
+@type: 2body KIDA
+@reacts: NH2,OH
+@prods: NH3,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.918d-13
+
+@type: 2body KIDA
+@reacts: NH2,OH
+@prods: NH3,O
+#@limits: 3.0d2, 2.0d3
+@rate: 0.209d-13*T32**(2.3)*exp(1.4d2*invT)
+
+@type: 2body KIDA
+@reacts: O2H,OH
+@prods: H2O,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.12d-9
+
+@type: 2body KIDA
+@reacts: O2H,OH
+@prods: H2O,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.48d-10*exp(2.5d2*invT)
+
+@type: 2body KIDA
+@reacts: O2H,OH
+@prods: H2O,O2
+#@limits: 2.5d2, 4.0d2
+@rate: 0.48d-10*exp(2.5d2*invT)
+
+@type: 2body KIDA
+@reacts: O2H,OH
+@prods: H2O,O2
+#@limits: 2.5d2, 4.0d2
+@rate: 0.48d-10*exp(2.5d2*invT)
+
+@type: 2body KIDA
+@reacts: CN+,O2
+@prods: CO,NO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.86d-10
+
+@type: 2body KIDA
+@reacts: CN+,O2
+@prods: NCO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.86d-10
+
+@type: ionpol1
+@reacts: CN+,H2O
+@prods: H2NC+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.8832d-10 + 0.3674d-9*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: CN+,H2O
+@prods: HCNH+,O
+#@limits: 2.98d2, 2.98d2
+@rate: 0.48d-9
+
+@type: ionpol1
+@reacts: CO+,OH
+@prods: HCO+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.2309d-9 + 0.9766d-9*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: CP+,O
+@prods: CO,P+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: CS+,O
+@prods: CO+,S
+#@limits: 1.0d1, 2.8d2
+@rate: 0.6d-10
+
+@type: 2body KIDA
+@reacts: CS+,O2
+@prods: O,OCS+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.13d-9
+
+@type: 2body KIDA
+@reacts: H2+,O
+@prods: H,OH+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.15d-8
+
+@type: 2body KIDA
+@reacts: H2+,O2
+@prods: H,HO2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.19d-8
+
+@type: 2body KIDA
+@reacts: HS+,O
+@prods: OH,S+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.29d-9
+
+@type: 2body KIDA
+@reacts: HS+,O
+@prods: H,SO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.29d-9
+
+@type: ionpol1
+@reacts: ClO,He+
+@prods: Cl+,He,O
+#@limits: 1.0d1, 4.7d2
+@rate: 0.1308d-8 + 0.2525d-8*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: ClO,He+
+@prods: Cl+,He,O
+#@limits: 4.71d2, 8.0d2
+@rate: 0.211d-80.5121d-9*sqrt(3d2/Tgas) + 0.1263d-8*(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CO,He+
+@prods: C+,He,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.175d-80.4248d-10*sqrt(3d2/Tgas) + 0.1047d-10*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: He+,NO
+@prods: He,N+,O
+#@limits: 1.0d1, 1.2d1
+@rate: 0.8688d-9 + 0.2745d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: He+,NO
+@prods: He,N+,O
+#@limits: 1.3d1, 8.0d2
+@rate: 0.1401d-80.5569d-10*sqrt(3d2/Tgas) + 0.2249d-10*(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: He+,O2
+@prods: He,O,O+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9
+
+@type: ionpol1
+@reacts: He+,PO
+@prods: He,O,P+
+#@limits: 1.0d1, 8.0d2
+@rate: 0.1513d-8 + 0.3955d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: He+,SiO
+@prods: He,O,Si+
+#@limits: 1.0d1, 8.0d2
+@rate: 0.7998d-9 + 0.3136d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: He+,SO
+@prods: He,O,S+
+#@limits: 1.0d1, 6.43d2
+@rate: 0.7006d-9 + 0.1578d-8*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: He+,SO
+@prods: He,O,S+
+#@limits: 6.44d2, 8.0d2
+@rate: 0.113d-80.3202d-9*sqrt(3d2/Tgas) + 0.9216d-9*(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: CO2,He+
+@prods: C+,He,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: CO2,He+
+@prods: CO+,He,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.8d-9
+
+@type: ionpol1
+@reacts: HCO,He+
+@prods: CH+,He,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.4109d-9 + 0.1131d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: HPO,He+
+@prods: He,O,PH+
+#@limits: 1.0d1, 8.0d2
+@rate: 0.775d-9 + 0.2324d-8*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: He+,N2O
+@prods: He,N2+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5225d-90.148d-10*sqrt(3d2/Tgas) + 0.4261d-11*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: He+,OCN
+@prods: CN+,He,O
+#@limits: 1.0d1, 1.45d2
+@rate: 0.6758d-9 + 0.7222d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: He+,OCN
+@prods: CN+,He,O
+#@limits: 1.46d2, 8.0d2
+@rate: 0.109d-80.1465d-9*sqrt(3d2/Tgas) + 0.2001d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: He+,OCS
+@prods: CS+,He,O
+#@limits: 1.0d1, 8.9d1
+@rate: 0.4262d-9 + 0.3572d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: He+,OCS
+@prods: CS+,He,O
+#@limits: 9.0d1, 8.0d2
+@rate: 0.6875d-90.7246d-10*sqrt(3d2/Tgas) + 0.776d-10*(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: He+,SiO2
+@prods: He,O2,Si+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: He+,SiO2
+@prods: He,O,SiO+
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5d-9
+
+@type: ionpol1
+@reacts: He+,SO2
+@prods: He,O2,S+
+#@limits: 1.0d1, 6.54d2
+@rate: 0.3658d-9 + 0.8325d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: He+,SO2
+@prods: He,O2,S+
+#@limits: 6.55d2, 8.0d2
+@rate: 0.59d-90.1689d-9*sqrt(3d2/Tgas) + 0.4911d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: He+,SO2
+@prods: He,O,SO+
+#@limits: 1.0d1, 6.54d2
+@rate: 0.3658d-9 + 0.8325d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: He+,SO2
+@prods: He,O,SO+
+#@limits: 6.55d2, 8.0d2
+@rate: 0.59d-90.1689d-9*sqrt(3d2/Tgas) + 0.4911d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: C3O,He+
+@prods: C3+,He,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.9269d-9 + 0.2494d-8*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: CH4,OH+
+@prods: CH5+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.195d-9
+
+@type: 2body KIDA
+@reacts: O,PH+
+@prods: H,PO+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9
+
+@type: 2body KIDA
+@reacts: O2,PH+
+@prods: OH,PO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.49d-9
+
+@type: 2body KIDA
+@reacts: O,SiC+
+@prods: C,SiO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.6d-9
+
+@type: 2body KIDA
+@reacts: O,SiH+
+@prods: H,SiO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.61d-9
+
+@type: 2body KIDA
+@reacts: O,SiN+
+@prods: N,SiO+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9
+
+@type: 2body KIDA
+@reacts: O,SiO+
+@prods: O2,Si+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: N,SO+
+@prods: NS+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: C2H+,O
+@prods: C,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.33d-9
+
+@type: 2body KIDA
+@reacts: CH2+,O
+@prods: H,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.75d-9
+
+@type: 2body KIDA
+@reacts: CH2+,O2
+@prods: HCO+,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.91d-9
+
+@type: 2body KIDA
+@reacts: CH2+,O2
+@prods: H,HOCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.47d-9
+
+@type: 2body KIDA
+@reacts: CO2+,H
+@prods: HCO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.29d-9
+
+@type: 2body KIDA
+@reacts: CO2+,O
+@prods: CO,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.164d-9
+
+@type: 2body KIDA
+@reacts: H2O+,O
+@prods: H2,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: O,c-C3H2+
+@prods: CCH,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: O,l-C3H2+
+@prods: CCH,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C4H+,O
+@prods: C3,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C4H2+,O
+@prods: H,HC4O+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.135d-9
+
+@type: 2body KIDA
+@reacts: C4H2+,O
+@prods: CO,c-C3H2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.55d-10
+
+@type: 2body KIDA
+@reacts: C4H2+,O
+@prods: CO,l-C3H2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.55d-10
+
+@type: 2body KIDA
+@reacts: C5H+,O
+@prods: C4,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: CH5+,O
+@prods: CH2,H3O+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.22d-9
+
+@type: 2body KIDA
+@reacts: CH5+,O
+@prods: H2,H2COH+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.44d-11
+
+@type: 2body KIDA
+@reacts: O,SiH5+
+@prods: H2,H3SiO+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: C2H5+,O
+@prods: CH4,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: C2H5+,O
+@prods: C2H4O+,H
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: C3H4+,O
+@prods: C2H3,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C4H3+,O
+@prods: HCO+,c-C3H2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.25d-10
+
+@type: 2body KIDA
+@reacts: C4H3+,O
+@prods: HCO+,l-C3H2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.25d-10
+
+@type: 2body KIDA
+@reacts: C5H2+,O
+@prods: C4H,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: CCH,O2
+@prods: CO,HCO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.42d-10*T32**(-0.32)
+
+@type: 2body KIDA
+@reacts: CCH,O2
+@prods: CH,CO2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.14d-10*T32**(-0.32)
+
+@type: 2body KIDA
+@reacts: CCH,O2
+@prods: CO,CO,H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.14d-10*T32**(-0.32)
+
+@type: 2body KIDA
+@reacts: C,CO
+@prods: C2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10*exp(-5.28d4*invT)
+
+@type: 2body KIDA
+@reacts: H,HCO
+@prods: CH2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.661d-10*exp(-5.16d4*invT)
+
+@type: 2body KIDA
+@reacts: H,OH
+@prods: H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.686d-13*T32**(2.8)*exp(-1.95d3*invT)
+
+@type: 2body KIDA
+@reacts: H,OH
+@prods: H2,O
+#@limits: 5.0d1, 2.0d2
+@rate: 0.699d-13*T32**(2.8)*exp(-1.95d3*invT)
+
+@type: 2body KIDA
+@reacts: H,NO
+@prods: NH,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.93d-9*T32**(-0.1)*exp(-3.52d4*invT)
+
+@type: 2body KIDA
+@reacts: H,HNO
+@prods: NH2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.105d-8*T32**(-0.3)*exp(-1.47d4*invT)
+
+@type: 2body KIDA
+@reacts: H,O2
+@prods: O,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.294d-9*exp(-8.38d3*invT)
+
+@type: 2body KIDA
+@reacts: H,O2H
+@prods: H2,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.56d-11
+
+@type: 2body KIDA
+@reacts: H,O2H
+@prods: H2,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.69d-11
+
+@type: 2body KIDA
+@reacts: H,O2H
+@prods: H2,O2
+#@limits: 2.45d2, 3.0d2
+@rate: 0.56d-11
+
+@type: 2body KIDA
+@reacts: H,O2H
+@prods: H2,O2
+#@limits: 2.5d2, 1.0d3
+@rate: 0.175d-9*exp(-1.03d3*invT)
+
+@type: 2body KIDA
+@reacts: H,O2H
+@prods: H2O,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.242d-11
+
+@type: 2body KIDA
+@reacts: H,O2H
+@prods: H2O,O
+#@limits: 2.0d2, 5.0d2
+@rate: 0.16d-11
+
+@type: 2body KIDA
+@reacts: H,O2H
+@prods: H2O,O
+#@limits: 2.45d2, 3.0d2
+@rate: 0.24d-11
+
+@type: 2body KIDA
+@reacts: H,O2H
+@prods: H2O,O
+#@limits: 2.5d2, 1.0d3
+@rate: 0.689d-11*T32**(1.6)*exp(-9.03d3*invT)
+
+@type: 2body KIDA
+@reacts: H2,O
+@prods: H,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.344d-12*T32**(2.67)*exp(-3.16d3*invT)
+
+@type: 2body KIDA
+@reacts: H2,O
+@prods: H,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.35d-12*T32**(2.67)*exp(-3.16d3*invT)
+
+@type: 2body KIDA
+@reacts: H2,O
+@prods: H,OH
+#@limits: 2.98d2, 3.3d3
+@rate: 0.634d-11*exp(-4.0d3*invT)
+
+@type: 2body KIDA
+@reacts: H2,O
+@prods: H,OH
+#@limits: 2.98d2, 3.3d3
+@rate: 0.146d-11*exp(-9.65d3*invT)
+
+@type: 2body KIDA
+@reacts: N,NO
+@prods: N2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.3d-10*T32**(-0.6)
+
+@type: 2body KIDA
+@reacts: N,NO
+@prods: N2,O
+#@limits: 1.0d1, 3.0d2
+@rate: 0.4d-10*T32**(-0.2)*exp(-2.0d1*invT)
+
+@type: 2body KIDA
+@reacts: N,NO
+@prods: N2,O
+#@limits: 4.8d1, 2.11d2
+@rate: 0.32d-10*exp(-2.5d1*invT)
+
+@type: 2body KIDA
+@reacts: N,NO
+@prods: N2,O
+#@limits: 1.0d2, 1.0d3
+@rate: 0.34d-10*exp(-2.48d1*invT)
+
+@type: 2body KIDA
+@reacts: N,NO
+@prods: N2,O
+#@limits: 1.0d2, 4.0d3
+@rate: 0.375d-10*exp(-2.6d1*invT)
+
+@type: 2body KIDA
+@reacts: N,NO
+@prods: N2,O
+#@limits: 1.96d2, 3.7d2
+@rate: 0.27d-10
+
+@type: 2body KIDA
+@reacts: N,NO
+@prods: N2,O
+#@limits: 2.0d2, 5.0d2
+@rate: 0.21d-10*exp(1.0d2*invT)
+
+@type: 2body KIDA
+@reacts: N,NO
+@prods: N2,O
+#@limits: 2.0d2, 2.5d3
+@rate: 0.215d-10*T32**(0.28)*exp(1.307d2*invT)
+
+@type: 2body KIDA
+@reacts: N,NO
+@prods: N2,O
+#@limits: 2.1d2, 3.7d3
+@rate: 0.35d-10
+
+@type: 2body KIDA
+@reacts: N,NO
+@prods: N2,O
+#@limits: 2.13d2, 3.69d2
+@rate: 0.22d-10*exp(1.6d2*invT)
+
+@type: 2body KIDA
+@reacts: N,NO
+@prods: N2,O
+#@limits: 2.98d2, 2.98d2
+@rate: 0.21d-10*exp(1.0d2*invT)
+
+@type: 2body KIDA
+@reacts: N,O2
+@prods: NO,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.15d-10*exp(-3.68d3*invT)
+
+@type: 2body KIDA
+@reacts: N,O2
+@prods: NO,O
+#@limits: 2.0d2, 5.0d2
+@rate: 0.15d-10*exp(-3.6d3*invT)
+
+@type: 2body KIDA
+@reacts: N,O2
+@prods: NO,O
+#@limits: 2.8d2, 5.0d3
+@rate: 0.31d-11*T32**(1.01)*exp(-3.12d3*invT)
+
+@type: 2body KIDA
+@reacts: N,O2
+@prods: NO,O
+#@limits: 2.8d2, 5.0d3
+@rate: 0.308d-11*T32**(1.01)*exp(-3.12d3*invT)
+
+@type: 2body KIDA
+@reacts: N,PO
+@prods: O,PN
+#@limits: 1.0d1, 2.8d2
+@rate: 0.3d-10*T32**(-0.6)
+
+@type: 2body KIDA
+@reacts: N,SO
+@prods: NS,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.468d-10*T32**(0.5)*exp(-8.25d3*invT)
+
+@type: 2body KIDA
+@reacts: N,NO2
+@prods: N2,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-12
+
+@type: 2body KIDA
+@reacts: N,NO2
+@prods: N2,O2
+#@limits: 1.0d1, 4.0d2
+@rate: 0d0
+
+@type: 2body KIDA
+@reacts: N,NO2
+@prods: N2,O2
+#@limits: 2.23d2, 3.66d2
+@rate: 0d0
+
+@type: 2body KIDA
+@reacts: N,NO2
+@prods: N2O,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.21d-10
+
+@type: 2body KIDA
+@reacts: N,NO2
+@prods: N2O,O
+#@limits: 1.0d1, 4.0d2
+@rate: 0.11d-10
+
+@type: 2body KIDA
+@reacts: N,NO2
+@prods: N2O,O
+#@limits: 2.0d2, 5.0d2
+@rate: 0.58d-11*exp(2.2d2*invT)
+
+@type: 2body KIDA
+@reacts: N,NO2
+@prods: N2O,O
+#@limits: 2.23d2, 3.66d2
+@rate: 0.58d-11*exp(2.2d2*invT)
+
+@type: 2body KIDA
+@reacts: N,O2H
+@prods: NH,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-12
+
+@type: 2body KIDA
+@reacts: C2,O
+@prods: C,CO
+#@limits: 1.0d1, 2.98d2
+@rate: 0.2d-9*T32**(-0.12)
+
+@type: 2body KIDA
+@reacts: CCl,O
+@prods: C,ClO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.138d-9*exp(-1.6d4*invT)
+
+@type: 2body KIDA
+@reacts: CCl,O
+@prods: CO,Cl
+#@limits: 1.0d1, 2.8d2
+@rate: 0.996d-10
+
+@type: 2body KIDA
+@reacts: ClO,O
+@prods: Cl,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: ClO,O
+@prods: Cl,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.28d-10*exp(8.5d1*invT)
+
+@type: 2body KIDA
+@reacts: ClO,O
+@prods: Cl,O2
+#@limits: 2.2d2, 3.9d2
+@rate: 0.25d-10*exp(1.1d2*invT)
+
+@type: 2body KIDA
+@reacts: CN,O
+@prods: CO,N
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: CN,O
+@prods: CO,N
+#@limits: 1.0d1, 3.0d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: CN,O
+@prods: CO,N
+#@limits: 5.0d1, 2.0d2
+@rate: 0.169d-10
+
+@type: 2body KIDA
+@reacts: CN,O
+@prods: C,NO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.381d-10*T32**(0.5)*exp(-1.45d4*invT)
+
+@type: 2body KIDA
+@reacts: CP,O
+@prods: CO,P
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: CS,O
+@prods: CO,S
+#@limits: 1.0d1, 2.8d2
+@rate: 0.194d-10*exp(-2.31d2*invT)
+
+@type: 2body KIDA
+@reacts: CS,O
+@prods: CO,S
+#@limits: 1.5d2, 3.0d2
+@rate: 0.26d-9*exp(-7.6d2*invT)
+
+@type: 2body KIDA
+@reacts: CS,O
+@prods: CO,S
+#@limits: 1.5d2, 3.0d2
+@rate: 0.27d-9*exp(-7.6d2*invT)
+
+@type: 2body KIDA
+@reacts: CS,O
+@prods: C,SO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.468d-10*T32**(0.5)*exp(-2.89d4*invT)
+
+@type: 2body KIDA
+@reacts: HS,O
+@prods: H,SO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.16d-9*T32**(0.5)
+
+@type: 2body KIDA
+@reacts: HS,O
+@prods: OH,S
+#@limits: 1.0d1, 8.0d2
+@rate: 0.174d-10*T32**(0.67)*exp(-9.56d2*invT)
+
+@type: 2body KIDA
+@reacts: NH,O
+@prods: H,NO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.116d-9
+
+@type: 2body KIDA
+@reacts: NH,O
+@prods: H,NO
+#@limits: 1.0d1, 2.98d2
+@rate: 0.66d-10
+
+@type: 2body KIDA
+@reacts: NH,O
+@prods: H,NO
+#@limits: 5.0d1, 2.0d2
+@rate: 0.116d-9
+
+@type: 2body KIDA
+@reacts: NH,O
+@prods: N,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.116d-10
+
+@type: 2body KIDA
+@reacts: NH,O
+@prods: N,OH
+#@limits: 1.0d1, 2.98d2
+@rate: 0d0
+
+@type: 2body KIDA
+@reacts: NH,O
+@prods: N,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.116d-10
+
+@type: 2body KIDA
+@reacts: NH,O
+@prods: N,OH
+#@limits: 2.98d2, 2.98d2
+@rate: 0.17d-12
+
+@type: 2body KIDA
+@reacts: NS,O
+@prods: NO,S
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: NS,O
+@prods: N,SO
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: O,OH
+@prods: H,O2
+#@limits: 1.0d1, 5.0d1
+@rate: 0.4d-10
+
+@type: 2body KIDA
+@reacts: O,OH
+@prods: H,O2
+#@limits: 3.9d1, 1.42d2
+@rate: 0.35d-10
+
+@type: 2body KIDA
+@reacts: O,OH
+@prods: H,O2
+#@limits: 1.5d2, 5.0d2
+@rate: 0.24d-10*exp(1.1d2*invT)
+
+@type: 2body KIDA
+@reacts: O,OH
+@prods: H,O2
+#@limits: 1.5d2, 5.0d2
+@rate: 0.24d-10*exp(1.1d2*invT)
+
+@type: 2body KIDA
+@reacts: O,OH
+@prods: H,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.18d-10*exp(1.8d2*invT)
+
+@type: 2body KIDA
+@reacts: O,OH
+@prods: H,O2
+#@limits: 2.5d2, 3.0d3
+@rate: 0.269d-10*T32**(-0.352)*exp(1.13d2*invT)
+
+@type: 2body KIDA
+@reacts: O,PH
+@prods: H,PO
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: O,S2
+@prods: S,SO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: O,SiC
+@prods: CO,Si
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: O,SiC
+@prods: C,SiO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: O,SiH
+@prods: H,SiO
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: O,SiN
+@prods: NO,Si
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: O,SiN
+@prods: N,SiO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: CCH,O
+@prods: CH,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: CCH,O
+@prods: CH,CO
+#@limits: 1.0d1, 2.98d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: CCH,O
+@prods: CH,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10
+
+@type: 2body KIDA
+@reacts: CCH,O
+@prods: CH,CO
+#@limits: 5.0d1, 2.0d2
+@rate: 0.241d-10*exp(-2.32d2*invT)
+
+@type: 2body KIDA
+@reacts: CCN,O
+@prods: CN,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.6d-11
+
+@type: 2body KIDA
+@reacts: CCN,O
+@prods: CN,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: CCO,O
+@prods: CO,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.86d-10
+
+@type: ionpol1
+@reacts: H2O+,OH
+@prods: H3O+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.509d-9 + 0.2153d-8*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: H2S+,O
+@prods: HS+,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.31d-9
+
+@type: 2body KIDA
+@reacts: H2S+,O
+@prods: H2,SO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.31d-9
+
+@type: 2body KIDA
+@reacts: H3+,O
+@prods: H2,OH+
+#@limits: 0d0, 7.0d1
+@rate: 0.112d-8*T32**(-0.144)
+
+@type: 2body KIDA
+@reacts: H3+,O
+@prods: H2,OH+
+#@limits: 1.0d1, 3.0d2
+@rate: 0.798d-9*T32**(-0.156)*exp(-1.41d0*invT)
+
+@type: 2body KIDA
+@reacts: H3+,O
+@prods: H2,OH+
+#@limits: 1.0d1, 8.0d2
+@rate: 0.8d-9
+
+@type: 2body KIDA
+@reacts: H3+,O
+@prods: H,H2O+
+#@limits: 0d0, 7.0d1
+@rate: 0.714d-10*T32**(-0.144)
+
+@type: 2body KIDA
+@reacts: H3+,O
+@prods: H,H2O+
+#@limits: 1.0d1, 3.0d2
+@rate: 0.342d-9*T32**(-0.156)*exp(-1.41d0*invT)
+
+@type: 2body KIDA
+@reacts: H3+,O2
+@prods: H2,HO2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.64d-9
+
+@type: 2body KIDA
+@reacts: CH4+,O
+@prods: CH3+,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9
+
+@type: 2body KIDA
+@reacts: C2H4+,O
+@prods: CH3,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.84d-10
+
+@type: 2body KIDA
+@reacts: C2H4+,O
+@prods: CH3+,HCO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.108d-9
+
+@type: 2body KIDA
+@reacts: O,c-C3H3+
+@prods: C2H3+,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.45d-10
+
+@type: 2body KIDA
+@reacts: O,l-C3H3+
+@prods: C2H3+,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.45d-10
+
+@type: ionpol1
+@reacts: C+,NH2CHO
+@prods: CH3CN+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.1605d-9 + 0.8169d-9*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: CO2,H+
+@prods: HCO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.3d-8
+
+@type: 2body KIDA
+@reacts: HCP+,O
+@prods: CO,PH+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: HCS+,O
+@prods: HCO+,S
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-9
+
+@type: 2body KIDA
+@reacts: HCS+,O
+@prods: H,OCS+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-9
+
+@type: 2body KIDA
+@reacts: HNC+,O2
+@prods: HCO,NO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.9d-10
+
+@type: 2body KIDA
+@reacts: HNO+,O
+@prods: H,NO2+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-12
+
+@type: ionpol1
+@reacts: N+,NO
+@prods: N2+,O
+#@limits: 1.0d1, 1.2d1
+@rate: 0.5459d-10 + 0.1725d-10*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: N+,NO
+@prods: N2+,O
+#@limits: 1.3d1, 8.0d2
+@rate: 0.8805d-100.3499d-11*sqrt(3d2/Tgas) + 0.1413d-11*(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: N+,O2
+@prods: NO,O+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.36d-10
+
+@type: 2body KIDA
+@reacts: N+,O2
+@prods: NO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-9
+
+@type: 2body KIDA
+@reacts: O2,P+
+@prods: O,PO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.49d-9
+
+@type: 2body KIDA
+@reacts: H2CO+,O2
+@prods: HCO+,O2H
+#@limits: 1.0d1, 2.8d2
+@rate: 0.77d-10
+
+@type: 2body KIDA
+@reacts: HOCO+,O
+@prods: HCO+,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9
+
+@type: 2body KIDA
+@reacts: NH3+,O
+@prods: H2,HNO+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: NH3+,O
+@prods: H,H2NO+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11
+
+@type: ionpol1
+@reacts: NH3+,OH
+@prods: NH4+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5158d-9 + 0.2181d-8*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: O,SiH3+
+@prods: H2,HSiO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: O,SiH3+
+@prods: H,H2SiO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: O2,SiH3+
+@prods: H3SiO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.29d-11
+
+@type: 2body KIDA
+@reacts: O,SiNCH+
+@prods: HCO+,SiN
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C2H3+,O
+@prods: H,H2CCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.85d-10
+
+@type: 2body KIDA
+@reacts: C2H3+,O
+@prods: CH3+,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-11
+
+@type: 2body KIDA
+@reacts: O2,S+
+@prods: O,SO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-10
+
+@type: 2body KIDA
+@reacts: C2+,O
+@prods: C,CO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.31d-9
+
+@type: 2body KIDA
+@reacts: C2+,O2
+@prods: CO,CO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.8d-9
+
+@type: 2body KIDA
+@reacts: CH+,O
+@prods: CO+,H
+#@limits: 1.0d1, 2.8d2
+@rate: 0.35d-9
+
+@type: 2body KIDA
+@reacts: CH+,O2
+@prods: HCO,O+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: CH+,O2
+@prods: CO+,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: CH+,O2
+@prods: HCO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.97d-9
+
+@type: 2body KIDA
+@reacts: N2+,O
+@prods: N,NO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.14d-9
+
+@type: 2body KIDA
+@reacts: NH+,O
+@prods: N,OH+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9
+
+@type: ionpol1
+@reacts: NH+,NO
+@prods: N2H+,O
+#@limits: 1.0d1, 1.2d1
+@rate: 0.1194d-9 + 0.3773d-10*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: NH+,NO
+@prods: N2H+,O
+#@limits: 1.3d1, 8.0d2
+@rate: 0.1926d-90.7655d-11*sqrt(3d2/Tgas) + 0.3091d-11*(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: NH+,O2
+@prods: NO+,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: NH+,O2
+@prods: HO2+,N
+#@limits: 1.0d1, 2.8d2
+@rate: 0.16d-9
+
+@type: 2body KIDA
+@reacts: H2O,NH+
+@prods: NH3+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.175d-9
+
+@type: ionpol1
+@reacts: H2O,NH+
+@prods: NH3+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.2318d-10 + 0.9641d-10*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: H2O,NH+
+@prods: NH3+,O
+#@limits: 3.0d2, 3.0d2
+@rate: 0.175d-9
+
+@type: 2body KIDA
+@reacts: NS+,O
+@prods: NO+,S
+#@limits: 1.0d1, 2.8d2
+@rate: 0.61d-9
+
+@type: 2body KIDA
+@reacts: C,O2+
+@prods: CO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.52d-10
+
+@type: 2body KIDA
+@reacts: N,O2+
+@prods: NO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.18d-9
+
+@type: 2body KIDA
+@reacts: O2+,S
+@prods: O,SO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.54d-9
+
+@type: ionpol1
+@reacts: CH,O2+
+@prods: HCO+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.3472d-9 + 0.889d-9*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: NH,O2+
+@prods: HNO+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.2734d-9 + 0.925d-9*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: CH2,O2+
+@prods: H2CO+,O
+#@limits: 1.0d1, 1.49d2
+@rate: 0.3379d-9 + 0.3663d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CH2,O2+
+@prods: H2CO+,O
+#@limits: 1.5d2, 8.0d2
+@rate: 0.545d-90.7431d-10*sqrt(3d2/Tgas) + 0.1029d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: H2CO,O2+
+@prods: H,HCO+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.1125d-9 + 0.4454d-9*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: CH3OH,O2+
+@prods: H,H2COH+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.3193d-9 + 0.8151d-9*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: C,OH+
+@prods: CH+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.12d-8
+
+@type: 2body KIDA
+@reacts: O,OH+
+@prods: H,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.71d-9
+
+@type: 2body KIDA
+@reacts: OH+,S
+@prods: HS+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.43d-9
+
+@type: 2body KIDA
+@reacts: OH+,Si
+@prods: O,SiH+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.19d-8
+
+@type: 2body KIDA
+@reacts: C2,OH+
+@prods: C2H+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.48d-9
+
+@type: ionpol1
+@reacts: CH,OH+
+@prods: CH2+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.3906d-9 + 0.1d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: CN,OH+
+@prods: HCN+,O
+#@limits: 1.0d1, 6.06d2
+@rate: 0.7688d-9 + 0.1679d-8*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CN,OH+
+@prods: HCN+,O
+#@limits: 6.07d2, 8.0d2
+@rate: 0.124d-80.3405d-9*sqrt(3d2/Tgas) + 0.9502d-9*(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CO,OH+
+@prods: HCO+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 1.0d-90.2427d-10*sqrt(3d2/Tgas) + 0.5985d-11*(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: N2,OH+
+@prods: N2H+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.36d-9
+
+@type: ionpol1
+@reacts: NH,OH+
+@prods: NH2+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.6188d-9 + 0.2093d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: NO,OH+
+@prods: HNO+,O
+#@limits: 1.0d1, 1.2d1
+@rate: 0.36d-9 + 0.1137d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: NO,OH+
+@prods: HNO+,O
+#@limits: 1.3d1, 8.0d2
+@rate: 0.5806d-90.2307d-10*sqrt(3d2/Tgas) + 0.9317d-11*(3d2/Tgas)
+
+@type: ionpol1
 @reacts: OH,OH+
-@prods: O,H2O+
-@rate: 5.1584d-10 + 2.1813792d-9*sqrt(3d2/Tgas)
+@prods: H2O+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5158d-9 + 0.2181d-8*sqrt(3d2/Tgas)
 
-@type: bimolecular
-@reacts: OH,H2O+
-@prods: O,H3O+
-@rate: 5.0902d-10 + 2.15253885d-9*sqrt(3d2/Tgas)
+@type: ionpol1
+@reacts: OH+,SiC
+@prods: CHSi+,O
+#@limits: 1.0d1, 3.29d2
+@rate: 0.1104d-8 + 0.1782d-8*sqrt(3d2/Tgas)
 
-@type: bimolecular
+@type: ionpol2
+@reacts: OH+,SiC
+@prods: CHSi+,O
+#@limits: 3.3d2, 8.0d2
+@rate: 0.178d-80.3615d-9*sqrt(3d2/Tgas) + 0.7458d-9*(3d2/Tgas)
+
+@type: ionpol2
+@reacts: OH+,SiH
+@prods: O,SiH2+
+#@limits: 1.0d1, 8.0d2
+@rate: 0.168d-80.2502d-10*sqrt(3d2/Tgas) + 0.3785d-11*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: OH+,SiO
+@prods: HSiO+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.8742d-9 + 0.3428d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: CCH,OH+
+@prods: C2H2+,O
+#@limits: 1.0d1, 1.33d2
+@rate: 0.4805d-9 + 0.4951d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CCH,OH+
+@prods: C2H2+,O
+#@limits: 1.34d2, 8.0d2
+@rate: 0.775d-90.1004d-9*sqrt(3d2/Tgas) + 0.1322d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: CH2,OH+
+@prods: CH3+,O
+#@limits: 1.0d1, 1.49d2
+@rate: 0.3813d-9 + 0.4134d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CH2,OH+
+@prods: CH3+,O
+#@limits: 1.5d2, 8.0d2
+@rate: 0.615d-90.8385d-10*sqrt(3d2/Tgas) + 0.1162d-9*(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: CO2,OH+
+@prods: HOCO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.14d-8
+
+@type: ionpol1
 @reacts: H2O,OH+
-@prods: O,H3O+
-@rate: 2.7013152d-10 + 1.123636892112d-9*sqrt(3d2/Tgas)
+@prods: H3O+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.2701d-9 + 0.1124d-8*sqrt(3d2/Tgas)
 
-@type: charge exchange
-@reacts: H2O,OH+
-@prods: OH,H2O+
-@rate: 3.1204848d-10 + 1.297994340888d-9*sqrt(3d2/Tgas)
+@type: ionpol1
+@reacts: H2S,OH+
+@prods: H3S+,O
+#@limits: 1.0d1, 2.33d2
+@rate: 0.3323d-9 + 0.4522d-9*sqrt(3d2/Tgas)
 
-@type: bimolecular
-@reacts: H2O,H2O+
-@prods: OH,H3O+
-@rate: 5.7412d-10 + 2.388104922d-9*sqrt(3d2/Tgas)
+@type: ionpol2
+@reacts: H2S,OH+
+@prods: H3S+,O
+#@limits: 2.34d2, 8.0d2
+@rate: 0.5359d-90.9173d-10*sqrt(3d2/Tgas) + 0.1595d-9*(3d2/Tgas)
 
+@type: ionpol1
+@reacts: HCN,OH+
+@prods: HCNH+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.713d-9 + 0.3624d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: HCO,OH+
+@prods: H2CO+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.2354d-9 + 0.6479d-9*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: HNC,OH+
+@prods: HCNH+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.744d-9 + 0.3718d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: NH2,OH+
+@prods: NH3+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.3379d-9 + 0.1195d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: H2CO,OH+
+@prods: H2COH+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.4227d-9 + 0.1674d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: NH3,OH+
+@prods: NH4+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.3596d-9 + 0.1009d-8*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: C3H+,O2
+@prods: CCO,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.15d-10
+
+@type: 2body KIDA
+@reacts: C3H+,O2
+@prods: C2HO+,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.25d-11
+
+@type: 2body KIDA
+@reacts: C3H+,O2
+@prods: HC3O+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.75d-11
+
+@type: 2body KIDA
+@reacts: CH2Si+,O
+@prods: H2CO,Si+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.6d-9
+
+@type: 2body KIDA
+@reacts: CH2Si+,O
+@prods: HCO+,SiH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.3d-9
+
+@type: 2body KIDA
+@reacts: CH3+,O
+@prods: H2,HOC+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.205d-9
+
+@type: 2body KIDA
+@reacts: CH3+,O
+@prods: H2,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.205d-9
+
+@type: 2body KIDA
+@reacts: CH3+,O
+@prods: H,H2CO+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-15
+
+@type: 2body KIDA
+@reacts: CH3+,O2
+@prods: H2COH+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-11
+
+@type: 2body KIDA
+@reacts: NH2+,O
+@prods: H,HNO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.72d-10
+
+@type: 2body KIDA
+@reacts: NH2+,O2
+@prods: HNO+,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.21d-10
+
+@type: 2body KIDA
+@reacts: NH2+,O2
+@prods: H2NO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.12d-9
+
+@type: ionpol1
+@reacts: H2O,NH2+
+@prods: NH4+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.1023d-10 + 0.4256d-10*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: H2O,NH2+
+@prods: NH4+,O
+#@limits: 3.0d2, 3.0d2
+@rate: 0.116d-9
+
+@type: 2body KIDA
+@reacts: C,HO2+
+@prods: CH+,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9
+
+@type: 2body KIDA
+@reacts: HO2+,O
+@prods: O2,OH+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.62d-9
+
+@type: 2body KIDA
+@reacts: HO2+,S
+@prods: HS+,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.11d-8
+
+@type: 2body KIDA
+@reacts: C2,HO2+
+@prods: C2H+,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.81d-9
+
+@type: ionpol1
+@reacts: CH,HO2+
+@prods: CH2+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.6944d-9 + 0.1778d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: CN,HO2+
+@prods: HCN+,O2
+#@limits: 1.0d1, 6.06d2
+@rate: 0.6448d-9 + 0.1408d-8*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CN,HO2+
+@prods: HCN+,O2
+#@limits: 6.07d2, 8.0d2
+@rate: 0.104d-80.2856d-9*sqrt(3d2/Tgas) + 0.7969d-9*(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CO,HO2+
+@prods: HCO+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.842d-90.2044d-10*sqrt(3d2/Tgas) + 0.504d-11*(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: H2,HO2+
+@prods: H3+,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.32d-9
+
+@type: 2body KIDA
+@reacts: HO2+,N2
+@prods: N2H+,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.79d-9
+
+@type: ionpol1
+@reacts: HO2+,NH
+@prods: NH2+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5444d-9 + 0.1842d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: HO2+,NO
+@prods: HNO+,O2
+#@limits: 1.0d1, 1.2d1
+@rate: 0.4768d-9 + 0.1507d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: HO2+,NO
+@prods: HNO+,O2
+#@limits: 1.3d1, 8.0d2
+@rate: 0.769d-90.3056d-10*sqrt(3d2/Tgas) + 0.1234d-10*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: HO2+,OH
+@prods: H2O+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.4495d-9 + 0.1901d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: CCH,HO2+
+@prods: C2H2+,O2
+#@limits: 1.0d1, 1.33d2
+@rate: 0.8122d-9 + 0.8368d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CCH,HO2+
+@prods: C2H2+,O2
+#@limits: 1.34d2, 8.0d2
+@rate: 0.131d-80.1697d-9*sqrt(3d2/Tgas) + 0.2235d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: CH2,HO2+
+@prods: CH3+,O2
+#@limits: 1.0d1, 1.49d2
+@rate: 0.6758d-9 + 0.7326d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CH2,HO2+
+@prods: CH3+,O2
+#@limits: 1.5d2, 8.0d2
+@rate: 0.109d-80.1486d-9*sqrt(3d2/Tgas) + 0.2059d-9*(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: CO2,HO2+
+@prods: HOCO+,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.11d-8
+
+@type: ionpol1
+@reacts: H2O,HO2+
+@prods: H3O+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5053d-9 + 0.2102d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: HCN,HO2+
+@prods: HCNH+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5946d-9 + 0.3022d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: HCO,HO2+
+@prods: H2CO+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5896d-9 + 0.1623d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: HNC,HO2+
+@prods: HCNH+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.62d-9 + 0.3099d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: HO2+,NH2
+@prods: NH3+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5896d-9 + 0.2085d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: H2CO,HO2+
+@prods: H2COH+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5909d-9 + 0.234d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: HO2+,NH3
+@prods: NH4+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.6262d-9 + 0.1757d-8*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: O,SiH2+
+@prods: H,HSiO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.63d-9
+
+@type: 2body KIDA
+@reacts: O2,SiH2+
+@prods: HSiO+,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.24d-10
+
+@type: 2body KIDA
+@reacts: O,SiNC+
+@prods: CO,SiN+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: C2H2+,O
+@prods: CH,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: C2H2+,O
+@prods: CH,HOC+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: C2H2+,O
+@prods: C2HO+,H
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: C2H2+,O2
+@prods: HCO,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.98d-12
+
+@type: 2body KIDA
+@reacts: CH,O
+@prods: CO,H
+#@limits: 1.0d1, 2.8d2
+@rate: 0.66d-10
+
+@type: 2body KIDA
+@reacts: CH,O
+@prods: CO,H
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10
+
+@type: 2body KIDA
+@reacts: CH,O
+@prods: CO,H
+#@limits: 5.0d1, 2.0d2
+@rate: 0.659d-10
+
+@type: 2body KIDA
+@reacts: CH,O
+@prods: CO,H
+#@limits: 2.95d2, 2.0d3
+@rate: 0.66d-10
+
+@type: 2body KIDA
+@reacts: CH,O
+@prods: CO,H
+#@limits: 2.98d2, 2.98d2
+@rate: 0.94d-10
+
+@type: 2body KIDA
+@reacts: CH,O
+@prods: HCO+,E
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-10*T32**(0.44)
+
+@type: 2body KIDA
+@reacts: CH,O
+@prods: HCO+,E
+#@limits: 2.95d2, 2.95d2
+@rate: 0.24d-13
+
+@type: 2body KIDA
+@reacts: CH,O
+@prods: C,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.252d-10*exp(-2.38d3*invT)
+
+@type: 2body KIDA
+@reacts: C,NO
+@prods: CN,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.6d-10*T32**(-0.16)
+
+@type: 2body KIDA
+@reacts: C,O2
+@prods: CO,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.47d-10*T32**(-0.34)
+
+@type: 2body KIDA
+@reacts: C,O2
+@prods: CO,O
+#@limits: 1.5d1, 2.95d2
+@rate: 0.49d-10*T32**(-0.32)
+
+@type: 2body KIDA
+@reacts: C,OH
+@prods: CH,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.225d-10*T32**(0.5)*exp(-1.48d4*invT)
+
+@type: 2body KIDA
+@reacts: C,SO
+@prods: CS,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.35d-10
+
+@type: 2body KIDA
+@reacts: H,OCN
+@prods: HCN,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.187d-10*T32**(0.9)*exp(-2.92d3*invT)
+
+@type: 2body KIDA
+@reacts: C4H-,O
+@prods: CO,c-C3H,E
+#@limits: 1.0d1, 2.8d2
+@rate: 0.53d-9
+
+@type: 2body KIDA
+@reacts: C5H-,O
+@prods: C4H-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: C6H-,O
+@prods: C5H-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.54d-9
+
+@type: 2body KIDA
+@reacts: C7H-,O
+@prods: C6H-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: C8H-,O
+@prods: C7H-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: C9H-,O
+@prods: C8H-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: C10H-,O
+@prods: C9H-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: HCO+,O-
+@prods: CO,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.376d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H3O+,O-
+@prods: H,H2O,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.376d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H3+,O-
+@prods: H,H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: N2H+,O-
+@prods: H,N2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C10H,O
+@prods: C9H,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: C10H,O
+@prods: C9H,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10
+
+@type: 2body KIDA
+@reacts: C10H2+,O
+@prods: C9H,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C10H+,O
+@prods: C9,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.15d-9
+
+@type: 2body KIDA
+@reacts: C10H+,O
+@prods: C9H+,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.15d-9
+
+@type: 2body KIDA
+@reacts: C10+,O
+@prods: C9+,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C9+,O
+@prods: C8+,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C5-,O
+@prods: C4,CO,E
+#@limits: 1.0d1, 2.8d2
+@rate: 0.64d-9
+
+@type: 2body KIDA
+@reacts: C5-,O
+@prods: C4-,CO
+#@limits: 3.0d2, 3.0d2
+@rate: 0.64d-9
+
+@type: 2body KIDA
+@reacts: C6-,O
+@prods: C5-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.47d-9
+
+@type: 2body KIDA
+@reacts: C6-,O
+@prods: C5-,CO
+#@limits: 3.0d2, 3.0d2
+@rate: 0.47d-9
+
+@type: 2body KIDA
+@reacts: C7-,O
+@prods: C6-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.53d-9
+
+@type: 2body KIDA
+@reacts: C7-,O
+@prods: C6-,CO
+#@limits: 3.0d2, 3.0d2
+@rate: 0.53d-9
+
+@type: 2body KIDA
+@reacts: C8-,O
+@prods: C7-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-9
+
+@type: 2body KIDA
+@reacts: C9-,O
+@prods: C8-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-9
+
+@type: 2body KIDA
+@reacts: C10-,O
+@prods: C9-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-9
+
+@type: 2body KIDA
+@reacts: C5H2,O
+@prods: C4H2,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: C5H2,O
+@prods: C4H2,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C5H2,O
+@prods: C4H2,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.839d-11*T32**(1.03)*exp(-1.2d3*invT)
+
+@type: 2body KIDA
+@reacts: C6H2,O
+@prods: C5H2,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: C6H2,O
+@prods: C5H2,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.3d-10*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C6H2,O
+@prods: C5H2,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.839d-11*T32**(1.03)*exp(-1.2d3*invT)
+
+@type: 2body KIDA
+@reacts: C7H2,O
+@prods: C6H2,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: C7H2,O
+@prods: C6H2,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C7H2,O
+@prods: C6H2,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.839d-11*T32**(1.03)*exp(-1.2d3*invT)
+
+@type: 2body KIDA
+@reacts: C8H2,O
+@prods: C7H2,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: C8H2,O
+@prods: C7H2,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.3d-10*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C8H2,O
+@prods: C7H2,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.839d-11*T32**(1.03)*exp(-1.2d3*invT)
+
+@type: 2body KIDA
+@reacts: C9H2,O
+@prods: C8H2,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: C9H2,O
+@prods: C8H2,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.2d-9
+
+@type: 2body KIDA
+@reacts: C9H2,O
+@prods: C8H2,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.448d-10*exp(-8.66d2*invT)
+
+@type: 2body KIDA
+@reacts: C3N-,O
+@prods: CCN,CO,E
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9
+
+@type: 2body KIDA
+@reacts: HSO+,O-
+@prods: H,O,SO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HCNH+,O-
+@prods: H,HCN,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H3CS+,O-
+@prods: H,H2CS,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H2C5N+,O-
+@prods: H,HC5N,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C5H3+,O-
+@prods: C5H2,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C7H2N+,O-
+@prods: H,HC7N,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C7H3+,O-
+@prods: C7H2,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C9H2N+,O-
+@prods: H,HC9N,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C9H3+,O-
+@prods: C9H2,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: CF+,O-
+@prods: C,F,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HS+,O-
+@prods: H,O,S
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HSiO+,O-
+@prods: H,O,SiO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H2NO+,O-
+@prods: H,HNO,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H3S+,O-
+@prods: H,H2S,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HC2S+,O-
+@prods: CCS,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HOCS+,O-
+@prods: H,O,OCS
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: O-,PCH2+
+@prods: H,HCP,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C2H3+,O-
+@prods: CCH,H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: O-,c-C3H2+
+@prods: H,O,c-C3H
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H2COH+,O-
+@prods: H,H2CO,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H3S2+,O-
+@prods: H,HSSH,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HC3S+,O-
+@prods: C3S,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: NH4+,O-
+@prods: H,NH3,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: CH3CO+,O-
+@prods: H,H2CCO,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C2H4+,O-
+@prods: C2H3,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HC3NH+,O-
+@prods: H,HC3N,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HC4S+,O-
+@prods: C4S,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C4H3+,O-
+@prods: C4H2,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C3H5+,O-
+@prods: CH3CCH,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C4H5+,O-
+@prods: CH2CHC2H,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C6H3+,O-
+@prods: C6H2,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C10H2+,O-
+@prods: C10H,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C5H5+,O-
+@prods: C5H2,H,H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C8H3+,O-
+@prods: C8H2,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C9H2+,O-
+@prods: C9H,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C7H5+,O-
+@prods: C7H2,H,H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C8H4+,O-
+@prods: C8H2,H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C6H7+,O-
+@prods: C6H6,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C9H4+,O-
+@prods: C9H2,H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C3-,O
+@prods: C2,CO,E
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-9
+
+@type: 2body KIDA
+@reacts: C4-,O
+@prods: C3-,CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.56d-9
+
+@type: 2body KIDA
+@reacts: C4-,O
+@prods: C3-,CO
+#@limits: 3.0d2, 3.0d2
+@rate: 0.56d-9
+
+@type: 2body KIDA
+@reacts: C10H3+,O
+@prods: C9H2,HCO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.3d-9
+
+@type: 2body KIDA
+@reacts: CCS,O
+@prods: CO,CS
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: CO,N(2D)
+@prods: CN,O
+#@limits: 5.0d1, 2.0d2
+@rate: 0.17d-11
+
+@type: 2body KIDA
+@reacts: CH4,O
+@prods: CH3,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.229d-11*T32**(2.2)*exp(-3.82d3*invT)
+
+@type: 2body KIDA
+@reacts: CH4,O
+@prods: CH3,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.841d-11*T32**(1.56)*exp(-4.28d3*invT)
+
+@type: 2body KIDA
+@reacts: C2H2,O
+@prods: CH2,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.839d-11*T32**(1.03)*exp(-1.2d3*invT)
+
+@type: 2body KIDA
+@reacts: C2H2,O
+@prods: CH2,CO
+#@limits: 5.0d1, 2.0d2
+@rate: 0.301d-10*exp(-1.6d3*invT)
+
+@type: 2body KIDA
+@reacts: C2H2,O
+@prods: CCH,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.53d-8*exp(-8.52d3*invT)
+
+@type: 2body KIDA
+@reacts: C2H4,O
+@prods: CH3CO,H
+#@limits: 5.0d1, 2.0d2
+@rate: 0.513d-12*T32**(1.88)*exp(-9.2d1*invT)
+
+@type: 2body KIDA
+@reacts: C2H4,O
+@prods: CH3,HCO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.152d-11*T32**(1.55)*exp(-2.15d2*invT)
+
+@type: 2body KIDA
+@reacts: C2H4,O
+@prods: CH3,HCO
+#@limits: 5.0d1, 2.0d2
+@rate: 0.409d-12*T32**(1.88)*exp(-9.2d1*invT)
+
+@type: 2body KIDA
+@reacts: C2H4,O
+@prods: CH3,HCO
+#@limits: 2.98d2, 2.98d2
+@rate: 0.445d-12
+
+@type: 2body KIDA
+@reacts: C2H4,O
+@prods: CH2,H2CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.42d-10*exp(-2.52d3*invT)
+
+@type: 2body KIDA
+@reacts: C2H4,O
+@prods: CH2,H2CO
+#@limits: 5.0d1, 2.0d2
+@rate: 0.102d-12*T32**(1.88)*exp(-9.2d1*invT)
+
+@type: 2body KIDA
+@reacts: C2H4,O
+@prods: CH2CHO,H
+#@limits: 2.98d2, 2.98d2
+@rate: 0.259d-12
+
+@type: 2body KIDA
+@reacts: C2H4,O
+@prods: H2,H2CCO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.511d-13*T32**(1.88)*exp(-9.2d1*invT)
+
+@type: 2body KIDA
+@reacts: C2H4,O
+@prods: H2,H2CCO
+#@limits: 2.98d2, 2.98d2
+@rate: 0.37d-13
+
+@type: 2body KIDA
+@reacts: C2H4,O
+@prods: C2H3,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.242d-12*T32**(2.13)*exp(-1.34d3*invT)
+
+@type: 2body KIDA
+@reacts: C2H6,O
+@prods: C2H5,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.218d-11*T32**(2.52)*exp(-2.45d3*invT)
+
+@type: 2body KIDA
+@reacts: C2H6,O
+@prods: C2H5,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.863d-11*T32**(1.5)*exp(-2.92d3*invT)
+
+@type: 2body KIDA
+@reacts: NH3,O
+@prods: NH2,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.189d-10*exp(-4.0d3*invT)
+
+@type: 2body KIDA
+@reacts: NH3,O
+@prods: NH2,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.291d-12*T32**(2.1)*exp(-2.62d3*invT)
+
+@type: 2body KIDA
+@reacts: NH3,O
+@prods: NH2,OH
+#@limits: 3.0d2, 2.0d3
+@rate: 0.103d-11*T32**(1.85)*exp(-2.0d2*invT)
+
+@type: 2body KIDA
+@reacts: H2CO,O
+@prods: HCO,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.107d-10*T32**(1.17)*exp(-1.24d3*invT)
+
+@type: 2body KIDA
+@reacts: H2CO,O
+@prods: HCO,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.178d-10*T32**(0.57)*exp(-1.39d3*invT)
+
+@type: 2body KIDA
+@reacts: H2CO,O
+@prods: HCO,OH
+#@limits: 2.5d2, 2.2d3
+@rate: 0.178d-10*T32**(0.57)*exp(-1.39d3*invT)
+
+@type: 2body KIDA
+@reacts: CH3O,O
+@prods: H2CO,OH
+#@limits: 1.0d1, 3.0d2
+@rate: 0.6d-11
+
+@type: 2body KIDA
+@reacts: CH3O,O
+@prods: H2CO,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: CH3O,O
+@prods: CH3,O2
+#@limits: 1.0d1, 3.0d2
+@rate: 0.19d-10
+
+@type: 2body KIDA
+@reacts: CH2OH,O
+@prods: H2CO,OH
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: CH2OH,O
+@prods: H2CO,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.15d-9
+
+@type: 2body KIDA
+@reacts: CH3OH,O
+@prods: CH2OH,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.163d-10*exp(-2.27d3*invT)
+
+@type: 2body KIDA
+@reacts: CH3OH,O
+@prods: CH3O,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.166d-10*exp(-2.36d0*invT)
+
+@type: 2body KIDA
+@reacts: CH3CO,O
+@prods: CH3,CO2
+#@limits: 5.0d1, 2.0d2
+@rate: 0.24d-9
+
+@type: 2body KIDA
+@reacts: CH3CO,O
+@prods: H2CCO,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.8d-10
+
+@type: 2body KIDA
+@reacts: CH3CO,O
+@prods: H2CCO,OH
+#@limits: 2.98d2, 2.98d2
+@rate: 0.875d-10
+
+@type: 2body KIDA
+@reacts: CH3CO,O
+@prods: H2CCO,OH
+#@limits: 2.98d2, 2.98d2
+@rate: 0.2625d-10
+
+@type: 2body KIDA
+@reacts: CH3CHO,O
+@prods: CH3CO,OH
+#@limits: 5.0d1, 2.0d2
+@rate: 0.179d-10*exp(-1.1d3*invT)
+
+@type: 2body KIDA
+@reacts: CH3CHO,O
+@prods: CH3CO,OH
+#@limits: 2.0d2, 5.0d2
+@rate: 0.18d-10*exp(-1.1d3*invT)
+
+@type: 2body KIDA
+@reacts: H2O,O(1D)
+@prods: H2,O2
+#@limits: 2.98d2, 2.98d2
+@rate: 0.22d-11
+
+@type: 2body KIDA
+@reacts: H2O,O(1D)
+@prods: H2O,O
+#@limits: 2.98d2, 2.98d2
+@rate: 0.66d-12
+
+@type: 2body KIDA
+@reacts: CO2,O(1D)
+@prods: CO2,O
+#@limits: 5.0d1, 2.0d2
+@rate: 0.741d-10*exp(1.21d2*invT)
+
+@type: 2body KIDA
+@reacts: CH3,OH
+@prods: CH4,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.327d-13*T32**(2.2)*exp(-2.24d3*invT)
+
+@type: 2body KIDA
+@reacts: CCH,OH
+@prods: C2H2,O
+#@limits: 5.0d1, 2.0d2
+@rate: 0.3d-10
+
+@type: 2body KIDA
+@reacts: O,O3
+@prods: O2,O2
+#@limits: 2.0d2, 4.0d2
+@rate: 0.8d-11*exp(-2.06d3*invT)
+
+@type: 2body KIDA
+@reacts: O,O3
+@prods: O2,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.8d-11*exp(-2.06d3*invT)
+
+@type: 2body KIDA
+@reacts: HOOH,O
+@prods: O2H,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.854d-13*T32**(3.25)*exp(-1.2d3*invT)
+
+@type: 2body KIDA
+@reacts: HOOH,O
+@prods: O2H,OH
+#@limits: 2.0d2, 5.0d2
+@rate: 0.14d-11*exp(-2.0d3*invT)
+
+@type: 2body KIDA
+@reacts: HOOH,O
+@prods: O2H,OH
+#@limits: 2.8d2, 3.9d2
+@rate: 0.14d-11*exp(-2.0d3*invT)
+
+@type: 2body KIDA
+@reacts: O3,OH
+@prods: O2,O2H
+#@limits: 2.0d2, 5.0d2
+@rate: 0.17d-11*exp(-9.4d2*invT)
+
+@type: 2body KIDA
+@reacts: O3,OH
+@prods: O2,O2H
+#@limits: 2.2d2, 4.5d2
+@rate: 0.17d-11*exp(-9.4d2*invT)
+
+@type: 2body KIDA
+@reacts: O2H,O2H
+@prods: HOOH,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.564d-11
+
+@type: 2body KIDA
+@reacts: O2H,O2H
+@prods: HOOH,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.3d-12*exp(4.6d2*invT)
+
+@type: 2body KIDA
+@reacts: O2H,O2H
+@prods: HOOH,O2
+#@limits: 2.3d2, 4.2d2
+@rate: 0.22d-12*exp(6.0d2*invT)
+
+@type: 2body KIDA
+@reacts: O2H,O3
+@prods: O2,O2,OH
+#@limits: 2.0d2, 5.0d2
+@rate: 1.0d-14*exp(-4.9d2*invT)
+
+@type: 2body KIDA
+@reacts: O2H,O3
+@prods: O2,O2,OH
+#@limits: 2.5d2, 3.4d2
+@rate: 0.203d-15*T32**(4.57)*exp(6.93d2*invT)
+
+@type: 2body KIDA
+@reacts: NO3,O
+@prods: NO2,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: NO3,O
+@prods: NO2,O2
+#@limits: 2.98d2, 2.98d2
+@rate: 0.17d-10
+
+@type: 2body KIDA
+@reacts: N2O,O(1D)
+@prods: N2,O2
+#@limits: 2.0d2, 3.5d2
+@rate: 0.43d-10
+
+@type: 2body KIDA
+@reacts: N2O,O(1D)
+@prods: N2,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.463d-10*exp(2.0d1*invT)
+
+@type: 2body KIDA
+@reacts: NO,O3
+@prods: NO2,O2
+#@limits: 1.95d2, 3.08d2
+@rate: 0.14d-11*exp(-1.31d3*invT)
+
+@type: 2body KIDA
+@reacts: NO,O3
+@prods: NO2,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.3d-11*exp(-1.5d3*invT)
+
+@type: 2body KIDA
+@reacts: NO2,O3
+@prods: NO3,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.12d-12*exp(-2.45d3*invT)
+
+@type: 2body KIDA
+@reacts: NO2,O3
+@prods: NO3,O2
+#@limits: 2.3d2, 3.6d2
+@rate: 0.14d-12*exp(-2.47d3*invT)
+
+@type: 2body KIDA
+@reacts: O3,S
+@prods: O2,SO
+#@limits: 2.98d2, 2.98d2
+@rate: 0.12d-10
+
+@type: 2body KIDA
+@reacts: O2,SO
+@prods: O,SO2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.11d-13*T32**(1.89)*exp(-1.54d3*invT)
+
+@type: 2body KIDA
+@reacts: O2,SO
+@prods: O,SO2
+#@limits: 2.3d2, 4.2d2
+@rate: 0.16d-12*exp(-2.28d3*invT)
+
+@type: 2body KIDA
+@reacts: O3,SO
+@prods: O2,SO2
+#@limits: 2.3d2, 4.2d2
+@rate: 0.45d-11*exp(-1.17d3*invT)
+
+@type: 2body KIDA
+@reacts: CS,O3
+@prods: O2,OCS
+#@limits: 2.98d2, 2.98d2
+@rate: 0.3d-15
+
+@type: 2body KIDA
+@reacts: C2H5,O2
+@prods: C2H4,O2H
+#@limits: 2.0d2, 5.0d2
+@rate: 0.2d-13
+
+@type: 2body KIDA
+@reacts: C2H5,O2
+@prods: C2H4,O2H
+#@limits: 2.98d2, 2.98d2
+@rate: 0.38d-14*exp(-1.78d0*invT)
+
+@type: 2body KIDA
+@reacts: C2H5,O2
+@prods: C2H4,O2H
+#@limits: 2.98d2, 2.98d2
+@rate: 0.19d-13*exp(-1.78d0*invT)
+
+@type: 2body KIDA
+@reacts: HCO,O2
+@prods: CO,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.558d-11
+
+@type: 2body KIDA
+@reacts: HCO,O2
+@prods: CO,O2H
+#@limits: 2.0d2, 3.0d2
+@rate: 0.52d-11
+
+@type: 2body KIDA
+@reacts: HCO,O2
+@prods: CO,O2H
+#@limits: 2.0d2, 5.0d2
+@rate: 0.52d-11
+
+@type: 2body KIDA
+@reacts: HCO,O2
+@prods: CO2,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.76d-12
+
+@type: 2body KIDA
+@reacts: CH2OH,O2
+@prods: H2CO,O2H
+#@limits: 2.0d2, 5.0d2
+@rate: 0.91d-11
+
+@type: 2body KIDA
+@reacts: CH2OH,O2
+@prods: H2CO,O2H
+#@limits: 2.5d2, 5.0d2
+@rate: 0.55d-11*exp(1.55d2*invT)
+
+@type: 2body KIDA
+@reacts: CH3O,O2
+@prods: H2CO,O2H
+#@limits: 2.0d2, 5.0d2
+@rate: 0.39d-13*exp(-9.0d2*invT)
+
+@type: 2body KIDA
+@reacts: CH3O,O2
+@prods: H2CO,O2H
+#@limits: 2.9d2, 6.1d2
+@rate: 0.72d-13*exp(-1.08d3*invT)
+
+@type: 2body KIDA
+@reacts: CH3O,O2
+@prods: H2CO,O2H
+#@limits: 2.98d2, 1.0d3
+@rate: 0.36d-13*exp(-1.113d3*invT)
+
+@type: 2body KIDA
+@reacts: FO,O
+@prods: F,O2
+#@limits: 2.98d2, 2.98d2
+@rate: 0.27d-10
+
+@type: 2body KIDA
+@reacts: FO2,O
+@prods: FO,O2
+#@limits: 2.98d2, 2.98d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: F,O3
+@prods: FO,O2
+#@limits: 2.5d2, 3.7d2
+@rate: 0.22d-10*exp(-2.3d2*invT)
+
+@type: 2body KIDA
+@reacts: FO2,NO
+@prods: FNO,O2
+#@limits: 1.9d2, 3.0d2
+@rate: 0.75d-11*exp(-6.9d2*invT)
+
+@type: 2body KIDA
+@reacts: ClOH,O
+@prods: ClO,OH
+#@limits: 2.0d2, 5.0d2
+@rate: 0.17d-12
+
+@type: 2body KIDA
+@reacts: ClOH,O
+@prods: ClO,OH
+#@limits: 2.1d2, 3.0d2
+@rate: 0.17d-12
+
+@type: 2body KIDA
+@reacts: O,OClO
+@prods: ClO,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.24d-11*exp(-9.6d2*invT)
+
+@type: 2body KIDA
+@reacts: O,OClO
+@prods: ClO,O2
+#@limits: 2.4d2, 4.0d2
+@rate: 0.24d-11*exp(-9.6d2*invT)
+
+@type: 2body KIDA
+@reacts: Cl,O3
+@prods: ClO,O2
+#@limits: 1.8d2, 3.0d2
+@rate: 0.28d-10*exp(-2.5d2*invT)
+
+@type: 2body KIDA
+@reacts: ClO,OH
+@prods: HCl,O2
+#@limits: 2.0d2, 3.8d2
+@rate: 0.438d-12*exp(3.0d2*invT)
+
+@type: 2body KIDA
+@reacts: OClO,OH
+@prods: ClOH,O2
+#@limits: 2.4d2, 4.0d2
+@rate: 0.14d-11*exp(6.0d2*invT)
+
+@type: 2body KIDA
+@reacts: ClO,O3
+@prods: ClO2,O2
+#@limits: 2.98d2, 2.98d2
+@rate: 0.15d-16
+
+@type: 2body KIDA
+@reacts: ClO,O3
+@prods: O2,OClO
+#@limits: 2.98d2, 2.98d2
+@rate: 1.0d-18
+
+@type: 2body KIDA
+@reacts: ClO,ClO
+@prods: Cl2,O2
+#@limits: 2.6d2, 3.9d2
+@rate: 1.0d-12*exp(-1.59d3*invT)
+
+@type: 2body KIDA
+@reacts: O(1D),O3
+@prods: O2,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.12d-9
+
+@type: 2body KIDA
+@reacts: O(1D),O3
+@prods: O,O,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.12d-9
+
+@type: 2body KIDA
+@reacts: H,O3
+@prods: O2,OH
+#@limits: 2.0d2, 5.0d2
+@rate: 0.14d-9*exp(-4.7d2*invT)
+
+@type: 2body KIDA
+@reacts: N,O3
+@prods: NO,O2
+#@limits: 2.98d2, 2.98d2
+@rate: 0.2d-15
+
+@type: 2body KIDA
+@reacts: NO2,NO3
+@prods: NO,NO2,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.45d-13*exp(-1.26d3*invT)
+
+@type: 2body KIDA
+@reacts: NO3,NO3
+@prods: NO2,NO2,O2
+#@limits: 2.0d2, 5.0d2
+@rate: 0.85d-12*exp(-2.45d3*invT)
+
+@type: 2body KIDA
+@reacts: HCl,O
+@prods: Cl,OH
+#@limits: 2.0d2, 5.0d2
+@rate: 1.0d-11*exp(-3.3d3*invT)
+
+@type: 2body KIDA
+@reacts: C3H5,O
+@prods: C2H3,H2CO
+#@limits: 3.0d2, 1.0d3
+@rate: 0.3d-10
+
+@type: 2body KIDA
+@reacts: C3H5,O2H
+@prods: CH3CHCH2,O2
+#@limits: 3.0d2, 1.0d3
+@rate: 0.44d-11
+
+@type: 2body KIDA
+@reacts: NH,O2
+@prods: NO,OH
+#@limits: 2.5d2, 3.3d3
+@rate: 0.15d-12*exp(-7.7d2*invT)
+
+@type: 2body KIDA
+@reacts: C2H3,O2
+@prods: H2CO,HCO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.273d-10*T32**(-1.39)*exp(-5.1d2*invT)
+
+@type: 2body KIDA
+@reacts: C2H3,O2
+@prods: H2CO,HCO
+#@limits: 2.9d2, 9.0d2
+@rate: 0.64d-11*exp(1.2d2*invT)
+
+@type: 2body KIDA
+@reacts: C2H3,O2
+@prods: C2H2,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.411d-13
+
+@type: 2body KIDA
+@reacts: CH3OCH2,O2
+@prods: CH3CHO,O2H
+#@limits: 2.0d2, 5.0d2
+@rate: 0.63d-13*exp(-5.5d2*invT)
+
+@type: 2body KIDA
+@reacts: CH2CCH,O
+@prods: C2H3,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.631d-10
+
+@type: 2body KIDA
+@reacts: CH2CCH,O
+@prods: C2H2,HCO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.231d-9
+
+@type: 2body KIDA
+@reacts: C6N,O
+@prods: C5N,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: C8N,O
+@prods: C7N,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: C10N,O
+@prods: C9N,CO
+#@limits: 1.0d1, 3.0d2
+@rate: 0.7d-10*T32**(0.17)
+
+@type: 2body KIDA
+@reacts: HCO+,O2
+@prods: HOCO+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 1.0d-9*exp(-1.45d3*invT)
+
+@type: 2body KIDA
+@reacts: N2H+,O
+@prods: N2,OH+
+#@limits: 1.0d1, 8.0d2
+@rate: 0.14d-9*exp(-3.4d3*invT)
+
+@type: 2body KIDA
+@reacts: HS+,OH
+@prods: H2S+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.31d-9*exp(-7.5d3*invT)
+
+@type: 2body KIDA
+@reacts: O2,Si+
+@prods: O,SiO+
+#@limits: 1.0d1, 8.0d2
+@rate: 1.0d-13
+
+@type: 2body KIDA
+@reacts: H+,N2O
+@prods: N2H+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.352d-9
+
+@type: 2body KIDA
+@reacts: C2,O2
+@prods: C,CO2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.66d-12
+
+@type: 2body KIDA
+@reacts: CH,O2H
+@prods: CH2,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.294d-12*T32**(0.5)*exp(-7.55d3*invT)
+
+@type: 2body KIDA
+@reacts: CH2,O2
+@prods: CO2,H2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.292d-10*T32**(-3.3)*exp(-1.44d3*invT)
+
+@type: 2body KIDA
+@reacts: CH2,O2
+@prods: HCO,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.41d-10*exp(-7.5d2*invT)
+
+@type: 2body KIDA
+@reacts: CH2,O2
+@prods: H2CO,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.365d-10*T32**(-3.3)*exp(-1.44d3*invT)
+
+@type: 2body KIDA
+@reacts: CH2,O2
+@prods: CO2,H,H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.365d-10*T32**(-3.3)*exp(-1.44d3*invT)
+
+@type: 2body KIDA
+@reacts: CH2,O2
+@prods: CO,H2O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.248d-9*T32**(-3.3)*exp(-1.44d3*invT)
+
+@type: 2body KIDA
+@reacts: CH3,O2
+@prods: H2CO,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.564d-12*exp(-4.5d3*invT)
+
+@type: 2body KIDA
+@reacts: CH3,O2
+@prods: CH2,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.53d-11*exp(-3.5d4*invT)
+
+@type: 2body KIDA
+@reacts: CH3,O2
+@prods: H2O,HCO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.166d-11
+
+@type: 2body KIDA
+@reacts: CH3,O2H
+@prods: CH4,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.6d-11
+
+@type: 2body KIDA
+@reacts: CH4,O2
+@prods: CH3,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.67d-10*exp(-2.86d4*invT)
+
+@type: 2body KIDA
+@reacts: CO,O2
+@prods: CO2,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.599d-11*exp(-2.41d4*invT)
+
+@type: 2body KIDA
+@reacts: H,SO
+@prods: HS,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.173d-10*T32**(0.5)*exp(-1.99d4*invT)
+
+@type: 2body KIDA
+@reacts: H2,O2
+@prods: H,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.24d-9*exp(-2.85d4*invT)
+
+@type: 2body KIDA
+@reacts: H2,O2
+@prods: OH,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.316d-9*exp(-2.19d4*invT)
+
+@type: 2body KIDA
+@reacts: HCO,O2H
+@prods: H2CO,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: NH,OH
+@prods: NH2,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.293d-11*T32**(0.1)*exp(-5.8d3*invT)
+
+@type: 2body KIDA
+@reacts: NO,O2
+@prods: NO2,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.28d-11*exp(-2.34d4*invT)
+
+@type: 2body KIDA
+@reacts: NO,S
+@prods: NS,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.294d-10*T32**(0.5)*exp(-1.75d4*invT)
+
+@type: 2body KIDA
+@reacts: CO2,O
+@prods: CO,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.246d-10*exp(-2.66d4*invT)
+
+@type: 2body KIDA
+@reacts: H2O,O
+@prods: H,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.448d-11*T32**(0.97)*exp(-3.45d4*invT)
+
+@type: 2body KIDA
+@reacts: H2O,O
+@prods: OH,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.185d-10*T32**(0.95)*exp(-8.57d3*invT)
+
+@type: 2body KIDA
+@reacts: N2,O
+@prods: N,NO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.251d-9*exp(-3.86d4*invT)
+
+@type: 2body KIDA
+@reacts: N2O,O
+@prods: N2,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.166d-9*exp(-1.41d4*invT)
+
+@type: 2body KIDA
+@reacts: N2O,O
+@prods: NO,NO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.115d-9*exp(-1.34d4*invT)
+
+@type: 2body KIDA
+@reacts: NO,O
+@prods: N,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.893d-12*T32**(1.0)*exp(-1.95d4*invT)
+
+@type: 2body KIDA
+@reacts: O,OCS
+@prods: CO2,S
+#@limits: 1.0d1, 8.0d2
+@rate: 0.83d-10*exp(-5.53d3*invT)
+
+@type: 2body KIDA
+@reacts: O,OCS
+@prods: CO,SO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.16d-10*exp(-2.15d3*invT)
+
+@type: 2body KIDA
+@reacts: O,SO
+@prods: O2,S
+#@limits: 1.0d1, 8.0d2
+@rate: 0.66d-12*exp(-2.76d3*invT)
+
+@type: 2body KIDA
+@reacts: O,SO2
+@prods: O2,SO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.901d-11*exp(-9.84d3*invT)
+
+@type: 2body KIDA
+@reacts: O2,OCN
+@prods: CO2,NO
+#@limits: 1.0d1, 8.0d2
+@rate: 1.0d-11*exp(-6.0d2*invT)
+
+@type: 2body KIDA
+@reacts: O2,P
+@prods: O,PO
+#@limits: 1.0d1, 8.0d2
+@rate: 1.0d-13
+
+@type: 2body KIDA
+@reacts: S,SO
+@prods: O,S2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.173d-10*T32**(0.5)*exp(-1.15d4*invT)
+
+@type: 2body KIDA
+@reacts: N2,O2
+@prods: N2O,O
+#@limits: 1.0d1, 8.0d2
+@rate: 1.0d-10*exp(-5.52d4*invT)
+
+@type: 2body KIDA
+@reacts: NO,NO
+@prods: N2O,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.722d-11*exp(-3.32d4*invT)
+
+@type: 2body KIDA
+@reacts: HNC,O
+@prods: CO,NH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.764d-11*exp(-1.13d3*invT)
+
+@type: 2body KIDA
+@reacts: HNC,O2
+@prods: CO2,NH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.2d-10*T32**(0.5)*exp(-2.0d3*invT)
+
+@type: 2body KIDA
+@reacts: O,c-C3H2
+@prods: C2H2,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.839d-11*T32**(1.03)*exp(-1.2d3*invT)
+
+@type: 2body KIDA
+@reacts: C4H2,O
+@prods: CO,l-C3H2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.42d-11*T32**(1.03)*exp(-1.2d3*invT)
+
+@type: 2body KIDA
+@reacts: C4H2,O
+@prods: CO,c-C3H2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.42d-11*T32**(1.03)*exp(-1.2d3*invT)
+
+@type: 2body KIDA
+@reacts: C2H2,O2
+@prods: CCH,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.201d-10*exp(-3.74d4*invT)
+
+@type: 2body KIDA
+@reacts: O2,l-C3H2
+@prods: O2H,l-C3H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.201d-10*exp(-3.74d4*invT)
+
+@type: 2body KIDA
+@reacts: O2,c-C3H2
+@prods: O2H,c-C3H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.201d-10*exp(-3.74d4*invT)
+
+@type: 2body KIDA
+@reacts: C4H2,O2
+@prods: C4H,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.201d-10*exp(-3.74d4*invT)
+
+@type: 2body KIDA
+@reacts: C5H2,O2
+@prods: C5H,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.201d-10*exp(-3.74d4*invT)
+
+@type: 2body KIDA
+@reacts: C6H2,O2
+@prods: C6H,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.201d-10*exp(-3.74d4*invT)
+
+@type: 2body KIDA
+@reacts: C7H2,O2
+@prods: C7H,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.201d-10*exp(-3.74d4*invT)
+
+@type: 2body KIDA
+@reacts: C8H2,O2
+@prods: C8H,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.201d-10*exp(-3.74d4*invT)
+
+@type: 2body KIDA
+@reacts: C9H2,O2
+@prods: C9H,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.201d-10*exp(-3.74d4*invT)
+
+@type: 2body KIDA
+@reacts: C10H2,O2
+@prods: C10H,O2H
+#@limits: 1.0d1, 8.0d2
+@rate: 0.201d-10*exp(-3.74d4*invT)
+
+@type: 2body KIDA
+@reacts: C10H2,O
+@prods: C9H2,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.448d-10*exp(-8.66d2*invT)
+
+@type: 2body KIDA
+@reacts: CH2CHC2H,O
+@prods: CH2CCH,HCO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.498d-10*exp(-9.06d2*invT)
+
+@type: 2body KIDA
+@reacts: H2CCN,O
+@prods: CH2,OCN
+#@limits: 1.0d1, 3.0d2
+@rate: 0d0
+
+@type: 2body KIDA
+@reacts: H2CCN,O
+@prods: CH2,OCN
+#@limits: 1.0d1, 8.0d2
+@rate: 0.849d-10*T32**(0.64)
+
+@type: 2body KIDA
+@reacts: H2CCN,O
+@prods: CN,H2CO
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: H2CCN,O
+@prods: HCN,HCO
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: H2CCN,O
+@prods: CO,H,HCN
+#@limits: 1.0d1, 3.0d2
+@rate: 0.2d-10
+
+@type: 2body KIDA
+@reacts: CH3CCH,O
+@prods: CH2CCH,OH
+#@limits: 1.0d1, 8.0d2
+@rate: 0.126d-13*T32**(2.16)*exp(-2.43d3*invT)
+
+@type: 2body KIDA
+@reacts: CH3CCH,O
+@prods: C2H4,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.13d-10*exp(-8.06d2*invT)
+
+@type: 2body KIDA
+@reacts: C3S,O
+@prods: CCS,CO
+#@limits: 1.0d1, 8.0d2
+@rate: 0.194d-10*exp(-2.31d2*invT)
+
+@type: 2body KIDA
+@reacts: CH2NH2,O
+@prods: CH2NH,OH
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-11
+
+@type: 2body KIDA
+@reacts: CH2NH2,O
+@prods: H2CO,NH2
+#@limits: 1.0d1, 3.0d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: CH3OCH2,O
+@prods: H,HCOOCH3
+#@limits: 1.0d1, 3.0d2
+@rate: 0.256d-9*T32**(0.15)
+
+@type: 2body KIDA
+@reacts: CN,O-
+@prods: CN-,O
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9
+
+@type: 2body KIDA
+@reacts: CO+,O
+@prods: CO,O+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.14d-9
+
+@type: 2body KIDA
+@reacts: CO+,O2
+@prods: CO,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.12d-9
+
+@type: 2body KIDA
+@reacts: C-,O+
+@prods: C,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.23d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H-,O+
+@prods: H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.23d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: O+,S-
+@prods: O,S
+#@limits: 1.0d1, 2.8d2
+@rate: 0.23d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: CO2+,O2
+@prods: CO2,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: HCN+,O
+@prods: HCN,O+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.65d-10
+
+@type: 2body KIDA
+@reacts: HCN+,O2
+@prods: HCN,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.32d-9
+
+@type: 2body KIDA
+@reacts: H2O+,O2
+@prods: H2O,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.43d-9
+
+@type: 2body KIDA
+@reacts: CH4+,O2
+@prods: CH4,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-9
+
+@type: 2body KIDA
+@reacts: Cl+,O2
+@prods: Cl,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.46d-9
+
+@type: 2body KIDA
+@reacts: H+,O
+@prods: H,O+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.7d-9*exp(-2.32d2*invT)
+
+@type: 2body KIDA
+@reacts: H+,O2
+@prods: H,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.12d-8
+
+@type: 2body KIDA
+@reacts: Fe,O+
+@prods: Fe+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.29d-8
+
+@type: 2body KIDA
+@reacts: H,O+
+@prods: H+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.7d-9
+
+@type: 2body KIDA
+@reacts: NO,O+
+@prods: NO+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.17d-11
+
+@type: 2body KIDA
+@reacts: O+,O2
+@prods: O,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.3d-10
+
+@type: ionpol1
+@reacts: CH2,O+
+@prods: CH2+,O
+#@limits: 1.0d1, 1.49d2
+@rate: 0.775d-9 + 0.8402d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CH2,O+
+@prods: CH2+,O
+#@limits: 1.5d2, 8.0d2
+@rate: 0.125d-80.1704d-9*sqrt(3d2/Tgas) + 0.2361d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: H2O,O+
+@prods: H2O+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5915d-9 + 0.246d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: NH2,O+
+@prods: NH2+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.6882d-9 + 0.2434d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: NO2,O+
+@prods: NO2+,O
+#@limits: 1.0d1, 3.1d1
+@rate: 0.7068d-9 + 0.3538d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: NO2,O+
+@prods: NO2+,O
+#@limits: 3.2d1, 8.0d2
+@rate: 0.114d-80.7176d-10*sqrt(3d2/Tgas) + 0.459d-10*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: NH3,O+
+@prods: NH3+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.7316d-9 + 0.2053d-8*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: CN+,O
+@prods: CN,O+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.65d-10
+
+@type: 2body KIDA
+@reacts: N2+,O2
+@prods: N2,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: Fe,O2+
+@prods: Fe+,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.11d-8
+
+@type: 2body KIDA
+@reacts: Mg,O2+
+@prods: Mg+,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.12d-8
+
+@type: 2body KIDA
+@reacts: Na,O2+
+@prods: Na+,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.71d-9
+
+@type: 2body KIDA
+@reacts: O2+,Si
+@prods: O2,Si+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.16d-8
+
+@type: ionpol1
+@reacts: NO,O2+
+@prods: NO+,O2
+#@limits: 1.0d1, 1.2d1
+@rate: 0.4799d-9 + 0.1516d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: NO,O2+
+@prods: NO+,O2
+#@limits: 1.3d1, 8.0d2
+@rate: 0.774d-90.3076d-10*sqrt(3d2/Tgas) + 0.1242d-10*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: H2S,O2+
+@prods: H2S+,O2
+#@limits: 1.0d1, 2.33d2
+@rate: 0.6758d-9 + 0.9197d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: H2S,O2+
+@prods: H2S+,O2
+#@limits: 2.34d2, 8.0d2
+@rate: 0.109d-80.1866d-9*sqrt(3d2/Tgas) + 0.3244d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: NH2,O2+
+@prods: NH2+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.5927d-9 + 0.2096d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: NO2,O2+
+@prods: NO2+,O2
+#@limits: 1.0d1, 3.1d1
+@rate: 0.5617d-9 + 0.2812d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: NO2,O2+
+@prods: NO2+,O2
+#@limits: 3.2d1, 8.0d2
+@rate: 0.906d-90.5703d-10*sqrt(3d2/Tgas) + 0.3648d-10*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: NH3,O2+
+@prods: NH3+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.6324d-9 + 0.1775d-8*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: O2,OH+
+@prods: O2+,OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.59d-9
+
+@type: 2body KIDA
+@reacts: O2,SO2+
+@prods: O2+,SO2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.25d-9
+
+@type: 2body KIDA
+@reacts: CN+,O2
+@prods: CN,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.78d-9
+
+@type: ionpol1
+@reacts: HCO,O+
+@prods: HCO+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.3596d-9 + 0.9898d-9*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: CO2+,O
+@prods: CO2,O+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.962d-10
+
+@type: ionpol1
+@reacts: O+,OH
+@prods: O,OH+
+#@limits: 1.0d1, 8.0d2
+@rate: 0.262d-9 + 0.1108d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: H2S,O+
+@prods: H2S+,O
+#@limits: 1.0d1, 2.33d2
+@rate: 0.6177d-9 + 0.8406d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: H2S,O+
+@prods: H2S+,O
+#@limits: 2.34d2, 8.0d2
+@rate: 0.9963d-90.1705d-9*sqrt(3d2/Tgas) + 0.2965d-9*(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: H2+,O2
+@prods: H2,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.8d-9
+
+@type: 2body KIDA
+@reacts: He+,O2
+@prods: He,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.33d-10
+
+@type: 2body KIDA
+@reacts: C2,O+
+@prods: C2+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.48d-9
+
+@type: 2body KIDA
+@reacts: N+,O2
+@prods: N,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.4d-9
+
+@type: 2body KIDA
+@reacts: CH4,O+
+@prods: CH4+,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.89d-9
+
+@type: ionpol1
+@reacts: CH3OH,O+
+@prods: CH3OH+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.1953d-9 + 0.4985d-9*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: CH3OH,O2+
+@prods: CH3OH+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.3193d-9 + 0.8151d-9*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: C,O2+
+@prods: C+,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.52d-10
+
+@type: 2body KIDA
+@reacts: NH+,O2
+@prods: NH,O2+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.45d-9
+
+@type: ionpol1
+@reacts: CH,O+
+@prods: CH+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.3937d-9 + 0.1008d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: NH,O+
+@prods: NH+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.3131d-9 + 0.1059d-8*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: CCH,O+
+@prods: C2H+,O
+#@limits: 1.0d1, 1.33d2
+@rate: 0.4898d-9 + 0.5046d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CCH,O+
+@prods: C2H+,O
+#@limits: 1.34d2, 8.0d2
+@rate: 0.79d-90.1024d-9*sqrt(3d2/Tgas) + 0.1348d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: O+,OCS
+@prods: O,OCS+
+#@limits: 1.0d1, 8.9d1
+@rate: 0.9021d-9 + 0.756d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: O+,OCS
+@prods: O,OCS+
+#@limits: 9.0d1, 8.0d2
+@rate: 0.1455d-80.1534d-9*sqrt(3d2/Tgas) + 0.1642d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: H2CO,O+
+@prods: H2CO+,O
+#@limits: 1.0d1, 8.0d2
+@rate: 0.4352d-9 + 0.1723d-8*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: O2+,S
+@prods: O2,S+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.54d-9
+
+@type: 2body KIDA
+@reacts: N2+,O
+@prods: N2,O+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-11
+
+@type: ionpol1
+@reacts: CH,O2+
+@prods: CH+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.3472d-9 + 0.889d-9*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: CH2,O2+
+@prods: CH2+,O2
+#@limits: 1.0d1, 1.49d2
+@rate: 0.3379d-9 + 0.3663d-9*sqrt(3d2/Tgas)
+
+@type: ionpol2
+@reacts: CH2,O2+
+@prods: CH2+,O2
+#@limits: 1.5d2, 8.0d2
+@rate: 0.545d-90.7431d-10*sqrt(3d2/Tgas) + 0.1029d-9*(3d2/Tgas)
+
+@type: ionpol1
+@reacts: HCO,O2+
+@prods: HCO+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.2967d-9 + 0.8166d-9*sqrt(3d2/Tgas)
+
+@type: ionpol1
+@reacts: H2CO,O2+
+@prods: H2CO+,O2
+#@limits: 1.0d1, 8.0d2
+@rate: 0.4827d-9 + 0.1911d-8*sqrt(3d2/Tgas)
+
+@type: 2body KIDA
+@reacts: HCO+,O-
+@prods: HCO,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.376d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: He+,O-
+@prods: He,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H+,O-
+@prods: H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: Fe+,O-
+@prods: Fe,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: O-,S+
+@prods: O,S
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: Mg+,O-
+@prods: Mg,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: Na+,O-
+@prods: Na,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C5H2+,O-
+@prods: C5H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C8H2+,O-
+@prods: C8H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: Cl+,O-
+@prods: Cl,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: F+,O-
+@prods: F,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: O-,P+
+@prods: O,P
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: O-,Si+
+@prods: O,Si
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: O-,SO+
+@prods: O,SO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H2S+,O-
+@prods: H2S,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HCS+,O-
+@prods: HCS,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HPO+,O-
+@prods: HPO,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H2CO+,O-
+@prods: H2CO,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H2S2+,O-
+@prods: HSSH,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C4H2+,O-
+@prods: C4H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C5H+,O-
+@prods: C5H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C6H2+,O-
+@prods: C6H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C7H+,O-
+@prods: C7H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C7H2+,O-
+@prods: C7H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C9H+,O-
+@prods: C9H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.751d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: C+,O
+@prods: CO+
+#@limits: 1.0d1, 2.8d2
+@rate: 0.25d-17
+
+@type: 2body KIDA
+@reacts: O,Si+
+@prods: SiO+
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-17
+
+@type: 2body KIDA
+@reacts: C,O
+@prods: CO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.21d-18
+
+@type: 2body KIDA
+@reacts: H,O
+@prods: OH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.99d-18*T32**(-0.38)
+
+@type: 2body KIDA
+@reacts: O,O
+@prods: O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.49d-19*T32**(1.58)
+
+@type: 2body KIDA
+@reacts: O,SO
+@prods: SO2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.32d-15*T32**(-1.6)
+
+@type: 2body KIDA
+@reacts: C-,O
+@prods: CO,E
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-9
+
+@type: 2body KIDA
+@reacts: C-,O2
+@prods: CO2,E
+#@limits: 1.0d1, 2.8d2
+@rate: 0.5d-10
+
+@type: 2body KIDA
+@reacts: H-,O
+@prods: OH,E
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-9
+
+@type: 2body KIDA
+@reacts: O,O-
+@prods: O2,E
+#@limits: 1.0d1, 2.8d2
+@rate: 0.19d-9
+
+@type: 2body KIDA
+@reacts: O,S-
+@prods: SO,E
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-10
+
+@type: 2body KIDA
+@reacts: O2,S-
+@prods: SO2,E
+#@limits: 1.0d1, 2.8d2
+@rate: 0.3d-10
+
+@type: 2body KIDA
+@reacts: H-,O2
+@prods: O2H,E
+#@limits: 3.0d2, 3.0d2
+@rate: 0.14d-8
+
+@type: 2body KIDA
+@reacts: O,E
+@prods: O-
+#@limits: 1.0d1, 2.8d2
+@rate: 0.15d-14
+
+@type: 2body KIDA
+@reacts: ClO+,E
+@prods: Cl,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: CO+,E
+@prods: C,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.275d-6*T32**(-0.55)
+
+@type: 2body KIDA
+@reacts: NO+,E
+@prods: N,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.41d-6*T32**(-1.0)
+
+@type: 2body KIDA
+@reacts: O2+,E
+@prods: O,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.195d-6*T32**(-0.7)
+
+@type: 2body KIDA
+@reacts: OH+,E
+@prods: H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.63d-8*T32**(-0.48)
+
+@type: 2body KIDA
+@reacts: PO+,E
+@prods: O,P
+#@limits: 1.0d1, 2.8d2
+@rate: 0.18d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: SiO+,E
+@prods: O,Si
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: SO+,E
+@prods: O,S
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: CO2+,E
+@prods: CO,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.42d-6*T32**(-0.75)
+
+@type: 2body KIDA
+@reacts: H2O+,E
+@prods: H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.39d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H2O+,E
+@prods: H,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.305d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HPO+,E
+@prods: O,PH
+#@limits: 1.0d1, 2.8d2
+@rate: 0.15d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: NO2+,E
+@prods: NO,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.3d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HO2+,E
+@prods: H,O2
+#@limits: 1.0d1, 2.8d2
+@rate: 0.3d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: OCS+,E
+@prods: CS,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.48d-7*T32**(-0.62)
+
+@type: 2body KIDA
+@reacts: SO2+,E
+@prods: O,SO
+#@limits: 1.0d1, 2.8d2
+@rate: 0.25d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: CH3OCH3+,E
+@prods: CH3,CH3,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.15d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: CH3OCH4+,E
+@prods: CH3,CH4,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.15d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: CH3OCH4+,E
+@prods: CH3,CH4,O
+#@limits: 1.0d1, 1.0d3
+@rate: 0.748d-6*T32**(-0.7)
+
+@type: 2body KIDA
+@reacts: C2HO+,E
+@prods: CCH,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.15d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H2CO+,E
+@prods: CH2,O
+#@limits: 1.0d1, 1.0d3
+@rate: 0.25d-7*T32**(-0.7)
+
+@type: 2body KIDA
+@reacts: H3O+,E
+@prods: H,H2,O
+#@limits: 1.0d1, 3.0d2
+@rate: 0.56d-8*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HOCO+,E
+@prods: CO,H,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.81d-6*T32**(-0.64)
+
+@type: 2body KIDA
+@reacts: HSO2+,E
+@prods: H,O,SO
+#@limits: 1.0d1, 2.8d2
+@rate: 1.0d-7*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: H2CCO+,E
+@prods: C2H2,O
+#@limits: 1.0d1, 2.8d2
+@rate: 0.2d-6*T32**(-0.5)
+
+@type: 2body KIDA
+@reacts: HN2O+,E
+@prods: H,N2,O
+#@limits: 1.0d1, 1.0d3
+@rate: 0.56d-6*T32**(-0.74)
+
+@type: 3body
+@reacts: O,H,N2
+@prods: OH,N2
+#@limits: 7.0d0, 5.0d1
+@rate: KIDA3body(0.433d-31, -1.0d0, 0d0, 1.0d-10, 0d0, 0d0, 0d0, 1.0d99, 1.0d-99, 1.0d99, 2.0d2, -9.999d3, n(idx_N2), Tgas)
+
+@type: 3body
+@reacts: O,CO,N2
+@prods: CO2,N2
+#@limits: 7.0d0, 5.0d1
+@rate: KIDA3body(0.17d-32, 0d0, 1.51d3, 1.0d-10, 0d0, 0d0, 0d0, 1.0d99, 1.0d-99, 1.0d99, 2.0d2, -9.999d3, n(idx_N2), Tgas)
+
+@type: 3body
+@reacts: O,NO,N2
+@prods: NO2,N2
+#@limits: 7.0d0, 2.0d2
+@rate: KIDA3body(1.0d-31, -1.6d0, 0d0, 0.3d-10, 0.3d0, 0d0, 0.15d0, 1.0d99, 1.0d-99, 1.0d99, 3.0d2, -9.999d3, n(idx_N2), Tgas)
+
+@type: 3body
+@reacts: O,NO,N2
+@prods: NO2,N2
+#@limits: 7.0d0, 2.0d2
+@rate: KIDA3body(0.9d-31, -1.5d0, 0d0, 0.3d-10, 0d0, 0d0, 0.4d0, 1.0d99, 1.0d-99, 1.0d99, 3.0d2, -9.999d3, n(idx_N2), Tgas)
+
+@type: 3body
+@reacts: O,NO,N2
+@prods: NO2,N2
+#@limits: 7.0d0, 2.0d2
+@rate: KIDA3body(1.0d-31, -1.6d0, 0d0, 0.49d-10, -0.4d0, 0d0, 0.2d0, 1.0d99, 1.0d-99, 1.0d99, 2.2d3, -9.999d3, n(idx_N2), Tgas)
+
+@type: 3body
+@reacts: O,NO2,N2
+@prods: NO3,N2
+#@limits: 7.0d0, 2.0d2
+@rate: KIDA3body(0.25d-30, -1.8d0, 0d0, 0.22d-10, -0.7d0, 0d0, 0.4d0, 1.0d99, 1.0d-99, 1.0d99, 3.0d2, -9.999d3, n(idx_N2), Tgas)
+
+@type: 3body
+@reacts: O,NO2,N2
+@prods: NO3,N2
+#@limits: 7.0d0, 2.0d2
+@rate: KIDA3body(0.13d-30, -1.5d0, 0d0, 0.23d-10, 0.24d0, 0d0, 0.4d0, 1.0d99, 1.0d-99, 1.0d99, 4.0d2, -9.999d3, n(idx_N2), Tgas)
+
+@type: 3body
+@reacts: O,NO,Ar
+@prods: NO2,Ar
+#@limits: 7.0d0, 2.0d2
+@rate: KIDA3body(0.69d-31, -1.6d0, 0d0, 0.49d-10, -0.4d0, 0d0, 0.2d0, 1.0d99, 1.0d-99, 1.0d99, 2.2d3, -9.999d3, n(idx_Ar), Tgas)
+
+@type: 3body
+@reacts: H,O2,N2
+@prods: O2H,N2
+#@limits: 7.0d0, 2.0d2
+@rate: KIDA3body(0.44d-31, -1.3d0, 0d0, 0.75d-10, 0.2d0, 0d0, 0.4d0, 1.0d99, 1.0d-99, 1.0d99, 3.0d2, -9.999d3, n(idx_N2), Tgas)
+
+@type: 3body
+@reacts: O2H,O2H,N2
+@prods: HOOH,O2,N2
+#@limits: 7.0d0, 2.0d2
+@rate: KIDA3body(0.21d-32, 0d0, -9.2d2, 0.3d-12, 0d0, -4.6d2, 0.4d0, 1.0d99, 1.0d-99, 1.0d99, 3.0d2, -9.999d3, n(idx_N2), Tgas)
+
+@type: 3body
+@reacts: O,SO2,N2
+@prods: SO3,N2
+#@limits: 7.0d0, 2.0d2
+@rate: KIDA3body(0.18d-32, 2.0d0, 0d0, 0.42d-13, 1.8d0, 0d0, 0.4d0, 1.0d99, 1.0d-99, 1.0d99, 3.0d2, -9.999d3, n(idx_N2), Tgas)
 
