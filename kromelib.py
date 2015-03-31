@@ -563,9 +563,9 @@ def compute_Hdata(arg):
 	xHData["AlO2H"] = {"DH":-355.472e0}
 	xHData["AlO"] = {"DH":42.98e0}
 	xHData["AlO2"] = {"DH":-38.658e0}
+	xHData["Al2O"] = {"DH":-148.611e0}
 	xHData["Al2O2"] = {"DH":-403.096e0}
 	xHData["Al2O3"] = {"DH":-546.891e0}
-	xHData["Al2O"] = {"DH":-148.611e0}
 
 
 	#extend with uppercase species
@@ -631,9 +631,10 @@ def generateCustom(readCustomFile):
 	custom["include"] = []
 	custom["exclude"] = []
 	custom["present"] = []
+	custom["only"] = []
 
 	#list of tokens where an array is expected
-	arrayTokens = ["atoms","include","exclude","present"]
+	arrayTokens = ["atoms","include","exclude","present","only"]
 
 	#read custom file and store the info in a dict
 	fhcustom = open(readCustomFile,"rb")
@@ -663,7 +664,7 @@ def generateCustom(readCustomFile):
 	amols_org += ["N","NO","CN","N2","HCN","HNC","HNO"]
 	amols_org += ["NH","NH2","NH3","N2H+","N2H"]
 	amols_org += ["N+","NH+","NH2+","NH3+","NH4+","HCN+","HCNH+"]
-	amols_org += ["Al","AlOH","AlO2H2","ALO3H3","AlO2H"]
+	amols_org += ["Al","AlOH","AlO2H2","AlO3H3","AlO2H"]
 	amols_org += ["AlO","AlO2","Al2O","Al2O2","Al2O3"]
 
 	#exploded species
@@ -722,7 +723,21 @@ def generateCustom(readCustomFile):
 			print " you should add this to the automatic list or correct any typo."
 			sys.exit()
 		amols.append(mol)
-		emols.append(emols_org[amols.index(mol)])
+		emols.append(emols_org[amols_org.index(mol)])
+
+	#check for only species (only reactions with these species)
+	if(len(custom["only"])>0):
+		amols = []
+		emols = []
+
+	for mol in custom["only"]:
+		if(mol==""): continue
+		if(not(mol in amols_org)):
+			print "ERROR: can't recognize this molecule: "+mol
+			print " you should add this to the automatic list or correct any typo."
+			sys.exit()
+		amols.append(mol)
+		emols.append(emols_org[amols_org.index(mol)])
 
 	#check number of species found
 	if(len(amols)==0):
@@ -730,7 +745,7 @@ def generateCustom(readCustomFile):
 		print " check options in "+readCustomFile+" file."
 		sys.exit()
 	print "Search custom reactions using the following species"
-	for i in range(len(amols)/5):
+	for i in range(len(amols)/5+1):
 		#this simply write 5 species per line
 		print " "+(" ".join(amols[i*5:min((i+1)*5,len(amols))]))
 
