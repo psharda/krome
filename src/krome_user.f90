@@ -902,6 +902,7 @@ contains
 
   end subroutine krome_set_photoBin_J21log
 
+
   !*****************************
   !get the opacity exp(-tau) correpsonding the to x(:)
   ! chemical composition. The column density
@@ -1378,6 +1379,17 @@ contains
 #KROME_scaleZ
 
   end subroutine krome_scale_Z
+
+  !*************************
+  subroutine krome_set_Z(xarg)
+    !set the total metallicity 
+    ! in terms of Z/Z_solar 
+    use krome_commons
+    real*8::xarg
+
+    total_Z = xarg
+     
+  end subroutine krome_set_Z
 
   !***********************
   !get the number of electrons by

@@ -45,4 +45,3 @@ This file (22Aug2014) is the changelog that contains the main modifications
   - updated solar abundances (Asplund 2009)
   - wizard.py script to run KROME with ease
   - improved krome_user module with a series of useful functions
-

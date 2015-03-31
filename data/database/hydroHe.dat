@@ -199,5 +199,3 @@
 @prods: H2,H2
 @limits: >3e2, 1d8
 @rate: .3d-32/(T32) / 8d0
-
-

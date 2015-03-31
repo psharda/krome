@@ -1015,7 +1015,7 @@ def get_cooling_index_list():
 	#the number is the corresponding integer index for the given cooling 
 	idxcoo = {"H2":1,"H2GP":2,"atomic":3, "CEN":3, "HD":4, "Z":5, "metal":5, "dH":6, "enthalpic":6, "dust":7,\
 		"compton":8,"CIE":9, "continuum":10, "cont":10,"exp":11,"expansion":11,"ff":12,"bss":12,"custom":13,\
-		"CO":14}
+		"CO":14, "ZCIE":15, "ZCIENOUV":16}
 
 	#loop on the index to write variables as idx_cool_H2 = 1
 	idxscoo = []
