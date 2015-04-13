@@ -107,6 +107,7 @@ class reaction():
 	isSurface = False #flag this reaction as Surface reaction
 	hasXsecFile = False #photo cross section is loaded from file
 	xsecFile = "" #cross section file
+	isAutoRev = False #this reaction is a reverse reaction in the automatic database
 	photoForm = []
 	photoDestroy = []
 
@@ -175,9 +176,16 @@ class reaction():
 		self.RHS = nuclearMult+"k("+str(self.idx)+")"
 		self.RHSvar = "kflux"+str(self.idx)
 		ns = []
+		actualReactants = self.reactants
+		actualCurlyR = self.curlyR
+		#if(self.isAutoRev):
+		#	actualReactants = self.products
+		#	actualCurlyR = self.curlyP
+		if(useNuclearMult and self.isAutoRev): sys.exit("ERROR: nuclear multiplier on reverse reaction is not allowed!")
 		i = 0
-		for r in self.reactants:
-			if(self.curlyR[i]): continue #skip curly reactants
+		for r in actualReactants:
+			if(len(actualCurlyR)>0):
+				if(actualCurlyR[i]): continue #skip curly reactants
 			i += 1
 			ns.append("n("+str(r.fidx)+")")
 			if(r.idx<=0):
@@ -1671,30 +1679,12 @@ def get_file_list():
 	files.append("src/krome_heating.f90")
 	files.append("src/krome_commons.f90")
 	files.append("data")
-	files.append("data/crossSect.dat")
-	files.append("data/heatxH.dat")
-	files.append("data/optSi.dat")
-	files.append("data/ip.dat")
-	files.append("data/optC.dat")
-	files.append("data/ratexHe.dat")
-	files.append("data/escape_H2.dat")
-	files.append("data/heatxHe.dat")
-	files.append("data/coolO2.dat")
-	files.append("data/thermo30.dat")
-	files.append("data/coolZ.dat")
-	files.append("data/ratexH.dat")
-	files.append("data/database")
-	files.append("data/database/photoioniziation.dat")
-	files.append("data/database/collisional_ionization.dat")
-	files.append("data/database/radiative_rec_lowT.dat")
-	files.append("data/database/radiative_rec.dat")
 	files.append("solver")
 	files.append("solver/nleq_all.f")
 	files.append("solver/opkda2.f")
 	files.append("solver/opkdmain.f")
 	files.append("solver/dvode_f90_license.txt")
 	files.append("solver/opkda1.f")
-	files.append("solver/dvode_f90_m.f90")
 	files.append("networks")
 	return files
 
