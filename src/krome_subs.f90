@@ -808,6 +808,42 @@ contains
 
   end function colion_v96
 
+  !****************************
+  !radiative recombination rates from
+  ! Verner routine, standard fit, cm3/s
+  function recV96(Tgas,a,b)
+    implicit none
+    real*8::recV96,Tgas,a,b
+
+    recV96 = a*(1d4/Tgas)**b
+
+  end function recV96
+
+  !****************************
+  !radiative recombination rates from
+  ! Verner routine, new fit, cm3/s
+  function recNewV96(Tgas,r1,r2,r3,r4)
+    implicit none
+    real*8::recNewV96,Tgas,r1,r2,r3,r4,tt
+
+    tt = sqrt(Tgas/r3)
+    recNewV96 = r1/(tt*(tt + 1d0)**(1.-r2) &
+         * (1d0 + sqrt(Tgas/r4)))**(1.+r2)
+
+  end function recNewV96
+
+  !****************************
+  !radiative recombination rates from
+  ! Verner routine, iron only, cm3/s
+  function recFeV96(Tgas,r1,r2,r3)
+    implicit none
+    real*8::recFeV96,Tgas,r1,r2,r3,tt
+
+    tt = sqrt(Tgas*1d-4)
+    recFeV96 = r1/tt**(r2 + r3 + log10(tt))
+
+  end function recFeV96
+
   !******************************
   !radiative recombination rates from Verner+96
   ! unit: cm3/s
