@@ -401,6 +401,26 @@ contains
 
   end subroutine krome_set_photobinE_lr
 
+  !*******************************
+  !set the energy (eV) of the photobin according
+  ! to MOCASSIN way (position and width array)
+  subroutine krome_set_photobinE_moc(binPos,binWidth)
+    use krome_commons
+    use krome_photo
+    implicit none
+    real*8::binPos(:),binWidth(:)
+
+    photoBinEleft(:) = binPos(:)-binWidth(:)/2d0
+    photoBinEright(:) = binPos(:)+binWidth(:)/2d0
+    photoBinEmid(:) = binPos(:)
+    photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
+    photoBinEidelta(:) = 1d0/photoBinEdelta(:)
+
+    !initialize xsecs table
+    call init_photoBins()
+
+  end subroutine krome_set_photobinE_moc
+
   !********************************
   ! set the energy (eV) of the photobin
   ! linearly from lowest and highest energy value
