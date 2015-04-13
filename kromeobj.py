@@ -186,7 +186,7 @@ class krome():
 		self.parser.add_argument("-columnDensityMethod", metavar="method", help="use an alternative method to \
 			N=1.8e21*(n*1e-3)**(2./3.) for column density calculation (N) from number density (n). Option available JEANS,\
 			which employs Jeans length (l) as N=n*l.")
-		self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
+		#self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
 		self.parser.add_argument("-computeElectrons", action="store_true", help="computes electrons by balancing charges instead of\
 			 using the differential de/dt.")
 		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global\
@@ -830,9 +830,9 @@ class krome():
 
 
 		#use human Fluxes
-		if(args.compressFluxes):
-			self.humanFlux = False
-			print "Reading option -compressFluxes"
+		#if(args.compressFluxes):
+		#	self.humanFlux = False
+		#	print "Reading option -compressFluxes"
 
 		#use cooling dT/dt in the ODE fex
 		if(args.skipODEthermo):
@@ -2274,6 +2274,7 @@ class krome():
 				sys.exit()
 			file_list = [f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))]
 			extraVars = dict() #dict of the extra varaibles, with key=filename
+			isAutoRev = False
 			for fname in file_list:
 				fname = fdbase + fname
 				if("~" in fname): continue
@@ -2294,10 +2295,13 @@ class krome():
 						myrea = dict()
 						myrea["autoFname"] = fname
 						myrea["limits"] = ""
+					if("@isrev:" in srow): isAutoRev = True
 					myrea.update(at_extract(srow)) #append to the dictionary
 					#each reaction block ends with @rate, append to the main database array
 					if("@rate:" in srow):
+						myrea["isAutoRev"] = isAutoRev
 						autoreacts.append(myrea)
+						isAutoRev = False
 
 			
 			#loop on the reactions to find auto
@@ -2342,6 +2346,8 @@ class krome():
 
 					dbFound = True
 					reaFound = autorea
+					reacts[i].isAutoRev = autorea["isAutoRev"]
+					if(autorea["isAutoRev"]): reacts[i].build_RHS()
 					if(rea.kphrate=="auto"):
 						reacts[i].kphrate = autorea["rate"]
 					else:
@@ -2355,6 +2361,7 @@ class krome():
 						reacts[i].Tmax = "1d8"
 						reacts[i].hasTlimitMax = reacts[i].hasTlimitMin = False
 						break #no more reactions needed
+
 
 				#error if automatic reaction not found
 				if(not(dbFound)):
@@ -5477,16 +5484,20 @@ class krome():
 									if(iType>0): offset = str(iType*self.dustArraySize)+"+"
 									sumTypeVar = "dSumDust"+dType
 									fout.write(sumTypeVar+" = 0d0\n")
-									fout.write("!partner species sum with evaporation control for "+dType+" dust\n")
+									fout.write("!partner species sum with evaporation control for "\
+										+ dType+" dust\n")
 									fout.write("do i=1,"+str(self.dustArraySize)+"\n")
-									fout.write(" if(dn(nmols+"+offset+"i)>-1d0 .and. n(nmols+"+offset+"i)>1d-40) then\n")
+									fout.write(" if(dn(nmols+"+offset+"i)>-1d0 .and. n(nmols+"+offset\
+										+"i)>1d-40) then\n")
 									fout.write(sumTypeVar+" = "+sumTypeVar \
 										+ " + 4d0*pi*dn(nmols+"+offset+"i)*n(nmols+"\
-										+offset+"i)**2*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
+										+offset+"i)**2*krome_grain_rho("+str(iType+1)\
+										+") / krome_dust_partner_mass("\
 										+str(iType+1)+")*xdust("+offset+"i)\n")
 									fout.write(" else\n")
 									fout.write(sumTypeVar+" = "+sumTypeVar + " + 4d0*pi/3d0*n(nmols+"\
-										+offset+"i)**3*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
+										+offset+"i)**3*krome_grain_rho("+str(iType+1)\
+										+") / krome_dust_partner_mass("\
 										+str(iType+1)+")*xdust("+offset+"i)\n")
 									fout.write("   n(nmols+"+offset+"i) = 0d0\n")
 									fout.write("   dn(nmols+"+offset+"i) = 0d0\n")
@@ -5500,12 +5511,14 @@ class krome():
 								for dType in dustTypes:
 									ilow = nmols + iType * dustArraySize + 1 #lower index for dust in specs array
 									iup = nmols + (iType + 1) * dustArraySize #upper index for dust in specs array
-									kpart = "krome_dust_partner_ratio(" + str(ilow-nmols) + ":" + str(iup-nmols) + ")"
+									kpart = "krome_dust_partner_ratio(" + str(ilow-nmols) + ":" \
+										+ str(iup-nmols) + ")"
 									limits = str(ilow) + ":" + str(iup) #absolute limits
 									limits_rel = str(ilow-nmols) + ":" + str(iup-nmols) #realtive limits
 									fout.write("dSumDust"+dType + " = sum(4d0*pi*n("+limits+")**2*dn("+\
 										limits+")*krome_grain_rho("+str(iType+1)+") / "+\
-										"krome_dust_partner_mass("+str(iType+1)+") * xdust("+limits_rel+"))\n")
+										"krome_dust_partner_mass("+str(iType+1)+") * xdust("\
+										+limits_rel+"))\n")
 									iType += 1
 							fout.write("\n") #print a blank line
 
@@ -6195,7 +6208,7 @@ class krome():
 
 		#copy HM2012 flux file
 		if(self.photoBins>0):
-			shutil.copyfile("data/krome_HMflux.dat", buildFolder+"krome_HMflux.dat")
+			shutil.copyfile("data/HM2012.dat", buildFolder+"krome_HMflux.dat")
 
 		#copy H2 dust tables
 		if(self.dustTabsH2):
