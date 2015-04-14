@@ -52327,18 +52327,6 @@
 @rate: 0.37d-11*T32**(-0.65)
 
 @type: 2body KIDA
-@reacts: H+,E
-@prods: H
-#@limits: 1.0d1, 2.8d2
-@rate: 0.35d-11*T32**(-0.7)
-
-@type: 2body KIDA
-@reacts: He+,E
-@prods: He
-#@limits: 1.0d1, 2.8d2
-@rate: 0.45d-11*T32**(-0.67)
-
-@type: 2body KIDA
 @reacts: Mg+,E
 @prods: Mg
 #@limits: 1.0d1, 2.8d2
