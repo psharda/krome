@@ -5771,6 +5771,24 @@ class krome():
 							allBasics.append(xbasic)						
 					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
 
+			#converter from MOCASSIN abundances to KROME
+			elif(srow == "#KROME_xmoc_map"):
+				xMocMap = ""
+				for sp in specs:
+					if(not(sp.is_atom)): continue
+					if(sp.charge<0): continue
+					xMocMap += "x("+sp.fidx+") = xmoc(imap("+str(sp.zatom)+"), "+str(sp.charge+1)+")\n"
+				fout.write(xMocMap)
+
+			#converter from KROME abundances to MOCASSIN
+			elif(srow == "#KROME_xmoc_map_return"):
+				xMocMap = ""
+				for sp in specs:
+					if(not(sp.is_atom)): continue
+					if(sp.charge<0): continue
+					xMocMap += "xmoc(imap("+str(sp.zatom)+"), "+str(sp.charge+1)+") = x("+sp.fidx+")\n"
+				fout.write(xMocMap)
+
 			elif(srow == "#KROME_user_commons_functions"):
 				funcs = ""
 				for x in self.commonvars:
