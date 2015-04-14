@@ -4062,6 +4062,8 @@ class krome():
 		constants.append(["clight","2.99792458e10","cm/s"]) 
 		constants.append(["pi","3.14159265359d0","#"]) 
 		constants.append(["eV_to_erg","1.60217646d-12","eV -> erg"]) 
+		constants.append(["ry_to_eV","13.60569d0","rydberg -> eV"])
+		constants.append(["ry_to_erg","2.179872d-11","rydberg -> erg"])
 		constants.append(["seconds_per_year","365d0*24d0*3600d0","yr -> s"]) 
 		constants.append(["km_to_cm","1d5","km -> cm"]) 
 		constants.append(["cm_to_Mpc","1.d0/3.08d24","cm -> Mpc"]) 
