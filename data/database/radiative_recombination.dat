@@ -1753,11 +1753,6 @@
 @rate: recNewV96(Tgas, 7.982d-11, 7.480d-01, 3.148d+00, 7.036d+05)
 
 @type: radrec
-@reacts: He+,E
-@prods: He
-@rate: recNewV96(Tgas, 1.891d-10, 7.524d-01, 9.370d+00, 2.774d+06)
-
-@type: radrec
 @reacts: Li+,E
 @prods: Li
 @rate: recNewV96(Tgas, 3.039d-10, 7.539d-01, 1.871d+01, 6.209d+06)
