@@ -18,6 +18,40 @@ contains
 #KROME_user_commons_functions
 
   !**********************
+  !convert from MOCASSIN abundances to KROME
+  ! xmoc: MOCASSIN matrix (note: cm-3, real*4),
+  ! imap: matrix position index map, integer
+  ! returns KROME abundances (cm-3, real*8)
+  function krome_convert_xmoc(xmoc,imap)
+    use krome_commons
+    implicit none
+    real*4::xmoc(:,:)
+    real*8::krome_convert_xmoc(nmols),x(nmols)
+    integer::imap(:)
+
+#KROME_xmoc_map
+
+    krome_convert_xmoc(:) = x(:)
+
+  end function krome_convert_xmoc
+
+  !*************************
+  !convert from KROME abundances to MOCASSIN
+  ! xmoc: KROME matrix (cm-3, real*4),
+  ! imap: matrix position index map, integer
+  ! xmoc (out), matrix MOCASSIN abundances (cm-3, real*4)
+  subroutine krome_return_xmoc(x,imap,xmoc)
+    use krome_commons
+    implicit none
+    real*8::x(:)
+    real*4::xmoc(:,:)
+    integer::imap(:)
+
+#KROME_xmoc_map_return
+
+  end subroutine krome_return_xmoc
+
+  !**********************
   !convert number density (cm-3) into column
   ! density (cm-2) using the specific density
   ! column method (see help for option
