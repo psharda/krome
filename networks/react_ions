@@ -110,6 +110,7 @@
 101,S+++++,E,S++++++,E,E,auto
 102,S++++++,E,S+++++++,E,E,auto
 
+@photo_start
 @format:idx,R,P,P,rate
 103,H,H+,E,auto
 104,He,He+,E,auto
@@ -162,3 +163,5 @@
 151,S++++,S+++++,E,auto
 152,S+++++,S++++++,E,auto
 153,S++++++,S+++++++,E,auto
+@photo_stop
+
