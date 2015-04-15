@@ -1341,6 +1341,20 @@ contains
     krome_get_mu = get_mu(n(:))
   end function krome_get_mu
 
+  !***************************
+  !get the names of the reactions as a
+  ! character*50 array of krome_nrea
+  ! elements
+  function krome_get_rnames()
+    use krome_commons
+    use krome_subs
+    implicit none
+    character*50::krome_get_rnames(nrea)
+
+    krome_get_rnames(:) = get_rnames()
+
+  end function krome_get_rnames
+
   !*****************
   !get an array of double containing the masses in g
   ! of the species
