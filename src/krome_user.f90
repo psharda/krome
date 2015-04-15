@@ -24,13 +24,17 @@ contains
   ! returns KROME abundances (cm-3, real*8)
   function krome_convert_xmoc(xmoc,imap)
     use krome_commons
+    use krome_subs
     implicit none
     real*4::xmoc(:,:)
-    real*8::krome_convert_xmoc(nmols),x(nmols)
+    real*8::krome_convert_xmoc(nmols),x(nmols),n(nspec)
     integer::imap(:)
 
 #KROME_xmoc_map
 
+    n(1:nmols) = x(:)
+    n(nmols+1:nspec) = 0d0
+    x(idx_e) = get_electrons(n(:))
     krome_convert_xmoc(:) = x(:)
 
   end function krome_convert_xmoc
