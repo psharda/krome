@@ -828,7 +828,7 @@ contains
 
     tt = sqrt(Tgas/r3)
     recNewV96 = r1/(tt*(tt + 1d0)**(1.-r2) &
-         * (1d0 + sqrt(Tgas/r4)))**(1.+r2)
+         * (1d0 + sqrt(Tgas/r4))**(1.+r2))
 
   end function recNewV96
 
