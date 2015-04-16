@@ -30,6 +30,8 @@ contains
     real*8::krome_convert_xmoc(nmols),x(nmols),n(nspec)
     integer::imap(:)
 
+    x(:) = 0d0
+
 #KROME_xmoc_map
 
     n(1:nmols) = x(:)
@@ -50,6 +52,8 @@ contains
     real*8::x(:)
     real*4::xmoc(:,:)
     integer::imap(:)
+
+    xmoc(:,:) = 0d0
 
 #KROME_xmoc_map_return
 
