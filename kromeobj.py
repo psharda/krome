@@ -196,7 +196,8 @@ class krome():
 			also tools/lamda2.py script for a LAMDA<->KROME converter. Default FILENAME is data/coolZ.dat, which contains\
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
-			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -cooling=ATOMIC,CII,OI,FeI),Z_CIE,ZCIE_NOUV.\
+			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -\
+			cooling=ATOMIC,CII,OI,FeI),Z_CIE,ZCIE_NOUV.\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
 		self.parser.add_argument("-coolLevels", metavar='MAXLEV', help="use only the levels up to MAXLEV (included), e.g. -coolLevels=3\
@@ -1053,7 +1054,8 @@ class krome():
 			myCools = args.cooling.split(",")
 			myCools = [x.strip() for x in myCools]
 			#list of all cooling (excluded from file)
-			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE","CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV"]
+			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE",\
+				"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
@@ -2087,6 +2089,7 @@ class krome():
 					print " (i.e. @photo_start, @photo_stop tokes)"
 					sys.exit()
 				myrea.hasXsecFile = True
+				myrea.Tmin = 0e0
 				#if file is SWRI convert to KROME
 				if(myrea.krate.strip()=="@xsecFile=SWRI"):
 					SWRI2KROME(self.buildFolder,myrea.reactants[0],myrea.products,myrea.Tmin)
@@ -2685,8 +2688,6 @@ class krome():
 		for x in self.specs:
 			if(not(x.name in self.thermodata)):
 				print "WARNING: no thermochemical data for "+x.name+"!"
-
-
 
 	###########################################add all the metals to cooling
 	def addMetals(self):
@@ -3797,6 +3798,7 @@ class krome():
 
 
 			#choose the correct solver depending on the number of levels
+			# i.e. 2 and 3 algebric, while >3 LAPACK
 			if(nlev>3):
 				full_function += "call mydgesv(nmax, A(:,:), B(:), \""+function_name+"\")\n\n"
 				self.needLAPACK = True
@@ -3823,7 +3825,7 @@ class krome():
 			full_function += " end if\n"
 			full_function += "end do\n\n"
 
-			#when negative value are found print some stuff and stop
+			#when negative large value are found print some stuff and stop
 			full_function += "!check if B has negative values\n"
 			full_function += "if(hasnegative>0)then\n"
 			full_function += " print *,\"ERROR: minval(B)<0d0 in "+function_name+"\"\n"
@@ -6051,7 +6053,8 @@ class krome():
 			if(srow == "#IFKROME_report" and not(self.doReport)): skip = True
 			if(srow == "#IFKROME_useTopology" and not(self.useTopology)): skip = True
 			if(srow == "#IFKROME_check_mass_conservation" and not(self.checkConserv)): skip = True
-			if(srow == "#IFKROME_useDustSizeEvol" and not(self.useDustSputter) and not(self.useDustGrowth) and not(self.useDustEvap)): skip = True
+			if(srow == "#IFKROME_useDustSizeEvol" and not(self.useDustSputter) and not(self.useDustGrowth)\
+				and not(self.useDustEvap)): skip = True
 			if(srow == "#IFKROME_useEquilibrium" and not(self.useEquilibrium)): skip = True
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
 			if(srow == "#IFKROME_useCoolingZ" and not(self.useCoolingZ)): skip = True
