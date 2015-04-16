@@ -136,8 +136,9 @@ class reaction():
 		if("@xsecFile=" in self.krate):
 			sidx = str(self.idx)
 			args = "xsec"+sidx+"_val(:), xsec"+sidx+"_Emin,"
-			args += " xsec"+sidx+"_n, xsec"+sidx+"_idE"
-			self.kphrate = "xsec_interp(energy_eV, "+args+")"
+			#args += "xsec"+sidx+"_n,"
+			args += "xsec"+sidx+"_idE"
+			self.kphrate = "xsec_interp(energyL, energyR, "+args+")"
 			self.xsecFile = self.krate.replace("@xsecFile=","").strip()
 			if(self.xsecFile.upper()=="SWRI"):
 				RR = self.reactants[0].name
@@ -385,6 +386,7 @@ def LEIDEN2KROME(build_folder,reactant,products):
 ###############################
 #convert a SWRI datafile to KROME format in the build folder
 def SWRI2KROME(build_folder,reactant,products,Eth):
+	import copy
 	try:
 		from scipy import interpolate
 	except:
@@ -416,7 +418,7 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		okrow.append(arow)
 	fswri.close()
 
-	#replace states, e.g. C1D->C
+	#replace exited states to ground, e.g. C1D->C
 	lold = lastLambda[:]
 	for state in ["1D","1S","3P"]:
 		lastLambda = [x.replace(state,"") for x in lastLambda]
@@ -466,17 +468,36 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	ydata = []
 	foutorg = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".org","w")
 	Eth = 1e99 #default threshold energy
-	#reverse array to have increasing energy
+	#for loop reads reversed array to have increasing energy
 	xsec_old = 0e0
 	xmin = xmax = None
+	#these 'Dirac' statements are employed to approximate line width (see comments below)
+	isDirac = False #boolean to determine if it is reading a line or not
+	xDirac = [] #list of the lines found
+	dDirac = {"freqL":0e0, "freqR":0e0, "xsec":0e0} #template for line (boundaries + xsec)
+	#row format is: [E(eV), [xsec(cm2) for each branch]]
 	for row in okrow[::-1]:
 		if(float(row[0])<=0e0): continue
 		xenergy = clight*hplanck/(float(row[0])*1e-8) #AA->eV
 		xsec = float(row[data_col]) #cross section cm2
+		#SWRI notation: when xsec is 1e-35 start to read a line
+		# with 1e-35 xsec 1e-35 to get the linewidth
+		if(xsec==1e-35):
+			isDirac = not(isDirac)
+			if(xsec_old==1e-35): isDirac = True #double 1e-35 to open lines block
+			#store the left and the right bound of the line
+			if(isDirac):
+				dDirac["freqL"] = xenergy
+			else:
+				dDirac["freqR"] = xenergy
+				xDirac.append(copy.copy(dDirac))
+		#store the xsec value when line value (Dirac) is open
+		if(xsec!=1e-35 and isDirac):
+			dDirac["xsec"] = xsec
 		xdata.append(xenergy)
 		ydata.append(xsec)
-		if(xsec>1e-28 and xmin==None): xmin = xenergy
-		if(xsec>1e-28): xmax = xenergy
+		if(xsec>1e-40 and xmin==None): xmin = xenergy
+		if(xsec>1e-40): xmax = xenergy
 		#find threshold for photoionization
 		if(xsec==0e0 and xsec_old!=0e0):
 			if("E" in products): Eth = xenergy_old
@@ -484,6 +505,16 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		xsec_old = xsec
 		xenergy_old = xenergy
 	foutorg.close()
+	#note: swri uses the sequence 1e-35 value 1e-35 in the xsec
+	# to indicate the with of the line and the averaged xsec.
+	# the boolean isDirac is true when reading line, hence
+	# if not closed (still False ad EOF) rises an error.
+	# False beacuse of double 1e-35 to close the line part
+	if(not(isDirac)):
+		print "ERROR: in SWRI read line with opened"
+		print " but never closed!"
+		sys.exit()
+	#create interpolated function from SWRI file
 	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
 
 	if(xmax==None or xmin==None or xmax<=xmin):
@@ -494,13 +525,28 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 
 	#write the file to the build folder
 	foutx = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".dat","w")
-	imax = 100
-	emax = min(xmax,2e1)
+	imax = 5000 #number of interpolated points
+	emax = min(xmax, 3e1) #this is the maximum energy limit for creating tables (eV)
 	emin = xmin
+	#write data to file using a regular xenergy grid
 	for i in range(imax):
 		xenergy = i*(emax-emin)/(imax-1)+emin
-		foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
-		
+		#if not line-based interpolates with numpy
+		if(len(xDirac)==0):
+			foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
+		else:
+			#if line-based lines are rectangles of average xsec
+			myxd = None
+			#loop on the lines found to determine the xsec @ xenergy
+			for xd in xDirac:
+				if(xenergy>=xd["freqL"] and xenergy<=xd["freqR"]):
+					myxd = xd #store the line at the corresponding xenergy
+					break
+			#xsec is zero outside the line boundaries
+			xsec = 0e0
+			if(myxd!=None): xsec = myxd["xsec"] #otherwise is the averaged xsec
+			foutx.write(str(xenergy)+" "+str(xsec)+"\n")
+
 	foutx.close()
 
 ################################
