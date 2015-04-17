@@ -217,6 +217,8 @@ contains
     end if
 
     print *,"Computing dust tables..."
+    print *,"dust bins:",ndust
+    print *,"(it may take a while)"
 
     open(33,file="KROME_dust_intBB.dat",status="replace")
     !loop on dust bins
