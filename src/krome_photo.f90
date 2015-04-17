@@ -18,7 +18,7 @@ contains
        get_photoIntensity = 0d0 !photoBinJ(1)
        return
     end if
-    
+
     !check if requested energy is greater that the the largest limit
     if(energy>photoBinEright(nPhotoBins)) then
        get_photoIntensity = 0d0 !photoBinJ(nPhotoBins)
@@ -46,7 +46,7 @@ contains
     use krome_commons
     implicit none
     integer::i,j
-    real*8::energy_eV,kk
+    real*8::energy_eV,kk,energyL,energyR
 
     if(photoBinEmid(nPhotoBins)==0d0) then
        print *,"ERROR: when using photo bins you must define"
@@ -58,6 +58,8 @@ contains
 
     !tabulate the xsecs into a bin-based array
     do j=1,nPhotoBins
+       energyL = photoBinEleft(j)
+       energyR = photoBinEright(j)
        energy_eV = photoBinEmid(j) !energy of the bin in eV
 #KROME_photobin_xsecs
     end do
@@ -73,10 +75,10 @@ contains
     use krome_commons
     implicit none
     real*8::n(nspec)
-    
+
     n(:) = 0d0
     call calc_photoBins_thick(n)
-    
+
   end subroutine calc_photoBins
 
   !**********************
@@ -88,12 +90,12 @@ contains
     implicit none
     integer::i,j
     real*8::dE,kk,Jval,E,Eth,n(:),ncol(nmols),tau
-    
+
     !get column density from number density
     do i=1,nmols
        ncol(i) = num2col(n(i),n(:))
     end do
-    
+
     !init rates and heating
     photoBinRates(:) = 0d0 !1/s/Hz
     photoBinHeats(:) = 0d0 !eV/s/Hz
@@ -214,10 +216,35 @@ contains
   end subroutine load_xsec
 
   !**********************
-  !linear interpolation for the photo xsec
-  function xsec_interp(energy,xsec_val,xsec_Emin,xsec_n,xsec_idE)
+  !return averaged xsec in the energy range [energyL,energyR]
+  ! units: eV, cm2
+  function xsec_interp(energyL,energyR,xsec_val,xsec_Emin,xsec_idE)
     implicit none
-    real*8::xsec_interp,E0
+    real*8::xsec_interp,E0,xsecA,dE
+    real*8::energy,xsec_val(:),xsec_Emin,xsec_idE,energyL,energyR
+    integer::xsec_n,idx
+
+    !xsec energy step (regular grid)
+    dE = 1d0/xsec_idE
+    xsecA = 0d0 !init integrated xsec
+    !loop on xsec vals
+    do idx=1,size(xsec_val)
+       energy = (idx-1)*dE+xsec_Emin
+       !if xsec energy in the interval compute area
+       if(energy>=energyL .and. energy<=energyR) xsecA = xsecA &
+            + xsec_val(idx)*dE
+    end do
+
+    !compute averaged xsec for the flux energy range
+    xsec_interp = xsecA/(energyR-energyL)
+
+  end function xsec_interp
+
+  !**********************
+  !linear interpolation for the photo xsec
+  function xsec_interp_mid(energy,xsec_val,xsec_Emin,xsec_n,xsec_idE)
+    implicit none
+    real*8::xsec_interp_mid,E0
     real*8::energy,xsec_val(:),xsec_Emin,xsec_idE
     integer::xsec_n,idx
 
@@ -227,8 +254,8 @@ contains
 
     !lower bound
     E0 = xsec_Emin + (idx-1)/xsec_idE
- 
-   !out of the limits is zero
+
+    !out of the limits is zero
     if(idx<1.or.idx>xsec_n-1) return
 
     !linear interpolation
@@ -236,8 +263,8 @@ contains
          * (xsec_val(idx+1)-xsec_val(idx)) + xsec_val(idx)
 
     !avoid negative xsec values when outside the limits
-    xsec_interp = max(xsec_interp,0d0)
+    xsec_interp_mid = max(xsec_interp,0d0)
 
-  end function xsec_interp
+  end function xsec_interp_mid
 
 end module krome_photo

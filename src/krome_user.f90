@@ -18,6 +18,48 @@ contains
 #KROME_user_commons_functions
 
   !**********************
+  !convert from MOCASSIN abundances to KROME
+  ! xmoc: MOCASSIN matrix (note: cm-3, real*4),
+  ! imap: matrix position index map, integer
+  ! returns KROME abundances (cm-3, real*8)
+  function krome_convert_xmoc(xmoc,imap)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*4::xmoc(:,:)
+    real*8::krome_convert_xmoc(nmols),x(nmols),n(nspec)
+    integer::imap(:)
+
+    x(:) = 0d0
+
+#KROME_xmoc_map
+
+    n(1:nmols) = x(:)
+    n(nmols+1:nspec) = 0d0
+    x(idx_e) = get_electrons(n(:))
+    krome_convert_xmoc(:) = x(:)
+
+  end function krome_convert_xmoc
+
+  !*************************
+  !convert from KROME abundances to MOCASSIN
+  ! xmoc: KROME matrix (cm-3, real*4),
+  ! imap: matrix position index map, integer
+  ! xmoc (out), matrix MOCASSIN abundances (cm-3, real*4)
+  subroutine krome_return_xmoc(x,imap,xmoc)
+    use krome_commons
+    implicit none
+    real*8::x(:)
+    real*4::xmoc(:,:)
+    integer::imap(:)
+
+    xmoc(:,:) = 0d0
+
+#KROME_xmoc_map_return
+
+  end subroutine krome_return_xmoc
+
+  !**********************
   !convert number density (cm-3) into column
   ! density (cm-2) using the specific density
   ! column method (see help for option
@@ -400,6 +442,26 @@ contains
     call init_photoBins()
 
   end subroutine krome_set_photobinE_lr
+
+  !*******************************
+  !set the energy (eV) of the photobin according
+  ! to MOCASSIN way (position and width array)
+  subroutine krome_set_photobinE_moc(binPos,binWidth)
+    use krome_commons
+    use krome_photo
+    implicit none
+    real*8::binPos(:),binWidth(:)
+
+    photoBinEleft(:) = binPos(:)-binWidth(:)/2d0
+    photoBinEright(:) = binPos(:)+binWidth(:)/2d0
+    photoBinEmid(:) = binPos(:)
+    photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
+    photoBinEidelta(:) = 1d0/photoBinEdelta(:)
+
+    !initialize xsecs table
+    call init_photoBins()
+
+  end subroutine krome_set_photobinE_moc
 
   !********************************
   ! set the energy (eV) of the photobin
@@ -1282,6 +1344,20 @@ contains
     n(1:nmols) = x(:)
     krome_get_mu = get_mu(n(:))
   end function krome_get_mu
+
+  !***************************
+  !get the names of the reactions as a
+  ! character*50 array of krome_nrea
+  ! elements
+  function krome_get_rnames()
+    use krome_commons
+    use krome_subs
+    implicit none
+    character*50::krome_get_rnames(nrea)
+
+    krome_get_rnames(:) = get_rnames()
+
+  end function krome_get_rnames
 
   !*****************
   !get an array of double containing the masses in g

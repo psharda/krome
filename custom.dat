@@ -2,10 +2,11 @@
 
 #atoms employed to build molecules
 #comma separated, can't be empty
-atoms: H,E,C,O,He,N
+#note that electron should be also included (as E)
+atoms: H,O,E
 
 #maximum number of atoms per molecule
-maxatoms: 4
+maxatoms: 99
 
 #use cations, e.g. CO+
 cations: yes
@@ -32,3 +33,8 @@ include:
 # (at least one of the listed species)
 #comma separated, empty=ignore
 present:
+
+#use ONLY these species
+#comma separated, empty=ignore
+#this command overrides all the others
+only:

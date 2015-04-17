@@ -107,6 +107,7 @@ class reaction():
 	isSurface = False #flag this reaction as Surface reaction
 	hasXsecFile = False #photo cross section is loaded from file
 	xsecFile = "" #cross section file
+	isAutoRev = False #this reaction is a reverse reaction in the automatic database
 	photoForm = []
 	photoDestroy = []
 
@@ -135,8 +136,9 @@ class reaction():
 		if("@xsecFile=" in self.krate):
 			sidx = str(self.idx)
 			args = "xsec"+sidx+"_val(:), xsec"+sidx+"_Emin,"
-			args += " xsec"+sidx+"_n, xsec"+sidx+"_idE"
-			self.kphrate = "xsec_interp(energy_eV, "+args+")"
+			#args += "xsec"+sidx+"_n,"
+			args += "xsec"+sidx+"_idE"
+			self.kphrate = "xsec_interp(energyL, energyR, "+args+")"
 			self.xsecFile = self.krate.replace("@xsecFile=","").strip()
 			if(self.xsecFile.upper()=="SWRI"):
 				RR = self.reactants[0].name
@@ -175,9 +177,16 @@ class reaction():
 		self.RHS = nuclearMult+"k("+str(self.idx)+")"
 		self.RHSvar = "kflux"+str(self.idx)
 		ns = []
+		actualReactants = self.reactants
+		actualCurlyR = self.curlyR
+		#if(self.isAutoRev):
+		#	actualReactants = self.products
+		#	actualCurlyR = self.curlyP
+		if(useNuclearMult and self.isAutoRev): sys.exit("ERROR: nuclear multiplier on reverse reaction is not allowed!")
 		i = 0
-		for r in self.reactants:
-			if(self.curlyR[i]): continue #skip curly reactants
+		for r in actualReactants:
+			if(len(actualCurlyR)>0):
+				if(actualCurlyR[i]): continue #skip curly reactants
 			i += 1
 			ns.append("n("+str(r.fidx)+")")
 			if(r.idx<=0):
@@ -377,6 +386,7 @@ def LEIDEN2KROME(build_folder,reactant,products):
 ###############################
 #convert a SWRI datafile to KROME format in the build folder
 def SWRI2KROME(build_folder,reactant,products,Eth):
+	import copy
 	try:
 		from scipy import interpolate
 	except:
@@ -408,7 +418,7 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		okrow.append(arow)
 	fswri.close()
 
-	#replace states, e.g. C1D->C
+	#replace exited states to ground, e.g. C1D->C
 	lold = lastLambda[:]
 	for state in ["1D","1S","3P"]:
 		lastLambda = [x.replace(state,"") for x in lastLambda]
@@ -458,17 +468,36 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	ydata = []
 	foutorg = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".org","w")
 	Eth = 1e99 #default threshold energy
-	#reverse array to have increasing energy
+	#for loop reads reversed array to have increasing energy
 	xsec_old = 0e0
 	xmin = xmax = None
+	#these 'Dirac' statements are employed to approximate line width (see comments below)
+	isDirac = False #boolean to determine if it is reading a line or not
+	xDirac = [] #list of the lines found
+	dDirac = {"freqL":0e0, "freqR":0e0, "xsec":0e0} #template for line (boundaries + xsec)
+	#row format is: [E(eV), [xsec(cm2) for each branch]]
 	for row in okrow[::-1]:
 		if(float(row[0])<=0e0): continue
 		xenergy = clight*hplanck/(float(row[0])*1e-8) #AA->eV
 		xsec = float(row[data_col]) #cross section cm2
+		#SWRI notation: when xsec is 1e-35 start to read a line
+		# with 1e-35 xsec 1e-35 to get the linewidth
+		if(xsec==1e-35):
+			isDirac = not(isDirac)
+			if(xsec_old==1e-35): isDirac = True #double 1e-35 to open lines block
+			#store the left and the right bound of the line
+			if(isDirac):
+				dDirac["freqL"] = xenergy
+			else:
+				dDirac["freqR"] = xenergy
+				xDirac.append(copy.copy(dDirac))
+		#store the xsec value when line value (Dirac) is open
+		if(xsec!=1e-35 and isDirac):
+			dDirac["xsec"] = xsec
 		xdata.append(xenergy)
 		ydata.append(xsec)
-		if(xsec>1e-28 and xmin==None): xmin = xenergy
-		if(xsec>1e-28): xmax = xenergy
+		if(xsec>1e-40 and xmin==None): xmin = xenergy
+		if(xsec>1e-40): xmax = xenergy
 		#find threshold for photoionization
 		if(xsec==0e0 and xsec_old!=0e0):
 			if("E" in products): Eth = xenergy_old
@@ -476,6 +505,16 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		xsec_old = xsec
 		xenergy_old = xenergy
 	foutorg.close()
+	#note: swri uses the sequence 1e-35 value 1e-35 in the xsec
+	# to indicate the with of the line and the averaged xsec.
+	# the boolean isDirac is true when reading line, hence
+	# if not closed (still False ad EOF) rises an error.
+	# False beacuse of double 1e-35 to close the line part
+	if(not(isDirac)):
+		print "ERROR: in SWRI read line with opened"
+		print " but never closed!"
+		sys.exit()
+	#create interpolated function from SWRI file
 	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
 
 	if(xmax==None or xmin==None or xmax<=xmin):
@@ -486,13 +525,28 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 
 	#write the file to the build folder
 	foutx = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".dat","w")
-	imax = 100
-	emax = min(xmax,2e1)
+	imax = 5000 #number of interpolated points
+	emax = min(xmax, 3e1) #this is the maximum energy limit for creating tables (eV)
 	emin = xmin
+	#write data to file using a regular xenergy grid
 	for i in range(imax):
 		xenergy = i*(emax-emin)/(imax-1)+emin
-		foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
-		
+		#if not line-based interpolates with numpy
+		if(len(xDirac)==0):
+			foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
+		else:
+			#if line-based lines are rectangles of average xsec
+			myxd = None
+			#loop on the lines found to determine the xsec @ xenergy
+			for xd in xDirac:
+				if(xenergy>=xd["freqL"] and xenergy<=xd["freqR"]):
+					myxd = xd #store the line at the corresponding xenergy
+					break
+			#xsec is zero outside the line boundaries
+			xsec = 0e0
+			if(myxd!=None): xsec = myxd["xsec"] #otherwise is the averaged xsec
+			foutx.write(str(xenergy)+" "+str(xsec)+"\n")
+
 	foutx.close()
 
 ################################
@@ -563,9 +617,9 @@ def compute_Hdata(arg):
 	xHData["AlO2H"] = {"DH":-355.472e0}
 	xHData["AlO"] = {"DH":42.98e0}
 	xHData["AlO2"] = {"DH":-38.658e0}
+	xHData["Al2O"] = {"DH":-148.611e0}
 	xHData["Al2O2"] = {"DH":-403.096e0}
 	xHData["Al2O3"] = {"DH":-546.891e0}
-	xHData["Al2O"] = {"DH":-148.611e0}
 
 
 	#extend with uppercase species
@@ -631,9 +685,10 @@ def generateCustom(readCustomFile):
 	custom["include"] = []
 	custom["exclude"] = []
 	custom["present"] = []
+	custom["only"] = []
 
 	#list of tokens where an array is expected
-	arrayTokens = ["atoms","include","exclude","present"]
+	arrayTokens = ["atoms","include","exclude","present","only"]
 
 	#read custom file and store the info in a dict
 	fhcustom = open(readCustomFile,"rb")
@@ -663,7 +718,7 @@ def generateCustom(readCustomFile):
 	amols_org += ["N","NO","CN","N2","HCN","HNC","HNO"]
 	amols_org += ["NH","NH2","NH3","N2H+","N2H"]
 	amols_org += ["N+","NH+","NH2+","NH3+","NH4+","HCN+","HCNH+"]
-	amols_org += ["Al","AlOH","AlO2H2","ALO3H3","AlO2H"]
+	amols_org += ["Al","AlOH","AlO2H2","AlO3H3","AlO2H"]
 	amols_org += ["AlO","AlO2","Al2O","Al2O2","Al2O3"]
 
 	#exploded species
@@ -722,7 +777,21 @@ def generateCustom(readCustomFile):
 			print " you should add this to the automatic list or correct any typo."
 			sys.exit()
 		amols.append(mol)
-		emols.append(emols_org[amols.index(mol)])
+		emols.append(emols_org[amols_org.index(mol)])
+
+	#check for only species (only reactions with these species)
+	if(len(custom["only"])>0):
+		amols = []
+		emols = []
+
+	for mol in custom["only"]:
+		if(mol==""): continue
+		if(not(mol in amols_org)):
+			print "ERROR: can't recognize this molecule: "+mol
+			print " you should add this to the automatic list or correct any typo."
+			sys.exit()
+		amols.append(mol)
+		emols.append(emols_org[amols_org.index(mol)])
 
 	#check number of species found
 	if(len(amols)==0):
@@ -730,7 +799,7 @@ def generateCustom(readCustomFile):
 		print " check options in "+readCustomFile+" file."
 		sys.exit()
 	print "Search custom reactions using the following species"
-	for i in range(len(amols)/5):
+	for i in range(len(amols)/5+1):
 		#this simply write 5 species per line
 		print " "+(" ".join(amols[i*5:min((i+1)*5,len(amols))]))
 
@@ -1656,30 +1725,12 @@ def get_file_list():
 	files.append("src/krome_heating.f90")
 	files.append("src/krome_commons.f90")
 	files.append("data")
-	files.append("data/crossSect.dat")
-	files.append("data/heatxH.dat")
-	files.append("data/optSi.dat")
-	files.append("data/ip.dat")
-	files.append("data/optC.dat")
-	files.append("data/ratexHe.dat")
-	files.append("data/escape_H2.dat")
-	files.append("data/heatxHe.dat")
-	files.append("data/coolO2.dat")
-	files.append("data/thermo30.dat")
-	files.append("data/coolZ.dat")
-	files.append("data/ratexH.dat")
-	files.append("data/database")
-	files.append("data/database/photoioniziation.dat")
-	files.append("data/database/collisional_ionization.dat")
-	files.append("data/database/radiative_rec_lowT.dat")
-	files.append("data/database/radiative_rec.dat")
 	files.append("solver")
 	files.append("solver/nleq_all.f")
 	files.append("solver/opkda2.f")
 	files.append("solver/opkdmain.f")
 	files.append("solver/dvode_f90_license.txt")
 	files.append("solver/opkda1.f")
-	files.append("solver/dvode_f90_m.f90")
 	files.append("networks")
 	return files
 

@@ -143,10 +143,14 @@ contains
           if (krome_mpi_rank>0) then
             print *,krome_mpi_rank,"ERROR: wrong solver exit status!"
             print *,krome_mpi_rank,"istate:",istate
+            print *,krome_mpi_rank,"iter count:",icount
+            print *,krome_mpi_rank,"max iter count:",icount_max
             print *,krome_mpi_rank,"SEE KROME_ERROR_REPORT file"
           else
             print *,"ERROR: wrong solver exit status!"
             print *,"istate:",istate
+            print *,"iter count:",icount
+            print *,"max iter count:",icount_max
             print *,"SEE KROME_ERROR_REPORT file"
           end if
           call krome_dump(n(:), rwork(:), iwork(:), ni(:))

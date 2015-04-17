@@ -186,7 +186,7 @@ class krome():
 		self.parser.add_argument("-columnDensityMethod", metavar="method", help="use an alternative method to \
 			N=1.8e21*(n*1e-3)**(2./3.) for column density calculation (N) from number density (n). Option available JEANS,\
 			which employs Jeans length (l) as N=n*l.")
-		self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
+		#self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
 		self.parser.add_argument("-computeElectrons", action="store_true", help="computes electrons by balancing charges instead of\
 			 using the differential de/dt.")
 		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global\
@@ -196,7 +196,8 @@ class krome():
 			also tools/lamda2.py script for a LAMDA<->KROME converter. Default FILENAME is data/coolZ.dat, which contains\
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
-			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -cooling=ATOMIC,CII,OI,FeI),Z_CIE,ZCIE_NOUV.\
+			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -\
+			cooling=ATOMIC,CII,OI,FeI),Z_CIE,ZCIE_NOUV.\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
 		self.parser.add_argument("-coolLevels", metavar='MAXLEV', help="use only the levels up to MAXLEV (included), e.g. -coolLevels=3\
@@ -830,9 +831,9 @@ class krome():
 
 
 		#use human Fluxes
-		if(args.compressFluxes):
-			self.humanFlux = False
-			print "Reading option -compressFluxes"
+		#if(args.compressFluxes):
+		#	self.humanFlux = False
+		#	print "Reading option -compressFluxes"
 
 		#use cooling dT/dt in the ODE fex
 		if(args.skipODEthermo):
@@ -1053,7 +1054,8 @@ class krome():
 			myCools = args.cooling.split(",")
 			myCools = [x.strip() for x in myCools]
 			#list of all cooling (excluded from file)
-			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE","CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV"]
+			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE",\
+				"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
@@ -2087,6 +2089,7 @@ class krome():
 					print " (i.e. @photo_start, @photo_stop tokes)"
 					sys.exit()
 				myrea.hasXsecFile = True
+				myrea.Tmin = 0e0
 				#if file is SWRI convert to KROME
 				if(myrea.krate.strip()=="@xsecFile=SWRI"):
 					SWRI2KROME(self.buildFolder,myrea.reactants[0],myrea.products,myrea.Tmin)
@@ -2274,6 +2277,7 @@ class krome():
 				sys.exit()
 			file_list = [f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))]
 			extraVars = dict() #dict of the extra varaibles, with key=filename
+			isAutoRev = False
 			for fname in file_list:
 				fname = fdbase + fname
 				if("~" in fname): continue
@@ -2294,10 +2298,13 @@ class krome():
 						myrea = dict()
 						myrea["autoFname"] = fname
 						myrea["limits"] = ""
+					if("@isrev:" in srow): isAutoRev = True
 					myrea.update(at_extract(srow)) #append to the dictionary
 					#each reaction block ends with @rate, append to the main database array
 					if("@rate:" in srow):
+						myrea["isAutoRev"] = isAutoRev
 						autoreacts.append(myrea)
+						isAutoRev = False
 
 			
 			#loop on the reactions to find auto
@@ -2342,6 +2349,8 @@ class krome():
 
 					dbFound = True
 					reaFound = autorea
+					reacts[i].isAutoRev = autorea["isAutoRev"]
+					if(autorea["isAutoRev"]): reacts[i].build_RHS()
 					if(rea.kphrate=="auto"):
 						reacts[i].kphrate = autorea["rate"]
 					else:
@@ -2355,6 +2364,7 @@ class krome():
 						reacts[i].Tmax = "1d8"
 						reacts[i].hasTlimitMax = reacts[i].hasTlimitMin = False
 						break #no more reactions needed
+
 
 				#error if automatic reaction not found
 				if(not(dbFound)):
@@ -2678,8 +2688,6 @@ class krome():
 		for x in self.specs:
 			if(not(x.name in self.thermodata)):
 				print "WARNING: no thermochemical data for "+x.name+"!"
-
-
 
 	###########################################add all the metals to cooling
 	def addMetals(self):
@@ -3790,6 +3798,7 @@ class krome():
 
 
 			#choose the correct solver depending on the number of levels
+			# i.e. 2 and 3 algebric, while >3 LAPACK
 			if(nlev>3):
 				full_function += "call mydgesv(nmax, A(:,:), B(:), \""+function_name+"\")\n\n"
 				self.needLAPACK = True
@@ -3816,7 +3825,7 @@ class krome():
 			full_function += " end if\n"
 			full_function += "end do\n\n"
 
-			#when negative value are found print some stuff and stop
+			#when negative large value are found print some stuff and stop
 			full_function += "!check if B has negative values\n"
 			full_function += "if(hasnegative>0)then\n"
 			full_function += " print *,\"ERROR: minval(B)<0d0 in "+function_name+"\"\n"
@@ -4055,6 +4064,8 @@ class krome():
 		constants.append(["clight","2.99792458e10","cm/s"]) 
 		constants.append(["pi","3.14159265359d0","#"]) 
 		constants.append(["eV_to_erg","1.60217646d-12","eV -> erg"]) 
+		constants.append(["ry_to_eV","13.60569d0","rydberg -> eV"])
+		constants.append(["ry_to_erg","2.179872d-11","rydberg -> erg"])
 		constants.append(["seconds_per_year","365d0*24d0*3600d0","yr -> s"]) 
 		constants.append(["km_to_cm","1d5","km -> cm"]) 
 		constants.append(["cm_to_Mpc","1.d0/3.08d24","cm -> Mpc"]) 
@@ -5477,16 +5488,20 @@ class krome():
 									if(iType>0): offset = str(iType*self.dustArraySize)+"+"
 									sumTypeVar = "dSumDust"+dType
 									fout.write(sumTypeVar+" = 0d0\n")
-									fout.write("!partner species sum with evaporation control for "+dType+" dust\n")
+									fout.write("!partner species sum with evaporation control for "\
+										+ dType+" dust\n")
 									fout.write("do i=1,"+str(self.dustArraySize)+"\n")
-									fout.write(" if(dn(nmols+"+offset+"i)>-1d0 .and. n(nmols+"+offset+"i)>1d-40) then\n")
+									fout.write(" if(dn(nmols+"+offset+"i)>-1d0 .and. n(nmols+"+offset\
+										+"i)>1d-40) then\n")
 									fout.write(sumTypeVar+" = "+sumTypeVar \
 										+ " + 4d0*pi*dn(nmols+"+offset+"i)*n(nmols+"\
-										+offset+"i)**2*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
+										+offset+"i)**2*krome_grain_rho("+str(iType+1)\
+										+") / krome_dust_partner_mass("\
 										+str(iType+1)+")*xdust("+offset+"i)\n")
 									fout.write(" else\n")
 									fout.write(sumTypeVar+" = "+sumTypeVar + " + 4d0*pi/3d0*n(nmols+"\
-										+offset+"i)**3*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
+										+offset+"i)**3*krome_grain_rho("+str(iType+1)\
+										+") / krome_dust_partner_mass("\
 										+str(iType+1)+")*xdust("+offset+"i)\n")
 									fout.write("   n(nmols+"+offset+"i) = 0d0\n")
 									fout.write("   dn(nmols+"+offset+"i) = 0d0\n")
@@ -5500,12 +5515,14 @@ class krome():
 								for dType in dustTypes:
 									ilow = nmols + iType * dustArraySize + 1 #lower index for dust in specs array
 									iup = nmols + (iType + 1) * dustArraySize #upper index for dust in specs array
-									kpart = "krome_dust_partner_ratio(" + str(ilow-nmols) + ":" + str(iup-nmols) + ")"
+									kpart = "krome_dust_partner_ratio(" + str(ilow-nmols) + ":" \
+										+ str(iup-nmols) + ")"
 									limits = str(ilow) + ":" + str(iup) #absolute limits
 									limits_rel = str(ilow-nmols) + ":" + str(iup-nmols) #realtive limits
 									fout.write("dSumDust"+dType + " = sum(4d0*pi*n("+limits+")**2*dn("+\
 										limits+")*krome_grain_rho("+str(iType+1)+") / "+\
-										"krome_dust_partner_mass("+str(iType+1)+") * xdust("+limits_rel+"))\n")
+										"krome_dust_partner_mass("+str(iType+1)+") * xdust("\
+										+limits_rel+"))\n")
 									iType += 1
 							fout.write("\n") #print a blank line
 
@@ -5755,6 +5772,24 @@ class krome():
 							fout.write("\tinteger,parameter::" + "KROME_"+xbasic + " = " + str(x.idx) +"\t!"+xname+"\n")
 							allBasics.append(xbasic)						
 					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
+
+			#converter from MOCASSIN abundances to KROME
+			elif(srow == "#KROME_xmoc_map"):
+				xMocMap = ""
+				for sp in specs:
+					if(not(sp.is_atom)): continue
+					if(sp.charge<0): continue
+					xMocMap += "x("+sp.fidx+") = xmoc(imap("+str(sp.zatom)+"), "+str(sp.charge+1)+")\n"
+				fout.write(xMocMap)
+
+			#converter from KROME abundances to MOCASSIN
+			elif(srow == "#KROME_xmoc_map_return"):
+				xMocMap = ""
+				for sp in specs:
+					if(not(sp.is_atom)): continue
+					if(sp.charge<0): continue
+					xMocMap += "xmoc(imap("+str(sp.zatom)+"), "+str(sp.charge+1)+") = x("+sp.fidx+")\n"
+				fout.write(xMocMap)
 
 			elif(srow == "#KROME_user_commons_functions"):
 				funcs = ""
@@ -6018,7 +6053,8 @@ class krome():
 			if(srow == "#IFKROME_report" and not(self.doReport)): skip = True
 			if(srow == "#IFKROME_useTopology" and not(self.useTopology)): skip = True
 			if(srow == "#IFKROME_check_mass_conservation" and not(self.checkConserv)): skip = True
-			if(srow == "#IFKROME_useDustSizeEvol" and not(self.useDustSputter) and not(self.useDustGrowth) and not(self.useDustEvap)): skip = True
+			if(srow == "#IFKROME_useDustSizeEvol" and not(self.useDustSputter) and not(self.useDustGrowth)\
+				and not(self.useDustEvap)): skip = True
 			if(srow == "#IFKROME_useEquilibrium" and not(self.useEquilibrium)): skip = True
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
 			if(srow == "#IFKROME_useCoolingZ" and not(self.useCoolingZ)): skip = True
@@ -6195,7 +6231,7 @@ class krome():
 
 		#copy HM2012 flux file
 		if(self.photoBins>0):
-			shutil.copyfile("data/krome_HMflux.dat", buildFolder+"krome_HMflux.dat")
+			shutil.copyfile("data/HM2012.dat", buildFolder+"krome_HMflux.dat")
 
 		#copy H2 dust tables
 		if(self.dustTabsH2):
