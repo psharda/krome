@@ -472,6 +472,26 @@ class krome():
 			print "Available tests are: "+tests
 			sys.exit()
 
+		#append extra arguments if listed
+		# e.g. -dustOptions=H2 -dustOptions=GROWTH is merged in one
+		argall = dict() #new argv
+		#loop on arguments
+		for arg in argv[1:]:
+			#if arguments have values split and merge
+			if("=" in arg):
+				(option, value) = arg.split("=")
+				#merge or create new
+				if(option in argall):
+					argall[option] += ","+value
+				else:
+					argall[option] = "="+value
+			else:
+				#no options just add argument as key
+				argall[arg] = ""
+
+		#prepare the new argv from the dictionary
+		sys.argv = [argv[0]] + [k+v for (k,v) in argall.iteritems()]
+
 		#check if the status of the test is valid
 		if(not(test_status in all_status)): sys.exit("ERROR: status "+test_status+" not recognized!")
 
@@ -3039,70 +3059,6 @@ class krome():
 				if(p.name=="E" and self.useComputeElectrons): continue
 				dns[p.idx-1] = dns[p.idx-1].replace(" = 0.d0"," =")
 				dns[p.idx-1] += " +"+rhs
-				
-
-
-		#equilibrium matrix (NOTE: NOT SUPPORTED!)
-		#TODO: fix it
-		if(False):
-			idxs = [] #already employed indexes
-			xvar = [] #names of the composite variables
-			xvarM = [] #equilibrium matrix
-			xvarS = [] #symbolic matrix (for signless comparison)
-			for rea in reacts:
-				if(rea.idx in idxs): continue #skip if already employed index
-				ridx = rea.idx-1
-				#build matrix variable reactants
-				pre_xvarR = []
-				for r in rea.reactants:
-					pre_xvarR.append("n("+r.fidx+")")
-				#build matrix variable reactants
-				pre_xvarP = []
-				for p in rea.products:
-					pre_xvarP.append("n("+p.fidx+")")
-				#look for powers (e.g. H*H*H, or H2*H2)
-				#equals = 0
-				#if(pre_xvar.count(pre_xvar[0])==len(pre_xvar)): equals = pre_xvar.count(pre_xvar[0])
-				pre_xvarR = "*".join(pre_xvarR)
-				pre_xvarP = "*".join(pre_xvarP)
-				#in case of new variable add a row to the matrix
-				if(not(pre_xvarR in xvar)):
-					xvar.append(pre_xvarR)
-					xvarM.append(["0d0" for i in reacts])
-					xvarS.append(["" for i in reacts])
-				if(not(pre_xvarP in xvar)):
-					xvar.append(pre_xvarP)
-					xvarM.append(["0d0" for i in reacts])
-					xvarS.append(["" for i in reacts])
-				#add rate to the matrix element
-				for r in rea.reactants:
-					xvarM[xvar.index(pre_xvarR)][ridx] = xvarM[xvar.index(pre_xvarR)][ridx].replace("0d0", "")
-					xvarM[xvar.index(pre_xvarR)][ridx] += " -k("+str(ridx+1)+")"
-					xvarS[xvar.index(pre_xvarR)][ridx] += "_"+str(ridx)
-				for p in rea.products:
-					xvarM[xvar.index(pre_xvarP)][ridx] = xvarM[xvar.index(pre_xvarP)][ridx].replace("0d0", "")
-					xvarM[xvar.index(pre_xvarP)][ridx] += " +k("+str(ridx+1)+")"
-					xvarS[xvar.index(pre_xvarP)][ridx] += "_"+str(ridx)
-
-			#add conseravtion to matrix
-			xvarM.append(["1d0" for i in reacts])
-			xvarS.append(["eq1" for i in reacts]) #add dummy for symbolic matrix
-			xvar.append("+".join(xvar))
-		
-			#remove linear dependent terms
-			xvarM_u = []
-			for i in range(len(xvarS)):
-				row1 = xvarS[i]
-				isequal = False
-				for j in range(i+1,len(xvarS)):
-					row2 = xvarS[j]
-					if(row1==row2):
-						isequal = True
-						break
-				if(not(isequal)):
-					xvarM_u.append(xvarM[i])
-			if(len(xvar)==len(xvarM_u)): print "NOTE: this system can be solved algebrically to the equilibrium"
-			#print str(len(xvar))+" variables and "+str(len(xvarM_u))+ " equations"
 
 		#add dust to ODEs
 		if(self.useDust):
@@ -4263,7 +4219,8 @@ class krome():
 					idust += 1
 				if(len(aadd)>0):
 					sadd = "ntot = " + (" &\n + ".join(aadd)) #current total density of the species k
-					saddi = "nitot = " + (" &\n + ".join([y.replace("n(","ni(") for y in aadd])) #initial total density of the species k
+					#initial total density of the species k
+					saddi = "nitot = " + (" &\n + ".join([y.replace("n(","ni(") for y in aadd]))
 				#prepare replacing string
 				krome_conserve += "\n!********** "+k+" **********\n"
 				krome_conserve += sadd + "\n"
