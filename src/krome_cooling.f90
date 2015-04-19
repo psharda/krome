@@ -817,7 +817,7 @@ contains
     real*8::n(:),Tgas
     real*8::temp,logt3,logt,cool,cooling_H2,T3
     real*8::LDL,HDLR,HDLV,HDL,fact
-    real*8::logt32,logt33,logt34,logt35,logt36,log37,logt38
+    real*8::logt32,logt33,logt34,logt35,logt36,logt37,logt38
     real*8::dump63,dump14
     integer::i
     character*16::names(nspec)
@@ -875,27 +875,20 @@ contains
     end if
 
     !//H2-e
-    if(temp>1d1 .and. temp<=2d2) then
-       cool =  cool +1d1**(-3.4286155D1 -4.8537163D1*logt3 &
-            -7.7121176D1*logt32 -5.1352459D1*logt33 &
-            -1.5169150D1*logt34 -.98120322D0*logt35)*n(idx_e)
-      ! cool =  cool +1d1**(-2.1928796d1 + 1.6815730d1*logt3 &
-      !      +9.6743155d1*logt32 +3.4319180d2*logt33 &
-      !      +7.3471651d2*logt34 +9.8367576d2*logt35 &
-      !      +8.0181247d2*logt36 +3.6414446d2*logt37 & 
-      !      +7.0609154d1*logt38)*n(idx_e)
+    if(temp>1d1 .and. temp<=5d2) then
+       cool =  cool +1d1**(-2.1928796d1 + 1.6815730d1*logt3 &
+            +9.6743155d1*logt32 +3.4319180d2*logt33 &
+            +7.3471651d2*logt34 +9.8367576d2*logt35 &
+            +8.0181247d2*logt36 +3.6414446d2*logt37 & 
+            +7.0609154d1*logt38)*n(idx_e)
        !note: limit extended from 1e4 to 1e6
-    elseif(temp>2d2 .and. temp<1d6)  then
-      ! cool = cool + 1d1**(-2.2921189D1 +1.6802758D0*logt3 &
-      !      +.93310622D0*logt32 +4.0406627d0*logt33 &
-      !      -4.7274036d0*logt34 -8.8077017d0*logt35 &
-      !      +8.9167183*logt36 + 6.4380698*logt37 &
-      !      -6.3701156*logt38)*n(idx_e) &
-      !      * dump63
-      cool = cool + 1d1**(-2.2190316D1 +1.5728955D0*logt3 &
-          -.213351D0*logt32 +.96149759D0*logt33 &
-          -.91023195D0*logt34 +.13749749D0*logt35)*n(idx_e) &
-          * dump63
+    elseif(temp>5d2 .and. temp<1d6)  then
+       cool = cool + 1d1**(-2.2921189D1 +1.6802758D0*logt3 &
+            +.93310622D0*logt32 +4.0406627d0*logt33 &
+            -4.7274036d0*logt34 -8.8077017d0*logt35 &
+            +8.9167183*logt36 + 6.4380698*logt37 &
+            -6.3701156*logt38)*n(idx_e) &
+            * dump63
     end if
 
     !//H2-He,  limit extended from 1e4 to 1e6
