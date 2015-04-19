@@ -248,7 +248,7 @@ contains
           !integral / hplanck (erg/s/cm2/K)
           dust_intBB_dT(k,i) = intBB_dT * pi * iplanck_eV * eV_to_erg
           !normalized integral
-          dust_intBB_sigma(k,i) = pi * dust_intBB(k,i) &
+          dust_intBB_sigma(k,i) = dust_intBB(k,i) &
                / (stefboltz_erg*Tbb**4)
           !write the data on a file
           write(33,'(2I8,99E17.8e3)') k, i, dust_intBB_Tbb(i), &
@@ -379,7 +379,7 @@ contains
     tau = (tau_d + tau_g) * lj
 
     if(tau<1d0) return
-    besc = tau**-2
+    besc = tau**(-2)
 
   end function besc
 
@@ -402,7 +402,7 @@ contains
          * (dust_intBB_sigma(jdust,ibb+1)-dust_intBB_sigma(jdust,ibb)) &
          + dust_intBB_sigma(jdust,ibb)
 
-    kpla_dust = intBB * krome_dust_asize2(jdust)
+    kpla_dust = intBB * krome_dust_asize2(jdust) * pi
 
   end function kpla_dust
 
