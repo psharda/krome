@@ -875,7 +875,7 @@ contains
     end if
 
     !//H2-e
-    if(temp>1d1 .and. temp<=5d2) then
+    if(temp>1d2 .and. temp<=5d2) then
        cool =  cool +1d1**(-2.1928796d1 + 1.6815730d1*logt3 &
             +9.6743155d1*logt32 +3.4319180d2*logt33 &
             +7.3471651d2*logt34 +9.8367576d2*logt35 &
