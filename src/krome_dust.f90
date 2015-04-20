@@ -117,7 +117,6 @@ contains
     na = 0
     asize_old = -1d99
     Qabs_old = -1d99
-    asize0 = -1d99
 
     !open file and read
     open(32,file=fname,status="old",iostat=ios)
