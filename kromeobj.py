@@ -2313,6 +2313,7 @@ class krome():
 					if("@photorates:" in srow): continue 
 					if("@var" in srow):
 						extraVars[fname].append(srow)
+						continue
 					#each reaction block starts with @type, init the reaction dictionary
 					if("@type:" in srow):
 						myrea = dict()
