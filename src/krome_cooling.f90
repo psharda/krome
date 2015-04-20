@@ -264,7 +264,12 @@ contains
     real*8::cooling_ZCIENOUV,n(:),inTgas
     real*8::cH,Tgas,xLd,logcH
 
-    cH = n(idx_H) + n(idx_H2) 
+    cH = get_Hnuclei(n(:)) 
+
+    !check if the abundance is close to zero to 
+    !avoid weird log evaluation
+    if(cH.lt.1d-20)return
+
     Tgas = log10(inTgas)
     logcH = log10(cH)
 
@@ -317,7 +322,12 @@ contains
     ixd3(:) = coolZCIEixd3(:)
 
     !local variables
-    cH = n(idx_H) + n(idx_H2) 
+    cH = get_Hnuclei(n(:)) 
+
+    !check if the abundance is close to zero to 
+    !avoid weird log evaluation
+    if(cH.lt.1d-20)return
+
     v1 = inTgas         !Tgas
     v2 = cH             !total H number density
     v3 = phys_zredshift !redshift is linear
