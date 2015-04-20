@@ -79,7 +79,7 @@
 20,H-,H,,H,H,E,,>1.16e3,NONE,exp(-20.37260896533324d0+1.139449335841631d0*lnTe-0.1421013521554148d0*lnTe**2+0.00846445538663d0*lnTe**3-0.0014327641212992d0*lnTe**4+0.0002012250284791d0*lnTe**5+0.0000866396324309d0*lnTe**6-0.00002585009680264d0*lnTe**7+2.4555011970392d-6*lnTe**8-8.06838246118d-8*lnTe**9)
 
 # Stenrup et al. 2009 !NEW!
-21,H-,H+,,H,H,,,NONE,NONE,(2.96d-6/sqrt(Tgas)-1.73d-9+2.50d-10*sqrt(Tgas)-7.77d-13*Tgas)
+21,H-,H+,,H,H,,,.GT.1d1,.LE.1e5,(2.96d-6/sqrt(Tgas)-1.73d-9+2.50d-10*sqrt(Tgas)-7.77d-13*Tgas)
 
 #Poulart 1978 
 22,H-,H+,,H2+,E,,,NONE,NONE,1.d-8*Tgas**(-0.4d0)
@@ -117,7 +117,7 @@
 27,H2+,,,H+,H,,,NONE,NONE,((aH2j + bH2j*Trad)**(-1/cH2j) + OffsetH2j)*user_J21
 
 # fit by Coppola et al. (2011) !NEW!
-29,H2+,E,,H,H,,,NONE,NONE,1.d6*(4.2278d-14-2.3088d-17*Tgas+7.3428d-21*Tgas**2-7.5474d-25*Tgas**3+3.3468d-29*Tgas**4-5.528d-34*Tgas**5)
+29,H2+,E,,H,H,,,NONE,.LE.1e4,1.d6*(4.2278d-14-2.3088d-17*Tgas+7.3428d-21*Tgas**2-7.5474d-25*Tgas**3+3.3468d-29*Tgas**4-5.528d-34*Tgas**5)
 
 #Dalgarno & Lepp 1987
 30,H2+,H-,,H,H2,,,NONE,NONE,5.d-7*sqrt(1.d2*invT)
