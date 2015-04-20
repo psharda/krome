@@ -143,10 +143,14 @@ contains
           if (krome_mpi_rank>0) then
             print *,krome_mpi_rank,"ERROR: wrong solver exit status!"
             print *,krome_mpi_rank,"istate:",istate
+            print *,krome_mpi_rank,"iter count:",icount
+            print *,krome_mpi_rank,"max iter count:",icount_max
             print *,krome_mpi_rank,"SEE KROME_ERROR_REPORT file"
           else
             print *,"ERROR: wrong solver exit status!"
             print *,"istate:",istate
+            print *,"iter count:",icount
+            print *,"max iter count:",icount_max
             print *,"SEE KROME_ERROR_REPORT file"
           end if
           call krome_dump(n(:), rwork(:), iwork(:), ni(:))
@@ -224,12 +228,14 @@ contains
   !*********************************
   !integrates to equilibrium using constant temperature
   subroutine krome_equilibrium(x,Tgas)
+    use krome_ode
+    use krome_subs
     use krome_commons
     use krome_constants
     implicit none
     integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
     integer::i,imax
-    real*8::tloc,x(:),Tgas,n(nspec),dt
+    real*8::tloc,x(:),Tgas,n(nspec),ni(nspec),dt
 #KROME_iwork_array
     real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
@@ -252,12 +258,15 @@ contains
 
     mf = 222 !internally evaluated sparsity and jacobian
     tloc = 0d0 !initial time
-    dt = seconds_per_year * 1d8
+    dt = seconds_per_year * 1d10
     
     !copy into array
     n(nmols+1:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
+
+    !store previous values
+    ni(:) = n(:)
     
     imax = 1000
 
@@ -276,6 +285,13 @@ contains
        print *,"ERROR: no equilibrium found!"
        stop
     end if
+
+    !avoid negative species
+    do i=1,nspec
+       n(i) = max(n(i),0.d0)
+    end do
+
+    n(:) = conserve(n(:),ni(:)) 
     x(:) = n(1:nmols)
 
   end subroutine krome_equilibrium
@@ -425,15 +441,17 @@ contains
     use krome_subs
     use krome_reduction
     use krome_dust
-#IFKROME_useCoolingZ
     use krome_cooling
-#ENDIFKROME
 #IFKROME_useStars
     use krome_stars
 #ENDIFKROME
 
     !init phys common variables
 #KROME_init_phys_variables
+
+    !init metallicity default
+    !assuming solar
+    total_Z = 1d0
 
     !default for thermo toggle is ON
     !$omp parallel
@@ -486,6 +504,21 @@ contains
 #IFKROME_useCoolingCO
     !initialize CO cooling
     call init_coolingCO()
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIE
+    !initialize metal CIE cooling
+    call init_coolingZCIE()
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIENOUV
+  !initialize metal CIE cooling no UV case
+  call init_anytab2D("coolZ_CIE2012NOUV.dat",CoolZNOUV_x(:), &
+        CoolZNOUV_y(:), CoolZNOUV_z(:,:), CoolZNOUV_xmul, &
+        CoolZNOUV_ymul)
+  call test_anytab2D("coolZ_CIE2012NOUV.dat",CoolZNOUV_x(:), &
+        CoolZNOUV_y(:), CoolZNOUV_z(:,:), CoolZNOUV_xmul, &
+        CoolZNOUV_ymul)
 #ENDIFKROME
 
     !initialize the table for exp(-a/T) function

@@ -51,6 +51,7 @@ class krome():
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
+        useCoolingZCIE = useCoolingZCIENOUV = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
@@ -185,7 +186,7 @@ class krome():
 		self.parser.add_argument("-columnDensityMethod", metavar="method", help="use an alternative method to \
 			N=1.8e21*(n*1e-3)**(2./3.) for column density calculation (N) from number density (n). Option available JEANS,\
 			which employs Jeans length (l) as N=n*l.")
-		self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
+		#self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
 		self.parser.add_argument("-computeElectrons", action="store_true", help="computes electrons by balancing charges instead of\
 			 using the differential de/dt.")
 		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global\
@@ -195,7 +196,8 @@ class krome():
 			also tools/lamda2.py script for a LAMDA<->KROME converter. Default FILENAME is data/coolZ.dat, which contains\
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
-			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -cooling=ATOMIC,CII,OI,FeI).\
+			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -\
+			cooling=ATOMIC,CII,OI,FeI),Z_CIE,ZCIE_NOUV.\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
 		self.parser.add_argument("-coolLevels", metavar='MAXLEV', help="use only the levels up to MAXLEV (included), e.g. -coolLevels=3\
@@ -469,6 +471,26 @@ class krome():
 			print "ERROR: test \""+args.test+"\" not present!"
 			print "Available tests are: "+tests
 			sys.exit()
+
+		#append extra arguments if listed
+		# e.g. -dustOptions=H2 -dustOptions=GROWTH is merged in one
+		argall = dict() #new argv
+		#loop on arguments
+		for arg in argv[1:]:
+			#if arguments have values split and merge
+			if("=" in arg):
+				(option, value) = arg.split("=")
+				#merge or create new
+				if(option in argall):
+					argall[option] += ","+value
+				else:
+					argall[option] = "="+value
+			else:
+				#no options just add argument as key
+				argall[arg] = ""
+
+		#prepare the new argv from the dictionary
+		sys.argv = [argv[0]] + [k+v for (k,v) in argall.iteritems()]
 
 		#check if the status of the test is valid
 		if(not(test_status in all_status)): sys.exit("ERROR: status "+test_status+" not recognized!")
@@ -829,9 +851,9 @@ class krome():
 
 
 		#use human Fluxes
-		if(args.compressFluxes):
-			self.humanFlux = False
-			print "Reading option -compressFluxes"
+		#if(args.compressFluxes):
+		#	self.humanFlux = False
+		#	print "Reading option -compressFluxes"
 
 		#use cooling dT/dt in the ODE fex
 		if(args.skipODEthermo):
@@ -1052,7 +1074,8 @@ class krome():
 			myCools = args.cooling.split(",")
 			myCools = [x.strip() for x in myCools]
 			#list of all cooling (excluded from file)
-			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE","CONT","CHEM","DISS","Z","CO"]
+			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE",\
+				"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
@@ -1115,6 +1138,8 @@ class krome():
 			if("CONT" in myCools): self.useCoolingCont = True
 			if("Z" in myCools): self.useCoolingZ = True
 			if("CO" in myCools): self.useCoolingCO = True
+			if("Z_CIE" in myCools): self.useCoolingZCIE = True
+			if("Z_CIENOUV" in myCools): self.useCoolingZCIENOUV = True
 
 			#loop over metals loaded from file and search for them in the cooling flags provided by the user
 			for met in fileCools:
@@ -2084,6 +2109,7 @@ class krome():
 					print " (i.e. @photo_start, @photo_stop tokes)"
 					sys.exit()
 				myrea.hasXsecFile = True
+				myrea.Tmin = 0e0
 				#if file is SWRI convert to KROME
 				if(myrea.krate.strip()=="@xsecFile=SWRI"):
 					SWRI2KROME(self.buildFolder,myrea.reactants[0],myrea.products,myrea.Tmin)
@@ -2271,6 +2297,7 @@ class krome():
 				sys.exit()
 			file_list = [f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))]
 			extraVars = dict() #dict of the extra varaibles, with key=filename
+			isAutoRev = False
 			for fname in file_list:
 				fname = fdbase + fname
 				if("~" in fname): continue
@@ -2291,10 +2318,13 @@ class krome():
 						myrea = dict()
 						myrea["autoFname"] = fname
 						myrea["limits"] = ""
+					if("@isrev:" in srow): isAutoRev = True
 					myrea.update(at_extract(srow)) #append to the dictionary
 					#each reaction block ends with @rate, append to the main database array
 					if("@rate:" in srow):
+						myrea["isAutoRev"] = isAutoRev
 						autoreacts.append(myrea)
+						isAutoRev = False
 
 			
 			#loop on the reactions to find auto
@@ -2339,6 +2369,8 @@ class krome():
 
 					dbFound = True
 					reaFound = autorea
+					reacts[i].isAutoRev = autorea["isAutoRev"]
+					if(autorea["isAutoRev"]): reacts[i].build_RHS()
 					if(rea.kphrate=="auto"):
 						reacts[i].kphrate = autorea["rate"]
 					else:
@@ -2352,6 +2384,7 @@ class krome():
 						reacts[i].Tmax = "1d8"
 						reacts[i].hasTlimitMax = reacts[i].hasTlimitMin = False
 						break #no more reactions needed
+
 
 				#error if automatic reaction not found
 				if(not(dbFound)):
@@ -2675,8 +2708,6 @@ class krome():
 		for x in self.specs:
 			if(not(x.name in self.thermodata)):
 				print "WARNING: no thermochemical data for "+x.name+"!"
-
-
 
 	###########################################add all the metals to cooling
 	def addMetals(self):
@@ -3028,70 +3059,6 @@ class krome():
 				if(p.name=="E" and self.useComputeElectrons): continue
 				dns[p.idx-1] = dns[p.idx-1].replace(" = 0.d0"," =")
 				dns[p.idx-1] += " +"+rhs
-				
-
-
-		#equilibrium matrix (NOTE: NOT SUPPORTED!)
-		#TODO: fix it
-		if(False):
-			idxs = [] #already employed indexes
-			xvar = [] #names of the composite variables
-			xvarM = [] #equilibrium matrix
-			xvarS = [] #symbolic matrix (for signless comparison)
-			for rea in reacts:
-				if(rea.idx in idxs): continue #skip if already employed index
-				ridx = rea.idx-1
-				#build matrix variable reactants
-				pre_xvarR = []
-				for r in rea.reactants:
-					pre_xvarR.append("n("+r.fidx+")")
-				#build matrix variable reactants
-				pre_xvarP = []
-				for p in rea.products:
-					pre_xvarP.append("n("+p.fidx+")")
-				#look for powers (e.g. H*H*H, or H2*H2)
-				#equals = 0
-				#if(pre_xvar.count(pre_xvar[0])==len(pre_xvar)): equals = pre_xvar.count(pre_xvar[0])
-				pre_xvarR = "*".join(pre_xvarR)
-				pre_xvarP = "*".join(pre_xvarP)
-				#in case of new variable add a row to the matrix
-				if(not(pre_xvarR in xvar)):
-					xvar.append(pre_xvarR)
-					xvarM.append(["0d0" for i in reacts])
-					xvarS.append(["" for i in reacts])
-				if(not(pre_xvarP in xvar)):
-					xvar.append(pre_xvarP)
-					xvarM.append(["0d0" for i in reacts])
-					xvarS.append(["" for i in reacts])
-				#add rate to the matrix element
-				for r in rea.reactants:
-					xvarM[xvar.index(pre_xvarR)][ridx] = xvarM[xvar.index(pre_xvarR)][ridx].replace("0d0", "")
-					xvarM[xvar.index(pre_xvarR)][ridx] += " -k("+str(ridx+1)+")"
-					xvarS[xvar.index(pre_xvarR)][ridx] += "_"+str(ridx)
-				for p in rea.products:
-					xvarM[xvar.index(pre_xvarP)][ridx] = xvarM[xvar.index(pre_xvarP)][ridx].replace("0d0", "")
-					xvarM[xvar.index(pre_xvarP)][ridx] += " +k("+str(ridx+1)+")"
-					xvarS[xvar.index(pre_xvarP)][ridx] += "_"+str(ridx)
-
-			#add conseravtion to matrix
-			xvarM.append(["1d0" for i in reacts])
-			xvarS.append(["eq1" for i in reacts]) #add dummy for symbolic matrix
-			xvar.append("+".join(xvar))
-		
-			#remove linear dependent terms
-			xvarM_u = []
-			for i in range(len(xvarS)):
-				row1 = xvarS[i]
-				isequal = False
-				for j in range(i+1,len(xvarS)):
-					row2 = xvarS[j]
-					if(row1==row2):
-						isequal = True
-						break
-				if(not(isequal)):
-					xvarM_u.append(xvarM[i])
-			if(len(xvar)==len(xvarM_u)): print "NOTE: this system can be solved algebrically to the equilibrium"
-			#print str(len(xvar))+" variables and "+str(len(xvarM_u))+ " equations"
 
 		#add dust to ODEs
 		if(self.useDust):
@@ -3787,6 +3754,7 @@ class krome():
 
 
 			#choose the correct solver depending on the number of levels
+			# i.e. 2 and 3 algebric, while >3 LAPACK
 			if(nlev>3):
 				full_function += "call mydgesv(nmax, A(:,:), B(:), \""+function_name+"\")\n\n"
 				self.needLAPACK = True
@@ -3813,7 +3781,7 @@ class krome():
 			full_function += " end if\n"
 			full_function += "end do\n\n"
 
-			#when negative value are found print some stuff and stop
+			#when negative large value are found print some stuff and stop
 			full_function += "!check if B has negative values\n"
 			full_function += "if(hasnegative>0)then\n"
 			full_function += " print *,\"ERROR: minval(B)<0d0 in "+function_name+"\"\n"
@@ -3907,6 +3875,8 @@ class krome():
 			if(srow == "#IFKROME_useOmukaiOpacity" and self.H2opacity!="OMUKAI"): skip = True
 			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
+			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
+			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -4050,6 +4020,8 @@ class krome():
 		constants.append(["clight","2.99792458e10","cm/s"]) 
 		constants.append(["pi","3.14159265359d0","#"]) 
 		constants.append(["eV_to_erg","1.60217646d-12","eV -> erg"]) 
+		constants.append(["ry_to_eV","13.60569d0","rydberg -> eV"])
+		constants.append(["ry_to_erg","2.179872d-11","rydberg -> erg"])
 		constants.append(["seconds_per_year","365d0*24d0*3600d0","yr -> s"]) 
 		constants.append(["km_to_cm","1d5","km -> cm"]) 
 		constants.append(["cm_to_Mpc","1.d0/3.08d24","cm -> Mpc"]) 
@@ -4247,7 +4219,8 @@ class krome():
 					idust += 1
 				if(len(aadd)>0):
 					sadd = "ntot = " + (" &\n + ".join(aadd)) #current total density of the species k
-					saddi = "nitot = " + (" &\n + ".join([y.replace("n(","ni(") for y in aadd])) #initial total density of the species k
+					#initial total density of the species k
+					saddi = "nitot = " + (" &\n + ".join([y.replace("n(","ni(") for y in aadd]))
 				#prepare replacing string
 				krome_conserve += "\n!********** "+k+" **********\n"
 				krome_conserve += sadd + "\n"
@@ -4977,6 +4950,8 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingFF" and not(self.useCoolingFF)): skip = True
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
+			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
+			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
@@ -5470,16 +5445,20 @@ class krome():
 									if(iType>0): offset = str(iType*self.dustArraySize)+"+"
 									sumTypeVar = "dSumDust"+dType
 									fout.write(sumTypeVar+" = 0d0\n")
-									fout.write("!partner species sum with evaporation control for "+dType+" dust\n")
+									fout.write("!partner species sum with evaporation control for "\
+										+ dType+" dust\n")
 									fout.write("do i=1,"+str(self.dustArraySize)+"\n")
-									fout.write(" if(dn(nmols+"+offset+"i)>-1d0 .and. n(nmols+"+offset+"i)>1d-40) then\n")
+									fout.write(" if(dn(nmols+"+offset+"i)>-1d0 .and. n(nmols+"+offset\
+										+"i)>1d-40) then\n")
 									fout.write(sumTypeVar+" = "+sumTypeVar \
 										+ " + 4d0*pi*dn(nmols+"+offset+"i)*n(nmols+"\
-										+offset+"i)**2*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
+										+offset+"i)**2*krome_grain_rho("+str(iType+1)\
+										+") / krome_dust_partner_mass("\
 										+str(iType+1)+")*xdust("+offset+"i)\n")
 									fout.write(" else\n")
 									fout.write(sumTypeVar+" = "+sumTypeVar + " + 4d0*pi/3d0*n(nmols+"\
-										+offset+"i)**3*krome_grain_rho("+str(iType+1)+") / krome_dust_partner_mass("\
+										+offset+"i)**3*krome_grain_rho("+str(iType+1)\
+										+") / krome_dust_partner_mass("\
 										+str(iType+1)+")*xdust("+offset+"i)\n")
 									fout.write("   n(nmols+"+offset+"i) = 0d0\n")
 									fout.write("   dn(nmols+"+offset+"i) = 0d0\n")
@@ -5493,12 +5472,14 @@ class krome():
 								for dType in dustTypes:
 									ilow = nmols + iType * dustArraySize + 1 #lower index for dust in specs array
 									iup = nmols + (iType + 1) * dustArraySize #upper index for dust in specs array
-									kpart = "krome_dust_partner_ratio(" + str(ilow-nmols) + ":" + str(iup-nmols) + ")"
+									kpart = "krome_dust_partner_ratio(" + str(ilow-nmols) + ":" \
+										+ str(iup-nmols) + ")"
 									limits = str(ilow) + ":" + str(iup) #absolute limits
 									limits_rel = str(ilow-nmols) + ":" + str(iup-nmols) #realtive limits
 									fout.write("dSumDust"+dType + " = sum(4d0*pi*n("+limits+")**2*dn("+\
 										limits+")*krome_grain_rho("+str(iType+1)+") / "+\
-										"krome_dust_partner_mass("+str(iType+1)+") * xdust("+limits_rel+"))\n")
+										"krome_dust_partner_mass("+str(iType+1)+") * xdust("\
+										+limits_rel+"))\n")
 									iType += 1
 							fout.write("\n") #print a blank line
 
@@ -5748,6 +5729,24 @@ class krome():
 							fout.write("\tinteger,parameter::" + "KROME_"+xbasic + " = " + str(x.idx) +"\t!"+xname+"\n")
 							allBasics.append(xbasic)						
 					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
+
+			#converter from MOCASSIN abundances to KROME
+			elif(srow == "#KROME_xmoc_map"):
+				xMocMap = ""
+				for sp in specs:
+					if(not(sp.is_atom)): continue
+					if(sp.charge<0): continue
+					xMocMap += "x("+sp.fidx+") = xmoc(imap("+str(sp.zatom)+"), "+str(sp.charge+1)+")\n"
+				fout.write(xMocMap)
+
+			#converter from KROME abundances to MOCASSIN
+			elif(srow == "#KROME_xmoc_map_return"):
+				xMocMap = ""
+				for sp in specs:
+					if(not(sp.is_atom)): continue
+					if(sp.charge<0): continue
+					xMocMap += "xmoc(imap("+str(sp.zatom)+"), "+str(sp.charge+1)+") = x("+sp.fidx+")\n"
+				fout.write(xMocMap)
 
 			elif(srow == "#KROME_user_commons_functions"):
 				funcs = ""
@@ -6011,11 +6010,14 @@ class krome():
 			if(srow == "#IFKROME_report" and not(self.doReport)): skip = True
 			if(srow == "#IFKROME_useTopology" and not(self.useTopology)): skip = True
 			if(srow == "#IFKROME_check_mass_conservation" and not(self.checkConserv)): skip = True
-			if(srow == "#IFKROME_useDustSizeEvol" and not(self.useDustSputter) and not(self.useDustGrowth) and not(self.useDustEvap)): skip = True
+			if(srow == "#IFKROME_useDustSizeEvol" and not(self.useDustSputter) and not(self.useDustGrowth)\
+				and not(self.useDustEvap)): skip = True
 			if(srow == "#IFKROME_useEquilibrium" and not(self.useEquilibrium)): skip = True
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
 			if(srow == "#IFKROME_useCoolingZ" and not(self.useCoolingZ)): skip = True
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
+			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
+			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
 			if(srow == "#IFKROME_ierr" and not(self.useIERR)): skip = True
 			if(srow == "#IFKROME_noierr" and (self.useIERR)): skip = True
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
@@ -6157,6 +6159,17 @@ class krome():
 			print "- copying coolCO.dat..."
 			shutil.copyfile("data/coolCO.dat", buildFolder+"coolCO.dat")
 
+                #copy cooling Z_CIE 
+		if(self.useCoolingZCIE):
+			print "- copying coolZ_CIE2012.dat..."
+			shutil.copyfile("data/coolZ_CIE2012.dat", buildFolder+"coolZ_CIE2012.dat")
+
+                #copy cooling Z_CIE NOUV 
+		if(self.useCoolingZCIENOUV):
+			print "- copying coolZ_CIE2012NOUV.dat..."
+			shutil.copyfile("data/coolZ_CIE2012NOUV.dat", buildFolder+"coolZ_CIE2012NOUV.dat")
+
+
 		#copy partition function files
 		if(self.typeGamma=="POPOVAS"):
 			partFiles = ["H2even","H2odd","CO"]
@@ -6175,7 +6188,7 @@ class krome():
 
 		#copy HM2012 flux file
 		if(self.photoBins>0):
-			shutil.copyfile("data/krome_HMflux.dat", buildFolder+"krome_HMflux.dat")
+			shutil.copyfile("data/HM2012.dat", buildFolder+"krome_HMflux.dat")
 
 		#copy H2 dust tables
 		if(self.dustTabsH2):

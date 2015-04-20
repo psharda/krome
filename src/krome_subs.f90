@@ -336,7 +336,7 @@ contains
     Tgas = (idx-1)*dT_part+min_part
     !store Tgas
     T1 = Tgas
-    
+
     !ln of partition functions (3 points forward)
     logz = log(array_part(idx))
     logz1 = log(array_part(idx+1))
@@ -348,7 +348,7 @@ contains
 
     !derivative for 1/(gamma-1)
     Cv1 = (emed2-emed1)/dT_part
-    
+
     !next point temperature
     Tgas = (idx)*dT_part+min_part
     !store Tgas
@@ -367,7 +367,7 @@ contains
 
     !interpolation for 1/(gamma-1)
     Cv = (Cv2-Cv1)*(inTgas-T1)/(T2-T1)+Cv1
-    
+
     !returns result
     gamma_pop = Cv
 
@@ -428,7 +428,7 @@ contains
     !derivative for the mean energy
     emed1 = Tgas**2*(logz1-logz)/dT_part
     emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
-    
+
     !get 1/(gamma-1) for the right point
     Cv2 = (emed2-emed1)/dT_part
 
@@ -743,8 +743,24 @@ contains
     real*8::troe_falloff,k0,kinf,Fc,m,rm,xexp
     rm = k0*m/kinf
     xexp = 1d0/(1d0+log10(rm)**2)
-    troe_falloff = k0*m/(1d0*rm)*Fc**xexp
+    troe_falloff = k0*m/(1d0+rm)*Fc**xexp
   end function troe_falloff
+
+  !*************************
+  function k3body(k0,kinf,Fc,nM)
+    implicit none
+    real*8::k3body,k0,kinf,Fc,nM
+    real*8::c,n,d,Pr,xexp,F
+
+    c = -0.4d0-0.67d0*log10(Fc)
+    n = 0.75d0-1.27d0*log10(Fc)
+    d = 0.14d0
+    Pr = k0*nM/kinf
+    xexp = (log10(Pr)+c)/(n-d*(log10(Pr)+c))
+    F = 1d1**(log10(Fc)/(1d0+xexp**2))
+    k3body = kinf*(Pr/(1d0+Pr)) * F
+
+  end function k3body
 
   !***********************
   !see http://kida.obs.u-bordeaux1.fr/help
@@ -792,6 +808,42 @@ contains
 
   end function colion_v96
 
+  !****************************
+  !radiative recombination rates from
+  ! Verner routine, standard fit, cm3/s
+  function recV96(Tgas,a,b)
+    implicit none
+    real*8::recV96,Tgas,a,b
+
+    recV96 = a*(1d4/Tgas)**b
+
+  end function recV96
+
+  !****************************
+  !radiative recombination rates from
+  ! Verner routine, new fit, cm3/s
+  function recNewV96(Tgas,r1,r2,r3,r4)
+    implicit none
+    real*8::recNewV96,Tgas,r1,r2,r3,r4,tt
+
+    tt = sqrt(Tgas/r3)
+    recNewV96 = r1/(tt*(tt + 1d0)**(1.-r2) &
+         * (1d0 + sqrt(Tgas/r4))**(1.+r2))
+
+  end function recNewV96
+
+  !****************************
+  !radiative recombination rates from
+  ! Verner routine, iron only, cm3/s
+  function recFeV96(Tgas,r1,r2,r3)
+    implicit none
+    real*8::recFeV96,Tgas,r1,r2,r3,tt
+
+    tt = sqrt(Tgas*1d-4)
+    recFeV96 = r1/tt**(r2 + r3 + log10(tt))
+
+  end function recFeV96
+
   !******************************
   !radiative recombination rates from Verner+96
   ! unit: cm3/s
@@ -829,7 +881,7 @@ contains
   ! for high-density regime and in the presence of UV backgrounds.
   ! if necessary it must be included in the reaction file as
   ! H2,H,,H,H,H,,NONE,NONE,dissH2_Martin96(n,Tgas)
-  function dissH2_Martin96(n, Tgas)
+  function dissH2_Martin96(n,Tgas)
     use krome_commons
     integer::i
     real*8::n(nspec),Tgas,dissH2_Martin96
@@ -842,7 +894,7 @@ contains
     !Collisional dissociation of H2
     k_CIDm(:,1) = (/-178.4239d0, -68.42243d0, 43.20243d0, -4.633167d0, &
          69.70086d0, 40870.38d0, -23705.70d0, 128.8953d0, -53.91334d0, &
-         5.313317d0, -19.73427d0, 16780.95d0, -25786.11d0, 14.82123d0, &
+         5.315517d0, -19.73427d0, 16780.95d0, -25786.11d0, 14.82123d0, &
          -4.890915d0, 0.4749030d0, -133.8283d0, -1.164408d0, 0.8227443d0,&
          0.5864073d0, -2.056313d0/)
 
@@ -867,22 +919,23 @@ contains
        logk_h2 = k_CIDm(7,i)*invT
        logk_l1 = k_CIDm(8,i)*logTv(1) + k_CIDm(9,i)*logTv(2) + &
             k_CIDm(10,i)*logTv(3) + k_CIDm(11,i)*log10(1.d0+k_CIDm(12,i)*invT)
-       logk_l2 = k_CIDm(13,i)*invT      
+       logk_l2 = k_CIDm(13,i)*invT
        logn_c1 = k_CIDm(14,i)*logTv(1) + k_CIDm(15,i)*logTv(2) &
             + k_CIDm(16,i)*logTv(3) + k_CIDm(17,i)*invT
        logn_c2 = k_CIDm(18,i) + logn_c1
-       p = k_CIDm(19,i) + k_CIDm(20,i)*exp(-Tgas*1.850d-3) &
-            + k_CIDm(21,i)*exp(-Tgas*4.40d-2)
-       n_c1 = 1d1**(-logn_c1)
-       n_c2 = 1d1**(-logn_c2)
-       logk_CID = logk_h1 - (logk_h1 - logk_l1) / (1.d0 + (n_H*n_c1)**p) &
-            + logk_h2 - (logk_h2 - logk_l2) / (1.d0 + (n_H*n_c2)**p)
+       p = k_CIDm(19,i) + k_CIDm(20,i)*exp(-Tgas/1.850d3) &
+            + k_CIDm(21,i)*exp(-Tgas/4.40d2)
+       n_c1 = 1d1**(logn_c1)
+       n_c2 = 1d1**(logn_c2)
+       logk_CID = logk_h1 - (logk_h1 - logk_l1) / (1.d0 + (n_H/n_c1)**p) &
+            + logk_h2 - (logk_h2 - logk_l2) / (1.d0 + (n_H/n_c2)**p)
        k_CID = k_CID + 1.d1**logk_CID
     enddo
 
-    dissH2_Martin96 = k_CID 
+    dissH2_Martin96 = k_CID
 
   end function dissH2_Martin96
+
 
   !**********************
   !adsorpion rate Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
