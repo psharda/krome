@@ -174,7 +174,7 @@ contains
           end if
        end do
        !interpolate on the dust size
-       dust_Qabs(nlow+i-1,:) = (Qabs_tmp(idx,1:nE) - Qabs_tmp(idx-1,1:nE)) &
+       dust_Qabs(i,:) = (Qabs_tmp(idx,1:nE) - Qabs_tmp(idx-1,1:nE)) &
             *(krome_dust_asize(i)-Qabs_a_tmp(idx-1)) &
             / (Qabs_a_tmp(idx)-Qabs_a_tmp(idx-1)) + Qabs_tmp(idx-1,1:nE)
     end do
