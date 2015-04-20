@@ -264,7 +264,12 @@ contains
     real*8::cooling_ZCIENOUV,n(:),inTgas
     real*8::cH,Tgas,xLd,logcH
 
-    cH = n(idx_H) + n(idx_H2) 
+    cH = get_Hnuclei(n(:)) 
+
+    !check if the abundance is close to zero to 
+    !avoid weird log evaluation
+    if(cH.lt.1d-20)return
+
     Tgas = log10(inTgas)
     logcH = log10(cH)
 
@@ -317,7 +322,12 @@ contains
     ixd3(:) = coolZCIEixd3(:)
 
     !local variables
-    cH = n(idx_H) + n(idx_H2) 
+    cH = get_Hnuclei(n(:)) 
+
+    !check if the abundance is close to zero to 
+    !avoid weird log evaluation
+    if(cH.lt.1d-20)return
+
     v1 = inTgas         !Tgas
     v2 = cH             !total H number density
     v3 = phys_zredshift !redshift is linear
@@ -629,7 +639,7 @@ contains
 
     cooling_dust = 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
          dust_tab_cool(:,:), dust_mult_ngas, dust_mult_Tgas, &
-         log10(ntot), log10(Tgas)) * 1d1**phys_metallicity
+         log10(ntot), log10(Tgas)) 
 
   end function cooling_dust
 #ENDIFKROME
@@ -673,7 +683,7 @@ contains
     implicit none
     real*8::cooling_dust,n(:),Tgas
 #IFKROME_usedTdust
-    real*8::rhogas,ljeans,be,pre,ntot,vgas
+    real*8::rhogas,ljeans,be,ntot,vgas
     real*8::m(nspec),intCMB,fact
     integer::i
     fact = 0.5d0
@@ -682,7 +692,6 @@ contains
     Tgas = n(idx_Tgas)
     vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
     ntot = sum(n(1:nmols))
-    pre = 0.5d0*fact*vgas*boltzmann_erg*ntot
     rhogas = sum(n(1:nmols)*m(1:nmols))
     ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
     be = besc(n(:),Tgas,ljeans,rhogas)
@@ -808,6 +817,7 @@ contains
 
   !ALL THE COOLING FUNCTIONS ARE FROM GLOVER & ABEL, MNRAS 388, 1627, 2008
   !FOR LOW DENSITY REGIME: CONSIDER AN ORTHO-PARA RATIO OF 3:1
+  !UPDATED TO THE DATA REPORTED BY GLOVER 2015, MNRAS
   !EACH SINGLE FUNCTION IS IN erg/s
   !FINAL UNITS = erg/cm3/s
   !*******************************
@@ -817,7 +827,8 @@ contains
     real*8::n(:),Tgas
     real*8::temp,logt3,logt,cool,cooling_H2,T3
     real*8::LDL,HDLR,HDLV,HDL,fact
-    real*8::logt32,logt33,logt34,logt35,dump63,dump14
+    real*8::logt32,logt33,logt34,logt35,logt36,logt37,logt38
+    real*8::dump63,dump14
     integer::i
     character*16::names(nspec)
     temp = max(Tgas, 1d1)
@@ -831,6 +842,9 @@ contains
     logt33 = logt32 * logt3
     logt34 = logt33 * logt3
     logt35 = logt34 * logt3
+    logt36 = logt35 * logt3
+    logt37 = logt36 * logt3
+    logt38 = logt37 * logt3
 
     !dumping function to extend 6e3 and 1e4 limits
     dump63 = 1d0/ (1d0 + exp(min((temp-1d4)*8d-4,3d2)))
@@ -856,9 +870,9 @@ contains
 
     !//H2-Hp, extended from 1e4 to 1e6
     if(temp>1.d1 .and. temp<=1.d4)  then
-       cool = cool + 1d1**(-2.1716699D1 +1.3865783D0*logt3 &
-            -0.37915285D0*logt32 +0.11453688D0*logt33 &
-            -0.23214154D0*logt34 +0.058538864D0*logt35)*n(idx_Hj) &
+       cool = cool + 1d1**(-2.2089523d1 +1.5714711d0*logt3 &
+            +0.015391166d0*logt32 -0.23619985d0*logt33 &
+            -0.51002221d0*logt34 +0.32168730d0*logt35)*n(idx_Hj) &
             * dump14
     end if
 
@@ -871,15 +885,19 @@ contains
     end if
 
     !//H2-e
-    if(temp>1d1 .and. temp<=2d2) then
-       cool =  cool +1d1**(-3.4286155D1 -4.8537163D1*logt3 &
-            -7.7121176D1*logt32 -5.1352459D1*logt33 &
-            -1.5169150D1*logt34 -.98120322D0*logt35)*n(idx_e)
+    if(temp>1d2 .and. temp<=5d2) then
+       cool =  cool +1d1**(-2.1928796d1 + 1.6815730d1*logt3 &
+            +9.6743155d1*logt32 +3.4319180d2*logt33 &
+            +7.3471651d2*logt34 +9.8367576d2*logt35 &
+            +8.0181247d2*logt36 +3.6414446d2*logt37 & 
+            +7.0609154d1*logt38)*n(idx_e)
        !note: limit extended from 1e4 to 1e6
-    elseif(temp>2d2 .and. temp<1d6)  then
-       cool = cool + 1d1**(-2.2190316D1 +1.5728955D0*logt3 &
-            -.213351D0*logt32 +.96149759D0*logt33 &
-            -.91023195D0*logt34 +.13749749D0*logt35)*n(idx_e) &
+    elseif(temp>5d2 .and. temp<1d6)  then
+       cool = cool + 1d1**(-2.2921189D1 +1.6802758D0*logt3 &
+            +.93310622D0*logt32 +4.0406627d0*logt33 &
+            -4.7274036d0*logt34 -8.8077017d0*logt35 &
+            +8.9167183*logt36 + 6.4380698*logt37 &
+            -6.3701156*logt38)*n(idx_e) &
             * dump63
     end if
 
@@ -912,10 +930,12 @@ contains
 
     !high density limit from HM79, GP98 
     !IN THE HIGH DENSITY REGIME LAMBDA_H2 = LAMBDA_H2(LTE) = HDL 
-    HDLR = ((9.5e-22*t3**3.76)/(1.+0.12*t3**2.1)*exp(-(0.13/t3)**3)+&
-         3.e-24*exp(-0.51/t3))
-    HDLV = (6.7e-19*exp(-5.86/t3) + 1.6e-18*exp(-11.7/t3))
-    HDL  = HDLR + HDLV
+    !UPDATED TO THE DATA BY GLOVER 2015, MNRAS
+    HDL = 1d1**(-2.0584225d1 + 5.0194035*logt3 &
+                -1.5738805*logt32 -4.7155769*logt33 & 
+                +2.4714161*logt34 +5.4710750*logt35 &
+                -3.9467356*logt36 -2.2148338*logt37 &
+                +1.8161874*logt38)
 
     LDL = cool !erg/s
     fact = HDL/LDL 
