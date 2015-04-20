@@ -99,21 +99,27 @@ contains
     use krome_constants
     implicit none
     character(*)::fname
-    integer::ios,nE,i,jtype,nd,nlow,nup
-    integer,parameter::nEmax=int(1e4)
+    integer::ios,nE,i,jtype,nd,nlow,nup,na,idx,j
+    integer,parameter::nEmax=int(1e4),namax=int(1e4)
     real*8::rout(5),E,asize,Qabs,asize_old,Qabs_old
-    real*8::Qabs_tmp(ndust,nEmax),Qabs_E_tmp(nEmax),asize0
+    real*8::Qabs_tmp(namax,nEmax),Qabs_E_tmp(nEmax)
+    real*8::Qabs_a_tmp(namax)
 
     !number of dust bins per type
     nd = ndust/ndustTypes
 
-    !set initial values
+    !check if Qabs for the given type is already filled with data
+    if(Qabs_allocated(jtype)) return
+    Qabs_allocated(jtype) = .true.
+
+    !set initial values and counters
     nE = 0
+    na = 0
     asize_old = -1d99
     Qabs_old = -1d99
     asize0 = -1d99
 
-    !open file
+    !open file and read
     open(32,file=fname,status="old",iostat=ios)
     !loop on file lines
     do
@@ -125,28 +131,19 @@ contains
        E = rout(2) * planck_eV !eV
        Qabs = rout(3) !dimensionless
        asize = rout(1) !cm
-       nE = nE + 1 !increase energy index
-       Qabs_E_tmp(nE) = E !store energy found
-       !loop on dust size to get Qabs
-       do i=(jtype-1)*nd+1,jtype*nd
-          !interpolate Qabs from asize
-          if(krome_dust_asize(i).ge.asize0 .and. &
-               krome_dust_asize(i).le.asize) then
-             Qabs_tmp(i,nE) = (krome_dust_asize(i)-asize0) &
-                  / (asize-asize0) * (Qabs-Qabs_old) + Qabs_old
-          end if
-       end do
 
        !check for next energy block
        if(asize/=asize_old) then
-          asize0 = asize_old
-          nE = 0
+          nE = 0 !restart energy counter
+          na = na + 1 !increase size counter
        end if
-       !store old
-       asize_old = asize
-       Qabs_old = Qabs
-    end do
 
+       nE = nE + 1 !increase energy index
+       Qabs_E_tmp(nE) = E !store energy found, eV
+       Qabs_a_tmp(na) = asize !store size found, cm
+       Qabs_tmp(na,nE) = Qabs !store Qabs
+       asize_old = asize
+    end do
     close(32)
 
     !if not allocated allocate
@@ -163,10 +160,27 @@ contains
     !store the number of energies in the common
     dust_Qabs_nE = nE
 
-    !copy temp Qabs to common Qabs
+    !upper and lower limits
     nlow = (jtype-1)*nd+1
     nup = jtype*nd
-    dust_Qabs(nlow:nup,:) = Qabs_tmp(nlow:nup,1:nE)
+    !copy temp Qabs to common Qabs and interpolate over grain sizes
+    !loop on dust bins
+    do i=nlow,nup
+       idx = -1 !deafult error-rising index
+       !loop on opt table sizes to found dust size corresponding index
+       do j=1,na
+          if(krome_dust_asize(i)<Qabs_a_tmp(j)) then
+             idx = j !found index
+             exit
+          end if
+       end do
+       !interpolate on the dust size
+       dust_Qabs(nlow+i-1,:) = (Qabs_tmp(idx,1:nE) - Qabs_tmp(idx-1,1:nE)) &
+            *(krome_dust_asize(i)-Qabs_a_tmp(idx-1)) &
+            / (Qabs_a_tmp(idx)-Qabs_a_tmp(idx-1)) + Qabs_tmp(idx-1,1:nE)
+    end do
+
+    !copy energies
     dust_Qabs_E(:) = Qabs_E_tmp(1:nE)
 
   end subroutine dust_load_Qabs

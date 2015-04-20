@@ -42,6 +42,7 @@ module krome_commons
   real*8,allocatable::dust_Qabs(:,:),dust_Qabs_E(:)
   real*8,allocatable::dust_intBB(:,:),dust_intBB_sigma(:,:)
   real*8,allocatable::dust_intBB_dT(:,:)
+  logical::Qabs_allocated(ndustTypes)
   real*8::xdust(ndust)
   integer::krome_dust_partner_idx(ndustTypes),dust_Qabs_nE
   integer,parameter::dust_nT=int(1e5)
