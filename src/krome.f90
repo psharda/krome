@@ -249,7 +249,7 @@ contains
     rwork(:) = 0.d0
     itol = 4 !both tolerances are scalar
     rtol(:) = 1d-6 !relative tolerance
-    atol(:) = 1d-10 !absolute tolerance
+    atol(:) = 1d-20 !absolute tolerance
 
     !for DLSODES options see its manual
     iopt = 0
