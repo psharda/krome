@@ -637,9 +637,9 @@ contains
     ntot = sum(n(1:nmols))
     Tgas = n(idx_Tgas)
 
-    cooling_dust = 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
+    cooling_dust = get_mu(n) * 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
          dust_tab_cool(:,:), dust_mult_ngas, dust_mult_Tgas, &
-         log10(ntot), log10(Tgas)) 
+         log10(ntot), log10(Tgas)) * ntot * ntot
 
   end function cooling_dust
 #ENDIFKROME
