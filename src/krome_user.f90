@@ -17,6 +17,35 @@ contains
 
 #KROME_user_commons_functions
 
+  !*********************
+  !returns the Tdust averaged over the number density
+  function krome_get_averaged_Tdust()
+    use krome_commons
+    implicit none
+    real*8::krome_get_averaged_Tdust
+
+    krome_get_averaged_Tdust = sum(xdust(:)*krome_dust_T(:))/sum(xdust(:))
+
+  end function krome_get_averaged_Tdust
+
+  !************************
+  !returns the Tdust averaged over the number density
+  ! as computed in the tables
+  function krome_get_table_Tdust(x,Tgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::krome_get_table_Tdust,x(:),ntot,Tgas
+
+    ntot = sum(x)
+    krome_get_table_Tdust = 1d1**fit_anytab2D(dust_tab_ngas(:), &
+         dust_tab_Tgas(:), dust_tab_Tdust(:,:), dust_mult_ngas, &
+         dust_mult_Tgas, &
+         log10(ntot), log10(Tgas))
+
+  end function krome_get_table_Tdust
+
+
   !**********************
   !convert from MOCASSIN abundances to KROME
   ! xmoc: MOCASSIN matrix (note: cm-3, real*4),
