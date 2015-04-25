@@ -5385,7 +5385,7 @@ class krome():
 		#H2 on dust from tables
 		if(self.dustTabsH2):
 			dustH2 = "ntot = sum(n(1:nmols))\n"
-			dustH2 += "nH2dust = get_mu(n(:) * n(idx_H) * 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &\n\
+			dustH2 += "nH2dust = get_mu(n(:)) * n(idx_H) * 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &\n\
 				dust_tab_H2(:,:), dust_mult_ngas, dust_mult_Tgas, &\n\
 				log10(ntot), log10(Tgas)) * ntot"
 
