@@ -16,7 +16,7 @@ contains
     real*8::rhogas,dmass,ngas(nmols),dust_gas_ratio,d2g
     real*8::iphi1,c,phi1,abin(ndust+1),mass(nspec),myc,phi4
     real*8::alow,aup,phi,dtg(ndustTypes),adust(ndust),Tbb,myx,a0,a1
-    real*8::alogmin,alogmax
+    real*8::alogmin,alogmax,keyFrac(ndustTypes),frac(ndustTypes)
     integer::i,j,ilow,iup,imax,nd
 
     d2g = dust_gas_ratio
@@ -36,15 +36,20 @@ contains
     !dust grain density (g/cm3)
 #KROME_dust_grain_density
 
-    !dust evaporation temperature (K)
-#KROME_dust_evaporation_temperature
+    !dust binding energy (K)
+#KROME_dust_binding_energy
+
+    !key element fraction
+#KROME_dust_key_fraction
+
+    frac(:) = keyFrac(:)/sum(keyFrac)
 
     rhogas = sum(mass(1:nmols)*ngas(:)) !total gas density g/cm3
 
     !loop on dust types
     do j=1,ndustTypes
        !integration constant
-       myc = rhogas*d2g/(4d0*pi/3d0*krome_grain_rho(j) &
+       myc = frac(j)*rhogas*d2g/(4d0*pi/3d0*krome_grain_rho(j) &
             *(aup**phi4-alow**phi4)/phi4)
        ilow = nd * (j - 1) + 1 !lower index
        iup = nd * j !upper index

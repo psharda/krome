@@ -393,7 +393,7 @@ class krome():
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=H2,CONT,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=EXACT","-ATOL=1d-40","-maxord=1",\
-				"-columnDensityMethod=JEANS","-useCoolCMBFloorZ"]]
+				"-columnDensityMethod=JEANS","-useCoolCMBFloorZ","-noSinkCheck"]]
 			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=dT,H2"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under development
@@ -4807,9 +4807,11 @@ class krome():
 
 
 		dustPartnerIdx = dustQabs = dustOptInt = ""
-		dustGrainDensity = dustEvaporationTemperature = ""
+		dustGrainDensity = dustEvaporationTemperature = dustKeyFraction = ""
 		dustBulkDensity = {"C":2.25e0, "Si":3.13e0} #bulk density in g/cm3 (Zhukovska PhD.Th., Tab.4.1)
-		dustTEvap = {"C":8.888e4, "Si":6.056e4} #evaporation density in K (Evans+93, Tab.5.1)
+		dustTEvap = {"C":8.888e4, "Si":6.056e4} #binding energy in K (Evans+93, Tab.5.1)
+		dustKey = {"C":"C", "Si":"Si"} #key element
+		zsun = get_solar_abundances()
 		useDustEvol = (self.useDustEvap or self.useDustGrowth or self.useDustSputter)
 		if(self.useDust):
 			itype = 0 #dust type index
@@ -4825,7 +4827,8 @@ class krome():
 					i2mult = "nd"
 				if(itype==2):
 					i1mult = "nd+1"
-				dustEvaporationTemperature += "krome_dust_Tevap("+i1mult+":"+i2mult+") = "+format_double(dustTEvap[dType])+"\n"
+				dustEvaporationTemperature += "krome_dust_Tbind("+i1mult+":"+i2mult+") = "+format_double(dustTEvap[dType])+"\n"
+				dustKeyFraction += "keyFrac("+str(itype)+") = 1d1**("+zsun[dustKey[dType]]+")\n"
 				if(useDustT or usedTdust): dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")\n" #,dust_opt_Qabs_"+dType
 			if(useDustT or usedTdust): dustOptInt += "call dust_init_intBB()"
 		if(not(useDustEvol)): dustPartnerIdx = ""
@@ -4855,11 +4858,12 @@ class krome():
 			if(skip): continue
 
 			row = row.replace("#KROME_dust_grain_density", dustGrainDensity)
-			row = row.replace("#KROME_dust_evaporation_temperature", dustEvaporationTemperature)
+			row = row.replace("#KROME_dust_binding_energy", dustEvaporationTemperature)
 			row = row.replace("#KROME_dust_seed", self.dustSeed)
 			row = row.replace("#KROME_dustPartnerIndex", dustPartnerIdx)
 			row = row.replace("#KROME_init_Qabs", dustQabs)
 			row = row.replace("#KROME_opt_integral", dustOptInt)
+			row = row.replace("#KROME_dust_key_fraction", dustKeyFraction)
 		 
 			if(row[0]!="#"): fout.write(row)
 
@@ -5381,9 +5385,9 @@ class krome():
 		#H2 on dust from tables
 		if(self.dustTabsH2):
 			dustH2 = "ntot = sum(n(1:nmols))\n"
-			dustH2 += "nH2dust = n(idx_H) * 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &\n\
+			dustH2 += "nH2dust = get_mu(n(:)) * n(idx_H) * 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &\n\
 				dust_tab_H2(:,:), dust_mult_ngas, dust_mult_Tgas, &\n\
-				log10(ntot), log10(Tgas)) * 1d1**phys_metallicity"
+				log10(ntot), log10(Tgas)) * ntot"
 
 
 		#replace pragma with built strings 
