@@ -9,11 +9,12 @@ module KROME_cooling
 contains
 
   !*******************
-  function cooling(n,Tgas)
+  function cooling(n,inTgas)
     use krome_commons
     implicit none
-    real*8::n(:),Tgas,cooling
+    real*8::n(:),inTgas,cooling,Tgas
 
+    Tgas = inTgas
     cooling = sum(get_cooling_array(n(:),Tgas))
 
   end function cooling

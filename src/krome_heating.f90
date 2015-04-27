@@ -4,11 +4,12 @@ contains
 #KROME_header
 
   !************************
-  function heating(n,Tgas,k,nH2dust)
+  function heating(n,inTgas,k,nH2dust)
     implicit none
-    real*8::n(:), Tgas, k(:), nH2dust
+    real*8::n(:), Tgas, inTgas, k(:), nH2dust
     real*8::heating
 
+    Tgas = inTgas
     heating = sum(get_heating_array(n(:),Tgas,k(:), nH2dust))
 
   end function heating
