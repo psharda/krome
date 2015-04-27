@@ -36,6 +36,7 @@ SUBROUTINE init_cooling
   USE cooling_mod
   USE krome_main
   USE krome_commons
+  USE krome_user
   implicit none
   character(len=80):: id='$Id: cooling.f90,v 1.40 2013/08/04 09:13:09 troels_h Exp $'
 !.......................................................................
@@ -54,7 +55,12 @@ SUBROUTINE init_cooling
 
   call read_cooling_namelist
 
-  if(do_cool.or.chemistry) call krome_init()
+  if(do_cool.or.chemistry) then
+    !$omp parallel
+    call krome_set_user_Av(1.0_8) ! Make sure AV is defined
+    !$omp end parallel
+    call krome_init()
+  endif
   if (do_radtrans) call init_radiative_transfer
 
 END SUBROUTINE init_cooling
