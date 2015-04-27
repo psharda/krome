@@ -447,12 +447,15 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	lastLambda = [sorted((x.replace("+","+/E/")).split("/")) for x in lastLambda]
 	#remove empty prdoducts if any
 	lastLambda = [[y for y in x if y!=""] for x in lastLambda]
+	lastLambda = [sorted([x.upper() if x=="e" else x for x in block]) for block in lastLambda]
 
 	#search the column that contains the given branch
 	psort = sorted(prods)
 	if(not(psort in lastLambda)):
-		print "ERROR: products "+(" ".join(psort))+" aren't in the SWRI file "+data_folder
+		print "ERROR: products "+(" ".join(psort))+" aren't in the SWRI file "\
+			+ data_folder+reactant.name + ".dat"
 		print "Available:",lastLambda[2:]
+		print "Looking for:",psort
 		sys.exit()
 	data_col = lastLambda.index(psort) #first column matching
 	if(data_col in removecol): sys.exit("ERROR: problem with SWRI column merging!")
@@ -473,6 +476,7 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	xmin = xmax = None
 	#these 'Dirac' statements are employed to approximate line width (see comments below)
 	isDirac = False #boolean to determine if it is reading a line or not
+	hasDirac = False #boolean to determine if lines are found or not
 	xDirac = [] #list of the lines found
 	dDirac = {"freqL":0e0, "freqR":0e0, "xsec":0e0} #template for line (boundaries + xsec)
 	#row format is: [E(eV), [xsec(cm2) for each branch]]
@@ -483,6 +487,7 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		#SWRI notation: when xsec is 1e-35 start to read a line
 		# with 1e-35 xsec 1e-35 to get the linewidth
 		if(xsec==1e-35):
+			hasDirac = True
 			isDirac = not(isDirac)
 			if(xsec_old==1e-35): isDirac = True #double 1e-35 to open lines block
 			#store the left and the right bound of the line
@@ -510,9 +515,10 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	# the boolean isDirac is true when reading line, hence
 	# if not closed (still False ad EOF) rises an error.
 	# False beacuse of double 1e-35 to close the line part
-	if(not(isDirac)):
-		print "ERROR: in SWRI read line with opened"
+	if(not(isDirac) and hasDirac):
+		print "ERROR: in SWRI read line with openen token"
 		print " but never closed!"
+		print " check:"+data_folder+reactant.name + ".dat"
 		sys.exit()
 	#create interpolated function from SWRI file
 	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
