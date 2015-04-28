@@ -17,17 +17,6 @@ contains
 
 #KROME_user_commons_functions
 
-  !*********************
-  !returns the Tdust averaged over the number density
-  function krome_get_averaged_Tdust()
-    use krome_commons
-    implicit none
-    real*8::krome_get_averaged_Tdust
-
-    krome_get_averaged_Tdust = sum(xdust(:)*krome_dust_T(:))/sum(xdust(:))
-
-  end function krome_get_averaged_Tdust
-
   !************************
   !returns the Tdust averaged over the number density
   ! as computed in the tables
@@ -44,7 +33,6 @@ contains
          log10(ntot), log10(Tgas))
 
   end function krome_get_table_Tdust
-
 
   !**********************
   !convert from MOCASSIN abundances to KROME
@@ -275,6 +263,17 @@ contains
     krome_dust_T(:) = arr(:)
 
   end subroutine krome_set_Tdust_array
+
+  !*********************
+  !returns the Tdust averaged over the number density
+  function krome_get_averaged_Tdust()
+    use krome_commons
+    implicit none
+    real*8::krome_get_averaged_Tdust
+
+    krome_get_averaged_Tdust = sum(xdust(:)*krome_dust_T(:))/sum(xdust(:))
+
+  end function krome_get_averaged_Tdust
 
   !****************************
   subroutine krome_scale_dust_distribution(xscale)
