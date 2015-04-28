@@ -23,7 +23,7 @@ subroutine cooling_fine(ilevel)
   ! Operator splitting step for cooling source term by vector sweeps
   if (do_cool) then
      ncache=active(ilevel)%ngrid
-     !$omp parallel do private(igrid,ngrid,i,ind_grid)
+     !$omp parallel do private(igrid,ngrid,i,ind_grid) schedule(dynamic,1)
      do igrid=1,ncache,nvector
         ngrid=MIN(nvector,ncache-igrid+1)
         do i=1,ngrid
@@ -162,6 +162,11 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
            if(do_cool.and.chemistry) then
               !KROME: do chemistry+cooling
+              if (any(unoneq < 0.0_dp)) then
+                 write(*,*) 'Negative densities are not allowed'
+                 write(*,*) 'N: ', unoneq
+                 stop
+              end if
               call krome(unoneq(:), Tgas, dtcool)
            elseif(.not.chemistry.and.do_cool) then
               !KROME: cooling only
