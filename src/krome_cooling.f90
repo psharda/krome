@@ -633,14 +633,27 @@ contains
     use krome_commons
     use krome_subs
     implicit none
-    real*8::n(:),Tgas,ntot,cooling_dust
+    real*8::n(:),Tgas,ntot,cooling_dust,coolFit
+    real*8::logn,logt
 
     ntot = sum(n(1:nmols))
     Tgas = n(idx_Tgas)
 
-    cooling_dust = get_mu(n) * 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
+    logn = log10(ntot)
+    logt = log10(Tgas)
+    !cooling fit from tables
+    coolFit = fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
          dust_tab_cool(:,:), dust_mult_ngas, dust_mult_Tgas, &
-         log10(ntot), log10(Tgas)) * ntot * ntot
+         logn, logt)
+
+    !very small cooling means load heating
+    if(coolFit<-39d0) then
+       cooling_dust = - get_mu(n) * 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
+            dust_tab_heat(:,:), dust_mult_ngas, dust_mult_Tgas, &
+            logn, logt) * ntot * ntot
+    else
+       cooling_dust = get_mu(n) * 1d1**coolFit * ntot * ntot
+    end if
 
   end function cooling_dust
 #ENDIFKROME
