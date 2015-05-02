@@ -946,7 +946,8 @@ contains
     !UPDATED TO THE DATA BY GLOVER 2015 for high temperature corrections, MNRAS
     !IN THE HIGH DENSITY REGIME LAMBDA_H2 = LAMBDA_H2(LTE) = HDL 
     !the following mix of functions ensures the right behaviour 
-    ! at low temperatures (Tgas < 10 K) and the new fitting at high temperatures (T > 2000 K)
+    ! at low temperatures (Tgas < 10 K) and at high temperatures (T > 2000 K) by 
+    ! using both the original Hollenbach and the new Glover data, merging them
     ! in a smooth way.
     if(temp.lt.2d3)then
        HDLR = ((9.5e-22*t3**3.76)/(1.+0.12*t3**2.1)*exp(-(0.13/t3)**3)+&
