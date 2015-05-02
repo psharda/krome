@@ -65,9 +65,7 @@
 # fit by Mitchell & Deveau 1983 of data by Corrigan 1965 !NEW!
 16,H2,E,,H,H,E,,NONE,NONE,4.38d-10*exp(-102000./Tgas)*Tgas**(0.35)
 
-#Martin et al 1996
-@noTabNext
-17,H2,H,,H,H,H,,NONE,NONE,dissH2_Martin96(n,Tgas)
+17,H2,H,,H,H,H,,NONE,NONE,1.0670825d-10*Te**2.012d0*exp(-4.463d0*invTe)/(1.d0+0.2472d0*Te)**3.512d0
 
 #Janev 1987
 18,H-,E,,H,E,E,,NONE,NONE,exp(-18.01849334273d0+2.360852208681d0*lnTe-0.2827443061704d0*lnTe**2+0.01623316639567d0*lnTe**3-0.03365012031362999d0*lnTe**4+0.01178329782711d0*lnTe**5-0.001656194699504d0*lnTe**6+0.0001068275202678d0*lnTe**7-2.631285809207d-6*lnTe**8)
@@ -105,8 +103,8 @@
 27,H2,H2,,H,H,H2,,NONE,NONE,kh21**(1.-a21)*kl21**a21
 
 #NEW REACTION FROM YOSHIDA 2006, FOR HELIUM CHARGE TRANSFER
-@format:idx,R,R,P,P,Tmin,Tmax,rate
-28,He+,H,He,H+,NONE,NONE,1.20d-15*(Tgas/3d2)**0.25d0
-
-29,He,H+,He+,H,NONE,.LE.1d4,1.26d-9*Tgas**(-0.75d0)*exp(-1.275d5*invT)
-30,He,H+,He+,H,>1d4,NONE,4.d-37*Tgas**(4.74d0)
+#@format:idx,R,R,P,P,Tmin,Tmax,rate
+#28,He+,H,He,H+,NONE,NONE,1.20d-15*(Tgas/3d2)**0.25d0
+#
+#29,He,H+,He+,H,NONE,.LE.1d4,1.26d-9*Tgas**(-0.75d0)*exp(-1.275d5*invT)
+#30,He,H+,He+,H,>1d4,NONE,4.d-37*Tgas**(4.74d0)
