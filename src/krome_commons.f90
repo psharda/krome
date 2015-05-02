@@ -105,6 +105,7 @@ module krome_commons
   real*8::dust_tab_ngas(dust_tab_imax)
   real*8::dust_tab_Tgas(dust_tab_jmax)
   real*8::dust_tab_cool(dust_tab_imax,dust_tab_jmax)
+  real*8::dust_tab_heat(dust_tab_imax,dust_tab_jmax)
   real*8::dust_tab_Tdust(dust_tab_imax,dust_tab_jmax)
   real*8::dust_tab_H2(dust_tab_imax,dust_tab_jmax)
   real*8::dust_mult_ngas,dust_mult_Tgas
