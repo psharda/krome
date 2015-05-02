@@ -93,3 +93,7 @@
 
 ##ENZO
 37,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)
+
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+#ADDITIONAL DEUTERIUM RATES FROM GP98, SLD98
+38,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)

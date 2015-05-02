@@ -360,7 +360,7 @@ class krome():
 			[argv.append(x) for x in ["-photoBins=10"]]
 			filename = "networks/react_auto"
 		elif(args.test=="chianti"):
-			[argv.append(x) for x in ["-photoBins=10","-useThermoToggle","-coolLevels=99999"]]
+			[argv.append(x) for x in ["-photoBins=10","-useThermoToggle","-coolLevels=99999","-noRecCheck"]]
 			[argv.append(x) for x in ["-cooling=CII,CIII,CIV,CV,CVI"]]
 			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
 			filename = "networks/react_chianti"
@@ -405,11 +405,11 @@ class krome():
 			filename = "networks/react_primordialZ_surface"
 			test_status = "dev" #under development
 		elif(args.test=="collapseZ"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM", "-noSinkCheck"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
 			filename = "networks/react_primordialZ"
 		elif(args.test=="collapse_COcool"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,CO", "-heating=COMPRESS,CHEM"]]
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,CO", "-heating=COMPRESS,CHEM","-noSinkCheck"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under development
@@ -420,13 +420,13 @@ class krome():
 			filename = "networks/react_COthin"
 			test_status = "dev" #under development
 		elif(args.test=="collapseZ_UV"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO","-noSinkCheck"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
 			filename = "networks/react_primordialZ_UV"
 			test_status = "dev" #under development
 		elif(args.test=="collapseZ_induced"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL","-photoBins=10","-usePhotoInduced"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL","-photoBins=10","-usePhotoInduced","-noSinkCheck"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under development
                 elif(args.test=="collapseUV"):
@@ -441,16 +441,17 @@ class krome():
 			filename = "networks/react_xrays"
                 elif(args.test=="earlyUniverse"):
 			[argv.append(x) for x in ["-cooling=H2GP98,COMPTON,EXPANSION"]]
-			[argv.append(x) for x in ["-useFileIdx"]]
+			[argv.append(x) for x in ["-useFileIdx","-computeElectrons"]]
 			filename = "networks/react_earlyUniverse"
 		elif(args.test=="stars"):
-			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck"]]
+			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck","-noSinkCheck"]]
 			filename = "networks/react_star"
 			test_status = "dev" #under development
 		elif(args.test=="reverse"):
-			[argv.append(x) for x in ["-reverse"]]
+			[argv.append(x) for x in ["-reverse","-noSinkCheck"]]
 			filename = "networks/react_NO"
 		elif(args.test=="atmosphere"):
+			[argv.append(x) for x in ["-noSinkCheck"]]
 			filename = "networks/react_kast80"
 			test_status = "dev" #under development
 		elif(args.test=="wrapC"):
@@ -463,6 +464,7 @@ class krome():
 			[argv.append(x) for x in ["-useThermoToggle"]]
 			filename = "networks/react_COthin"
 		elif(args.test=="hello"):
+                        [argv.append(x) for x in ["-noSinkCheck"]]
 			filename = "networks/react_hello"
 		elif(args.test=="customCooling"):
 			filename = "networks/react_customCool"
