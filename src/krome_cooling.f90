@@ -945,11 +945,13 @@ contains
     !high density limit from HM79, GP98 
     !IN THE HIGH DENSITY REGIME LAMBDA_H2 = LAMBDA_H2(LTE) = HDL 
     !UPDATED TO THE DATA BY GLOVER 2015, MNRAS
-    HDL = 1d1**(-2.0584225d1 + 5.0194035*logt3 &
-                -1.5738805*logt32 -4.7155769*logt33 & 
-                +2.4714161*logt34 +5.4710750*logt35 &
-                -3.9467356*logt36 -2.2148338*logt37 &
-                +1.8161874*logt38)
+    if(temp>=1d2 .and. temp<=1d4)then
+       HDL = 1d1**(-2.0584225d1 + 5.0194035*logt3 &
+                   -1.5738805*logt32 -4.7155769*logt33 & 
+                   +2.4714161*logt34 +5.4710750*logt35 &
+                   -3.9467356*logt36 -2.2148338*logt37 &
+                   +1.8161874*logt38)
+    endif
 
     LDL = cool !erg/s
     fact = HDL/LDL 
