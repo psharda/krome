@@ -227,7 +227,11 @@ contains
 
   !*********************************
   !integrates to equilibrium using constant temperature
+#IFKROME_useX
+  subroutine krome_equilibrium(x,rhogas,Tgas)
+#ELSEKROME
   subroutine krome_equilibrium(x,Tgas)
+#ENDIFKROME
     use krome_ode
     use krome_subs
     use krome_commons
@@ -235,7 +239,8 @@ contains
     implicit none
     integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
     integer::i,imax
-    real*8::tloc,x(:),Tgas,n(nspec),ni(nspec),dt
+    real*8::tloc,x(nmols),Tgas,n(nspec),mass(nspec),ni(nspec)
+    real*8::rhogas,dt,xin
 #KROME_iwork_array
     real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
@@ -259,10 +264,21 @@ contains
     mf = 222 !internally evaluated sparsity and jacobian
     tloc = 0d0 !initial time
     dt = seconds_per_year * 1d10
-    
+
+    n(:) = 0.d0 !initialize densities
+#IFKROME_useX
+    mass(:) = get_mass() !get masses
+    xin = sum(x) !store initial fractions
+    !compute densities from fractions
+    do i = 1,nmols
+       if(mass(i)>0.d0) n(i) = rhogas * x(i) / mass(i)
+    end do
+#ELSEKROME
     !copy into array
     n(nmols+1:) = 0d0
     n(1:nmols) = x(:)
+#ENDIFKROME
+
     n(idx_Tgas) = Tgas
 
     !store previous values
@@ -291,8 +307,17 @@ contains
        n(i) = max(n(i),0.d0)
     end do
 
+#IFKROME_conserve
     n(:) = conserve(n(:),ni(:)) 
+#ENDIFKROME
+
+#IFKROME_useX
+    x(:) = mass(1:nmols)*n(1:nmols)/rhogas !return to fractions
+    x(:) = x(:) / sum(x) * xin !force mass conservation
+#ELSEKROME
+    !returns to user array
     x(:) = n(1:nmols)
+#ENDIFKROME
 
   end subroutine krome_equilibrium
 

@@ -845,7 +845,7 @@ contains
     real*8::dump63,dump14
     integer::i
     character*16::names(nspec)
-    temp = max(Tgas, 1d1)
+    temp = max(Tgas, 3d1)
 
     T3 = temp * 1.d-3
     logt3 = log10(T3)
@@ -960,12 +960,19 @@ contains
                    +2.4714161*logt34 +5.4710750*logt35 &
                    -3.9467356*logt36 -2.2148338*logt37 &
                    +1.8161874*logt38)
+    else
+       HDL = 1d1**(-2.0584225d1 + 5.0194035 &
+                   -1.5738805 -4.7155769 &
+                   +2.4714161 +5.4710750 &
+                   -3.9467356 -2.2148338 &
+                   +1.8161874)*dump14
     endif 
 
     LDL = cool !erg/s
     fact = HDL/LDL 
 
     cooling_H2 = HDL*n(idx_H2)/(1.d0+(fact))  #KROME_H2opacity !erg/cm3/s
+    cooling_H2 = max(1d-30,cooling_H2)
 
   end function cooling_H2
 #ENDIFKROME
