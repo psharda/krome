@@ -138,3 +138,9 @@
 @format:idx,Tmin,Tmax,R,R,P,P,P,rate
 41,NONE,NONE,H3O+,E,OH,H,H,6.50d-7*(T32)**(-0.50)
 42,NONE,NONE,OH+,E,O,H,,6.3d-9*(T32)**(-0.48)
+@format:idx,R,R,P,rate
+43,O+,E,O,auto
+44,CO+,E,CO,auto
+@format:idx,R,R,P,P,rate
+45,CO+,E,C,O,auto
+

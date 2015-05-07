@@ -845,7 +845,7 @@ contains
     real*8::dump63,dump14
     integer::i
     character*16::names(nspec)
-    temp = max(Tgas, 1d1)
+    temp = max(Tgas, 3d1)
 
     T3 = temp * 1.d-3
     logt3 = log10(T3)
@@ -942,21 +942,37 @@ contains
        return
     end if
 
-    !high density limit from HM79, GP98 
+    !high density limit from HM79, GP98 below Tgas = 2d3  
+    !UPDATED TO THE DATA BY GLOVER 2015 for high temperature corrections, MNRAS
     !IN THE HIGH DENSITY REGIME LAMBDA_H2 = LAMBDA_H2(LTE) = HDL 
-    !UPDATED TO THE DATA BY GLOVER 2015, MNRAS
-    if(temp>=1d2 .and. temp<=1d4)then
+    !the following mix of functions ensures the right behaviour 
+    ! at low temperatures (Tgas < 10 K) and at high temperatures (T > 2000 K) by 
+    ! using both the original Hollenbach and the new Glover data, merging them
+    ! in a smooth way.
+    if(temp.lt.2d3)then
+       HDLR = ((9.5e-22*t3**3.76)/(1.+0.12*t3**2.1)*exp(-(0.13/t3)**3)+&
+            3.e-24*exp(-0.51/t3)) !erg/s
+       HDLV = (6.7e-19*exp(-5.86/t3) + 1.6e-18*exp(-11.7/t3)) !erg/s
+       HDL  = HDLR + HDLV !erg/s
+    elseif(temp>=2d3 .and. temp<=1d4)then
        HDL = 1d1**(-2.0584225d1 + 5.0194035*logt3 &
-                   -1.5738805*logt32 -4.7155769*logt33 & 
+                   -1.5738805*logt32 -4.7155769*logt33 &
                    +2.4714161*logt34 +5.4710750*logt35 &
                    -3.9467356*logt36 -2.2148338*logt37 &
                    +1.8161874*logt38)
-    endif
+    else
+       HDL = 1d1**(-2.0584225d1 + 5.0194035 &
+                   -1.5738805 -4.7155769 &
+                   +2.4714161 +5.4710750 &
+                   -3.9467356 -2.2148338 &
+                   +1.8161874)*dump14
+    endif 
 
     LDL = cool !erg/s
     fact = HDL/LDL 
 
     cooling_H2 = HDL*n(idx_H2)/(1.d0+(fact))  #KROME_H2opacity !erg/cm3/s
+    cooling_H2 = max(1d-30,cooling_H2)
 
   end function cooling_H2
 #ENDIFKROME
