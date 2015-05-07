@@ -263,7 +263,6 @@ contains
 
     mf = 222 !internally evaluated sparsity and jacobian
     tloc = 0d0 !initial time
-    dt = seconds_per_year * 1d10
 
     n(:) = 0.d0 !initialize densities
 #IFKROME_useX
@@ -286,6 +285,7 @@ contains
     
     imax = 1000
 
+    dt = seconds_per_year * 1d10
     do i=1,imax
        !solve ODE
        CALL DLSODES(fcn_tconst, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
@@ -313,7 +313,6 @@ contains
 
 #IFKROME_useX
     x(:) = mass(1:nmols)*n(1:nmols)/rhogas !return to fractions
-    x(:) = x(:) / sum(x) * xin !force mass conservation
 #ELSEKROME
     !returns to user array
     x(:) = n(1:nmols)
