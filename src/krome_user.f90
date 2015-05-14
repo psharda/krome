@@ -53,7 +53,9 @@ contains
 
     n(1:nmols) = x(:)
     n(nmols+1:nspec) = 0d0
+#IFKROME_has_electrons
     x(idx_e) = get_electrons(n(:))
+#ENDIFKROME
     krome_convert_xmoc(:) = x(:)
 
   end function krome_convert_xmoc
@@ -1240,7 +1242,7 @@ contains
     use krome_commons
     implicit none
     real*8::x(:),n(nspec),inTgas,k(nrea)
-    real*8::krome_get_heating_array(9),Tgas,nH2dust
+    real*8::krome_get_heating_array(nheats),Tgas,nH2dust
 
     n(:) = 0d0
     n(1:nmols) = x(:)

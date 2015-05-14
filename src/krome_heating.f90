@@ -64,9 +64,27 @@ contains
     heats(idx_heat_visc) = heat_Visc(n(:),Tgas)
 #ENDIFKROME
 
+    heats(idx_heat_custom) = heat_custom(n(:),Tgas)
+
     get_heating_array(:) = heats(:)
 
   end function get_heating_array
+
+
+  !*************************
+  function heat_custom(n,Tgas)
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    implicit none
+    real*8::n(:),Tgas,heat_custom
+#KROME_custom_heating_var_define
+
+    heat_custom = 0d0
+#KROME_custom_heating_var
+#KROME_custom_heating_expr
+
+  end function heat_custom
 
 #IFKROME_useHeatingVisc
   !*************************
