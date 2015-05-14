@@ -89,6 +89,7 @@ class krome():
 	dummy = molec()
 	coevars = dict() #variables in function coe() (krome_subs.f90)
 	coolVars = dict() #variables for custom cooling (krome_cooling.f90)
+	heatVars = dict() #variables for custom heating (krome_heating.f90)
 	coevarsODE = dict() #variables in function fex() (krome_ode.f90)
 	commonvars = [] #list of common variables
 	implicit_arrays = totMetals = ""
@@ -126,6 +127,7 @@ class krome():
 	ramses_offset = 2 #offset in the array for ramses
 	coolFile = ["data/coolZ.dat"]
 	customCoolList = [] #list of the custom cooling functions
+	customHeatList = [] #list of the custom heating functions
 	fdbase = "data/database/" #database of reaction folder for auto reactions
 	version = "14.08.dev"
 	codename = "Beastie Boyle"
@@ -1652,6 +1654,7 @@ class krome():
 		irate = 10 #position of the rate in F90 style
 		ivarcoe = 0 #number variable to order dictionary (dictionaries are not ordered by definition!)
 		ivarCool = 0 #same as above but for custom cooling variables
+		ivarHeat = 0 #same as above but for custom heating variables
 		TminAuto = self.TminAuto
 		TmaxAuto = self.TmaxAuto
 		hasFormat = False
@@ -1673,6 +1676,7 @@ class krome():
 		inOdeModifierBlock = False #block of modifier expression for the ODE dn/dT
 		noTabBlockStored = noTabNextBlock #store the noTabNextBlock array before inPhotoBlock to restore it
 		inCoolingBlock = False #block for custom cooling expression
+		inHeatingBlock = False #block for custom heating expression
 		inSurfaceBlock = False #block for reaction on surface
 
 		#generate a custom reaction network and replace filename with the custom one
@@ -1758,6 +1762,13 @@ class krome():
 				self.customCoolList.append(customCool) #append cooling
 				continue #not a reaction
 
+			#search for custom heating and append to the list
+			if(("@heating:" in srow) and (inHeatingBlock)):
+				customHeat = srow.replace("@heating:","").strip() #remove token
+				if(customHeat[0]=="+"): customHeat = customHeat[1:] #remove initial + sign if present
+				self.customHeatList.append(customHeat) #append heating 
+				continue #not a reaction
+
 			#search for variables
 			if("@var:" in srow):
 				arow = srow.replace("@var:","").split("=")
@@ -1785,6 +1796,16 @@ class krome():
 					if(arow[0] in self.coolVars): continue #skip already found variables
 					self.coolVars[arow[0]] = [ivarCool,arow[1]]
 					ivarCool += 1 #count variables for later sorting
+				continue #SKIP: a variable line is not a reaction line
+
+				if(not(inHeatingBlock)):
+					if(arow[0] in self.coevars): continue #skip already found variables
+					self.coevars[arow[0]] = [ivarcoe,arow[1]]
+					ivarcoe += 1 #count variables for later sorting
+				else:
+					if(arow[0] in self.heatVars): continue #skip already found variables
+					self.heatVars[arow[0]] = [ivarHeat,arow[1]]
+					ivarHeat += 1 #count variables for later sorting
 				continue #SKIP: a variable line is not a reaction line
 
 			#search for common variables
@@ -1890,6 +1911,17 @@ class krome():
 			#custom cooling block end
 			if(srow.lower()=="@cooling_end" or srow.lower()=="@cooling_stop"):
 				inCoolingBlock = False
+				continue #SKIP (not a reaction)
+
+                        #custom heating block start
+			if(srow.lower()=="@heating_start" or srow.lower()=="@heating_begin"):
+				inHeatingBlock = True
+				self.use_heating = True
+				continue #SKIP (not a reaction)
+
+			#custom heating block end
+			if(srow.lower()=="@heating_end" or srow.lower()=="@heating_stop"):
+				inHeatingBlock = False
 				continue #SKIP (not a reaction)
 
 			#if requested the next reaction will not uses tabs
@@ -5100,6 +5132,8 @@ class krome():
 				klist = [[k+" = "+v[1]+"\n",v[0]] for k,v in self.coolVars.iteritems()] #this mess is to sort dict
 				klist = sorted(klist, key=lambda x: x[1])
 				fout.write("".join([x[0] for x in klist]))
+
+						
 			else:
 				#replace pragma for total metals
 				row = row.replace("#KROME_tot_metals", self.totMetals)
@@ -5323,6 +5357,18 @@ class krome():
 					row = row.replace("#KROME_vars","real*8::"+(",".join(dH_varsa))+"\n")
 					row = row.replace("#KROME_rates",dH_coe)
 					row = row.replace("#KROME_dH_heating",dH_heat)
+				elif("#KROME_custom_heating_expr" in row.strip()):
+					heatAll = ""
+					if(len(self.customHeatList)!=0): heatAll = " heating_custom = " + ("+ &\n".join(self.customHeatList))
+					fout.write(row.replace("#KROME_custom_heating_expr",heatAll))
+				elif(row.strip()=="#KROME_custom_heating_var_define"):
+					vardef = ""
+					if(len(self.heatVars)>0): vardef = "real*8::"+(",".join(self.heatVars))
+					fout.write(vardef+"\n")
+				elif(row.strip()=="#KROME_custom_heating_var"):
+					klist = [[k+" = "+v[1]+"\n",v[0]] for k,v in self.heatVars.iteritems()] #this mess is to sort dict
+					klist = sorted(klist, key=lambda x: x[1])
+					fout.write("".join([x[0] for x in klist]))
 			
 				if(len(row)==0): continue
 				if(row[0]!="#"): fout.write(row)
