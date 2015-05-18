@@ -1766,7 +1766,7 @@ class krome():
 			#search for custom heating and append to the list
 			if(("@heating:" in srow) and (inHeatingBlock)):
 				customHeat = srow.replace("@heating:","").strip() #remove token
-				if(customCool[0]=="+"): customCool = customCool[1:] #remove initial + sign if present
+				if(customHeat[0]=="+"): customHeat = customHeat[1:] #remove initial + sign if present
 				self.customHeatList.append(customHeat) #append heating
 				continue #not a reaction
 
