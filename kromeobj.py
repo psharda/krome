@@ -5798,6 +5798,7 @@ class krome():
 				for sp in specs:
 					if(not(sp.is_atom)): continue
 					if(sp.charge<0): continue
+					if(sp.zatom==0): continue
 					xMocMap += "x("+sp.fidx+") = xmoc(imap("+str(sp.zatom)+"), "+str(sp.charge+1)+")\n"
 				fout.write(xMocMap)
 
@@ -5806,6 +5807,7 @@ class krome():
 				xMocMap = ""
 				for sp in specs:
 					if(not(sp.is_atom)): continue
+					if(sp.zatom==0): continue
 					if(sp.charge<0): continue
 					xMocMap += "xmoc(imap("+str(sp.zatom)+"), "+str(sp.charge+1)+") = x("+sp.fidx+")\n"
 				fout.write(xMocMap)
