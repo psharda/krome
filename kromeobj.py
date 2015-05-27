@@ -409,15 +409,19 @@ class krome():
 			test_status = "dev" #under development
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM", "-noSinkCheck"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1",
+				"-columnDensityMethod=JEANS"]]
 			filename = "networks/react_primordialZ"
 		elif(args.test=="collapse_COcool"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,CO", "-heating=COMPRESS,CHEM","-noSinkCheck"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,CO", "-heating=COMPRESS,CHEM",\
+				"-noSinkCheck"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1",\
+				"-columnDensityMethod=JEANS"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under development
 		elif(args.test=="collapseCO"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM", "-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM",\
+				"-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=REDUCED","-ATOL=1d-10","-maxord=1","-useTabs"]]
 			[argv.append(x) for x in ["-coolingQuench=10"]]
 			filename = "networks/react_COthin"
@@ -2660,6 +2664,9 @@ class krome():
 				#skip reactions with more than four products
 				if(len(myrea.products)>3):
 					print "WARNING: in reversing reaction "+myrea.verbatim+" more than 3 products found! Skipped."
+					continue
+				elif(myrea.kphrate):
+					print "WARNING: "+myrea.verbatim+" is photoreaction! Not reversed."
 					continue
 				else:
 					count_reverse += 1
