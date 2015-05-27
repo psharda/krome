@@ -355,6 +355,7 @@ class krome():
 
 		if(args.test=="cloud"):
 			[argv.append(x) for x in ["-iRHS","-skipJacobian","-useCustomCoe=\"myCoe(:)\""]]
+			[argv.append(x) for x in ["-noRecCheck", "-noSinkCheck"]]
 			filename = "networks/react_cloud"
 		elif(args.test=="slowmanifold"):
 			filename = "networks/react_SM"
