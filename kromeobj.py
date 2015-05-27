@@ -5754,6 +5754,7 @@ class krome():
 				scaleZ = [] #reset scaleZ since Htot= is no longer needed
 				break #skip routine if H is not present
 			for mols in specs:
+				if(mols.name.upper()=="HE"): continue #skip helium
 				if(k.upper()==mols.name.upper()):
 					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
