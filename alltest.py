@@ -134,7 +134,9 @@ for test in tests:
 		os.remove(ff)
 
 	#call krome
-	call(["./krome", "-test="+test,"-skipDevTest", "-pedantic", "-unsafe", "-sh","-compiler",compiler])
+	callarg = ["./krome", "-test="+test,"-skipDevTest", "-pedantic", "-unsafe", "-sh","-compiler="+compiler]
+	print callarg
+	call(callarg)
 
 	#skip development test
 	if(os.path.isfile("build/dev.skip")): continue
