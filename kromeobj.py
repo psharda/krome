@@ -410,7 +410,7 @@ class krome():
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM", "-noSinkCheck"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1",
-				"-columnDensityMethod=JEANS"]]
+				"-columnDensityMethod=JEANS","-coolingQuench=1e1"]]
 			filename = "networks/react_primordialZ"
 		elif(args.test=="collapse_COcool"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,CO", "-heating=COMPRESS,CHEM",\
