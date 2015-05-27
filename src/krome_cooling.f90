@@ -916,7 +916,7 @@ contains
     end if
 
     !//H2-He,  limit extended from 1e4 to 1e6
-    if(temp>1.d1 .and. temp<=1d6) then
+    if(temp<=1d6) then
        cool =  cool + 1d1**(-2.3689237d1 +2.1892372d0*logt3&
             -.81520438d0*logt32 +.29036281d0*logt33 -.16596184d0*logt34 &
             +.19191375d0*logt35)*n(idx_He)  &
