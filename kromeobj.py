@@ -3119,7 +3119,7 @@ class krome():
 						dns[nmols+j-1] += " &\n- krome_dust_sput(Tgas,krome_dust_asize("
 						dns[nmols+j-1] += str(j)+"),ntot,n("+str(nmols+j)+"))"
 					if(self.useDustEvap):
-						dns[nmols+j-1] += " &\n- dust_evap(krome_dust_T("+str(j)+"),krome_dust_Tevap("+str(j)+")"
+						dns[nmols+j-1] += " &\n- dust_evap(krome_dust_T("+str(j)+"),krome_dust_Tbind("+str(j)+")"
 						dns[nmols+j-1] += ","+partner_mass+",n("+str(nmols+j)+")**2,krome_grain_rho("+str(iType)+"))"
 					dns[nmols+j-1] = dns[nmols+j-1].replace("= 0.d0 +", "=") 
 
