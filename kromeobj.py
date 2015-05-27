@@ -2536,6 +2536,7 @@ class krome():
 
 		#check sinks (species that are only formed)
 		if(self.sinkCheck):
+			print "checking sinks..."
 			allR = []
 			allP = []
 			for rea in reacts:
@@ -2548,6 +2549,7 @@ class krome():
 			for PP in allP:
 				if(not(PP in allR)): sinks.append(PP)
 			for RR in allR:
+				if(RR=="CR"): continue
 				if(not(RR in allP)): sources.append(RR)
 			if(len(sinks)>0):
 				print "ERROR: sinks found, check your network ("+(", ".join(sinks))+")!"
@@ -2561,6 +2563,7 @@ class krome():
 
 		#check recombination (ion species that never recombine with electrons)
 		if(self.recCheck):
+			print "checking recombinations..."
 			for sp in specs:
 				if(sp.charge>0):
 					found = False
