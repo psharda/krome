@@ -141,7 +141,7 @@ for test in tests:
 	call(callarg)
 
 	#skip development test
-	if(os.path.isfile("build_"+prj_name+"/dev.skip")): continue
+	if(not(os.path.isfile("build_"+prj_name+"/Makefile"))): continue
 
 	#move to build directory
 	os.chdir("build_"+prj_name+"/")
