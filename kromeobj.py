@@ -526,9 +526,19 @@ class krome():
 			print " Bye!"
 			sys.exit()
 
+		#project name folder (required for dev.skip file)
+		if(args.project):
+			self.projectName = projectName = args.project
+			print "Reading option -project (name="+str(projectName)+")"
+			self.buildFolder = "build_"+projectName+"/"
+			fout = open(projectName+".kpj","w")
+			fout.write((" ".join(argv)))
+			fout.close()
+
+
 		#EXIT if development test found and skipDevTest enabled
 		if(args.skipDevTest and self.test_status=="dev"):
-			fh = open("build/dev.skip","w")
+			fh = open(self.buildFolder+"dev.skip","w")
 			fh.close()
 			sys.exit("THIS IS A DEV TEST (and -skipDevTest enabled): KROME ENDS!")
 
@@ -1342,14 +1352,6 @@ class krome():
 			self.dustSeed = args.dustSeed.strip().replace("\"","")
 			print "Reading option -dustSeed (seed="+self.dustSeed+")"
 
-		#project name folder
-		if(args.project):
-			self.projectName = projectName = args.project
-			print "Reading option -project (name="+str(projectName)+")"
-			self.buildFolder = "build_"+projectName+"/"
-			fout = open(projectName+".kpj","w")
-			fout.write((" ".join(argv)))
-			fout.close()
 
 		#project name folder
 		if(args.source):
