@@ -845,7 +845,11 @@ contains
     real*8::dump63,dump14
     integer::i
     character*16::names(nspec)
-    temp = max(Tgas, 3d1)
+
+
+    temp = Tgas
+    cooling_H2 = 0d0
+    if(temp<1d1) return
 
     T3 = temp * 1.d-3
     logt3 = log10(T3)
