@@ -355,6 +355,7 @@ class krome():
 
 		if(args.test=="cloud"):
 			[argv.append(x) for x in ["-iRHS","-skipJacobian","-useCustomCoe=\"myCoe(:)\""]]
+			[argv.append(x) for x in ["-noRecCheck", "-noSinkCheck"]]
 			filename = "networks/react_cloud"
 		elif(args.test=="slowmanifold"):
 			filename = "networks/react_SM"
@@ -408,15 +409,19 @@ class krome():
 			test_status = "dev" #under development
 		elif(args.test=="collapseZ"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM", "-noSinkCheck"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1",
+				"-columnDensityMethod=JEANS","-coolingQuench=1e1"]]
 			filename = "networks/react_primordialZ"
 		elif(args.test=="collapse_COcool"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,CO", "-heating=COMPRESS,CHEM","-noSinkCheck"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1","-columnDensityMethod=JEANS"]]
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,CO", "-heating=COMPRESS,CHEM",\
+				"-noSinkCheck"]]
+			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1",\
+				"-columnDensityMethod=JEANS"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under development
 		elif(args.test=="collapseCO"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM", "-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
+			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM",\
+				"-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
 			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=REDUCED","-ATOL=1d-10","-maxord=1","-useTabs"]]
 			[argv.append(x) for x in ["-coolingQuench=10"]]
 			filename = "networks/react_COthin"
@@ -521,9 +526,19 @@ class krome():
 			print " Bye!"
 			sys.exit()
 
+		#project name folder (required for dev.skip file)
+		if(args.project):
+			self.projectName = projectName = args.project
+			print "Reading option -project (name="+str(projectName)+")"
+			self.buildFolder = "build_"+projectName+"/"
+			fout = open(projectName+".kpj","w")
+			fout.write((" ".join(argv)))
+			fout.close()
+
+
 		#EXIT if development test found and skipDevTest enabled
 		if(args.skipDevTest and self.test_status=="dev"):
-			fh = open("build/dev.skip","w")
+			fh = open(self.buildFolder+"dev.skip","w")
 			fh.close()
 			sys.exit("THIS IS A DEV TEST (and -skipDevTest enabled): KROME ENDS!")
 
@@ -1337,14 +1352,6 @@ class krome():
 			self.dustSeed = args.dustSeed.strip().replace("\"","")
 			print "Reading option -dustSeed (seed="+self.dustSeed+")"
 
-		#project name folder
-		if(args.project):
-			self.projectName = projectName = args.project
-			print "Reading option -project (name="+str(projectName)+")"
-			self.buildFolder = "build_"+projectName+"/"
-			fout = open(projectName+".kpj","w")
-			fout.write((" ".join(argv)))
-			fout.close()
 
 		#project name folder
 		if(args.source):
@@ -2536,6 +2543,7 @@ class krome():
 
 		#check sinks (species that are only formed)
 		if(self.sinkCheck):
+			print "checking sinks..."
 			allR = []
 			allP = []
 			for rea in reacts:
@@ -2548,6 +2556,7 @@ class krome():
 			for PP in allP:
 				if(not(PP in allR)): sinks.append(PP)
 			for RR in allR:
+				if(RR=="CR"): continue
 				if(not(RR in allP)): sources.append(RR)
 			if(len(sinks)>0):
 				print "ERROR: sinks found, check your network ("+(", ".join(sinks))+")!"
@@ -2561,6 +2570,7 @@ class krome():
 
 		#check recombination (ion species that never recombine with electrons)
 		if(self.recCheck):
+			print "checking recombinations..."
 			for sp in specs:
 				if(sp.charge>0):
 					found = False
@@ -2656,6 +2666,9 @@ class krome():
 				#skip reactions with more than four products
 				if(len(myrea.products)>3):
 					print "WARNING: in reversing reaction "+myrea.verbatim+" more than 3 products found! Skipped."
+					continue
+				elif(myrea.kphrate):
+					print "WARNING: "+myrea.verbatim+" is photoreaction! Not reversed."
 					continue
 				else:
 					count_reverse += 1
@@ -3108,7 +3121,7 @@ class krome():
 						dns[nmols+j-1] += " &\n- krome_dust_sput(Tgas,krome_dust_asize("
 						dns[nmols+j-1] += str(j)+"),ntot,n("+str(nmols+j)+"))"
 					if(self.useDustEvap):
-						dns[nmols+j-1] += " &\n- dust_evap(krome_dust_T("+str(j)+"),krome_dust_Tevap("+str(j)+")"
+						dns[nmols+j-1] += " &\n- dust_evap(krome_dust_T("+str(j)+"),krome_dust_Tbind("+str(j)+")"
 						dns[nmols+j-1] += ","+partner_mass+",n("+str(nmols+j)+")**2,krome_grain_rho("+str(iType)+"))"
 					dns[nmols+j-1] = dns[nmols+j-1].replace("= 0.d0 +", "=") 
 
@@ -5743,6 +5756,7 @@ class krome():
 				scaleZ = [] #reset scaleZ since Htot= is no longer needed
 				break #skip routine if H is not present
 			for mols in specs:
+				if(mols.name.upper()=="HE"): continue #skip helium
 				if(k.upper()==mols.name.upper()):
 					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
@@ -5786,6 +5800,7 @@ class krome():
 				for sp in specs:
 					if(not(sp.is_atom)): continue
 					if(sp.charge<0): continue
+					if(sp.zatom==0): continue
 					xMocMap += "x("+sp.fidx+") = xmoc(imap("+str(sp.zatom)+"), "+str(sp.charge+1)+")\n"
 				fout.write(xMocMap)
 
@@ -5794,6 +5809,7 @@ class krome():
 				xMocMap = ""
 				for sp in specs:
 					if(not(sp.is_atom)): continue
+					if(sp.zatom==0): continue
 					if(sp.charge<0): continue
 					xMocMap += "xmoc(imap("+str(sp.zatom)+"), "+str(sp.charge+1)+") = x("+sp.fidx+")\n"
 				fout.write(xMocMap)

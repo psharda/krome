@@ -56,12 +56,12 @@ contains
 
        !loop to find limits
        do i=1,nd+1
-          abin(i) = 1d1**((i-1)*(alogmax-alogmin)/ndust+alogmin)
+          abin(i) = 1d1**((i-1)*(alogmax-alogmin)/nd+alogmin)
        end do
 
        !loop to find mean size, span, and dust number density 
        do i=1,nd
-          adust(i+ilow-1) = (abin(i)+abin(i+1)) * 0.5d0 !mean bin size
+          adust(i+ilow-1) = ((abin(i+1)**phi4-abin(i)**phi4)/(abin(i+1)**phi1-abin(i)**phi1)*(phi1/phi4))**(1./3.) !(abin(i)+abin(i+1)) * 0.5d0 !mean bin size
           krome_dust_aspan(i+ilow-1) = abin(i+1) - abin(i) !bin span
           xdust(i+ilow-1) = myc*(abin(i+1)**phi1-abin(i)**phi1)/phi1
        end do

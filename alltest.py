@@ -13,7 +13,8 @@ compiler="ifort" #ifort or gfortran
 if("-compiler" in argv):
 	compiler = argv[argv.index("-compiler")+1]
 
-testpath = "tests/"
+testpath = "tests/" #where the tests are located
+prj_name = "alltest" #where the tests
 
 #import the list of tests from testpath
 tests = [x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath]
@@ -93,8 +94,9 @@ if(mode=="check"):
 #a = raw_input("Any key to continue q to quit... ")
 #if(a=="q"): print sys.exit()
 
+if(not(os.path.exists("build_"+prj_name+"/"))): os.makedirs("build_"+prj_name+"/")
 
-os.chdir("build/")
+os.chdir("build_"+prj_name+"/")
 #clear directory
 for ff in glob.glob("*"):
 	os.remove(ff)
@@ -130,17 +132,19 @@ for test in tests:
 	print
 
 	#clear directory
-	for ff in glob.glob("build/*"):
+	for ff in glob.glob("build_"+prj_name+"/*"):
 		os.remove(ff)
 
 	#call krome
-	call(["./krome", "-test="+test,"-skipDevTest", "-pedantic", "-unsafe", "-sh","-compiler",compiler])
+	callarg = ["./krome", "-test="+test,"-skipDevTest", "-pedantic", "-unsafe", "-sh","-compiler="+compiler,"-project="+prj_name]
+	print callarg
+	call(callarg)
 
 	#skip development test
-	if(os.path.isfile("build/dev.skip")): continue
+	if(not(os.path.isfile("build_"+prj_name+"/Makefile"))): continue
 
 	#move to build directory
-	os.chdir("build/")
+	os.chdir("build_"+prj_name+"/")
 	
 	#make clean
 	call(["make","clean"])
