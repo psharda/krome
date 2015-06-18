@@ -275,11 +275,11 @@ contains
     logcH = log10(cH)
 
     xLd = fit_anytab2D(CoolZNOUV_x(:), CoolZNOUV_y(:), CoolZNOUV_z(:,:), &
-                 CoolZNOUV_xmul, CoolZNOUV_ymul,logcH,Tgas)
+         CoolZNOUV_xmul, CoolZNOUV_ymul,logcH,Tgas)
 
     cooling_ZCIENOUV = 10**xLd * cH * cH * total_Z
 
-   end function cooling_ZCIENOUV
+  end function cooling_ZCIENOUV
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIE
@@ -418,7 +418,7 @@ contains
        coolZCIEixd1(i) = 1d0/(coolZCIEx1(i+1)-coolZCIEx1(i))
     end do
     do i=1,coolZCIEn2-1
-      coolZCIEixd2(i) = 1d0/(coolZCIEx2(i+1)-coolZCIEx2(i))
+       coolZCIEixd2(i) = 1d0/(coolZCIEx2(i+1)-coolZCIEx2(i))
     end do
     do i=1,coolZCIEn3-1
        coolZCIEixd3(i) = 1d0/(coolZCIEx3(i+1)-coolZCIEx3(i))
@@ -829,6 +829,32 @@ contains
 
 #IFKROME_useCoolingH2
 
+  !*****************
+  !sigmoid function with x0 shift and s steepness
+  function sigmoid(x,x0,s)
+    implicit none
+    real*8::sigmoid,x,x0,s
+
+    sigmoid = 1d1/(1d1+exp(-s*(x-x0)))
+
+  end function sigmoid
+
+  !*******************
+  !window function for H2 cooling to smooth limits
+  function wCool(logTgas,logTmin,logTmax)
+    implicit none
+    real*8::wCool,logTgas,logTmin,logTmax,x
+
+    x = (logTgas-logTmin)/(logTmax-logTmin)
+    wCool = 1d1**(2d2*(sigmoid(x,-2d-1,5d1)*sigmoid(-x,-1.2d0,5d1)-1d0))
+    if(wCool<1d-199) wCool = 0d0
+    if(wCool>1d0) then
+       print *,"ERROR: wCool>1"
+       stop
+    end if
+
+  end function wCool
+
   !ALL THE COOLING FUNCTIONS ARE FROM GLOVER & ABEL, MNRAS 388, 1627, 2008
   !FOR LOW DENSITY REGIME: CONSIDER AN ORTHO-PARA RATIO OF 3:1
   !UPDATED TO THE DATA REPORTED BY GLOVER 2015, MNRAS
@@ -842,19 +868,18 @@ contains
     real*8::temp,logt3,logt,cool,cooling_H2,T3
     real*8::LDL,HDLR,HDLV,HDL,fact
     real*8::logt32,logt33,logt34,logt35,logt36,logt37,logt38
-    real*8::dump63,dump14
+    real*8::dump14,fH2H,fH2e,fH2H2,w14,w24
     integer::i
     character*16::names(nspec)
 
-
     temp = Tgas
     cooling_H2 = 0d0
-    if(temp<1d1) return
+    !if(temp<2d0) return
 
     T3 = temp * 1.d-3
     logt3 = log10(T3)
     logt = log10(temp)
-    cool = 0.d0
+    cool = 0d0
 
     logt32 = logt3 * logt3
     logt33 = logt32 * logt3
@@ -864,72 +889,65 @@ contains
     logt37 = logt36 * logt3
     logt38 = logt37 * logt3
 
-    !dumping function to extend 6e3 and 1e4 limits
-    dump63 = 1d0/ (1d0 + exp(min((temp-1d4)*8d-4,3d2)))
-    dump14 = 1d0/ (1d0 + exp(min((temp-3d4)*2d-4,3d2)))
+    w14 = wCool(logt, 1d0, 4d0)
+    w24 = wCool(logt, 2d0, 4d0)
 
     !//H2-H
-    if(temp>1d1 .and. temp<=1d2) then
-       cool = cool +1.d1**(-16.818342D0 +3.7383713D1*logt3 &
+    if(temp<=1d2) then
+       fH2H = 1.d1**(-16.818342D0 +3.7383713D1*logt3 &
             +5.8145166D1*logt32 +4.8656103D1*logt33 &
             +2.0159831D1*logt34 +3.8479610D0*logt35 )*n(idx_H)
     elseif(temp>1d2 .and. temp<=1d3) then
-       cool = cool +1.d1**(-2.4311209D1 +3.5692468D0*logt3 &
+       fH2H = 1.d1**(-2.4311209D1 +3.5692468D0*logt3 &
             -1.1332860D1*logt32 -2.7850082D1*logt33 &
             -2.1328264D1*logt34 -4.2519023D0*logt35)*n(idx_H)
-       !note here that the limit has been extended from 6e3 to 1e6
-    elseif(temp>1.d3 .and. temp<=1.d6) then
-       cool = cool +1d1**(-2.4311209D1 +4.6450521D0*logt3 &
+    elseif(temp>1.d3) then
+       fH2H = 1d1**(-2.4311209D1 +4.6450521D0*logt3 &
             -3.7209846D0*logt32 +5.9369081D0*logt33 &
-            -5.5108049D0*logt34 +1.5538288D0*logt35)*n(idx_H) &
-            * dump63
-
+            -5.5108049D0*logt34 +1.5538288D0*logt35)*n(idx_H)
     end if
 
-    !//H2-Hp, extended from 1e4 to 1e6
-    if(temp>1.d1 .and. temp<=1.d4)  then
-       cool = cool + 1d1**(-2.2089523d1 +1.5714711d0*logt3 &
-            +0.015391166d0*logt32 -0.23619985d0*logt33 &
-            -0.51002221d0*logt34 +0.32168730d0*logt35)*n(idx_Hj) &
-            * dump14
-    end if
+    cool = cool + fH2H * wCool(logt,1d0,log10(6d3))
 
-    !//H2-H2, limit extended from 6e3 to 1e6
-    if(temp>1.d2 .and. temp<=1.d6) then
-       cool = cool + 1d1**(-2.3962112D1 +2.09433740D0*logt3 &
-            -.77151436D0*logt32 +.43693353D0*logt33 &
-            -.14913216D0*logt34 -.033638326D0*logt35)*n(idx_H2) &
-            * dump63
-    end if
+    !//H2-Hp
+    cool = cool + 1d1**(-2.2089523d1 +1.5714711d0*logt3 &
+         +0.015391166d0*logt32 -0.23619985d0*logt33 &
+         -0.51002221d0*logt34 +0.32168730d0*logt35)*n(idx_Hj) &
+         * w14
+
+
+    !//H2-H2
+    fH2H2 = 1d1**(-2.3962112D1 +2.09433740D0*logt3 &
+         -.77151436D0*logt32 +.43693353D0*logt33 &
+         -.14913216D0*logt34 -.033638326D0*logt35)*n(idx_H2) !&
+    cool = cool + fH2H2 * w24
 
     !//H2-e
-    if(temp>1d2 .and. temp<=5d2) then
-       cool =  cool +1d1**(-2.1928796d1 + 1.6815730d1*logt3 &
+    fH2e = 0d0
+    if(temp<=5d2) then
+       fH2e = 1d1**(min(-2.1928796d1 + 1.6815730d1*logt3 &
             +9.6743155d1*logt32 +3.4319180d2*logt33 &
             +7.3471651d2*logt34 +9.8367576d2*logt35 &
-            +8.0181247d2*logt36 +3.6414446d2*logt37 & 
-            +7.0609154d1*logt38)*n(idx_e)
-       !note: limit extended from 1e4 to 1e6
-    elseif(temp>5d2 .and. temp<1d6)  then
-       cool = cool + 1d1**(-2.2921189D1 +1.6802758D0*logt3 &
+            +8.0181247d2*logt36 +3.6414446d2*logt37 &
+            +7.0609154d1*logt38,3d1))*n(idx_e)
+    elseif(temp>5d2)  then
+       fH2e = 1d1**(-2.2921189D1 +1.6802758D0*logt3 &
             +.93310622D0*logt32 +4.0406627d0*logt33 &
             -4.7274036d0*logt34 -8.8077017d0*logt35 &
             +8.9167183*logt36 + 6.4380698*logt37 &
-            -6.3701156*logt38)*n(idx_e) &
-            * dump63
+            -6.3701156*logt38)*n(idx_e)
     end if
+    cool = cool + fH2e*w24
 
-    !//H2-He,  limit extended from 1e4 to 1e6
-    if(temp<=1d6) then
-       cool =  cool + 1d1**(-2.3689237d1 +2.1892372d0*logt3&
-            -.81520438d0*logt32 +.29036281d0*logt33 -.16596184d0*logt34 &
-            +.19191375d0*logt35)*n(idx_He)  &
-            * dump63
-    end if
+    !//H2-He
+    cool =  cool + 1d1**(-2.3689237d1 +2.1892372d0*logt3&
+         -.81520438d0*logt32 +.29036281d0*logt33 -.16596184d0*logt34 &
+         +.19191375d0*logt35)*n(idx_He)  &
+         * w14
 
     !check error
     if(cool>1.d30) then
-       print *,"ERROR!!! H2 cooling <0 OR cooling >1.d30 erg/s/cm3"
+       print *,"ERROR: cooling >1.d30 erg/s/cm3"
        print *,"cool (erg/s/cm3): ",cool
        names(:) = get_names()
        do i=1,size(n)
@@ -938,19 +956,17 @@ contains
        stop
     end if
 
-    cool = max(cool,0.d0)
-
-    !this will avoid a division by zero and useless calculations
-    if(cool==0.d0) then
-       cooling_H2 = 0.d0
+    !this to avoid negative, overflow and useless calculations below
+    if(cool<=0d0) then
+       cooling_H2 = 0d0
        return
     end if
 
-    !high density limit from HM79, GP98 below Tgas = 2d3  
+    !high density limit from HM79, GP98 below Tgas = 2d3
     !UPDATED TO THE DATA BY GLOVER 2015 for high temperature corrections, MNRAS
-    !IN THE HIGH DENSITY REGIME LAMBDA_H2 = LAMBDA_H2(LTE) = HDL 
-    !the following mix of functions ensures the right behaviour 
-    ! at low temperatures (Tgas < 10 K) and at high temperatures (T > 2000 K) by 
+    !IN THE HIGH DENSITY REGIME LAMBDA_H2 = LAMBDA_H2(LTE) = HDL
+    !the following mix of functions ensures the right behaviour
+    ! at low temperatures (Tgas < 10 K) and at high temperatures (T > 2000 K) by
     ! using both the original Hollenbach and the new Glover data, merging them
     ! in a smooth way.
     if(temp.lt.2d3)then
@@ -960,23 +976,23 @@ contains
        HDL  = HDLR + HDLV !erg/s
     elseif(temp>=2d3 .and. temp<=1d4)then
        HDL = 1d1**(-2.0584225d1 + 5.0194035*logt3 &
-                   -1.5738805*logt32 -4.7155769*logt33 &
-                   +2.4714161*logt34 +5.4710750*logt35 &
-                   -3.9467356*logt36 -2.2148338*logt37 &
-                   +1.8161874*logt38)
+            -1.5738805*logt32 -4.7155769*logt33 &
+            +2.4714161*logt34 +5.4710750*logt35 &
+            -3.9467356*logt36 -2.2148338*logt37 &
+            +1.8161874*logt38)
     else
+       dump14 = 1d0 / (1d0 + exp(min((temp-3d4)*2d-4,3d2)))
        HDL = 1d1**(-2.0584225d1 + 5.0194035 &
-                   -1.5738805 -4.7155769 &
-                   +2.4714161 +5.4710750 &
-                   -3.9467356 -2.2148338 &
-                   +1.8161874)*dump14
-    endif 
+            -1.5738805 -4.7155769 &
+            +2.4714161 +5.4710750 &
+            -3.9467356 -2.2148338 &
+            +1.8161874)*dump14
+    endif
 
     LDL = cool !erg/s
-    fact = HDL/LDL 
+    fact = HDL/LDL
 
-    cooling_H2 = HDL*n(idx_H2)/(1.d0+(fact))  #KROME_H2opacity !erg/cm3/s
-    cooling_H2 = max(1d-30,cooling_H2)
+    cooling_H2 = HDL*n(idx_H2)/(1.d0+(fact)) #KROME_H2opacity !erg/cm3/s
 
   end function cooling_H2
 #ENDIFKROME
