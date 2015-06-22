@@ -1591,6 +1591,56 @@ contains
 
   end function fit_anytab1D
 
+ function fit_anytab2D_linlog(x,y,z,xmul,ymul,xx,yy)
+    real*8::fit_anytab2D_linlog,x(:),y(:),z(:,:),xmul,ymul,xx,yy
+    real*8::zleft(size(x)),zright(size(x)),zl,zr
+    integer::ipos,i1,i2
+
+    ipos = (yy-y(1)) * ymul + 1
+    i1 = min(max(ipos,1),size(y)-1)
+    i2 = i1 + 1
+    zleft(:) = z(:,i1)
+    zright(:) = z(:,i2)
+
+    zl = fit_anytab1D_linlog(x(:),zleft(:),xmul,xx)
+    zr = fit_anytab1D_linlog(x(:),zright(:),xmul,xx)
+
+    fit_anytab2D_linlog = (yy-y(i1))*ymul*(zr-zl)+zl
+
+  end function fit_anytab2D_linlog
+
+  !*********************
+  function fit_anytab1D_linlog(x,z,xmul,xx)
+    real*8::fit_anytab1D_linlog,x(:),z(:),xmul,xx,p,z2,z1
+    integer::ipos,i1,i2
+
+    ipos = (xx-x(1)) * xmul + 1
+    i1 = min(max(ipos,1),size(x)-1)
+    i2 = i1 + 1
+
+    p = (xx-x(i1)) * xmul
+
+    z2 = z(i2)
+    z1 = z(i1)
+    if(z1<0d0 .and. z2<0d0) then
+       z1 = log10(-z1)
+       z2 = log10(-z2)
+       fit_anytab1D_linlog = -1d1**(p * (z2 - z1) + z1)
+       return
+    end if
+
+    if(z1>0d0 .and. z2>0d0) then
+       z1 = log10(z1)
+       z2 = log10(z2)
+       fit_anytab1D_linlog = 1d1**(p * (z2 - z1) + z1)
+       return
+    end if
+
+    fit_anytab1D_linlog = (p * (z2 - z1) + z1)
+
+  end function fit_anytab1D_linlog
+
+
   !*****************************
   !spline interpolation at t using array  x,y (size n) as data
   function fspline(x,y,t)
