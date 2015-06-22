@@ -642,18 +642,11 @@ contains
     logn = log10(ntot)
     logt = log10(Tgas)
     !cooling fit from tables
-    coolFit = fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
+    coolFit = fit_anytab2D_linlog(dust_tab_ngas(:), dust_tab_Tgas(:), &
          dust_tab_cool(:,:), dust_mult_ngas, dust_mult_Tgas, &
          logn, logt)
 
-    !very small cooling means load heating
-    if(coolFit<-39d0) then
-       cooling_dust = - get_mu(n) * 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
-            dust_tab_heat(:,:), dust_mult_ngas, dust_mult_Tgas, &
-            logn, logt) * ntot * ntot
-    else
-       cooling_dust = get_mu(n) * 1d1**coolFit * ntot * ntot
-    end if
+    cooling_dust = get_mu(n) * coolFit * ntot * ntot
 
   end function cooling_dust
 #ENDIFKROME
