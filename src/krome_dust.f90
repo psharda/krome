@@ -808,9 +808,6 @@ contains
     call init_anytab2D("dust_table_cool.dat",dust_tab_ngas(:),&
          dust_tab_Tgas(:), dust_tab_cool(:,:), dust_mult_ngas, &
          dust_mult_Tgas)
-    call init_anytab2D("dust_table_heat.dat",dust_tab_ngas(:),&
-         dust_tab_Tgas(:), dust_tab_heat(:,:), dust_mult_ngas, &
-         dust_mult_Tgas)
     call init_anytab2D("dust_table_Tdust.dat",dust_tab_ngas(:), &
          dust_tab_Tgas(:), dust_tab_Tdust(:,:), dust_mult_ngas, &
          dust_mult_Tgas)
