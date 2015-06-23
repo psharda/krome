@@ -165,7 +165,7 @@ contains
     !see Bates&Tielens 1994
     !This is for the local interstellar Habing flux and 
     !without considering the recombination (which at this 
-    !radiation flux are indeed negligible)
+    !radiation flux is indeed negligible)
     use krome_commons
     use krome_subs
     implicit none
@@ -182,7 +182,7 @@ contains
     eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
          3.7d-2 * (Tgas * 1d-4)**.7 / (1d0 + 2d-4 * psi)
     z = #KROME_photoDustZ !metallicty wrt solar
-    heat_photoDust = 1d-24*eps*Ghab*ntot*z
+    heat_photoDust = 1.3d-24*eps*Ghab*ntot*z
 
   end function heat_photoDust
 #ENDIFKROME
@@ -230,7 +230,7 @@ contains
     z = #KROME_photoDustZ !metallicty wrt solar
 
     !net photoelectric heating
-    heat_netPhotoDust = (1d-24*eps*Ghab*ntot-recomb_cool)*z
+    heat_netPhotoDust = (1.3d-24*eps*Ghab*ntot-recomb_cool)*z
 
   end function heat_netPhotoDust
 #ENDIFKROME
