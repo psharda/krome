@@ -162,7 +162,7 @@ contains
   !***************************
   function heat_photoDust(n,Tgas)
     !photoelectric effect from dust in erg/s/cm3
-    !see Bates&Tielens 1994 with a slight modification of Wolfire 2003
+    !see Bakes&Tielens 1994 with a slight modification of Wolfire 2003
     !on the amount of absorbed ultraviolet energy.
     !This is for the local interstellar Habing flux and 
     !without considering the recombination (which at this 
