@@ -162,7 +162,8 @@ contains
   !***************************
   function heat_photoDust(n,Tgas)
     !photoelectric effect from dust in erg/s/cm3
-    !see Bates&Tielens 1994
+    !see Bates&Tielens 1994 with a slight modification of Wolfire 2003
+    !on the amount of absorbed ultraviolet energy.
     !This is for the local interstellar Habing flux and 
     !without considering the recombination (which at this 
     !radiation flux is indeed negligible)
@@ -222,7 +223,7 @@ contains
     end if
 
     !grains recombination cooling 
-    recomb_cool = 4.65d-30*Tgas**0.94*(psi)**bet & 
+    recomb_cool = 4.65d-30*Tgas**0.94*psi**bet & 
          * n(idx_e)*n(idx_H)
 
     eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
