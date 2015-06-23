@@ -162,6 +162,10 @@ contains
   !***************************
   function heat_photoDust(n,Tgas)
     !photoelectric effect from dust in erg/s/cm3
+    !see Bates&Tielens 1994
+    !This is for the local interstellar Habing flux and 
+    !without considering the recombination (which at this 
+    !radiation flux are indeed negligible)
     use krome_commons
     use krome_subs
     implicit none
@@ -171,14 +175,14 @@ contains
     ntot = get_Hnuclei(n(:))
     Ghab = 1.69d0 !habing flux, 1.69 is Draine78
     if(n(idx_e)>0d0) then
-       psi = 2d0 * Ghab * sqrt(Tgas) / n(idx_e)
+       psi = Ghab * sqrt(Tgas) / n(idx_e)
     else
        psi = 0d0
     end if
     eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
          3.7d-2 * (Tgas * 1d-4)**.7 / (1d0 + 2d-4 * psi)
     z = #KROME_photoDustZ !metallicty wrt solar
-    heat_photoDust = 1.3d-24*eps*Ghab*ntot*z
+    heat_photoDust = 1d-24*eps*Ghab*ntot*z
 
   end function heat_photoDust
 #ENDIFKROME
@@ -187,7 +191,7 @@ contains
   !***************************
   function heat_netPhotoDust(n,Tgas)
     !photoelectric effect from dust in erg/s/cm3
-    !including the recombination cooling 
+    !including the recombination cooling and a generic radiation flux
     !eq. 42 and 44 in Bakes&Tielens, 1994
     use krome_commons
     use krome_subs
@@ -212,13 +216,13 @@ contains
     Ghab = Ghab * 4d0 * pi / (1.6d-3) / planck_eV * eV_to_erg
 
     if(n(idx_e)>0d0) then
-       psi = 2d0 * Ghab * sqrt(Tgas) / n(idx_e)
+       psi = Ghab * sqrt(Tgas) / n(idx_e)
     else
        psi = 0d0
     end if
 
     !grains recombination cooling 
-    recomb_cool = 4.65d-30*Tgas**0.94*(Ghab*sqrt(Tgas)/n(idx_e))**bet & 
+    recomb_cool = 4.65d-30*Tgas**0.94*(psi)**bet & 
          * n(idx_e)*n(idx_H)
 
     eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
@@ -226,7 +230,7 @@ contains
     z = #KROME_photoDustZ !metallicty wrt solar
 
     !net photoelectric heating
-    heat_netPhotoDust = (1.3d-24*eps*Ghab*ntot-recomb_cool)*z
+    heat_netPhotoDust = (1d-24*eps*Ghab*ntot-recomb_cool)*z
 
   end function heat_netPhotoDust
 #ENDIFKROME
