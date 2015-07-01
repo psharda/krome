@@ -2621,6 +2621,9 @@ class krome():
 
 			fhrev.close()
 
+		#rebuild RHS to keep into account multi-range automatic reactions
+		for rea in reacts:
+			rea.build_RHS()
 
 		#copy local to global vars
 		self.nrea = nrea
