@@ -5128,7 +5128,8 @@ class krome():
 						metal_name = funct_name.split("_")[-1]
 						fout.write("!"+popvar+"\n")
 						fout.write("do i=1,size("+funct_name+")\n")
-						fout.write(" write(nfile,'(a8,I5,2E17.8e3)') \""+metal_name+"\", i, Tgas, "+funct_name+"(i)\n")
+						fout.write(" write(nfile,'(a8,I5,3E17.8e3)') \""+metal_name+"\", i, Tgas, "+\
+							funct_name+"(i), sum("+funct_name+"(:))\n")
 						fout.write("end do\n\n")
 
 			elif("#KROME_custom_cooling_expr" in row.strip()):
