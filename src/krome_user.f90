@@ -103,7 +103,7 @@ contains
   end function krome_num2col
 
   !***********************
-  !print the current values of the phys variables
+  !print on screen the current values of the phys variables
   subroutine krome_print_phys_variables()
     use krome_commons
     implicit none
@@ -134,24 +134,25 @@ contains
 #IFKROME_use_coolingZ
   !***************************
   !dump the population of the Z cooling levels
-  ! in the nfile file unit, using Tgas as 
+  ! in the nfile file unit, using xvar as
   ! independent variable. alias of
   ! dump_cooling_pop subroutine
-  subroutine krome_popcool_dump(inTgas,nfile)
+  subroutine krome_popcool_dump(xvar,nfile)
     use krome_cooling
     implicit none
-    real*8::Tgas,inTgas
+    real*8::xvar
     integer::nfile
 
-    Tgas = inTgas
-    call dump_cooling_pop(Tgas,nfile)
+    call dump_cooling_pop(xvar,nfile)
 
   end subroutine krome_popcool_dump
+
 #ENDIFKROME
 
 #IFKROME_useTabsTdust
   !*****************************
-  !get averaged Tdust from tables
+  !get averaged Tdust from tables, with x(:) species array
+  ! of size krome_nmols, and Tgas the gas temperature
   function krome_get_Tdust(x,Tgas)
     use krome_commons
     use krome_subs
@@ -172,7 +173,9 @@ contains
   !*************************
   !this subroutine sets the dust distribution in the range
   ! alow_arg, aup_arg, using power law with exponent phi_arg.
-  ! All these arguments are optional.
+  ! All these arguments are optional, execept for x(:) of size
+  ! krome_nmols that represents the number densitites of the
+  ! chemical species, and dust_gas_ratio
   subroutine krome_init_dust_distribution(x,dust_gas_ratio,alow_arg,&
        aup_arg,phi_arg)
     use krome_dust
@@ -229,8 +232,9 @@ contains
   end function krome_get_dust_size
 
   !******************************
-  !this function returns an array of size krome_ndust
-  ! that contains the size of the dust bins in cm
+  !this function set the sizes of the dust with an array
+  ! of size krome_ndust that contains the size of the
+  ! dust bins in cm
   subroutine krome_set_dust_size(arg)
     use krome_commons
     implicit none
@@ -256,7 +260,8 @@ contains
 
   !************************
   !this function sets the temperature
-  ! for all the dust bins as an array.
+  ! for all the dust bins but using an array
+  ! of size krome_ndust.
   subroutine krome_set_Tdust_array(arr)
     use krome_commons
     implicit none
@@ -267,7 +272,7 @@ contains
   end subroutine krome_set_Tdust_array
 
   !*********************
-  !returns the Tdust averaged over the number density
+  !returns the Tdust averaged over the dust number density
   function krome_get_averaged_Tdust()
     use krome_commons
     implicit none
@@ -278,6 +283,8 @@ contains
   end function krome_get_averaged_Tdust
 
   !****************************
+  ! scales the dust distribution by multiplying it by the
+  ! real*8 value xscale
   subroutine krome_scale_dust_distribution(xscale)
     use krome_commons
     implicit none
@@ -288,6 +295,8 @@ contains
   end subroutine krome_scale_dust_distribution
 
   !***********************
+  !returns an array of size krome_ndust containing the
+  ! dust temperatures in K
   function krome_get_Tdust()
     use krome_commons
     implicit none
@@ -433,6 +442,8 @@ contains
 
 #IFKROME_usePhotoBins
   !************************
+  ! prepares tables for cross sections and
+  ! photorates
   subroutine krome_calc_photobins()
     use krome_photo
     call calc_photobins()
@@ -440,7 +451,7 @@ contains
 
   !****************************
   ! set the energy per photo bin
-  ! eV/s/cm2/sr/Hz
+  ! eV/cm2/sr
   subroutine krome_set_photoBinJ(phbin)
     use krome_commons
     use krome_photo
@@ -495,7 +506,8 @@ contains
 
   !********************************
   ! set the energy (eV) of the photobin
-  ! linearly from lowest and highest energy value
+  ! linearly from lowest to highest energy value
+  ! in eV
   subroutine krome_set_photobinE_lin(lower,upper)
     use krome_commons
     use krome_photo
@@ -518,7 +530,8 @@ contains
 
   !********************************
   ! set the energy (eV) of the photobin
-  ! logarithmic from lowest to highest energy value
+  ! logarithmically from lowest to highest energy value
+  ! in eV
   subroutine krome_set_photobinE_log(lower,upper)
     use krome_commons
     use krome_photo
@@ -556,14 +569,16 @@ contains
 
   !*********************************
   function krome_get_photoBinE_left()
-    !returns an array with the left energy limits (eV)
+    !returns an array of size krome_nPhotoBins with the
+    ! left energy limits (eV)
     use krome_commons
     real*8::krome_get_photoBinE_left(nPhotoBins)
     krome_get_photoBinE_left(:) = photoBinEleft(:)
   end function krome_get_photoBinE_left
 
   !*********************************
-  !returns an array with the right energy limits (eV)
+  !returns an array of size krome_nPhotoBins with the
+  ! right energy limits (eV)
   function krome_get_photoBinE_right()
     use krome_commons
     real*8::krome_get_photoBinE_right(nPhotoBins)
@@ -571,7 +586,8 @@ contains
   end function krome_get_photoBinE_right
 
   !*********************************
-  !returns an array with the middle energy limits (eV)
+  !returns an array of size krome_nPhotoBins with the
+  ! middle energy values (eV)
   function krome_get_photoBinE_mid()
     use krome_commons
     real*8::krome_get_photoBinE_mid(nPhotoBins)
@@ -579,7 +595,8 @@ contains
   end function krome_get_photoBinE_mid
 
   !*********************************
-  !returns an array with the middle energy limits (eV)
+  !returns an array of size krome_nPhotoBins with the
+  ! bin span (eV)
   function krome_get_photoBinE_delta()
     use krome_commons
     real*8::krome_get_photoBinE_delta(nPhotoBins)
@@ -587,7 +604,8 @@ contains
   end function krome_get_photoBinE_delta
 
   !*********************************
-  !returns an array with the middle energy limits (eV)
+  !returns an array of size krome_nPhotoBins with the
+  ! inverse of the bin span (1/eV)
   function krome_get_photoBinE_idelta()
     use krome_commons
     real*8::krome_get_photoBinE_idelta(nPhotoBins)
@@ -595,7 +613,8 @@ contains
   end function krome_get_photoBinE_idelta
 
   !*********************************
-  !returns an array with the integrated photo rates (1/s)
+  !returns an array of size krome_nPhotoBins with the
+  ! integrated photo rates (1/s)
   function krome_get_photoBin_rates()
     use krome_commons
     real*8::krome_get_photoBin_rates(nPhotoRea)
@@ -603,7 +622,7 @@ contains
   end function krome_get_photoBin_rates
 
   !*********************************
-  !returns an array of size nPhotoBins containing
+  !returns an array of size krome_nPhotoBins containing
   ! the cross section (cm2) of the idx-th photoreaction
   function krome_get_xsec(idx)
     use krome_commons
@@ -616,7 +635,8 @@ contains
   end function krome_get_xsec
 
   !*********************************
-  !returns an array with the integrated photo heatings (erg/s)
+  !returns an array of size krome_nPhotoBins with the
+  ! integrated photo heatings (erg/s)
   function krome_get_photoBin_heats()
     use krome_commons
     real*8::krome_get_photoBin_heats(nPhotoRea)
@@ -624,7 +644,7 @@ contains
   end function krome_get_photoBin_heats
 
   !****************************
-  !multiply all the bins by a factor xscale
+  !multiply all the bins by a factor real*8 xscale
   subroutine krome_photoBin_scale(xscale)
     use krome_commons
     use krome_photo
@@ -639,7 +659,7 @@ contains
   end subroutine krome_photoBin_scale
 
   !****************************
-  !multiply all the bins by an array xscale(:)
+  !multiply all the bins by a real*8 array xscale(:)
   ! of size krome_nPhotoBins
   subroutine krome_photoBin_scale_array(xscale)
     use krome_commons
@@ -655,7 +675,10 @@ contains
   end subroutine krome_photoBin_scale_array
 
   !********************************
-  !restore the original flux (undo any rescale)
+  !restore the original flux (i.e. undo any rescale).
+  ! the flux is automatically stored by the functions
+  ! that set the flux, or by the function
+  ! krome_photoBin_store()
   subroutine krome_photoBin_restore
     use krome_commons
     implicit none
@@ -734,6 +757,8 @@ contains
   end subroutine krome_load_photoBin_file
 
   !**********************************
+  !this subroutine set a flux HM in the energy limits
+  ! as argument
   subroutine krome_set_photoBin_HMlog(lower_in,upper_in)
     use krome_commons
     use krome_photo
@@ -784,6 +809,8 @@ contains
   end subroutine krome_set_photoBin_HMlog
 
   !**********************************
+  !set the flux as a black body with temperature Tbb (K)
+  ! in the range lower to upper (eV). the spacing is linear
   subroutine krome_set_photoBin_BBlin(lower,upper,Tbb)
     use krome_commons
     use krome_constants
@@ -808,6 +835,8 @@ contains
 
 
   !**********************************
+  !set the flux as a black body with temperature Tbb (K)
+  ! in the range lower to upper (eV). the spacing is logarithmic
   subroutine krome_set_photoBin_BBlog(lower,upper,Tbb)
     use krome_commons
     use krome_constants
@@ -822,7 +851,7 @@ contains
 
     call krome_set_photoBinE_log(lower,upper)
 
-    !eV/cm2/s/Hz/sr
+    !eV/cm2/sr
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
        photoBinJ(i) = planckBB(x,Tbb)
@@ -908,7 +937,9 @@ contains
 
   end subroutine krome_set_photoBin_BBlog_auto
 
-  !**************************
+  !**********************************
+  !set the flux as Draine's function
+  ! in the range lower to upper (eV). the spacing is linear
   subroutine krome_set_photoBin_draineLin(lower,upper)
     use krome_commons
     use krome_photo
@@ -920,7 +951,7 @@ contains
 
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
-       !eV/cm2/sr/s/Hz
+       !eV/cm2/sr
        if(x<13.6d0) then
           photoBinJ(i) = (1.658d6*x - 2.152d5*x**2 + 6.919d3*x**3) &
                * x *planck_eV
@@ -937,6 +968,8 @@ contains
   end subroutine krome_set_photoBin_draineLin
 
   !**************************
+  !set the flux as Draine's function
+  ! in the range lower to upper (eV). the spacing is logarithmic
   subroutine krome_set_photoBin_draineLog(lower,upper)
     use krome_commons
     use krome_photo
@@ -965,6 +998,8 @@ contains
   end subroutine krome_set_photoBin_draineLog
 
   !**************************
+  !set the flux as power-law (J21-style)
+  ! in the range lower to upper (eV). the spacing is linear
   subroutine krome_set_photoBin_J21lin(lower,upper)
     use krome_commons
     use krome_photo
@@ -980,6 +1015,8 @@ contains
   end subroutine krome_set_photoBin_J21lin
 
   !**************************
+  !set the flux as power-law (J21-style)
+  ! in the range lower to upper (eV). the spacing is logarithmic
   subroutine krome_set_photoBin_J21log(lower,upper)
     use krome_commons
     use krome_photo
@@ -1087,7 +1124,8 @@ contains
 
   !***************************
   !alias for coe in krome_subs
-  ! returns the coefficients for a given Tgas
+  ! returns the coefficient array of size krome_nrea
+  ! for a given Tgas
   function krome_get_coef(Tgas)
     use krome_commons
     use krome_subs
@@ -1220,6 +1258,8 @@ contains
 
 #IFKROME_use_heating
   !*************************
+  !get heating (erg/cm3/s) for a given species
+  ! array x(:) and Tgas
   function krome_get_heating(x,inTgas)
     use krome_heating
     use krome_subs
@@ -1236,6 +1276,9 @@ contains
   end function krome_get_heating
 
   !*****************************
+  ! get an array containing individual heatings (erg/cm3/s)
+  ! the array has size krome_nheats. see heatcool.gps
+  ! for index list
   function krome_get_heating_array(x,inTgas)
     use krome_heating
     use krome_subs
@@ -1258,6 +1301,8 @@ contains
 
 #IFKROME_use_cooling
   !*************************
+  !get cooling (erg/cm3/s) for x(:) species array
+  ! and Tgas
   function krome_get_cooling(x,inTgas)
     use krome_cooling
     use krome_commons
@@ -1271,6 +1316,9 @@ contains
   end function krome_get_cooling
 
   !*****************************
+  ! get an array containing individual coolings (erg/cm3/s)
+  ! the array has size krome_ncools. see heatcool.gps
+  ! for index list
   function krome_get_cooling_array(x,inTgas)
     use krome_cooling
     use krome_commons
@@ -1318,6 +1366,8 @@ contains
 #ENDIFKROME
 
   !*************************
+  !force conservation to array x(:)
+  !using xi(:) as initial abundances.
   !alias for conserve in krome_subs
   function krome_conserve(x,xi)
     use krome_subs
@@ -1335,7 +1385,9 @@ contains
   end function krome_conserve
 
   !***************************
-  !alias for gamma_index in krome_subs
+  !get the adiabatic index for x(:) species abundances
+  ! and Tgas.
+  ! alias for gamma_index in krome_subs
   function krome_get_gamma(x,Tgas)
     use krome_subs
     use krome_commons
@@ -1348,8 +1400,8 @@ contains
 
   !***************************
   !get an integer array containing the atomic numbers Z
-  ! of the spcecies
-  !alias for get_zatoms
+  ! of the spcecies.
+  ! alias for get_zatoms
   function krome_get_zatoms()
     use krome_subs
     use krome_commons
@@ -1363,7 +1415,7 @@ contains
 
   !****************************
   !get the mean molecular weight from 
-  ! number density and mass density
+  ! number density and mass density.
   ! alias for get_mu in krome_subs module
   function krome_get_mu(x)
     use krome_commons
@@ -1391,8 +1443,8 @@ contains
 
   !*****************
   !get an array of double containing the masses in g
-  ! of the species
-  !alias for get_mass in krome_subs
+  ! of the species.
+  ! alias for get_mass in krome_subs
   function krome_get_mass()
     use krome_subs
     use krome_commons
@@ -1429,8 +1481,9 @@ contains
   end function krome_get_Hnuclei
 
   !*****************
-  !get an array containing the charges of the species
-  !alias for get_charges
+  !get an array of size krome_nmols containing the
+  ! charges of the species.
+  ! alias for get_charges
   function krome_get_charges()
     use krome_subs
     use krome_commons
@@ -1441,9 +1494,9 @@ contains
   end function krome_get_charges
 
   !*****************
-  !get an array of character*16 containing the names
-  ! of alla the species
-  !alias for get_names
+  !get an array of character*16 and size krome_nmols
+  ! containing the names of all the species.
+  ! alias for get_names
   function krome_get_names()
     use krome_subs
     use krome_commons
@@ -1454,8 +1507,8 @@ contains
   end function krome_get_names
 
   !*****************
-  !get the index of the species with name name
-  !alias for get_index
+  !get the index of the species with name name.
+  ! alias for get_index
   function krome_get_index(name)
     use krome_subs
     implicit none
@@ -1477,8 +1530,9 @@ contains
 
   !*************************
   subroutine krome_scale_Z(n,Z)
-    !scale metallicity the metals contained in n(:) 
-    ! to Z according to Asplund+2009
+    !scale the abundances of the metals contained in n(:)
+    ! to Z according to Asplund+2009.
+    ! note that this applies only to neutral atoms.
     use krome_commons
     real*8::n(:),Z,Htot
 
@@ -1498,8 +1552,8 @@ contains
   end subroutine krome_set_Z
 
   !***********************
-  !get the number of electrons by
-  ! balancing the charge
+  !get the number of electrons assuming
+  ! total neutral charge
   function krome_get_electrons(x)
     !get the total number of electrons from
     ! the number denisities of all the species
@@ -1512,7 +1566,7 @@ contains
   end function krome_get_electrons
 
   !**********************
-  !print the first nbest fluxes
+  !print on screen the first nbest highest reaction fluxes
   subroutine krome_print_best_flux(xin,Tgas,nbest)
     use krome_subs
     use krome_commons
@@ -1525,9 +1579,9 @@ contains
 
   end subroutine krome_print_best_flux
 
-  !print the best fluxes greater than a fraction frac
-  ! of the maximum flux
   !*********************
+  !print only the highest fluxes greater than a fraction frac
+  ! of the maximum flux
   subroutine krome_print_best_flux_frac(xin,Tgas,frac)
     use krome_subs
     use krome_commons
@@ -1540,7 +1594,8 @@ contains
   end subroutine krome_print_best_flux_frac
   
   !**********************
-  !print the nbest fluxes for a given species
+  !print the highest nbest fluxes for reactions involving
+  !a given species using the index idx_find (e.g. krome_idx_H2)
   subroutine krome_print_best_flux_spec(xin,Tgas,nbest,idx_find)
     use krome_subs
     use krome_commons
@@ -1553,7 +1608,8 @@ contains
   end subroutine krome_print_best_flux_spec
 
   !*******************************
-  !get the fluxes of all the reactions in 1/cm3/s
+  !get an array of size krome_nrea with
+  ! the fluxes of all the reactions in cm-3/s
   function krome_get_flux(n,Tgas)
     use krome_commons
     use krome_subs
@@ -1566,6 +1622,7 @@ contains
   end function krome_get_flux
 
   !*********************
+  !get nulcear qeff for the reactions
   function krome_get_qeff()
     use krome_commons
     use krome_subs
@@ -1647,6 +1704,9 @@ contains
   end subroutine krome_dump_flux
 
   !************************
+  !dump all the evaluation of the coefficient rates in
+  ! the file funit, in the range inTmin, inTmax, using
+  ! imax points
   subroutine krome_dump_rates(inTmin,inTmax,imax,funit)
     use krome_commons
     use krome_subs
