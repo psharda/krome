@@ -20,11 +20,6 @@
 @cooling_stop
 #cooling block END
 
-@heating_start
-  @common:user_extheat
-  @heating:user_extheat
-@heating_stop
-
 #dummy reaction
 @format:idx,R,R,P,P,rate
 1,,,,,0.d0
