@@ -1533,6 +1533,7 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 		"K":19,
 		"TI":22,
 		"CA":20,
+		"TI":22,
 		"CR":24,
 		"MN":25,
 		"FE":26,
