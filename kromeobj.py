@@ -1620,8 +1620,8 @@ class krome():
 
 		#build isotopes (including some non-esistent) as [n]A
 		# with -usePlainIsotopes build as nA
-		atoms_iso = ["H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar","K","Ca","Fe","Co","Ni"]
-		atoms_p = [i+1 for i in range(20)] + [26,27,28]
+		atoms_iso = ["H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar","K","Ca","Ti","Fe","Co","Ni"]
+		atoms_p = [i+1 for i in range(20)] + [22,26,27,28]
 		if(len(atoms_iso)!=len(atoms_p)): 
 			die("ERROR: in building isotopes the length of the atoms array and the number of protons array mismatch!")
 		for aiso in atoms_iso:
