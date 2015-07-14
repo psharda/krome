@@ -809,7 +809,7 @@ def generateCustom(readCustomFile):
 		#this simply write 5 species per line
 		print " "+(" ".join(amols[i*5:min((i+1)*5,len(amols))]))
 
-	#random temporary file name
+	#temporary file name
 	tmpNumber = "network" #str(int(rand()*1e8))
 	tmpFname = "cstm"+tmpNumber+".tmp"
 	tmpFnameAll = "cstm"+tmpNumber+"_all.tmp"
@@ -1021,10 +1021,11 @@ def readTOpt(rea):
 	ops = ["GT","LT","GE","LE",">","<"]
 	for op in ops:
 		if(op in rea.Tmin):
-			rea.Tmin = rea.Tmin.replace(op,"").replace(".","")
+			rea.Tmin = rea.Tmin.replace(op,"").replace("..","")
 			rea.TminOp = op.replace(">","GT").replace("<","LT")
 		if(op in rea.Tmax):
-			rea.Tmax = rea.Tmax.replace(op,"").replace(".","")
+			print rea.Tmax
+			rea.Tmax = rea.Tmax.replace(op,"").replace("..","")
 			rea.TmaxOp = op.replace(">","GT").replace("<","LT")
 	return rea
 
