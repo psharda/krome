@@ -1295,10 +1295,10 @@ class krome():
 		if(args.dustOptions):
 			allOptions = ["H2","GROWTH","SPUTTER","T","EVAP","dT"]
 			if(not(self.useDust)): die("ERROR: you need -dust=[see help] to activate -dustOptions!")
-			for opt in allOptions:
-				if(not(opt in allOptions)): sys.exit("ERROR: option "+opt+" in -dustOptions unknown!")
 			dustopt = args.dustOptions
 			dustOptions = [x.strip() for x in dustopt.split(",")]
+			for opt in dustOptions:
+				if(not(opt in allOptions)): sys.exit("ERROR: option "+opt+" in -dustOptions unknown!")
 			if("GROWTH" in dustOptions): self.useDustGrowth = True
 			if("SPUTTER" in dustOptions): self.useDustSputter = True
 			if("H2" in dustOptions): self.useDustH2 = True
@@ -2964,18 +2964,18 @@ class krome():
 
 		#dump species to gnuplot initialization
 		fout = open(self.buildFolder+"species.gps","w")
-		fout.write("#This file is a script to initialize the species index in krome gnuplot\n")
+		fout.write("#This file is a script to initialize the species indexes for gnuplot\n")
 		idx = 0
 		fout.write("\n")
 		fout.write("\n")
-		fout.write("if(!exists(\"nkrome\")) print \"ERROR: first you must set the value of the offset nkrome\"\n")
+		fout.write("if(!exists(\"nkrome\")) print \"ERROR: first set the value of the column-offset nkrome\"\n")
 		inits = []
 		for mol in self.specs:
 			idx += 1
 			inits.append("krome_"+mol.fidx+" = "+str(idx)+" + nkrome")
 		fout.write(("\n".join(inits))+"\n")
 		fout.write("print \"All variables set as e.g. krome_idx_H2\"\n")
-		fout.write("print \"plot 'your_file' u 1:(column(krome_idx_H2))\"\n")
+		fout.write("print \"plot 'your_output' u 1:krome_idx_H2\"\n")
 		fout.write("print \" the offset is nkrome=\",nkrome\n")
 		fout.close()
 		print "Species index initialization for gnuplot in "+self.buildFolder+"species.gps"
@@ -2986,7 +2986,7 @@ class krome():
 		idx = 0
 		fout.write("\n")
 		fout.write("\n")
-		fout.write("if(!exists(\"nkrome_heatcool\")) print \"ERROR: first you must set the value of the offset nkrome_heatcool\"\n")
+		fout.write("if(!exists(\"nkrome_heatcool\")) print \"ERROR: first you must set the column-offset nkrome_heatcool\"\n")
 		idxcools = get_cooling_index_list()
 		idxheats = get_heating_index_list()
 		inits = []
@@ -2996,7 +2996,7 @@ class krome():
 			inits.append("krome_"+idx+" + nkrome_heatcool")
 		fout.write(("\n".join(inits))+"\n")
 		fout.write("print \"All variables set as e.g. krome_idx_cool_H2\"\n")
-		fout.write("print \"plot 'your_file' u 1:(column(krome_idx_cool_H2))\"\n")
+		fout.write("print \"plot 'your_file' u 1:krome_idx_cool_H2\"\n")
 		fout.write("print \" the offset is nkrome_heatcool=\",nkrome_heatcool\n")
 		fout.close()
 		print "Heating cooling index init for gnuplot in "+self.buildFolder+"heatcool.gps"
