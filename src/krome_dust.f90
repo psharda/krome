@@ -747,7 +747,7 @@ contains
 
   !*************************
   function H2_eps_Si(myTgas, myTdust)
-    !restituisce l'epsilon del Si
+    !give back the H2 formation efficiency on silicates
     real*8::H2_eps_Si,Ec,Es,Ep,apc,func
     real*8::myTgas,myTdust
     Ec = 1.5d4 !K
@@ -770,7 +770,7 @@ contains
 
   !*************************
   function H2_eps_C(myTgas, myTdust)
-    !resituisce l'epsilon per il C
+    !give back the H2 formation efficiency on C
     real*8::H2_eps_C,myTgas,myTdust
     real*8::Ep,Ec,Es,Th
     Ep = 8d2 !K
@@ -787,7 +787,7 @@ contains
 
   !***************************
   function stick(myTgas,myTdust)
-    !sticking coefficient per la formazione di H2
+    !sticking coefficient for the H2 formation
     real*8::stick,myTgas,myTdust
     stick = 1.d0 / (1.d0 + 0.4*sqrt((myTgas+myTdust)/1d2) &
          + 0.2*myTgas/1d2 + 0.08*(myTgas/1d2)**2)
