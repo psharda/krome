@@ -2958,7 +2958,7 @@ class krome():
 		idx = 0
 		for mol in self.specs:
 			idx += 1
-			fout.write(str(idx)+"\t"+mol.name+"\t"+mol.fidx+"\n")
+			fout.write(str(idx)+"\t"+mol.name+"\t""krome_"+mol.fidx+"\n")
 		fout.close()
 		print "Species list saved in "+self.buildFolder+"species.log"
 
