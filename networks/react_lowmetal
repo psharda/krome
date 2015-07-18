@@ -44,22 +44,6 @@
 
 25,H2+,H-,,H,H2,,,NONE,NONE,5.d-7*sqrt(1.d2*invT)
 
-#DEUTERIUM CHEMISTRY
-
-#26,H+,D,,H,D+,,,NONE,1e8,1.0d-9 *exp(-4.1d1*invT)
-#
-#27,H,D+,,H+,D,,,NONE,1e8,1.0d-9 
-#
-#28,H2,D+,,HD,H+,,,NONE,1e8,2.1d-9
-#
-#29,HD,H+,,H2,D+,,,NONE,1e8,1.0d-9 *exp(-4.57d2*invT)
-#
-#30,H2,D,,HD,H,,,NONE,1e8,7.5d-11*exp(-3.82d3*invT)
-#
-#31,HD,H,,H2,D,,,NONE,1e8,7.5d-11*exp(-4.24d3*invT)
-#
-#32,D,H-,,HD,E,,,NONE,1e8,1.5d-9*(T32)**(-0.1d0)
-
 #THREE-BODY REACTIONS, Forrey 2013
 33,H,H,H,H2,H,,,NONE,NONE,6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0)
 34,H2,H,H,H2,H2,,,NONE,NONE,(6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0))/8.d0

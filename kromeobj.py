@@ -2559,9 +2559,11 @@ class krome():
 				if(RR=="CR"): continue
 				if(not(RR in allP)): sources.append(RR)
 			if(len(sinks)>0):
-				print "ERROR: sinks found, check your network ("+(", ".join(sinks))+")!"
+				print "WARNING: sinks found, check your network ("+(", ".join(sinks))+")!"
 				print " Disable this control with -noSinkCheck"
-				sys.exit()
+				a = raw_input("Any key to ignore q to quit... ")
+                                if(a=="q"): print sys.exit()
+				#sys.exit()
 
 			if(len(sources)>0):
 				print "ERROR: sources found, check your network ("+(", ".join(sources))+")!"
@@ -2958,7 +2960,7 @@ class krome():
 		idx = 0
 		for mol in self.specs:
 			idx += 1
-			fout.write(str(idx)+"\t"+mol.name+"\t"+mol.fidx+"\n")
+			fout.write(str(idx)+"\t"+mol.name+"\t""krome_"+mol.fidx+"\n")
 		fout.close()
 		print "Species list saved in "+self.buildFolder+"species.log"
 
