@@ -42,26 +42,32 @@ if(len(argv)>1):
 		
 
 fh = open("krome_user.f90","rb")
+alltext = ""
+for row in fh:
+	alltext += row
+
+alltext = alltext.replace("&\n","")
 
 inpartF = ["function","(",")"]
 inpartS = ["subroutine","(",")"]
 infun = issub = False
 storecom = ""
 flist = []
-for row in fh:
+for row in alltext.split("\n"):
 	srow = row.strip()
 	if(srow==""): continue
 	if(srow=="contains"): storecom = ""
 	isfun = True
 	for part in inpartF:
-		if(not(part in srow)): 
+		if(not(part in srow) or srow[0]=="!"): 
 			isfun = False
 			break
 	issub = True
 	for part in inpartS:
-		if(not(part in srow)): 
+		if(not(part in srow) or srow[0]=="!"):
 			issub = False
 			break
+
 	if(isfun or issub):
 		if(storecom==""): storecom = "[no comments available]"
 		ffname = srow
@@ -91,7 +97,10 @@ icount = 0
 for x in flist:
 	#if not matches searh criteria skip
 	if(not(x[2])): continue
-	print str(icount+1)+") "+x[0]
+	fname = x[0]
+	while("  " in fname):
+		fname = fname.replace("  "," ")
+	print str(icount+1)+") "+fname.replace(", ",",")
 	print "  "+x[1]+"\n"
 	icount += 1
 
