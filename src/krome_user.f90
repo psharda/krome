@@ -679,7 +679,7 @@ contains
   ! the flux is automatically stored by the functions
   ! that set the flux, or by the function
   ! krome_photoBin_store()
-  subroutine krome_photoBin_restore
+  subroutine krome_photoBin_restore()
     use krome_commons
     implicit none
 

@@ -4764,7 +4764,7 @@ class krome():
 				noTabReactions += "coe_tab("+str(rea.idx)+") = "+rea.krate+"\n"
 				countNoTab += 1
 				sclist = get_Tshortcut(rea,sclist,coevars) #add shotcut if needed
-			
+
 
 		#if reactions that cannot be tabbed are found
 		klist = kvars = ""
@@ -4824,6 +4824,7 @@ class krome():
 			if(row.strip() == "#KROME_Tshortcuts"):
 				ssc = ""
 				for shortcut in sclist:
+					if(not(self.useTabs)): break
 					ssc += shortcut + "\n"
 				row = ssc
 
