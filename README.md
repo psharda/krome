@@ -49,8 +49,8 @@ Written and developed by Tommaso Grassi
 
 Co-developer Stefano Bovino
 ```
- sbovino@astro.physik.uni-goettingen.de
- Institut fuer Astrophysik, Goettingen.
+ stefano.bovino@uni-hamburg.de
+ Hamburger Sternwarte, Hamburg.
 ```
 
 Contributors (alphabetically): D. Galli, F.A. Gianturco, T.Haugbølle, J. Prieto,
