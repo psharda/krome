@@ -1,0 +1,17 @@
+reset
+set logscale
+set autoscale
+set format y "%L"
+set format x "%L"
+
+set ylabel "log(T/K)"
+set xlabel "log(n/cm-3)"
+
+set key b r
+set grid
+
+n=1
+plot 'fort.66' u 2:3 every n w l t "Tgas",\
+ '' u 2:(column(3+1)) every n w l t "Tdust C-",\
+ '' u 2:(column(3+2)) every n w l t "Tdust C",\
+ '' u 2:(column(3+3)) every n w l t "Tdust C+"

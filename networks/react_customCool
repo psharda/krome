@@ -1,0 +1,25 @@
+#in this network we only show how to add a custom
+# cooling expression to KROME.
+# see eqns. (A13)-(A14) http://adsabs.harvard.edu/abs/2003MNRAS.339....1S
+
+#for this cooling function ghosts are needed
+@ghost:H,H2,H2O
+
+#cooling block START
+@cooling_start
+
+ #additional variables in F90 format
+ # note that the @var tokens inside a @cooling block do not interfere with the other ones
+ @var:a=1.35d0-0.3d0*log10(Tgas*1d-3)
+ @var:lambda3=1.32d-23*(Tgas*1d-3)**a
+
+ #cooling expression for rotational part
+ # note that the index are written in the internal KROME way (without "krome_")
+ @cooling:(n(idx_H2) + 1.39d0*n(idx_H)) * n(idx_H2O) * lambda3
+
+@cooling_stop
+#cooling block END
+
+#dummy reaction
+@format:idx,R,R,P,P,rate
+1,,,,,0.d0

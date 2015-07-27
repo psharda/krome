@@ -1,25 +1,5 @@
 ######################################
 ######################################
-#collisional ionization rate from verner+96
-@type: colion
-@reacts: H, E
-@prods: H+,E, E
-@limits: 1.160452d+04, 2.320904d+08
-@rate: colion_v96(Tgas, 13.6d0, 0d0, 0.291d-07, 0.2320d0, 0.39d0)
-
-#collisional ionization rate from verner+96
-@type: colion
-@reacts: He, E
-@prods: He+,E, E
-@limits: 1.160452d+04, 2.320904d+08
-@rate: colion_v96(Tgas, 24.6d0, 0d0, 0.175d-07, 0.1800d0, 0.35d0)
-
-#collisional ionization rate from verner+96
-@type: colion
-@reacts: He+, E
-@prods: He++,E, E
-@limits: 3.481356d+04, 2.320904d+08
-@rate: colion_v96(Tgas, 54.4d0, 1d0, 0.205d-08, 0.2650d0, 0.25d0)
 
 #collisional ionization rate from verner+96
 @type: colion

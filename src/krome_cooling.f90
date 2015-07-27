@@ -9,12 +9,14 @@ module KROME_cooling
 contains
 
   !*******************
-  function cooling(n,Tgas)
+  function cooling(n,inTgas)
+    use krome_commons
     implicit none
-    real*8::n(:),Tgas,cooling
+    real*8::n(:),inTgas,cooling,Tgas
 
+    Tgas = inTgas
     cooling = sum(get_cooling_array(n(:),Tgas))
-    
+
   end function cooling
 
   !*******************************
@@ -44,7 +46,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
-    cools(idx_cool_Z) = cooling_Z(n(:), Tgas)
+    cools(idx_cool_Z) = cooling_Z(n(:), Tgas) #KROME_CMBfloorZ
 #ENDIFKROME
 
 #IFKROME_useCoolingdH
@@ -52,6 +54,14 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingDust
+    cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingDustNoTdust
+    cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingDustTabs
     cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
@@ -75,27 +85,374 @@ contains
     cools(idx_cool_ff) = cooling_ff(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingCO
+    cools(idx_cool_CO) = cooling_CO(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIE
+    cools(idx_cool_ZCIE) = cooling_ZCIE(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIENOUV
+    cools(idx_cool_ZCIENOUV) = cooling_ZCIENOUV(n(:), Tgas)
+#ENDIFKROME
+
+    cools(idx_cool_custom) = cooling_custom(n(:),Tgas)
+
     get_cooling_array(:) = cools(:)
-
-    !remove the comment below to write cooling contributions to fort.44
-    !write(44,'(99E17.8e3)') sum(n(1:nmols)),Tgas,cools(:)
-
-    !gnuplot command (every n=100, and m=1 for density or m=2 for 
-    ! temperature following the write(44,...) command above) 
-    !plot 'fort.44' u m:3 every n w l t "H2",\
-    ! '' u m:4 every n w l t "H2GP",\
-    ! '' u m:5 every n w l t "atomic",\
-    ! '' u m:6 every n w l t "HD",\
-    ! '' u m:7 every n w l t "Z",\
-    ! '' u m:8 every n w l t "enthalpy",\
-    ! '' u m:9 every n w l t "dust",\
-    ! '' u m:10 every n w l t "compton",\
-    ! '' u m:11 every n w l t "CIE",\
-    ! '' u m:12 every n w l t "Cont",\
-    ! '' u m:13 every n w l t "Exp"
 
   end function get_cooling_array
 
+#IFKROME_useCoolingCO
+  !***************************
+  !CO cooling: courtesy of K.Omukai (Nov2014)
+  ! method: Neufeld+Kaufman 1993 (bit.ly/1vnjcXV, see eqn.5).
+  ! see also Omukai+2010 (bit.ly/1HIaGcn)
+  ! H and H2 collisions
+  function cooling_CO(n,inTgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    integer,parameter::imax=coolCOn1
+    integer,parameter::jmax=coolCOn2
+    integer,parameter::kmax=coolCOn3
+    integer::i,j,k
+    real*8,parameter::eps=1d-5
+    real*8::cooling_CO,n(:),inTgas,Tgas
+    real*8::v1,v2,v3,prev1,prev2,cH
+    real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
+    real*8::x1(imax),x2(jmax),x3(kmax)
+    real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
+    real*8::v1min,v1max,v2min,v2max,v3min,v3max
+
+    !local copy of limits
+    v1min = coolCOx1min
+    v1max = coolCOx1max
+    v2min = coolCOx2min
+    v2max = coolCOx2max
+    v3min = coolCOx3min
+    v3max = coolCOx3max
+
+    !local copy of variables arrays
+    x1(:) = coolCOx1(:)
+    x2(:) = coolCOx2(:)
+    x3(:) = coolCOx3(:)
+
+    ixd1(:) = coolCOixd1(:)
+    ixd2(:) = coolCOixd2(:)
+    ixd3(:) = coolCOixd3(:)
+
+    !local variables
+    v3 = num2col(n(idx_CO),n(:)) !CO column density
+    cH = n(idx_H) + n(idx_H2)
+    v2 = cH
+    v1 = inTgas !Tgas
+
+    !logs of variables
+    v1 = log10(v1)
+    v2 = log10(v2)
+    v3 = log10(v3)
+
+    !default value erg/s/cm3
+    cooling_CO = 0d0
+
+    !check limits
+    if(v1>=v1max) v1 = v1max*(1d0-eps)
+    if(v2>=v2max) v2 = v2max*(1d0-eps)
+    if(v3>=v3max) v3 = v3max*(1d0-eps)
+
+    if(v1<v1min) return
+    if(v2<v2min) return
+    if(v3<v3min) return
+
+    !gets position of variable in the array
+    i = (v1-v1min)*coolCOdvn1+1
+    j = (v2-v2min)*coolCOdvn2+1
+    k = (v3-v3min)*coolCOdvn3+1
+
+    !precompute shared variables
+    prev1 = (v1-x1(i))*ixd1(i)
+    prev2 = (v2-x2(j))*ixd2(j)
+
+    !linear interpolation on x1 for x2,x3
+    vv1 = prev1 * (coolCOy(k,j,i+1) - &
+         coolCOy(k,j,i)) + coolCOy(k,j,i)
+    !linear interpolation on x1 for x2+dx2,x3
+    vv2 = prev1 * (coolCOy(k,j+1,i+1) - &
+         coolCOy(k,j+1,i)) + coolCOy(k,j+1,i)
+    !linear interpolation on x2 for x3
+    vv12 = prev2 * (vv2 - vv1) + vv1
+
+    !linear interpolation on x1 for x2,x3+dx3
+    vv3 = prev1 * (coolCOy(k+1,j,i+1) - &
+         coolCOy(k+1,j,i)) + coolCOy(k+1,j,i)
+    !linear interpolation on x1 for x2+dx2,x3+dx3
+    vv4 = prev1 * (coolCOy(k+1,j+1,i+1) - &
+         coolCOy(k+1,j+1,i)) + coolCOy(k+1,j+1,i)
+    !linear interpolation on x2 for x3+dx3
+    vv34 = prev2 * (vv4 - vv3) + vv3
+
+    !linear interpolation on x3
+    xLd = (v3-x3(k))*ixd3(k)*(vv34 - &
+         vv12) + vv12
+
+    !CO cooling in erg/s/cm3
+    cooling_CO = 1d1**xLd * cH * n(idx_CO)
+
+  end function cooling_CO
+
+  !************************
+  subroutine init_coolingCO()
+    use krome_commons
+    implicit none
+    integer::ios,iout(3),i
+    real*8::rout(4)
+
+    print *,"load CO cooling..."
+    open(33,file="coolCO.dat",status="old",iostat=ios)
+    !check if file exists
+    if(ios.ne.0) then
+       print *,"ERROR: problems loading coolCO.dat!"
+       stop
+    end if
+
+    do
+       read(33,*,iostat=ios) iout(:),rout(:) !read line
+       if(ios<0) exit !eof
+       if(ios/=0) cycle !skip blanks
+       coolCOx1(iout(1)) = rout(1)
+       coolCOx2(iout(2)) = rout(2)
+       coolCOx3(iout(3)) = rout(3)
+       coolCOy(iout(3),iout(2),iout(1)) = rout(4)
+    end do
+
+    !store inverse of the differences
+    ! to speed up interpolation
+    do i=1,coolCOn1-1
+       coolCOixd1(i) = 1d0/(coolCOx1(i+1)-coolCOx1(i))
+    end do
+    do i=1,coolCOn2-1
+       coolCOixd2(i) = 1d0/(coolCOx2(i+1)-coolCOx2(i))
+    end do
+    do i=1,coolCOn3-1
+       coolCOixd3(i) = 1d0/(coolCOx3(i+1)-coolCOx3(i))
+    end do
+
+    coolCOx1min = minval(coolCOx1)
+    coolCOx1max = maxval(coolCOx1)
+    coolCOx2min = minval(coolCOx2)
+    coolCOx2max = maxval(coolCOx2)
+    coolCOx3min = minval(coolCOx3)
+    coolCOx3max = maxval(coolCOx3)
+
+    coolCOdvn1 = (coolCOn1-1)/(coolCOx1max-coolCOx1min)
+    coolCOdvn2 = (coolCOn2-1)/(coolCOx2max-coolCOx2min)
+    coolCOdvn3 = (coolCOn3-1)/(coolCOx3max-coolCOx3min)
+
+  end subroutine init_coolingCO
+#ENDIFKROME
+
+
+#IFKROME_useCoolingZCIENOUV
+  !***************************
+  !Metal line cooling CIE
+  ! method: CLOUDY 10, NOUV
+  ! tables kindly provided by Sijing Shen.
+  function cooling_ZCIENOUV(n,inTgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::cooling_ZCIENOUV,n(:),inTgas
+    real*8::cH,Tgas,xLd,logcH
+
+    cH = get_Hnuclei(n(:)) 
+
+    !check if the abundance is close to zero to 
+    !avoid weird log evaluation
+    if(cH.lt.1d-20)return
+
+    Tgas = log10(inTgas)
+    logcH = log10(cH)
+
+    xLd = fit_anytab2D(CoolZNOUV_x(:), CoolZNOUV_y(:), CoolZNOUV_z(:,:), &
+         CoolZNOUV_xmul, CoolZNOUV_ymul,logcH,Tgas)
+
+    cooling_ZCIENOUV = 10**xLd * cH * cH * total_Z
+
+  end function cooling_ZCIENOUV
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIE
+  !***************************
+  !Metal line cooling CIE
+  ! method: CLOUDY 10, including the 
+  ! extragalactic (quasars + galaxies) UV flux
+  ! by Haardt&Madau 2012.
+  !Tables kindly provided by Sijing Shen.
+  function cooling_ZCIE(n,inTgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    integer,parameter::imax=coolZCIEn1
+    integer,parameter::jmax=coolZCIEn2
+    integer,parameter::kmax=coolZCIEn3
+    integer::i,j,k
+    real*8::cooling_ZCIE,n(:),inTgas,Tgas
+    real*8::v1,v2,v3,prev1,prev2,cH
+    real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
+    real*8::x1(imax),x2(jmax),x3(kmax)
+    real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
+    real*8::v1min,v1max,v2min,v2max,v3min,v3max
+    real*8,parameter::eps=1d-5
+
+    !local copy of limits
+    v1min = coolZCIEx1min
+    v1max = coolZCIEx1max
+    v2min = coolZCIEx2min
+    v2max = coolZCIEx2max
+    v3min = coolZCIEx3min
+    v3max = coolZCIEx3max
+
+    !local copy of variables arrays
+    x1(:) = coolZCIEx1(:)
+    x2(:) = coolZCIEx2(:)
+    x3(:) = coolZCIEx3(:)
+
+    ixd1(:) = coolZCIEixd1(:)
+    ixd2(:) = coolZCIEixd2(:)
+    ixd3(:) = coolZCIEixd3(:)
+
+    !local variables
+    cH = get_Hnuclei(n(:)) 
+
+    !check if the abundance is close to zero to 
+    !avoid weird log evaluation
+    if(cH.lt.1d-20)return
+
+    v1 = inTgas         !Tgas
+    v2 = cH             !total H number density
+    v3 = phys_zredshift !redshift is linear
+
+    !logs of variables
+    v1 = log10(v1)
+    v2 = log10(v2)
+
+    !default value erg/s/cm3
+    cooling_ZCIE = 0d0
+
+    !check limits
+    !check limits
+    if(v1>=v1max) v1 = v1max*(1d0-eps)
+    if(v2>=v2max) v2 = v2max*(1d0-eps)
+    if(v3>=v3max) v3 = v3max*(1d0-eps)
+
+    if(v1<v1min) return
+    if(v2<v2min) return
+    if(v3<v3min) return
+
+    !gets position of variable in the array
+    i = (v1-v1min)*coolZCIEdvn1+1
+    j = (v2-v2min)*coolZCIEdvn2+1
+    k = (v3-v3min)*coolZCIEdvn3+1
+
+    !precompute shared variables
+    prev1 = (v1-x1(i))*ixd1(i)
+    prev2 = (v2-x2(j))*ixd2(j)
+
+    !linear interpolation on x1 for x2,x3
+    vv1 = prev1 * (coolZCIEy(k,j,i+1) - &
+         coolZCIEy(k,j,i)) + coolZCIEy(k,j,i)
+    !linear interpolation on x1 for x2+dx2,x3
+    vv2 = prev1 * (coolZCIEy(k,j+1,i+1) - &
+         coolZCIEy(k,j+1,i)) + coolZCIEy(k,j+1,i)
+    !linear interpolation on x2 for x3
+    vv12 = prev2 * (vv2 - vv1) + vv1
+
+    !linear interpolation on x1 for x2,x3+dx3
+    vv3 = prev1 * (coolZCIEy(k+1,j,i+1) - &
+         coolZCIEy(k+1,j,i)) + coolZCIEy(k+1,j,i)
+    !linear interpolation on x1 for x2+dx2,x3+dx3
+    vv4 = prev1 * (coolZCIEy(k+1,j+1,i+1) - &
+         coolZCIEy(k+1,j+1,i)) + coolZCIEy(k+1,j+1,i)
+    !linear interpolation on x2 for x3+dx3
+    vv34 = prev2 * (vv4 - vv3) + vv3
+
+    !linear interpolation on x3
+    xLd = (v3-x3(k))*ixd3(k)*(vv34 - &
+         vv12) + vv12
+
+    !Z cooling in erg/s/cm3
+    cooling_ZCIE = 1d1**xLd * cH * cH * total_Z
+
+  end function cooling_ZCIE
+
+  !************************
+  subroutine init_coolingZCIE()
+    use krome_commons
+    implicit none
+    integer::ios,iout(3),i
+    real*8::rout(5)
+
+    print *,"load Z_CIE2012 cooling..."
+    open(33,file="coolZ_CIE2012.dat",status="old",iostat=ios)
+    !check if file exists
+    if(ios.ne.0) then
+       print *,"ERROR: problems loading coolZ_CIE2012.dat!"
+       stop
+    end if
+
+    do
+       read(33,*,iostat=ios) iout(:),rout(:) !read line
+       if(ios<0) exit !eof
+       if(ios/=0) cycle !skip blanks
+       coolZCIEx1(iout(1)) = rout(1)
+       coolZCIEx2(iout(2)) = rout(2)
+       coolZCIEx3(iout(3)) = rout(3)
+       coolZCIEy(iout(3),iout(2),iout(1)) = rout(4)
+       heatZCIEy(iout(3),iout(2),iout(1)) = rout(5)
+    end do
+
+    !store inverse of the differences
+    ! to speed up interpolation
+    do i=1,coolZCIEn1-1
+       coolZCIEixd1(i) = 1d0/(coolZCIEx1(i+1)-coolZCIEx1(i))
+    end do
+    do i=1,coolZCIEn2-1
+       coolZCIEixd2(i) = 1d0/(coolZCIEx2(i+1)-coolZCIEx2(i))
+    end do
+    do i=1,coolZCIEn3-1
+       coolZCIEixd3(i) = 1d0/(coolZCIEx3(i+1)-coolZCIEx3(i))
+    end do
+
+    coolZCIEx1min = minval(coolZCIEx1)
+    coolZCIEx1max = maxval(coolZCIEx1)
+    coolZCIEx2min = minval(coolZCIEx2)
+    coolZCIEx2max = maxval(coolZCIEx2)
+    coolZCIEx3min = minval(coolZCIEx3)
+    coolZCIEx3max = maxval(coolZCIEx3)
+
+    coolZCIEdvn1 = (coolZCIEn1-1)/(coolZCIEx1max-coolZCIEx1min)
+    coolZCIEdvn2 = (coolZCIEn2-1)/(coolZCIEx2max-coolZCIEx2min)
+    coolZCIEdvn3 = (coolZCIEn3-1)/(coolZCIEx3max-coolZCIEx3min)
+
+  end subroutine init_coolingZCIE
+#ENDIFKROME
+
+
+  !*****************************
+  function cooling_custom(n,Tgas)
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    implicit none
+    real*8::n(:),Tgas,cooling_custom
+#KROME_custom_cooling_var_define
+
+    cooling_custom = 0d0
+#KROME_custom_cooling_var
+#KROME_custom_cooling_expr
+
+  end function cooling_custom
 
   !**********************************
   function kpla(n,Tgas)
@@ -107,9 +464,10 @@ contains
     use krome_commons
     implicit none
     real*8::kpla,rhogas,Tgas,n(:),y
-    real*8::a0,a1
+    real*8::a0,a1,m(nspec)
 
-    rhogas = sum(n(:)*get_mass()) !g/cm3
+    m(:) = get_mass()
+    rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
 
     kpla = 0.d0
     !opacity is zero under 1e-12 g/cm3
@@ -149,8 +507,10 @@ contains
     use krome_subs
     implicit none
     real*8::n(:),Tgas,cooling_Continuum,kgas,rhogas
-    real*8::lj,tau,beta
-    rhogas = sum(n(:)*get_mass()) !g/cm3
+    real*8::lj,tau,beta,m(nspec)
+
+    m(:) = get_mass()
+    rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
     kgas = kpla(n(:),Tgas) !planck opacity cm2/g (Omukai+2000)
     lj = get_jeans_length(n(:), Tgas) !cm
     tau = lj * kgas * rhogas + 1d-40 !opacity
@@ -179,14 +539,13 @@ contains
     real*8::b0,b1,b2,b3,b4,b5
     real*8::cool,tauCIE,logcool
 
+    cooling_CIE = 0d0
     !under 1e-12 1/cm3 cooling is zero
-    if(n(idx_H2)<1d-12) then
-       cooling_CIE = 0.d0
-       return
-    end if
+    if(n(idx_H2)<1d-12) return
 
+    Tgas = inTgas
     !temperature limit
-    Tgas = max(inTgas, phys_Tcmb) 
+    if(Tgas<phys_Tcmb) return
 
     !prepares variables
     x = log10(Tgas)
@@ -260,37 +619,100 @@ contains
     use krome_commons
     real*8::cooling_compton,n(:),Tgas
 
-    !note that redhsift is defined in krome_user_commons and 
-    ! must be provided by the user
+    !note that redhsift is a common variable and
+    ! should be provided by the user, otherwise the default is zero
     cooling_compton = 5.65d-36 * (1.d0 + phys_zredshift)**4 &
          * (Tgas - 2.73d0 * (1.d0 + phys_zredshift)) * n(idx_e) !erg/s/cm3
 
   end function cooling_compton
 #ENDIFKROME
 
+#IFKROME_useCoolingDustTabs
+  !****************************
+  function cooling_dust(n,Tgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::n(:),Tgas,ntot,cooling_dust,coolFit
+    real*8::logn,logt
+
+    ntot = sum(n(1:nmols))
+    Tgas = n(idx_Tgas)
+
+    logn = log10(ntot)
+    logt = log10(Tgas)
+    !cooling fit from tables
+    coolFit = fit_anytab2D_linlog(dust_tab_ngas(:), dust_tab_Tgas(:), &
+         dust_tab_cool(:,:), dust_mult_ngas, dust_mult_Tgas, &
+         logn, logt)
+
+    cooling_dust = get_mu(n) * coolFit * ntot * ntot
+
+  end function cooling_dust
+#ENDIFKROME
+
+#IFKROME_useCoolingDustNoTdust
+  !*******************************
+  function cooling_dust(n,Tgas)
+    !cooling from dust in erg/cm3/s
+    use krome_constants
+    use krome_commons
+    use krome_dust
+    implicit none
+    real*8::cooling_dust,n(:),Tgas
+    real*8::pre,ntot,vgas,fact
+    integer::i
+    fact = 0.5d0
+    Tgas = n(idx_Tgas)
+    vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
+    ntot = sum(n(1:nmols))
+    pre = 2d0*fact*vgas*boltzmann_erg*ntot
+
+    cooling_dust = 0d0
+    do i=1,ndust
+       cooling_dust = cooling_dust &
+            + pre * xdust(i) * krome_dust_asize2(i) &
+            * (Tgas-krome_dust_T(i))
+    end do
+
+  end function cooling_dust
+#ENDIFKROME
+
+
 #IFKROME_useCoolingDust
   !*******************************
   function cooling_dust(n,Tgas)
     !cooling from dust in erg/cm3/s
-    use krome_dust
-    use krome_commons
     use krome_constants
+    use krome_commons
+    use krome_subs
+    use krome_dust
     implicit none
-    real*8::cooling_dust,n(:),Tgas,cool,ntot
-    integer::i,idust
-
-    !total gas density 1/cm3
+    real*8::cooling_dust,n(:),Tgas
+#IFKROME_usedTdust
+    real*8::rhogas,ljeans,be,ntot,vgas
+    real*8::m(nspec),intCMB,fact
+    integer::i
+    fact = 0.5d0
+    cooling_dust = 0d0
+    m(:) = get_mass()
+    Tgas = n(idx_Tgas)
+    vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
     ntot = sum(n(1:nmols))
+    rhogas = sum(n(1:nmols)*m(1:nmols))
+    ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
+    be = besc(n(:),Tgas,ljeans,rhogas)
 
-    cool = 0.d0 !cooling in erg/s/cm3
-    !loop on dust to evaluate cooling following Hollenbach and McKee 1979
-    do i=nmols+1,nmols+ndust
-       idust = i - nmols !index of dust
-       cool = cool + dustCool(krome_dust_asize2(idust), n(i), Tgas,&
-            krome_dust_T(idust), ntot)
+    do i=1,ndust
+       intCMB = get_dust_intBB(i,phys_Tcmb)
+       cooling_dust = cooling_dust + (get_dust_intBB(i,n(nmols+ndust+i)) &
+            - intCMB) * be * xdust(i) * krome_dust_asize2(i)
     end do
+    cooling_dust = 4d0*pi*cooling_dust !erg/s/cm3
+    return
+#ENDIFKROME_usedTdust
 
-    cooling_dust = cool !erg/s/cm3
+    cooling_dust = dust_cooling !erg/s/cm3
 
   end function cooling_dust
 #ENDIFKROME
@@ -333,7 +755,7 @@ contains
   end function cooling_dH
 #ENDIFKROME
 
-
+#IFKROME_useH2esc_omukai
   !*****************************
   !escape opacity for H2 cooling. 
   ! courtesy of Kazu Omukai (2014)
@@ -354,8 +776,9 @@ contains
     H2opacity_omukai = 1d1**(fit_anytab2D(arrH2esc_ntot(:), &
          arrH2esc_Tgas(:), arrH2esc(:,:), xmulH2esc, &
          ymulH2esc,lntot,lTgas))
-    
+
   end function H2opacity_omukai
+#ENDIFKROME
 
 #IFKROME_useCoolingH2GP
   !*******************************
@@ -398,9 +821,36 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingH2
-    
+
+  !*****************
+  !sigmoid function with x0 shift and s steepness
+  function sigmoid(x,x0,s)
+    implicit none
+    real*8::sigmoid,x,x0,s
+
+    sigmoid = 1d1/(1d1+exp(-s*(x-x0)))
+
+  end function sigmoid
+
+  !*******************
+  !window function for H2 cooling to smooth limits
+  function wCool(logTgas,logTmin,logTmax)
+    implicit none
+    real*8::wCool,logTgas,logTmin,logTmax,x
+
+    x = (logTgas-logTmin)/(logTmax-logTmin)
+    wCool = 1d1**(2d2*(sigmoid(x,-2d-1,5d1)*sigmoid(-x,-1.2d0,5d1)-1d0))
+    if(wCool<1d-199) wCool = 0d0
+    if(wCool>1d0) then
+       print *,"ERROR: wCool>1"
+       stop
+    end if
+
+  end function wCool
+
   !ALL THE COOLING FUNCTIONS ARE FROM GLOVER & ABEL, MNRAS 388, 1627, 2008
   !FOR LOW DENSITY REGIME: CONSIDER AN ORTHO-PARA RATIO OF 3:1
+  !UPDATED TO THE DATA REPORTED BY GLOVER 2015, MNRAS
   !EACH SINGLE FUNCTION IS IN erg/s
   !FINAL UNITS = erg/cm3/s
   !*******************************
@@ -410,83 +860,87 @@ contains
     real*8::n(:),Tgas
     real*8::temp,logt3,logt,cool,cooling_H2,T3
     real*8::LDL,HDLR,HDLV,HDL,fact
-    real*8::logt32,logt33,logt34,logt35,dump63,dump14
+    real*8::logt32,logt33,logt34,logt35,logt36,logt37,logt38
+    real*8::dump14,fH2H,fH2e,fH2H2,w14,w24
     integer::i
     character*16::names(nspec)
-    temp = max(Tgas, 1d1)
+
+    temp = Tgas
+    cooling_H2 = 0d0
+    !if(temp<2d0) return
 
     T3 = temp * 1.d-3
     logt3 = log10(T3)
     logt = log10(temp)
-    cool = 0.d0
+    cool = 0d0
 
     logt32 = logt3 * logt3
     logt33 = logt32 * logt3
     logt34 = logt33 * logt3
     logt35 = logt34 * logt3
+    logt36 = logt35 * logt3
+    logt37 = logt36 * logt3
+    logt38 = logt37 * logt3
 
-    !dumping function to extend 6e3 and 1e4 limits
-    dump63 = 1d0/ (1d0 + exp(min((temp-1d4)*8d-4,3d2)))
-    dump14 = 1d0/ (1d0 + exp(min((temp-3d4)*2d-4,3d2)))
+    w14 = wCool(logt, 1d0, 4d0)
+    w24 = wCool(logt, 2d0, 4d0)
 
     !//H2-H
-    if(temp>1d1 .and. temp<=1d2) then
-       cool = cool +1.d1**(-16.818342D0 +3.7383713D1*logt3 &
+    if(temp<=1d2) then
+       fH2H = 1.d1**(-16.818342D0 +3.7383713D1*logt3 &
             +5.8145166D1*logt32 +4.8656103D1*logt33 &
             +2.0159831D1*logt34 +3.8479610D0*logt35 )*n(idx_H)
     elseif(temp>1d2 .and. temp<=1d3) then
-       cool = cool +1.d1**(-2.4311209D1 +3.5692468D0*logt3 &
+       fH2H = 1.d1**(-2.4311209D1 +3.5692468D0*logt3 &
             -1.1332860D1*logt32 -2.7850082D1*logt33 &
             -2.1328264D1*logt34 -4.2519023D0*logt35)*n(idx_H)
-       !note here that the limit has been extended from 6e3 to 1e6
-    elseif(temp>1.d3 .and. temp<=1.d6) then
-       cool = cool +1d1**(-2.4311209D1 +4.6450521D0*logt3 &
+    elseif(temp>1.d3) then
+       fH2H = 1d1**(-2.4311209D1 +4.6450521D0*logt3 &
             -3.7209846D0*logt32 +5.9369081D0*logt33 &
-            -5.5108049D0*logt34 +1.5538288D0*logt35)*n(idx_H) &
-            * dump63
-       
+            -5.5108049D0*logt34 +1.5538288D0*logt35)*n(idx_H)
     end if
 
-    !//H2-Hp, extended from 1e4 to 1e6
-    if(temp>1.d1 .and. temp<=1.d4)  then
-       cool = cool + 1d1**(-2.1716699D1 +1.3865783D0*logt3 &
-            -0.37915285D0*logt32 +0.11453688D0*logt33 &
-            -0.23214154D0*logt34 +0.058538864D0*logt35)*n(idx_Hj) &
-            * dump14
-    end if
+    cool = cool + fH2H * wCool(logt,1d0,log10(6d3))
 
-    !//H2-H2, limit extended from 6e3 to 1e6
-    if(temp>1.d2 .and. temp<=1.d6) then
-       cool = cool + 1d1**(-2.3962112D1 +2.09433740D0*logt3 &
-            -.77151436D0*logt32 +.43693353D0*logt33 &
-            -.14913216D0*logt34 -.033638326D0*logt35)*n(idx_H2) &
-            * dump63
-    end if
+    !//H2-Hp
+    cool = cool + 1d1**(-2.2089523d1 +1.5714711d0*logt3 &
+         +0.015391166d0*logt32 -0.23619985d0*logt33 &
+         -0.51002221d0*logt34 +0.32168730d0*logt35)*n(idx_Hj) &
+         * w14
+
+
+    !//H2-H2
+    fH2H2 = 1d1**(-2.3962112D1 +2.09433740D0*logt3 &
+         -.77151436D0*logt32 +.43693353D0*logt33 &
+         -.14913216D0*logt34 -.033638326D0*logt35)*n(idx_H2) !&
+    cool = cool + fH2H2 * w24
 
     !//H2-e
-    if(temp>1d1 .and. temp<=2d2) then
-       cool =  cool +1d1**(-3.4286155D1 -4.8537163D1*logt3 &
-            -7.7121176D1*logt32 -5.1352459D1*logt33 &
-            -1.5169150D1*logt34 -.98120322D0*logt35)*n(idx_e)
-       !note: limit extended from 1e4 to 1e6
-    elseif(temp>2d2 .and. temp<1d6)  then
-       cool = cool + 1d1**(-2.2190316D1 +1.5728955D0*logt3 &
-            -.213351D0*logt32 +.96149759D0*logt33 &
-            -.91023195D0*logt34 +.13749749D0*logt35)*n(idx_e) &
-            * dump63
+    fH2e = 0d0
+    if(temp<=5d2) then
+       fH2e = 1d1**(min(-2.1928796d1 + 1.6815730d1*logt3 &
+            +9.6743155d1*logt32 +3.4319180d2*logt33 &
+            +7.3471651d2*logt34 +9.8367576d2*logt35 &
+            +8.0181247d2*logt36 +3.6414446d2*logt37 &
+            +7.0609154d1*logt38,3d1))*n(idx_e)
+    elseif(temp>5d2)  then
+       fH2e = 1d1**(-2.2921189D1 +1.6802758D0*logt3 &
+            +.93310622D0*logt32 +4.0406627d0*logt33 &
+            -4.7274036d0*logt34 -8.8077017d0*logt35 &
+            +8.9167183*logt36 + 6.4380698*logt37 &
+            -6.3701156*logt38)*n(idx_e)
     end if
+    cool = cool + fH2e*w24
 
-    !//H2-He,  limit extended from 1e4 to 1e6
-    if(temp>1.d1 .and. temp<=1d6) then
-       cool =  cool + 1d1**(-2.3689237d1 +2.1892372d0*logt3&
-            -.81520438d0*logt32 +.29036281d0*logt33 -.16596184d0*logt34 &
-            +.19191375d0*logt35)*n(idx_He)  &
-            * dump63
-    end if
+    !//H2-He
+    cool =  cool + 1d1**(-2.3689237d1 +2.1892372d0*logt3&
+         -.81520438d0*logt32 +.29036281d0*logt33 -.16596184d0*logt34 &
+         +.19191375d0*logt35)*n(idx_He)  &
+         * w14
 
     !check error
     if(cool>1.d30) then
-       print *,"ERROR!!! H2 cooling <0 OR cooling >1.d30 erg/s/cm3"
+       print *,"ERROR: cooling >1.d30 erg/s/cm3"
        print *,"cool (erg/s/cm3): ",cool
        names(:) = get_names()
        do i=1,size(n)
@@ -495,25 +949,43 @@ contains
        stop
     end if
 
-    cool = max(cool,0.d0)
-
-    !this will avoid a division by zero and useless calculations
-    if(cool==0.d0) then
-       cooling_H2 = 0.d0
+    !this to avoid negative, overflow and useless calculations below
+    if(cool<=0d0) then
+       cooling_H2 = 0d0
        return
     end if
 
-    !high density limit from HM79, GP98 
-    !IN THE HIGH DENSITY REGIME LAMBDA_H2 = LAMBDA_H2(LTE) = HDL 
-    HDLR = ((9.5e-22*t3**3.76)/(1.+0.12*t3**2.1)*exp(-(0.13/t3)**3)+&
-         3.e-24*exp(-0.51/t3))
-    HDLV = (6.7e-19*exp(-5.86/t3) + 1.6e-18*exp(-11.7/t3))
-    HDL  = HDLR + HDLV
+    !high density limit from HM79, GP98 below Tgas = 2d3
+    !UPDATED TO THE DATA BY GLOVER 2015 for high temperature corrections, MNRAS
+    !IN THE HIGH DENSITY REGIME LAMBDA_H2 = LAMBDA_H2(LTE) = HDL
+    !the following mix of functions ensures the right behaviour
+    ! at low temperatures (Tgas < 10 K) and at high temperatures (T > 2000 K) by
+    ! using both the original Hollenbach and the new Glover data, merging them
+    ! in a smooth way.
+    if(temp.lt.2d3)then
+       HDLR = ((9.5e-22*t3**3.76)/(1.+0.12*t3**2.1)*exp(-(0.13/t3)**3)+&
+            3.e-24*exp(-0.51/t3)) !erg/s
+       HDLV = (6.7e-19*exp(-5.86/t3) + 1.6e-18*exp(-11.7/t3)) !erg/s
+       HDL  = HDLR + HDLV !erg/s
+    elseif(temp>=2d3 .and. temp<=1d4)then
+       HDL = 1d1**(-2.0584225d1 + 5.0194035*logt3 &
+            -1.5738805*logt32 -4.7155769*logt33 &
+            +2.4714161*logt34 +5.4710750*logt35 &
+            -3.9467356*logt36 -2.2148338*logt37 &
+            +1.8161874*logt38)
+    else
+       dump14 = 1d0 / (1d0 + exp(min((temp-3d4)*2d-4,3d2)))
+       HDL = 1d1**(-2.0584225d1 + 5.0194035 &
+            -1.5738805 -4.7155769 &
+            +2.4714161 +5.4710750 &
+            -3.9467356 -2.2148338 &
+            +1.8161874)*dump14
+    endif
 
     LDL = cool !erg/s
-    fact = HDL/LDL 
+    fact = HDL/LDL
 
-    cooling_H2 = HDL*n(idx_H2)/(1.d0+(fact))  #KROME_H2opacity !erg/cm3/s
+    cooling_H2 = HDL*n(idx_H2)/(1.d0+(fact)) #KROME_H2opacity !erg/cm3/s
 
   end function cooling_H2
 #ENDIFKROME
@@ -684,7 +1156,7 @@ contains
     implicit none
     integer::nfile,i
     real*8::Tgas
-    
+
 #KROME_popvar_dump
     write(nfile,*)
 
@@ -836,7 +1308,7 @@ contains
           print *,"ERROR in nleq1: can't find a solution after attempt",ptype
           stop
        end if
-       
+
        x(:) = xi(:) !restore initial guess
 
        !if damping error or negative solutions
@@ -1008,7 +1480,7 @@ contains
        allocate(tmp(size(Bin)))
        print *,"ERROR: matrix exactly singular, U(i,i) where i=",info
        print *,' (called by "'//trim(parent_name)//'" function)'
-       
+
        !dump the input matrix to a file
        open(97,file="ERROR_dump_dgesv.dat",status="replace")
        !dump size of the problem
@@ -1042,8 +1514,8 @@ contains
        write(97,*) "Info on matrix A rows"
        write(97,'(a5,99a17)') "idx","minval","maxval"
        do i=1,size(Ain,1)
-           write(97,'(I5,999E17.8e3)') i, minval(Ain(i,:)), &
-                maxval(Ain(i,:))
+          write(97,'(I5,999E17.8e3)') i, minval(Ain(i,:)), &
+               maxval(Ain(i,:))
        end do
 
        !dump info on matrix sum left and right
@@ -1063,7 +1535,7 @@ contains
 
        stop
     end if
-    
+
     !if error print some info and stop
     if(info<0) then
        print *,"ERROR: input error position ",info

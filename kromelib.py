@@ -41,12 +41,12 @@
 # KROME PYTHON SCRIPT
 
 
-import sys
+import sys,os
 ##################################
 class molec():
 	name = "" #molecule name
 	charge = 0 #charge (0=neutral)
-	mass = 0. #mass in g
+	mass = 0e0 #mass in g
 	zatom = 0 #atomic number (also for molecules)
 	neutrons = 0 #total number of neutrons
 	ename = "" #exploded name (e.g. H2C4=CCCCHH)
@@ -55,6 +55,10 @@ class molec():
 	coolname = "" #name for cooling, e.g. CIV
 	fidx = "idx_" #index for fortran (e.g. H+=idx_Hj, D-=idx_Dk)
 	is_atom = False #flag to identify atoms
+	is_surface = False #flag for species on surface
+	is_chemisorbed = False #flag for chemisorbed species
+	Ebind_ice = Ebind_bare = 0e0 #binding energy on surface for ice and bare grain
+	parentDustBin = 0 #for surface species: belongs to this dust bin (1-based)
 	chempot = 0. #chemical potential (J/mol)
 	poly1 = [0.e0]*7 #nasa polynomials (usually 200-1000K)
 	poly2 = [0.e0]*7 #nasa polynomials (usually 1000-5000K)
@@ -66,6 +70,7 @@ class molec():
 	natoms = 0 #the number of atoms (e.g. diatomic=2)
 	ve_vib = "__NONE__" #vibrational constant in K
 	be_rot = "__NONE__" #rotational constant in K
+	links = 0 #number of reactions involved
 
 	def __init__(self):
 		self.poly1 = [0.e0]*7
@@ -99,6 +104,13 @@ class reaction():
 	ifrate = "" #if condition on rate, e.g. if(Tgas>1d2):
 	isCR = False #flag this reaction as CR
 	isXRay = False #flag this reaction as XRay
+	isSurface = False #flag this reaction as Surface reaction
+	hasXsecFile = False #photo cross section is loaded from file
+	xsecFile = "" #cross section file
+	isAutoRev = False #this reaction is a reverse reaction in the automatic database
+	photoForm = []
+	photoDestroy = []
+
 	#method: constructor to initialize lists
 	def __init__(self):
 		self.reactants = []
@@ -121,6 +133,21 @@ class reaction():
 		if(not("krome_kph_auto" in self.krate) and not(photoBlock)): return
 		myr = self.reactants
 		self.kphrate = self.krate.replace("krome_kph_auto=","")
+		if("@xsecFile=" in self.krate):
+			sidx = str(self.idx)
+			args = "xsec"+sidx+"_val(:), xsec"+sidx+"_Emin,"
+			#args += "xsec"+sidx+"_n,"
+			args += "xsec"+sidx+"_idE"
+			self.kphrate = "xsec_interp(energyL, energyR, "+args+")"
+			self.xsecFile = self.krate.replace("@xsecFile=","").strip()
+			if(self.xsecFile.upper()=="SWRI"):
+				RR = self.reactants[0].name
+				PP = ("_".join([x.name for x in self.products]))
+				self.xsecFile = "swri_"+RR+"__"+PP+".dat"
+			if(self.xsecFile.upper()=="LEIDEN"):
+				RR = self.reactants[0].name
+				PP = ("_".join([x.name for x in self.products]))
+				self.xsecFile = "leiden_"+RR+"__"+PP+".dat"
 		self.krate = "photoBinRates("+str(self.idxph)+")"
 		#if(self.krate.strip()=="krome_kph_auto"): 
 		#	self.krate = "krome_kph_"+myr[0].phname
@@ -150,9 +177,16 @@ class reaction():
 		self.RHS = nuclearMult+"k("+str(self.idx)+")"
 		self.RHSvar = "kflux"+str(self.idx)
 		ns = []
+		actualReactants = self.reactants
+		actualCurlyR = self.curlyR
+		#if(self.isAutoRev):
+		#	actualReactants = self.products
+		#	actualCurlyR = self.curlyP
+		if(useNuclearMult and self.isAutoRev): sys.exit("ERROR: nuclear multiplier on reverse reaction is not allowed!")
 		i = 0
-		for r in self.reactants:
-			if(self.curlyR[i]): continue #skip curly reactants
+		for r in actualReactants:
+			if(len(actualCurlyR)>0):
+				if(actualCurlyR[i]): continue #skip curly reactants
 			i += 1
 			ns.append("n("+str(r.fidx)+")")
 			if(r.idx<=0):
@@ -250,8 +284,750 @@ class reaction():
 		ridx = "(/"+(",".join([x.fidx for x in self.reactants]))+"/)"
 		ndif = len(self.reactants)-len(self.products)
 		kk = "("+self.krate+") / exp(revKc(Tgas,"+ridx+","+pidx+"))"
-		if(ndif!=0): kk ="0.d0"  #" * (1.3806488d-2 * Tgas)**("+str(ndif)+")"
+		if(ndif!=0): kk +=" * (1.3806488d-22 * Tgas)**("+str(ndif)+")"
 		return kk
+
+#############################################
+#find a species with the given name and return it as an object
+def searchSpeciesByName(speciesList,speciesName):
+	for xsp in speciesList:
+		if(xsp.name==speciesName): return xsp
+
+	sys.exit("ERROR: species "+speciesName+" not found by searchSpeciesByName!")
+
+###############################
+#convert a LEIDEN datafile to KROME format in the build folder
+# see http://home.strw.leidenuniv.nl/~ewine/photo/
+def LEIDEN2KROME(build_folder,reactant,products):
+	try:
+		from scipy import interpolate
+	except:
+		print "ERROR: scipy not installed!"
+		print " This module is necessary to use LEIDEN xsecs."
+		sys.exit()
+
+	prods = [x.name for x in products]
+	data_folder = "data/database/leiden_xsecs/"
+	fname1 = data_folder+reactant.name+"__"+("_".join(prods))+".dat"
+	fname2 = data_folder+reactant.name+"__"+("_".join(prods[::-1]))+".dat"
+
+	if(os.path.exists(fname1)):
+		fname = fname1
+	elif(os.path.exists(fname2)):
+		fname = fname2
+	else:
+		print
+		print "ERROR: file "+fname1+" OR"
+		print " file "+fname2+" don't exist!"
+		print "Species "+reactant.name+" doesn't have a LEIDEN file."
+		print "Search on http://home.strw.leidenuniv.nl/~ewine/photo/index.php?file=pd.php"
+		print " and copy to "+data_folder
+		print "The file should be in the format R__P_P.dat, "
+		print " where R is the reactant name and P the products,"
+		print " e.g. "+fname1
+		sys.exit()
+
+	#read data from the file and store the data and the header
+	fleiden = open(fname,"rb")
+	rowCont = []
+	rowLine = []
+	icount = 0
+	for row in fleiden:
+		srow = row.strip()
+		if(srow==""): continue
+		icount += 1
+		if(icount==1): continue #skip title
+		if(icount==2):
+			nCont = int(srow) #number of continuum lines
+			continue #skip title
+		arow = [x.strip() for x in srow.split(" ") if x!=""]
+		if(icount>4+nCont): rowCont.append(arow)
+		if(icount>2 and icount<2+nCont): rowCont.append(arow)
+	fleiden.close()
+
+	if(len(rowCont)==0):
+		print "ERROR: "+reactant.name+" photodissociation doesn't have continuum data!"
+		sys.exit()
+
+
+	print "automatic reaction from LEIDEN database found: "+reactant.name+" -> "+(" + ".join(prods))
+
+	#some constants to convert AA to eV
+	clight = 2.99792458e10 #cm/s
+	hplanck = 4.135667516e-15 #eV*s
+
+	#prepare data for interpolation and dump original data for comparison
+	xdata = []
+	ydata = []
+	foutorg = open(build_folder+"leiden_"+reactant.name+"__"+("_".join(prods))+".org","w")
+	#reverse array to have increasing energy
+	for row in rowCont[::-1]:
+		xenergy = clight*hplanck/(float(row[1])*1e-8) #AA->eV
+		xsec = float(row[2]) #cross section cm2
+		xdata.append(xenergy)
+		ydata.append(xsec)
+		foutorg.write(str(xenergy)+" "+str(xsec)+"\n")
+	foutorg.close()
+	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
+
+
+	#write the file to the build folder
+	foutx = open(build_folder+"leiden_"+reactant.name+"__"+("_".join(prods))+".dat","w")
+	imax = 100
+	emax = min(max(xdata),4e1)
+	for i in range(imax):
+		xenergy = i*(emax-min(xdata))/(imax-1)+min(xdata)
+		foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
+		
+	foutx.close()
+	
+
+
+###############################
+#convert a SWRI datafile to KROME format in the build folder
+def SWRI2KROME(build_folder,reactant,products,Eth):
+	import copy
+	try:
+		from scipy import interpolate
+	except:
+		print "ERROR: scipy not installed!"
+		print " This module is necessary to use SWRI xsecs."
+		sys.exit()
+
+	prods = [x.name for x in products]
+	data_folder = "data/database/swri_xsecs/" 
+	fname = data_folder+reactant.name+".dat"
+	if(not(os.path.exists(fname))):
+		print
+		print "ERROR: file "+fname+" doesn't exist!"
+		print "Species "+reactant.name+" doesn't have a SWRI file."
+		print "Search on http://phidrates.space.swri.edu"
+		print " and copy to "+data_folder
+		sys.exit()
+	#read data from the file and store the data and the header
+	fswri = open(fname,"rb")
+	okrow = []
+	for row in fswri:
+		srow = row.strip()
+		if(srow==""): continue
+		arow = [x.strip() for x in srow.split(" ") if x!=""]
+		if(arow[0]=="Lambda"):
+			lastLambda = arow[:]
+			okrow = []
+			continue
+		okrow.append(arow)
+	fswri.close()
+
+	#replace exited states to ground, e.g. C1D->C
+	lold = lastLambda[:]
+	for state in ["1D","1S","3P"]:
+		lastLambda = [x.replace(state,"") for x in lastLambda]
+
+	#check columns with same products (after state replacing)
+	match = [] #index matching
+	founds = []
+	for i in range(len(lastLambda)-1):
+		match.append([])
+		for j in range(i+1,len(lastLambda)):
+			if(lastLambda[i]==lastLambda[j] and not(j in founds)):
+				match[i].append(j)
+				founds.append(j)
+
+	#merge (sum) columns with same products (after state replacing)
+	removecol = []
+	for j in range(len(match)):
+		columns = match[j]
+		if(len(columns)==0): continue #skip empty matches
+		for icol in columns:
+			removecol.append(icol)
+			for i in range(len(okrow)):
+				okrow[i][j] = float(okrow[i][j])+float(okrow[i][icol])
+
+	#write branches slash separated and include electrons if needed
+	lastLambda = [sorted((x.replace("+","+/E/")).split("/")) for x in lastLambda]
+	#remove empty prdoducts if any
+	lastLambda = [[y for y in x if y!=""] for x in lastLambda]
+	lastLambda = [sorted([x.upper() if x=="e" else x for x in block]) for block in lastLambda]
+
+	#search the column that contains the given branch
+	psort = sorted(prods)
+	if(not(psort in lastLambda)):
+		print "ERROR: products "+(" ".join(psort))+" aren't in the SWRI file "\
+			+ data_folder+reactant.name + ".dat"
+		print "Available:",lastLambda[2:]
+		print "Looking for:",psort
+		sys.exit()
+	data_col = lastLambda.index(psort) #first column matching
+	if(data_col in removecol): sys.exit("ERROR: problem with SWRI column merging!")
+
+	print "automatic reaction from SWRI database found: "+reactant.name+" -> "+(" + ".join(psort))
+
+	#some constants to convert AA to eV
+	clight = 2.99792458e10 #cm/s
+	hplanck = 4.135667516e-15 #eV*s
+
+	#prepare data for interpolation and dump original data for comparison
+	xdata = []
+	ydata = []
+	foutorg = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".org","w")
+	Eth = 1e99 #default threshold energy
+	#for loop reads reversed array to have increasing energy
+	xsec_old = 0e0
+	xmin = xmax = None
+	#these 'Dirac' statements are employed to approximate line width (see comments below)
+	isDirac = False #boolean to determine if it is reading a line or not
+	hasDirac = False #boolean to determine if lines are found or not
+	xDirac = [] #list of the lines found
+	dDirac = {"freqL":0e0, "freqR":0e0, "xsec":0e0} #template for line (boundaries + xsec)
+	#row format is: [E(eV), [xsec(cm2) for each branch]]
+	for row in okrow[::-1]:
+		if(float(row[0])<=0e0): continue
+		xenergy = clight*hplanck/(float(row[0])*1e-8) #AA->eV
+		xsec = float(row[data_col]) #cross section cm2
+		#SWRI notation: when xsec is 1e-35 start to read a line
+		# with 1e-35 xsec 1e-35 to get the linewidth
+		if(xsec==1e-35):
+			hasDirac = True
+			isDirac = not(isDirac)
+			if(xsec_old==1e-35): isDirac = True #double 1e-35 to open lines block
+			#store the left and the right bound of the line
+			if(isDirac):
+				dDirac["freqL"] = xenergy
+			else:
+				dDirac["freqR"] = xenergy
+				xDirac.append(copy.copy(dDirac))
+		#store the xsec value when line value (Dirac) is open
+		if(xsec!=1e-35 and isDirac):
+			dDirac["xsec"] = xsec
+		xdata.append(xenergy)
+		ydata.append(xsec)
+		if(xsec>1e-40 and xmin==None): xmin = xenergy
+		if(xsec>1e-40): xmax = xenergy
+		#find threshold for photoionization
+		if(xsec==0e0 and xsec_old!=0e0):
+			if("E" in products): Eth = xenergy_old
+		foutorg.write(str(xenergy)+" "+str(xsec)+"\n")
+		xsec_old = xsec
+		xenergy_old = xenergy
+	foutorg.close()
+	#note: swri uses the sequence 1e-35 value 1e-35 in the xsec
+	# to indicate the with of the line and the averaged xsec.
+	# the boolean isDirac is true when reading line, hence
+	# if not closed (still False ad EOF) rises an error.
+	# False beacuse of double 1e-35 to close the line part
+	if(not(isDirac) and hasDirac):
+		print "ERROR: in SWRI read line with openen token"
+		print " but never closed!"
+		print " check:"+data_folder+reactant.name + ".dat"
+		sys.exit()
+	#create interpolated function from SWRI file
+	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
+
+	if(xmax==None or xmin==None or xmax<=xmin):
+		print "ERROR: problem with loading cross section for"
+		print reactant.name+" -> "+(" + ".join(psort))
+		print "xmin:",xmin,"xmax:",xmax
+		sys.exit()
+
+	#write the file to the build folder
+	foutx = open(build_folder+"swri_"+reactant.name+"__"+("_".join(prods))+".dat","w")
+	imax = 5000 #number of interpolated points
+	emax = min(xmax, 3e1) #this is the maximum energy limit for creating tables (eV)
+	emin = xmin
+	#write data to file using a regular xenergy grid
+	for i in range(imax):
+		xenergy = i*(emax-emin)/(imax-1)+emin
+		#if not line-based interpolates with numpy
+		if(len(xDirac)==0):
+			foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
+		else:
+			#if line-based lines are rectangles of average xsec
+			myxd = None
+			#loop on the lines found to determine the xsec @ xenergy
+			for xd in xDirac:
+				if(xenergy>=xd["freqL"] and xenergy<=xd["freqR"]):
+					myxd = xd #store the line at the corresponding xenergy
+					break
+			#xsec is zero outside the line boundaries
+			xsec = 0e0
+			if(myxd!=None): xsec = myxd["xsec"] #otherwise is the averaged xsec
+			foutx.write(str(xenergy)+" "+str(xsec)+"\n")
+
+	foutx.close()
+
+################################
+#split molecule name assuming elements written as He
+def listA(arg):
+	parts = []
+	part = ""
+	for a in list(arg):
+		if(a.islower()):
+			part += a
+		else:
+			if(part!=""): parts.append(part)
+			part = a
+	parts.append(part)
+	return parts
+
+####################
+#fill with spaces the end of a string up to columns characters
+def fillSpaces(instring,columns):
+	astring = str(instring)
+	if(columns<len(astring)): return ("#"*columns)
+	return astring+(" "*(columns-len(astring)))
+
+#####################
+def compute_Hdata(arg):
+	eV2kJmol = 96.4869e0 #eV -> kJ/mol
+	#enthalpy data (DH: enthalpy of fomration (kJ/mol), EA: electron affinity (eV)
+	#IE: ionization energy (eV) - note: @298K
+	#see http://webbook.nist.gov/chemistry/
+	xHData = dict()
+	xHData["H"] = {"DH":218e0, "IE":13.59844e0, "EA":0.754195e0}
+	xHData["H2"] = {"DH":0e0, "IE":15.42593e0}
+	xHData["He"] = {"DH":0e0, "IE":24.58741e0}
+	xHData["H2+"] = {"DH":1497e0}
+	xHData["E"] = {"DH":6.2e0} #5/2RT @298K
+	xHData["O"] = {"DH":249.18e0, "IE":13.61806e0, "EA":1.439157e0}
+	xHData["O2"] = {"DH":0e0, "IE":12.0697e0, "EA":0.4480e0}
+	xHData["OH"] = {"DH":38.99e0, "IE":13.017e0, "EA":1.82767e0}
+	xHData["H2O"] = {"DH":-241.826e0, "IE":12.621e0, "EA":12.65e0}
+	xHData["H3O+"] = {"DH":603.417e0}
+	xHData["H3+"] = {"DH":1.1e3} #from pag.37 Chemistry of the Elements (N. N. Greenwood,A. Earnshaw)
+	xHData["C"] = {"DH":716.68e0, "IE":11.26030e0, "EA":1.262114e0}
+	xHData["C2"] = {"DH":837.74e0, "IE":11.4e0, "EA":3.273e0}
+	xHData["CH"] = {"DH":594.13e0, "IE":10.64e0, "EA":1.26e0}
+	xHData["CH2"] = {"DH":386.39e0, "IE":10.396e0, "EA":0.652e0}
+	xHData["CH3"] = {"DH":145.59e0, "IE":9.84e0, "EA":0.08e0}
+	xHData["HCO"] = {"DH":43.51e0, "IE":8.12e0, "EA":0.313e0}
+	xHData["HOC+"] = {"DH":978.7e0} #using reactions 1-2 in Li+2008, J. Chem. Phys.129, 244306
+	xHData["CO"] = {"DH":-110.53e0, "IE":14.014e0, "EA":1.32608e0}
+	xHData["CO2"] = {"DH":-393.51e0, "IE":13.777e0, "EA":-0.599986e0}
+	xHData["N"] = {"DH":472.68e0, "IE":14.534e0}
+	xHData["NO"] = {"DH":90.29e0, "IE":9.264e0}
+	xHData["CN"] = {"DH":435.14e0, "IE":13.598e0}
+	xHData["N2"] = {"DH":0e0, "IE":15.581e0}
+	xHData["HCN"] = {"DH":135.15e0, "IE":13.6e0, "EA":0.00156e0}
+	xHData["HNC"] = {"DH":207.94} #Wenthold 2000, J. Phys. Chem. A 104, 5612
+	xHData["HNO"] = {"DH":99.58e0, "IE":10.1e0, "EA":0.338e0}
+	xHData["NH"] = {"DH":376.56e0, "IE":13.49e0, "EA":0.37e0}
+	xHData["NH2"] = {"DH":190.37e0, "IE":10.78e0, "EA":0.7710e0}
+	xHData["NH3"] = {"DH":-45.9e0, "IE":10.07e0}
+	xHData["NH4+"] = {"DH":-132.5e0} #(aq) D.Ebbing, S.D.Gammon, General Chemistry, Enhanced Edition
+	xHData["N2H"] = {"DH":251.46e0, "IE":7.8e0} #Cs symmetry, Matus+2006, J. Phys. Chem. A 110, 10116
+	xHData["HCNH"] = {"DH":250e0, "IE":9.41e0} #Cowles+1991, J.Chem.Phys. 94, 3517
+	xHData["Al"] = {"DH":250e0}
+	xHData["AlOH"] = {"DH":-179.91e0}
+	xHData["AlO3H3"] = {"DH":-1016.67e0}
+	xHData["AlO2H2"] = {"DH":-507.661e0}
+	xHData["AlO2H"] = {"DH":-355.472e0}
+	xHData["AlO"] = {"DH":42.98e0}
+	xHData["AlO2"] = {"DH":-38.658e0}
+	xHData["Al2O"] = {"DH":-148.611e0}
+	xHData["Al2O2"] = {"DH":-403.096e0}
+	xHData["Al2O3"] = {"DH":-546.891e0}
+
+
+	#extend with uppercase species
+	exHData = dict()
+	for k,v in xHData.iteritems():
+		exHData[k.upper()] = v
+	xHData.update(exHData)
+
+	#if DH is present no need to compute it
+	if(arg in xHData): return xHData[arg]
+
+	#find neutral
+	neutral = arg.replace("+","").replace("-","")
+
+	#check if neutral DH exists
+	if(not(neutral in xHData)):
+		sys.exit("ERROR: cannot compute DH for "+arg+" since "+neutral+" is missing!")
+
+	#do calculation for cation
+	if("+" in arg):
+		#check if neutral's IE exists
+		if(not("IE" in xHData[neutral])):
+			sys.exit("ERROR: cannot compute DH for "+arg+" since IE "+neutral+" is missing!")
+		#DH(cation) = DH(neutral) + ionization energy - electron entalphy
+		return {"DH": xHData[neutral]["DH"] + xHData[neutral]["IE"]*eV2kJmol - xHData["E"]["DH"]}
+
+	#do calculation for anion
+	if("-" in arg):
+		#check if neutral's EA exists
+		if(not("EA" in xHData[neutral])):
+			sys.exit("ERROR: cannot compute DH for "+arg+" since EA "+neutral+" is missing!")
+		#DH(anion) = DH(neutral) - electron affinity + electron entalphy
+		return {"DH": xHData[neutral]["DH"] - xHData[neutral]["EA"]*eV2kJmol + xHData["E"]["DH"]}
+
+	#if DH doesn't exist for neutral no way to get it
+	sys.exit("ERROR: cannot compute DH for "+arg+", it only works for cations/anions")
+
+
+################################
+def compute_DHreact(listRR,listPP):
+	DH = 0e0
+	return sum([compute_Hdata(x)["DH"] for x in listPP])\
+		- sum([compute_Hdata(x)["DH"] for x in listRR])
+
+################################
+def generateCustom(readCustomFile):
+	from random import random as rand
+	from os import listdir
+	from os.path import isfile,join
+	from math import log10
+	import time
+	from scipy.optimize import bisect
+
+	#defaults
+	custom = dict()
+	custom["atoms"] = ["E","H","He"]
+	custom["anions"] = "yes"
+	custom["cations"] = "yes"
+	custom["maxatoms"] = "99"
+	custom["maxrea"] = "99"
+	custom["maxprod"] = "99"
+	custom["photorates"] = "no"
+	custom["include"] = []
+	custom["exclude"] = []
+	custom["present"] = []
+	custom["only"] = []
+
+	#list of tokens where an array is expected
+	arrayTokens = ["atoms","include","exclude","present","only"]
+
+	#read custom file and store the info in a dict
+	fhcustom = open(readCustomFile,"rb")
+	for row in fhcustom:
+		srow = row.strip()
+		if(srow.strip()==""): continue
+		if(srow[0]=="#"): continue
+		isArray = False
+		#search for if this is an array token
+		for arr in arrayTokens:
+			if(arr in srow.split(":")):
+				isArray = True
+				break
+		#read data according to array or value
+		if(isArray):
+			custom[srow.split(":")[0].strip()] = [x.strip() for x in srow.split(":")[1].split(",") if x.strip()!=""]
+		else:
+			custom[srow.split(":")[0].strip()] = srow.split(":")[1].strip()
+
+	#species available
+	amols_org = ["H","H2","H+","H-","He","He+","H2+","H3+","E"]
+	amols_org += ["O", "O+", "O-", "O2", "OH", "OH+", "OH-"]
+	amols_org += ["H2O", "H2O+", "H3O+"]
+	amols_org += ["C", "C+", "C-", "C2", "CH", "CH+", "CH2"]
+	amols_org += ["CH2+", "CH3+"]
+	amols_org += ["HCO+", "HOC+","HCO","CO","CO+","CO2"]
+	amols_org += ["N","NO","CN","N2","HCN","HNC","HNO"]
+	amols_org += ["NH","NH2","NH3","N2H+","N2H"]
+	amols_org += ["N+","NH+","NH2+","NH3+","NH4+","HCN+","HCNH+"]
+	amols_org += ["Al","AlOH","AlO2H2","AlO3H3","AlO2H"]
+	amols_org += ["AlO","AlO2","Al2O","Al2O2","Al2O3"]
+
+	#exploded species
+	emols_org = ["H","HH","H+","H-","He","He+","HH+","HHH3+","-"]
+	emols_org += ["O", "O+", "O-", "O2", "OH", "OH+", "OH-"]
+	emols_org += ["HHO", "HHO+", "HHHO+"]
+	emols_org += ["C", "C+", "C-", "CC", "CH", "CH+", "CHH"]
+	emols_org += ["CHH+", "CHHH+"]
+	emols_org += ["HCO+", "HOC+","HCO","CO","CO+","COO"]
+	emols_org += ["N","NO","CN","NN","HCN","HNC","HNO"]
+	emols_org += ["NH","NHH","NHHH","NNH+","NNH"]
+	emols_org += ["N+","NH+","NHH+","NHHH+","NHHHH+","HCN+","HCNH+"]
+	emols_org += ["Al","AlOH","AlOOHH","ALOOOHHH","AlOOH"]
+	emols_org += ["AlO","AlOO","AlAlO","AlAlOO","AlAlOOO"]
+
+	#convert array present into exploded version
+	custom["present"] = [emols_org[amols_org.index(x)] for x in custom["present"]]
+
+	#compute missing DH data using http://webbook.nist.gov/chemistry/ion/#DH prescriptions
+	HData = dict()
+	for species in amols_org:
+		HData[species] = compute_Hdata(species)
+
+	amols = []
+	emols = []
+	#prepare restricted set according to the options
+	for i in range(len(amols_org)):
+		#skip anions and cations if reqired
+		if(("+" in emols_org[i]) and custom["cations"]=="no"): continue
+		if(("-" in emols_org[i]) and custom["anions"]=="no"): continue
+		#skip species if required
+		if(amols_org[i] in custom["exclude"]): continue
+		thisMol = emols_org[i].replace("+","").replace("-","")
+		if(thisMol==""): thisMol = "E" #fix electron for parsing
+		countAtoms = 0 #number of atoms found
+		#atoms are sorted for replacing
+		for at in sorted(custom["atoms"],key=lambda x:len(x))[::-1]:
+			#replace until atom is found in the exploded species
+			while(at in thisMol):
+				countAtoms += 1
+				thisMol = thisMol.replace(at,"",1)
+		#check max number of atoms per species
+		if(countAtoms>int(custom["maxatoms"])): continue
+		#check residuals from replacing
+		if(is_number(thisMol) or thisMol==""):
+			amols.append(amols_org[i])
+			emols.append(emols_org[i])
+
+
+	#include additional molecules
+	for mol in custom["include"]:
+		if(mol==""): continue
+		if(mol in custom["exclude"]): sys.exit("ERROR: "+mol+" present in exclude AND in include on file "+readCustomFile)
+		if(not(mol in amols_org)):
+			print "ERROR: can't recognize this molecule: "+mol
+			print " you should add this to the automatic list or correct any typo."
+			sys.exit()
+		amols.append(mol)
+		emols.append(emols_org[amols_org.index(mol)])
+
+	#check for only species (only reactions with these species)
+	if(len(custom["only"])>0):
+		amols = []
+		emols = []
+
+	for mol in custom["only"]:
+		if(mol==""): continue
+		if(not(mol in amols_org)):
+			print "ERROR: can't recognize this molecule: "+mol
+			print " you should add this to the automatic list or correct any typo."
+			sys.exit()
+		amols.append(mol)
+		emols.append(emols_org[amols_org.index(mol)])
+
+	#check number of species found
+	if(len(amols)==0):
+		print "ERROR: no species available for custom reactions,"
+		print " check options in "+readCustomFile+" file."
+		sys.exit()
+	print "Search custom reactions using the following species"
+	for i in range(len(amols)/5+1):
+		#this simply write 5 species per line
+		print " "+(" ".join(amols[i*5:min((i+1)*5,len(amols))]))
+
+	#temporary file name
+	tmpNumber = "network" #str(int(rand()*1e8))
+	tmpFname = "cstm"+tmpNumber+".tmp"
+	tmpFnameAll = "cstm"+tmpNumber+"_all.tmp"
+
+	print "building automatic product/reactant combinations..."
+	#build product/reactant combinations
+	combs = []
+	for mol1 in emols:
+		cc = "".join(sorted(listA(mol1))) #exploded 1body combination
+		combs.append([cc,[mol1]]) #single prod/react
+		for mol2 in emols:
+			if(int(custom["maxprod"])<2): continue
+			if(int(custom["maxrea"])<2): continue
+			cc = "".join(sorted(listA(mol1)+listA(mol2))) #exploded 2body combination
+			if("++" in cc): continue #exclude cation-cation reactions
+			if("--" in cc): continue #exclude anion-anion reactions
+			cc = cc.replace("+-","") #neutralize
+			combs.append([cc,sorted([mol1,mol2])]) #double prod/react
+			for mol3 in emols:
+				if(int(custom["maxprod"])<3): continue
+				if(int(custom["maxrea"])<3): continue
+				#exploded 3body combination
+				cc = "".join(sorted(listA(mol1)+listA(mol2)+listA(mol3)))
+				#cc = cc.replace("+-","")
+				if("+" in cc): continue #exclude cation 3body
+				if("-" in cc): continue #exclude anion 3body
+				combs.append([cc,sorted([mol1,mol2,mol3])]) #triple prod/react
+
+	#build reactions from product/reactant combinations
+	#combinations are [exploded,[species]]
+	print "building automatic reactions... (it may take a while)"
+	time0 = time.time()
+	custRea = []
+	lenPresent = len(custom["present"])
+	#loop on reactants
+	countRR = 0
+	for RR in combs:
+		if((countRR % 5000)==1): print "time to go (s):",round((time.time()-time0)/countRR*(len(combs)-countRR),2)
+		countRR += 1
+		JRR = ("".join(sorted("".join(RR[1]))))
+		lenRR = len(RR[1])
+		#loop on products
+		for PP in combs:
+			#check if exploded are the same
+			if(RR[0]!=PP[0]): continue
+			#3body->3body ignored
+			if(lenRR==3 and len(PP[1])==3): continue
+			#anion-cation->cation-anion ignored
+			JPP = ("".join(sorted("".join(PP[1]))))
+			if(("+-" in JRR) and ("+-" in JPP)): continue
+			#check if reactant/products are different (avoid A+B->A+B)
+			if(RR[1]==PP[1]): continue
+			#check "present" statement
+			if(lenPresent>0):
+				allSpecies = RR[1]+PP[1] #all the species R+P
+				anyFound = False
+				#loop on species
+				for sp in allSpecies:
+					if(sp in custom["present"]):
+						anyFound = True
+						break
+				#if none of the "present" species are found skip reaction
+				if(not(anyFound)): continue
+
+			#prepare the reaction
+			cRea = sorted([RR,PP])
+			#if not already present add
+			if(not(cRea in custRea)): custRea.append(cRea)
+
+	print "searching automatic reactions in the dbase..."
+	#search reactions in the database
+	autoreacts = [] #dbase array contains dictionary with reaction data
+	fdbase = "data/database/"
+	file_list = [f for f in listdir(fdbase) if isfile(join(fdbase,f))]
+	extraVars = dict() #dict of the extra varaibles, with key=filename
+	for fname in file_list:
+		if("~" in fname): continue #skip temp files
+		fhauto = open(fdbase+fname,"rb")
+		for row in fhauto:
+			srow = row.strip()
+			if(srow.strip()==""): continue
+			if(srow=="#BREAK DATABASE"): break #skip non database files
+			if(srow[0]=="#"): continue
+			#skip phtorates if not needed
+			if("@photorates:yes" in srow.lower().replace(" ","")):
+				if(custom["photorates"]!="yes"): break
+				continue
+			if("@var:" in srow): continue
+			if("@type:" in srow): autorea = dict() #begin reaction
+			autorea[srow.split(":")[0].replace("@","").strip()] = srow.split(":")[1].strip()
+			if("@rate:" in srow): autoreacts.append(autorea) #end reaction
+
+
+
+	DHlimit = 3e3 #enthalpy limit to accept a reaction, K
+	sDHlimit = str(round(DHlimit/1e1**int(log10(DHlimit)),2))+"d"+str(int(log10(DHlimit)))
+	reaFound = []
+	fhTmpAll = open(tmpFnameAll,"w")
+	fhTmpAll.write("#Reactions automatically found using custom instructions file "+readCustomFile+"\n")
+	fhTmpAll.write("#This file also indicates the reactions found in the database (True/False), \n")
+	fhTmpAll.write("# satisfying the enthalpy upper limit of "+str(sDHlimit)+" K (*), and that should be checked\n")
+	fhTmpAll.write("# because are NOT in the database AND have an enthalpy below that the limit (#).\n")
+	fhTmpAll.write(fillSpaces("#IDX",5) + fillSpaces("REACTANS",20) + "    " + fillSpaces("PRODUCTS",20)\
+		+ fillSpaces("ENTHALPY (K)",18) + fillSpaces("FOUND IN DBASE",16)\
+		+ fillSpaces("<"+str(sDHlimit)+"K",9) + "check\n")
+
+	print "automatic reactions found:",len(custRea)*2 #including reverse
+	print "writing automatic reactions to file... (it may also take a while)"
+	time0 = time.time()
+	kJmol2K = 120.274e0 #kJ/mol -> K
+	#search created reactions in the database
+	iCount = cCount = 0
+	for crea in custRea:
+		if((cCount % 500)==1): print "time to go (s):",round((time.time()-time0)/cCount*(len(custRea)-cCount),2)
+		cCount += 1
+		#prepare custom products/reactants
+		CC1 = crea[0][1]
+		CC1 = sorted([amols[emols.index(x)] for x in CC1])
+		CC2 = crea[1][1]
+		CC2 = sorted([amols[emols.index(x)] for x in CC2])
+		inDatabaseFwd = inDatabaseRev = False
+		DHCC1 = sum([HData[x]["DH"] for x in CC1])
+		DHCC2 = sum([HData[x]["DH"] for x in CC2])
+		#loop into the databse
+		for autorea in autoreacts:
+			#prepare database products and reactants
+			PP = sorted([x.strip() for x in autorea["prods"].split(",")])
+			RR = sorted([x.strip() for x in autorea["reacts"].split(",")])
+			#append new reactions found
+			if(RR==CC1 and PP==CC2 and not([CC1,CC2] in reaFound)):
+				reaFound.append([CC1,CC2])
+				inDatabaseFwd = True
+			if(RR==CC2 and PP==CC1 and not([CC2,CC1] in reaFound)):
+				reaFound.append([CC2,CC1])
+				inDatabaseRev = True
+			if(inDatabaseRev and inDatabaseFwd): break
+		JJ1 = ("".join(CC1))
+		JJ2 = ("".join(CC2))
+		#write all the reactions even if not in the database
+		RRall = (" + ".join(CC1))
+		PPall = (" + ".join(CC2))
+		rtype = ""
+		if(("+" in JJ1) and ("-" in JJ1) and (len(CC2)==3)): rtype = "+-3prods"
+		if(list(set(CC1).intersection(CC2))): rtype = "catal"
+		if(len(CC2)==1): rtype = "form"
+		DH = (DHCC2-DHCC1) * kJmol2K #enthalpy products - reactants
+		fav = (" *" if (DH<DHlimit) else "")
+		check = (" #" if(DH<DHlimit and not(inDatabaseFwd)) else "")
+		if(len(CC1)<3 or rtype=="catal"):
+			if(inDatabaseFwd or (DH<DHlimit)):
+				fhTmpAll.write(fillSpaces(iCount+1,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
+					+ fillSpaces(DH,18) + fillSpaces(inDatabaseFwd,16)\
+					+ fillSpaces(fav,9) + fillSpaces(check,3) + rtype + "\n")
+				iCount += 1
+
+		RRall = (" + ".join(CC2))
+		PPall = (" + ".join(CC1))
+		rtype = ""
+		if(("+" in JJ2) and ("-" in JJ2) and (len(CC1)==3)): rtype = "+-3prods"
+		if(list(set(CC2).intersection(CC1))): rtype = "catal"
+		if(len(CC1)==1): rtype = "form"
+		DH = (DHCC1-DHCC2) * kJmol2K #enthalpy products - reactants
+		fav = (" *" if (DH<DHlimit) else "")
+		check = (" #" if(DH<DHlimit and not(inDatabaseRev)) else "")
+		if(len(CC2)<3 or rtype=="catal"):
+			if(inDatabaseRev or (DH<DHlimit)):
+				fhTmpAll.write(fillSpaces(iCount+2,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
+					+ fillSpaces(DH,18) + fillSpaces(inDatabaseRev,16)\
+					+ fillSpaces(fav,9) + fillSpaces(check,3) + rtype + "\n")
+				iCount += 1
+
+	fhTmpAll.close()
+
+	#check number of reactions found
+	if(len(reaFound)==0):
+		print "ERROR: no custom reactions found in the database,"
+		print " check options in "+readCustomFile+" file."
+		sys.exit()
+
+	print "Custom reactions found:",len(reaFound)
+
+
+	#sort reactions according to their format
+	reaFound = sorted(reaFound, key=lambda x:10*len(x[0])+len(x[1]))
+	idx = 0
+	fmtHashOld = 0
+	fhTmp = open(tmpFname,"w")
+	print "writing custom reactions on file "+tmpFname
+	fhTmp.write("#this is an automatically-generated network with the options below\n")
+	for k,v in custom.iteritems():
+		if(not(isinstance(v, basestring))): v = (",".join(v))
+		fhTmp.write("#"+k+": "+v+"\n")
+	#write results into a network file
+	for rea in reaFound:
+		fmtHash = 10*len(rea[0])+len(rea[1]) #format hash
+		#new format hash requires new format token
+		if(fmtHashOld!=fmtHash): fhTmp.write("\n@format:idx,"+("R,"*len(rea[0]))+("P,"*len(rea[1]))+"rate\n")
+		fhTmp.write(str(idx+1)+","+(",".join(rea[0]+rea[1]))+",auto\n")
+		fmtHashOld = fmtHash
+		idx += 1
+	fhTmp.close()
+
+	#this function returns the name of the custom file
+	return tmpFname
+
+#################################
+#read operators and set attributes
+def readTOpt(rea):
+	ops = ["GT","LT","GE","LE",">","<"]
+	for op in ops:
+		if(op in rea.Tmin):
+			rea.Tmin = rea.Tmin.replace(op,"").replace("..","")
+			rea.TminOp = op.replace(">","GT").replace("<","LT")
+		if(op in rea.Tmax):
+			print rea.Tmax
+			rea.Tmax = rea.Tmax.replace(op,"").replace("..","")
+			rea.TmaxOp = op.replace(">","GT").replace("<","LT")
+	return rea
 
 #################################
 #create tabvar (probably not the best interface ever)
@@ -314,7 +1090,8 @@ def get_cooling_index_list():
 	#the keys of this list must be lowercase. 
 	#the number is the corresponding integer index for the given cooling 
 	idxcoo = {"H2":1,"H2GP":2,"atomic":3, "CEN":3, "HD":4, "Z":5, "metal":5, "dH":6, "enthalpic":6, "dust":7,\
-		"compton":8,"CIE":9, "continuum":10, "cont":10,"exp":11,"expansion":11,"ff":12,"bss":12}
+		"compton":8,"CIE":9, "continuum":10, "cont":10,"exp":11,"expansion":11,"ff":12,"bss":12,"custom":13,\
+		"CO":14, "ZCIE":15, "ZCIENOUV":16}
 
 	#loop on the index to write variables as idx_cool_H2 = 1
 	idxscoo = []
@@ -330,7 +1107,7 @@ def get_cooling_index_list():
 #heating index list
 def get_heating_index_list():
 	idxhea = {"chem":1,"compress":2, "compr":2, "photo":3, "dH":4, "enthalpic":4, "photoAv":5, "Av":5,\
-		"CR":6, "dust":7, "xray":8}
+		"CR":6, "dust":7, "xray":8, "visc":9,"viscous":9, "custom":10}
 
 	idxshea = []
 	maxv = 0
@@ -350,6 +1127,7 @@ def get_solar_abundances():
 	#  log10(epsilon) = log10(n/nH) + 12
 	# where n is the number densiity of the given element, 
 	# while nH is the number density of H
+	# This function returns log10(n/nH)
 	solar_abs = {
 		"D":12.00e0,
 		"He":10.93e0,
@@ -379,11 +1157,9 @@ def get_solar_abundances():
 
 	solar_out = dict()
 	for k,v in solar_abs.iteritems():
-		solar_out[k] = str(1e1**(v-12e0))
+		solar_out[k] = str(v-12e0)
 
 	return solar_out
-
-
 
 ###################################
 #vibrational constant dictionary
@@ -644,6 +1420,8 @@ def truncF90(mystr, sublen, sep):
 	#split (&\n) the string mystr in parts smaller tha sublen using sep as separator
 	if(mystr.strip()==""): return mystr
 	mystr = mystr.replace("**","##")
+	mystr = mystr.replace("(/","###")
+	mystr = mystr.replace("/)","####")
 	astr = mystr.split(sep)
 	s = z = ""
 	first = True
@@ -656,15 +1434,29 @@ def truncF90(mystr, sublen, sep):
 		s += zep + x
 		z += zep + x
 		first = False
-	return s.replace("##","**")	
+	return s.replace("####","/)").replace("###","(/").replace("##","**")
+
+
+##################################
+#look for array definition in var token and prepare variable name according to array size
+def coeVarArray(varin):
+	if("[" in varin):
+		varin = varin.replace(" ","") #replace spaces
+		var_array_size = varin.split("[")[1].split("]")[0] #grep inside brackets
+		varin = varin.replace("["+var_array_size+"]","") #replace braketes and content
+		varin = varin+"("+var_array_size+")" #set variable definition
+
+	return varin
+
 
 ################################
 def at_extract(arg):
 	aarg = arg.split(":")
-	if(len(aarg)!=2):
+	if(len(aarg)<2):
 		print "ERROR: @label:value format not respected for"
 		print arg
 		sys.exit()
+	aarg[1] = (":".join(aarg[1:]))
 	aarg[0] = aarg[0].replace("@","")
 	return {aarg[0]:aarg[1]}
 
@@ -700,8 +1492,8 @@ def is_number(s):
 
 ##################################
 #parse molecule name using dictionary and atoms list
-def parser(name, mass_dic, atoms, thermo_data):
-
+def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
+	
 	mymol = molec() #oggetto molec
 	namecp = name.upper()
 	if(namecp=="E-"): namecp = "E" #avoid double negative charge
@@ -709,6 +1501,7 @@ def parser(name, mass_dic, atoms, thermo_data):
 	mass = 0. #init mass
 	is_atom = True #atom flag
 	founds = 0 #atoms found
+	mymol.parentDustBin = dustIdx #this species belongs to this dust bin (1-based) 
 	
 	#if you change these check the same values in kromeobj
 	#(employed here for computing number of neutrons)
@@ -741,6 +1534,7 @@ def parser(name, mass_dic, atoms, thermo_data):
 		"K":19,
 		"TI":22,
 		"CA":20,
+		"TI":22,
 		"CR":24,
 		"MN":25,
 		"FE":26,
@@ -752,6 +1546,10 @@ def parser(name, mass_dic, atoms, thermo_data):
 	for k,v in zdic_copy.iteritems():
 		for i in range(2,56):
 			zdic[str(i)+k] = v
+
+	#look for species on grain surface
+	if("_dust" in name.lower()):
+		mymol.is_surface = True
 
 	#check for fake species
 	if("FK" in name):
@@ -765,6 +1563,16 @@ def parser(name, mass_dic, atoms, thermo_data):
 		mymol.fidx = "idx_"+name #f90 index
 		mymol.neutrons = 0 #number of neutrons
 		return mymol
+
+	#chemisorbed species
+	if("_c_dust" in name.lower()):
+		mymol.is_chemisorbed = True
+
+	#when belongs to dust+idx remove _dust in the name
+	if(dustIdx>0 and not(mymol.is_surface)):
+		print "ERROR: in parser, dustIdx>0 with a non-surface species"
+		print dustIdx,name
+		sys.exit()
 	
 	zatom = 0 #atomic number init
 	#loop over charcters
@@ -811,6 +1619,9 @@ def parser(name, mass_dic, atoms, thermo_data):
 	#get rotational constant in K
 	if(get_be_rot(name)):
 		mymol.be_rot = get_be_rot(name)
+
+	#when dust index changes the name	
+	if(dustIdx>0): name = name+"_"+str(dustIdx)
 
 	mymol.name = name #name
 	mymol.mass = mass #mass (g)
@@ -922,30 +1733,12 @@ def get_file_list():
 	files.append("src/krome_heating.f90")
 	files.append("src/krome_commons.f90")
 	files.append("data")
-	files.append("data/crossSect.dat")
-	files.append("data/heatxH.dat")
-	files.append("data/optSi.dat")
-	files.append("data/ip.dat")
-	files.append("data/optC.dat")
-	files.append("data/ratexHe.dat")
-	files.append("data/escape_H2.dat")
-	files.append("data/heatxHe.dat")
-	files.append("data/coolO2.dat")
-	files.append("data/thermo30.dat")
-	files.append("data/coolZ.dat")
-	files.append("data/ratexH.dat")
-	files.append("data/database")
-	files.append("data/database/photoioniziation.dat")
-	files.append("data/database/collisional_ionization.dat")
-	files.append("data/database/radiative_rec_lowT.dat")
-	files.append("data/database/radiative_rec.dat")
 	files.append("solver")
 	files.append("solver/nleq_all.f")
 	files.append("solver/opkda2.f")
 	files.append("solver/opkdmain.f")
 	files.append("solver/dvode_f90_license.txt")
 	files.append("solver/opkda1.f")
-	files.append("solver/dvode_f90_m.f90")
 	files.append("networks")
 	return files
 
@@ -1179,13 +1972,8 @@ def indentF90(filename):
 		is_blank = (srow=="") #flag for blank line mode
 		if(lbeg(tokenopen, srow)): nind += 1 #check if the line ends with one of tokenclose
 		if(lbeg(["if"],srow) and "then" in srow): nind += 1 #check if line stats with if and has then
+		if(srow=="do"): nind += 1
 	fh.close()
-
-	#arowl = []
-	#for j in range(50):
-	#	arowl = cutlines(arow)
-	#	if(len(arow)==len(arowl)): break
-	#	arow = arowl[:]
 
 	arowl = arow[:]
 
@@ -1280,7 +2068,9 @@ def get_quote(qall=False):
 	["Chemistry has been termed by the physicist as the messy part of physics", "Frederick Soddy "],
 	["Don't worry if it doesn't work right. If everything did, you'd be out of a job.", "Mosher's Law"],
 	["Beware of bugs in the above code; I have only proved it correct, not tried it.", "Donald Knuth"],
-	["Given enough eyeballs, all bugs are shallow.", "Eric S. Raymond"]
+	["Given enough eyeballs, all bugs are shallow.", "Eric S. Raymond"],
+	["We make an extreme, but wholly defensible, statement: There are no good, general methods for solving systems of more than one nonlinear equation.",\
+	 "Numerical Recipes in C"]
 	]
 	qrange = 1
 	print 

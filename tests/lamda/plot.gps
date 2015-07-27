@@ -5,6 +5,7 @@ set size square
 set format x "%L"
 set format y "%L"
 set format z "%L"
+set format cb "%L"
 set ylabel "log(Tgas/K)\n"
 set xlabel "log(ntot/cm-3)"
 unset key

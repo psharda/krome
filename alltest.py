@@ -4,23 +4,30 @@
 from subprocess import call
 from subprocess import Popen, PIPE
 import os,sys,hashlib,glob,platform,shutil,time
-import ftplib,urllib
+import ftplib,urllib2,sys,cookielib
 
-testpath = "tests/"
+argv = sys.argv
+
+compiler="ifort" #ifort or gfortran
+
+if("-compiler" in argv):
+	compiler = argv[argv.index("-compiler")+1]
+
+testpath = "tests/" #where the tests are located
+prj_name = "alltest" #where the tests
 
 #import the list of tests from testpath
 tests = [x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath]
 #tests = ["hello"]
 
-#list of test to be skipped (e.g. under developement)
-skiptests = ["stars","collapseZ_induced","collapseZ_UV","shock1Dphoto","atmosphere"]
-
 #start from this test (empty string start from first test)
 first = ""
 if(first.strip()==""): first = tests[0]
 
-compiler="ifort" #ifort or gfortran
+
 mode = "check" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
+
+################
 
 #check if a new test is needed
 if(mode=="check"):
@@ -41,15 +48,19 @@ if(mode=="check"):
 
 	#retireve the changeset on the SERVER
 	changesetSERVER = ""
-	content = urllib.urlopen('http://kromepackage.org/test/outcheck.log')
+	#content = urllib2.urlopen('http://kromepackage.org/test/outcheck.log')
+	cj = cookielib.CookieJar()
+	opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+	request = urllib2.Request('http://kromepackage.org/test/outcheck.log')
+	content = opener.open(request)
 	for line in iter(content.readlines()):
 		if("changeset:" in line): changesetSERVER = line.replace("changeset:","").strip()
 	#check if the server changeset is retrieved
 	if(changesetSERVER==""): sys.exit("ERROR: check mode enabled and url not retrieved")
 
 	#check if the server and the folder have the same changeset. If so no need to check.
-	if(changesetSERVER==changesetFOLDER):
-		sys.exit("SERVER and local FOLDER has the same changeset. No need to check.")
+	#if(changesetSERVER==changesetFOLDER):
+	#	sys.exit("SERVER and local FOLDER has the same changeset. No need to check.")
 
 
 
@@ -83,8 +94,9 @@ if(mode=="check"):
 #a = raw_input("Any key to continue q to quit... ")
 #if(a=="q"): print sys.exit()
 
+if(not(os.path.exists("build_"+prj_name+"/"))): os.makedirs("build_"+prj_name+"/")
 
-os.chdir("build/")
+os.chdir("build_"+prj_name+"/")
 #clear directory
 for ff in glob.glob("*"):
 	os.remove(ff)
@@ -112,33 +124,27 @@ run = False #run flag
 for test in tests:
 	if(test==first): run = True #run the first test
 	if((compiler=="gfortran") and (test=="wrapC")): continue
-	if(test in skiptests): continue
 	if(not(run)): continue #skip if test is before first
-	print "test "+test
+	print
+	print "#########################################################################################################"
+	print "                                          test: "+test
+	print "#########################################################################################################"
+	print
+
+	#clear directory
+	for ff in glob.glob("build_"+prj_name+"/*"):
+		os.remove(ff)
 
 	#call krome
-	call(["./krome", "-test="+test, "-pedantic", "-unsafe", "-sh"])
+	callarg = ["./krome", "-test="+test,"-skipDevTest", "-pedantic", "-unsafe", "-sh","-compiler="+compiler,"-project="+prj_name]
+	print callarg
+	call(callarg)
+
+	#skip development test
+	if(not(os.path.isfile("build_"+prj_name+"/Makefile"))): continue
 
 	#move to build directory
-	os.chdir("build/")
-
-	#change Makefile to gfortran if needed
-	fh = open("Makefile","rb")
-	fout2 = open("tmp","w")
-	if(compiler=="gfortran"):
-		for row in fh:
-			if(row.strip()=="fc = ifort"):
-				fout2.write("fc = gfortran\n")
-			else:
-				fout2.write(row)
-		fh.close()
-		fout2.close()
-		shutil.move("tmp","Makefile")
-	elif(compiler=="ifort"):
-		pass
-	else:
-		print "ERRROR: unknown compiler",compiler
-		sys.exit()
+	os.chdir("build_"+prj_name+"/")
 	
 	#make clean
 	call(["make","clean"])
@@ -150,13 +156,13 @@ for test in tests:
 	call(["./krome"])
 
 	#run zenity notification when exectutable ends (LINUX USERS ONLY)
-	if("linux" in platform.system().lower()):
-		notifier = "zenity"
-		fpath = "/usr/bin/"+notifier
-		#check if notifier zenity exists
-		if(os.path.isfile(fpath) and os.access(fpath, os.X_OK)):
-			call(["killall","notification-daemon"])
-			call([notifier,"--notification","--text", "\""+test+" done!\"", "--timeout","2"])
+	#if("linux" in platform.system().lower()):
+	#	notifier = "zenity"
+	#	fpath = "/usr/bin/"+notifier
+	#	#check if notifier zenity exists
+	#	if(os.path.isfile(fpath) and os.access(fpath, os.X_OK)):
+	#		call(["killall","notification-daemon"])
+	#		call([notifier,"--notification","--text", "\""+test+" done!\"", "--timeout","2"])
 
 	hashall = []
 	#hash and store MD5 for fort files
@@ -193,9 +199,9 @@ for test in tests:
 	print "DONE!"
 
 #add skipped tests as failed
-if(mode=="check"):
-	for test in skiptests:
-		fout.write(test+" "+str(False)+" "+str(time.time())+" skipped\n")
+#if(mode=="check"):
+#	for test in skiptests:
+#		fout.write(test+" "+str(False)+" "+str(time.time())+" skipped\n")
 fout.close()
 
 #copy the results to kromepackage.org using FTP

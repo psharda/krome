@@ -1,0 +1,257 @@
+#UPDATED primordial rates, 2014
+@var:T=Tgas
+
+#This modifier turns off the reactions involving metals when
+# the density (its internal name is sum(n(1:nmols)) is greater than 1e14 1/cm3.
+#This is necessary to cope with the solver instability at higher density.
+#Note that metals do not participate to the thermal history of the collapse
+# at higher density and hence they can be neglected in that range.
+@reactionModifier_begin
+if(sum(n(1:nmols))>1d14) k(31:71) = 0d0
+@reactionModifier_end
+
+#Janev 1987
+1,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
+
+#Abel et al. 1997, fit by data from Ferland et al. 1992
+2,H+,E,,H,g,,,NONE,.LE.5.5e3,3.92d-13*invTe**0.6353d0
+3,H+,E,,H,g,,,>5.5e3,NONE,exp(-28.61303380689232d0-0.7241125657826851d0*lnTe-0.02026044731984691d0*lnTe**2-0.002380861877349834d0*lnTe**3-0.0003212605213188796d0*lnTe**4-0.00001421502914054107d0*lnTe**5+4.989108920299513d-6*lnTe**6+5.755614137575758d-7*lnTe**7-1.856767039775261d-8*lnTe**8-3.071135243196595d-9*lnTe**9)
+
+#Janev 1987
+4,HE,E,,HE+,E,E,,NONE,NONE,exp(-44.09864886d0+23.91596563d0*lnTe-10.7532302d0*(lnTe**2)+3.05803875d0*(lnTe**3)-0.56851189d0*(lnTe**4)+6.79539123d-2*(lnTe**5)-5.00905610d-3*(lnTe**6)+2.06723616d-4*(lnTe**7)-3.64916141d-6*(lnTe**8))
+
+#Radiative+dielectronic from Cen 1992, Aldrovandi & Pequignot 1973
+5,HE+,E,,HE,g,,,NONE,.LE.9.28e3,3.92d-13*invTe**0.6353d0
+6,HE+,E,,HE,g,,,>9.28e3,NONE,1.54d-9*(1.d0+0.3d0/exp(8.099328789667d0*invTe))/(exp(40.49664394833662d0*invTe)*Te**1.5d0)+3.92d-13/Te**0.6353d0
+
+#Aladdin database 1989 (see Abel et al. 1997)
+7,HE+,E,,HE++,E,E,,NONE,NONE,exp(-68.71040990212001d0+43.93347632635d0*lnTe-18.48066993568d0*lnTe**2+4.701626486759002d0*lnTe**3-0.7692466334492d0*lnTe**4+0.08113042097303d0*lnTe**5-0.005324020628287001d0*lnTe**6+0.0001975705312221d0*lnTe**7-3.165581065665d-6*lnTe**8)
+
+# Verner & Ferland 1996 !NEW!
+8,HE++,E,,HE+,,,,NONE,NONE,1.891d-10/(sqrt(Tgas/9.37)*(1.+sqrt(Tgas/9.37))**0.2476*(1.+sqrt(Tgas/2.774d6))**1.7524)
+
+# De Jong (1972) !NEW!
+9,H,E,,H-,,,,NONE,NONE,1.4d-18*Tgas**0.928*exp(-Tgas/16200.)
+
+# fit by Kreckel et al. 2010 !NEW!
+@var:a1=1.3500e-09
+@var:a2=9.8493e-02
+@var:a3=3.2852e-01
+@var:a4=5.5610e-01
+@var:a5=2.7710e-07
+@var:a6=2.1826e+00
+@var:a7=6.1910e-03
+@var:a8=1.0461e+00
+@var:a9=8.9712e-11
+@var:a10=3.0424e+00
+@var:a11=3.2576e-14
+@var:a12=3.7741e+00
+10,H-,H,,H2,E,,,NONE,NONE,a1*(Tgas**a2+a3*Tgas**a4+a5*Tgas**a6)/(1.+a7*Tgas**a8+a9*Tgas**a10+a11*Tgas**a12)
+
+# fit to Ramaker & Peek 1976, corrected by Coppola !NEW!
+11,H,H+,,H2+,,,,NONE,.LT.30.0d0,2.10e-20*(Tgas/30.)**(-0.15)
+12,H,H+,,H2+,,,,.GE.30.0d0,NONE,10**(-18.20-3.194*log10(Tgas)+1.786*(log10(Tgas))**2-0.2072*(log10(Tgas))**3)
+
+#Karpas 1979
+13,H2+,H,,H2,H+,,,NONE,NONE,6.0d-10
+
+# fit by Savin et al. 2004, see also Glover et al. 2010  !NEW!
+@var:asav = 2.1237150d4
+@var:bsav1=-3.3232183d-7
+@var:bsav2= 3.3735382d-7
+@var:bsav3=-1.4491368d-7 
+@var:bsav4= 3.4172805d-8 
+@var:bsav5=-4.7813728d-9 
+@var:bsav6= 3.9731542d-10
+@var:bsav7=-1.8171411d-11
+@var:bsav8= 3.5311932d-13
+@var:sumsav=bsav1+bsav2*log(Tgas)+bsav3*(log(Tgas))**2+bsav4*(log(Tgas))**3+bsav5*(log(Tgas))**4+bsav6*(log(Tgas))**5+bsav7*(log(Tgas))**6+bsav8*(log(Tgas))**7
+14,H2,H+,,H2+,H,,,.GE.1.d2,.LE.3.d4,sumsav*exp(-asav*invT)
+
+# Capitelli et al. 2007 ! NEW REACTION! 
+15,H2,E,,H,H-,,,NONE,NONE,3.55d1*Tgas**(-2.28)*exp(-46707./Tgas)
+
+# fit by Mitchell & Deveau 1983 of data by Corrigan 1965 !NEW!
+16,H2,E,,H,H,E,,NONE,NONE,4.38d-10*exp(-102000./Tgas)*Tgas**(0.35)
+
+#Martin et al 1996
+#@noTabNext
+17,H2,H,,H,H,H,,NONE,NONE,dissH2_Martin96(n,Tgas)
+
+#Janev 1987
+18,H-,E,,H,E,E,,NONE,NONE,exp(-18.01849334273d0+2.360852208681d0*lnTe-0.2827443061704d0*lnTe**2+0.01623316639567d0*lnTe**3-0.03365012031362999d0*lnTe**4+0.01178329782711d0*lnTe**5-0.001656194699504d0*lnTe**6+0.0001068275202678d0*lnTe**7-2.631285809207d-6*lnTe**8)
+
+#Abel et al. 1997, based on Janev 1987
+19,H-,H,,H,H,E,,NONE,.LE.1.16e3,2.56d-9*Te**1.78186d0
+20,H-,H,,H,H,E,,>1.16e3,NONE,exp(-20.37260896533324d0+1.139449335841631d0*lnTe-0.1421013521554148d0*lnTe**2+0.00846445538663d0*lnTe**3-0.0014327641212992d0*lnTe**4+0.0002012250284791d0*lnTe**5+0.0000866396324309d0*lnTe**6-0.00002585009680264d0*lnTe**7+2.4555011970392d-6*lnTe**8-8.06838246118d-8*lnTe**9)
+
+# Stenrup et al. 2009 !NEW!
+21,H-,H+,,H,H,,,NONE,NONE,(2.96d-6/sqrt(Tgas)-1.73d-9+2.50d-10*sqrt(Tgas)-7.77d-13*Tgas)
+
+#Poulart 1978
+22,H-,H+,,H2+,E,,,NONE,NONE,1.d-8*Tgas**(-0.4d0)
+
+# fit by Coppola et al. (2011) !NEW!
+23,H2+,E,,H,H,,,NONE,NONE,1.d6*(4.2278d-14-2.3088d-17*Tgas+7.3428d-21*Tgas**2-7.5474d-25*Tgas**3+3.3468d-29*Tgas**4-5.528d-34*Tgas**5)
+
+#Dalgarno & Lepp 1987
+24,H2+,H-,,H,H2,,,NONE,NONE,5.d-7*sqrt(1.d2*invT)
+
+#Forrey 2013 !NEW! 
+25,H,H,H,H2,H,,,NONE,NONE,6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0)
+
+#Glover&Abel 2008 
+26,H2,H,H,H2,H2,,,NONE,NONE,(6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0))/8.d0
+#
+#Omukai 2001
+@var:invT = 1d0/Tgas
+@var:Hnuclei = get_Hnuclei(n(:))
+@var:kl21 = 1.18d-10*exp(-6.95d4*invT)
+@var:kh21 = 8.125d-8*T**(-0.5d0)*exp(-5.2d4*invT)*(1.d0-exp(-6d3*invT))
+@var:ncr21 = 1d1**(4.845d0-1.3d0*log10(T*1d-4)+1.62d0*(log10(T*1d-4))**2)
+@var:a21=1.d0/(1.d0+(Hnuclei/ncr21))
+@noTabNext
+27,H2,H2,,H,H,H2,,NONE,NONE,kh21**(1.-a21)*kl21**a21
+
+#NEW REACTION FROM YOSHIDA 2006, FOR HELIUM CHARGE TRANSFER
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+28,He+,H,He,H+,NONE,NONE,1.20d-15*(Tgas/3d2)**0.25d0
+
+29,He,H+,He+,H,NONE,.LE.1d4,1.26d-9*Tgas**(-0.75d0)*exp(-1.275d5*invT)
+30,He,H+,He+,H,>1d4,NONE,4.d-37*Tgas**(4.74d0)
+
+#Metals reactions from the reduced network of Omukai 2005
+@format:idx,Tmin,Tmax,R,R,P,P,rate
+31,NONE,NONE,O+,H,H+,O,6.80d-10 
+32,NONE,NONE,H+,O,O+,H,7.00d-10*exp(-232.*invT) 
+33,NONE,NONE,O+,H2,OH+,H,1.70d-9 
+34,NONE,NONE,OH+,H2,H2O+,H,1.01d-9 
+35,NONE,NONE,H2O+,H2,H3O+,H,8.30d-10 
+36,NONE,NONE,H2O+,E,O,H2,2.00d-7*(T32)**(-0.50)
+37,NONE,NONE,H2O+,E,OH,H,1.60d-7*(T32)**(-0.50) 
+38,NONE,NONE,H3O+,E,H2O,H,3.50d-7*(T32)**(-0.50)
+39,NONE,NONE,O,H,OH,,9.90d-19*(T32)**(-0.38)
+40,NONE,NONE,O,H2,OH,H,3.43d-13*(T32)**2.67*exp(-3160*invT) 
+41,NONE,NONE,H2,OH,H2O,H,1.55d-12*(T32)**1.60*exp(-1660*invT) 
+42,NONE,NONE,OH,OH,H2O,O,1.65d-12*(T32)**1.14*exp(-50*invT) 
+43,NONE,NONE,H+,OH,OH+,H,2.10d-9 
+44,NONE,NONE,H+,H2O,H2O+,H,6.90d-9 
+45,NONE,NONE,H,OH,H2,O,7.00d-14*(T32)**2.80*exp(-1950*invT) 
+46,NONE,NONE,H,H2O,OH,H2,6.83d-12*(T32)**1.60*exp(-9720*invT) 
+47,NONE,NONE,O,O,O2,,4.90d-20*(T32)**1.58 
+48,NONE,NONE,O,OH,O2,H,4.34d-11*(T32)**(-0.50)*exp(-30*invT) 
+49,NONE,NONE,H,O2,OH,O,3.30d-10*exp(-8460*invT) 
+50,NONE,NONE,H+,O2,O2+,H,2.00d-9 
+51,NONE,NONE,O2+,E,O,O,1.95d-7*(T32)**(-0.70) 
+52,NONE,NONE,O,CH,CO,H,6.60d-11 
+53,NONE,NONE,C,OH,CO,H,1.10d-10*(T32)**0.50 
+54,NONE,NONE,C,O2,CO,O,3.30d-11 
+55,NONE,NONE,C+,O2,O+,CO,6.20d-10 
+56,NONE,NONE,OH,CO,CO2,H,1.00d-13
+57,NONE,NONE,C+,E,C,,4.40d-12*(T32)**(-0.61)
+58,NONE,NONE,C+,OH,CO+,H,7.70d-10
+59,NONE,NONE,CO+,H,H+,CO,7.50d-10
+60,NONE,NONE,C,H,CH,,1.00d-17
+61,NONE,NONE,C,H2,CH,H,6.64d-10*exp(-11700*invT)
+62,NONE,NONE,H,CH,C,H2,4.98d-11
+63,NONE,NONE,H2,CH,CH2,H,2.38d-10*exp(-1760*invT)
+64,NONE,NONE,H,CH2,CH,H2,2.70d-10
+65,NONE,NONE,H2,CH2,CH3,H,5.18d-11*(T32)**0.17*exp(-6400*invT)
+66,NONE,NONE,H,CH3,CH2,H2,1.00d-10*exp(-7600*invT)
+67,NONE,NONE,H2,CH3,CH4,H,6.86d-14*(T32)**2.74*exp(-4740*invT)
+68,NONE,NONE,H,CH4,H2,CH3,5.82d-13*(T32)**3.00*exp(-4045*invT)
+69,NONE,NONE,H2,C,CH2,,1.00d-17
+@format:idx,Tmin,Tmax,R,R,P,P,P,rate
+70,NONE,NONE,H3O+,E,OH,H,H,6.50d-7*(T32)**(-0.50)
+71,NONE,NONE,OH+,E,O,H,,6.3d-9*(T32)**(-0.48)
+
+@surface_start
+@format:idx,R,P,rate
+72,H,H_dust,auto
+73,H2,H2_dust,auto
+74,O,O_dust,auto
+75,OH,OH_dust,auto
+76,H2O,H2O_dust,auto
+77,CO,CO_dust,auto
+78,HCO,HCO_dust,auto
+79,H2CO,H2CO_dust,auto
+80,CH3O,CH3O_dust,auto
+81,CH3OH,CH3OH_dust,auto
+82,O2,O2_dust,auto
+83,HO2,HO2_dust,auto
+84,H2O2,H2O2_dust,auto
+85,CO2,CO2_dust,auto
+86,O3,O3_dust,auto
+
+87,H_dust,H,auto
+88,H2_dust,H2,auto
+89,O_dust,O,auto
+90,OH_dust,OH,auto
+91,H2O_dust,H2O,auto
+92,CO_dust,CO,auto
+93,HCO_dust,HCO,auto
+94,H2CO_dust,H2CO,auto
+95,CH3O_dust,CH3O,auto
+96,CH3OH_dust,CH3OH,auto
+97,O2_dust,O2,auto
+98,HO2_dust,HO2,auto
+99,H2O2_dust,H2O2,auto
+100,CO2_dust,CO2,auto
+101,O3_dust,O3,auto
+
+@format:idx,R,R,P,rate
+102,H_dust,H_dust,H2_dust,auto
+103,H_dust,O_dust,OH_dust,auto
+104,H_dust,OH_dust,H2O_dust,auto
+105,H_dust,O2_dust,HO2_dust,auto
+106,H_dust,CO_dust,HCO_dust,auto
+107,H_dust,HCO_dust,H2CO_dust,auto
+108,H_dust,H2CO_dust,CH3O_dust,auto
+109,H_dust,CH3O_dust,CH3OH_dust,auto
+110,O_dust,O_dust,O2_dust,auto
+111,O_dust,O2_dust,O3_dust,auto
+112,O_dust,CO_dust,CO2_dust,auto
+113,OH_dust,OH_dust,H2O2_dust,auto
+
+@format:idx,R,R,P,P,rate
+114,H_dust,O3_dust,OH_dust,O2_dust,auto
+115,H_dust,H2O2_dust,OH_dust,H2O_dust,auto
+116,H_dust,H2O_dust,OH_dust,H2_dust,auto
+117,H_dust,HO2_dust,OH_dust,OH_dust,auto
+118,H_dust,HCO_dust,CO_dust,H2_dust,auto
+119,H_dust,H2CO_dust,HCO_dust,H2_dust,auto
+120,H_dust,CH3O_dust,H2CO_dust,H2_dust,auto
+121,H_dust,CH3OH_dust,CH3O_dust,H2_dust,auto
+122,H_dust,CO2_dust,CO_dust,OH_dust,auto
+123,O_dust,O3_dust,O2_dust,O2_dust,auto
+124,O_dust,H2_dust,H_dust,OH_dust,auto
+125,O_dust,HO2_dust,O2_dust,OH_dust,auto
+126,O_dust,OH_dust,O2_dust,H_dust,auto
+127,O_dust,HCO_dust,CO2_dust,H_dust,auto
+128,O_dust,H2CO_dust,CO2_dust,H2_dust,auto
+129,OH_dust,H2_dust,H_dust,H2O_dust,auto
+130,OH_dust,CO_dust,CO2_dust,H_dust,auto
+131,OH_dust,HCO_dust,CO2_dust,H2_dust,auto
+132,HO2_dust,H2_dust,H_dust,H2O2_dust,auto
+
+@format:idx,R,R,P,rate
+133,H_dust,O_dust,OH,auto
+134,H_dust,OH_dust,H2O,auto
+135,H_dust,H2CO_dust,CH3O,auto
+136,H_dust,CH3O_dust,CH3OH,auto
+137,O_dust,O_dust,O2,auto
+
+@format:idx,R,R,P,P,rate
+138,H_dust,HCO_dust,CO,H2,auto
+
+@format:idx,R,P,rate
+139,H_c_dust,H_dust,auto
+140,H_dust,H_c_dust,auto
+
+@format:idx,R,R,P,rate
+141,H_dust,H_c_dust,H2_dust,auto
+142,H_c_dust,H_c_dust,H2_dust,auto
+
+@surface_stop
+
+

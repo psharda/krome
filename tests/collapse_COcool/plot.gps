@@ -1,0 +1,12 @@
+reset
+set logscale
+set format y "%L"
+set key Left reverse left
+set grid
+set yrange [1e-6:]
+set xlabel "density [cm-3]"
+set ylabel "log(cool, heat [erg/s/g])"
+nkrome_heatcool = 1
+load 'heatcool.gps'
+plot 'fort.55' u 1:(column(krome_idx_cool_CO)/$1*1e24) w l t "cool CO",\
+ 'fort.66' u 1:(column(krome_idx_heat_compr)/$1*1e24) t "heat COMPRESS" w l

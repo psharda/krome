@@ -32,7 +32,7 @@ subroutine cooling_fine(ilevel)
      call coolfine1(ind_grid,ngrid,ilevel)
   end do
 
-  if((cooling.and..not.neq_chem).and.ilevel==levelmin.and.cosmo)then
+  if((cooling.and..not.neq_chem).and.ilevel==levelmin.and.cosmo.and..not.krome_chem)then
      if(myid==1)write(*,*)'Computing new cooling table'
      call set_table(dble(aexp))
   endif
@@ -288,7 +288,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 #endif
 
      ! Compute net cooling at constant nH
-     if(cooling.and..not.neq_chem)then
+     if(cooling.and..not.neq_chem.and..not.krome_chem)then
         call solve_cooling(nH,T2,Zsolar,boost,dtcool,delta_T2,nleaf)
      endif
 #ifdef RT

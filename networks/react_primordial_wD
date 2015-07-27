@@ -1,0 +1,163 @@
+#the following is the primordial network including 
+# deuterium species
+#UPDATED primordial rates, 2014
+@var:T=Tgas
+
+#Janev 1987
+1,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
+
+#Abel et al. 1997, fit by data from Ferland et al. 1992
+2,H+,E,,H,g,,,NONE,.LE.5.5e3,3.92d-13*invTe**0.6353d0
+3,H+,E,,H,g,,,>5.5e3,NONE,exp(-28.61303380689232d0-0.7241125657826851d0*lnTe-0.02026044731984691d0*lnTe**2-0.002380861877349834d0*lnTe**3-0.0003212605213188796d0*lnTe**4-0.00001421502914054107d0*lnTe**5+4.989108920299513d-6*lnTe**6+5.755614137575758d-7*lnTe**7-1.856767039775261d-8*lnTe**8-3.071135243196595d-9*lnTe**9)
+
+#Janev 1987
+4,HE,E,,HE+,E,E,,NONE,NONE,exp(-44.09864886d0+23.91596563d0*lnTe-10.7532302d0*(lnTe**2)+3.05803875d0*(lnTe**3)-0.56851189d0*(lnTe**4)+6.79539123d-2*(lnTe**5)-5.00905610d-3*(lnTe**6)+2.06723616d-4*(lnTe**7)-3.64916141d-6*(lnTe**8))
+
+#Radiative+dielectronic from Cen 1992, Aldrovandi & Pequignot 1973
+5,HE+,E,,HE,g,,,NONE,.LE.9.28e3,3.92d-13*invTe**0.6353d0
+6,HE+,E,,HE,g,,,>9.28e3,NONE,1.54d-9*(1.d0+0.3d0/exp(8.099328789667d0*invTe))/(exp(40.49664394833662d0*invTe)*Te**1.5d0)+3.92d-13/Te**0.6353d0
+
+#Aladdin database 1989 (see Abel et al. 1997)
+7,HE+,E,,HE++,E,E,,NONE,NONE,exp(-68.71040990212001d0+43.93347632635d0*lnTe-18.48066993568d0*lnTe**2+4.701626486759002d0*lnTe**3-0.7692466334492d0*lnTe**4+0.08113042097303d0*lnTe**5-0.005324020628287001d0*lnTe**6+0.0001975705312221d0*lnTe**7-3.165581065665d-6*lnTe**8)
+
+# Verner & Ferland 1996 !NEW!
+8,HE++,E,,HE+,,,,NONE,NONE,1.891d-10/(sqrt(Tgas/9.37)*(1.+sqrt(Tgas/9.37))**0.2476*(1.+sqrt(Tgas/2.774d6))**1.7524)
+
+# De Jong (1972) !NEW!
+9,H,E,,H-,,,,NONE,NONE,1.4d-18*Tgas**0.928*exp(-Tgas/16200.)
+
+# fit by Kreckel et al. 2010 !NEW!
+@var:a1=1.3500e-09
+@var:a2=9.8493e-02
+@var:a3=3.2852e-01
+@var:a4=5.5610e-01
+@var:a5=2.7710e-07
+@var:a6=2.1826e+00
+@var:a7=6.1910e-03
+@var:a8=1.0461e+00
+@var:a9=8.9712e-11
+@var:a10=3.0424e+00
+@var:a11=3.2576e-14
+@var:a12=3.7741e+00
+10,H-,H,,H2,E,,,NONE,NONE,a1*(Tgas**a2+a3*Tgas**a4+a5*Tgas**a6)/(1.+a7*Tgas**a8+a9*Tgas**a10+a11*Tgas**a12)
+
+# fit to Ramaker & Peek 1976, corrected by Coppola !NEW!
+11,H,H+,,H2+,,,,NONE,.LT.30.0d0,2.10e-20*(Tgas/30.)**(-0.15)
+12,H,H+,,H2+,,,,.GE.30.0d0,NONE,10**(-18.20-3.194*log10(Tgas)+1.786*(log10(Tgas))**2-0.2072*(log10(Tgas))**3)
+
+#Karpas 1979
+13,H2+,H,,H2,H+,,,NONE,NONE,6.0d-10
+
+# fit by Savin et al. 2004, see also Glover et al. 2010  !NEW!
+@var:asav = 2.1237150d4
+@var:bsav1=-3.3232183d-7
+@var:bsav2= 3.3735382d-7
+@var:bsav3=-1.4491368d-7 
+@var:bsav4= 3.4172805d-8 
+@var:bsav5=-4.7813728d-9 
+@var:bsav6= 3.9731542d-10
+@var:bsav7=-1.8171411d-11
+@var:bsav8= 3.5311932d-13
+@var:sumsav=bsav1+bsav2*log(Tgas)+bsav3*(log(Tgas))**2+bsav4*(log(Tgas))**3+bsav5*(log(Tgas))**4+bsav6*(log(Tgas))**5+bsav7*(log(Tgas))**6+bsav8*(log(Tgas))**7
+14,H2,H+,,H2+,H,,,.GE.1.d2,.LE.3.d4,sumsav*exp(-asav*invT)
+
+# Capitelli et al. 2007 ! NEW REACTION! 
+15,H2,E,,H,H-,,,NONE,NONE,3.55d1*Tgas**(-2.28)*exp(-46707./Tgas)
+
+# fit by Mitchell & Deveau 1983 of data by Corrigan 1965 !NEW!
+16,H2,E,,H,H,E,,NONE,NONE,4.38d-10*exp(-102000./Tgas)*Tgas**(0.35)
+
+#Martin et al 1996
+@noTabNext
+17,H2,H,,H,H,H,,NONE,NONE,dissH2_Martin96(n,Tgas)
+
+#Janev 1987
+18,H-,E,,H,E,E,,NONE,NONE,exp(-18.01849334273d0+2.360852208681d0*lnTe-0.2827443061704d0*lnTe**2+0.01623316639567d0*lnTe**3-0.03365012031362999d0*lnTe**4+0.01178329782711d0*lnTe**5-0.001656194699504d0*lnTe**6+0.0001068275202678d0*lnTe**7-2.631285809207d-6*lnTe**8)
+
+#Abel et al. 1997, based on Janev 1987
+19,H-,H,,H,H,E,,NONE,.LE.1.16e3,2.56d-9*Te**1.78186d0
+20,H-,H,,H,H,E,,>1.16e3,NONE,exp(-20.37260896533324d0+1.139449335841631d0*lnTe-0.1421013521554148d0*lnTe**2+0.00846445538663d0*lnTe**3-0.0014327641212992d0*lnTe**4+0.0002012250284791d0*lnTe**5+0.0000866396324309d0*lnTe**6-0.00002585009680264d0*lnTe**7+2.4555011970392d-6*lnTe**8-8.06838246118d-8*lnTe**9)
+
+# Stenrup et al. 2009 !NEW!
+21,H-,H+,,H,H,,,.GE.1e1,.LE.1e5,(2.96d-6/sqrt(Tgas)-1.73d-9+2.50d-10*sqrt(Tgas)-7.77d-13*Tgas)
+
+#Poulart 1978
+22,H-,H+,,H2+,E,,,NONE,NONE,1.d-8*Tgas**(-0.4d0)
+
+# fit by Coppola et al. (2011) !NEW!
+23,H2+,E,,H,H,,,NONE,.LE.1e4,1.d6*(4.2278d-14-2.3088d-17*Tgas+7.3428d-21*Tgas**2-7.5474d-25*Tgas**3+3.3468d-29*Tgas**4-5.528d-34*Tgas**5)
+
+#Dalgarno & Lepp 1987
+24,H2+,H-,,H,H2,,,NONE,NONE,5.d-7*sqrt(1.d2*invT)
+
+#Forrey 2013 !NEW! 
+25,H,H,H,H2,H,,,NONE,NONE,6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0)
+
+#Glover&Abel 2008 
+26,H2,H,H,H2,H2,,,NONE,NONE,(6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0))/8.d0
+
+#Omukai 2001
+@var:invT = 1d0/Tgas
+@var:Hnuclei = get_Hnuclei(n(:))
+@var:kl21 = 1.18d-10*exp(-6.95d4*invT)
+@var:kh21 = 8.125d-8*T**(-0.5d0)*exp(-5.2d4*invT)*(1.d0-exp(-6d3*invT))
+@var:ncr21 = 1d1**(4.845d0-1.3d0*log10(T*1d-4)+1.62d0*(log10(T*1d-4))**2)
+@var:a21=1.d0/(1.d0+(Hnuclei/ncr21))
+@noTabNext
+27,H2,H2,,H,H,H2,,NONE,NONE,kh21**(1.-a21)*kl21**a21
+
+#NEW REACTION FROM YOSHIDA 2006, FOR HELIUM CHARGE TRANSFER
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+28,He+,H,He,H+,NONE,NONE,1.20d-15*(Tgas/3d2)**0.25d0
+
+29,He,H+,He+,H,NONE,.LE.1d4,1.26d-9*Tgas**(-0.75d0)*exp(-1.275d5*invT)
+30,He,H+,He+,H,>1d4,NONE,4.d-37*Tgas**(4.74d0)
+
+@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
+#DEUTERIUM CHEMISTRY
+#Galli&Palla 2002 from Gerlich 1982 
+31,H2,D+,,HD,H+,,,NONE,NONE,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
+
+#Galli & Palla 2002, from Garlich 1982 with modification by Gay et al. 2011
+32,HD,H+,,H2,D+,,,NONE,NONE,1.0d-9 *exp(-4.57d2*invT)
+
+#Glover et al. 2009, from data by Mielke et al. 2003
+33,H2,D,,HD,H,,,NONE,.LE.2.d3,10**(-56.4737+5.88886*log10(Tgas)+7.19692*(log10(Tgas))**2+2.25069*(log10(Tgas))**3-2.16903*(log10(Tgas))**4+0.317887*(log10(Tgas))**5)
+34,H2,D,,HD,H,,,.GT.2d3,NONE,3.17d-10*exp(-5207.*invT)
+
+#Galli & Palla 2002, from Shavitt 1959
+35,HD,H,,H2,D,,,>2e2,NONE,5.25d-11*exp(-4430.*invT+1.739d5*(invT)**2)
+
+36,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)
+
+#Galli & Palla 2002 from Wolf Savin 2001
+37,H+,D,,H,D+,,,.GE.5d1,NONE,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
+
+#Galli & Palla 2002 from Wolf Savin 2001
+38,H,D+,,H+,D,,,.GE.5d1,NONE,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
+
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+#ADDITIONAL DEUTERIUM RATES FROM GP98, SLD98
+39,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
+
+40,H,D,HD,,NONE,NONE,1.0d-25
+
+41,HD+,H,HD,H+,NONE,NONE,6.4d-10
+
+42,H+,D,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
+
+43,H,D+,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
+
+44,HD+,E,H,D,NONE,NONE,7.2d-8*invsqrT
+
+45,D,E,D-,,NONE,NONE,3d-16*(Tgas/300)**(0.95d0)*exp(-Tgas/9.320d3)
+
+46,D+,D-,D,D,NONE,NONE,5.7d-8*(Tgas/300)**(-0.5d0)
+
+47,D-,H+,D,H,NONE,NONE,4.6d-8*(Tgas/300)**(-0.5d0)
+
+48,H-,D,D-,H,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
+
+49,D-,H,H-,D,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
+
+50,D-,H,HD,E,NONE,NONE,1.5d-9*(Tgas/300)**(-0.1d0)

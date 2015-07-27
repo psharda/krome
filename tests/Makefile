@@ -1,5 +1,4 @@
-fc = ifort
-#fc = gfortran
+fc = #KROME_compiler
 prj = krome #exe name
 lib = -llapack #libraries
 
@@ -9,7 +8,7 @@ ifeq ($(GREP),)
 endif
 
 
-ifeq ($(fc),ifort)
+ifneq (,$(findstring ifort,$(fc)))
 	std = -check all -traceback -fpe0 -ftz -ftrapuv -warn all -u
 	nowarn = -nowarn
 	sswitch = $(std)

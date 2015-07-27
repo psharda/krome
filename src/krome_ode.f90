@@ -3,7 +3,7 @@ contains
 
 #KROME_header
 
-  subroutine fex(neq,tt,n,dn)
+  subroutine fex(neq,tt,nin,dn)
     use krome_commons
     use krome_constants
     use krome_subs
@@ -15,9 +15,9 @@ contains
     use krome_dust
 #ENDIFKROME
     implicit none
-    integer::neq
+    integer::neq,idust
     real*8::tt,dn(neq),n(neq),k(nrea),krome_gamma
-    real*8::gamma,Tgas,vgas,ntot,nH2dust,nd
+    real*8::gamma,Tgas,vgas,ntot,nH2dust,nd,nin(neq)
 #KROME_dustSumVariables
 #KROME_implicit_variables
 #KROME_flux_variables
@@ -25,14 +25,22 @@ contains
 
 #KROME_coevars
 
+    n(:) = nin(:)
+
     nH2dust = 0.d0
     n(idx_CR) = 1.d0
     n(idx_g)  = 1.d0
     n(idx_dummy) = 1.d0
 
+#KROME_compute_electrons
+
     dn(:) = 0.d0 !initialize differentials
-    Tgas = max(n(idx_Tgas), phys_Tcmb) !get temperature
-    
+    n(idx_Tgas) = max(n(idx_tgas),2.73d0)
+    n(idx_Tgas) = min(n(idx_tgas),1d8)
+    Tgas = n(idx_Tgas) !get temperature
+
+#KROME_Tdust_limits
+
     k(:) = coe_tab(n(:)) !compute coefficients
 
 #KROME_photobins_compute_thick
@@ -43,8 +51,9 @@ contains
 
     #KROME_calc_Tdust
 
-    #KROME_dust_H2
 #ENDIFKROME
+
+#KROME_dust_H2
 
 #KROME_ODE
 
@@ -64,6 +73,10 @@ contains
     end if
 #ENDIFKROME
 
+#IFKROME_usedTdust
+    dn(nmols+ndust+1:nmols+2*ndust) = get_dTdust(n(:),dn(idx_Tgas),vgas,ntot)
+#ENDIFKROME
+
 #KROME_ODEModifier
 
 #KROME_odeConstant
@@ -74,9 +87,7 @@ contains
        write(97,'(999E12.3e3)') tt,dn(:)
 #ENDIFKROME
        
-       jac_dnold(:) = jac_dn(:) !store previous dn for explicit jacobian
-       jac_nold(:) = n(:) !store previous n for explicit jacobian
-       jac_dn(:) = dn(:) !store current n
+       last_coe(:) = k(:)
 
   end subroutine fex
 
@@ -96,11 +107,13 @@ contains
     nH2dust = 0.d0
     Tgas = n(idx_Tgas)
 
+#KROME_compute_electrons
+
 #IFKROME_use_thermo
     krome_gamma = gamma_index(n(:))
 #ENDIFKROME
     
-    if(j.ne.idx_Tgas) k(:) = coe_tab(n(:)) !compute coefficients
+    k(:) = last_coe(:) !get rate coefficients
     
 #KROME_JAC_PD
     

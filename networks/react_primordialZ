@@ -164,3 +164,10 @@ if(sum(n(1:nmols))>1d14) k(31:71) = 0d0
 @format:idx,Tmin,Tmax,R,R,P,P,P,rate
 70,NONE,NONE,H3O+,E,OH,H,H,6.50d-7*(T32)**(-0.50)
 71,NONE,NONE,OH+,E,O,H,,6.3d-9*(T32)**(-0.48)
+
+@format:idx,R,R,P,rate
+72,O+,E,O,auto
+73,CO+,E,CO,auto
+@format:idx,R,R,P,P,rate
+74,CO+,E,C,O,auto
+

@@ -4,13 +4,14 @@ contains
 #KROME_header
 
   !************************
-  function heating(n,Tgas,k,nH2dust)
+  function heating(n,inTgas,k,nH2dust)
     implicit none
-    real*8::n(:), Tgas, k(:), nH2dust
+    real*8::n(:), Tgas, inTgas, k(:), nH2dust
     real*8::heating
-    
+
+    Tgas = inTgas
     heating = sum(get_heating_array(n(:),Tgas,k(:), nH2dust))
-    
+
   end function heating
 
   !*******************************
@@ -51,22 +52,63 @@ contains
     heats(idx_heat_dust) = heat_photoDust(n(:),Tgas)
 #ENDIFKROME
 
+#IFKROME_useHeatingPhotoDustNet
+    heats(idx_heat_dust) = heat_netPhotoDust(n(:),Tgas)
+#ENDIFKROME
+
 #IFKROME_useHeatingXRay
     heats(idx_heat_xray) = heat_XRay(n(:),Tgas,k(:))
 #ENDIFKROME
-    
+
+#IFKROME_useHeatingVisc
+    heats(idx_heat_visc) = heat_Visc(n(:),Tgas)
+#ENDIFKROME
+
+    heats(idx_heat_custom) = heat_custom(n(:),Tgas)
+
     get_heating_array(:) = heats(:)
 
-    !remove the comment below to write heating terms to fort.55
-    !write(55,'(99E17.8e3)') sum(n(1:nmols)),Tgas,heats(:)
-
-    !gnuplot command (n=100, and m=1 for density or m=2 for temperature) 
-    !plot 'fort.55' u m:(abs($3)) every n w l t "chem",\
-    ! '' u m:4 every n w l t "compress",\
-    ! '' u m:5 every n w l t "photo",\
-    ! '' u m:6 every n w l t "enthalpy"
-
   end function get_heating_array
+
+
+  !*************************
+  function heat_custom(n,Tgas)
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    implicit none
+    real*8::n(:),Tgas,heat_custom
+#KROME_custom_heating_var_define
+
+    heat_custom = 0d0
+#KROME_custom_heating_var
+#KROME_custom_heating_expr
+
+  end function heat_custom
+
+#IFKROME_useHeatingVisc
+  !*************************
+  !heating from viscosity (erg/s/cm3)
+  ! requires user_nu (kinematic viscosity) and
+  ! user_omega (keplerian orbital frequency)
+  ! both from krome_user_commons
+  function heat_visc(n,Tgas)
+    use krome_commons
+    use krome_user_commons
+    use krome_subs
+    implicit none
+    real*8::n(:),Tgas,heat_visc
+    real*8::m(nspec),rhogas
+    
+    n(idx_Tgas) = Tgas
+    m(:) = get_mass()
+    rhogas = max(sum(n(1:nmols)*m(1:nmols)),1d-40)
+    
+    heat_visc = 9d0/4d0 * user_nu * rhogas * user_omega * user_omega
+    
+  end function heat_visc
+#ENDIFKROME
+
 
 #IFKROME_useHeatingXRay
   !*************************
@@ -106,7 +148,7 @@ contains
     !prepares varibles for xray photochemistry
     ratexH = 1d1**xheat_H * J21xray
     ratexHe = 1d1**xheat_He * J21xray
-    
+
     heat_Xray = ratexH * n(idx_H)
     heat_Xray = heat_Xray + ratexHe * n(idx_He)
     heat_Xray = heat_Xray * .9971d0 * (1d0-(1d0-xe**.2663)**1.3163)
@@ -120,26 +162,78 @@ contains
   !***************************
   function heat_photoDust(n,Tgas)
     !photoelectric effect from dust in erg/s/cm3
+    !see Bakes&Tielens 1994 with a slight modification of Wolfire 2003
+    !on the amount of absorbed ultraviolet energy.
+    !This is for the local interstellar Habing flux and 
+    !without considering the recombination (which at this 
+    !radiation flux is indeed negligible)
     use krome_commons
     use krome_subs
     implicit none
     real*8::heat_photoDust,n(:),Tgas,ntot,eps
-    real*8::Ghab,z,izsun,psi
+    real*8::Ghab,z,psi
 
     ntot = get_Hnuclei(n(:))
-    izsun = 1d0/0.02d0 !inverse solar metallicity
     Ghab = 1.69d0 !habing flux, 1.69 is Draine78
     if(n(idx_e)>0d0) then
-       psi = 2.d0*Ghab*sqrt(Tgas)*n(idx_e)
+       psi = Ghab * sqrt(Tgas) / n(idx_e)
     else
        psi = 0d0
     end if
-    eps = 4.9d-2/(1d0+4d-3*psi**.73) + &
-         3.7d-2*(Tgas*1d-4)**.7/(1d0+2d-4*psi)
-    z = #KROME_photoDustZ !metallicty
-    heat_photoDust = 1.3d-24*eps*Ghab*ntot*z*izsun
+    eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
+         3.7d-2 * (Tgas * 1d-4)**.7 / (1d0 + 2d-4 * psi)
+    z = #KROME_photoDustZ !metallicty wrt solar
+    heat_photoDust = 1.3d-24*eps*Ghab*ntot*z
 
   end function heat_photoDust
+#ENDIFKROME
+
+#IFKROME_useHeatingPhotoDustNet
+  !***************************
+  function heat_netPhotoDust(n,Tgas)
+    !photoelectric effect from dust in erg/s/cm3
+    !including the recombination cooling and a generic radiation flux
+    !eq. 42 and 44 in Bakes&Tielens, 1994
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    implicit none
+    integer::i
+    real*8::heat_netPhotoDust,n(:),Tgas,ntot,eps
+    real*8::Ghab,z,psi,recomb_cool,bet
+
+    ntot = get_Hnuclei(n(:))
+    Ghab = 0d0 !habing flux
+    bet = 0.735d0*(Tgas)**(-0.068)
+
+    !integral over photo bins
+    do i=1,nphotoBins
+       Ghab = Ghab + photoBinJ(i) * photoBinEdelta(i)
+    end do
+
+    !integral -> habing flux
+    !from eq. 20 of Omukai, 2008
+    !see also Bakes&Tielens, 1994
+    Ghab = Ghab * 4d0 * pi / (1.6d-3) / planck_eV * eV_to_erg
+
+    if(n(idx_e)>0d0) then
+       psi = Ghab * sqrt(Tgas) / n(idx_e)
+    else
+       psi = 0d0
+    end if
+
+    !grains recombination cooling 
+    recomb_cool = 4.65d-30*Tgas**0.94*psi**bet & 
+         * n(idx_e)*n(idx_H)
+
+    eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
+         3.7d-2 * (Tgas * 1d-4)**.7 / (1d0 + 2d-4 * psi)
+    z = #KROME_photoDustZ !metallicty wrt solar
+
+    !net photoelectric heating
+    heat_netPhotoDust = (1.3d-24*eps*Ghab*ntot-recomb_cool)*z
+
+  end function heat_netPhotoDust
 #ENDIFKROME
 
 #IFKROME_useHeatingPhotoAv
@@ -157,13 +251,13 @@ contains
     ncrn  = 1.0d6*(Tgas**(-0.5d0))
     ncrd1 = 1.6d0*exp(-(4.0d2/Tgas)**2)
     ncrd2 = 1.4d0*exp(-1.2d4/(Tgas+1.2d3))
-    
+
     yH = n(idx_H)/dd   !dimensionless
     yH2= n(idx_H2)/dd  !dimensionless
-    
+
     ncr = ncrn/(ncrd1*yH+ncrd2*yH2)      !1/cm3
     h2heatfac = 1.0d0/(1.0d0+ncr/dd)     !dimensionless
-    
+
     Rdiss = #KROME_RdissH2
 
     !photodissociation H2 heating
@@ -171,7 +265,7 @@ contains
 
     !UV photo-pumping H2
     heat_photoAv = heat_photoAv + 2.7d-11*Rdiss*h2heatfac*n(idx_H2)
-    
+
   end function heat_photoAv
 #ENDIFKROME
 
@@ -223,7 +317,7 @@ contains
 
   end function heat_dH
 #ENDIFKROME
-  
+
 #IFKROME_useHeatingPhoto
   !**************************
   function photo_heating(n)
@@ -305,5 +399,5 @@ contains
 
   end function heat_compress
 #ENDIFKROME
-  
+
 end module KROME_heating

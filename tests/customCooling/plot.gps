@@ -1,0 +1,11 @@
+reset
+nkrome_heatcool = 1
+load 'heatcool.gps'
+set logscale
+set xlabel "log(Tgas/K)"
+set ylabel "cooling erg/cm3/s"
+set key b
+set format x "%L"
+set format y "%L"
+plot './fort.44' u 1:(column(krome_idx_cool_custom)) w l t "H2O cooling"
+

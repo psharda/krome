@@ -26,7 +26,7 @@ program test_krome
      print *,""
      print *,"****************"
      !INITIAL CONDITIONS
-     call krome_set_user_redshift(0d0)
+     call krome_set_zredshift(0d0)
      ntot           = 0.1d0  !total density in 1/cm3
      Tgas           = 3d2    !temperature in kelvin
 

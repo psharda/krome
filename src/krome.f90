@@ -10,9 +10,9 @@ contains
   !********************************
   !KROME main (interface to the solver library)
 #IFKROME_useX
-  subroutine krome(x,rhogas,Tgas,dt#KROME_dust_arguments)
+  subroutine krome(x,rhogas,Tgas,dt)!#KROME_dust_arguments)
 #ELSEKROME
-  subroutine krome(x,Tgas,dt#KROME_dust_arguments)
+  subroutine krome(x,Tgas,dt)!#KROME_dust_arguments)
 #ENDIFKROME
     use krome_commons
     use krome_subs
@@ -20,7 +20,7 @@ contains
     use krome_reduction
     use krome_dust
     real*8::dt,x(nmols),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin
-    real*8::rrmax,totmass,xdust(ndust),n_old(nspec),ni(nspec)
+    real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
     integer::icount,i,ierr,icount_max
     
     !DLSODES variables
@@ -83,14 +83,25 @@ contains
 
     n(idx_Tgas) = Tgas !put temperature in the input array
     
-#IFKROME_useDust
-    n(nmols+1:nmols+ndust) = xdust(:) !get dust abundances
+#IFKROME_useDustSizeEvol
+    n(nmols+1:nmols+ndust) = krome_dust_asize(:) !set dust sizes
 #ENDIFKROME
 
+#IFKROME_usedTdust
+    n(nmols+ndust+1:nmols+2*ndust) = krome_dust_T(:)
+    call compute_Tdust(n(:),Tgas)
+    krome_dust_T(:) = n(nmols+ndust+1:nmols+2*ndust)
+#ENDIFKROME
 
-    jac_nold(:) = n(:) !store initial densities (finite difference for Jacobian)
-    jac_dn(:) = 0.d0
-    jac_dnold(:) = 0.d0
+#IFKROME_usePreDustExp
+    !pre-calculates exponent
+    invTdust(:) = 1d0/(krome_dust_T(:)+1d-40)
+    dust_Ebareice_exp(:) = &
+         get_Ebareice_exp_array(invTdust(:))
+    dust_Ebareice23_exp(:) = &
+         get_Ebareice23_exp_array(invTdust(:))
+#ENDIFKROME
+
     icount = 0 !count solver iterations
     istate = 1 !init solver state
     tloc = 0.d0 !set starting time
@@ -99,7 +110,6 @@ contains
     mass(:) = get_mass() !get masses
     totmass = sum(n(:) * mass(:)) !calculate total mass
 #ENDIFKROME
-
     !store initial values
     ni(:) = n(:)
 
@@ -122,20 +132,25 @@ contains
        elseif(istate==-5 .or. istate==-4) then
           istate = 3 !wrong sparsity recompute
 #IFKROME_noierr
-       else
-          call XSETF(1)!turn on verbosity
-          got_error = .true.
+       elseif(istate==-3) then
+          n(:) = ni(:)
           istate = 1
+       else
+          got_error = .true.
        end if
        
        if(got_error.or.icount>icount_max) then
           if (krome_mpi_rank>0) then
             print *,krome_mpi_rank,"ERROR: wrong solver exit status!"
             print *,krome_mpi_rank,"istate:",istate
+            print *,krome_mpi_rank,"iter count:",icount
+            print *,krome_mpi_rank,"max iter count:",icount_max
             print *,krome_mpi_rank,"SEE KROME_ERROR_REPORT file"
           else
             print *,"ERROR: wrong solver exit status!"
             print *,"istate:",istate
+            print *,"iter count:",icount
+            print *,"max iter count:",icount_max
             print *,"SEE KROME_ERROR_REPORT file"
           end if
           call krome_dump(n(:), rwork(:), iwork(:), ni(:))
@@ -167,6 +182,8 @@ contains
 #ENDIFKROME
     end do
 
+#KROME_compute_electrons
+
 #IFKROME_check_mass_conservation
     if(abs(1.d0-totmass/sum(n(:) * mass(:)))>1d-3) then
        print *,"ERROR: mass conservation failure!"
@@ -191,8 +208,16 @@ contains
     x(:) = n(1:nmols)
 #ENDIFKROME
 
-#IFKROME_useDust
-    xdust(:) = n(nmols+1:nmols+ndust)
+#IFKROME_useDustSizeEvol
+    !returns dust abundance
+    krome_dust_asize(:) = n(nmols+1:nmols+ndust)
+    krome_dust_asize2(:) = n(nmols+1:nmols+ndust)**2
+    krome_dust_asize3(:) = n(nmols+1:nmols+ndust)**3
+#ENDIFKROME
+
+#IFKROME_usedTdust
+    !returns dust temperature
+    krome_dust_T(:) = n(nmols+ndust+1:nmols+2*ndust)
 #ENDIFKROME
 
     Tgas = n(idx_Tgas) !get new temperature
@@ -202,13 +227,20 @@ contains
 
   !*********************************
   !integrates to equilibrium using constant temperature
+#IFKROME_useX
+  subroutine krome_equilibrium(x,rhogas,Tgas)
+#ELSEKROME
   subroutine krome_equilibrium(x,Tgas)
+#ENDIFKROME
+    use krome_ode
+    use krome_subs
     use krome_commons
     use krome_constants
     implicit none
     integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
     integer::i,imax
-    real*8::tloc,x(:),Tgas,n(nspec),dt
+    real*8::tloc,x(nmols),Tgas,n(nspec),mass(nspec),ni(nspec)
+    real*8::rhogas,dt,xin
 #KROME_iwork_array
     real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
@@ -222,7 +254,7 @@ contains
     rwork(:) = 0.d0
     itol = 4 !both tolerances are scalar
     rtol(:) = 1d-6 !relative tolerance
-    atol(:) = 1d-10 !absolute tolerance
+    atol(:) = 1d-20 !absolute tolerance
 
     !for DLSODES options see its manual
     iopt = 0
@@ -231,15 +263,29 @@ contains
 
     mf = 222 !internally evaluated sparsity and jacobian
     tloc = 0d0 !initial time
-    dt = seconds_per_year * 1d8
-    
+
+    n(:) = 0.d0 !initialize densities
+#IFKROME_useX
+    mass(:) = get_mass() !get masses
+    xin = sum(x) !store initial fractions
+    !compute densities from fractions
+    do i = 1,nmols
+       if(mass(i)>0.d0) n(i) = rhogas * x(i) / mass(i)
+    end do
+#ELSEKROME
     !copy into array
     n(nmols+1:) = 0d0
     n(1:nmols) = x(:)
+#ENDIFKROME
+
     n(idx_Tgas) = Tgas
+
+    !store previous values
+    ni(:) = n(:)
     
     imax = 1000
 
+    dt = seconds_per_year * 1d10
     do i=1,imax
        !solve ODE
        CALL DLSODES(fcn_tconst, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
@@ -255,7 +301,22 @@ contains
        print *,"ERROR: no equilibrium found!"
        stop
     end if
+
+    !avoid negative species
+    do i=1,nspec
+       n(i) = max(n(i),0.d0)
+    end do
+
+#IFKROME_conserve
+    n(:) = conserve(n(:),ni(:)) 
+#ENDIFKROME
+
+#IFKROME_useX
+    x(:) = mass(1:nmols)*n(1:nmols)/rhogas !return to fractions
+#ELSEKROME
+    !returns to user array
     x(:) = n(1:nmols)
+#ENDIFKROME
 
   end subroutine krome_equilibrium
 
@@ -328,13 +389,15 @@ contains
     
     !RATE COEFFIECIENTS
     k(:) = coe_tab(n(:))
+    idx(:) = idx_sort(k(:))
     kmax = maxval(k)
     write(fnum,*)
-    write(fnum,*) "Rate coefficients at Tgas",n(idx_Tgas)
+    write(fnum,*) "Rate coefficients (sorted) at Tgas",n(idx_Tgas)
     write(fnum,*) "**********************"
     write(fnum,'(a5,2a12,a10)') "#","k","k %","  name"
     write(fnum,*) "**********************"    
-    do i=1,nrea
+    do j=1,nrea
+       i = idx(j)
        kperc = 0.d0
        if(kmax>0.d0) kperc = k(i)*1d2/kmax
        write(fnum,'(I5,2E12.3e3,a2,a50)') i,k(i),kperc,"  ", rnames(i)
@@ -347,7 +410,7 @@ contains
     rrmax = fex_check(n(:), n(idx_Tgas))
     idx(:) = idx_sort(arr_flux(:))
     write(fnum,*)
-    write(fnum,*) "Reaction magnitude (sorted) [k*n1*n2*n3]"
+    write(fnum,*) "Reaction magnitude (sorted) [k*n1*n2*n3*...]"
     write(fnum,*) "**********************"
     write(fnum,'(a5,2a12,a10)') "#","flux","flux %","  name"
     write(fnum,*) "**********************"    
@@ -401,12 +464,23 @@ contains
     use krome_tabs
     use krome_subs
     use krome_reduction
-#IFKROME_useCoolingZ
+    use krome_dust
     use krome_cooling
-#ENDIFKROME
 #IFKROME_useStars
     use krome_stars
 #ENDIFKROME
+
+    !init phys common variables
+#KROME_init_phys_variables
+
+    !init metallicity default
+    !assuming solar
+    total_Z = 1d0
+
+    !default for thermo toggle is ON
+    !$omp parallel
+    krome_thermo_toggle = 1
+    !$omp end parallel
 
     call load_arrays
 
@@ -421,8 +495,16 @@ contains
     call check_tabs()
 #ENDIFKROME
 
+#IFKROME_useDustTabs
+    call init_dust_tabs()
+#ENDIFKROME
+
 #IFKROME_useStars
     call stars_init()
+#ENDIFKROME
+
+#IFKROME_useChemisorption
+    call init_chemisorption_rates()
 #ENDIFKROME
 
 #IFKROME_useH2esc_omukai
@@ -434,16 +516,47 @@ contains
          ymulH2esc)
 #ENDIFKROME
 
-    !init phys common variables
-#KROME_init_phys_variables
+#IFKROME_useMayerOpacity
+    call init_anytab2D("mayer_E2.dat",mayer_x(:), &
+         mayer_y(:), mayer_z(:,:), mayer_xmul, &
+         mayer_ymul)
+    call test_anytab2D("mayer_E2.dat",mayer_x(:), &
+         mayer_y(:), mayer_z(:,:), mayer_xmul, &
+         mayer_ymul)
+#ENDIFKROME
 
-    !default for thermo toggle is ON
-    !$omp parallel
-    krome_thermo_toggle = 1
-    !$omp end parallel
+#IFKROME_useCoolingCO
+    !initialize CO cooling
+    call init_coolingCO()
+#ENDIFKROME
 
-    !get smallest possible value
-    krome_smallest = epsilon(0d0)
+#IFKROME_useCoolingZCIE
+    !initialize metal CIE cooling
+    call init_coolingZCIE()
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIENOUV
+  !initialize metal CIE cooling no UV case
+  call init_anytab2D("coolZ_CIE2012NOUV.dat",CoolZNOUV_x(:), &
+        CoolZNOUV_y(:), CoolZNOUV_z(:,:), CoolZNOUV_xmul, &
+        CoolZNOUV_ymul)
+  call test_anytab2D("coolZ_CIE2012NOUV.dat",CoolZNOUV_x(:), &
+        CoolZNOUV_y(:), CoolZNOUV_z(:,:), CoolZNOUV_xmul, &
+        CoolZNOUV_ymul)
+#ENDIFKROME
+
+    !initialize the table for exp(-a/T) function
+    call init_exp_table()
+
+#IFKROME_useGammaPop
+    call load_parts()
+#ENDIFKROME
+
+    !init photo reactants indexes
+#KROME_photopartners
+
+    !get machine precision
+    krome_epsilon = epsilon(0d0)
 
   end subroutine krome_init
 
@@ -455,10 +568,12 @@ contains
     use krome_tabs
     implicit none
     real*8::krome_get_coe(nrea),n(nspec),x(:),Tgas
+
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
     krome_get_coe(:) = coe_tab(n(:))
+
   end function krome_get_coe
 
   !****************************

@@ -1,0 +1,40 @@
+#custom file options
+
+#atoms employed to build molecules
+#comma separated, can't be empty
+#note that electron should be also included (as E)
+atoms: H,O,E
+
+#maximum number of atoms per molecule
+maxatoms: 99
+
+#use cations, e.g. CO+
+cations: yes
+
+#use anions, e.g. H-
+anions: yes
+
+#maximum number of reactants per reaction (1<=N<=3)
+maxrea: 3
+
+#maximum number of products per reaction (1<=N<=3)
+maxprod: 3
+
+#species to exclude (included by other tokens)
+#comma separated, empty=ignore
+exclude:
+
+#additional species to include (excluded by other tokens)
+#comma separated, empty=ignore
+#this command overrides all the others (except "exclude:")
+include:
+
+#species that should be present in all the reactions
+# (at least one of the listed species)
+#comma separated, empty=ignore
+present:
+
+#use ONLY these species
+#comma separated, empty=ignore
+#this command overrides all the others
+only:
