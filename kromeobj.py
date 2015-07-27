@@ -1010,6 +1010,13 @@ class krome():
 			if(self.is_test):
 				print "ERROR: -test option and -flash are incompatible!"
 				sys.exit()
+			if(args.gamma):
+				typeGamma = args.gamma
+				self.typeGamma = typeGamma.replace("\"","")
+				if(self.typeGamma!="FULL" and self.typeGamma!="DEFAULT" ):
+					print "ERROR: for consistency reasons so far only -gamma FULL or DEFAULT is allowed for FLASH!"
+					print "Updates follow soon, please contact D. Seifried for more details"
+					sys.exit()
 			if(args.useX):
 				print "ERROR: the patch for FLASH requires number densities, please remove -useX option!"
 				sys.exit()
