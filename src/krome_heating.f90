@@ -175,10 +175,11 @@ contains
 
     ntot = get_Hnuclei(n(:))
     Ghab = 1.69d0 !habing flux, 1.69 is Draine78
+#KROME_GhabAv
     if(n(idx_e)>0d0) then
        psi = Ghab * sqrt(Tgas) / n(idx_e)
     else
-       psi = 0d0
+       psi = 1d99
     end if
     eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
          3.7d-2 * (Tgas * 1d-4)**.7 / (1d0 + 2d-4 * psi)

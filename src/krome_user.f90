@@ -1529,10 +1529,10 @@ contains
   end function krome_get_rho
 
   !*************************
+  !scale the abundances of the metals contained in n(:)
+  ! to Z according to Asplund+2009.
+  ! note that this applies only to neutral atoms.
   subroutine krome_scale_Z(n,Z)
-    !scale the abundances of the metals contained in n(:)
-    ! to Z according to Asplund+2009.
-    ! note that this applies only to neutral atoms.
     use krome_commons
     real*8::n(:),Z,Htot
 
@@ -1541,9 +1541,9 @@ contains
   end subroutine krome_scale_Z
 
   !*************************
+  !set the total metallicity
+  ! in terms of Z/Z_solar
   subroutine krome_set_Z(xarg)
-    !set the total metallicity 
-    ! in terms of Z/Z_solar 
     use krome_commons
     real*8::xarg
 
@@ -1553,10 +1553,8 @@ contains
 
   !***********************
   !get the number of electrons assuming
-  ! total neutral charge
+  ! total neutral charge (cations-anions)
   function krome_get_electrons(x)
-    !get the total number of electrons from
-    ! the number denisities of all the species
     use krome_commons
     use krome_subs
     real*8::x(:),n(nspec),krome_get_electrons
@@ -1620,6 +1618,43 @@ contains
     x(idx_Tgas) = Tgas
     krome_get_flux(:) = get_flux(x(:), Tgas)
   end function krome_get_flux
+
+  !*****************************
+  !store the fluxes to the file unit ifile
+  ! using the chemical composition x(:), and the
+  ! gas temperature Tgas. xvar is th value of an
+  ! user-defined independent variable that
+  ! can be employed for plots.
+  ! the file columns are as follow
+  ! rate number, xvar, absolute flux,
+  !  flux/maxflux, flux fraction wrt total,
+  !  reaction name (*50 string)
+  subroutine krome_explore_flux(x,Tgas,ifile,xvar)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::x(nmols),Tgas,xvar,n(nspec)
+    real*8::flux(nrea),fluxmax,sumflux
+    integer::ifile,i
+    character*50::rname(nrea)
+
+    !get reaction names
+    rname(:) = get_rnames()
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
+    !get fluxes
+    flux(:) = get_flux(n(:), Tgas)
+    fluxmax = maxval(flux) !maximum flux
+    sumflux = sum(flux) !sum of all the fluxes
+    !loop on reactions
+    do i=1,nrea
+       write(ifile,'(I8,4E17.8e3,a3,a50)') i,xvar,flux(i),&
+            flux(i)/fluxmax, flux(i)/sumflux," ",rname(i)
+    end do
+    write(ifile,*)
+
+  end subroutine krome_explore_flux
 
   !*********************
   !get nulcear qeff for the reactions
