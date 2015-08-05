@@ -125,6 +125,7 @@ class krome():
 	columnDensityMethod = "DEFAULT"
 	compiler = "ifort" #default compiler
 	ramses_offset = 2 #offset in the array for ramses
+	photoDustVarAv = "" #variable for visual extinction in the photoelectric heating
 	coolFile = ["data/coolZ.dat"]
 	customCoolList = [] #list of the custom cooling functions
 	customHeatList = [] #list of the custom heating functions
@@ -264,6 +265,10 @@ class krome():
 		self.parser.add_argument("-options", metavar="filename", help="read the options from a file instead of command line\
 			(in principle you can use both). See options_example file.")
 		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
+		self.parser.add_argument("-photoDustVarAv", metavar="common_variable", help="set the name of the common variable that\
+			is employed for the visual extinction Av to attenuate the photoelectric effect on the dust. It follows\
+			exp(-2.5*Av) where Av is the variable. The variable should be set in the network file using the token\
+			@common: user_Av, or any other custom name. This option must be used togheter with -heating=PHOTODUST")
 		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the\
 			default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
 		self.parser.add_argument("-quote", action="store_true", help="print a citation and exit")
@@ -1250,6 +1255,12 @@ class krome():
 
 
 			print "Reading option -heating ("+(",".join(myHeat))+")"
+
+		#set variable name for Av attenuation in photoelectric effect
+		if(args.photoDustVarAv):
+			self.photoDustVarAv = args.photoDustVarAv.strip()
+			if(not(self.useHeatingPhotoDust)): sys.exit("ERROR: -photoDustVarAv should be used with -heating=PHOTODUST")
+			print "Reading option -photoDustVarAv (variable name: "+self.photoDustVarAv+")"
 	
                 #use number densities instead of mass fractions (default, retrocompatibility)
 		if(args.useN):
@@ -5378,6 +5389,11 @@ class krome():
 						sys.exit()			
 
 					row = row.replace("#KROME_RdissH2",rateDissH2) #replace pragma with H2 photodissociation rate
+
+				#add attenuation from Av for photoelectric effect
+				if(row.strip() == "#KROME_GhabAv"):
+					row = "Ghab  = Ghab * exp(-2.5*"+self.photoDustVarAv+")\n"
+					if(self.photoDustVarAv == ""): row = "\n"
 
 				#replace shortcuts for temperature
 				if(row.strip() == "#KROME_Tshortcuts"):
