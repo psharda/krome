@@ -2099,11 +2099,19 @@ class krome():
 
 			myrea.Tmin = "2.73d0" #default min temperature
 			myrea.Tmax = "1.d8" #default max temperature
-			#search for reactions without Tlims
+
+			#search for reactions without Tlims (MIN)
 			if(tminFound):
 				if(arow[iTmin].strip().upper() in ["N","NONE","N/A","NO",""]): myrea.hasTlimitMin = False
+			else:
+				myrea.hasTlimitMin = False
+
+			#search for reactions without Tlims (MAX)
 			if(tmaxFound):
 				if(arow[iTmax].strip().upper() in ["N","NONE","N/A","NO",""]): myrea.hasTlimitMax = False
+			else:
+				myrea.hasTlimitMax = False
+
 			#store Tlimits if any
 			if(myrea.hasTlimitMin):
 				if(tminFound): myrea.Tmin = format_double(arow[iTmin]) #get Tmin
@@ -4169,7 +4177,8 @@ class krome():
 			if(Ebind_tupla in Ebind23list):
 				get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = "+functionName+"("+str(Ebind23list[Ebind_tupla])+")\n")
 				continue
-			get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = get_exp_table("+format_double(fmult*float(x.Ebind_bare))+", invTdust("\
+			get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = get_exp_table("\
+				+format_double(fmult*float(x.Ebind_bare))+", invTdust("\
 				+str(x.parentDustBin)+"))\n")
 			Ebind23list[Ebind_tupla] = x.fidx+"+nspec"
 
@@ -4374,7 +4383,7 @@ class krome():
 					#build temperature limit IF
 					sTlimit = ""
 					hasTlim = (x.hasTlimitMin or x.hasTlimitMax) #Tmin or Tmax are present
-					Tlimfound = False #flag to check if enfif is needed after the reaction rate
+					Tlimfound = False #flag to check if endif is needed after the reaction rate
 					if(x.kphrate==None and self.useTlimits and hasTlim):
 						Tlimfound = True #need to close the if statement opened here
 						sTlimit = "if("
