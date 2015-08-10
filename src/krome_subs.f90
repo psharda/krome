@@ -937,47 +937,6 @@ contains
 
   end function dissH2_Martin96
 
-  !************************
-  function H2_sigmaLW(energy_eV)
-    !H2 direct photodissociation in the Lyman-Werner bands
-    ! cross-section in cm^2 fit by Abel et al. 1997 of 
-    ! data by Allison&Dalgarno 1969
-    use krome_commons
-    real*8::H2_sigmaLW,energy_eV
-    real*8::sL0,sW0,sL1,sW1
-
-    !initialization
-    sL0 = 0d0
-    sL1 = 0d0
-    sW0 = 0d0
-    sW1 = 0d0
-
-    if(energy_eV>14.675.and.energy_eV<16.820)then
-       sL0 = 1d-18*1d1**(15.1289-1.05139*energy_eV)
-    elseif(energy_eV>16.820.and.energy_eV<17.6d0)then
-       sL0 = 1d-18*1d1**(-31.41d0+1.8042d-2*energy_eV**3-4.2339d-5*energy_eV**5)
-    endif
-
-    if(energy_eV>14.675d0.and.energy_eV<17.7d0)then
-       sW0 = 1d-18*1d1**(13.5311d0-0.9182618*energy_eV)
-    endif
-
-    if(energy_eV>14.159d0.and.energy_eV<15.302d0)then
-       sL1 = 1d-18*1d1**(12.0218406d0-0.819429*energy_eV)
-    elseif(energy_eV>15.302d0.and.energy_eV<17.2d0)then
-       sL1 = 1d-18*1d1**(16.04644d0-1.082438*energy_eV)
-    endif
-
-    if(energy_eV>14.159d0.and.energy_eV<17.2d0)then
-       sW1 = 1d-18*1d1**(12.87367-0.85088597*energy_eV)
-    endif
-
-    fact = 1d0/(phys_orthoParaRatio+1d0)
-
-    H2_sigmaLW = fact*(sL0+sW0)+(1d0-fact)*(sL1+sW1)
-
-  end function H2_sigmaLW
-
   !**********************
   !adsorpion rate Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
   function dust_adsorption_rate(nndust,ims,stick,adust2,sqrTgas)
