@@ -25,7 +25,7 @@ first = ""
 if(first.strip()==""): first = tests[0]
 
 
-mode = "check" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
+mode = "eyeball" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
 
 ################
 
