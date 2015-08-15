@@ -112,7 +112,7 @@ module krome_commons
   real*8::coolZCIEx2min,coolZCIEx2max
   real*8::coolZCIEx3min,coolZCIEx3max
   real*8::coolZCIEdvn1,coolZCIEdvn2,coolZCIEdvn3
-#ENDIF
+#ENDIFKROME
 
 
   !commons for dust tabs (cool,H2,Tdust)
