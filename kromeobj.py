@@ -58,7 +58,7 @@ class krome():
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
-	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolCMBFloor = False
+	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
 	useCoolCMBFloorZ = False
@@ -304,8 +304,8 @@ class krome():
 			if the T limits for a given reaction are 10. and 1d4 the option -Tlmit GE,LE will provide (Tgas>=10. AND Tgas<=1d4) as\
 			the reaction range of validity. Operators opLow and opHigh must be one of the following: LE, GE, LT, GT.")
 		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
-		self.parser.add_argument("-useCoolCMBFloor", action="store_true", help="include a cooling floor given by the CMB temperature.\
-			note that you must define Tcmb by using the subroutine krome_get_Tcmb(your_Tcmb) before calling krome.")
+		self.parser.add_argument("-useCoolFloor", action="store_true", help="include a cooling floor given by the Tfloor temperature.\
+			note that you must define Tfloor by using the subroutine krome_set_Tfloor(your_Tfloor) before calling krome.")
 		self.parser.add_argument("-useCoolCMBFloorZ", action="store_true", help="as -useCoolCMBFloor, but for metals only.")
 		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size\
 			NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION\
@@ -805,13 +805,13 @@ class krome():
 			self.usePhotoOpacity = True
 			print "Reading option -usePhotoOpacity (now obsolete, you can remove it)"
 
-		#use cooling CMB floor 
-		if(args.useCoolCMBFloor):
-			self.useCoolCMBFloor = True
+		#use cooling floor 
+		if(args.useCoolFloor):
+			self.useCoolFloor = True
 			if(not(args.cooling)):
-				print "ERROR: option -useCoolCMBFloor needs at least one active cooling option. See -cooling="
+				print "ERROR: option -useCoolFloor needs at least one active cooling option. See -cooling="
 				sys.exit()
-			print "Reading option -useCoolCMBFloor"
+			print "Reading option -useCoolFloor"
 
 		#use cooling CMB floor Z 
 		if(args.useCoolCMBFloorZ):
@@ -2670,7 +2670,8 @@ class krome():
 		self.physVariables = [["Tcmb", "2.73d0"],
 			["zredshift", "0d0"],
 			["orthoParaRatio", "3d0"],
-			["metallicity", "0d0"]]
+			["metallicity", "0d0"],
+                        [ "Tfloor", "2.73d0"]]
 	
 	#####################################################
 	def photo_warnings(self):
@@ -5321,6 +5322,7 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingPhotoDustNet" and not(self.useHeatingPhotoDustNet)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingXRay" and not(self.useHeatingXRay)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingVisc" and not(self.useHeatingVisc)): skip = True
+				if(row.strip() == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
 				if(row.strip() == "#IFKROME_useHeatingChem" and skipBool): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
@@ -5500,12 +5502,12 @@ class krome():
 
 			coolPragmaFound = False
 			#include cooling cmb floor if necessary
-			if("#KROME_coolCMBfloor" in srow):
+			if("#KROME_coolfloor" in srow):
 				coolPragmaFound = True
-				if(self.useCoolCMBFloor):
-					srow = srow.replace("#KROME_coolCMBfloor"," + cooling(n(:), phys_Tcmb)")
+				if(self.useCoolFloor):
+					srow = srow.replace("#KROME_coolfloor"," + cooling(n(:), phys_Tfloor)")
 				else:
-					srow = srow.replace("#KROME_coolCMBfloor","")
+					srow = srow.replace("#KROME_coolfloor","")
 				
 			#replace quenching function for cooling
 			if("#KROME_coolingQuench" in srow):
