@@ -281,7 +281,7 @@ contains
     ! data by Allison&Dalgarno 1969
     use krome_commons
     real*8::H2_sigmaLW,energy_eV
-    real*8::sL0,sW0,sL1,sW1
+    real*8::sL0,sW0,sL1,sW1,fact
 
     !initialization
     sL0 = 0d0
