@@ -305,6 +305,11 @@ contains
     real*8::v1min,v1max,v2min,v2max,v3min,v3max
     real*8,parameter::eps=1d-5
 
+    Tgas = inTgas
+#IFKROME_useCoolingZ
+    if(Tgas<1d4) return
+#ENDIFKROME
+
     !local copy of limits
     v1min = coolZCIEx1min
     v1max = coolZCIEx1max
@@ -329,7 +334,7 @@ contains
     !avoid weird log evaluation
     if(cH.lt.1d-20)return
 
-    v1 = inTgas         !Tgas
+    v1 = Tgas           !Tgas
     v2 = cH             !total H number density
     v3 = phys_zredshift !redshift is linear
 
@@ -340,7 +345,6 @@ contains
     !default value erg/s/cm3
     cooling_ZCIE = 0d0
 
-    !check limits
     !check limits
     if(v1>=v1max) v1 = v1max*(1d0-eps)
     if(v2>=v2max) v2 = v2max*(1d0-eps)
