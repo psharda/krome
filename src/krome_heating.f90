@@ -110,6 +110,7 @@ contains
     real*8,parameter::eps=1d-5
 
     Tgas = inTgas
+    heat_ZCIE = 0d0
 #IFKROME_useCoolingZ
     if(Tgas<1d4) return
 #ENDIFKROME

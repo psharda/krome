@@ -265,6 +265,7 @@ contains
     real*8::cooling_ZCIENOUV,n(:),inTgas
     real*8::cH,Tgas,xLd,logcH
 
+    cooling_ZCIENOUV = 0d0
     cH = get_Hnuclei(n(:)) 
 
     !check if the abundance is close to zero to 
@@ -306,6 +307,7 @@ contains
     real*8,parameter::eps=1d-5
 
     Tgas = inTgas
+    cooling_ZCIE = 0d0
 #IFKROME_useCoolingZ
     if(Tgas<1d4) return
 #ENDIFKROME
