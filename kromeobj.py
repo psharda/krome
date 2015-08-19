@@ -4854,8 +4854,10 @@ class krome():
 			if(row.strip() == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
-			row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(max("+str(self.TminAuto)+",2.73d0))")
-			row = row.replace("#KROME_logTup", "ktab_logTup = log10(min("+str(self.TmaxAuto)+",1d8))")
+			#row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(max("+str(self.TminAuto)+",2.73d0))")
+			row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(2.73d0)")
+			row = row.replace("#KROME_logTup", "ktab_logTup = log10(1d9)")
+			#row = row.replace("#KROME_logTup", "ktab_logTup = log10(min("+str(self.TmaxAuto)+",1d8))")
 			row = row.replace("#KROME_define_vars",kvars)
 			row = row.replace("#KROME_init_vars",klist)
 			row = row.replace("#KROME_noTabReactions",noTabReactions)
