@@ -344,9 +344,6 @@ contains
     v1 = log10(v1)
     v2 = log10(v2)
 
-    !default value erg/s/cm3
-    cooling_ZCIE = 0d0
-
     !check limits
     if(v1>=v1max) v1 = v1max*(1d0-eps)
     if(v2>=v2max) v2 = v2max*(1d0-eps)
