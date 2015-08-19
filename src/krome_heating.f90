@@ -111,9 +111,6 @@ contains
 
     Tgas = inTgas
     heat_ZCIE = 0d0
-#IFKROME_useCoolingZ
-    if(Tgas<1d4) return
-#ENDIFKROME
     
     !local copy of limits
     v1min = coolZCIEx1min
