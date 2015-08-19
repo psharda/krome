@@ -2172,6 +2172,9 @@ class krome():
 					sys.exit()
 				myrea.hasXsecFile = True
 				myrea.Tmin = 0e0
+			#store Tlimits if any
+			if(myrea.hasTlimitMin):
+				if(tminFound): myrea.Tmin = format_double(arow[iTmin])
 				#if file is SWRI convert to KROME
 				if(myrea.krate.strip()=="@xsecFile=SWRI"):
 					SWRI2KROME(self.buildFolder,myrea.reactants[0],myrea.products,myrea.Tmin)
@@ -4735,14 +4738,23 @@ class krome():
 					row += " xsec"+sidx+"_n, xsec"+sidx+"_idE)\n"
 
 			#replace pragma with the initialization of the photorate table in bins
+		#	if(srow=="#KROME_photobin_xsecs"):
+		#		phbinx = ""
+		#		for rea in reacts:
+		#			if(rea.kphrate==None): continue
+		#			phbinx += "\n!"+rea.verbatim+"\n"
+		#			phbinx += "kk = "+rea.kphrate+"\n"
+		#			phbinx += "if(energy_eV<"+str(rea.Tmin)+") kk = 0d0\n"
+		#			phbinx += "if(energy_eV>"+str(rea.Tmax)+") kk = 0d0\n"
+		#			phbinx += "photoBinJTab("+str(rea.idxph)+",j) = kk\n"
+		#		row = phbinx+"\n"
 			if(srow=="#KROME_photobin_xsecs"):
 				phbinx = ""
 				for rea in reacts:
 					if(rea.kphrate==None): continue
 					phbinx += "\n!"+rea.verbatim+"\n"
-					phbinx += "kk = "+rea.kphrate+"\n"
-					phbinx += "if(energy_eV<"+str(rea.Tmin)+") kk = 0d0\n"
-					phbinx += "if(energy_eV>"+str(rea.Tmax)+") kk = 0d0\n"
+					phbinx += "kk = 0d0\n"
+					phbinx += "if(energy_eV>"+str(rea.Tmin)+".and.energy_eV<"+str(rea.Tmax)+") kk = "+rea.kphrate+"\n"
 					phbinx += "photoBinJTab("+str(rea.idxph)+",j) = kk\n"
 				row = phbinx+"\n"
 			#replace the energy treshold assuming that it is equal to Tmin
