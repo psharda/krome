@@ -60,7 +60,7 @@ class krome():
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
-	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
+	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = False
 	useCoolCMBFloorZ = False
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
@@ -241,7 +241,7 @@ class krome():
 			can also be used. Default value is 5/3.",metavar="OPTION")
 		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be RIPAMONTI or OMUKAI")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM\
-			, DH, CR, PHOTOAV,VISCOUS. If you want a complete list of the available heating options type -heating=?")
+			, DH, CR, PHOTOAV,VISCOUS,H2PUMPING. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems).")
 		self.parser.add_argument("-listAutomatics", action="store_true", help="list all the automatic reactions available.")
@@ -1218,7 +1218,7 @@ class krome():
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
 			myHeat = [x.strip() for x in myHeat]
-			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","PHOTODUSTNET","XRAY","VISCOUS"]
+			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","PHOTODUSTNET","XRAY","VISCOUS","H2PUMPING"]
 			for hea in myHeat:
 				if(not(hea in allHeats)):
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
@@ -1233,6 +1233,7 @@ class krome():
 			if("PHOTODUSTNET" in myHeat): self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
 			if("XRAY" in myHeat): self.useHeatingXRay = True #heating from xray reactions rate
 			if("VISCOUS" in myHeat): self.useHeatingVisc = True #heating from viscosity 
+			if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2  in LW bands 
 
 			self.use_thermo = True
 			if(self.photoBins<=0 and self.useHeatingPhoto):
@@ -5305,6 +5306,8 @@ class krome():
 						break
 			if(self.useDustH2 or self.dustTabsH2):
 				HChemDust += "HChem = HChem + nH2dust * (4.2d0*h2heatfac + 0.2d0)\n"
+			if(self.useHeatingPumpH2):
+				HChem += "HChem = HChem + kH2pump * (18.7d0*h2heatfac + 0.4d0)*n(idx_H2)\n"
 
 		#build heating terms for photoionization
 		pheatvars = []
@@ -5336,6 +5339,7 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingPhotoDustNet" and not(self.useHeatingPhotoDustNet)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingXRay" and not(self.useHeatingXRay)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingVisc" and not(self.useHeatingVisc)): skip = True
+				if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
 				if(row.strip() == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
 				if(row.strip() == "#IFKROME_useHeatingChem" and skipBool): skip = True

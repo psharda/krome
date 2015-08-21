@@ -47,6 +47,24 @@ contains
 
 #KROME_metallicity_functions
 
+  !*********************
+  !this function returns the
+  ! photorates of H2 occurring in the 
+  ! Lyman-Werner bands following the approximation
+  ! provided by Glover&Jappsen 2007. Rate in seconds.
+  !It also stores the rate as a common needed for the photoheating
+  function H2_solomonLW(myflux)
+    use krome_commons
+    use krome_constants
+    implicit none
+    real*8::H2_solomonLW,myflux
+
+    !myflux should be converted to erg
+    H2_solomonLW = 1.38d9*myflux*eV_to_erg
+    kH2pump = H2_solomonLW
+
+  end function H2_solomonLW
+
   !**********************
   !planck function in eV/s/cm2/Hz/sr
   ! x is the energy in eV, Tbb the black body
