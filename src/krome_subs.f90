@@ -17,7 +17,7 @@ contains
 #KROME_initcoevars
     !Tgas is in K
     Tgas = max(n(idx_Tgas), phys_Tcmb)
-    Tgas = min(Tgas,1d8)
+    Tgas = min(Tgas,1d9)
 
     !maxn initialization can be removed and small can be
     ! replaced with a proper value according to the environment
@@ -46,6 +46,27 @@ contains
   end function coe
 
 #KROME_metallicity_functions
+
+  !*********************
+  !this function returns the
+  ! photorate of H2 occurring in the 
+  ! Lyman-Werner bands following the approximation
+  ! provided by Glover&Jappsen 2007. Rate in seconds.
+  !Approximation valid at low-density, it assumes H2(nu = 0).
+  !It also stores the rate as a common, needed for the photoheating
+  function H2_solomonLW(myflux)
+    use krome_commons
+    use krome_constants
+    implicit none
+    real*8::H2_solomonLW,myflux
+
+    !myflux is the radiation background at E = 12.87 eV
+    !should be converted to erg
+    H2_solomonLW = 1.38d9*myflux*eV_to_erg
+
+    kH2pump = H2_solomonLW
+
+  end function H2_solomonLW
 
   !**********************
   !planck function in eV/s/cm2/Hz/sr

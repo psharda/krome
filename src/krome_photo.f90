@@ -99,11 +99,15 @@ contains
     !init rates and heating
     photoBinRates(:) = 0d0 !1/s/Hz
     photoBinHeats(:) = 0d0 !eV/s/Hz
+    GHabing = 0d0 !habing flux
     !loop on energy bins
     do j=1,nPhotoBins
        dE = photoBinEdelta(j) !energy interval, eV
        E = photoBinEmid(j) !energy of the bin in eV
        Jval = photoBinJ(j) !radiation intensity eV/s/cm2/sr/Hz
+       if(E>=6d0.and.E<=13.6)then
+         GHabing = GHabing + Jval * dE
+       endif
        tau = 0d0
 #KROME_photobin_opacity
        !loop on reactions
@@ -119,6 +123,9 @@ contains
           end if
        end do
     end do
+
+    !Final Habing flux 
+    GHabing = GHabing * 4d0 * pi / (1.6d-3) / planck_eV * eV_to_erg
 
     !converts to 1/s
     photoBinRates(:) = photoBinRates(:) * iplanck_eV
@@ -274,7 +281,7 @@ contains
     ! data by Allison&Dalgarno 1969
     use krome_commons
     real*8::H2_sigmaLW,energy_eV
-    real*8::sL0,sW0,sL1,sW1
+    real*8::sL0,sW0,sL1,sW1,fact
 
     !initialization
     sL0 = 0d0

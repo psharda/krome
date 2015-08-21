@@ -58,9 +58,9 @@ class krome():
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
-	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolCMBFloor = False
+	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
-	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
+	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = False
 	useCoolCMBFloorZ = False
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
@@ -241,7 +241,7 @@ class krome():
 			can also be used. Default value is 5/3.",metavar="OPTION")
 		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be RIPAMONTI or OMUKAI")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM\
-			, DH, CR, PHOTOAV,VISCOUS. If you want a complete list of the available heating options type -heating=?")
+			, DH, CR, PHOTOAV,VISCOUS,H2PUMPING. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems).")
 		self.parser.add_argument("-listAutomatics", action="store_true", help="list all the automatic reactions available.")
@@ -304,8 +304,8 @@ class krome():
 			if the T limits for a given reaction are 10. and 1d4 the option -Tlmit GE,LE will provide (Tgas>=10. AND Tgas<=1d4) as\
 			the reaction range of validity. Operators opLow and opHigh must be one of the following: LE, GE, LT, GT.")
 		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
-		self.parser.add_argument("-useCoolCMBFloor", action="store_true", help="include a cooling floor given by the CMB temperature.\
-			note that you must define Tcmb by using the subroutine krome_get_Tcmb(your_Tcmb) before calling krome.")
+		self.parser.add_argument("-useCoolFloor", action="store_true", help="include a cooling floor given by the Tfloor temperature.\
+			note that you must define Tfloor by using the subroutine krome_set_Tfloor(your_Tfloor) before calling krome.")
 		self.parser.add_argument("-useCoolCMBFloorZ", action="store_true", help="as -useCoolCMBFloor, but for metals only.")
 		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size\
 			NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION\
@@ -805,13 +805,13 @@ class krome():
 			self.usePhotoOpacity = True
 			print "Reading option -usePhotoOpacity (now obsolete, you can remove it)"
 
-		#use cooling CMB floor 
-		if(args.useCoolCMBFloor):
-			self.useCoolCMBFloor = True
+		#use cooling floor 
+		if(args.useCoolFloor):
+			self.useCoolFloor = True
 			if(not(args.cooling)):
-				print "ERROR: option -useCoolCMBFloor needs at least one active cooling option. See -cooling="
+				print "ERROR: option -useCoolFloor needs at least one active cooling option. See -cooling="
 				sys.exit()
-			print "Reading option -useCoolCMBFloor"
+			print "Reading option -useCoolFloor"
 
 		#use cooling CMB floor Z 
 		if(args.useCoolCMBFloorZ):
@@ -1218,7 +1218,7 @@ class krome():
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
 			myHeat = [x.strip() for x in myHeat]
-			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","PHOTODUSTNET","XRAY","VISCOUS"]
+			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","PHOTODUSTNET","XRAY","VISCOUS","H2PUMPING"]
 			for hea in myHeat:
 				if(not(hea in allHeats)):
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "+(", ".join(allHeats)))
@@ -1233,6 +1233,7 @@ class krome():
 			if("PHOTODUSTNET" in myHeat): self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
 			if("XRAY" in myHeat): self.useHeatingXRay = True #heating from xray reactions rate
 			if("VISCOUS" in myHeat): self.useHeatingVisc = True #heating from viscosity 
+			if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2  in LW bands 
 
 			self.use_thermo = True
 			if(self.photoBins<=0 and self.useHeatingPhoto):
@@ -2172,6 +2173,9 @@ class krome():
 					sys.exit()
 				myrea.hasXsecFile = True
 				myrea.Tmin = 0e0
+			#store Tlimits if any
+			if(myrea.hasTlimitMin):
+				if(tminFound): myrea.Tmin = format_double(arow[iTmin])
 				#if file is SWRI convert to KROME
 				if(myrea.krate.strip()=="@xsecFile=SWRI"):
 					SWRI2KROME(self.buildFolder,myrea.reactants[0],myrea.products,myrea.Tmin)
@@ -2670,7 +2674,8 @@ class krome():
 		self.physVariables = [["Tcmb", "2.73d0"],
 			["zredshift", "0d0"],
 			["orthoParaRatio", "3d0"],
-			["metallicity", "0d0"]]
+			["metallicity", "0d0"],
+                        [ "Tfloor", "2.73d0"]]
 	
 	#####################################################
 	def photo_warnings(self):
@@ -4734,14 +4739,23 @@ class krome():
 					row += " xsec"+sidx+"_n, xsec"+sidx+"_idE)\n"
 
 			#replace pragma with the initialization of the photorate table in bins
+		#	if(srow=="#KROME_photobin_xsecs"):
+		#		phbinx = ""
+		#		for rea in reacts:
+		#			if(rea.kphrate==None): continue
+		#			phbinx += "\n!"+rea.verbatim+"\n"
+		#			phbinx += "kk = "+rea.kphrate+"\n"
+		#			phbinx += "if(energy_eV<"+str(rea.Tmin)+") kk = 0d0\n"
+		#			phbinx += "if(energy_eV>"+str(rea.Tmax)+") kk = 0d0\n"
+		#			phbinx += "photoBinJTab("+str(rea.idxph)+",j) = kk\n"
+		#		row = phbinx+"\n"
 			if(srow=="#KROME_photobin_xsecs"):
 				phbinx = ""
 				for rea in reacts:
 					if(rea.kphrate==None): continue
 					phbinx += "\n!"+rea.verbatim+"\n"
-					phbinx += "kk = "+rea.kphrate+"\n"
-					phbinx += "if(energy_eV<"+str(rea.Tmin)+") kk = 0d0\n"
-					phbinx += "if(energy_eV>"+str(rea.Tmax)+") kk = 0d0\n"
+					phbinx += "kk = 0d0\n"
+					phbinx += "if(energy_eV>"+str(rea.Tmin)+".and.energy_eV<"+str(rea.Tmax)+") kk = "+rea.kphrate+"\n"
 					phbinx += "photoBinJTab("+str(rea.idxph)+",j) = kk\n"
 				row = phbinx+"\n"
 			#replace the energy treshold assuming that it is equal to Tmin
@@ -4841,8 +4855,10 @@ class krome():
 			if(row.strip() == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
-			row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(max("+str(self.TminAuto)+",2.73d0))")
-			row = row.replace("#KROME_logTup", "ktab_logTup = log10(min("+str(self.TmaxAuto)+",1d8))")
+			#row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(max("+str(self.TminAuto)+",2.73d0))")
+			row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(2.73d0)")
+			row = row.replace("#KROME_logTup", "ktab_logTup = log10(1d9)")
+			#row = row.replace("#KROME_logTup", "ktab_logTup = log10(min("+str(self.TmaxAuto)+",1d8))")
 			row = row.replace("#KROME_define_vars",kvars)
 			row = row.replace("#KROME_init_vars",klist)
 			row = row.replace("#KROME_noTabReactions",noTabReactions)
@@ -5290,6 +5306,8 @@ class krome():
 						break
 			if(self.useDustH2 or self.dustTabsH2):
 				HChemDust += "HChem = HChem + nH2dust * (4.2d0*h2heatfac + 0.2d0)\n"
+			if(self.useHeatingPumpH2):
+				HChem += "HChem = HChem + kH2pump * (18.7d0*h2heatfac + 0.4d0)*n(idx_H2)\n"
 
 		#build heating terms for photoionization
 		pheatvars = []
@@ -5321,6 +5339,8 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingPhotoDustNet" and not(self.useHeatingPhotoDustNet)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingXRay" and not(self.useHeatingXRay)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingVisc" and not(self.useHeatingVisc)): skip = True
+				if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
+				if(row.strip() == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
 				if(row.strip() == "#IFKROME_useHeatingChem" and skipBool): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
@@ -5500,12 +5520,12 @@ class krome():
 
 			coolPragmaFound = False
 			#include cooling cmb floor if necessary
-			if("#KROME_coolCMBfloor" in srow):
+			if("#KROME_coolfloor" in srow):
 				coolPragmaFound = True
-				if(self.useCoolCMBFloor):
-					srow = srow.replace("#KROME_coolCMBfloor"," + cooling(n(:), phys_Tcmb)")
+				if(self.useCoolFloor):
+					srow = srow.replace("#KROME_coolfloor"," + cooling(n(:), phys_Tfloor)")
 				else:
-					srow = srow.replace("#KROME_coolCMBfloor","")
+					srow = srow.replace("#KROME_coolfloor","")
 				
 			#replace quenching function for cooling
 			if("#KROME_coolingQuench" in srow):
