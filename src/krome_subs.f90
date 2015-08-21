@@ -17,7 +17,7 @@ contains
 #KROME_initcoevars
     !Tgas is in K
     Tgas = max(n(idx_Tgas), phys_Tcmb)
-    Tgas = min(Tgas,1d8)
+    Tgas = min(Tgas,1d9)
 
     !maxn initialization can be removed and small can be
     ! replaced with a proper value according to the environment
