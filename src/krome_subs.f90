@@ -49,18 +49,21 @@ contains
 
   !*********************
   !this function returns the
-  ! photorates of H2 occurring in the 
+  ! photorate of H2 occurring in the 
   ! Lyman-Werner bands following the approximation
   ! provided by Glover&Jappsen 2007. Rate in seconds.
-  !It also stores the rate as a common needed for the photoheating
+  !Approximation valid at low-density, it assumes H2(nu = 0).
+  !It also stores the rate as a common, needed for the photoheating
   function H2_solomonLW(myflux)
     use krome_commons
     use krome_constants
     implicit none
     real*8::H2_solomonLW,myflux
 
-    !myflux should be converted to erg
+    !myflux is the radiation background at E = 12.87 eV
+    !should be converted to erg
     H2_solomonLW = 1.38d9*myflux*eV_to_erg
+
     kH2pump = H2_solomonLW
 
   end function H2_solomonLW
