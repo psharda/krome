@@ -116,7 +116,7 @@ module krome_commons
 
 
   !commons for dust tabs (cool,H2,Tdust)
-  integer,parameter::dust_tab_imax=30,dust_tab_jmax=30
+  integer,parameter::dust_tab_imax=50,dust_tab_jmax=50
   real*8::dust_tab_ngas(dust_tab_imax)
   real*8::dust_tab_Tgas(dust_tab_jmax)
   real*8::dust_tab_cool(dust_tab_imax,dust_tab_jmax)
