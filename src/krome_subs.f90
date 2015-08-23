@@ -47,8 +47,46 @@ contains
 
 #KROME_metallicity_functions
 
+  !*******************
+  !The following functions compute the recombination rate
+  ! on dust for H and He. See Weingartner&Draine 2001
+  function H_recombination_on_dust(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::n(nspec),Tgas,psi
+    real*8::H_recombination_on_dust
+ 
+    H_recombination_on_dust = 0d0
+
+    if(n(idx_E)<1d-20)return 
+
+    psi = GHabing*sqrt(Tgas)/n(idx_E) 
+
+    H_recombination_on_dust =  1.225d-13*total_Z &
+     /(1.d0+8.074d-6*psi**(1.378)*(1.d0+5.087d2 &
+     *Tgas**(0.01586)*psi**(-0.4723-1.102d-5*log(Tgas))))
+
+  end function H_recombination_on_dust
+
+  function He_recombination_on_dust(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::n(nspec),Tgas,psi
+    real*8::He_recombination_on_dust
+ 
+    He_recombination_on_dust = 0d0
+    if(n(idx_E)<1d-20) return
+  
+    psi = GHabing*sqrt(Tgas)/n(idx_E) 
+  
+    He_recombination_on_dust = 5.572d-14*total_Z&
+        /(1.d0+6.089d-3*psi**(1.128)*(1.d0+4.331d2&
+        *Tgas**(0.04845)*psi**(-0.8120-1.333d-4*log(Tgas))))
+
+  end function He_recombination_on_dust
+
   !*********************
-  !this function returns the
+  !This function returns the
   ! photorate of H2 occurring in the 
   ! Lyman-Werner bands following the approximation
   ! provided by Glover&Jappsen 2007. Rate in seconds.
