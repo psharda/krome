@@ -176,8 +176,9 @@ module krome_commons
   real*8::zpart_H2even(zpart_nH2even),minpart_H2even,partdT_H2even
   real*8::zpart_H2odd(zpart_nH2odd),minpart_H2odd,partdT_H2odd
 
-  !Habing flux for the photoelectric heating by dust
-  real*8::GHabing,kH2pump
+  !Habing flux for the photoelectric heating by dust, H2 pumping rate and clumping factor
+  !for H2 formation on dust by Jura/Gnedin
+  real*8::GHabing,kH2pump,clump_factor
 
   !partition functions common vars
 #KROME_var_parts

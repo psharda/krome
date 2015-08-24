@@ -58,10 +58,10 @@ class krome():
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
-	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolFloor = False
+	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = False
-	useCoolCMBFloorZ = False
+	useCoolCMBFloorZ =  False
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
@@ -313,7 +313,8 @@ class krome():
 		self.parser.add_argument("-useAutoNetwork", action="store_true", help="Use a set of instruction to build an automatic network\
 			instead of a pre-made one. This option changes the behaviour of -n FILENAME into -n INSTRUCTIONS. See\
 			custom.dat for an example. In this case you should use -n custom.dat -useAutoNetwork")
-
+		self.parser.add_argument("-useDustH2const", action="store_true", help="use Jura + Gnedin\
+			H2 formation on dust, needs user_clump defined. Cannot be used if  you enable the dust Options.")
 		self.parser.add_argument("-useDvodeF90", action="store_true", help="use Dvode implementation in F90 (slower)")
 		self.parser.add_argument("-useEquilibrium", action="store_true", help="check if the solver has reached the equilbirum.\
 			If so break the solver's loop and return the values found. It is useful when the system oscillates around\
@@ -826,7 +827,7 @@ class krome():
 		if(args.usePhotoInduced):
 			self.usePhotoInduced = True
 			if(not(args.photoBins)):
-				print "ERRROR: -usePhotoInduced requires the option -photoBins=N enabled"
+				print "ERROR: -usePhotoInduced requires the option -photoBins=N enabled"
 				print " where N is the number of photon bins employed."
 				sys.exit()
 			print "Reading option -usePhotoInduced"
@@ -835,22 +836,32 @@ class krome():
 		if(args.useEquilibrium):
 			self.useEquilibrium = True
 			print "Reading option -useEquilibrium"
+
 		#do not use temperature limits
 		if(args.noTlimits):
 			self.useTlimits = False
 			print "Reading option -noTlimits"
+
 		#skip duplicated reactions
 		if(args.skipDup):
 			self.skipDup = True
 			print "Reading option -skipDup"
+
 		#skip duplicated reactions
 		if(args.pedantic):
 			self.pedanticMakefile = True
 			print "Reading option -pedantic"
+
 		#use reverse kinetics
 		if(args.reverse):
 			self.useReverse = True
 			print "Reading option -reverse"
+
+                #use H2 on dust, constant rate by Jura 
+		if(args.useDustH2const):
+			self.useDustH2const = True
+			print "Reading option -useDustH2const"
+
 		#use H2opacity following
 		if(args.H2opacity):
 			opacities = ["RIPAMONTI", "OMUKAI"]
@@ -1233,7 +1244,7 @@ class krome():
 			if("PHOTODUSTNET" in myHeat): self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
 			if("XRAY" in myHeat): self.useHeatingXRay = True #heating from xray reactions rate
 			if("VISCOUS" in myHeat): self.useHeatingVisc = True #heating from viscosity 
-			if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2  in LW bands 
+			if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2 in LW bands 
 
 			self.use_thermo = True
 			if(self.photoBins<=0 and self.useHeatingPhoto):
@@ -4348,6 +4359,7 @@ class krome():
                         if(srow == "#IFKROME_useShieldingDB96" and not(self.useShieldingDB96)): skip = True
                         if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
+			if(srow == "#IFKROME_useH2dust_constant" and not(self.useDustH2const)): skip = True
 
 		        if(srow == "#ENDIFKROME"): skip = False
 
@@ -5304,7 +5316,7 @@ class krome():
 						HChem += headchem + tklim + "HChem = HChem + k("+str(rea.idx)+") * ("+kref[i] + "*"+rmult+")\n"
 						if(self.useTlimits and hasTlim): HChem += "end if\n\n"
 						break
-			if(self.useDustH2 or self.dustTabsH2):
+			if(self.useDustH2 or self.dustTabsH2 or self.useDustH2const):
 				HChemDust += "HChem = HChem + nH2dust * (4.2d0*h2heatfac + 0.2d0)\n"
 			if(self.useHeatingPumpH2):
 				HChem += "HChem = HChem + kH2pump * (18.7d0*h2heatfac + 0.4d0)*n(idx_H2)\n"
@@ -5496,6 +5508,10 @@ class krome():
 				dustH2 += dustT+", n(idx_H), H2_eps_"+dType+", vgas)\n"
 				iType += 1
 
+                #H2 on dust from Jura constant value
+                if(self.useDustH2const):
+			dustH2 +="nH2dust = nH2dust + H2_dustJura(n(:))"
+
 		#H2 on dust from tables
 		if(self.dustTabsH2):
 			dustH2 = "ntot = sum(n(1:nmols))\n"
@@ -5545,6 +5561,7 @@ class krome():
 				if(self.use_implicit_RHS):
 					fout.write(get_implicit_ode(self.maxnreag, self.maxnprod)+"\n")
 				else:
+                                        
 					#add dust ODE and partner specie RHS terms
 					if(self.useDust or self.dustTabsH2):
 						ndust = self.dustArraySize*self.dustTypesSize #number of dust ODEs
@@ -5614,8 +5631,6 @@ class krome():
 							fout.write("\t" + x + "\n")
 							idnw += 1
 
-
-
 						#print other species (CR, PHOTONS, Tgas, dummy)
 						for x in dnw[nmols+ndust:]:
 							fout.write("\t" + x + "\n")
@@ -5630,7 +5645,14 @@ class krome():
 							fout.write("\n")
 					
 						inw = 0
+						idnw = 0
 						for x in dnw:
+							#add H2 formation on dust
+							if(self.useDustH2const):
+								if("H"==specs[idnw].name): x += " - 2d0*nH2dust"
+								if("H2"==specs[idnw].name): x += " + nH2dust"
+							idnw +=1
+
 							#add custom ODE if needed
 							if(len(self.customODEs)>0):
 								for ode in self.customODEs:
@@ -5643,6 +5665,7 @@ class krome():
 							fout.write("\t" + x + "\n")
 							inw += 1
 
+						
 			#replace the pragma with the computation of the photorates using the opacity computed with
 			# the approximation of Glover+2009 Eqn.2
 			elif(srow == "#KROME_photobins_compute_thick" and self.usePhotoOpacity):

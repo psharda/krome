@@ -1854,4 +1854,19 @@ contains
 
   end function ispline
 
+#IFKROME_useH2dust_constant
+  function H2_dustJura(n)
+    use krome_commons
+    use krome_user_commons
+    implicit none
+    real*8::n(nspec),H2_dustJura
+    real*8::ntot
+    
+    ntot = get_Hnuclei(n(:))
+
+    H2_dustJura = n(idx_H)*ntot*3.5d-17*total_Z*clump_factor
+
+  end function H2_dustJura 
+#ENDIFKROME
+
 end module krome_subs
