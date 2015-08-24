@@ -89,7 +89,7 @@ contains
   !This function returns the
   ! photorate of H2 occurring in the 
   ! Lyman-Werner bands following the approximation
-  ! provided by Glover&Jappsen 2007. Rate in seconds.
+  ! provided by Glover&Jappsen 2007. Rate in 1/s.
   !Approximation valid at low-density, it assumes H2(nu = 0).
   !It also stores the rate as a common, needed for the photoheating
   function H2_solomonLW(myflux)
