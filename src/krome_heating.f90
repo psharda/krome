@@ -191,7 +191,6 @@ contains
 #ENDIFKROME
 
 
-
 #IFKROME_useHeatingVisc
   !*************************
   !heating from viscosity (erg/s/cm3)
@@ -468,6 +467,7 @@ contains
     n2H = n(idx_H) * n(idx_H)
 
 #KROME_HChem_terms
+
 #KROME_HChem_dust
 
     heatingChem = HChem * eV_to_erg  !erg/cm3/s

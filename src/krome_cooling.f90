@@ -30,7 +30,7 @@ contains
     cools(:) = 0.d0
 
 #IFKROME_useCoolingH2
-    cools(idx_cool_H2) = cooling_H2(n(:), Tgas)
+    cools(idx_cool_H2) = cooling_H2(n(:), Tgas) #KROME_floorH2
 #ENDIFKROME
 
 #IFKROME_useCoolingH2GP
@@ -38,15 +38,15 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingAtomic
-    cools(idx_cool_atomic) = cooling_Atomic(n(:), Tgas)
+    cools(idx_cool_atomic) = cooling_Atomic(n(:), Tgas) #KROME_floorAtomic
 #ENDIFKROME
 
 #IFKROME_useCoolingHD
-    cools(idx_cool_HD) = cooling_HD(n(:), Tgas)
+    cools(idx_cool_HD) = cooling_HD(n(:), Tgas) #KROME_floorHD
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
-    cools(idx_cool_Z) = cooling_Z(n(:), Tgas) #KROME_CMBfloorZ
+    cools(idx_cool_Z) = cooling_Z(n(:), Tgas) #KROME_floorZ
 #ENDIFKROME
 
 #IFKROME_useCoolingdH
@@ -86,15 +86,15 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingCO
-    cools(idx_cool_CO) = cooling_CO(n(:), Tgas)
+    cools(idx_cool_CO) = cooling_CO(n(:), Tgas) #KROME_floorCO
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIE
-    cools(idx_cool_ZCIE) = cooling_ZCIE(n(:), Tgas)
+    cools(idx_cool_ZCIE) = cooling_ZCIE(n(:), Tgas) #KROME_floorZCIE
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIENOUV
-    cools(idx_cool_ZCIENOUV) = cooling_ZCIENOUV(n(:), Tgas)
+    cools(idx_cool_ZCIENOUV) = cooling_ZCIENOUV(n(:), Tgas) #KROME_floorZ_CIENOUV
 #ENDIFKROME
 
     cools(idx_cool_custom) = cooling_custom(n(:),Tgas)
