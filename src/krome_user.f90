@@ -1551,6 +1551,17 @@ contains
      
   end subroutine krome_set_Z
 
+  !*************************
+  !set the clumping factor
+  subroutine krome_set_clump(xarg)
+    use krome_commons
+    real*8::xarg
+
+    clump_factor = xarg
+     
+  end subroutine krome_set_clump
+
+
   !***********************
   !get the number of electrons assuming
   ! total neutral charge (cations-anions)

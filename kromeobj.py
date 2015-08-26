@@ -51,17 +51,18 @@ class krome():
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
-        useCoolingZCIE = useCoolingZCIENOUV = False
+        useCoolingZCIE = useCoolingZCIENOUV = useFloorH2 = useFloorZCIE = useFloorZ = useFloorAtomic = useFloorHD = False
+	useFloorCO = useFloorZ_CIENOUV = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
-	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = checkThermochem = needLAPACK = useCoolFloor = False
+	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = False
-	useCoolCMBFloorZ = False
+#	useCoolCMBFloorZ =  False DEPRECATED (SB)
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
@@ -306,14 +307,15 @@ class krome():
 		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
 		self.parser.add_argument("-useCoolFloor", action="store_true", help="include a cooling floor given by the Tfloor temperature.\
 			note that you must define Tfloor by using the subroutine krome_set_Tfloor(your_Tfloor) before calling krome.")
-		self.parser.add_argument("-useCoolCMBFloorZ", action="store_true", help="as -useCoolCMBFloor, but for metals only.")
+#		self.parser.add_argument("-useCoolCMBFloorZ", action="store_true", help="as -useCoolCMBFloor, but for metals only.")
 		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size\
 			NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION\
 			must be explicitly included in krome_user_commons module.", metavar="FUNCTION")
 		self.parser.add_argument("-useAutoNetwork", action="store_true", help="Use a set of instruction to build an automatic network\
 			instead of a pre-made one. This option changes the behaviour of -n FILENAME into -n INSTRUCTIONS. See\
 			custom.dat for an example. In this case you should use -n custom.dat -useAutoNetwork")
-
+		self.parser.add_argument("-useDustH2const", action="store_true", help="use Jura + Gnedin\
+			H2 formation on dust, needs user_clump defined. Cannot be used if  you enable the dust Options.")
 		self.parser.add_argument("-useDvodeF90", action="store_true", help="use Dvode implementation in F90 (slower)")
 		self.parser.add_argument("-useEquilibrium", action="store_true", help="check if the solver has reached the equilbirum.\
 			If so break the solver's loop and return the values found. It is useful when the system oscillates around\
@@ -323,6 +325,8 @@ class krome():
 			coefficients, e.g. k(10) = 1d-2*k(3)")
 		self.parser.add_argument("-useIERR", action="store_true",help="use ierr in the interface with KROME to return errors instead\
 			of stopping the exectution")
+		self.parser.add_argument("-useIndividualFloor", metavar="TERMS", help="applies a floor definded by Tfloor\
+			at the single cooling which are specified")
 		self.parser.add_argument("-useN", action="store_true",help="use number densities as input/ouput instead of\
 			 mass fractions. This is the default.")
 		self.parser.add_argument("-useX", action="store_true",help="use mass fractions as input/ouput instead of number densities\
@@ -343,6 +347,7 @@ class krome():
 		self.parser.add_argument("-v", action="store_true", help="print the current version of KROME")
 		self.parser.add_argument("-ver", action="store_true", help="same as -v")
 		self.parser.add_argument("-version", action="store_true", help="same as -v")
+
 	 
 	
 	######################################
@@ -401,7 +406,7 @@ class krome():
 		elif(args.test=="collapseDUST"):
 			[argv.append(x) for x in ["-cooling=H2,CONT,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=EXACT","-ATOL=1d-40","-maxord=1",\
-				"-columnDensityMethod=JEANS","-useCoolCMBFloorZ","-noSinkCheck"]]
+				"-columnDensityMethod=JEANS","-useIndividualFloor=Z","-noSinkCheck"]]
 			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=dT,H2"]]
 			filename = "networks/react_primordialZ"
 			test_status = "dev" #under development
@@ -409,7 +414,7 @@ class krome():
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=REDUCED","-ATOL=1d-20","-maxord=2",\
 				"-columnDensityMethod=JEANS"]]
-			[argv.append(x) for x in ["-dust=3,C","-dustOptions=dT","-useCoolCMBFloorZ"]]
+			[argv.append(x) for x in ["-dust=3,C","-dustOptions=dT","-useIndividualFloor=Z"]]
 			filename = "networks/react_primordialZ_surface"
 			test_status = "dev" #under development
 		elif(args.test=="collapseZ"):
@@ -805,7 +810,7 @@ class krome():
 			self.usePhotoOpacity = True
 			print "Reading option -usePhotoOpacity (now obsolete, you can remove it)"
 
-		#use cooling floor 
+		#use a global cooling floor 
 		if(args.useCoolFloor):
 			self.useCoolFloor = True
 			if(not(args.cooling)):
@@ -813,20 +818,39 @@ class krome():
 				sys.exit()
 			print "Reading option -useCoolFloor"
 
-		#use cooling CMB floor Z 
-		if(args.useCoolCMBFloorZ):
-			self.useCoolCMBFloorZ = True
-			if(not(args.cooling)):
-				print "ERROR: option -useCoolCMBFloorZ needs at least one active cooling option. See -cooling="
-				sys.exit()
-			print "Reading option -useCoolCMBFloorZ"
+		#apply an individual cooling floor (SB)
+		if(args.useIndividualFloor):
+			myFloor = [x.strip() for x in args.useIndividualFloor.split(",")]
+			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV"]
+			for floor in myFloor:
+				if(not(floor in allFloor)):
+					die("ERROR: Floor \""+floor+"\" is unknown!\nAvailable floor are: "+(", ".join(allFloor)))
+			if(self.useCoolFloor): die("ERROR: useCoolFloor and useIndividualFloor are mutually exclusive!")
+			self.useFloorH2 = ("H2" in myFloor)
+			self.useFloorZCIE = ("Z_CIE" in myFloor)
+			self.useFloorZ = ("Z" in myFloor)
+			self.useFloorAtomic = ("ATOMIC" in myFloor)
+			self.useFloorHD = ("HD" in myFloor)
+			self.useFloorCO = ("CO" in myFloor)
+			self.useFloorZ_CIENOUV = ("Z_CIENOUV" in myFloor)
+                       	self.useIndividualFloor = True
+			print "Reading option -useIndividualFloor (FLOOR TO="+(",".join(myFloor))+")"
+
+
+		#use cooling CMB floor Z: DEPRECATED
+		#if(args.useCoolCMBFloorZ):
+		#	self.useCoolCMBFloorZ = True
+		#	if(not(args.cooling)):
+		#		print "ERROR: option -useCoolCMBFloorZ needs at least one active cooling option. See -cooling="
+		#		sys.exit()
+		#	print "Reading option -useCoolCMBFloorZ"
 
 
 		#use photo-induced cooling transitions 
 		if(args.usePhotoInduced):
 			self.usePhotoInduced = True
 			if(not(args.photoBins)):
-				print "ERRROR: -usePhotoInduced requires the option -photoBins=N enabled"
+				print "ERROR: -usePhotoInduced requires the option -photoBins=N enabled"
 				print " where N is the number of photon bins employed."
 				sys.exit()
 			print "Reading option -usePhotoInduced"
@@ -835,22 +859,32 @@ class krome():
 		if(args.useEquilibrium):
 			self.useEquilibrium = True
 			print "Reading option -useEquilibrium"
+
 		#do not use temperature limits
 		if(args.noTlimits):
 			self.useTlimits = False
 			print "Reading option -noTlimits"
+
 		#skip duplicated reactions
 		if(args.skipDup):
 			self.skipDup = True
 			print "Reading option -skipDup"
+
 		#skip duplicated reactions
 		if(args.pedantic):
 			self.pedanticMakefile = True
 			print "Reading option -pedantic"
+
 		#use reverse kinetics
 		if(args.reverse):
 			self.useReverse = True
 			print "Reading option -reverse"
+
+                #use H2 on dust, constant rate by Jura 
+		if(args.useDustH2const):
+			self.useDustH2const = True
+			print "Reading option -useDustH2const"
+
 		#use H2opacity following
 		if(args.H2opacity):
 			opacities = ["RIPAMONTI", "OMUKAI"]
@@ -873,6 +907,7 @@ class krome():
 			self.useShieldingWG11 = ("WG11" in myShielding)
                         self.useShielding = True
 			print "Reading option -shielding (TYPE="+(",".join(myShielding))+")"
+
 
 
 		#use human Fluxes
@@ -1101,6 +1136,7 @@ class krome():
 			if(not(self.TlimitOpLow in allOps) or not(self.TlimitOpHigh in allOps)):
 				die("ERROR: on -Tlimit operators must be one of the followings: "+(", ".join(allOps)))
 			print "Reading option -Tlimit (Low="+self.TlimitOpLow+", High="+self.TlimitOpHigh+")"
+
 		#determine cooling types
 		if(args.cooling):
 			myCools = args.cooling.split(",")
@@ -1233,7 +1269,7 @@ class krome():
 			if("PHOTODUSTNET" in myHeat): self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
 			if("XRAY" in myHeat): self.useHeatingXRay = True #heating from xray reactions rate
 			if("VISCOUS" in myHeat): self.useHeatingVisc = True #heating from viscosity 
-			if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2  in LW bands 
+			if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2 in LW bands 
 
 			self.use_thermo = True
 			if(self.photoBins<=0 and self.useHeatingPhoto):
@@ -2675,7 +2711,7 @@ class krome():
 			["zredshift", "0d0"],
 			["orthoParaRatio", "3d0"],
 			["metallicity", "0d0"],
-                        [ "Tfloor", "2.73d0"]]
+                        ["Tfloor", "2.73d0"]]
 	
 	#####################################################
 	def photo_warnings(self):
@@ -4348,6 +4384,7 @@ class krome():
                         if(srow == "#IFKROME_useShieldingDB96" and not(self.useShieldingDB96)): skip = True
                         if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
+			if(srow == "#IFKROME_useH2dust_constant" and not(self.useDustH2const)): skip = True
 
 		        if(srow == "#ENDIFKROME"): skip = False
 
@@ -5073,13 +5110,84 @@ class krome():
 				fout.write(srow.replace("#KROME_small",mysmall)+"\n")
 				continue
 
-			#replace Z cooling floor
-			if("#KROME_CMBfloorZ" in srow):
-				CMBfloorZ = ""
-				if(self.useCoolCMBFloorZ): CMBfloorZ = "- cooling_Z(n(:),phys_Tcmb)"
-				fout.write(srow.replace("#KROME_CMBfloorZ", CMBfloorZ)+"\n")
-				continue
+			#replace Z cooling floor: DEPRECATED
+			#if("#KROME_CMBfloorZ" in srow):
+			#	CMBfloorZ = ""
+			#	if(self.useCoolCMBFloorZ): CMBfloorZ = "- cooling_Z(n(:),phys_Tcmb)"
+			#	fout.write(srow.replace("#KROME_CMBfloorZ", CMBfloorZ)+"\n")
+			#	continue
 
+########JUST A TEST BY SB, CAN BE IMPROVED#######
+			if(self.useFloorH2): 
+				if("#KROME_floorH2" in srow): 
+					floorH2 = "- cooling_H2(n(:),phys_Tfloor)"
+					fout.write(srow.replace("#KROME_floorH2", floorH2)+"\n")
+					continue
+			else:
+				if("#KROME_floorH2" in srow): 
+					fout.write(srow.replace("#KROME_floorH2", " ")+"\n")
+					continue
+
+			if(self.useFloorZCIE):
+				if("#KROME_floorZCIE" in srow):
+					floorZCIE = "- cooling_ZCIE(n(:),phys_Tfloor)"
+					fout.write(srow.replace("#KROME_floorZCIE", floorZCIE)+"\n")
+					continue
+			else:
+				if("#KROME_floorZCIE" in srow):
+					fout.write(srow.replace("#KROME_floorZCIE", " ")+"\n")
+					continue
+
+			if(self.useFloorZ):
+				if("#KROME_floorZ" in srow):
+					floorZ = "- cooling_Z(n(:),phys_Tfloor)"
+					fout.write(srow.replace("#KROME_floorZ", floorZ)+"\n")
+					continue
+			else:
+				if("#KROME_floorZ" in srow):
+					fout.write(srow.replace("#KROME_floorZ", " ")+"\n")
+					continue
+
+			if(self.useFloorAtomic): 
+				if("#KROME_floorAtomic" in srow):
+					floorAtomic = "- cooling_Atomic(n(:),phys_Tfloor)"
+					fout.write(srow.replace("#KROME_floorAtomic", floorAtomic)+"\n")
+					continue
+			else:
+				if("#KROME_floorAtomic" in srow):
+					fout.write(srow.replace("#KROME_floorAtomic", " ")+"\n")
+					continue
+				
+			if(self.useFloorHD): 
+				if("#KROME_floorHD" in srow):
+					floorHD = "- cooling_HD(n(:),phys_Tfloor)"
+					fout.write(srow.replace("#KROME_floorHD", floorHD)+"\n")
+					continue
+			else:
+				if("#KROME_floorHD" in srow):
+					fout.write(srow.replace("#KROME_floorHD", " ")+"\n")
+					continue
+				
+			if(self.useFloorCO): 
+				if("#KROME_floorCO" in srow):
+					floorCO = "- cooling_CO(n(:),phys_Tfloor)"
+					fout.write(srow.replace("#KROME_floorCO", floorCO)+"\n")
+					continue
+			else:
+				if("#KROME_floorCO" in srow):
+					fout.write(srow.replace("#KROME_floorCO", " ")+"\n")
+					continue
+				
+			if(self.useFloorZ_CIENOUV): 
+				if("#KROME_floorZ_CIENOUV" in srow):
+					floorZ_CIENOUV = "- cooling_Z_CIENOUV(n(:),phys_Tfloor)"
+					fout.write(srow.replace("#KROME_floorZ_CIENOUV", floorZ_CIENOUV)+"\n")
+					continue
+			else:
+				if("#KROME_floorZ_CIENOUV" in srow):
+					fout.write(srow.replace("#KROME_floorZ_CIENOUV", " ")+"\n")
+					continue
+#################################################
 			if(row.strip() == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 			elif(row.strip() == "#KROME_escape_vars"):
@@ -5304,7 +5412,7 @@ class krome():
 						HChem += headchem + tklim + "HChem = HChem + k("+str(rea.idx)+") * ("+kref[i] + "*"+rmult+")\n"
 						if(self.useTlimits and hasTlim): HChem += "end if\n\n"
 						break
-			if(self.useDustH2 or self.dustTabsH2):
+			if(self.useDustH2 or self.dustTabsH2 or self.useDustH2const):
 				HChemDust += "HChem = HChem + nH2dust * (4.2d0*h2heatfac + 0.2d0)\n"
 			if(self.useHeatingPumpH2):
 				HChem += "HChem = HChem + kH2pump * (18.7d0*h2heatfac + 0.4d0)*n(idx_H2)\n"
@@ -5496,6 +5604,10 @@ class krome():
 				dustH2 += dustT+", n(idx_H), H2_eps_"+dType+", vgas)\n"
 				iType += 1
 
+                #H2 on dust from Jura constant value
+                if(self.useDustH2const):
+			dustH2 +="nH2dust = nH2dust + H2_dustJura(n(:))"
+
 		#H2 on dust from tables
 		if(self.dustTabsH2):
 			dustH2 = "ntot = sum(n(1:nmols))\n"
@@ -5545,6 +5657,7 @@ class krome():
 				if(self.use_implicit_RHS):
 					fout.write(get_implicit_ode(self.maxnreag, self.maxnprod)+"\n")
 				else:
+                                        
 					#add dust ODE and partner specie RHS terms
 					if(self.useDust or self.dustTabsH2):
 						ndust = self.dustArraySize*self.dustTypesSize #number of dust ODEs
@@ -5614,8 +5727,6 @@ class krome():
 							fout.write("\t" + x + "\n")
 							idnw += 1
 
-
-
 						#print other species (CR, PHOTONS, Tgas, dummy)
 						for x in dnw[nmols+ndust:]:
 							fout.write("\t" + x + "\n")
@@ -5630,7 +5741,14 @@ class krome():
 							fout.write("\n")
 					
 						inw = 0
+						idnw = 0
 						for x in dnw:
+							#add H2 formation on dust
+							if(self.useDustH2const):
+								if("H"==specs[idnw].name): x += " - 2d0*nH2dust"
+								if("H2"==specs[idnw].name): x += " + nH2dust"
+							idnw +=1
+
 							#add custom ODE if needed
 							if(len(self.customODEs)>0):
 								for ode in self.customODEs:
@@ -5643,6 +5761,7 @@ class krome():
 							fout.write("\t" + x + "\n")
 							inw += 1
 
+						
 			#replace the pragma with the computation of the photorates using the opacity computed with
 			# the approximation of Glover+2009 Eqn.2
 			elif(srow == "#KROME_photobins_compute_thick" and self.usePhotoOpacity):

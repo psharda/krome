@@ -36,7 +36,7 @@ contains
 
     dn(:) = 0.d0 !initialize differentials
     n(idx_Tgas) = max(n(idx_tgas),2.73d0)
-    n(idx_Tgas) = min(n(idx_tgas),1d8)
+    n(idx_Tgas) = min(n(idx_tgas),1d9)
     Tgas = n(idx_Tgas) !get temperature
 
 #KROME_Tdust_limits

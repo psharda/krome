@@ -47,11 +47,49 @@ contains
 
 #KROME_metallicity_functions
 
+  !*******************
+  !The following functions compute the recombination rate
+  ! on dust for H and He. See Weingartner&Draine 2001
+  function H_recombination_on_dust(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::n(nspec),Tgas,psi
+    real*8::H_recombination_on_dust
+ 
+    H_recombination_on_dust = 0d0
+
+    if(n(idx_E)<1d-20)return 
+
+    psi = GHabing*sqrt(Tgas)/n(idx_E) 
+
+    H_recombination_on_dust =  1.225d-13*total_Z &
+     /(1.d0+8.074d-6*psi**(1.378)*(1.d0+5.087d2 &
+     *Tgas**(0.01586)*psi**(-0.4723-1.102d-5*log(Tgas))))
+
+  end function H_recombination_on_dust
+
+  function He_recombination_on_dust(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::n(nspec),Tgas,psi
+    real*8::He_recombination_on_dust
+ 
+    He_recombination_on_dust = 0d0
+    if(n(idx_E)<1d-20) return
+  
+    psi = GHabing*sqrt(Tgas)/n(idx_E) 
+  
+    He_recombination_on_dust = 5.572d-14*total_Z&
+        /(1.d0+6.089d-3*psi**(1.128)*(1.d0+4.331d2&
+        *Tgas**(0.04845)*psi**(-0.8120-1.333d-4*log(Tgas))))
+
+  end function He_recombination_on_dust
+
   !*********************
-  !this function returns the
+  !This function returns the
   ! photorate of H2 occurring in the 
   ! Lyman-Werner bands following the approximation
-  ! provided by Glover&Jappsen 2007. Rate in seconds.
+  ! provided by Glover&Jappsen 2007. Rate in 1/s.
   !Approximation valid at low-density, it assumes H2(nu = 0).
   !It also stores the rate as a common, needed for the photoheating
   function H2_solomonLW(myflux)
@@ -1815,5 +1853,20 @@ contains
     ispline = y(i) + dx*(b(i) + dx*(c(i) + dx*d(i)))
 
   end function ispline
+
+#IFKROME_useH2dust_constant
+  function H2_dustJura(n)
+    use krome_commons
+    use krome_user_commons
+    implicit none
+    real*8::n(nspec),H2_dustJura
+    real*8::ntot
+    
+    ntot = get_Hnuclei(n(:))
+
+    H2_dustJura = n(idx_H)*ntot*3.5d-17*total_Z*clump_factor
+
+  end function H2_dustJura 
+#ENDIFKROME
 
 end module krome_subs

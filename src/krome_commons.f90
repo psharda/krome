@@ -116,7 +116,7 @@ module krome_commons
 
 
   !commons for dust tabs (cool,H2,Tdust)
-  integer,parameter::dust_tab_imax=30,dust_tab_jmax=30
+  integer,parameter::dust_tab_imax=50,dust_tab_jmax=50
   real*8::dust_tab_ngas(dust_tab_imax)
   real*8::dust_tab_Tgas(dust_tab_jmax)
   real*8::dust_tab_cool(dust_tab_imax,dust_tab_jmax)
@@ -176,8 +176,9 @@ module krome_commons
   real*8::zpart_H2even(zpart_nH2even),minpart_H2even,partdT_H2even
   real*8::zpart_H2odd(zpart_nH2odd),minpart_H2odd,partdT_H2odd
 
-  !Habing flux for the photoelectric heating by dust
-  real*8::GHabing,kH2pump
+  !Habing flux for the photoelectric heating by dust, H2 pumping rate and clumping factor
+  !for H2 formation on dust by Jura/Gnedin
+  real*8::GHabing,kH2pump,clump_factor
 
   !partition functions common vars
 #KROME_var_parts
