@@ -62,8 +62,8 @@ class krome():
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = False
-#	useCoolCMBFloorZ =  False DEPRECATED (SB)
-	humanFlux = True
+	humanFlux = reducer = True
+#	useCoolCMBFloorZ =  False #DEPRECATED (SB)
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -123,6 +123,7 @@ class krome():
 	kModifier = [] #modifier lines that will be appended after the rate calculation
 	odeModifier = [] #modifier lines that will be appended after the ODE calculation
 	photoPartners = dict() #dictionary of the reactants of photoreactions (key is reaction index)
+	reducerVars = ["ntot", "Tgas","Zmetals"] #variables for the reducer tool interface
 	columnDensityMethod = "DEFAULT"
 	compiler = "ifort" #default compiler
 	ramses_offset = 2 #offset in the array for ramses
@@ -277,6 +278,8 @@ class krome():
 		self.parser.add_argument("-ramses", action="store_true", help="create patches for RAMSES, see also -enzo and -flash")
 		self.parser.add_argument("-ramsesOffset", metavar="offset", help="add an offset to the array of the passive scalar. The\
 			default is 3.")
+		self.parser.add_argument("-reducer", action="store_true", help="Create the interface to the reaction reducer (experimental).\
+			Variables are ntot, Tgas, and all the custom variable set with @common in the network file (i.e. user_*)")
 		self.parser.add_argument("-ramsesTH", action="store_true", help="create patches for RAMSES_TH. This is a private version\
 			and probably does not fix your needs.")
 		self.parser.add_argument("-report", action="store_true", help="generate report file in the main call to krome as\
@@ -1470,6 +1473,11 @@ class krome():
 			self.maxord = min(max(1,int(args.maxord)),5)
 			print "Reading option -maxord (maxord="+str(self.maxord)+")"
 
+		#reducer
+		if(args.reducer):
+			self.reducer = True
+			print "Reading option -reducer"
+
 		#custom ATOLs
 		if(args.customATOL):
 			fname = args.customATOL
@@ -1876,6 +1884,7 @@ class krome():
 						print " it should be: user_"+commonvar
 						sys.exit()
 					if(commonvar in self.commonvars): continue #skip if already present
+					self.reducerVars.append(commonvar)
 					self.commonvars.append(commonvar) #add to the global array
 				continue #skip: a common is not a reaction line
 
@@ -2412,7 +2421,9 @@ class krome():
 					if(srow=="#BREAK DATABASE"): break
 					if(srow[0]=="#"): continue #skip comments
 					#serach for extra variables and append
-					if("@photorates:" in srow): continue 
+					if("@photoxsec:" in srow.lower()): break
+					if("@cr:" in srow.lower()): break
+					if("@photoav:" in srow.lower()): break
 					if("@var" in srow):
 						extraVars[fname].append(srow)
 						continue
@@ -2952,7 +2963,7 @@ class krome():
 			mymol.idx = len(specs)+1
 			specs.append(mymol)
 			self.photon_species = mymol #store object
-			print "Cosmic Rays (CR) added!"
+			#print "Cosmic Rays (CR) added!"
 
 		#append photons as species named g
 		if(not(has_g)):
@@ -2965,7 +2976,7 @@ class krome():
 			mymol.idx = len(specs)+1
 			specs.append(mymol)
 			self.photon_species = mymol #store object
-			print "Photons (g) added!"
+			#print "Photons (g) added!"
 
 		#append temperature as species named Tgas
 		mymol = molec()
@@ -6268,6 +6279,7 @@ class krome():
 			if(srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT) and self.useSurface)): skip = True
 			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
 			if(srow == "#IFKROME_useDustTabs" and not(self.useDustTabs)): skip = True
+			if(srow == "#IFKROME_reducer" and not(self.reducer)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			ierr = ""
@@ -6281,9 +6293,57 @@ class krome():
 			row = row.replace("#KROME_RTOL",str(RTOL))
 
 			if(skip): continue
+			reducerVarsList = [[x+"_Min",x+"_Max"] for x in self.reducerVars]
 
 			if(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
+			#writes the arguments in the reducer subroutine interface
+			elif("#KROME_reducerVarsInterface" in srow):
+				reducerVarsInterface = [(",".join(x)) for x in reducerVarsList]
+				row = row.replace("#KROME_reducerVarsInterface",\
+					",&\n".join(reducerVarsInterface))
+				fout.write(row)
+				continue
+			#writes the declarations of the argument variables (and their logs)
+			elif("#KROME_reducerVarsDeclare" in srow):
+				reducerVarsDeclareVals = [("real*8::"+x+"_val" if "user_" in x else "real*8::"+x)\
+					 for x in self.reducerVars]
+				reducerVarsDeclare = ["real*8::"+(",".join(x)) for x in reducerVarsList]
+				reducerVarsDeclareLog = ["real*8::"+(",".join([x+"Log" for x in var])) for var in reducerVarsList]
+				fout.write("!automatically generated declarations\n")
+				for var in (reducerVarsDeclareVals+reducerVarsDeclare+reducerVarsDeclareLog):
+					fout.write(var+"\n")
+			#writes conversions to log
+			elif("#KROME_reducerVarsLog" in srow):
+				fout.write("!converts variables to logarithms\n")
+				for var in reducerVarsList:
+					for x in var:
+						fout.write(x+"Log = log10("+x+")\n")
+			#writes randomizer
+			elif("#KROME_reducerVarsRandomize" in srow):
+				for var in self.reducerVars:
+					varname = var
+					if("user_" in var): varname += "_val"
+					fout.write(varname+" = 1d1**(rand()*("+var+"_MaxLog-"+var+"_MinLog) &\n+"+var+"_MinLog)\n")
+
+			#writes initializations
+			elif("#KROME_reducerPrintInits" in srow):
+				for var in self.reducerVars:
+					varname = var
+					if("user_" in var): varname += "_val"
+					fout.write("print *,\""+var+"\","+varname+"\n")
+
+
+			#includes ifport if intel compiler ifort is employed
+			elif(srow == "#KROME_useIFPORT"):
+				if(self.compiler=="ifort"): fout.write("use ifport\n")
+
+			#add user variables if any
+			elif("#KROME_reducerVarsUserSet" in srow):
+				for var in self.reducerVars:
+					if("user_" in var):
+						fout.write("call krome_set_"+var+"("+var+"_val)\n")
+
 			elif(srow == "#KROME_custom_ATOL"):
 				#add custom atols
 				if(len(self.atols)>0):

@@ -595,4 +595,115 @@ contains
     krome_get_coeT(:) = coe_tab(n(:))
   end function krome_get_coeT
 
+
+#IFKROME_reducer
+  !****************************
+  !this subroutine randomly performs integrations over the
+  ! intervals of the variables provided via the arguments.
+  ! The runs are employed to track the most active reactions
+  subroutine krome_reducer(#KROME_reducerVarsInterface,&
+       verbosity,iterations,treshold)
+    use krome_commons
+    use krome_constants
+    use krome_user
+    use krome_subs
+#KROME_useIFPORT
+    implicit none
+    integer::imax,i,verbose,idx(nrea),j
+    integer,optional::verbosity,iterations
+    character*50::name(nrea),fname
+    real*8,optional::treshold
+    real*8::dt,t,tmax,x(nmols),flux(nrea),fluxmax,frac,points(nrea)
+#KROME_reducerVarsDeclare
+
+    fname = "KROME_reduced.dat"
+
+    !option variable for verbosity
+    if(present(verbosity)) then
+       verbose = verbosity
+    else
+       verbose = 2
+    end if
+
+    !option variable for iterations
+    if(present(iterations)) then
+       imax = iterations
+    else
+       imax = 10
+    end if
+
+    !option variable for treshold
+    if(present(treshold)) then
+       frac = treshold
+    else
+       frac = 1d-6
+    end if
+
+    if(frac.ge.1d0) then
+       print *,"ERROR: the fraction in reducer is >=1!"
+       stop
+    end if
+
+    if(verbose>0) then
+       print *,"reducer starts!"
+       print *,"threshold fraction:",frac
+       print *,"iterations:",imax
+    end if
+
+    !init points to zero
+    points(:) = 0d0
+
+#KROME_reducerVarsLog    
+
+    tmax = 1d7*seconds_per_year !max time (s)
+    do i=1,imax
+
+#KROME_reducerVarsRandomize
+
+#KROME_reducerVarsUserSet
+
+       if(verbose>1) print *,"***************"
+       if(verbose>0) print *,i,"of",imax
+       if(verbose>1) then
+#KROME_reducerPrintInits
+       end if
+
+       !initialize variables
+       x(:) = 1d-40
+       x(idx_H) = ntot
+       call krome_scale_Z(x(:),Zmetals)
+       t = 0d0
+       dt = 1d-3*seconds_per_year
+       do
+          dt = dt * 1.1
+          t = t + dt
+          call krome(x(:),Tgas,dt)
+          flux(:) = krome_get_flux(x(:),Tgas) !get fluxes
+          fluxmax = maxval(flux)
+          !call the sorting algorithm (bubblesort)
+          do j=1,nrea
+             if(flux(j)>fluxmax*frac) points(j) = points(j) + 1d0
+          end do
+          if(t>tmax) exit
+       end do
+    end do
+
+    idx(:) = idx_sort(points(:))
+    name(:) = get_rnames() !get reaction names
+
+    open(32,file=trim(fname),status="replace")
+    write(32,*) "**** RESULTS ****"
+    write(32,'(a50,a8,a10)') "reaction","idx","score"
+    do j=1,size(idx)
+       write(32,'(a50,I8,F10.0)') name(idx(j)),idx(j),points(idx(j))
+    end do
+    close(32)
+    if(verbose>0) then
+       print *,"reducer ends!"
+       print *,"data saved to "//trim(fname)
+    end if
+  end subroutine krome_reducer
+
+#ENDIFKROME
+
 end module krome_main
