@@ -30,7 +30,7 @@ contains
     cools(:) = 0.d0
 
 #IFKROME_useCoolingH2
-    cools(idx_cool_H2) = cooling_H2(n(:), Tgas)
+    cools(idx_cool_H2) = cooling_H2(n(:), Tgas) #KROME_floorH2
 #ENDIFKROME
 
 #IFKROME_useCoolingH2GP
@@ -38,15 +38,15 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingAtomic
-    cools(idx_cool_atomic) = cooling_Atomic(n(:), Tgas)
+    cools(idx_cool_atomic) = cooling_Atomic(n(:), Tgas) #KROME_floorAtomic
 #ENDIFKROME
 
 #IFKROME_useCoolingHD
-    cools(idx_cool_HD) = cooling_HD(n(:), Tgas)
+    cools(idx_cool_HD) = cooling_HD(n(:), Tgas) #KROME_floorHD
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
-    cools(idx_cool_Z) = cooling_Z(n(:), Tgas) #KROME_CMBfloorZ
+    cools(idx_cool_Z) = cooling_Z(n(:), Tgas) #KROME_floorZ
 #ENDIFKROME
 
 #IFKROME_useCoolingdH
@@ -86,15 +86,15 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingCO
-    cools(idx_cool_CO) = cooling_CO(n(:), Tgas)
+    cools(idx_cool_CO) = cooling_CO(n(:), Tgas) #KROME_floorCO
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIE
-    cools(idx_cool_ZCIE) = cooling_ZCIE(n(:), Tgas)
+    cools(idx_cool_ZCIE) = cooling_ZCIE(n(:), Tgas) #KROME_floorZCIE
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIENOUV
-    cools(idx_cool_ZCIENOUV) = cooling_ZCIENOUV(n(:), Tgas)
+    cools(idx_cool_ZCIENOUV) = cooling_ZCIENOUV(n(:), Tgas) #KROME_floorZ_CIENOUV
 #ENDIFKROME
 
     cools(idx_cool_custom) = cooling_custom(n(:),Tgas)
@@ -265,6 +265,7 @@ contains
     real*8::cooling_ZCIENOUV,n(:),inTgas
     real*8::cH,Tgas,xLd,logcH
 
+    cooling_ZCIENOUV = 0d0
     cH = get_Hnuclei(n(:)) 
 
     !check if the abundance is close to zero to 
@@ -305,6 +306,9 @@ contains
     real*8::v1min,v1max,v2min,v2max,v3min,v3max
     real*8,parameter::eps=1d-5
 
+    Tgas = inTgas
+    cooling_ZCIE = 0d0
+
     !local copy of limits
     v1min = coolZCIEx1min
     v1max = coolZCIEx1max
@@ -329,7 +333,7 @@ contains
     !avoid weird log evaluation
     if(cH.lt.1d-20)return
 
-    v1 = inTgas         !Tgas
+    v1 = Tgas           !Tgas
     v2 = cH             !total H number density
     v3 = phys_zredshift !redshift is linear
 
@@ -337,10 +341,6 @@ contains
     v1 = log10(v1)
     v2 = log10(v2)
 
-    !default value erg/s/cm3
-    cooling_ZCIE = 0d0
-
-    !check limits
     !check limits
     if(v1>=v1max) v1 = v1max*(1d0-eps)
     if(v2>=v2max) v2 = v2max*(1d0-eps)
@@ -861,7 +861,7 @@ contains
     real*8::temp,logt3,logt,cool,cooling_H2,T3
     real*8::LDL,HDLR,HDLV,HDL,fact
     real*8::logt32,logt33,logt34,logt35,logt36,logt37,logt38
-    real*8::dump14,fH2H,fH2e,fH2H2,w14,w24
+    real*8::dump14,fH2H,fH2e,fH2H2,fH2Hp,fH2He,w14,w24
     integer::i
     character*16::names(nspec)
 
@@ -894,26 +894,31 @@ contains
        fH2H = 1.d1**(-2.4311209D1 +3.5692468D0*logt3 &
             -1.1332860D1*logt32 -2.7850082D1*logt33 &
             -2.1328264D1*logt34 -4.2519023D0*logt35)*n(idx_H)
-    elseif(temp>1.d3) then
+    elseif(temp>1.d3.and.temp<=6d3) then
        fH2H = 1d1**(-2.4311209D1 +4.6450521D0*logt3 &
-            -3.7209846D0*logt32 +5.9369081D0*logt33 &
-            -5.5108049D0*logt34 +1.5538288D0*logt35)*n(idx_H)
+           -3.7209846D0*logt32 +5.9369081D0*logt33 &
+           -5.5108049D0*logt34 +1.5538288D0*logt35)*n(idx_H)
+    else
+       fH2H = 1.862314467912518E-022*wCool(logt,1d0,log10(6d3))*n(idx_H)
     end if
-
-    cool = cool + fH2H * wCool(logt,1d0,log10(6d3))
+    cool = cool + fH2H
 
     !//H2-Hp
-    cool = cool + 1d1**(-2.2089523d1 +1.5714711d0*logt3 &
-         +0.015391166d0*logt32 -0.23619985d0*logt33 &
-         -0.51002221d0*logt34 +0.32168730d0*logt35)*n(idx_Hj) &
-         * w14
+    if(temp>1d1.and.temp<=1d4) then
+      fH2Hp = 1d1**(-2.2089523d1 +1.5714711d0*logt3 &
+           +0.015391166d0*logt32 -0.23619985d0*logt33 &
+           -0.51002221d0*logt34 +0.32168730d0*logt35)*n(idx_Hj)
+    else
+      fH2Hp = 1.182509139382060E-021*n(idx_Hj)*w14
+    endif
+    cool = cool + fH2Hp
 
 
     !//H2-H2
-    fH2H2 = 1d1**(-2.3962112D1 +2.09433740D0*logt3 &
+    fH2H2 = w24*1d1**(-2.3962112D1 +2.09433740D0*logt3 &
          -.77151436D0*logt32 +.43693353D0*logt33 &
          -.14913216D0*logt34 -.033638326D0*logt35)*n(idx_H2) !&
-    cool = cool + fH2H2 * w24
+    cool = cool + fH2H2
 
     !//H2-e
     fH2e = 0d0
@@ -933,10 +938,14 @@ contains
     cool = cool + fH2e*w24
 
     !//H2-He
-    cool =  cool + 1d1**(-2.3689237d1 +2.1892372d0*logt3&
-         -.81520438d0*logt32 +.29036281d0*logt33 -.16596184d0*logt34 &
-         +.19191375d0*logt35)*n(idx_He)  &
-         * w14
+    if(temp>1d1.and.temp<=1d4)then
+       fH2He = 1d1**(-2.3689237d1 +2.1892372d0*logt3&
+            -.81520438d0*logt32 +.29036281d0*logt33 -.16596184d0*logt34 &
+            +.19191375d0*logt35)*n(idx_He)
+    else
+       fH2He = 1.002560385050777E-022*n(idx_He)*w14
+    endif
+    cool = cool + fH2He
 
     !check error
     if(cool>1.d30) then
@@ -975,11 +984,7 @@ contains
             +1.8161874*logt38)
     else
        dump14 = 1d0 / (1d0 + exp(min((temp-3d4)*2d-4,3d2)))
-       HDL = 1d1**(-2.0584225d1 + 5.0194035 &
-            -1.5738805 -4.7155769 &
-            +2.4714161 +5.4710750 &
-            -3.9467356 -2.2148338 &
-            +1.8161874)*dump14
+       HDL = 5.531333679406485E-019*dump14
     endif
 
     LDL = cool !erg/s

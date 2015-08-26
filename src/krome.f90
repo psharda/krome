@@ -477,6 +477,12 @@ contains
     !assuming solar
     total_Z = 1d0
 
+#IFKROME_useH2dust_constant
+    !default clumping factor for
+    ! H2 formation on dust by Jura/Gnedin
+    clump_factor = 1d0
+#ENDIFKROME
+
     !default for thermo toggle is ON
     !$omp parallel
     krome_thermo_toggle = 1

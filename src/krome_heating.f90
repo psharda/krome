@@ -64,6 +64,11 @@ contains
     heats(idx_heat_visc) = heat_Visc(n(:),Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingZCIE
+    heats(idx_heat_ZCIE) = heat_ZCIE(n(:),Tgas)
+#ENDIFKROME
+
+
     heats(idx_heat_custom) = heat_custom(n(:),Tgas)
 
     get_heating_array(:) = heats(:)
@@ -85,6 +90,106 @@ contains
 #KROME_custom_heating_expr
 
   end function heat_custom
+
+
+#IFKROME_useCoolingZCIE
+  function heat_ZCIE(n,inTgas)
+    use krome_commons
+    use krome_subs
+    implicit none
+    integer,parameter::imax=coolZCIEn1
+    integer,parameter::jmax=coolZCIEn2
+    integer,parameter::kmax=coolZCIEn3
+    integer::i,j,k
+    real*8::heat_ZCIE,n(:),inTgas,Tgas
+    real*8::v1,v2,v3,prev1,prev2,cH
+    real*8::vv1_h,vv2_h,vv3_h,vv4_h,vv12_h,vv34_h,xGd
+    real*8::x1(imax),x2(jmax),x3(kmax)
+    real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
+    real*8::v1min,v1max,v2min,v2max,v3min,v3max
+    real*8,parameter::eps=1d-5
+
+    Tgas = inTgas
+    heat_ZCIE = 0d0
+    
+    !local copy of limits
+    v1min = coolZCIEx1min
+    v1max = coolZCIEx1max
+    v2min = coolZCIEx2min
+    v2max = coolZCIEx2max
+    v3min = coolZCIEx3min
+    v3max = coolZCIEx3max
+    
+    !local copy of variables arrays
+    x1(:) = coolZCIEx1(:)
+    x2(:) = coolZCIEx2(:)
+    x3(:) = coolZCIEx3(:)
+    
+    ixd1(:) = coolZCIEixd1(:)
+    ixd2(:) = coolZCIEixd2(:)
+    ixd3(:) = coolZCIEixd3(:)
+
+    !local variables
+    cH = get_Hnuclei(n(:)) 
+
+    !check if the abundance is close to zero to 
+    !avoid weird log evaluation
+    if(cH.lt.1d-20)return
+
+    v1 = Tgas           !Tgas
+    v2 = cH             !total H number density
+    v3 = phys_zredshift !redshift is linear
+
+    !logs of variables
+    v1 = log10(v1)
+    v2 = log10(v2)
+
+    !check limits
+    if(v1>=v1max) v1 = v1max*(1d0-eps)
+    if(v2>=v2max) v2 = v2max*(1d0-eps)
+    if(v3>=v3max) v3 = v3max*(1d0-eps)
+
+    if(v1<v1min) return
+    if(v2<v2min) return
+    if(v3<v3min) return
+
+    !gets position of variable in the array
+    i = (v1-v1min)*coolZCIEdvn1+1
+    j = (v2-v2min)*coolZCIEdvn2+1
+    k = (v3-v3min)*coolZCIEdvn3+1
+
+    !precompute shared variables
+    prev1 = (v1-x1(i))*ixd1(i)
+    prev2 = (v2-x2(j))*ixd2(j)
+    
+    !linear interpolation on x1 for x2,x3
+    vv1_h = prev1 * (heatZCIEy(k,j,i+1) - &
+        heatZCIEy(k,j,i)) + heatZCIEy(k,j,i)
+    !linear interpolation on x1 for x2+dx2,x3
+    vv2_h = prev1 * (heatZCIEy(k,j+1,i+1) - &
+        heatZCIEy(k,j+1,i)) + heatZCIEy(k,j+1,i)
+    !linear interpolation on x2 for x3
+    vv12_h = prev2 * (vv2_h - vv1_h) + vv1_h
+    
+    !linear interpolation on x1 for x2,x3+dx3
+    vv3_h = prev1 * (heatZCIEy(k+1,j,i+1) - &
+        heatZCIEy(k+1,j,i)) + heatZCIEy(k+1,j,i)
+    !linear interpolation on x1 for x2+dx2,x3+dx3
+    vv4_h = prev1 * (heatZCIEy(k+1,j+1,i+1) - &
+        heatZCIEy(k+1,j+1,i)) + heatZCIEy(k+1,j+1,i)
+    !linear interpolation on x2 for x3+dx3
+    vv34_h = prev2 * (vv4_h - vv3_h) + vv3_h
+    
+    !linear interpolation on x3
+    xGd = (v3-x3(k))*ixd3(k)*(vv34_h - &
+        vv12_h) + vv12_h
+
+    !Z cooling in erg/s/cm3
+    heat_ZCIE = 1d1**xGd * cH * cH * total_Z
+
+  end function heat_ZCIE
+#ENDIFKROME
+
 
 #IFKROME_useHeatingVisc
   !*************************
@@ -201,24 +306,13 @@ contains
     implicit none
     integer::i
     real*8::heat_netPhotoDust,n(:),Tgas,ntot,eps
-    real*8::Ghab,z,psi,recomb_cool,bet
+    real*8::psi,recomb_cool,bet
 
     ntot = get_Hnuclei(n(:))
-    Ghab = 0d0 !habing flux
     bet = 0.735d0*(Tgas)**(-0.068)
 
-    !integral over photo bins
-    do i=1,nphotoBins
-       Ghab = Ghab + photoBinJ(i) * photoBinEdelta(i)
-    end do
-
-    !integral -> habing flux
-    !from eq. 20 of Omukai, 2008
-    !see also Bakes&Tielens, 1994
-    Ghab = Ghab * 4d0 * pi / (1.6d-3) / planck_eV * eV_to_erg
-
     if(n(idx_e)>0d0) then
-       psi = Ghab * sqrt(Tgas) / n(idx_e)
+       psi = GHabing * sqrt(Tgas) / n(idx_e)
     else
        psi = 0d0
     end if
@@ -229,10 +323,9 @@ contains
 
     eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
          3.7d-2 * (Tgas * 1d-4)**.7 / (1d0 + 2d-4 * psi)
-    z = #KROME_photoDustZ !metallicty wrt solar
 
     !net photoelectric heating
-    heat_netPhotoDust = (1.3d-24*eps*Ghab*ntot-recomb_cool)*z
+    heat_netPhotoDust = (1.3d-24*eps*GHabing*ntot-recomb_cool)*total_Z
 
   end function heat_netPhotoDust
 #ENDIFKROME
@@ -374,6 +467,7 @@ contains
     n2H = n(idx_H) * n(idx_H)
 
 #KROME_HChem_terms
+
 #KROME_HChem_dust
 
     heatingChem = HChem * eV_to_erg  !erg/cm3/s

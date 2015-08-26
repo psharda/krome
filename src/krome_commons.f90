@@ -99,9 +99,24 @@ module krome_commons
   real*8::CoolZNOUV_z(CoolZNOUVn,CoolZNOUVm),CoolZNOUV_xmul,CoolZNOUV_ymul
 #ENDIFKROME
 
+#IFKROME_useCoolingZCIE
+!data for metal cooling from table in the presence of UV
+  integer,parameter::coolZCIEn1=81
+  integer,parameter::coolZCIEn2=81
+  integer,parameter::coolZCIEn3=81
+  real*8::coolZCIEx1(coolZCIEn1),coolZCIEx2(coolZCIEn2),coolZCIEx3(coolZCIEn3)
+  real*8::coolZCIEixd1(coolZCIEn1-1),coolZCIEixd2(coolZCIEn2-1),coolZCIEixd3(coolZCIEn3-1)
+  real*8::coolZCIEy(coolZCIEn1,coolZCIEn2,coolZCIEn3)
+  real*8::heatZCIEy(coolZCIEn1,coolZCIEn2,coolZCIEn3)
+  real*8::coolZCIEx1min,coolZCIEx1max
+  real*8::coolZCIEx2min,coolZCIEx2max
+  real*8::coolZCIEx3min,coolZCIEx3max
+  real*8::coolZCIEdvn1,coolZCIEdvn2,coolZCIEdvn3
+#ENDIFKROME
+
 
   !commons for dust tabs (cool,H2,Tdust)
-  integer,parameter::dust_tab_imax=30,dust_tab_jmax=30
+  integer,parameter::dust_tab_imax=50,dust_tab_jmax=50
   real*8::dust_tab_ngas(dust_tab_imax)
   real*8::dust_tab_Tgas(dust_tab_jmax)
   real*8::dust_tab_cool(dust_tab_imax,dust_tab_jmax)
@@ -160,6 +175,10 @@ module krome_commons
   real*8::zpart_CO(zpart_nCO),minpart_CO,partdT_CO
   real*8::zpart_H2even(zpart_nH2even),minpart_H2even,partdT_H2even
   real*8::zpart_H2odd(zpart_nH2odd),minpart_H2odd,partdT_H2odd
+
+  !Habing flux for the photoelectric heating by dust, H2 pumping rate and clumping factor
+  !for H2 formation on dust by Jura/Gnedin
+  real*8::GHabing,kH2pump,clump_factor
 
   !partition functions common vars
 #KROME_var_parts

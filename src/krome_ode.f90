@@ -36,7 +36,7 @@ contains
 
     dn(:) = 0.d0 !initialize differentials
     n(idx_Tgas) = max(n(idx_tgas),2.73d0)
-    n(idx_Tgas) = min(n(idx_tgas),1d8)
+    n(idx_Tgas) = min(n(idx_tgas),1d9)
     Tgas = n(idx_Tgas) !get temperature
 
 #KROME_Tdust_limits
@@ -65,7 +65,7 @@ contains
        krome_gamma = gamma_index(n(:))
        
        dn(idx_Tgas) = (heating(n(:), Tgas, k(:), nH2dust) &
-            - cooling(n(:), Tgas) #KROME_coolingQuench #KROME_coolCMBfloor) &
+            - cooling(n(:), Tgas) #KROME_coolingQuench #KROME_coolfloor) &
             * (krome_gamma - 1.d0) / boltzmann_erg / sum(n(1:nmols))
 #ENDIFKROME
        
