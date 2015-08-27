@@ -45,10 +45,8 @@ contains
     cools(idx_cool_HD) = cooling_HD(n(:), Tgas) #KROME_floorHD
 #ENDIFKROME
 
-#IFKROME_useZnoFex
 #IFKROME_useCoolingZ
     cools(idx_cool_Z) = cooling_Z(n(:), Tgas) #KROME_floorZ
-#ENDIFKROME
 #ENDIFKROME
 
 #IFKROME_useCoolingdH
