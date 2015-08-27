@@ -45,12 +45,14 @@ contains
     cools(idx_cool_HD) = cooling_HD(n(:), Tgas) #KROME_floorHD
 #ENDIFKROME
 
+#IFKROME_useZnoFex
 #IFKROME_useCoolingZ
     cools(idx_cool_Z) = cooling_Z(n(:), Tgas) #KROME_floorZ
 #ENDIFKROME
+#ENDIFKROME
 
 #IFKROME_useCoolingdH
-    cools(idx_cool_dH) = cooling_dH(n(:), Tgas)
+    cools(idx_cool_dH) = cooling_dH(n(:), Tgas) 
 #ENDIFKROME
 
 #IFKROME_useCoolingDust
@@ -95,6 +97,10 @@ contains
 
 #IFKROME_useCoolingZCIENOUV
     cools(idx_cool_ZCIENOUV) = cooling_ZCIENOUV(n(:), Tgas) #KROME_floorZ_CIENOUV
+#ENDIFKROME
+
+#IFKROME_useCoolingZExtended
+    cools(idx_cool_ZExtend) = cooling_ZExtended(n(:), Tgas)
 #ENDIFKROME
 
     cools(idx_cool_custom) = cooling_custom(n(:),Tgas)
@@ -436,6 +442,24 @@ contains
     coolZCIEdvn3 = (coolZCIEn3-1)/(coolZCIEx3max-coolZCIEx3min)
 
   end subroutine init_coolingZCIE
+#ENDIFKROME
+
+#IFKROME_useCoolingZExtended
+  function cooling_ZExtended(n,Tgas)
+     use krome_commons
+     implicit none 
+     real*8::cooling_ZExtended 
+     real*8::n(:),Tgas
+     real*8::f1,f2,smooth
+ 
+     smooth = 1.d-3
+
+     f1 = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0
+     f2 = (tanh(smooth*(-Tgas+1d4))+1.d0)*0.5d0
+
+     cooling_ZExtended = f1*cooling_ZCIE(n(:),Tgas) + f2*cooling_Z(n(:),Tgas)
+
+  end function cooling_ZExtended
 #ENDIFKROME
 
 
@@ -1642,6 +1666,30 @@ contains
 
 #IFKROME_useCoolingCIE
     cool(9) = cooling_CIE(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingContinuum
+    cool(10) = cooling_continuum(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingExpansion
+    cool(11) = cooling_expansion(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingFF
+    cool(12) = cooling_ff(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingCO
+    cool(13) = cooling_CO(n(:), Tgas) #KROME_floorCO
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIE
+    cool(14) = cooling_ZCIE(n(:), Tgas) #KROME_floorZCIE
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIENOUV
+    cool(15) = cooling_ZCIENOUV(n(:), Tgas) #KROME_floorZ_CIENOUV
 #ENDIFKROME
 
     write(nfile,'(99E14.5e3)') Tgas,sum(cool),cool(:) 
