@@ -52,8 +52,8 @@ class krome():
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
         useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = False
-        useFloorH2 = useFloorZCIE = useFloorZ = useFloorAtomic = useFloorHD = useFloorCO = useFloorZ_CIENOUV  = useFloorZExtended = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = False
+        useFloorH2 = useFloorZCIE = useFloorZ = useFloorAtomic = useFloorHD = useFloorCO = useFloorZCIENOUV = useFloorZExtended = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
@@ -835,7 +835,7 @@ class krome():
 			self.useFloorAtomic = ("ATOMIC" in myFloor)
 			self.useFloorHD = ("HD" in myFloor)
 			self.useFloorCO = ("CO" in myFloor)
-			self.useFloorZ_CIENOUV = ("Z_CIENOUV" in myFloor)
+			self.useFloorZCIENOUV = ("Z_CIENOUV" in myFloor)
 			self.useFloorZExtended = ("Z_EXT" in myFloor)
                        	self.useIndividualFloor = True
 			print "Reading option -useIndividualFloor (FLOOR TO="+(",".join(myFloor))+")"
@@ -5156,7 +5156,7 @@ class krome():
 				if("#KROME_floorZ" in srow):
 					floorZ = "- cooling_Z(n(:),phys_Tfloor)"
 					fout.write(srow.replace("#KROME_floorZ", floorZ)+"\n")
-					continue
+		        		continue
 			else:
 				if("#KROME_floorZ" in srow):
 					fout.write(srow.replace("#KROME_floorZ", " ")+"\n")
@@ -5192,25 +5192,25 @@ class krome():
 					fout.write(srow.replace("#KROME_floorCO", " ")+"\n")
 					continue
 				
-			if(self.useFloorZ_CIENOUV): 
-				if("#KROME_floorZ_CIENOUV" in srow):
-					floorZ_CIENOUV = "- cooling_Z_CIENOUV(n(:),phys_Tfloor)"
-					fout.write(srow.replace("#KROME_floorZ_CIENOUV", floorZ_CIENOUV)+"\n")
+			if(self.useFloorZCIENOUV): 
+				if("#KROME_floor_ZCIENOUV" in srow):
+					floorZCIENOUV = "- cooling_Z_CIENOUV(n(:),phys_Tfloor)"
+					fout.write(srow.replace("#KROME_floor_ZCIENOUV", floorZCIENOUV)+"\n")
 					continue
 			else:
-				if("#KROME_floorZ_CIENOUV" in srow):
-					fout.write(srow.replace("#KROME_floorZ_CIENOUV", " ")+"\n")
+				if("#KROME_floor_ZCIENOUV" in srow):
+					fout.write(srow.replace("#KROME_floor_ZCIENOUV","")+"\n")
 					continue
 
-			#if(self.useFloorZExtended): 
-			#	if("#KROME_floorZ_EXT" in srow):
-			#		floorZ_EXT = "- cooling_Z(n(:),phys_Tfloor)"
-			#		fout.write(srow.replace("#KROME_floorZ_EXT", floorZ_EXT)+"\n")
-			#		continue
-			#else:
-			#	if("#KROME_floorZ_EXT" in srow):
-			#		fout.write(srow.replace("#KROME_floorZ_EXT", " ")+"\n")
-			#		continue
+			if(self.useFloorZExtended): 
+				if("#KROME_floor_ZEXT" in srow):
+					floorZ_EXT = "- f2*cooling_Z(n(:),phys_Tfloor)"
+					fout.write(srow.replace("#KROME_floor_ZEXT", floorZ_EXT)+"\n")
+					continue
+			else:
+				if("#KROME_floor_ZEXT" in srow):
+					fout.write(srow.replace("#KROME_floor_ZEXT", " ")+"\n")
+					continue
 			
 #################################################
 			if(row.strip() == "#KROME_header"):
