@@ -1212,7 +1212,8 @@ class krome():
 			if("CO" in myCools): self.useCoolingCO = True
 			if("Z_CIE" in myCools): self.useCoolingZCIE = True
 			if("Z_CIENOUV" in myCools): self.useCoolingZCIENOUV = True
-			if("Z_EXTENDED" in myCools): self.useCoolingZExtended = self.useCoolingZ = self.useCoolingZCIE = True 
+			if("Z_EXTENDED" in myCools): 
+				self.useCoolingZExtended = self.useCoolingZ = self.useCoolingZCIE = True 
 
 			#loop over metals loaded from file and search for them in the cooling flags provided by the user
 			for met in fileCools:
@@ -5111,6 +5112,7 @@ class krome():
 
 			if(skip or skip_nleq or skip_dTdust): continue
 
+
 			#replace the small value for rates according to the maximum number of products 
 			if("#KROME_small" in srow):
 				if(self.useTabs):
@@ -5148,7 +5150,7 @@ class krome():
 					fout.write(srow.replace("#KROME_floorZCIE", floorZCIE)+"\n")
 					continue
 			else:
-				if("#KROME_floorZCIE" in srow):
+				if("#KROME_floorZCIE" in srow and (self.useCoolingZExtended)):
 					fout.write(srow.replace("#KROME_floorZCIE", " ")+"\n")
 					continue
 
