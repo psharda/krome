@@ -824,7 +824,7 @@ class krome():
 		#apply an individual cooling floor (SB, mod TG)
 		if(args.useIndividualFloor):
 			myFloor = [x.strip() for x in args.useIndividualFloor.split(",")]
-			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXT"]
+			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED"]
 			for floor in myFloor:
 				if(not(floor in allFloor)):
 					die("ERROR: Floor \""+floor+"\" is unknown!\nAvailable floor are: "+(", ".join(allFloor)))
@@ -895,13 +895,6 @@ class krome():
                         self.useShielding = True
 			print "Reading option -shielding (TYPE="+(",".join(myShielding))+")"
 
-
-
-		#use human Fluxes
-		#if(args.compressFluxes):
-		#	self.humanFlux = False
-		#	print "Reading option -compressFluxes"
-
 		#use cooling dT/dt in the ODE fex
 		if(args.skipODEthermo):
 			self.useODEthermo = False
@@ -964,7 +957,6 @@ class krome():
 			self.checkMode = "ALL"
 		else:
 			print "ERROR: problem with -nomassCheck and/or -nochargeCheck and/or -noCheck"
-
 			sys.exit()
 
 		#skip recombination check
@@ -5113,11 +5105,13 @@ class krome():
 
 			#individual floors for different cooling functions
 			if("#KROME_floor" in srow):
-				pragma = "#"+srow.split("#")[1] #floor PRAGMA
+				pragma = "#"+srow.split("#")[1].split(")")[0] #floor PRAGMA, starts with #, ends with )
 				floorName = pragma.replace("#KROME_floor","").strip() #get floor name
+				floorNameFunction = floorName
+				if(floorName=="Z_EXTENDED"): floorNameFunction = "Z"
 				#check if name is in the individual cooling list, if so replace with floor function
 				if(floorName in self.individualCoolingFloors):
-					coolingFunction =  "- cooling_"+floorName+"(n(:),phys_Tfloor)"
+					coolingFunction =  "- cooling_"+floorNameFunction+"(n(:),phys_Tfloor)"
 					fout.write(srow.replace("#KROME_floor"+floorName, coolingFunction)+"\n")
 				else:
 					fout.write(srow.replace("#KROME_floor"+floorName, "")+"\n")
