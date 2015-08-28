@@ -90,15 +90,15 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIE
-    cools(idx_cool_ZCIE) = cooling_ZCIE(n(:), Tgas) #KROME_floorZCIE
+    cools(idx_cool_ZCIE) = cooling_ZCIE(n(:), Tgas) #KROME_floorZ_CIE
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIENOUV
-    cools(idx_cool_ZCIENOUV) = cooling_ZCIENOUV(n(:), Tgas) #KROME_floor_ZCIENOUV
+    cools(idx_cool_ZCIENOUV) = cooling_ZCIENOUV(n(:), Tgas) #KROME_floorZ_CIENOUV
 #ENDIFKROME
 
 #IFKROME_useCoolingZExtended
-    cools(idx_cool_ZExtend) = cooling_ZExtended(n(:), Tgas)
+    cools(idx_cool_ZExtend) = cooling_ZExtended(n(:), Tgas) !floor is inside the function
 #ENDIFKROME
 
     cools(idx_cool_custom) = cooling_custom(n(:),Tgas)
@@ -460,7 +460,7 @@ contains
      f2 = (tanh(smooth*(-Tgas+1d4))+1.d0)*0.5d0
 
      cooling_ZExtended = f1*cooling_ZCIE(n(:),Tgas) &
-          + f2*cooling_Z(n(:),Tgas) #KROME_floor_ZEXT
+          + f2*(cooling_Z(n(:),Tgas) #KROME_floorZ_EXTENDED)
 
   end function cooling_ZExtended
 #ENDIFKROME
