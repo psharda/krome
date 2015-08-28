@@ -1195,7 +1195,7 @@ class krome():
 			if("CO" in myCools): self.useCoolingCO = True
 			if("Z_CIE" in myCools): self.useCoolingZCIE = True
 			if("Z_CIENOUV" in myCools): self.useCoolingZCIENOUV = True
-			if("Z_EXTENDED" in myCools): 
+			if("Z_EXTENDED" in myCools):
 				self.useCoolingZExtended = self.useCoolingZ = self.useCoolingZCIE = True 
 
 			#loop over metals loaded from file and search for them in the cooling flags provided by the user
@@ -5066,7 +5066,8 @@ class krome():
 			srow = row.strip()
 			usingTd = (self.usedTdust or self.useDustT)
 			#cooling pragmas
-			if(srow == "#IFKROME_useCoolingZ" and not(useCoolingZ)): skip = True
+			if(srow == "#IFKROME_useCoolingZ" and (not(useCoolingZ) or self.useCoolingZExtended)): skip = True
+			if(srow == "#IFKROME_useCoolingZ_function" and not(useCoolingZ)): skip = True
 			if(srow == "#IFKROME_useCoolingdH" and (not(self.useCoolingdH) or len(dH_varsa)==0)): skip = True
 			if(srow == "#IFKROME_useCoolingDust" and (not(self.useCoolingDust) or not(usingTd))): skip = True
 			if(srow == "#IFKROME_useCoolingDustNoTdust" and (usingTd or not(self.useCoolingDust))): skip = True
@@ -5080,8 +5081,9 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingFF" and not(self.useCoolingFF)): skip = True
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
-			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
+			if(srow == "#IFKROME_useCoolingZCIE" and (not(self.useCoolingZCIE) or self.useCoolingZExtended)): skip = True
+			if(srow == "#IFKROME_useCoolingZCIE_function" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZExtended" and not(self.useCoolingZExtended)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK

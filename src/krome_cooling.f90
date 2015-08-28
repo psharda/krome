@@ -46,9 +46,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
-#IFKROME_useSkipZ
     cools(idx_cool_Z) = cooling_Z(n(:), Tgas) #KROME_floorZ
-#ENDIFKROME
 #ENDIFKROME
 
 #IFKROME_useCoolingdH
@@ -289,7 +287,7 @@ contains
   end function cooling_ZCIENOUV
 #ENDIFKROME
 
-#IFKROME_useCoolingZCIE
+#IFKROME_useCoolingZCIE_function
   !***************************
   !Metal line cooling CIE
   ! method: CLOUDY 10, including the 
@@ -445,6 +443,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZExtended
+  !************************
   function cooling_ZExtended(n,Tgas)
      use krome_commons
      implicit none 
@@ -452,12 +451,16 @@ contains
      real*8::n(:),Tgas
      real*8::f1,f2,smooth
  
+     !this parameter controls the smoothness of the
+     ! merge between the two cooling functions
      smooth = 1.d-3
 
+     !smoothing functions | f1+f2=1
      f1 = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0
      f2 = (tanh(smooth*(-Tgas+1d4))+1.d0)*0.5d0
 
-     cooling_ZExtended = f1*cooling_ZCIE(n(:),Tgas) + f2*cooling_Z(n(:),Tgas) #KROME_floor_ZEXT
+     cooling_ZExtended = f1*cooling_ZCIE(n(:),Tgas) &
+          + f2*cooling_Z(n(:),Tgas) #KROME_floor_ZEXT
 
   end function cooling_ZExtended
 #ENDIFKROME
@@ -1151,7 +1154,7 @@ contains
   end function cooling_HD
 #ENDIFKROME
 
-#IFKROME_useCoolingZ
+#IFKROME_useCoolingZ_function
   !*********************************************
   !function for linear interpolation of f(x), using xval(:)
   ! and the corresponding yval(:) as reference values
