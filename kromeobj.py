@@ -51,9 +51,9 @@ class krome():
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
-        useCoolingZCIE = useCoolingZCIENOUV = useFloorH2 = useFloorZCIE = useFloorZ = useFloorAtomic = useFloorHD = False
-	useFloorCO = useFloorZ_CIENOUV = False
+        useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = False
+        useFloorH2 = useFloorZCIE = useFloorZ = useFloorAtomic = useFloorHD = useFloorCO = useFloorZCIENOUV = useFloorZExtended = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
@@ -202,7 +202,7 @@ class krome():
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
 			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -\
-			cooling=ATOMIC,CII,OI,FeI),Z_CIE,ZCIE_NOUV.\
+			cooling=ATOMIC,CII,OI,FeI),Z_CIE,ZCIE_NOUV,Z_EXTENDED.\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
 		self.parser.add_argument("-coolLevels", metavar='MAXLEV', help="use only the levels up to MAXLEV (included), e.g. -coolLevels=3\
@@ -824,7 +824,7 @@ class krome():
 		#apply an individual cooling floor (SB)
 		if(args.useIndividualFloor):
 			myFloor = [x.strip() for x in args.useIndividualFloor.split(",")]
-			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV"]
+			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXT"]
 			for floor in myFloor:
 				if(not(floor in allFloor)):
 					die("ERROR: Floor \""+floor+"\" is unknown!\nAvailable floor are: "+(", ".join(allFloor)))
@@ -835,7 +835,8 @@ class krome():
 			self.useFloorAtomic = ("ATOMIC" in myFloor)
 			self.useFloorHD = ("HD" in myFloor)
 			self.useFloorCO = ("CO" in myFloor)
-			self.useFloorZ_CIENOUV = ("Z_CIENOUV" in myFloor)
+			self.useFloorZCIENOUV = ("Z_CIENOUV" in myFloor)
+			self.useFloorZExtended = ("Z_EXT" in myFloor)
                        	self.useIndividualFloor = True
 			print "Reading option -useIndividualFloor (FLOOR TO="+(",".join(myFloor))+")"
 
@@ -1146,7 +1147,7 @@ class krome():
 			myCools = [x.strip() for x in myCools]
 			#list of all cooling (excluded from file)
 			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE",\
-				"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV"]
+				"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV","Z_EXTENDED"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
@@ -1211,6 +1212,8 @@ class krome():
 			if("CO" in myCools): self.useCoolingCO = True
 			if("Z_CIE" in myCools): self.useCoolingZCIE = True
 			if("Z_CIENOUV" in myCools): self.useCoolingZCIENOUV = True
+			if("Z_EXTENDED" in myCools): 
+				self.useCoolingZExtended = self.useCoolingZ = self.useCoolingZCIE = True 
 
 			#loop over metals loaded from file and search for them in the cooling flags provided by the user
 			for met in fileCools:
@@ -5096,6 +5099,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
+			if(srow == "#IFKROME_useCoolingZExtended" and not(self.useCoolingZExtended)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
@@ -5107,6 +5111,7 @@ class krome():
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip or skip_nleq or skip_dTdust): continue
+
 
 			#replace the small value for rates according to the maximum number of products 
 			if("#KROME_small" in srow):
@@ -5145,7 +5150,7 @@ class krome():
 					fout.write(srow.replace("#KROME_floorZCIE", floorZCIE)+"\n")
 					continue
 			else:
-				if("#KROME_floorZCIE" in srow):
+				if("#KROME_floorZCIE" in srow and (self.useCoolingZExtended)):
 					fout.write(srow.replace("#KROME_floorZCIE", " ")+"\n")
 					continue
 
@@ -5153,7 +5158,7 @@ class krome():
 				if("#KROME_floorZ" in srow):
 					floorZ = "- cooling_Z(n(:),phys_Tfloor)"
 					fout.write(srow.replace("#KROME_floorZ", floorZ)+"\n")
-					continue
+		        		continue
 			else:
 				if("#KROME_floorZ" in srow):
 					fout.write(srow.replace("#KROME_floorZ", " ")+"\n")
@@ -5189,15 +5194,26 @@ class krome():
 					fout.write(srow.replace("#KROME_floorCO", " ")+"\n")
 					continue
 				
-			if(self.useFloorZ_CIENOUV): 
-				if("#KROME_floorZ_CIENOUV" in srow):
-					floorZ_CIENOUV = "- cooling_Z_CIENOUV(n(:),phys_Tfloor)"
-					fout.write(srow.replace("#KROME_floorZ_CIENOUV", floorZ_CIENOUV)+"\n")
+			if(self.useFloorZCIENOUV): 
+				if("#KROME_floor_ZCIENOUV" in srow):
+					floorZCIENOUV = "- cooling_Z_CIENOUV(n(:),phys_Tfloor)"
+					fout.write(srow.replace("#KROME_floor_ZCIENOUV", floorZCIENOUV)+"\n")
 					continue
 			else:
-				if("#KROME_floorZ_CIENOUV" in srow):
-					fout.write(srow.replace("#KROME_floorZ_CIENOUV", " ")+"\n")
+				if("#KROME_floor_ZCIENOUV" in srow):
+					fout.write(srow.replace("#KROME_floor_ZCIENOUV","")+"\n")
 					continue
+
+			if(self.useFloorZExtended): 
+				if("#KROME_floor_ZEXT" in srow):
+					floorZ_EXT = "- f2*cooling_Z(n(:),phys_Tfloor)"
+					fout.write(srow.replace("#KROME_floor_ZEXT", floorZ_EXT)+"\n")
+					continue
+			else:
+				if("#KROME_floor_ZEXT" in srow):
+					fout.write(srow.replace("#KROME_floor_ZEXT", " ")+"\n")
+					continue
+			
 #################################################
 			if(row.strip() == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
@@ -6472,6 +6488,11 @@ class krome():
 		if(self.useCoolingZCIENOUV):
 			print "- copying coolZ_CIE2012NOUV.dat..."
 			shutil.copyfile("data/coolZ_CIE2012NOUV.dat", buildFolder+"coolZ_CIE2012NOUV.dat")
+
+		#cooling Z_Extended
+		if(self.useCoolingZExtended):
+			print "- copying coolZ_CIE2012.dat..."
+			shutil.copyfile("data/coolZ_CIE2012.dat", buildFolder+"coolZ_CIE2012.dat")
 
 
 		#copy partition function files
