@@ -1689,7 +1689,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIENOUV
-    cool(15) = cooling_ZCIENOUV(n(:), Tgas) #KROME_floorZ_CIENOUV
+    cool(15) = cooling_ZCIENOUV(n(:), Tgas) #KROME_floor_ZCIENOUV
 #ENDIFKROME
 
     write(nfile,'(99E14.5e3)') Tgas,sum(cool),cool(:) 
