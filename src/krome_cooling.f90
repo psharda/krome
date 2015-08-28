@@ -90,11 +90,11 @@ contains
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIE
-    cools(idx_cool_ZCIE) = cooling_ZCIE(n(:), Tgas) #KROME_floorZ_CIE
+    cools(idx_cool_ZCIE) = cooling_Z_CIE(n(:), Tgas) #KROME_floorZ_CIE
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIENOUV
-    cools(idx_cool_ZCIENOUV) = cooling_ZCIENOUV(n(:), Tgas) #KROME_floorZ_CIENOUV
+    cools(idx_cool_ZCIENOUV) = cooling_Z_CIENOUV(n(:), Tgas) #KROME_floorZ_CIENOUV
 #ENDIFKROME
 
 #IFKROME_useCoolingZExtended
@@ -262,14 +262,14 @@ contains
   !Metal line cooling CIE
   ! method: CLOUDY 10, NOUV
   ! tables kindly provided by Sijing Shen.
-  function cooling_ZCIENOUV(n,inTgas)
+  function cooling_Z_CIENOUV(n,inTgas)
     use krome_commons
     use krome_subs
     implicit none
-    real*8::cooling_ZCIENOUV,n(:),inTgas
+    real*8::cooling_Z_CIENOUV,n(:),inTgas
     real*8::cH,Tgas,xLd,logcH
 
-    cooling_ZCIENOUV = 0d0
+    cooling_Z_CIENOUV = 0d0
     cH = get_Hnuclei(n(:)) 
 
     !check if the abundance is close to zero to 
@@ -282,9 +282,9 @@ contains
     xLd = fit_anytab2D(CoolZNOUV_x(:), CoolZNOUV_y(:), CoolZNOUV_z(:,:), &
          CoolZNOUV_xmul, CoolZNOUV_ymul,logcH,Tgas)
 
-    cooling_ZCIENOUV = 10**xLd * cH * cH * total_Z
+    cooling_Z_CIENOUV = 10**xLd * cH * cH * total_Z
 
-  end function cooling_ZCIENOUV
+  end function cooling_Z_CIENOUV
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIE_function
@@ -294,7 +294,7 @@ contains
   ! extragalactic (quasars + galaxies) UV flux
   ! by Haardt&Madau 2012.
   !Tables kindly provided by Sijing Shen.
-  function cooling_ZCIE(n,inTgas)
+  function cooling_Z_CIE(n,inTgas)
     use krome_commons
     use krome_subs
     implicit none
@@ -302,7 +302,7 @@ contains
     integer,parameter::jmax=coolZCIEn2
     integer,parameter::kmax=coolZCIEn3
     integer::i,j,k
-    real*8::cooling_ZCIE,n(:),inTgas,Tgas
+    real*8::cooling_Z_CIE,n(:),inTgas,Tgas
     real*8::v1,v2,v3,prev1,prev2,cH
     real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
     real*8::x1(imax),x2(jmax),x3(kmax)
@@ -311,7 +311,7 @@ contains
     real*8,parameter::eps=1d-5
 
     Tgas = inTgas
-    cooling_ZCIE = 0d0
+    cooling_Z_CIE = 0d0
 
     !local copy of limits
     v1min = coolZCIEx1min
@@ -386,9 +386,9 @@ contains
          vv12) + vv12
 
     !Z cooling in erg/s/cm3
-    cooling_ZCIE = 1d1**xLd * cH * cH * total_Z
+    cooling_Z_CIE = 1d1**xLd * cH * cH * total_Z
 
-  end function cooling_ZCIE
+  end function cooling_Z_CIE
 
   !************************
   subroutine init_coolingZCIE()
@@ -1629,73 +1629,13 @@ contains
   !***********************************
   !routine to dump cooling in unit nfile
   subroutine dump_cool(n,Tgas,nfile)
+    use krome_commons
     implicit none
-    real*8::Tgas,n(:),cool(9)
+    real*8::Tgas,n(:),cools(ncools)
     integer::nfile
 
-    cool(:) = 0.d0
-
-#IFKROME_useCoolingH2
-    cool(1) = cooling_H2(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingH2GP
-    cool(2) = cooling_H2GP(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingAtomic
-    cool(3) = cooling_atomic(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingHD
-    cool(4) = cooling_HD(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingZ
-    cool(5) = cooling_Z(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingdH
-    cool(6) = cooling_dH(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingDust
-    cool(7) = cooling_dust(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingCompton
-    cool(8) = cooling_compton(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingCIE
-    cool(9) = cooling_CIE(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingContinuum
-    cool(10) = cooling_continuum(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingExpansion
-    cool(11) = cooling_expansion(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingFF
-    cool(12) = cooling_ff(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingCO
-    cool(13) = cooling_CO(n(:), Tgas) #KROME_floorCO
-#ENDIFKROME
-
-#IFKROME_useCoolingZCIE
-    cool(14) = cooling_ZCIE(n(:), Tgas) #KROME_floorZCIE
-#ENDIFKROME
-
-#IFKROME_useCoolingZCIENOUV
-    cool(15) = cooling_ZCIENOUV(n(:), Tgas) #KROME_floor_ZCIENOUV
-#ENDIFKROME
-
-    write(nfile,'(99E14.5e3)') Tgas,sum(cool),cool(:) 
+    cools(:) = get_cooling_array(n(:),Tgas)
+    write(nfile,'(99E14.5e3)') Tgas, sum(cools), cools(:)
 
   end subroutine dump_cool
 
