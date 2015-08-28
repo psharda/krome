@@ -1630,7 +1630,7 @@ contains
   !routine to dump cooling in unit nfile
   subroutine dump_cool(n,Tgas,nfile)
     implicit none
-    real*8::Tgas,n(:),cool(15)
+    real*8::Tgas,n(:),cool(9)
     integer::nfile
 
     cool(:) = 0.d0
