@@ -459,7 +459,7 @@ contains
      f1 = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0
      f2 = (tanh(smooth*(-Tgas+1d4))+1.d0)*0.5d0
 
-     cooling_ZExtended = f1*cooling_ZCIE(n(:),Tgas) &
+     cooling_ZExtended = f1*cooling_Z_CIE(n(:),Tgas) &
           + f2*(cooling_Z(n(:),Tgas) #KROME_floorZ_EXTENDED)
 
   end function cooling_ZExtended
