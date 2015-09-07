@@ -94,6 +94,7 @@ module amr_parameters
   integer::foutput=1000000    ! Frequency of outputs
   integer::output_mode=0      ! Output mode (for hires runs)
   logical::gadget_output=.false. ! Output in gadget format
+  logical::output_now=.false. ! write output next step
 
   ! Lightcone parameters
   real(dp)::thetay_cone=12.5
@@ -110,9 +111,9 @@ module amr_parameters
   real(dp)::aexp   =1.0D0     ! Current expansion factor
   real(dp)::hexp   =0.0D0     ! Current Hubble parameter
   real(dp)::texp   =0.0D0     ! Current proper time
-  real(dp)::n_sink = -1.d0      ! Sink particle density threshold in H/cc
+  real(dp)::n_sink = -1.d0    ! Sink particle density threshold in H/cc
   real(dp)::rho_sink = -1.D0  ! Sink particle density threshold in g/cc
-  real(dp)::d_sink            ! Sink particle density threshold in user units
+  real(dp)::d_sink = -1.D0    ! Sink particle density threshold in user units
   real(dp)::m_star =-1.0      ! Star particle mass in units of mass_sph
   real(dp)::n_star =0.1D0     ! Star formation density threshold in H/cc
   real(dp)::t_star =0.0D0     ! Star formation time scale in Gyr
@@ -146,8 +147,8 @@ module amr_parameters
   logical ::pressure_fix=.false.
   logical ::nordlund_fix=.true.
   logical ::cooling=.false.
-  logical ::neq_chem=.false.   ! Non-equilbrium chemistry activated
-  logical ::krome_chem=.false. ! Non-equilibrium chemistry with KROME 
+  logical ::neq_chem=.false.  ! Non-equilbrium chemistry activated
+  logical ::krome_chem=.false. ! Non-equilibrium chemistry with KROME
   logical ::isothermal=.false.
   logical ::metal=.false.
   logical ::haardt_madau=.false.
@@ -168,16 +169,22 @@ module amr_parameters
   real(kind=8)::tendmov=0.,aendmov=0.
   real(kind=8),allocatable,dimension(:)::amovout,tmovout
   logical::movie=.false.
-  integer::nx_frame=512
-  integer::ny_frame=512
+  integer::nw_frame=512 ! prev: nx_frame, width of frame in pixels
+  integer::nh_frame=512 ! prev: ny_frame, height of frame in pixels
   integer::levelmax_frame=0
   integer::ivar_frame=1
-  real(kind=8),dimension(1:4)::xcentre_frame=0d0
-  real(kind=8),dimension(1:4)::ycentre_frame=0d0
-  real(kind=8),dimension(1:4)::zcentre_frame=0d0
-  real(kind=8),dimension(1:4)::deltax_frame=0d0
-  real(kind=8),dimension(1:4)::deltay_frame=0d0
-  real(kind=8),dimension(1:4)::deltaz_frame=0d0
+  real(kind=8),dimension(1:20)::xcentre_frame=0d0
+  real(kind=8),dimension(1:20)::ycentre_frame=0d0
+  real(kind=8),dimension(1:20)::zcentre_frame=0d0
+  real(kind=8),dimension(1:10)::deltax_frame=0d0
+  real(kind=8),dimension(1:10)::deltay_frame=0d0
+  real(kind=8),dimension(1:10)::deltaz_frame=0d0
+  character(LEN=5)::proj_axis='z' ! x->x, y->y, projection along z
+#ifdef SOLVERmhd
+  integer,dimension(0:NVAR+6)::movie_vars=0
+#else
+  integer,dimension(0:NVAR+2)::movie_vars=0
+#endif
 
   ! Refinement parameters for each level
   real(dp),dimension(1:MAXLEVEL)::m_refine =-1.0 ! Lagrangian threshold
@@ -191,6 +198,7 @@ module amr_parameters
   real(dp)::var_cut_refine=-1.0 ! Threshold for variable-based refinement
   real(dp)::mass_cut_refine=-1.0 ! Mass threshold for particle-based refinement
   integer::ivar_refine=-1 ! Variable index for refinement
+  logical::sink_refine=.false. ! Fully refine on sink particles
 
   ! Initial condition files for each level
   logical::multiple=.false.
@@ -226,5 +234,16 @@ module amr_parameters
   integer ,dimension(1:MAXBOUND)    ::jbound_max=0
   integer ,dimension(1:MAXBOUND)    ::kbound_min=0
   integer ,dimension(1:MAXBOUND)    ::kbound_max=0
+
+  !Number of processes sharing one token
+  !Only one process can write at a time in an I/O group
+  integer::IOGROUPSIZE=0           ! Main snapshot
+  integer::IOGROUPSIZECONE=0       ! Lightcone
+  integer::IOGROUPSIZEREP=0        ! Subfolder size
+  logical::withoutmkdir=.false.    !If true mkdir should be done before the run
+  logical::print_when_io=.false.   !If true print when IO
+  logical::synchro_when_io=.false. !If true synchronize when IO
+
+
 
 end module amr_parameters

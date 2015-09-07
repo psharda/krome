@@ -60,8 +60,8 @@ class krome():
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
-	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = False
-	humanFlux = reducer = True
+	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = reducer = False
+	humanFlux = True
 #	useCoolCMBFloorZ =  False #DEPRECATED (SB)
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
@@ -6716,7 +6716,7 @@ class krome():
 				sdef = str(ndef[x.name]) #default value from array
 			else:
 				sdef = str(ndef["default"]) #default values if not present in array
-			cheminit += "q(1:nn,ndim+"+ramses_offset+"+"+str(ichem)+")  = "+sdef+"  !"+x.name+"\n"
+			cheminit += "q(1:nn,ndim+"+ramses_offset+"+"+str(ichem)+")  = "+sdef.replace("e","d")+"  !"+x.name+"\n"
 		#replace initialization
 		self.replacein(pfold+fname, ramsesFolder+fname, ["#KROME_init_chem"], [cheminit])
 		indentF90(ramsesFolder+fname)
