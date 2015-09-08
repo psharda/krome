@@ -49,7 +49,7 @@ contains
 
   !*******************
   !The following functions compute the recombination rate
-  ! on dust for H and He. See Weingartner&Draine 2001
+  ! on dust for H+, He+, C+, Si+, and O+. See Weingartner&Draine 2001
   function H_recombination_on_dust(n,Tgas)
     use krome_commons
     implicit none
@@ -58,7 +58,7 @@ contains
  
     H_recombination_on_dust = 0d0
 
-    if(n(idx_E)<1d-20)return 
+    if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
 
     psi = GHabing*sqrt(Tgas)/n(idx_E) 
 
@@ -68,6 +68,7 @@ contains
 
   end function H_recombination_on_dust
 
+  !******************
   function He_recombination_on_dust(n,Tgas)
     use krome_commons
     implicit none
@@ -75,15 +76,63 @@ contains
     real*8::He_recombination_on_dust
  
     He_recombination_on_dust = 0d0
-    if(n(idx_E)<1d-20) return
+    if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
   
     psi = GHabing*sqrt(Tgas)/n(idx_E) 
   
     He_recombination_on_dust = 5.572d-14*total_Z&
+        /(1.d0+3.185d-7*psi**(1.512)*(1.d0+5.115d3&
+        *Tgas**(3.903d-7)*psi**(-0.4956-5.494d-7*log(Tgas))))
+
+  end function He_recombination_on_dust
+
+  !*******************
+  function C_recombination_on_dust(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::n(nspec),Tgas,psi
+    real*8::C_recombination_on_dust
+ 
+    C_recombination_on_dust = 0d0
+    if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
+  
+    psi = GHabing*sqrt(Tgas)/n(idx_E) 
+  
+    C_recombination_on_dust = 4.558d-13*total_Z&
         /(1.d0+6.089d-3*psi**(1.128)*(1.d0+4.331d2&
         *Tgas**(0.04845)*psi**(-0.8120-1.333d-4*log(Tgas))))
 
-  end function He_recombination_on_dust
+  end function C_recombination_on_dust
+
+  !******************
+  function Si_recombination_on_dust(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::n(nspec),Tgas,psi
+    real*8::Si_recombination_on_dust
+ 
+    Si_recombination_on_dust = 0d0
+    if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
+  
+    psi = GHabing*sqrt(Tgas)/n(idx_E) 
+  
+    Si_recombination_on_dust = 2.166d-14*total_Z&
+        /(1.d0+5.678d-8*psi**(1.874)*(1.d0+4.375d4&
+        *Tgas**(1.635d-6)*psi**(-0.8964-7.538d-5*log(Tgas))))
+
+  end function Si_recombination_on_dust
+
+  !********************
+  function O_recombination_on_dust(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::n(nspec),Tgas,k_H
+    real*8::O_recombination_on_dust
+ 
+    k_H = H_recombination_on_dust(n(:),Tgas)
+    O_recombination_on_dust = 0.25d0*k_H
+
+  end function O_recombination_on_dust
 
   !*********************
   !This function returns the
