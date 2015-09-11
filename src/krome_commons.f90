@@ -5,6 +5,8 @@ module krome_commons
 #KROME_species_index
 #KROME_parameters
 
+#KROME_atom_index
+
   !cooling index
 #KROME_cool_index
 
