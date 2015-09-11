@@ -2,7 +2,7 @@ fc = #KROME_compiler
 prj = krome #exe name
 lib = -llapack #libraries
 
-GREP = $(shell grep -i 'dgesv' krome_cooling.f90)
+GREP = $(shell grep -i 'dgesv' krome_subs.f90)
 ifeq ($(GREP),)
 	lib = 
 endif
