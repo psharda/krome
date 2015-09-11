@@ -56,7 +56,7 @@ class krome():
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
-	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = noExample = useNLEQ = usePhotoOpacity = useXRay = False
+	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = usePhotoOpacity = useXRay = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
@@ -193,10 +193,12 @@ class krome():
 			which employs Jeans length (l) as N=n*l.")
 		#self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
 		self.parser.add_argument("-computeElectrons", action="store_true", help="computes electrons by balancing charges instead of\
-			 using the differential de/dt.")
+			using the differential de/dt.")
 		self.parser.add_argument("-conserve", action="store_true", help="conserves the species total number and charge global\
 			neutrality. Works with some limitations, please read the manual.")
 		self.parser.add_argument("-conserveE", action="store_true", help="conserves the charge global neutrality only.")
+		self.parser.add_argument("-conserveLin", action="store_true", help="enable hydro-code oriented function to conserve mass using\
+			a mass-weighted method.")
 		self.parser.add_argument("-coolFile", metavar='FILENAME', help="select the filename to be used to load external cooling. See\
 			also tools/lamda2.py script for a LAMDA<->KROME converter. Default FILENAME is data/coolZ.dat, which contains\
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
@@ -905,6 +907,13 @@ class krome():
 			self.useConserve = True
 			self.useConserveE = True
 			print "Reading option -conserve"
+
+		#use species mass conservation (and charge)
+		if(args.conserveLin):
+			self.useConserveLin = True
+			self.useConserveE = True
+			self.needLAPACK = True
+			print "Reading option -conserveLin"
 
 		#use species charge conservation only
 		if(args.conserveE):
@@ -3967,6 +3976,13 @@ class krome():
 				optVariables += dType+"(:),dust_opt_Qabs_"+dType+"(:,:)\n"
 				optVariables += "real*8,allocatable::dust_opt_Em_"+dType+"(:,:),dust_opt_Tbb_"+dType+"(:)\n"
 
+		#get the list of all the atoms contained in the species
+		atoms = []
+		for x in specs:
+			atoms += x.atomcount.keys()
+		atoms = list(set(atoms))
+		atoms = [x for x in atoms if not(x in ["+","-"])]
+
 
 		#common variables
 		skip = False
@@ -3989,11 +4005,15 @@ class krome():
 			if(srow == "#KROME_species_index"):
 				for x in specs:
 					fout.write("\tinteger,parameter::" + x.fidx + "=" + str(x.idx) + "\n")
+			if(srow == "#KROME_atom_index"):
+					for atom in atoms:
+						fout.write("integer,parameter::idx_atom_" + atom + "=" + str(atoms.index(atom)+1) + "\n")
 			elif(srow == "#KROME_parameters"):
 					ndust = self.dustArraySize*self.dustTypesSize
 					fout.write("\tinteger,parameter::nrea=" + str(self.nrea) + "\n")
 					fout.write("\tinteger,parameter::nmols=" + str(self.nmols) + "\n")
 					fout.write("\tinteger,parameter::nspec=" + str(len(specs)) + "\n")
+					fout.write("\tinteger,parameter::natoms=" + str(len(atoms)) + "\n")
 					fout.write("\tinteger,parameter::ndust=" + str(ndust) + "\n")
 					fout.write("\tinteger,parameter::ndustTypes=" + str(self.dustTypesSize) + "\n")
 					fout.write("\tinteger,parameter::nPhotoBins=" + str(self.photoBins) + "\n")
@@ -4267,7 +4287,7 @@ class krome():
 
 		#conserve
 		krome_conserve = "" #init full string for the pragma replacement
-		if(self.useConserve):
+		if(self.useConserve or self.useConserveLin):
 			skipa = ["CR","Tgas","dummy","g"] #skip these species
 			multi = [] #species with shared atoms
 			acount = dict() #store species per atom type (e.g. {"C":["C","CO","C2"], ...})
@@ -4290,7 +4310,7 @@ class krome():
 					has_multiple = True #flag for shared atoms
 					multi.append(x.name)
 			#if species with shared atoms warns the user (also in the subs file)
-			if(has_multiple):
+			if(has_multiple and self.useConserve):
 				krome_conserve += "!WARNING: found species with different atoms:\n"
 				krome_conserve += "!conservation function may be non-accurate\n"
 				krome_conserve += "!the approximation is valid when the following species\n"
@@ -4375,6 +4395,7 @@ class krome():
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#IFKROME_useH2dust_constant" and not(self.useDustH2const)): skip = True
 			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
+			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 
 		        if(srow == "#ENDIFKROME"): skip = False
 
@@ -4408,6 +4429,33 @@ class krome():
 					if(x.charge<0): chargeBalance.append(" - "+mult+"n("+x.fidx+")")
 				if(len(chargeBalance)>0):
 					fout.write("get_electrons = "+(" &\n".join(chargeBalance))+"\n")
+
+			elif(srow=="#KROME_conserve_matrix" and self.useConserveLin):
+				conserve_matrix = ""
+				for atomType,speciesList in acount.iteritems():
+					for atomType2,speciesList2 in acount.iteritems():
+						for species in speciesList:
+							if(atomType in species.atomcount and atomType2 in species.atomcount):
+								mtxVarA = "A(idx_atom_"+atomType+", idx_atom_"+atomType2+")"
+								pp = species.atomcount[atomType]*species.atomcount[atomType2]
+								mfact = pp*self.mass_dic[atomType.upper()] \
+									* self.mass_dic[atomType2.upper()] / species.mass**2
+								conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + x("+species.fidx \
+									 + ") * "+str(mfact)+" !"+str(pp)+"*m"+atomType+"*m"+atomType2+"/(m"+species.name+")**2\n"
+				fout.write(conserve_matrix+"\n")
+
+
+			elif(srow=="#KROME_conserve_fscale" and self.useConserveLin):
+				specSkip = ["E","+","-","CR","g","dummy","Tgas"]
+				conserve_fscale = ""
+				for species in self.specs:
+					if(species.name in specSkip): continue
+					fmult = [str(atomCount)+"d0*m(idx_"+atomType+") * B(idx_atom_"+atomType+")" for atomType,atomCount in species.atomcount.iteritems() \
+						if not(atomType in specSkip)]
+					fact = (" + &\n ".join(fmult))
+					rescale = "x("+species.fidx+") = x("+species.fidx+") * ("+fact+")*"+str(1./species.mass).replace("e","d")
+					conserve_fscale += rescale.replace(" 1d0*"," ").replace("(1d0*","(")+"\n"
+				fout.write(conserve_fscale+"\n")
 
 			#write reaction rates in coe function
 			if(srow == "#KROME_krates"):
@@ -5986,6 +6034,7 @@ class krome():
 					fout.write("\n!*******************\n")
 					fout.write("function "+funcname+"(xin,inTgas)\n")
 					fout.write("use krome_commons\n")
+					fout.write("use krome_subs\n")
 					fout.write("use krome_cooling\n")
 					fout.write("use krome_constants\n")
 					fout.write("real*8::xin(:),n(nspec),inTgas,k(nZrate),"+funcname+"\n")
