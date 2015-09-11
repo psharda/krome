@@ -4374,6 +4374,7 @@ class krome():
                         if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#IFKROME_useH2dust_constant" and not(self.useDustH2const)): skip = True
+			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
 
 		        if(srow == "#ENDIFKROME"): skip = False
 

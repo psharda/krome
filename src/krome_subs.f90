@@ -47,6 +47,7 @@ contains
 
 #KROME_metallicity_functions
 
+#IFKROME_has_electrons
   !*******************
   !The following functions compute the recombination rate
   ! on dust for H+, He+, C+, Si+, and O+. See Weingartner&Draine 2001
@@ -133,6 +134,8 @@ contains
     O_recombination_on_dust = 0.25d0*k_H
 
   end function O_recombination_on_dust
+
+#ENDIFKROME
 
   !*********************
   !This function returns the
