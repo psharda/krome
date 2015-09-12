@@ -1365,6 +1365,34 @@ contains
 
 #ENDIFKROME
 
+  !************************
+  !conserve the total amount of nucleii,
+  ! alias for conserveLin_x in subs
+  subroutine krome_conserveLin_x(x,ref)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::x(nspec),ref(natoms)
+
+    call conserveLin_x(x(:),ref(:))
+
+  end subroutine krome_conserveLin_x
+
+  !************************
+  !conserve the total amount of nucleii,
+  ! alias for conserveLin_x in subs
+  function krome_conserveLinGetRef_x(x)
+    use krome_commons
+    use krome_subs
+    implicit none
+    real*8::x(nspec)
+    real*8::krome_conserveLinGetRef_x(natoms)
+
+    krome_conserveLinGetRef_x(:) = &
+         conserveLinGetRef_x(x(:))
+
+  end function krome_conserveLinGetRef_x
+
   !*************************
   !force conservation to array x(:)
   !using xi(:) as initial abundances.
