@@ -3976,7 +3976,7 @@ class krome():
 				optVariables += dType+"(:),dust_opt_Qabs_"+dType+"(:,:)\n"
 				optVariables += "real*8,allocatable::dust_opt_Em_"+dType+"(:,:),dust_opt_Tbb_"+dType+"(:)\n"
 
-		#get the list of all the atoms contained in the species
+		#get the list of all the atoms contained in the species, H,C,O,...
 		atoms = []
 		for x in specs:
 			atoms += x.atomcount.keys()
@@ -4005,7 +4005,7 @@ class krome():
 			if(srow == "#KROME_species_index"):
 				for x in specs:
 					fout.write("\tinteger,parameter::" + x.fidx + "=" + str(x.idx) + "\n")
-			if(srow == "#KROME_atom_index"):
+			if(srow == "#KROME_atom_index" and self.useConserveLin):
 					for atom in atoms:
 						fout.write("integer,parameter::idx_atom_" + atom + "=" + str(atoms.index(atom)+1) + "\n")
 			elif(srow == "#KROME_parameters"):
@@ -4432,30 +4432,52 @@ class krome():
 
 			elif(srow=="#KROME_conserve_matrix" and self.useConserveLin):
 				conserve_matrix = ""
+				#loop on the type of atoms, H,C,O,...
 				for atomType,speciesList in acount.iteritems():
+					#loop on the type of atoms
 					for atomType2,speciesList2 in acount.iteritems():
+						#loop on the species of a given atom type
 						for species in speciesList:
-							if(atomType in species.atomcount and atomType2 in species.atomcount):
+							#if the species belongs to both atom groups, e.g. CO in C and O
+							if((atomType in species.atomcount) and (atomType2 in species.atomcount)):
+								#matrix element
 								mtxVarA = "A(idx_atom_"+atomType+", idx_atom_"+atomType2+")"
+								#product of atoms multipliers
 								pp = species.atomcount[atomType]*species.atomcount[atomType2]
+								#factor m1*m2/mSpecies**2
 								mfact = pp*self.mass_dic[atomType.upper()] \
 									* self.mass_dic[atomType2.upper()] / species.mass**2
 								conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + x("+species.fidx \
-									 + ") * "+str(mfact)+" !"+str(pp)+"*m"+atomType+"*m"+atomType2+"/(m"+species.name+")**2\n"
+									+ ") * "+str(mfact)+" !"+str(pp)+"*m"+atomType+"*m"+atomType2 \
+									+ "/(m"+species.name+")**2\n"
 				fout.write(conserve_matrix+"\n")
-
 
 			elif(srow=="#KROME_conserve_fscale" and self.useConserveLin):
 				specSkip = ["E","+","-","CR","g","dummy","Tgas"]
 				conserve_fscale = ""
 				for species in self.specs:
 					if(species.name in specSkip): continue
-					fmult = [str(atomCount)+"d0*m(idx_"+atomType+") * B(idx_atom_"+atomType+")" for atomType,atomCount in species.atomcount.iteritems() \
+					fmult = [str(atomCount)+"d0*m(idx_"+atomType+") * B(idx_atom_"+atomType+")" \
+						for atomType,atomCount in species.atomcount.iteritems() \
 						if not(atomType in specSkip)]
 					fact = (" + &\n ".join(fmult))
 					rescale = "x("+species.fidx+") = x("+species.fidx+") * ("+fact+")*"+str(1./species.mass).replace("e","d")
 					conserve_fscale += rescale.replace(" 1d0*"," ").replace("(1d0*","(")+"\n"
 				fout.write(conserve_fscale+"\n")
+
+			elif(srow=="#KROME_conserveLin_ref" and self.useConserveLin):
+				atomSkip = ["+","-","E"]
+				refMassAll = ""
+				for species in self.specs:
+					if(species.name in atomSkip): continue
+					if(species.mass>0e0):
+						for atomType,atomCount in species.atomcount.iteritems():
+							if(atomType in atomSkip): continue
+							varRef = conserveLinGetRef_x = "conserveLinGetRef_x(idx_atom_"+atomType+")"
+							refMass = varRef + " = "+ varRef + " + " + str(atomCount) \
+								+"d0*m(idx_"+atomType+")*x("+species.fidx+")\n"
+							refMassAll += refMass.replace(" 1d0*"," ")
+				fout.write(refMassAll+"\n")
 
 			#write reaction rates in coe function
 			if(srow == "#KROME_krates"):
@@ -6073,9 +6095,17 @@ class krome():
 					const += "real*8,parameter::krome_" + x[0] + " = " + x[1] + " !" + x[2] + "\n"
 				fout.write(const)
 			elif(srow == "#KROME_common_alias"):
+				#get the list of all the atoms contained in the species, H,C,O,...
+				atoms = []
+				for x in specs:
+					atoms += x.atomcount.keys()
+				atoms = list(set(atoms))
+				atoms = [x for x in atoms if not(x in ["+","-"])]
+
 				fout.write("\tinteger,parameter::krome_nrea=" + str(self.nrea) + "\n")
 				fout.write("\tinteger,parameter::krome_nmols=" + str(nmols) + "\n")
 				fout.write("\tinteger,parameter::krome_nspec=" + str(len(specs)) + "\n")
+				fout.write("\tinteger,parameter::krome_natoms=" + str(len(atoms)) + "\n")
 				fout.write("\tinteger,parameter::krome_ndust=" + str(dustArraySize*dustTypesSize) + "\n")
 				fout.write("\tinteger,parameter::krome_ndustTypes=" + str(dustTypesSize) + "\n")
 				fout.write("\tinteger,parameter::krome_nPhotoBins=" + str(self.photoBins) + "\n")
