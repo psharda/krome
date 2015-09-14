@@ -282,7 +282,7 @@ contains
   subroutine conserveLin_x(x,ref)
     use krome_commons
     implicit none
-    real*8::x(nspec),ref(natoms)
+    real*8::x(nmols),ref(natoms)
     real*8::A(natoms,natoms),B(natoms),m(nspec)
 
     m(:) = get_mass()
@@ -302,7 +302,7 @@ contains
   function conserveLinGetRef_x(x)
     use krome_commons
     implicit none
-    real*8::conserveLinGetRef_x(natoms),x(nspec)
+    real*8::conserveLinGetRef_x(natoms),x(nmols)
     real*8::m(nspec)
 
     m(:) = get_mass()
