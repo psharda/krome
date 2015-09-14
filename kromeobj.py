@@ -4432,9 +4432,9 @@ class krome():
 
 			elif(srow=="#KROME_conserve_matrix" and self.useConserveLin):
 				conserve_matrix = ""
-				#loop on the type of atoms, H,C,O,...
+				#loop on the type of atoms (equation-wise)
 				for atomType,speciesList in acount.iteritems():
-					#loop on the type of atoms
+					#loop on the type of atoms (coefficent-wise)
 					for atomType2,speciesList2 in acount.iteritems():
 						#loop on the species of a given atom type
 						for species in speciesList:
@@ -4443,13 +4443,11 @@ class krome():
 								#matrix element
 								mtxVarA = "A(idx_atom_"+atomType+", idx_atom_"+atomType2+")"
 								#product of atoms multipliers
-								pp = species.atomcount[atomType]*species.atomcount[atomType2]
-								#factor m1*m2/mSpecies**2
-								mfact = pp*self.mass_dic[atomType.upper()] \
-									* self.mass_dic[atomType2.upper()] / species.mass**2
-								conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + x("+species.fidx \
-									+ ") * "+str(mfact)+" !"+str(pp)+"*m"+atomType+"*m"+atomType2 \
-									+ "/(m"+species.name+")**2\n"
+								pp = str(species.atomcount[atomType2]*species.atomcount[atomType])+"d0 *"
+								if(pp=="1d0 *"): pp = ""
+								#mfact = pp*self.mass_dic[atomType2.upper()] / species.mass
+								conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + "+str(pp)+" x("+species.fidx \
+									+ ") * m(idx_"+atomType+") * m(idx_"+atomType2+") / m("+species.fidx+")\n"
 				fout.write(conserve_matrix+"\n")
 
 			elif(srow=="#KROME_conserve_fscale" and self.useConserveLin):
@@ -4461,7 +4459,7 @@ class krome():
 						for atomType,atomCount in species.atomcount.iteritems() \
 						if not(atomType in specSkip)]
 					fact = (" + &\n ".join(fmult))
-					rescale = "x("+species.fidx+") = x("+species.fidx+") * ("+fact+")*"+str(1./species.mass).replace("e","d")
+					rescale = "x("+species.fidx+") = x("+species.fidx+") * ("+fact+")/m("+species.fidx+")" #+str(1./species.mass).replace("e","d")
 					conserve_fscale += rescale.replace(" 1d0*"," ").replace("(1d0*","(")+"\n"
 				fout.write(conserve_fscale+"\n")
 

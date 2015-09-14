@@ -1372,7 +1372,7 @@ contains
     use krome_commons
     use krome_subs
     implicit none
-    real*8::x(nspec),ref(natoms)
+    real*8::x(nmols),ref(natoms)
 
     call conserveLin_x(x(:),ref(:))
 
@@ -1385,7 +1385,7 @@ contains
     use krome_commons
     use krome_subs
     implicit none
-    real*8::x(nspec)
+    real*8::x(nmols)
     real*8::krome_conserveLinGetRef_x(natoms)
 
     krome_conserveLinGetRef_x(:) = &
