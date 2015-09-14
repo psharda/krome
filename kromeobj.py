@@ -56,7 +56,8 @@ class krome():
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
-	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = usePhotoOpacity = useXRay = False
+	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
+	usePhotoOpacity = useXRay = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = wrapC = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
@@ -4447,7 +4448,7 @@ class krome():
 								if(pp=="1d0 *"): pp = ""
 								#mfact = pp*self.mass_dic[atomType2.upper()] / species.mass
 								conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + "+str(pp)+" x("+species.fidx \
-									+ ") * m(idx_"+atomType+") * m(idx_"+atomType2+") / m("+species.fidx+")\n"
+									+ ") * m(idx_"+atomType+") * m(idx_"+atomType2+") / m("+species.fidx+")**2\n"
 				fout.write(conserve_matrix+"\n")
 
 			elif(srow=="#KROME_conserve_fscale" and self.useConserveLin):
@@ -4459,7 +4460,7 @@ class krome():
 						for atomType,atomCount in species.atomcount.iteritems() \
 						if not(atomType in specSkip)]
 					fact = (" + &\n ".join(fmult))
-					rescale = "x("+species.fidx+") = x("+species.fidx+") * ("+fact+")/m("+species.fidx+")" #+str(1./species.mass).replace("e","d")
+					rescale = "x("+species.fidx+") = x("+species.fidx+") * ("+fact+")/m("+species.fidx+")"
 					conserve_fscale += rescale.replace(" 1d0*"," ").replace("(1d0*","(")+"\n"
 				fout.write(conserve_fscale+"\n")
 
@@ -4473,7 +4474,7 @@ class krome():
 							if(atomType in atomSkip): continue
 							varRef = conserveLinGetRef_x = "conserveLinGetRef_x(idx_atom_"+atomType+")"
 							refMass = varRef + " = "+ varRef + " + " + str(atomCount) \
-								+"d0*m(idx_"+atomType+")*x("+species.fidx+")\n"
+								+"d0*m(idx_"+atomType+")*x("+species.fidx+")/m("+species.fidx+")\n"
 							refMassAll += refMass.replace(" 1d0*"," ")
 				fout.write(refMassAll+"\n")
 
