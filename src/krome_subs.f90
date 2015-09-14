@@ -299,6 +299,20 @@ contains
   end subroutine conserveLin_x
 
   !***************************
+  function conserveLinGetRef_x(x)
+    use krome_commons
+    implicit none
+    real*8::conserveLinGetRef_x(natoms),x(nspec)
+    real*8::m(nspec)
+
+    m(:) = get_mass()
+    conserveLinGetRef_x(:) = 0d0
+
+#KROME_conserveLin_ref
+
+  end function conserveLinGetRef_x
+
+  !***************************
   !Ref: Sasaki & Takahara (1993)
   !This function evaluate the recombination rate
   ! for H+ + e --> H + gamma and the same
