@@ -279,6 +279,8 @@ contains
   end function conserve
 
   !*************************
+  !this subroutine changes the x(:) mass fractions of the species
+  ! to force conservation according to the reference ref(:)
   subroutine conserveLin_x(x,ref)
     use krome_commons
     implicit none
@@ -295,10 +297,20 @@ contains
 #ENDIFKROME
 
 #KROME_conserve_fscale
+#IFKROME_has_electrons
+    !charge conservation
+    x(idx_E) = m(idx_E)*(#KROME_conserveLin_electrons)
+    !check if charge conservation goes wrong
+    if(x(idx_E)<0d0) then
+       print *,"ERROR in conserveLin, electrons < 0"
+       stop
+    end if
+#ENDIFKROME
 
   end subroutine conserveLin_x
 
   !***************************
+  !compute the total reference mass atom type by atom type
   function conserveLinGetRef_x(x)
     use krome_commons
     implicit none
