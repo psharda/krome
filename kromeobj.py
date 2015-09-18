@@ -4478,6 +4478,17 @@ class krome():
 							refMassAll += refMass.replace(" 1d0*"," ")
 				fout.write(refMassAll+"\n")
 
+			elif("#KROME_conserveLin_electrons" in srow):
+				conserveLinElectrons = []
+				for species in specs:
+					if(species.charge==0 or species.name=="E"): continue
+					sgn = ("+" if species.charge>0 else "-")
+					conserveLinElectrons.append(sgn + " " + str(abs(species.charge)) + "d0*x(" + species.fidx +") / m("+species.fidx+")")
+				srow = srow.replace("#KROME_conserveLin_electrons",(" &\n".join(conserveLinElectrons)))
+				srow = srow.replace("1d0*","")
+				fout.write(srow+"\n")
+				continue
+
 			#write reaction rates in coe function
 			if(srow == "#KROME_krates"):
 				for x in reacts:
