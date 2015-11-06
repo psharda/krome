@@ -1651,6 +1651,7 @@ class krome():
 			'_dust':0e0,
 			'_c_dust':0e0,
 			'_grain':0e0,
+			'_surface':0e0,
 			'l_':0e0,
 			'c_':0e0,
 			'CR':0e0,
