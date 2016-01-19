@@ -1655,6 +1655,7 @@ class krome():
 			'l_':0e0,
 			'c_':0e0,
 			'CR':0e0,
+			'Q':0e0,
 			'M':0e0,
 			'g':0e0,
 			'E':me,
@@ -7093,6 +7094,7 @@ class krome():
 				gamma = "1.66666666667d0"
 			else:
 				gamma = self.typeGamma
+			if('Q' in name): gamma = "1d99"
 			all_parts.append([name, x.zatom, x.mass, x.neutrons, x.zatom-x.charge,gamma])
 		all_parts = sorted(all_parts,key=lambda x:x[1]) #sort by atomic number
 		for parts in all_parts:
