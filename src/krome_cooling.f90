@@ -815,7 +815,7 @@ contains
     use krome_subs
     real*8::n(:),Tgas, tm, logT
     real*8::cooling_H2GP,T3
-    real*8::LDL,HDLR,HDLV,HDL,fact
+    real*8::LDL,HDLR,HDLV,HDL
 
     tm = max(Tgas, 13.0d0)    ! no cooling below 13 Kelvin
     tm = min(Tgas, 1.d5)      ! fixes numerics
@@ -839,10 +839,11 @@ contains
     HDL  = HDLR + HDLV !erg/s
 
     !TO AVOID DIVISION BY ZERO
-    fact = HDL/LDL !dimensionless
-
-    cooling_H2GP = HDL*n(idx_H2)/(1.d0+(fact)) #KROME_H2opacity !erg/cm3/s
-
+    if (HDL==0.) then
+      cooling_H2GP = 0.0
+    else
+      cooling_H2GP = n(idx_H2)/(1.d0/HDL+1.d0/LDL) #KROME_H2opacity !erg/cm3/s
+    endif
 
   end function cooling_H2GP
 #ENDIFKROME
@@ -886,7 +887,7 @@ contains
     use krome_subs
     real*8::n(:),Tgas
     real*8::temp,logt3,logt,cool,cooling_H2,T3
-    real*8::LDL,HDLR,HDLV,HDL,fact
+    real*8::LDL,HDLR,HDLV,HDL
     real*8::logt32,logt33,logt34,logt35,logt36,logt37,logt38
     real*8::dump14,fH2H,fH2e,fH2H2,fH2Hp,fH2He,w14,w24
     integer::i
@@ -1015,9 +1016,11 @@ contains
     endif
 
     LDL = cool !erg/s
-    fact = HDL/LDL
-
-    cooling_H2 = HDL*n(idx_H2)/(1.d0+(fact)) #KROME_H2opacity !erg/cm3/s
+    if (HDL==0.) then
+      cooling_H2 = 0.d0
+    else
+      cooling_H2 = n(idx_H2)/(1.d0/HDL+1.d0/LDL) #KROME_H2opacity !erg/cm3/s
+    endif
 
   end function cooling_H2
 #ENDIFKROME
