@@ -164,8 +164,8 @@
 #Glover+2010
 84,OH,H,O,H2,NONE,NONE,6.99d-14*T32**2.8*exp(-1950d0*invT)
 
-#KIDA, recomended with the largest T interval
-87,H2,OH,H2O,H,NONE,NONE,2.1d-12*(T32)**(1.52)*exp(-1.74d0*invT)
+#from Baluch+2005
+87,H2,OH,H2O,H,NONE,NONE,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
 
 #KIDA, recomended, below 10K constant
 88,C,OH,H,CO,NONE,1d1,3.68d-10
@@ -199,10 +199,10 @@
 99,CO,H,C,OH,NONE,NONE,1.1d-10*T32**0.5*exp(-77700d0*invT)
 
 #Glover+2010
-100,H2+,H2,H3+,H,NONE,NONE,2.24d-9*T32*.042*exp(-Tgas/46600.)
+100,H2+,H2,H3+,H,NONE,NONE,2.24d-9*T32**.042*exp(-Tgas/46600.)
 
 #Glover+2010
-101,H3+,H,H2+,H2,NONE,NONE,7.7d-9*T32*.042*exp(-17560d0*invT)
+101,H3+,H,H2+,H2,NONE,NONE,7.7d-9*exp(-17560d0*invT)
 
 #Glover+2010
 102,C,H2+,CH+,H,NONE,NONE,2.4d-9
@@ -453,7 +453,7 @@
 @format:idx,R,R,P,rate
 @var:fA = 1d0/(1d0+1d4*exp(-6d2/(user_Tdust+1d-40)))
 @noTabNext
-223,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0+0.04d0*sqrt(max(Tgas-user_Tdust,0d0))+0.002d0*Tgas+8d-6*Tgas**2)
+223,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0+0.04d0*sqrt(Tgas+user_Tdust)+0.002d0*Tgas+8d-6*Tgas**2)
 
 #PHOTOREACTIONS THIN WITH Av
 @format:idx,R,P,P,rate
@@ -491,10 +491,10 @@
 246,H2O+,H2+,O,5.d-11*HnOj
 247,H2O+,H+,OH,5.d-11*HnOj
 248,H2O+,O+,H2,5.d-11*HnOj
-249,H2O+,OH+,H,5.d-11*HnOj
+249,H2O+,OH+,H,1.5d-10*HnOj
 250,H3O+,H+,H2O,2.5d-11*HnOj
 251,H3O+,H2+,OH,2.5d-11*HnOj
-252,H3O+,H2O+,H,7.5d-11*HnOj
+252,H3O+,H2O+,H,7.5d-12*HnOj
 253,H3O+,OH+,H2,2.5d-11*HnOj
 254,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)
 255,O2,O,O,7d-10*exp(-1.8*user_Av)
