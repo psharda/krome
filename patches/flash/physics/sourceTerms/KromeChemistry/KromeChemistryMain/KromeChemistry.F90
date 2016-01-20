@@ -42,7 +42,8 @@ subroutine KromeChemistry(blockCount, blockList, dt)
   use Eos_interface, ONLY : Eos_wrapped, Eos
 
 
-  use krome_main  
+  use krome_main
+  use krome_user
 
   implicit none
   
