@@ -828,7 +828,7 @@ contains
 
     !this will avoid a division by zero and useless calculations
     if(LDL==0d0) then
-       cooling_H2GP = 0.d0
+       cooling_H2GP = 0d0
        return
     end if
 
@@ -838,11 +838,11 @@ contains
     HDLV = (6.7e-19*exp(-5.86/t3) + 1.6e-18*exp(-11.7/t3)) !erg/s
     HDL  = HDLR + HDLV !erg/s
 
-    !TO AVOID DIVISION BY ZERO
-    if (HDL==0.) then
-      cooling_H2GP = 0.0
+    !to avoid division by zero
+    if (HDL==0d0) then
+      cooling_H2GP = 0d0
     else
-      cooling_H2GP = n(idx_H2)/(1.d0/HDL+1.d0/LDL) #KROME_H2opacity !erg/cm3/s
+      cooling_H2GP = n(idx_H2)/(1d0/HDL+1d0/LDL) #KROME_H2opacity !erg/cm3/s
     endif
 
   end function cooling_H2GP
