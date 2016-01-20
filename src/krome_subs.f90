@@ -426,7 +426,7 @@ contains
 
     fselfH2 = 0.965d0/(1+x/b5)**2 + &
          0.035d0/sqrt(1d0+x) * &
-         exp(-8.5d-4*sqrt(1+x))
+         exp(max(-8.5d-4*sqrt(1+x),-250.))
 
   end function fselfH2
 
