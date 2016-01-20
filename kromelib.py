@@ -1964,8 +1964,7 @@ def indentF90(filename):
 		if(lbeg(tokenclose, srow)): nind -= 1 #check if the line ends with one of tokenclose
 		indent = (" "*(nind*nspace)) #compute number of spaces for indent
 		if(is_amper): indent = (" "*(2*nspace)) + indent #increas indent in case of previous &
-		if(srow!=""):
-			if(srow[0]=="#"): indent = "" #no indent for pragmas
+		if(srow.startswith("#")): indent = "" #no indent for pragmas
 		if(not(srow=="" and is_blank)): arow.append(indent+srow+"\n") #append indented line to array of rows
 		is_amper = False #is a line after ampersend flag
 		if(lend(["&"], srow)): is_amper = True #check if the line ends with &
@@ -1980,7 +1979,7 @@ def indentF90(filename):
 	#write the new file
 	fh = open(filename,"w")
 	for x in arowl:
-		fh.write(x)
+		fh.write(x.rstrip()+"\n")
 	fh.close()
 
 ################################
