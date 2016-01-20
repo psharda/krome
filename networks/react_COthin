@@ -453,7 +453,7 @@
 @format:idx,R,R,P,rate
 @var:fA = 1d0/(1d0+1d4*exp(-6d2/(user_Tdust+1d-40)))
 @noTabNext
-223,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0+0.04d0*sqrt(Tgas+user_Tdust)+0.002d0*Tgas+8d-6*Tgas**2)
+223,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0+0.04d0*sqrt(Tgas+user_Tdust)+0.002d0*Tgas+8d-6*Tgas**2)/n(idx_H)*Hnuclei
 
 #PHOTOREACTIONS THIN WITH Av
 @format:idx,R,P,P,rate
