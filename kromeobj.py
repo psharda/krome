@@ -4046,6 +4046,8 @@ class krome():
 			elif(srow == "#KROME_phys_commons"):
 				for x in self.physVariables:
 					fout.write("real*8::phys_"+x[0]+"\n")
+				for x in self.physVariables:
+					fout.write("!$omp threadprivate(phys_"+x[0]+")\n")
 			elif(srow == "#KROME_xsecs_from_file"):
 				srow = ""
 				for rea in reacts:
@@ -6403,8 +6405,12 @@ class krome():
 						photoPartnersList += "photoPartners("+str(i+1)+") = "+listPart[i][1].fidx+"\n"
 				fout.write(photoPartnersList+"\n")
 			elif(srow == "#KROME_init_phys_variables"):
+				if (len(self.physVariables)>0):
+					fout.write("!$omp parallel\n")
 				for x in self.physVariables:
 					fout.write("phys_"+x[0]+" = "+x[1]+"\n")
+				if (len(self.physVariables)>0):
+					fout.write("!$omp end parallel\n")
 			elif(srow == "#KROME_rwork_array"):
 				fout.write("\treal*8::rwork("+str(self.lrw)+")\n")
 			elif(srow == "#KROME_iwork_array"):
