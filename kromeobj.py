@@ -2609,14 +2609,18 @@ class krome():
 
 		#check sinks (species that are only formed)
 		if(self.sinkCheck):
-			print "checking sinks..."
+			print "checking sinks/sources..."
 			allR = []
 			allP = []
 			for rea in reacts:
 				for RR in rea.reactants:
-					if(not(RR in allR)): allR.append(RR.name)
+					allR.append(RR.name)
 				for PP in rea.products:
-					if(not(PP in allP)): allP.append(PP.name)
+					allP.append(PP.name)
+
+			allP = list(set(allP))
+			allR = list(set(allR))
+
 			sinks = []
 			sources = []
 			for PP in allP:
@@ -2638,6 +2642,7 @@ class krome():
 
 		#check recombination (ion species that never recombine with electrons)
 		if(self.recCheck):
+			foundOnce = False
 			print "checking recombinations..."
 			for sp in specs:
 				if(sp.charge>0):
@@ -2645,12 +2650,15 @@ class krome():
 					for rea in reacts:
 						RR = sorted([x.name for x in rea.reactants])
 						if(RR==sorted([sp.name,"E"])):
-							found = True
+							found = foundOnce = True
 							break
 					if(not(found)):
-						print "ERROR: "+sp.name+" never recombines, check your network!"
-						print " Disable this control with -noRecCheck"
-						sys.exit()
+						print "ERROR: "+sp.name+" never recombines with electrons, check your network!"
+
+			#error and stop if recombination error found
+			if(foundOnce):
+				print " Disable this control with -noRecCheck"
+				sys.exit()
 
 		#write reverse report tp file
 		if(self.checkReverse):
