@@ -1644,7 +1644,7 @@ contains
        stop
     end if
 
-    print *,"Reading tables from "//trim(filename)
+    if (krome_mpi_rank<=1) print *,"Reading tables from "//trim(filename)
 
     !open file and check if it exists
     open(51,file=trim(filename),status="old",iostat=ios)

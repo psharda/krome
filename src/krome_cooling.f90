@@ -212,7 +212,7 @@ contains
     integer::ios,iout(3),i
     real*8::rout(4)
 
-    print *,"load CO cooling..."
+    if (krome_mpi_rank<=1) print *,"load CO cooling..."
     open(33,file="coolCO.dat",status="old",iostat=ios)
     !check if file exists
     if(ios.ne.0) then
