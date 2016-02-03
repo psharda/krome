@@ -4336,6 +4336,7 @@ class krome():
 
 			#loop on the found atoms. k=atom, v=list of species with k
 			for (k,v) in acount.iteritems():
+				if(not(self.useConserve)): break
 				if(k=="E"): continue #skip electrons
 				aadd = [] #parts of the summation for ntot
 				sdiff = "" #string for scaling
