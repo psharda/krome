@@ -1627,6 +1627,8 @@ contains
 
   !********************************************
   subroutine init_anytab2D(filename,x,y,z,xmul,ymul)
+    use krome_commons
+    implicit none
     character(len=*)::filename
     character(len=60)::row_string
     real*8::x(:),y(:),z(:,:),rout(3),xmul,ymul
@@ -1644,7 +1646,7 @@ contains
        stop
     end if
 
-    print *,"Reading tables from "//trim(filename)
+    if (krome_mpi_rank<=1) print *,"Reading tables from "//trim(filename)
 
     !open file and check if it exists
     open(51,file=trim(filename),status="old",iostat=ios)

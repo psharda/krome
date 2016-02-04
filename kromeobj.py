@@ -2609,14 +2609,18 @@ class krome():
 
 		#check sinks (species that are only formed)
 		if(self.sinkCheck):
-			print "checking sinks..."
+			print "checking sinks/sources..."
 			allR = []
 			allP = []
 			for rea in reacts:
 				for RR in rea.reactants:
-					if(not(RR in allR)): allR.append(RR.name)
+					allR.append(RR.name)
 				for PP in rea.products:
-					if(not(PP in allP)): allP.append(PP.name)
+					allP.append(PP.name)
+
+			allP = list(set(allP))
+			allR = list(set(allR))
+
 			sinks = []
 			sources = []
 			for PP in allP:
@@ -2638,6 +2642,7 @@ class krome():
 
 		#check recombination (ion species that never recombine with electrons)
 		if(self.recCheck):
+			recErrorOnce = False
 			print "checking recombinations..."
 			for sp in specs:
 				if(sp.charge>0):
@@ -2648,9 +2653,13 @@ class krome():
 							found = True
 							break
 					if(not(found)):
-						print "ERROR: "+sp.name+" never recombines, check your network!"
-						print " Disable this control with -noRecCheck"
-						sys.exit()
+						recErrorOnce = True
+						print "ERROR: "+sp.name+" never recombines with electrons, check your network!"
+
+			#error and stop if recombination error found
+			if(recErrorOnce):
+				print " Disable this control with -noRecCheck"
+				sys.exit()
 
 		#write reverse report tp file
 		if(self.checkReverse):
@@ -4046,6 +4055,8 @@ class krome():
 			elif(srow == "#KROME_phys_commons"):
 				for x in self.physVariables:
 					fout.write("real*8::phys_"+x[0]+"\n")
+				for x in self.physVariables:
+					fout.write("!$omp threadprivate(phys_"+x[0]+")\n")
 			elif(srow == "#KROME_xsecs_from_file"):
 				srow = ""
 				for rea in reacts:
@@ -4325,6 +4336,7 @@ class krome():
 
 			#loop on the found atoms. k=atom, v=list of species with k
 			for (k,v) in acount.iteritems():
+				if(not(self.useConserve)): break
 				if(k=="E"): continue #skip electrons
 				aadd = [] #parts of the summation for ntot
 				sdiff = "" #string for scaling
@@ -6403,8 +6415,12 @@ class krome():
 						photoPartnersList += "photoPartners("+str(i+1)+") = "+listPart[i][1].fidx+"\n"
 				fout.write(photoPartnersList+"\n")
 			elif(srow == "#KROME_init_phys_variables"):
+				if (len(self.physVariables)>0):
+					fout.write("!$omp parallel\n")
 				for x in self.physVariables:
 					fout.write("phys_"+x[0]+" = "+x[1]+"\n")
+				if (len(self.physVariables)>0):
+					fout.write("!$omp end parallel\n")
 			elif(srow == "#KROME_rwork_array"):
 				fout.write("\treal*8::rwork("+str(self.lrw)+")\n")
 			elif(srow == "#KROME_iwork_array"):

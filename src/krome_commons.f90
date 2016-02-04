@@ -146,6 +146,7 @@ module krome_commons
 
   !stores the last evaluation of the rates in the fex
   real*8::last_coe(nrea)
+  !$omp threadprivate(last_coe)
 
 #IFKROME_usePreDustExp
   !store the exponentials at constant Tdust
