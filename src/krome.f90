@@ -1,5 +1,8 @@
 module krome_main
 
+#IFKROME_useBindC
+  use iso_c_binding
+#ENDIFKROME
   integer::krome_call_to_fex
   !$omp threadprivate(krome_call_to_fex)
 
@@ -10,16 +13,17 @@ contains
   !********************************
   !KROME main (interface to the solver library)
 #IFKROME_useX
-  subroutine krome(x,rhogas,Tgas,dt)!#KROME_dust_arguments)
+  subroutine krome(x,rhogas,Tgas,dt #KROME_dust_arguments) #KROME_bindC
 #ELSEKROME
-  subroutine krome(x,Tgas,dt)!#KROME_dust_arguments)
+  subroutine krome(x,Tgas,dt #KROME_dust_arguments) #KROME_bindC
 #ENDIFKROME
     use krome_commons
     use krome_subs
     use krome_ode
     use krome_reduction
     use krome_dust
-    real*8::dt,x(nmols),rhogas,Tgas,mass(nspec),n(nspec),tloc,xin
+    #KROME_double :: rhogas,Tgas,dt,x(nmols)
+    real*8::mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
     integer::icount,i,ierr,icount_max
     
@@ -228,9 +232,9 @@ contains
   !*********************************
   !integrates to equilibrium using constant temperature
 #IFKROME_useX
-  subroutine krome_equilibrium(x,rhogas,Tgas)
+  subroutine krome_equilibrium(x,rhogas,Tgas) #KROME_bindC
 #ELSEKROME
-  subroutine krome_equilibrium(x,Tgas)
+  subroutine krome_equilibrium(x,Tgas) #KROME_bindC
 #ENDIFKROME
     use krome_ode
     use krome_subs
@@ -239,8 +243,9 @@ contains
     implicit none
     integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
     integer::i,imax
-    real*8::tloc,x(nmols),Tgas,n(nspec),mass(nspec),ni(nspec)
-    real*8::rhogas,dt,xin
+    #KROME_double :: Tgas, rhogas, x(nmols)
+    real*8::tloc,n(nspec),mass(nspec),ni(nspec)
+    real*8::dt,xin
 #KROME_iwork_array
     real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
@@ -459,7 +464,7 @@ contains
   end subroutine krome_dump
 
   !********************************
-  subroutine krome_init()
+  subroutine krome_init() #KROME_bindC
     use krome_commons
     use krome_tabs
     use krome_subs
@@ -567,32 +572,56 @@ contains
   end subroutine krome_init
 
   !****************************
-  function krome_get_coe(x,Tgas)
+  function krome_get_coe(x,Tgas) #KROME_bindC
     !krome_get_coe: public interface to obtain rate coefficients
     use krome_commons
     use krome_subs
     use krome_tabs
     implicit none
-    real*8::krome_get_coe(nrea),n(nspec),x(:),Tgas
+#IFKROME_useBindC
+    real(kind=c_double) :: x(:), Tgas
+    real(kind=c_double), target :: coes(nrea)
+    type(c_ptr) :: krome_get_coe
+#ELSEKROME_useBindC
+    real*8 :: krome_get_coe(nrea), x(:), Tgas
+#ENDIFKROME
+    real*8::n(nspec)
 
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
+#IFKROME_useBindC
+    coes(:) = coe_tab(n(:))
+    krome_get_coe = c_loc(coes)
+#ELSEKROME_useBindC
     krome_get_coe(:) = coe_tab(n(:))
+#ENDIFKROME
 
   end function krome_get_coe
 
   !****************************
-  function krome_get_coeT(Tgas)
+  function krome_get_coeT(Tgas) #KROME_bindC
     !krome_get_coeT: public interface to obtain rate coefficients
     ! with argument Tgas only
     use krome_commons
     use krome_subs
     use krome_tabs
     implicit none
-    real*8::krome_get_coeT(nrea),n(nspec),Tgas
+#IFKROME_useBindC
+    real(kind=c_double) :: Tgas
+    real(kind=c_double), target :: coeTs(nrea)
+    type(c_ptr) :: krome_get_coeT
+#ELSEKROME_useBindC
+    real*8 :: krome_get_coeT(nrea),Tgas
+#ENDIFKROME
+    real*8::n(nspec)
     n(idx_Tgas) = Tgas
+#IFKROME_useBindC
+    coeTs(:) = coe_tab(n(:))
+    krome_get_coeT = c_loc(coeTs)
+#ELSEKROME_useBindC
     krome_get_coeT(:) = coe_tab(n(:))
+#ENDIFKROME
   end function krome_get_coeT
 
 
