@@ -27,8 +27,8 @@ contains
     use krome_commons
     use krome_subs
     implicit none
-    #KROME_double_value :: krome_get_table_Tdust,Tgas
-    #KROME_double :: x(nmols)
+    #KROME_double_value :: Tgas
+    #KROME_double :: x(nmols), krome_get_table_Tdust
     real*8::ntot
 
     ntot = sum(x)
@@ -108,8 +108,8 @@ contains
     use krome_subs
     use krome_commons
     implicit none
-    #KROME_double :: x(nmols),num
-    #KROME_double_value :: Tgas,krome_num2col
+    #KROME_double :: x(nmols),krome_num2col
+    #KROME_double_value :: Tgas,num
     real*8::n(nspec)
 
     n(:) = 0d0
@@ -175,8 +175,8 @@ contains
     use krome_commons
     use krome_subs
     implicit none
-    #KROME_double :: x(nmols)
-    #KROME_double_value :: Tgas, krome_get_Tdust
+    #KROME_double :: x(nmols), krome_get_Tdust
+    #KROME_double_value :: Tgas
     real*8 :: ntot
 
     ntot = sum(x(1:nmols))
@@ -298,7 +298,7 @@ contains
   function krome_get_averaged_Tdust() #KROME_bindC
     use krome_commons
     implicit none
-    #KROME_double_value :: krome_get_averaged_Tdust
+    #KROME_double :: krome_get_averaged_Tdust
 
     krome_get_averaged_Tdust = sum(xdust(:)*krome_dust_T(:))/sum(xdust(:))
 
@@ -353,7 +353,7 @@ contains
   subroutine krome_set_surface_norm(x,xarg,idx_base) #KROME_bindC
     use krome_commons
     implicit none
-    #KROME_integer :: idx_base
+    #KROME_integer_value :: idx_base
     #KROME_double_value :: xarg
     #KROME_double :: x(nmols)
 
@@ -369,7 +369,7 @@ contains
   subroutine krome_set_surface_array(x,xarr,idx_base) #KROME_bindC
     use krome_commons
     implicit none
-    #KROME_integer :: idx_base
+    #KROME_integer_value :: idx_base
     #KROME_double :: xarr(ndust),x(nmols)
 
     x(idx_base:idx_base+ndust-1) = xarr(:)
@@ -384,9 +384,8 @@ contains
   function krome_get_surface(x,idx_base) #KROME_bindC
     use krome_commons
     implicit none
-    #KROME_integer :: idx_base
-    #KROME_double_value :: krome_get_surface
-    #KROME_double :: x(nmols)
+    #KROME_integer_value :: idx_base
+    #KROME_double :: x(nmols), krome_get_surface
 
     krome_get_surface = sum(x(idx_base:idx_base+ndust-1))
 
@@ -1193,8 +1192,7 @@ contains
   function krome_get_mu_x(xin) #KROME_bindC
     use krome_commons
     implicit none
-    #KROME_double_value :: krome_get_mu_x
-    #KROME_double :: xin(:)
+    #KROME_double :: xin(nmols), krome_get_mu_x
     real*8::n(nmols)
     n(:) = krome_x2n(xin(:),1d0)
     krome_get_mu_x = krome_get_mu(n(:))
@@ -1206,8 +1204,8 @@ contains
   function krome_get_gamma_x(xin,inTgas) #KROME_bindC
     use krome_commons
     implicit none
-    #KROME_double_value :: krome_get_gamma_x,inTgas
-    #KROME_double :: xin(nmols)
+    #KROME_double_value :: inTgas
+    #KROME_double :: xin(nmols), krome_get_gamma_x
     real*8::x(nmols),Tgas,rhogas
 
     Tgas = inTgas
@@ -1347,8 +1345,8 @@ contains
     use krome_subs
     use krome_commons
     implicit none
-    #KROME_double_value :: krome_get_heating,inTgas
-    #KROME_double :: x(nmols)
+    #KROME_double_value :: inTgas
+    #KROME_double :: x(nmols), krome_get_heating
     real*8::Tgas,k(nrea),nH2dust,n(nspec)
     n(1:nmols) = x(:)
     Tgas = inTgas
@@ -1403,8 +1401,8 @@ contains
     use krome_cooling
     use krome_commons
     implicit none
-    #KROME_double_value :: krome_get_cooling,inTgas
-    #KROME_double :: x(nmols)
+    #KROME_double_value :: inTgas
+    #KROME_double :: x(nmols), krome_get_cooling
     real*8::Tgas,n(nspec)
     n(1:nmols) = x(:)
     Tgas = inTgas
@@ -1449,7 +1447,7 @@ contains
   subroutine krome_plot_cooling(n) #KROME_bindC
     use krome_cooling
     implicit none
-    #KROME_double :: n(nmols)
+    #KROME_double :: n(krome_nmols)
 
     call plot_cool(n(:))
 
@@ -1464,12 +1462,19 @@ contains
     #KROME_double :: n(nmols)
     #KROME_double_value :: Tgas
     real*8::x(nspec)
-    #KROME_integer_value, optional :: nfile_in
+#IFKROME_useBindC
+    #KROME_integer_value :: nfile_in
+#ELSEKROME_useBindC
+    #KROME_integer, optional :: nfile_in
+#ENDIFKROME
     integer::nfile
     nfile = 31
     x(:) = 0.d0
     x(1:nmols) = n(:)
+#IFKROME_useBindC
+#ELSEKROME_useBindC
     if(present(nfile_in)) nfile = nfile_in
+#ENDIFKROME
     call dump_cool(x(:),Tgas,nfile)
 
   end subroutine krome_dump_cooling
@@ -1549,8 +1554,8 @@ contains
   function krome_get_gamma(x,Tgas) #KROME_bindC
     use krome_subs
     use krome_commons
-    #KROME_double_value :: krome_get_gamma,Tgas
-    #KROME_double :: x(nmols)
+    #KROME_double_value :: Tgas
+    #KROME_double :: x(nmols), krome_get_gamma
     real*8::n(nspec)
     n(:) = 0.d0
     n(1:nmols) = x(:)
@@ -1590,8 +1595,7 @@ contains
     use krome_commons
     use krome_subs
     implicit none
-    #KROME_double :: x(nmols)
-    #KROME_double_value :: krome_get_mu
+    #KROME_double :: x(nmols), krome_get_mu
     real*8::n(1:nspec)
     n(:) = 0d0
     n(1:nmols) = x(:)
@@ -1672,8 +1676,7 @@ contains
     use krome_commons
     use krome_subs
     real*8::n(nspec)
-    #KROME_double_value :: krome_get_Hnuclei
-    #KROME_double :: x(nmols)
+    #KROME_double :: krome_get_Hnuclei, x(nmols)
     n(:) = 0d0
     n(1:nmols) = x(:)
 
@@ -1739,8 +1742,7 @@ contains
   ! giving all the number densities n(:)
   function krome_get_rho(n) #KROME_bindC
     use krome_commons
-    #KROME_double_value :: krome_get_rho
-    #KROME_double :: n(nmols)
+    #KROME_double :: krome_get_rho, n(nmols)
     real*8::m(nmols)
     m(:) = krome_get_mass()
     krome_get_rho = sum(m(:)*n(:))
@@ -1788,8 +1790,7 @@ contains
   function krome_get_electrons(x) #KROME_bindC
     use krome_commons
     use krome_subs
-    #KROME_double :: x(nmols)
-    #KROME_double_value :: krome_get_electrons
+    #KROME_double :: x(nmols), krome_get_electrons
     real*8::n(nspec)
     n(1:nmols) = x(:)
     n(nmols+1:nspec) = 0d0
