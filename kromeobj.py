@@ -135,7 +135,9 @@ class krome():
 	fdbase = "data/database/" #database of reaction folder for auto reactions
 	KindSingle = "real*4"
 	KindDouble = "real*8"
+	KindDoubleValue = "real*8"
 	KindInteger = "integer"
+	KindIntegerValue = "integer"
 	KindCharacter = "character"
 	BindC = ""
 	version = "14.08.dev"
@@ -1087,8 +1089,10 @@ class krome():
 		#creates C and Python wrappers
 		if(args.interfaceC or args.interfacePy):
 			self.KindInteger = "integer(kind=c_int)"
+			self.KindIntegerValue = "integer(kind=c_int), value"
 			self.KindSingle = "real(kind=c_float)"
 			self.KindDouble = "real(kind=c_double)"
+			self.KindDoubleValue = "real(kind=c_double), value"
 			self.KindCharacter = "character(kind=c_char)"
 			self.BindC = "bind(C)"
 			self.interfaceC = True
@@ -3274,7 +3278,7 @@ class krome():
 			elif(srow == "#KROME_cooling_functions"):
 				for x in self.coolZ_functions:
 					funcname =  "krome_"+x[0]
-					fout.write("extern double "+funcname+"(double *, double inTgas);\n")
+					fout.write("extern double "+funcname+"(double *x, double inTgas);\n")
 
 			else:
 				if(len(srow)>0):
@@ -6150,7 +6154,9 @@ class krome():
 
 			row = row.replace("#KROME_single",self.KindSingle)
 			row = row.replace("#KROME_double",self.KindDouble)
+			row = row.replace("#KROME_double_value",self.KindDoubleValue)
 			row = row.replace("#KROME_integer",self.KindInteger)
+			row = row.replace("#KROME_integer_value",self.KindIntegerValue)
 			row = row.replace("#KROME_character",self.KindCharacter)
 
 			if(self.interfaceC or self.interfacePy):
@@ -6197,7 +6203,7 @@ class krome():
 					fset += "subroutine "+fsetname+"(argset) " + self.BindC + "\n"
 					fset += "use krome_commons\n"
 					fset += "implicit none\n"
-					fset += self.KindDouble + " :: argset\n"
+					fset += self.KindDoubleValue + " :: argset\n"
 					fset += x+" = argset\n"
 					fset += "end subroutine "+fsetname+"\n"
 					
@@ -6206,7 +6212,7 @@ class krome():
 					fget += "function "+fgetname+"() " + self.BindC + "\n"
 					fget += "use krome_commons\n"
 					fget += "implicit none\n"
-					fget += self.KindDouble + " :: "+fgetname+"\n"
+					fget += self.KindDoubleValue + " :: "+fgetname+"\n"
 					fget += fgetname+" = "+x+"\n"
 					fget += "end function "+fgetname+"\n"
 					funcs += fset + fget
@@ -6230,20 +6236,20 @@ class krome():
 					#set subroutine
 					funcname = "krome_set_"+x[0]
 					fout.write("!*******************\n")
-					fout.write("subroutine "+funcname+"(arg)" + self.BindC + "\n")
+					fout.write("subroutine "+funcname+"(arg) " + self.BindC + "\n")
 					fout.write(" use krome_commons\n")
 					fout.write(" implicit none\n")
-					fout.write(" " + self.KindDouble + " :: arg\n")
+					fout.write(" " + self.KindDoubleValue + " :: arg\n")
 					fout.write(" phys_"+x[0]+" = arg\n")
 					fout.write("end subroutine "+funcname+"\n\n")
 
 					#get function
 					funcname = "krome_get_"+x[0]
 					fout.write("!*******************\n")
-					fout.write("function "+funcname+"()" + self.BindC + "\n")
+					fout.write("function "+funcname+"() " + self.BindC + "\n")
 					fout.write(" use krome_commons\n")
 					fout.write(" implicit none\n")
-					fout.write(" " + self.KindDouble + " :: "+funcname+"\n")
+					fout.write(" " + self.KindDoubleValue + " :: "+funcname+"\n")
 					fout.write(funcname+" = phys_"+x[0]+"\n")
 					fout.write("end function "+funcname+"\n\n")
 			#write the user alias for the cooling functions
@@ -6256,7 +6262,8 @@ class krome():
 					fout.write("use krome_subs\n")
 					fout.write("use krome_cooling\n")
 					fout.write("use krome_constants\n")
-					fout.write(self.KindDouble + " :: xin(:),inTgas,"+funcname+"\n")
+					fout.write(self.KindDouble + " :: xin(nmols)")
+					fout.write(self.KindDoubleValue + " :: inTgas,"+funcname+"\n")
 					fout.write("real*8::n(nspec),k(nZrate)\n")
 					fout.write("n(:) = 0d0\n")
 					fout.write("n(idx_Tgas) = inTgas\n")
@@ -6496,7 +6503,9 @@ class krome():
 
 			row = row.replace("#KROME_single",self.KindSingle)
 			row = row.replace("#KROME_double",self.KindDouble)
+			row = row.replace("#KROME_double_value",self.KindDoubleValue)
 			row = row.replace("#KROME_integer",self.KindInteger)
+			row = row.replace("#KROME_integer_value",self.KindIntegerValue)
 			row = row.replace("#KROME_character",self.KindCharacter)
 
 			row = row.replace("#KROME_ATOL",str(ATOL))
