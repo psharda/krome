@@ -2,7 +2,7 @@ module krome_main
 
 #IFKROME_useBindC
   use iso_c_binding
-#ENDIFKROME
+#ENDIFKROME_useBindC
   integer::krome_call_to_fex
   !$omp threadprivate(krome_call_to_fex)
 
@@ -22,7 +22,13 @@ contains
     use krome_ode
     use krome_reduction
     use krome_dust
-    #KROME_double :: rhogas,Tgas,dt,x(nmols)
+    #KROME_double :: Tgas,dt
+    #KROME_double :: x(nmols)
+#IFKROME_useX
+    #KROME_double_value :: rhogas
+#ELSEKROME
+    real*8 :: rhogas
+#ENDIFKROME
     real*8::mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
     integer::icount,i,ierr,icount_max
@@ -243,7 +249,13 @@ contains
     implicit none
     integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
     integer::i,imax
-    #KROME_double :: Tgas, rhogas, x(nmols)
+    #KROME_double_value :: Tgas
+    #KROME_double :: x(nmols)
+#IFKROME_useX
+    #KROME_double_value :: rhogas
+#ELSEKROME
+    real*8 :: rhogas
+#ENDIFKROME
     real*8::tloc,n(nspec),mass(nspec),ni(nspec)
     real*8::dt,xin
 #KROME_iwork_array
@@ -579,12 +591,13 @@ contains
     use krome_tabs
     implicit none
 #IFKROME_useBindC
-    real(kind=c_double) :: x(:), Tgas
+    real(kind=c_double) :: x(nmols)
+    real(kind=c_double), value :: Tgas
     real(kind=c_double), target :: coes(nrea)
     type(c_ptr) :: krome_get_coe
 #ELSEKROME_useBindC
-    real*8 :: krome_get_coe(nrea), x(:), Tgas
-#ENDIFKROME
+    real*8 :: krome_get_coe(nrea), x(nmols), Tgas
+#ENDIFKROME_useBindC
     real*8::n(nspec)
 
     n(:) = 0d0
@@ -595,7 +608,7 @@ contains
     krome_get_coe = c_loc(coes)
 #ELSEKROME_useBindC
     krome_get_coe(:) = coe_tab(n(:))
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   end function krome_get_coe
 
@@ -608,12 +621,12 @@ contains
     use krome_tabs
     implicit none
 #IFKROME_useBindC
-    real(kind=c_double) :: Tgas
+    real(kind=c_double), value :: Tgas
     real(kind=c_double), target :: coeTs(nrea)
     type(c_ptr) :: krome_get_coeT
 #ELSEKROME_useBindC
     real*8 :: krome_get_coeT(nrea),Tgas
-#ENDIFKROME
+#ENDIFKROME_useBindC
     real*8::n(nspec)
     n(idx_Tgas) = Tgas
 #IFKROME_useBindC
@@ -621,7 +634,7 @@ contains
     krome_get_coeT = c_loc(coeTs)
 #ELSEKROME_useBindC
     krome_get_coeT(:) = coe_tab(n(:))
-#ENDIFKROME
+#ENDIFKROME_useBindC
   end function krome_get_coeT
 
 

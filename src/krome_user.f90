@@ -1,7 +1,7 @@
 module krome_user
 #IFKROME_useBindC
   use iso_c_binding
-#ENDIFKROME
+#ENDIFKROME_useBindC
   implicit none
 
 #KROME_header
@@ -57,7 +57,7 @@ contains
     real*4 :: xmoc(:,:)
     real*8 :: krome_convert_xmoc(nmols),x(nmols)
     integer :: imap(:)
-#ENDIFKROME
+#ENDIFKROME_useBindC
     real*8::n(nspec)
 
     x(:) = 0d0
@@ -73,7 +73,7 @@ contains
     krome_convert_xmoc = c_loc(x)
 #ELSEKROME_useBindC
     krome_convert_xmoc(:) = x(:)
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   end function krome_convert_xmoc
 
@@ -158,7 +158,7 @@ contains
   subroutine krome_popcool_dump(xvar,nfile) #KROME_bindC
     use krome_cooling
     implicit none
-    #KROME_double :: xvar
+    #KROME_double_value :: xvar
     #KROME_integer_value :: nfile
 
     call dump_cooling_pop(xvar,nfile)
@@ -1172,7 +1172,7 @@ contains
     type(c_ptr) :: krome_get_coef
 #ELSEKROME_useBindC
     real*8 :: krome_get_coef(nrea),Tgas
-#ENDIFKROME
+#ENDIFKROME_useBindC
     real*8::n(nspec)
     n(:) = 0d0
     n(idx_Tgas) = Tgas
@@ -1182,7 +1182,7 @@ contains
     krome_get_coef = c_loc(coeffs)
 #ELSEKROME_useBindC
     krome_get_coef(:) = coe(n(:))
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   end function krome_get_coef
 
@@ -1270,7 +1270,7 @@ contains
     real*8 :: krome_n2x(nmols)
 
     krome_n2x(:) = n(:) * krome_get_mass() / rhogas
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   end function krome_n2x
 
@@ -1304,7 +1304,7 @@ contains
     krome_x2n_c = c_loc(x2n)
 
   end function krome_x2n_c
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   !*******************
   !do only cooling and heating
@@ -1373,7 +1373,7 @@ contains
     type(c_ptr) :: krome_get_heating_array
 #ELSEKROME_useBindC
     real*8 :: x(nmols),krome_get_heating_array(nheats),inTgas
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
     n(:) = 0d0
     n(1:nmols) = x(:)
@@ -1387,7 +1387,7 @@ contains
     krome_get_heating_array = c_loc(heatarr)
 #ELSEKROME_useBindC
     krome_get_heating_array(:) = get_heating_array(n(:),Tgas,k(:),nH2dust)
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   end function krome_get_heating_array
 
@@ -1426,7 +1426,7 @@ contains
     type(c_ptr) :: krome_get_cooling_array
 #ELSEKROME_useBindC
     real*8 :: x(nmols),krome_get_cooling_array(ncools),inTgas
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
     n(:) = 0d0
     n(1:nmols) = x(:)
@@ -1438,7 +1438,7 @@ contains
     krome_get_cooling_array = c_loc(coolarr)
 #ELSEKROME_useBindC
     krome_get_cooling_array(:) = get_cooling_array(n(:),Tgas)
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   end function krome_get_cooling_array
 
@@ -1466,7 +1466,7 @@ contains
     #KROME_integer_value :: nfile_in
 #ELSEKROME_useBindC
     #KROME_integer, optional :: nfile_in
-#ENDIFKROME
+#ENDIFKROME_useBindC
     integer::nfile
     nfile = 31
     x(:) = 0.d0
@@ -1474,7 +1474,7 @@ contains
 #IFKROME_useBindC
 #ELSEKROME_useBindC
     if(present(nfile_in)) nfile = nfile_in
-#ENDIFKROME
+#ENDIFKROME_useBindC
     call dump_cool(x(:),Tgas,nfile)
 
   end subroutine krome_dump_cooling
@@ -1513,7 +1513,7 @@ contains
 
     krome_conserveLinGetRef_x(:) = &
          conserveLinGetRef_x(x(:))
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   end function krome_conserveLinGetRef_x
 
@@ -1530,7 +1530,7 @@ contains
     type(c_ptr) :: krome_conserve
 #ELSEKROME_useBindC
     real*8 :: x(krome_nmols),xi(krome_nmols),krome_conserve(krome_nmols)
-#ENDIFKROME
+#ENDIFKROME_useBindC
     real*8::n(krome_nspec),ni(krome_nspec)
 
     n(:) = 0d0
@@ -1543,7 +1543,7 @@ contains
     krome_conserve = c_loc(n_mols)
 #ELSEKROME_useBindC
     krome_conserve(:) = n(1:krome_nmols)
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   end function krome_conserve
 
@@ -1583,7 +1583,7 @@ contains
     
     zatoms(:) = get_zatoms()
     krome_get_zatoms(:) = zatoms(1:nmols)
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   end function krome_get_zatoms
 
@@ -1641,7 +1641,7 @@ contains
     mass(:) = krome_get_mass()
     krome_get_mass_c = c_loc(mass)
   end function krome_get_mass_c
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   !*****************
   !get an array of double containing the inverse 
@@ -1668,7 +1668,7 @@ contains
     imass(:) = krome_get_imass()
     krome_get_imass_c = c_loc(imass)
   end function krome_get_imass_c
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   !***********************
   !get the total number of H nuclei
@@ -1710,7 +1710,7 @@ contains
     krome_get_charges_c = c_loc(chgs)
 
   end function krome_get_charges_c
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   !*****************
   !get an array of character*16 and size krome_nmols
@@ -1872,7 +1872,7 @@ contains
     krome_get_flux_c = c_loc(fluxes)
 
   end function krome_get_flux_c
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   !*****************************
   !store the fluxes to the file unit ifile
@@ -1929,7 +1929,7 @@ contains
     real*8 :: krome_get_qeff(nrea)
 
     krome_get_qeff(:) = get_qeff()
-#ENDIFKROME
+#ENDIFKROME_useBindC
 
   end function krome_get_qeff
 
@@ -1943,7 +1943,13 @@ contains
     use krome_subs
     implicit none
     #KROME_double_value :: rho,Tgas
-    #KROME_double :: krome_stars_coe(nrea),x(nmols)
+    #KROME_double :: x(nmols)
+#IFKROME_useBindC
+    type(c_ptr) :: krome_stars_coe
+    real(kind=c_double), target :: coe_stars(nrea)
+#ELSEKROME_useBindC
+    real*8 :: krome_stars_coe(nrea)
+#ENDIFKROME_useBindC
     real*8::n(nspec)
     integer::ny
     real*8,allocatable::y(:)
@@ -1966,8 +1972,12 @@ contains
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
-
+#IFKROME_useBindC
+    coe_stars(:) = stars_coe(n(:),rho,Tgas,y(:),zz(:))
+    krome_stars_coe = c_loc(coe_stars)
+#ELSEKROME_useBindC
     krome_stars_coe(:) = stars_coe(n(:),rho,Tgas,y(:),zz(:))
+#ENDIFKROME_useBindC
     deallocate(y,zz)
   end function krome_stars_coe
 

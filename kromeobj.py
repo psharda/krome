@@ -3191,7 +3191,7 @@ class krome():
 						if(not(xbasic in allBasics)):
 							fout.write("const int krome_"+xbasic + " = " + str(x.idx-1) +"; //"+mol.name+"\n")
 						allBasics.append(xbasic)
-					fout.write("const int krome_"+x.fidx + " = " + str(x.idx) +"; // "+x.name+"\n")
+					fout.write("const int krome_"+x.fidx + " = " + str(x.idx-1) +"; // "+x.name+"\n")
 
 				# write out the names of the species
 				fout.write("const char* krome_names[] = {\n")
@@ -3202,12 +3202,18 @@ class krome():
 				# write out KROME cooling terms
 				idxcool = get_cooling_index_list()
 				for x in idxcool:
+					# C arrays start from 0; decrement all indices by one.
+					if x[:6] != 'ncools':
+						x = re.sub(r'= (\d+)', lambda m: '= {0}'.format(int(m.group(1))-1), x)
 					fout.write("const int krome_"+x+";\n")
 
 			elif(srow == "#KROME_heat_index"):
 				# write out KROME heating terms
 				idxheat = get_heating_index_list()
 				for x in idxheat:
+					# C arrays start from 0; decrement all indices by one.
+					if x[:6] != 'nheats':
+						x = re.sub(r'= (\d+)', lambda m: '= {0}'.format(int(m.group(1))-1), x)
 					fout.write("const int krome_"+x+";\n")
 
 			elif(srow == "#KROME_constant_list"):
@@ -6127,7 +6133,7 @@ class krome():
 				if(k.upper()==mols.name.upper()):
 					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
-		skip = skipDustOpacity = False
+		skip = skipDustOpacity = skipBindC = False
 		#loop on source to pre-process pragmas
 		for row in fh:
 
@@ -6145,12 +6151,14 @@ class krome():
 			if(srow == "#IFKROME_dust_opacity" and not(self.useDust)): skipDustOpacity = True
 			if(srow == "#ENDIFKROME"): skip = False
 			if(srow == "#ENDIFKROME_dust_opacity"): skipDustOpacity = False
-			if(srow == "#IFKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skip = True
-			if(srow == "#ELSEKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skip = False
-			if(srow == "#ELSEKROME_useBindC" and (self.interfaceC or self.interfacePy)): skip = True
+			if(srow == "#IFKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = True
+			if(srow == "#ELSEKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = False
+			if(srow == "#ELSEKROME_useBindC" and (self.interfaceC or self.interfacePy)): skipBindC = True
+			if(srow == "#ENDIFKROME_useBindC"): skipBindC = False
 
 			if(skip): continue
 			if(skipDustOpacity): continue
+			if(skipBindC): continue
 
 			row = row.replace("#KROME_single",self.KindSingle)
 			row = row.replace("#KROME_double_value",self.KindDoubleValue)
@@ -6453,7 +6461,7 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome.f90","w")
 
-		skip = False
+		skip = skipBindC = False
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_useX" and not(self.useX)): skip = True
@@ -6484,9 +6492,10 @@ class krome():
 			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
 			if(srow == "#IFKROME_useDustTabs" and not(self.useDustTabs)): skip = True
 			if(srow == "#IFKROME_reducer" and not(self.reducer)): skip = True
-			if(srow == "#IFKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skip = True
-			if(srow == "#ELSEKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skip = False
-			if(srow == "#ELSEKROME_useBindC" and (self.interfaceC or self.interfacePy)): skip = True
+			if(srow == "#IFKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = True
+			if(srow == "#ELSEKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = False
+			if(srow == "#ELSEKROME_useBindC" and (self.interfaceC or self.interfacePy)): skipBindC = True
+			if(srow == "#ENDIFKROME_useBindC"): skipBindC = False
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -6513,6 +6522,7 @@ class krome():
 			row = row.replace("#KROME_RTOL",str(RTOL))
 
 			if(skip): continue
+			if(skipBindC): continue
 			reducerVarsList = [[x+"_Min",x+"_Max"] for x in self.reducerVars]
 
 			if(srow == "#KROME_header"):
