@@ -125,7 +125,7 @@
 65,HOC+,H2,HCO+,H2,NONE,NONE,3d-10
 
 #ionpol1 rate from 10 K. Below this limit constant ionpol1(T=10K), otherwise explode
-66,HOC+,CO,HCO+,CO,NONE,1d1,1.14d-9
+66,HOC+,CO,HCO+,CO,NONE,1d1,1.604d-9
 67,HOC+,CO,HCO+,CO,1d1,NONE,8.68d-10*(1.+2.42717d-2*sqrt(3e2*invT)+7.1537*invT)
 68,C,H2,CH,H,NONE,NONE,6.64d-10*exp(-11700d0*invT)
 69,CH,H,C,H2,NONE,NONE,1.31d-10*exp(-8d1*invT)
@@ -171,7 +171,7 @@
 87,H2,OH,H2O,H,NONE,NONE,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
 
 #KIDA, recomended, below 10K constant
-88,C,OH,H,CO,NONE,1d1,3.68d-10
+88,C,OH,H,CO,NONE,1d1,7.051e-11
 89,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(-.108d0*invT)
 
 #KIDA, recomended
@@ -258,11 +258,11 @@
 119,O,H3+,H,H2O+,NONE,NONE,3.42d-10*T32**(-.156)*exp(-1.41d0*invT)
 
 #KIDA, below 10K constant
-120,OH,H3+,H2,H2O+,NONE,1d1,2.28d-8
+120,OH,H3+,H2,H2O+,NONE,1d1,2.277d-8
 121,OH,H3+,H2,H2O+,1d1,NONE,1.52d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #KIDA, below 10K constant
-122,OH,C+,H,CO+,NONE,1d1,2.28d-8
+122,OH,C+,H,CO+,NONE,1d1,2.277d-8
 123,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #Glover+2010
@@ -277,7 +277,7 @@
 
 #Glover+2010, KIDA, constant below 10K, and KIDA for additional channel
 128,H2O,C+,HOC+,H,NONE,NONE,1.8d-9
-129,H2O,C+,HCO+,H,NONE,1d1,5.03d-9
+129,H2O,C+,HCO+,H,NONE,1d1,5.027d-9
 130,H2O,C+,HCO+,H,1d1,NONE,3.4093e-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 131,H2O,C+,H2O+,C,NONE,NONE,2.4d-10
 
@@ -296,22 +296,22 @@
 137,C,O2+,O2,C+,NONE,NONE,5.2d-11
 
 #KIDA, constant below 10K
-138,CO,H3+,H2,HCO+,NONE,1d1,2.47d-9
+138,CO,H3+,H2,HCO+,NONE,1d1,2.468d-9
 139,CO,H3+,H2,HCO+,1d1,NONE,1.88055d-9*(1d0 + 0.02427d0*(3d2*invT)**.5 + 1.79558d0*invT)
 
 #KIDA, constant below 10K
-140,CO,H3+,H2,HOC+,NONE,1d1,1.45d-10
+140,CO,H3+,H2,HOC+,NONE,1d1,1.421d-10
 141,CO,H3+,H2,HOC+,1d1,NONE,1.08256d-10*(1d0 + 0.02427d0*(3d2*invT)**.5 + 1.79558d0*invT)
 
-#Glover+2010
-142,HCO+,C,CO,CH+,NONE,1d1,1d-9
+#KIDA
+142,HCO+,C,CO,CH+,NONE,NONE,1.1d-9
 
 #KIDA, constant below 10K
-143,HCO+,H2O,CO,H3O+,NONE,1d1,1.23d-8
+143,HCO+,H2O,CO,H3O+,NONE,1d1,7.279e-08
 144,HCO+,H2O,CO,H3O+,1d1,NONE,8.34d-10*(1d0 + 0.5232d0*(3d2*invT)**.5 + 834.165880*invT)
 
 #KIDA, constant below 10K
-145,CH,H+,CH+,H,NONE,1d1,3.3d-8
+145,CH,H+,CH+,H,NONE,1d1,3.297d-8
 146,CH,H+,CH+,H,1d1,NONE,3.54e-09*(0.62d0 + 1.587411d0*(3d2*invT)**.5)
 
 #KIDA, same rate for both channels
@@ -331,26 +331,26 @@
 
 #KIDA, constant below 10K
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-155,OH,H+,OH+,H,NONE,1d1,3.75d-8
+155,OH,H+,OH+,H,NONE,1d1,3.745d-8
 156,OH,H+,OH+,H,1d1,NONE,2.5d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #KIDA, constant below 10K
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
-157,OH,He+,O+,He,H,NONE,1d1,2.2d-8
+157,OH,He+,O+,He,H,NONE,1d1,2.022d-8
 158,OH,He+,O+,He,H,1d1,NONE,1.35d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #KIDA, constant below 10K
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-159,H2O,H+,H,H2O+,NONE,1d1,4.2d-8
+159,H2O,H+,H,H2O+,NONE,1d1,4.202d-8
 160,H2O,H+,H,H2O+,1d1,NONE,2.85d-9*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 
 #KIDA,constant below 10K
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
-161,H2O,He+,He,OH,H+,NONE,1d1,7.56d-9
+161,H2O,He+,He,OH,H+,NONE,1d1,7.562d-9
 162,H2O,He+,He,OH,H+,1d1,NONE,5.1282d-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 
 #KIDA,constant below 10K
-163,H2O,He+,He,OH+,H,NONE,1d1,7.56d-9
+163,H2O,He+,He,OH+,H,NONE,1d1,7.562d-9
 164,H2O,He+,He,OH+,H,1d1,NONE,5.1282d-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 
 #KIDA,constant below 10K
