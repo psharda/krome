@@ -223,9 +223,17 @@ contains
   function krome_get_dust_distribution() #KROME_bindC
     use krome_commons
     implicit none
-    #KROME_double :: krome_get_dust_distribution(ndust)
+#IFKROME_useBindC
+    real(kind=c_double), target :: dust_distribution(ndust)
+    type(c_ptr) :: krome_get_dust_distribution
+
+    dust_distribution(:) = xdust(:)
+    krome_get_dust_distribution = c_loc(dust_distribution)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_dust_distribution(ndust)
 
     krome_get_dust_distribution(:) = xdust(:)
+#ENDIFKROME_useBindC
 
   end function krome_get_dust_distribution
 
@@ -247,9 +255,17 @@ contains
   function krome_get_dust_size() #KROME_bindC
     use krome_commons
     implicit none
-    #KROME_double :: krome_get_dust_size(ndust)
+#IFKROME_useBindC
+    real(kind=c_double), target :: dust_size(ndust)
+    type(c_ptr) :: krome_get_dust_size
+
+    dust_size(:) = krome_dust_asize(:)
+    krome_get_dust_size = c_loc(dust_size)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_dust_size(ndust)
 
     krome_get_dust_size(:) = krome_dust_asize(:)
+#ENDIFKROME_useBindC
 
   end function krome_get_dust_size
 
@@ -322,9 +338,17 @@ contains
   function krome_get_Tdust() #KROME_bindC
     use krome_commons
     implicit none
-    #KROME_double :: krome_get_Tdust(ndust)
+#IFKROME_useBindC
+    real(kind=c_double), target :: arrTdust(ndust)
+    type(c_ptr) :: krome_get_Tdust
+
+    arrTdust(:) = krome_dust_T(:)
+    krome_get_Tdust = c_loc(arrTdust)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_Tdust(ndust)
 
     krome_get_Tdust(:) = krome_dust_T(:)
+#ENDIFKROME_useBindC
 
   end function krome_get_Tdust
 
@@ -591,8 +615,14 @@ contains
   ! in eV/cm2/sr
   function krome_get_photoBinJ() #KROME_bindC
     use krome_commons
-    #KROME_double :: krome_get_photoBinJ(nPhotoBins)
+#IFKROME_useBindC
+    real(kind=c_double), target :: get_photoBinJ(nPhotoBins)
+    type(c_ptr) :: krome_get_photoBinJ
+    krome_get_photoBinJ = c_loc(get_photoBinJ)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_photoBinJ(nPhotoBins)
     krome_get_photoBinJ(:) = photoBinJ(:)
+#ENDIFKROME_useBindC
   end function krome_get_photoBinJ
 
   !*********************************
@@ -600,8 +630,15 @@ contains
     !returns an array of size krome_nPhotoBins with the
     ! left energy limits (eV)
     use krome_commons
-    #KROME_double :: krome_get_photoBinE_left(nPhotoBins)
+#IFKROME_useBindC
+    real(kind=c_double), target :: get_photoBinE_left(nPhotoBins)
+    type(c_ptr) :: krome_get_photoBinE_left
+    get_photoBinE_left(:) = photoBinEleft(:)
+    krome_get_photoBinE_left = c_loc(get_photoBinE_left)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_photoBinE_left(nPhotoBins)
     krome_get_photoBinE_left(:) = photoBinEleft(:)
+#ENDIFKROME_useBindC
   end function krome_get_photoBinE_left
 
   !*********************************
@@ -609,8 +646,15 @@ contains
   ! right energy limits (eV)
   function krome_get_photoBinE_right() #KROME_bindC
     use krome_commons
-    #KROME_double :: krome_get_photoBinE_right(nPhotoBins)
+#IFKROME_useBindC
+    real(kind=c_double), target :: get_photoBinE_right(nPhotoBins)
+    type(c_ptr) :: get_photoBinE_right
+    get_photoBinE_right(:) = photoBinEright(:)
+    krome_get_photoBinE_right = c_loc(get_photoBinE_right)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_photoBinE_right(nPhotoBins)
     krome_get_photoBinE_right(:) = photoBinEright(:)
+#ENDIFKROME_useBindC
   end function krome_get_photoBinE_right
 
   !*********************************
@@ -618,8 +662,15 @@ contains
   ! middle energy values (eV)
   function krome_get_photoBinE_mid() #KROME_bindC
     use krome_commons
-    #KROME_double :: krome_get_photoBinE_mid(nPhotoBins)
+#IFKROME_useBindC
+    real(kind=c_double), target :: get_photoBinE_mid(nPhotoBins)
+    type(c_ptr) :: krome_get_photoBinE_mid
+    get_photoBinE_mid(:) = photoBinEmid(:)
+    krome_get_photoBinE_mid = c_loc(get_photoBinE_mid)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_photoBinE_mid(nPhotoBins)
     krome_get_photoBinE_mid(:) = photoBinEmid(:)
+#ENDIFKROME_useBindC
   end function krome_get_photoBinE_mid
 
   !*********************************
@@ -627,8 +678,15 @@ contains
   ! bin span (eV)
   function krome_get_photoBinE_delta() #KROME_bindC
     use krome_commons
-    #KROME_double :: krome_get_photoBinE_delta(nPhotoBins)
+#IFKROME_useBindC
+    real(kind=c_double), target :: get_photoBinE_delta(nPhotoBins)
+    type(c_ptr) :: krome_get_photoBinE_delta
+    get_photoBinE_delta(:) = photoBinEdelta(:)
+    krome_get_photoBinE_delta = c_loc(get_photoBinE_delta)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_photoBinE_delta(nPhotoBins)
     krome_get_photoBinE_delta(:) = photoBinEdelta(:)
+#ENDIFKROME_useBindC
   end function krome_get_photoBinE_delta
 
   !*********************************
@@ -636,8 +694,15 @@ contains
   ! inverse of the bin span (1/eV)
   function krome_get_photoBinE_idelta() #KROME_bindC
     use krome_commons
-    #KROME_double :: krome_get_photoBinE_idelta(nPhotoBins)
+#IFKROME_useBindC
+    real(kind=c_double), target :: get_photoBinE_idelta(nPhotoBins)
+    type(c_ptr) :: krome_get_photoBinE_idelta
+    get_photoBinE_idelta(:) = photoBinEidelta(:)
+    krome_get_photoBinE_idelta = c_loc(get_photoBinE_idelta)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_photoBinE_idelta(nPhotoBins)
     krome_get_photoBinE_idelta(:) = photoBinEidelta(:)
+#ENDIFKROME_useBindC
   end function krome_get_photoBinE_idelta
 
   !*********************************
@@ -645,8 +710,15 @@ contains
   ! integrated photo rates (1/s)
   function krome_get_photoBin_rates() #KROME_bindC
     use krome_commons
-    #KROME_double :: krome_get_photoBin_rates(nPhotoRea)
+#IFKROME_useBindC
+    real(kind=c_double), target :: get_photoBin_rates(nPhotoRea)
+    type(c_ptr) :: krome_get_photoBin_rates
+    get_photoBin_rates(:) = photoBinRates(:)
+    krome_get_photoBin_rates = c_loc(get_photoBin_rates)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_photoBin_rates(nPhotoRea)
     krome_get_photoBin_rates(:) = photoBinRates(:)
+#ENDIFKROME_useBindC
   end function krome_get_photoBin_rates
 
   !*********************************
@@ -655,10 +727,19 @@ contains
   function krome_get_xsec(idx) #KROME_bindC
     use krome_commons
     implicit none
-    #KROME_double :: krome_get_xsec(nPhotoBins)
-    #KROME_integer_value :: idx
+#IFKROME_useBindC
+    real(kind=c_double), target :: get_xsec(nPhotoBins)
+    type(c_ptr) :: krome_get_xsec
+    integer, value :: idx
+    
+    get_xsec(:) = photoBinJTab(idx,:)
+    krome_get_xsec = c_loc(get_xsec)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_xsec(nPhotoBins)
+    integer :: idx
     
     krome_get_xsec(:) = photoBinJTab(idx,:)
+#ENDIFKROME_useBindC
     
   end function krome_get_xsec
 
@@ -667,8 +748,17 @@ contains
   ! integrated photo heatings (erg/s)
   function krome_get_photoBin_heats() #KROME_bindC
     use krome_commons
-    #KROME_double :: krome_get_photoBin_heats(nPhotoRea)
+    implicit none
+#IFKROME_useBindC
+    real(kind=c_double), target :: get_photoBin_heats(nPhotoRea)
+    type(c_ptr) :: krome_get_photoBin_heats
+    get_photoBin_heats(:) = photoBinHeats(:)
+    krome_get_photoBin_heats = c_loc(get_photoBin_heats)
+#ELSEKROME_useBindC
+    real*8 :: krome_get_photoBin_heats(nPhotoRea)
     krome_get_photoBin_heats(:) = photoBinHeats(:)
+#ENDIFKROME_useBindC
+
   end function krome_get_photoBin_heats
 
   !****************************
@@ -732,7 +822,7 @@ contains
   ! energy Left (eV), energy Right (eV)
   ! intensity (eV/cm2/sr).
   ! This subroutine sets also the bin-size
-  subroutine krome_load_photoBin_file(fname) #KROME_bindC
+  subroutine krome_load_photoBin_file(fname) !!#KROME_bindC !! not yet callable from C
     use krome_commons
     implicit none
     integer::ios,icount
@@ -1077,8 +1167,15 @@ contains
     use krome_photo
     use krome_subs
     implicit none
-    #KROME_double :: x(nmols),krome_get_opacity(nPhotoBins)
-    #KROME_double_value :: Tgas
+#IFKROME_useBindC
+    real(kind=c_double) :: x(nmols)
+    real(kind=c_double), target :: get_opacity(nPhotoBins)
+    type(c_ptr) :: krome_get_opacity
+    real(kind=c_double), value :: Tgas
+#ELSEKROME_useBindC
+    real*8 :: x(nmols),krome_get_opacity(nPhotoBins)
+    real*8 :: Tgas
+#ENDIFKROME_useBindC
     real*8::tau,n(nspec)
     integer::i,j,idx
 
@@ -1094,8 +1191,16 @@ contains
           idx = photoPartners(i)
           tau = tau + num2col(x(idx),n(:)) * photoBinJTab(i,j)
        end do
+#IFKROME_useBindC
+       get_opacity(j) = tau !store
+#ELSEKROME_useBindC
        krome_get_opacity(j) = tau !store
+#ENDIFKROME_useBindC
     end do
+
+#IFKROME_useBindC
+    krome_get_opacity = c_loc(get_opacity)
+#ENDIFKROME_useBindC
 
   end function krome_get_opacity
 
@@ -1111,8 +1216,14 @@ contains
     use krome_subs
     use krome_dust
     implicit none
-    #KROME_double :: x(nmols),krome_get_opacity_size(nPhotoBins)
-    #KROME_double_value :: Tgas,csize
+#IFKROME_useBindC
+    real(kind=c_double) :: x(nmols)
+    real(kind=c_double), target :: get_opacity_size(nPhotoBins)
+    real(kind=c_double), value :: Tgas, csize
+#ELSEKROME_useBindC
+    real*8 :: x(nmols),krome_get_opacity_size(nPhotoBins)
+    real*8 :: Tgas,csize
+#ENDIFKROME_useBindC
     real*8::n(nspec),energy,tau
     integer::i,j,idx
 
@@ -1136,9 +1247,15 @@ contains
           tau = tau + pi*krome_dust_asize2(i)*xdust(i) * get_Qabs(energy,i)
        end do
 #ENDIFKROME_dust_opacity
-
+#IFKROME_useBindC
+       get_opacity_size(j) = tau * csize !store
+#ELSEKROME_useBindC
        krome_get_opacity_size(j) = tau * csize !store
     end do
+
+#IFKROME_useBindC
+    krome_get_opacity_size = c_loc(get_opacity_size)
+#ENDIFKROME_useBindC
 
   end function krome_get_opacity_size
 
@@ -1260,8 +1377,8 @@ contains
     implicit none
     #KROME_double :: n(nmols)
     #KROME_double_value :: rhogas
-    #KROME_double, target :: n2x(nmols)
 #IFKROME_useBindC
+    real(kind=c_double), target :: n2x(nmols)
     type(c_ptr) :: krome_n2x
 
     n2x(:) = n(:) * krome_get_mass() / rhogas
@@ -1657,7 +1774,7 @@ contains
     krome_get_imass = tmp(1:nmols)
   end function krome_get_imass
 #IFKROME_useBindC
-  ! Another example of a wrapper function that exists because the original
+  ! Yet another example of a wrapper function that exists because the original
   ! version is called by other functions (within this file).
   function krome_get_imass_c() bind(C, name='krome_get_imass')
     use krome_commons
@@ -1987,14 +2104,25 @@ contains
     use krome_commons
     use krome_stars
     implicit none
-    #KROME_double :: x(nmols),krome_stars_energy(nrea),k(nrea)
+    #KROME_double :: x(nmols),k(nrea)
     #KROME_double_value :: rho,Tgas
+#IFKROME_useBindC
+    real(kind=c_double), target :: get_stars_energy(nrea)
+    type(c_ptr) :: krome_stars_energy
+#ELSEKROME_useBindC
+    real*8 :: krome_stars_energy(nrea)
+#ENDIFKROME_useBindC
     real*8::n(nspec)
 
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
+#IFKROME_useBindC
+    get_stars_energy(:) = stars_energy(n(:),rho,Tgas,k(:))
+    krome_stars_energy = c_loc(get_stars_energy)
+#ELSEKROME_useBindC
     krome_stars_energy(:) = stars_energy(n(:),rho,Tgas,k(:))
+#ENDIFKROME_useBindC
 
   end function krome_stars_energy
 
