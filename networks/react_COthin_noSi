@@ -262,7 +262,7 @@
 121,OH,H3+,H2,H2O+,1d1,NONE,1.52d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #KIDA, below 10K constant
-122,OH,C+,H,CO+,NONE,1d1,2.277d-8
+122,OH,C+,H,CO+,NONE,1d1,1.371d-08
 123,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #Glover+2010
