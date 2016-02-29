@@ -502,7 +502,7 @@ class krome():
 			[argv.append(x) for x in ["-interfaceC", "-coolFile=tests/Cinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
 			filename = "tests/Cinterface/network.ntw"
 		elif(args.test=="Pyinterface"):
-			[argv.append(x) for x in ["-interfacePy",  "-coolFile=tests/Cinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
+			[argv.append(x) for x in ["-interfacePy",  "-coolFile=tests/Pyinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
 			filename = "tests/Cinterface/network.ntw"
 		else:
 			tests = ", ".join(sorted(os.walk('tests').next()[1]))
@@ -1101,12 +1101,12 @@ class krome():
 			self.KindDoubleValue = "real(kind=c_double), value"
 			self.KindCharacter = "character(kind=c_char)"
 			self.BindC = "bind(C)"
-			self.interfaceC = True
 			if (args.interfaceC):
 				print "Reading option -interfaceC"
+				self.interfaceC = True
 			if (args.interfacePy):
-				self.interfacePy = True
 				print "Reading option -interfacePy"
+				self.interfacePy = True
 
 		#skip writing Jacobian in krome_ode.f90, allows faster compilation
 		if(args.skipJacobian):
@@ -3132,7 +3132,7 @@ class krome():
 
 	# write the C header for krome_main
 	def makeMainCHeader(self):
-		if(not(self.interfaceC or self.interfacePy)): return
+		if(not(self.interfaceC)): return
 
 		fh = open(self.srcFolder+"krome.h")
 		if(self.buildCompact):
@@ -3159,7 +3159,7 @@ class krome():
 	def makeUserCHeader(self):
 		import re
 
-		if(not(self.interfaceC or self.interfacePy)): return
+		if(not(self.interfaceC)): return
 
 		fh = open(self.srcFolder+"krome_user.h")
 		if(self.buildCompact):
@@ -3301,8 +3301,144 @@ class krome():
 		if(not(self.buildCompact)):
 			fout.close()
 
+	def makePythonModule(self):
+		if(not(self.interfacePy)): return
+
+		fh = open(self.srcFolder+"pykrome.py")
+		fout = open(self.buildFolder+"pykrome.py","w")
+
+		skip = False
+		for row in fh:
+			srow = row.strip()
+
+			if(srow == "#IFKROME_useX" and not(self.useX)): skip = True
+			if(srow == "#ELSEKROME" and not(self.useX)): skip = False
+			if(srow == "#ELSEKROME" and self.useX): skip = True
+
+			if(srow == "#IFKROME_usePhotoBins" and self.photoBins<=0): skip = True
+			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
+			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
+			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
+			if(srow == "#IFKROME_use_coolingZ" and not(self.useCoolingZ)): skip = True
+			if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
+			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
+			if(srow == "#IFKROME_has_electrons" and not(hasElectrons)): skip = True
+			if(srow == "#IFKROME_useTabsTdust" and not(self.useDustTabs)): skip = True
+			if(srow == "#IFKROME_dust_opacity" and not(self.useDust)): skip = True
+
+			if(srow == "#ENDIFKROME"): skip = False
+			if(srow == "#ENDIFKROME_dust_opacity"): skip = False
+
+			if(skip): continue
+
+			if(srow == "#KROME_species"):
+				# write out KROME species
+				allBasics = []
+				for x in self.specs:
+					if(x.is_surface):
+						xbasic = ("_".join(x.fidx.split("_")[:-1]))
+						xname = ("_".join(x.name.split("_")[:-1]))
+						if(not(xbasic in allBasics)):
+							fout.write("krome_"+xbasic + " = " + str(x.idx-1) +" # "+mol.name+"\n")
+						allBasics.append(xbasic)
+					fout.write("krome_"+x.fidx + " = " + str(x.idx-1) +" # "+x.name+"\n")
+
+				# write out the names of the species
+				fout.write("krome_names = (\n")
+				fout.write(",\n".join(["  \""+x.name+"\"" for x in self.specs])+"\n)")
+				fout.write("\n")
+
+			elif(srow == "#KROME_cool_index"):
+				# write out KROME cooling terms
+				idxcool = get_cooling_index_list()
+				for x in idxcool:
+					# Python arrays start from 0; decrement all indices by one.
+					if x[:6] != 'ncools':
+						x = re.sub(r'= (\d+)', lambda m: '= {0}'.format(int(m.group(1))-1), x)
+					fout.write("krome_"+x+"\n")
+
+			elif(srow == "#KROME_heat_index"):
+				# write out KROME heating terms
+				idxheat = get_heating_index_list()
+				for x in idxheat:
+					# Python arrays start from 0; decrement all indices by one.
+					if x[:6] != 'nheats':
+						x = re.sub(r'= (\d+)', lambda m: '= {0}'.format(int(m.group(1))-1), x)
+					fout.write("krome_"+x+"\n")
+
+			elif(srow == "#KROME_constant_list"):
+				# write out KROME constants
+				const = ""
+				constants = self.constantList
+				newc = []
+				for i in range(len(constants)):
+					x = constants[i]
+					for j in range(i):
+						y = constants[j]
+						x[1] = x[1].replace(y[0],"krome_"+y[0])
+					newc.append(x)
+
+				for x in newc:
+					x[1] = x[1].replace('d','e')
+					const += "krome_" + x[0] + " = " + x[1] + " # " + x[2] + "\n"
+				fout.write(const)
+
+			elif(srow == "#KROME_common_alias"):
+				#get the list of all the atoms contained in the species, H,C,O,...
+				atoms = []
+				for x in self.specs:
+					atoms += x.atomcount.keys()
+				atoms = list(set(atoms))
+				atoms = [x for x in atoms if not(x in ["+","-"])]
+
+				fout.write("krome_nrea = " + str(self.nrea) + "\n")
+				fout.write("krome_nmols = " + str(self.nmols) + "\n")
+				fout.write("krome_nspec = " + str(len(self.specs)) + "\n")
+				fout.write("krome_natoms = " + str(len(atoms)) + "\n")
+				fout.write("krome_ndust = " + str(self.dustArraySize*self.dustTypesSize) + "\n")
+				fout.write("krome_ndustTypes = " + str(self.dustTypesSize) + "\n")
+				fout.write("krome_nPhotoBins = " + str(self.photoBins) + "\n")
+				fout.write("krome_nPhotoRates = " + str(self.nPhotoRea) + "\n")
+
+			elif(srow == "#KROME_user_commons_functions"):
+				# write interfaces/signatures for user_commons get/set functions
+				funcs = ""
+				for x in self.commonvars:
+					fsetname = "krome_set_"+x
+					fset = "fortran."+fsetname+".restype = None\n"
+					fset += "fortran."+fsetname+".argtypes = ctypes.c_double\n"
+					fgetname = "krome_get_"+x
+					fget = "fortran."+fgetname+".restype = ctypes.c_double\n"
+					fget += "fortran."+fgetname+".argtypes = None\n"
+					funcs += fset + fget
+				fout.write(funcs)
+
+			elif(srow=="#KROME_set_get_phys_functions"):
+				funcs = ""
+				for x in self.physVariables:
+					fsetname = "krome_set_"+x[0]
+					fset = "fortran."+fsetname+".restype = None\n"
+					fset += "fortran."+fsetname+".argtypes = ctypes.c_double\n"
+					fgetname = "krome_get_"+x[0]
+					fget = "fortran."+fgetname+".restype = ctypes.c_double\n"
+					fget += "fortran."+fgetname+".argtypes = None\n"
+					funcs += fset + fget
+				fout.write(funcs)
+
+			elif(srow == "#KROME_cooling_functions"):
+				for x in self.coolZ_functions:
+					funcname =  "krome_"+x[0]
+					fout.write("fortran."+funcname+".restype = ctypes.c_double\n")
+					fout.write("fortran."+funcname+".argtypes = [array_1d_double, ctypes.c_double]\n")
+
+			else:
+				if(len(srow)>0):
+					if(srow[0]!="#"): fout.write(row)
+				else:
+					fout.write(row)
+
 	def CInterface(self):
-		if(not(self.interfaceC or self.interfacePy)): return
+		if(not(self.interfaceC)): return
 
 		print "- writing KROME C headers...",
 		# generate C header files, one for each KROME Fortran module which
@@ -3315,7 +3451,7 @@ class krome():
 
 		print "- writing pykrome.py...",
 		# generate pykrome.py file
-        ###self.makePythonModule()
+		self.makePythonModule()
 
 	###############################################
 	#show info about ODE system
