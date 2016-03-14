@@ -502,7 +502,7 @@ class krome():
 			[argv.append(x) for x in ["-interfaceC", "-coolFile=tests/Cinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
 			filename = "tests/Cinterface/network.ntw"
 		elif(args.test=="Pyinterface"):
-			[argv.append(x) for x in ["-interfacePy",  "-coolFile=tests/Pyinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
+			[argv.append(x) for x in ["-interfacePy",  "-coolFile=tests/Cinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
 			filename = "tests/Cinterface/network.ntw"
 		else:
 			tests = ", ".join(sorted(os.walk('tests').next()[1]))
@@ -3375,7 +3375,7 @@ class krome():
 					x = constants[i]
 					for j in range(i):
 						y = constants[j]
-						x[1] = x[1].replace(y[0],"krome_"+y[0])
+					x[1] = x[1].replace("sqrt","np.sqrt")
 					newc.append(x)
 
 				for x in newc:
