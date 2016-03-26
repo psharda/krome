@@ -6922,7 +6922,10 @@ class krome():
 		# scaleueq: scale array from code units (RAMSES) to 1/cm3 (KROME) (unoneq<-unoneq)
 		# bkscaleueq: scale array from 1/cm3 (KROME) to code units (RAMSES) (unoneq->unoneq)
 		# bkupdateueq: copy from 1dim array of krome to 2dim array of ramses (unoneq->uold)
-		updateueq = scaleueq = bkscaleueq = bkupdateueq = ""
+		# These two are used when updating oct-averaged states
+		# vecupdateueq: copy from ramses 2dim array to 1dim array for krome (unoneq<-uin)
+		# vecbkupdateueq: copy from 1dim array of krome to 2dim array of ramses (unoneq->uout)
+		updateueq = scaleueq = bkscaleueq = bkupdateueq = vecupdateueq = vecbkupdateueq = ""
 		ichem = 0
 		fname = "cooling_fine.f90"
 		for x in specs:
@@ -6932,8 +6935,10 @@ class krome():
 				if(x.mass>0e0): scaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
 				bkscaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*"+str(x.mass)+"*iscale_d !"+x.name+"\n"
 				bkupdateueq += "uold(ind_leaf(i),ichem+1+"+str(ichem-1)+") = unoneq("+str(ichem)+") !"+x.name+"\n"
-		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
-		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
+				vecupdateueq += "unoneq("+str(ichem)+") = uin(i,2+"+str(ichem)+") !"+x.name+"\n"
+				vecbkupdateueq += "uout(i,2+"+str(ichem)+") = unoneq("+str(ichem)+") !"+x.name+"\n"
+		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq","#KROME_vecupdate_unoneq","#KROME_vecbackupdate_unoneq",]
+		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq, vecupdateueq, vecbkupdateueq]
 		#replace pragmas (org) with expressions (new)
 		self.replacein(pfold+fname, ramsesFolder+fname, org, new)
 		indentF90(ramsesFolder+fname)
