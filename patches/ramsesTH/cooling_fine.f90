@@ -270,7 +270,7 @@ subroutine coolfine1_oct(ind_grid,ngrid,ilevel)
   real(kind=8), dimension(1:krome_natoms),     save :: ref
   real(kind=8), dimension(ichem_param+1:nvar), save :: x, fracV
   integer,dimension(1:nvector),                save :: nleaf
-  integer,dimension(1:nvector,twotondim),      save :: ind_leaf
+  integer,dimension(twotondim,1:nvector),      save :: ind_leaf
   ! uin and uout contains [nvector entries]x[rho, Pressure, rhoX]
   real(kind=8), dimension(1:nvector,nvar-ichem_param+2), save :: uin=1., uout=1.
   !$omp threadprivate(ref,x,fracV,nleaf,ind_leaf,uin,uout)
