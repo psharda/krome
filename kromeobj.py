@@ -3339,13 +3339,13 @@ class krome():
 						xbasic = ("_".join(x.fidx.split("_")[:-1]))
 						xname = ("_".join(x.name.split("_")[:-1]))
 						if(not(xbasic in allBasics)):
-							fout.write("krome_"+xbasic + " = " + str(x.idx-1) +" # "+mol.name+"\n")
+							fout.write("\t\tself.krome_"+xbasic + " = " + str(x.idx-1) +" # "+mol.name+"\n")
 						allBasics.append(xbasic)
-					fout.write("krome_"+x.fidx + " = " + str(x.idx-1) +" # "+x.name+"\n")
+					fout.write("\t\tself.krome_"+x.fidx + " = " + str(x.idx-1) +" # "+x.name+"\n")
 
 				# write out the names of the species
-				fout.write("krome_names = (\n")
-				fout.write(",\n".join(["  \""+x.name+"\"" for x in self.specs])+"\n)")
+				fout.write("\t\tself.krome_names = (\n")
+				fout.write(",\n".join(["\t\t\t\t\t\t\""+x.name+"\"" for x in self.specs])+"\n\t\t\t\t\t\t)")
 				fout.write("\n")
 
 			elif(srow == "#KROME_cool_index"):
@@ -3355,7 +3355,7 @@ class krome():
 					# Python arrays start from 0; decrement all indices by one.
 					if x[:6] != 'ncools':
 						x = re.sub(r'= (\d+)', lambda m: '= {0}'.format(int(m.group(1))-1), x)
-					fout.write("krome_"+x+"\n")
+					fout.write("\t\tself.krome_"+x+"\n")
 
 			elif(srow == "#KROME_heat_index"):
 				# write out KROME heating terms
@@ -3364,7 +3364,7 @@ class krome():
 					# Python arrays start from 0; decrement all indices by one.
 					if x[:6] != 'nheats':
 						x = re.sub(r'= (\d+)', lambda m: '= {0}'.format(int(m.group(1))-1), x)
-					fout.write("krome_"+x+"\n")
+					fout.write("\t\tself.krome_"+x+"\n")
 
 			elif(srow == "#KROME_constant_list"):
 				# write out KROME constants
@@ -3380,7 +3380,8 @@ class krome():
 
 				for x in newc:
 					x[1] = x[1].replace('d','e')
-					const += "krome_" + x[0] + " = " + x[1] + " # " + x[2] + "\n"
+					x[1] = x[1].replace('krome','self.krome')
+					const += "\t\tself.krome_" + x[0] + " = " + x[1] + " # " + x[2] + "\n"
 				fout.write(const)
 
 			elif(srow == "#KROME_common_alias"):
@@ -3391,51 +3392,48 @@ class krome():
 				atoms = list(set(atoms))
 				atoms = [x for x in atoms if not(x in ["+","-"])]
 
-				fout.write("krome_nrea = " + str(self.nrea) + "\n")
-				fout.write("krome_nmols = " + str(self.nmols) + "\n")
-				fout.write("krome_nspec = " + str(len(self.specs)) + "\n")
-				fout.write("krome_natoms = " + str(len(atoms)) + "\n")
-				fout.write("krome_ndust = " + str(self.dustArraySize*self.dustTypesSize) + "\n")
-				fout.write("krome_ndustTypes = " + str(self.dustTypesSize) + "\n")
-				fout.write("krome_nPhotoBins = " + str(self.photoBins) + "\n")
-				fout.write("krome_nPhotoRates = " + str(self.nPhotoRea) + "\n")
+				fout.write("\t\tself.krome_nrea = " + str(self.nrea) + "\n")
+				fout.write("\t\tself.krome_nmols = " + str(self.nmols) + "\n")
+				fout.write("\t\tself.krome_nspec = " + str(len(self.specs)) + "\n")
+				fout.write("\t\tself.krome_natoms = " + str(len(atoms)) + "\n")
+				fout.write("\t\tself.krome_ndust = " + str(self.dustArraySize*self.dustTypesSize) + "\n")
+				fout.write("\t\tself.krome_ndustTypes = " + str(self.dustTypesSize) + "\n")
+				fout.write("\t\tself.krome_nPhotoBins = " + str(self.photoBins) + "\n")
+				fout.write("\t\tself.krome_nPhotoRates = " + str(self.nPhotoRea) + "\n")
 
 			elif(srow == "#KROME_user_commons_functions"):
 				# write interfaces/signatures for user_commons get/set functions
 				funcs = ""
 				for x in self.commonvars:
-					fsetname = "krome_set_"+x
-					fset = "fortran."+fsetname+".restype = None\n"
-					fset += "fortran."+fsetname+".argtypes = ctypes.c_double\n"
-					fgetname = "krome_get_"+x
-					fget = "fortran."+fgetname+".restype = ctypes.c_double\n"
-					fget += "fortran."+fgetname+".argtypes = None\n"
+					fsetname = "krome_set_"+x.lower()
+					fset = "\t\tfortran."+fsetname+".restype = None\n"
+					fset += "\t\tfortran."+fsetname+".argtypes = [ctypes.c_double]\n"
+					fgetname = "krome_get_"+x.lower()
+					fget = "\t\tfortran."+fgetname+".restype = ctypes.c_double\n"
+					fget += "\t\tfortran."+fgetname+".argtypes = None\n"
 					funcs += fset + fget
 				fout.write(funcs)
 
 			elif(srow=="#KROME_set_get_phys_functions"):
 				funcs = ""
 				for x in self.physVariables:
-					fsetname = "krome_set_"+x[0]
-					fset = "fortran."+fsetname+".restype = None\n"
-					fset += "fortran."+fsetname+".argtypes = ctypes.c_double\n"
-					fgetname = "krome_get_"+x[0]
-					fget = "fortran."+fgetname+".restype = ctypes.c_double\n"
-					fget += "fortran."+fgetname+".argtypes = None\n"
+					fsetname = "krome_set_"+x[0].lower()
+					fset = "\t\tfortran."+fsetname+".restype = None\n"
+					fset += "\t\tfortran."+fsetname+".argtypes = [ctypes.c_double]\n"
+					fgetname = "krome_get_"+x[0].lower()
+					fget = "\t\tfortran."+fgetname+".restype = ctypes.c_double\n"
+					fget += "\t\tfortran."+fgetname+".argtypes = None\n"
 					funcs += fset + fget
 				fout.write(funcs)
 
 			elif(srow == "#KROME_cooling_functions"):
 				for x in self.coolZ_functions:
-					funcname =  "krome_"+x[0]
-					fout.write("fortran."+funcname+".restype = ctypes.c_double\n")
-					fout.write("fortran."+funcname+".argtypes = [array_1d_double, ctypes.c_double]\n")
+					funcname =  "krome_"+x[0].lower()
+					fout.write("\t\tfortran."+funcname+".restype = ctypes.c_double\n")
+					fout.write("\t\tfortran."+funcname+".argtypes = [array_1d_double, ctypes.c_double]\n")
 
 			else:
-				if(len(srow)>0):
-					if(srow[0]!="#"): fout.write(row)
-				else:
-					fout.write(row)
+				fout.write(row)
 
 	def CInterface(self):
 		if(not(self.interfaceC)): return

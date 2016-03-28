@@ -83,7 +83,7 @@ extern void krome_photoBin_scale(double xscale);
 extern void krome_photoBin_scale_array(double *xscale);
 extern void krome_photoBin_restore();
 extern void krome_photoBin_store();
-extern void krome_load_photoBin_file(char *fname);
+// extern void krome_load_photoBin_file(char *fname);
 /* Here is another example of a Fortran subroutine which accepts optional arguments. */
 extern void krome_set_photoBin_HMlog(double lower_in, double upper_in);
 extern void krome_set_photoBin_BBlin(double lower, double upper, double Tbb);
@@ -136,7 +136,7 @@ extern double krome_get_electrons(double *x);
 extern void krome_print_best_flux(double *xin, double Tgas, int nbest);
 extern void krome_print_best_flux_frac(double *xin, double Tgas, double frac);
 extern void krome_print_best_flux_spec(double *xin, double Tgas, int nbest, int idx_find);
-extern *krome_get_flux(double *n, double Tgas);
+extern double *krome_get_flux(double *n, double Tgas);
 extern void krome_explore_flux(double *x, double Tgas, int ifile, double xvar);
 extern double *krome_get_qeff();
 #IFKROME_useStars
