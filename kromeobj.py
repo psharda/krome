@@ -2395,7 +2395,7 @@ class krome():
 			if(not(os.path.isdir(fdbase))):
 				print "ERROR: folder "+fdbase+" not found!"
 				sys.exit()
-			file_list = [f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))]
+			file_list = sorted([f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))])
 			extraVars = dict() #dict of the extra varaibles, with key=filename
 			isAutoRev = False
 			for fname in file_list:
