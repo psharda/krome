@@ -3433,7 +3433,11 @@ class krome():
 					fout.write("\t\tfortran."+funcname+".argtypes = [array_1d_double, ctypes.c_double]\n")
 
 			else:
-				fout.write(row)
+				if(len(srow)>0):
+					if(srow[0:3] != "#IF" and srow[0:5] != "#ELSE" and srow[0:4] != "#END"):
+						 fout.write(row)
+				else:
+					fout.write(row)
 
 	def CInterface(self):
 		if(not(self.interfaceC)): return
