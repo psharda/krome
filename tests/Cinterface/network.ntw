@@ -1,0 +1,20 @@
+###################
+@common:user_tauh,user_xi,user_Wergs
+@format:idx,R,R,P,rate
+1,H+,E,H,auto
+2,Fe+,E,Fe,auto
+
+
+@format:idx,R,R,P,P,P,rate
+3,H,E,H+,E,E,auto
+4,Fe,E,Fe+,E,E,auto
+
+@format:idx,R,P,rate
+5,[60Fe],[60Ni],log(2.0d0) / user_tauh
+
+@format:idx,R,P,P,rate
+6,H,H+,E,user_xi * n(idx_60Fe)
+
+@heating_start
+  @heating:user_xi * n(idx_60Fe) * n(idx_H) * user_Wergs
+@heating_stop

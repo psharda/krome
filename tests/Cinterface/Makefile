@@ -1,0 +1,68 @@
+fc = gfortran
+cc = gcc
+prjC = kromeC #exe name
+prjF = kromeF
+lib = -llapack #libraries
+clib = -lm -lgfortran
+
+GREP = $(shell grep -i 'dgesv' krome_cooling.f90)
+ifeq ($(GREP),)
+	lib = 
+endif
+
+
+ifneq (,$(findstring ifort,$(fc)))
+	std = -check all -traceback -fpe0 -ftz -ftrapuv -warn all -u
+	nowarn = -nowarn
+	sswitch = $(std)
+	fswitch = $(std) -O3 -ipo -ip -unroll 
+	hswitch =  -O3 -ipo -ip -unroll
+	pswitch = $(hswitch) -pg
+	nswitch = $(std) -O0
+	switch =  $(nswitch) -warn nounused
+	switcho = $(switch)
+else
+	switch = -ffpe-trap=invalid,zero,overflow -fbacktrace -fbounds-check
+	switch+= -ffree-line-length-none -fimplicit-none -g
+	switcho =
+	switchc = -g
+	nowarn = -w
+endif
+
+all:
+
+ifneq ($(wildcard opkdmain.f),) 
+	$(fc) -c opkda2.f $(switcho) $(nowarn)
+	$(fc) -c opkda1.f $(switcho) $(nowarn)
+	$(fc) -c opkdmain.f $(switcho) $(nowarn)
+endif
+
+ifneq ($(wildcard dvode_f90_m.f90),) 
+	$(fc) -c dvode_f90_m.f90 $(switcho) $(nowarn)
+endif
+
+ifneq ($(wildcard nleq_all.f),) 
+	$(fc) -c nleq_all.f $(switch) $(nowarn)
+endif
+	$(fc) -c krome_commons.f90 $(switch) 
+	$(fc) -c krome_constants.f90 $(switch)
+	$(fc) -c krome_user_commons.f90 $(switch)
+	$(fc) -c krome_subs.f90 $(switch)
+	$(fc) -c krome_stars.f90 $(switch)
+	$(fc) -c krome_photo.f90 $(switch)
+	$(fc) -c krome_tabs.f90 $(switch)
+	$(fc) -c krome_dust.f90 $(switch)	
+	$(fc) -c krome_cooling.f90 $(switch)
+	$(fc) -c krome_heating.f90 $(switch)	
+	$(fc) -c krome_ode.f90 $(switch) 
+	$(fc) -c krome_user.f90 $(switch)
+	$(fc) -c krome_reduction.f90 $(switch)
+	$(fc) -c krome.f90 $(switch)
+	$(cc) -c test.c -o testC.o $(switchc) 
+	$(fc) -c test.f90 -o testF.o $(switch)
+
+	$(cc) -o $(prjC) krome*.o opkd*.o testC.o $(switchc) $(lib) $(clib)
+	$(fc) -o $(prjF) krome*.o opkd*.o testF.o $(switch) $(lib)
+
+clean: 
+	rm -f *.o $(prjC) $(prjF) *~ *.mod *_genmod.f90 *.i90
