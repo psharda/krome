@@ -1,12 +1,12 @@
-#KROME is a nice and friendly chemistry package for a wide range of 
-# astrophysical simulations. Given a chemical network (in CSV format) 
-# it automatically generates all the routines needed to solve the kinetic 
-# of the system, modelled as system of coupled Ordinary Differential 
-# Equations. 
-# It provides different options which make it unique and very flexible. 
-# Any suggestions and comments are welcomed. KROME is an open-source 
-# package, GNU-licensed, and any improvements provided by 
-# the users is well accepted. See disclaimer below and GNU License 
+#KROME is a nice and friendly chemistry package for a wide range of
+# astrophysical simulations. Given a chemical network (in CSV format)
+# it automatically generates all the routines needed to solve the kinetic
+# of the system, modelled as system of coupled Ordinary Differential
+# Equations.
+# It provides different options which make it unique and very flexible.
+# Any suggestions and comments are welcomed. KROME is an open-source
+# package, GNU-licensed, and any improvements provided by
+# the users is well accepted. See disclaimer below and GNU License
 # in gpl-3.0.txt.
 #
 # more details in http://kromepackage.org/
@@ -26,18 +26,18 @@
 # E.Tognelli
 #
 #
-# KROME is provided "as it is", without any warranty. 
-# The Authors assume no liability for any damages of any kind 
-# (direct or indirect damages, contractual or non-contractual 
-# damages, pecuniary or non-pecuniary damages), directly or 
-# indirectly derived or arising from the correct or incorrect 
-# usage of KROME, in any possible environment, or arising from 
-# the impossibility to use, fully or partially, the software, 
+# KROME is provided "as it is", without any warranty.
+# The Authors assume no liability for any damages of any kind
+# (direct or indirect damages, contractual or non-contractual
+# damages, pecuniary or non-pecuniary damages), directly or
+# indirectly derived or arising from the correct or incorrect
+# usage of KROME, in any possible environment, or arising from
+# the impossibility to use, fully or partially, the software,
 # or any bug or malefunction.
-# Such exclusion of liability expressly includes any damages 
+# Such exclusion of liability expressly includes any damages
 # including the loss of data of any kind (including personal data)
 
-# THIS FILE CONTAINS FUNCTIONS AND CLASSES FOR THE MAIN 
+# THIS FILE CONTAINS FUNCTIONS AND CLASSES FOR THE MAIN
 # KROME PYTHON SCRIPT
 
 
@@ -76,7 +76,7 @@ class molec():
 		self.poly1 = [0.e0]*7
 		self.poly2 = [0.e0]*7
 		self.Tpoly = [0.e0]*3
-		self.atomcount = dict()	
+		self.atomcount = dict()
 ##################################
 class reaction():
 	verbatim = "" #reaction written as string (e.g. A+B->C+D)
@@ -122,7 +122,7 @@ class reaction():
 		myp = []
 		for r in self.reactants:
 			if(r.name!="dummy"):
-				myr.append(r.name)	
+				myr.append(r.name)
 		for p in self.products:
 			if(p.name!="dummy"):
 				myp.append(p.name)
@@ -149,9 +149,9 @@ class reaction():
 				PP = ("_".join([x.name for x in self.products]))
 				self.xsecFile = "leiden_"+RR+"__"+PP+".dat"
 		self.krate = "photoBinRates("+str(self.idxph)+")"
-		#if(self.krate.strip()=="krome_kph_auto"): 
+		#if(self.krate.strip()=="krome_kph_auto"):
 		#	self.krate = "krome_kph_"+myr[0].phname
-		#else: 
+		#else:
 		#	self.krate = "krome_kph_" + myr[0].phname.capitalize() + "R" + str(self.idx)
 
 	#method: build RHS
@@ -203,10 +203,10 @@ class reaction():
 		pname = []
 		for r in self.reactants:
 			rname.append(r.name)
-		
+
 		for p in self.products:
 			pname.append(p.name)
-		self.pseudo_hash = ("_".join(sorted(rname)))+"|"+("_".join(sorted(pname))) 
+		self.pseudo_hash = ("_".join(sorted(rname)))+"|"+("_".join(sorted(pname)))
 
 	#method: check reaction (mass and charge conservation)
 	def check(self,mode="ALL"):
@@ -215,7 +215,7 @@ class reaction():
 		for r in self.reactants:
 			mass_reactants += r.mass
 			charge_reactants += r.charge
-		
+
 		for p in self.products:
 			mass_products += p.mass
 			charge_products += p.charge
@@ -227,7 +227,7 @@ class reaction():
 				print "reactants:", [r.name for r in self.reactants], mass_reactants
 				print "products:", [p.name for p in self.products], mass_products
 				print "mass ratio (prods/reacts):",mass_products/mass_reactants, "(should be 1.0)"
-				print "You can remove this check with the -nomassCheck option"	
+				print "You can remove this check with the -nomassCheck option"
 				print "************************************************"
 				a = raw_input("Any key to continue q to quit... ")
 				if(a=="q"): print sys.exit()
@@ -264,7 +264,7 @@ class reaction():
 			#if(not(xr.name in deltaH)):
 			#	available = False
 			#	break
-			rH += xr.enthalpy #deltaH[xr.name] 
+			rH += xr.enthalpy #deltaH[xr.name]
 
 		#loop on products
 		for xp in prod:
@@ -272,7 +272,7 @@ class reaction():
 			#print xp.name
 			#if(not(xp.name in deltaH)):
 			#	available = False
-			#	break	
+			#	break
 			pH += xp.enthalpy
 		self.dH = None
 		if(available): self.dH = (rH-pH)*1.60217657e-12 #eV->erg (cooling<0)
@@ -378,9 +378,9 @@ def LEIDEN2KROME(build_folder,reactant,products):
 	for i in range(imax):
 		xenergy = i*(emax-min(xdata))/(imax-1)+min(xdata)
 		foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
-		
+
 	foutx.close()
-	
+
 
 
 ###############################
@@ -395,7 +395,7 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		sys.exit()
 
 	prods = [x.name for x in products]
-	data_folder = "data/database/swri_xsecs/" 
+	data_folder = "data/database/swri_xsecs/"
 	fname = data_folder+reactant.name+".dat"
 	if(not(os.path.exists(fname))):
 		print
@@ -1048,8 +1048,8 @@ def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpath
 	for tabrow in fhtab:
 		stabrow = tabrow.strip()
 		if(stabrow==""): continue
-		if(stabrow[0]=="#"): continue		
-		if("," in stabrow): 
+		if(stabrow[0]=="#"): continue
+		if("," in stabrow):
 			mytabsize = [xx.strip() for xx in stabrow.split(",")]
 		else:
 			print "ERROR: the file "+mytabpath+" must contain the size of the"
@@ -1087,8 +1087,8 @@ def addVarCoe(mytabvar,tabf,coevars):
 #############################
 #cooling index list
 def get_cooling_index_list():
-	#the keys of this list must be lowercase. 
-	#the number is the corresponding integer index for the given cooling 
+	#the keys of this list must be lowercase.
+	#the number is the corresponding integer index for the given cooling
 	idxcoo = {"H2":1,"H2GP":2,"atomic":3, "CEN":3, "HD":4, "Z":5, "metal":5, "dH":6, "enthalpic":6, "dust":7,\
 		"compton":8,"CIE":9, "continuum":10, "cont":10,"exp":11,"expansion":11,"ff":12,"bss":12,"custom":13,\
 		"CO":14, "ZCIE":15, "ZCIENOUV":16, "ZExtend":17}
@@ -1125,7 +1125,7 @@ def get_solar_abundances():
 	#solar abundances from Tab.1 in Asplund+2009
 	# following their definition
 	#  log10(epsilon) = log10(n/nH) + 12
-	# where n is the number densiity of the given element, 
+	# where n is the number densiity of the given element,
 	# while nH is the number density of H
 	# This function returns log10(n/nH)
 	solar_abs = {
@@ -1184,7 +1184,7 @@ def get_ve_vib(arg):
 		"O2+":1905.892,
 		"OH":3737.761}
 	if(arg in ve):
-		return ve[arg]*1.42879e0 #cm-1 to K 
+		return ve[arg]*1.42879e0 #cm-1 to K
 	else:
 		False
 
@@ -1202,7 +1202,7 @@ def get_be_rot(arg):
 		"O2":1.4264,
 		"CO":2.78}
 	if(arg in ve):
-		return ve[arg]*1.42879e0 #cm-1 to K 
+		return ve[arg]*1.42879e0 #cm-1 to K
 	else:
 		False
 
@@ -1255,8 +1255,8 @@ def get_terminal_size(fd=1):
     Returns height and width of current terminal. First tries to get
     size via termios.TIOCGWINSZ, then from environment. Defaults to 25
     lines x 80 columns if both methods fail.
- 
-    :param fd: file descriptor (default: 1=stdout) 
+
+    :param fd: file descriptor (default: 1=stdout)
 	from bit.ly/HteEcQ
     """
     try:
@@ -1265,9 +1265,9 @@ def get_terminal_size(fd=1):
     except:
         try:
             hw = (os.environ['LINES'], os.environ['COLUMNS'])
-        except:  
+        except:
             hw = (25, 80)
- 
+
     return hw
 
 ##################################
@@ -1277,8 +1277,8 @@ def get_example(nsp,useX):
 		!###################################################
 		! WARNING:This is a test auto-generated by KROME, in order to
 		! show a bare-minimal code to call the KROME's subroutine.
-		! Most of the values could not be appropriate for your 
-		! problem, since this test is only intended as a general	
+		! Most of the values could not be appropriate for your
+		! problem, since this test is only intended as a general
 		! purpose example.
 
 		program test
@@ -1295,7 +1295,7 @@ def get_example(nsp,useX):
 			x(:) = 1d-20 !default abundances
 			x(krome_idx_H) = @nH@ !hydrogen initial abundance
 			@norm@
-		
+
 			Tgas = 1d3 !gas temperature (K)
 			dt = 1d6 * spy !time-step (s)
 			@rho_init@
@@ -1304,7 +1304,7 @@ def get_example(nsp,useX):
 			call krome(x(:),@rhof@ Tgas, dt) !call KROME
 
 			print *,"Test OK!"
-		
+
 		end program test
 
 	"""
@@ -1336,7 +1336,7 @@ def parsevar(arg):
 	return arg.split("@")
 
 ##################################
-#extend the list slist with the temperature shortcuts 
+#extend the list slist with the temperature shortcuts
 # for the reaction rea
 def get_Tshortcut(rea,slist,cvars=[]):
 	shcut = ["logT = log10(Tgas) !log10 of Tgas (#)",
@@ -1395,7 +1395,7 @@ def get_Tshortcut(rea,slist,cvars=[]):
 		#loop on user-defined variables
 		for cv in cvars:
 			#when variable is found skip it
-			if(xkey.lower().strip()==cv.lower().strip()): 
+			if(xkey.lower().strip()==cv.lower().strip()):
 				xFound = True
 				break
 		if(not(xFound)):
@@ -1430,7 +1430,7 @@ def truncF90(mystr, sublen, sep):
 			s += "&\n"
 			z = ""
 		zep = sep
-		if(first): zep = "" 
+		if(first): zep = ""
 		s += zep + x
 		z += zep + x
 		first = False
@@ -1466,12 +1466,12 @@ def format_double(snum):
 	snum = str(snum)
 	#format string number to F90 double
 	if("d" in snum): return snum
-	if("e" in snum): return snum.replace("e","d")	
+	if("e" in snum): return snum.replace("e","d")
 	return snum+"d0"
 
 ##################################
 #format the subelement according to its size (Fe, N, ...)
-def format_subel(subel):	
+def format_subel(subel):
 	if(len(subel)==1):
 		fsubel = subel.upper()
 		if(fsubel=="G"): fsubel = "g"
@@ -1483,7 +1483,7 @@ def format_subel(subel):
 
 ##################################
 #check if the value s is a number or not (return logical)
-def is_number(s):	
+def is_number(s):
 	try:
 		float(s)
 		return True
@@ -1493,7 +1493,7 @@ def is_number(s):
 ##################################
 #parse molecule name using dictionary and atoms list
 def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
-	
+
 	mymol = molec() #oggetto molec
 	namecp = name.upper()
 	if(namecp=="E-"): namecp = "E" #avoid double negative charge
@@ -1501,8 +1501,8 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 	mass = 0. #init mass
 	is_atom = True #atom flag
 	founds = 0 #atoms found
-	mymol.parentDustBin = dustIdx #this species belongs to this dust bin (1-based) 
-	
+	mymol.parentDustBin = dustIdx #this species belongs to this dust bin (1-based)
+
 	#if you change these check the same values in kromeobj
 	#(employed here for computing number of neutrons)
 	me = 9.10938188e-28 #electron mass (g)
@@ -1573,7 +1573,7 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 		print "ERROR: in parser, dustIdx>0 with a non-surface species"
 		print dustIdx,name
 		sys.exit()
-	
+
 	zatom = 0 #atomic number init
 	#loop over charcters
 	for atm in atoms:
@@ -1592,7 +1592,7 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 				imult = max(int(mult),1) #evaluate multiplicator (must be >0)
 				mass += mass_dic[a]*imult #compute mass
 				if(a in zdic): zatom += zdic[a]*imult #increase atomic number
-				if(format_subel(a) in mymol.atomcount): 
+				if(format_subel(a) in mymol.atomcount):
 					mymol.atomcount[format_subel(a)] += imult #increase atom count
 				else:
 					mymol.atomcount[format_subel(a)] = imult #init atom count
@@ -1601,7 +1601,7 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 				if(namecp==""): break #if nothing more to find break loop
 		if(a!="+" and a!="-"): founds += imult #count found atoms for is_atom
 	if(founds>1): is_atom = False #atoms have only one atom (viz.)
-	
+
 	mymol.atomcount2 = dict()
 	natoms = 0
 	for (k,v) in mymol.atomcount.iteritems():
@@ -1620,7 +1620,7 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 	if(get_be_rot(name)):
 		mymol.be_rot = get_be_rot(name)
 
-	#when dust index changes the name	
+	#when dust index changes the name
 	if(dustIdx>0): name = name+"_"+str(dustIdx)
 
 	mymol.name = name #name
@@ -1638,7 +1638,7 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 	f90idx = "idx_"+name.replace("+","j").replace("-","k").replace("(","_").replace(")","").replace("[","").replace("]","_") #f90 index
 	if(f90idx.endswith("_")): f90idx = f90idx[:-1] #remove last underscore if any
 	mymol.fidx = f90idx #index in f90 format
-	
+
 	if("+" in name): mymol.charge = name.count("+") #get + charge
 	if("-" in name): mymol.charge = -name.count("-") #get - charge
 
@@ -1657,7 +1657,7 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 
 	#electron has negative charge
 	if(mymol.name=="E"): mymol.charge = -1
-	
+
 	#thermal data
 	if(mymol.name in thermo_data):
 		mymol.poly1 = thermo_data[mymol.name][10:] #NASA polynomials lower T interval (min-med)
@@ -1674,7 +1674,7 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 	mymol.enthalpy = polyH*8.314472e-3*Tgas*0.01036410e0 #eV
 
 	#checks parsing results
-	if(len(namecp)>0): 
+	if(len(namecp)>0):
 		print "************************************************"
 		print "ERROR: Parsing problem for", name
 		print "Unknown subelements in substring \"" + namecp +"\"."
@@ -1752,7 +1752,7 @@ def get_file_list():
 def GetHashofDirs():
 	import hashlib, os
 	SHAhash = hashlib.sha1()
-	fles = get_file_list() 
+	fles = get_file_list()
 	for fle in fles:
 		try:
 			f1 = open(fle, 'rb')
@@ -1783,15 +1783,15 @@ def get_licence_header(version, codename, short=False):
 	!! This file has been generated with:
 	!! krome #version# "#codename#" on #date#.
 	!!
-	!!KROME is a nice and friendly chemistry package for a wide range of 
-	!! astrophysical simulations. Given a chemical network (in CSV format) 
-	!! it automatically generates all the routines needed to solve the kinetic 
-	!! of the system, modelled as system of coupled Ordinary Differential 
-	!! Equations. 
-	!! It provides different options which make it unique and very flexible. 
-	!! Any suggestions and comments are welcomed. KROME is an open-source 
-	!! package, GNU-licensed, and any improvements provided by 
-	!! the users is well accepted. See disclaimer below and GNU License 
+	!!KROME is a nice and friendly chemistry package for a wide range of
+	!! astrophysical simulations. Given a chemical network (in CSV format)
+	!! it automatically generates all the routines needed to solve the kinetic
+	!! of the system, modelled as system of coupled Ordinary Differential
+	!! Equations.
+	!! It provides different options which make it unique and very flexible.
+	!! Any suggestions and comments are welcomed. KROME is an open-source
+	!! package, GNU-licensed, and any improvements provided by
+	!! the users is well accepted. See disclaimer below and GNU License
 	!! in gpl-3.0.txt.
 	!!
 	!! more details in http://kromepackage.org/
@@ -1806,20 +1806,20 @@ def get_licence_header(version, codename, short=False):
   	!! sbovino@astro.physik.uni-goettingen.de
 	!! Institut fuer Astrophysik, Goettingen.
 	!!
-	!!Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle, 
-	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
+	!!Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
+	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini,
 	!! E. Tognelli
 	!!
 	!!
-	!!KROME is provided \"as it is\", without any warranty. 
-	!! The Authors assume no liability for any damages of any kind 
-	!! (direct or indirect damages, contractual or non-contractual 
-	!! damages, pecuniary or non-pecuniary damages), directly or 
-	!! indirectly derived or arising from the correct or incorrect 
-	!! usage of KROME, in any possible environment, or arising from 
-	!! the impossibility to use, fully or partially, the software, 
+	!!KROME is provided \"as it is\", without any warranty.
+	!! The Authors assume no liability for any damages of any kind
+	!! (direct or indirect damages, contractual or non-contractual
+	!! damages, pecuniary or non-pecuniary damages), directly or
+	!! indirectly derived or arising from the correct or incorrect
+	!! usage of KROME, in any possible environment, or arising from
+	!! the impossibility to use, fully or partially, the software,
 	!! or any bug or malefunction.
-	!! Such exclusion of liability expressly includes any damages 
+	!! Such exclusion of liability expressly includes any damages
 	!! including the loss of data of any kind (including personal data)
 	!!*************************************************************\n"""
 
@@ -1831,8 +1831,8 @@ def get_licence_header(version, codename, short=False):
 	!!Written and developed by Tommaso Grassi
 	!!
 	!!Co-developer Stefano Bovino
-	!!Others (alphabetically): D.Galli, F.A. Gianturco, T. Haugboelle, 
-	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
+	!!Others (alphabetically): D.Galli, F.A. Gianturco, T. Haugboelle,
+	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini,
 	!! E. Tognelli.
 	!!KROME is provided \"as it is\", without any warranty.
 	!!*************************************************************\n"""
@@ -1843,7 +1843,7 @@ def get_licence_header(version, codename, short=False):
 
 #################################
 #breaks a string (mystr), in piece
-# of length (sublen), using a 
+# of length (sublen), using a
 # separator (sep)
 def trunc(mystr,sublen,sep):
 	astr = mystr.split(sep)
@@ -1889,7 +1889,7 @@ n(idx_CR) = 1.d0
 
 ###########################
 #this function returns if the string line
-# starts with one of the items in the array 
+# starts with one of the items in the array
 # of string aarg
 def lbeg(aarg,line):
 	for arg in aarg:
@@ -1898,7 +1898,7 @@ def lbeg(aarg,line):
 
 ###########################
 #this function returns if the string line
-# ends with one of the items in the array 
+# ends with one of the items in the array
 # of string aarg
 def lend(aarg,line):
 	for arg in aarg:
@@ -1942,7 +1942,7 @@ def indentF90(filename):
 	import os
 	#check if the file exists else return
 	if(not(os.path.isfile(filename))): return
-	
+
 	#open file for indent
 	fh = open(filename,"rb")
 	arow = [] #array of the lines of the indented file
@@ -1958,14 +1958,13 @@ def indentF90(filename):
 		srow = row.strip() #trim the row
 		if(module_head in srow): module_head_found = True #do not duplicate module header
 		#check module begin
-		if(lbeg(["module"], srow) and not(module_head_found)): 
+		if(lbeg(["module"], srow) and not(module_head_found)):
 			arow.append("\n") #blank line
 			arow.append(module_head+"\n") #comment
 		if(lbeg(tokenclose, srow)): nind -= 1 #check if the line ends with one of tokenclose
 		indent = (" "*(nind*nspace)) #compute number of spaces for indent
 		if(is_amper): indent = (" "*(2*nspace)) + indent #increas indent in case of previous &
-		if(srow!=""):
-			if(srow[0]=="#"): indent = "" #no indent for pragmas
+		if(srow.startswith("#")): indent = "" #no indent for pragmas
 		if(not(srow=="" and is_blank)): arow.append(indent+srow+"\n") #append indented line to array of rows
 		is_amper = False #is a line after ampersend flag
 		if(lend(["&"], srow)): is_amper = True #check if the line ends with &
@@ -1980,11 +1979,11 @@ def indentF90(filename):
 	#write the new file
 	fh = open(filename,"w")
 	for x in arowl:
-		fh.write(x)
+		fh.write(x.rstrip()+"\n")
 	fh.close()
 
 ################################
-#This function writes an error 
+#This function writes an error
 # and exit
 def die(msg):
 	import sys
@@ -2073,7 +2072,7 @@ def get_quote(qall=False):
 	 "Numerical Recipes in C"]
 	]
 	qrange = 1
-	print 
+	print
 	if(qall): qrange = len(quotes)
 	for i in range(qrange):
 		irand = int(random.random()*(len(quotes)))
@@ -2087,7 +2086,7 @@ def get_quote(qall=False):
 		print myqt
 		if(qtup[1].strip()==""): qtup[1] = "Anonymous"
 		print "--- "+qtup[1]
-		if(i==qrange-1): 
+		if(i==qrange-1):
 			print "*"*lqt
 			print
 

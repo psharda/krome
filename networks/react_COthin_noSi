@@ -1,3 +1,6 @@
+#######################
+#This is a prototype network for CO formation
+#######################
 #rates for CO network similar to Glover+2010 MNRAS from there and other authors
 @var:Hnuclei = get_Hnuclei(n(:))
 @common: user_crate,user_Av,user_Tdust
@@ -89,8 +92,8 @@
 39,C+,E,,C,g,,2.73d0,.LE.7950d0,4.67d-12*(T32)**(-0.6d0)
 40,C+,E,,C,g,,>7950d0,.LE.21140d0,1.23d-17*(T32)**2.49*exp(21845.6d0*invT)
 41,C+,E,,C,g,,>21140d0,.LE.21140d0,9.62d-8*(T32)**(-1.37)*exp(-115786.2d0*invT)
-42,Si+,E,,Si,g,,2.73d0,.LE.2.d3,7.5d-12*(T32)**(-0.55d0)
-43,Si+,E,,Si,g,,>2.d3,NONE,4.86d-12*(T32)**(-0.32d0)
+#42,Si+,E,,Si,g,,2.73d0,.LE.2.d3,7.5d-12*(T32)**(-0.55d0)
+#43,Si+,E,,Si,g,,>2.d3,NONE,4.86d-12*(T32)**(-0.32d0)
 44,O+,E,,O,g,,2.73d0,.LE.4.d2,1.30d-10*(Tgas)**(-0.64d0)
 45,O+,E,,O,g,,>4.d2,1d8,1.41d-10*(Tgas)**(-0.66d0) + 7.4d-4*(Tgas)**(-1.5d0)*exp(-1.75d5*invT)*(1.d0+0.062d0*exp(-1.45d5*invT))
 @var:u1 = 11.26d0*invTe
@@ -98,7 +101,7 @@
 @var:u3 = 13.6*invTe
 @format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
 46,C,E,,C+,E,E,,2.73d0,1d8,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
-47,Si,E,,Si+,E,E,,2.73d0,1d8,1.88d-7*(1d0+u2**0.5)*u2**0.25*exp(-u2)/(0.376d0+u2)
+#47,Si,E,,Si+,E,E,,2.73d0,1d8,1.88d-7*(1d0+u2**0.5)*u2**0.25*exp(-u2)/(0.376d0+u2)
 48,O,E,,O+,E,E,,2.73d0,1d8,3.59d-8*u3**0.34*exp(-u3)/(0.073d0+u3)
 49,O+,H,,O,H+,,,2.73d0,1d8,4.99d-11*Tgas**0.405d0 + 7.54d-10*invT**(0.458d0)
 50,O,H+,,O+,H,,,2.73d0,1d8,(1.08d-11*Tgas**0.517d0 + 4.0d-10*Tgas**(0.00669d0))*exp(-2.27d2*invT)
@@ -108,21 +111,21 @@
 54,C,HE+,,C+,HE,,,2.73d0,.LE.2d2,8.58d-17*Tgas**(0.757d0)
 55,C,HE+,,C+,HE,,,>2d2,.LE.2d3,3.25d-17*Tgas**(0.968d0)
 56,C,HE+,,C+,HE,,,>2d3,1d8,2.77d-19*Tgas**(1.597d0)
-57,Si,H+,,Si+,H,,,2.73d0,.LE.1d4,5.88d-13*Tgas**(0.848d0)
-58,Si,H+,,Si+,H,,,>1.d4,1d8,1.45d-13*Tgas
-59,Si,HE+,,Si+,HE,,,2.73d0,1d8,3.3d-9
-60,C+,Si,,C,Si+,,,2.73d0,1d8,2.1d-9
+#57,Si,H+,,Si+,H,,,2.73d0,.LE.1d4,5.88d-13*Tgas**(0.848d0)
+#58,Si,H+,,Si+,H,,,>1.d4,1d8,1.45d-13*Tgas
+#59,Si,HE+,,Si+,HE,,,2.73d0,1d8,3.3d-9
+#60,C+,Si,,C,Si+,,,2.73d0,1d8,2.1d-9
 
 #Trange from original Kingdon+Ferland1996
-61,Si+,H+,,Si++,H,,,NONE,1d6,4.10d-10*(Tgas*1d-4)**(0.24)*(1.0d0+3.17d0*exp(Tgas*4.184d-7))*exp(-3.178d0*invTe)
-62,Si++,H,,Si+,H+,,,NONE,1d6,1.23d-9*(Tgas*1d-4)**(0.24)*(1.0d0+3.17d0*exp(Tgas*4.184d-7))
-63,Si++,E,,Si+,g,,,2.73d0,1d8,1.75d-12*(Tgas/1d4)**(-0.6346d0)
+#61,Si+,H+,,Si++,H,,,NONE,1d6,4.10d-10*(Tgas*1d-4)**(0.24)*(1.0d0+3.17d0*exp(Tgas*4.184d-7))*exp(-3.178d0*invTe)
+#62,Si++,H,,Si+,H+,,,NONE,1d6,1.23d-9*(Tgas*1d-4)**(0.24)*(1.0d0+3.17d0*exp(Tgas*4.184d-7))
+#63,Si++,E,,Si+,g,,,2.73d0,1d8,1.75d-12*(Tgas/1d4)**(-0.6346d0)
 64,OH,H,,O,H,H,,NONE,NONE,6d-9*exp(-5.09d4*invT)
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 65,HOC+,H2,HCO+,H2,NONE,NONE,3d-10
 
 #ionpol1 rate from 10 K. Below this limit constant ionpol1(T=10K), otherwise explode
-66,HOC+,CO,HCO+,CO,NONE,1d1,1.14d-9
+66,HOC+,CO,HCO+,CO,NONE,1d1,1.604d-9
 67,HOC+,CO,HCO+,CO,1d1,NONE,8.68d-10*(1.+2.42717d-2*sqrt(3e2*invT)+7.1537*invT)
 68,C,H2,CH,H,NONE,NONE,6.64d-10*exp(-11700d0*invT)
 69,CH,H,C,H2,NONE,NONE,1.31d-10*exp(-8d1*invT)
@@ -168,7 +171,7 @@
 87,H2,OH,H2O,H,NONE,NONE,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
 
 #KIDA, recomended, below 10K constant
-88,C,OH,H,CO,NONE,1d1,3.68d-10
+88,C,OH,H,CO,NONE,1d1,7.051e-11
 89,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(-.108d0*invT)
 
 #KIDA, recomended
@@ -255,11 +258,11 @@
 119,O,H3+,H,H2O+,NONE,NONE,3.42d-10*T32**(-.156)*exp(-1.41d0*invT)
 
 #KIDA, below 10K constant
-120,OH,H3+,H2,H2O+,NONE,1d1,2.28d-8
+120,OH,H3+,H2,H2O+,NONE,1d1,2.277d-8
 121,OH,H3+,H2,H2O+,1d1,NONE,1.52d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #KIDA, below 10K constant
-122,OH,C+,H,CO+,NONE,1d1,2.28d-8
+122,OH,C+,H,CO+,NONE,1d1,1.371d-08
 123,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #Glover+2010
@@ -274,7 +277,7 @@
 
 #Glover+2010, KIDA, constant below 10K, and KIDA for additional channel
 128,H2O,C+,HOC+,H,NONE,NONE,1.8d-9
-129,H2O,C+,HCO+,H,NONE,1d1,5.03d-9
+129,H2O,C+,HCO+,H,NONE,1d1,5.027d-9
 130,H2O,C+,HCO+,H,1d1,NONE,3.4093e-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 131,H2O,C+,H2O+,C,NONE,NONE,2.4d-10
 
@@ -293,22 +296,22 @@
 137,C,O2+,O2,C+,NONE,NONE,5.2d-11
 
 #KIDA, constant below 10K
-138,CO,H3+,H2,HCO+,NONE,1d1,2.47d-9
+138,CO,H3+,H2,HCO+,NONE,1d1,2.468d-9
 139,CO,H3+,H2,HCO+,1d1,NONE,1.88055d-9*(1d0 + 0.02427d0*(3d2*invT)**.5 + 1.79558d0*invT)
 
 #KIDA, constant below 10K
-140,CO,H3+,H2,HOC+,NONE,1d1,1.45d-10
+140,CO,H3+,H2,HOC+,NONE,1d1,1.421d-10
 141,CO,H3+,H2,HOC+,1d1,NONE,1.08256d-10*(1d0 + 0.02427d0*(3d2*invT)**.5 + 1.79558d0*invT)
 
-#Glover+2010
-142,HCO+,C,CO,CH+,NONE,1d1,1d-9
+#KIDA
+142,HCO+,C,CO,CH+,NONE,NONE,1.1d-9
 
 #KIDA, constant below 10K
-143,HCO+,H2O,CO,H3O+,NONE,1d1,1.23d-8
+143,HCO+,H2O,CO,H3O+,NONE,1d1,7.279e-08
 144,HCO+,H2O,CO,H3O+,1d1,NONE,8.34d-10*(1d0 + 0.5232d0*(3d2*invT)**.5 + 834.165880*invT)
 
 #KIDA, constant below 10K
-145,CH,H+,CH+,H,NONE,1d1,3.3d-8
+145,CH,H+,CH+,H,NONE,1d1,3.297d-8
 146,CH,H+,CH+,H,1d1,NONE,3.54e-09*(0.62d0 + 1.587411d0*(3d2*invT)**.5)
 
 #KIDA, same rate for both channels
@@ -328,26 +331,26 @@
 
 #KIDA, constant below 10K
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-155,OH,H+,OH+,H,NONE,1d1,3.75d-8
+155,OH,H+,OH+,H,NONE,1d1,3.745d-8
 156,OH,H+,OH+,H,1d1,NONE,2.5d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #KIDA, constant below 10K
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
-157,OH,He+,O+,He,H,NONE,1d1,2.2d-8
+157,OH,He+,O+,He,H,NONE,1d1,2.022d-8
 158,OH,He+,O+,He,H,1d1,NONE,1.35d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #KIDA, constant below 10K
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-159,H2O,H+,H,H2O+,NONE,1d1,4.2d-8
+159,H2O,H+,H,H2O+,NONE,1d1,4.202d-8
 160,H2O,H+,H,H2O+,1d1,NONE,2.85d-9*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 
 #KIDA,constant below 10K
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
-161,H2O,He+,He,OH,H+,NONE,1d1,7.56d-9
+161,H2O,He+,He,OH,H+,NONE,1d1,7.562d-9
 162,H2O,He+,He,OH,H+,1d1,NONE,5.1282d-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 
 #KIDA,constant below 10K
-163,H2O,He+,He,OH+,H,NONE,1d1,7.56d-9
+163,H2O,He+,He,OH+,H,NONE,1d1,7.562d-9
 164,H2O,He+,He,OH+,H,1d1,NONE,5.1282d-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 
 #KIDA,constant below 10K

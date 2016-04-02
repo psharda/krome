@@ -1,12 +1,12 @@
-#KROME is a nice and friendly chemistry package for a wide range of 
-# astrophysical simulations. Given a chemical network (in CSV format) 
-# it automatically generates all the routines needed to solve the kinetic 
-# of the system, modelled as system of coupled Ordinary Differential 
-# Equations. 
-# It provides different options which make it unique and very flexible. 
-# Any suggestions and comments are welcomed. KROME is an open-source 
-# package, GNU-licensed, and any improvements provided by 
-# the users is well accepted. See disclaimer below and GNU License 
+#KROME is a nice and friendly chemistry package for a wide range of
+# astrophysical simulations. Given a chemical network (in CSV format)
+# it automatically generates all the routines needed to solve the kinetic
+# of the system, modelled as system of coupled Ordinary Differential
+# Equations.
+# It provides different options which make it unique and very flexible.
+# Any suggestions and comments are welcomed. KROME is an open-source
+# package, GNU-licensed, and any improvements provided by
+# the users is well accepted. See disclaimer below and GNU License
 # in gpl-3.0.txt.
 #
 # more details in http://kromepackage.org/
@@ -21,20 +21,20 @@
 # sbovino@astro.physik.uni-goettingen.de
 # Institut fuer Astrophysik, Goettingen.
 #
-# Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle, 
-# J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini, 
+# Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
+# J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini,
 # E. Tognelli
 #
 #
-# KROME is provided "as it is", without any warranty. 
-# The Authors assume no liability for any damages of any kind 
-# (direct or indirect damages, contractual or non-contractual 
-# damages, pecuniary or non-pecuniary damages), directly or 
-# indirectly derived or arising from the correct or incorrect 
-# usage of KROME, in any possible environment, or arising from 
-# the impossibility to use, fully or partially, the software, 
+# KROME is provided "as it is", without any warranty.
+# The Authors assume no liability for any damages of any kind
+# (direct or indirect damages, contractual or non-contractual
+# damages, pecuniary or non-pecuniary damages), directly or
+# indirectly derived or arising from the correct or incorrect
+# usage of KROME, in any possible environment, or arising from
+# the impossibility to use, fully or partially, the software,
 # or any bug or malefunction.
-# Such exclusion of liability expressly includes any damages 
+# Such exclusion of liability expressly includes any damages
 # including the loss of data of any kind (including personal data)
 
 # THIS FILE CONTAINS THE KROME CLASS
@@ -63,7 +63,6 @@ class krome():
 	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = reducer = False
 	humanFlux = True
-#	useCoolCMBFloorZ =  False #DEPRECATED (SB)
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
 	test_name = "default"
@@ -362,8 +361,8 @@ class krome():
 		self.parser.add_argument("-ver", action="store_true", help="same as -v")
 		self.parser.add_argument("-version", action="store_true", help="same as -v")
 
-	 
 	
+
 	######################################
 	#select test name
 	def select_test(self,argv):
@@ -583,7 +582,7 @@ class krome():
 			a = raw_input("Any key to ignore q to quit... ")
 			if(a=="q"): print sys.exit()
 			print
-			
+
 
 		#list arguments if test
 		if(args.test):
@@ -593,7 +592,7 @@ class krome():
 				if(arg): print " -"+k+" = "+str(arg)
 			print " -n = "+self.filename
 			print
-		
+
 		#use custom option file (load options from a file and append to argv)
 		if(args.options):
 			fopt = args.options.strip() #get filename
@@ -623,7 +622,7 @@ class krome():
 				if(srow[0]!="-"): srow = "-"+srow
 
 				arow = srow.split()
-				if(len(arow)==1): 
+				if(len(arow)==1):
 					sys.argv.append(arow[0].strip())
 					continue
 				elif(len(arow)==2):
@@ -660,11 +659,11 @@ class krome():
 					if(reasa!="" and prodsa!="" and typea!=""):
 						icounta += 1
 						print str(icounta)+". ("+typea+") "+reasa+" -> "+prodsa
-					if("@reacts:" in srow): 
+					if("@reacts:" in srow):
 						reasa = " + ".join([x.strip() for x in srow.replace("@reacts:","").split(",")])
-					if("@prods:" in srow): 
+					if("@prods:" in srow):
 						prodsa = " + ".join([x.strip() for x in srow.replace("@prods:","").split(",")])
-					if("@type:" in srow): 
+					if("@type:" in srow):
 						typea = srow.replace("@type:","").strip()
 				print
 			sys.exit()
@@ -692,7 +691,7 @@ class krome():
 
 			sys.exit()
 
-		
+
 		#get a citation and exit
 		if(args.quote):
 			print "KROME is a quote random generator with some utility for astrochemistry."
@@ -823,12 +822,12 @@ class krome():
 			self.usePhIoniz = True
 			print "Reading option -usePhIoniz (now obsolete, you can remove it)"
 
-		#use photoionization 
+		#use photoionization
 		if(args.usePhotoOpacity):
 			self.usePhotoOpacity = True
 			print "Reading option -usePhotoOpacity (now obsolete, you can remove it)"
 
-		#use a global cooling floor 
+		#use a global cooling floor
 		if(args.useCoolFloor):
 			self.useCoolFloor = True
 			if(not(args.cooling)):
@@ -848,7 +847,7 @@ class krome():
 			print "Reading option -useIndividualFloor ("+(",".join(myFloor))+")"
 
 
-		#use photo-induced cooling transitions 
+		#use photo-induced cooling transitions
 		if(args.usePhotoInduced):
 			self.usePhotoInduced = True
 			if(not(args.photoBins)):
@@ -882,7 +881,7 @@ class krome():
 			self.useReverse = True
 			print "Reading option -reverse"
 
-                #use H2 on dust, constant rate by Jura 
+                #use H2 on dust, constant rate by Jura
 		if(args.useDustH2const):
 			self.useDustH2const = True
 			print "Reading option -useDustH2const"
@@ -896,10 +895,10 @@ class krome():
 			self.H2opacity = args.H2opacity.strip()
 			print "Reading option -H2opacity="+self.H2opacity
 
-                #determine H2shielding types 
+                #determine H2shielding types
 		if(args.shielding):
 			myShielding = [x.strip() for x in args.shielding.split(",")]
-			#list of the shielding approximations 
+			#list of the shielding approximations
 			allShielding = ["DB96","WG11"]
 			for shi in myShielding:
 				if(not(shi in allShielding)):
@@ -1171,7 +1170,7 @@ class krome():
 					if(srow[0]=="#"): continue
 					if(srow[:1]=="//"): continue
 					if(srow[:1]=="/*"): inComment = True
-					if("*/" in srow): 
+					if("*/" in srow):
 						inComment = False
 						continue
 					srow = srow.split("#")[0]
@@ -1189,7 +1188,7 @@ class krome():
 						allCools.append(mname) #append flag to the list of the coolants
 				#write found coolants
 				joinedCool = (", ".join([x["flag"] for x in partialFileCools]))
-				if(len(partialFileCools)>0): 
+				if(len(partialFileCools)>0):
 					print "Cooling "+joinedCool+" available from "+fname
 					allCools.append("FILE")
 
@@ -1220,7 +1219,7 @@ class krome():
 			if("Z_CIE" in myCools): self.useCoolingZCIE = True
 			if("Z_CIENOUV" in myCools): self.useCoolingZCIENOUV = True
 			if("Z_EXTENDED" in myCools):
-				self.useCoolingZExtended = self.useCoolingZ = self.useCoolingZCIE = True 
+				self.useCoolingZExtended = self.useCoolingZ = self.useCoolingZCIE = True
 
 			#loop over metals loaded from file and search for them in the cooling flags provided by the user
 			for met in fileCools:
@@ -1262,7 +1261,7 @@ class krome():
 			if(self.coolingQuench<0e0):
 				die("ERROR: Tcrit for coolingQuench should be greater than zero!")
 			print "Reading option -coolingQuench ("+str(self.coolingQuench)+")"
-		
+
 		#determine heating types
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
@@ -1281,8 +1280,8 @@ class krome():
 			if("PHOTODUST" in myHeat): self.useHeatingPhotoDust = True #photoelectric heating from dust
 			if("PHOTODUSTNET" in myHeat): self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
 			if("XRAY" in myHeat): self.useHeatingXRay = True #heating from xray reactions rate
-			if("VISCOUS" in myHeat): self.useHeatingVisc = True #heating from viscosity 
-			if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2 in LW bands 
+			if("VISCOUS" in myHeat): self.useHeatingVisc = True #heating from viscosity
+			if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2 in LW bands
 
 			self.use_thermo = True
 			if(self.photoBins<=0 and self.useHeatingPhoto):
@@ -1311,7 +1310,7 @@ class krome():
 			self.photoDustVarAv = args.photoDustVarAv.strip()
 			if(not(self.useHeatingPhotoDust)): sys.exit("ERROR: -photoDustVarAv should be used with -heating=PHOTODUST")
 			print "Reading option -photoDustVarAv (variable name: "+self.photoDustVarAv+")"
-	
+
                 #use number densities instead of mass fractions (default, retrocompatibility)
 		if(args.useN):
 			self.usex = False
@@ -1321,7 +1320,7 @@ class krome():
 		if(args.useX):
 			self.useX = True
 			print "Reading option -useX"
-     
+
 		#force rwork size
 		if(args.forceRWORK):
 			myrwork = args.forceRWORK
@@ -1430,7 +1429,7 @@ class krome():
 
 			src = str(args.source)
 			print "Reading option -source (name="+src+")"
-	
+
 			#check if folder exists
 			if(not(os.path.exists(src))):
 				print "ERROR: the folder "+src+"/ doesn't exist!"
@@ -1477,7 +1476,7 @@ class krome():
 		if(args.RTOL):
 			self.RTOL = args.RTOL
 			print "Reading option -rtol (rtol="+str(self.RTOL)+")"
-			
+
 		#maxord
 		if(args.maxord):
 			self.maxord = min(max(1,int(args.maxord)),5)
@@ -1560,8 +1559,8 @@ class krome():
 					print "var: "+arow[0]
 					self.coevarsODE[arow[0]] = [ivarcoe,arow[1]]
 					ivarcoe += 1 #count variables to sort
-					continue #SKIP: a variable line is not a reaction line	
-				#search for ODE		
+					continue #SKIP: a variable line is not a reaction line
+				#search for ODE
 				arow = [x.strip() for x in srow.split("=")]
 				if(len(arow)!=2):
 					print "ERROR: wrong format in custom ODE file!"
@@ -1623,7 +1622,7 @@ class krome():
 					#check the number of coefficients (3temp+14poly)
 					if(len(coef)!=17):
 						print "ERROR: NASA polynomials!"
-						print spec	
+						print spec
 						print srow
 						sys.exit()
 					thermo[spec] = coef #append coefficients to the dictionary
@@ -1677,6 +1676,7 @@ class krome():
 			'l_':0e0,
 			'c_':0e0,
 			'CR':0e0,
+			'Q':0e0,
 			'M':0e0,
 			'g':0e0,
 			'E':me,
@@ -1696,7 +1696,7 @@ class krome():
 		# with -usePlainIsotopes build as nA
 		atoms_iso = ["H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar","K","Ca","Ti","Fe","Co","Ni"]
 		atoms_p = [i+1 for i in range(20)] + [22,26,27,28]
-		if(len(atoms_iso)!=len(atoms_p)): 
+		if(len(atoms_iso)!=len(atoms_p)):
 			die("ERROR: in building isotopes the length of the atoms array and the number of protons array mismatch!")
 		for aiso in atoms_iso:
 			protons = atoms_p[atoms_iso.index(aiso)] #get proton numbers
@@ -1707,13 +1707,13 @@ class krome():
 
 		#prepare mass dictionary
 		self.mass_dic = dict([[k.upper(),v] for (k,v) in mass_dic.iteritems()])
-		#sort dictionary, longest first. note that even if it is called 
-		# atoms, this contains also other chemical formula parts, as GRAIN, PAH, and so on... 
+		#sort dictionary, longest first. note that even if it is called
+		# atoms, this contains also other chemical formula parts, as GRAIN, PAH, and so on...
 		self.atoms = sorted(mass_dic, key = lambda x: len(x),reverse=True)
 
-	
+
 	#################################################
-	#read the reaction file 
+	#read the reaction file
 	def read_file(self):
 		skipDup = self.skipDup
 		filename = self.filename
@@ -1779,14 +1779,14 @@ class krome():
 			line_count += 1
 			allrows.append(row.strip())
 		fh.close()
-	
+
 		#warning if the number of lines exceed a certain limit
 		if(line_count>1000): print "Found "+str(line_count)+" lines! It takes a while..."
 
 		fsh_found = False #search for fsh variable for shielding if needed
 		#start reading file stored in the loop above
 		isComment = False #flag for comment block
-		noTabNext = False #flag for use tabs for the next reaction 
+		noTabNext = False #flag for use tabs for the next reaction
 		for row in allrows:
 			srow = row.strip() #stripped row
 			if(srow.strip()==""): continue #looks for blank line
@@ -1858,7 +1858,7 @@ class krome():
 					print "ERROR: variable line must be @var:variable=F90_expression"
 					print "found: "+srow
 					sys.exit()
-				
+
 
 				#look for array definition in var token
 				arow[0] = coeVarArray(arow[0])
@@ -1924,7 +1924,7 @@ class krome():
 					print "ERROR: wrong format, it should be @tabvar:varname=file,var1,var2"
 					print " You provided: "+srow.strip()
 					sys.exit()
-				
+
 				mytabvar = atab[0].strip()
 				mytabpath = aatab[0].strip().replace("\"","")
 				mytabxxyy = aatab[1]+","+aatab[2]
@@ -1932,12 +1932,12 @@ class krome():
 				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
 					self.anytabsizes,self.coevars,ivarcoe)
 				continue #this is not a reaction line
-				
+
 			#search for format string
 			if("@format:" in srow):
 				idxFound = tminFound = tmaxFound = rateFound = qeffFound = False
 				hasFormat = True #format flag
-				srow = srow.replace("@format:","") #remove 
+				srow = srow.replace("@format:","") #remove
 				#print "Found custom format: "+srow
 				arow = srow.split(",") #split format line
 				#check format (at least 4 elements)
@@ -1954,7 +1954,7 @@ class krome():
 				#read format elements
 				for x in arow:
 					x = x.lower().strip() #lower trimmed item
-					if(x=="idx"): 
+					if(x=="idx"):
 						iidx = ipos #index position
 						idxFound = True
 					if(x=="r"): ireact.append(ipos) #reactants positions
@@ -1962,10 +1962,10 @@ class krome():
 					if(x=="tmin"):
 						iTmin = ipos #min temperature position
 						tminFound = True
-					if(x=="tmax"): 
+					if(x=="tmax"):
 						iTmax = ipos #max temperature position
 						tmaxFound = True
-					if(x=="rate" or x=="k"): 
+					if(x=="rate" or x=="k"):
 						irate = ipos #rate in F90 style position
 						rateFound = True
 					if(x=="qeff" or x=="qpp"):
@@ -1976,7 +1976,7 @@ class krome():
 				if(not(rateFound)):
 					print "ERROR: format must contain rate token"
 					sys.exit()
-			
+
 				continue #SKIP format line (it is not a reaction line)
 
 			#custom cooling block start
@@ -2150,7 +2150,7 @@ class krome():
 			for op in opTlist:
 				if(not(tmaxFound)): break
 				if(op in arow[iTmax]):
-					arow[iTmax] = arow[iTmax].replace(op,"")		
+					arow[iTmax] = arow[iTmax].replace(op,"")
 					myrea.TmaxOp = op.replace(">","GT").replace("<","LT").replace(".","")
 					break
 
@@ -2185,7 +2185,7 @@ class krome():
 				myrea.ifrate = area[0] #store prepending if condition
 				myrea.krate = area[1] #get reaction rate written in F90 style
 			if("krome_fshield" in myrea.krate.lower()): fsh_found = True
-			
+
 			if(qeffFound): myrea.qeff = arow[iqeff]
 
 
@@ -2274,12 +2274,12 @@ class krome():
 				else:
 					pseudo_hash_list.append(myrea.pseudo_hash)
 
-			#append reactions if not skipped 
+			#append reactions if not skipped
 			if(not(skip_append)): reacts.append(myrea)
 			del myrea,row
 			if(not(noTabNextBlock)): noTabNext = False #return to default value when outside a block
 			#END LOOP ON FILE
-	
+
 		#after loop on file post-process special reactions
 		#shielding reactions requires fsh variable
 		if((self.useShieldingDB96 or self.useShieldingWG11) and not(fsh_found)):
@@ -2408,7 +2408,7 @@ class krome():
 				if(rea.krate.lower().strip()=="auto"):
 					autoFound = True
 					break
-		
+
 		#load auto reaction from the database
 		if(autoFound):
 			autoreacts = [] #dbase array contains dictionary with reaction data
@@ -2417,7 +2417,7 @@ class krome():
 			if(not(os.path.isdir(fdbase))):
 				print "ERROR: folder "+fdbase+" not found!"
 				sys.exit()
-			file_list = [f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))]
+			file_list = sorted([f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))])
 			extraVars = dict() #dict of the extra varaibles, with key=filename
 			isAutoRev = False
 			for fname in file_list:
@@ -2451,7 +2451,7 @@ class krome():
 						autoreacts.append(myrea)
 						isAutoRev = False
 
-			
+
 			#loop on the reactions to find auto
 			necessaryExtraVars = []
 			reaMultiTrange = []
@@ -2533,7 +2533,7 @@ class krome():
 				nameVar = coeVarArray(nameVar) #check for array
 				if(nameVar in self.coevars): continue
 				self.coevars[nameVar] = [len(self.coevars),exprVar]
-				
+
 
 		#load bare and ice binding energy from file into a dictionary (K)
 		fhbind = open("data/Ebare_ice.dat","rb")
@@ -2545,7 +2545,7 @@ class krome():
 			Ebind_spec, Ebind_bare, Ebind_ice = [x for x in srow.split(" ") if x!=""]
 			Ebind[(Ebind_spec+"_DUST").upper()] = {"Ebare": Ebind_bare, "Eice":Ebind_ice}
 
-		#increase the species to include bin-based surface species 
+		#increase the species to include bin-based surface species
 		uspecs = []
 		for sp in specs:
 			if(sp.is_chemisorbed): self.useChemisorption = True
@@ -2631,14 +2631,18 @@ class krome():
 
 		#check sinks (species that are only formed)
 		if(self.sinkCheck):
-			print "checking sinks..."
+			print "checking sinks/sources..."
 			allR = []
 			allP = []
 			for rea in reacts:
 				for RR in rea.reactants:
-					if(not(RR in allR)): allR.append(RR.name)
+					allR.append(RR.name)
 				for PP in rea.products:
-					if(not(PP in allP)): allP.append(PP.name)
+					allP.append(PP.name)
+
+			allP = list(set(allP))
+			allR = list(set(allR))
+
 			sinks = []
 			sources = []
 			for PP in allP:
@@ -2660,6 +2664,7 @@ class krome():
 
 		#check recombination (ion species that never recombine with electrons)
 		if(self.recCheck):
+			recErrorOnce = False
 			print "checking recombinations..."
 			for sp in specs:
 				if(sp.charge>0):
@@ -2670,9 +2675,13 @@ class krome():
 							found = True
 							break
 					if(not(found)):
-						print "ERROR: "+sp.name+" never recombines, check your network!"
-						print " Disable this control with -noRecCheck"
-						sys.exit()
+						recErrorOnce = True
+						print "ERROR: "+sp.name+" never recombines with electrons, check your network!"
+
+			#error and stop if recombination error found
+			if(recErrorOnce):
+				print " Disable this control with -noRecCheck"
+				sys.exit()
 
 		#write reverse report tp file
 		if(self.checkReverse):
@@ -2724,17 +2733,17 @@ class krome():
 		print "done!"
 
 	#####################################################
-	#define the phys_ variables (will be used in krome_commons and 
-	# in krome_user to create the get and set functions) 
+	#define the phys_ variables (will be used in krome_commons and
+	# in krome_user to create the get and set functions)
 	def definePhysVariables(self):
 		#variables are list [name, default_value_string]
-		#note that phys_ will be prepended 
+		#note that phys_ will be prepended
 		self.physVariables = [["Tcmb", "2.73d0"],
 			["zredshift", "0d0"],
 			["orthoParaRatio", "3d0"],
 			["metallicity", "0d0"],
                         ["Tfloor", "2.73d0"]]
-	
+
 	#####################################################
 	def photo_warnings(self):
 		if(self.is_test): return #skip warning if test mode
@@ -2745,7 +2754,7 @@ class krome():
 			print " your main file! Read the manual for further details."
 			print "************************************************"
 			a = raw_input("Any key to continue...")
-		
+
 	###############################################
 	def do_reverse(self):
 		#do reverse reaction if needed
@@ -2787,7 +2796,7 @@ class krome():
 					myrev.check(self.checkMode) #check mass and charge conservation
 					reacts.append(myrev)
 			print "Inverse reaction added: "+str(count_reverse)
-			
+
 			self.reacts = reacts
 			self.nrea = len(reacts)
 
@@ -2797,7 +2806,7 @@ class krome():
 	# arg1 and arg2 are the arrays of reactants and products
 	# to return pruned reactant list
 	def PRuniq(self,arg1, arg2):
-		
+
 		arg1n = []
 		arg1c = [x.name for x in arg1]
 		arg2c = [x.name for x in arg2]
@@ -2808,7 +2817,7 @@ class krome():
 				continue
 			arg1n.append(x)
 		return arg1n
-			
+
 	###########################################
 	#check if reactions have their reverse in the chemical network
 	def check_reverse(self):
@@ -2838,7 +2847,7 @@ class krome():
 					idxRev.append(j)
 					break #break loop when reverse found
 			if(not(revFound)): print "WARNING: no reverse reaction found for "+rea1.verbatim
-					
+
 	###################################################
 	def verifyThermochem(self):
 		if(not(self.checkThermochem)): return
@@ -2865,7 +2874,7 @@ class krome():
 				mymol.idx = len(specs)+1
 				self.specs.append(mymol)
 		self.totMetals = "tot_metals = " + (" + ".join(["n(idx_"+x.replace("+","j")+")" for x in Zcools]))
-	
+
 	#######################################
 	def addReaMin(self):
 		for rea in self.reacts:
@@ -3041,7 +3050,7 @@ class krome():
 		if(not(os.path.exists(buildFolder))):
 			os.mkdir(buildFolder)
 			print "Created "+buildFolder
-		
+
 		#dump species to log file
 		fout = open(self.buildFolder+"species.log","w")
 		fout.write("#This file contains a list of the species used with their indexes\n")
@@ -3092,9 +3101,9 @@ class krome():
 		fout.close()
 		print "Heating cooling index init for gnuplot in "+self.buildFolder+"heatcool.gps"
 
-	
+
 		#dump reactions to log file
-		
+
 		fout = open(self.buildFolder+"reactions.log","w")
 		idx = maxprod = maxreag = 0
 		for rea in self.reacts:
@@ -3110,13 +3119,13 @@ class krome():
 			fout.write(str(rea.idx)+"\t"+rea.verbatim+"\n")
 		fout.close()
 
-		
+
 		#dump network to dot file
 		fout = open(self.buildFolder+"network.dot","w")
 		ntw = dict()
 		dot = "digraph{\n"
 		for rea in self.reacts:
-			react = self.uniq(rea.reactants)		
+			react = self.uniq(rea.reactants)
 			prods = self.uniq(rea.products)
 			for x in react:
 				dot += "\""+x.name+"\" -> k"+str(rea.idx) +"\n"
@@ -3126,7 +3135,7 @@ class krome():
 		fout.write(dot)
 		fout.close
 		print "Reactions saved in "+self.buildFolder+"reactions.log"
-	
+
 	##############################################
 	#write C headers if requested
 
@@ -3523,7 +3532,7 @@ class krome():
 					if(self.useDustEvap):
 						dns[nmols+j-1] += " &\n- dust_evap(krome_dust_T("+str(j)+"),krome_dust_Tbind("+str(j)+")"
 						dns[nmols+j-1] += ","+partner_mass+",n("+str(nmols+j)+")**2,krome_grain_rho("+str(iType)+"))"
-					dns[nmols+j-1] = dns[nmols+j-1].replace("= 0.d0 +", "=") 
+					dns[nmols+j-1] = dns[nmols+j-1].replace("= 0.d0 +", "=")
 
 		#find the maximum number of products and reactants
 		maxnprod = maxnreag = 0
@@ -3674,7 +3683,7 @@ class krome():
 				jac[Tgas_species.idx-1][i] += " pdj(idx_Tgas) = (dn1-dn0)/dnn\n"
 				jac[Tgas_species.idx-1][i] += "end if\n"
 
-				#jac[Tgas_species.idx-1][i] = "if(abs(n("+s+") - jac_nold(" + s 
+				#jac[Tgas_species.idx-1][i] = "if(abs(n("+s+") - jac_nold(" + s
 				#jac[Tgas_species.idx-1][i] += "))>1d-10) pdj(idx_Tgas) = (jac_dn(idx_Tgas) - jac_dnold(idx_Tgas)) / (n("
 				#jac[Tgas_species.idx-1][i] += s + ") - jac_nold(" + s + "))"
 
@@ -3816,8 +3825,8 @@ class krome():
 			return arg_metal.replace("-","k")
 		else:
 			return arg_metal #is not an ion
-	
-		
+
+
 	#####################################
 	#alternative for reading cooling data from file
 	def createZcooling(self):
@@ -3867,7 +3876,7 @@ class krome():
 					#add level data to the dictionary
 					levels_data[int(arow[0])] = {"energy":float(arow[1]), "g":float(arow[2])}
 					continue
-				
+
 				#if 3 elemets is transistion data
 				if("->" in srow):
 					srow = srow.replace("->",",") #replace the arrow with a comma (easier to split)
@@ -3906,7 +3915,7 @@ class krome():
 						"Bij":float(arow[2])*preB, "denergy_eV":de_eV, "denergy_K":de_eV/kboltzmann_eV,\
 						"Bji":float(arow[2])*preB/gj*gi}
 					continue
-		
+
 				#if more than 3 elements is a rate data
 				if(len(srow.split(","))>3):
 					arow = srow.split(",")
@@ -3990,7 +3999,7 @@ class krome():
 				index_count += 1
 				#store the size of the k(:) array
 				self.coolZ_nkrates = index_count
-				#build reverse as Rji = Rij*gi/gj*exp(-deltaE/T)					
+				#build reverse as Rji = Rij*gi/gj*exp(-deltaE/T)
 				rate_comment = "!"+str(r_data["up"])+"<-"+str(r_data["down"])+", "+metal_name+" - "+r_data["collider"]+"\n"
 				myrate = "k("+str(r_data["rate"])+") * "+str(float(g_up)/float(g_down))+"d0 * exp(-"+deltaE+" * invT)"
 				self.coolZ_rates.append(rate_comment+"k("+str(index_count)+") = " + myrate)
@@ -4000,7 +4009,7 @@ class krome():
 
 			#merge excitation and de-excitation dictionary
 			rate_data = dict(rate_data.items() + rate_data_rev.items())
-			
+
 
 			idx_linear_dep_level = 0 #ground level will be removed (for linear dependency)
 
@@ -4016,7 +4025,7 @@ class krome():
 					continue
 				#loop on the number of levels (i index, i<->j)
 				for ilev in level_list:
-					#loop on the number of levels (j index, i<->j)						
+					#loop on the number of levels (j index, i<->j)
 					for jlev in level_list:
 						#no transitions from the same level
 						if(ilev==jlev): continue
@@ -4147,14 +4156,14 @@ class krome():
 			full_function += "if(n(idx_"+metal_name_f90+")<1d-15) return\n\n" #if low coolant abundance skip all
 			full_function += "A(:,:) = 0d0\n\n" #init A matrix to zero
 
-			#write the initialization of first column of the A matrix 
+			#write the initialization of first column of the A matrix
 			# (will be used by the f90 to reduce the size of the problem)
 			for j in range(nlev):
 				if(Amatrix[j][0]!="0d0"):
 					matrix_element = Amatrix[j][0].replace("0d0 &\n","")
 					full_function += "A("+str(j+1)+",1) = "+matrix_element+"\n"
 
-			#write the initialization of diagonal elements of the A matrix 
+			#write the initialization of diagonal elements of the A matrix
 			# (will be used by the f90 to reduce the size of the problem)
 			for j in range(1,nlev):
 				if(Amatrix[j][j]!="0d0"):
@@ -4180,7 +4189,7 @@ class krome():
 
 
 			#write the A matrix column-wise. A(:,1) matrix column computed above
-			# as well as the diagonal elements 
+			# as well as the diagonal elements
 			for i in range(1,nlev):
 				for j in range(nlev):
 					#skip diagonal elements since already written (see above)
@@ -4246,7 +4255,7 @@ class krome():
 			full_function += " stop\n"
 			full_function += "end if\n\n"
 
-			#when the population for each level is known compute the cooling (see above) 
+			#when the population for each level is known compute the cooling (see above)
 			full_function += function_name + " = " +full_B_vector+"\n\n"
 			full_function += "end function "+function_name+"\n\n"
 
@@ -4374,6 +4383,8 @@ class krome():
 			elif(srow == "#KROME_phys_commons"):
 				for x in self.physVariables:
 					fout.write("real*8::phys_"+x[0]+"\n")
+				for x in self.physVariables:
+					fout.write("!$omp threadprivate(phys_"+x[0]+")\n")
 			elif(srow == "#KROME_xsecs_from_file"):
 				srow = ""
 				for rea in reacts:
@@ -4457,35 +4468,35 @@ class krome():
 	def makeConstants(self):
 		buildFolder = self.buildFolder
 		constants = []
-		constants.append(["boltzmann_eV", "8.617332478d-5","eV / K"]) 
+		constants.append(["boltzmann_eV", "8.617332478d-5","eV / K"])
 		constants.append(["boltzmann_J", "1.380648d-23","J / K"])
-		constants.append(["boltzmann_erg", "1.380648d-16","erg / K"]) 
+		constants.append(["boltzmann_erg", "1.380648d-16","erg / K"])
 		constants.append(["planck_eV","4.135667516d-15","eV s"])
-		constants.append(["planck_J","6.62606957d-34","J s"])  
-		constants.append(["planck_erg","6.62606957d-27","erg s"]) 
+		constants.append(["planck_J","6.62606957d-34","J s"])
+		constants.append(["planck_erg","6.62606957d-27","erg s"])
 		constants.append(["iplanck_eV","1d0/planck_eV","1 / eV / s"])
 		constants.append(["iplanck_J","1d0/planck_J","1 / J / s"])
 		constants.append(["iplanck_erg","1d0/planck_erg","1 / erg / s"])
-		constants.append(["gravity","6.674d-8","cm3 / g / s2"])      
+		constants.append(["gravity","6.674d-8","cm3 / g / s2"])
 		constants.append(["e_mass","9.10938188d-28","g"])
 		constants.append(["p_mass","1.67262158d-24","g"])
 		constants.append(["n_mass","1.674920d-24","g"])
 		constants.append(["ip_mass","1d0/p_mass","1/g"])
-		constants.append(["clight","2.99792458e10","cm/s"]) 
-		constants.append(["pi","3.14159265359d0","#"]) 
-		constants.append(["eV_to_erg","1.60217646d-12","eV -> erg"]) 
+		constants.append(["clight","2.99792458e10","cm/s"])
+		constants.append(["pi","3.14159265359d0","#"])
+		constants.append(["eV_to_erg","1.60217646d-12","eV -> erg"])
 		constants.append(["ry_to_eV","13.60569d0","rydberg -> eV"])
 		constants.append(["ry_to_erg","2.179872d-11","rydberg -> erg"])
-		constants.append(["seconds_per_year","365d0*24d0*3600d0","yr -> s"]) 
-		constants.append(["km_to_cm","1d5","km -> cm"]) 
-		constants.append(["cm_to_Mpc","1.d0/3.08d24","cm -> Mpc"]) 
-		constants.append(["kvgas_erg","8.d0*boltzmann_erg/pi/p_mass",""]) 
-		constants.append(["pre_kvgas_sqrt","sqrt(8.d0*boltzmann_erg/pi)",""]) 
-		constants.append(["pre_planck","2.d0*planck_erg/clight**2","erg/cm2*s3"]) 
-		constants.append(["exp_planck","planck_erg / boltzmann_erg","s*K"]) 
+		constants.append(["seconds_per_year","365d0*24d0*3600d0","yr -> s"])
+		constants.append(["km_to_cm","1d5","km -> cm"])
+		constants.append(["cm_to_Mpc","1.d0/3.08d24","cm -> Mpc"])
+		constants.append(["kvgas_erg","8.d0*boltzmann_erg/pi/p_mass",""])
+		constants.append(["pre_kvgas_sqrt","sqrt(8.d0*boltzmann_erg/pi)",""])
+		constants.append(["pre_planck","2.d0*planck_erg/clight**2","erg/cm2*s3"])
+		constants.append(["exp_planck","planck_erg / boltzmann_erg","s*K"])
 		constants.append(["stefboltz_erg","5.670373d-5","erg/s/cm2/K4"])
-		constants.append(["N_avogadro","6.0221d23","#"]) 
-		constants.append(["Rgas_J","8.3144621d0","J/K/mol"]) 
+		constants.append(["N_avogadro","6.0221d23","#"])
+		constants.append(["Rgas_J","8.3144621d0","J/K/mol"])
 		constants.append(["Rgas_kJ","8.3144621d-3","kJ/K/mol"])
 		constants.append(["hubble","0.704d0","dimensionless"])
 		constants.append(["Omega0","1.0d0","dimensionless"])
@@ -4500,7 +4511,7 @@ class krome():
 			fout = open(buildFolder+"krome_all.f90","a")
 		else:
 			fout = open(buildFolder+"krome_constants.f90","w")
-		
+
 		#prepares list of constants
 		const = "!constants\n"
 		for x in constants:
@@ -4613,7 +4624,7 @@ class krome():
 				if(x[1]>1): smult = str(x[1])+"d0*"
 				parts.append(smult+"n("+x[0]+")")
 			zGets.append([k, "z"+k, (" &\n + ".join(parts))])
-				
+
 
 		#conserve
 		krome_conserve = "" #init full string for the pragma replacement
@@ -4653,6 +4664,7 @@ class krome():
 
 			#loop on the found atoms. k=atom, v=list of species with k
 			for (k,v) in acount.iteritems():
+				if(not(self.useConserve)): break
 				if(k=="E"): continue #skip electrons
 				aadd = [] #parts of the summation for ntot
 				sdiff = "" #string for scaling
@@ -4683,7 +4695,7 @@ class krome():
 				krome_conserve += "factor = nitot/ntot\n"
 				krome_conserve += sdiff + "\n"
 				krome_conserve += "\n"
-	
+
 		nmax = 60 #max number of species for conservation
 		if(len(specs)>nmax and self.useConserve):
 			print "WARNING: more than "+str(nmax)+" species (i.e. "+str(len(specs))+"), -conserve disabled!"
@@ -4731,11 +4743,11 @@ class krome():
 
 			if(skip): continue #skip
 
-			#replace the small value for rates according to the maximum number of products 
+			#replace the small value for rates according to the maximum number of products
 			if("#KROME_small" in srow):
 				if(self.useTabs):
 					fout.write(srow.replace("#KROME_small","0d0")+"\n")
-					continue					
+					continue
 				maxprod = 0
 				for x in reacts:
 					maxprod = max(len(x.products),maxprod)
@@ -4840,9 +4852,9 @@ class krome():
 			#replace arrays for best flux
 			elif(srow == "#KROME_arr_reactprod"):
 				for i in range(self.maxnreag):
-					fout.write("if(arr_r"+str(i+1)+"(i) == idx_found) found = .true.\n") 
+					fout.write("if(arr_r"+str(i+1)+"(i) == idx_found) found = .true.\n")
 				for i in range(self.maxnprod):
-					fout.write("if(arr_p"+str(i+1)+"(i) == idx_found) found = .true.\n") 
+					fout.write("if(arr_p"+str(i+1)+"(i) == idx_found) found = .true.\n")
 			elif(srow == "#KROME_conserve"):
 				fout.write(krome_conserve+"\n")
 
@@ -4935,7 +4947,7 @@ class krome():
 				for x in specs:
 					zatomrow = "\tget_zatoms("+str(x.idx)+") = " + str(x.zatom) + "\t!" + x.name + "\n"
 					fout.write(zatomrow)
-					
+
 			elif(srow == "#KROME_names"):
 				for x in specs:
 					fout.write("\tget_names("+str(x.idx)+") = \"" + x.name + "\"\n")
@@ -5003,10 +5015,10 @@ class krome():
 					spart = "call load_part(\"part"+spec_part+".dat\", zpart"+spec_part+", zpartMin"\
 						+spec_part+", zpartdT"+spec_part+")"
 					fout.write(spart+"\n")
-				
+
 			elif(srow == "#KROME_gamma"):
 				is_multiline = False #flag for multiline gamma
-				#computes the adiabatic index if needed or uses a user-defined expression 
+				#computes the adiabatic index if needed or uses a user-defined expression
 				if(self.typeGamma=="DEFAULT"):
 					gamma = "1.66666666667d0" #default gamma is 5/3 (atomic)
 				elif(self.typeGamma=="FULL"):
@@ -5043,7 +5055,7 @@ class krome():
 					di_vars = []
 					mo_vars = []
 					smallest_ve = 1e99
-					print 
+					print
 					for mol in specs:
 						#monoatomic
 						if(mol.natoms==1):
@@ -5053,7 +5065,7 @@ class krome():
 						elif(mol.natoms==2):
 							gtype = self.typeGamma
 							#skip every diatoms except H2 and CO if REDUCED
-							if(gtype=="REDUCED" and (mol.name!="H2" and mol.name!="CO")): continue 
+							if(gtype=="REDUCED" and (mol.name!="H2" and mol.name!="CO")): continue
 							if(gtype=="POPOVAS" and (mol.name!="H2" and mol.name!="CO")): continue
 							#warning if vibrational constant not found
 							if(mol.ve_vib=="__NONE__" and (gtype=="EXACT" or gtype=="VIB")):
@@ -5118,11 +5130,11 @@ class krome():
 					header += "\n!avoid small Tgas that causes large x=a/Tgas below\n"
 					header += "Tgas_vib = max(n(idx_Tgas), "+format_double(smallest_ve*1e-2) + ")\n"
 					header += "Tgas = n(idx_Tgas)\n"
-				
+
 					#append gamma to the header
 					gamma = header + gamma
 					is_multiline = True
-					
+
 				else:
 					#user-defined gamma
 					gamma = self.typeGamma
@@ -5132,7 +5144,7 @@ class krome():
 					fout.write(gamma)
 				else:
 					fout.write("krome_gamma = " + gamma + "\n")
-		
+
 			else:
                                 if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):
@@ -5391,7 +5403,7 @@ class krome():
 			row = row.replace("#KROME_init_Qabs", dustQabs)
 			row = row.replace("#KROME_opt_integral", dustOptInt)
 			row = row.replace("#KROME_dust_key_fraction", dustKeyFraction)
-		 
+		
 			if(row[0]!="#"): fout.write(row)
 
 		if(not(self.buildCompact)):
@@ -5458,7 +5470,7 @@ class krome():
 			if(srow==""): continue
 			if(srow[0]=="#"): continue
 			arow = [x for x in srow.split(" ") if x!=""]
-			#Z: atomic number, ion: ionization degree (e.g. HII=1), energy_eV: ioniz potential, n0: principal quantum number 
+			#Z: atomic number, ion: ionization degree (e.g. HII=1), energy_eV: ioniz potential, n0: principal quantum number
 			fbdata.append({"Z":int(arow[0]), "ion":int(arow[1]), "energy_eV":float(arow[5]), "n0":int(arow[6])})
 
 		skip = skip_nleq = skip_dTdust = False
@@ -5500,11 +5512,11 @@ class krome():
 			if(skip or skip_nleq or skip_dTdust): continue
 
 
-			#replace the small value for rates according to the maximum number of products 
+			#replace the small value for rates according to the maximum number of products
 			if("#KROME_small" in srow):
 				if(self.useTabs):
 					fout.write(srow.replace("#KROME_small","0d0")+"\n")
-					continue					
+					continue
 				maxprod = 0
 				for x in reacts:
 					maxprod = max(len(x.products),maxprod)
@@ -5543,7 +5555,7 @@ class krome():
 					for i in range(len(fcn_levs)):
 						preif = ""
 						if(i>0): preif = "else "
-						fcase = preif+"if(n=="+str(fcn_levs[i])+") then\n"		
+						fcase = preif+"if(n=="+str(fcn_levs[i])+") then\n"
 						fcase += "call fcn_"+str(fcn_levs[i])+"(n,x(:),f(:))\n"
 						fout.write(fcase)
 					fout.write("else\n")
@@ -5563,7 +5575,7 @@ class krome():
 						if(dataip["Z"]==Zatom and dataip["ion"]==charge):
 							mydataip = dataip #store the line
 							dataFound = True #update found flag
-							break #break the loop 
+							break #break the loop
 					#raise error if no data found
 					if(not(dataFound)): sys.exit("ERROR: no data found for "+x.name)
 					#start calculation (precompute most of the known stuff)
@@ -5640,7 +5652,7 @@ class krome():
 			else:
 				#replace pragma for total metals
 				row = row.replace("#KROME_tot_metals", self.totMetals)
-				
+
 				if(self.H2opacity=="RIPAMONTI"):
 					#thick case (note that 1.25d-10 = 1/8e9)
 					row = row.replace("#KROME_H2opacity", "&\n* min(1.d0, max(1.25d-10 * sum(n(1:nmols)),1d-40)**(-.45))")
@@ -5649,7 +5661,7 @@ class krome():
 					row = row.replace("#KROME_H2opacity", "&\n* H2opacity_omukai(Tgas, n(:))")
 				else:
 					#thin case
-					row = row.replace("#KROME_H2opacity", "") 
+					row = row.replace("#KROME_H2opacity", "")
 
 				#replace pragma for dH_cooling
 				if(self.useCoolingdH):
@@ -5705,10 +5717,10 @@ class krome():
 
 		#build H2 heating according to the rates
 		HChem = HChemDust = ""
-		sclist = [] 
+		sclist = []
 		if(self.useHeatingChem or self.useCoolingChem or self.useCoolingDISS):
 			RPK = []
-			#RPK is the list of the heating/cooling processes as 
+			#RPK is the list of the heating/cooling processes as
 			# [product_list, reactant_list, fortran_rate, heating/cooling_flag]
 			if(self.useHeatingChem):
 				RPK.append([["H","H","H"], ["H2","H"], "4.48d0*h2heatfac","H"])
@@ -5807,11 +5819,11 @@ class krome():
 					klist = sorted(klist, key=lambda x: x[1])
 					fout.write("".join([x[0] for x in klist]))
 
-				#replace the small value for rates according to the maximum number of products 
+				#replace the small value for rates according to the maximum number of products
 				if("#KROME_small" in row):
 					if(self.useTabs):
 						fout.write(row.replace("#KROME_small","0d0")+"\n")
-						continue					
+						continue
 					maxprod = 0
 					for x in reacts:
 						maxprod = max(len(x.products),maxprod)
@@ -5862,7 +5874,7 @@ class krome():
 					if(not(rdh2Found)):
 						print "ERROR: if you use PHOTOAV heating you should have"
 						print " H2 photodissiocation rate in your chemical network!"
-						sys.exit()			
+						sys.exit()
 
 					row = row.replace("#KROME_RdissH2",rateDissH2) #replace pragma with H2 photodissociation rate
 
@@ -5882,7 +5894,7 @@ class krome():
 					row = row.replace("#KROME_vars","real*8::"+(",".join(dH_varsa))+"\n")
 					row = row.replace("#KROME_rates",dH_coe)
 					row = row.replace("#KROME_dH_heating",dH_heat)
-			
+
 				if(len(row)==0): continue
 				if(row[0]!="#"): fout.write(row)
 
@@ -5955,7 +5967,7 @@ class krome():
 				log10(ntot), log10(Tgas)) * ntot"
 
 
-		#replace pragma with built strings 
+		#replace pragma with built strings
 		skip = False
 		for row in fh:
 			srow = row.strip()
@@ -5977,7 +5989,7 @@ class krome():
 					srow = srow.replace("#KROME_coolfloor"," + cooling(n(:), phys_Tfloor)")
 				else:
 					srow = srow.replace("#KROME_coolfloor","")
-				
+
 			#replace quenching function for cooling
 			if("#KROME_coolingQuench" in srow):
 				coolPragmaFound = True
@@ -5996,7 +6008,7 @@ class krome():
 				if(self.use_implicit_RHS):
 					fout.write(get_implicit_ode(self.maxnreag, self.maxnprod)+"\n")
 				else:
-                                        
+
 					#add dust ODE and partner specie RHS terms
 					if(self.useDust or self.dustTabsH2):
 						ndust = self.dustArraySize*self.dustTypesSize #number of dust ODEs
@@ -6074,11 +6086,11 @@ class krome():
 					else:
 
 						#add init flux var
-						if(not(self.humanFlux)): 
+						if(not(self.humanFlux)):
 							for x in self.reacts:
 								fout.write("kflux("+str(x.idx)+") = "+x.RHS+"\n")
 							fout.write("\n")
-					
+
 						inw = 0
 						idnw = 0
 						for x in dnw:
@@ -6100,7 +6112,7 @@ class krome():
 							fout.write("\t" + x + "\n")
 							inw += 1
 
-						
+
 			#replace the pragma with the computation of the photorates using the opacity computed with
 			# the approximation of Glover+2009 Eqn.2
 			elif(srow == "#KROME_photobins_compute_thick" and self.usePhotoOpacity):
@@ -6186,7 +6198,7 @@ class krome():
 							repT = "pd(idx_Tgas,"+str(i+1)+")"
 							spdj += "!d["+str(specj.name)+"_dot]/d["+str(speci.name)+"]\n"
 							spdj += self.jac[j][i].replace(org,rep).replace(orgT,repT)+"\n\n"
-							
+
 				fout.write(spdj)
 
 			elif(srow == "#KROME_JAC_PD"):
@@ -6260,13 +6272,13 @@ class krome():
 		hasElectrons = False
 		for mols in specs:
 			if(mols.name=="E"): hasElectrons = True
-			if(not("H" in mols.atomcount2)): continue 
+			if(not("H" in mols.atomcount2)): continue
 			Hcount = mols.atomcount2["H"]
 			if(Hcount>0): has_H = True
 			if(Hcount==1): sHtot += " &\n + n("+mols.fidx+")"
 			if(Hcount>1): sHtot += " &\n + "+str(Hcount)+"d0 * n("+mols.fidx+")"
 
-		scaleZ.append(sHtot) #Htot= is the first of the list 
+		scaleZ.append(sHtot) #Htot= is the first of the list
 		#creates the metallicity rescaling subroutine
 		for (k,v) in solar.iteritems():
 			if(not(has_H)):
@@ -6324,7 +6336,7 @@ class krome():
 						xname = ("_".join(x.name.split("_")[:-1]))
 						if(not(xbasic in allBasics)):
 							fout.write("\tinteger,parameter::" + "KROME_"+xbasic + " = " + str(x.idx) +"\t!"+xname+"\n")
-							allBasics.append(xbasic)						
+							allBasics.append(xbasic)
 					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
 
 			#converter from MOCASSIN abundances to KROME
@@ -6358,7 +6370,7 @@ class krome():
 					fset += self.KindDoubleValue + " :: argset\n"
 					fset += x+" = argset\n"
 					fset += "end subroutine "+fsetname+"\n"
-					
+
 					fgetname = "krome_get_"+x
 					fget = "\n!*******************\n"
 					fget += "function "+fgetname+"() " + self.BindC + "\n"
@@ -6521,7 +6533,7 @@ class krome():
 		print "done!"
 
 	##############################
-	def makeStars(self):		
+	def makeStars(self):
 		buildFolder = self.buildFolder
 		#********* STARS ****************
 		#intended for nuclear networks of stars
@@ -6768,8 +6780,12 @@ class krome():
 						photoPartnersList += "photoPartners("+str(i+1)+") = "+listPart[i][1].fidx+"\n"
 				fout.write(photoPartnersList+"\n")
 			elif(srow == "#KROME_init_phys_variables"):
+				if (len(self.physVariables)>0):
+					fout.write("!$omp parallel\n")
 				for x in self.physVariables:
-					fout.write("phys_"+x[0]+" = "+x[1]+"\n")					
+					fout.write("phys_"+x[0]+" = "+x[1]+"\n")
+				if (len(self.physVariables)>0):
+					fout.write("!$omp end parallel\n")
 			elif(srow == "#KROME_rwork_array"):
 				fout.write("\treal*8::rwork("+str(self.lrw)+")\n")
 			elif(srow == "#KROME_iwork_array"):
@@ -6837,12 +6853,12 @@ class krome():
 			print "- copying coolCO.dat..."
 			shutil.copyfile("data/coolCO.dat", buildFolder+"coolCO.dat")
 
-                #copy cooling Z_CIE 
+                #copy cooling Z_CIE
 		if(self.useCoolingZCIE):
 			print "- copying coolZ_CIE2012.dat..."
 			shutil.copyfile("data/coolZ_CIE2012.dat", buildFolder+"coolZ_CIE2012.dat")
 
-                #copy cooling Z_CIE NOUV 
+                #copy cooling Z_CIE NOUV
 		if(self.useCoolingZCIENOUV):
 			print "- copying coolZ_CIE2012NOUV.dat..."
 			shutil.copyfile("data/coolZ_CIE2012NOUV.dat", buildFolder+"coolZ_CIE2012NOUV.dat")
@@ -6987,17 +7003,17 @@ class krome():
 					x = pragmas[i]
 					y = str(repls[i])
 					srow = srow.replace(x,y)
-			if(trim): 
+			if(trim):
 				fw.write(srow+"\n")
 			else:
 				fw.write(srow)
 		fh.close()
 		fw.close()
-			
+
         #########################################
 	def ramses_patch2011(self):
 		pfold = "patches/ramses/"
-		ramsesFolder = self.buildFolder+"krome_ramses_patch/" 
+		ramsesFolder = self.buildFolder+"krome_ramses_patch/"
 		buildFolder = self.buildFolder
 		if(not(os.path.exists(ramsesFolder))): os.makedirs(ramsesFolder)
 		specs = self.specs
@@ -7099,7 +7115,7 @@ class krome():
 		#replace pragma and copy the file to the build/ramses
 		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_init_array"],[init_array])
 		indentF90(ramsesFolder+fname)
-		
+
 		#output_hydro
 		fname = "output_hydro.f90"
 		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
@@ -7127,7 +7143,7 @@ class krome():
 	#########################################
 	def ramses_patch(self):
 		pfold = "patches/ramses/"
-		ramsesFolder = self.buildFolder+"krome_ramses_patch/" 
+		ramsesFolder = self.buildFolder+"krome_ramses_patch/"
 		buildFolder = self.buildFolder
 		if(not(os.path.exists(ramsesFolder))): os.makedirs(ramsesFolder)
 		specs = self.specs
@@ -7215,7 +7231,7 @@ class krome():
 		#replace pragma and copy the file to the build/ramses
 		self.replacein(pfold+fname,ramsesFolder+fname,["#KROME_init_array"],[init_array])
 		indentF90(ramsesFolder+fname)
-		
+
 		#read_hydro_params
 		fname = "read_hydro_params.f90"
 		self.replacein(pfold+fname,ramsesFolder+fname,[],[])
@@ -7271,7 +7287,10 @@ class krome():
 		# scaleueq: scale array from code units (RAMSES) to 1/cm3 (KROME) (unoneq<-unoneq)
 		# bkscaleueq: scale array from 1/cm3 (KROME) to code units (RAMSES) (unoneq->unoneq)
 		# bkupdateueq: copy from 1dim array of krome to 2dim array of ramses (unoneq->uold)
-		updateueq = scaleueq = bkscaleueq = bkupdateueq = ""
+		# These two are used when updating oct-averaged states
+		# vecupdateueq: copy from ramses 2dim array to 1dim array for krome (unoneq<-uin)
+		# vecbkupdateueq: copy from 1dim array of krome to 2dim array of ramses (unoneq->uout)
+		updateueq = scaleueq = bkscaleueq = bkupdateueq = vecupdateueq = vecbkupdateueq = ""
 		ichem = 0
 		fname = "cooling_fine.f90"
 		for x in specs:
@@ -7281,8 +7300,10 @@ class krome():
 				if(x.mass>0e0): scaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
 				bkscaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*"+str(x.mass)+"*iscale_d !"+x.name+"\n"
 				bkupdateueq += "uold(ind_leaf(i),ichem+1+"+str(ichem-1)+") = unoneq("+str(ichem)+") !"+x.name+"\n"
-		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq"]
-		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq]
+				vecupdateueq += "unoneq("+str(ichem)+") = uin(i,2+"+str(ichem)+") !"+x.name+"\n"
+				vecbkupdateueq += "uout(i,2+"+str(ichem)+") = unoneq("+str(ichem)+") !"+x.name+"\n"
+		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq","#KROME_vecupdate_unoneq","#KROME_vecbackupdate_unoneq",]
+		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq, vecupdateueq, vecbkupdateueq]
 		#replace pragmas (org) with expressions (new)
 		self.replacein(pfold+fname, ramsesFolder+fname, org, new)
 		indentF90(ramsesFolder+fname)
@@ -7401,7 +7422,7 @@ class krome():
 
 		#***********physics->physics***********
 		pFolder = "physics/sourceTerms/KromeChemistry/"
-		kromeFileList = ["KromeChemistry.F90","KromeChemistry_finalize.F90", 
+		kromeFileList = ["KromeChemistry.F90","KromeChemistry_finalize.F90",
 			"KromeChemistry_init.F90", "KromeChemistry_interface.F90", "Makefile"]
 		for fl in kromeFileList:
 			shutil.copy(patchFolder+pFolder+fl, flashFolder+pFolder+fl)
@@ -7458,6 +7479,7 @@ class krome():
 				gamma = "1.66666666667d0"
 			else:
 				gamma = self.typeGamma
+			if('Q' in name): gamma = "1d99"
 			all_parts.append([name, x.zatom, x.mass, x.neutrons, x.zatom-x.charge,gamma])
 		all_parts = sorted(all_parts,key=lambda x:x[1]) #sort by atomic number
 		for parts in all_parts:
@@ -7536,7 +7558,7 @@ class krome():
 	# when a piece is longer than largmax append the
 	# chracter rep
 	def linebreakerC(self,arg,sep,largmax = 40,rep="\n"):
-		
+
 		aarg = arg.split(sep)
 		sarg = ""
 		larg = 0
@@ -7584,7 +7606,7 @@ class krome():
 			else:
 				name = (uname+"I").replace("+","I") #neutral and ions
 			extname = name+"Density"
-			if(name=="EI"): 
+			if(name=="EI"):
 				name = "De" #electron is special
 				extname = "ElectronDensity"
 			speciesCount += 1 #increases species count
@@ -7616,7 +7638,7 @@ class krome():
 			krome_solve_baryon += "BaryonField["+name+"Num], "
 			krome_solve_numa.append(name+"Num")
 			krome_solve_identifya.append(name+"Num")
-			
+
 			#4. GridKrome.h
 			krome_grid_identifya.append("int &"+name+"Num")
 
@@ -7684,7 +7706,7 @@ class krome():
 		flist = ["krome_all", "krome_user_commons"]
 		for fle in flist:
 			shutil.move(buildFolder+fle+".f90", enzoFolder+fle+".F90")
-       
+
                 if(self.useDvodeF90):
 		        flist = ["dvode_f90_m"]
 		        for fle in flist:
@@ -7720,7 +7742,7 @@ class krome():
 		#check for large reaction set
 		if(len(reacts)>500 and not(self.use_implicit_RHS)):
 			print
-			print "WARNING: "+str(len(reacts))+" reactions found! Using implicit RHS (option -iRHS)" 
+			print "WARNING: "+str(len(reacts))+" reactions found! Using implicit RHS (option -iRHS)"
 			print "could be more efficient and also allows faster compilation."
 			a = raw_input("Any key to continue q to quit... ")
 			if(a=="q"): print sys.exit()
@@ -7736,13 +7758,13 @@ class krome():
 					print "    call krome(x(:), gas_density, gas_temperature, time_step)"
 				else:
 					print "    call krome(x(:), gas_temperature, time_step)"
-				print "where:" 
+				print "where:"
 				print " x(:) is a real*8 array of size "+str(nmols)+(" of the mass fractions" if useX else\
 					 " of number densities [1/cm3]")
 				if(useX): print " gas_density  is the gas density in [g/cm3]"
 				print " gas_temperature is the gas temperature in [K]"
 				print " time_step is the integration time-step in [s]"
-			
+
 				if(not(self.isdry)):
 					fout = open(buildFolder+"test.f90","w")
 					fout.write(get_example(nmols,useX))

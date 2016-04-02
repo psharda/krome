@@ -42,7 +42,8 @@ subroutine KromeChemistry(blockCount, blockList, dt)
   use Eos_interface, ONLY : Eos_wrapped, Eos
 
 
-  use krome_main  
+  use krome_main
+  use krome_user
 
   implicit none
   
@@ -99,9 +100,15 @@ subroutine KromeChemistry(blockCount, blockList, dt)
                  x(n) = solnData(specieMap(n),i,j,k)
                  xn(n) = x(n) * rho / mp / amu(n)
               enddo
-              
+
+	      !force neutral charge
+	      xn(krome_idx_e) = krome_get_electrons(xn(:))
+
               !Do the chemistry
               call krome(xn,tmp,dt)
+
+	      !force neutral charge
+	      xn(krome_idx_e) = krome_get_electrons(xn(:))
 
               !map the species back
               do n=1,NSPECIES
