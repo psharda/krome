@@ -356,7 +356,7 @@ subroutine coolfine1_oct(ind_grid,ngrid,ilevel)
                            (uold(i,1+neul) + uold(i,1+nvar))**2 + &
                            (uold(i,2+neul) + uold(i,2+nvar))**2 + &
                            (uold(i,3+neul) + uold(i,3+nvar))**2 )
-        uold(i,neul) = uout(2,nvec) / (uold(i,ichem) - 1.0_8) + ekin_mag    ! Total energy
+        uold(i,neul) = uout(nvec,2) / (uold(i,ichem) - 1.0_8) + ekin_mag    ! Total energy
      endif
      ! More than one leaf cell. Rescale fractionally, and make sure we conserve metallicities
      if (nleaf(igrid)>1) then
