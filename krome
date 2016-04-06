@@ -113,9 +113,6 @@ krome.countSpecies()
 #dump reactions and species to a file
 krome.dumpNetwork()
 
-#prepares a simple C header for wrappers
-krome.simpleCHeader()
-
 #show ODE stats
 krome.showODE()
 
@@ -166,6 +163,11 @@ if(not(krome.isdry)):
 	#create patches if needed
 	krome.patches()
 
+#prepares a C interface if desired
+krome.CInterface()
+
+#prepares a Python interface if desired
+krome.PyInterface()
 
 #print a final report an usage hints
 krome.final_report()

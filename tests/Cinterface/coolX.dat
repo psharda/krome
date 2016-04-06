@@ -1,0 +1,29 @@
+##############
+#custom variables here below
+@var:T2 = Tgas * 0.01d0
+
+##############
+#IRON II
+metal:Fe+
+#level n: energy (K), degeneracy g
+level 0: 0e0, 10
+level 1: 553.58d0, 8
+level 2: 9.6d2, 6
+
+#Aij
+1 -> 0, 2.13d-3
+2 -> 1, 1.57d-3
+2 -> 0, 1.5d-9
+
+#H collisions
+H, 1, 0, 9.5d-10
+H, 2, 1, 4.7d-10
+H, 2, 0, 5.7d-10
+
+#e- collisions
+E, 1, 0, 1.8e-6*T2**(-0.5)
+E, 2, 0, 1.8e-6*T2**(-0.5)
+E, 2, 1, 8.7d-7*T2**(-0.5)
+
+endmetal
+
