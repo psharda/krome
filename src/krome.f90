@@ -261,6 +261,8 @@ contains
 #KROME_iwork_array
     real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
+    real*8::ertol,eatol,max_time
+    logical::converged
 
     call XSETF(0)!toggle solver verbosity
     meth = 2
@@ -272,6 +274,11 @@ contains
     itol = 4 !both tolerances are scalar
     rtol(:) = 1d-6 !relative tolerance
     atol(:) = 1d-20 !absolute tolerance
+
+    ! Switches to decide when equilibrium has been reached
+    ertol = 1d-5  ! relative min change in a species
+    eatol = 1d-12 ! absolute min change in a species
+    max_time=seconds_per_year*1d9 ! max time we will be integrating for
 
     !for DLSODES options see its manual
     iopt = 0
@@ -302,32 +309,44 @@ contains
     
     imax = 1000
 
-    dt = seconds_per_year * 1d10
-    do i=1,imax
-       !solve ODE
-       CALL DLSODES(fcn_tconst, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
-            ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, jcn_dummy, MF)
-       if(istate==2) then
-          exit
-       else
-          istate=1
+    dt = seconds_per_year * 100.
+    converged = .false.
+    do while (.not. converged)
+       do i=1,imax
+          !solve ODE
+          CALL DLSODES(fcn_tconst, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
+               ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, jcn_dummy, MF)
+          if(istate==2) then
+             exit
+          else
+             istate=1
+          end if
+       end do
+       !check errors
+       if(istate.ne.2) then
+          print *,"ERROR: no equilibrium found!"
+          stop
        end if
-    end do
-    !check errors
-    if(istate.ne.2) then
-       print *,"ERROR: no equilibrium found!"
-       stop
-    end if
 
-    !avoid negative species
-    do i=1,nspec
-       n(i) = max(n(i),0.d0)
-    end do
+       !avoid negative species
+       do i=1,nspec
+          n(i) = max(n(i),0.d0)
+       end do
 
 #IFKROME_conserve
-    n(:) = conserve(n(:),ni(:)) 
+       n(:) = conserve(n(:),ni(:)) 
 #ENDIFKROME
 
+       ! check if we have converged by comparing the error in any species with an relative abundance above eatol 
+       converged = maxval(abs(n(1:nmols) - ni(1:nmols)) / max(n(1:nmols),eatol*sum(n(1:nmols)))) .lt. ertol &
+                   .or. dt .gt. max_time
+
+       ! Increase integration time by a reasonable factor
+       if (.not. converged) then
+          dt = dt * 5.
+          ni = n
+       endif
+    enddo
 #IFKROME_useX
     x(:) = mass(1:nmols)*n(1:nmols)/rhogas !return to fractions
 #ELSEKROME
