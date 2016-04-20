@@ -199,6 +199,7 @@ contains
   subroutine krome_init_dust_distribution(x,dust_gas_ratio,alow_arg,&
        aup_arg,phi_arg) #KROME_bindC
     use krome_dust
+    use krome_commons
     #KROME_double_value , optional :: alow_arg,aup_arg,phi_arg
     #KROME_double_value :: dust_gas_ratio
     #KROME_double :: x(nmols)
@@ -826,7 +827,7 @@ contains
     use krome_commons
     implicit none
     integer::ios,icount
-    #KROME_character :: fname(*)
+    #KROME_character(len=*) :: fname
     real*8::tmp_El(nPhotoBins),tmp_Er(nPhotoBins)
     real*8::rout(3),tmp_J(nPhotoBins)
 
