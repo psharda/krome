@@ -353,7 +353,7 @@ contains
   end function krome_get_Tdust
 
   !***************************
-  !this subroutine sets as a scalar (xarg) all the 
+  !this subroutine sets as a scalar (xarg) all the
   ! surface species for the given idx_base in the
   ! species array x:
   ! e.g. krome_set_surface(x(:),1d3,krome_idx_OH_dust)
@@ -369,7 +369,7 @@ contains
   end subroutine krome_set_surface
 
   !***************************
-  !this subroutine sets as a scalar (xarg) all the 
+  !this subroutine sets as a scalar (xarg) all the
   ! surface species for the given idx_base in the
   ! species array x, normalized by the amount of dust
   ! in each bin:
@@ -386,7 +386,7 @@ contains
   end subroutine krome_set_surface_norm
 
   !***************************
-  !this subroutine sets as a vector (xarr) all the 
+  !this subroutine sets as a vector (xarr) all the
   ! surface species for the given idx_base in the
   ! species array x. The size of the array xarr is ndust.
   ! e.g. krome_set_surface_array(x(:),arr(:),krome_idx_OH_dust)
@@ -399,7 +399,7 @@ contains
     x(idx_base:idx_base+ndust-1) = xarr(:)
 
   end subroutine krome_set_surface_array
-  
+
   !***************************
   !this function gets the total amount of surface
   ! species for the given idx_base in the
@@ -445,7 +445,7 @@ contains
     close(nfile)
 
   end subroutine krome_store
-  
+
   !*****************************
   !restore the data from a dump (UNDER DEVELOPEMENT!)
   !arguments: the species array and the gas temperature
@@ -467,7 +467,7 @@ contains
        read(nfile,*) x(i)
     end do
 #IFKROME_useDust
-    !restore dust 
+    !restore dust
     do i=1,ndust
        read(nfile,*) xdust(i)
     end do
@@ -731,16 +731,16 @@ contains
     real(kind=c_double), target :: get_xsec(nPhotoBins)
     type(c_ptr) :: krome_get_xsec
     integer, value :: idx
-    
+
     get_xsec(:) = photoBinJTab(idx,:)
     krome_get_xsec = c_loc(get_xsec)
 #ELSEKROME_useBindC
     real*8 :: krome_get_xsec(nPhotoBins)
     integer :: idx
-    
+
     krome_get_xsec(:) = photoBinJTab(idx,:)
 #ENDIFKROME_useBindC
-    
+
   end function krome_get_xsec
 
   !*********************************
@@ -813,7 +813,7 @@ contains
     implicit none
 
     photoBinJ_org(:) = photoBinJ(:)
-    
+
   end subroutine krome_photoBin_store
 
   !********************************
@@ -1036,15 +1036,15 @@ contains
 
     !bisection to find the maximum
     x0 = xmax
-    x1 = 2.9d2*Tbb*boltzmann_eV 
-    J0 = planckBB(x0,Tbb) - eps 
+    x1 = 2.9d2*Tbb*boltzmann_eV
+    J0 = planckBB(x0,Tbb) - eps
     J1 = planckBB(x1,Tbb) - eps
     if(J0<0d0.or.J1>0d0) then
        print *,"ERROR: problems with auto planck bisection!"
        stop
     end if
 
-    do 
+    do
        xm = 0.5d0*(x0+x1)
        Jm = planckBB(xm,Tbb) - eps
        if(Jm>0d0) x0 = xm
@@ -1097,7 +1097,7 @@ contains
     use krome_photo
     use krome_constants
     #KROME_double_value :: upper,lower
-    real*8:x
+    real*8::x
     integer::i
 
     call krome_set_photoBinE_log(lower,upper)
@@ -1158,7 +1158,7 @@ contains
   !*****************************
   !get the opacity exp(-tau) correpsonding the to x(:)
   ! chemical composition. The column density
-  ! is computed using the expression in the 
+  ! is computed using the expression in the
   ! num2col(x) function.
   ! An array of size krome_nPhotoBins is returned.
   function krome_get_opacity(x,Tgas) #KROME_bindC
@@ -1370,7 +1370,7 @@ contains
 
   !*********************
   !return an array sized krome_nmols containing
-  ! the mass fractions (#), computed from the number 
+  ! the mass fractions (#), computed from the number
   ! densities (1/cm3) and the total density in g/cm3
   function krome_n2x(n,rhogas) #KROME_bindC
     use krome_commons
@@ -1393,7 +1393,7 @@ contains
 
   !********************
   !return an array sized krome_nmols containing
-  ! the number densities (1/cm3), computed from the mass 
+  ! the number densities (1/cm3), computed from the mass
   ! fractions and the total density in g/cm3
   function krome_x2n(x,rhogas)
     use krome_commons
@@ -1697,7 +1697,7 @@ contains
 #ELSEKROME_useBindC
     integer :: krome_get_zatoms(nmols)
     integer::zatoms(nspec)
-    
+
     zatoms(:) = get_zatoms()
     krome_get_zatoms(:) = zatoms(1:nmols)
 #ENDIFKROME_useBindC
@@ -1705,7 +1705,7 @@ contains
   end function krome_get_zatoms
 
   !****************************
-  !get the mean molecular weight from 
+  !get the mean molecular weight from
   ! number density and mass density.
   ! alias for get_mu in krome_subs module
   function krome_get_mu(x) #KROME_bindC
@@ -1761,7 +1761,7 @@ contains
 #ENDIFKROME_useBindC
 
   !*****************
-  !get an array of double containing the inverse 
+  !get an array of double containing the inverse
   ! of the mass (1/g) of the species
   !alias for get_imass in krome_subs
   function krome_get_imass()
@@ -1781,7 +1781,7 @@ contains
     implicit none
     real(kind=c_double), target :: imass(nmols)
     type(c_ptr) :: krome_get_imass_c
-    
+
     imass(:) = krome_get_imass()
     krome_get_imass_c = c_loc(imass)
   end function krome_get_imass_c
@@ -1887,7 +1887,7 @@ contains
     #KROME_double_value :: xarg
 
     total_Z = xarg
-     
+
   end subroutine krome_set_Z
 
   !*************************
@@ -1897,7 +1897,7 @@ contains
     #KROME_double_value :: xarg
 
     clump_factor = xarg
-     
+
   end subroutine krome_set_clump
 
 
@@ -1945,7 +1945,7 @@ contains
     call print_best_flux_frac(n,Tgas,frac)
 
   end subroutine krome_print_best_flux_frac
-  
+
   !**********************
   !print the highest nbest fluxes for reactions involving
   !a given species using the index idx_find (e.g. krome_idx_H2)
@@ -1984,7 +1984,7 @@ contains
     real(kind=c_double), value :: Tgas
     real(kind=c_double), target :: fluxes(nrea)
     type(c_ptr) :: krome_get_flux_c
-    
+
     fluxes = krome_get_flux(n, Tgas)
     krome_get_flux_c = c_loc(fluxes)
 
