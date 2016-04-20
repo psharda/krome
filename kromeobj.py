@@ -361,7 +361,7 @@ class krome():
 		self.parser.add_argument("-ver", action="store_true", help="same as -v")
 		self.parser.add_argument("-version", action="store_true", help="same as -v")
 
-	
+
 
 	######################################
 	#select test name
@@ -500,9 +500,11 @@ class krome():
 		elif(args.test=="Cinterface"):
 			[argv.append(x) for x in ["-interfaceC", "-coolFile=tests/Cinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
 			filename = "tests/Cinterface/network.ntw"
+			test_status = "dev" #under development
 		elif(args.test=="Pyinterface"):
 			[argv.append(x) for x in ["-interfacePy",  "-coolFile=tests/Cinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
 			filename = "tests/Cinterface/network.ntw"
+			test_status = "dev" #under development
 		else:
 			tests = ", ".join(sorted(os.walk('tests').next()[1]))
 			print "ERROR: test \""+args.test+"\" not present!"
@@ -4130,6 +4132,7 @@ class krome():
 			full_function += "function "+function_name+"(n,inTgas,k)\n"
 			full_function += "use krome_commons\n"
 			full_function += "use krome_photo\n"
+			full_function += "use krome_subs\n"
 			full_function += "implicit none\n"
 
 			#declaration of varaibles
@@ -5403,7 +5406,7 @@ class krome():
 			row = row.replace("#KROME_init_Qabs", dustQabs)
 			row = row.replace("#KROME_opt_integral", dustOptInt)
 			row = row.replace("#KROME_dust_key_fraction", dustKeyFraction)
-		
+
 			if(row[0]!="#"): fout.write(row)
 
 		if(not(self.buildCompact)):
@@ -6657,10 +6660,7 @@ class krome():
 
 			ierr = ""
 			if(self.useIERR): ierr = ",ierr"
-			if(self.useDust):
-				row = row.replace("#KROME_dust_arguments",",xdust"+ierr)
-			else:
-				row = row.replace("#KROME_dust_arguments",""+ierr)
+			row = row.replace("#KROME_dust_arguments",""+ierr)
 
 			if(self.interfaceC or self.interfacePy):
 				row = row.replace("#KROME_bindC","bind(C)")
