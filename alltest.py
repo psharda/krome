@@ -75,7 +75,7 @@ if(mode=="check"):
 		#load reference changeset name
 		if("changeset:" in srow):
 			changesetREF = srow.replace("changeset:","")
-			continue 
+			continue
 		arow = srow.split(" ")
 		hashtab.append(arow)
 
@@ -111,7 +111,7 @@ if(os.path.isfile(masterfile)):
 	changeset = changeset[:7]
 
 #open output file for MD5 or results
-if(mode!="check"): 
+if(mode!="check"):
 	fout = open("outtest.log","w")
 else:
 	fout = open("outcheck.log","w")
@@ -145,7 +145,7 @@ for test in tests:
 
 	#move to build directory
 	os.chdir("build_"+prj_name+"/")
-	
+
 	#make clean
 	call(["make","clean"])
 
@@ -185,7 +185,7 @@ for test in tests:
 				#sys.exit()
 		print "Is OK?",testOK
 		fout.write(test+" "+str(testOK)+" "+str(time.time())+" regular\n")
-		
+
 
 	#call gnuplot if you want graphical result
 	if(mode=="eyeball"): call(["gnuplot"])
