@@ -508,7 +508,7 @@ class krome():
 		elif(args.test=="fargo3d"):
 			#[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
 			#[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL"]]
-			[argv.append(x) for x in ["-compact","-sh"]]
+			[argv.append(x) for x in ["-compact","-sh","-ATOL=1d-10"]]
 			test_status = "dev" #under development
 			filename = "networks/react_primordial3"
 		else:
