@@ -505,6 +505,12 @@ class krome():
 			[argv.append(x) for x in ["-interfacePy",  "-coolFile=tests/Cinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
 			filename = "tests/Cinterface/network.ntw"
 			test_status = "dev" #under development
+		elif(args.test=="fargo3d"):
+			#[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
+			#[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL"]]
+			[argv.append(x) for x in ["-compact","-sh"]]
+			test_status = "dev" #under development
+			filename = "networks/react_primordial3"
 		else:
 			tests = ", ".join(sorted(os.walk('tests').next()[1]))
 			print "ERROR: test \""+args.test+"\" not present!"
