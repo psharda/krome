@@ -2240,12 +2240,12 @@ class krome():
 			#store Tlimits if any
 			if(myrea.hasTlimitMin):
 				if(tminFound): myrea.Tmin = format_double(arow[iTmin])
-				#if file is SWRI convert to KROME
-				if(myrea.krate.strip()=="@xsecFile=SWRI"):
-					SWRI2KROME(self.buildFolder,myrea.reactants[0],myrea.products,myrea.Tmin)
-				#if file is LEIDEN convert to KROME
-				if(myrea.krate.strip()=="@xsecFile=LEIDEN"):
-					LEIDEN2KROME(self.buildFolder,myrea.reactants[0],myrea.products)
+			#if file is SWRI convert to KROME
+			if(myrea.krate.strip()=="@xsecFile=SWRI"):
+				SWRI2KROME(self.buildFolder,myrea.reactants[0],myrea.products,myrea.Tmin)
+			#if file is LEIDEN convert to KROME
+			if(myrea.krate.strip()=="@xsecFile=LEIDEN"):
+				LEIDEN2KROME(self.buildFolder,myrea.reactants[0],myrea.products)
 
 			#this reaction is on surface
 			if(inSurfaceBlock):
