@@ -511,6 +511,13 @@ class krome():
 			[argv.append(x) for x in ["-compact","-sh","-ATOL=1d-10"]]
 			test_status = "dev" #under development
 			filename = "networks/react_primordial3"
+		elif(args.test=="rtchem"):
+			#[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM",\
+			#	"-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
+			#[argv.append(x) for x in ["-gamma=REDUCED"]]
+			[argv.append(x) for x in ["-photoBins=10","-sh"]]
+			filename = "networks/react_COthin_rt"
+			test_status = "dev" #under development
 		else:
 			tests = ", ".join(sorted(os.walk('tests').next()[1]))
 			print "ERROR: test \""+args.test+"\" not present!"
@@ -5186,6 +5193,14 @@ class krome():
 			if(row.strip() == "#ENDIFKROME_photobin_heat"): skip_heat = False
 
 			if(skip or skip_heat): continue
+
+			if(srow=="#KROME_save_xsecs_to_file"):
+				row = ""
+				for rea in reacts:
+					if(not(rea.hasXsecFile)): continue
+					sidx = str(rea.idx)
+					row += "call save_xsec(\""+rea.xsecFile+","+str(rea.idxph)+")\n"
+
 			#replace pragma with the initialization of the photorate table in bins
 			if(srow=="#KROME_load_xsecs_from_file"):
 				row = ""
