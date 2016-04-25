@@ -1,0 +1,29 @@
+reset
+unset pm3d
+set multiplot layout 1,2
+set log
+nkrome = 3
+load 'species.gps'
+
+set xlabel "r/pc"
+set ylabel "n/cm-3"
+set title "chemistry"
+
+plot './fort.55' u 2:krome_idx_Hj w l t "H+",\
+'' u 2:krome_idx_H w l t "H",\
+'' u 2:krome_idx_C w l t "C",\
+'' u 2:krome_idx_Cj w l t "C+",\
+'' u 2:krome_idx_CO w l t "CO",\
+'' u 2:krome_idx_H2 w l t "H2",\
+'' u 2:krome_idx_O w l t "O"
+
+#************************
+set title "intensity [erg/cm2/sr]"
+set pm3d map
+set ylabel "energy/eV"
+unset key
+unset log y
+set format cb "%L"
+splot './opacity.dat' u 1:2:($3+1e-10)
+
+unset multiplot
