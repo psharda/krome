@@ -515,7 +515,7 @@ class krome():
 			#[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM",\
 			#	"-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
 			#[argv.append(x) for x in ["-gamma=REDUCED"]]
-			[argv.append(x) for x in ["-photoBins=10","-sh"]]
+			[argv.append(x) for x in ["-photoBins=100","-sh"]]
 			filename = "networks/react_COthin_rt"
 			test_status = "dev" #under development
 		else:
