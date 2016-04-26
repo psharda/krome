@@ -4448,6 +4448,7 @@ class krome():
 					fout.write("real*8::photoBinHeats(nPhotoRea) !photo heating, erg/s\n")
 					fout.write("real*8::photoBinEth(nPhotoRea) !energy treshold, eV\n")
 					fout.write("real*8::photoPartners(nPhotoRea) !index of the photoreactants\n")
+					fout.write("real*8::opacityDust(nPhotoBins) !interpolated opacity from tables\n")
 					fout.write("!$omp threadprivate(photoBinJ,photoBinEleft,photoBinEright,photoBinEmid,photoBinEdelta, &\n")
 					fout.write("!$omp    photoBinEidelta,photoBinJTab,photoBinRates,photoBinHeats,photoBinEth,photoPartners)\n")
 
