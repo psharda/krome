@@ -1435,6 +1435,8 @@ C MOSS = 2.  Compute structure from results of N + 1 calls to F. -------
         YJ = Y(J)
         ERWT = 1.0D0/EWT(J)
         DYJ = SIGN(ERWT,YJ)
+        IF (ABS(DYJ) .GE. ABS(YJ) .and. YJ*DYJ .LT. 0.0D0)
+     1                                           DYJ = - 0.9 * YJ
         Y(J) = YJ + DYJ
         CALL F (NEQ, TN, Y, FTEM)
         Y(J) = YJ
@@ -1787,12 +1789,16 @@ C If MITER = 2, make NGP calls to F to approximate J and P. ------------
         DO 210 J = JMIN,JMAX
           JJ = IWK(IBJGP+J)
           R = MAX(SRUR*ABS(Y(JJ)),R0/EWT(JJ))
+          IF (ABS(R) .GE. ABS(Y(JJ)) .and. Y(JJ)*R .LT. 0.0D0)
+     1                                              R = - 0.9 * Y(JJ)
  210      Y(JJ) = Y(JJ) + R
         CALL F (NEQ, TN, Y, FTEM)
         DO 230 J = JMIN,JMAX
           JJ = IWK(IBJGP+J)
           Y(JJ) = YH(JJ,1)
           R = MAX(SRUR*ABS(Y(JJ)),R0/EWT(JJ))
+          IF (ABS(R) .GE. ABS(Y(JJ)) .and. Y(JJ)*R .LT. 0.0D0)
+     1                                              R = - 0.9 * Y(JJ)
           FAC = -HL0/R
           KMIN =IWK(IBIAN+JJ)
           KMAX =IWK(IBIAN+JJ+1) - 1

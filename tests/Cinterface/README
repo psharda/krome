@@ -1,0 +1,7 @@
+!**************Tests the functionality of the C interface***************
+! Uses the `iso_c_binding` standard Fortran module.
+!
+! After compiling, run `./kromeF`, `./kromeC`, and then
+! `python check_diffs.py` to check for differences in the outputs.
+!
+!***********************************************************************

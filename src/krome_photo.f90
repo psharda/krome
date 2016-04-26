@@ -64,10 +64,31 @@ contains
 #KROME_photobin_xsecs
     end do
 
+    !save interpolated xsecs to file
+#KROME_save_xsecs_to_file
+
     !energy tresholds (eV)
 #KROME_photobin_Eth
 
   end subroutine init_photoBins
+
+  !**********************
+  !save xsecs with index idx to file
+  subroutine save_xsec(fname,idx)
+    use krome_commons
+    implicit none
+    character(len=*)::fname
+    integer::idx,j
+    real*8::energy_eV
+
+    open(22,file=trim(fname),status="replace")
+    do j=1,nPhotoBins
+       energy_eV = photoBinEmid(j) !energy of the bin in eV
+       write(22,*) energy_eV, photoBinJTab(idx,j)
+    end do
+    close(22)
+
+  end subroutine save_xsec
 
   !**********************
   !compute integrals to derive phtorates (thin)

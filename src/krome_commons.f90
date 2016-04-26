@@ -24,7 +24,7 @@ module krome_commons
   !thermo toggle (when >0 do cooling/heating)
   integer::krome_thermo_toggle
   !$omp threadprivate(krome_thermo_toggle)
-  
+
   !commons for implicit RHS
 #KROME_implicit_arr_r
 #KROME_implicit_arr_p
@@ -35,7 +35,7 @@ module krome_commons
 
 #IFKROME_useDust
   !commons for dust
-  real*8::krome_dust_partner_ratio(ndust), krome_dust_partner_ratio_inv(ndust)
+  real*8::krome_dust_partner_ratio(ndust),krome_dust_partner_ratio_inv(ndust)
   real*8::krome_dust_partner_mass(ndustTypes)
   real*8::krome_dust_asize(ndust),krome_dust_T(ndust)
   real*8::krome_dust_asize2(ndust),krome_dust_aspan(ndust)
@@ -85,7 +85,7 @@ module krome_commons
   !xrayJ21 for tabulated heating and rate
   real*8::J21xray
 
-  !total metallicity relative to solar Z/Z_solar 
+  !total metallicity relative to solar Z/Z_solar
   real*8::total_Z
 
 #IFKROME_useMayerOpacity
@@ -107,7 +107,8 @@ module krome_commons
   integer,parameter::coolZCIEn2=81
   integer,parameter::coolZCIEn3=81
   real*8::coolZCIEx1(coolZCIEn1),coolZCIEx2(coolZCIEn2),coolZCIEx3(coolZCIEn3)
-  real*8::coolZCIEixd1(coolZCIEn1-1),coolZCIEixd2(coolZCIEn2-1),coolZCIEixd3(coolZCIEn3-1)
+  real*8::coolZCIEixd1(coolZCIEn1-1),coolZCIEixd2(coolZCIEn2-1)
+  real*8::coolZCIEixd3(coolZCIEn3-1)
   real*8::coolZCIEy(coolZCIEn1,coolZCIEn2,coolZCIEn3)
   real*8::heatZCIEy(coolZCIEn1,coolZCIEn2,coolZCIEn3)
   real*8::coolZCIEx1min,coolZCIEx1max
@@ -179,8 +180,9 @@ module krome_commons
   real*8::zpart_H2even(zpart_nH2even),minpart_H2even,partdT_H2even
   real*8::zpart_H2odd(zpart_nH2odd),minpart_H2odd,partdT_H2odd
 
-  !Habing flux for the photoelectric heating by dust, H2 pumping rate and clumping factor
-  !for H2 formation on dust by Jura/Gnedin
+  !Habing flux for the photoelectric heating by dust,
+  ! H2 pumping rate and clumping factor for H2 formation
+  ! on dust by Jura/Gnedin
   real*8::GHabing,kH2pump,clump_factor
 
   !partition functions common vars
