@@ -5199,7 +5199,8 @@ class krome():
 				for rea in reacts:
 					if(not(rea.hasXsecFile)): continue
 					sidx = str(rea.idx)
-					row += "call save_xsec(\""+rea.xsecFile+","+str(rea.idxph)+")\n"
+					dumpFileName = rea.xsecFile.replace(".dat",".interp")
+					row += "call save_xsec(\""+dumpFileName+"\","+str(rea.idxph)+")\n"
 
 			#replace pragma with the initialization of the photorate table in bins
 			if(srow=="#KROME_load_xsecs_from_file"):
