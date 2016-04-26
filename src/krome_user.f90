@@ -1290,7 +1290,7 @@ contains
     m(:) = get_mass()
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
-    mgas = sum(n(1:nmols)*x(1:nmols))
+    mgas = sum(n(1:nmols)*m(1:nmols))
 
     !loop on frequency bins
     do j=1,nPhotoBins
@@ -1319,7 +1319,7 @@ contains
 
   end function krome_get_opacity_size_d2g
 
- !*******************************
+  !*******************************
   subroutine krome_load_opacity_table(fname,unitEnergy)
     use krome_commons
     use krome_constants
@@ -1417,10 +1417,11 @@ contains
        !sum opacity for the given photo bin
        kk = 0d0
        !if there are other opacity points in between left and right limits
-       if(iR-iL>1) then
+       if(iR-iL>0) then
           kk = kk + (energy(iL)-photoBinEleft(j))*(fL+kappa(iL))/2d0
           kk = kk + (photoBinEright(j)-energy(iR-1))*(fR+kappa(iR-1))/2d0
-          do i=iL,iR-1
+          !sum points in between
+          do i=iL,iR-2
              kk = kk + (energy(i+1)-energy(i))*(kappa(i+1)+kappa(i))/2d0
           end do
        elseif(iR==iL) then
@@ -1433,9 +1434,24 @@ contains
        end if
 
        !copy to common
-       opacityDust(j) = kk
+       dE = photoBinEright(j)-photoBinEleft(j)
+       opacityDust(j) = kk/dE
 
     end do
+
+    !dump interpolated opacity
+    open(23,file="opacityDust.interp",status="replace")
+    do j=1,nPhotoBins
+       write(23,*) photoBinEmid(j),opacityDust(j)
+    end do
+    close(23)
+
+    !dump original opacity file
+    open(23,file="opacityDust.org",status="replace")
+    do i=1,size(energy)
+       write(23,*) energy(i),kappa(i)
+    end do
+    close(23)
 
   end subroutine krome_load_opacity_table
 
