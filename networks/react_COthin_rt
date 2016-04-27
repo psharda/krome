@@ -484,17 +484,59 @@
 @CR_stop
 
 
+#H2 ON GRAINS WITH RATE APPROXIMATION
+@format:idx,R,R,P,rate
+223,H,H,H2,2.121d-17
+
 @format:idx,R,P,P,rate
+
 @photo_start
 401,H,H+,E,auto
-402,C,C+,E,auto
+402,C,C+,E,@xsecFile=SWRI
 403,O,O+,E,auto
 404,CO,C,O,@xsecFile=SWRI
 405,H2,H,H,@xsecFile=SWRI
 406,H2,H2+,E,@xsecFile=SWRI
+
+407,H-,H,E,@xsecFile=SWRI
+231,CH,C,H,@xsecFile=SWRI
+232,CH,CH+,E,@xsecFile=SWRI
+239,C2,C,C,@xsecFile=SWRI
+241,OH,O,H,@xsecFile=SWRI
+242,OH,OH+,E,@xsecFile=SWRI
+244,H2O,OH,H,@xsecFile=SWRI
+245,H2O,H2O+,E,@xsecFile=SWRI
+254,O2,O2+,E,@xsecFile=SWRI
+255,O2,O,O,@xsecFile=SWRI
+
 @format:idx,R,P,P,P,rate
 407,H2,H+,H,E,@xsecFile=SWRI
 @photo_end
+
+@format:idx,R,P,P,rate
+@var:fscale=1d0
+225,H2+,H,H+,1.1d-9*fscale
+227,H3+,H2,H+,4.9d-13*fscale
+228,H3+,H2+,H,4.9d-13*fscale
+230,C-,C,E,2.4d-7*fscale
+233,CH+,C,H+,2.6d-10*fscale
+234,CH2,CH,H,7.1d-10*fscale
+235,CH2,CH2+,E,5.9d-10*fscale
+236,CH2+,CH+,H,4.6d-10*fscale
+237,CH3+,CH2+,H,1d-9*fscale
+238,CH3+,CH+,H2,1d-9*fscale
+240,O-,O,E,2.4d-7*fscale
+243,OH+,O,H+,1d-12*fscale
+#@var: HnOj = fHnOj(user_Av)
+246,H2O+,H2+,O,5.d-11*fscale
+247,H2O+,H+,OH,5.d-11*fscale
+248,H2O+,O+,H2,5.d-11*fscale
+249,H2O+,OH+,H,1.5d-10*fscale
+250,H3O+,H+,H2O,2.5d-11*fscale
+251,H3O+,H2+,OH,2.5d-11*fscale
+252,H3O+,H2O+,H,7.5d-12*fscale
+253,H3O+,OH+,H2,2.5d-11*fscale
+
 
 #3body catalysis
 @noTab_start
