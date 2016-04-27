@@ -90,6 +90,34 @@ contains
 
   end subroutine save_xsec
 
+  !*********************
+  !return the ratio between the current flux an Draine's
+  function get_ratioFluxDraine()
+    implicit none
+    real*8::get_ratioFluxDraine
+
+    !7.95d-8 eV/cm2/sr is the integrated Draine flux
+    get_ratioFluxDraine = get_integratedFlux()/7.95d-8
+
+  end function get_ratioFluxDraine
+
+  !**********************
+  !return the curred integrated flux (eV/cm2/sr)
+  ! as I(E)/E*dE
+  function get_integratedFlux()
+    use krome_commons
+    implicit none
+    integer::j
+    real*8::get_integratedFlux
+
+    get_integratedFlux = 0d0
+    do j=1,nPhotoBins
+       get_integratedFlux = get_integratedFlux &
+            + photoBinJ(j)*photoBinEdelta(j)/photoBinEmid(j)
+    end do
+
+  end function get_integratedFlux
+
   !**********************
   !compute integrals to derive phtorates (thin)
   subroutine calc_photoBins()
@@ -136,7 +164,7 @@ contains
           Eth = photoBinEth(i) !reaction energy treshold, eV
           if(E>Eth) then
              !approx bin integral
-             kk = 4d0*pi*photoBinJTab(i,j)*Jval/E*dE * exp(-tau) 
+             kk = 4d0*pi*photoBinJTab(i,j)*Jval/E*dE * exp(-tau)
              photoBinRates(i) = photoBinRates(i) + kk
 #IFKROME_photobin_heat
              photoBinHeats(i) = photoBinHeats(i) + kk*(E-Eth)
@@ -145,7 +173,7 @@ contains
        end do
     end do
 
-    !Final Habing flux 
+    !Final Habing flux
     GHabing = GHabing * 4d0 * pi / (1.6d-3) / planck_eV * eV_to_erg
 
     !converts to 1/s
@@ -158,7 +186,7 @@ contains
 
   end subroutine calc_photoBins_thick
 
-#ENDIFKROME  
+#ENDIFKROME
 
   !********************
   function sigma_v96(energy_eV,E0,sigma_0,ya,P,yw,y0,y1)
