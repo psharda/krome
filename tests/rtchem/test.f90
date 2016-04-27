@@ -1,9 +1,10 @@
-!In this test we have an emmiting sphere that cast rays
+!In this test we have a semi-infinite slab
 ! in a box with size rmin-rmax defined by ngrid grid points.
-!The light is attenuated via geometric decay and opacity
+!The light is attenuated via opacity
 ! determined by the photochemical xsecs present in the network
+! and dust opacity loaded from file
 !The emission is 10 times the draine flux in the energy
-! interval [11.6,13.6] eV
+! interval [5,13.6] eV
 program main
   use krome_main
   use krome_user
@@ -17,7 +18,9 @@ program main
   real*8::opx(krome_nPhotoBins),energy(krome_nPhotoBins)
   real*8::flux(krome_nPhotoBins),Av,fav
 
-  fav = 1.8d21!1d0/6.289d-22
+  !fav = 1.8d21
+  !Av/NH conversion factor
+  fav = 1d0/6.289d-22
 
   call krome_init()
 
@@ -26,7 +29,7 @@ program main
   spy = krome_seconds_per_year !s
   pc = 3.085d18 !1 pc in cm
   Rsun = 7d10 !sun radius in cm
-  rmin = fav/ntot*1d-6 !min radius: cm
+  rmin = fav/ntot*1d-3 !min radius: cm
   rmax = fav/ntot*1d1 !box radius: cm
   Rstar = 66.1*Rsun !emitting sphere radius
 
@@ -54,13 +57,13 @@ program main
 
   !uses a draine flux
   call krome_set_photoBin_draineLin(5d0, 13.6d0)
+  !load energy (micron), opacity (cm2/g) table from file
   call krome_load_opacity_table("opacityDraineR35.dat",unitEnergy="micron")
   !scale the draine flux by 10 times
-  !call krome_photoBin_scale(1d1)
+  call krome_photoBin_scale(1d0)
   call krome_photoBin_store()
   !store energy value for plot
   energy(:) = krome_get_photoBinE_mid()
-
 
   !loop on time
   do
@@ -70,6 +73,7 @@ program main
      dt = dt * 1.2
      !increase total time
      t = t + dt
+     !print time
      print *,t/spy
      rold = 0d0
      !initial opacity is 1 (thin)
@@ -82,9 +86,12 @@ program main
         r = rx(i)
         !grid spacing
         dr = r-rold
+        !compute Av
         Av = Av + dr * sum(xall(i,:))/fav
         !opacity from photochemitry
         op(:) = op(:)*exp(-krome_get_opacity_size_d2g(x(:),Tgas(i), dr,1d-2))
+        !semi-infinite slab (krome assumes 4*pi)
+        opx(:) = op(:) / 4d0
         !store flux for plot
         flux(:) = krome_get_photoBinJ()
         !loop on photobins to write energy-dependent flux
@@ -93,7 +100,7 @@ program main
         end do
         write(45,*)
         !scale the flux according to opacity
-        call krome_photoBin_scale_array(op(:))
+        call krome_photoBin_scale_array(opx(:))
         !call KROME to do chemistry
         x(:) = xall(i,:)
         call krome(x(:),Tgas(i),dt)
@@ -119,7 +126,7 @@ program main
      write(66,*)
 
      !exit after tend
-     if(t>1d9*spy) exit
+     if(t>5.7d8*spy) exit
   end do
 
   !loop in grid points to write final conditions
@@ -129,7 +136,7 @@ program main
      x(:) = xall(i,:)
      r = rx(i)
      av = av + (r-rold)*sum(x) / fav
-     write(55,'(99E17.8e3)') t/spy,Av,Tgas(i),x(:)/ntot
+     write(55,'(99E17.8e3)') t/spy,Av,Tgas(i),x(:)
      rold = r
   end do
 
