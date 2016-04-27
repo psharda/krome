@@ -32,7 +32,7 @@ contains
     real*8::mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
     integer::icount,i,ierr,icount_max
-    
+
     !DLSODES variables
     integer,parameter::meth=2 !1=adam, 2=BDF
     integer::neq(1),itol,itask,istate,iopt,lrw,liw,mf
@@ -79,7 +79,7 @@ contains
 
     ierr = 0 !error flag, zero==OK!
     n(:) = 0.d0 !initialize densities
-    
+
 #IFKROME_useX
     mass(:) = get_mass() !get masses
     xin = sum(x) !store initial fractions
@@ -92,7 +92,7 @@ contains
 #ENDIFKROME
 
     n(idx_Tgas) = Tgas !put temperature in the input array
-    
+
 #IFKROME_useDustSizeEvol
     n(nmols+1:nmols+ndust) = krome_dust_asize(:) !set dust sizes
 #ENDIFKROME
@@ -148,7 +148,7 @@ contains
        else
           got_error = .true.
        end if
-       
+
        if(got_error.or.icount>icount_max) then
           if (krome_mpi_rank>0) then
             print *,krome_mpi_rank,"ERROR: wrong solver exit status!"
@@ -186,7 +186,7 @@ contains
              end if
           end if
        end do
-       
+
        if(equil) exit
        n_old(:) = n(:)
 #ENDIFKROME
@@ -240,121 +240,123 @@ contains
 #IFKROME_useX
   subroutine krome_equilibrium(x,rhogas,Tgas) #KROME_bindC
 #ELSEKROME
-  subroutine krome_equilibrium(x,Tgas) #KROME_bindC
+    subroutine krome_equilibrium(x,Tgas) #KROME_bindC
 #ENDIFKROME
-    use krome_ode
-    use krome_subs
-    use krome_commons
-    use krome_constants
-    implicit none
-    integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
-    integer::i,imax
-    #KROME_double_value :: Tgas
-    #KROME_double :: x(nmols)
+      use krome_ode
+      use krome_subs
+      use krome_commons
+      use krome_constants
+      implicit none
+      integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
+      integer::i,imax
+#KROME_double_value :: Tgas
+#KROME_double :: x(nmols)
 #IFKROME_useX
-    #KROME_double_value :: rhogas
+#KROME_double_value :: rhogas
 #ELSEKROME
-    real*8 :: rhogas
+      real*8 :: rhogas
 #ENDIFKROME
-    real*8::tloc,n(nspec),mass(nspec),ni(nspec)
-    real*8::dt,xin
+      real*8::tloc,n(nspec),mass(nspec),ni(nspec)
+      real*8::dt,xin
 #KROME_iwork_array
-    real*8::atol(nspec),rtol(nspec)
+      real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
-    real*8::ertol,eatol,max_time
-    logical::converged
+      real*8::ertol,eatol,max_time
+      logical::converged
 
-    call XSETF(0)!toggle solver verbosity
-    meth = 2
-    neq = nspec !number of eqns
-    liw = size(iwork)
-    lrw = size(rwork)
-    iwork(:) = 0
-    rwork(:) = 0.d0
-    itol = 4 !both tolerances are scalar
-    rtol(:) = 1d-6 !relative tolerance
-    atol(:) = 1d-20 !absolute tolerance
+      call XSETF(0)!toggle solver verbosity
+      meth = 2
+      neq = nspec !number of eqns
+      liw = size(iwork)
+      lrw = size(rwork)
+      iwork(:) = 0
+      rwork(:) = 0.d0
+      itol = 4 !both tolerances are scalar
+      rtol(:) = 1d-6 !relative tolerance
+      atol(:) = 1d-20 !absolute tolerance
 
-    ! Switches to decide when equilibrium has been reached
-    ertol = 1d-5  ! relative min change in a species
-    eatol = 1d-12 ! absolute min change in a species
-    max_time=seconds_per_year*1d9 ! max time we will be integrating for
+      ! Switches to decide when equilibrium has been reached
+      ertol = 1d-5  ! relative min change in a species
+      eatol = 1d-12 ! absolute min change in a species
+      max_time=seconds_per_year*1d9 ! max time we will be integrating for
 
-    !for DLSODES options see its manual
-    iopt = 0
-    itask = 1
-    istate = 1
+      !for DLSODES options see its manual
+      iopt = 0
+      itask = 1
+      istate = 1
 
-    mf = 222 !internally evaluated sparsity and jacobian
-    tloc = 0d0 !initial time
+      mf = 222 !internally evaluated sparsity and jacobian
+      tloc = 0d0 !initial time
 
-    n(:) = 0.d0 !initialize densities
+      n(:) = 0.d0 !initialize densities
 #IFKROME_useX
-    mass(:) = get_mass() !get masses
-    xin = sum(x) !store initial fractions
-    !compute densities from fractions
-    do i = 1,nmols
-       if(mass(i)>0.d0) n(i) = rhogas * x(i) / mass(i)
-    end do
+      mass(:) = get_mass() !get masses
+      xin = sum(x) !store initial fractions
+      !compute densities from fractions
+      do i = 1,nmols
+         if(mass(i)>0.d0) n(i) = rhogas * x(i) / mass(i)
+      end do
 #ELSEKROME
-    !copy into array
-    n(nmols+1:) = 0d0
-    n(1:nmols) = x(:)
+      !copy into array
+      n(nmols+1:) = 0d0
+      n(1:nmols) = x(:)
 #ENDIFKROME
 
-    n(idx_Tgas) = Tgas
+      n(idx_Tgas) = Tgas
 
-    !store previous values
-    ni(:) = n(:)
-    
-    imax = 1000
+      !store previous values
+      ni(:) = n(:)
 
-    dt = seconds_per_year * 100.
-    converged = .false.
-    do while (.not. converged)
-       do i=1,imax
-          !solve ODE
-          CALL DLSODES(fcn_tconst, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
-               ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, jcn_dummy, MF)
-          if(istate==2) then
-             exit
-          else
-             istate=1
-          end if
-       end do
-       !check errors
-       if(istate.ne.2) then
-          print *,"ERROR: no equilibrium found!"
-          stop
-       end if
+      imax = 1000
 
-       !avoid negative species
-       do i=1,nspec
-          n(i) = max(n(i),0.d0)
-       end do
+      dt = seconds_per_year * 100.
+      converged = .false.
+      do while (.not. converged)
+         do i=1,imax
+            !solve ODE
+            CALL DLSODES(fcn_tconst, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
+                 ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, jcn_dummy, MF)
+            if(istate==2) then
+               exit
+            else
+               istate=1
+            end if
+         end do
+         !check errors
+         if(istate.ne.2) then
+            print *,"ERROR: no equilibrium found!"
+            stop
+         end if
+
+         !avoid negative species
+         do i=1,nspec
+            n(i) = max(n(i),0.d0)
+         end do
 
 #IFKROME_conserve
-       n(:) = conserve(n(:),ni(:)) 
+         n(:) = conserve(n(:),ni(:))
 #ENDIFKROME
 
-       ! check if we have converged by comparing the error in any species with an relative abundance above eatol 
-       converged = maxval(abs(n(1:nmols) - ni(1:nmols)) / max(n(1:nmols),eatol*sum(n(1:nmols)))) .lt. ertol &
-                   .or. dt .gt. max_time
+         ! check if we have converged by comparing the error
+         !in any species with an relative abundance above eatol
+         converged = maxval(abs(n(1:nmols) - ni(1:nmols)) &
+              / max(n(1:nmols),eatol*sum(n(1:nmols)))) .lt. ertol &
+              .or. dt .gt. max_time
 
-       ! Increase integration time by a reasonable factor
-       if (.not. converged) then
-          dt = dt * 5.
-          ni = n
-       endif
-    enddo
+         ! Increase integration time by a reasonable factor
+         if (.not. converged) then
+            dt = dt * 5.
+            ni = n
+         endif
+      enddo
 #IFKROME_useX
-    x(:) = mass(1:nmols)*n(1:nmols)/rhogas !return to fractions
+      x(:) = mass(1:nmols)*n(1:nmols)/rhogas !return to fractions
 #ELSEKROME
-    !returns to user array
-    x(:) = n(1:nmols)
+      !returns to user array
+      x(:) = n(1:nmols)
 #ENDIFKROME
 
-  end subroutine krome_equilibrium
+    end subroutine krome_equilibrium
 
   !********************
   !dummy jacobian
@@ -399,7 +401,7 @@ contains
     call fex(nspec,tt,n(:),dn(:))
 
     write(fnum,*) "KROME ERROR REPORT"
-    write(fnum,*) 
+    write(fnum,*)
     !SPECIES
     write(fnum,*) "Species abundances"
     write(fnum,*) "**********************"
@@ -412,7 +414,7 @@ contains
 
 
     !F90 FRIENDLY RESTART
-    write(fnum,*) 
+    write(fnum,*)
     write(fnum,*) "**********************"
     write(fnum,*) "F90-friendly species"
     write(fnum,*) "**********************"
@@ -422,7 +424,7 @@ contains
     end do
 
     write(fnum,*) "**********************"
-    
+
     !RATE COEFFIECIENTS
     k(:) = coe_tab(n(:))
     idx(:) = idx_sort(k(:))
@@ -431,7 +433,7 @@ contains
     write(fnum,*) "Rate coefficients (sorted) at Tgas",n(idx_Tgas)
     write(fnum,*) "**********************"
     write(fnum,'(a5,2a12,a10)') "#","k","k %","  name"
-    write(fnum,*) "**********************"    
+    write(fnum,*) "**********************"
     do j=1,nrea
        i = idx(j)
        kperc = 0.d0
@@ -449,7 +451,7 @@ contains
     write(fnum,*) "Reaction magnitude (sorted) [k*n1*n2*n3*...]"
     write(fnum,*) "**********************"
     write(fnum,'(a5,2a12,a10)') "#","flux","flux %","  name"
-    write(fnum,*) "**********************"    
+    write(fnum,*) "**********************"
     do j=1,nrea
        i = idx(j)
        rperc = 0.d0
@@ -482,9 +484,9 @@ contains
     write(fnum,FMTi) "base address of IAN",iwork(23)
     write(fnum,FMTi) "base address of JAN",iwork(24)
     write(fnum,FMTi) "NNZ in lower LU",iwork(25)
-    write(fnum,FMTi) "NNZ in upper LU",iwork(21)    
+    write(fnum,FMTi) "NNZ in upper LU",iwork(21)
     write(fnum,*) "See DLSODES manual for further details on Optional Outputs"
-    write(fnum,*) 
+    write(fnum,*)
     write(fnum,*) "END KROME ERROR REPORT"
     write(fnum,*)
     close(fnum)
@@ -714,7 +716,7 @@ contains
     !init points to zero
     points(:) = 0d0
 
-#KROME_reducerVarsLog    
+#KROME_reducerVarsLog
 
     tmax = 1d7*seconds_per_year !max time (s)
     do i=1,imax
