@@ -1059,6 +1059,17 @@ contains
 
   end subroutine krome_set_photoBin_BBlog_auto
 
+  !*********************************
+  !return the ratio between the current flux an Draine's
+  function krome_get_ratioFluxDraine()
+    use krome_photo
+    implicit none
+    real*8::krome_get_ratioFluxDraine
+
+    krome_get_ratioFluxDraine = get_ratioFluxDraine()
+
+  end function krome_get_ratioFluxDraine
+
   !**********************************
   !set the flux as Draine's function
   ! in the range lower to upper (eV). the spacing is linear
@@ -1075,7 +1086,7 @@ contains
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
        !eV/cm2/sr
-       if(x<13.6d0) then
+       if(x<13.6d0.and.x>5d0) then
           photoBinJ(i) = (1.658d6*x - 2.152d5*x**2 + 6.919d3*x**3) &
                * x *planck_eV
        else
@@ -1106,7 +1117,7 @@ contains
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
        !eV/cm2/sr/s/Hz
-       if(x<13.6d0) then
+       if(x<13.6d0.and.x>5d0) then
           photoBinJ(i) = (1.658d6*x - 2.152d5*x**2 + 6.919d3*x**3) &
                * x *planck_eV
        else
