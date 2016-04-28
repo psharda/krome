@@ -1062,7 +1062,7 @@ contains
   !*********************************
   !return the ratio between the current flux an Draine's
   function krome_get_ratioFluxDraine()
-    use krome_photo
+    use krome_subs
     implicit none
     real*8::krome_get_ratioFluxDraine
 

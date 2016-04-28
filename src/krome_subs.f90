@@ -47,6 +47,37 @@ contains
 
 #KROME_metallicity_functions
 
+#IFKROME_usePhotoBins
+  !*********************
+  !return the ratio between the current flux an Draine's
+  function get_ratioFluxDraine()
+    implicit none
+    real*8::get_ratioFluxDraine
+
+    !7.95d-8 eV/cm2/sr is the integrated Draine flux
+    get_ratioFluxDraine = get_integratedFlux()/7.95d-8
+
+  end function get_ratioFluxDraine
+
+  !**********************
+  !return the curred integrated flux (eV/cm2/sr)
+  ! as I(E)/E*dE
+  function get_integratedFlux()
+    use krome_commons
+    implicit none
+    integer::j
+    real*8::get_integratedFlux,dE
+
+    get_integratedFlux = 0d0
+    do j=1,nPhotoBins
+       dE = photoBinEdelta(j)
+       get_integratedFlux = get_integratedFlux &
+            + photoBinJ(j)*dE/photoBinEmid(j)
+    end do
+
+  end function get_integratedFlux
+#ENDIFKROME
+
 #IFKROME_has_electrons
   !*******************
   !The following functions compute the recombination rate
@@ -56,16 +87,16 @@ contains
     implicit none
     real*8::n(nspec),Tgas,psi
     real*8::H_recombination_on_dust
- 
+
     H_recombination_on_dust = 0d0
 
     if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
 
-    psi = GHabing*sqrt(Tgas)/n(idx_E) 
+    psi = GHabing*sqrt(Tgas)/n(idx_E)
 
     H_recombination_on_dust =  1.225d-13*total_Z &
-     /(1.d0+8.074d-6*psi**(1.378)*(1.d0+5.087d2 &
-     *Tgas**(0.01586)*psi**(-0.4723-1.102d-5*log(Tgas))))
+         /(1.d0+8.074d-6*psi**(1.378)*(1.d0+5.087d2 &
+         *Tgas**(0.01586)*psi**(-0.4723-1.102d-5*log(Tgas))))
 
   end function H_recombination_on_dust
 
@@ -75,15 +106,15 @@ contains
     implicit none
     real*8::n(nspec),Tgas,psi
     real*8::He_recombination_on_dust
- 
+
     He_recombination_on_dust = 0d0
     if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
-  
-    psi = GHabing*sqrt(Tgas)/n(idx_E) 
-  
+
+    psi = GHabing*sqrt(Tgas)/n(idx_E)
+
     He_recombination_on_dust = 5.572d-14*total_Z&
-        /(1.d0+3.185d-7*psi**(1.512)*(1.d0+5.115d3&
-        *Tgas**(3.903d-7)*psi**(-0.4956-5.494d-7*log(Tgas))))
+         /(1.d0+3.185d-7*psi**(1.512)*(1.d0+5.115d3&
+         *Tgas**(3.903d-7)*psi**(-0.4956-5.494d-7*log(Tgas))))
 
   end function He_recombination_on_dust
 
@@ -93,15 +124,15 @@ contains
     implicit none
     real*8::n(nspec),Tgas,psi
     real*8::C_recombination_on_dust
- 
+
     C_recombination_on_dust = 0d0
     if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
-  
-    psi = GHabing*sqrt(Tgas)/n(idx_E) 
-  
+
+    psi = GHabing*sqrt(Tgas)/n(idx_E)
+
     C_recombination_on_dust = 4.558d-13*total_Z&
-        /(1.d0+6.089d-3*psi**(1.128)*(1.d0+4.331d2&
-        *Tgas**(0.04845)*psi**(-0.8120-1.333d-4*log(Tgas))))
+         /(1.d0+6.089d-3*psi**(1.128)*(1.d0+4.331d2&
+         *Tgas**(0.04845)*psi**(-0.8120-1.333d-4*log(Tgas))))
 
   end function C_recombination_on_dust
 
@@ -111,15 +142,15 @@ contains
     implicit none
     real*8::n(nspec),Tgas,psi
     real*8::Si_recombination_on_dust
- 
+
     Si_recombination_on_dust = 0d0
     if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
-  
-    psi = GHabing*sqrt(Tgas)/n(idx_E) 
-  
+
+    psi = GHabing*sqrt(Tgas)/n(idx_E)
+
     Si_recombination_on_dust = 2.166d-14*total_Z&
-        /(1.d0+5.678d-8*psi**(1.874)*(1.d0+4.375d4&
-        *Tgas**(1.635d-6)*psi**(-0.8964-7.538d-5*log(Tgas))))
+         /(1.d0+5.678d-8*psi**(1.874)*(1.d0+4.375d4&
+         *Tgas**(1.635d-6)*psi**(-0.8964-7.538d-5*log(Tgas))))
 
   end function Si_recombination_on_dust
 
@@ -129,7 +160,7 @@ contains
     implicit none
     real*8::n(nspec),Tgas,k_H
     real*8::O_recombination_on_dust
- 
+
     k_H = H_recombination_on_dust(n(:),Tgas)
     O_recombination_on_dust = 0.25d0*k_H
 
@@ -139,7 +170,7 @@ contains
 
   !*********************
   !This function returns the
-  ! photorate of H2 occurring in the 
+  ! photorate of H2 occurring in the
   ! Lyman-Werner bands following the approximation
   ! provided by Glover&Jappsen 2007. Rate in 1/s.
   !Approximation valid at low-density, it assumes H2(nu = 0).
@@ -203,7 +234,7 @@ contains
   end function planckBB_dT
 
   !****************************
-  !tanh smoothing function that 
+  !tanh smoothing function that
   ! increses when xarg increases.
   ! xpos is the position of the transition point.
   ! slope is the steepness of the curve.
@@ -217,7 +248,7 @@ contains
   end function smooth_increase
 
   !****************************
-  !tanh smoothing function that 
+  !tanh smoothing function that
   ! decreses when xarg increases.
   ! xpos is the position of the transition point.
   ! slope is the steepness of the curve.
@@ -231,7 +262,7 @@ contains
   end function smooth_decrease
 
   !*********************
-  !sign: return 1d0 if x>=0d0, 
+  !sign: return 1d0 if x>=0d0,
   ! else return -1d0
   function get_sgn(x)
     implicit none
@@ -335,7 +366,7 @@ contains
     implicit none
     real*8::nabund,nelec,Trad
     real*8::nucleiH,elec_recomb_ST93
-    real*8::al,ak,rc2,r2c  
+    real*8::al,ak,rc2,r2c
     real*8::a0,b0,c0,d0,e0
     real*8::a1,b1,c1,d1,e1,f1,g1,h1
     real*8::ntot,ratio
@@ -413,7 +444,7 @@ contains
   end function fHnOj
 
   !******************************
-  !self-shielding for H2 
+  !self-shielding for H2
   ! following Glover+2010 MNRAS sect2.2 eqn.6
   ! N: column density (cm-2)
   ! b: doppler broadening (cm/s)
@@ -678,7 +709,7 @@ contains
 
   !***********************
   !get the degrees of freedom at Tgas for
-  ! the rotational component of a diatom 
+  ! the rotational component of a diatom
   ! with rotational constant brot in K
   function gamma_rot(Tgas_in,brot)
     implicit none
@@ -854,7 +885,7 @@ contains
 
 #IFKROME_useShieldingDB96
   !************************
-  !calculate the self-shielding factor, following Draine&Bertoldi 1996 
+  !calculate the self-shielding factor, following Draine&Bertoldi 1996
   !NOTE: this function is suited for collapse. Use with caution!
   function calc_H2shieldDB96(n,Tgas)
     use krome_commons
@@ -887,7 +918,7 @@ contains
     H_mass = p_mass+e_mass !H mass in g
 
     !doppler broadening parameter b divided by 1d5 cm/s (#)
-    b5 = ((boltzmann_erg*Tgas/H_mass)**0.5d0)*1.d-5 
+    b5 = ((boltzmann_erg*Tgas/H_mass)**0.5d0)*1.d-5
     calc_H2shieldWG11 = 0.965d0/(1.d0+xN_H2/b5)**1.1d0 &
          + (0.035d0/(1.d0+xN_H2)**0.5d0) &
          * exp(-8.5d-4*(1.d0+xN_H2)**0.5d0)
@@ -1223,7 +1254,7 @@ contains
     do i=1,ndust
        Td100 = Tdust(i) * 1d-2
        dust_stick_array(i) = 1d0/(1d0+.4d0*sqrt(Tg100+Td100) &
-            + .2d0*Tg100 + 0.08d0*Tg100**2) 
+            + .2d0*Tg100 + 0.08d0*Tg100**2)
     end do
 
   end function dust_stick_array
@@ -1425,7 +1456,7 @@ contains
   end function revKc
 
   !*****************************
-  !compute H-S for species with index idx 
+  !compute H-S for species with index idx
   ! when temperature is Tgas
   function revHS(Tgas,idx)
     use krome_commons
@@ -1465,7 +1496,7 @@ contains
 
   !******************************
   subroutine print_best_flux(n,Tgas,nbestin)
-    !print the first nbestin fluxes 
+    !print the first nbestin fluxes
     use krome_commons
     implicit none
     real*8::n(nspec),Tgas,flux(nrea)
@@ -1490,7 +1521,7 @@ contains
 
   !******************************
   subroutine print_best_flux_frac(n,Tgas,frac)
-    !print the first nbestin fluxes 
+    !print the first nbestin fluxes
     use krome_commons
     implicit none
     real*8::n(nspec),Tgas,flux(nrea),frac
@@ -1561,7 +1592,7 @@ contains
     integer::idx_sort(size(fin)),n,itmp,i
     logical::found
 
-    f(:) = fin(:) !copy to local 
+    f(:) = fin(:) !copy to local
 
     n = size(f)
     !init indexes
@@ -1749,7 +1780,7 @@ contains
 
   end function fit_anytab1D
 
- function fit_anytab2D_linlog(x,y,z,xmul,ymul,xx,yy)
+  function fit_anytab2D_linlog(x,y,z,xmul,ymul,xx,yy)
     real*8::fit_anytab2D_linlog,x(:),y(:),z(:,:),xmul,ymul,xx,yy
     real*8::zleft(size(x)),zright(size(x)),zl,zr
     integer::ipos,i1,i2
@@ -1863,7 +1894,7 @@ contains
        c(i) = c(i+1) - c(i)
     end do
 
-    ! step 2: end conditions 
+    ! step 2: end conditions
     b(1) = -d(1)
     b(n) = -d(n-1)
     c(1) = 0d0
@@ -1875,7 +1906,7 @@ contains
        c(n) = -c(n)*d(n-1)**2/(x(n)-x(n-3))
     end if
 
-    ! step 3: forward elimination 
+    ! step 3: forward elimination
     do i = 2, n
        h = d(i-1)/b(i-1)
        b(i) = b(i) - h*d(i-1)
@@ -1963,12 +1994,12 @@ contains
     implicit none
     real*8::n(nspec),H2_dustJura
     real*8::ntot
-    
+
     ntot = get_Hnuclei(n(:))
 
     H2_dustJura = n(idx_H)*ntot*3.5d-17*total_Z*clump_factor
 
-  end function H2_dustJura 
+  end function H2_dustJura
 #ENDIFKROME
 
 #IFKROME_useLAPACK

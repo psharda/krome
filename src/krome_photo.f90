@@ -90,34 +90,6 @@ contains
 
   end subroutine save_xsec
 
-  !*********************
-  !return the ratio between the current flux an Draine's
-  function get_ratioFluxDraine()
-    implicit none
-    real*8::get_ratioFluxDraine
-
-    !7.95d-8 eV/cm2/sr is the integrated Draine flux
-    get_ratioFluxDraine = get_integratedFlux()/7.95d-8
-
-  end function get_ratioFluxDraine
-
-  !**********************
-  !return the curred integrated flux (eV/cm2/sr)
-  ! as I(E)/E*dE
-  function get_integratedFlux()
-    use krome_commons
-    implicit none
-    integer::j
-    real*8::get_integratedFlux
-
-    get_integratedFlux = 0d0
-    do j=1,nPhotoBins
-       get_integratedFlux = get_integratedFlux &
-            + photoBinJ(j)*photoBinEdelta(j)/photoBinEmid(j)
-    end do
-
-  end function get_integratedFlux
-
   !**********************
   !compute integrals to derive phtorates (thin)
   subroutine calc_photoBins()
