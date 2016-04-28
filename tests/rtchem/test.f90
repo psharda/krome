@@ -29,8 +29,8 @@ program main
   spy = krome_seconds_per_year !s
   pc = 3.085d18 !1 pc in cm
   Rsun = 7d10 !sun radius in cm
-  rmin = fav/ntot*1d-3 !min radius: cm
-  rmax = fav/ntot*1d1 !box radius: cm
+  rmin = fav/ntot*1d-4 !min radius: cm
+  rmax = fav/ntot*3d0 !box radius: cm
   Rstar = 66.1*Rsun !emitting sphere radius
 
   !set cosmic rays
@@ -60,7 +60,7 @@ program main
   !load energy (micron), opacity (cm2/g) table from file
   call krome_load_opacity_table("opacityDraineR35.dat",unitEnergy="micron")
   !scale the draine flux by 10 times
-  call krome_photoBin_scale(1d0)
+  call krome_photoBin_scale(1d1)
   call krome_photoBin_store()
   !store energy value for plot
   energy(:) = krome_get_photoBinE_mid()
