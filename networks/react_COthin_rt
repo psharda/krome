@@ -499,22 +499,22 @@
 406,H2,H2+,E,@xsecFile=SWRI
 
 407,H-,H,E,@xsecFile=SWRI
-231,CH,C,H,@xsecFile=SWRI
-232,CH,CH+,E,@xsecFile=SWRI
-239,C2,C,C,@xsecFile=SWRI
-241,OH,O,H,@xsecFile=SWRI
-242,OH,OH+,E,@xsecFile=SWRI
-244,H2O,OH,H,@xsecFile=SWRI
-245,H2O,H2O+,E,@xsecFile=SWRI
-254,O2,O2+,E,@xsecFile=SWRI
-255,O2,O,O,@xsecFile=SWRI
+408,CH,C,H,@xsecFile=SWRI
+409,CH,CH+,E,@xsecFile=SWRI
+410,C2,C,C,@xsecFile=SWRI
+411,OH,O,H,@xsecFile=SWRI
+412,OH,OH+,E,@xsecFile=SWRI
+413,H2O,OH,H,@xsecFile=SWRI
+414,H2O,H2O+,E,@xsecFile=SWRI
+415,O2,O2+,E,@xsecFile=SWRI
+416,O2,O,O,@xsecFile=SWRI
 
 @format:idx,R,P,P,P,rate
-407,H2,H+,H,E,@xsecFile=SWRI
+417,H2,H+,H,E,@xsecFile=SWRI
 @photo_end
 
 @format:idx,R,P,P,rate
-@var:fscale=1d0
+@var:fscale=get_ratioFluxDraine()
 225,H2+,H,H+,1.1d-9*fscale
 227,H3+,H2,H+,4.9d-13*fscale
 228,H3+,H2+,H,4.9d-13*fscale
@@ -527,7 +527,6 @@
 238,CH3+,CH+,H2,1d-9*fscale
 240,O-,O,E,2.4d-7*fscale
 243,OH+,O,H+,1d-12*fscale
-#@var: HnOj = fHnOj(user_Av)
 246,H2O+,H2+,O,5.d-11*fscale
 247,H2O+,H+,OH,5.d-11*fscale
 248,H2O+,O+,H2,5.d-11*fscale
