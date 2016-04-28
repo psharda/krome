@@ -1,47 +1,76 @@
-fc = #KROME_compiler
-prj = krome #exe name
-lib = -llapack #libraries
+#default fortran compiler
+fc = ifort
 
-GREP = $(shell grep -i 'dgesv' krome_all.f90)
+#executable name
+exec = test
+
+#default libraries
+lib = -llapack
+
+#if dgesv is not present non need for LAPACK
+GREP = $(shell grep -i 'dgesv' krome_subs.f90)
 ifeq ($(GREP),)
-	lib = 
+	lib =
 endif
 
-ifneq (,$(findstring ifort,$(fc)))
-	std = -check all -traceback -fpe0 -ftz -ftrapuv -warn all -u
-	nowarn = -nowarn
-	sswitch = $(std)
-	fswitch = $(std) -O3 -ipo -ip -unroll 
-	hswitch =  -O3 -ipo -ip -unroll
-	pswitch = $(hswitch) -pg
-	nswitch = $(std) -O0
-	switch =  $(hswitch)
-else
-	switch = -O3 -ffree-line-length-none
-	nowarn = -w
-endif
+#flags
+switchOPT = -O3 -ipo -ip -unroll
+switchDBG = -O0 -check all -warn all -fpe0 -u -traceback -warn nounused
+switchPRO = $(switchOPT) -pg -traceback
+switchOMP = $(switchOPT) -openmp
 
-all:
+#default switch
+switch = $(switchOPT)
 
-ifneq ($(wildcard opkdmain.f),) 
-	$(fc) -c opkda2.f $(switch) $(nowarn)
-	$(fc) -c opkda1.f $(switch) $(nowarn)
-	$(fc) -c opkdmain.f $(switch) $(nowarn)
-endif
+#no warning switch (for DLSODES)
+nowarnIfort = -nowarn
+nowarnGNU = -w
 
-ifneq ($(wildcard dvode_f90_m.f90),) 
-	$(fc) -c dvode_f90_m.f90 $(switch) $(nowarn)
-endif
+#objects
+objs = opkda2.o
+objs += opkda1.o
+objs += opkdmain.o
+objs += krome_user_commons.o
+objs += krome_all.o
+objs += test.o
 
-ifneq ($(wildcard nleq_all.f),) 
-	$(fc) -c nleq_all.f $(switch) $(nowarn)
-endif
+#default target
+all: 	$(objs)
+	$(fc) $(objs) -o $(exec) $(switch) $(lib)
 
-	$(fc) -c krome_user_commons.f90 $(switch)
-	$(fc) -c krome_all.f90 $(switch) 
-	$(fc) -c test.f90 $(switch) 
+#ifort full debug target
+debug: switch = $(switchDBG)
+debug: nowarn = $(nowarnIfort)
+debug: all
 
-	$(fc) -o $(prj) *.o $(switch) $(lib)
+#ifort profile target
+profile: switch = $(switchPRO)
+profile: nowarn = $(nowarnIfort)
+profile: all
 
-clean: 
-	rm -f *.o $(prj) *~ *.mod *_genmod.f90 *.i90
+#gfortran target
+gfortran: fc = gfortran
+gfortran: switch = -ffree-line-length-none
+gfortran: nowarn = $(nowarnGNU)
+gfortran: all
+
+#gfortran debug target
+gfortran_dbg: fc = gfortran
+gfortran_dbg: switch = -fbacktrace -g
+gfortran_dbg: switch += -ffpe-trap=zero,overflow,invalid
+gfortran_dbg: switch += -fbounds-check -ffree-line-length-none
+gfortran_dbg: nowarn = $(nowarnGNU)
+gfortran_dbg: all
+
+#clean target
+clean:
+	rm -f *.o *.mod *__genmod.f90 *~ $(exec)
+
+#rule for f90
+%.o:%.f90
+	$(fc) $(switch) -c $^ -o $@
+
+#rule for f
+%.o:%.f
+	$(fc) $(switch) $(nowarn) -c $^ -o $@
+
