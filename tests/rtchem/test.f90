@@ -10,13 +10,13 @@ program main
   use krome_user
   use krome_user_commons
   implicit none
-  integer,parameter::ngrid=100 !grid points
+  integer,parameter::ngrid=300 !grid points
   integer::i,j
   real*8::Tgas(ngrid),dt,x(krome_nmols),spy,pc,Rsun,ntot
   real*8::xall(ngrid,krome_nmols),rmin,rmax,r,t,rx(ngrid)
   real*8::Rstar,Tstar,dr,rold,op(krome_nPhotoBins)
   real*8::opx(krome_nPhotoBins),energy(krome_nPhotoBins)
-  real*8::flux(krome_nPhotoBins),Av,fav
+  real*8::flux(krome_nPhotoBins),Av,fav,tend
 
   !fav = 1.8d21
   !Av/NH conversion factor
@@ -32,6 +32,7 @@ program main
   rmin = fav/ntot*1d-4 !min radius: cm
   rmax = fav/ntot*3d0 !box radius: cm
   Rstar = 66.1*Rsun !emitting sphere radius
+  tend = 1d6*spy
 
   !set cosmic rays
   call krome_set_user_crate(5d-17)
@@ -74,7 +75,7 @@ program main
      !increase total time
      t = t + dt
      !print time
-     print *,t/spy
+     print *,t/tend*1d2,"%"
      rold = 0d0
      !initial opacity is 1 (thin)
      op(:) = 1d0
@@ -126,7 +127,7 @@ program main
      write(66,*)
 
      !exit after tend
-     if(t>5.7d8*spy) exit
+     if(t>tend) exit
   end do
 
   !loop in grid points to write final conditions
