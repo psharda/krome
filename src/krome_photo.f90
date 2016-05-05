@@ -136,7 +136,7 @@ contains
           Eth = photoBinEth(i) !reaction energy treshold, eV
           if(E>Eth) then
              !approx bin integral
-             kk = 4d0*pi*photoBinJTab(i,j)*Jval/E*dE * exp(-tau) 
+             kk = 4d0*pi*photoBinJTab(i,j)*Jval/E*dE * exp(-tau)
              photoBinRates(i) = photoBinRates(i) + kk
 #IFKROME_photobin_heat
              photoBinHeats(i) = photoBinHeats(i) + kk*(E-Eth)
@@ -145,7 +145,7 @@ contains
        end do
     end do
 
-    !Final Habing flux 
+    !Final Habing flux
     GHabing = GHabing * 4d0 * pi / (1.6d-3) / planck_eV * eV_to_erg
 
     !converts to 1/s
@@ -158,7 +158,7 @@ contains
 
   end subroutine calc_photoBins_thick
 
-#ENDIFKROME  
+#ENDIFKROME
 
   !********************
   function sigma_v96(energy_eV,E0,sigma_0,ya,P,yw,y0,y1)

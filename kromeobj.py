@@ -4583,7 +4583,8 @@ class krome():
 			if(x.Ebind_bare==0e0): continue
 			Ebind_tupla = str(x.Ebind_bare)+"_"+str(x.parentDustBin)
 			if(Ebind_tupla in Ebind23list):
-				get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = "+functionName+"("+str(Ebind23list[Ebind_tupla])+")\n")
+				get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = "\
+					+functionName+"("+str(Ebind23list[Ebind_tupla])+")\n")
 				continue
 			get_Ebareice_out += (functionName+"("+str(x.fidx)+"+nspec) = get_exp_table("\
 				+format_double(fmult*float(x.Ebind_bare))+", invTdust("\
@@ -4755,6 +4756,8 @@ class krome():
 			if(srow == "#IFKROME_useH2dust_constant" and not(self.useDustH2const)): skip = True
 			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
+			if(srow == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True
+
 
 		        if(srow == "#ENDIFKROME"): skip = False
 
@@ -4805,8 +4808,9 @@ class krome():
 								pp = str(species.atomcount[atomType2]*species.atomcount[atomType])+"d0 *"
 								if(pp=="1d0 *"): pp = ""
 								#mfact = pp*self.mass_dic[atomType2.upper()] / species.mass
-								conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + "+str(pp)+" x("+species.fidx \
-									+ ") * m(idx_"+atomType+") * m(idx_"+atomType2+") / m("+species.fidx+")**2\n"
+								conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + "+str(pp) \
+									+" x("+species.fidx + ") * m(idx_"+atomType+") * m(idx_"+atomType2 \
+									+") / m("+species.fidx+")**2\n"
 				fout.write(conserve_matrix+"\n")
 
 			elif(srow=="#KROME_conserve_fscale" and self.useConserveLin):
@@ -4841,7 +4845,8 @@ class krome():
 				for species in specs:
 					if(species.charge==0 or species.name=="E"): continue
 					sgn = ("+" if species.charge>0 else "-")
-					conserveLinElectrons.append(sgn + " " + str(abs(species.charge)) + "d0*x(" + species.fidx +") / m("+species.fidx+")")
+					conserveLinElectrons.append(sgn + " " + str(abs(species.charge)) \
+						+ "d0*x(" + species.fidx +") / m("+species.fidx+")")
 				srow = srow.replace("#KROME_conserveLin_electrons",(" &\n".join(conserveLinElectrons)))
 				srow = srow.replace("1d0*","")
 				fout.write(srow+"\n")

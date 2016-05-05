@@ -1059,6 +1059,17 @@ contains
 
   end subroutine krome_set_photoBin_BBlog_auto
 
+  !*********************************
+  !return the ratio between the current flux an Draine's
+  function krome_get_ratioFluxDraine()
+    use krome_subs
+    implicit none
+    real*8::krome_get_ratioFluxDraine
+
+    krome_get_ratioFluxDraine = get_ratioFluxDraine()
+
+  end function krome_get_ratioFluxDraine
+
   !**********************************
   !set the flux as Draine's function
   ! in the range lower to upper (eV). the spacing is linear
@@ -1075,7 +1086,7 @@ contains
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
        !eV/cm2/sr
-       if(x<13.6d0) then
+       if(x<13.6d0.and.x>5d0) then
           photoBinJ(i) = (1.658d6*x - 2.152d5*x**2 + 6.919d3*x**3) &
                * x *planck_eV
        else
@@ -1106,7 +1117,7 @@ contains
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
        !eV/cm2/sr/s/Hz
-       if(x<13.6d0) then
+       if(x<13.6d0.and.x>5d0) then
           photoBinJ(i) = (1.658d6*x - 2.152d5*x**2 + 6.919d3*x**3) &
                * x *planck_eV
        else
@@ -1320,6 +1331,10 @@ contains
   end function krome_get_opacity_size_d2g
 
   !*******************************
+  !load a frequency-dependent opacity table stored in fname file,
+  ! column 1 is energy or wavelenght in un units of unitEnergy
+  ! (default eV), column 2 is opacity in cm2/g.
+  ! opacity is interpolated over the current photo-binning.
   subroutine krome_load_opacity_table(fname,unitEnergy)
     use krome_commons
     use krome_constants
@@ -1334,7 +1349,7 @@ contains
     real*8,allocatable::energy(:),kappa(:)
 
     !read energy unit optional argument
-    eunit = "eV"
+    eunit = "eV" !default is eV
     if(present(unitEnergy)) then
        eunit = trim(unitEnergy)
     end if
@@ -1349,6 +1364,7 @@ contains
     icount = 0
     !loop on file lines
     do
+       !read wavelength and opacity
        read(22,*,iostat=ios) wl,opac
        if(ios/=0) exit
        icount = icount + 1
@@ -1361,10 +1377,11 @@ contains
     allocate(energy(icount), kappa(icount))
     !copy temp arrays into allocated arrays, converting units
     if(trim(eunit)=="eV") then
+       !eV->eV (default)
        kappa(:) = opacs(1:icount)
        energy(:) = wls(1:icount)
     elseif(trim(eunit)=="micron") then
-       !micron->eV (reverse array)
+       !micron->eV
        kappa(:) = opacs(1:icount)
        energy(:) = planck_eV*clight/(wls(1:icount)*1d-4)
     else
@@ -1374,8 +1391,8 @@ contains
 
     !reverse array if necessary
     if(energy(2)<energy(1)) then
-       energy(:) = energy(::-1)
-       kappa(:) = kappa(::-1)
+       energy(:) = energy(size(energy):1:-1)
+       kappa(:) = kappa(size(kappa):1:-1)
     end if
 
     !check lower limit
@@ -1433,7 +1450,7 @@ contains
           stop
        end if
 
-       !copy to common
+       !copy to common and scale to bin size
        dE = photoBinEright(j)-photoBinEleft(j)
        opacityDust(j) = kk/dE
 
@@ -1446,7 +1463,7 @@ contains
     end do
     close(23)
 
-    !dump original opacity file
+    !dump original opacity file (as loaded by krome)
     open(23,file="opacityDust.org",status="replace")
     do i=1,size(energy)
        write(23,*) energy(i),kappa(i)

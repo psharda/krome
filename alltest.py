@@ -136,7 +136,7 @@ for test in tests:
 		os.remove(ff)
 
 	#call krome
-	callarg = ["./krome", "-test="+test,"-skipDevTest", "-pedantic", "-unsafe", "-sh","-compiler="+compiler,"-project="+prj_name]
+	callarg = ["./krome", "-test="+test,"-skipDevTest", "-unsafe", "-sh","-compiler="+compiler,"-project="+prj_name]
 	print callarg
 	call(callarg)
 
@@ -149,11 +149,11 @@ for test in tests:
 	#make clean
 	call(["make","clean"])
 
-	#compile
-	call(["make"])
+	#compile full debug
+	call(["make","debug"])
 
 	#run executable
-	call(["./krome"])
+	call(["./test"])
 
 	#run zenity notification when exectutable ends (LINUX USERS ONLY)
 	#if("linux" in platform.system().lower()):
