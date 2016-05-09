@@ -5,7 +5,7 @@
 #utility to plot rate coefficients (TG, May 8 2016)
 from math import log10,exp,log,sqrt
 import matplotlib.pyplot as plt
-import os
+import os,sys
 
 #reaction filename
 fname = "../networks/react_COthin_rt"
@@ -32,15 +32,19 @@ for filePNG in os.listdir(outFolder):
 	if(filePNG==".."): continue
 	os.unlink(outFolder+"/"+filePNG)
 
+defaultFormat = "@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate"
 
 #expressions to be replace in Tmin/Tmax
-replace = {"d":"e",".LE.":"",".GE.":"",">":"","<":""}
+replace = {"d":"e",".LE.":"",".GE.":"",">":"","<":"",".LT.":"",".GT.":""}
 
 #shortcuts for temperature (also searched into @var)
 shortcuts = {"invT":"1d0/Tgas", \
 	"T32":"Tgas/3d2",\
+	"invT32":"3d2/Tgas",\
 	"T":"Tgas",\
+	"Te":"Tgas*8.617343d-5",\
 	"invTe":"1e0/Te",\
+	"lnTe":"log(Te)",\
 	"sqrTgas":"sqrt(Tgas)",\
 	"invTgas":"1e0/Tgas"}
 
@@ -48,7 +52,7 @@ shortcuts = {"invT":"1d0/Tgas", \
 maths = ["+","-","*","/","(",")"]
 
 network = dict()
-
+noFormat = True
 #open file to read
 fh = open(fname,"rb")
 for row in fh:
@@ -56,16 +60,19 @@ for row in fh:
 	if(srow==""): continue
 	if(srow.startswith("#")): continue
 	#read format
-	if(srow.startswith("@format:")):
+	if(srow.startswith("@format:") or noFormat):
+		myFormat = srow
+		if(noFormat): myFormat = defaultFormat
 		Tmin = TminDefault
 		Tmax = TmaxDefault
 		idxTmin = idxTmax = idxRate = -1
-		arow = [x.lower() for x in srow.split(",")]
+		arow = [x.lower() for x in myFormat.split(",")]
 		if("tmin" in arow): idxTmin = arow.index("tmin")
 		if("tmax" in arow): idxTmax = arow.index("tmax")
 		if("rate" in arow): idxRate = arow.index("rate")
 		listR = [i for i in range(len(arow)) if arow[i]=="r"]
 		listP = [i for i in range(len(arow)) if arow[i]=="p"]
+		noFormat = False
 	#store additional shortcuts (@var)
 	if(srow.startswith("@var:")):
 		arow = srow.split("=")
@@ -169,10 +176,12 @@ for (verbatimReaction,reactions) in network.iteritems():
 			print "WARNING: no eval!"
 			continue
 		#check for negative values
-		if(min(ydata)<0e0):
+		if(min(ydata2)<0e0):
 			print "**********"
+			print verbatimReaction
 			print rate
-			print "WARNING: negative!"
+			print "ERROR: negative!"
+			sys.exit()
 		plt.loglog(xdata,ydata,"r--")
 		plt.loglog(xdata,ydata2,"b")
 		#store absolute min and max
@@ -180,8 +189,16 @@ for (verbatimReaction,reactions) in network.iteritems():
 		minKmin = min(minKmin,min(ydataDef))
 		maxKmax = max(maxKmax,max(ydataDef))
 		#plot junction points
-		kmin = eval(rate.replace("tgas",str(Tmin)))
-		kmax = eval(rate.replace("tgas",str(Tmax)))
+		try:
+			kmin = eval(rate.replace("tgas",str(Tmin)))
+			kmax = eval(rate.replace("tgas",str(Tmax)))
+		except:
+			print "**********"
+			print verbatimReaction
+			print rate
+			print Tmin,Tmax
+			print "ERROR: problem while evaluating limit points!"
+			sys.exit()
 		plt.loglog([Tmin,Tmax],[kmin,kmax],"ro")
 		nothingToPlot = False
 
