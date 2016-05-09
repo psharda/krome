@@ -261,8 +261,15 @@ contains
 #KROME_iwork_array
       real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
-      real*8::ertol,eatol,max_time
+      real*8::ertol,eatol,max_time,t_tot
       logical::converged
+
+      integer, save :: ncall=0
+      integer, parameter :: ncall_print_frequency=20000
+      integer :: ncallp
+      integer::charges(nspec)
+      real*8::masses(nspec)
+      character*16::names(nspec)
 
       call XSETF(0)!toggle solver verbosity
       meth = 2
@@ -278,7 +285,7 @@ contains
       ! Switches to decide when equilibrium has been reached
       ertol = 1d-5  ! relative min change in a species
       eatol = 1d-12 ! absolute min change in a species
-      max_time=seconds_per_year*1d9 ! max time we will be integrating for
+      max_time=seconds_per_year*5d8 ! max time we will be integrating for
 
       !for DLSODES options see its manual
       iopt = 0
@@ -310,6 +317,7 @@ contains
       imax = 1000
 
       dt = seconds_per_year * 100.
+      t_tot = dt
       converged = .false.
       do while (.not. converged)
          do i=1,imax
@@ -336,16 +344,14 @@ contains
 #IFKROME_conserve
          n(:) = conserve(n(:),ni(:))
 #ENDIFKROME
-
-         ! check if we have converged by comparing the error
-         !in any species with an relative abundance above eatol
-         converged = maxval(abs(n(1:nmols) - ni(1:nmols)) &
-              / max(n(1:nmols),eatol*sum(n(1:nmols)))) .lt. ertol &
-              .or. dt .gt. max_time
+         ! check if we have converged by comparing the error in any species with an relative abundance above eatol
+         converged = maxval(abs(n(1:nmols) - ni(1:nmols)) / max(n(1:nmols),eatol*sum(n(1:nmols)))) .lt. ertol &
+                       .or. t_tot .gt. max_time
 
          ! Increase integration time by a reasonable factor
          if (.not. converged) then
-            dt = dt * 5.
+            dt = dt * 3.
+            t_tot = t_tot + dt
             ni = n
          endif
       enddo
@@ -356,6 +362,33 @@ contains
       x(:) = n(1:nmols)
 #ENDIFKROME
 
+      if (t_tot > max_time .and. &
+          maxval(abs(n(1:nmols) - ni(1:nmols)) / max(n(1:nmols),eatol*sum(n(1:nmols)))) > 0.2) then
+        print *, 'krome_equilibrium: Did not converge in ', max_time / seconds_per_year, ' years.'
+        print *, 'Tgas :', Tgas
+        names(:) = get_names()
+        charges(:) = get_charges()
+        masses(:) = get_mass()
+  
+        print '(a4,a10,a11,a5,a16)',"#","Name","m (g)","Chrg","  Current / Last"
+        do i=1,nmols
+          print '(I4,a10,E11.3,I5,2E14.6,E11.3)',i," "//names(i),masses(i),charges(i),n(i),ni(i),abs(n(i) - ni(i)) / max(n(i),eatol*sum(n(1:nmols)))
+        end do
+        print '(a30,2E14.6)'," sum",sum(n(1:nmols)),sum(ni(1:nmols))
+        print *, 'Fractional error :', maxval(abs(n(1:nmols) - ni(1:nmols)) / max(n(1:nmols),eatol*sum(n(1:nmols))))
+        print *, 'Absolute and relative floors:', eatol, ertol
+      endif
+  
+      ! Print info ever so often
+      !$omp critical
+      ncall=ncall+1
+      ncallp = ncall
+      !$omp end critical
+  
+      if (modulo(ncallp,ncall_print_frequency)==0) then
+        print *, 'Found equilibrium for ', ncallp, ' cells.'
+      endif
+  
     end subroutine krome_equilibrium
 
   !********************
