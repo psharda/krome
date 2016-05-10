@@ -1,0 +1,7 @@
+The data file, original fortran interface files and test setup can be found here:
+
+http://astro.uchicago.edu/~gnedin/CF/chf.html
+
+The relevant paper is
+
+http://adsabs.harvard.edu/abs/2012ApJS..202...13G
