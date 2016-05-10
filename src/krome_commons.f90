@@ -185,6 +185,11 @@ module krome_commons
   ! on dust by Jura/Gnedin
   real*8::GHabing,kH2pump,clump_factor
 
+  ! Photo reaction rates relevant for Gnedin-Hollon cooling/heating function
+#IFKROME_useCoolingGnedinHollon
+  real*8::QLW,QHI,QHeI,QCVI
+  !$omp threadprivate(QLW,QHI,QHeI,QCVI)
+#ENDIFKROME
   !partition functions common vars
 #KROME_var_parts
 
