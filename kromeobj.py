@@ -51,7 +51,7 @@ class krome():
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
-        useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = False
+        useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
@@ -853,7 +853,7 @@ class krome():
 		#apply an individual cooling floor (SB, mod TG)
 		if(args.useIndividualFloor):
 			myFloor = [x.strip() for x in args.useIndividualFloor.split(",")]
-			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED"]
+			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED","GH"]
 			for floor in myFloor:
 				if(not(floor in allFloor)):
 					die("ERROR: Floor \""+floor+"\" is unknown!\nAvailable floor are: "+(", ".join(allFloor)))
@@ -1168,7 +1168,7 @@ class krome():
 			myCools = [x.strip() for x in myCools]
 			#list of all cooling (excluded from file)
 			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE",\
-				"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV","Z_EXTENDED"]
+				"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV","Z_EXTENDED","GH"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
@@ -1235,6 +1235,7 @@ class krome():
 			if("Z_CIENOUV" in myCools): self.useCoolingZCIENOUV = True
 			if("Z_EXTENDED" in myCools):
 				self.useCoolingZExtended = self.useCoolingZ = self.useCoolingZCIE = True
+                        if("GH" in myCools): self.useCoolingGH = True
 
 			#loop over metals loaded from file and search for them in the cooling flags provided by the user
 			for met in fileCools:
@@ -1260,6 +1261,8 @@ class krome():
 				die("ERROR: to include dust cooling you need dust (use -dust=[see help]).")
 			if(("CIE" in myCools) and ("CONT" in myCools)):
 				die("ERROR: CIE and CONT cooling are mutually exclusive!")
+			if(("CIE" in myCools) and ("GH" in myCools)):
+				die("ERROR: CIE and GH cooling are mutually exclusive!")
 
 			self.use_thermo = True
 
@@ -3200,6 +3203,7 @@ class krome():
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
 			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
 			if(srow == "#IFKROME_use_coolingZ" and not(self.useCoolingZ)): skip = True
+			if(srow == "#IFKROME_use_coolingGH" and not(self.useCoolingGH)): skip = True
 			if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#IFKROME_has_electrons" and not(hasElectrons)): skip = True
@@ -3344,6 +3348,7 @@ class krome():
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
 			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
 			if(srow == "#IFKROME_use_coolingZ" and not(self.useCoolingZ)): skip = True
+			if(srow == "#IFKROME_use_coolingGH" and not(self.useCoolingGH)): skip = True
 			if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#IFKROME_has_electrons" and not(hasElectrons)): skip = True
@@ -4352,6 +4357,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
+			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -5531,6 +5537,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingZCIE_function" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZExtended" and not(self.useCoolingZExtended)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
+			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
@@ -5831,6 +5838,7 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingVisc" and not(self.useHeatingVisc)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
 				if(row.strip() == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
+				if(row.strip() == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
 				if(row.strip() == "#IFKROME_useHeatingChem" and skipBool): skip = True
 				if(row.strip() == "#ENDIFKROME"): skip = False
@@ -6331,6 +6339,7 @@ class krome():
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
 			if(srow == "#IFKROME_use_thermo" and not(self.use_thermo)): skip = True
 			if(srow == "#IFKROME_use_coolingZ" and not(self.useCoolingZ)): skip = True
+			if(srow == "#IFKROME_use_coolingGH" and not(self.useCoolingGH)): skip = True
 			if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#IFKROME_has_electrons" and not(hasElectrons)): skip = True
@@ -6672,6 +6681,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
+			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
 			if(srow == "#IFKROME_ierr" and not(self.useIERR)): skip = True
 			if(srow == "#IFKROME_noierr" and (self.useIERR)): skip = True
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
@@ -6896,6 +6906,10 @@ class krome():
 			print "- copying coolZ_CIE2012.dat..."
 			shutil.copyfile("data/coolZ_CIE2012.dat", buildFolder+"coolZ_CIE2012.dat")
 
+		#cooling GH
+		if(self.useCoolingGH):
+			print "- copying GnedinHollon/cf_table.I2.dat..."
+			shutil.copyfile("data/GnedinHollon/cf_table.I2.dat", buildFolder+"cf_table.I2.dat")
 
 		#copy partition function files
 		if(self.typeGamma=="POPOVAS"):

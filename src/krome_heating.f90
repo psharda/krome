@@ -20,6 +20,7 @@ contains
     implicit none
     real*8::n(:), Tgas, k(:), nH2dust
     real*8::get_heating_array(nheats),heats(nheats)
+    real*8::smooth,f1,f2
     !returns heating in erg/cm3/s
 
     heats(:) = 0.d0
@@ -68,6 +69,27 @@ contains
     heats(idx_heat_ZCIE) = heat_ZCIE(n(:),Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingGnedinHollon
+    !this parameter controls the smoothness of the
+    ! merge between the two cooling functions
+    smooth = 1.d-3
+
+    !smoothing functions | f1+f2=1
+    f1 = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0
+    f2 = (tanh(smooth*(-Tgas+1d4))+1.d0)*0.5d0
+
+    !heating is already included in the cooling function (that thus can be negative)
+
+    ! X-rays is covered by the CVI band in the GH model
+#IFKROME_useHeatingXRay
+    heats(idx_heat_xray) = f2 * heats(idx_heat_xray)
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIE
+    heats(idx_heat_ZCIE) = f2 * heats(idx_heat_ZCIE)
+#ENDIFKROME
+
+#ENDIFKROME
 
     heats(idx_heat_custom) = heat_custom(n(:),Tgas)
 
