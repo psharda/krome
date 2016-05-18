@@ -38,7 +38,7 @@
 #Glover+2011
 12,H2,He+,,He,H2+,,NONE,NONE,7.2d-15
 @format:idx,R,R,R,P,P,P,Tmin,Tmax,rate
-13,H2,He+,,He,H,H+,NONE,NONE,3.7d-14*exp(35d0*invT)
+13,H2,He+,,He,H,H+,NONE,NONE,3.7d-14*exp(-35d0*invT)
 
 #KIDA
 14,H2,He+,,He+,H,H,NONE,NONE,3d-11*sqrt(T32)*exp(-5.2d4*invT)
@@ -91,7 +91,7 @@
 #METALS FROM Glover&Jappsen 2010 from #30
 39,C+,E,,C,g,,2.73d0,.LE.7950d0,4.67d-12*(T32)**(-0.6d0)
 40,C+,E,,C,g,,>7950d0,.LE.21140d0,1.23d-17*(T32)**2.49*exp(21845.6d0*invT)
-41,C+,E,,C,g,,>21140d0,.LE.21140d0,9.62d-8*(T32)**(-1.37)*exp(-115786.2d0*invT)
+41,C+,E,,C,g,,>21140d0,NONE,9.62d-8*(T32)**(-1.37)*exp(-115786.2d0*invT)
 #42,Si+,E,,Si,g,,2.73d0,.LE.2.d3,7.5d-12*(T32)**(-0.55d0)
 #43,Si+,E,,Si,g,,>2.d3,NONE,4.86d-12*(T32)**(-0.32d0)
 44,O+,E,,O,g,,2.73d0,.LE.4.d2,1.30d-10*(Tgas)**(-0.64d0)
@@ -131,8 +131,7 @@
 69,CH,H,C,H2,NONE,NONE,1.31d-10*exp(-8d1*invT)
 70,CH,H2,CH2,H,NONE,NONE,5.46d-10*exp(-1943d0*invT)
 71,CH,C,C2,H,NONE,NONE,2.40d-10
-72,CH,O,CO,H,NONE,2d3,6.6d-11
-73,CH,O,CO,H,2d3,NONE,1.02d-10*exp(-914d0*invT)
+73,CH,O,CO,H,NONE,NONE,1.02d-10*exp(-914d0*invT)
 
 #UMIST
 74,CH,O,HCO+,E,NONE,NONE,1.9d-11*(T32)**(-2.2)*exp(-165.1d0*invT)
@@ -165,7 +164,9 @@
 83,O,H2,OH,H,NONE,NONE,1.46e-12*exp(-9650.*invT)
 
 #Glover+2010
-84,OH,H,O,H2,NONE,NONE,6.99d-14*T32**2.8*exp(-1950d0*invT)
+84,OH,H,O,H2,NONE,280.,6.99d-14*T32**2.8*exp(-1950d0*invT)
+> 85,OH,H,O,H2,280.,NONE,5.45d-17
+
 
 #from Baluch+2005
 87,H2,OH,H2O,H,NONE,NONE,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
@@ -174,13 +175,9 @@
 88,C,OH,H,CO,NONE,1d1,7.051e-11
 89,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(-.108d0*invT)
 
-#KIDA, recomended
-90,O,OH,H,O2,NONE,NONE,2.4d-11*exp(-110.d0*invT)
-
-#KIDA, recomended, below 200K and above 350K constant
-91,O,OH,H,O2,NONE,2d2,2.42d-12
-92,O,OH,H,O2,2d2,350,6.2d-14*(T32)**(2.62)*exp(-945d0*invT)
-93,O,OH,H,O2,350,NONE,1.38d-12
+#KIDA, recomended, above 500K constant
+92,O,OH,H,O2,NONE,500.,2.4d-11*exp(-110.d0*invT)
+93,O,OH,H,O2,500.,NONE,1.93d-11
 
 #Glover+2010
 93,OH,OH,H2O,O,NONE,NONE,1.65d-12*(T32)**1.14*exp(-5d1*invT)
@@ -194,9 +191,9 @@
 #Glover+2010
 96,O2,H2,OH,OH,NONE,NONE,3.16d-10*exp(-21890.d0*invT)
 
-#Glover+2010
-97,O2,C,CO,O,NONE,295d0,4.7d-11*T32**(-.34)
-98,O2,C,CO,O,295d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
+#Glover+2010 (limit 1052. for continuity)
+97,O2,C,CO,O,NONE,1052d0,4.7d-11*T32**(-.34)
+98,O2,C,CO,O,1052d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
 
 #Glover+2010
 99,CO,H,C,OH,NONE,NONE,1.1d-10*T32**0.5*exp(-77700d0*invT)
@@ -439,8 +436,7 @@
 211,C,H,CH,,NONE,NONE,1d-17
 212,C,H2,CH2,,NONE,NONE,1d-17
 213,C,C,C2,,NONE,NONE,4.36d-18*T32**.35*exp(-161.3d0*invT)
-214,C,O,CO,,NONE,3d2,1d-19
-215,C,O,CO,,3d2,NONE,3.09d-17*T32**.33*exp(-1629d0*invT)
+215,C,O,CO,,NONE,NONE,3.09d-17*T32**.33*exp(-1629d0*invT)
 216,C+,H,CH+,,NONE,NONE,4.46d-16*Tgas**(-.5)*exp(-4.93*Tgas**(-.6667))
 
 #KIDA, recomended

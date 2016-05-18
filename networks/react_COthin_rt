@@ -131,7 +131,7 @@
 69,CH,H,C,H2,NONE,NONE,1.31d-10*exp(-8d1*invT)
 70,CH,H2,CH2,H,NONE,NONE,5.46d-10*exp(-1943d0*invT)
 71,CH,C,C2,H,NONE,NONE,2.40d-10
-73,CH,O,CO,H,2d3,NONE,1.02d-10*exp(-914d0*invT)
+73,CH,O,CO,H,NONE,NONE,1.02d-10*exp(-914d0*invT)
 
 #UMIST
 74,CH,O,HCO+,E,NONE,NONE,1.9d-11*(T32)**(-2.2)*exp(-165.1d0*invT)
@@ -175,7 +175,7 @@
 89,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(-.108d0*invT)
 
 #KIDA, recomended, above 350K constant
-92,O,OH,H,O2,150.,500.,2.4d-11*exp(-110.d0*invT)
+92,O,OH,H,O2,NONE,500.,2.4d-11*exp(-110.d0*invT)
 93,O,OH,H,O2,500.,NONE,1.93d-11
 
 #Glover+2010
@@ -435,7 +435,7 @@
 211,C,H,CH,,NONE,NONE,1d-17
 212,C,H2,CH2,,NONE,NONE,1d-17
 213,C,C,C2,,NONE,NONE,4.36d-18*T32**.35*exp(-161.3d0*invT)
-215,C,O,CO,,3d2,NONE,3.09d-17*T32**.33*exp(-1629d0*invT)
+215,C,O,CO,,NONE,NONE,3.09d-17*T32**.33*exp(-1629d0*invT)
 216,C+,H,CH+,,NONE,NONE,4.46d-16*Tgas**(-.5)*exp(-4.93*Tgas**(-.6667))
 
 #KIDA, recomended
