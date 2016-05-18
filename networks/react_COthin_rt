@@ -174,7 +174,7 @@
 88,C,OH,H,CO,NONE,1d1,7.051e-11
 89,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(-.108d0*invT)
 
-#KIDA, recomended, above 350K constant
+#KIDA, recomended, above 500K constant
 92,O,OH,H,O2,NONE,500.,2.4d-11*exp(-110.d0*invT)
 93,O,OH,H,O2,500.,NONE,1.93d-11
 
@@ -191,8 +191,8 @@
 96,O2,H2,OH,OH,NONE,NONE,3.16d-10*exp(-21890.d0*invT)
 
 #Glover+2010 (limit 1052. for continuity)
-97,O2,C,CO,O,NONE,1052.,4.7d-11*T32**(-.34)
-98,O2,C,CO,O,1052.,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
+97,O2,C,CO,O,NONE,1052d0,4.7d-11*T32**(-.34)
+98,O2,C,CO,O,1052d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
 
 #Glover+2010
 99,CO,H,C,OH,NONE,NONE,1.1d-10*T32**0.5*exp(-77700d0*invT)

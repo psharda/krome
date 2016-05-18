@@ -165,8 +165,7 @@
 
 #Glover+2010
 84,OH,H,O,H2,NONE,280.,6.99d-14*T32**2.8*exp(-1950d0*invT)
-> 85,OH,H,O,H2,280.,NONE,5.45d-17
-
+85,OH,H,O,H2,280.,NONE,5.45d-17
 
 #from Baluch+2005
 87,H2,OH,H2O,H,NONE,NONE,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
