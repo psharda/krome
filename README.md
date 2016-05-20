@@ -54,7 +54,7 @@ Co-developer Stefano Bovino
 ```
 
 Contributors (alphabetically): D. Galli, F.A. Gianturco, T.Haugbølle, J. Prieto,
- D.R.G. Schleicher, D. Seifried, E. Simoncini, E. Tognelli 
+ J. Ramsey, D.R.G. Schleicher, D. Seifried, E. Simoncini, E. Tognelli 
 
 ---
 
