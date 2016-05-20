@@ -22,7 +22,7 @@
 # Institut fuer Astrophysik, Goettingen.
 #
 # Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
-# J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini,
+# J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried, E. Simoncini,
 # E. Tognelli
 #
 #

@@ -878,16 +878,19 @@ contains
   !**********************************
   !this subroutine set a flux HM in the energy limits
   ! as argument
-  subroutine krome_set_photoBin_HMlog(lower_in,upper_in) #KROME_bindC
+  subroutine krome_set_photoBin_HMlog(lower_in,upper_in,additive) #KROME_bindC
     use krome_commons
     use krome_photo
     use krome_subs
     implicit none
     real*8::z(59),energy(500),HM(59,500)
     real*8::z_mul,energy_mul,x,lower,upper
+    real*8::photoTmpJ(nPhotoBins)
     real*8,parameter::limit_lower = 0.1237d0
     real*8,parameter::limit_upper = 4.997d7
     real*8,parameter::limit_redshift = 15.660d0
+    logical,optional::additive
+    logical::add
     #KROME_double_value, optional :: lower_in,upper_in
     integer::i
 
@@ -895,6 +898,9 @@ contains
     upper = limit_upper
     if(present(lower_in)) lower = lower_in
     if(present(upper_in)) upper = upper_in
+
+    add = .false.
+    if(present(additive)) add = additive
 
     if(phys_zredshift>limit_redshift) then
        print *,"ERROR: redshift out of range in HM"
@@ -917,9 +923,16 @@ contains
 
     do i=1,nPhotoBins
        x = log10(photoBinEmid(i)) !log(eV)
-       photoBinJ(i) = 1d1**fit_anytab2D(z(:), energy(:), HM(:,:), &
+       photoTmpJ(i) = 1d1**fit_anytab2D(z(:), energy(:), HM(:,:), &
             z_mul, energy_mul, phys_zredshift, x)
     end do
+
+    !add flux to already-present flux if optional argument
+    if(add) then
+       photoBinJ(:) = photoBinJ(:) + photoTmpJ(:)
+    else
+       photoBinJ(:) = photoTmpJ(:)
+    end if
 
     photoBinJ_org(:) = photoBinJ(:)
 
