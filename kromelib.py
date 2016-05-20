@@ -22,7 +22,7 @@
 # Institut fuer Astrophysik, Goettingen.
 #
 # Others (alphabetically): D.Galli, F.A. Gianturco, T. Haugboelle,
-# J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini,
+# J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried, E. Simoncini,
 # E.Tognelli
 #
 #
@@ -1807,8 +1807,8 @@ def get_licence_header(version, codename, short=False):
 	!! Institut fuer Astrophysik, Goettingen.
 	!!
 	!!Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
-	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini,
-	!! E. Tognelli
+	!! J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried,
+	!! E. Simoncini, E. Tognelli
 	!!
 	!!
 	!!KROME is provided \"as it is\", without any warranty.
@@ -1832,7 +1832,7 @@ def get_licence_header(version, codename, short=False):
 	!!
 	!!Co-developer Stefano Bovino
 	!!Others (alphabetically): D.Galli, F.A. Gianturco, T. Haugboelle,
-	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini,
+	!! J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried, E. Simoncini,
 	!! E. Tognelli.
 	!!KROME is provided \"as it is\", without any warranty.
 	!!*************************************************************\n"""
