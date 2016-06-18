@@ -57,7 +57,7 @@ class krome():
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
-	usePhotoOpacity = useXRay = False
+	usePhotoOpacity = useXRay = hasSurfaceReactions = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
@@ -1778,6 +1778,7 @@ class krome():
 		inCoolingBlock = False #block for custom cooling expression
 		inHeatingBlock = False #block for custom heating expression
 		inSurfaceBlock = False #block for reaction on surface
+		self.hasSurfaceReactions = False #true if surface reactions found
 
 		#generate a custom reaction network and replace filename with the custom one
 		if(self.useCustom):
@@ -2088,6 +2089,7 @@ class krome():
 
 			#search for surface chemistry reactions (start)
 			if(srow.lower()=="@surface_start" or srow.lower()=="@surface_begin"):
+				self.hasSurfaceReactions = True
 				inSurfaceBlock = self.useSurface = True
 				noTabBlockStored = noTabNextBlock
 				noTabNext = noTabNextBlock = True
@@ -2568,7 +2570,8 @@ class krome():
 		for sp in specs:
 			if(sp.is_chemisorbed): self.useChemisorption = True
 			#if surface add species for each dust bin (append _BinIndex)
-			if(sp.is_surface):
+			# note: ignored if no surface reactions found
+			if(sp.is_surface and self.hasSurfaceReactions):
 				#loop on the number of bins (all types)
 				for idust in range(self.dustArraySize*len(self.dustTypes)):
 					sp2 = parser(sp.name,mass_dic,atoms,thermodata,idust+1) #parse the new species
@@ -3157,6 +3160,7 @@ class krome():
 	##############################################
 	#write C headers if requested
 
+	###############################################
 	# write the C header for krome_main
 	def makeMainCHeader(self):
 		if(not(self.interfaceC)): return
@@ -3182,6 +3186,7 @@ class krome():
 		if(not(self.buildCompact)):
 			fout.close()
 
+	###############################################
 	# write the C header for krome_user
 	def makeUserCHeader(self):
 		import re
@@ -3329,6 +3334,7 @@ class krome():
 		if(not(self.buildCompact)):
 			fout.close()
 
+	###############################################
 	def makePythonModule(self):
 		if(not(self.interfacePy)): return
 
@@ -3468,6 +3474,7 @@ class krome():
 				else:
 					fout.write(row)
 
+	###############################################
 	def CInterface(self):
 		if(not(self.interfaceC)): return
 
@@ -3477,6 +3484,7 @@ class krome():
 		self.makeMainCHeader()
 		self.makeUserCHeader()
 
+	###############################################
 	def PyInterface(self):
 		if(not(self.interfacePy)): return
 
@@ -6371,7 +6379,7 @@ class krome():
 			if(srow == "#KROME_species"):
 				allBasics = []
 				for x in specs:
-					if(x.is_surface):
+					if(x.is_surface and self.hasSurfaceReactions):
 						xbasic = ("_".join(x.fidx.split("_")[:-1]))
 						xname = ("_".join(x.name.split("_")[:-1]))
 						if(not(xbasic in allBasics)):
