@@ -1,5 +1,3 @@
-  #KROME_header
-
   module KROME_cooling
 #KROME_header
     integer,parameter::coolTab_n=int(1e2)
@@ -105,10 +103,6 @@
       cools(idx_cool_ZExtend) = cooling_ZExtended(n(:), Tgas)
 #ENDIFKROME
 
-      !default for f1 and f2 smoothing
-      f1 = 1d0
-      f2 = 1d0
-
 #IFKROME_useCoolingGH
       !this parameter controls the smoothness of the
       ! merge between the two cooling functions
@@ -120,39 +114,39 @@
 
       cools(idx_cool_GH) = f1 * cooling_GH(n(:), Tgas)
 
-#IFKROME_useCoolingAtomic
+ #IFKROME_useCoolingAtomic
       cools(idx_cool_atomic) = f2 * cools(idx_cool_atomic)
-#ENDIFKROME
+ #ENDIFKROME
 
-#IFKROME_useCoolingZ
+ #IFKROME_useCoolingZ
       cools(idx_cool_Z) = f2 * cools(idx_cool_Z)
-#ENDIFKROME
+ #ENDIFKROME
 
-#IFKROME_useCoolingCompton
+ #IFKROME_useCoolingCompton
       cools(idx_cool_compton) = f2 * cools(idx_cool_compton)
-#ENDIFKROME
+ #ENDIFKROME
 
-#IFKROME_useCoolingCIE
+ #IFKROME_useCoolingCIE
       cools(idx_cool_CIE) = f2 * cools(idx_cool_CIE)
-#ENDIFKROME
+ #ENDIFKROME
 
-#IFKROME_useCoolingContinuum
+ #IFKROME_useCoolingContinuum
       cools(idx_cool_cont) = f2 * cools(idx_cool_cont)
-#ENDIFKROME
+ #ENDIFKROME
 
-#IFKROME_useCoolingFF
+ #IFKROME_useCoolingFF
       cools(idx_cool_ff) = f2 * cools(idx_cool_ff)
-#ENDIFKROME
+ #ENDIFKROME
 
-#IFKROME_useCoolingZCIE
+ #IFKROME_useCoolingZCIE
       cools(idx_cool_ZCIE) = f2 * cools(idx_cool_ZCIE)
-#ENDIFKROME
+ #ENDIFKROME
 
-#IFKROME_useCoolingZCIENOUV
+ #IFKROME_useCoolingZCIENOUV
       cools(idx_cool_ZCIENOUV) = f2 * cools(idx_cool_ZCIENOUV)
-#ENDIFKROME
+ #ENDIFKROME
 
-#ENDIFKROME
+#ENDIFKROME_useCoolingGH
 
       cools(idx_cool_custom) = cooling_custom(n(:),Tgas)
 
@@ -323,9 +317,9 @@
       real*8::cH,Tgas,xLd,logcH
 
       cooling_Z_CIENOUV = 0d0
-      cH = get_Hnuclei(n(:)) 
+      cH = get_Hnuclei(n(:))
 
-      !check if the abundance is close to zero to 
+      !check if the abundance is close to zero to
       !avoid weird log evaluation
       if(cH.lt.1d-20)return
 
@@ -343,7 +337,7 @@
 #IFKROME_useCoolingZCIE_function
     !***************************
     !Metal line cooling CIE
-    ! method: CLOUDY 10, including the 
+    ! method: CLOUDY 10, including the
     ! extragalactic (quasars + galaxies) UV flux
     ! by Haardt&Madau 2012.
     !Tables kindly provided by Sijing Shen.
@@ -384,9 +378,9 @@
       ixd3(:) = coolZCIEixd3(:)
 
       !local variables
-      cH = get_Hnuclei(n(:)) 
+      cH = get_Hnuclei(n(:))
 
-      !check if the abundance is close to zero to 
+      !check if the abundance is close to zero to
       !avoid weird log evaluation
       if(cH.lt.1d-20)return
 
@@ -499,8 +493,8 @@
     !************************
     function cooling_ZExtended(n,Tgas)
       use krome_commons
-      implicit none 
-      real*8::cooling_ZExtended 
+      implicit none
+      real*8::cooling_ZExtended
       real*8::n(:),Tgas
       real*8::f1,f2,smooth
 
@@ -642,17 +636,17 @@
       if(x>2.d0 .and. x<2.95d0) then
          a0 = -30.3314216559651d0
          a1 = 19.0004016698518d0
-         a2 = -17.1507937874082d0 
-         a3 = 9.49499574218739d0 
-         a4 = -2.54768404538229d0 
+         a2 = -17.1507937874082d0
+         a3 = 9.49499574218739d0
+         a4 = -2.54768404538229d0
          a5 = 0.265382965410969d0
-         logcool = a0 + a1*x + a2*x2 + a3*x3 +a4*x4 +a5*x5 
+         logcool = a0 + a1*x + a2*x2 + a3*x3 +a4*x4 +a5*x5
       elseif(x.GE.2.95d0 .and. x<5.d0) then
-         b0 = -180.992524120965d0 
-         b1 = 168.471004362887d0 
-         b2 = -67.499549702687d0 
-         b3 = 13.5075841245848d0 
-         b4 = -1.31983368963974d0 
+         b0 = -180.992524120965d0
+         b1 = 168.471004362887d0
+         b2 = -67.499549702687d0
+         b3 = 13.5075841245848d0
+         b4 = -1.31983368963974d0
          b5 = 0.0500087685129987d0
          logcool = b0 + b1*x + b2*x2 + b3*x3 +b4*x4 +b5*x5
       elseif(x.GE.5.d0) then
@@ -681,7 +675,7 @@
       real*8::ntot
 
       ntot=sum(n(1:nmols))
-      !note that user_* must be provided by the user 
+      !note that user_* must be provided by the user
       ! in the reaction file using @common: and initialized
       ! using the interface subroutine
       cooling_expansion = 3.d0*ntot*boltzmann_erg*Tgas*hubble0 &
@@ -830,18 +824,18 @@
 #KROME_rates
 #KROME_dH_cooling
 
-      cooling_dH = cool    
+      cooling_dH = cool
 
     end function cooling_dH
 #ENDIFKROME
 
 #IFKROME_useH2esc_omukai
     !*****************************
-    !escape opacity for H2 cooling. 
+    !escape opacity for H2 cooling.
     ! courtesy of Kazu Omukai (2014)
-    ! Einstein's A coefficients for spontaneous emission 
-    ! calculated by Turner, Kirby-Docken, & Dalgarno 1977, ApJS, 35, 281 
-    ! and the excitation energies for the levels of Borysow, 
+    ! Einstein's A coefficients for spontaneous emission
+    ! calculated by Turner, Kirby-Docken, & Dalgarno 1977, ApJS, 35, 281
+    ! and the excitation energies for the levels of Borysow,
     ! Frommhold & Moraldi (1989), ApJ, 336, 495.
     function H2opacity_omukai(Tgas, n)
       use krome_commons
@@ -1184,7 +1178,7 @@
       !extrapolate density limits
       dd = min(max(dd,1d-2),1d10)
 
-      !POLYNOMIAL COEFFICIENT: TABLE 1 LIPOVKA 
+      !POLYNOMIAL COEFFICIENT: TABLE 1 LIPOVKA
       c(0,:) = (/-42.56788d0, 0.92433d0, 0.54962d0, -0.07676d0, 0.00275d0/)
       c(1,:) = (/21.93385d0, 0.77952d0, -1.06447d0, 0.11864d0, -0.00366d0/)
       c(2,:) = (/-10.19097d0, -0.54263d0, 0.62343d0, -0.07366d0, 0.002514d0/)
@@ -1273,7 +1267,7 @@
       cooling_GH = ntot**2*(cfun-hfun)
 
     end function cooling_GH
-#ENDIFKROME
+#ENDIFKROME_useCoolingGH
 
 #IFKROME_useCoolingZ_function
     !*********************************************
@@ -2037,4 +2031,4 @@
     end subroutine frtGetCF
 
   end module frt_cf3_mod
-#ENDIFKROME
+#ENDIFKROME_useCoolingGH
