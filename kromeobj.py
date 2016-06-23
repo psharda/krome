@@ -4353,7 +4353,7 @@ class krome():
 
 
 		#common variables
-		skip = False
+		skip = skipGH = False
 		for row in fh:
 			srow = row.strip()
 
@@ -4365,11 +4365,12 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
-			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
+			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skipGH = True
 
 			if(srow == "#ENDIFKROME"): skip = False
+			if(srow == "#ENDIFKROME_useCoolingGH"): skipGH = False
 
-			if(skip): continue
+			if(skip or skipGH): continue
 
 			if(srow == "#KROME_species_index"):
 				for x in specs:
@@ -5518,7 +5519,7 @@ class krome():
 			#Z: atomic number, ion: ionization degree (e.g. HII=1), energy_eV: ioniz potential, n0: principal quantum number
 			fbdata.append({"Z":int(arow[0]), "ion":int(arow[1]), "energy_eV":float(arow[5]), "n0":int(arow[6])})
 
-		skip = skip_nleq = skip_dTdust = False
+		skip = skip_nleq = skip_dTdust = skipGH = False
 		useCoolingZ = self.useCoolingZ
 		#loop on source to replace pragmas
 		for row in fh:
@@ -5545,7 +5546,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingZCIE_function" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZExtended" and not(self.useCoolingZExtended)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
-			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
+			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skipGH = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
@@ -5553,9 +5554,10 @@ class krome():
 
 			if(srow == "#ENDIFKROME_usedTdust"): skip_dTdust = False
 			if(srow == "#ENDIFKROME_use_NLEQ"): skip_nleq = False
+			if(srow == "#ENDIFKROME_useCoolingGH"): skipGH = False
 			if(srow == "#ENDIFKROME"): skip = False
 
-			if(skip or skip_nleq or skip_dTdust): continue
+			if(skip or skip_nleq or skip_dTdust or skipGH): continue
 
 
 			#replace the small value for rates according to the maximum number of products
@@ -5828,7 +5830,7 @@ class krome():
 				pheatvars.append("photoBinHeats("+str(react.idxph)+") * n(" + react.reactants[0].fidx + ")")
 
 		#replace pragma with strings built above
-		skip = False
+		skip = skipGH = False
 		for row in fh:
 			srow = row.strip()
 			if(row.strip() == "#KROME_header"):
@@ -5845,13 +5847,15 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingXRay" and not(self.useHeatingXRay)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingVisc" and not(self.useHeatingVisc)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
-				if(row.strip() == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
-				if(row.strip() == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
+				if(row.strip() == "#IFKROME_useHeatingZCIE" and not(self.useCoolingZCIE)): skip = True
+				if(row.strip() == "#IFKROME_useHeatingGH" and not(self.useCoolingGH)): skipGH = True
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
 				if(row.strip() == "#IFKROME_useHeatingChem" and skipBool): skip = True
-				if(row.strip() == "#ENDIFKROME"): skip = False
 
-				if(skip): continue
+				if(row.strip() == "#ENDIFKROME"): skip = False
+				if(row.strip() == "#ENDIFKROME_useHeatingGH"): skipGH = False
+
+				if(skip or skipGH): continue
 
 				if("#KROME_custom_heating_expr" in row.strip()):
 					heatAll = ""

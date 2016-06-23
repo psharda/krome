@@ -65,31 +65,30 @@ contains
     heats(idx_heat_visc) = heat_Visc(n(:),Tgas)
 #ENDIFKROME
 
-#IFKROME_useCoolingZCIE
+#IFKROME_useHeatingZCIE
     heats(idx_heat_ZCIE) = heat_ZCIE(n(:),Tgas)
 #ENDIFKROME
 
-#IFKROME_useCoolingGnedinHollon
+#IFKROME_useHeatingGH
     !this parameter controls the smoothness of the
     ! merge between the two cooling functions
     smooth = 1.d-3
 
     !smoothing functions | f1+f2=1
-    f1 = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0
+    !f1 = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0
     f2 = (tanh(smooth*(-Tgas+1d4))+1.d0)*0.5d0
 
     !heating is already included in the cooling function (that thus can be negative)
 
-    ! X-rays is covered by the CVI band in the GH model
-#IFKROME_useHeatingXRay
+ #IFKROME_useHeatingXRay
     heats(idx_heat_xray) = f2 * heats(idx_heat_xray)
-#ENDIFKROME
+ #ENDIFKROME
 
-#IFKROME_useCoolingZCIE
+ #IFKROME_useHeatingZCIE
     heats(idx_heat_ZCIE) = f2 * heats(idx_heat_ZCIE)
-#ENDIFKROME
+ #ENDIFKROME
 
-#ENDIFKROME
+#ENDIFKROME_useHeatingGH
 
     heats(idx_heat_custom) = heat_custom(n(:),Tgas)
 
@@ -114,7 +113,7 @@ contains
   end function heat_custom
 
 
-#IFKROME_useCoolingZCIE
+#IFKROME_useHeatingZCIE
   function heat_ZCIE(n,inTgas)
     use krome_commons
     use krome_subs
@@ -133,7 +132,7 @@ contains
 
     Tgas = inTgas
     heat_ZCIE = 0d0
-    
+
     !local copy of limits
     v1min = coolZCIEx1min
     v1max = coolZCIEx1max
@@ -141,20 +140,20 @@ contains
     v2max = coolZCIEx2max
     v3min = coolZCIEx3min
     v3max = coolZCIEx3max
-    
+
     !local copy of variables arrays
     x1(:) = coolZCIEx1(:)
     x2(:) = coolZCIEx2(:)
     x3(:) = coolZCIEx3(:)
-    
+
     ixd1(:) = coolZCIEixd1(:)
     ixd2(:) = coolZCIEixd2(:)
     ixd3(:) = coolZCIEixd3(:)
 
     !local variables
-    cH = get_Hnuclei(n(:)) 
+    cH = get_Hnuclei(n(:))
 
-    !check if the abundance is close to zero to 
+    !check if the abundance is close to zero to
     !avoid weird log evaluation
     if(cH.lt.1d-20)return
 
@@ -183,7 +182,7 @@ contains
     !precompute shared variables
     prev1 = (v1-x1(i))*ixd1(i)
     prev2 = (v2-x2(j))*ixd2(j)
-    
+
     !linear interpolation on x1 for x2,x3
     vv1_h = prev1 * (heatZCIEy(k,j,i+1) - &
         heatZCIEy(k,j,i)) + heatZCIEy(k,j,i)
@@ -192,7 +191,7 @@ contains
         heatZCIEy(k,j+1,i)) + heatZCIEy(k,j+1,i)
     !linear interpolation on x2 for x3
     vv12_h = prev2 * (vv2_h - vv1_h) + vv1_h
-    
+
     !linear interpolation on x1 for x2,x3+dx3
     vv3_h = prev1 * (heatZCIEy(k+1,j,i+1) - &
         heatZCIEy(k+1,j,i)) + heatZCIEy(k+1,j,i)
@@ -201,7 +200,7 @@ contains
         heatZCIEy(k+1,j+1,i)) + heatZCIEy(k+1,j+1,i)
     !linear interpolation on x2 for x3+dx3
     vv34_h = prev2 * (vv4_h - vv3_h) + vv3_h
-    
+
     !linear interpolation on x3
     xGd = (v3-x3(k))*ixd3(k)*(vv34_h - &
         vv12_h) + vv12_h
@@ -226,13 +225,13 @@ contains
     implicit none
     real*8::n(:),Tgas,heat_visc
     real*8::m(nspec),rhogas
-    
+
     n(idx_Tgas) = Tgas
     m(:) = get_mass()
     rhogas = max(sum(n(1:nmols)*m(1:nmols)),1d-40)
-    
+
     heat_visc = 9d0/4d0 * user_nu * rhogas * user_omega * user_omega
-    
+
   end function heat_visc
 #ENDIFKROME
 
@@ -291,8 +290,8 @@ contains
     !photoelectric effect from dust in erg/s/cm3
     !see Bakes&Tielens 1994 with a slight modification of Wolfire 2003
     !on the amount of absorbed ultraviolet energy.
-    !This is for the local interstellar Habing flux and 
-    !without considering the recombination (which at this 
+    !This is for the local interstellar Habing flux and
+    !without considering the recombination (which at this
     !radiation flux is indeed negligible)
     use krome_commons
     use krome_subs
@@ -339,8 +338,8 @@ contains
        psi = 0d0
     end if
 
-    !grains recombination cooling 
-    recomb_cool = 4.65d-30*Tgas**0.94*psi**bet & 
+    !grains recombination cooling
+    recomb_cool = 4.65d-30*Tgas**0.94*psi**bet &
          * n(idx_e)*n(idx_H)
 
     eps = 4.9d-2 / (1d0 + 4d-3 * psi**.73) + &
@@ -429,7 +428,7 @@ contains
 #KROME_rates
 #KROME_dH_heating
 
-    heat_dH = heat    
+    heat_dH = heat
 
   end function heat_dH
 #ENDIFKROME
@@ -452,7 +451,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useHeatingChem
-  !H2 FORMATION HEATING and other exo/endothermic 
+  !H2 FORMATION HEATING and other exo/endothermic
   ! processes (including H2 on dust) in erg/cm3/s
   !krome builds the heating/cooling term according
   ! to the chemical network employed
