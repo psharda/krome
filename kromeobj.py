@@ -6040,6 +6040,7 @@ class krome():
 			if(srow == "#IFKROME_report" and not(self.doReport)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip = True
+			if(srow == "#IFKROME_usePhotoBins" and self.photoBins<=0): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -6309,6 +6310,7 @@ class krome():
 		if(not(self.buildCompact)):
 			fout.close()
 		print "done!"
+
 	################################
 	def makeUser(self):
 
