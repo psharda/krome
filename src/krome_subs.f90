@@ -185,8 +185,6 @@ contains
     !should be converted to erg
     H2_solomonLW = 1.38d9*myflux*eV_to_erg
 
-    kH2pump = H2_solomonLW
-
   end function H2_solomonLW
 
   !**********************
