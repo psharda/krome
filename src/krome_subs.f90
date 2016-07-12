@@ -47,7 +47,40 @@ contains
 
 #KROME_metallicity_functions
 
+  !****************************
+  !dust shielding factor
+  function shield_dust(n,Tgas,gam)
+    use krome_commons
+    implicit none
+    real*8::shield_dust,n(:),Tgas,gam,eff_d2g
+    real*8::sigma_d,NHtot,NHI,NHII,NH2I
+
+    eff_d2g = 1d-2
+    sigma_d = 2d-21*eff_d2g*gam !Richings et al. 2014
+    !sigma_d = 2d-21 !Glover+2007
+    !sigma_d = 4d-22 !Richings+ 2014
+    !sigma_d = 4d-21 !Gnedin 2009
+    NHI  = num2col(n(idx_H),n(:))
+    NHII = num2col(n(idx_Hj),n(:))
+    NH2I = num2col(n(idx_H2),n(:))
+    NHtot = NHI + NHII + 2d0*NH2I
+    shield_dust = exp(-sigma_d*NHtot)
+
+  end function shield_dust
+
 #IFKROME_usePhotoBins
+
+  !*******************
+  !apply a shielding to Habing flux
+  subroutine calcHabingThick(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::getHabingThick,n(:),Tgas
+
+    GHabing = GHabing_thin * shield_dust(n(:),Tgas,0.665d0)
+
+  end subroutine calcHabingThick
+
   !*********************
   !return the ratio between the current flux an Draine's
   function get_ratioFluxDraine()
