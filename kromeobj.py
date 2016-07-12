@@ -4754,11 +4754,13 @@ class krome():
 			krome_conserve = "" #with more than NMAX species conserve only electrons
 
 		has_electrons = False #check if electrons are present
+		has_HI = has_HII = has_H2I = False
 		#check if electrons are present
 		for x in specs:
-			if(x.name=="E"):
-				has_electrons = True #check if electrons are present
-				break
+			has_electrons = (x.name=="E") #check if electrons are present
+			has_HI = (x.name=="H")
+			has_HII = (x.name=="H+")
+			has_H2I = (x.name=="H2")
 
 		#charge conservation
 		if(has_electrons and self.useConserveE):
@@ -4792,6 +4794,9 @@ class krome():
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True
 
+			if(srow == "#IFKROME_hasHI" and not(has_HI)): skip = True
+			if(srow == "#IFKROME_hasHII" and not(has_HII)): skip = True
+			if(srow == "#IFKROME_hasH2I" and not(has_H2I)): skip = True
 
 		        if(srow == "#ENDIFKROME"): skip = False
 
