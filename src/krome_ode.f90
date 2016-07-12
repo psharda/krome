@@ -39,7 +39,7 @@ contains
     n(idx_Tgas) = min(n(idx_tgas),1d9)
     Tgas = n(idx_Tgas) !get temperature
 
-#IFKROME_usePhotoBins
+#IFKROME_shieldHabingDust
     call calcHabingThick(n(:),Tgas)
 #ENDIFKROME
 
