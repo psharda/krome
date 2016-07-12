@@ -53,17 +53,25 @@ contains
     use krome_commons
     implicit none
     real*8::shield_dust,n(:),Tgas,gam,eff_d2g
-    real*8::sigma_d,NHtot,NHI,NHII,NH2I
+    real*8::sigma_d,NHtot
 
     eff_d2g = 1d-2
     sigma_d = 2d-21*eff_d2g*gam !Richings et al. 2014
     !sigma_d = 2d-21 !Glover+2007
     !sigma_d = 4d-22 !Richings+ 2014
     !sigma_d = 4d-21 !Gnedin 2009
-    NHI  = num2col(n(idx_H),n(:))
-    NHII = num2col(n(idx_Hj),n(:))
-    NH2I = num2col(n(idx_H2),n(:))
-    NHtot = NHI + NHII + 2d0*NH2I
+
+    NHtot = 0d0
+#IFKROME_hasHI
+    NHtot  = NHtot + num2col(n(idx_H),n(:))
+#ENDIFKROME
+#IFKROME_hasHII
+    NHtot  = NHtot + num2col(n(idx_Hj),n(:))
+#ENDIFKROME
+#IFKROME_hasHII
+    NHtot  = NHtot + 2d0 * num2col(n(idx_H2),n(:))
+#ENDIFKROME
+
     shield_dust = exp(-sigma_d*NHtot)
 
   end function shield_dust
