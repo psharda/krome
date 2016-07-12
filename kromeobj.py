@@ -57,7 +57,7 @@ class krome():
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
-	usePhotoOpacity = useXRay = hasSurfaceReactions = False
+	usePhotoOpacity = useXRay = hasSurfaceReactions = shieldHabingDust = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
@@ -305,6 +305,7 @@ class krome():
 		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files")
                 self.parser.add_argument("-shielding", metavar="TYPE", help="use H2 self-shielding, TYPE can be DB96 for Draine+Bertoldi 1996,\
                         WG11 for the more accurate Wolcott+Greene 2011")
+		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux (when calculated from photobins).")
 		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
 		self.parser.add_argument("-skipJacobian", action="store_true", help="do not write Jacobian in krome_ode.f90 file. Useful\
@@ -924,6 +925,11 @@ class krome():
 			self.useShieldingWG11 = ("WG11" in myShielding)
                         self.useShielding = True
 			print "Reading option -shielding (TYPE="+(",".join(myShielding))+")"
+
+		#use dust shielding for Habing flux
+		if(args.shieldHabingDust):
+			self.shieldHabingDust = True
+			print "Reading option -shieldHabingDust"
 
 		#use cooling dT/dt in the ODE fex
 		if(args.skipODEthermo):
@@ -6040,7 +6046,7 @@ class krome():
 			if(srow == "#IFKROME_report" and not(self.doReport)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip = True
-			if(srow == "#IFKROME_usePhotoBins" and self.photoBins<=0): skip = True
+			if(srow == "#IFKROME_shieldHabingDust" and not(self.shieldHabingDust)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
