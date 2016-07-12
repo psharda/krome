@@ -183,7 +183,7 @@ module krome_commons
   !Habing flux for the photoelectric heating by dust
   ! and clumping factor for H2 formation
   ! on dust by Jura/Gnedin
-  real*8::GHabing,clump_factor
+  real*8::GHabing,Ghabing_thin,clump_factor
 
   ! Photo reaction rates relevant for Gnedin-Hollon cooling/heating function
 #IFKROME_useCoolingGnedinHollon
