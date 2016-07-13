@@ -892,6 +892,7 @@ class krome():
 		if(args.pedantic):
 			self.pedanticMakefile = True
 			print "Reading option -pedantic"
+			sys.exit("ERROR: option -pedantic is deprecated. Remove this from your command line.")
 
 		#use reverse kinetics
 		if(args.reverse):
