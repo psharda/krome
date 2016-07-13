@@ -47,7 +47,48 @@ contains
 
 #KROME_metallicity_functions
 
+  !****************************
+  !dust shielding factor
+  function shield_dust(n,Tgas,gam)
+    use krome_commons
+    implicit none
+    real*8::shield_dust,n(:),Tgas,gam,eff_d2g
+    real*8::sigma_d,NHtot
+
+    eff_d2g = 1d-2
+    sigma_d = 2d-21*eff_d2g*gam !Richings et al. 2014
+    !sigma_d = 2d-21 !Glover+2007
+    !sigma_d = 4d-22 !Richings+ 2014
+    !sigma_d = 4d-21 !Gnedin 2009
+
+    NHtot = 0d0
+#IFKROME_hasHI
+    NHtot  = NHtot + num2col(n(idx_H),n(:))
+#ENDIFKROME
+#IFKROME_hasHII
+    NHtot  = NHtot + num2col(n(idx_Hj),n(:))
+#ENDIFKROME
+#IFKROME_hasHII
+    NHtot  = NHtot + 2d0 * num2col(n(idx_H2),n(:))
+#ENDIFKROME
+
+    shield_dust = exp(-sigma_d*NHtot)
+
+  end function shield_dust
+
 #IFKROME_usePhotoBins
+
+  !*******************
+  !apply a shielding to Habing flux
+  subroutine calcHabingThick(n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::getHabingThick,n(:),Tgas
+
+    GHabing = GHabing_thin * shield_dust(n(:),Tgas,0.665d0)
+
+  end subroutine calcHabingThick
+
   !*********************
   !return the ratio between the current flux an Draine's
   function get_ratioFluxDraine()
@@ -184,8 +225,6 @@ contains
     !myflux is the radiation background at E = 12.87 eV
     !should be converted to erg
     H2_solomonLW = 1.38d9*myflux*eV_to_erg
-
-    kH2pump = H2_solomonLW
 
   end function H2_solomonLW
 

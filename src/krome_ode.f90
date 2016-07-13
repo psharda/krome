@@ -39,6 +39,10 @@ contains
     n(idx_Tgas) = min(n(idx_tgas),1d9)
     Tgas = n(idx_Tgas) !get temperature
 
+#IFKROME_shieldHabingDust
+    call calcHabingThick(n(:),Tgas)
+#ENDIFKROME
+
 #KROME_Tdust_limits
 
     k(:) = coe_tab(n(:)) !compute coefficients
@@ -86,7 +90,7 @@ contains
        write(98,'(999E12.3e3)') tt,n(:)
        write(97,'(999E12.3e3)') tt,dn(:)
 #ENDIFKROME
-       
+
        last_coe(:) = k(:)
 
   end subroutine fex
@@ -112,11 +116,11 @@ contains
 #IFKROME_use_thermo
     krome_gamma = gamma_index(n(:))
 #ENDIFKROME
-    
+
     k(:) = last_coe(:) !get rate coefficients
-    
+
 #KROME_JAC_PD
-    
+
     return
   end subroutine jes
 
@@ -156,11 +160,11 @@ contains
     character*50::rnames(nrea)
     fnum = 99
     open(fnum,FILE="KROME_ODE_REPORT",status="replace")
-    
+
     names(:) = get_names()
 
     write(fnum,*) "KROME ERROR REPORT"
-    write(fnum,*) 
+    write(fnum,*)
     !SPECIES
     write(fnum,*) "Species aboundances"
     write(fnum,*) "**********************"
@@ -170,14 +174,14 @@ contains
        write(fnum,'(I5,a20,E12.3e3)') i,names(i),n(i)
     end do
     write(fnum,*) "**********************"
-    
+
     !RATE COEFFIECIENTS
     kmax = maxval(k)
     write(fnum,*)
     write(fnum,*) "Rate coefficients at Tgas",n(idx_Tgas)
     write(fnum,*) "**********************"
     write(fnum,'(a5,2a12)') "#","k","k %"
-    write(fnum,*) "**********************"    
+    write(fnum,*) "**********************"
     do i=1,nrea
        kperc = 0.d0
        if(kmax>0.d0) kperc = k(i)*1d2/kmax
