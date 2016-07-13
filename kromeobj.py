@@ -4757,10 +4757,10 @@ class krome():
 		has_HI = has_HII = has_H2I = False
 		#check if electrons are present
 		for x in specs:
-			has_electrons = (x.name=="E") #check if electrons are present
-			has_HI = (x.name=="H")
-			has_HII = (x.name=="H+")
-			has_H2I = (x.name=="H2")
+			if(x.name=="E"): has_electrons = True
+			if(x.name=="H"): has_HI = True
+			if(x.name=="H+"): has_HII = True
+			if(x.name=="H2"): has_H2I = True
 
 		#charge conservation
 		if(has_electrons and self.useConserveE):
