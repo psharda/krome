@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import os,sys
 
 #reaction filename
-fname = "../networks/react_COthin_rt"
+fname = "../networks/react_COthin_noSi"
 #output foder
 outFolder = "checkPlots"
 #plot min/max temperature
@@ -152,6 +152,7 @@ for (verbatimReaction,reactions) in network.iteritems():
 		ydata = []
 		ydata2 = []
 		ydataDef = []
+		negativeExtrapolated = []
 		#loop on Tgas points
 		for ii in range(imax):
 			Tgas = 1e1**(ii*(lTmax-lTmin)/(imax-1)+lTmin)
@@ -165,9 +166,11 @@ for (verbatimReaction,reactions) in network.iteritems():
 			#evaluate rate only inside limits
 			if(Tgas<Tmin or Tgas>Tmax):
 				ydata2.append(0e0)
+				if(kk<0e0): negativeExtrapolated.append(Tgas)
 			else:
 				ydata2.append(kk)
 				ydataDef.append(kk)
+
 		#if rate is never evaluated rise error
 		if(max(ydata)<=0e0):
 			print "**********"
@@ -182,6 +185,13 @@ for (verbatimReaction,reactions) in network.iteritems():
 			print rate
 			print "ERROR: negative!"
 			sys.exit()
+		if(len(negativeExtrapolated)>0):
+			print "**********"
+			print "WARNING: Negative rate when extrapolated!"
+			print verbatimReaction
+			print "Temperature range (K):",min(negativeExtrapolated),max(negativeExtrapolated)
+			print rate
+
 		plt.loglog(xdata,ydata,"r--")
 		plt.loglog(xdata,ydata2,"b")
 		#store absolute min and max
