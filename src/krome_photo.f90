@@ -117,7 +117,7 @@ contains
     do i=1,nmols
        ncol(i) = num2col(n(i),n(:))
     end do
-#ENDIFKROME
+#ENDIFKROME_usePhotoOpacity
 
     !init rates and heating
     photoBinRates(:) = 0d0 !1/s/Hz

@@ -5229,18 +5229,19 @@ class krome():
 			fout = open(buildFolder+"krome_photo.f90","w")
 
 		#replace photoionization and photoheating functions
-		skip = skip_heat = False
+		skip = skip_heat = skip_opacity = False
 		for row in fh:
 			srow = row.strip()
 			if(row.strip() == "#IFKROME_usePhIoniz" and not(self.usePhIoniz)): skip = True
 			if(row.strip() == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True
-			if(row.strip() == "#IFKROME_usePhotoOpacity" and not(self.usePhotoOpacity)): skip = True
 			if(row.strip() == "#ENDIFKROME"): skip = False
 
+			if(row.strip() == "#IFKROME_usePhotoOpacity" and not(self.usePhotoOpacity)): skip_opacity = True
+			if(row.strip() == "#ENDIFKROME_usePhotoOpacity"): skip_opacity = False
 			if(row.strip() == "#IFKROME_photobin_heat" and not(self.useHeatingPhoto)): skip_heat = True
 			if(row.strip() == "#ENDIFKROME_photobin_heat"): skip_heat = False
 
-			if(skip or skip_heat): continue
+			if(skip or skip_heat or skip_opacity): continue
 
 			if(srow=="#KROME_save_xsecs_to_file"):
 				row = ""
