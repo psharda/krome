@@ -2224,7 +2224,8 @@ class krome():
 			else:
 				myrea.ifrate = area[0] #store prepending if condition
 				myrea.krate = area[1] #get reaction rate written in F90 style
-			if("krome_fshield" in myrea.krate.lower()): fsh_found = True
+			#if("krome_fshield" in myrea.krate.lower()): fsh_found = True
+			if("krome_fshield" in myrea.krate.lower() or "shield" in myrea.krate.lower()): fsh_found = True
 
 			if(qeffFound): myrea.qeff = arow[iqeff]
 
@@ -5233,6 +5234,7 @@ class krome():
 			srow = row.strip()
 			if(row.strip() == "#IFKROME_usePhIoniz" and not(self.usePhIoniz)): skip = True
 			if(row.strip() == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True
+			if(row.strip() == "#IFKROME_usePhotoOpacity" and not(self.usePhotoOpacity)): skip = True
 			if(row.strip() == "#ENDIFKROME"): skip = False
 
 			if(row.strip() == "#IFKROME_photobin_heat" and not(self.useHeatingPhoto)): skip_heat = True
