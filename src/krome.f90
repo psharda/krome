@@ -547,6 +547,10 @@ contains
     !assuming solar
     total_Z = 1d0
 
+    !default D/D_sol = Z/Z_sol
+    !assuming linear scaling
+    dust2gas_ratio = total_Z
+
 #IFKROME_useH2dust_constant
     !default clumping factor for
     ! H2 formation on dust by Jura/Gnedin

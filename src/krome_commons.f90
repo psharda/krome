@@ -87,6 +87,7 @@ module krome_commons
 
   !total metallicity relative to solar Z/Z_solar
   real*8::total_Z
+  real*8::dust2gas_ratio
 
 #IFKROME_useMayerOpacity
   !commons for Mayer opacity table
