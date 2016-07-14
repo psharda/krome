@@ -2224,8 +2224,7 @@ class krome():
 			else:
 				myrea.ifrate = area[0] #store prepending if condition
 				myrea.krate = area[1] #get reaction rate written in F90 style
-			#if("krome_fshield" in myrea.krate.lower()): fsh_found = True
-			if("krome_fshield" in myrea.krate.lower() or "shield" in myrea.krate.lower()): fsh_found = True
+			if("krome_fshield" in myrea.krate.lower()): fsh_found = True
 
 			if(qeffFound): myrea.qeff = arow[iqeff]
 
