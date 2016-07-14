@@ -2202,6 +2202,16 @@ contains
   end subroutine krome_set_Z
 
   !*************************
+  !set D is in terms of D_solar (D/D_sol).
+  subroutine krome_set_dust_to_gas(xarg) #KROME_bindC
+     use krome_commons
+#KROME_double_value :: xarg
+
+   dust2gas_ratio = xarg
+
+  end subroutine 
+
+  !*************************
   !set the clumping factor
   subroutine krome_set_clump(xarg) #KROME_bindC
     use krome_commons

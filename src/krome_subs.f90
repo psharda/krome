@@ -55,7 +55,7 @@ contains
     real*8::shield_dust,n(:),Tgas,gam,eff_d2g
     real*8::sigma_d,NHtot
 
-    eff_d2g = 1d-2
+    eff_d2g = dust2gas_ratio
     sigma_d = 2d-21*eff_d2g*gam !Richings et al. 2014
     !sigma_d = 2d-21 !Glover+2007
     !sigma_d = 4d-22 !Richings+ 2014
@@ -123,6 +123,7 @@ contains
   !*******************
   !The following functions compute the recombination rate
   ! on dust for H+, He+, C+, Si+, and O+. See Weingartner&Draine 2001
+  ! dust2gas_ratio, D/D_sol, default is assumed equal to Z/Z_sol
   function H_recombination_on_dust(n,Tgas)
     use krome_commons
     implicit none
@@ -135,7 +136,7 @@ contains
 
     psi = GHabing*sqrt(Tgas)/n(idx_E)
 
-    H_recombination_on_dust =  1.225d-13*total_Z &
+    H_recombination_on_dust =  1.225d-13*dust2gas_ratio &
          /(1.d0+8.074d-6*psi**(1.378)*(1.d0+5.087d2 &
          *Tgas**(0.01586)*psi**(-0.4723-1.102d-5*log(Tgas))))
 
@@ -153,7 +154,7 @@ contains
 
     psi = GHabing*sqrt(Tgas)/n(idx_E)
 
-    He_recombination_on_dust = 5.572d-14*total_Z&
+    He_recombination_on_dust = 5.572d-14*dust2gas_ratio&
          /(1.d0+3.185d-7*psi**(1.512)*(1.d0+5.115d3&
          *Tgas**(3.903d-7)*psi**(-0.4956-5.494d-7*log(Tgas))))
 
@@ -171,7 +172,7 @@ contains
 
     psi = GHabing*sqrt(Tgas)/n(idx_E)
 
-    C_recombination_on_dust = 4.558d-13*total_Z&
+    C_recombination_on_dust = 4.558d-13*dust2gas_ratio&
          /(1.d0+6.089d-3*psi**(1.128)*(1.d0+4.331d2&
          *Tgas**(0.04845)*psi**(-0.8120-1.333d-4*log(Tgas))))
 
@@ -189,7 +190,7 @@ contains
 
     psi = GHabing*sqrt(Tgas)/n(idx_E)
 
-    Si_recombination_on_dust = 2.166d-14*total_Z&
+    Si_recombination_on_dust = 2.166d-14*dust2gas_ratio&
          /(1.d0+5.678d-8*psi**(1.874)*(1.d0+4.375d4&
          *Tgas**(1.635d-6)*psi**(-0.8964-7.538d-5*log(Tgas))))
 
@@ -2027,6 +2028,8 @@ contains
 #IFKROME_useH2dust_constant
   !********************************
   !H2 formation on dust using Jura rate
+  !dust2gas_ratio in terms of D_solar
+  !Usually D/D_sol = Z/Z_sol
   function H2_dustJura(n)
     use krome_commons
     use krome_user_commons
@@ -2036,7 +2039,7 @@ contains
 
     ntot = get_Hnuclei(n(:))
 
-    H2_dustJura = n(idx_H)*ntot*3.5d-17*total_Z*clump_factor
+    H2_dustJura = n(idx_H)*ntot*3.5d-17*dust2gas_ratio*clump_factor
 
   end function H2_dustJura
 #ENDIFKROME

@@ -321,6 +321,7 @@ contains
     !photoelectric effect from dust in erg/s/cm3
     !including the recombination cooling and a generic radiation flux
     !eq. 42 and 44 in Bakes&Tielens, 1994
+    ! dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
     use krome_commons
     use krome_subs
     use krome_constants
@@ -346,7 +347,7 @@ contains
          3.7d-2 * (Tgas * 1d-4)**.7 / (1d0 + 2d-4 * psi)
 
     !net photoelectric heating
-    heat_netPhotoDust = (1.3d-24*eps*GHabing*ntot-recomb_cool)*total_Z
+    heat_netPhotoDust = (1.3d-24*eps*GHabing*ntot-recomb_cool)*dust2gas_ratio
 
   end function heat_netPhotoDust
 #ENDIFKROME

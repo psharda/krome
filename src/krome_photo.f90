@@ -112,10 +112,12 @@ contains
     integer::i,j
     real*8::dE,kk,Jval,E,Eth,n(:),ncol(nmols),tau
 
+#IFKROME_usePhotoOpacity
     !get column density from number density
     do i=1,nmols
        ncol(i) = num2col(n(i),n(:))
     end do
+#ENDIFKROME_usePhotoOpacity
 
     !init rates and heating
     photoBinRates(:) = 0d0 !1/s/Hz
