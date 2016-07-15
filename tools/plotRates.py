@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import os,sys
 
 #reaction filename
-fname = "../networks/react_COthin_noSi"
+fname = "../networks/react_primordialZ"
 #output foder
 outFolder = "checkPlots"
 #plot min/max temperature
@@ -51,14 +51,28 @@ shortcuts = {"invT":"1d0/Tgas", \
 #operators to replace shortcuts, e.g. *Tgas)
 maths = ["+","-","*","/","(",")"]
 
+
+#open/close token list for block to be skipped
+skipTokenList = ["@reactionModifier_begin"]
+unskipTokenList = ["@reactionModifier_end"]
+
 network = dict()
-noFormat = True
+noFormat = True #flag when default format
+skipBlock = False #skip useless block btween tokens
 #open file to read
 fh = open(fname,"rb")
 for row in fh:
 	srow = row.strip()
 	if(srow==""): continue
 	if(srow.startswith("#")): continue
+	#start skipping useless block
+	if(srow in skipTokenList): skipBlock = True
+	#stop skiping useless block
+	if(srow in unskipTokenList):
+		skipBlock = False
+		continue
+	#skip block if useless
+	if(skipBlock): continue
 	#read format
 	if(srow.startswith("@format:") or noFormat):
 		myFormat = srow
