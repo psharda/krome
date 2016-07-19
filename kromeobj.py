@@ -50,7 +50,7 @@ class krome():
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
-	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
+	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
         useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
@@ -304,7 +304,7 @@ class krome():
 		self.parser.add_argument("-photoBins", metavar="NBINS", help="define the number of frequency bins for the impinging radiation.")
 		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files")
                 self.parser.add_argument("-shielding", metavar="TYPE", help="use H2 self-shielding, TYPE can be DB96 for Draine+Bertoldi 1996,\
-                        WG11 for the more accurate Wolcott+Greene 2011")
+                        WG11 for the more accurate Wolcott+Greene 2011, R14 for the Tgas-dependent by Richings+2014")
 		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux (when calculated from photobins).")
 		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
@@ -917,13 +917,14 @@ class krome():
 		if(args.shielding):
 			myShielding = [x.strip() for x in args.shielding.split(",")]
 			#list of the shielding approximations
-			allShielding = ["DB96","WG11"]
+			allShielding = ["DB96","WG11","R14"]
 			for shi in myShielding:
 				if(not(shi in allShielding)):
 					die("ERROR: Shielding \""+shi+"\" is unknown!\nAvailable shielding are: "+(", ".join(allShielding)))
 			if(len(myShielding)>1): die("ERROR: "+(", ".join(allShielding))+" are mutually exclusive!")
 			self.useShieldingDB96 = ("DB96" in myShielding)
 			self.useShieldingWG11 = ("WG11" in myShielding)
+			self.useShieldingR14  = ("R14" in myShielding)
                         self.useShielding = True
 			print "Reading option -shielding (TYPE="+(",".join(myShielding))+")"
 
@@ -2322,7 +2323,7 @@ class krome():
 
 		#after loop on file post-process special reactions
 		#shielding reactions requires fsh variable
-		if((self.useShieldingDB96 or self.useShieldingWG11) and not(fsh_found)):
+		if((self.useShieldingDB96 or self.useShieldingWG11 or self.useShieldingR14) and not(fsh_found)):
 			print
 			print "WARNING: no krome_fshield(n(:),Tgas) variable found in rate coefficient"
 			print " even if shielding option is enabled."
@@ -4788,6 +4789,7 @@ class krome():
                         #skip when find IF pragmas
                         if(srow == "#IFKROME_useShieldingWG11" and not(self.useShieldingWG11)): skip = True
                         if(srow == "#IFKROME_useShieldingDB96" and not(self.useShieldingDB96)): skip = True
+                        if(srow == "#IFKROME_useShieldingR14" and not(self.useShieldingR14)): skip = True
                         if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#IFKROME_useH2dust_constant" and not(self.useDustH2const)): skip = True
@@ -4799,7 +4801,7 @@ class krome():
 			if(srow == "#IFKROME_hasHII" and not(has_HII)): skip = True
 			if(srow == "#IFKROME_hasH2I" and not(has_H2I)): skip = True
 
-		        if(srow == "#ENDIFKROME"): skip = False
+		        if(srow == "#ENDIFKROME"): skip = False 
 
 			if(skip): continue #skip
 
