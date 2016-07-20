@@ -68,7 +68,7 @@ contains
 #IFKROME_hasHII
     NHtot  = NHtot + num2col(n(idx_Hj),n(:))
 #ENDIFKROME
-#IFKROME_hasHII
+#IFKROME_hasH2I
     NHtot  = NHtot + 2d0 * num2col(n(idx_H2),n(:))
 #ENDIFKROME
 
@@ -330,6 +330,11 @@ contains
 #IFKROME_useShieldingWG11
     !compute shielding from Wolcott+Greene 2011
     krome_fshield =  calc_H2shieldWG11(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useShieldingR14
+    !compute shielding from Richings+ 2014
+    krome_fshield =  calc_H2shieldR14(n(:), Tgas)
 #ENDIFKROME
 
   end function krome_fshield
@@ -935,7 +940,10 @@ contains
     ! weird numerical artifacts
     nH2 = max(1d-40, n(idx_H2))
 
-    N_H2 = nH2*get_jeans_length(n(:),Tgas)*0.5d0  !column density (cm-2)
+!    N_H2 = nH2*get_jeans_length(n(:),Tgas)*0.5d0  !column density (cm-2)
+    
+    NH2  =  2d0 * num2col(nH2,n(:))
+
     calc_H2shieldDB96 = min(1.d0, (N_H2*1.d-14)**(-0.75d0))
 
   end function calc_H2shieldDB96
@@ -953,7 +961,10 @@ contains
 
     !check on H2 abundances to avoid weird numerical artifacts
     nH2 = max(1d-40, n(idx_H2))
-    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
+
+    NH2  =  2d0 * num2col(nH2,n(:))
+
+!    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
     xN_H2 = N_H2*2d-15 !normalized column density (#), 2d-15=1/5d14
     H_mass = p_mass+e_mass !H mass in g
 
@@ -965,6 +976,49 @@ contains
 
   end function calc_H2shieldWG11
 #ENDIFKROME
+
+#IFKROME_useShieldingR14
+  !Temperature-dependent self-shielding as reported in Richings+2014.
+  function calc_H2shieldR14(n,Tgas)
+    use krome_commons
+    use krome_constants
+    real*8::n(nspec),Tgas,calc_H2shieldR14,N_H2,nH2
+    real*8::xN_H2,b5,H_mass,bturb,btherm2
+    real*8::alpha,omegaH2,Ncrit
+
+    !check on H2 abundances to avoid weird numerical artifacts
+    nH2 = max(1d-40, n(idx_H2))
+
+    NH2  =  2d0 * num2col(nH2,n(:))
+
+!    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
+    H_mass = p_mass+e_mass !H mass in g
+    bturb = 7.1d0*km_to_cm !turbulent Doppler broadening parameter in cm/s
+    btherm2 = boltzmann_erg*Tgas/H_mass !thermal Doppler broadening parameter cm/s
+
+    !doppler broadening parameter b divided by 1d5 cm/s (#)
+    b5 = ((btherm2 + bturb**2d0)**0.5)*1.d-5
+    omegaH2 = 0.013d0*(1d0+(Tgas/2.7d3)**1.3)**(1.0/1.3)*exp(-(Tgas/3.9d3)**14.6)
+
+    if(Tgas<3d3)then
+      alpha = 1.4
+      Ncrit = 1.3d0*(1d0+(Tgas/6d2)**0.8)
+    elseif(Tgas>=3d3.or.Tgas<4d3)then
+      alpha = (Tgas/4.5d3)**(-0.8)
+      Ncrit = (Tgas/4.76d3)**(-3.8)
+    else
+      alpha = 1.1
+      Ncrit = 2.d0
+    endif
+
+    xN_H2 = N_H2*1d-14/Ncrit !normalized column density (#)
+    
+    calc_H2shieldR14 = (1d0-omegaH2)/(1d0+xN_H2/b5)**alpha*exp(-5d-7*(1d0+xN_H2)) & 
+                      +(omegaH2/sqrt(1d0+xN_H2))*exp(-8.5d-4*sqrt(1d0+xN_H2))
+
+  end function calc_H2shieldR14
+#ENDIFKROME
+
 
   !**********************
   function troe_falloff(k0,kinf,Fc,m)
