@@ -399,7 +399,7 @@ class krome():
 			[argv.append(x) for x in ["-useX"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="shock1Dphoto"):
-			[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium","-useX"]]
+			[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium","-useX", "-photoBins=20", "-noRecCheck"]]
 			filename = "networks/react_primordial_photo"
 			test_status = "dev" #under development
 		elif(args.test=="shock1Dlarge"):
@@ -428,7 +428,7 @@ class krome():
 		elif(args.test=="collapseSurface"):
 			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
 			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=REDUCED","-ATOL=1d-20","-maxord=2",\
-				"-columnDensityMethod=JEANS"]]
+				"-columnDensityMethod=JEANS", "-noSinkCheck", "-noRecCheck"]]
 			[argv.append(x) for x in ["-dust=3,C","-dustOptions=dT","-useIndividualFloor=Z"]]
 			filename = "networks/react_primordialZ_surface"
 			test_status = "dev" #under development
@@ -477,7 +477,7 @@ class krome():
 			[argv.append(x) for x in ["-useFileIdx","-computeElectrons"]]
 			filename = "networks/react_earlyUniverse"
 		elif(args.test=="stars"):
-			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck","-noSinkCheck"]]
+			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck","-noSinkCheck", "-useX"]]
 			filename = "networks/react_star"
 			test_status = "dev" #under development
 		elif(args.test=="reverse"):
@@ -4800,7 +4800,7 @@ class krome():
 			elif(srow == "#KROME_reaction_names"):
 				for x in reacts:
 					kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
-
+					fout.write(kstr+"\n")
 			elif(srow == "#KROME_qeff"):
 				#look for the largest qeff value
 				maxqeff = 0e0
@@ -5004,7 +5004,7 @@ class krome():
 		print "done!"
 
 
-	#SB2016###############################################
+	################################################
 	def makePhotoFuncs(self):
 		buildFolder = self.buildFolder
 		reacts = self.reacts
