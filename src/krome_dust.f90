@@ -12,6 +12,7 @@ contains
     use krome_commons
     use krome_subs
     use krome_constants
+    use krome_getphys
     implicit none
     real*8::rhogas,dmass,ngas(nmols),dust_gas_ratio,d2g
     real*8::iphi1,c,phi1,abin(ndust+1),mass(nspec),myc,phi4
@@ -196,6 +197,7 @@ contains
     use krome_subs
     use krome_commons
     use krome_constants
+    use krome_phfuncs
     implicit none
     integer::i,j,k,ios,nread
     real*8::Tbb,E,intBB,dE,intBB_dT,rout(4)
@@ -373,6 +375,7 @@ contains
   function besc(n,Tgas,lj,rhogas)
     use krome_commons
     use krome_subs
+    use krome_phfuncs
     implicit none
     real*8::n(:),besc,Tgas,tau,lj,tau_d,tau_g,rhogas,Tff
     integer::j
@@ -431,6 +434,7 @@ contains
     use krome_commons
     use krome_constants
     use krome_subs
+    use krome_getphys
     implicit none
     real*8::get_dTdust(ndust),n(:),dTgas,intBB,pre
     real*8::vgas,ntot,Tgas,rhogas,ljeans,be,m(nspec)
@@ -460,6 +464,7 @@ contains
     use krome_commons
     use krome_constants
     use krome_subs
+    use krome_getphys
     implicit none
     integer::i,j1,j2,jmid
     real*8::Td1,Td2,fact,vgas,ntot,n(:),be,ljeans,rhogas

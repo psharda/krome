@@ -108,6 +108,7 @@ contains
     use krome_commons
     use krome_constants
     use krome_subs
+    use krome_getphys
     implicit none
     integer::i,j
     real*8::dE,kk,Jval,E,Eth,n(:),ncol(nmols),tau
