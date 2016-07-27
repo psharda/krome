@@ -44,11 +44,10 @@ objs += krome_ode.o
 objs += krome_user.o
 objs += krome_reduction.o
 objs += krome.o
-objs += test.o
 
 #default target
-all: 	$(objs)
-	$(fc) $(objs) -o $(exec) $(switch) $(lib)
+all: 	$(objs) test.o
+	$(fc) $(objs) test.o -o $(exec) $(switch) $(lib)
 
 #ifort full debug target
 debug: switch = $(switchDBG)
@@ -73,6 +72,15 @@ gfortran_dbg: switch += -ffpe-trap=zero,overflow,invalid
 gfortran_dbg: switch += -fbounds-check -ffree-line-length-none
 gfortran_dbg: nowarn = $(nowarnGNU)
 gfortran_dbg: all
+
+#library accessible from python interface target
+sharedlib:	$(objs)
+	$(fc) $(objs) -o libkrome.so $(switch) -shared $(lib)
+
+pyinterface: fc = gfortran
+pyinterface: switch = -ffree-line-length-none -fPIC
+pyinterface: nowarn = $(nowarnGNU)
+pyinterface: sharedlib
 
 #clean target
 clean:
