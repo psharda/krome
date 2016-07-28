@@ -24,7 +24,7 @@ program test_krome
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt,f(krome_nmols)
-  real*8::ntot,rho,j21s(4),mass(krome_nspec)
+  real*8::ntot,rho,j21s(4),mass(krome_nmols)
   real*8::cool(12), heat(8),j21xs
 
   j21xs = 1d-1
@@ -53,7 +53,7 @@ program test_krome
      x(KROME_idx_He)        = 0.0775*ntot    !He
      x(KROME_idx_E) = krome_get_electrons(x(:))
 
-     mass(:) = get_mass()
+     mass(:) = krome_get_mass()
      dd = ntot
 
      print *,"solving for J21=",j21s(j)

@@ -11,6 +11,8 @@ contains
     use krome_heating
     use krome_tabs
     use krome_photo
+    use krome_gadiab
+    use krome_getphys
 #IFKROME_useDust
     use krome_dust
 #ENDIFKROME
@@ -103,6 +105,8 @@ contains
     use krome_cooling
     use krome_heating
     use krome_constants
+    use krome_gadiab
+    use krome_getphys
     implicit none
     integer::neq, j, ian, jan, r1, r2, p1, p2, p3, i
     real*8::tt, n(neq), pdj(neq), dr1, dr2, kk,k(nrea),Tgas
@@ -132,6 +136,7 @@ contains
     use krome_heating
     use krome_constants
     use krome_subs
+    use krome_gadiab
     implicit none
     real*8::n(neq),pd(neq,neq),t,k(nrea),dn0,dn1,dnn,Tgas
     real*8::krome_gamma,nn(neq),nH2dust
