@@ -14,8 +14,8 @@ class PyKROME(object):
 	# symbols in `libkrome.so` are entirely lower-case (regardless of their form in
 	# the Fortran files).
 
-	def __init__(self):
-		fortran = npctypes.load_library('libkrome.so','.')
+	def __init__(self, path_to_lib='.'):
+		fortran = npctypes.load_library('libkrome.so',path_to_lib)
 
 		# alias the Fortran functions and subroutines to `lib`.
 		self.lib = fortran

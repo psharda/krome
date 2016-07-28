@@ -753,6 +753,7 @@ class krome():
 		if(args.compiler):
 			self.compiler = args.compiler.strip()
 			print "Reading option -compiler (COMPILER="+self.compiler+")"
+			sys.exit("ERROR: option -compiler is deprecated; see wiki. Remove this from your command line.")
 
 		#use f90 solver
 		if(args.useDvodeF90):
@@ -892,7 +893,7 @@ class krome():
 		if(args.pedantic):
 			self.pedanticMakefile = True
 			print "Reading option -pedantic"
-			sys.exit("ERROR: option -pedantic is deprecated. Remove this from your command line.")
+			sys.exit("ERROR: option -pedantic is deprecated; see wiki. Remove this from your command line.")
 
 		#use reverse kinetics
 		if(args.reverse):
