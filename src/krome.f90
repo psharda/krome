@@ -22,6 +22,7 @@ contains
     use krome_ode
     use krome_reduction
     use krome_dust
+    use krome_getphys
     #KROME_double :: Tgas,dt
     #KROME_double :: x(nmols)
 #IFKROME_useX
@@ -245,6 +246,7 @@ contains
     use krome_subs
     use krome_commons
     use krome_constants
+    use krome_getphys
     implicit none
     integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
     integer::i,imax
@@ -415,6 +417,7 @@ contains
     use krome_tabs
     use krome_reduction
     use krome_ode
+    use krome_getphys
     integer::fnum,i,iwork(:),idx(nrea),j
     real*8::n(:),rwork(:),rrmax,k(nrea),kmax,rperc,kperc,dn(nspec),tt,ni(:)
     character*16::names(nspec),FMTi,FMTr

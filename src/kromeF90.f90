@@ -13,6 +13,7 @@ contains
 
     use krome_commons
     use krome_subs
+    use krome_getphys
     use krome_ode
     USE DVODE_F90_M
     implicit none
@@ -130,6 +131,7 @@ contains
   subroutine krome_init()
     use krome_tabs
     use krome_subs
+    use krome_getphys
 
     call load_arrays
 

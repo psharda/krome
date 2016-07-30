@@ -33,6 +33,7 @@ contains
   function stars_coe(n,rho,Tgas,y,zz)
     use krome_commons
     use krome_subs
+    use krome_getphys
     implicit none
     real*8::n(:),Tgas,k(nrea),stars_coe(nrea),rho,ko(nrea)
     real*8::scr12,scr23,y(:)
@@ -177,6 +178,7 @@ contains
   function stars_energy(n,rho,Tgas,k)
     use krome_commons
     use krome_subs
+    use krome_getphys
     implicit none
     real*8::stars_energy(nrea),qeff(nrea),flux(nrea)
     real*8::k(nrea),n(:),rho,Tgas

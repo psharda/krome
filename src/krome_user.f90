@@ -47,6 +47,7 @@ contains
   function krome_convert_xmoc(xmoc,imap) #KROME_bindC
     use krome_commons
     use krome_subs
+    use krome_getphys
     implicit none
 #IFKROME_useBindC
     real(kind=c_float) :: xmoc(:,:)
@@ -107,6 +108,7 @@ contains
   function krome_num2col(num,x,Tgas) #KROME_bindC
     use krome_subs
     use krome_commons
+    use krome_getphys
     implicit none
     #KROME_double :: x(nmols),krome_num2col
     #KROME_double_value :: Tgas,num
@@ -998,6 +1000,7 @@ contains
     use krome_constants
     use krome_photo
     use krome_subs
+    use krome_phfuncs
     implicit none
     #KROME_double_value :: lower,upper,Tbb
     real*8::x
@@ -1025,6 +1028,7 @@ contains
     use krome_constants
     use krome_photo
     use krome_subs
+    use krome_phfuncs
     implicit none
     #KROME_double_value :: lower,upper,Tbb
     real*8::x,xmax,xexp,Jlim
@@ -1087,6 +1091,7 @@ contains
     use krome_commons
     use krome_subs
     use krome_constants
+    use krome_phfuncs
     implicit none
     #KROME_double_value :: Tbb
     real*8::xlow,xup,eps,xmax,J0,J1,x0,x1,xm,Jm
@@ -1126,6 +1131,7 @@ contains
   !return the ratio between the current flux an Draine's
   function krome_get_ratioFluxDraine()
     use krome_subs
+    use krome_phfuncs
     implicit none
     real*8::krome_get_ratioFluxDraine
 
@@ -1276,6 +1282,7 @@ contains
     use krome_constants
     use krome_photo
     use krome_subs
+    use krome_getphys
     implicit none
 #IFKROME_useBindC
     real(kind=c_double) :: x(nmols)
@@ -1384,6 +1391,7 @@ contains
     use krome_photo
     use krome_subs
     use krome_dust
+    use krome_getphys
     implicit none
 #IFKROME_useBindC
     real(kind=c_double) :: x(nmols)
@@ -1743,6 +1751,7 @@ contains
     use krome_subs
     use krome_tabs
     use krome_constants
+    use krome_gadiab
     implicit none
 #KROME_double :: x(nmols)
 #KROME_double_value :: Tgas,dt
@@ -1982,6 +1991,7 @@ contains
   function krome_get_gamma(x,Tgas) #KROME_bindC
     use krome_subs
     use krome_commons
+    use krome_gadiab
 #KROME_double_value :: Tgas
 #KROME_double :: x(nmols), krome_get_gamma
     real*8::n(nspec)
@@ -1998,6 +2008,7 @@ contains
   function krome_get_zatoms() #KROME_bindC
     use krome_subs
     use krome_commons
+    use krome_getphys
     implicit none
 #IFKROME_useBindC
     integer(kind=c_int), target :: zatoms(nspec)
@@ -2022,6 +2033,7 @@ contains
   function krome_get_mu(x) #KROME_bindC
     use krome_commons
     use krome_subs
+    use krome_getphys
     implicit none
 #KROME_double :: x(nmols), krome_get_mu
     real*8::n(1:nspec)
@@ -2037,6 +2049,7 @@ contains
   function krome_get_rnames() !!#KROME_bindC !! cannot yet be called from C
     use krome_commons
     use krome_subs
+    use krome_getphys
     implicit none
     character*50 :: krome_get_rnames(nrea)
 
@@ -2051,6 +2064,7 @@ contains
   function krome_get_mass()
     use krome_subs
     use krome_commons
+    use krome_getphys
     implicit none
     real*8::tmp(nspec)
     real*8 :: krome_get_mass(nmols)
@@ -2078,6 +2092,7 @@ contains
   function krome_get_imass()
     use krome_subs
     use krome_commons
+    use krome_getphys
     implicit none
     real*8::tmp(nspec)
     real*8 :: krome_get_imass(nmols)
@@ -2103,6 +2118,7 @@ contains
   function krome_get_Hnuclei(x) #KROME_bindC
     use krome_commons
     use krome_subs
+    use krome_getphys
     real*8::n(nspec)
 #KROME_double :: krome_get_Hnuclei, x(nmols)
     n(:) = 0d0
@@ -2119,6 +2135,7 @@ contains
   function krome_get_charges()
     use krome_subs
     use krome_commons
+    use krome_getphys
     implicit none
     real*8::tmp(nspec)
     real*8 :: krome_get_charges(nmols)
@@ -2147,6 +2164,7 @@ contains
   function krome_get_names() !! #KROME_bindC !! cannot yet be called from C
     use krome_subs
     use krome_commons
+    use krome_getphys
     implicit none
     character*16 :: krome_get_names(nmols)
     character*16::tmp(nspec)
@@ -2228,6 +2246,7 @@ contains
   function krome_get_electrons(x) #KROME_bindC
     use krome_commons
     use krome_subs
+    use krome_getphys
 #KROME_double :: x(nmols), krome_get_electrons
     real*8::n(nspec)
     n(1:nmols) = x(:)
@@ -2325,6 +2344,7 @@ contains
   subroutine krome_explore_flux(x,Tgas,ifile,xvar) #KROME_bindC
     use krome_commons
     use krome_subs
+    use krome_getphys
     implicit none
 #KROME_double :: x(nmols)
 #KROME_double_value :: Tgas,xvar
@@ -2356,6 +2376,7 @@ contains
   function krome_get_qeff() #KROME_bindC
     use krome_commons
     use krome_subs
+    use krome_getphys
     implicit none
 #IFKROME_useBindC
     type(c_ptr) :: krome_get_qeff
@@ -2379,6 +2400,7 @@ contains
     use krome_commons
     use krome_stars
     use krome_subs
+    use krome_getphys
     implicit none
 #KROME_double_value :: rho,Tgas
 #KROME_double :: x(nmols)
@@ -2502,6 +2524,7 @@ contains
   subroutine krome_get_info(x, Tgas) #KROME_bindC
     use krome_commons
     use krome_subs
+    use krome_getphys
     integer::i,charges(nspec)
 #KROME_double :: x(nmols)
 #KROME_double_value :: Tgas

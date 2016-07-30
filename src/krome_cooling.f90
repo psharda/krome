@@ -163,6 +163,7 @@
     function cooling_CO(n,inTgas)
       use krome_commons
       use krome_subs
+      use krome_getphys
       implicit none
       integer,parameter::imax=coolCOn1
       integer,parameter::jmax=coolCOn2
@@ -534,8 +535,9 @@
       !only denisity dependent (note that the
       ! fit provided by Lenzuni is wrong)
       ! valid for T<3e3 K
-      use krome_subs
+      !use krome_subs
       use krome_commons
+      use krome_getphys
       implicit none
       real*8::kpla,rhogas,Tgas,n(:),y
       real*8::a0,a1,m(nspec)
@@ -579,6 +581,7 @@
       use krome_commons
       use krome_constants
       use krome_subs
+      use krome_getphys
       implicit none
       real*8::n(:),Tgas,cooling_Continuum,kgas,rhogas
       real*8::lj,tau,beta,m(nspec)
@@ -706,6 +709,7 @@
     function cooling_dust(n,Tgas)
       use krome_commons
       use krome_subs
+      use krome_getphys
       implicit none
       real*8::n(:),Tgas,ntot,cooling_dust,coolFit
       real*8::logn,logt
@@ -732,6 +736,7 @@
       use krome_constants
       use krome_commons
       use krome_dust
+      use krome_getphys
       implicit none
       real*8::cooling_dust,n(:),Tgas
       real*8::pre,ntot,vgas,fact
@@ -761,6 +766,7 @@
       use krome_commons
       use krome_subs
       use krome_dust
+      use krome_getphys
       implicit none
       real*8::cooling_dust,n(:),Tgas
 #IFKROME_usedTdust
@@ -840,6 +846,7 @@
     function H2opacity_omukai(Tgas, n)
       use krome_commons
       use krome_subs
+      use krome_getphys
       implicit none
       real*8::H2opacity_omukai,Tgas,ntot,lTgas,lntot,n(:)
 
@@ -932,6 +939,7 @@
     function cooling_H2(n, Tgas)
       use krome_commons
       use krome_subs
+      use krome_getphys
       real*8::n(:),Tgas
       real*8::temp,logt3,logt,cool,cooling_H2,T3
       real*8::LDL,HDLR,HDLV,HDL

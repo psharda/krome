@@ -243,6 +243,7 @@ contains
     use krome_commons
     use krome_constants
     use krome_subs
+    use krome_getphys
     implicit none
     real*8::n(:),Tgas,heat_Xray,k(:),ntot
     real*8::xheat_H,xheat_He,logH,logHe
@@ -295,6 +296,7 @@ contains
     !radiation flux is indeed negligible)
     use krome_commons
     use krome_subs
+    use krome_getphys
     implicit none
     real*8::heat_photoDust,n(:),Tgas,ntot,eps
     real*8::Ghab,z,psi
@@ -325,6 +327,7 @@ contains
     use krome_commons
     use krome_subs
     use krome_constants
+    use krome_getphys
     implicit none
     integer::i
     real*8::heat_netPhotoDust,n(:),Tgas,ntot,eps
@@ -359,6 +362,7 @@ contains
     use krome_commons
     use krome_user_commons
     use krome_subs
+    use krome_getphys
     implicit none
     real*8::heat_photoAv,n(:),Tgas,k(:)
     real*8::ncrn,ncrd1,ncrd2,yH,yH2,ncr,h2heatfac,dd,Rdiss
@@ -462,6 +466,7 @@ contains
     use krome_commons
     use krome_dust
     use krome_subs
+    use krome_getphys
     implicit none
     real*8::heatingChem, n(:), Tgas,k(:),nH2dust
     real*8::h2heatfac,HChem,yH,yH2
