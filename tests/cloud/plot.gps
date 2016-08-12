@@ -10,19 +10,27 @@ set key t r
 set grid
 set xrange[1e2:1e8]
 
+nkrome=1
+load 'species.gps'
+
+set xlabel ""
 set yrange[1e-10:1e-3]
-plot 'fort.66' u 1:($6/2e4) w l t "C"
+plot 'fort.66' u 1:(column(krome_idx_C)/2e4) w l t "C"
 
+set ylabel ""
 set yrange[1e-12:1e-7]
-plot 'fort.66' u 1:($57/2e4) w l t "OH"
+plot 'fort.66' u 1:(column(krome_idx_OH)/2e4) w l t "OH"
 
+set xlabel "log(t/yr)"
+set ylabel "log(x)"
 set yrange[1e-13:1e-7]
 set key t l
-plot 'fort.66' u 1:($146/2e4) w l t " HC3N"
+plot 'fort.66' u 1:(column(krome_idx_HC3N)/2e4) w l t " HC3N"
 
+set ylabel ""
 set yrange[1e-11:1e-4]
 set key b r
-plot 'fort.66' u 1:($55/2e4) w l t "O2"
+plot 'fort.66' u 1:(column(krome_idx_O2)/2e4) w l t "O2"
 
 
 unset multiplot
