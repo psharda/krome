@@ -2178,7 +2178,7 @@ contains
     use krome_commons
     use krome_getphys
     implicit none
-    character*1024::krome_get_names_header
+    character*8000::krome_get_names_header
     character*16::tmp(nspec)
     integer::i
 
@@ -2186,7 +2186,7 @@ contains
 
     krome_get_names_header = ""
     do i=1,nmols
-       krome_get_names_header = trim(krome_get_names_header)//" "//tmp(i)
+       krome_get_names_header = trim(krome_get_names_header)//" "//trim(tmp(i))
     end do
 
   end function krome_get_names_header
