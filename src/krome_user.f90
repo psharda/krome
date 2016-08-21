@@ -2172,6 +2172,25 @@ contains
     krome_get_names = tmp(1:nmols)
   end function krome_get_names
 
+  !********************
+  !get space-separated header of chemical species
+  function krome_get_names_header()
+    use krome_commons
+    use krome_getphys
+    implicit none
+    character*1024::krome_get_names_header
+    character*16::tmp(nspec)
+    integer::i
+
+    tmp(:) = get_names()
+
+    krome_get_names_header = ""
+    do i=1,nmols
+       krome_get_names_header = trim(krome_get_names_header)//" "//tmp(i)
+    end do
+
+  end function krome_get_names_header
+
   !*****************
   !get the index of the species with name name.
   ! alias for get_index
