@@ -7,10 +7,17 @@ from math import log10,exp,log,sqrt
 import matplotlib.pyplot as plt
 import os,sys
 
-#reaction filename
-fname = "../networks/react_primordialZ"
-#output foder
+#check command-line arguments and store them
+if(len(sys.argv)<2):
+	print ("Usage: %s INPUT" % sys.argv[0])
+	sys.exit()
+
+if(not os.path.isfile(sys.argv[1].strip())):
+    sys.exit("ERROR: input file %s was not found!" % sys.argv[1])
+
+fname = sys.argv[1].strip()
 outFolder = "checkPlots"
+
 #plot min/max temperature
 TminDefault = 1e0
 TmaxDefault = 1e8
@@ -198,7 +205,7 @@ for (verbatimReaction,reactions) in network.iteritems():
 			print verbatimReaction
 			print rate
 			print "ERROR: negative!"
-			sys.exit()
+			#sys.exit()
 		if(len(negativeExtrapolated)>0):
 			print "**********"
 			print "WARNING: Negative rate when extrapolated!"
