@@ -11,7 +11,7 @@ program test_krome
   use krome_main
   use krome_user
   use krome_user_commons
-  
+
 
   integer,parameter::rstep = 500000
   integer::i
@@ -25,7 +25,7 @@ program test_krome
   ntot = 1.d0                !total density in 1/cm3
   Tgas = 1d2                 !temperature in kelvin
 
-  !INITIALIZE KROME PARAMETERS AND DUST 
+  !INITIALIZE KROME PARAMETERS AND DUST
   call krome_init()
 
   !species initialization in 1/cm3
@@ -36,11 +36,14 @@ program test_krome
   x(KROME_idx_E)         = 1.0e-4*ntot    !E
   x(KROME_idx_Hj)        = 1.0e-4*ntot    !H+
   x(KROME_idx_HE)        = 0.0775*ntot    !He
-  
+
   dd = ntot
 
   print *,"solving..."
   print '(a5,2a11)',"step","n(cm-3)","Tgas(K)"
+
+  !output header
+  write(22,*) "#ntot Tgas "//trim(krome_get_names_header())
 
   !loop over the hydro time-step
   do i = 1,rstep
@@ -55,10 +58,10 @@ program test_krome
      deldd = (dd/tff) * dtH
      dd = dd + deldd        !UPDATE DENSITY
 
-     x(:) = x(:)*dd/dd1  
+     x(:) = x(:)*dd/dd1
 
-     dt = dtH 
-     
+     dt = dtH
+
      if(dd.gt.1d18) exit
 
      !solve the chemistry
