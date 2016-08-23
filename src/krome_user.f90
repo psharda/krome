@@ -1019,7 +1019,6 @@ contains
 
   end subroutine krome_set_photoBin_BBlin
 
-
   !**********************************
   !set the flux as a black body with temperature Tbb (K)
   ! in the range lower to upper (eV). the spacing is logarithmic
@@ -1269,7 +1268,6 @@ contains
     call calc_photobins()
 
   end subroutine krome_set_photoBin_J21log
-
 
   !*****************************
   !get the opacity exp(-tau) correpsonding the to x(:)
@@ -1741,6 +1739,31 @@ contains
 
   end function krome_x2n_c
 #ENDIFKROME_useBindC
+
+  !******************
+  function krome_get_free_fall_time(x)
+    use krome_commons
+    use krome_getphys
+    implicit none
+    real*8::krome_get_free_fall_time
+    real*8::x(:),n(nspec)
+
+    n(1:nmols) = x(:)
+    n(nmols+1:nspec) = 0d0
+    krome_get_free_fall_time = get_free_fall_time(n(:))
+
+  end function krome_get_free_fall_time
+
+  !******************
+  function krome_get_free_fall_time_rho(rhogas)
+    use krome_getphys
+    implicit none
+    real*8::krome_get_free_fall_time_rho
+    real*8::rhogas
+
+    krome_get_free_fall_time_rho = get_free_fall_time_rho(rhogas)
+
+  end function krome_get_free_fall_time_rho
 
   !*******************
   !do only cooling and heating
@@ -2246,7 +2269,7 @@ contains
 
    dust2gas_ratio = xarg
 
-  end subroutine 
+  end subroutine
 
   !*************************
   !set the clumping factor
