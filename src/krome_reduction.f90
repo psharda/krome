@@ -25,7 +25,7 @@ contains
        rrmax = max(rrmax, arr_flux(i))
     end do
     fex_check = rrmax
-    
+
   end function fex_check
 
 #IFKROME_useFlux
@@ -41,7 +41,7 @@ contains
 
     thold = 1d-8
     if(present(threshold)) thold = threshold
-    
+
     do i=1,nrea
        if(arr_flux(i)>rrmax*thold) then
           arr_u(i) = 1
@@ -49,7 +49,7 @@ contains
           arr_u(i) = 0
        end if
     end do
- 
+
   end subroutine flux_reduction
 #ENDIFKROME
 

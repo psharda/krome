@@ -399,7 +399,8 @@ class krome():
 			[argv.append(x) for x in ["-useX"]]
 			filename = "networks/react_primordial"
 		elif(args.test=="shock1Dphoto"):
-			[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium","-useX", "-photoBins=20", "-noRecCheck"]]
+			[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium",\
+				"-useX", "-photoBins=20", "-noRecCheck"]]
 			filename = "networks/react_primordial_photo"
 			test_status = "dev" #under development
 		elif(args.test=="shock1Dlarge"):
@@ -447,9 +448,9 @@ class krome():
 		elif(args.test=="collapseCO"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM",\
 				"-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=REDUCED","-ATOL=1d-10","-maxord=1","-useTabs"]]
+			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=REDUCED","-ATOL=1d-40","-maxord=1"]]
 			[argv.append(x) for x in ["-coolingQuench=10"]]
-			filename = "networks/react_COthin"
+			filename = "networks/react_COthin_noSi"
 			test_status = "dev" #under development
 		elif(args.test=="collapseZ_UV"):
 			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM",\
@@ -5450,6 +5451,10 @@ class krome():
 					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+self.photoPartners[rea.idx].fidx+") !"\
 						+rea.verbatim+"\n"
 				row = phbintau+"\n"
+			#add qabs interpolation on photobins
+			elif(srow=="#KROME_interpolate_dust_qabs" and self.useDust):
+				row = "call interp_qabs()\n"
+
 			if(row.strip()==""):
 				fout.write("\n")
 				continue
@@ -5700,7 +5705,7 @@ class krome():
 			#Z: atomic number, ion: ionization degree (e.g. HII=1), energy_eV: ioniz potential, n0: principal quantum number
 			fbdata.append({"Z":int(arow[0]), "ion":int(arow[1]), "energy_eV":float(arow[5]), "n0":int(arow[6])})
 
-		skip = skip_nleq = skip_dTdust = skipGH = False
+		skip = skip_nleq = skip_dTdust = skipGH = skipPhotoDust = False
 		useCoolingZ = self.useCoolingZ
 		#loop on source to replace pragmas
 		for row in fh:
@@ -5732,10 +5737,13 @@ class krome():
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
 			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip_dTdust = True
+			if(srow == "#IFKROME_usePhotoDust" and not(self.photoBins>0)): skipPhotoDust = True
+
 
 			if(srow == "#ENDIFKROME_usedTdust"): skip_dTdust = False
 			if(srow == "#ENDIFKROME_use_NLEQ"): skip_nleq = False
 			if(srow == "#ENDIFKROME_useCoolingGH"): skipGH = False
+			if(srow == "#ENDIFKROME_usePhotoDust"): skipPhotoDust = False
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip or skip_nleq or skip_dTdust or skipGH): continue

@@ -1,6 +1,6 @@
 !This module contains useful routines to get physical
-! quantities, like mean molecular weight, mass density, 
-! mass, jeans length etc. etc.
+! quantities, like mean molecular weight, mass density,
+! mass, jeans length, etc. etc.
 module krome_getphys
 contains
 
@@ -77,7 +77,6 @@ contains
 
   end function get_rnames
 
-
   !************************
   !get species names
   function get_names()
@@ -119,6 +118,30 @@ contains
 #KROME_qeff
 
   end function get_qeff
+
+  !**************************
+  function get_free_fall_time(n)
+    use krome_constants
+    use krome_commons
+    implicit none
+    real*8::n(:),m(nspec)
+    real*8::rhogas,get_free_fall_time
+
+    m(:) = get_mass()
+    rhogas = sum(n(1:nmols)*m(1:nmols))
+    get_free_fall_time = sqrt(3d0*pi/32d0/gravity/rhogas)
+
+  end function get_free_fall_time
+
+  !**************************
+  function get_free_fall_time_rho(rhogas)
+    use krome_constants
+    implicit none
+    real*8::rhogas,get_free_fall_time_rho
+
+    get_free_fall_time_rho = sqrt(3d0*pi/32d0/gravity/rhogas)
+
+  end function get_free_fall_time_rho
 
   !********************************
   function get_jeans_length(n,Tgas)

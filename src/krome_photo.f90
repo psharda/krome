@@ -44,6 +44,7 @@ contains
   !initialize/tabulate the bin-based xsecs
   subroutine init_photoBins()
     use krome_commons
+    use krome_dust
     implicit none
     integer::i,j
     real*8::energy_eV,kk,energyL,energyR
@@ -69,6 +70,9 @@ contains
 
     !energy tresholds (eV)
 #KROME_photobin_Eth
+
+    !interpolate dust qabs
+#KROME_interpolate_dust_qabs
 
   end subroutine init_photoBins
 
