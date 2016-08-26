@@ -60,7 +60,7 @@ contains
           abin(i) = 1d1**((i-1)*(alogmax-alogmin)/nd+alogmin)
        end do
 
-       !loop to find mean size, span, and dust number density 
+       !loop to find mean size, span, and dust number density
        do i=1,nd
           adust(i+ilow-1) = ((abin(i+1)**phi4-abin(i)**phi4)/(abin(i+1)**phi1-abin(i)**phi1)*(phi1/phi4))**(1./3.) !(abin(i)+abin(i+1)) * 0.5d0 !mean bin size
           krome_dust_aspan(i+ilow-1) = abin(i+1) - abin(i) !bin span
@@ -225,7 +225,7 @@ contains
           dust_intBB_sigma(k,i) = rout(4)
        end do
        close(33)
-       
+
        !check if the number of data loaded is OK
        if(nread/=dust_nT*ndust) then
           print *,"ERROR: the size of the file KROME_dust_intBB.dat"
@@ -484,7 +484,7 @@ contains
     be = besc(n(:),Tgas,ljeans,rhogas)
 
     !init dust cooling
-    dustCooling = 0d0 
+    dustCooling = 0d0
 
     !init external radiation flux
     intJflux = 0d0
@@ -512,7 +512,7 @@ contains
        intJflux = get_int_JQabs(i)
 #ENDIFKROME_usePhotoDust
        !bisection method
-       do 
+       do
 
           !f(x) evaluated at j1 and j2
           f1 = (get_dust_intBB(i,Td1) - intCMB - intJflux) * be &
@@ -659,7 +659,7 @@ contains
 
   !*********************
   function krome_dust_growth(natom,Tgas,Tdust,vgas,atom_mass,rho0)
-    !krome_dust_growth: compute dust growth in cm/s 
+    !krome_dust_growth: compute dust growth in cm/s
     implicit none
     real*8::krome_dust_growth,natom,Tgas,Tdust,vgas,atom_mass,rho0
 
@@ -688,7 +688,7 @@ contains
     implicit none
     real*8::dust_evap,Tdust,ebind,nu0,amass
     real*8::asize2,rho0
-    
+
     dust_evap = 0d0 !default
     nu0 = 1d12 !1/s
     if(asize2<=0d0) return
@@ -738,7 +738,7 @@ contains
     real*8::myvgas,H2_eps,nndust(:),nH,H2_eps_f
     integer::i
 
-    H2_dust = 0.d0 
+    H2_dust = 0.d0
     do i = 1,size(Tdust)
        H2_eps = H2_eps_f(Tgas, Tdust(i))
        H2_dust = H2_dust + 0.5d0 * nH * myvgas * nndust(i) &
@@ -759,7 +759,7 @@ contains
     Es = -1d3 !K
     Ep = 7d2 !K
     !m (must be in m even if in CS2009 it's in \AA!!, Cazaux2012 private comm.)
-    apc = 1.7d-10 
+    apc = 1.7d-10
     func = 2.d0 * exp(-(Ep-Es)/(Ep+myTgas)) / (1.d0+sqrt((Ec-Es)/(Ep-Es)))**2
     H2_eps_Si = 1.d0/(1.+16.*myTdust/(Ec-Es) * exp(-Ep/myTdust)&
          * exp(4d9*apc*sqrt(Ep-Es))) + func
