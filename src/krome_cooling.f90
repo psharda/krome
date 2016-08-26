@@ -771,8 +771,9 @@
       real*8::cooling_dust,n(:),Tgas
 #IFKROME_usedTdust
       real*8::rhogas,ljeans,be,ntot,vgas
-      real*8::m(nspec),intCMB,fact
+      real*8::m(nspec),intCMB,fact,intJflux
       integer::i
+
       fact = 0.5d0
       cooling_dust = 0d0
       m(:) = get_mass()
@@ -782,11 +783,16 @@
       rhogas = sum(n(1:nmols)*m(1:nmols))
       ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
       be = besc(n(:),Tgas,ljeans,rhogas)
+      intJflux = 0d0
 
       do i=1,ndust
+#IFKROME_usePhotoDust
+         !compute external radiation term
+         intJflux = get_int_JQabs(i)
+#ENDIFKROME_usePhotoDust
          intCMB = get_dust_intBB(i,phys_Tcmb)
          cooling_dust = cooling_dust + (get_dust_intBB(i,n(nmols+ndust+i)) &
-              - intCMB) * be * xdust(i) * krome_dust_asize2(i)
+              - intCMB - intJflux) * be * xdust(i) * krome_dust_asize2(i)
       end do
       cooling_dust = 4d0*pi*cooling_dust !erg/s/cm3
       return
