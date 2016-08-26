@@ -5451,6 +5451,10 @@ class krome():
 					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+self.photoPartners[rea.idx].fidx+") !"\
 						+rea.verbatim+"\n"
 				row = phbintau+"\n"
+			#add qabs interpolation on photobins
+			elif(srow=="#KROME_interpolate_dust_qabs" and self.useDust):
+				row = "call interp_qabs()\n"
+
 			if(row.strip()==""):
 				fout.write("\n")
 				continue
