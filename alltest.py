@@ -136,7 +136,7 @@ for test in tests:
 		os.remove(ff)
 
 	#call krome
-	callarg = ["./krome", "-test="+test,"-skipDevTest", "-unsafe", "-sh","-compiler="+compiler,"-project="+prj_name]
+	callarg = ["./krome", "-test="+test,"-skipDevTest", "-unsafe", "-sh","-project="+prj_name]
 	print callarg
 	call(callarg)
 
