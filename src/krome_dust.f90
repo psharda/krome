@@ -279,6 +279,25 @@ contains
 
   end subroutine dust_init_intBB
 
+  !************************
+  subroutine interp_qabs()
+    use krome_commons
+    implicit none
+    integer::i,jdust
+
+#IFKROME_usePhotoDust
+    !loop on dust types
+    do jdust=1,ndustTypes
+       !loop on photobins
+       do i=1,nPhotoBins
+          !interpolate Qabs on photo bins
+          dust_Qabs_interp(i,jdust) = get_Qabs(photoBinEmid(i),jdust)
+       end do
+    end do
+#ENDIFKROME_usePhotoDust
+
+  end subroutine interp_qabs
+
   !*************************
   !return the Qabs for the dust bin jdust
   ! and for the given energy in eV
@@ -308,6 +327,17 @@ contains
 
   end function get_Qabs
 
+  !************************
+  function get_Qabs_bin(jbin,jdust)
+    use krome_commons
+    implicit none
+    real*8::get_Qabs_bin
+    integer::jbin,jdust
+
+    get_Qabs_bin = dust_Qabs_interp(jdust,jbin)
+
+  end function get_Qabs_bin
+
 #IFKROME_usePhotoDust
   !***********************
   !compute the integral J(E)*Qabs(E) over the photobins
@@ -322,7 +352,9 @@ contains
     !loop over photo bins
     intJ = 0d0
     do i=1,nPhotoBins
-       intJ = intJ + photobinJ(i) * get_Qabs(photoBinEmid(i),jdust) &
+       intJ = intJ + photobinJ(i) &
+            !* get_Qabs(photoBinEmid(i),jdust) &
+            * get_Qabs_bin(i,jdust) &
             * photoBinEdelta(i)
     end do
 
