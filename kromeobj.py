@@ -3096,15 +3096,31 @@ class krome():
 			print "Created "+buildFolder
 
 		#dump species to log file
-		fout = open(self.buildFolder+"species.log","w")
-		fout.write("#This file contains a list of the species used with their indexes\n")
+		fout = open(self.buildFolder+"info.log","w")
+		fout.write("#This file contains a list of the species\n")
+		fout.write("# with their indexes and additional info\n")
 		fout.write("\n")
 		idx = 0
 		for mol in self.specs:
 			idx += 1
 			fout.write(str(idx)+"\t"+mol.name+"\t""krome_"+mol.fidx+"\n")
+		fout.write("\n\n")
+
+		#table with info as a structure
+		addInfo = [["krome_nrea", str(self.nrea), "!number of reactions"],\
+			["krome_nmols", str(self.nmols), "!number of chemical species"],\
+			["krome_nspec", str(len(self.specs)), "!number of species including Tgas,CR,..."],\
+			["krome_ndust", str(self.dustArraySize*self.dustTypesSize), "!number of dust bins (total)"],\
+			["krome_ndustTypes", str(self.dustTypesSize), "!number of dust types"],\
+			["krome_nPhotoBins", str(self.photoBins), "!number of radiation bins"],\
+			["krome_nPhotoRates", str(self.nPhotoRea), "!number of photochemical reactions"]]
+
+		#dump structure to file
+		for row in addInfo:
+			fout.write(fillSpaces(row[0],20)+" = "+fillSpaces(row[1],5)+row[2]+"\n")
+
 		fout.close()
-		print "Species list saved in "+self.buildFolder+"species.log"
+		print "Species list and info saved in "+self.buildFolder+"info.log"
 
 		#dump species to gnuplot initialization
 		fout = open(self.buildFolder+"species.gps","w")
