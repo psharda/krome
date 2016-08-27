@@ -1,8 +1,8 @@
-import sys
+import sys,os
 #this python script returns the list and the information on the functions
-# in the krome_user.f90 file
+# in the krome_user.f90 file or krome_all.f90
 # the details are taken from the block of comments before the function when present
-# Grassi+KROME Team 01Jul2015
+# Grassi+KROME Team 01Jul2015, last edit 27Aug2016
 
 #NO NEED TO MODIFY THIS SCRIPT
 listNamesOnly = False
@@ -39,9 +39,11 @@ if(len(argv)>1):
 		if("-sf=" in v): searchName = v.replace("-sf=","").strip().lower()
 		if("-sd=" in v): searchDescription = v.replace("-sd=","").strip().lower()
 	listNamesOnly = ("-n" in argv)
-		
 
-fh = open("krome_user.f90","rb")
+fileName = "krome_user.f90"
+if(not(os.path.isfile(fileName))): fileName = "krome_all.f90"
+
+fh = open(fileName,"rb")
 alltext = ""
 for row in fh:
 	alltext += row
@@ -51,11 +53,15 @@ alltext = alltext.replace("&\n","")
 inpartF = ["function","(",")"]
 inpartS = ["subroutine","(",")"]
 infun = issub = False
+readData = False
 storecom = ""
 flist = []
 for row in alltext.split("\n"):
 	srow = row.strip()
 	if(srow==""): continue
+	if("module krome_user" in srow): readData = True
+	if("end module krome_user" in srow): break
+	if(not(readData)): continue
 	if(srow=="contains"): storecom = ""
 	isfun = True
 	for part in inpartF:
