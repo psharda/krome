@@ -3104,7 +3104,9 @@ class krome():
 		for mol in self.specs:
 			idx += 1
 			fout.write(str(idx)+"\t"+mol.name+"\t""krome_"+mol.fidx+"\n")
-		fout.write("\n\n")
+		fout.write("\n")
+		fout.write("#Note: the first "+str(self.nmols)+" variables should be used\n")
+		fout.write("# as framework code passive scalars\n\n")
 
 		#table with info as a structure
 		addInfo = [["krome_nrea", str(self.nrea), "!number of reactions"],\
@@ -3119,8 +3121,46 @@ class krome():
 		for row in addInfo:
 			fout.write(fillSpaces(row[0],20)+" = "+fillSpaces(row[1],5)+row[2]+"\n")
 
+		fout.write("\n\n#list of reactions (including with multiple limits)\n")
+		#dump reactions to log file
+		idx = maxprod = maxreag = 0
+		verbatimList = []
+		for rea in self.reacts:
+			idx += 1
+			rcount = pcount = 0
+			#search for the maximum number of reactants and products
+			for r in rea.reactants:
+				if(r.name!=""): rcount += 1
+			maxreag = max(maxreag,rcount)
+			for p in rea.products:
+				if(p.name!=""): pcount += 1
+			maxprod = max(maxprod,pcount)
+			fout.write(str(rea.idx)+"\t"+rea.verbatim+"\n")
+			verbatimList.append(rea.verbatim)
+
+		#dump list of reactions (without reactions with multiple limits)
+		verbatimList = list(set(verbatimList))
+		idx = 0
+		fout.write("\n\n#list of reactions (without multiple limits)\n")
+		for verb in verbatimList:
+			idx += 1
+			fout.write(str(idx)+"\t"+verb+"\n")
+
+		idx = 0
+		#dump list of reactions (latex format)
+		fout.write("\n\n#list of reactions (LaTeX format)\n")
+		for rea in self.reacts:
+			idx += 1
+			rList = [x.name for x in rea.reactants]
+			pList = [x.name for x in rea.products]
+			rLatex = (" & + & ".join(rList+[""]*(maxreag-len(rList))))
+			pLatex = (" & + & ".join(pList+[""]*(maxprod-len(pList))))
+			verbLatex = str(idx)+" & "+rLatex+" & $\\to$ & "+pLatex+"\\\\\n"
+			verbLatex = verbLatex.replace("& + &  &","& & &")
+			fout.write(" "+verbLatex)
+
 		fout.close()
-		print "Species list and info saved in "+self.buildFolder+"info.log"
+		print "Species list, reactions, and info saved in "+self.buildFolder+"info.log"
 
 		#dump species to gnuplot initialization
 		fout = open(self.buildFolder+"species.gps","w")
@@ -3160,25 +3200,6 @@ class krome():
 		fout.write("print \" the offset is nkrome_heatcool=\",nkrome_heatcool\n")
 		fout.close()
 		print "Heating cooling index init for gnuplot in "+self.buildFolder+"heatcool.gps"
-
-
-		#dump reactions to log file
-
-		fout = open(self.buildFolder+"reactions.log","w")
-		idx = maxprod = maxreag = 0
-		for rea in self.reacts:
-			idx += 1
-			rcount = pcount = 0
-			#search for the maximum number of reactants and products
-			for r in rea.reactants:
-				if(r.name!=""): rcount += 1
-			maxreag = max(maxreag,rcount)
-			for p in rea.products:
-				if(p.name!=""): pcount += 1
-			maxprod = max(maxprod,pcount)
-			fout.write(str(rea.idx)+"\t"+rea.verbatim+"\n")
-		fout.close()
-
 
 		#dump network to dot file
 		fout = open(self.buildFolder+"network.dot","w")
