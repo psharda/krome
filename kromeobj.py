@@ -5718,6 +5718,9 @@ class krome():
 					dH_cool += "cool = cool + "+kvar+"*"+("*".join(["n("+x.fidx+")" for x in rea.reactants])) #evautate cooling
 					dH_cool += "*"+(str(abs(rea.dH))).replace("e","d")+"\n"
 
+		#store species names
+		speciesNames = [x.name for x in self.specs]
+
 
 		#bremsstrahlung (free-free) for all the ions as charge**2*n_ion
 		bms_ions = "bms_ions ="
@@ -5743,6 +5746,7 @@ class krome():
 			fbdata.append({"Z":int(arow[0]), "ion":int(arow[1]), "energy_eV":float(arow[5]), "n0":int(arow[6])})
 
 		skip = skip_nleq = skip_dTdust = skipGH = skipPhotoDust = False
+		skip_speciesH2 = False
 		useCoolingZ = self.useCoolingZ
 		#loop on source to replace pragmas
 		for row in fh:
@@ -5775,15 +5779,23 @@ class krome():
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
 			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip_dTdust = True
 			if(srow == "#IFKROME_usePhotoDust" and not(self.photoBins>0)): skipPhotoDust = True
+			if(srow == "#IFKROME_hasH" and not("H" in speciesNames)): skip_speciesH2 = True
+			if(srow == "#IFKROME_hasHp" and not("H+" in speciesNames)): skip_speciesH2 = True
+			if(srow == "#IFKROME_hasHe" and not("He" in speciesNames)): skip_speciesH2 = True
+			if(srow == "#IFKROME_hasElectrons" and not("E" in speciesNames)): skip_speciesH2 = True
 
 
 			if(srow == "#ENDIFKROME_usedTdust"): skip_dTdust = False
 			if(srow == "#ENDIFKROME_use_NLEQ"): skip_nleq = False
 			if(srow == "#ENDIFKROME_useCoolingGH"): skipGH = False
 			if(srow == "#ENDIFKROME_usePhotoDust"): skipPhotoDust = False
+			if(srow == "#ENDIFKROME_hasH"): skip_speciesH2 = False
+			if(srow == "#ENDIFKROME_hasHp"): skip_speciesH2 = False
+			if(srow == "#ENDIFKROME_hasHe"): skip_speciesH2 = False
+			if(srow == "#ENDIFKROME_hasElectrons"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME"): skip = False
 
-			if(skip or skip_nleq or skip_dTdust or skipGH): continue
+			if(skip or skip_nleq or skip_dTdust or skipGH or skip_speciesH2): continue
 
 
 			#replace the small value for rates according to the maximum number of products
