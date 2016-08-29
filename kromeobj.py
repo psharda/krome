@@ -5722,7 +5722,7 @@ class krome():
 					dH_cool += "*"+(str(abs(rea.dH))).replace("e","d")+"\n"
 
 		#store species names
-		speciesNames = [x.name for x in self.specs]
+		speciesNames = [x.name.upper() for x in self.specs]
 
 
 		#bremsstrahlung (free-free) for all the ions as charge**2*n_ion
@@ -5784,7 +5784,7 @@ class krome():
 			if(srow == "#IFKROME_usePhotoDust" and not(self.photoBins>0)): skipPhotoDust = True
 			if(srow == "#IFKROME_hasH" and not("H" in speciesNames)): skip_speciesH2 = True
 			if(srow == "#IFKROME_hasHp" and not("H+" in speciesNames)): skip_speciesH2 = True
-			if(srow == "#IFKROME_hasHe" and not("He" in speciesNames)): skip_speciesH2 = True
+			if(srow == "#IFKROME_hasHe" and not("HE" in speciesNames)): skip_speciesH2 = True
 			if(srow == "#IFKROME_hasElectrons" and not("E" in speciesNames)): skip_speciesH2 = True
 
 
