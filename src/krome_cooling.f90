@@ -974,6 +974,7 @@
       w14 = wCool(logt, 1d0, 4d0)
       w24 = wCool(logt, 2d0, 4d0)
 
+#IFKROME_hasH
       !//H2-H
       if(temp<=1d2) then
          fH2H = 1.d1**(-16.818342D0 +3.7383713D1*logt3 &
@@ -991,7 +992,9 @@
          fH2H = 1.862314467912518E-022*wCool(logt,1d0,log10(6d3))*n(idx_H)
       end if
       cool = cool + fH2H
+#ENDIFKROME_hasH
 
+#IFKROME_hasHp
       !//H2-Hp
       if(temp>1d1.and.temp<=1d4) then
          fH2Hp = 1d1**(-2.2089523d1 +1.5714711d0*logt3 &
@@ -1001,7 +1004,7 @@
          fH2Hp = 1.182509139382060E-021*n(idx_Hj)*w14
       endif
       cool = cool + fH2Hp
-
+#ENDIFKROME_hasHp
 
       !//H2-H2
       fH2H2 = w24*1d1**(-2.3962112D1 +2.09433740D0*logt3 &
@@ -1009,6 +1012,7 @@
            -.14913216D0*logt34 -.033638326D0*logt35)*n(idx_H2) !&
       cool = cool + fH2H2
 
+#IFKROME_hasElectrons
       !//H2-e
       fH2e = 0d0
       if(temp<=5d2) then
@@ -1025,7 +1029,9 @@
               -6.3701156*logt38)*n(idx_e)
       end if
       cool = cool + fH2e*w24
+#ENDIFKROME_hasElectrons
 
+#IFKROME_hasHe
       !//H2-He
       if(temp>1d1.and.temp<=1d4)then
          fH2He = 1d1**(-2.3689237d1 +2.1892372d0*logt3&
@@ -1035,6 +1041,7 @@
          fH2He = 1.002560385050777E-022*n(idx_He)*w14
       endif
       cool = cool + fH2He
+#ENDIFKROME_hasHe
 
       !check error
       if(cool>1.d30) then
@@ -1054,12 +1061,12 @@
       end if
 
       !high density limit from HM79, GP98 below Tgas = 2d3
-      !UPDATED TO THE DATA BY GLOVER 2015 for high temperature corrections, MNRAS
+      !UPDATED USING GLOVER 2015 for high temperature corrections, MNRAS
       !IN THE HIGH DENSITY REGIME LAMBDA_H2 = LAMBDA_H2(LTE) = HDL
       !the following mix of functions ensures the right behaviour
-      ! at low temperatures (Tgas < 10 K) and at high temperatures (T > 2000 K) by
-      ! using both the original Hollenbach and the new Glover data, merging them
-      ! in a smooth way.
+      ! at low (T<10 K) and high temperatures (T>2000 K) by
+      ! using both the original Hollenbach and the new Glover data
+      ! merged in a smooth way.
       if(temp.lt.2d3)then
          HDLR = ((9.5e-22*t3**3.76)/(1.+0.12*t3**2.1)*exp(-(0.13/t3)**3)+&
               3.e-24*exp(-0.51/t3)) !erg/s
@@ -1084,7 +1091,7 @@
       endif
 
     end function cooling_H2
-#ENDIFKROME
+#ENDIFKROME_useCoolingH2
 
 
 #IFKROME_useCoolingAtomic

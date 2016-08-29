@@ -1741,6 +1741,8 @@ contains
 #ENDIFKROME_useBindC
 
   !******************
+  !returns free-fall time using the number density
+  ! abundances of array x(:)
   function krome_get_free_fall_time(x)
     use krome_commons
     use krome_getphys
@@ -1755,6 +1757,8 @@ contains
   end function krome_get_free_fall_time
 
   !******************
+  !returns free-fall time using the total mass density
+  !  of gas, rhogas (g/cm3)
   function krome_get_free_fall_time_rho(rhogas)
     use krome_getphys
     implicit none
