@@ -280,6 +280,7 @@ contains
   end subroutine dust_init_intBB
 
   !************************
+  !interpolate dust Qabs over photobins
   subroutine interp_qabs()
     use krome_commons
     implicit none
@@ -287,7 +288,7 @@ contains
 
 #IFKROME_usePhotoDust
     !loop on dust types
-    do jdust=1,ndustTypes
+    do jdust=1,ndust
        !loop on photobins
        do i=1,nPhotoBins
           !interpolate Qabs on photo bins
@@ -328,13 +329,14 @@ contains
   end function get_Qabs
 
   !************************
+  !jbin is the photobin, jdust the dust bin
   function get_Qabs_bin(jbin,jdust)
     use krome_commons
     implicit none
     real*8::get_Qabs_bin
     integer::jbin,jdust
 
-    get_Qabs_bin = dust_Qabs_interp(jdust,jbin)
+    get_Qabs_bin = dust_Qabs_interp(jbin,jdust)
 
   end function get_Qabs_bin
 
