@@ -1447,7 +1447,7 @@ contains
     character(len=*)::fname
     character(len=*),optional::unitEnergy
     character*10::eunit
-    integer::ios,icount,iR,iL,i,j
+    integer::ios,icount,iR,iL,i,j,fileUnit
     real*8::wl,opac,fL,fR,kk,dE
     real*8::wls(ntmp),opacs(ntmp)
     real*8,allocatable::energy(:),kappa(:)
@@ -1459,7 +1459,7 @@ contains
     end if
 
     !read form file
-    open(22,file=trim(fname),status="old",iostat=ios)
+    open(newunit=fileUnit,file=trim(fname),status="old",iostat=ios)
     !error if problems reading file
     if(ios/=0) then
        print *,"ERROR: problem while loading "//trim(fname)
@@ -1469,13 +1469,13 @@ contains
     !loop on file lines
     do
        !read wavelength and opacity
-       read(22,*,iostat=ios) wl,opac
+       read(fileUnit,*,iostat=ios) wl,opac
        if(ios/=0) exit
        icount = icount + 1
        wls(icount) = wl
        opacs(icount) = opac
     end do
-    close(22)
+    close(fileUnit)
 
     !allocate arrays
     allocate(energy(icount), kappa(icount))
