@@ -13,18 +13,17 @@
 # also see https://bitbucket.org/krome/krome_stable
 #
 # Written and developed by Tommaso Grassi
-# tommasograssi@gmail.com,
+# tgrassi@nbi.dk,
 # Starplan Center, Copenhagen.
 # Niels Bohr Institute, Copenhagen.
 #
-# Co-developer Stefano Bovino
-# sbovino@astro.physik.uni-goettingen.de
-# Institut fuer Astrophysik, Goettingen.
+# and Stefano Bovino
+# stefano.bovino@uni-hamburg.de
+# Hamburger Sternwarte, Hamburg.
 #
-# Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
-# J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried, E. Simoncini,
-# E. Tognelli
-#
+# Others (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
+# J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
+# E.Tognelli
 #
 # KROME is provided "as it is", without any warranty.
 # The Authors assume no liability for any damages of any kind
@@ -58,9 +57,9 @@ class krome():
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
 	usePhotoOpacity = useXRay = hasSurfaceReactions = shieldHabingDust = False
-	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
+	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = shortHead = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
-	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
+	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = isdry = useIERR = checkReverse = usePhotoInduced = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = reducer = False
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
@@ -187,7 +186,8 @@ class krome():
 		self.parser.add_argument("-ATOL", help="set solver absolute tolerance to the float or double value ATOL, e.g. -atol 1d-40\
 			Default is ATOL=1d-20, see also -RTOL and -customATOL")
 		self.parser.add_argument("-interfaceC", action="store_true", help="create a C wrapper")
-		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper since its a pre-requisite)")
+		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper \
+			since its a pre-requisite)")
 		self.parser.add_argument("-compact", action="store_true", help="creates a single fortran file with all the modules instead of\
 			various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact)")
 		self.parser.add_argument("-checkConserv", action="store_true", help="check mass conservation during integration (slower)")
@@ -257,6 +257,7 @@ class krome():
 			, DH, CR, PHOTOAV,VISCOUS. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems).")
+		self.parser.add_argument("-lh", action="store_true", help="use long header in f90 files.")
 		self.parser.add_argument("-listAutomatics", action="store_true", help="list all the automatic reactions available.")
 		self.parser.add_argument("-listSWRI", action="store_true", help="list all the photo reactions available in the SWRI database.")
 		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
@@ -302,10 +303,12 @@ class krome():
 		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g.\
 			-RTOL 1e-5 Default is RTOL=1d-4, see also -ATOL and -customRTOL")
 		self.parser.add_argument("-photoBins", metavar="NBINS", help="define the number of frequency bins for the impinging radiation.")
-		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files")
+		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files. Now this is the default, \
+			here for retrocompatibility, see option -lh.")
                 self.parser.add_argument("-shielding", metavar="TYPE", help="use H2 self-shielding, TYPE can be DB96 for Draine+Bertoldi 1996,\
                         WG11 for the more accurate Wolcott+Greene 2011, R14 for the Tgas-dependent by Richings+2014")
-		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux (when calculated from photobins).")
+		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux \
+			(when calculated from photobins).")
 		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
 		self.parser.add_argument("-skipJacobian", action="store_true", help="do not write Jacobian in krome_ode.f90 file. Useful\
@@ -322,7 +325,7 @@ class krome():
 		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
 		self.parser.add_argument("-useCoolFloor", action="store_true", help="include a cooling floor given by the Tfloor temperature.\
 			note that you must define Tfloor by using the subroutine krome_set_Tfloor(your_Tfloor) before calling krome.")
-#		self.parser.add_argument("-useCoolCMBFloorZ", action="store_true", help="as -useCoolCMBFloor, but for metals only.")
+		#self.parser.add_argument("-useCoolCMBFloorZ", action="store_true", help="as -useCoolCMBFloor, but for metals only.")
 		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size\
 			NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION\
 			must be explicitly included in krome_user_commons module.", metavar="FUNCTION")
@@ -967,6 +970,11 @@ class krome():
 		if(args.sh):
 			self.shortHead = True
 			print "Reading option -sh"
+
+		#use short header for f90 files
+		if(args.lh):
+			self.shortHead = False
+			print "Reading option -lh"
 
 		#enable thermochemistry checking
 		if(args.checkThermochem):

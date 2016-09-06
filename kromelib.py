@@ -12,19 +12,21 @@
 # more details in http://kromepackage.org/
 # also see https://bitbucket.org/krome/krome_stable
 #
+# more details in http://kromepackage.org/
+# also see https://bitbucket.org/krome/krome_stable
+#
 # Written and developed by Tommaso Grassi
-# tommasograssi@gmail.com,
+# tgrassi@nbi.dk,
 # Starplan Center, Copenhagen.
 # Niels Bohr Institute, Copenhagen.
 #
-# Co-developer Stefano Bovino
-# sbovino@astro.physik.uni-goettingen.de
-# Institut fuer Astrophysik, Goettingen.
+# and Stefano Bovino
+# stefano.bovino@uni-hamburg.de
+# Hamburger Sternwarte, Hamburg.
 #
-# Others (alphabetically): D.Galli, F.A. Gianturco, T. Haugboelle,
-# J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried, E. Simoncini,
+# Others (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
+# J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
 # E.Tognelli
-#
 #
 # KROME is provided "as it is", without any warranty.
 # The Authors assume no liability for any damages of any kind
@@ -1793,14 +1795,15 @@ def clear_dir(folder):
 
 
 #################################
-# returns the licence of KROME
+# returns the license of KROME
 def get_licence_header(version, codename, short=False):
 	import datetime
 	header =  """!!*************************************************************
 	!! This file has been generated with:
-	!! krome #version# "#codename#" on #date#.
+	!! KROME #version# "#codename#" on #date#
+	!! Changeset #changeset#
 	!!
-	!!KROME is a nice and friendly chemistry package for a wide range of
+	!! KROME is a nice and friendly chemistry package for a wide range of
 	!! astrophysical simulations. Given a chemical network (in CSV format)
 	!! it automatically generates all the routines needed to solve the kinetic
 	!! of the system, modelled as system of coupled Ordinary Differential
@@ -1814,21 +1817,21 @@ def get_licence_header(version, codename, short=False):
 	!! more details in http://kromepackage.org/
 	!! also see https://bitbucket.org/krome/krome_stable
 	!!
-	!!Written and developed by Tommaso Grassi
-	!! tommasograssi@gmail.com,
-	!! Starplan Center, Copenhagen.
-	!! Niels Bohr Institute, Copenhagen.
+	!! Written and developed by Tommaso Grassi
+	!!  tgrassi@nbi.dk,
+	!!  Starplan Center, Copenhagen.
+	!!  Niels Bohr Institute, Copenhagen.
 	!!
-	!!Co-developer Stefano Bovino
-  	!! sbovino@astro.physik.uni-goettingen.de
-	!! Institut fuer Astrophysik, Goettingen.
+	!! and Stefano Bovino
+	!!  stefano.bovino@uni-hamburg.de
+	!!  Hamburger Sternwarte, Hamburg.
 	!!
-	!!Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
-	!! J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried,
-	!! E. Simoncini, E. Tognelli
+	!! Contributors (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
+	!!  J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried,
+	!!  E. Simoncini, E. Tognelli
 	!!
 	!!
-	!!KROME is provided \"as it is\", without any warranty.
+	!! KROME is provided \"as it is\", without any warranty.
 	!! The Authors assume no liability for any damages of any kind
 	!! (direct or indirect damages, contractual or non-contractual
 	!! damages, pecuniary or non-pecuniary damages), directly or
@@ -1841,21 +1844,28 @@ def get_licence_header(version, codename, short=False):
 	!!*************************************************************\n"""
 
 	if(short): header = """!!*************************************************************
-	!!This file has been generated with:
-	!!KROME #version# on #date#
-	!!see http://kromepackage.org
+	!! This file has been generated with:
+	!! KROME #version# on #date#
+	!! Changeset #changeset#
+	!! see http://kromepackage.org
 	!!
-	!!Written and developed by Tommaso Grassi
+	!! Written and developed by Tommaso Grassi and Stefano Bovino
 	!!
-	!!Co-developer Stefano Bovino
-	!!Others (alphabetically): D.Galli, F.A. Gianturco, T. Haugboelle,
-	!! J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried, E. Simoncini,
-	!! E. Tognelli.
-	!!KROME is provided \"as it is\", without any warranty.
+	!! Contributors (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
+	!!  J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
+	!!  E.Tognelli.
+	!! KROME is provided \"as it is\", without any warranty.
 	!!*************************************************************\n"""
 
+	#name of the git master file
+	masterfile = ".git/refs/heads/master"
+	#if git master file exists grep the changeset
+	if(file_exists(masterfile)):
+		changeset = open(masterfile,"rb").read()
+
 	datenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-	header = header.replace("#date#",datenow).replace("#version#",version).replace("#codename#",codename)
+	header = header.replace("#date#",datenow).replace("#version#",version)
+	header = header.replace("#codename#",codename).replace("#changeset#",changeset[:7])
 	return header.replace("\t","").replace("!!","   ! ")
 
 #################################
