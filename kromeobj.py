@@ -3154,8 +3154,8 @@ class krome():
 		fout.write("\n\n#list of reactions (LaTeX format)\n")
 		for rea in self.reacts:
 			idx += 1
-			rList = [x.name for x in rea.reactants]
-			pList = [x.name for x in rea.products]
+			rList = [x.nameLatex for x in rea.reactants]
+			pList = [x.nameLatex for x in rea.products]
 			rLatex = (" & + & ".join(rList+[""]*(maxreag-len(rList))))
 			pLatex = (" & + & ".join(pList+[""]*(maxprod-len(pList))))
 			verbLatex = str(idx)+" & "+rLatex+" & $\\to$ & "+pLatex+"\\\\\n"

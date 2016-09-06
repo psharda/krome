@@ -71,6 +71,7 @@ class molec():
 	ve_vib = "__NONE__" #vibrational constant in K
 	be_rot = "__NONE__" #rotational constant in K
 	links = 0 #number of reactions involved
+	nameLatex = "" #name in LaTeX format
 
 	def __init__(self):
 		self.poly1 = [0.e0]*7
@@ -1559,6 +1560,7 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 		mymol.charge = 0 #charge
 		mymol.zatom = 0 #atomic number
 		mymol.fname = name #f90 name
+		mymol.nameLatex = name
 		mymol.is_atom = True #atom flag
 		mymol.fidx = "idx_"+name #f90 index
 		mymol.neutrons = 0 #number of neutrons
@@ -1629,6 +1631,17 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 	mymol.charge = 0 #charge
 	mymol.zatom = zatom #atomic number
 	mymol.fname = name.replace("+","j").replace("-","k") #f90 name
+	#name latex version, replace number with subscript, signs with superscripts
+	expName = list(name)
+	repName = []
+	#loop on name parts
+	for part in expName:
+		if(is_number(part)): part = "$_"+part+"$"
+		if(part=="+" or part=="-"): part = "$^"+part+"$"
+		repName.append(part)
+	mymol.nameLatex = ("".join(repName))
+	#replace latex name if electron
+	if(name=="E"): mymol.nameLatex = "e$^-$"
 	#cooling name is only for atoms, e.g. CIV
 	mymol.coolname = name
 	if(is_atom):
