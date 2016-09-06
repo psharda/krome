@@ -109,24 +109,32 @@ for row in fh:
 
 	wasComment = False
 	arow = srow.split(",")
-	if(len(arow)<cfmt.nfmt):
+	# guard against reaction rates that use function calls (i.e., commas
+    # within parentheses).
+	hasParentheses = (srow.find("(") >= 0 and srow.find(")") >= 0)
+	if hasParentheses:
+		idx_split = srow.find("(")
+		arow_chk = (srow[:idx_split] + srow[idx_split:].replace(',','')).split(",")
+	else:
+		arow_chk = arow
+	if(len(arow_chk)<cfmt.nfmt):
 		print "***********************"
 		print "ERROR: wrong format for"
 		print srow
-		print "Expected "+str(cfmt.nfmt)+" parts, found "+str(len(arow))
+		print "Expected "+str(cfmt.nfmt)+" parts, found "+str(len(arow_chk))
 		okall = False
-		print fmt
+		print cfmt.fmt
 		sys.exit()
 
-	if(len(arow)>cfmt.nfmt):
+	if(len(arow_chk)>cfmt.nfmt):
 		print "***********************"
 		print "WARNING: possible wrong format for"
 		print srow
-		print "Expected "+str(cfmt.nfmt)+" parts, found "+str(len(arow))
+		print "Expected "+str(cfmt.nfmt)+" parts, found "+str(len(arow_chk))
 		okall = False
-		print fmt
+		print cfmt.fmt
 
-	if(arow[cfmt.rate].count("(")!=arow[cfmt.rate].count(")")):
+	if(arow_chk[cfmt.rate].count("(")!=arow_chk[cfmt.rate].count(")")):
 		print "***********************"
 		print "ERROR: unbalanced brackets!"
 		print srow
