@@ -3152,6 +3152,8 @@ class krome():
 		idx = 0
 		#dump list of reactions (latex format)
 		fout.write("\n\n#list of reactions (LaTeX format)\n")
+		columnsFormat = ("l"*(2*maxreag))+"c"+("l"*(2*maxprod-1))
+		fout.write("#Table columns format {"+columnsFormat+"}\n")
 		for rea in self.reacts:
 			idx += 1
 			rList = [x.nameLatex for x in rea.reactants]
