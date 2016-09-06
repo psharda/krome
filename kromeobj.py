@@ -8096,6 +8096,6 @@ class krome():
 			print "This is a test. To run it just type:"
 			print "> cd build/"
 			print "> make"
-			print "> ./krome"
+			print "> ./test"
 		print
 		print "Everything done, goodbye!"
