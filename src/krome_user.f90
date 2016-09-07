@@ -2224,6 +2224,46 @@ contains
 
   end function krome_get_names_header
 
+  !********************
+  !get space-separated header of coolings
+  function krome_get_cooling_names_header()
+    use krome_commons
+    use krome_getphys
+    implicit none
+    #KROME_cooling_names_header_define
+    character*16::tmp(ncools)
+    integer::i
+
+    tmp(:) = get_cooling_names()
+
+    krome_get_cooling_names_header = ""
+    do i=1,ncools
+       if(trim(tmp(i))=="") cycle
+       krome_get_cooling_names_header = trim(krome_get_cooling_names_header)//" "//trim(tmp(i))
+    end do
+
+  end function krome_get_cooling_names_header
+
+  !********************
+  !get space-separated header of heatings
+  function krome_get_heating_names_header()
+    use krome_commons
+    use krome_getphys
+    implicit none
+    #KROME_heating_names_header_define
+    character*16::tmp(nheats)
+    integer::i
+
+    tmp(:) = get_heating_names()
+
+    krome_get_heating_names_header = ""
+    do i=1,nheats
+       if(trim(tmp(i))=="") cycle
+       krome_get_heating_names_header = trim(krome_get_heating_names_header)//" "//trim(tmp(i))
+    end do
+
+  end function krome_get_heating_names_header
+
   !*****************
   !get the index of the species with name name.
   ! alias for get_index
