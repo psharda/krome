@@ -6941,8 +6941,8 @@ class krome():
 
 		ATOL = self.ATOL
 		RTOL = self.RTOL
-		if(is_number(ATOL)): ATOL = '%e' % ATOL
-		if(is_number(RTOL)): RTOL = '%e' % RTOL
+		if(is_number(ATOL)): ATOL = '%e' % float(ATOL)
+		if(is_number(RTOL)): RTOL = '%e' % float(RTOL)
 		ATOL = ATOL.replace("e","d")
 		RTOL = RTOL.replace("e","d")
 
