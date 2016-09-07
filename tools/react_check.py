@@ -108,14 +108,14 @@ for row in fh:
 	if(srow[0]=="@"): continue
 
 	wasComment = False
-	arow = srow.split(",")
+	arow = srow.split(",",cfmt.nfmt-1)
 	if(len(arow)<cfmt.nfmt):
 		print "***********************"
 		print "ERROR: wrong format for"
 		print srow
 		print "Expected "+str(cfmt.nfmt)+" parts, found "+str(len(arow))
 		okall = False
-		print fmt
+		print cfmt.fmt
 		sys.exit()
 
 	if(len(arow)>cfmt.nfmt):
@@ -124,7 +124,7 @@ for row in fh:
 		print srow
 		print "Expected "+str(cfmt.nfmt)+" parts, found "+str(len(arow))
 		okall = False
-		print fmt
+		print cfmt.fmt
 
 	if(arow[cfmt.rate].count("(")!=arow[cfmt.rate].count(")")):
 		print "***********************"
