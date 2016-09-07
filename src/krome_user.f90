@@ -2205,7 +2205,7 @@ contains
     use krome_commons
     use krome_getphys
     implicit none
-    character*8000::krome_get_names_header
+    #KROME_names_header_define
     character*16::tmp(nspec)
     integer::i
 
