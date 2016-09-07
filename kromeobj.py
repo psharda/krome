@@ -6785,6 +6785,13 @@ class krome():
 				fout.write("\tinteger,parameter::krome_ndustTypes=" + str(dustTypesSize) + "\n")
 				fout.write("\tinteger,parameter::krome_nPhotoBins=" + str(self.photoBins) + "\n")
 				fout.write("\tinteger,parameter::krome_nPhotoRates=" + str(self.nPhotoRea) + "\n")
+			elif(srow == "#KROME_names_header_define"):
+				skipspec = ["CR","Tgas","dummy","g"]
+				headlen = 0
+				for species in specs:
+					if(species.name in skipspec): continue
+					headlen += len(species.name)+1
+				fout.write("character*"+str(headlen)+"::krome_get_names_header")
 			elif(srow == "#KROME_scaleZ"):
 				fout.write(("\n".join(scaleZ))+"\n")
 			else:
