@@ -8,6 +8,7 @@ import sys,os
 #3) CHECK BRACKETS
 #4) RENUMBER RATES
 #written by Tommaso Grassi and the KROME team (Mar21,2014)
+import ipdb
 
 #check command-line arguments and store them
 if(len(sys.argv)<3):
@@ -108,16 +109,8 @@ for row in fh:
 	if(srow[0]=="@"): continue
 
 	wasComment = False
-	arow = srow.split(",")
-	# guard against reaction rates that use function calls (i.e., commas
-    # within parentheses).
-	hasParentheses = (srow.find("(") >= 0 and srow.find(")") >= 0)
-	if hasParentheses:
-		idx_split = srow.find("(")
-		arow_chk = (srow[:idx_split] + srow[idx_split:].replace(',','')).split(",")
-	else:
-		arow_chk = arow
-	if(len(arow_chk)<cfmt.nfmt):
+	arow = srow.split(",",cfmt.nfmt-1)
+	if(len(arow)<cfmt.nfmt):
 		print "***********************"
 		print "ERROR: wrong format for"
 		print srow
@@ -126,15 +119,16 @@ for row in fh:
 		print cfmt.fmt
 		sys.exit()
 
-	if(len(arow_chk)>cfmt.nfmt):
+	if(len(arow)>cfmt.nfmt):
 		print "***********************"
 		print "WARNING: possible wrong format for"
 		print srow
 		print "Expected "+str(cfmt.nfmt)+" parts, found "+str(len(arow_chk))
 		okall = False
+		ipdb.set_trace()
 		print cfmt.fmt
 
-	if(arow_chk[cfmt.rate].count("(")!=arow_chk[cfmt.rate].count(")")):
+	if(arow[cfmt.rate].count("(")!=arow[cfmt.rate].count(")")):
 		print "***********************"
 		print "ERROR: unbalanced brackets!"
 		print srow
