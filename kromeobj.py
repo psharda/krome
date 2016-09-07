@@ -6798,7 +6798,7 @@ class krome():
 				for species in specs:
 					if(species.name in skipspec): continue
 					headlen += len(species.name)+1
-				fout.write("character*"+str(headlen)+"::krome_get_names_header")
+				fout.write("character*"+str(headlen)+"::krome_get_names_header\n")
 			elif(srow == "#KROME_scaleZ"):
 				fout.write(("\n".join(scaleZ))+"\n")
 			else:
