@@ -13,18 +13,17 @@
 # also see https://bitbucket.org/krome/krome_stable
 #
 # Written and developed by Tommaso Grassi
-# tommasograssi@gmail.com,
+# tgrassi@nbi.dk,
 # Starplan Center, Copenhagen.
 # Niels Bohr Institute, Copenhagen.
 #
-# Co-developer Stefano Bovino
-# sbovino@astro.physik.uni-goettingen.de
-# Institut fuer Astrophysik, Goettingen.
+# and Stefano Bovino
+# stefano.bovino@uni-hamburg.de
+# Hamburger Sternwarte, Hamburg.
 #
-# Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
-# J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried, E. Simoncini,
-# E. Tognelli
-#
+# Others (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
+# J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
+# E.Tognelli
 #
 # KROME is provided "as it is", without any warranty.
 # The Authors assume no liability for any damages of any kind
@@ -58,9 +57,9 @@ class krome():
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
 	usePhotoOpacity = useXRay = hasSurfaceReactions = shieldHabingDust = False
-	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = True
+	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = shortHead = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
-	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = shortHead = isdry = useIERR = checkReverse = usePhotoInduced = False
+	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = isdry = useIERR = checkReverse = usePhotoInduced = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = reducer = False
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
@@ -113,6 +112,8 @@ class krome():
 	coolZ_nkrates = 0
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
 	Zcools = [] #list of cooling read from file (species name, e.g. C+)
+	allCoolings = [] #list all coolings names from option
+	allHeatings = [] #list all heatings names from option
 	anytabvars = [] #variable names for the tables
 	anytabfiles = [] #file name for the tables
 	anytabpaths = [] #paths for the tables
@@ -187,7 +188,8 @@ class krome():
 		self.parser.add_argument("-ATOL", help="set solver absolute tolerance to the float or double value ATOL, e.g. -atol 1d-40\
 			Default is ATOL=1d-20, see also -RTOL and -customATOL")
 		self.parser.add_argument("-interfaceC", action="store_true", help="create a C wrapper")
-		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper since its a pre-requisite)")
+		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper \
+			since its a pre-requisite)")
 		self.parser.add_argument("-compact", action="store_true", help="creates a single fortran file with all the modules instead of\
 			various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact)")
 		self.parser.add_argument("-checkConserv", action="store_true", help="check mass conservation during integration (slower)")
@@ -257,6 +259,7 @@ class krome():
 			, DH, CR, PHOTOAV,VISCOUS. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems).")
+		self.parser.add_argument("-lh", action="store_true", help="use long header in f90 files.")
 		self.parser.add_argument("-listAutomatics", action="store_true", help="list all the automatic reactions available.")
 		self.parser.add_argument("-listSWRI", action="store_true", help="list all the photo reactions available in the SWRI database.")
 		self.parser.add_argument("-maxord", help="max order of the BDF solver. Default (and maximum values) is 5.")
@@ -302,10 +305,12 @@ class krome():
 		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g.\
 			-RTOL 1e-5 Default is RTOL=1d-4, see also -ATOL and -customRTOL")
 		self.parser.add_argument("-photoBins", metavar="NBINS", help="define the number of frequency bins for the impinging radiation.")
-		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files")
+		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files. Now this is the default, \
+			here for retrocompatibility, see option -lh.")
                 self.parser.add_argument("-shielding", metavar="TYPE", help="use H2 self-shielding, TYPE can be DB96 for Draine+Bertoldi 1996,\
                         WG11 for the more accurate Wolcott+Greene 2011, R14 for the Tgas-dependent by Richings+2014")
-		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux (when calculated from photobins).")
+		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux \
+			(when calculated from photobins).")
 		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
 		self.parser.add_argument("-skipJacobian", action="store_true", help="do not write Jacobian in krome_ode.f90 file. Useful\
@@ -322,7 +327,7 @@ class krome():
 		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
 		self.parser.add_argument("-useCoolFloor", action="store_true", help="include a cooling floor given by the Tfloor temperature.\
 			note that you must define Tfloor by using the subroutine krome_set_Tfloor(your_Tfloor) before calling krome.")
-#		self.parser.add_argument("-useCoolCMBFloorZ", action="store_true", help="as -useCoolCMBFloor, but for metals only.")
+		#self.parser.add_argument("-useCoolCMBFloorZ", action="store_true", help="as -useCoolCMBFloor, but for metals only.")
 		self.parser.add_argument("-useCustomCoe", help="use a user-defined custom function that returns a real*8 array of size\
 			NREA = number of reactions, that replaces the standard rate coefficient calculation function. Note that FUNCTION\
 			must be explicitly included in krome_user_commons module.", metavar="FUNCTION")
@@ -968,6 +973,11 @@ class krome():
 			self.shortHead = True
 			print "Reading option -sh"
 
+		#use short header for f90 files
+		if(args.lh):
+			self.shortHead = False
+			print "Reading option -lh"
+
 		#enable thermochemistry checking
 		if(args.checkThermochem):
 			self.checkThermochem = True
@@ -1264,6 +1274,10 @@ class krome():
 						neutral_name = met["name"].replace("-","")
 						if(not(neutral_name in self.Zcools)): self.Zcools.append(netural_name)
 
+
+			self.allCoolings = myCools
+			if(len(self.Zcools)>0): self.allCoolings += ["Z"]
+
 			self.use_cooling = True
 			self.hasDust = False
 			for aa in argv:
@@ -1295,6 +1309,7 @@ class krome():
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
 			myHeat = [x.strip() for x in myHeat]
+			self.allHeatings = myHeat
 			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","PHOTODUSTNET","XRAY","VISCOUS"]
 			for hea in myHeat:
 				if(not(hea in allHeats)):
@@ -3100,16 +3115,18 @@ class krome():
 
 		#dump species to log file
 		fout = open(self.buildFolder+"info.log","w")
-		fout.write("#This file contains a list of the species\n")
-		fout.write("# with their indexes and additional info\n")
-		fout.write("\n")
+		fout.write("#This file contains index list and other info\n")
+
+		fout.write("\n\n#********************************\n")
+		fout.write("# Species list with their indexes\n")
 		idx = 0
 		for mol in self.specs:
 			idx += 1
 			fout.write(str(idx)+"\t"+mol.name+"\t""krome_"+mol.fidx+"\n")
 		fout.write("\n")
-		fout.write("#Note: the first "+str(self.nmols)+" variables should be used\n")
-		fout.write("# as framework code passive scalars\n\n")
+		fout.write("#Note: the first "+str(self.nmols)+" variables above should be used\n")
+		fout.write("# as framework code passive scalars, while the last "+str(len(self.specs)-self.nmols)+"\n")
+		fout.write("# are employed inside KROME.\n")
 
 		#table with info as a structure
 		addInfo = [["krome_nrea", str(self.nrea), "!number of reactions"],\
@@ -3120,11 +3137,14 @@ class krome():
 			["krome_nPhotoBins", str(self.photoBins), "!number of radiation bins"],\
 			["krome_nPhotoRates", str(self.nPhotoRea), "!number of photochemical reactions"]]
 
+		fout.write("\n\n#********************************\n")
+		fout.write("#useful parameters\n")
 		#dump structure to file
 		for row in addInfo:
 			fout.write(fillSpaces(row[0],20)+" = "+fillSpaces(row[1],5)+row[2]+"\n")
 
-		fout.write("\n\n#list of reactions (including with multiple limits)\n")
+		fout.write("\n\n#********************************\n")
+		fout.write("#list of reactions (including with multiple limits)\n")
 		#dump reactions to log file
 		idx = maxprod = maxreag = 0
 		verbatimList = []
@@ -3144,18 +3164,22 @@ class krome():
 		#dump list of reactions (without reactions with multiple limits)
 		verbatimList = list(set(verbatimList))
 		idx = 0
-		fout.write("\n\n#list of reactions (without multiple limits)\n")
+		fout.write("\n\n#********************************\n")
+		fout.write("#list of reactions (without multiple limits)\n")
 		for verb in verbatimList:
 			idx += 1
 			fout.write(str(idx)+"\t"+verb+"\n")
 
 		idx = 0
 		#dump list of reactions (latex format)
-		fout.write("\n\n#list of reactions (LaTeX format)\n")
+		fout.write("\n\n#********************************\n")
+		fout.write("#list of reactions (LaTeX format)\n")
+		columnsFormat = ("l"*(2*maxreag))+"c"+("l"*(2*maxprod-1))
+		fout.write("#Table columns format {"+columnsFormat+"}\n")
 		for rea in self.reacts:
 			idx += 1
-			rList = [x.name for x in rea.reactants]
-			pList = [x.name for x in rea.products]
+			rList = [x.nameLatex for x in rea.reactants]
+			pList = [x.nameLatex for x in rea.products]
 			rLatex = (" & + & ".join(rList+[""]*(maxreag-len(rList))))
 			pLatex = (" & + & ".join(pList+[""]*(maxprod-len(pList))))
 			verbLatex = str(idx)+" & "+rLatex+" & $\\to$ & "+pLatex+"\\\\\n"
@@ -4694,7 +4718,7 @@ class krome():
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
-		        if(srow == "#ENDIFKROME"): skip = False 
+		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
 
@@ -4768,7 +4792,6 @@ class krome():
 		#loop on src file and replace pragmas
 		for row in fh:
 			srow = row.strip()
-			
 			if(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 
@@ -4797,7 +4820,6 @@ class krome():
 					fout.write("num2col = 0.5d0 * ncalc * get_jeans_length(n(:),Tgas)\n")
 				else:
 					sys.exit("ERROR: method "+self.columnDensityMethod+" unknown for num2col")
-
 			elif(srow == "#KROME_masses"):
 				for x in specs:
 					massrow = "\tget_mass("+str(x.idx)+") = " + str(x.mass).replace("e","d") + "\t!" + x.name + "\n"
@@ -4834,6 +4856,17 @@ class krome():
 			elif(srow == "#KROME_names"):
 				for x in specs:
 					fout.write("\tget_names("+str(x.idx)+") = \"" + x.name + "\"\n")
+
+			elif(srow == "#KROME_cooling_names"):
+				coolDict = get_cooling_dict()
+				allCoolings = [x.lower() for x in self.allCoolings]
+				for (k,v) in coolDict.iteritems():
+					if(k in allCoolings): fout.write("get_cooling_names(idx_cool_"+str(k)+") = \"" + k.upper() + "\"\n")
+			elif(srow == "#KROME_heating_names"):
+				heatDict = get_heating_dict()
+				allHeatings = [x.lower() for x in self.allHeatings]
+				for (k,v) in heatDict.iteritems():
+					if(k in allHeatings): fout.write("get_heating_names(idx_heat_"+str(k)+") = \"" + k.upper() + "\"\n")
 
 			elif(srow == "#KROME_charges"):
 				for x in specs:
@@ -5088,7 +5121,7 @@ class krome():
 			if(srow == "#IFKROME_hasHII" and not(has_HII)): skip = True
 			if(srow == "#IFKROME_hasH2I" and not(has_H2I)): skip = True
 
-		        if(srow == "#ENDIFKROME"): skip = False 
+		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
 			else:
@@ -5239,7 +5272,7 @@ class krome():
 			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 
-		        if(srow == "#ENDIFKROME"): skip = False 
+		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
 
@@ -6775,6 +6808,19 @@ class krome():
 				fout.write("\tinteger,parameter::krome_ndustTypes=" + str(dustTypesSize) + "\n")
 				fout.write("\tinteger,parameter::krome_nPhotoBins=" + str(self.photoBins) + "\n")
 				fout.write("\tinteger,parameter::krome_nPhotoRates=" + str(self.nPhotoRea) + "\n")
+			elif(srow == "#KROME_cooling_names_header_define"):
+				joinedCools = (" ".join(self.allCoolings))
+				fout.write("character*"+str(len(joinedCools))+"::krome_get_cooling_names_header\n")
+			elif(srow == "#KROME_heating_names_header_define"):
+				joinedHeats = (" ".join(self.allHeatings))
+				fout.write("character*"+str(len(joinedHeats))+"::krome_get_heating_names_header\n")
+			elif(srow == "#KROME_names_header_define"):
+				skipspec = ["CR","Tgas","dummy","g"]
+				headlen = 0
+				for species in specs:
+					if(species.name in skipspec): continue
+					headlen += len(species.name)+1
+				fout.write("character*"+str(headlen)+"::krome_get_names_header\n")
 			elif(srow == "#KROME_scaleZ"):
 				fout.write(("\n".join(scaleZ))+"\n")
 			else:
@@ -8086,6 +8132,6 @@ class krome():
 			print "This is a test. To run it just type:"
 			print "> cd build/"
 			print "> make"
-			print "> ./krome"
+			print "> ./test"
 		print
 		print "Everything done, goodbye!"

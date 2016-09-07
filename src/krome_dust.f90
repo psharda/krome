@@ -130,7 +130,10 @@ contains
     do
        read(32,*,iostat=ios) rout(:)
        if(ios<0) exit !eof
-       if(ios/=0) cycle !skip blanks
+       !skip when # is found
+       if(ios==59.or.ios==5010) cycle
+       !skip blanks
+       if(ios/=0) cycle
 
        !read values
        E = rout(2) * planck_eV !eV

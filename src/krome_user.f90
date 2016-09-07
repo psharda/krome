@@ -123,7 +123,7 @@ contains
   end function krome_num2col
 
   !***********************
-  !print on screen the current values of the phys variables
+  !print on screen the current values of all phys variables
   subroutine krome_print_phys_variables() #KROME_bindC
     use krome_commons
     implicit none
@@ -137,8 +137,8 @@ contains
 
 #IFKROME_useXrays
   !****************************
-  !set the value of J21xrays for tabulated
-  ! heating and rate
+  !set value of J21xrays for tabulated
+  ! heating and corresponding rate
   subroutine krome_set_J21xray(xarg) #KROME_bindC
     use krome_commons
     implicit none
@@ -197,7 +197,8 @@ contains
   ! alow_arg, aup_arg, using power law with exponent phi_arg.
   ! All these arguments are optional, execept for x(:) of size
   ! krome_nmols that represents the number densitites of the
-  ! chemical species, and dust_gas_ratio
+  ! chemical species, and dust_gas_ratio. Check the code below
+  ! for defaults
   subroutine krome_init_dust_distribution(x,dust_gas_ratio,alow_arg,&
        aup_arg,phi_arg) #KROME_bindC
     use krome_dust
@@ -243,6 +244,7 @@ contains
   !*****************************
   !this function sets the dust distribution with an array
   ! that contains the amount of dust per bin in 1/cm3.
+  ! each array element represents a dust bin.
   subroutine krome_set_dust_distribution(arg) #KROME_bindC
     use krome_commons
     implicit none
@@ -288,8 +290,8 @@ contains
   end subroutine krome_set_dust_size
 
   !************************
-  !this function sets the default temperature
-  ! for all the dust bins.
+  !this function sets the default temperature (arg)
+  ! for all the dust bins, K
   subroutine krome_set_Tdust(arg) #KROME_bindC
     use krome_commons
     implicit none
@@ -302,7 +304,7 @@ contains
   !************************
   !this function sets the temperature
   ! for all the dust bins but using an array
-  ! of size krome_ndust.
+  ! of size krome_ndust, K
   subroutine krome_set_Tdust_array(arr) #KROME_bindC
     use krome_commons
     implicit none
@@ -337,7 +339,7 @@ contains
 
   !***********************
   !returns an array of size krome_ndust containing the
-  ! dust temperatures in K
+  ! dust temperatures, K. Each array element is a dust bin
   function krome_get_Tdust() #KROME_bindC
     use krome_commons
     implicit none
@@ -526,6 +528,7 @@ contains
     use krome_photo
     implicit none
     #KROME_double :: phbinleft(nPhotoBins),phbinright(nPhotoBins)
+
     photoBinEleft(:) = phbinleft(:)
     photoBinEright(:) = phbinright(:)
     photoBinEmid(:) = 0.5d0*(phbinleft(:)+phbinright(:))
@@ -629,6 +632,8 @@ contains
   end function krome_get_photoBinJ
 
   !*********************************
+  !get an array containing all the left positions
+  ! of the photobins, eV
   function krome_get_photoBinE_left() #KROME_bindC
     !returns an array of size krome_nPhotoBins with the
     ! left energy limits (eV)
@@ -765,7 +770,7 @@ contains
   end function krome_get_photoBin_heats
 
   !****************************
-  !multiply all the bins by a factor real*8 xscale
+  !multiply all photobins by a factor real*8 xscale
   subroutine krome_photoBin_scale(xscale) #KROME_bindC
     use krome_commons
     use krome_photo
@@ -780,7 +785,7 @@ contains
   end subroutine krome_photoBin_scale
 
   !****************************
-  !multiply all the bins by a real*8 array xscale(:)
+  !multiply all photobins by a real*8 array xscale(:)
   ! of size krome_nPhotoBins
   subroutine krome_photoBin_scale_array(xscale) #KROME_bindC
     use krome_commons
@@ -878,8 +883,8 @@ contains
   end subroutine krome_load_photoBin_file
 
   !**********************************
-  !this subroutine set a flux HM in the energy limits
-  ! as argument
+  !this subroutine sets an Hardt+Madau flux in the
+  ! energy limits lower_in, upper_in (eV, log-spaced)
   subroutine krome_set_photoBin_HMlog(lower_in,upper_in) #KROME_bindC
     use krome_commons
     use krome_photo
@@ -930,8 +935,9 @@ contains
   end subroutine krome_set_photoBin_HMlog
 
   !**********************************
-  !this subroutine set a flux HM in the energy limits
-  ! as argument
+  !this subroutine ADD an Hardt+Madau flux to the current radiation
+  ! in the energy limits lower_in, upper_in (eV), It assumes
+  ! the current binning
   subroutine krome_set_photoBin_HMCustom(lower_in,upper_in,additive) #KROME_bindC
     use krome_commons
     use krome_photo
@@ -994,7 +1000,7 @@ contains
 
   !**********************************
   !set the flux as a black body with temperature Tbb (K)
-  ! in the range lower to upper (eV). the spacing is linear
+  ! in the range lower to upper (eV),  linear-spaced
   subroutine krome_set_photoBin_BBlin(lower,upper,Tbb) #KROME_bindC
     use krome_commons
     use krome_constants
@@ -1021,7 +1027,7 @@ contains
 
   !**********************************
   !set the flux as a black body with temperature Tbb (K)
-  ! in the range lower to upper (eV). the spacing is logarithmic
+  ! in the range lower to upper (eV), log-spaced
   subroutine krome_set_photoBin_BBlog(lower,upper,Tbb) #KROME_bindC
     use krome_commons
     use krome_constants
@@ -1171,7 +1177,7 @@ contains
 
   !**************************
   !set the flux as Draine's function
-  ! in the range lower to upper (eV). the spacing is logarithmic
+  ! in the range lower to upper (eV). log-spaced
   subroutine krome_set_photoBin_draineLog(lower,upper) #KROME_bindC
     use krome_commons
     use krome_photo
@@ -1237,14 +1243,14 @@ contains
 
   !**************************
   !set the flux as power-law (J21-style)
-  ! in the range lower to upper (eV). the spacing is linear
+  ! in the range lower to upper (eV). linear-spaced
   subroutine krome_set_photoBin_J21lin(lower,upper) #KROME_bindC
     use krome_commons
     use krome_photo
     #KROME_double_value :: upper,lower
 
     call krome_set_photoBinE_lin(lower,upper)
-    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/s/Hz/sr
+    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/sr
     photoBinJ_org(:) = photoBinJ(:)
 
     !compute rates
@@ -1261,7 +1267,7 @@ contains
     #KROME_double_value :: upper,lower
 
     call krome_set_photoBinE_log(lower,upper)
-    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/s/Hz/sr
+    photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/sr
     photoBinJ_org(:) = photoBinJ(:)
 
     !compute rates
@@ -1270,7 +1276,7 @@ contains
   end subroutine krome_set_photoBin_J21log
 
   !*****************************
-  !get the opacity exp(-tau) correpsonding the to x(:)
+  !get the opacity exp(-tau) correpsonding to x(:)
   ! chemical composition. The column density
   ! is computed using the expression in the
   ! num2col(x) function.
@@ -2205,7 +2211,7 @@ contains
     use krome_commons
     use krome_getphys
     implicit none
-    character*8000::krome_get_names_header
+    #KROME_names_header_define
     character*16::tmp(nspec)
     integer::i
 
@@ -2217,6 +2223,46 @@ contains
     end do
 
   end function krome_get_names_header
+
+  !********************
+  !get space-separated header of coolings
+  function krome_get_cooling_names_header()
+    use krome_commons
+    use krome_getphys
+    implicit none
+    #KROME_cooling_names_header_define
+    character*16::tmp(ncools)
+    integer::i
+
+    tmp(:) = get_cooling_names()
+
+    krome_get_cooling_names_header = ""
+    do i=1,ncools
+       if(trim(tmp(i))=="") cycle
+       krome_get_cooling_names_header = trim(krome_get_cooling_names_header)//" "//trim(tmp(i))
+    end do
+
+  end function krome_get_cooling_names_header
+
+  !********************
+  !get space-separated header of heatings
+  function krome_get_heating_names_header()
+    use krome_commons
+    use krome_getphys
+    implicit none
+    #KROME_heating_names_header_define
+    character*16::tmp(nheats)
+    integer::i
+
+    tmp(:) = get_heating_names()
+
+    krome_get_heating_names_header = ""
+    do i=1,nheats
+       if(trim(tmp(i))=="") cycle
+       krome_get_heating_names_header = trim(krome_get_heating_names_header)//" "//trim(tmp(i))
+    end do
+
+  end function krome_get_heating_names_header
 
   !*****************
   !get the index of the species with name name.
