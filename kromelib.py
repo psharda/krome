@@ -1087,15 +1087,21 @@ def addVarCoe(mytabvar,tabf,coevars):
 	if(not(mytabvar in coevars)):
 		coevars[mytabvar] = [len(coevars),tabf]
 
-#############################
-#cooling index list
-def get_cooling_index_list():
+############################
+def get_cooling_dict():
 	#the keys of this list must be lowercase.
 	#the number is the corresponding integer index for the given cooling
 	idxcoo = {"H2":1,"H2GP":2,"atomic":3, "CEN":3, "HD":4, "Z":5, "metal":5, "dH":6, "enthalpic":6, "dust":7,\
 		"compton":8,"CIE":9, "continuum":10, "cont":10,"exp":11,"expansion":11,"ff":12,"bss":12,"custom":13,\
 		"CO":14, "ZCIE":15, "ZCIENOUV":16, "ZExtend":17}
+	idxcoo = {k.lower():v for (k,v) in idxcoo.iteritems()}
+	return idxcoo
 
+#############################
+#cooling index list
+def get_cooling_index_list():
+
+	idxcoo = get_cooling_dict()
 	#loop on the index to write variables as idx_cool_H2 = 1
 	idxscoo = []
 	maxv = 0 #maximum index found is the size of the cooling array
@@ -1106,12 +1112,19 @@ def get_cooling_index_list():
 	idxscoo.append([99,"ncools = "+str(maxv)])
 	return [x[1] for x in idxscoo]
 
+############################
+def get_heating_dict():
+	#the number is the corresponding integer index for the given heating
+	idxhea = {"chem":1,"compress":2, "compr":2, "photo":3, "dH":4, "enthalpic":4, "photoAv":5, "Av":5,\
+		"CR":6, "dust":7, "xray":8, "visc":9,"viscous":9, "custom":10, "ZCIE":11}
+	idxhea = {k.lower():v for (k,v) in idxhea.iteritems()}
+	return idxhea
+
 #############################
 #heating index list
 def get_heating_index_list():
-	idxhea = {"chem":1,"compress":2, "compr":2, "photo":3, "dH":4, "enthalpic":4, "photoAv":5, "Av":5,\
-		"CR":6, "dust":7, "xray":8, "visc":9,"viscous":9, "custom":10, "ZCIE":11}
 
+	idxhea = get_heating_dict()
 	idxshea = []
 	maxv = 0
 	for (k,v) in idxhea.iteritems():
