@@ -88,6 +88,32 @@ contains
 
   end function get_names
 
+  !************************
+  !get cooling names list (empty element if cooling not present)
+  function get_cooling_names()
+    use krome_commons
+    implicit none
+    character*16::get_cooling_names(ncools)
+
+    get_cooling_names(:) = ""
+
+#KROME_cooling_names
+
+  end function get_cooling_names
+
+  !************************
+  !get heating names list (empty element if heating not present)
+  function get_heating_names()
+    use krome_commons
+    implicit none
+    character*16::get_heating_names(nheats)
+
+    get_heating_names(:) = ""
+
+#KROME_heating_names
+
+  end function get_heating_names
+
   !******************************
   !get the total number of H nuclei
   function get_Hnuclei(n)
