@@ -112,6 +112,8 @@ class krome():
 	coolZ_nkrates = 0
 	zcoolants = [] #list of cooling read from file (flag name, e.g CII)
 	Zcools = [] #list of cooling read from file (species name, e.g. C+)
+	allCoolings = [] #list all coolings names from option
+	allHeatings = [] #list all heatings names from option
 	anytabvars = [] #variable names for the tables
 	anytabfiles = [] #file name for the tables
 	anytabpaths = [] #paths for the tables
@@ -1272,6 +1274,10 @@ class krome():
 						neutral_name = met["name"].replace("-","")
 						if(not(neutral_name in self.Zcools)): self.Zcools.append(netural_name)
 
+
+			self.allCoolings = myCools
+			if(len(self.Zcools)>0): self.allCoolings += ["Z"]
+
 			self.use_cooling = True
 			self.hasDust = False
 			for aa in argv:
@@ -1303,6 +1309,7 @@ class krome():
 		if(args.heating):
 			myHeat = args.heating.upper().split(",")
 			myHeat = [x.strip() for x in myHeat]
+			self.allHeatings = myHeat
 			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","PHOTODUSTNET","XRAY","VISCOUS"]
 			for hea in myHeat:
 				if(not(hea in allHeats)):
@@ -4711,7 +4718,7 @@ class krome():
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
-		        if(srow == "#ENDIFKROME"): skip = False 
+		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
 
@@ -4785,7 +4792,6 @@ class krome():
 		#loop on src file and replace pragmas
 		for row in fh:
 			srow = row.strip()
-			
 			if(srow == "#KROME_header"):
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 
@@ -4814,7 +4820,6 @@ class krome():
 					fout.write("num2col = 0.5d0 * ncalc * get_jeans_length(n(:),Tgas)\n")
 				else:
 					sys.exit("ERROR: method "+self.columnDensityMethod+" unknown for num2col")
-
 			elif(srow == "#KROME_masses"):
 				for x in specs:
 					massrow = "\tget_mass("+str(x.idx)+") = " + str(x.mass).replace("e","d") + "\t!" + x.name + "\n"
@@ -4851,6 +4856,17 @@ class krome():
 			elif(srow == "#KROME_names"):
 				for x in specs:
 					fout.write("\tget_names("+str(x.idx)+") = \"" + x.name + "\"\n")
+
+			elif(srow == "#KROME_cooling_names"):
+				coolDict = get_cooling_dict()
+				allCoolings = [x.lower() for x in self.allCoolings]
+				for (k,v) in coolDict.iteritems():
+					if(k in allCoolings): fout.write("get_cooling_names(idx_cool_"+str(k)+") = \"" + k.upper() + "\"\n")
+			elif(srow == "#KROME_heating_names"):
+				heatDict = get_heating_dict()
+				allHeatings = [x.lower() for x in self.allHeatings]
+				for (k,v) in heatDict.iteritems():
+					if(k in allHeatings): fout.write("get_heating_names(idx_heat_"+str(k)+") = \"" + k.upper() + "\"\n")
 
 			elif(srow == "#KROME_charges"):
 				for x in specs:
@@ -5105,7 +5121,7 @@ class krome():
 			if(srow == "#IFKROME_hasHII" and not(has_HII)): skip = True
 			if(srow == "#IFKROME_hasH2I" and not(has_H2I)): skip = True
 
-		        if(srow == "#ENDIFKROME"): skip = False 
+		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
 			else:
@@ -5256,7 +5272,7 @@ class krome():
 			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 
-		        if(srow == "#ENDIFKROME"): skip = False 
+		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
 
@@ -6792,6 +6808,12 @@ class krome():
 				fout.write("\tinteger,parameter::krome_ndustTypes=" + str(dustTypesSize) + "\n")
 				fout.write("\tinteger,parameter::krome_nPhotoBins=" + str(self.photoBins) + "\n")
 				fout.write("\tinteger,parameter::krome_nPhotoRates=" + str(self.nPhotoRea) + "\n")
+			elif(srow == "#KROME_cooling_names_header_define"):
+				joinedCools = (" ".join(self.allCoolings))
+				fout.write("character*"+str(len(joinedCools))+"::krome_get_cooling_names_header\n")
+			elif(srow == "#KROME_heating_names_header_define"):
+				joinedHeats = (" ".join(self.allHeatings))
+				fout.write("character*"+str(len(joinedHeats))+"::krome_get_heating_names_header\n")
 			elif(srow == "#KROME_names_header_define"):
 				skipspec = ["CR","Tgas","dummy","g"]
 				headlen = 0
