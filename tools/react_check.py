@@ -8,7 +8,6 @@ import sys,os
 #3) CHECK BRACKETS
 #4) RENUMBER RATES
 #written by Tommaso Grassi and the KROME team (Mar21,2014)
-import ipdb
 
 #check command-line arguments and store them
 if(len(sys.argv)<3):
@@ -114,7 +113,7 @@ for row in fh:
 		print "***********************"
 		print "ERROR: wrong format for"
 		print srow
-		print "Expected "+str(cfmt.nfmt)+" parts, found "+str(len(arow_chk))
+		print "Expected "+str(cfmt.nfmt)+" parts, found "+str(len(arow))
 		okall = False
 		print cfmt.fmt
 		sys.exit()
@@ -123,9 +122,8 @@ for row in fh:
 		print "***********************"
 		print "WARNING: possible wrong format for"
 		print srow
-		print "Expected "+str(cfmt.nfmt)+" parts, found "+str(len(arow_chk))
+		print "Expected "+str(cfmt.nfmt)+" parts, found "+str(len(arow))
 		okall = False
-		ipdb.set_trace()
 		print cfmt.fmt
 
 	if(arow[cfmt.rate].count("(")!=arow[cfmt.rate].count(")")):
