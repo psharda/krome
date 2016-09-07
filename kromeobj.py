@@ -3108,16 +3108,18 @@ class krome():
 
 		#dump species to log file
 		fout = open(self.buildFolder+"info.log","w")
-		fout.write("#This file contains a list of the species\n")
-		fout.write("# with their indexes and additional info\n")
-		fout.write("\n")
+		fout.write("#This file contains index list and other info\n")
+
+		fout.write("\n\n#********************************\n")
+		fout.write("# Species list with their indexes\n")
 		idx = 0
 		for mol in self.specs:
 			idx += 1
 			fout.write(str(idx)+"\t"+mol.name+"\t""krome_"+mol.fidx+"\n")
 		fout.write("\n")
-		fout.write("#Note: the first "+str(self.nmols)+" variables should be used\n")
-		fout.write("# as framework code passive scalars\n\n")
+		fout.write("#Note: the first "+str(self.nmols)+" variables above should be used\n")
+		fout.write("# as framework code passive scalars, while the last "+str(len(self.specs)-self.nmols)+"\n")
+		fout.write("# are employed inside KROME.\n")
 
 		#table with info as a structure
 		addInfo = [["krome_nrea", str(self.nrea), "!number of reactions"],\
@@ -3128,11 +3130,14 @@ class krome():
 			["krome_nPhotoBins", str(self.photoBins), "!number of radiation bins"],\
 			["krome_nPhotoRates", str(self.nPhotoRea), "!number of photochemical reactions"]]
 
+		fout.write("\n\n#********************************\n")
+		fout.write("#useful parameters\n")
 		#dump structure to file
 		for row in addInfo:
 			fout.write(fillSpaces(row[0],20)+" = "+fillSpaces(row[1],5)+row[2]+"\n")
 
-		fout.write("\n\n#list of reactions (including with multiple limits)\n")
+		fout.write("\n\n#********************************\n")
+		fout.write("#list of reactions (including with multiple limits)\n")
 		#dump reactions to log file
 		idx = maxprod = maxreag = 0
 		verbatimList = []
@@ -3152,14 +3157,16 @@ class krome():
 		#dump list of reactions (without reactions with multiple limits)
 		verbatimList = list(set(verbatimList))
 		idx = 0
-		fout.write("\n\n#list of reactions (without multiple limits)\n")
+		fout.write("\n\n#********************************\n")
+		fout.write("#list of reactions (without multiple limits)\n")
 		for verb in verbatimList:
 			idx += 1
 			fout.write(str(idx)+"\t"+verb+"\n")
 
 		idx = 0
 		#dump list of reactions (latex format)
-		fout.write("\n\n#list of reactions (LaTeX format)\n")
+		fout.write("\n\n#********************************\n")
+		fout.write("#list of reactions (LaTeX format)\n")
 		columnsFormat = ("l"*(2*maxreag))+"c"+("l"*(2*maxprod-1))
 		fout.write("#Table columns format {"+columnsFormat+"}\n")
 		for rea in self.reacts:
