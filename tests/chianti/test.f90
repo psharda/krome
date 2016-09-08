@@ -2,8 +2,8 @@
 !This is a test to plot cooling function using e.g.
 ! the information from the Chianti database.
 ! http://www.chiantidatabase.org
-! It computes a cooling curve similar to the one 
-! shown in Gnat+Ferland 2012 ApJS 199 20 (fig.2)
+! It computes a cooling curve similar to the one
+! shown in Gnat+Ferland 2012 ApJS 199 20 (Fig.2)
 ! http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:1111.6980
 
 program test
@@ -13,7 +13,7 @@ program test
   real*8::Tgas,dt,x(krome_nmols),spy,t,j21s(3),j21
   integer, parameter :: kmax=30, imaxx=5000
   integer::i,j,k,imax(kmax)
-  real*8::res66(2+krome_nmols,imaxx,kmax), res55(2,kmax) 
+  real*8::res66(2+krome_nmols,imaxx,kmax), res55(2,kmax)
   real*8::res77(1+krome_nmols,kmax) !temp arrs for output
 
   spy = krome_seconds_per_year !use shorter variable for this constant
@@ -33,7 +33,7 @@ program test
      j21 = j21s(j) !select J21 value
      call krome_photoBin_scale(j21) !scale radiation according to j21
 
-     !$omp end parallel 
+     !$omp end parallel
 
      print *,"running with j21=",j21
 
@@ -54,7 +54,7 @@ program test
 
         !switch off thermo to get equilibirum at constant temperature
         call krome_thermo_off()
-        
+
         !equilibrium
         i=0
         do
@@ -77,12 +77,13 @@ program test
      end do
 
      !dump results on a file
+     write(55,'(a)') "#J21 Tgas cooling"
      do k=1,kmax
         do i=1, imax(k)
            write(66,'(I5,99E17.8)') j, res66(:,i,k)
         enddo
         write(77,'(I5,999E17.8e3)') j, res77(:,k)
-        write(55,'(I5,999E17.8e3)') j, res55(:,k)
+        write(55,'(999E17.8e3)') j21s(j), res55(:,k)
         write(66,*)
      enddo
      write(55,*)
