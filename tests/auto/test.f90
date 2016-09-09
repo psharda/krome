@@ -14,13 +14,15 @@ program test
   implicit none
   real*8::Tgas,dt,x(krome_nmols),rho,spy,t,j21s(3),j21
   integer::j
-  
+
   spy = krome_seconds_per_year !use shorter variable for this constant
 
-  j21s(:) = (/1d-3,1d-1,1d0/) !list of j21 values
+  j21s(:) = (/1d-3, 1d-1, 1d0/) !list of j21 values
 
   call krome_init() !init krome (mandatory)
 
+  !header
+  write(66,'(a)') "#j21 time "//krome_get_names_header()
   !loop on j21 values
   do j=1,size(j21s)
      !init radiation field between 1d1 and 1d2 using 1/E profile
@@ -39,11 +41,11 @@ program test
      dt = spy !initial time-step (s)
      t = 0d0 !start time (s)
 
-     do 
+     do
         dt = dt * 1.1d0 !increase time-step
         t = t + dt !advance time
         call krome(x(:), Tgas, dt) !call KROME
-        write(66,'(I5,99E17.8)') j, t/spy, x(:) !dump
+        write(66,'(99E17.8)') j21, t/spy, x(:) !dump
         if(t>1d8*spy) exit !exit when 1d6 years is reached
      end do
      write(66,*)
