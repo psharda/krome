@@ -4858,15 +4858,16 @@ class krome():
 					fout.write("\tget_names("+str(x.idx)+") = \"" + x.name + "\"\n")
 
 			elif(srow == "#KROME_cooling_names"):
-				coolDict = get_cooling_dict()
-				allCoolings = [x.lower() for x in self.allCoolings]
-				for (k,v) in coolDict.iteritems():
-					if(k in allCoolings): fout.write("get_cooling_names(idx_cool_"+str(k)+") = \"" + k.upper() + "\"\n")
+				coolDict = [[k,v] for (k,v) in get_cooling_dict().iteritems()]
+				allCoolings = [xx[0] for xx in sorted(coolDict,key=lambda x:x[1])]
+				for cool in allCoolings:
+					fout.write("get_cooling_names(idx_cool_"+str(cool)+") = \"" + cool.upper() + "\"\n")
+
 			elif(srow == "#KROME_heating_names"):
-				heatDict = get_heating_dict()
-				allHeatings = [x.lower() for x in self.allHeatings]
-				for (k,v) in heatDict.iteritems():
-					if(k in allHeatings): fout.write("get_heating_names(idx_heat_"+str(k)+") = \"" + k.upper() + "\"\n")
+				heatDict = [[k,v] for (k,v) in get_heating_dict().iteritems()]
+				allHeatings = [xx[0] for xx in sorted(heatDict,key=lambda x:x[1])]
+				for heat in allHeatings:
+					fout.write("get_heating_names(idx_heat_"+str(heat)+") = \"" + heat.upper() + "\"\n")
 
 			elif(srow == "#KROME_charges"):
 				for x in specs:
@@ -6809,10 +6810,12 @@ class krome():
 				fout.write("\tinteger,parameter::krome_nPhotoBins=" + str(self.photoBins) + "\n")
 				fout.write("\tinteger,parameter::krome_nPhotoRates=" + str(self.nPhotoRea) + "\n")
 			elif(srow == "#KROME_cooling_names_header_define"):
-				joinedCools = (" ".join(self.allCoolings))
+				coolDict = [k for (k,v) in get_cooling_dict().iteritems()]
+				joinedCools = (" ".join(coolDict))
 				fout.write("character*"+str(len(joinedCools))+"::krome_get_cooling_names_header\n")
 			elif(srow == "#KROME_heating_names_header_define"):
-				joinedHeats = (" ".join(self.allHeatings))
+				heatDict = [k for (k,v) in get_heating_dict().iteritems()]
+				joinedHeats = (" ".join(heatDict))
 				fout.write("character*"+str(len(joinedHeats))+"::krome_get_heating_names_header\n")
 			elif(srow == "#KROME_names_header_define"):
 				skipspec = ["CR","Tgas","dummy","g"]
@@ -6941,8 +6944,8 @@ class krome():
 
 		ATOL = self.ATOL
 		RTOL = self.RTOL
-		if(is_number(ATOL)): ATOL = '%e' % ATOL
-		if(is_number(RTOL)): RTOL = '%e' % RTOL
+		if(is_number(ATOL)): ATOL = '%e' % float(ATOL)
+		if(is_number(RTOL)): RTOL = '%e' % float(RTOL)
 		ATOL = ATOL.replace("e","d")
 		RTOL = RTOL.replace("e","d")
 

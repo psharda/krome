@@ -21,30 +21,30 @@ program test_krome
   real*8::result(5,10000,4)
 
   !preset J21 values
-  j21s = (/0.d0, 1d0, 1d2, 1d5/)
+  j21s = (/0d0, 1d0, 1d2, 1d5/)
 
   !INITIAL CONDITIONS
-  call krome_set_zredshift(15.0d0) !redshift
+  call krome_set_zredshift(15d0) !redshift
 
-  !INITIALIZE KROME PARAMETERS AND DUST 
+  !INITIALIZE KROME PARAMETERS AND DUST
   call krome_init()
 
   !$omp parallel do schedule(dynamic,1) default(none) &
   !$omp   private(ntot,Tgas,x,dd,i,j,dd1,rho,tff,dt,dtH,deldd) &
   !$omp   shared(j21s,imax,result)
   do j=1,size(j21s)
-     ntot           = 1.d0    !total density in 1/cm3
+     ntot           = 1d0    !total density in 1/cm3
      Tgas           = 1d2     !temperature in kelvin
 
      call krome_set_user_J21(j21s(j)) !common for J21
 
      !species initialization in 1/cm3
-     x(:) = 1.d-40
+     x(:) = 1d-40
 
      x(KROME_idx_H)         = ntot           !H
-     x(KROME_idx_H2)        = 1.0e-6*ntot    !H2
-     x(KROME_idx_E)         = 1.0e-4*ntot    !E
-     x(KROME_idx_Hj)        = 1.0e-4*ntot    !H+
+     x(KROME_idx_H2)        = 1d-6*ntot    !H2
+     x(KROME_idx_E)         = 1d-4*ntot    !E
+     x(KROME_idx_Hj)        = 1d-4*ntot    !H+
      x(KROME_idx_HE)        = 0.0775*ntot    !He
 
      dd = ntot
@@ -59,21 +59,22 @@ program test_krome
 
         !***CALCULATE THE FREE FALL TIME***!
         rho = krome_get_rho(x(:))
-        tff = sqrt(3.0d0 * 3.1415d0 / (32.0d0*6.67e-8*rho))
+        tff = sqrt(3d0 * 3.1415d0 / (32d0*6.67d-8*rho))
         user_tff = tff
         dtH = 0.01d0 * tff        !TIME-STEP
         deldd = (dd/tff) * dtH
         dd = dd + deldd        !UPDATE DENSITY
 
-        x(:) = x(:) * dd / dd1  
+        x(:) = x(:) * dd / dd1
 
-        dt = dtH 
+        dt = dtH
 
         if(dd.gt.1d16) exit
 
         !solve the chemistry
         call krome(x(:),Tgas,dt)
 
+        !store results to dump later
         result(:,i,j) = (/ j21s(j),dd,Tgas,x(KROME_idx_H2)/dd,x(KROME_idx_H)/dd /)
         if(mod(i,100)==0) print '(2I5,99E11.3)',j,i,dd,Tgas
 
@@ -82,6 +83,8 @@ program test_krome
      print *,""
   end do
 
+  !dump results
+  write(22,'(a)') "#J21 ntot Tgas H2 H"
   do j = 1,size(j21s)
      do i = 1,imax(j)
         write(22,'(99E17.8e3)') result(:,i,j)
