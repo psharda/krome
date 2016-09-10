@@ -19,11 +19,11 @@ program test_krome
 
   real*8::results(krome_nmols+3,10000,5)
 
-  !INITIALIZE KROME PARAMETERS AND DUST 
+  !INITIALIZE KROME PARAMETERS AND DUST
   call krome_init()
   call krome_set_zredshift(15d0)
 
-  zs = (/-99.d0, -4.d0, -3d0, -2d0, -1d0/) !list of metallicities
+  zs = (/-99d0, -4d0, -3d0, -2d0, -1d0/) !list of metallicities
   !$omp parallel do schedule(dynamic,1) default(none) &
   !$omp   private(jz,ntot,Tgas,x,dd,i,dd1,rho,tff,dt,dtH,deldd) &
   !$omp   shared(zs,imax,results)
@@ -34,12 +34,12 @@ program test_krome
      Tgas           = 3d2    !temperature in kelvin
 
      !species initialization in 1/cm3
-     x(:) = 1.d-40
+     x(:) = 1d-40
 
      x(KROME_idx_H)  = ntot          !H
-     x(KROME_idx_H2) = 1.d-6*ntot    !H2
-     x(KROME_idx_E)  = 1.d-4*ntot    !E
-     x(KROME_idx_Hj) = 1.d-4*ntot    !H+
+     x(KROME_idx_H2) = 1d-6*ntot    !H2
+     x(KROME_idx_E)  = 1d-4*ntot    !E
+     x(KROME_idx_Hj) = 1d-4*ntot    !H+
      x(KROME_idx_HE) = 0.0775d0*ntot !He
 
      !rescale metallicity for neutral metals (C,Fe,Si,O)
@@ -71,7 +71,7 @@ program test_krome
 
         x(:) = x(:) * dd / dd1 !rescale abundances
 
-        dt = dtH 
+        dt = dtH
 
         if(dd>1d18) exit !quit after 1e18 1/cm3
 
@@ -88,6 +88,7 @@ program test_krome
   end do
 
   !dump all the results stored during the runs
+  write(22,'(a)') "#Z rho Tgas "//krome_get_names_header()
   do jz = 1,size(zs)
      do i = 1,imax(jz)
         write(22,'(99E17.8e3)') results(:,i,jz)
