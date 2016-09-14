@@ -1505,16 +1505,25 @@ contains
        kappa(:) = kappa(size(kappa):1:-1)
     end if
 
+    !check if photobins are intialized
+    if(maxval(photoBinEleft)==0d0) then
+       print *,"ERROR: empty photobins when interpolating dust Qabs"
+       print *," from file "//trim(fname)
+       print *,"You probably need to define a photobins metric before"
+       print *," the call to krome_load_opacity_table"
+       stop
+    end if
+
     !check lower limit
     if(photoBinEleft(1)<energy(1)) then
-       print *,"ERROR: dust table "//trim(fname)//" lower bound"
+       print *,"ERROR: dust table "//trim(fname)//" energy lower bound (eV)"
        print *,photoBinEleft(1), "<", energy(1)
        stop
     end if
 
     !check upper limit
     if(photoBinEright(nPhotoBins)>energy(size(energy))) then
-       print *,"ERROR: dust table "//trim(fname)//" upper bound"
+       print *,"ERROR: dust table "//trim(fname)//" energy upper bound (eV)"
        print *,photoBinEright(nPhotoBins), ">", energy(size(energy))
        stop
     end if
