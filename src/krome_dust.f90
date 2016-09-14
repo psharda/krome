@@ -311,6 +311,14 @@ contains
     integer::jdust,j
     real*8::get_Qabs,energy
 
+    !rise error if array size problem
+    if(dust_Qabs_nE<=0) then
+       print *,"ERROR: when interpolating Qabs found zero energy points!"
+       print *,"You should probably intialize dust before initializing"
+       print *," photochemistry..."
+       stop
+    end if
+
     !loop to find the energy and interpolate
     do j=2,dust_Qabs_nE
        if(energy<dust_Qabs_E(j)) then
@@ -323,9 +331,10 @@ contains
        end if
     end do
 
-    !raise an error if nothing found
+    !rise an error if nothing found
     print *,"ERROR: no value found for get_Qabs"
     print *,"energy (eV):", energy
+    print *,"energy limits (eV):", dust_Qabs_E(1), dust_Qabs_E(dust_Qabs_nE)
     print *,"jdust:",jdust
     stop
 
