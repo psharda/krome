@@ -1576,18 +1576,18 @@ contains
     end do
 
     !dump interpolated opacity
-    open(23,file="opacityDust.interp",status="replace")
+    open(newunit=fileUnit,file="opacityDust.interp",status="replace")
     do j=1,nPhotoBins
-       write(23,*) photoBinEmid(j),opacityDust(j)
+       write(fileUnit,*) photoBinEmid(j),opacityDust(j)
     end do
-    close(23)
+    close(fileUnit)
 
     !dump original opacity file (as loaded by krome)
-    open(23,file="opacityDust.org",status="replace")
+    open(newunit=fileUnit,file="opacityDust.org",status="replace")
     do i=1,size(energy)
-       write(23,*) energy(i),kappa(i)
+       write(fileUnit,*) energy(i),kappa(i)
     end do
-    close(23)
+    close(fileUnit)
 
   end subroutine krome_load_opacity_table
 
