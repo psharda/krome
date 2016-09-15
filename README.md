@@ -47,13 +47,13 @@ Written and developed by Tommaso Grassi
  Niels Bohr Institute, Copenhagen.
 ```
 
-Co-developer Stefano Bovino
+and Stefano Bovino
 ```
  stefano.bovino@uni-hamburg.de
  Hamburger Sternwarte, Hamburg.
 ```
 
-Contributors (alphabetically): D. Galli, F.A. Gianturco, T.Haugbølle, J. Prieto,
+Contributors: D. Galli, F.A. Gianturco, T.Haugbølle, J. Prieto,
  J. Ramsey, D.R.G. Schleicher, D. Seifried, E. Simoncini, E. Tognelli 
 
 ---
