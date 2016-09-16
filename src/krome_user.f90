@@ -656,7 +656,7 @@ contains
     use krome_commons
 #IFKROME_useBindC
     real(kind=c_double), target :: get_photoBinE_right(nPhotoBins)
-    type(c_ptr) :: get_photoBinE_right
+    type(c_ptr) :: krome_get_photoBinE_right
     get_photoBinE_right(:) = photoBinEright(:)
     krome_get_photoBinE_right = c_loc(get_photoBinE_right)
 #ELSEKROME_useBindC
@@ -834,7 +834,7 @@ contains
     use krome_commons
     implicit none
     integer::ios,icount
-    #KROME_character(len=*) :: fname
+    character(len=*) :: fname
     real*8::tmp_El(nPhotoBins),tmp_Er(nPhotoBins)
     real*8::rout(3),tmp_J(nPhotoBins)
 
@@ -895,13 +895,18 @@ contains
     real*8,parameter::limit_lower = 0.1237d0
     real*8,parameter::limit_upper = 4.997d7
     real*8,parameter::limit_redshift = 15.660d0
-    #KROME_double_value, optional :: lower_in,upper_in
+    #KROME_double_value :: lower_in,upper_in
     integer::i
 
+#IFKROME_useBindC
+    lower = lower_in
+    upper = upper_in
+#ELSEKROME_useBindC
     lower = limit_lower
     upper = limit_upper
     if(present(lower_in)) lower = lower_in
     if(present(upper_in)) upper = upper_in
+#ENDIFKROME_useBindC
 
     if(phys_zredshift>limit_redshift) then
        print *,"ERROR: redshift out of range in HM"
@@ -951,13 +956,18 @@ contains
     real*8,parameter::limit_redshift = 15.660d0
     logical,optional::additive
     logical::add
-    #KROME_double_value, optional :: lower_in,upper_in
+    #KROME_double_value :: lower_in,upper_in
     integer::i
 
+#IFKROME_useBindC
+    lower = lower_in
+    upper = upper_in
+#ELSEKROME_useBindC
     lower = limit_lower
     upper = limit_upper
     if(present(lower_in)) lower = lower_in
     if(present(upper_in)) upper = upper_in
+#ENDIFKROME_useBindC
 
     add = .false.
     if(present(additive)) add = additive
@@ -1340,6 +1350,7 @@ contains
 #IFKROME_useBindC
     real(kind=c_double) :: x(nmols)
     real(kind=c_double), target :: get_opacity_size(nPhotoBins)
+    type(c_ptr) :: krome_get_opacity_size
     real(kind=c_double), value :: Tgas, csize
 #ELSEKROME_useBindC
     real*8 :: x(nmols),krome_get_opacity_size(nPhotoBins)
@@ -1372,8 +1383,8 @@ contains
        get_opacity_size(j) = tau * csize !store
 #ELSEKROME_useBindC
        krome_get_opacity_size(j) = tau * csize !store
-    end do
 #ENDIFKROME_useBindC
+    end do
 
 #IFKROME_useBindC
     krome_get_opacity_size = c_loc(get_opacity_size)
@@ -1401,6 +1412,7 @@ contains
     real(kind=c_double) :: x(nmols)
     real(kind=c_double), target :: get_opacity_size_d2g(nPhotoBins)
     real(kind=c_double), value :: Tgas, csize,d2g
+    type(c_ptr) :: krome_get_opacity_size_d2g
 #ELSEKROME_useBindC
     real*8 :: x(nmols),krome_get_opacity_size_d2g(nPhotoBins)
     real*8 :: Tgas,csize,d2g
@@ -1431,11 +1443,11 @@ contains
        get_opacity_size_d2g(j) = tau * csize !store
 #ELSEKROME_useBindC
        krome_get_opacity_size_d2g(j) = tau * csize !store
-    end do
 #ENDIFKROME_useBindC
+    end do
 
 #IFKROME_useBindC
-    krome_get_opacity_size_d2g = c_loc(get_opacity_size)
+    krome_get_opacity_size_d2g = c_loc(get_opacity_size_d2g)
 #ENDIFKROME_useBindC
 
   end function krome_get_opacity_size_d2g

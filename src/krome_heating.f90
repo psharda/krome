@@ -117,6 +117,7 @@ contains
   function heat_ZCIE(n,inTgas)
     use krome_commons
     use krome_subs
+    use krome_getphys
     implicit none
     integer,parameter::imax=coolZCIEn1
     integer,parameter::jmax=coolZCIEn2
