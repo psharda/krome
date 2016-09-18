@@ -1276,7 +1276,7 @@ contains
   end subroutine krome_set_photoBin_J21log
 
   !*****************************
-  !get the opacity exp(-tau) correpsonding to x(:)
+  !get the opacity tau correpsonding to x(:)
   ! chemical composition. The column density
   ! is computed using the expression in the
   ! num2col(x) function.
@@ -1326,7 +1326,7 @@ contains
   end function krome_get_opacity
 
   !*****************************
-  !get the opacity exp(-tau) correpsonding to the x(:)
+  !get the opacity tau correpsonding to the x(:)
   ! chemical composition. The column density
   ! is computed using the size of the cell (csize)
   ! An array of size krome_nPhotoBins is returned.
@@ -1382,7 +1382,7 @@ contains
   end function krome_get_opacity_size
 
   !*****************************
-  !get the opacity exp(-tau) correpsonding to the x(:)
+  !get the opacity tau correpsonding to the x(:)
   ! chemical composition. The column density
   ! is computed using the size of the cell (csize).
   ! Dust is included using dust-to-gas mass ratio (d2g).
