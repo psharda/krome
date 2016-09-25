@@ -2,7 +2,7 @@ import utils,itertools
 
 class species():
 
-	name = nameLatex = nameFile = nameHtml = None
+	name = nameLatex = nameFile = nameHtml = nameHref = None
 
 	#*****************
 	#constructor
@@ -11,8 +11,9 @@ class species():
 		self.name = speciesName
 
 		self.nameLatex = self.getLatexName()
+		self.nameFile = self.name.lower().replace("+","j").replace("-","w")
 		self.nameHtml = self.getHtmlName()
-		self.nameFile = self.name.replace("+","j").replace("-","w")
+		self.nameHref = self.getHrefName()
 
 		me = 9.10938356e-28 #electron mass, g
 
@@ -61,7 +62,7 @@ class species():
 	def getHtmlName(self):
 		name = list(self.name)
 		if(self.name.upper()=="E"): return "e<sup>-</sup>"
-		nameLatex = []
+		nameHtml = []
 		for x in name:
 			if(utils.isNumber(x)):
 				y = "<sub>"+x+"</sub>"
@@ -69,10 +70,13 @@ class species():
 				y = "<sup>"+x+"</sup>"
 			else:
 				y = x
-			nameLatex.append(y)
+			nameHtml.append(y)
+		return ("".join(nameHtml))
 
-		return ("".join(nameLatex))
-
+	#******************
+	def getHrefName(self):
+		url = "species_"+str(self.nameFile)+".html"
+		return "<a href=\""+url+"\">"+self.getHtmlName()+"</a>"
 
 	#**********************
 	def getLatexName(self):
@@ -89,4 +93,48 @@ class species():
 			nameLatex.append(y)
 
 		return ("".join(nameLatex))
+
+	#*********************
+	def makeHtmlPage(self,myNetwork):
+
+		fname = "htmls/species_"+str(self.nameFile)+".html"
+
+		tableFormation = []
+		tableDestruction = []
+		for reactions in myNetwork.reactions:
+			if(self.name in [x.name for x in reactions.products]):
+				tableFormation.append(reactions)
+			if(self.name in [x.name for x in reactions.reactants]):
+				tableDestruction.append(reactions)
+
+		fout = open(fname,"w")
+		fout.write(utils.getFile("header.php"))
+		fout.write("<p style=\"font-size:30px\">"+self.nameHtml+"</p>\n")
+		fout.write("<br>\n")
+		fout.write("<a href=\"indexSpecies.html\">back</a>\n")
+
+		fout.write("<br><br>\n")
+		fout.write("<p style=\"font-size:20px\">Formation channels</p>\n")
+		fout.write("<table>\n")
+		fout.write("<tr><th><th><th>\n")
+		for reaction in tableFormation:
+			fout.write("<tr valign=\"baseline\">"+reaction.getReactionHtmlRow(self)+"\n")
+		fout.write("<tr><th><th><th>\n")
+		fout.write("</table>\n")
+
+		fout.write("<br><br>\n")
+		fout.write("<p style=\"font-size:20px\">Destruction channels</p>\n")
+		fout.write("<table>\n")
+		fout.write("<tr><th><th><th>\n")
+		for reaction in tableDestruction:
+			fout.write("<tr valign=\"baseline\">"+reaction.getReactionHtmlRow(self)+"\n")
+		fout.write("<tr><th><th><th>\n")
+		fout.write("</table>\n")
+
+		fout.write(utils.getFile("footer.php"))
+		fout.close()
+
+
+
+
 

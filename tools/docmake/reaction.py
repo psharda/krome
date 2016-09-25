@@ -113,10 +113,25 @@ class reaction:
 		return self.reactionHash
 
 	#********************
-	def getReactionHtmlRow(self):
-		if(self.reactionHtmlRow!=None): return self.reactionHtmlRow
-		reactantsName = sorted([x.nameHtml for x in self.reactants])
-		productsName = sorted([x.nameHtml for x in self.products])
+	def getReactionHtmlRow(self,mySpecies=None):
+		reactantsName = []
+		for species in self.reactants:
+			xspec = species.nameHref
+			if(mySpecies!=None):
+				if(species.name==mySpecies.name):
+					xspec = "<b>"+species.nameHtml+"</b>"
+			reactantsName.append(xspec)
+
+		productsName = []
+		for species in self.products:
+			xspec = species.nameHref
+			if(mySpecies!=None):
+				if(species.name==mySpecies.name):
+					xspec = "<b>"+species.nameHtml+"</b>"
+			productsName.append(xspec)
+
+		#reactantsName = sorted(reactantsName)
+		#productsName = sorted(productsName)
 
 		rpart = ("<td>+<td>".join(reactantsName))
 		ppart = ("<td>+<td>".join(productsName))
