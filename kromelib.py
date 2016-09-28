@@ -1384,7 +1384,7 @@ def get_Tshortcut(rea,slist,cvars=[]):
 	shcut = sorted(shcut, key=lambda x:len(x.split("=")[0].strip()), reverse=True)
 
 	#loop on the shortcuts to find if the rate coefficient employs them
-	krea = rea.krate
+	krea = rea.krate.replace(" ","")
 	for x in shcut:
 		ax = x.split("=") #split the shortcut
 		xvar = parsevar(krea) #parse the variable in the rate coefficient
@@ -1394,7 +1394,7 @@ def get_Tshortcut(rea,slist,cvars=[]):
 			xtmp = x
 			for xx in shcut:
 				axx = xx.split("=") #split the shortcut
-				xxvar = parsevar(xtmp)  #parse the variables in the rate coeffcient found
+				xxvar = parsevar(xtmp)  #parse the variables in the rate coefficient found
 				xtmp = xtmp.replace(axx[0].strip(),"")
 				if((axx[0].strip().lower() in xxvar) and not(xx in slist)):
 					slist.append(xx) #append the dependent shortcut
@@ -1433,7 +1433,7 @@ def get_usage():
 ##################################
 #truncate F90 expression using sep as separator for blocks shorter than sublen
 def truncF90(mystr, sublen, sep):
-	#split (&\n) the string mystr in parts smaller tha sublen using sep as separator
+	#split (&\n) the string mystr in parts smaller than sublen using sep as separator
 	if(mystr.strip()==""): return mystr
 	mystr = mystr.replace("**","##")
 	mystr = mystr.replace("(/","###")
@@ -1459,7 +1459,7 @@ def coeVarArray(varin):
 	if("[" in varin):
 		varin = varin.replace(" ","") #replace spaces
 		var_array_size = varin.split("[")[1].split("]")[0] #grep inside brackets
-		varin = varin.replace("["+var_array_size+"]","") #replace braketes and content
+		varin = varin.replace("["+var_array_size+"]","") #replace brackets and content
 		varin = varin+"("+var_array_size+")" #set variable definition
 
 	return varin

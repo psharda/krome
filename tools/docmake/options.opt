@@ -1,0 +1,4 @@
+network: 	../../networks/react_COthin_noSi
+range: 		Tgas = 1e1,1e4
+range: 		user_crate = 1e-19,1e-15
+

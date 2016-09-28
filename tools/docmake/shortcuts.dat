@@ -1,0 +1,7 @@
+T32 = Tgas/3d2
+invT = 1d0/Tgas
+invTgas = 1d0/Tgas
+Te = Tgas/11604.52500617
+invTe = 11604.52500617/Tgas
+lnte = log(Tgas/11604.52500617)
+invT32 = 3d2/Tgas
