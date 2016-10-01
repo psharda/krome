@@ -137,9 +137,19 @@ class reaction:
 		ppart = ("<td>+<td>".join(productsName))
 		rspace = ("<td><td>".join([""]*(6-len(reactantsName))))
 		pspace = ("<td><td>".join([""]*(10-len(productsName))))
-		self.reactionHtmlRow = "<td>"+rpart+"<td>"+rspace+"<td>&rarr;<td>"+ppart+"<td>"+pspace
+		self.reactionHtmlRow = "<td>&nbsp;"+rpart+"<td>"+rspace+"<td>&rarr;<td>"+ppart+"<td>"+pspace
 		self.reactionHtmlRow += "<td><a href=\"rate_"+self.getReactionHash()+".html\">details</a>"
 		return self.reactionHtmlRow
+
+
+	#*******************
+	def getAtoms(self):
+		atoms = [x for x in self.getSpecies()]
+		return list(set(atoms))
+
+	#********************
+	def getSpecies(self):
+		return self.reactants+self.products
 
 	#********************
 	def merge(self,myReaction):
@@ -151,6 +161,7 @@ class reaction:
 	def plotRate(self,shortcuts,varRanges):
 		self.evalRate(shortcuts,varRanges)
 		self.doPlot()
+		self.saveEvals()
 
 	#********************
 	#evaluate rates
@@ -329,6 +340,23 @@ class reaction:
 
 		#if value found save plot to png file
 		if(hasPlot): plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png")
+
+
+	#****************
+	#save evaluation as a json structure
+	def saveEvals(self):
+		import json
+
+		#jsone file name
+		fname = "evals/rate_"+str(self.getReactionHash())+".json"
+
+		#convert to json
+		jsonData = json.dumps(self.evaluation)
+
+		#dump to file
+		fout = open(fname,"w")
+		fout.write(jsonData)
+		fout.close()
 
 
 	#****************

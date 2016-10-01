@@ -8,10 +8,18 @@ class species():
 	#constructor
 	def __init__(self,speciesName,atomSet):
 
+
+		#check for upper case atoms, e.g. HE instead of He
+		for atom in atomSet.keys():
+			if((atom.upper()!=atom) and (atom.upper() in speciesName)):
+				orgSpeciesName = speciesName
+				speciesName = speciesName.replace(atom.upper(),atom)
+				print "WARNING: "+atom+" found upper case in "+orgSpeciesName+"! Replaced as "+speciesName
+
 		self.name = speciesName
 
 		self.nameLatex = self.getLatexName()
-		self.nameFile = self.name.lower().replace("+","j").replace("-","w")
+		self.nameFile = self.nameHash = self.name.lower().replace("+","j").replace("-","w")
 		self.nameHtml = self.getHtmlName()
 		self.nameHref = self.getHrefName()
 
@@ -24,8 +32,8 @@ class species():
 		#check to have enough combinations
 		if(len(atoms)>len(alpha)): sys.exit("ERROR: in species parser alpha needs to be extended!")
 
-		#species name uppercase
-		specName = speciesName.upper()
+		#local species name
+		specName = speciesName #.upper()
 
 		#compute charge
 		self.charge = specName.count("+")-specName.count("-")
@@ -54,6 +62,11 @@ class species():
 
 		#store exploded with real atom names
 		self.exploded = [atoms[alpha.index(x)] for x in exploded]
+
+		#store atoms
+		nonAtoms = ["+","-"]
+		self.atoms = [x for x in self.exploded if not(x in nonAtoms) and not(utils.isNumber(x))]
+
 		#compute mass using dictionary as reference
 		self.mass = sum([atomSet[x] for x in self.exploded])
 		if(speciesName.upper()!="E"): self.mass -= self.charge*me
@@ -99,6 +112,8 @@ class species():
 
 		fname = "htmls/species_"+str(self.nameFile)+".html"
 
+		tableHeader = "<tr>"+("<th>"*30)
+
 		tableFormation = []
 		tableDestruction = []
 		for reactions in myNetwork.reactions:
@@ -114,21 +129,29 @@ class species():
 		fout.write("<a href=\"indexSpecies.html\">back</a>\n")
 
 		fout.write("<br><br>\n")
-		fout.write("<p style=\"font-size:20px\">Formation channels</p>\n")
-		fout.write("<table>\n")
-		fout.write("<tr><th><th><th>\n")
+		fout.write("<p style=\"font-size:20px\">Formation channels</p><br>\n")
+		fout.write("<table width=\"50%\">\n")
+		fout.write(tableHeader+"\n")
+		icount = 0
 		for reaction in tableFormation:
-			fout.write("<tr valign=\"baseline\">"+reaction.getReactionHtmlRow(self)+"\n")
-		fout.write("<tr><th><th><th>\n")
+			bgcolor = ""
+			if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
+			fout.write("<tr bgcolor=\""+bgcolor+"\" valign=\"baseline\">"+reaction.getReactionHtmlRow(self)+"\n")
+			icount += 1
+		fout.write(tableHeader+"\n")
 		fout.write("</table>\n")
 
 		fout.write("<br><br>\n")
-		fout.write("<p style=\"font-size:20px\">Destruction channels</p>\n")
-		fout.write("<table>\n")
-		fout.write("<tr><th><th><th>\n")
+		fout.write("<p style=\"font-size:20px\">Destruction channels</p><br>\n")
+		fout.write("<table width=\"50%\">\n")
+		fout.write(tableHeader+"\n")
+		icount = 0
 		for reaction in tableDestruction:
-			fout.write("<tr valign=\"baseline\">"+reaction.getReactionHtmlRow(self)+"\n")
-		fout.write("<tr><th><th><th>\n")
+			bgcolor = ""
+			if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
+			fout.write("<tr bgcolor=\""+bgcolor+"\" valign=\"baseline\">"+reaction.getReactionHtmlRow(self)+"\n")
+			icount += 1
+		fout.write(tableHeader+"\n")
 		fout.write("</table>\n")
 
 		fout.write(utils.getFile("footer.php"))

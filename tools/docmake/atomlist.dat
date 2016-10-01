@@ -1,7 +1,17 @@
 #atoms and mass
+#NOTE: case sensitive!
+# electron is "E"
+#
+#definitions are:
+#me = electron mass
+#mp = proton mass
+#mn = neutron mass
+#mep = me + mp
+#mepn = me + mp + mn
+
 H	mep
 He	2*mepn
 C	6*mepn
 O	8*mepn
-e	me
+E	me
 Si	14*mepn

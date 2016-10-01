@@ -301,13 +301,13 @@ color:#41403b;
 }
 
 
+/*TABLE properties*/
+table {
+	border-collapse: collapse;
+}
 
-
-	
-	
-
-
-	
-	
-
+th {
+	height: 1px;
+	background-color: black;
+}
 
