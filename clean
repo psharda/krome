@@ -30,6 +30,18 @@ for files in glob.glob("tools/docmake/pngs/*.png"):
 	print "removing ./"+files
 	hasrm = True
 
+#cleam eps from docmake
+for files in glob.glob("tools/docmake/epss/*.eps"):
+	os.unlink(files)
+	print "removing ./"+files
+	hasrm = True
+
+#cleam eps from docmake
+for files in glob.glob("tools/docmake/dots/*.dot"):
+	os.unlink(files)
+	print "removing ./"+files
+	hasrm = True
+
 #cleam html from docmake
 for files in glob.glob("tools/docmake/htmls/*.html"):
 	os.unlink(files)
