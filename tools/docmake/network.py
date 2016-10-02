@@ -20,6 +20,8 @@ class network:
 		#read shortcuts
 		shortcuts = utils.getShortcuts()
 
+		inBlockCR = False
+
 		self.reactions = []
 		print "reading network "+fileName
 		#open file to read network
@@ -39,11 +41,18 @@ class network:
 				(variable,expression) = [x.strip() for x in srow.replace("@var:","").split("=")]
 				shortcuts[variable] = expression
 
+			if(srow.lower().startswith("@cr_start") or srow.lower().startswith("@cr_begin")): inBlockCR = True
+			if(srow.lower().startswith("@cr_stop") or srow.lower().startswith("@cr_end")): inBlockCR = False
+
+			#change reaction type to CR
+			reactionType = "standard" #default
+			if(inBlockCR): reactionType = "CR"
+
 			#skip other tokens
 			if(srow.startswith("@")): continue
 
 			#parse row line for reaction
-			myReaction = reaction.reaction(srow,reactionFormat,atomSet)
+			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType)
 
 			#add parsed reaction to reactions structure in network
 			self.reactions.append(myReaction)
