@@ -18,7 +18,7 @@ switchPRO = $(switchOPT) -pg -traceback
 switchOMP = $(switchOPT) -openmp
 
 #default switch
-switch = $(switchDBG)
+switch = $(switchOPT) -fPIC
 
 #no warning switch (for DLSODES)
 nowarnIfort = -nowarn
@@ -52,11 +52,15 @@ all: 	$(objs) testF.o
 	$(fc) $(objs) testF.o -o testF $(switch) $(lib)
 	$(fc) -o libkrome.so $(objs) $(switch) $(lib) -shared
 
+#ifort full debug target
+debug: switch = $(switchDBG) -fPIC
+debug: nowarn = $(nowarnIfort)
+debug: all
+
 #gfortran target
 gfortran: fc = gfortran
 gfortran: cc = gcc
 gfortran: switch = -ffree-line-length-none
-gfortran: switch += -fPIC
 gfortran: nowarn = $(nowarnGNU)
 gfortran: clib = -lm -lgfortran
 gfortran: all

@@ -1,6 +1,7 @@
 #default fortran compiler
 fc = ifort
 cc = icc
+clib = -nofor_main
 
 #default libraries
 lib = -llapack
@@ -18,7 +19,8 @@ switchPRO = $(switchOPT) -pg -traceback
 switchOMP = $(switchOPT) -openmp
 
 #default switch
-switch = $(switchDBG)
+switch = $(switchOPT)
+switchc = $(switchOPT)
 
 #no warning switch (for DLSODES)
 nowarnIfort = -nowarn
@@ -48,14 +50,22 @@ objs += krome_reduction.o
 objs += krome.o
 
 #default target
+#note that Fortran is used as the linker
 all: 	$(objs) testC.o testF.o
 	$(fc) $(objs) testF.o -o testF $(switch) $(lib)
-	$(cc) $(objs) testC.o -o testC $(switchc) $(clib)
+	$(fc) $(objs) testC.o -o testC $(switchc) $(clib)
+
+#ifort full debug target
+debug: switch = $(switchDBG)
+debug: switchc = -traceback
+debug: nowarn = $(nowarnIfort)
+debug: all
 
 #gfortran target
 gfortran: fc = gfortran
 gfortran: cc = gcc
 gfortran: switch = -ffree-line-length-none
+gfortran: switchc = 
 gfortran: nowarn = $(nowarnGNU)
 gfortran: clib = -lm -lgfortran
 gfortran: all
@@ -74,4 +84,4 @@ clean:
 
 #rule for c
 %.o:%.c
-	$(cc) $(switch) $(nowarn) -c $^ -o $@
+	$(cc) $(switchc) $(nowarn) -c $^ -o $@
