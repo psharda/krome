@@ -1,68 +1,77 @@
-fc = gfortran
-cc = gcc
-prjC = kromeC #exe name
-prjF = kromeF
-lib = -llapack #libraries
-clib = -lm -lgfortran
+#default fortran compiler
+fc = ifort
+cc = icc
 
-GREP = $(shell grep -i 'dgesv' krome_cooling.f90)
+#default libraries
+lib = -llapack
+
+#if dgesv is not present non need for LAPACK
+GREP = $(shell grep -i 'dgesv' krome_subs.f90)
 ifeq ($(GREP),)
-	lib = 
+	lib =
 endif
 
+#flags
+switchOPT = -O3 -ipo -ip -unroll
+switchDBG = -O0 -check all -warn all -fpe0 -u -traceback -warn nounused
+switchPRO = $(switchOPT) -pg -traceback
+switchOMP = $(switchOPT) -openmp
 
-ifneq (,$(findstring ifort,$(fc)))
-	std = -check all -traceback -fpe0 -ftz -ftrapuv -warn all -u
-	nowarn = -nowarn
-	sswitch = $(std)
-	fswitch = $(std) -O3 -ipo -ip -unroll 
-	hswitch =  -O3 -ipo -ip -unroll
-	pswitch = $(hswitch) -pg
-	nswitch = $(std) -O0
-	switch =  $(nswitch) -warn nounused
-	switcho = $(switch)
-else
-	switch = -ffpe-trap=invalid,zero,overflow -fbacktrace -fbounds-check
-	switch+= -ffree-line-length-none -fimplicit-none -g
-	switcho =
-	switchc = -g
-	nowarn = -w
-endif
+#default switch
+switch = $(switchDBG)
 
-all:
+#no warning switch (for DLSODES)
+nowarnIfort = -nowarn
+nowarnGNU = -w
 
-ifneq ($(wildcard opkdmain.f),) 
-	$(fc) -c opkda2.f $(switcho) $(nowarn)
-	$(fc) -c opkda1.f $(switcho) $(nowarn)
-	$(fc) -c opkdmain.f $(switcho) $(nowarn)
-endif
+#objects
+objs = opkda2.o
+objs += opkda1.o
+objs += opkdmain.o
+objs += krome_commons.o
+objs += krome_constants.o
+objs += krome_user_commons.o
+objs += krome_getphys.o
+objs += krome_gadiab.o
+objs += krome_grfuncs.o
+objs += krome_phfuncs.o
+objs += krome_subs.o
+objs += krome_stars.o
+objs += krome_tabs.o
+objs += krome_dust.o
+objs += krome_photo.o
+objs += krome_cooling.o
+objs += krome_heating.o
+objs += krome_ode.o
+objs += krome_user.o
+objs += krome_reduction.o
+objs += krome.o
 
-ifneq ($(wildcard dvode_f90_m.f90),) 
-	$(fc) -c dvode_f90_m.f90 $(switcho) $(nowarn)
-endif
+#default target
+all: 	$(objs) testC.o testF.o
+	$(fc) $(objs) testF.o -o testF $(switch) $(lib)
+	$(cc) $(objs) testC.o -o testC $(switchc) $(clib)
 
-ifneq ($(wildcard nleq_all.f),) 
-	$(fc) -c nleq_all.f $(switch) $(nowarn)
-endif
-	$(fc) -c krome_commons.f90 $(switch) 
-	$(fc) -c krome_constants.f90 $(switch)
-	$(fc) -c krome_user_commons.f90 $(switch)
-	$(fc) -c krome_subs.f90 $(switch)
-	$(fc) -c krome_stars.f90 $(switch)
-	$(fc) -c krome_photo.f90 $(switch)
-	$(fc) -c krome_tabs.f90 $(switch)
-	$(fc) -c krome_dust.f90 $(switch)	
-	$(fc) -c krome_cooling.f90 $(switch)
-	$(fc) -c krome_heating.f90 $(switch)	
-	$(fc) -c krome_ode.f90 $(switch) 
-	$(fc) -c krome_user.f90 $(switch)
-	$(fc) -c krome_reduction.f90 $(switch)
-	$(fc) -c krome.f90 $(switch)
-	$(cc) -c test.c -o testC.o $(switchc) 
-	$(fc) -c test.f90 -o testF.o $(switch)
+#gfortran target
+gfortran: fc = gfortran
+gfortran: cc = gcc
+gfortran: switch = -ffree-line-length-none
+gfortran: nowarn = $(nowarnGNU)
+gfortran: clib = -lm -lgfortran
+gfortran: all
 
-	$(cc) -o $(prjC) krome*.o opkd*.o testC.o $(switchc) $(lib) $(clib)
-	$(fc) -o $(prjF) krome*.o opkd*.o testF.o $(switch) $(lib)
+#clean target
+clean:
+	rm -f *.o *.mod *__genmod.f90 *~ $(exec)
 
-clean: 
-	rm -f *.o $(prjC) $(prjF) *~ *.mod *_genmod.f90 *.i90
+#rule for f90
+%.o:%.f90
+	$(fc) $(switch) -c $^ -o $@
+
+#rule for f
+%.o:%.f
+	$(fc) $(switch) $(nowarn) -c $^ -o $@
+
+#rule for c
+%.o:%.c
+	$(cc) $(switch) $(nowarn) -c $^ -o $@
