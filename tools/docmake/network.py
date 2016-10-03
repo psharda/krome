@@ -260,11 +260,14 @@ class network:
 		for refAtom in self.getAtoms():
 
 			fnamePNG = "pngs/network_atom_"+str(refAtom)+".png"
+			fnameEPS = "epss/network_atom_"+str(refAtom)+".eps"
 			if(not(os.path.isfile(fnamePNG))): continue
 
 			fout.write("<p style=\"font-size:20px\">Graph for "+refAtom+"</p>\n")
+			fout.write("<p>&nbsp;Download <a href=\"../"+fnamePNG+"\" target=\"_blank\">PNG</a>")
+			fout.write(" <a href=\"../"+fnameEPS+"\" target=\"_blank\">EPS</a></p><br>\n")
 			fout.write("<a target=\"_blank\" href=\"../"+fnamePNG+"\">")
-			fout.write("<img src=\"../"+fnamePNG+"\" width=\"500px\"></a>\n")
+			fout.write("<img src=\"../"+fnamePNG+"\" style=\"{max-width:500px;}\"></a>\n")
 			fout.write("<br><br>\n")
 
 		#add footer
