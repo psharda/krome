@@ -26,12 +26,6 @@ program test_krome
 
   call krome_init()
 
-  !NOTE: here myCoe array is employed to store the
-  ! coefficient values, since the temperature is
-  ! constant during the model evolution.
-  ! myCoe(:) is defined in krome_user_commons
-  myCoe(:) = krome_get_coef(Tgas)
-
   x(:) = 1.d-20
   !initial densities (model EA2 Wakelam+Herbst 2008)
   x(KROME_idx_H2)  = 0.5d0   * xH
@@ -50,6 +44,12 @@ program test_krome
 
   !calculate elctrons (neutral cloud)
   x(KROME_idx_e) = krome_get_electrons(x(:))
+
+  !NOTE: here myCoe array is employed to store the
+  ! coefficient values, since the temperature is
+  ! constant during the model evolution.
+  ! myCoe(:) is defined in krome_user_commons
+  myCoe(:) = krome_get_coef(Tgas,x(:))
 
   dt = 1d2*spy !time-step (s)
   t = 0d0 !initial time (s)
