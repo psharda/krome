@@ -10,7 +10,7 @@ class network:
 	def __init__(self,myOptions):
 
 		#default format
-		reactionFormat = "@idx,R,R,R,P,P,P,P,Tmin,Tmax,rate"
+		reactionFormat = "@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate"
 
 		#get network file name
 		fileName = myOptions.network

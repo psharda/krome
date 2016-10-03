@@ -17,7 +17,7 @@ class reaction:
 	#parse csv reaction
 	def __init__(self,row,reactionFormat,atomSet,reactionType):
 		if(not(reactionFormat.startswith("@format:"))):
-			sys.exit("ERROR: wrong format "+reactionFromat)
+			sys.exit("ERROR: wrong format "+reactionFormat)
 		splitFormat = reactionFormat.replace("@format:","").split(",")
 		splitFormat = [x.lower() for x in splitFormat]
 		arow = row.strip().split(",",len(splitFormat))
