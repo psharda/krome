@@ -1,8 +1,15 @@
 #***********************
+def getHtmlProperty(item):
+	if(item=="tableRowBgcolor"):
+		return  "#D3D3D3"
+	else:
+		print "ERROR: item "+item+" unknown!"
+		sys.exit()
+
+#***********************
 def getFile(fileName):
 	with open(fileName, 'r') as content_file:
 		return content_file.read()
-
 
 #*********************
 def getAtomSet(fileName):
@@ -25,7 +32,7 @@ def getAtomSet(fileName):
 		reps = sorted(refMass.keys(), key=lambda x:len(x),reverse=True)
 		for rep in reps:
 			arow[1] = arow[1].replace(rep,str(refMass[rep]))
-		atomSet[arow[0].upper()] = eval(arow[1])
+		atomSet[arow[0]] = eval(arow[1])
 	return atomSet
 
 #*********************

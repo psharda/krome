@@ -15,7 +15,7 @@
     <!---logo ends here -->
     <div class="menu">
       <ul>
-        <li><a class="active" href="#">Home</a>me</li>
+        <li><a class="active" href="index.html">Home</a>me</li>
       </ul>
     </div>
     <!--- menu ends here -->

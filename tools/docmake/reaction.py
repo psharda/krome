@@ -15,21 +15,22 @@ class reaction:
 
 	#********************
 	#parse csv reaction
-	def __init__(self,row,reactionFormat,atomSet):
+	def __init__(self,row,reactionFormat,atomSet,reactionType):
 		if(not(reactionFormat.startswith("@format:"))):
-			sys.exit("ERROR: wrong format "+reactionFromat)
+			sys.exit("ERROR: wrong format "+reactionFormat)
 		splitFormat = reactionFormat.replace("@format:","").split(",")
 		splitFormat = [x.lower() for x in splitFormat]
 		arow = row.strip().split(",",len(splitFormat))
 		arow = [x.strip() for x in arow]
 
-		specials = ["","G","CR"]
+		specials = ["","G"]
 
 		self.rate = []
 		self.reactants = []
 		self.products = []
 		self.Tmin = [None]
 		self.Tmax = [None]
+		self.reactionType = reactionType
 
 		for i in range(len(splitFormat)):
 			part = splitFormat[i]
@@ -54,6 +55,12 @@ class reaction:
 			else:
 				print "ERROR: unknow format element "+part
 				sys.exit(reactionFormat)
+
+		#add cosmic ray if not present
+		hasCR = ("CR" in [x.name for x in self.reactants])
+		if(not(hasCR) and reactionType=="CR"):
+				spec = species.species("CR",atomSet)
+				self.reactants.append(spec)
 		self.check()
 
 	#**************
@@ -137,9 +144,19 @@ class reaction:
 		ppart = ("<td>+<td>".join(productsName))
 		rspace = ("<td><td>".join([""]*(6-len(reactantsName))))
 		pspace = ("<td><td>".join([""]*(10-len(productsName))))
-		self.reactionHtmlRow = "<td>"+rpart+"<td>"+rspace+"<td>&rarr;<td>"+ppart+"<td>"+pspace
+		self.reactionHtmlRow = "<td>&nbsp;"+rpart+"<td>"+rspace+"<td>&rarr;<td>"+ppart+"<td>"+pspace
 		self.reactionHtmlRow += "<td><a href=\"rate_"+self.getReactionHash()+".html\">details</a>"
 		return self.reactionHtmlRow
+
+
+	#*******************
+	def getAtoms(self):
+		atoms = [x for x in self.getSpecies()]
+		return list(set(atoms))
+
+	#********************
+	def getSpecies(self):
+		return self.reactants+self.products
 
 	#********************
 	def merge(self,myReaction):
@@ -151,6 +168,7 @@ class reaction:
 	def plotRate(self,shortcuts,varRanges):
 		self.evalRate(shortcuts,varRanges)
 		self.doPlot()
+		self.saveEvals()
 
 	#********************
 	#evaluate rates
@@ -294,30 +312,37 @@ class reaction:
 	def doPlot(self):
 		import matplotlib.pyplot as plt
 		#max orders of magnitude y axis
-		yspanMax = 1e-6
+
 		plt.clf()
+		yspanMax = 1e-10
 		hasPlot = False
 		#loop on different limited ranges
 		for evaluation in self.evaluation:
 			#get loop variable and evaluated rate
 			for (variable,data) in evaluation.iteritems():
+
 				if(data==None): continue
 				hasPlot = True
 				xdata = data["xdata"]
 				ydata = data["ydata"]
-				#plot full range
-				plt.loglog(xdata,ydata,"r--")
 
-				#if Tgas use limited ranges and plot limit points
 				if(variable.lower()=="tgas"):
+					#plot full range
+					plt.loglog(xdata,ydata,"r--")
+
+					#if Tgas use limited ranges and plot limit points
 					xdataRange = data["xdataRange"]
 					ydataRange = data["ydataRange"]
 					plt.loglog(evaluation[variable]["xlimits"], evaluation[variable]["ylimits"],"ro")
 					plt.loglog(xdataRange,ydataRange,"b-")
 				else:
+					plt.clf()
 					xdataRange = xdata
 					ydataRange = ydata
+					plt.loglog(xdataRange,ydataRange)
 
+
+				plt.grid(b=True, color='0.65',linestyle='--')
 				#plot limited range
 				plt.xlabel(variable)
 				plt.ylabel("rate")
@@ -327,8 +352,25 @@ class reaction:
 				#set limits if constant
 				if(min(ydataRange)==max(ydataRange)): plt.ylim(max(ydataRange)*1e-1,max(ydataRange)*1e1)
 
-		#if value found save plot to png file
-		if(hasPlot): plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png")
+				#if value found save plot to png file
+				if(hasPlot): plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png")
+
+
+	#****************
+	#save evaluation as a json structure
+	def saveEvals(self):
+		import json
+
+		#jsone file name
+		fname = "evals/rate_"+str(self.getReactionHash())+".json"
+
+		#convert to json
+		jsonData = json.dumps(self.evaluation)
+
+		#dump to file
+		fout = open(fname,"w")
+		fout.write(jsonData)
+		fout.close()
 
 
 	#****************

@@ -1612,18 +1612,20 @@ contains
   !alias for coe in krome_subs
   ! returns the coefficient array of size krome_nrea
   ! for a given Tgas
-  function krome_get_coef(Tgas) #KROME_bindC
+  function krome_get_coef(Tgas,x) #KROME_bindC
     use krome_commons
     use krome_subs
 #IFKROME_useBindC
     real(kind=c_double), value :: Tgas
     real(kind=c_double), target :: coeffs(nrea)
+    real(kind=c_double), target :: x(nmols)
     type(c_ptr) :: krome_get_coef
 #ELSEKROME_useBindC
-    real*8 :: krome_get_coef(nrea),Tgas
+    real*8 :: krome_get_coef(nrea),Tgas,x(nmols)
 #ENDIFKROME_useBindC
     real*8::n(nspec)
     n(:) = 0d0
+    n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
 
 #IFKROME_useBindC

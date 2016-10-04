@@ -12,29 +12,22 @@ for x in [".log","~",".pyc",".dot",".gps",".tmp"]:
 		print "removing ./"+files
 		hasrm = True
 
-#cleam pyc from tools
-for files in glob.glob("tools/*.pyc"):
-	os.unlink(files)
-	print "removing ./"+files
-	hasrm = True
 
-#cleam pyc from docmake
-for files in glob.glob("tools/docmake/*.pyc"):
-	os.unlink(files)
-	print "removing ./"+files
-	hasrm = True
+removePatterns = ["tools/*.pyc", \
+	"tools/docmake/*.pyc", \
+	"tools/docmake/pngs/*.png", \
+	"tools/docmake/epss/*.eps", \
+	"tools/docmake/evals/*.json", \
+	"tools/docmake/dots/*.dot", \
+	"tools/docmake/htmls/*.html", \
+	]
 
-#cleam png from docmake
-for files in glob.glob("tools/docmake/pngs/*.png"):
-	os.unlink(files)
-	print "removing ./"+files
-	hasrm = True
-
-#cleam html from docmake
-for files in glob.glob("tools/docmake/htmls/*.html"):
-	os.unlink(files)
-	print "removing ./"+files
-	hasrm = True
+#clean patterns
+for pattern in removePatterns:
+	for files in glob.glob(pattern):
+		os.unlink(files)
+		print "removing ./"+files
+		hasrm = True
 
 #remove temp files (~) from subfolders
 for root, dirnames, filenames in os.walk('.'):
