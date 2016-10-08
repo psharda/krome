@@ -60,7 +60,7 @@ class krome():
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = shortHead = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = isdry = useIERR = checkReverse = usePhotoInduced = False
-	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = reducer = False
+	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = reducer = useFexCustom = False
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
@@ -244,6 +244,8 @@ class krome():
 		self.parser.add_argument("-dustSeed", help="set the dust seed in 1/cm3 for dust growth. Default is zero. Any F90 expression \
 			is allowed for SEED.", metavar="SEED")
 		self.parser.add_argument("-enzo", action="store_true", help="create patches for ENZO")
+		self.parser.add_argument("-fexArgument", action="store_true", help="add ODE function (fex) as additional argument to \
+			the main call to KROME")
 		self.parser.add_argument("-flash", action="store_true", help="create patches for FLASH")
 		self.parser.add_argument("-forceMF21", action="store_true", help="force explicit sparsity and Jacobian")
 		self.parser.add_argument("-forceMF222", action="store_true", help="force internal-generated sparsity and Jacobian")
@@ -1530,6 +1532,11 @@ class krome():
 		if(args.reducer):
 			self.reducer = True
 			print "Reading option -reducer"
+
+		#fex argument option
+		if(args.fexArgument):
+			self.useFexCustom = True
+			print "Reading option -fexArgument"
 
 		#custom ATOLs
 		if(args.customATOL):
@@ -6633,9 +6640,12 @@ class krome():
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#IFKROME_has_electrons" and not(hasElectrons)): skip = True
 			if(srow == "#IFKROME_useTabsTdust" and not(self.useDustTabs)): skip = True
+			if(srow == "#IFKROME_customFex" and not(self.useFexCustom)): skip = True
 			if(srow == "#IFKROME_dust_opacity" and not(self.useDust)): skipDustOpacity = True
+
 			if(srow == "#ENDIFKROME"): skip = False
 			if(srow == "#ENDIFKROME_dust_opacity"): skipDustOpacity = False
+
 			if(srow == "#IFKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = True
 			if(srow == "#ELSEKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = False
 			if(srow == "#ELSEKROME_useBindC" and (self.interfaceC or self.interfacePy)): skipBindC = True
@@ -7009,6 +7019,7 @@ class krome():
 			else:
 				row = row.replace("#KROME_bindC","")
 
+
 			row = row.replace("#KROME_single",self.KindSingle)
 			row = row.replace("#KROME_double_value",self.KindDoubleValue)
 			row = row.replace("#KROME_double",self.KindDouble)
@@ -7018,6 +7029,17 @@ class krome():
 
 			row = row.replace("#KROME_ATOL",str(ATOL))
 			row = row.replace("#KROME_RTOL",str(RTOL))
+
+
+			#modfify call to krome main and DLSODES to use a custom fex
+			if(self.useFexCustom):
+				row = row.replace("#KROME_fexCustom",", fexCustom")
+				row = row.replace("#KROME_postfixFexCustom","Custom")
+				row = row.replace("#KROME_externalFexCustom","external fexCustom")
+			else:
+				row = row.replace("#KROME_fexCustom","")
+				row = row.replace("#KROME_postfixFexCustom","")
+				row = row.replace("#KROME_externalFexCustom","")
 
 			if(skip): continue
 			if(skipBindC): continue
