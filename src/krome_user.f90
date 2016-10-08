@@ -20,6 +20,17 @@ contains
 
 #KROME_user_commons_functions
 
+#IFKROME_customFex
+  !*******************
+  !custom FEX prototype function
+  !subroutine myCustomFex(neq,tt,nin,dn)
+  !  implicit none
+  !  integer::neq
+  !  real*8::tt,dn(neq),nin(neq)
+  !
+  !end subroutine myCustomFex
+#ENDIFKROME
+
   !************************
   !returns the Tdust averaged over the number density
   ! as computed in the tables
