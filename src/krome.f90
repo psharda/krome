@@ -13,9 +13,9 @@ contains
   !********************************
   !KROME main (interface to the solver library)
 #IFKROME_useX
-  subroutine krome(x,rhogas,Tgas,dt #KROME_dust_arguments) #KROME_bindC
+  subroutine krome(x,rhogas,Tgas,dt #KROME_dust_arguments #KROME_fexCustom) #KROME_bindC
 #ELSEKROME
-  subroutine krome(x,Tgas,dt #KROME_dust_arguments) #KROME_bindC
+  subroutine krome(x,Tgas,dt #KROME_dust_arguments #KROME_fexCustom) #KROME_bindC
 #ENDIFKROME
     use krome_commons
     use krome_subs
@@ -30,6 +30,7 @@ contains
 #ELSEKROME
     real*8 :: rhogas
 #ENDIFKROME
+    #KROME_externalFexCustom
     real*8::mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
     integer::icount,i,ierr,icount_max
@@ -129,8 +130,9 @@ contains
     do
        icount = icount + 1
        !solve ODE
-       CALL DLSODES(fex, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
-            ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, JES, MF)
+       CALL DLSODES(fex#KROME_postfixFexCustom, NEQ(:), n(:), tloc, dt, &
+            ITOL, RTOL, ATOL, ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, &
+            LIW, JES, MF)
 #IFKROME_report
        call krome_dump(n(:), rwork(:), iwork(:), ni(:))
 #ENDIFKROME
