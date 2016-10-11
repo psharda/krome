@@ -60,7 +60,7 @@ class krome():
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = shortHead = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
 	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = isdry = useIERR = checkReverse = usePhotoInduced = False
-	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = reducer = False
+	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = reducer = useFexCustom = False
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
@@ -244,6 +244,8 @@ class krome():
 		self.parser.add_argument("-dustSeed", help="set the dust seed in 1/cm3 for dust growth. Default is zero. Any F90 expression \
 			is allowed for SEED.", metavar="SEED")
 		self.parser.add_argument("-enzo", action="store_true", help="create patches for ENZO")
+		self.parser.add_argument("-fexArgument", action="store_true", help="add ODE function (fex) as additional argument to \
+			the main call to KROME")
 		self.parser.add_argument("-flash", action="store_true", help="create patches for FLASH")
 		self.parser.add_argument("-forceMF21", action="store_true", help="force explicit sparsity and Jacobian")
 		self.parser.add_argument("-forceMF222", action="store_true", help="force internal-generated sparsity and Jacobian")
@@ -1530,6 +1532,11 @@ class krome():
 		if(args.reducer):
 			self.reducer = True
 			print "Reading option -reducer"
+
+		#fex argument option
+		if(args.fexArgument):
+			self.useFexCustom = True
+			print "Reading option -fexArgument"
 
 		#custom ATOLs
 		if(args.customATOL):
@@ -3254,7 +3261,7 @@ class krome():
 
 		fh = open(self.srcFolder+"krome.h")
 		if(self.buildCompact):
-			fout = open(self.buildFolder+"krome_all.h","a")
+			fout = open(self.buildFolder+"krome_all.h","w")
 		else:
 			fout = open(self.buildFolder+"krome.h","w")
 
@@ -3268,7 +3275,7 @@ class krome():
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
-			if(row[0]!="#"): fout.write(row)
+			if(row[0]!="#"): fout.write(row.lower())
 
 		if(not(self.buildCompact)):
 			fout.close()
@@ -3285,6 +3292,8 @@ class krome():
 			fout = open(self.buildFolder+"krome_all.h","a")
 		else:
 			fout = open(self.buildFolder+"krome_user.h","w")
+
+		foutc = open(self.buildFolder+"krome_header.c","w")
 
 		skip = False
 		for row in fh:
@@ -3315,14 +3324,17 @@ class krome():
 						xbasic = ("_".join(x.fidx.split("_")[:-1]))
 						xname = ("_".join(x.name.split("_")[:-1]))
 						if(not(xbasic in allBasics)):
-							fout.write("const int krome_"+xbasic + " = " + str(x.idx-1) +"; //"+mol.name+"\n")
+							fout.write("extern const int krome_"+xbasic + "; //"+mol.name+"\n")
+							foutc.write("const int krome_"+xbasic + " = " + str(x.idx-1) +"; //"+mol.name+"\n")
 						allBasics.append(xbasic)
-					fout.write("const int krome_"+x.fidx + " = " + str(x.idx-1) +"; // "+x.name+"\n")
+					fout.write("extern const int krome_"+x.fidx + "; // "+x.name+"\n")
+					foutc.write("const int krome_"+x.fidx + " = " + str(x.idx-1) +"; // "+x.name+"\n")
 
 				# write out the names of the species
-				fout.write("const char* krome_names[] = {\n")
-				fout.write(",\n".join(["  \""+x.name+"\"" for x in self.specs])+"\n};")
-				fout.write("\n")
+				fout.write("extern const char* krome_names[];\n")
+				foutc.write("const char* krome_names[] = {\n")
+				foutc.write(",\n".join(["  \""+x.name+"\"" for x in self.specs])+"\n};")
+				foutc.write("\n")
 
 			elif(srow == "#KROME_cool_index"):
 				# write out KROME cooling terms
@@ -3331,7 +3343,9 @@ class krome():
 					# C arrays start from 0; decrement all indices by one.
 					if x[:6] != 'ncools':
 						x = re.sub(r'= (\d+)', lambda m: '= {0}'.format(int(m.group(1))-1), x)
-					fout.write("const int krome_"+x+";\n")
+					name=x.index('=')-1
+                                        fout.write("extern const int krome_"+x[:name]+";\n")
+                                        foutc.write("const int krome_"+x+";\n")
 
 			elif(srow == "#KROME_heat_index"):
 				# write out KROME heating terms
@@ -3340,11 +3354,14 @@ class krome():
 					# C arrays start from 0; decrement all indices by one.
 					if x[:6] != 'nheats':
 						x = re.sub(r'= (\d+)', lambda m: '= {0}'.format(int(m.group(1))-1), x)
-					fout.write("const int krome_"+x+";\n")
+					name=x.index('=')-1
+                                        fout.write("extern const int krome_"+x[:name]+";\n")
+					foutc.write("const int krome_"+x+";\n")
 
 			elif(srow == "#KROME_constant_list"):
 				# write out KROME constants
 				const = ""
+				consth = ""
 				constants = self.constantList
 				newc = []
 				for i in range(len(constants)):
@@ -3369,8 +3386,10 @@ class krome():
 
 				for x in newc:
 					x[1] = x[1].replace('d','e')
+					consth += "extern const double krome_" + x[0] + "; //" + x[2] + "\n"
 					const += "const double krome_" + x[0] + " = " + x[1] + "; //" + x[2] + "\n"
-				fout.write(const)
+				fout.write(consth)
+				foutc.write(const)
 
 			elif(srow == "#KROME_common_alias"):
 				#get the list of all the atoms contained in the species, H,C,O,...
@@ -3380,46 +3399,58 @@ class krome():
 				atoms = list(set(atoms))
 				atoms = [x for x in atoms if not(x in ["+","-"])]
 
-				fout.write("const int krome_nrea=" + str(self.nrea) + ";\n")
-				fout.write("const int krome_nmols=" + str(self.nmols) + ";\n")
-				fout.write("const int krome_nspec=" + str(len(self.specs)) + ";\n")
-				fout.write("const int krome_natoms=" + str(len(atoms)) + ";\n")
-				fout.write("const int krome_ndust=" + str(self.dustArraySize*self.dustTypesSize) + ";\n")
-				fout.write("const int krome_ndustTypes=" + str(self.dustTypesSize) + ";\n")
-				fout.write("const int krome_nPhotoBins=" + str(self.photoBins) + ";\n")
-				fout.write("const int krome_nPhotoRates=" + str(self.nPhotoRea) + ";\n")
+				fout.write("extern const int krome_nrea;\n")
+                                fout.write("extern const int krome_nmols;\n")
+                                fout.write("extern const int krome_nspec;\n")
+                                fout.write("extern const int krome_natoms;\n")
+                                fout.write("extern const int krome_ndust;\n")
+                                fout.write("extern const int krome_ndustTypes;\n")
+                                fout.write("extern const int krome_nPhotoBins;\n")
+                                fout.write("extern const int krome_nPhotoRates;\n")
+
+
+				foutc.write("const int krome_nrea=" + str(self.nrea) + ";\n")
+				foutc.write("const int krome_nmols=" + str(self.nmols) + ";\n")
+				foutc.write("const int krome_nspec=" + str(len(self.specs)) + ";\n")
+				foutc.write("const int krome_natoms=" + str(len(atoms)) + ";\n")
+				foutc.write("const int krome_ndust=" + str(self.dustArraySize*self.dustTypesSize) + ";\n")
+				foutc.write("const int krome_ndustTypes=" + str(self.dustTypesSize) + ";\n")
+				foutc.write("const int krome_nPhotoBins=" + str(self.photoBins) + ";\n")
+				foutc.write("const int krome_nPhotoRates=" + str(self.nPhotoRea) + ";\n")
 
 			elif(srow == "#KROME_user_commons_functions"):
 				# write interfaces/signatures for user_commons get/set functions
 				funcs = ""
 				for x in self.commonvars:
-					fsetname = "krome_set_"+x
+					fsetname = "krome_set_"+x.lower()
 					fset = "extern void "+fsetname+"(double argset);\n"
-					fgetname = "krome_get_"+x
+					fgetname = "krome_get_"+x.lower()
 					fget = "extern double "+fgetname+"();\n"
 					funcs += fset + fget
 				fout.write(funcs)
 
 			elif(srow=="#KROME_set_get_phys_functions"):
 				for x in self.physVariables:
-					funcname = "krome_set_"+x[0]
+					funcname = "krome_set_"+x[0].lower()
 					fout.write("extern void "+funcname+"(double arg);\n")
-					funcname = "krome_get_"+x[0]
+					funcname = "krome_get_"+x[0].lower()
 					fout.write("extern double "+funcname+"();\n")
 
 			elif(srow == "#KROME_cooling_functions"):
 				for x in self.coolZ_functions:
-					funcname =  "krome_"+x[0]
-					fout.write("extern double "+funcname+"(double *x, double inTgas);\n")
+					funcname =  "krome_"+x[0].lower()
+					fout.write("extern double "+funcname+"(double *x, double intgas);\n")
 
 			else:
 				if(len(srow)>0):
-					if(srow[0]!="#"): fout.write(row)
+					if(srow[0]!="#"): fout.write(row.lower())
 				else:
 					fout.write(row)
+					foutc.write(row)
 
 		if(not(self.buildCompact)):
 			fout.close()
+		foutc.close()
 
 	###############################################
 	def makePythonModule(self):
@@ -6633,9 +6664,12 @@ class krome():
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
 			if(srow == "#IFKROME_has_electrons" and not(hasElectrons)): skip = True
 			if(srow == "#IFKROME_useTabsTdust" and not(self.useDustTabs)): skip = True
+			if(srow == "#IFKROME_customFex" and not(self.useFexCustom)): skip = True
 			if(srow == "#IFKROME_dust_opacity" and not(self.useDust)): skipDustOpacity = True
+
 			if(srow == "#ENDIFKROME"): skip = False
 			if(srow == "#ENDIFKROME_dust_opacity"): skipDustOpacity = False
+
 			if(srow == "#IFKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = True
 			if(srow == "#ELSEKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = False
 			if(srow == "#ELSEKROME_useBindC" and (self.interfaceC or self.interfacePy)): skipBindC = True
@@ -7009,6 +7043,7 @@ class krome():
 			else:
 				row = row.replace("#KROME_bindC","")
 
+
 			row = row.replace("#KROME_single",self.KindSingle)
 			row = row.replace("#KROME_double_value",self.KindDoubleValue)
 			row = row.replace("#KROME_double",self.KindDouble)
@@ -7018,6 +7053,17 @@ class krome():
 
 			row = row.replace("#KROME_ATOL",str(ATOL))
 			row = row.replace("#KROME_RTOL",str(RTOL))
+
+
+			#modfify call to krome main and DLSODES to use a custom fex
+			if(self.useFexCustom):
+				row = row.replace("#KROME_fexCustom",", fexCustom")
+				row = row.replace("#KROME_postfixFexCustom","Custom")
+				row = row.replace("#KROME_externalFexCustom","external fexCustom")
+			else:
+				row = row.replace("#KROME_fexCustom","")
+				row = row.replace("#KROME_postfixFexCustom","")
+				row = row.replace("#KROME_externalFexCustom","")
 
 			if(skip): continue
 			if(skipBindC): continue

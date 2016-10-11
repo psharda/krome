@@ -313,6 +313,7 @@
     function cooling_Z_CIENOUV(n,inTgas)
       use krome_commons
       use krome_subs
+      use krome_getphys
       implicit none
       real*8::cooling_Z_CIENOUV,n(:),inTgas
       real*8::cH,Tgas,xLd,logcH
@@ -345,6 +346,7 @@
     function cooling_Z_CIE(n,inTgas)
       use krome_commons
       use krome_subs
+      use krome_getphys
       implicit none
       integer,parameter::imax=coolZCIEn1
       integer,parameter::jmax=coolZCIEn2
@@ -1091,7 +1093,7 @@
       endif
 
     end function cooling_H2
-#ENDIFKROME_useCoolingH2
+#ENDIFKROME
 
 
 #IFKROME_useCoolingAtomic
