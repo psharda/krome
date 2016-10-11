@@ -906,7 +906,7 @@ contains
     real*8,parameter::limit_lower = 0.1237d0
     real*8,parameter::limit_upper = 4.997d7
     real*8,parameter::limit_redshift = 15.660d0
-    #KROME_double_value :: lower_in,upper_in
+    #KROME_double_value_optional::lower_in,upper_in
     integer::i
 
 #IFKROME_useBindC
@@ -967,7 +967,7 @@ contains
     real*8,parameter::limit_redshift = 15.660d0
     logical,optional::additive
     logical::add
-    #KROME_double_value :: lower_in,upper_in
+    #KROME_double_value_optional :: lower_in,upper_in
     integer::i
 
 #IFKROME_useBindC
