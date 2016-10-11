@@ -137,6 +137,7 @@ class krome():
 	KindSingle = "real*4"
 	KindDouble = "real*8"
 	KindDoubleValue = "real*8"
+	KindDoubleValueOptional = "real*8,optional"
 	KindInteger = "integer"
 	KindIntegerValue = "integer"
 	KindCharacter = "character"
@@ -1136,6 +1137,7 @@ class krome():
 			self.KindSingle = "real(kind=c_float)"
 			self.KindDouble = "real(kind=c_double)"
 			self.KindDoubleValue = "real(kind=c_double), value"
+			self.KindDoubleValueOptional = "real(kind=c_double), value"
 			self.KindCharacter = "character(kind=c_char)"
 			self.BindC = "bind(C)"
 			if (args.interfaceC):
@@ -6680,6 +6682,7 @@ class krome():
 			if(skipBindC): continue
 
 			row = row.replace("#KROME_single",self.KindSingle)
+			row = row.replace("#KROME_double_value_optional",self.KindDoubleValueOptional)
 			row = row.replace("#KROME_double_value",self.KindDoubleValue)
 			row = row.replace("#KROME_double",self.KindDouble)
 			row = row.replace("#KROME_integer_value",self.KindIntegerValue)
