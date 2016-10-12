@@ -133,6 +133,15 @@ contains
        CALL DLSODES(fex#KROME_postfixFexCustom, NEQ(:), n(:), tloc, dt, &
             ITOL, RTOL, ATOL, ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, &
             LIW, JES, MF)
+
+#IFKROME_ierr
+       !break and return ierr when max count reached
+       if(icount>icount_max) then
+          ierr = istate
+          exit
+       end if
+#ENDIFKROME
+
 #IFKROME_report
        call krome_dump(n(:), rwork(:), iwork(:), ni(:))
 #ENDIFKROME
