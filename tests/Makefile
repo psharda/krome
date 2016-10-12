@@ -88,6 +88,16 @@ pyinterface: sharedlib
 
 cinterface: gfortran
 
+pyinterface_opt: fc = gfortran
+pyinterface_opt: switch = -O3 -ffree-line-length-none -fPIC
+pyinterface_opt: nowarn = $(nowarnGNU)
+pyinterface_opt: sharedlib
+
+cinterface_opt: fc = gfortran
+cinterface_opt: switch = -O3 -ffree-line-length-none -fPIC
+cinterface_opt: nowarn = $(nowarnGNU)
+cinterface_opt: all
+
 #clean target
 clean:
 	rm -f *.o *.mod *__genmod.f90 *~ $(exec)
