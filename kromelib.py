@@ -405,7 +405,7 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		print "ERROR: file "+fname+" doesn't exist!"
 		print "Species "+reactant.name+" doesn't have a SWRI file."
 		print "Search on http://phidrates.space.swri.edu"
-		print " and copy to "+data_folder
+		print " and copy to "+data_folder+"/"+reactant.name+".dat"
 		sys.exit()
 	#read data from the file and store the data and the header
 	fswri = open(fname,"rb")
