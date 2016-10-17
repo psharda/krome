@@ -87,8 +87,8 @@ contains
 
     open(22,file=trim(fname),status="replace")
     do j=1,nPhotoBins
-       energyLeft = photoBinLeft(j) !left bin energy, eV
-       energyRight = photoBinRight(j) !right bin energy, eV
+       energyLeft = photoBinELeft(j) !left bin energy, eV
+       energyRight = photoBinERight(j) !right bin energy, eV
        write(22,*) energyLeft, energyRight, photoBinJTab(idx,j)
     end do
     close(22)
