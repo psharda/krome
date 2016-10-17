@@ -83,12 +83,13 @@ contains
     implicit none
     character(len=*)::fname
     integer::idx,j
-    real*8::energy_eV
+    real*8::energyLeft,energyRight
 
     open(22,file=trim(fname),status="replace")
     do j=1,nPhotoBins
-       energy_eV = photoBinEmid(j) !energy of the bin in eV
-       write(22,*) energy_eV, photoBinJTab(idx,j)
+       energyLeft = photoBinLeft(j) !left bin energy, eV
+       energyRight = photoBinRight(j) !right bin energy, eV
+       write(22,*) energyLeft, energyRight, photoBinJTab(idx,j)
     end do
     close(22)
 
