@@ -551,6 +551,23 @@ contains
 
   end subroutine krome_set_photobinE_lr
 
+  !*************************
+  ! set the energy (frequency) of photobins
+  ! when contiguous. Left and right limits are automatically
+  ! extracted. Energy in eV
+  subroutine krome_set_photobinE_limits(phbinLimits) #KROME_bindC
+    use krome_commons
+    use krome_photo
+    implicit none
+    #KROME_double :: phbinLimits(nPhotoBins+1)
+    real*8::phl(nPhotoBins),phr(nPhotoBins)
+    phl(:) = phbinLimits(1:nPhotoBins)
+    phr(:) = phbinLimits(2:nPhotoBins+1)
+
+    call krome_set_photobinE_lr(phl(:),phr(:))
+
+  end subroutine krome_set_photobinE_limits
+
   !*******************************
   !set the energy (eV) of the photobin according
   ! to MOCASSIN way (position and width array)
