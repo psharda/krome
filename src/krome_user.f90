@@ -1269,9 +1269,9 @@ contains
        elseif(xL<5d0.and.xR>5d0) then
           xL = 5d0 !eV
           xR = photoBinEright(i) !eV
-       elseif(xL<13d0.and.xR>13d0) then
+       elseif(xL<13d0.and.xR>13.6d0) then
           xL = photoBinEleft(i) !eV
-          xR = 13d0 !eV
+          xR = 13.6d0 !eV
        else
           xL = 0d0
           xR = 0d0
