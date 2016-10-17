@@ -1244,32 +1244,44 @@ contains
 
   end subroutine krome_set_photoBin_draineLog
 
- !**************************
-  !set the flux as Draine's function
-  ! in the range lower to upper (eV). the spacing is custom
+  !**************************
+  !set the flux as Draine's function with the current binning
   ! Note: you have to set the binning first
-  subroutine krome_set_photoBin_draineCustom(lower,upper) #KROME_bindC
+  subroutine krome_set_photoBin_draineCustom() #KROME_bindC
     use krome_commons
     use krome_photo
     use krome_constants
-    #KROME_double_value :: upper,lower
-    real*8::x
+    real*8::xL,xR,f1,f2
     integer::i
 
+    !return error if binning is not set
     if(maxval(photoBinEmid)==0d0) then
        print *,"ERROR: not initialized binning in draineCustom!"
        stop
     end if
 
+    !loop on bins
     do i=1,nPhotoBins
-       x = photoBinEmid(i) !eV
-       !eV/cm2/sr/s/Hz
-       if(x<13.6d0.and.x>5d0) then
-          photoBinJ(i) = (1.658d6*x - 2.152d5*x**2 + 6.919d3*x**3) &
-               * x *planck_eV
+       !eV/cm2/sr
+       if(xR<=13.6d0.and.xL>=5d0) then
+          xL = photoBinEleft(i) !eV
+          xR = photoBinEright(i) !eV
+       elseif(xL<5d0.and.xR>5d0) then
+          xL = 5d0 !eV
+          xR = photoBinEright(i) !eV
+       elseif(xL<13d0.and.xR>13d0) then
+          xL = photoBinEleft(i) !eV
+          xR = 13d0 !eV
        else
-          photoBinJ(i) = 0d0
+          xL = 0d0
+          xR = 0d0
        end if
+       f1 = (1.658d6*xL - 2.152d5*xL**2 + 6.919d3*xL**3) &
+            * planck_eV
+       f2 = (1.658d6*xR - 2.152d5*xR**2 + 6.919d3*xR**3) &
+            * planck_eV
+       photoBinJ(i) = (f1+f2)*(xR-xL)/2d0
+
     end do
 
     photoBinJ_org(:) = photoBinJ(:)
