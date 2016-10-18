@@ -23,6 +23,7 @@ contains
     use krome_reduction
     use krome_dust
     use krome_getphys
+    implicit none
     #KROME_double :: Tgas,dt
     #KROME_double :: x(nmols)
 #IFKROME_useX
