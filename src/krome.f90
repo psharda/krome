@@ -34,7 +34,8 @@ contains
     #KROME_externalFexCustom
     real*8::mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
-    integer::icount,i,ierr,icount_max
+    integer::icount,i,icount_max
+    #KROME_integer :: ierr
 
     !DLSODES variables
     integer,parameter::meth=2 !1=adam, 2=BDF

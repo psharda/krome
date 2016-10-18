@@ -4,6 +4,7 @@ import ctypes
 import numpy.ctypeslib as npctypes
 
 # define aliases for complicated variable types
+int_byref = ctypes.POINTER(ctypes.c_int)
 dble_byref = ctypes.POINTER(ctypes.c_double)
 array_1d_int = npctypes.ndpointer(dtype=np.int,ndim=1,flags='CONTIGUOUS')
 array_1d_double = npctypes.ndpointer(dtype=np.double,ndim=1,flags='CONTIGUOUS')
@@ -45,6 +46,9 @@ class PyKROME(object):
 		#ELSEKROME
 		fortran.krome.argtypes = [array_1d_double, dble_byref, dble_byref]
 		fortran.krome_equilibrium.argtypes = [array_1d_double, dble_byref]
+		#ENDIFKROME
+		#IFKROME_ierr
+		fortran.krome.argtypes.append(int_byref)
 		#ENDIFKROME
 		fortran.krome_init.restype = None
 		fortran.krome_init.argtypes = None
