@@ -23,6 +23,7 @@ contains
     use krome_reduction
     use krome_dust
     use krome_getphys
+    implicit none
     #KROME_double :: Tgas,dt
     #KROME_double :: x(nmols)
 #IFKROME_useX
@@ -33,7 +34,8 @@ contains
     #KROME_externalFexCustom
     real*8::mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
-    integer::icount,i,ierr,icount_max
+    integer::icount,i,icount_max
+    #KROME_integer :: ierr
 
     !DLSODES variables
     integer,parameter::meth=2 !1=adam, 2=BDF
