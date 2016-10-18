@@ -565,6 +565,9 @@ contains
     !assuming linear scaling
     dust2gas_ratio = total_Z
 
+    !default broadening turubulence velocity
+    broadeningVturb2 = 0d0
+
 #IFKROME_useH2dust_constant
     !default clumping factor for
     ! H2 formation on dust by Jura/Gnedin
