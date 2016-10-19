@@ -908,6 +908,64 @@ contains
 
   end subroutine krome_photoBin_store
 
+  !*********************
+  !load flux radiation from a two-columns file
+  ! energy/eV, flux/(eV/cm2/sr)
+  ! Flux is interpolated over the existing binning
+  ! constant-area method
+  subroutine krome_load_photoBin_file_2col(fname)
+    use krome_commons
+    implicit none
+    integer,parameter::imax=int(1e4)
+    character(len=*) :: fname
+    integer::unit,ios,icount,j,i
+    real*8::xtmp(imax),ftmp(imax),intA,eL,eR
+    real*8::xL,xR,pL,pR,fL,fR
+
+    !open file to read
+    open(newunit=unit,file=trim(fname),iostat=ios)
+    if(ios/=0) then
+       print *,"ERROR: problems reading "//trim(fname)
+       stop
+    end if
+
+    !read file line by line and store to temporary
+    icount = 1
+    do
+       read(unit,*,iostat=ios) xtmp(icount), ftmp(icount)
+       if(ios/=0) exit
+       icount = icount + 1
+    end do
+    close(unit)
+
+    !loop on photobins for interpolation
+    do j=1,nPhotoBins
+       intA = 0d0
+       !photobin limits
+       eL = photoBinEleft(j)
+       eR = photoBinEright(j)
+       !loop on flux bins
+       do i=1,icount-1
+          !flux bin limits
+          xL = xtmp(i)
+          xR = xtmp(i+1)
+          !if outside the bin skip
+          if((xR<eL).or.(xL>eR)) cycle
+          !get the interval limit (consider partial overlapping)
+          pL = max(xL,eL)
+          pR = min(xR,eR)
+          !interpolate to get the flux at the interval limit
+          fL = (ftmp(i+1)-ftmp(i))*(pL-xL)/(xR-xL)+ftmp(i)
+          fR = (ftmp(i+1)-ftmp(i))*(pR-xL)/(xR-xL)+ftmp(i)
+          !compute area of the overlapped area
+          intA = intA + (fL+fR)*(pR-pL)/2d0
+       end do
+       !distribute the flux in the photobin
+       photoBinJ(j) = intA / (eR-eL)
+    end do
+
+  end subroutine krome_load_photoBin_file_2col
+
   !********************************
   !load the radiation bins from the file fname
   ! data should be a 3-column file with
