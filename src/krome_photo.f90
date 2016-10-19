@@ -42,18 +42,28 @@ contains
 
   !*********************
   !initialize/tabulate the bin-based xsecs
-  subroutine init_photoBins()
+  subroutine init_photoBins(Tgas)
+    use krome_constants
     use krome_commons
     use krome_dust
+    use krome_getphys
     implicit none
     integer::i,j
-    real*8::energy_eV,kk,energyL,energyR
+    real*8::Tgas,imass(nspec),kt2
+    real*8::energy_eV,kk,energyL,energyR,dshift(nmols)
 
+    !rise error if photobins are not defined
     if(photoBinEmid(nPhotoBins)==0d0) then
        print *,"ERROR: when using photo bins you must define"
        print *," the energy interval in bins!"
        stop
     end if
+
+    !get inverse of mass
+    imass(:) = get_imass()
+
+    !precompute adimensional line broadening
+#KROME_broadening_shift_precalc
 
 #KROME_load_xsecs_from_file
 
@@ -135,7 +145,7 @@ contains
        E = photoBinEmid(j) !energy of the bin in eV
        Jval = photoBinJ(j) !radiation intensity eV/s/cm2/sr/Hz
        if(E>=6d0.and.E<=13.6)then
-         GHabing_thin = GHabing_thin + Jval * dE
+          GHabing_thin = GHabing_thin + Jval * dE
        endif
        tau = 0d0
 #KROME_photobin_opacity
@@ -252,27 +262,39 @@ contains
   end subroutine load_xsec
 
   !**********************
-  !return averaged xsec in the energy range [energyL,energyR]
-  ! units: eV, cm2
-  function xsec_interp(energyL,energyR,xsec_val,xsec_Emin,xsec_idE)
+  !return averaged xsec in the energy range [xL,xR]
+  ! units: eV, cm2; broadening shift is adimensional
+  function xsec_interp(xL,xR,xsec_val,xsec_Emin,xsec_idE,dshift) result(xsecA)
     implicit none
-    real*8::xsec_interp,E0,xsecA,dE
-    real*8::energy,xsec_val(:),xsec_Emin,xsec_idE,energyL,energyR
-    integer::xsec_n,idx
+    real*8::xsecA,dE,dshift,dE_shift,eL,eR,dxi
+    real*8::energy,xsec_val(:),xsec_Emin,xsec_idE,xL,xR
+    integer::idx
 
     !xsec energy step (regular grid)
     dE = 1d0/xsec_idE
+    !store inverse of bin size
+    dxi = 1d0/(xR-xL)
     xsecA = 0d0 !init integrated xsec
     !loop on xsec vals
     do idx=1,size(xsec_val)
-       energy = (idx-1)*dE+xsec_Emin
-       !if xsec energy in the interval compute area
-       if(energy>=energyL .and. energy<=energyR) xsecA = xsecA &
-            + xsec_val(idx)*dE
-    end do
+       eL = (idx-1)*dE+xsec_Emin !left interval
+       eR = eL + dE !right interval
+       energy = (eL+eR)/2d0 !mid point
 
-    !compute averaged xsec for the flux energy range
-    xsec_interp = xsecA/(energyR-energyL)
+       !compute line broadening
+       eL = eL - 0.5d0*dshift*energy
+       eR = eR + 0.5d0*dshift*energy
+
+       !if xsec energy in the interval compute area
+       if(xR<eL.and.xL<eL) then
+          xsecA = xsecA + 0d0
+       elseif(xR>eL.and.xL>eL) then
+          xsecA = xsecA + 0d0
+       else
+          !renormalize xsec area considering partial overlap
+          xsecA = xsecA +xsec_val(idx) * (min(eR,xR)-max(eL,xL)) * dxi
+       end if
+    end do
 
   end function xsec_interp
 
