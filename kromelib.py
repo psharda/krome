@@ -140,7 +140,7 @@ class reaction():
 			sidx = str(self.idx)
 			args = "xsec"+sidx+"_val(:), xsec"+sidx+"_Emin,"
 			#args += "xsec"+sidx+"_n,"
-			args += "xsec"+sidx+"_idE"
+			args += "xsec"+sidx+"_idE, dshift("+self.reactants[0].fidx+")"
 			self.kphrate = "xsec_interp(energyL, energyR, "+args+")"
 			self.xsecFile = self.krate.replace("@xsecFile=","").strip()
 			if(self.xsecFile.upper()=="SWRI"):
