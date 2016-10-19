@@ -61,6 +61,9 @@ module krome_commons
   !commons for dust optical properties
 #KROME_opt_variables
 
+  !square of turbulence velocity for broadening
+  real*8::broadeningVturb2
+
   !mpi rank of process. If 0, ignored
   integer::krome_mpi_rank=0, krome_omp_thread
   !$omp threadprivate(krome_omp_thread)
