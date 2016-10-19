@@ -5504,6 +5504,26 @@ class krome():
 
 			if(skip or skip_heat or skip_opacity): continue
 
+			#precompute broadeinng in photochemistry
+			if(srow=="#KROME_broadening_shift_precalc"):
+				row = "kt2 = 2d0*boltzmann_erg*Tgas\n"
+				row += "dshift(:) = 0d0\n"
+				foundPartner = [] #unique photoreaction partners
+				#loop on reactions to get photoreaction partners
+				for rea in reacts:
+					#use only photoreactions
+					if(not(rea.hasXsecFile)): continue
+					#get partner index
+					sidx = rea.reactants[0].fidx
+					#skip if parnter already found
+					if(sidx in foundPartner): continue
+					#compute thermal and turbulent broadening
+					row += "dshift("+sidx+") = sqrt(kt2*imass("+sidx+") &\n"
+					row += " + broadeningVturb2)/clight\n"
+					#add partner to found partners list
+					foundPartner.append(sidx)
+
+			#write interpolated xsecs to file
 			if(srow=="#KROME_save_xsecs_to_file"):
 				row = ""
 				for rea in reacts:
