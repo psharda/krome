@@ -534,11 +534,23 @@ contains
   !*************************
   ! set the energy (frequency) of the photobin
   ! as left-right limits in eV
-  subroutine krome_set_photobinE_lr(phbinleft,phbinright) #KROME_bindC
+  subroutine krome_set_photobinE_lr(phbinleft,phbinright,Tgas) #KROME_bindC
     use krome_commons
     use krome_photo
     implicit none
-    #KROME_double :: phbinleft(nPhotoBins),phbinright(nPhotoBins)
+#KROME_double :: phbinleft(nPhotoBins),phbinright(nPhotoBins)
+#KROME_double_value_optional::Tgas
+    real*8::bTgas
+
+#IFKROME_useBindC
+    bTgas = tgas
+#ELSEKROME_useBindC
+    !default Tgas for broadening
+    bTgas = 1d1
+    if(present(Tgas)) then
+       bTgas = Tgas
+    end if
+#ENDIFKROME_useBindC
 
     photoBinEleft(:) = phbinleft(:)
     photoBinEright(:) = phbinright(:)
@@ -547,7 +559,7 @@ contains
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
 
     !initialize xsecs table
-    call init_photoBins()
+    call init_photoBins(bTgas)
 
   end subroutine krome_set_photobinE_lr
 
@@ -555,27 +567,49 @@ contains
   ! set the energy (frequency) of photobins
   ! when contiguous. Left and right limits are automatically
   ! extracted. Energy in eV
-  subroutine krome_set_photobinE_limits(phbinLimits) #KROME_bindC
+  subroutine krome_set_photobinE_limits(phbinLimits,Tgas) #KROME_bindC
     use krome_commons
     use krome_photo
     implicit none
     #KROME_double :: phbinLimits(nPhotoBins+1)
-    real*8::phl(nPhotoBins),phr(nPhotoBins)
+    #KROME_double_value_optional::Tgas
+    real*8::phl(nPhotoBins),phr(nPhotoBins),bTgas
+
+#IFKROME_useBindC
+    bTgas = tgas
+#ELSEKROME_useBindC
+    !default Tgas for broadening
+    bTgas = 1d1
+    if(present(Tgas)) then
+       bTgas = Tgas
+    end if
+#ENDIFKROME_useBindC
     phl(:) = phbinLimits(1:nPhotoBins)
     phr(:) = phbinLimits(2:nPhotoBins+1)
 
-    call krome_set_photobinE_lr(phl(:),phr(:))
+    call krome_set_photobinE_lr(phl(:),phr(:),bTgas)
 
   end subroutine krome_set_photobinE_limits
 
   !*******************************
   !set the energy (eV) of the photobin according
   ! to MOCASSIN way (position and width array)
-  subroutine krome_set_photobinE_moc(binPos,binWidth) #KROME_bindC
+  subroutine krome_set_photobinE_moc(binPos,binWidth,Tgas) #KROME_bindC
     use krome_commons
     use krome_photo
     implicit none
-    #KROME_double :: binPos(nPhotoBins),binWidth(nPhotoBins)
+#KROME_double :: binPos(nPhotoBins),binWidth(nPhotoBins)
+#KROME_double_value_optional::Tgas
+    real*8::bTgas
+
+#IFKROME_useBindC
+    bTgas = Tgas
+#ELSEKROME_useBindC
+    bTgas = 1d1
+    if(present(Tgas)) then
+       bTgas = Tgas
+    end if
+#ELSEKROME_useBindC
 
     photoBinEleft(:) = binPos(:)-binWidth(:)/2d0
     photoBinEright(:) = binPos(:)+binWidth(:)/2d0
@@ -584,7 +618,7 @@ contains
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
 
     !initialize xsecs table
-    call init_photoBins()
+    call init_photoBins(bTgas)
 
   end subroutine krome_set_photobinE_moc
 
@@ -592,13 +626,24 @@ contains
   ! set the energy (eV) of the photobin
   ! linearly from lowest to highest energy value
   ! in eV
-  subroutine krome_set_photobinE_lin(lower,upper) #KROME_bindC
+  subroutine krome_set_photobinE_lin(lower,upper,Tgas) #KROME_bindC
     use krome_commons
     use krome_photo
     implicit none
-    #KROME_double_value :: lower,upper
-    real*8::dE
+#KROME_double_value :: lower,upper
+#KROME_double_value_optional::Tgas
+    real*8::dE,bTgas
     integer::i
+
+#IFKROME_useBindC
+    bTgas = Tgas
+#ELSEKROME_useBindC
+    bTgas = 1d1
+    if(present(Tgas)) then
+       bTgas = Tgas
+    end if
+#ENDIFKROME_useBindC
+
     dE = abs(upper-lower)/nPhotoBins
     do i=1,nPhotoBins
        photoBinEleft(i) = dE*(i-1) + lower
@@ -609,7 +654,7 @@ contains
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
 
     !initialize xsecs table
-    call init_photoBins()
+    call init_photoBins(bTgas)
 
   end subroutine krome_set_photobinE_lin
 
@@ -617,13 +662,24 @@ contains
   ! set the energy (eV) of the photobin
   ! logarithmically from lowest to highest energy value
   ! in eV
-  subroutine krome_set_photobinE_log(lower,upper) #KROME_bindC
+  subroutine krome_set_photobinE_log(lower,upper,Tgas) #KROME_bindC
     use krome_commons
     use krome_photo
     implicit none
-    #KROME_double_value :: lower,upper
-    real*8::dE,logup,loglow
+#KROME_double_value :: lower,upper
+#KROME_double_value_optional::Tgas
+    real*8::dE,logup,loglow,bTgas
     integer::i
+
+#IFKROME_useBindC
+    bTgas = Tgas
+#ELSEKROME_useBindC
+    bTgas = 1d1
+    if(present(Tgas)) then
+       bTgas = Tgas
+    end if
+#ENDIFKROME_useBindC
+
     if(lower.ge.upper) then
        print *,"ERROR: in  krome_set_photobinE_log lower >= upper limit!"
        stop
@@ -640,7 +696,7 @@ contains
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
 
     !initialize xsecs table
-    call init_photoBins()
+    call init_photoBins(bTgas)
 
   end subroutine krome_set_photobinE_log
 
@@ -1657,6 +1713,18 @@ contains
     end do
 
   end subroutine krome_dump_Jflux
+
+  !**********************
+  !set the velocity for line broadening, cm/s
+  subroutine krome_set_lineBroadeningVturb(vturb)
+    use krome_constants
+    use krome_commons
+    implicit none
+    real*8::vturb
+
+    broadeningVturb2 = vturb**2
+
+  end subroutine krome_set_lineBroadeningVturb
 
 #ENDIFKROME
 
