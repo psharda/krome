@@ -1606,6 +1606,19 @@ contains
 
   end function krome_get_opacity_size_d2g
 
+  !*********************
+  !scale radiation intensity with opacity assuming a given
+  ! cell size and gas composition
+  subroutine krome_opacity_scale_size(csize,n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::csize,n(nmols),xscale(nPhotoBins),Tgas
+
+    xscale(:) = krome_get_opacity_size(n(:),Tgas,csize)
+    call krome_photoBin_scale_array(exp(-xscale(:)))
+
+  end subroutine krome_opacity_scale_size
+
   !*******************************
   !load a frequency-dependent opacity table stored in fname file,
   ! column 1 is energy or wavelenght in un units of unitEnergy
