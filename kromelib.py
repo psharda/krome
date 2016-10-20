@@ -1872,6 +1872,7 @@ def get_licence_header(version, codename, short=False):
 
 	#name of the git master file
 	masterfile = ".git/refs/heads/master"
+	changeset = ("x"*7) #default unknown changeset
 	#if git master file exists grep the changeset
 	if(file_exists(masterfile)):
 		changeset = open(masterfile,"rb").read()
