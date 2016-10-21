@@ -326,6 +326,91 @@ contains
   end function xsec_interp_mid
 
   !************************
+  subroutine kpd_H2_loadData()
+    use krome_commons
+    implicit none
+    integer::unit,ios,ii,jj
+    real*8::xE,dE,pre
+    character(len=20)::fname
+
+    !open file to read
+    fname = "H2pdB.dat"
+    open(newunit=unit,file=trim(fname),status="old",iostat=ios)
+    !check for errors
+    if(ios/=0) then
+       print *,"ERROR: problem loading file "//trim(fname)
+       stop
+    end if
+
+    !loop on file to read
+    do
+       read(unit,*,iostat=ios) ii,jj,xE,dE,pre
+       !skip comments
+       if(ios==59.or.ios==5010) cycle
+       !exit when eof
+       if(ios/=0) exit
+       H2pdData_EX(ii+1) = xE !ground level energy, eV
+       H2pdData_dE(ii+1,jj+1) = dE !Ej-Ei energy, eV
+       H2pdData_pre(ii+1,jj+1) = pre !precomp (see file header)
+    end do
+
+    !check if enough data have been loaded
+    if((ii+1/=H2pdData_nvibX).or.(jj+1/=H2pdData_nvibB)) then
+       print *,"ERROR: missing data when loading "//fname
+       print *,"found:",ii+1,jj+1
+       print *,"expected:",H2pdData_nvibX,H2pdData_nvibB
+       stop
+    end if
+
+    close(unit)
+
+  end subroutine kpd_H2_loadData
+
+  !************************
+  !compute vibrational partition function at given Tgas
+  ! for all the loaded energies (for H2 Solomon)
+  function partitionH2_vib(Tgas) result(z)
+    use krome_constants
+    use krome_commons
+    implicit none
+    real*8::Tgas,z(H2pdData_nvibX),b
+    integer::j
+
+    !prepare partition function from ground (X) levels energies
+    b = iboltzmann_eV/Tgas
+    z(:) = exp(-H2pdData_EX(:)*b)
+
+    !normalize
+    z(:) = z(:)/sum(z)
+
+  end function partitionH2_vib
+
+  !************************
+  !compute H2 photodissociation rate (Solomon)
+  ! state to state, using preloded data, 1/s
+  function kpd_H2(Tgas) result(kpd)
+    use krome_commons
+    implicit none
+    integer::i,j
+    real*8::Tgas,kpd,dE,z(H2pdData_nvibX)
+    real*8::Jf(H2pdData_nvibX)
+
+    !get partition for ground state X
+    z(:) = partitionH2_vib(Tgas)
+
+    !compute the rate, using preloaded data
+    kpd = 0d0
+    do i=1,H2pdData_nvibB
+       do j=1,H2pdData_nvibX
+          Jf(j) = get_photoIntensity(H2pdData_dE(j,i))
+       end do
+       kpd = kpd + sum(H2pdData_pre(:,i) &
+            * Jf(:) * z(:))
+    end do
+
+  end function kpd_H2
+
+  !************************
   function H2_sigmaLW(energy_eV)
     !H2 direct photodissociation in the Lyman-Werner bands
     ! cross-section in cm^2 fit by Abel et al. 1997 of
