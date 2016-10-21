@@ -176,7 +176,6 @@ contains
 
   end subroutine calc_photoBins_thick
 
-#ENDIFKROME
 
   !********************
   function sigma_v96(energy_eV,E0,sigma_0,ya,P,yw,y0,y1)
@@ -450,5 +449,6 @@ contains
     H2_sigmaLW = fact*(sL0+sW0)+(1d0-fact)*(sL1+sW1)
 
   end function H2_sigmaLW
+#ENDIFKROME
 
 end module krome_photo
