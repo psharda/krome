@@ -920,7 +920,7 @@ contains
     character(len=*) :: fname
     integer::unit,ios,icount,j,i
     real*8::xtmp(imax),ftmp(imax),intA,eL,eR
-    real*8::xL,xR,pL,pR,fL,fR
+    real*8::xL,xR,pL,pR,fL,fR,Jflux(nPhotoBins)
 
     !open file to read
     open(newunit=unit,file=trim(fname),iostat=ios)
@@ -961,8 +961,11 @@ contains
           intA = intA + (fL+fR)*(pR-pL)/2d0
        end do
        !distribute the flux in the photobin
-       photoBinJ(j) = intA / (eR-eL)
+       Jflux(j) = intA / (eR-eL)
     end do
+
+    !initialize intensity according to data
+    call krome_set_photoBinJ(Jflux(:))
 
   end subroutine krome_load_photoBin_file_2col
 
@@ -1018,7 +1021,7 @@ contains
        stop
     end if
 
-    !initialize inteval and indensity according to data
+    !initialize interval and intensity according to data
     call krome_set_photobinE_lr(tmp_El(:),tmp_Er(:))
     call krome_set_photoBinJ(tmp_J(:))
 
@@ -1444,7 +1447,7 @@ contains
   ! chemical composition. The column density
   ! is computed using the expression in the
   ! num2col(x) function.
-  ! An array of size krome_nPhotoBins is returned.
+  ! An array of size krome_nPhotoBins is returned
   function krome_get_opacity(x,Tgas) #KROME_bindC
     use krome_commons
     use krome_constants
