@@ -18,7 +18,7 @@ switchPRO = $(switchOPT) -pg -traceback
 switchOMP = $(switchOPT) -openmp
 
 #default switch
-switch = $(switchOPT) -fPIC
+switch = $(switchOPT)
 
 #no warning switch (for DLSODES)
 nowarnIfort = -nowarn
@@ -60,7 +60,7 @@ debug: all
 #gfortran target
 gfortran: fc = gfortran
 gfortran: cc = gcc
-gfortran: switch = -ffree-line-length-none
+gfortran: switch = -ffree-line-length-none -fPIC
 gfortran: nowarn = $(nowarnGNU)
 gfortran: clib = -lm -lgfortran
 gfortran: all

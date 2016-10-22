@@ -23,6 +23,7 @@ contains
     use krome_reduction
     use krome_dust
     use krome_getphys
+    implicit none
     #KROME_double :: Tgas,dt
     #KROME_double :: x(nmols)
 #IFKROME_useX
@@ -33,7 +34,8 @@ contains
     #KROME_externalFexCustom
     real*8::mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
-    integer::icount,i,ierr,icount_max
+    integer::icount,i,icount_max
+    #KROME_integer :: ierr
 
     !DLSODES variables
     integer,parameter::meth=2 !1=adam, 2=BDF
@@ -133,6 +135,15 @@ contains
        CALL DLSODES(fex#KROME_postfixFexCustom, NEQ(:), n(:), tloc, dt, &
             ITOL, RTOL, ATOL, ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, &
             LIW, JES, MF)
+
+#IFKROME_ierr
+       !break and return ierr when max count reached
+       if(icount>icount_max) then
+          ierr = istate
+          exit
+       end if
+#ENDIFKROME
+
 #IFKROME_report
        call krome_dump(n(:), rwork(:), iwork(:), ni(:))
 #ENDIFKROME
@@ -555,6 +566,9 @@ contains
     !default D/D_sol = Z/Z_sol
     !assuming linear scaling
     dust2gas_ratio = total_Z
+
+    !default broadening turubulence velocity
+    broadeningVturb2 = 0d0
 
 #IFKROME_useH2dust_constant
     !default clumping factor for

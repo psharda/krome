@@ -534,11 +534,23 @@ contains
   !*************************
   ! set the energy (frequency) of the photobin
   ! as left-right limits in eV
-  subroutine krome_set_photobinE_lr(phbinleft,phbinright) #KROME_bindC
+  subroutine krome_set_photobinE_lr(phbinleft,phbinright,Tgas) #KROME_bindC
     use krome_commons
     use krome_photo
     implicit none
-    #KROME_double :: phbinleft(nPhotoBins),phbinright(nPhotoBins)
+#KROME_double :: phbinleft(nPhotoBins),phbinright(nPhotoBins)
+#KROME_double_value_optional::Tgas
+    real*8::bTgas
+
+#IFKROME_useBindC
+    bTgas = tgas
+#ELSEKROME_useBindC
+    !default Tgas for broadening
+    bTgas = 1d1
+    if(present(Tgas)) then
+       bTgas = Tgas
+    end if
+#ENDIFKROME_useBindC
 
     photoBinEleft(:) = phbinleft(:)
     photoBinEright(:) = phbinright(:)
@@ -547,18 +559,57 @@ contains
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
 
     !initialize xsecs table
-    call init_photoBins()
+    call init_photoBins(bTgas)
 
   end subroutine krome_set_photobinE_lr
+
+  !*************************
+  ! set the energy (frequency) of photobins
+  ! when contiguous. Left and right limits are automatically
+  ! extracted. Energy in eV
+  subroutine krome_set_photobinE_limits(phbinLimits,Tgas) #KROME_bindC
+    use krome_commons
+    use krome_photo
+    implicit none
+    #KROME_double :: phbinLimits(nPhotoBins+1)
+    #KROME_double_value_optional::Tgas
+    real*8::phl(nPhotoBins),phr(nPhotoBins),bTgas
+
+#IFKROME_useBindC
+    bTgas = tgas
+#ELSEKROME_useBindC
+    !default Tgas for broadening
+    bTgas = 1d1
+    if(present(Tgas)) then
+       bTgas = Tgas
+    end if
+#ENDIFKROME_useBindC
+    phl(:) = phbinLimits(1:nPhotoBins)
+    phr(:) = phbinLimits(2:nPhotoBins+1)
+
+    call krome_set_photobinE_lr(phl(:),phr(:),bTgas)
+
+  end subroutine krome_set_photobinE_limits
 
   !*******************************
   !set the energy (eV) of the photobin according
   ! to MOCASSIN way (position and width array)
-  subroutine krome_set_photobinE_moc(binPos,binWidth) #KROME_bindC
+  subroutine krome_set_photobinE_moc(binPos,binWidth,Tgas) #KROME_bindC
     use krome_commons
     use krome_photo
     implicit none
-    #KROME_double :: binPos(nPhotoBins),binWidth(nPhotoBins)
+#KROME_double :: binPos(nPhotoBins),binWidth(nPhotoBins)
+#KROME_double_value_optional::Tgas
+    real*8::bTgas
+
+#IFKROME_useBindC
+    bTgas = Tgas
+#ELSEKROME_useBindC
+    bTgas = 1d1
+    if(present(Tgas)) then
+       bTgas = Tgas
+    end if
+#ELSEKROME_useBindC
 
     photoBinEleft(:) = binPos(:)-binWidth(:)/2d0
     photoBinEright(:) = binPos(:)+binWidth(:)/2d0
@@ -567,7 +618,7 @@ contains
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
 
     !initialize xsecs table
-    call init_photoBins()
+    call init_photoBins(bTgas)
 
   end subroutine krome_set_photobinE_moc
 
@@ -575,13 +626,24 @@ contains
   ! set the energy (eV) of the photobin
   ! linearly from lowest to highest energy value
   ! in eV
-  subroutine krome_set_photobinE_lin(lower,upper) #KROME_bindC
+  subroutine krome_set_photobinE_lin(lower,upper,Tgas) #KROME_bindC
     use krome_commons
     use krome_photo
     implicit none
-    #KROME_double_value :: lower,upper
-    real*8::dE
+#KROME_double_value :: lower,upper
+#KROME_double_value_optional::Tgas
+    real*8::dE,bTgas
     integer::i
+
+#IFKROME_useBindC
+    bTgas = Tgas
+#ELSEKROME_useBindC
+    bTgas = 1d1
+    if(present(Tgas)) then
+       bTgas = Tgas
+    end if
+#ENDIFKROME_useBindC
+
     dE = abs(upper-lower)/nPhotoBins
     do i=1,nPhotoBins
        photoBinEleft(i) = dE*(i-1) + lower
@@ -592,7 +654,7 @@ contains
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
 
     !initialize xsecs table
-    call init_photoBins()
+    call init_photoBins(bTgas)
 
   end subroutine krome_set_photobinE_lin
 
@@ -600,13 +662,24 @@ contains
   ! set the energy (eV) of the photobin
   ! logarithmically from lowest to highest energy value
   ! in eV
-  subroutine krome_set_photobinE_log(lower,upper) #KROME_bindC
+  subroutine krome_set_photobinE_log(lower,upper,Tgas) #KROME_bindC
     use krome_commons
     use krome_photo
     implicit none
-    #KROME_double_value :: lower,upper
-    real*8::dE,logup,loglow
+#KROME_double_value :: lower,upper
+#KROME_double_value_optional::Tgas
+    real*8::dE,logup,loglow,bTgas
     integer::i
+
+#IFKROME_useBindC
+    bTgas = Tgas
+#ELSEKROME_useBindC
+    bTgas = 1d1
+    if(present(Tgas)) then
+       bTgas = Tgas
+    end if
+#ENDIFKROME_useBindC
+
     if(lower.ge.upper) then
        print *,"ERROR: in  krome_set_photobinE_log lower >= upper limit!"
        stop
@@ -623,7 +696,7 @@ contains
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
 
     !initialize xsecs table
-    call init_photoBins()
+    call init_photoBins(bTgas)
 
   end subroutine krome_set_photobinE_log
 
@@ -835,6 +908,67 @@ contains
 
   end subroutine krome_photoBin_store
 
+  !*********************
+  !load flux radiation from a two-columns file
+  ! energy/eV, flux/(eV/cm2/sr)
+  ! Flux is interpolated over the existing binning
+  ! constant-area method
+  subroutine krome_load_photoBin_file_2col(fname)
+    use krome_commons
+    implicit none
+    integer,parameter::imax=int(1e4)
+    character(len=*) :: fname
+    integer::unit,ios,icount,j,i
+    real*8::xtmp(imax),ftmp(imax),intA,eL,eR
+    real*8::xL,xR,pL,pR,fL,fR,Jflux(nPhotoBins)
+
+    !open file to read
+    open(newunit=unit,file=trim(fname),iostat=ios)
+    if(ios/=0) then
+       print *,"ERROR: problems reading "//trim(fname)
+       stop
+    end if
+
+    !read file line by line and store to temporary
+    icount = 1
+    do
+       read(unit,*,iostat=ios) xtmp(icount), ftmp(icount)
+       if(ios/=0) exit
+       icount = icount + 1
+    end do
+    close(unit)
+
+    !loop on photobins for interpolation
+    do j=1,nPhotoBins
+       intA = 0d0
+       !photobin limits
+       eL = photoBinEleft(j)
+       eR = photoBinEright(j)
+       !loop on flux bins
+       do i=1,icount-1
+          !flux bin limits
+          xL = xtmp(i)
+          xR = xtmp(i+1)
+          !if outside the bin skip
+          if((xR<eL).or.(xL>eR)) cycle
+          !get the interval limit (consider partial overlapping)
+          pL = max(xL,eL)
+          pR = min(xR,eR)
+          !interpolate to get the flux at the interval limit
+          fL = (ftmp(i+1)-ftmp(i))*(pL-xL)/(xR-xL)+ftmp(i)
+          fR = (ftmp(i+1)-ftmp(i))*(pR-xL)/(xR-xL)+ftmp(i)
+          !compute area of the overlapped area
+          intA = intA + (fL+fR)*(pR-pL)/2d0
+       end do
+       !distribute the flux in the photobin
+       Jflux(j) = intA / (eR-eL)
+    end do
+
+    !initialize intensity according to data
+    call krome_set_photoBinJ(Jflux(:))
+
+  end subroutine krome_load_photoBin_file_2col
+
   !********************************
   !load the radiation bins from the file fname
   ! data should be a 3-column file with
@@ -887,7 +1021,7 @@ contains
        stop
     end if
 
-    !initialize inteval and indensity according to data
+    !initialize interval and intensity according to data
     call krome_set_photobinE_lr(tmp_El(:),tmp_Er(:))
     call krome_set_photoBinJ(tmp_J(:))
 
@@ -1227,32 +1361,44 @@ contains
 
   end subroutine krome_set_photoBin_draineLog
 
- !**************************
-  !set the flux as Draine's function
-  ! in the range lower to upper (eV). the spacing is custom
+  !**************************
+  !set the flux as Draine's function with the current binning
   ! Note: you have to set the binning first
-  subroutine krome_set_photoBin_draineCustom(lower,upper) #KROME_bindC
+  subroutine krome_set_photoBin_draineCustom() #KROME_bindC
     use krome_commons
     use krome_photo
     use krome_constants
-    #KROME_double_value :: upper,lower
-    real*8::x
+    real*8::xL,xR,f1,f2
     integer::i
 
+    !return error if binning is not set
     if(maxval(photoBinEmid)==0d0) then
        print *,"ERROR: not initialized binning in draineCustom!"
        stop
     end if
 
+    !loop on bins
     do i=1,nPhotoBins
-       x = photoBinEmid(i) !eV
-       !eV/cm2/sr/s/Hz
-       if(x<13.6d0.and.x>5d0) then
-          photoBinJ(i) = (1.658d6*x - 2.152d5*x**2 + 6.919d3*x**3) &
-               * x *planck_eV
+       !eV/cm2/sr
+       if(xR<=13.6d0.and.xL>=5d0) then
+          xL = photoBinEleft(i) !eV
+          xR = photoBinEright(i) !eV
+       elseif(xL<5d0.and.xR>5d0) then
+          xL = 5d0 !eV
+          xR = photoBinEright(i) !eV
+       elseif(xL<13d0.and.xR>13.6d0) then
+          xL = photoBinEleft(i) !eV
+          xR = 13.6d0 !eV
        else
-          photoBinJ(i) = 0d0
+          xL = 0d0
+          xR = 0d0
        end if
+       f1 = (1.658d6*xL - 2.152d5*xL**2 + 6.919d3*xL**3) &
+            * planck_eV
+       f2 = (1.658d6*xR - 2.152d5*xR**2 + 6.919d3*xR**3) &
+            * planck_eV
+       photoBinJ(i) = (f1+f2)*(xR-xL)/2d0
+
     end do
 
     photoBinJ_org(:) = photoBinJ(:)
@@ -1301,7 +1447,7 @@ contains
   ! chemical composition. The column density
   ! is computed using the expression in the
   ! num2col(x) function.
-  ! An array of size krome_nPhotoBins is returned.
+  ! An array of size krome_nPhotoBins is returned
   function krome_get_opacity(x,Tgas) #KROME_bindC
     use krome_commons
     use krome_constants
@@ -1462,6 +1608,19 @@ contains
 #ENDIFKROME_useBindC
 
   end function krome_get_opacity_size_d2g
+
+  !*********************
+  !scale radiation intensity with opacity assuming a given
+  ! cell size and gas composition
+  subroutine krome_opacity_scale_size(csize,n,Tgas)
+    use krome_commons
+    implicit none
+    real*8::csize,n(nmols),xscale(nPhotoBins),Tgas
+
+    xscale(:) = krome_get_opacity_size(n(:),Tgas,csize)
+    call krome_photoBin_scale_array(exp(-xscale(:)))
+
+  end subroutine krome_opacity_scale_size
 
   !*******************************
   !load a frequency-dependent opacity table stored in fname file,
@@ -1628,6 +1787,18 @@ contains
     end do
 
   end subroutine krome_dump_Jflux
+
+  !**********************
+  !set the velocity for line broadening, cm/s
+  subroutine krome_set_lineBroadeningVturb(vturb)
+    use krome_constants
+    use krome_commons
+    implicit none
+    real*8::vturb
+
+    broadeningVturb2 = vturb**2
+
+  end subroutine krome_set_lineBroadeningVturb
 
 #ENDIFKROME
 

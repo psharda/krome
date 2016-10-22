@@ -58,8 +58,20 @@ module krome_commons
   !commons for frequency bins
 #KROME_photobins_array
 
+  !commons for H2 photodissociation (Solomon)
+  ! note: paramters here are set depending on the data
+  ! but if you have a different file you should modify them
+  integer,parameter::H2pdData_nvibX=15
+  integer,parameter::H2pdData_nvibB=37
+  real*8::H2pdData_dE(H2pdData_nvibX,H2pdData_nvibB)
+  real*8::H2pdData_pre(H2pdData_nvibX,H2pdData_nvibB)
+  real*8::H2pdData_EX(H2pdData_nvibX)
+
   !commons for dust optical properties
 #KROME_opt_variables
+
+  !square of turbulence velocity for broadening
+  real*8::broadeningVturb2
 
   !mpi rank of process. If 0, ignored
   integer::krome_mpi_rank=0, krome_omp_thread

@@ -188,9 +188,6 @@ class krome():
 		self.parser = argparse.ArgumentParser(description="KROME a package for astrochemistry and microphysics")
 		self.parser.add_argument("-ATOL", help="set solver absolute tolerance to the float or double value ATOL, e.g. -atol 1d-40\
 			Default is ATOL=1d-20, see also -RTOL and -customATOL")
-		self.parser.add_argument("-interfaceC", action="store_true", help="create a C wrapper")
-		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper \
-			since its a pre-requisite)")
 		self.parser.add_argument("-compact", action="store_true", help="creates a single fortran file with all the modules instead of\
 			various file with the different modules. Solver files remain stand-alone (see example make in test/MakefileCompact)")
 		self.parser.add_argument("-checkConserv", action="store_true", help="check mass conservation during integration (slower)")
@@ -261,6 +258,9 @@ class krome():
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM\
 			, DH, CR, PHOTOAV,VISCOUS. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
+		self.parser.add_argument("-interfaceC", action="store_true", help="create a C wrapper")
+		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper \
+			since its a pre-requisite)")
 		self.parser.add_argument("-iRHS", action="store_true", help="implicit loop-based RHS (suggested for large systems).")
 		self.parser.add_argument("-lh", action="store_true", help="use long header in f90 files.")
 		self.parser.add_argument("-listAutomatics", action="store_true", help="list all the automatic reactions available.")
@@ -5504,6 +5504,26 @@ class krome():
 
 			if(skip or skip_heat or skip_opacity): continue
 
+			#precompute broadeinng in photochemistry
+			if(srow=="#KROME_broadening_shift_precalc"):
+				row = "kt2 = 2d0*boltzmann_erg*Tgas\n"
+				row += "dshift(:) = 0d0\n"
+				foundPartner = [] #unique photoreaction partners
+				#loop on reactions to get photoreaction partners
+				for rea in reacts:
+					#use only photoreactions
+					if(not(rea.hasXsecFile)): continue
+					#get partner index
+					sidx = rea.reactants[0].fidx
+					#skip if parnter already found
+					if(sidx in foundPartner): continue
+					#compute thermal and turbulent broadening
+					row += "dshift("+sidx+") = sqrt(kt2*imass("+sidx+") &\n"
+					row += " + broadeningVturb2)/clight\n"
+					#add partner to found partners list
+					foundPartner.append(sidx)
+
+			#write interpolated xsecs to file
 			if(srow=="#KROME_save_xsecs_to_file"):
 				row = ""
 				for rea in reacts:

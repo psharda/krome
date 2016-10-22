@@ -42,18 +42,28 @@ contains
 
   !*********************
   !initialize/tabulate the bin-based xsecs
-  subroutine init_photoBins()
+  subroutine init_photoBins(Tgas)
+    use krome_constants
     use krome_commons
     use krome_dust
+    use krome_getphys
     implicit none
     integer::i,j
-    real*8::energy_eV,kk,energyL,energyR
+    real*8::Tgas,imass(nspec),kt2
+    real*8::energy_eV,kk,energyL,energyR,dshift(nmols)
 
+    !rise error if photobins are not defined
     if(photoBinEmid(nPhotoBins)==0d0) then
        print *,"ERROR: when using photo bins you must define"
        print *," the energy interval in bins!"
        stop
     end if
+
+    !get inverse of mass
+    imass(:) = get_imass()
+
+    !precompute adimensional line broadening
+#KROME_broadening_shift_precalc
 
 #KROME_load_xsecs_from_file
 
@@ -83,12 +93,13 @@ contains
     implicit none
     character(len=*)::fname
     integer::idx,j
-    real*8::energy_eV
+    real*8::energyLeft,energyRight
 
     open(22,file=trim(fname),status="replace")
     do j=1,nPhotoBins
-       energy_eV = photoBinEmid(j) !energy of the bin in eV
-       write(22,*) energy_eV, photoBinJTab(idx,j)
+       energyLeft = photoBinELeft(j) !left bin energy, eV
+       energyRight = photoBinERight(j) !right bin energy, eV
+       write(22,*) energyLeft, energyRight, photoBinJTab(idx,j)
     end do
     close(22)
 
@@ -134,7 +145,7 @@ contains
        E = photoBinEmid(j) !energy of the bin in eV
        Jval = photoBinJ(j) !radiation intensity eV/s/cm2/sr/Hz
        if(E>=6d0.and.E<=13.6)then
-         GHabing_thin = GHabing_thin + Jval * dE
+          GHabing_thin = GHabing_thin + Jval * dE
        endif
        tau = 0d0
 #KROME_photobin_opacity
@@ -165,7 +176,6 @@ contains
 
   end subroutine calc_photoBins_thick
 
-#ENDIFKROME
 
   !********************
   function sigma_v96(energy_eV,E0,sigma_0,ya,P,yw,y0,y1)
@@ -251,27 +261,39 @@ contains
   end subroutine load_xsec
 
   !**********************
-  !return averaged xsec in the energy range [energyL,energyR]
-  ! units: eV, cm2
-  function xsec_interp(energyL,energyR,xsec_val,xsec_Emin,xsec_idE)
+  !return averaged xsec in the energy range [xL,xR]
+  ! units: eV, cm2; broadening shift is adimensional
+  function xsec_interp(xL,xR,xsec_val,xsec_Emin,xsec_idE,dshift) result(xsecA)
     implicit none
-    real*8::xsec_interp,E0,xsecA,dE
-    real*8::energy,xsec_val(:),xsec_Emin,xsec_idE,energyL,energyR
-    integer::xsec_n,idx
+    real*8::xsecA,dE,dshift,dE_shift,eL,eR,dxi
+    real*8::energy,xsec_val(:),xsec_Emin,xsec_idE,xL,xR
+    integer::idx
 
     !xsec energy step (regular grid)
     dE = 1d0/xsec_idE
+    !store inverse of bin size
+    dxi = 1d0/(xR-xL)
     xsecA = 0d0 !init integrated xsec
     !loop on xsec vals
     do idx=1,size(xsec_val)
-       energy = (idx-1)*dE+xsec_Emin
-       !if xsec energy in the interval compute area
-       if(energy>=energyL .and. energy<=energyR) xsecA = xsecA &
-            + xsec_val(idx)*dE
-    end do
+       eL = (idx-1)*dE+xsec_Emin !left interval
+       eR = eL + dE !right interval
+       energy = (eL+eR)/2d0 !mid point
 
-    !compute averaged xsec for the flux energy range
-    xsec_interp = xsecA/(energyR-energyL)
+       !compute line broadening
+       eL = eL - 0.5d0*dshift*energy
+       eR = eR + 0.5d0*dshift*energy
+
+       !if xsec energy in the interval compute area
+       if(xR<eL.and.xL<eL) then
+          xsecA = xsecA + 0d0
+       elseif(xR>eL.and.xL>eL) then
+          xsecA = xsecA + 0d0
+       else
+          !renormalize xsec area considering partial overlap
+          xsecA = xsecA +xsec_val(idx) * (min(eR,xR)-max(eL,xL)) * dxi
+       end if
+    end do
 
   end function xsec_interp
 
@@ -301,6 +323,91 @@ contains
     xsec_interp_mid = max(xsec_interp_mid,0d0)
 
   end function xsec_interp_mid
+
+  !************************
+  subroutine kpd_H2_loadData()
+    use krome_commons
+    implicit none
+    integer::unit,ios,ii,jj
+    real*8::xE,dE,pre
+    character(len=20)::fname
+
+    !open file to read
+    fname = "H2pdB.dat"
+    open(newunit=unit,file=trim(fname),status="old",iostat=ios)
+    !check for errors
+    if(ios/=0) then
+       print *,"ERROR: problem loading file "//trim(fname)
+       stop
+    end if
+
+    !loop on file to read
+    do
+       read(unit,*,iostat=ios) ii,jj,xE,dE,pre
+       !skip comments
+       if(ios==59.or.ios==5010) cycle
+       !exit when eof
+       if(ios/=0) exit
+       H2pdData_EX(ii+1) = xE !ground level energy, eV
+       H2pdData_dE(ii+1,jj+1) = dE !Ej-Ei energy, eV
+       H2pdData_pre(ii+1,jj+1) = pre !precomp (see file header)
+    end do
+
+    !check if enough data have been loaded
+    if((ii+1/=H2pdData_nvibX).or.(jj+1/=H2pdData_nvibB)) then
+       print *,"ERROR: missing data when loading "//fname
+       print *,"found:",ii+1,jj+1
+       print *,"expected:",H2pdData_nvibX,H2pdData_nvibB
+       stop
+    end if
+
+    close(unit)
+
+  end subroutine kpd_H2_loadData
+
+  !************************
+  !compute vibrational partition function at given Tgas
+  ! for all the loaded energies (for H2 Solomon)
+  function partitionH2_vib(Tgas) result(z)
+    use krome_constants
+    use krome_commons
+    implicit none
+    real*8::Tgas,z(H2pdData_nvibX),b
+    integer::j
+
+    !prepare partition function from ground (X) levels energies
+    b = iboltzmann_eV/Tgas
+    z(:) = exp(-H2pdData_EX(:)*b)
+
+    !normalize
+    z(:) = z(:)/sum(z)
+
+  end function partitionH2_vib
+
+  !************************
+  !compute H2 photodissociation rate (Solomon)
+  ! state to state, using preloded data, 1/s
+  function kpd_H2(Tgas) result(kpd)
+    use krome_commons
+    implicit none
+    integer::i,j
+    real*8::Tgas,kpd,dE,z(H2pdData_nvibX)
+    real*8::Jf(H2pdData_nvibX)
+
+    !get partition for ground state X
+    z(:) = partitionH2_vib(Tgas)
+
+    !compute the rate, using preloaded data
+    kpd = 0d0
+    do i=1,H2pdData_nvibB
+       do j=1,H2pdData_nvibX
+          Jf(j) = get_photoIntensity(H2pdData_dE(j,i))
+       end do
+       kpd = kpd + sum(H2pdData_pre(:,i) &
+            * Jf(:) * z(:))
+    end do
+
+  end function kpd_H2
 
   !************************
   function H2_sigmaLW(energy_eV)
@@ -342,5 +449,6 @@ contains
     H2_sigmaLW = fact*(sL0+sW0)+(1d0-fact)*(sL1+sW1)
 
   end function H2_sigmaLW
+#ENDIFKROME
 
 end module krome_photo

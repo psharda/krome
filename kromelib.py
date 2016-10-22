@@ -140,7 +140,7 @@ class reaction():
 			sidx = str(self.idx)
 			args = "xsec"+sidx+"_val(:), xsec"+sidx+"_Emin,"
 			#args += "xsec"+sidx+"_n,"
-			args += "xsec"+sidx+"_idE"
+			args += "xsec"+sidx+"_idE, dshift("+self.reactants[0].fidx+")"
 			self.kphrate = "xsec_interp(energyL, energyR, "+args+")"
 			self.xsecFile = self.krate.replace("@xsecFile=","").strip()
 			if(self.xsecFile.upper()=="SWRI"):
@@ -405,7 +405,7 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		print "ERROR: file "+fname+" doesn't exist!"
 		print "Species "+reactant.name+" doesn't have a SWRI file."
 		print "Search on http://phidrates.space.swri.edu"
-		print " and copy to "+data_folder
+		print " and copy to "+data_folder+"/"+reactant.name+".dat"
 		sys.exit()
 	#read data from the file and store the data and the header
 	fswri = open(fname,"rb")
@@ -1872,6 +1872,7 @@ def get_licence_header(version, codename, short=False):
 
 	#name of the git master file
 	masterfile = ".git/refs/heads/master"
+	changeset = ("x"*7) #default unknown changeset
 	#if git master file exists grep the changeset
 	if(file_exists(masterfile)):
 		changeset = open(masterfile,"rb").read()
