@@ -66,6 +66,7 @@ module krome_commons
   real*8::H2pdData_dE(H2pdData_nvibX,H2pdData_nvibB)
   real*8::H2pdData_pre(H2pdData_nvibX,H2pdData_nvibB)
   real*8::H2pdData_EX(H2pdData_nvibX)
+  integer::H2pdData_binMap(H2pdData_nvibX,H2pdData_nvibB)
 
   !commons for dust optical properties
 #KROME_opt_variables
