@@ -1543,6 +1543,11 @@ contains
 #ENDIFKROME_useBindC
     end do
 
+#IFKROME_useH2pd
+    krome_get_opacity_size(:) = krome_get_opacity_size(:) &
+         + kpd_H2_xsec(Tgas) * n(idx_H2) * csize
+#ENDIFKROME
+
 #IFKROME_useBindC
     krome_get_opacity_size = c_loc(get_opacity_size)
 #ENDIFKROME_useBindC
