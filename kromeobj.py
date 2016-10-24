@@ -48,19 +48,23 @@ class krome():
 	solver_MF = 222
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
-	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = use_cooling = useCoolingDust = useCoolingCont = False
-	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useCoolingCIE = useCoolingDISS = useCoolingFF = False
+	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = False
+	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = False
+	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
         useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = False
-	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = use_thermo = useStars = useNuclearMult = False
-	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useCoolingdH = useHeatingdH = useCoolingChem = False
+	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = False
+	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
+	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
 	usePhotoOpacity = useXRay = hasSurfaceReactions = shieldHabingDust = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = shortHead = True
-	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = checkThermochem = needLAPACK = useCoolFloor = False
-	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = isdry = useIERR = checkReverse = usePhotoInduced = False
-	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = useHeatingPumpH2 = reducer = useFexCustom = False
+	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = False
+	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = False
+	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
+	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
+	useHeatingPumpH2 = reducer = useFexCustom = False
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
@@ -134,6 +138,7 @@ class krome():
 	individualCoolingFloors = [] #list of individual floors
 	fdbase = "data/database/" #database of reaction folder for auto reactions
 	indexSolomon = -1 #default solomon index, -1 to trigger error
+	indexH2photodissociation = -1 #default H2pd index, -1 to trigger error
 	KindSingle = "real*4"
 	KindDouble = "real*8"
 	KindDoubleValue = "real*8"
@@ -1845,6 +1850,7 @@ class krome():
 		isComment = False #flag for comment block
 		noTabNext = False #flag for use tabs for the next reaction
 		nextSolomon = False #next reaction is Solomon (to store index for H2 pumping)
+		nextH2photodissociation = False #next reaction is H2 photodissociation
 		for row in allrows:
 			srow = row.strip() #stripped row
 			if(srow.strip()==""): continue #looks for blank line
@@ -2145,10 +2151,20 @@ class krome():
 				nextSolomon = True
 				continue
 
+			#search for solomon reaction
+			if(srow.lower()=="@next_h2photodissociation"):
+				nextH2photodissociation = True
+				continue
+
 			#store index if reaction is Solomon for H2 pumping
 			if(nextSolomon):
 				self.indexSolomon = rcount + 1
 				nextSolomon = False
+
+			#store index if reaction is Solomon for H2 pumping
+			if(nextH2photodissociation):
+				self.indexH2photodissociation = rcount + 1
+				nextH2photodissociation = False
 
 
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
@@ -2465,6 +2481,13 @@ class krome():
 			print " 7,H,H+,E,NONE,NONE,auto"
 			print " 8,He,He+,E,NONE,NONE,auto"
 			print " where indexes are arbitrary"
+			sys.exit()
+
+		#if both H2 pd and solomon index are not -1 means that user is using both
+		if((self.indexH2photodissociation>=0) and (self.indexSolomon>=0)):
+			print "ERROR: you cannot use H2 photodissociation"
+			print " on the fly method (@next_H2photodissoctiation)"
+			print " and Solomon (@next_Solomom) together"
 			sys.exit()
 
 		#check for automatic reactions
@@ -4623,6 +4646,8 @@ class krome():
 		constants.append(["boltzmann_eV", "8.617332478d-5","eV / K"])
 		constants.append(["boltzmann_J", "1.380648d-23","J / K"])
 		constants.append(["boltzmann_erg", "1.380648d-16","erg / K"])
+		constants.append(["iboltzmann_eV", "1d0/boltzmann_eV","K / eV"])
+		constants.append(["iboltzmann_erg", "1d0/boltzmann_erg","K / erg"])
 		constants.append(["planck_eV","4.135667516d-15","eV s"])
 		constants.append(["planck_J","6.62606957d-34","J s"])
 		constants.append(["planck_erg","6.62606957d-27","erg s"])
@@ -5541,17 +5566,6 @@ class krome():
 					row += "call load_xsec(\""+rea.xsecFile+"\", xsec"+sidx+"_val, xsec"+sidx+"_Emin,"
 					row += " xsec"+sidx+"_n, xsec"+sidx+"_idE)\n"
 
-			#replace pragma with the initialization of the photorate table in bins
-		#	if(srow=="#KROME_photobin_xsecs"):
-		#		phbinx = ""
-		#		for rea in reacts:
-		#			if(rea.kphrate==None): continue
-		#			phbinx += "\n!"+rea.verbatim+"\n"
-		#			phbinx += "kk = "+rea.kphrate+"\n"
-		#			phbinx += "if(energy_eV<"+str(rea.Tmin)+") kk = 0d0\n"
-		#			phbinx += "if(energy_eV>"+str(rea.Tmax)+") kk = 0d0\n"
-		#			phbinx += "photoBinJTab("+str(rea.idxph)+",j) = kk\n"
-		#		row = phbinx+"\n"
 			if(srow=="#KROME_photobin_xsecs"):
 				phbinx = ""
 				for rea in reacts:
@@ -5575,12 +5589,16 @@ class krome():
 				for i in range(len(reacts)):
 					rea = reacts[i]
 					if(rea.kphrate==None): continue
-					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol("+self.photoPartners[rea.idx].fidx+") !"\
-						+rea.verbatim+"\n"
+					phbintau += "tau = tau + photoBinJTab("+str(rea.idxph)+",j) * ncol(" \
+					+ self.photoPartners[rea.idx].fidx+") !"\
+					+ rea.verbatim+"\n"
 				row = phbintau+"\n"
 			#add qabs interpolation on photobins
 			elif(srow=="#KROME_interpolate_dust_qabs" and self.useDust):
 				row = "call interp_qabs()\n"
+			#call to subroutine that store the transition to bin correspondence
+			elif(srow=="#KROME_init_H2kpd_transition_map" and (self.indexH2photodissociation>-1)):
+				row = "call kpd_bin_map()\n"
 
 			if(row.strip()==""):
 				fout.write("\n")
@@ -6504,6 +6522,12 @@ class krome():
 				fout.write("real*8::kflux("+str(len(self.reacts))+")\n")
 				fout.write("\n")
 
+			elif(srow=="#KROME_H2pdRate"):
+				#add H2 photodissociation rate if available
+				if(self.indexH2photodissociation>-1):
+					fout.write("!get H2 photodissociation rate\n")
+					fout.write("k("+str(self.indexH2photodissociation)+") = kpd_H2(Tgas)\n")
+
 			elif(srow == "#KROME_calc_Tdust" and self.useDustT and not(self.usedTdust)):
 				fout.write("call compute_Tdust(n(:),Tgas)"+"\n")
 
@@ -6670,12 +6694,16 @@ class krome():
 				if(k.upper()==mols.name.upper()):
 					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
+		#non-negative index means H2 photodissociation reaction is set
+		useH2Photodissociation = (self.indexH2photodissociation>-1)
+
 		skip = skipDustOpacity = skipBindC = False
 		#loop on source to pre-process pragmas
 		for row in fh:
 
 			srow = row.strip()
 
+			if(srow == "#IFKROME_useH2pd" and not(useH2Photodissociation)): skip = True
 			if(srow == "#IFKROME_usePhotoBins" and self.photoBins<=0): skip = True
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
@@ -7018,6 +7046,9 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome.f90","w")
 
+		#non-negative index means H2 photodissociation reaction is set
+		useH2Photodissociation = (self.indexH2photodissociation>-1)
+
 		skip = skipBindC = False
 		for row in fh:
 			srow = row.strip()
@@ -7026,6 +7057,7 @@ class krome():
 			if(srow == "#ELSEKROME" and self.useX): skip = True
 
 			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip = True
+			if(srow == "#IFKROME_useH2pd" and not(useH2Photodissociation)): skip = True
 			if(srow == "#IFKROME_useTabs" and not(self.useTabs)): skip = True
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#IFKROME_usePhotoBins" and not(self.photoBins>0)): skip = True
