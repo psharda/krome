@@ -6697,13 +6697,12 @@ class krome():
 		#non-negative index means H2 photodissociation reaction is set
 		useH2Photodissociation = (self.indexH2photodissociation>-1)
 
-		skip = skipDustOpacity = skipBindC = False
+		skip = skipDustOpacity = skipBindC = skipH2pd = False
 		#loop on source to pre-process pragmas
 		for row in fh:
 
 			srow = row.strip()
 
-			if(srow == "#IFKROME_useH2pd" and not(useH2Photodissociation)): skip = True
 			if(srow == "#IFKROME_usePhotoBins" and self.photoBins<=0): skip = True
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
 			if(srow == "#IFKROME_use_cooling" and not(self.use_cooling)): skip = True
@@ -6716,9 +6715,11 @@ class krome():
 			if(srow == "#IFKROME_useTabsTdust" and not(self.useDustTabs)): skip = True
 			if(srow == "#IFKROME_customFex" and not(self.useFexCustom)): skip = True
 			if(srow == "#IFKROME_dust_opacity" and not(self.useDust)): skipDustOpacity = True
+			if(srow == "#IFKROME_useH2pd" and not(useH2Photodissociation)): skipH2pd = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 			if(srow == "#ENDIFKROME_dust_opacity"): skipDustOpacity = False
+			if(srow == "#ENDIFKROME_useH2pd"): skipH2pd = False
 
 			if(srow == "#IFKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = True
 			if(srow == "#ELSEKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = False
