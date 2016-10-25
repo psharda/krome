@@ -1546,7 +1546,7 @@ contains
 #IFKROME_useH2pd
     krome_get_opacity_size(:) = krome_get_opacity_size(:) &
          + kpd_H2_xsec(Tgas) * n(idx_H2) * csize
-#ENDIFKROME
+#ENDIFKROME_useH2pd
 
 #IFKROME_useBindC
     krome_get_opacity_size = c_loc(get_opacity_size)
