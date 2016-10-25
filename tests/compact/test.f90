@@ -1,8 +1,8 @@
 !****************SEDOV-LIKE SHOCK 1D LAGRANGIAN TEST***************
-! REFER TO: Bodenheimer P., Laughlin G., Rozyczka M., Yorke H.    
-!           2006, Numerical Methods in Astrophysics:         
-!           An Introduction. Series in Astronomy and Astrophysics, 
-!                             Taylor&Francis 
+! REFER TO: Bodenheimer P., Laughlin G., Rozyczka M., Yorke H.
+!  2006, Numerical Methods in Astrophysics:
+!  An Introduction. Series in Astronomy and Astrophysics,
+!  Taylor&Francis
 !*******************************************************************
 
 !The scheme of the following f90 file is:
@@ -11,11 +11,11 @@
 !program sedov (main)
 
 !***************START MODULES NEEDED BY THE TEST-CODE***************
-!*****COMMONS*****!
+!*****COMMONS*****
 module commons
   use krome_user
   integer,parameter::nx=100, il=20, nsp=krome_nmols
-  real*8,parameter::pi43=4.d0/3.d0*3.1415, spy=365.*24.*3600.d0
+  real*8,parameter::pi43=4d0/3d0*3.1415, spy=365.*24.*3600d0
   real*8,parameter::pi=3.1415d0
   real*8::cflfactor,dfactor,gamma,dt12,dt,t, fmratio, efac, tmax, Tgas(nx)
   real*8::radius, rhogas, mass0, esed
@@ -25,31 +25,31 @@ module commons
   real*8::x(nx,nsp),massr(nx)
 end module commons
 
-!******SUBS***********! 
+!******SUBS***********
 module subs
 contains
-  !*****INITIALIZATION OF THE CHEMICAL ABUNDANCES*******!
+  !*****INITIALIZATION OF THE CHEMICAL ABUNDANCES*******
   subroutine initchem()
     use commons
 
     integer::ix
     real*8:: xx(nsp)
-    x(:,:) = 0.d0
+    x(:,:) = 0d0
 
     !INITIALIZATION IN MASS FRACTION
     do ix = 1, nx
        x(ix,KROME_idx_H)     = 0.9225d0  !H
-       x(ix,KROME_idx_E)     = 1.0d-4    !E
-       x(ix,KROME_idx_Hj)    = 1.0d-4    !H+
-       x(ix,KROME_idx_D)     = 1.0d-20   !D
-       x(ix,KROME_idx_Dj)    = 1.0d-20   !D+
+       x(ix,KROME_idx_E)     = 1d-4    !E
+       x(ix,KROME_idx_Hj)    = 1d-4    !H+
+       x(ix,KROME_idx_D)     = 1d-20   !D
+       x(ix,KROME_idx_Dj)    = 1d-20   !D+
        x(ix,KROME_idx_HE)    = 0.0972d0  !He
-       x(ix,KROME_idx_HEj)   = 1.0d-20   !He+
-       x(ix,KROME_idx_H2j)   = 1.0d-20   !H2+
-       x(ix,KROME_idx_H2)    = 1.0d-5    !H2
-       x(ix,KROME_idx_HD)    = 1.0d-8    !HD
-       x(ix,KROME_idx_Hk)    = 1.0d-20   !H-
-       x(ix,KROME_idx_HEjj)  = 1.0d-20   !He++
+       x(ix,KROME_idx_HEj)   = 1d-20   !He+
+       x(ix,KROME_idx_H2j)   = 1d-20   !H2+
+       x(ix,KROME_idx_H2)    = 1d-5    !H2
+       x(ix,KROME_idx_HD)    = 1d-8    !HD
+       x(ix,KROME_idx_Hk)    = 1d-20   !H-
+       x(ix,KROME_idx_HEjj)  = 1d-20   !He++
        !normalize
        x(ix,:) = x(ix,:) / sum(x(ix,:))
     end do
@@ -67,17 +67,17 @@ contains
     real*8::dtc,dtd
     integer::ix
 
-    dtc = 1.d99
+    dtc = 1d99
     do ix = 1, nx-1
        dtc = min(dtc, dr12(ix) / (abs(u(ix)) + sqrt(gamma*eps(ix))))
     end do
 
     !courant
     dtc  = cflfactor * dtc
-    if (t+dtc.gt.tmax) dtc = tmax-t 
+    if (t+dtc.gt.tmax) dtc = tmax-t
 
     !diffusion limit
-    dtd = 1.d-99
+    dtd = 1d-99
     do ix = 1, nx-1
        dtd = max(dtd, abs(at12(ix+1)*u(ix+1)-at12(ix)*u(ix)) &
             /(v(ix+1) - v(ix)))
@@ -122,7 +122,7 @@ contains
        rho (ix) = rhoej
        eps (ix) = efac
        p   (ix) = (gamma - 1d0) * rho(ix) * eps(ix)
-       u   (ix) = 0.d0
+       u   (ix) = 0d0
     end do
 
     print *,"***********************"
@@ -140,12 +140,12 @@ contains
        dm12(ix) = dmamb
        rho (ix) = rhoamb
        eps (ix) = efac
-       p   (ix) = (gamma - 1.d0) * rho(ix) * eps(ix)
-       u   (ix) = 0.d0
+       p   (ix) = (gamma - 1d0) * rho(ix) * eps(ix)
+       u   (ix) = 0d0
     end do
 
     !initialize integral mass
-    fm(1) = dm12(1) 
+    fm(1) = dm12(1)
     do ix = 2, nx
        fm (ix) = fm(ix-1) + dm12(ix)
     end do
@@ -155,12 +155,12 @@ contains
     end do
 
     !initialize shell radius, volume, surface
-    r(1) = 0.d0
-    v(1) = 0.d0
+    r(1) = 0d0
+    v(1) = 0d0
     do ix = 2, nx
        v(ix) = v(ix-1) + dm12(ix-1) / rho(ix-1)
        r(ix) = (v(ix)/pi43)**(1./3.)
-       a(ix) = 4.d0 * pi * r(ix)**2
+       a(ix) = 4d0 * pi * r(ix)**2
     end do
     !initialize shell sizes
     do ix = 1, nx-1
@@ -176,7 +176,7 @@ contains
     do ix = 1,nx
        write(22,'(99E11.3)') r(ix), dr12(ix), dm12(ix), eps(ix), rho(ix)
     end do
-    t = 0.d0
+    t = 0d0
     print *,"***********************"
 
   end subroutine inicond
@@ -197,7 +197,7 @@ program sedov
   real*8::umax, rhomax, pmax, emax, wmax, epsi
   real*8::xx(nsp)
 
-  !     This Lagrangian code follows the adiabatic expansion 
+  !     This Lagrangian code follows the adiabatic expansion
   !     of a hot spherical bubble in a uniform ambient medium.
   !     The present setup is ajusted to spherical geometry.
   !     It includes primordial chemistry evolution
@@ -205,10 +205,10 @@ program sedov
 
   call krome_init() !###initialize KROME###
 
-  gamma = 5.d0/3.d0 !adiabatic index
+  gamma = 5d0/3d0 !adiabatic index
   nsteps = int(1e4) !maximum number of time-steps
   ndump = 10 !dump interval
-  Tgas(:) = 1d3 !default gas temp (K)  
+  Tgas(:) = 1d3 !default gas temp (K)
   tmax = spy * 5d3 !maximum integration time (s)
   q = 2d0 !artificial viscosity parameter
   radius = 3.08568025d18 * 1d0 !radius of the box (cm)
@@ -241,13 +241,13 @@ program sedov
      !update velocities (eqn 6.42)
      do ix = 2, nx
         u(ix) = u(ix) - a(ix) * (p(ix)-p(ix-1)) * dt / dm(ix) &
-             - .5d0 * (w(ix) * (3.d0*ak12(ix)-a(ix)) &
-             - w(ix-1) * (3.d0*ak12(ix-1)-a(ix))) &
-             * dt/dm(ix) 
+             - .5d0 * (w(ix) * (3d0*ak12(ix)-a(ix)) &
+             - w(ix-1) * (3d0*ak12(ix-1)-a(ix))) &
+             * dt/dm(ix)
         u(ix) = u(ix) - krome_gravity * massr(ix) / r(ix)**2 * dt
      end do
 
-     u(1) = 0.d0 !velocity of the first shell
+     u(1) = 0d0 !velocity of the first shell
 
      !update radii, surfaces and volumes (eqn 6.41_2)
      rold(:) = r(:)
@@ -258,17 +258,17 @@ program sedov
         print *,"r(ix)<0"
         stop
      end if
-     
+
      !update shell radius
      do ix = 1, nx-1
         dr12(ix) = r(ix+1) - r(ix)
      end do
-     
+
      !update surface and volume
-     at12(:) = 4.d0 * pi * (.5d0 * (r(:)+rold(:)))**2
-     a(:) = 4.d0 * pi * r(:)**2 
+     at12(:) = 4d0 * pi * (.5d0 * (r(:)+rold(:)))**2
+     a(:) = 4d0 * pi * r(:)**2
      v(:) = pi43 * r(:)**3
-     
+
      do ix = 1, nx-1
         ak12(ix) = .5d0 * (at12(ix+1) + at12(ix))
      end do
@@ -279,8 +279,8 @@ program sedov
      end do
      rho(nx) = rho(nx-1)
 
-     !update shells integral mass 
-     massr(1) = 0.d0
+     !update shells integral mass
+     massr(1) = 0d0
      do ix = 2, nx
         massr(ix) = massr(ix-1) + pi43 * (r(ix)**3 -r(ix-1)**3) * rho(ix)
      end do
@@ -288,13 +288,13 @@ program sedov
      !artificial viscosity
      do ix = 1, nx-1
         w(ix)  = -q**2 * rho(ix) * abs(u(ix+1)-u(ix)) &
-             * (u(ix+1) * (1.d0 - at12(ix+1)/3.d0/ak12(ix)) &
-             - u(ix) * (1.d0 - at12(ix)/3.d0/ak12(ix))) 
+             * (u(ix+1) * (1d0 - at12(ix+1)/3d0/ak12(ix)) &
+             - u(ix) * (1d0 - at12(ix)/3d0/ak12(ix)))
      end do
 
      !no viscosity for postive velocity divergence
      do ix = 1, nx-1
-        if(u(ix+1) > u(ix)) w(ix) = 0.d0 
+        if(u(ix+1) > u(ix)) w(ix) = 0d0
      end do
 
      !update internal energies and pressures (6.43)
@@ -302,7 +302,7 @@ program sedov
         aux = eps(ix) - p(ix) &
              * (at12(ix+1) * u(ix+1) &
              - at12(ix) * u(ix)) * dt12 / dm12(ix)
-        p(ix) = .5d0 * (p(ix) + (gamma-1.d0) * rho(ix) * aux)
+        p(ix) = .5d0 * (p(ix) + (gamma-1d0) * rho(ix) * aux)
      end do
 
      !internal energies
@@ -331,12 +331,12 @@ program sedov
      enddo
 
      !update internal energy with new temperature
-     eps(:) = Tgas(:) / (gamma - 1.d0) / krome_p_mass &
+     eps(:) = Tgas(:) / (gamma - 1d0) / krome_p_mass &
           * krome_boltzmann_erg
 
      !update pressure
      do ix = 1, nx-1
-        p(ix) = (gamma-1.d0) * rho(ix) * eps(ix)
+        p(ix) = (gamma-1d0) * rho(ix) * eps(ix)
      end do
 
      !update last shell
@@ -345,7 +345,7 @@ program sedov
 
      t = t + dt12 !update time
 
-     !dump hydrodinamics and chemistry
+     !dump hydrodynamics and chemistry
      if (mod(istep,ndump).eq.0) then
         write(*,100) istep,t/spy,t/tmax*100
         do ix = 1, nx
@@ -363,6 +363,8 @@ program sedov
   end do
 
   !dump final conditions and chemistry
+  write(24,*) "#cell time radius density velocity pressure Tgas"
+  write(34,*) "#cell time radius "//krome_get_names_header()
   do ix = 1, nx-1
      !get number density from mass fraction
      xx(1:nsp) = x(ix,:)!*rho(ix)/spec_mass(:)
@@ -370,8 +372,9 @@ program sedov
      write(34,'(I8,999E11.3)') ix, t, r(ix), xx(1:nsp)
   end do
 
-!format
+  !format
 100 format('step:',i6,'; t:',1pe10.2,'; ',0pf6.1,'%')
 
   write(*,*) "finish!"
+
 end program sedov

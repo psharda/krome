@@ -18,7 +18,7 @@ program test_krome
   real*8::aexp,Tcmb0
   real*8::zinit,zend,u
 
-  !INITIALIZE KROME PARAMETERS AND DUST 
+  !INITIALIZE KROME PARAMETERS
   call krome_init()
 
   !INITIAL CONDITIONS
@@ -41,13 +41,16 @@ program test_krome
   !INIT: FULLY IONIZED GAS IN NUMBER DENSITY
   x(KROME_idx_Hj)     = 0.924d0 * dd   !H+
   x(KROME_idx_HEjj)   = 0.076d0 * dd   !He++
-  x(KROME_idx_Dj)     = 4.3d-5 * dd    !D+  
+  x(KROME_idx_Dj)     = 4.3d-5 * dd    !D+
   x(KROME_idx_E)      = krome_get_electrons(x)
 
   call krome_get_info(x(:),Tgas)
 
   print *,"solving..."
   print '(a7,4a11)',"step","z","n(cm-3)","Tgas(K)","Trad(K)"
+
+  !header
+  write(22,'(a)') "#z density Tgas Trad "//krome_get_names_header()
 
   !loop over the hydro time-step
   do i = 1,rstep
@@ -91,7 +94,7 @@ program test_krome
      !species update
      x(:) = x(:) * dd / dd1
 
-     dt = dtH 
+     dt = dtH
 
      !solve the chemistry
      call krome(x(:),Tgas,dt)

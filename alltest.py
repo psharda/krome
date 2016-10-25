@@ -8,10 +8,10 @@ import ftplib,urllib2,sys,cookielib
 
 argv = sys.argv
 
-compiler="ifort" #ifort or gfortran
+makeOption = "debug"
 
-if("-compiler" in argv):
-	compiler = argv[argv.index("-compiler")+1]
+if("-makeopt" in argv):
+	makeOption = argv[argv.index("-makeopt")+1]
 
 testpath = "tests/" #where the tests are located
 prj_name = "alltest" #where the tests
@@ -123,7 +123,6 @@ fout.write("changeset: "+changeset+"\n")
 run = False #run flag
 for test in tests:
 	if(test==first): run = True #run the first test
-	if((compiler=="gfortran") and (test=="wrapC")): continue
 	if(not(run)): continue #skip if test is before first
 	print
 	print "#########################################################################################################"
@@ -136,7 +135,7 @@ for test in tests:
 		os.remove(ff)
 
 	#call krome
-	callarg = ["./krome", "-test="+test,"-skipDevTest", "-unsafe", "-sh","-compiler="+compiler,"-project="+prj_name]
+	callarg = ["./krome", "-test="+test,"-skipDevTest", "-unsafe", "-sh","-project="+prj_name]
 	print callarg
 	call(callarg)
 
@@ -150,7 +149,7 @@ for test in tests:
 	call(["make","clean"])
 
 	#compile full debug
-	call(["make","debug"])
+	call(["make",makeOption])
 
 	#run executable
 	call(["./test"])

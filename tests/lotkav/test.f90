@@ -8,17 +8,18 @@ program test
   implicit none
   integer,parameter::nsp=krome_nmols !number of species (common)
   real*8::Tgas,dt,x(nsp),t
-  
+
   call krome_init() !init krome (mandatory)
-  
+
   x(:) = 1d-20 !default abundances
-  x(krome_idx_x) = 5.d0 !initial prey
-  x(krome_idx_y) = 2.d0 !initial predator
-  
+  x(krome_idx_x) = 5d0 !initial prey
+  x(krome_idx_y) = 2d0 !initial predator
+
   Tgas = 1d3 !gas temperature (dummy)
 
   dt = 1d-2 !time-step (s)
-  t = 0.d0 !time (s)
+  t = 0d0 !time (s)
+  write(66,'(a)') "#time predators preys"
   do
      call krome(x(:),  Tgas, dt) !call KROME
      write(66,'(99E17.8e3)') t,x(:)
@@ -29,6 +30,6 @@ program test
   print *,"to plot type in gnuplot"
   print *,"load 'plot.gps'"
   print *,"have a nice day"
-  
+
 end program test
 

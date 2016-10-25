@@ -9,16 +9,17 @@ program test
   use krome_user !use utility (for krome_idx_* constants and others)
   implicit none
   real*8::Tgas,dt,x(krome_nmols),t
-  
+
   call krome_init() !init krome (mandatory)
-  
+
   x(:) = 0d0 !default abundances (number density)
-  x(krome_idx_FK1) = 1.d0 !FK1 initial abundance (number density)
-  
+  x(krome_idx_FK1) = 1d0 !FK1 initial abundance (number density)
+
   Tgas = 1d2 !gas temperature, not used (K)
   dt = 1d-5 !time-step (arbitrary)
   t = 0d0 !time (arbitrary)
-  
+
+  write(66,'(a)') "#time "//krome_get_names_header()
   do
      dt = dt * 1.1d0 !increase timestep
      call krome(x(:), Tgas, dt) !call KROME

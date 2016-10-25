@@ -1,0 +1,232 @@
+#primordial network for galaxy simulations including photochemistry, 2016
+# Ref: Bovino+, A&A, 590, A15 
+# Variables definition
+@var:T=Tgas
+@common: user_crate
+
+#Janev 1987
+1,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
+
+#Abel et al. 1997, fit by data from Ferland et al. 1992
+2,H+,E,,H,g,,,NONE,.LE.5.5e3,3.92d-13*invTe**0.6353d0
+3,H+,E,,H,g,,,>5.5e3,NONE,exp(-28.61303380689232d0-0.7241125657826851d0*lnTe-0.02026044731984691d0*lnTe**2-0.002380861877349834d0*lnTe**3-0.0003212605213188796d0*lnTe**4-0.00001421502914054107d0*lnTe**5+4.989108920299513d-6*lnTe**6+5.755614137575758d-7*lnTe**7-1.856767039775261d-8*lnTe**8-3.071135243196595d-9*lnTe**9)
+
+#Janev 1987
+4,HE,E,,HE+,E,E,,NONE,NONE,exp(-44.09864886d0+23.91596563d0*lnTe-10.7532302d0*(lnTe**2)+3.05803875d0*(lnTe**3)-0.56851189d0*(lnTe**4)+6.79539123d-2*(lnTe**5)-5.00905610d-3*(lnTe**6)+2.06723616d-4*(lnTe**7)-3.64916141d-6*(lnTe**8))
+
+#Radiative+dielectronic from Cen 1992, Aldrovandi & Pequignot 1973
+5,HE+,E,,HE,g,,,NONE,.LE.9.284e3,3.92d-13*invTe**0.6353d0
+6,HE+,E,,HE,g,,,>9.284e3,NONE,1.54d-9*(1.d0+0.3d0/exp(8.099328789667d0*invTe))/(exp(40.49664394833662d0*invTe)*Te**1.5d0)+3.92d-13/Te**0.6353d0
+
+#Aladdin database 1989 (see Abel et al. 1997)
+7,HE+,E,,HE++,E,E,,NONE,NONE,exp(-68.71040990212001d0+43.93347632635d0*lnTe-18.48066993568d0*lnTe**2+4.701626486759002d0*lnTe**3-0.7692466334492d0*lnTe**4+0.08113042097303d0*lnTe**5-0.005324020628287001d0*lnTe**6+0.0001975705312221d0*lnTe**7-3.165581065665d-6*lnTe**8)
+
+#Verner & Ferland 1996
+8,HE++,E,,HE+,,,,NONE,NONE,1.891d-10/(sqrt(Tgas/9.37)*(1.+sqrt(Tgas/9.37))**0.2476*(1.+sqrt(Tgas/2.774d6))**1.7524)
+
+#De Jong (1972)
+9,H,E,,H-,,,,NONE,NONE,1.4d-18*Tgas**0.928*exp(-Tgas/16200.)
+
+# fit by Kreckel et al. 2010
+@var:a1=1.3500e-09
+@var:a2=9.8493e-02
+@var:a3=3.2852e-01
+@var:a4=5.5610e-01
+@var:a5=2.7710e-07
+@var:a6=2.1826e+00
+@var:a7=6.1910e-03
+@var:a8=1.0461e+00
+@var:a9=8.9712e-11
+@var:a10=3.0424e+00
+@var:a11=3.2576e-14
+@var:a12=3.7741e+00
+10,H-,H,,H2,E,,,NONE,NONE,a1*(Tgas**a2+a3*Tgas**a4+a5*Tgas**a6)/(1.+a7*Tgas**a8+a9*Tgas**a10+a11*Tgas**a12)
+
+# fit to Ramaker & Peek 1976, corrected by Coppola
+11,H,H+,,H2+,,,,NONE,.LT.3d1,2.10e-20*(Tgas/30.)**(-0.15)
+12,H,H+,,H2+,,,,.GE.3d1,NONE,10**(-18.20-3.194*log10(Tgas)+1.786*(log10(Tgas))**2-0.2072*(log10(Tgas))**3)
+
+#Karpas 1979
+13,H2+,H,,H2,H+,,,NONE,NONE,6.0d-10
+
+#fit by Savin et al. 2004, Krstic, see also Grassi et al. 2011
+@var:asav0=-1.9153214d2
+@var:asav1= 4.0129114d2
+@var:asav2=-3.7446991d2 
+@var:asav3= 1.9078410d2 
+@var:asav4=-5.7263467d1 
+@var:asav5= 1.0133210d1
+@var:asav6=-9.8012853d-1
+@var:asav7= 4.0023414d-2
+@var:bsav0=-8.8755774d3
+@var:bsav1= 1.0081246d4
+@var:bsav2=-4.8606622d3 
+@var:bsav3= 1.2889659d3 
+@var:bsav4=-2.0319575d2 
+@var:bsav5= 1.9057493d1
+@var:bsav6=-9.8530668d-1
+@var:bsav7= 2.1675387d-2
+@var:sumsav=asav0+asav1*log10(Tgas)+asav2*(log10(Tgas))**2+asav3*(log10(Tgas))**3+asav4*(log10(Tgas))**4+asav5*(log10(Tgas))**5+asav6*(log10(Tgas))**6+asav7*(log10(Tgas))**7
+@var:sumsbv=bsav0+bsav1*log10(Tgas)+bsav2*(log10(Tgas))**2+bsav3*(log10(Tgas))**3+bsav4*(log10(Tgas))**4+bsav5*(log10(Tgas))**5+bsav6*(log10(Tgas))**6+bsav7*(log10(Tgas))**7
+14,H2,H+,,H2+,H,,,.GE.1.d2,.LT.1.d5,10**sumsav
+15,H2,H+,,H2+,H,,,.GE.1.d5,.LE.1.d8,10**sumsbv
+
+#Capitelli et al. 2007
+16,H2,E,,H,H-,,,NONE,NONE,3.55d1*Tgas**(-2.28)*exp(-46707./Tgas)
+
+#fit by Mitchell & Deveau 1983 of data by Corrigan 1965
+17,H2,E,,H,H,E,,NONE,NONE,4.38d-10*exp(-102000./Tgas)*Tgas**(0.35)
+
+#Glover&Abel 2008, only the low-density contributions (H2 in the ground state)
+18,H2,H,,H,H,H,,NONE,NONE,6.67e-12*sqrt(Tgas)*exp(-(1+63593/Tgas))
+
+#Janev 1987
+19,H-,E,,H,E,E,,NONE,NONE,exp(-18.01849334273d0+2.360852208681d0*lnTe-0.2827443061704d0*lnTe**2+0.01623316639567d0*lnTe**3-0.03365012031362999d0*lnTe**4+0.01178329782711d0*lnTe**5-0.001656194699504d0*lnTe**6+0.0001068275202678d0*lnTe**7-2.631285809207d-6*lnTe**8)
+
+#Abel et al. 1997, based on Janev 1987
+20,H-,H,,H,H,E,,NONE,.LE.1.16e3,2.56d-9*Te**1.78186d0
+21,H-,H,,H,H,E,,>1.16e3,NONE,exp(-20.37260896533324d0+1.139449335841631d0*lnTe-0.1421013521554148d0*lnTe**2+0.00846445538663d0*lnTe**3-0.0014327641212992d0*lnTe**4+0.0002012250284791d0*lnTe**5+0.0000866396324309d0*lnTe**6-0.00002585009680264d0*lnTe**7+2.4555011970392d-6*lnTe**8-8.06838246118d-8*lnTe**9)
+
+#Stenrup et al. 2009
+22,H-,H+,,H,H,,,.GE.1d1,.LE.1d7,(2.96d-6/sqrt(Tgas)-1.73d-9+2.50d-10*sqrt(Tgas)-7.77d-13)
+
+#Poulart 1978
+23,H-,H+,,H2+,E,,,NONE,NONE,1.d-8*Tgas**(-0.4d0)
+
+#Abel et al. 1997, fit by data from Schneider 1994
+24,H2+,E,,H,H,,,NONE,.LE.6.17e2,1.d-8
+25,H2+,E,,H,H,,,>6.17e2,NONE,1.32d-6*Tgas**(-0.76d0)
+
+#Dalgarno & Lepp 1987
+26,H2+,H-,,H,H2,,,NONE,NONE,5.d-7*sqrt(1.d2*invT)
+
+#Glover & Abel 2008
+27,H2,H2,,H,H,H2,,NONE,NONE,5.996d-30*Tgas**(4.1881)*(1d0+6.761d-6*Tgas)**(-5.6881)*exp(-54657.4*invT)
+
+#New reactions from Yoshida et al. 2006, helium charge-transfer 
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+28,He+,H,He,H+,NONE,NONE,1.20d-15*(Tgas/3d2)**0.25d0
+29,He,H+,He+,H,NONE,.LE.1d4,1.26d-9*Tgas**(-0.75d0)*exp(-1.275d5*invT)
+30,He,H+,He+,H,>1d4,NONE,4.d-37*Tgas**(4.74d0)
+
+#Additional reactions for completness, check UMIST and other references, Glover+2011
+@format:idx,R,R,P,P,P,rate
+31,H2,He+,He,H,H+,3.7d-14*exp(-35.d0/Tgas)
+32,H2,He,H,H,He,10**(-27.029 + 3.801*log10(Tgas)-29487d0/Tgas)
+@format:idx,R,R,P,P,rate
+33,H2,He+,H2+,He,7.2d-15
+#New reactions from Glover 2015
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+34,H,H,H,H+,E,NONE,NONE,1.2d-17*Tgas**(1.2d0)*exp(-157800*invT)
+35,H,He,He,H+,E,NONE,NONE,1.75d-17*Tgas**(1.3d0)*exp(-157800*invT)
+
+#PHOTOCHEMISTRY
+@format:idx,R,P,P,rate
+@photo_start
+36,H,H+,E,auto
+37,He,He+,E,auto
+38,He+,He++,E,auto
+@format:idx,R,P,P,Tmin,Tmax,rate
+39,H-,H,E,>0.755d0,NONE,@xsecFile=SWRI
+40,H2,H2+,E,>15.4d0,NONE,@xsecFile=SWRI
+41,H2+,H+,H,>2.65d0,NONE,@xsecFile=LEIDEN
+@format:idx,R,P,P,P,Tmin,Tmax,rate
+#Shapiro & Kang 1987
+42,H2+,H+,H+,E,>3.d1,<9.d1,10**(-16.926-4.528d-2*energy_eV+2.238d-4*energy_eV**2+4.245d-7*energy_eV**3)
+@format:idx,R,P,P,Tmin,Tmax,rate
+#Abel et al. 1997, fit from data by Allison&Dalgarno 1969, direct photodissociation
+43,H2,H,H,>14.159d0,<17.7d0,H2_sigmaLW(energy_eV)
+@photo_stop
+
+@noTabNext
+@format:idx,R,P,P,rate
+#H&M2012 radiation background at 12.87 eV
+#If you want to use a different radiation backgroun this rate must be updated
+#If you plan to copule with a radiative transfer code this should also be changed
+@var:myflux_eV=2.01235E-010 
+44,H2,H,H,H2_solomonLW(myflux_eV)
+
+#Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
+#Internally evaluated by KROME
+@noTab_start
+@format:idx,R,R,P,rate
+45,H+,E,H,H_recombination_on_dust(n,Tgas)
+46,He+,E,He,He_recombination_on_dust(n,Tgas)
+
+##FOLLOWING ONLY WHEN SWITCH ON METALS
+#47,O+,E,O,O_recombination_on_dust(n,Tgas)
+#48,Si+,E,Si,Si_recombination_on_dust(n,Tgas)
+#49,C+,E,C,C_recombination_on_dust(n,Tgas)
+@noTab_stop
+
+####ADDING METALS FROM Glover&Jappsen 2010 from #30
+###Photoreactions for metals
+#@photo_start
+#@format:idx,R,P,P,rate
+#50,C,C+,E,auto
+#51,O,O+,E,auto
+#52,Si,Si+,E,auto
+#53,Si+,Si++,E,auto
+#@photo_stop
+
+#@format:idx,R,R,P,Tmin,Tmax,rate
+#54,C+,E,C,NONE,.LE.7950d0,4.67d-12*(T32)**(-0.6)
+#55,C+,E,C,.GT.7950d0,.LE.2.114d4,1.23d-17*(T32)**(2.49)*exp(2.18456d4*invT)
+#56,C+,E,C,.GT.2.114d4,NONE,9.62d-8*(T32)**(-1.37)*exp(-115786.2*invT)
+#
+#57,Si+,E,Si,NONE,.LE.2.d3,7.5d-12*(T32)**(-0.55d0)
+#58,Si+,E,Si,>2.d3,.LE.1.d4,4.86d-12*(T32)**(-0.32d0)
+#59,Si+,E,Si,>1d4,NONE,9.08d-14*(T32)**(0.818)
+#
+#60,O+,E,O,NONE,.LE.4.d2,1.30d-10*(Tgas)**(-0.64d0)
+#61,O+,E,O,>4.d2,NONE,1.41d-10*(Tgas)**(-0.66d0) + 7.4d-4*(Tgas)**(-1.5d0)*exp(-1.75d5*invT)*(1.0d0+0.062d0*exp(-1.45d5*invT))
+#
+#@var:u1 = 11.26d0*invTe
+#@var:u2 = 8.2d0*invTe
+#@var:u3 = 13.6*invTe
+#
+#@format:idx,R,R,P,P,P,rate
+#62,C,E,C+,E,E,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
+#63,Si,E,Si+,E,E,1.88d-7*(1d0+u2**0.5)*u2**0.25*exp(-u2)/(0.376d0+u2)
+#64,O,E,O+,E,E,3.59d-8*u3**0.34*exp(-u3)/(0.073d0+u3)
+#
+#@format:idx,R,R,P,P,rate
+#65,O+,H,O,H+,4.99d-11*Tgas**0.405d0 + 7.54d-10*invT**(0.458d0)
+#66,O,H+,O+,H,(1.08d-11*Tgas**0.517d0 + 4.0d-10*Tgas**(0.00669d0))*exp(-2.27d2*invT)
+#67,O,HE+,O+,HE,4.991d-15*(Tgas/1d4)**0.3794d0*exp(-Tgas/1.121d6)+2.78d-15*(Tgas/1d4)**(-0.2163d0)*exp(-Tgas/8.158d5)
+#68,C,H+,C+,H,3.9d-16*Tgas**(0.213d0)
+#69,C+,H,C,H+,6.08d-14*(Tgas/1d4)**(1.96d0)*exp(-1.7d5*invT)
+#
+#@format:idx,R,R,P,P,Tmin,Tmax,rate
+#70,C,HE+,C+,HE,NONE,.LE.2d2,8.58d-17*Tgas**(0.757d0)
+#71,C,HE+,C+,HE,>2d2,.LE.2d3,3.25d-17*Tgas**(0.968d0)
+#72,C,HE+,C+,HE,>2d3,NONE,2.77d-19*Tgas**(1.597d0)
+#73,Si,H+,Si+,H,NONE,.LE.1d4,5.88d-13*Tgas**(0.848d0)
+#74,Si,H+,Si+,H,>1.d4,NONE,1.45d-13*Tgas
+#75,Si,HE+,Si+,HE,NONE,NONE,3.3d-9
+#76,C+,Si,C,Si+,NONE,NONE,2.1d-9
+
+#Trange from original Kingdon+Ferland1996
+#@format:idx,R,R,P,P,Tmin,Tmax,rate
+#77,Si+,H+,Si++,H,NONE,1d6,4.10d-10*(Tgas/1d4)**(0.24d0)*(1.0d0+3.17d0*exp(Tgas/2.39d6))*exp(-3.178d0*invTe)
+#78,Si++,H,Si+,H+,NONE,1d6,1.23d-9*(Tgas/1d4)**(0.24d0)*(1.0d0+3.17d0*exp(Tgas/2.39d6))
+#@format:idx,R,R,P,Tmin,Tmax,rate
+#79,Si++,E,Si+,NONE,1d6,1.75d-12*(Tgas/1d4)**(-0.6346d0)
+#
+#adding cosmic rays processes from OSU
+#@format:idx,R,P,P,rate
+#@CR_start
+#80,H,H+,E,4.6d-1*user_crate
+#81,He,He+,E,5.d-1*user_crate
+#82,H2,H,H,1d-1*user_crate
+#83,H2,H+,H-,3d-4*user_crate
+#84,H2,H2+,E,9.3d-1*user_crate
+##85,O,O+,E,2.8d0*user_crate
+##86,C,C+,E,1.02d3*user_crate
+#@format:idx,R,P,P,P,rate
+#87,H2,H,H+,E,9.3d-1*user_crate
+#@CR_stop
+
+# by using the Glover formula k = 1.38d9*J(12.87)
+#@format:idx,R,R,P,P,Tmin,Tmax,rate
+#44,H2,g,H,H,NONE,NONE,4.45498d-13 

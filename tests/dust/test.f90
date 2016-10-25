@@ -1,8 +1,8 @@
 !#################################################################
 !This test consists of a gas with an initial population of dust,
-! both silicon and carbon based, with 10 bins each.
-!The gas-to-dust ratio is 10^-5 and the dust distribution
-! follows an MRN power-law.
+! both silicon and carbon based, with 10 size-bins each.
+!The gas-to-dust ratio is 10e-5 and the dust distribution
+! follows an MRN power-law. Tgas evolves (see main loop).
 !#################################################################
 program test_krome
 
@@ -21,7 +21,7 @@ program test_krome
   !initialize krome
   call krome_init()
 
-  x(:) = 1.d-20 !default species abundance (cm-3)
+  x(:) = 1d-20 !default species abundance (cm-3)
 
   !number densities (cm-3)
   x(KROME_idx_H)     = 1d0 * xH  !H
@@ -35,6 +35,9 @@ program test_krome
 
   xi(:) = x(:) !store the initial amount of species
   dt = 1d3*spy !time-step (s)
+
+  !output file header
+  write(66,*) "#Tgas mC mSi"
 
   !loop on Tgas
   do i=1,imax
@@ -55,22 +58,25 @@ program test_krome
      !write mass density in the gas phase, C and Si
      write(66,*) Tgas, x(krome_idx_C)*12d0*krome_p_mass, &
           x(krome_idx_Si)*28d0*krome_p_mass
-     write(88,*) Tgas,sum(data(i,:))+  x(krome_idx_C)*12d0*krome_p_mass + &
+     write(88,*) Tgas,sum(data(i,:)) + x(krome_idx_C)*12d0*krome_p_mass + &
           x(krome_idx_Si)*28d0*krome_p_mass
      !store Tgas
      dataT(i) = Tgas
    end do
 
    !write dust mass density evolution
+   write(77,*) "#dustType Tgas rhodust"
+   !loop on dust bins
    do j=1,nd
+      !loop on data
       do i=1,imax
          !dust type, Tgas, dust mass density
          write(77,*) (j-1)/(nd/2),dataT(i),data(i,j)
       end do
       write(77,*)
    end do
-   
-   print *,"load 'plot.gps' in gnuplot to show the results" 
+
+   print *,"load 'plot.gps' in gnuplot to show the results"
    print *,"That's all! have a nice day!"
-  
+
 end program test_krome

@@ -11,6 +11,8 @@ contains
     use krome_heating
     use krome_tabs
     use krome_photo
+    use krome_gadiab
+    use krome_getphys
 #IFKROME_useDust
     use krome_dust
 #ENDIFKROME
@@ -39,9 +41,15 @@ contains
     n(idx_Tgas) = min(n(idx_tgas),1d9)
     Tgas = n(idx_Tgas) !get temperature
 
+#IFKROME_shieldHabingDust
+    call calcHabingThick(n(:),Tgas)
+#ENDIFKROME
+
 #KROME_Tdust_limits
 
     k(:) = coe_tab(n(:)) !compute coefficients
+
+#KROME_H2pdRate
 
 #KROME_photobins_compute_thick
 
@@ -86,7 +94,7 @@ contains
        write(98,'(999E12.3e3)') tt,n(:)
        write(97,'(999E12.3e3)') tt,dn(:)
 #ENDIFKROME
-       
+
        last_coe(:) = k(:)
 
   end subroutine fex
@@ -99,6 +107,8 @@ contains
     use krome_cooling
     use krome_heating
     use krome_constants
+    use krome_gadiab
+    use krome_getphys
     implicit none
     integer::neq, j, ian, jan, r1, r2, p1, p2, p3, i
     real*8::tt, n(neq), pdj(neq), dr1, dr2, kk,k(nrea),Tgas
@@ -112,11 +122,11 @@ contains
 #IFKROME_use_thermo
     krome_gamma = gamma_index(n(:))
 #ENDIFKROME
-    
+
     k(:) = last_coe(:) !get rate coefficients
-    
+
 #KROME_JAC_PD
-    
+
     return
   end subroutine jes
 
@@ -128,6 +138,7 @@ contains
     use krome_heating
     use krome_constants
     use krome_subs
+    use krome_gadiab
     implicit none
     real*8::n(neq),pd(neq,neq),t,k(nrea),dn0,dn1,dnn,Tgas
     real*8::krome_gamma,nn(neq),nH2dust
@@ -156,11 +167,11 @@ contains
     character*50::rnames(nrea)
     fnum = 99
     open(fnum,FILE="KROME_ODE_REPORT",status="replace")
-    
+
     names(:) = get_names()
 
     write(fnum,*) "KROME ERROR REPORT"
-    write(fnum,*) 
+    write(fnum,*)
     !SPECIES
     write(fnum,*) "Species aboundances"
     write(fnum,*) "**********************"
@@ -170,14 +181,14 @@ contains
        write(fnum,'(I5,a20,E12.3e3)') i,names(i),n(i)
     end do
     write(fnum,*) "**********************"
-    
+
     !RATE COEFFIECIENTS
     kmax = maxval(k)
     write(fnum,*)
     write(fnum,*) "Rate coefficients at Tgas",n(idx_Tgas)
     write(fnum,*) "**********************"
     write(fnum,'(a5,2a12)') "#","k","k %"
-    write(fnum,*) "**********************"    
+    write(fnum,*) "**********************"
     do i=1,nrea
        kperc = 0.d0
        if(kmax>0.d0) kperc = k(i)*1d2/kmax

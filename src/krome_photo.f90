@@ -42,17 +42,28 @@ contains
 
   !*********************
   !initialize/tabulate the bin-based xsecs
-  subroutine init_photoBins()
+  subroutine init_photoBins(Tgas)
+    use krome_constants
     use krome_commons
+    use krome_dust
+    use krome_getphys
     implicit none
     integer::i,j
-    real*8::energy_eV,kk,energyL,energyR
+    real*8::Tgas,imass(nspec),kt2
+    real*8::energy_eV,kk,energyL,energyR,dshift(nmols)
 
+    !rise error if photobins are not defined
     if(photoBinEmid(nPhotoBins)==0d0) then
        print *,"ERROR: when using photo bins you must define"
        print *," the energy interval in bins!"
        stop
     end if
+
+    !get inverse of mass
+    imass(:) = get_imass()
+
+    !precompute adimensional line broadening
+#KROME_broadening_shift_precalc
 
 #KROME_load_xsecs_from_file
 
@@ -70,6 +81,12 @@ contains
     !energy tresholds (eV)
 #KROME_photobin_Eth
 
+    !interpolate dust qabs
+#KROME_interpolate_dust_qabs
+
+    !map with X->B/C transition to bin corrspondence
+#KROME_init_H2kpd_transition_map
+
   end subroutine init_photoBins
 
   !**********************
@@ -79,12 +96,13 @@ contains
     implicit none
     character(len=*)::fname
     integer::idx,j
-    real*8::energy_eV
+    real*8::energyLeft,energyRight
 
     open(22,file=trim(fname),status="replace")
     do j=1,nPhotoBins
-       energy_eV = photoBinEmid(j) !energy of the bin in eV
-       write(22,*) energy_eV, photoBinJTab(idx,j)
+       energyLeft = photoBinELeft(j) !left bin energy, eV
+       energyRight = photoBinERight(j) !right bin energy, eV
+       write(22,*) energyLeft, energyRight, photoBinJTab(idx,j)
     end do
     close(22)
 
@@ -108,26 +126,29 @@ contains
     use krome_commons
     use krome_constants
     use krome_subs
+    use krome_getphys
     implicit none
     integer::i,j
     real*8::dE,kk,Jval,E,Eth,n(:),ncol(nmols),tau
 
+#IFKROME_usePhotoOpacity
     !get column density from number density
     do i=1,nmols
        ncol(i) = num2col(n(i),n(:))
     end do
+#ENDIFKROME_usePhotoOpacity
 
     !init rates and heating
     photoBinRates(:) = 0d0 !1/s/Hz
     photoBinHeats(:) = 0d0 !eV/s/Hz
-    GHabing = 0d0 !habing flux
+    GHabing_thin = 0d0 !habing flux
     !loop on energy bins
     do j=1,nPhotoBins
        dE = photoBinEdelta(j) !energy interval, eV
        E = photoBinEmid(j) !energy of the bin in eV
        Jval = photoBinJ(j) !radiation intensity eV/s/cm2/sr/Hz
        if(E>=6d0.and.E<=13.6)then
-         GHabing = GHabing + Jval * dE
+          GHabing_thin = GHabing_thin + Jval * dE
        endif
        tau = 0d0
 #KROME_photobin_opacity
@@ -136,7 +157,7 @@ contains
           Eth = photoBinEth(i) !reaction energy treshold, eV
           if(E>Eth) then
              !approx bin integral
-             kk = 4d0*pi*photoBinJTab(i,j)*Jval/E*dE * exp(-tau)
+             kk = photoBinJTab(i,j)*Jval/E*dE
              photoBinRates(i) = photoBinRates(i) + kk
 #IFKROME_photobin_heat
              photoBinHeats(i) = photoBinHeats(i) + kk*(E-Eth)
@@ -146,23 +167,22 @@ contains
     end do
 
     !Final Habing flux
-    GHabing = GHabing * 4d0 * pi / (1.6d-3) / planck_eV * eV_to_erg
+    GHabing_thin = GHabing_thin * 4d0 * pi / (1.6d-3) * iplanck_eV * eV_to_erg
 
     !converts to 1/s
-    photoBinRates(:) = photoBinRates(:) * iplanck_eV
+    photoBinRates(:) = 4d0*pi*photoBinRates(:) * iplanck_eV
 
 #IFKROME_photobin_heat
     !converts to erg/s
-    photoBinHeats(:) = photoBinHeats(:) * iplanck_eV * eV_to_erg
+    photoBinHeats(:) = 4d0*pi*photoBinHeats(:) * iplanck_eV * eV_to_erg
 #ENDIFKROME_photobin_heat
 
   end subroutine calc_photoBins_thick
 
-#ENDIFKROME
-
   !********************
+  !Verner+96 cross section fit (cm2)
   function sigma_v96(energy_eV,E0,sigma_0,ya,P,yw,y0,y1)
-    !Verner+96 cross section fit (cm2)
+    implicit none
     real*8::sigma_v96,energy_eV,sigma_0,Fy,yw,x,y,E0
     real*8::y0,y1,ya,P
     x = energy_eV/E0 - y0
@@ -186,7 +206,7 @@ contains
   end function heat_v96
 
   !************************
-  !load the xsecs from file
+  !load the xsecs from file and get limits
   subroutine load_xsec(fname,xsec_val,xsec_Emin,xsec_n,xsec_idE)
     implicit none
     real*8,allocatable::xsec_val(:)
@@ -244,27 +264,39 @@ contains
   end subroutine load_xsec
 
   !**********************
-  !return averaged xsec in the energy range [energyL,energyR]
-  ! units: eV, cm2
-  function xsec_interp(energyL,energyR,xsec_val,xsec_Emin,xsec_idE)
+  !return averaged xsec in the energy range [xL,xR]
+  ! units: eV, cm2; broadening shift is adimensional
+  function xsec_interp(xL,xR,xsec_val,xsec_Emin,xsec_idE,dshift) result(xsecA)
     implicit none
-    real*8::xsec_interp,E0,xsecA,dE
-    real*8::energy,xsec_val(:),xsec_Emin,xsec_idE,energyL,energyR
-    integer::xsec_n,idx
+    real*8::xsecA,dE,dshift,dE_shift,eL,eR,dxi
+    real*8::energy,xsec_val(:),xsec_Emin,xsec_idE,xL,xR
+    integer::idx
 
     !xsec energy step (regular grid)
     dE = 1d0/xsec_idE
+    !store inverse of bin size
+    dxi = 1d0/(xR-xL)
     xsecA = 0d0 !init integrated xsec
     !loop on xsec vals
     do idx=1,size(xsec_val)
-       energy = (idx-1)*dE+xsec_Emin
-       !if xsec energy in the interval compute area
-       if(energy>=energyL .and. energy<=energyR) xsecA = xsecA &
-            + xsec_val(idx)*dE
-    end do
+       eL = (idx-1)*dE+xsec_Emin !left interval
+       eR = eL + dE !right interval
+       energy = (eL+eR)/2d0 !mid point
 
-    !compute averaged xsec for the flux energy range
-    xsec_interp = xsecA/(energyR-energyL)
+       !compute line broadening
+       eL = eL - 0.5d0*dshift*energy
+       eR = eR + 0.5d0*dshift*energy
+
+       !if xsec energy in the interval compute area
+       if(xR<eL.and.xL<eL) then
+          xsecA = xsecA + 0d0
+       elseif(xR>eL.and.xL>eL) then
+          xsecA = xsecA + 0d0
+       else
+          !renormalize xsec area considering partial overlap
+          xsecA = xsecA +xsec_val(idx) * (min(eR,xR)-max(eL,xL)) * dxi
+       end if
+    end do
 
   end function xsec_interp
 
@@ -296,11 +328,176 @@ contains
   end function xsec_interp_mid
 
   !************************
-  function H2_sigmaLW(energy_eV)
-    !H2 direct photodissociation in the Lyman-Werner bands
-    ! cross-section in cm^2 fit by Abel et al. 1997 of
-    ! data by Allison&Dalgarno 1969
+  !load photodissociation data from default file
+  subroutine kpd_H2_loadData()
     use krome_commons
+    implicit none
+    integer::unit,ios,ii,jj
+    real*8::xE,dE,pre
+    character(len=20)::fname
+
+    !open file to read
+    fname = "H2pdB.dat"
+    open(newunit=unit,file=trim(fname),status="old",iostat=ios)
+    !check for errors
+    if(ios/=0) then
+       print *,"ERROR: problem loading file "//trim(fname)
+       stop
+    end if
+
+    !init data default
+    H2pdData_EX(:) = 0d0
+    H2pdData_dE(:,:) = 0d0
+    H2pdData_pre(:,:) = 0d0
+
+    !loop on file to read
+    do
+       read(unit,*,iostat=ios) ii,jj,xE,dE,pre
+       !skip comments
+       if(ios==59.or.ios==5010) cycle
+       !exit when eof
+       if(ios/=0) exit
+       !store data
+       H2pdData_EX(ii+1) = xE !ground level energy, eV
+       H2pdData_dE(ii+1,jj+1) = dE !Ej-Ei energy, eV
+       H2pdData_pre(ii+1,jj+1) = pre !precomp (see file header)
+    end do
+
+    !check if enough data have been loaded (file size is expected)
+    if((ii+1/=H2pdData_nvibX).or.(jj+1/=H2pdData_nvibB)) then
+       !print error message
+       print *,"ERROR: missing data when loading "//fname
+       print *,"found:",ii+1,jj+1
+       print *,"expected:",H2pdData_nvibX,H2pdData_nvibB
+       stop
+    end if
+
+    close(unit)
+
+  end subroutine kpd_H2_loadData
+
+  !************************
+  subroutine kpd_bin_map()
+    use krome_commons
+    implicit none
+    integer::i,j,k
+    logical::found
+
+    !loop on excited states (B)
+    do i=1,H2pdData_nvibB
+       !loop on ground states (X)
+       do j=1,H2pdData_nvibX
+          !if prefactor is zero no need to check map
+          ! default is set to 1 (be aware of it!)
+          if(H2pdData_pre(j,i)==0d0) then
+             H2pdData_binMap(j,i) = 1
+             cycle
+          end if
+
+          found = .false.
+          !loop on bins
+          do k=1,nPhotoBins
+             !find energy bin corresponding on the given dE
+             if((photoBinEleft(k).le.H2pdData_dE(j,i)) &
+                  .and. (photoBinEright(k).ge.H2pdData_dE(j,i))) then
+                H2pdData_binMap(j,i) = k
+                found = .true.
+             end if
+          end do
+          !error if outside bounds
+          if(.not.found) then
+             print *,"ERROR: problem when creating H2"
+             print *," photodissociation map!"
+             print *," min/max (eV):", minval(photoBinEleft), &
+                  maxval(photoBinEright)
+             print *," transition:",j,i
+             print *," corresponding energy (eV):",H2pdData_dE(j,i)
+             print *," transitions min/max (eV):", &
+                  minval(H2pdData_dE, mask=((H2pdData_dE>0d0) .and. &
+                  (H2pdData_pre>0d0))), &
+                  maxval(H2pdData_dE, mask=(H2pdData_pre>0d0))
+             stop
+          end if
+       end do
+    end do
+
+  end subroutine kpd_bin_map
+
+  !************************
+  !compute vibrational partition function at given Tgas
+  ! for all the loaded energies (for H2 Solomon)
+  function partitionH2_vib(Tgas) result(z)
+    use krome_constants
+    use krome_commons
+    implicit none
+    real*8::Tgas,z(H2pdData_nvibX),b
+    integer::j
+
+    !prepare partition function from ground (X) levels energies
+    b = iboltzmann_eV/Tgas
+    z(:) = exp(-H2pdData_EX(:)*b)
+
+    !normalize
+    z(:) = z(:)/sum(z)
+
+  end function partitionH2_vib
+
+  !************************
+  !compute H2 photodissociation rate (Solomon)
+  ! state to state, using preloded data, 1/s
+  function kpd_H2(Tgas) result(kpd)
+    use krome_commons
+    implicit none
+    integer::i,j
+    real*8::Tgas,kpd,dE,z(H2pdData_nvibX)
+
+    !get partition for ground state X
+    z(:) = partitionH2_vib(Tgas)
+
+    !compute the rate, using preloaded data
+    kpd = 0d0
+    !loop on excited states (B)
+    do i=1,H2pdData_nvibB
+       !compute rate for ith state
+       kpd = kpd + sum(H2pdData_pre(:,i) &
+            * photoBinJ(H2pdData_binMap(:,i)) * z(:))
+    end do
+
+  end function kpd_H2
+
+  !************************
+  !photodissociation H2 xsec from atomic data (for opacity)
+  function kpd_H2_xsec(Tgas) result(xsec)
+    use krome_constants
+    use krome_commons
+    implicit none
+    real*8::xsec(nPhotoBins),z(H2pdData_nvibX)
+    real*8::Tgas
+    integer::i
+
+    !get partition for ground state X
+    z(:) = partitionH2_vib(Tgas)
+
+    xsec(:) = 0d0
+    !loop on excited states (B)
+    do i=1,H2pdData_nvibB
+       xsec(H2pdData_binMap(:,i)) = &
+            xsec(H2pdData_binMap(:,i)) &
+            + H2pdData_pre(:,i)*z(:)
+    end do
+
+    !cm2
+    xsec(:) = xsec(:)*planck_eV
+
+  end function kpd_H2_xsec
+
+  !************************
+  !H2 direct photodissociation in the Lyman-Werner bands
+  ! cross-section in cm^2 fit by Abel et al. 1997 of
+  ! data by Allison&Dalgarno 1969
+  function H2_sigmaLW(energy_eV)
+    use krome_commons
+    implicit none
     real*8::H2_sigmaLW,energy_eV
     real*8::sL0,sW0,sL1,sW1,fact
 
@@ -335,5 +532,6 @@ contains
     H2_sigmaLW = fact*(sL0+sW0)+(1d0-fact)*(sL1+sW1)
 
   end function H2_sigmaLW
+#ENDIFKROME
 
 end module krome_photo

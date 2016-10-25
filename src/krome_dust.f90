@@ -12,6 +12,7 @@ contains
     use krome_commons
     use krome_subs
     use krome_constants
+    use krome_getphys
     implicit none
     real*8::rhogas,dmass,ngas(nmols),dust_gas_ratio,d2g
     real*8::iphi1,c,phi1,abin(ndust+1),mass(nspec),myc,phi4
@@ -59,7 +60,7 @@ contains
           abin(i) = 1d1**((i-1)*(alogmax-alogmin)/nd+alogmin)
        end do
 
-       !loop to find mean size, span, and dust number density 
+       !loop to find mean size, span, and dust number density
        do i=1,nd
           adust(i+ilow-1) = ((abin(i+1)**phi4-abin(i)**phi4)/(abin(i+1)**phi1-abin(i)**phi1)*(phi1/phi4))**(1./3.) !(abin(i)+abin(i+1)) * 0.5d0 !mean bin size
           krome_dust_aspan(i+ilow-1) = abin(i+1) - abin(i) !bin span
@@ -129,7 +130,10 @@ contains
     do
        read(32,*,iostat=ios) rout(:)
        if(ios<0) exit !eof
-       if(ios/=0) cycle !skip blanks
+       !skip when # is found
+       if(ios==59.or.ios==5010) cycle
+       !skip blanks
+       if(ios/=0) cycle
 
        !read values
        E = rout(2) * planck_eV !eV
@@ -196,6 +200,7 @@ contains
     use krome_subs
     use krome_commons
     use krome_constants
+    use krome_phfuncs
     implicit none
     integer::i,j,k,ios,nread
     real*8::Tbb,E,intBB,dE,intBB_dT,rout(4)
@@ -223,7 +228,7 @@ contains
           dust_intBB_sigma(k,i) = rout(4)
        end do
        close(33)
-       
+
        !check if the number of data loaded is OK
        if(nread/=dust_nT*ndust) then
           print *,"ERROR: the size of the file KROME_dust_intBB.dat"
@@ -277,6 +282,26 @@ contains
 
   end subroutine dust_init_intBB
 
+  !************************
+  !interpolate dust Qabs over photobins
+  subroutine interp_qabs()
+    use krome_commons
+    implicit none
+    integer::i,jdust
+
+#IFKROME_usePhotoDust
+    !loop on dust types
+    do jdust=1,ndust
+       !loop on photobins
+       do i=1,nPhotoBins
+          !interpolate Qabs on photo bins
+          dust_Qabs_interp(i,jdust) = get_Qabs(photoBinEmid(i),jdust)
+       end do
+    end do
+#ENDIFKROME_usePhotoDust
+
+  end subroutine interp_qabs
+
   !*************************
   !return the Qabs for the dust bin jdust
   ! and for the given energy in eV
@@ -285,6 +310,14 @@ contains
     implicit none
     integer::jdust,j
     real*8::get_Qabs,energy
+
+    !rise error if array size problem
+    if(dust_Qabs_nE<=0) then
+       print *,"ERROR: when interpolating Qabs found zero energy points!"
+       print *,"You should probably intialize dust before initializing"
+       print *," photochemistry..."
+       stop
+    end if
 
     !loop to find the energy and interpolate
     do j=2,dust_Qabs_nE
@@ -298,13 +331,26 @@ contains
        end if
     end do
 
-    !raise an error if nothing found
+    !rise an error if nothing found
     print *,"ERROR: no value found for get_Qabs"
     print *,"energy (eV):", energy
+    print *,"energy limits (eV):", dust_Qabs_E(1), dust_Qabs_E(dust_Qabs_nE)
     print *,"jdust:",jdust
     stop
 
   end function get_Qabs
+
+  !************************
+  !jbin is the photobin, jdust the dust bin
+  function get_Qabs_bin(jbin,jdust)
+    use krome_commons
+    implicit none
+    real*8::get_Qabs_bin
+    integer::jbin,jdust
+
+    get_Qabs_bin = dust_Qabs_interp(jbin,jdust)
+
+  end function get_Qabs_bin
 
 #IFKROME_usePhotoDust
   !***********************
@@ -320,7 +366,9 @@ contains
     !loop over photo bins
     intJ = 0d0
     do i=1,nPhotoBins
-       intJ = intJ + photobinJ(i) * get_Qabs(photoBinEmid(i),jdust) &
+       intJ = intJ + photobinJ(i) &
+            !* get_Qabs(photoBinEmid(i),jdust) &
+            * get_Qabs_bin(i,jdust) &
             * photoBinEdelta(i)
     end do
 
@@ -373,6 +421,7 @@ contains
   function besc(n,Tgas,lj,rhogas)
     use krome_commons
     use krome_subs
+    use krome_phfuncs
     implicit none
     real*8::n(:),besc,Tgas,tau,lj,tau_d,tau_g,rhogas,Tff
     integer::j
@@ -431,6 +480,7 @@ contains
     use krome_commons
     use krome_constants
     use krome_subs
+    use krome_getphys
     implicit none
     real*8::get_dTdust(ndust),n(:),dTgas,intBB,pre
     real*8::vgas,ntot,Tgas,rhogas,ljeans,be,m(nspec)
@@ -460,6 +510,7 @@ contains
     use krome_commons
     use krome_constants
     use krome_subs
+    use krome_getphys
     implicit none
     integer::i,j1,j2,jmid
     real*8::Td1,Td2,fact,vgas,ntot,n(:),be,ljeans,rhogas
@@ -479,7 +530,7 @@ contains
     be = besc(n(:),Tgas,ljeans,rhogas)
 
     !init dust cooling
-    dustCooling = 0d0 
+    dustCooling = 0d0
 
     !init external radiation flux
     intJflux = 0d0
@@ -507,7 +558,7 @@ contains
        intJflux = get_int_JQabs(i)
 #ENDIFKROME_usePhotoDust
        !bisection method
-       do 
+       do
 
           !f(x) evaluated at j1 and j2
           f1 = (get_dust_intBB(i,Td1) - intCMB - intJflux) * be &
@@ -654,7 +705,7 @@ contains
 
   !*********************
   function krome_dust_growth(natom,Tgas,Tdust,vgas,atom_mass,rho0)
-    !krome_dust_growth: compute dust growth in cm/s 
+    !krome_dust_growth: compute dust growth in cm/s
     implicit none
     real*8::krome_dust_growth,natom,Tgas,Tdust,vgas,atom_mass,rho0
 
@@ -683,7 +734,7 @@ contains
     implicit none
     real*8::dust_evap,Tdust,ebind,nu0,amass
     real*8::asize2,rho0
-    
+
     dust_evap = 0d0 !default
     nu0 = 1d12 !1/s
     if(asize2<=0d0) return
@@ -733,7 +784,7 @@ contains
     real*8::myvgas,H2_eps,nndust(:),nH,H2_eps_f
     integer::i
 
-    H2_dust = 0.d0 
+    H2_dust = 0.d0
     do i = 1,size(Tdust)
        H2_eps = H2_eps_f(Tgas, Tdust(i))
        H2_dust = H2_dust + 0.5d0 * nH * myvgas * nndust(i) &
@@ -754,7 +805,7 @@ contains
     Es = -1d3 !K
     Ep = 7d2 !K
     !m (must be in m even if in CS2009 it's in \AA!!, Cazaux2012 private comm.)
-    apc = 1.7d-10 
+    apc = 1.7d-10
     func = 2.d0 * exp(-(Ep-Es)/(Ep+myTgas)) / (1.d0+sqrt((Ec-Es)/(Ep-Es)))**2
     H2_eps_Si = 1.d0/(1.+16.*myTdust/(Ec-Es) * exp(-Ep/myTdust)&
          * exp(4d9*apc*sqrt(Ep-Es))) + func

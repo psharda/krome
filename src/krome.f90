@@ -13,15 +13,17 @@ contains
   !********************************
   !KROME main (interface to the solver library)
 #IFKROME_useX
-  subroutine krome(x,rhogas,Tgas,dt #KROME_dust_arguments) #KROME_bindC
+  subroutine krome(x,rhogas,Tgas,dt #KROME_dust_arguments #KROME_fexCustom) #KROME_bindC
 #ELSEKROME
-  subroutine krome(x,Tgas,dt #KROME_dust_arguments) #KROME_bindC
+  subroutine krome(x,Tgas,dt #KROME_dust_arguments #KROME_fexCustom) #KROME_bindC
 #ENDIFKROME
     use krome_commons
     use krome_subs
     use krome_ode
     use krome_reduction
     use krome_dust
+    use krome_getphys
+    implicit none
     #KROME_double :: Tgas,dt
     #KROME_double :: x(nmols)
 #IFKROME_useX
@@ -29,9 +31,11 @@ contains
 #ELSEKROME
     real*8 :: rhogas
 #ENDIFKROME
+    #KROME_externalFexCustom
     real*8::mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
-    integer::icount,i,ierr,icount_max
+    integer::icount,i,icount_max
+    #KROME_integer :: ierr
 
     !DLSODES variables
     integer,parameter::meth=2 !1=adam, 2=BDF
@@ -128,8 +132,18 @@ contains
     do
        icount = icount + 1
        !solve ODE
-       CALL DLSODES(fex, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
-            ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, JES, MF)
+       CALL DLSODES(fex#KROME_postfixFexCustom, NEQ(:), n(:), tloc, dt, &
+            ITOL, RTOL, ATOL, ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, &
+            LIW, JES, MF)
+
+#IFKROME_ierr
+       !break and return ierr when max count reached
+       if(icount>icount_max) then
+          ierr = istate
+          exit
+       end if
+#ENDIFKROME
+
 #IFKROME_report
        call krome_dump(n(:), rwork(:), iwork(:), ni(:))
 #ENDIFKROME
@@ -245,6 +259,7 @@ contains
     use krome_subs
     use krome_commons
     use krome_constants
+    use krome_getphys
     implicit none
     integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
     integer::i,imax
@@ -415,6 +430,7 @@ contains
     use krome_tabs
     use krome_reduction
     use krome_ode
+    use krome_getphys
     integer::fnum,i,iwork(:),idx(nrea),j
     real*8::n(:),rwork(:),rrmax,k(nrea),kmax,rperc,kperc,dn(nspec),tt,ni(:)
     character*16::names(nspec),FMTi,FMTr
@@ -536,6 +552,7 @@ contains
     use krome_reduction
     use krome_dust
     use krome_cooling
+    use krome_photo
 #IFKROME_useStars
     use krome_stars
 #ENDIFKROME
@@ -546,6 +563,13 @@ contains
     !init metallicity default
     !assuming solar
     total_Z = 1d0
+
+    !default D/D_sol = Z/Z_sol
+    !assuming linear scaling
+    dust2gas_ratio = total_Z
+
+    !default broadening turubulence velocity
+    broadeningVturb2 = 0d0
 
 #IFKROME_useH2dust_constant
     !default clumping factor for
@@ -558,9 +582,16 @@ contains
     krome_thermo_toggle = 1
     !$omp end parallel
 
-    call load_arrays
+    !load arrays with ractants/products indexes
+    call load_arrays()
+
+#IFKROME_useH2pd
+    !load data for H2 photodissociation (file name default)
+    call kpd_H2_loadData()
+#ENDIFKROME
 
 #IFKROME_useCoolingZ
+    !initialize cooling tabel for metals
     call coolingZ_init_tabs()
 #ENDIFKROME
 
@@ -593,12 +624,12 @@ contains
 #ENDIFKROME
 
 #IFKROME_useMayerOpacity
-    call init_anytab2D("mayer_E2.dat",mayer_x(:), &
-         mayer_y(:), mayer_z(:,:), mayer_xmul, &
-         mayer_ymul)
-    call test_anytab2D("mayer_E2.dat",mayer_x(:), &
-         mayer_y(:), mayer_z(:,:), mayer_xmul, &
-         mayer_ymul)
+    !call init_anytab2D("mayer_E2.dat",mayer_x(:), &
+    !     mayer_y(:), mayer_z(:,:), mayer_xmul, &
+    !     mayer_ymul)
+    !call test_anytab2D("mayer_E2.dat",mayer_x(:), &
+    !     mayer_y(:), mayer_z(:,:), mayer_xmul, &
+    !     mayer_ymul)
 #ENDIFKROME
 
 #IFKROME_useCoolingCO

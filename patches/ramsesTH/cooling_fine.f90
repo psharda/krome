@@ -217,22 +217,22 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
                t*scale_t / (krome_seconds_per_year*1e3), t2old * mu_noneq_old, nH(i),  &
                delta_T2(i)*nH(i)/scale_T2/(uold(ind_leaf(i),ichem)-1.0) * scale_d * scale_V**2 / dtcool, &
                delta_T2(i)/nH(i)/scale_T2/(uold(ind_leaf(i),ichem)-1.0) * scale_d * scale_V**2 / dtcool
-             print '(a,F12.4, e12.3, 3F10.2, 12e12.3)', &
-               'Time, density, T, mu, gamma, H, e-, H+, H-, H2, C, C+, O, O+, CO, OH, H2O :', &
-               t * scale_t / (krome_seconds_per_year*1e3), nH(i),  &
-               Tgas, mu_noneq, uold(ind_leaf(i),ichem), &
-               uold(ind_leaf(i),ichem+krome_idx_H)   / uold(ind_leaf(i),1), &
-               uold(ind_leaf(i),ichem+krome_idx_e)   / uold(ind_leaf(i),1), &
-               uold(ind_leaf(i),ichem+krome_idx_Hj)  / uold(ind_leaf(i),1), &
-               uold(ind_leaf(i),ichem+krome_idx_Hk)  / uold(ind_leaf(i),1), &
-               uold(ind_leaf(i),ichem+krome_idx_H2)  / uold(ind_leaf(i),1), &
-               uold(ind_leaf(i),ichem+krome_idx_C)   / uold(ind_leaf(i),1), &
-               uold(ind_leaf(i),ichem+krome_idx_Cj)  / uold(ind_leaf(i),1), &
-               uold(ind_leaf(i),ichem+krome_idx_O)   / uold(ind_leaf(i),1), &
-               uold(ind_leaf(i),ichem+krome_idx_Oj)  / uold(ind_leaf(i),1), &
-               uold(ind_leaf(i),ichem+krome_idx_CO)  / uold(ind_leaf(i),1), &
-               uold(ind_leaf(i),ichem+krome_idx_OH)  / uold(ind_leaf(i),1), &
-               uold(ind_leaf(i),ichem+krome_idx_H2O) / uold(ind_leaf(i),1)
+!!$             print '(a,F12.4, e12.3, 3F10.2, 12e12.3)', &
+!!$               'Time, density, T, mu, gamma, H, e-, H+, H-, H2, C, C+, O, O+, CO, OH, H2O :', &
+!!$               t * scale_t / (krome_seconds_per_year*1e3), nH(i),  &
+!!$               Tgas, mu_noneq, uold(ind_leaf(i),ichem), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_H)   / uold(ind_leaf(i),1), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_e)   / uold(ind_leaf(i),1), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_Hj)  / uold(ind_leaf(i),1), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_Hk)  / uold(ind_leaf(i),1), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_H2)  / uold(ind_leaf(i),1), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_C)   / uold(ind_leaf(i),1), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_Cj)  / uold(ind_leaf(i),1), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_O)   / uold(ind_leaf(i),1), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_Oj)  / uold(ind_leaf(i),1), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_CO)  / uold(ind_leaf(i),1), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_OH)  / uold(ind_leaf(i),1), &
+!!$               uold(ind_leaf(i),ichem+krome_idx_H2O) / uold(ind_leaf(i),1)
            end if
            !$omp end critical
            end if

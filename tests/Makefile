@@ -33,22 +33,25 @@ objs += opkdmain.o
 objs += krome_commons.o
 objs += krome_constants.o
 objs += krome_user_commons.o
+objs += krome_getphys.o
+objs += krome_gadiab.o
+objs += krome_grfuncs.o
+objs += krome_phfuncs.o
 objs += krome_subs.o
 objs += krome_stars.o
-objs += krome_photo.o
 objs += krome_tabs.o
 objs += krome_dust.o
+objs += krome_photo.o
 objs += krome_cooling.o
 objs += krome_heating.o
 objs += krome_ode.o
 objs += krome_user.o
 objs += krome_reduction.o
 objs += krome.o
-objs += test.o
 
 #default target
-all: 	$(objs)
-	$(fc) $(objs) -o $(exec) $(switch) $(lib)
+all: 	$(objs) test.o
+	$(fc) $(objs) test.o -o $(exec) $(switch) $(lib)
 
 #ifort full debug target
 debug: switch = $(switchDBG)
@@ -73,6 +76,27 @@ gfortran_dbg: switch += -ffpe-trap=zero,overflow,invalid
 gfortran_dbg: switch += -fbounds-check -ffree-line-length-none
 gfortran_dbg: nowarn = $(nowarnGNU)
 gfortran_dbg: all
+
+#library accessible from python interface target
+sharedlib:	$(objs)
+	$(fc) $(objs) -o libkrome.so $(switch) -shared $(lib)
+
+pyinterface: fc = gfortran
+pyinterface: switch = -ffree-line-length-none -fPIC
+pyinterface: nowarn = $(nowarnGNU)
+pyinterface: sharedlib
+
+cinterface: gfortran
+
+pyinterface_opt: fc = gfortran
+pyinterface_opt: switch = -O3 -ffree-line-length-none -fPIC
+pyinterface_opt: nowarn = $(nowarnGNU)
+pyinterface_opt: sharedlib
+
+cinterface_opt: fc = gfortran
+cinterface_opt: switch = -O3 -ffree-line-length-none -fPIC
+cinterface_opt: nowarn = $(nowarnGNU)
+cinterface_opt: all
 
 #clean target
 clean:

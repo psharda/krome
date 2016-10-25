@@ -12,19 +12,21 @@
 # more details in http://kromepackage.org/
 # also see https://bitbucket.org/krome/krome_stable
 #
+# more details in http://kromepackage.org/
+# also see https://bitbucket.org/krome/krome_stable
+#
 # Written and developed by Tommaso Grassi
-# tommasograssi@gmail.com,
+# tgrassi@nbi.dk,
 # Starplan Center, Copenhagen.
 # Niels Bohr Institute, Copenhagen.
 #
-# Co-developer Stefano Bovino
-# sbovino@astro.physik.uni-goettingen.de
-# Institut fuer Astrophysik, Goettingen.
+# and Stefano Bovino
+# stefano.bovino@uni-hamburg.de
+# Hamburger Sternwarte, Hamburg.
 #
-# Others (alphabetically): D.Galli, F.A. Gianturco, T. Haugboelle,
-# J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini,
+# Others (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
+# J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
 # E.Tognelli
-#
 #
 # KROME is provided "as it is", without any warranty.
 # The Authors assume no liability for any damages of any kind
@@ -71,6 +73,7 @@ class molec():
 	ve_vib = "__NONE__" #vibrational constant in K
 	be_rot = "__NONE__" #rotational constant in K
 	links = 0 #number of reactions involved
+	nameLatex = "" #name in LaTeX format
 
 	def __init__(self):
 		self.poly1 = [0.e0]*7
@@ -137,7 +140,7 @@ class reaction():
 			sidx = str(self.idx)
 			args = "xsec"+sidx+"_val(:), xsec"+sidx+"_Emin,"
 			#args += "xsec"+sidx+"_n,"
-			args += "xsec"+sidx+"_idE"
+			args += "xsec"+sidx+"_idE, dshift("+self.reactants[0].fidx+")"
 			self.kphrate = "xsec_interp(energyL, energyR, "+args+")"
 			self.xsecFile = self.krate.replace("@xsecFile=","").strip()
 			if(self.xsecFile.upper()=="SWRI"):
@@ -402,7 +405,7 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		print "ERROR: file "+fname+" doesn't exist!"
 		print "Species "+reactant.name+" doesn't have a SWRI file."
 		print "Search on http://phidrates.space.swri.edu"
-		print " and copy to "+data_folder
+		print " and copy to "+data_folder+"/"+reactant.name+".dat"
 		sys.exit()
 	#read data from the file and store the data and the header
 	fswri = open(fname,"rb")
@@ -1084,15 +1087,21 @@ def addVarCoe(mytabvar,tabf,coevars):
 	if(not(mytabvar in coevars)):
 		coevars[mytabvar] = [len(coevars),tabf]
 
-#############################
-#cooling index list
-def get_cooling_index_list():
+############################
+def get_cooling_dict():
 	#the keys of this list must be lowercase.
 	#the number is the corresponding integer index for the given cooling
 	idxcoo = {"H2":1,"H2GP":2,"atomic":3, "CEN":3, "HD":4, "Z":5, "metal":5, "dH":6, "enthalpic":6, "dust":7,\
 		"compton":8,"CIE":9, "continuum":10, "cont":10,"exp":11,"expansion":11,"ff":12,"bss":12,"custom":13,\
 		"CO":14, "ZCIE":15, "ZCIENOUV":16, "ZExtend":17}
+	idxcoo = {k.lower():v for (k,v) in idxcoo.iteritems()}
+	return idxcoo
 
+#############################
+#cooling index list
+def get_cooling_index_list():
+
+	idxcoo = get_cooling_dict()
 	#loop on the index to write variables as idx_cool_H2 = 1
 	idxscoo = []
 	maxv = 0 #maximum index found is the size of the cooling array
@@ -1103,12 +1112,19 @@ def get_cooling_index_list():
 	idxscoo.append([99,"ncools = "+str(maxv)])
 	return [x[1] for x in idxscoo]
 
+############################
+def get_heating_dict():
+	#the number is the corresponding integer index for the given heating
+	idxhea = {"chem":1,"compress":2, "compr":2, "photo":3, "dH":4, "enthalpic":4, "photoAv":5, "Av":5,\
+		"CR":6, "dust":7, "xray":8, "visc":9,"viscous":9, "custom":10, "ZCIE":11}
+	idxhea = {k.lower():v for (k,v) in idxhea.iteritems()}
+	return idxhea
+
 #############################
 #heating index list
 def get_heating_index_list():
-	idxhea = {"chem":1,"compress":2, "compr":2, "photo":3, "dH":4, "enthalpic":4, "photoAv":5, "Av":5,\
-		"CR":6, "dust":7, "xray":8, "visc":9,"viscous":9, "custom":10, "ZCIE":11}
 
+	idxhea = get_heating_dict()
 	idxshea = []
 	maxv = 0
 	for (k,v) in idxhea.iteritems():
@@ -1368,7 +1384,7 @@ def get_Tshortcut(rea,slist,cvars=[]):
 	shcut = sorted(shcut, key=lambda x:len(x.split("=")[0].strip()), reverse=True)
 
 	#loop on the shortcuts to find if the rate coefficient employs them
-	krea = rea.krate
+	krea = rea.krate.replace(" ","")
 	for x in shcut:
 		ax = x.split("=") #split the shortcut
 		xvar = parsevar(krea) #parse the variable in the rate coefficient
@@ -1378,7 +1394,7 @@ def get_Tshortcut(rea,slist,cvars=[]):
 			xtmp = x
 			for xx in shcut:
 				axx = xx.split("=") #split the shortcut
-				xxvar = parsevar(xtmp)  #parse the variables in the rate coeffcient found
+				xxvar = parsevar(xtmp)  #parse the variables in the rate coefficient found
 				xtmp = xtmp.replace(axx[0].strip(),"")
 				if((axx[0].strip().lower() in xxvar) and not(xx in slist)):
 					slist.append(xx) #append the dependent shortcut
@@ -1417,7 +1433,7 @@ def get_usage():
 ##################################
 #truncate F90 expression using sep as separator for blocks shorter than sublen
 def truncF90(mystr, sublen, sep):
-	#split (&\n) the string mystr in parts smaller tha sublen using sep as separator
+	#split (&\n) the string mystr in parts smaller than sublen using sep as separator
 	if(mystr.strip()==""): return mystr
 	mystr = mystr.replace("**","##")
 	mystr = mystr.replace("(/","###")
@@ -1443,7 +1459,7 @@ def coeVarArray(varin):
 	if("[" in varin):
 		varin = varin.replace(" ","") #replace spaces
 		var_array_size = varin.split("[")[1].split("]")[0] #grep inside brackets
-		varin = varin.replace("["+var_array_size+"]","") #replace braketes and content
+		varin = varin.replace("["+var_array_size+"]","") #replace brackets and content
 		varin = varin+"("+var_array_size+")" #set variable definition
 
 	return varin
@@ -1559,6 +1575,7 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 		mymol.charge = 0 #charge
 		mymol.zatom = 0 #atomic number
 		mymol.fname = name #f90 name
+		mymol.nameLatex = name
 		mymol.is_atom = True #atom flag
 		mymol.fidx = "idx_"+name #f90 index
 		mymol.neutrons = 0 #number of neutrons
@@ -1629,6 +1646,17 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 	mymol.charge = 0 #charge
 	mymol.zatom = zatom #atomic number
 	mymol.fname = name.replace("+","j").replace("-","k") #f90 name
+	#name latex version, replace number with subscript, signs with superscripts
+	expName = list(name)
+	repName = []
+	#loop on name parts
+	for part in expName:
+		if(is_number(part)): part = "$_"+part+"$"
+		if(part=="+" or part=="-"): part = "$^"+part+"$"
+		repName.append(part)
+	mymol.nameLatex = ("".join(repName))
+	#replace latex name if electron
+	if(name=="E"): mymol.nameLatex = "e$^-$"
 	#cooling name is only for atoms, e.g. CIV
 	mymol.coolname = name
 	if(is_atom):
@@ -1723,6 +1751,10 @@ def get_file_list():
 	files.append("src/krome_user.f90")
 	files.append("src/krome_stars.f90")
 	files.append("src/krome_user_commons.f90")
+	files.append("src/krome_getphys.f90")
+	files.append("src/krome_grfuncs.f90")
+	files.append("src/krome_phfuncs.f90")
+	files.append("src/krome_gadiab.f90")
 	files.append("src/krome_subs.f90")
 	files.append("src/krome_dust.f90")
 	files.append("src/krome_cooling.f90")
@@ -1776,14 +1808,15 @@ def clear_dir(folder):
 
 
 #################################
-# returns the licence of KROME
+# returns the license of KROME
 def get_licence_header(version, codename, short=False):
 	import datetime
 	header =  """!!*************************************************************
 	!! This file has been generated with:
-	!! krome #version# "#codename#" on #date#.
+	!! KROME #version# "#codename#" on #date#
+	!! Changeset #changeset#
 	!!
-	!!KROME is a nice and friendly chemistry package for a wide range of
+	!! KROME is a nice and friendly chemistry package for a wide range of
 	!! astrophysical simulations. Given a chemical network (in CSV format)
 	!! it automatically generates all the routines needed to solve the kinetic
 	!! of the system, modelled as system of coupled Ordinary Differential
@@ -1797,21 +1830,21 @@ def get_licence_header(version, codename, short=False):
 	!! more details in http://kromepackage.org/
 	!! also see https://bitbucket.org/krome/krome_stable
 	!!
-	!!Written and developed by Tommaso Grassi
-	!! tommasograssi@gmail.com,
-	!! Starplan Center, Copenhagen.
-	!! Niels Bohr Institute, Copenhagen.
+	!! Written and developed by Tommaso Grassi
+	!!  tgrassi@nbi.dk,
+	!!  Starplan Center, Copenhagen.
+	!!  Niels Bohr Institute, Copenhagen.
 	!!
-	!!Co-developer Stefano Bovino
-  	!! sbovino@astro.physik.uni-goettingen.de
-	!! Institut fuer Astrophysik, Goettingen.
+	!! and Stefano Bovino
+	!!  stefano.bovino@uni-hamburg.de
+	!!  Hamburger Sternwarte, Hamburg.
 	!!
-	!!Others (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
-	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini,
-	!! E. Tognelli
+	!! Contributors (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
+	!!  J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried,
+	!!  E. Simoncini, E. Tognelli
 	!!
 	!!
-	!!KROME is provided \"as it is\", without any warranty.
+	!! KROME is provided \"as it is\", without any warranty.
 	!! The Authors assume no liability for any damages of any kind
 	!! (direct or indirect damages, contractual or non-contractual
 	!! damages, pecuniary or non-pecuniary damages), directly or
@@ -1824,21 +1857,29 @@ def get_licence_header(version, codename, short=False):
 	!!*************************************************************\n"""
 
 	if(short): header = """!!*************************************************************
-	!!This file has been generated with:
-	!!KROME #version# on #date#
-	!!see http://kromepackage.org
+	!! This file has been generated with:
+	!! KROME #version# on #date#
+	!! Changeset #changeset#
+	!! see http://kromepackage.org
 	!!
-	!!Written and developed by Tommaso Grassi
+	!! Written and developed by Tommaso Grassi and Stefano Bovino
 	!!
-	!!Co-developer Stefano Bovino
-	!!Others (alphabetically): D.Galli, F.A. Gianturco, T. Haugboelle,
-	!! J.Prieto, D.R.G. Schleicher, D. Seifried, E. Simoncini,
-	!! E. Tognelli.
-	!!KROME is provided \"as it is\", without any warranty.
+	!! Contributors (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
+	!!  J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
+	!!  E.Tognelli.
+	!! KROME is provided \"as it is\", without any warranty.
 	!!*************************************************************\n"""
 
+	#name of the git master file
+	masterfile = ".git/refs/heads/master"
+	changeset = ("x"*7) #default unknown changeset
+	#if git master file exists grep the changeset
+	if(file_exists(masterfile)):
+		changeset = open(masterfile,"rb").read()
+
 	datenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-	header = header.replace("#date#",datenow).replace("#version#",version).replace("#codename#",codename)
+	header = header.replace("#date#",datenow).replace("#version#",version)
+	header = header.replace("#codename#",codename).replace("#changeset#",changeset[:7])
 	return header.replace("\t","").replace("!!","   ! ")
 
 #################################

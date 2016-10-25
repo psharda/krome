@@ -7,10 +7,17 @@ from math import log10,exp,log,sqrt
 import matplotlib.pyplot as plt
 import os,sys
 
-#reaction filename
-fname = "../networks/react_COthin_rt"
-#output foder
+#check command-line arguments and store them
+if(len(sys.argv)<2):
+	print ("Usage: %s INPUT" % sys.argv[0])
+	sys.exit()
+
+if(not os.path.isfile(sys.argv[1].strip())):
+    sys.exit("ERROR: input file %s was not found!" % sys.argv[1])
+
+fname = sys.argv[1].strip()
 outFolder = "checkPlots"
+
 #plot min/max temperature
 TminDefault = 1e0
 TmaxDefault = 1e8
@@ -51,14 +58,28 @@ shortcuts = {"invT":"1d0/Tgas", \
 #operators to replace shortcuts, e.g. *Tgas)
 maths = ["+","-","*","/","(",")"]
 
+
+#open/close token list for block to be skipped
+skipTokenList = ["@reactionModifier_begin"]
+unskipTokenList = ["@reactionModifier_end"]
+
 network = dict()
-noFormat = True
+noFormat = True #flag when default format
+skipBlock = False #skip useless block btween tokens
 #open file to read
 fh = open(fname,"rb")
 for row in fh:
 	srow = row.strip()
 	if(srow==""): continue
 	if(srow.startswith("#")): continue
+	#start skipping useless block
+	if(srow in skipTokenList): skipBlock = True
+	#stop skiping useless block
+	if(srow in unskipTokenList):
+		skipBlock = False
+		continue
+	#skip block if useless
+	if(skipBlock): continue
 	#read format
 	if(srow.startswith("@format:") or noFormat):
 		myFormat = srow
@@ -152,6 +173,7 @@ for (verbatimReaction,reactions) in network.iteritems():
 		ydata = []
 		ydata2 = []
 		ydataDef = []
+		negativeExtrapolated = []
 		#loop on Tgas points
 		for ii in range(imax):
 			Tgas = 1e1**(ii*(lTmax-lTmin)/(imax-1)+lTmin)
@@ -165,9 +187,11 @@ for (verbatimReaction,reactions) in network.iteritems():
 			#evaluate rate only inside limits
 			if(Tgas<Tmin or Tgas>Tmax):
 				ydata2.append(0e0)
+				if(kk<0e0): negativeExtrapolated.append(Tgas)
 			else:
 				ydata2.append(kk)
 				ydataDef.append(kk)
+
 		#if rate is never evaluated rise error
 		if(max(ydata)<=0e0):
 			print "**********"
@@ -181,7 +205,14 @@ for (verbatimReaction,reactions) in network.iteritems():
 			print verbatimReaction
 			print rate
 			print "ERROR: negative!"
-			sys.exit()
+			#sys.exit()
+		if(len(negativeExtrapolated)>0):
+			print "**********"
+			print "WARNING: Negative rate when extrapolated!"
+			print verbatimReaction
+			print "Temperature range (K):",min(negativeExtrapolated),max(negativeExtrapolated)
+			print rate
+
 		plt.loglog(xdata,ydata,"r--")
 		plt.loglog(xdata,ydata2,"b")
 		#store absolute min and max

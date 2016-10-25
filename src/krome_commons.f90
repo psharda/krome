@@ -45,6 +45,7 @@ module krome_commons
   real*8,allocatable::dust_intBB(:,:),dust_intBB_sigma(:,:)
   real*8,allocatable::dust_intBB_dT(:,:)
   logical::Qabs_allocated(ndustTypes)
+  real*8::dust_Qabs_interp(nPhotoBins,ndust)
   real*8::xdust(ndust)
   integer::krome_dust_partner_idx(ndustTypes),dust_Qabs_nE
   integer,parameter::dust_nT=int(1e5)
@@ -57,8 +58,21 @@ module krome_commons
   !commons for frequency bins
 #KROME_photobins_array
 
+  !commons for H2 photodissociation (Solomon)
+  ! note: paramters here are set depending on the data
+  ! but if you have a different file you should modify them
+  integer,parameter::H2pdData_nvibX=15
+  integer,parameter::H2pdData_nvibB=37
+  real*8::H2pdData_dE(H2pdData_nvibX,H2pdData_nvibB)
+  real*8::H2pdData_pre(H2pdData_nvibX,H2pdData_nvibB)
+  real*8::H2pdData_EX(H2pdData_nvibX)
+  integer::H2pdData_binMap(H2pdData_nvibX,H2pdData_nvibB)
+
   !commons for dust optical properties
 #KROME_opt_variables
+
+  !square of turbulence velocity for broadening
+  real*8::broadeningVturb2
 
   !mpi rank of process. If 0, ignored
   integer::krome_mpi_rank=0, krome_omp_thread
@@ -87,6 +101,7 @@ module krome_commons
 
   !total metallicity relative to solar Z/Z_solar
   real*8::total_Z
+  real*8::dust2gas_ratio
 
 #IFKROME_useMayerOpacity
   !commons for Mayer opacity table
@@ -180,10 +195,10 @@ module krome_commons
   real*8::zpart_H2even(zpart_nH2even),minpart_H2even,partdT_H2even
   real*8::zpart_H2odd(zpart_nH2odd),minpart_H2odd,partdT_H2odd
 
-  !Habing flux for the photoelectric heating by dust,
-  ! H2 pumping rate and clumping factor for H2 formation
+  !Habing flux for the photoelectric heating by dust
+  ! and clumping factor for H2 formation
   ! on dust by Jura/Gnedin
-  real*8::GHabing,kH2pump,clump_factor
+  real*8::GHabing,Ghabing_thin,clump_factor
 
   ! Photo reaction rates relevant for Gnedin-Hollon cooling/heating function
 #IFKROME_useCoolingGnedinHollon
