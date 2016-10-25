@@ -176,7 +176,16 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
               !KROME: cooling only
               call krome_thermo(unoneq(:), Tgas, dtcool)
            elseif(.not.do_cool.and.chemistry) then
-              print *,"ERROR (KROME): you cannot do chemistry without cooling"
+              !print *,"ERROR (KROME): you cannot do chemistry without cooling"
+              !KROME: do chemistry+cooling
+              if (any(unoneq < 0.0_dp)) then
+                 write(*,*) 'Negative densities are not allowed'
+                 write(*,*) 'N: ', unoneq
+                 stop
+              end if
+              call krome(unoneq(:), Tgas, dtcool)
+              t2old = T2(i)
+              Tgas  = t2old * mu_noneq_old
            else
               continue
            end if
