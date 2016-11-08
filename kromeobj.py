@@ -6729,6 +6729,7 @@ class krome():
 			if(skip): continue
 			if(skipDustOpacity): continue
 			if(skipBindC): continue
+			if(skipH2pd): continue
 
 			row = row.replace("#KROME_single",self.KindSingle)
 			row = row.replace("#KROME_double_value_optional",self.KindDoubleValueOptional)
