@@ -1623,7 +1623,8 @@ contains
     real*8::csize,n(nmols),xscale(nPhotoBins),Tgas
 
     xscale(:) = krome_get_opacity_size(n(:),Tgas,csize)
-    call krome_photoBin_scale_array(exp(-xscale(:)))
+    xscale(:) = exp(-xscale(:))
+    call krome_photoBin_scale_array(xscale(:))
 
   end subroutine krome_opacity_scale_size
 
