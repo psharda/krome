@@ -245,6 +245,8 @@ class reaction:
 					Tmax = varMax
 					if(self.Tmin[icount]!=None): Tmin = float(utils.replaceTlims(self.Tmin[icount]))
 					if(self.Tmax[icount]!=None): Tmax = float(utils.replaceTlims(self.Tmax[icount]))
+					Tmin = max(varMin,Tmin)
+					Tmax = min(varMax,Tmax)
 					valsRange = [x for x in vals if(Tmin<=x and x<=Tmax)]
 					valsRange = [Tmin]+valsRange+[Tmax]
 
