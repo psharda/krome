@@ -49,6 +49,8 @@ contains
 
     k(:) = coe_tab(n(:)) !compute coefficients
 
+#KROME_H2pdRate
+
 #KROME_photobins_compute_thick
 
 #IFKROME_useDust

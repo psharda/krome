@@ -1543,6 +1543,11 @@ contains
 #ENDIFKROME_useBindC
     end do
 
+#IFKROME_useH2pd
+    krome_get_opacity_size(:) = krome_get_opacity_size(:) &
+         + kpd_H2_xsec(Tgas) * n(idx_H2) * csize
+#ENDIFKROME_useH2pd
+
 #IFKROME_useBindC
     krome_get_opacity_size = c_loc(get_opacity_size)
 #ENDIFKROME_useBindC
@@ -1618,7 +1623,8 @@ contains
     real*8::csize,n(nmols),xscale(nPhotoBins),Tgas
 
     xscale(:) = krome_get_opacity_size(n(:),Tgas,csize)
-    call krome_photoBin_scale_array(exp(-xscale(:)))
+    xscale(:) = exp(-xscale(:))
+    call krome_photoBin_scale_array(xscale(:))
 
   end subroutine krome_opacity_scale_size
 

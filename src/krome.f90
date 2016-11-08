@@ -552,6 +552,7 @@ contains
     use krome_reduction
     use krome_dust
     use krome_cooling
+    use krome_photo
 #IFKROME_useStars
     use krome_stars
 #ENDIFKROME
@@ -581,9 +582,16 @@ contains
     krome_thermo_toggle = 1
     !$omp end parallel
 
-    call load_arrays
+    !load arrays with ractants/products indexes
+    call load_arrays()
+
+#IFKROME_useH2pd
+    !load data for H2 photodissociation (file name default)
+    call kpd_H2_loadData()
+#ENDIFKROME
 
 #IFKROME_useCoolingZ
+    !initialize cooling tabel for metals
     call coolingZ_init_tabs()
 #ENDIFKROME
 
