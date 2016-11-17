@@ -3666,8 +3666,12 @@ class krome():
 		nmols = self.nmols
 		dummy = self.dummy
 
+		#maximum number of parts in RHS
+		maxDnsParts = 1000
+
 		#create explicit differentials
 		dns = ["dn("+sp.fidx+") = 0.d0" for sp in specs] #initialize
+		dnsCount = [0 for sp in specs] #initialize RHS part count
 		idxs = [] #already employed indexes
 		for rea in reacts:
 			if(rea.idx in idxs): continue #skip if already employed index
@@ -3676,12 +3680,19 @@ class krome():
 			if(self.humanFlux): rhs = rea.RHS
 			for r in rea.reactants:
 				if(r.name=="E" and self.useComputeElectrons): continue
+				dnsCount[r.idx-1] += 1
+				if(dnsCount[r.idx-1]%maxDnsParts==0):
+					dns[r.idx-1] += " dn("+r.fidx+") = "
 				dns[r.idx-1] = dns[r.idx-1].replace(" = 0.d0"," =")
 				dns[r.idx-1] += " -"+rhs
 			for p in rea.products:
 				if(p.name=="E" and self.useComputeElectrons): continue
+				dnsCount[p.idx-1] += 1
+				if(dnsCount[p.idx-1]%maxDnsParts==0):
+					dns[p.idx-1] += " dn("+p.fidx+") = "
 				dns[p.idx-1] = dns[p.idx-1].replace(" = 0.d0"," =")
 				dns[p.idx-1] += " +"+rhs
+
 
 		#add dust to ODEs
 		if(self.useDust):
@@ -3747,18 +3758,22 @@ class krome():
 				continue
 			RHSs = []
 			RHSc = []
-			dnspl =  dn.strip().split()
-			dns = " ".join(dnspl[:2])
+			dnspl =  dn.strip().split(" ")
+			dns = (" ".join(dnspl[:2]))
 			for p in dnspl[2:]:
 				if(not(p in RHSs)):
 					RHSs.append(p)
 					RHSc.append(0)
 				RHSc[RHSs.index(p)] += 1
 			for i in range(len(RHSs)):
+
 				#if((i+1) % 4 == 0): dns += "&\n" #break long lines
 				if("-" in RHSs[i] and RHSc[i]>1): dns += RHSs[i].replace("-"," &\n-"+str(RHSc[i])+".d0*")
 				if("+" in RHSs[i] and RHSc[i]>1): dns += RHSs[i].replace("+"," &\n+"+str(RHSc[i])+".d0*")
 				if(RHSc[i]==1): dns+= " &\n"+RHSs[i]
+			dns = dns.replace("&\n&\n","&\n")
+			dns = dns.replace("&\ndn(","\n\ndn(")
+			dns = dns.replace("&\n= &\n &","= &")
 			#dns = dns.replace("*"," * ")
 			dnw.append(dns)
 			idn += 1
