@@ -1,10 +1,14 @@
 import sys
+#move to the python source folder
+sys.path.insert(0, "./src_py/")
+
 import network,options
 
 #check argv
 if(len(sys.argv)!=2):
 	print "USAGE is: python docmaker.py OPTION_FILE"
 	sys.exit()
+
 
 #get filename
 fname = sys.argv[1]
