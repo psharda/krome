@@ -357,9 +357,9 @@ class network:
 		icount = 0
 		#loop on reactions
 		for myReaction in self.reactions:
-			if(icount%2==0): fout.write("<tr><td>")
+			if(icount%1==0): fout.write("<tr><td>")
 			fnamePNG = "../pngs/rate_"+str(myReaction.getReactionHash())+"_"+variable+".png"
-			fout.write("<img src=\""+fnamePNG+"\">")
+			fout.write("<img src=\""+fnamePNG+"\" alt=\"MISSING: "+myReaction.getVerbatim()+"\">")
 			icount += 1
 		fout.write("</table>\n")
 
