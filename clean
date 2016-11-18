@@ -15,6 +15,7 @@ for x in [".log","~",".pyc",".dot",".gps",".tmp"]:
 
 removePatterns = ["tools/*.pyc", \
 	"tools/docmake/*.pyc", \
+	"tools/docmake/src_py/*.pyc", \
 	"tools/docmake/pngs/*.png", \
 	"tools/docmake/epss/*.eps", \
 	"tools/docmake/evals/*.json", \
