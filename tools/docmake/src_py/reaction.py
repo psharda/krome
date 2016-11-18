@@ -14,7 +14,7 @@ class reaction:
 	evaluation = []
 
 	#********************
-	#parse csv reaction
+	#parse csv reaction file row (constructor)
 	def __init__(self,row,reactionFormat,atomSet,reactionType):
 		if(not(reactionFormat.startswith("@format:"))):
 			sys.exit("ERROR: wrong format "+reactionFormat)
@@ -32,24 +32,31 @@ class reaction:
 		self.Tmax = [None]
 		self.reactionType = reactionType
 
+		#loop on format parts (and parse species)
 		for i in range(len(splitFormat)):
 			part = splitFormat[i]
+			#reaction index
 			if(part=="idx"):
 				self.index = int(arow[i])
+			#reactant
 			elif(part=="r"):
 				if(arow[i].upper() in specials): continue
 				spec = species.species(arow[i],atomSet)
 				self.reactants.append(spec)
+			#product
 			elif(part=="p"):
 				if(arow[i].upper() in specials): continue
 				spec = species.species(arow[i],atomSet)
 				self.products.append(spec)
+			#min temperature
 			elif(part=="tmin"):
 				self.Tmin = [arow[i].replace("d","e")]
 				if(arow[i].lower()=="none" or arow[i]==""): self.Tmin = [None]
+			#max temperature
 			elif(part=="tmax"):
 				self.Tmax = [arow[i].replace("d","e")]
 				if(arow[i].lower()=="none" or arow[i]==""): self.Tmax = [None]
+			#rate coefficient
 			elif(part=="rate"):
 				self.rate.append(arow[i])
 			else:
@@ -61,10 +68,14 @@ class reaction:
 		if(not(hasCR) and reactionType=="CR"):
 				spec = species.species("CR",atomSet)
 				self.reactants.append(spec)
+
+		#check mass and charge conservation
 		self.check()
 
 	#**************
+	#check reaction charge and mass conservation
 	def check(self):
+		#check charge
 		reactantsCharge = sum([x.charge for x in self.reactants])
 		productsCharge = sum([x.charge for x in self.products])
 		if(reactantsCharge!=productsCharge):
@@ -72,9 +83,11 @@ class reaction:
 			print self.getVerbatim()
 			sys.exit()
 
+		#check mass
 		reactantsMass = sum([x.mass for x in self.reactants])
 		productsMass = sum([x.mass for x in self.products])
 		me = 9.10938356e-28 #electron mass, g
+		#error if difference in mass is greater than half electron mass
 		if(abs(reactantsMass-productsMass)>=me/2.):
 			print "ERROR: mass problems"
 			print self.getVerbatim()
@@ -88,6 +101,7 @@ class reaction:
 			sys.exit()
 
 	#********************
+	#get verbatim reaction, e.g.H2+H2->H+H+H2
 	def getVerbatim(self):
 		if(self.verbatim!=None): return self.verbatim
 		reactantsName = [x.name for x in self.reactants]
@@ -96,6 +110,7 @@ class reaction:
 		return self.verbatim
 
 	#********************
+	#get reaction verbatim in latex format, e.g. H$^+$+e$^-$$\to$H
 	def getVerbatimLatex(self):
 		if(self.verbatimLatex!=None): return self.verbatimLatex
 		reactantsName = [x.nameLatex for x in self.reactants]
@@ -104,6 +119,7 @@ class reaction:
 		return self.verbatimLatex
 
 	#********************
+	#get HTML verbatim, e.g. H<sub>2</sub>&rarr;H+H
 	def getVerbatimHtml(self):
 		if(self.verbatimHtml!=None): return self.verbatimHtml
 		reactantsName = [x.nameHtml for x in self.reactants]
@@ -112,6 +128,7 @@ class reaction:
 		return self.verbatimHtml
 
 	#********************
+	#get reaction unique hash, e.g. H_H__H2
 	def getReactionHash(self):
 		if(self.reactionHash!=None): return self.reactionHash
 		reactantsName = sorted([x.nameFile for x in self.reactants])
@@ -120,6 +137,7 @@ class reaction:
 		return self.reactionHash
 
 	#********************
+	#get html table row with bold mySpecies when present
 	def getReactionHtmlRow(self,mySpecies=None):
 		reactantsName = []
 		for species in self.reactants:
@@ -137,15 +155,15 @@ class reaction:
 					xspec = "<b>"+species.nameHtml+"</b>"
 			productsName.append(xspec)
 
-		#reactantsName = sorted(reactantsName)
-		#productsName = sorted(productsName)
-
 		rpart = ("<td>+<td>".join(reactantsName))
 		ppart = ("<td>+<td>".join(productsName))
+		#fill empty spaces
 		rspace = ("<td><td>".join([""]*(6-len(reactantsName))))
 		pspace = ("<td><td>".join([""]*(10-len(productsName))))
+
 		self.reactionHtmlRow = "<td>&nbsp;"+rpart+"<td>"+rspace+"<td>&rarr;<td>"+ppart+"<td>"+pspace
 		self.reactionHtmlRow += "<td><a href=\"rate_"+self.getReactionHash()+".html\">details</a>"
+
 		return self.reactionHtmlRow
 
 
@@ -155,16 +173,19 @@ class reaction:
 		return list(set(atoms))
 
 	#********************
+	#get list of species
 	def getSpecies(self):
 		return self.reactants+self.products
 
 	#********************
+	#merge limits and rates with another rate
 	def merge(self,myReaction):
 		self.Tmin += myReaction.Tmin
 		self.Tmax += myReaction.Tmax
 		self.rate += myReaction.rate
 
 	#*******************
+	#plot rate coefficient
 	def plotRate(self,shortcuts,varRanges):
 		self.evalRate(shortcuts,varRanges)
 		self.doPlot()
@@ -174,7 +195,7 @@ class reaction:
 	#evaluate rates
 	def evalRate(self,shortcuts,varRanges):
 
-		#number of points
+		#number of points in the plot
 		imax = 100
 
 		self.evaluation = []
@@ -182,9 +203,13 @@ class reaction:
 		self.warnings = []
 		self.shortcutsFound = dict()
 
+		#F90 expected operators in F90 rate expression
+		ops = ["+","-","/","*","(",")"]
+
+
 		#loop on rates parts
 		for icount in range(len(self.rate)):
-			#get urrent rate
+			#get current rate
 			rate = self.rate[icount]
 			evaluation = dict()
 
@@ -194,8 +219,7 @@ class reaction:
 				#remove spaces
 				rate = rate.replace(" ","").lower()
 
-				ops = ["+","-","/","*","(",")"]
-				#add #s around operators
+				#surround F90 operators with # symbols
 				for op in ops:
 					rate = "#"+rate.replace(op,"#"+op+"#")+"#"
 
@@ -219,10 +243,10 @@ class reaction:
 				#join rate back
 				rate = ("".join(splitRate))
 
-			#replace f90 numbers
+			#replace F90 numbers for evaluation, d->e
 			rate = rate.replace("d","e")
 
-			ops = ["+","-","/","*","(",")"]
+			#surround F90 operators with # symbols
 			for op in ops:
 				rate = "#"+rate.replace(op,"#"+op+"#")+"#"
 
@@ -235,7 +259,7 @@ class reaction:
 				#log limits
 				logVarMin = log10(varMin)
 				logVarMax = log10(varMax)
-				#create range
+				#create variable range
 				vals = [i*(logVarMax-logVarMin)/(imax-1)+logVarMin for i in range(imax)]
 				vals = [1e1**x for x in vals]
 
@@ -264,6 +288,8 @@ class reaction:
 				if(isTgas):
 					evaluation[variable]["xdataRange"] = valsRange
 					evaluation[variable]["ydataRange"] = []
+
+				#evaluation exist flag
 				hasEval = False
 				#evaluate rate full range
 				for val in vals:
@@ -311,11 +337,12 @@ class reaction:
 			self.evaluation.append(evaluation)
 
 	#**************************
+	#do plot (PNG)
 	def doPlot(self):
 		import matplotlib.pyplot as plt
-		#max orders of magnitude y axis
 
 		plt.clf()
+		#max orders of magnitude y axis
 		yspanMax = 1e-10
 		hasPlot = False
 		#loop on different limited ranges
@@ -363,7 +390,7 @@ class reaction:
 	def saveEvals(self):
 		import json
 
-		#jsone file name
+		#json file name
 		fname = "evals/rate_"+str(self.getReactionHash())+".json"
 
 		#convert to json
@@ -376,6 +403,7 @@ class reaction:
 
 
 	#****************
+	#make corresponding HTML page
 	def makeHtmlPage(self,myOptions):
 
 		fname = "htmls/rate_"+str(self.getReactionHash())+".html"
