@@ -78,11 +78,10 @@ class network:
 
 		#create reaction index page
 		self.makeHtmlIndex()
-		self.makeHtmlAllRates()
-		self.makeHtmlReactionIndex()
+		self.makeHtmlReactionIndex(myOptions)
 		self.makeHtmlSpeciesIndex()
 		self.makeHtmlGraphIndex()
-
+		self.makeHtmlAllRates(myOptions)
 
 
 		#prepare html pages for species
@@ -243,7 +242,7 @@ class network:
 		fout.write("<li><a href=\"indexSpecies.html\">Species</a></li>")
 		fout.write("<li><a href=\"indexGraph.html\">Graphs</a></li>")
 		fout.write("</ul>")
-		fout.write(utils.getFile("footer.php"))
+		fout.write(utils.getFooter("footer.php"))
 		fout.close()
 
 	#****************
@@ -256,6 +255,7 @@ class network:
 		#add header
 		fout.write(utils.getFile("header.php"))
 		fout.write("<p style=\"font-size:30px\">Graphs</p>\n")
+		fout.write("<a href=\"index.html\">back</a><br>\n")
 		fout.write("<br><br>\n")
 
 		#loop on all available atoms in the network
@@ -273,9 +273,8 @@ class network:
 			fout.write("<br><br>\n")
 
 		#add footer
-		fout.write(utils.getFile("footer.php"))
+		fout.write(utils.getFooter("footer.php"))
 		fout.close()
-
 
 
 	#****************
@@ -289,6 +288,7 @@ class network:
 		#add header
 		fout.write(utils.getFile("header.php"))
 		fout.write("<p style=\"font-size:30px\">Species</p>\n")
+		fout.write("<a href=\"index.html\">back</a><br>\n")
 		fout.write("<br><br>\n")
 		#reaction table
 		fout.write("<table>\n")
@@ -304,13 +304,13 @@ class network:
 		fout.write("</table>\n")
 
 		#add footer
-		fout.write(utils.getFile("footer.php"))
+		fout.write(utils.getFooter("footer.php"))
 		fout.close()
 
 
 	#****************
 	#create reaction list index as html page
-	def makeHtmlReactionIndex(self):
+	def makeHtmlReactionIndex(self,myOptions):
 
 		fname = "htmls/indexReactions.html"
 
@@ -321,6 +321,10 @@ class network:
 		#add header
 		fout.write(utils.getFile("header.php"))
 		fout.write("<p style=\"font-size:30px\">Reactions</p>\n")
+		fout.write("<a href=\"index.html\">back</a><br>\n")
+
+		for variable in myOptions.getRanges().keys():
+			fout.write("<a href=\"allRates_"+variable+".html\">All rates with <b>"+variable+"</b></a><br>\n")
 		fout.write("<br><br>\n")
 		#reaction table
 		fout.write("<table width=\"50%\">\n")
@@ -336,36 +340,43 @@ class network:
 		fout.write("</table>\n")
 
 		#add footer
-		fout.write(utils.getFile("footer.php"))
+		fout.write(utils.getFooter("footer.php"))
 		fout.close()
 
 	#*******************
-	def makeHtmlAllRates(self):
+	def makeHtmlAllRates(self,myOptions):
 
-		fname = "htmls/allRates.html"
+		#loop on variables
+		for variable in myOptions.getRanges().keys():
 
-		variable = "Tgas"
+			#prepare a file for each variable
+			fname = "htmls/allRates_"+variable+".html"
 
-		#open file to write
-		fout = open(fname,"w")
-		#add header
-		fout.write(utils.getFile("header.php"))
-		fout.write("<p style=\"font-size:30px\">All rate plots</p>\n")
-		fout.write("<br><br>\n")
-		#reaction table
-		fout.write("<table>\n")
-		icount = 0
-		#loop on reactions
-		for myReaction in self.reactions:
-			if(icount%1==0): fout.write("<tr><td>")
-			fnamePNG = "../pngs/rate_"+str(myReaction.getReactionHash())+"_"+variable+".png"
-			fout.write("<img src=\""+fnamePNG+"\" alt=\"MISSING: "+myReaction.getVerbatim()+"\">")
-			icount += 1
-		fout.write("</table>\n")
+			#open file to write
+			fout = open(fname,"w")
+			#add header
+			fout.write(utils.getFile("header.php"))
+			fout.write("<p style=\"font-size:30px\">All rate plots with <b>"+variable+"</b></p>\n")
+			fout.write("<a href=\"indexReactions.html\">back</a><br>\n")
+			fout.write("<br><br>\n")
+			#reaction table
+			fout.write("<table>\n")
+			icount = 0
+			#loop on reactions
+			for myReaction in self.reactions:
+				#skip when the variable is not in the reaction rate
+				if(not(myReaction.hasVariable(myOptions,variable))): continue
+				if(icount%1==0): fout.write("<tr><td>")
+				fnamePNG = "../pngs/rate_"+str(myReaction.getReactionHash())+"_"+variable+".png"
+				linkURL = "<a href=\"rate_"+myReaction.getReactionHash()+".html\">details</a>"
+				fout.write("<img src=\""+fnamePNG+"\" alt=\"&#9888; MISSING: "+myReaction.getVerbatim()+"\"><br>"+linkURL)
+				fout.write("<tr height=\"10px\"><td>")
+				icount += 1
+			fout.write("</table>\n")
 
-		#add footer
-		fout.write(utils.getFile("footer.php"))
-		fout.close()
+			#add footer
+			fout.write(utils.getFooter("footer.php"))
+			fout.close()
 
 
 

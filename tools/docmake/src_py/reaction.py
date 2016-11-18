@@ -192,6 +192,27 @@ class reaction:
 		self.saveEvals()
 
 	#********************
+	#search for rate variables in the rate
+	def getRateVariables(self,myOptions):
+		rateVariables = []
+		#loop on user defined variables
+		for variable in myOptions.getRanges().keys():
+			#loop on rates to search variable name
+			for rate in self.rate:
+				#append when variable found
+				if(variable in rate.lower()): rateVariables.append(variable)
+		#if no variable found assumes Tgas
+		if(len(rateVariables)==0): rateVariables = ["tgas"]
+
+		#return unique list
+		return list(set(rateVariables))
+
+	#*****************
+	#boolean returned if variable found in rates
+	def hasVariable(self,myOptions,variable):
+		return (variable.lower() in [x.lower() for x in self.getRateVariables(myOptions)])
+
+	#********************
 	#evaluate rates
 	def evalRate(self,shortcuts,varRanges):
 
@@ -449,3 +470,4 @@ class reaction:
 
 		fout.write(utils.getFile("footer.php"))
 		fout.close()
+
