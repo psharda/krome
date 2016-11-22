@@ -417,15 +417,18 @@ class network:
 		fout.write("<br><br>\n")
 		#reaction table
 		fout.write("<table>\n")
-		fout.write("<tr><th>\n")
+		fout.write("<tr><th><th>\n")
+		fout.write("<tr><td>name<td>&Delta;H (K)\n")
+		fout.write("<tr><th><th>\n")
 		icount = 0
 		#loop on reactions
 		for mySpecies in sorted(self.getSpecies(),key=lambda x:x.name):
 			bgcolor = ""
 			if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
-			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"&nbsp;\n")
+			enthalpy = mySpecies.getEnthalpy(self.thermochemicalData)
+			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"&nbsp;<td>"+str(enthalpy)+"\n")
 			icount += 1
-		fout.write("<tr><th>\n")
+		fout.write("<tr><th><th>\n")
 		fout.write("</table>\n")
 
 		#add footer
@@ -474,22 +477,25 @@ class network:
 
 		fname = "htmls/indexMissingReactions.html"
 
+		kJmol2K = 120.274 #kJ/mol->K
+
 		tableHeader = "<tr>"+("<th>"*30)
 
 		#open file to write
 		fout = open(fname,"w")
 		#add header
 		fout.write(utils.getFile("header.php"))
-		fout.write("<p style=\"font-size:30px\">Missing reactions</p>\n")
+		fout.write("<p style=\"font-size:30px\">Missing reactions*</p>\n")
+		fout.write("<p style=\"font-size:10px\">*if reactants are present it doesn't check for missing branches!</p>\n")
 		fout.write("<a href=\"index.html\">back</a><br>\n")
 
 
 		rtypes = {1:"unimolecular", 2:"bimolecular", 3:"3-body"}
 		for (nreact,rname) in rtypes.iteritems():
 			fout.write("<br><br>\n")
-			fout.write("<p style=\"font-size:20px\">"+rname.title()+"</p>\n")
+			fout.write("<p style=\"font-size:20px\">"+rname.title()+", &Delta;H/K</p>\n")
 			#reaction table
-			fout.write("<table width=\"40%\">\n")
+			fout.write("<table width=\"60%\">\n")
 			fout.write(tableHeader+"\n")
 			icount = 0
 			#loop on reactions
@@ -505,6 +511,8 @@ class network:
 				#if no branches available (given the network, skip)
 				if(len(reaction["products"])==0): continue
 
+				reactantsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in reactants]
+
 				#add an arrow at the end of the row
 				row += "<td><td>&rarr;"
 				#write row to file
@@ -513,11 +521,17 @@ class network:
 				ntds = row.count("<td>")
 				#loop on products
 				for products in reaction["products"]:
+					productsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in products]
 					bgcolor = "" #this row has no bgcolor
 					#create row from products name
-					row = "<td>&rarr;<td>"+("<td>+<td>".join([x.getHtmlName() for x in products]))
+					rowx = "<td>&rarr;<td>"+("<td>+<td>".join([x.getHtmlName() for x in products]))
 					#add n-1 td as offset
-					row = ("<td>"*(ntds-1))+row
+					row = ("<td>"*(ntds-1))+rowx+("<td>"*(10-rowx.count("<td>")))
+					if(None in (productsEnthalpy+reactantsEnthalpy)):
+						row += "<td>missing enthalpy data"
+					else:
+						DeltaH = sum(productsEnthalpy)-sum(reactantsEnthalpy)
+						row += "<td>"+utils.htmlExp(kJmol2K*DeltaH)
 					#write html row to file
 					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"\n")
 				icount += 1
