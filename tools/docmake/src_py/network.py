@@ -99,7 +99,7 @@ class network:
 		#plotting rates
 		print "plotting rates..."
 		icount = 0
-		#loop on reactions to evalute and plot
+		#loop on reactions to evaluate and plot
 		for myReaction in self.reactions:
 			print str(int(icount*1e2/len(self.reactions)))+"%", myReaction.getVerbatim()
 			myReaction.plotRate(shortcuts,varRanges)
@@ -187,7 +187,7 @@ class network:
 
 			#connection dictionary
 			networkMap = dict()
-			#loop on reations
+			#loop on reactions
 			for myReaction in self.reactions:
 				#loop on reactants
 				for myR in myReaction.reactants:
@@ -257,6 +257,7 @@ class network:
 		#evaluate expected reactions
 		print "expected reactions:",len(species)**2+len(species)
 
+		#unimolecular reactants to be skipped
 		skipUnimol = ["CR","E"]
 
 		allReactants = []
@@ -280,31 +281,74 @@ class network:
 				reactants = [species1.name,species2.name]
 				allReactants.append(sorted(reactants))
 
+
+		#get species dictionary to return species objects instead of names
+		speciesDictionary = self.getSpeciesDictionary()
+
+		#create a dictionary of products using exploded as key
+		# e.g. -_C_H_H_O for H2O + C-
+		productDictionary = dict()
+		#loop on all reactants (products are the same since species1+species2 generated)
+		for reactants in allReactants:
+			reactExploded = []
+			#loop on reactants for exploded (not explodedFull contains charge signs)
+			for RR in reactants:
+				reactExploded += speciesDictionary[RR].explodedFull
+			#concatenate exploded, e.g. -_C_H_H_O for H2O + C-
+			reactExp = ("_".join(sorted(reactExploded)))
+			#remove mutual sign neutralization
+			reactExp = reactExp.replace("+_-_","")
+			#store products in a list (init list if not present)
+			if(not(reactExp in productDictionary)):
+				productDictionary[reactExp] = []
+			#store unique products
+			if(not(reactants in productDictionary[reactExp])): productDictionary[reactExp].append(reactants)
+
+
 		#write number of potential reactions found
 		print "expected reactions (after criteria):",len(allReactants)
 
+		#store reactants for each reaction
 		networkReactants = []
 		for myReaction in self.reactions:
 			reactants = sorted([x.name for x in myReaction.reactants])
 			networkReactants.append(reactants)
 
+		#search for missing rates
 		missing = []
+		#loop on all possible reactants groups
 		for reactant in allReactants:
 			found = False
+			#loop on network reactant groups
 			for rectantNtw in networkReactants:
 				if(reactant==rectantNtw):
 					found = True
 					break
+			#store not found if not present already
 			if(not(found) and not(reactant in missing)): missing.append(reactant)
 
 		#sort missing reactions by reactants name
 		missing = sorted(missing,key=lambda x:("_".join(x)))
 		print "missing reactions:",len(missing)
 
-		#get species dictionary to return species objects instead of names
-		speciesDictionary = self.getSpeciesDictionary()
+		missingReactions = []
+		#loop on missing reactions to search for possible branches
+		for reactants in missing:
+			#create exploded reaction
+			reactExploded = []
+			for RR in reactants:
+				reactExploded += speciesDictionary[RR].explodedFull
+			reactExp = ("_".join(sorted(reactExploded)))
+			#remove mutual sign neutralization
+			reactExp = reactExp.replace("+_-_","")
+			#skip reactants==products, e.g. H+OH -> H+OH (and convert names into species objects)
+			productsList = [[speciesDictionary[x] for x in products] for products in productDictionary[reactExp] if(products!=reactants)]
+			#convert names in to species objects
+			reatantsList = [speciesDictionary[x] for x in reactants]
+			missingReactions.append({"reactants":reatantsList,"products":productsList})
+
 		#return list of objects reactants
-		return [[speciesDictionary[x] for x in reactants] for reactants in missing]
+		return missingReactions
 
 
 	#****************
@@ -321,7 +365,7 @@ class network:
 		fout.write("<li><a href=\"indexReactions.html\">Reactions</a></li>")
 		fout.write("<li><a href=\"indexSpecies.html\">Species</a></li>")
 		fout.write("<li><a href=\"indexGraph.html\">Graphs</a></li>")
-		fout.write("<li><a href=\"indexMissingReactions.html\">\"Missing\" reactions</a></li>")
+		fout.write("<li><a href=\"indexMissingReactions.html\">Missing reactions</a></li>")
 		fout.write("</ul>")
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
@@ -445,17 +489,39 @@ class network:
 			fout.write("<br><br>\n")
 			fout.write("<p style=\"font-size:20px\">"+rname.title()+"</p>\n")
 			#reaction table
-			fout.write("<table width=\"20%\">\n")
+			fout.write("<table width=\"40%\">\n")
 			fout.write(tableHeader+"\n")
 			icount = 0
 			#loop on reactions
-			for reactants in self.missingReactions:
+			for reaction in self.missingReactions:
+				#get reactants
+				reactants = reaction["reactants"]
+				#consider only number of reactants for the current reaction type
 				if(len(reactants)!=nreact): continue
-				bgcolor = ""
-				if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
+				#background color
+				bgcolor = utils.getHtmlProperty("tableRowBgcolor")
+				#create html row
 				row = "<td>"+str(icount+1)+"<td>"+("<td>+<td>".join([x.getHtmlName() for x in reactants]))
+				#if no branches available (given the network, skip)
+				if(len(reaction["products"])==0): continue
+
+				#add an arrow at the end of the row
+				row += "<td><td>&rarr;"
+				#write row to file
 				fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"\n")
+				#count <td> elements
+				ntds = row.count("<td>")
+				#loop on products
+				for products in reaction["products"]:
+					bgcolor = "" #this row has no bgcolor
+					#create row from products name
+					row = "<td>&rarr;<td>"+("<td>+<td>".join([x.getHtmlName() for x in products]))
+					#add n-1 td as offset
+					row = ("<td>"*(ntds-1))+row
+					#write html row to file
+					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"\n")
 				icount += 1
+
 			fout.write(tableHeader+"\n")
 			fout.write("</table>\n")
 
