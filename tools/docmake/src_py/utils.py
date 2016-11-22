@@ -39,6 +39,9 @@ def getThermochemicalData(fileName):
 	cnum = 5 #number of coefficients per line
 	clen = 15 #number of characters per coefficient
 
+
+	print "loading thermochemical data from "+fileName
+
 	#thermochemical data dictionary
 	thermochemDict = dict()
 
