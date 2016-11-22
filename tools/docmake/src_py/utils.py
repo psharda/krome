@@ -33,6 +33,55 @@ def getFooterInfo():
 		+ bitbucketLink + "\" target=\"_blank\">" + changeset[:7] + "</a> - " + datenow
 
 #*********************
+#load thermochemical data from a burcat-like file
+def getThermochemicalData(fileName):
+
+	cnum = 5 #number of coefficients per line
+	clen = 15 #number of characters per coefficient
+
+	#thermochemical data dictionary
+	thermochemDict = dict()
+
+	#open file to read
+	fh = open(fileName,"rb")
+	#loop on file
+	for row in fh:
+		srow = row.strip()
+		if(srow==""): continue
+		if(srow.startswith("#")): continue
+		arow = [x for x in srow.split(" ") if(x!="")]
+		#last column is an integer (line count)
+		lineIdx = int(arow[-1])
+		#first line starts with species name
+		if(lineIdx==1):
+			#species name
+			specName = arow[0]
+			#temperature limits from first line
+			(Tmin,Tmax,Tmid) = [float(x) for x in arow[-4:-1]]
+			#init and store temperature limits in the dictionary
+			thermochemDict[specName] = dict()
+			thermochemDict[specName]["Tmin"] = Tmin
+			thermochemDict[specName]["Tmid"] = Tmid
+			thermochemDict[specName]["Tmax"] = Tmax
+			coefs = []
+		elif(lineIdx>1 and lineIdx<5):
+			#loop on coefficients and store
+			for i in range(cnum):
+				coefs.append(float(row[i*clen:(i+1)*clen]))
+			#if last line store coefficients
+			if(lineIdx==4):
+				thermochemDict[specName]["lowT"] = coefs[7:]
+				thermochemDict[specName]["highT"] = coefs[:7]
+		else:
+			print "ERROR: unkonw reading index in "+fileName+" for line:"
+			print srow
+			sys.exit()
+	fh.close()
+
+	return thermochemDict
+
+
+#*********************
 def getAtomSet(fileName):
 	atomSet = dict()
 
@@ -54,6 +103,9 @@ def getAtomSet(fileName):
 		for rep in reps:
 			arow[1] = arow[1].replace(rep,str(refMass[rep]))
 		atomSet[arow[0]] = eval(arow[1])
+
+	fh.close()
+
 	return atomSet
 
 #*********************
