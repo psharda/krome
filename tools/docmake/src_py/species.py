@@ -107,6 +107,31 @@ class species():
 
 		return ("".join(nameLatex))
 
+	#*****************
+	#get "engineered" enthalpy kJ/mol
+	def getEnthalpy(self,thermochemicalData,Tgas=298.15):
+
+		#return None if unkonw element
+		if(not(self.name in thermochemicalData)): return None
+
+		myData = thermochemicalData[self.name]
+		if(Tgas>myData["Tmid"]):
+			coefs = myData["highT"]
+		else:
+			coefs = myData["lowT"]
+
+		HRT = coefs[0] + \
+			coefs[1]*Tgas/2. + \
+			coefs[2]*Tgas**2/3. + \
+			coefs[3]*Tgas**3/4. + \
+			coefs[4]*Tgas**4/5. + \
+			coefs[5]/Tgas
+
+		#gas constant kJ/mol/K
+		Rgas = 8.3144598
+		#kJ/mol
+		return HRT*Rgas*Tgas/1e3
+
 	#*********************
 	def makeHtmlPage(self,myNetwork):
 
@@ -127,6 +152,8 @@ class species():
 		fout.write("<p style=\"font-size:30px\">"+self.nameHtml+"</p>\n")
 		fout.write("<br>\n")
 		fout.write("<a href=\"indexSpecies.html\">back</a>\n")
+		fout.write("<p>Enthalpy @ 298.15K: <b>" \
+			+ str(self.getEnthalpy(myNetwork.thermochemicalData)) + "</b> kJ/mol</p>")
 
 		fout.write("<br><br>\n")
 		fout.write("<p style=\"font-size:20px\">Formation channels</p><br>\n")
@@ -154,7 +181,7 @@ class species():
 		fout.write(tableHeader+"\n")
 		fout.write("</table>\n")
 
-		fout.write(utils.getFile("footer.php"))
+		fout.write(utils.getFooter("footer.php"))
 		fout.close()
 
 
