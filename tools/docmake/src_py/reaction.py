@@ -468,6 +468,6 @@ class reaction:
 			if(not(os.path.isfile(plotFileName))): continue
 			fout.write("<img width=\"700px\" src=\"../"+plotFileName+"\">\n")
 
-		fout.write(utils.getFile("footer.php"))
+		fout.write(utils.getFooter("footer.php"))
 		fout.close()
 
