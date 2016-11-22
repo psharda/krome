@@ -36,7 +36,9 @@ class species():
 		specName = speciesName #.upper()
 
 		#compute charge
-		self.charge = specName.count("+")-specName.count("-")
+		positiveCount = specName.count("+")
+		negativeCount = specName.count("-")
+		self.charge = positiveCount-negativeCount
 		if(speciesName.upper()=="E"): self.charge = -1
 		#replace signs
 		specName = specName.replace("+","").replace("-","")
@@ -62,6 +64,7 @@ class species():
 
 		#store exploded with real atom names
 		self.exploded = [atoms[alpha.index(x)] for x in exploded]
+		self.explodedFull = self.exploded + (["+"]*positiveCount) + (["-"]*negativeCount)
 
 		#store atoms
 		nonAtoms = ["+","-"]
