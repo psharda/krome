@@ -1,4 +1,4 @@
-import os,datetime
+import os,datetime,math
 
 #***********************
 def getHtmlProperty(item):
@@ -110,6 +110,14 @@ def getAtomSet(fileName):
 	fh.close()
 
 	return atomSet
+
+#*********************
+def htmlExp(arg,digits=2):
+	if(arg==0): return "0"
+	xp = int(math.log10(abs(arg)))
+	mt = arg/1e1**(xp)
+	mt = int(mt*1e1**digits)/1e1**digits
+	return str(mt)+"&times;10<sup>"+str(xp)+"</sup>"
 
 #*********************
 def replaceTlims(arg):
