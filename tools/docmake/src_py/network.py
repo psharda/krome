@@ -4,6 +4,7 @@ import reaction,utils,options
 class network:
 
 	species = None
+	speciesDictionary = None
 
 	#************************
 	#class constructor
@@ -19,6 +20,9 @@ class network:
 		atomSet = utils.getAtomSet("atomlist.dat")
 		#read shortcuts
 		shortcuts = utils.getShortcuts()
+
+		#load thermochemical data
+		self.thermochemicalData = utils.getThermochemicalData("thermo30.dat")
 
 		inBlockCR = False
 
@@ -62,6 +66,9 @@ class network:
 		print "merging multiple reactions"
 		self.mergeReactions()
 
+		#get a list with missing reactions (reactants)
+		self.missingReactions = self.getMissing()
+
 		#get ranges from option file
 		varRanges = dict()
 		for rng in myOptions.range:
@@ -78,6 +85,7 @@ class network:
 
 		#create reaction index page
 		self.makeHtmlIndex()
+		self.makeHtmlMissingReactionIndex(myOptions)
 		self.makeHtmlReactionIndex(myOptions)
 		self.makeHtmlSpeciesIndex()
 		self.makeHtmlGraphIndex()
@@ -114,6 +122,18 @@ class network:
 		self.species = dicSpec.values()
 
 		return self.species
+
+	#**************
+	#get all network species in a dictionary with NAME as keys
+	def getSpeciesDictionary(self):
+		if(self.speciesDictionary!=None): return self.speciesDictionary
+
+		#unique list of species
+		self.speciesDictionary = dict()
+		for mySpecies in self.getSpecies():
+			self.speciesDictionary[mySpecies.name] = mySpecies
+
+		return self.speciesDictionary
 
 	#*******************
 	def getAtoms(self):
@@ -228,6 +248,66 @@ class network:
 
 
 	#****************
+	#get a list of the missing reactions (reactants only)
+	def getMissing(self):
+
+		#get list of species
+		species = self.getSpecies()
+
+		#evaluate expected reactions
+		print "expected reactions:",len(species)**2+len(species)
+
+		skipUnimol = ["CR","E"]
+
+		allReactants = []
+		#loop on species (reactant 1)
+		for species1 in species:
+			#add unimolecular (only neutral or anion)
+			if((species1.charge<1) and not(species1.name in skipUnimol)): allReactants.append([species1.name])
+			#loop on species (reactant 2) for bimolecular
+			for species2 in species:
+				#exclude repulsive
+				if(species1.charge*species2.charge>0): continue
+
+				#exclude double ionization CR
+				hasCR = (species1.name=="CR" or species2.name=="CR")
+				hasElectron = (species1.name=="E" or species2.name=="E")
+				hasCation = (species1.charge>0 or species2.charge>0)
+				if(hasCation and hasCR): continue
+				if(hasCR and hasElectron): continue
+
+				#add bimolecular
+				reactants = [species1.name,species2.name]
+				allReactants.append(sorted(reactants))
+
+		#write number of potential reactions found
+		print "expected reactions (after criteria):",len(allReactants)
+
+		networkReactants = []
+		for myReaction in self.reactions:
+			reactants = sorted([x.name for x in myReaction.reactants])
+			networkReactants.append(reactants)
+
+		missing = []
+		for reactant in allReactants:
+			found = False
+			for rectantNtw in networkReactants:
+				if(reactant==rectantNtw):
+					found = True
+					break
+			if(not(found) and not(reactant in missing)): missing.append(reactant)
+
+		#sort missing reactions by reactants name
+		missing = sorted(missing,key=lambda x:("_".join(x)))
+		print "missing reactions:",len(missing)
+
+		#get species dictionary to return species objects instead of names
+		speciesDictionary = self.getSpeciesDictionary()
+		#return list of objects reactants
+		return [[speciesDictionary[x] for x in reactants] for reactants in missing]
+
+
+	#****************
 	def makeHtmlIndex(self):
 		fname = "htmls/index.html"
 
@@ -241,6 +321,7 @@ class network:
 		fout.write("<li><a href=\"indexReactions.html\">Reactions</a></li>")
 		fout.write("<li><a href=\"indexSpecies.html\">Species</a></li>")
 		fout.write("<li><a href=\"indexGraph.html\">Graphs</a></li>")
+		fout.write("<li><a href=\"indexMissingReactions.html\">\"Missing\" reactions</a></li>")
 		fout.write("</ul>")
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
@@ -338,6 +419,45 @@ class network:
 			icount += 1
 		fout.write(tableHeader+"\n")
 		fout.write("</table>\n")
+
+		#add footer
+		fout.write(utils.getFooter("footer.php"))
+		fout.close()
+
+	#****************
+	#create reaction list index as html page
+	def makeHtmlMissingReactionIndex(self,myOptions):
+
+		fname = "htmls/indexMissingReactions.html"
+
+		tableHeader = "<tr>"+("<th>"*30)
+
+		#open file to write
+		fout = open(fname,"w")
+		#add header
+		fout.write(utils.getFile("header.php"))
+		fout.write("<p style=\"font-size:30px\">Missing reactions</p>\n")
+		fout.write("<a href=\"index.html\">back</a><br>\n")
+
+
+		rtypes = {1:"unimolecular", 2:"bimolecular", 3:"3-body"}
+		for (nreact,rname) in rtypes.iteritems():
+			fout.write("<br><br>\n")
+			fout.write("<p style=\"font-size:20px\">"+rname.title()+"</p>\n")
+			#reaction table
+			fout.write("<table width=\"20%\">\n")
+			fout.write(tableHeader+"\n")
+			icount = 0
+			#loop on reactions
+			for reactants in self.missingReactions:
+				if(len(reactants)!=nreact): continue
+				bgcolor = ""
+				if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
+				row = "<td>"+str(icount+1)+"<td>"+("<td>+<td>".join([x.getHtmlName() for x in reactants]))
+				fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"\n")
+				icount += 1
+			fout.write(tableHeader+"\n")
+			fout.write("</table>\n")
 
 		#add footer
 		fout.write(utils.getFooter("footer.php"))
