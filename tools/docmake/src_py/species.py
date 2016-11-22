@@ -114,6 +114,16 @@ class species():
 	#get "engineered" enthalpy kJ/mol
 	def getEnthalpy(self,thermochemicalData,Tgas=298.15):
 
+
+		#gas constant kJ/mol/K
+		Rgas = 8.3144598
+
+		#use so-called electron convention
+		if(self.name=="E"): return 5./2.*Rgas*Tgas
+
+		#CRs has no enthalpy
+		if(self.name=="CR"): return 0e0
+
 		#return None if unkonw element
 		if(not(self.name in thermochemicalData)): return None
 
@@ -130,8 +140,6 @@ class species():
 			coefs[4]*Tgas**4/5. + \
 			coefs[5]/Tgas
 
-		#gas constant kJ/mol/K
-		Rgas = 8.3144598
 		#kJ/mol
 		return HRT*Rgas*Tgas/1e3
 
