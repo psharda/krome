@@ -4,6 +4,7 @@ import reaction,utils,options
 class network:
 
 	species = None
+	speciesDictionary = None
 
 	#************************
 	#class constructor
@@ -19,6 +20,9 @@ class network:
 		atomSet = utils.getAtomSet("atomlist.dat")
 		#read shortcuts
 		shortcuts = utils.getShortcuts()
+
+		#load thermochemical data
+		self.thermochemicalData = utils.getThermochemicalData("thermo30.dat")
 
 		inBlockCR = False
 
@@ -62,6 +66,9 @@ class network:
 		print "merging multiple reactions"
 		self.mergeReactions()
 
+		#get a list with missing reactions (reactants)
+		self.missingReactions = self.getMissing()
+
 		#get ranges from option file
 		varRanges = dict()
 		for rng in myOptions.range:
@@ -78,11 +85,11 @@ class network:
 
 		#create reaction index page
 		self.makeHtmlIndex()
-		self.makeHtmlAllRates()
-		self.makeHtmlReactionIndex()
+		self.makeHtmlMissingReactionIndex(myOptions)
+		self.makeHtmlReactionIndex(myOptions)
 		self.makeHtmlSpeciesIndex()
 		self.makeHtmlGraphIndex()
-
+		self.makeHtmlAllRates(myOptions)
 
 
 		#prepare html pages for species
@@ -92,7 +99,7 @@ class network:
 		#plotting rates
 		print "plotting rates..."
 		icount = 0
-		#loop on reactions to evalute and plot
+		#loop on reactions to evaluate and plot
 		for myReaction in self.reactions:
 			print str(int(icount*1e2/len(self.reactions)))+"%", myReaction.getVerbatim()
 			myReaction.plotRate(shortcuts,varRanges)
@@ -115,6 +122,18 @@ class network:
 		self.species = dicSpec.values()
 
 		return self.species
+
+	#**************
+	#get all network species in a dictionary with NAME as keys
+	def getSpeciesDictionary(self):
+		if(self.speciesDictionary!=None): return self.speciesDictionary
+
+		#unique list of species
+		self.speciesDictionary = dict()
+		for mySpecies in self.getSpecies():
+			self.speciesDictionary[mySpecies.name] = mySpecies
+
+		return self.speciesDictionary
 
 	#*******************
 	def getAtoms(self):
@@ -168,7 +187,7 @@ class network:
 
 			#connection dictionary
 			networkMap = dict()
-			#loop on reations
+			#loop on reactions
 			for myReaction in self.reactions:
 				#loop on reactants
 				for myR in myReaction.reactants:
@@ -229,6 +248,110 @@ class network:
 
 
 	#****************
+	#get a list of the missing reactions (reactants only)
+	def getMissing(self):
+
+		#get list of species
+		species = self.getSpecies()
+
+		#evaluate expected reactions
+		print "expected reactions:",len(species)**2+len(species)
+
+		#unimolecular reactants to be skipped
+		skipUnimol = ["CR","E"]
+
+		allReactants = []
+		#loop on species (reactant 1)
+		for species1 in species:
+			#add unimolecular (only neutral or anion)
+			if((species1.charge<1) and not(species1.name in skipUnimol)): allReactants.append([species1.name])
+			#loop on species (reactant 2) for bimolecular
+			for species2 in species:
+				#exclude repulsive
+				if(species1.charge*species2.charge>0): continue
+
+				#exclude double ionization CR
+				hasCR = (species1.name=="CR" or species2.name=="CR")
+				hasElectron = (species1.name=="E" or species2.name=="E")
+				hasCation = (species1.charge>0 or species2.charge>0)
+				if(hasCation and hasCR): continue
+				if(hasCR and hasElectron): continue
+
+				#add bimolecular
+				reactants = [species1.name,species2.name]
+				allReactants.append(sorted(reactants))
+
+
+		#get species dictionary to return species objects instead of names
+		speciesDictionary = self.getSpeciesDictionary()
+
+		#create a dictionary of products using exploded as key
+		# e.g. -_C_H_H_O for H2O + C-
+		productDictionary = dict()
+		#loop on all reactants (products are the same since species1+species2 generated)
+		for reactants in allReactants:
+			reactExploded = []
+			#loop on reactants for exploded (not explodedFull contains charge signs)
+			for RR in reactants:
+				reactExploded += speciesDictionary[RR].explodedFull
+			#concatenate exploded, e.g. -_C_H_H_O for H2O + C-
+			reactExp = ("_".join(sorted(reactExploded)))
+			#remove mutual sign neutralization
+			reactExp = reactExp.replace("+_-_","")
+			#store products in a list (init list if not present)
+			if(not(reactExp in productDictionary)):
+				productDictionary[reactExp] = []
+			#store unique products
+			if(not(reactants in productDictionary[reactExp])): productDictionary[reactExp].append(reactants)
+
+
+		#write number of potential reactions found
+		print "expected reactions (after criteria):",len(allReactants)
+
+		#store reactants for each reaction
+		networkReactants = []
+		for myReaction in self.reactions:
+			reactants = sorted([x.name for x in myReaction.reactants])
+			networkReactants.append(reactants)
+
+		#search for missing rates
+		missing = []
+		#loop on all possible reactants groups
+		for reactant in allReactants:
+			found = False
+			#loop on network reactant groups
+			for rectantNtw in networkReactants:
+				if(reactant==rectantNtw):
+					found = True
+					break
+			#store not found if not present already
+			if(not(found) and not(reactant in missing)): missing.append(reactant)
+
+		#sort missing reactions by reactants name
+		missing = sorted(missing,key=lambda x:("_".join(x)))
+		print "missing reactions:",len(missing)
+
+		missingReactions = []
+		#loop on missing reactions to search for possible branches
+		for reactants in missing:
+			#create exploded reaction
+			reactExploded = []
+			for RR in reactants:
+				reactExploded += speciesDictionary[RR].explodedFull
+			reactExp = ("_".join(sorted(reactExploded)))
+			#remove mutual sign neutralization
+			reactExp = reactExp.replace("+_-_","")
+			#skip reactants==products, e.g. H+OH -> H+OH (and convert names into species objects)
+			productsList = [[speciesDictionary[x] for x in products] for products in productDictionary[reactExp] if(products!=reactants)]
+			#convert names in to species objects
+			reatantsList = [speciesDictionary[x] for x in reactants]
+			missingReactions.append({"reactants":reatantsList,"products":productsList})
+
+		#return list of objects reactants
+		return missingReactions
+
+
+	#****************
 	def makeHtmlIndex(self):
 		fname = "htmls/index.html"
 
@@ -242,8 +365,9 @@ class network:
 		fout.write("<li><a href=\"indexReactions.html\">Reactions</a></li>")
 		fout.write("<li><a href=\"indexSpecies.html\">Species</a></li>")
 		fout.write("<li><a href=\"indexGraph.html\">Graphs</a></li>")
+		fout.write("<li><a href=\"indexMissingReactions.html\">Missing reactions</a></li>")
 		fout.write("</ul>")
-		fout.write(utils.getFile("footer.php"))
+		fout.write(utils.getFooter("footer.php"))
 		fout.close()
 
 	#****************
@@ -256,6 +380,7 @@ class network:
 		#add header
 		fout.write(utils.getFile("header.php"))
 		fout.write("<p style=\"font-size:30px\">Graphs</p>\n")
+		fout.write("<a href=\"index.html\">back</a><br>\n")
 		fout.write("<br><br>\n")
 
 		#loop on all available atoms in the network
@@ -273,9 +398,8 @@ class network:
 			fout.write("<br><br>\n")
 
 		#add footer
-		fout.write(utils.getFile("footer.php"))
+		fout.write(utils.getFooter("footer.php"))
 		fout.close()
-
 
 
 	#****************
@@ -289,28 +413,32 @@ class network:
 		#add header
 		fout.write(utils.getFile("header.php"))
 		fout.write("<p style=\"font-size:30px\">Species</p>\n")
+		fout.write("<a href=\"index.html\">back</a><br>\n")
 		fout.write("<br><br>\n")
 		#reaction table
 		fout.write("<table>\n")
-		fout.write("<tr><th>\n")
+		fout.write("<tr><th><th>\n")
+		fout.write("<tr><td>name<td>&Delta;H (K)\n")
+		fout.write("<tr><th><th>\n")
 		icount = 0
 		#loop on reactions
 		for mySpecies in sorted(self.getSpecies(),key=lambda x:x.name):
 			bgcolor = ""
 			if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
-			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"&nbsp;\n")
+			enthalpy = mySpecies.getEnthalpy(self.thermochemicalData)
+			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"&nbsp;<td>"+str(enthalpy)+"\n")
 			icount += 1
-		fout.write("<tr><th>\n")
+		fout.write("<tr><th><th>\n")
 		fout.write("</table>\n")
 
 		#add footer
-		fout.write(utils.getFile("footer.php"))
+		fout.write(utils.getFooter("footer.php"))
 		fout.close()
 
 
 	#****************
 	#create reaction list index as html page
-	def makeHtmlReactionIndex(self):
+	def makeHtmlReactionIndex(self,myOptions):
 
 		fname = "htmls/indexReactions.html"
 
@@ -321,6 +449,10 @@ class network:
 		#add header
 		fout.write(utils.getFile("header.php"))
 		fout.write("<p style=\"font-size:30px\">Reactions</p>\n")
+		fout.write("<a href=\"index.html\">back</a><br>\n")
+
+		for variable in myOptions.getRanges().keys():
+			fout.write("<a href=\"allRates_"+variable+".html\">All rates with <b>"+variable+"</b></a><br>\n")
 		fout.write("<br><br>\n")
 		#reaction table
 		fout.write("<table width=\"50%\">\n")
@@ -336,36 +468,122 @@ class network:
 		fout.write("</table>\n")
 
 		#add footer
-		fout.write(utils.getFile("footer.php"))
+		fout.write(utils.getFooter("footer.php"))
 		fout.close()
 
-	#*******************
-	def makeHtmlAllRates(self):
+	#****************
+	#create reaction list index as html page
+	def makeHtmlMissingReactionIndex(self,myOptions):
 
-		fname = "htmls/allRates.html"
+		fname = "htmls/indexMissingReactions.html"
 
-		variable = "Tgas"
+		kJmol2K = 120.274 #kJ/mol->K
+
+		tableHeader = "<tr>"+("<th>"*30)
 
 		#open file to write
 		fout = open(fname,"w")
 		#add header
 		fout.write(utils.getFile("header.php"))
-		fout.write("<p style=\"font-size:30px\">All rate plots</p>\n")
-		fout.write("<br><br>\n")
-		#reaction table
-		fout.write("<table>\n")
-		icount = 0
-		#loop on reactions
-		for myReaction in self.reactions:
-			if(icount%1==0): fout.write("<tr><td>")
-			fnamePNG = "../pngs/rate_"+str(myReaction.getReactionHash())+"_"+variable+".png"
-			fout.write("<img src=\""+fnamePNG+"\" alt=\"MISSING: "+myReaction.getVerbatim()+"\">")
-			icount += 1
-		fout.write("</table>\n")
+		fout.write("<p style=\"font-size:30px\">Missing reactions*</p>\n")
+		fout.write("<p style=\"font-size:10px\">*if reactants are present it doesn't check for missing branches!</p>\n")
+		fout.write("<a href=\"index.html\">back</a><br>\n")
+
+
+		rtypes = {1:"unimolecular", 2:"bimolecular", 3:"3-body"}
+		for (nreact,rname) in rtypes.iteritems():
+			fout.write("<br><br>\n")
+			fout.write("<p style=\"font-size:20px\">"+rname.title()+", &Delta;H/K</p>\n")
+			#reaction table
+			fout.write("<table width=\"60%\">\n")
+			fout.write(tableHeader+"\n")
+			icount = 0
+			#loop on reactions
+			for reaction in self.missingReactions:
+				#get reactants
+				reactants = reaction["reactants"]
+				#consider only number of reactants for the current reaction type
+				if(len(reactants)!=nreact): continue
+				#background color
+				bgcolor = utils.getHtmlProperty("tableRowBgcolor")
+				#create html row
+				row = "<td>"+str(icount+1)+"<td>"+("<td>+<td>".join([x.getHtmlName() for x in reactants]))
+				#if no branches available (given the network, skip)
+				if(len(reaction["products"])==0): continue
+
+				reactantsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in reactants]
+
+				#add an arrow at the end of the row
+				row += "<td><td>&rarr;"
+				#write row to file
+				fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"\n")
+				#count <td> elements
+				ntds = row.count("<td>")
+				#loop on products
+				for products in reaction["products"]:
+					productsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in products]
+					bgcolor = "" #this row has no bgcolor
+					#create row from products name
+					rowx = "<td>&rarr;<td>"+("<td>+<td>".join([x.getHtmlName() for x in products]))
+					#add n-1 td as offset
+					row = ("<td>"*(ntds-1))+rowx+("<td>"*(10-rowx.count("<td>")))
+					if(None in (productsEnthalpy+reactantsEnthalpy)):
+						row += "<td>missing enthalpy data"
+					else:
+						DeltaH = sum(productsEnthalpy)-sum(reactantsEnthalpy)
+						DeltaH_K = kJmol2K*DeltaH
+						row += "<td>"+utils.htmlExp(DeltaH_K)
+						if(DeltaH_K<0e0):
+							row += "<td>&#10004;&#10004;"
+						elif(DeltaH_K>=0 and DeltaH_K<1e4):
+							row += "<td>&#10004;"
+						else:
+							row += "<td>&#10006;"
+					#write html row to file
+					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"\n")
+				icount += 1
+
+			fout.write(tableHeader+"\n")
+			fout.write("</table>\n")
 
 		#add footer
-		fout.write(utils.getFile("footer.php"))
+		fout.write(utils.getFooter("footer.php"))
 		fout.close()
+
+	#*******************
+	def makeHtmlAllRates(self,myOptions):
+
+		#loop on variables
+		for variable in myOptions.getRanges().keys():
+
+			#prepare a file for each variable
+			fname = "htmls/allRates_"+variable+".html"
+
+			#open file to write
+			fout = open(fname,"w")
+			#add header
+			fout.write(utils.getFile("header.php"))
+			fout.write("<p style=\"font-size:30px\">All rate plots with <b>"+variable+"</b></p>\n")
+			fout.write("<a href=\"indexReactions.html\">back</a><br>\n")
+			fout.write("<br><br>\n")
+			#reaction table
+			fout.write("<table>\n")
+			icount = 0
+			#loop on reactions
+			for myReaction in self.reactions:
+				#skip when the variable is not in the reaction rate
+				if(not(myReaction.hasVariable(myOptions,variable))): continue
+				if(icount%1==0): fout.write("<tr><td>")
+				fnamePNG = "../pngs/rate_"+str(myReaction.getReactionHash())+"_"+variable+".png"
+				linkURL = "<a href=\"rate_"+myReaction.getReactionHash()+".html\">details</a>"
+				fout.write("<img src=\""+fnamePNG+"\" alt=\"&#9888; MISSING: "+myReaction.getVerbatim()+"\"><br>"+linkURL)
+				fout.write("<tr height=\"10px\"><td>")
+				icount += 1
+			fout.write("</table>\n")
+
+			#add footer
+			fout.write(utils.getFooter("footer.php"))
+			fout.close()
 
 
 
