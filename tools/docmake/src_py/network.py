@@ -531,7 +531,14 @@ class network:
 						row += "<td>missing enthalpy data"
 					else:
 						DeltaH = sum(productsEnthalpy)-sum(reactantsEnthalpy)
-						row += "<td>"+utils.htmlExp(kJmol2K*DeltaH)
+						DeltaH_K = kJmol2K*DeltaH
+						row += "<td>"+utils.htmlExp(DeltaH_K)
+						if(DeltaH_K<0e0):
+							row += "<td>&#10004;&#10004;"
+						elif(DeltaH_K>=0 and DeltaH_K<1e4):
+							row += "<td>&#10004;"
+						else:
+							row += "<td>&#10006;"
 					#write html row to file
 					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"\n")
 				icount += 1
