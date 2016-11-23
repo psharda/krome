@@ -609,7 +609,7 @@ contains
     if(present(Tgas)) then
        bTgas = Tgas
     end if
-#ELSEKROME_useBindC
+#ENDIFKROME_useBindC
 
     photoBinEleft(:) = binPos(:)-binWidth(:)/2d0
     photoBinEright(:) = binPos(:)+binWidth(:)/2d0
@@ -1022,7 +1022,11 @@ contains
     end if
 
     !initialize interval and intensity according to data
+#IFKROME_useBindC
+    call krome_set_photobinE_lr(tmp_El(:),tmp_Er(:),1d1)
+#ELSEKROME_useBindC
     call krome_set_photobinE_lr(tmp_El(:),tmp_Er(:))
+#ENDIFKROME_useBindC
     call krome_set_photoBinJ(tmp_J(:))
 
   end subroutine krome_load_photoBin_file
@@ -1067,7 +1071,11 @@ contains
        stop
     end if
 
+#IFKROME_useBindC
+    call krome_set_photoBinE_log(lower,upper,1d1)
+#ELSEKROME_useBindC
     call krome_set_photoBinE_log(lower,upper)
+#ENDIFKROME_useBindC
 
     call init_anytab2D("krome_HMflux.dat", z(:), energy(:), &
          HM(:,:), z_mul, energy_mul)
@@ -1167,7 +1175,11 @@ contains
     real*8::x
     integer::i
 
+#IFKROME_useBindC
+    call krome_set_photoBinE_lin(lower,upper,1d1)
+#ELSEKROME_useBindC
     call krome_set_photoBinE_lin(lower,upper)
+#ENDIFKROME_useBindC
 
     !eV/cm2/sr
     do i=1,nPhotoBins
@@ -1197,7 +1209,11 @@ contains
     !limit for the black body intensity to check limits
     Jlim = 1d-3
 
+#IFKROME_useBindC
+    call krome_set_photoBinE_log(lower,upper,1d1)
+#ELSEKROME_useBindC
     call krome_set_photoBinE_log(lower,upper)
+#ENDIFKROME_useBindC
 
     !eV/cm2/sr
     do i=1,nPhotoBins
@@ -1310,7 +1326,11 @@ contains
     real*8::x
     integer::i
 
+#IFKROME_useBindC
+    call krome_set_photoBinE_lin(lower,upper,1d1)
+#ELSEKROME_useBindC
     call krome_set_photoBinE_lin(lower,upper)
+#ENDIFKROME_useBindC
 
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
@@ -1341,7 +1361,11 @@ contains
     real*8::x
     integer::i
 
+#IFKROME_useBindC
+    call krome_set_photoBinE_log(lower,upper,1d1)
+#ELSEKROME_useBindC
     call krome_set_photoBinE_log(lower,upper)
+#ENDIFKROME_useBindC
 
     do i=1,nPhotoBins
        x = photoBinEmid(i) !eV
@@ -1416,7 +1440,12 @@ contains
     use krome_photo
     #KROME_double_value :: upper,lower
 
+#IFKROME_useBindC
+    call krome_set_photoBinE_lin(lower,upper,1d1)
+#ELSEKROME_useBindC
     call krome_set_photoBinE_lin(lower,upper)
+#ENDIFKROME_useBindC
+
     photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/sr
     photoBinJ_org(:) = photoBinJ(:)
 
@@ -1433,7 +1462,12 @@ contains
     use krome_photo
     #KROME_double_value :: upper,lower
 
+#IFKROME_useBindC
+    call krome_set_photoBinE_log(lower,upper,1d1)
+#ELSEKROME_useBindC
     call krome_set_photoBinE_log(lower,upper)
+#ENDIFKROME_useBindC
+
     photoBinJ(:) = 6.2415d-10 * (13.6d0/photoBinEmid(:)) !eV/cm2/sr
     photoBinJ_org(:) = photoBinJ(:)
 
@@ -1617,12 +1651,35 @@ contains
   !*********************
   !scale radiation intensity with opacity assuming a given
   ! cell size and gas composition
+!  subroutine krome_opacity_scale_size(csize,n,Tgas)
+!    use krome_commons
+!    implicit none
+!    real*8::csize,n(nmols),xscale(nPhotoBins),Tgas
+!
+!    xscale(:) = krome_get_opacity_size(n(:),Tgas,csize)
+!    xscale(:) = exp(-xscale(:))
+!    call krome_photoBin_scale_array(xscale(:))
+!
+!  end subroutine krome_opacity_scale_size
+
+  !*********************
+  !scale radiation intensity with opacity assuming a given
+  ! cell size and gas composition
   subroutine krome_opacity_scale_size(csize,n,Tgas)
     use krome_commons
     implicit none
-    real*8::csize,n(nmols),xscale(nPhotoBins),Tgas
+    real*8::csize,n(nmols),Tgas
+#IFKROME_useBindC
+    real*8, pointer:: xscale(:)
+#ELSEKROME_useBindC
+    real*8 :: xscale(nPhotoBins)
+#ENDIFKROME_useBindC
 
+#IFKROME_useBindC
+    call c_f_pointer(krome_get_opacity_size(n(:),Tgas,csize),xscale,(/nPhotoBins/))
+#ELSEKROME_useBindC
     xscale(:) = krome_get_opacity_size(n(:),Tgas,csize)
+#ENDIFKROME_useBindC
     xscale(:) = exp(-xscale(:))
     call krome_photoBin_scale_array(xscale(:))
 
