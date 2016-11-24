@@ -42,7 +42,7 @@ More information on the wiki
 
 Written and developed by Tommaso Grassi
 ```
- tommasograssi@gmail.com
+ tgrassi@nbi.dk
  Starplan, Copenhagen.
  Niels Bohr Institute, Copenhagen.
 ```
@@ -53,7 +53,7 @@ and Stefano Bovino
  Hamburger Sternwarte, Hamburg.
 ```
 
-Contributors: D. Galli, F.A. Gianturco, T.Haugbølle, J. Prieto,
+Contributors: D. Galli, F.A. Gianturco, T.Haugbølle, A. Lupi, J. Prieto,
  J. Ramsey, D.R.G. Schleicher, D. Seifried, E. Simoncini, E. Tognelli 
 
 ---
