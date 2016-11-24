@@ -1,3 +1,7 @@
+#Atomic data for astrophysics. II. New analytic fits for photoionization cross sections of atoms and ions.
+# D. A. Verner, G. J. Ferland, K. T. Korista, and D. G. Yakovlev, 1996, ApJ, 465, 487
+# http://www.pa.uky.edu/~verner/photo.html
+
  1  1 1.360E+01 5.000E+04 4.298E-01 5.475E+04 3.288E+01 2.963E+00 0.000E+00 0.000E+00 0.000E+00
  2  2 2.459E+01 5.000E+04 1.361E+01 9.492E+02 1.469E+00 3.188E+00 2.039E+00 4.434E-01 2.136E+00
  2  1 5.442E+01 5.000E+04 1.720E+00 1.369E+04 3.288E+01 2.963E+00 0.000E+00 0.000E+00 0.000E+00
