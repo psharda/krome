@@ -25,8 +25,8 @@
 # Hamburger Sternwarte, Hamburg.
 #
 # Others (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
-# J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
-# E.Tognelli, A.Trani
+# A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
+# E.Tognelli
 #
 # KROME is provided "as it is", without any warranty.
 # The Authors assume no liability for any damages of any kind
@@ -1840,8 +1840,8 @@ def get_licence_header(version, codename, short=False):
 	!!  Hamburger Sternwarte, Hamburg.
 	!!
 	!! Contributors (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
-	!!  J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried,
-	!!  E. Simoncini, E. Tognelli, A. Trani
+	!!  A. Lupi, J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried,
+	!!  E. Simoncini, E. Tognelli
 	!!
 	!!
 	!! KROME is provided \"as it is\", without any warranty.
@@ -1865,8 +1865,8 @@ def get_licence_header(version, codename, short=False):
 	!! Written and developed by Tommaso Grassi and Stefano Bovino
 	!!
 	!! Contributors (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
-	!!  J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
-	!!  E.Tognelli, A.Tani
+	!!  A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
+	!!  E.Tognelli
 	!! KROME is provided \"as it is\", without any warranty.
 	!!*************************************************************\n"""
 
