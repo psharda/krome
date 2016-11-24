@@ -13,6 +13,7 @@ contains
     use krome_photo
     use krome_gadiab
     use krome_getphys
+    use krome_phfuncs
 #IFKROME_useDust
     use krome_dust
 #ENDIFKROME

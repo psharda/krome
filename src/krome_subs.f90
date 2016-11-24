@@ -2097,6 +2097,7 @@ contains
   !Usually D/D_sol = Z/Z_sol
   function H2_dustJura(n)
     use krome_commons
+    use krome_getphys
     use krome_user_commons
     implicit none
     real*8::n(nspec),H2_dustJura

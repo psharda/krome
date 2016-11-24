@@ -234,6 +234,7 @@ contains
   function calc_H2shieldR14(n,Tgas)
     use krome_commons
     use krome_constants
+    use krome_getphys
     real*8::n(nspec),Tgas,calc_H2shieldR14,N_H2,nH2
     real*8::xN_H2,b5,H_mass,bturb,btherm2
     real*8::alpha,omegaH2,Ncrit
