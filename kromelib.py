@@ -26,7 +26,7 @@
 #
 # Others (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
 # J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
-# E.Tognelli
+# E.Tognelli, A.Trani
 #
 # KROME is provided "as it is", without any warranty.
 # The Authors assume no liability for any damages of any kind
@@ -1841,7 +1841,7 @@ def get_licence_header(version, codename, short=False):
 	!!
 	!! Contributors (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
 	!!  J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried,
-	!!  E. Simoncini, E. Tognelli
+	!!  E. Simoncini, E. Tognelli, A. Trani
 	!!
 	!!
 	!! KROME is provided \"as it is\", without any warranty.
@@ -1866,7 +1866,7 @@ def get_licence_header(version, codename, short=False):
 	!!
 	!! Contributors (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
 	!!  J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
-	!!  E.Tognelli.
+	!!  E.Tognelli, A.Tani
 	!! KROME is provided \"as it is\", without any warranty.
 	!!*************************************************************\n"""
 
