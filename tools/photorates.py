@@ -55,7 +55,7 @@ class photorates:
 		for (k,v) in data.iteritems():
 			exec(k + " = "+str(v)+"")
 		#check energy threshold
-		if(energy<E_th): return 0e0
+		if(energy<=E_th): return 0e0
 		#see Verner+1996, ApJ, 465, 487
 		xx = energy/E_0 - y_0
 		yy = sqrt(xx**2+y_1**2)
@@ -126,7 +126,7 @@ class photorates:
 
 	#***************
 	#set black body radiation @ Tbb, if no limits uses Draine limits
-	def setBB(self,Tbb,Emin=None,Emax=None,nbins=100,verbose=True,normalizeToDraine=False):
+	def setBB(self,Tbb,Emin=None,Emax=None,nbins=100,verbose=True,normalizeToDraine=True):
 
 		#uses Draine limits if not defined
 		if(Emin==None): Emin = self.eminDraine
@@ -167,14 +167,13 @@ class photorates:
 
 
 	#*****************
-	#compute rate as usual
+	#compute rate as integral 4pi*J(E)*sigma(E)/E/h dE, 1/s
 	def calcRate(self,atomName):
 
 		krate = 0e0
 		for i in range(len(self.dataFlux)-1):
 			(energyL,fluxL) = self.dataFlux[i]
 			(energyR,fluxR) = self.dataFlux[i+1]
-			if(energyL>13.6 or energyR<5.): continue
 			fL = self.getXsec(atomName,energyL)*fluxL/energyL
 			fR = self.getXsec(atomName,energyR)*fluxR/energyR
 			dE = energyR-energyL
@@ -188,20 +187,17 @@ class photorates:
 #create class
 p = photorates()
 
-#compute rate, black-body @ 2e4K
-p.setBB(2e4)
-print "Si photorate (1/s) with BB @ 2e4K, ", p.calcRate("Si")
+#compute rate, black-body @ 1e3K
+p.setBB(3e4)
+print "C photorate (1/s) with BB @ 3e4K, ", p.calcRate("C")
 
 #compute rate, black-body @ 1e3K
-p.setBB(1e4,verbose=False,Emin=1e-1,Emax=1e2)
-print "O photorate (1/s) with BB @ 1e4K, ", p.calcRate("O")
+p.setBB(1e5,verbose=False,Emin=13.6,Emax=1e2)
+print "O photorate (1/s) with BB @ 1e5K, ", p.calcRate("O")
 
 #compute rate, Draine flux
 p.setDraine()
-print "C photorate (1/s) with Draine flux, ", p.calcRate("C")
-
-#p.loadFlux("../data/black87_incident_eV.dat")
-
+print "Si photorate (1/s) with Draine flux, ", p.calcRate("Si")
 
 
 
