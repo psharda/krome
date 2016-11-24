@@ -194,7 +194,7 @@ print "Si photorate (1/s) with BB @ 2e4K, ", p.calcRate("Si")
 
 #compute rate, black-body @ 1e3K
 p.setBB(1e4,verbose=False,Emin=1e-1,Emax=1e2)
-print "O photorate (1/s) with BB @ 1e5K, ", p.calcRate("O")
+print "O photorate (1/s) with BB @ 1e4K, ", p.calcRate("O")
 
 #compute rate, Draine flux
 p.setDraine()
