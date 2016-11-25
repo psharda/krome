@@ -179,7 +179,7 @@
 26,H2,H,H,H2,H2,(6d-32*Tgas**(-0.25) + 2d-31*Tgas**(-.5)) / 8d0
 
 #METALS FROM Glover&Jappsen 2010 from
-@format:idx,R,R,P,rate
+@format:idx,R,R,P,Tmin,Tmax,rate
 39,C+,E,C,NONE,.LE.7950d0,4.67d-12*(T32)**(-0.6)
 40,C+,E,C,>7950d0,.LE.21140d0,1.23d-17*(T32)**2.49*exp(21845.6d0*invT)
 41,C+,E,C,>21140d0,NONE,9.62d-8*(T32)**(-1.37)*exp(-115786.2d0*invT)
