@@ -38,7 +38,7 @@ More information on the wiki
 
  - https://bitbucket.org/tgrassi/krome/wiki/Home
 
-Additional material can be found in the Computational Astrochemistry Schools
+Additional material can be found in the Computational Astrochemistry Schools website
 
  - http://kromepackage.org/bootcamp/
 
