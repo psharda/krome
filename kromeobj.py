@@ -5427,20 +5427,7 @@ class krome():
 			if(srow == "#KROME_krates"):
 				for x in reacts:
 					#build temperature limit IF
-					sTlimit = ""
-					hasTlim = (x.hasTlimitMin or x.hasTlimitMax) #Tmin or Tmax are present
-					Tlimfound = False #flag to check if endif is needed after the reaction rate
-					if(x.kphrate==None and self.useTlimits and hasTlim):
-						Tlimfound = True #need to close the if statement opened here
-						sTlimit = "if("
-						if(x.hasTlimitMin): sTlimit += "Tgas."+x.TminOp+"."+x.Tmin #Tmin is present
-						if(x.hasTlimitMin and x.hasTlimitMax): sTlimit += " .and. " #Tmin and Tmax are present
-						if(x.hasTlimitMax): sTlimit += "Tgas."+x.TmaxOp+"."+x.Tmax #Tmax is present
-						sTlimit += ") then\n"
-					kstr = "!" + x.verbatim+"\n" #reaction header
-					kstr += "\t" + sTlimit + x.ifrate + " k("+str(x.idx)+") = " + x.krate #limit+extraif+rate
-					if(Tlimfound): kstr += "\nend if" #close the if statement for temperature
-					kstr = truncF90(kstr, 60,"*") #truncates long reaction rates
+					kstr = x.getRateF90(self)
 					fout.write(truncF90(kstr, 60,"/")+"\n\n") #truncate
 			#replace arrays for best flux
 			elif(srow == "#KROME_arr_reactprod"):
@@ -5638,11 +5625,13 @@ class krome():
 
 		#include reactions that cannot be tabbed
 		countNoTab = 0
-		noTabReactions = ""
+		noTabReactions = "\n!non tabulated rates\n"
 		sclist = [] #list of the temperature shortcuts
 		for rea in self.reacts:
 			if(not(rea.canUseTabs)):
-				noTabReactions += "coe_tab("+str(rea.idx)+") = "+rea.krate+"\n"
+
+				noTabReactions += rea.getRateF90(self,varname="coe_tab")+"\n\n"
+				#noTabReactions += "coe_tab("+str(rea.idx)+") = "+rea.krate+"\n"
 				countNoTab += 1
 				sclist = get_Tshortcut(rea,sclist,coevars) #add shotcut if needed
 
