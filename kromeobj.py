@@ -22,7 +22,7 @@
 # Hamburger Sternwarte, Hamburg.
 #
 # Others (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
-# J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
+# A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
 # E.Tognelli
 #
 # KROME is provided "as it is", without any warranty.
