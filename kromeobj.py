@@ -1734,6 +1734,7 @@ class krome():
 			'_para':0e0,
 			'_ortho':0e0,
 			'_meta':0e0,
+			'_ice':0e0,
 			'l_':0e0,
 			'c_':0e0,
 			'CR':0e0,
