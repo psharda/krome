@@ -272,7 +272,7 @@
 89,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(-.108d0*invT)
 
 #KIDA, recomended, below 150K constant
-92,O,OH,H,O2,150.,NONE,2.4d-11*exp(110d0*invT)
+92,O,OH,H,O2,150.,NONE,2.4d-11*exp(-110d0*invT)
 93,O,OH,H,O2,NONE,150.,4.997d-11
 
 #Glover+2010
