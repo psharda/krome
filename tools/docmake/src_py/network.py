@@ -458,8 +458,10 @@ class network:
 		fout.write("<table width=\"50%\">\n")
 		fout.write(tableHeader+"\n")
 		icount = 0
+		#reactions sorted by unsorted reaction hash (in the html list)
+		reactionsSorted = sorted(self.reactions, key=lambda x:x.getReactionHashUnsorted())
 		#loop on reactions
-		for myReaction in self.reactions:
+		for myReaction in reactionsSorted:
 			bgcolor = ""
 			if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
 			fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+myReaction.getReactionHtmlRow()+"\n")
