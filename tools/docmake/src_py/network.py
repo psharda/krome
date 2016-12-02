@@ -334,7 +334,7 @@ class network:
 		missingReactions = []
 		#loop on missing reactions to search for possible branches
 		for reactants in missing:
-			#create exploded reaction
+			#create exploded reaction to compare and get branches
 			reactExploded = []
 			for RR in reactants:
 				reactExploded += speciesDictionary[RR].explodedFull
@@ -343,9 +343,16 @@ class network:
 			reactExp = reactExp.replace("+_-_","")
 			#skip reactants==products, e.g. H+OH -> H+OH (and convert names into species objects)
 			productsList = [[speciesDictionary[x] for x in products] for products in productDictionary[reactExp] if(products!=reactants)]
+			productsListPrune = []
+			for products in productsList:
+				charges = [x.charge for x in products]
+				#skip reaction that generates anion-cation products
+				if((max(charges)+min(charges)==0) and (max(charges)>0)): continue
+				productsListPrune.append(products)
+
 			#convert names in to species objects
 			reatantsList = [speciesDictionary[x] for x in reactants]
-			missingReactions.append({"reactants":reatantsList,"products":productsList})
+			missingReactions.append({"reactants":reatantsList,"products":productsListPrune})
 
 		#return list of objects reactants
 		return missingReactions
@@ -513,6 +520,7 @@ class network:
 				#if no branches available (given the network, skip)
 				if(len(reaction["products"])==0): continue
 
+				#get DH for each reactant
 				reactantsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in reactants]
 
 				#add an arrow at the end of the row
