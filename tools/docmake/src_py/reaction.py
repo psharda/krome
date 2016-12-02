@@ -137,6 +137,13 @@ class reaction:
 		return self.reactionHash
 
 	#********************
+	#get reaction NON-unique (unsorted) hash, e.g. H_H__H2
+	def getReactionHashUnsorted(self):
+		reactantsName = [x.nameFile for x in self.reactants]
+		productsName = [x.nameFile for x in self.products]
+		return ("_".join(reactantsName))+"__"+("_".join(productsName))
+
+	#********************
 	#get html table row with bold mySpecies when present
 	def getReactionHtmlRow(self,mySpecies=None):
 		reactantsName = []
