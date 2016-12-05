@@ -70,13 +70,13 @@ contains
     logical::is_rank_zero
 
     is_rank_zero = (krome_mpi_rank<=1)
-    
+
     pblock = ktab_n/10 !write % every 10
     if(is_rank_zero) print *,"KROME: checking tabs..."
     !loop on tabs
     do i=1,ktab_n
        if(mod(i,pblock)==0.and.is_rank_zero) print *,i/pblock*10,"%" !output
-       Tgas = 1d1**((i-1)*(ktab_logTup-ktab_logTlow)/(ktab_n-1)+ktab_logTlow) 
+       Tgas = 1d1**((i-1)*(ktab_logTup-ktab_logTlow)/(ktab_n-1)+ktab_logTlow)
        n(:) = 0.d0 !rates do not depends on densities
        n(idx_Tgas) = Tgas !rates depend on temperature
        kk(:) = coe(n(:)) !get rates
@@ -85,7 +85,7 @@ contains
        !loop on reactions
        do j=1,nrea
           kmax = kk(j)
-          if(kmax>0.d0.and.kk(j)>0.d0) then
+          if(kmax>0d0.and.kk(j)>0d0) then
              dk = abs(kk(j)-kold(j))/(kold(j)+1d-40)
              if(abs(kk(j)-kktab(j))/kmax>1d-1.and.kmax>1d-12.and.dk<1d-1) then
                 if(is_rank_zero) then
@@ -151,12 +151,16 @@ contains
 #ENDIFKROME
 
 #IFKROME_useTabs
+    !get interpolation bin
     idx = (log10(Tgas)-ktab_logTlow) * inv_ktab_idx + 1
+    !check limits
     idx = max(idx,1)
     idx = min(idx,ktab_n-1)
+    !default value
     coe_tab(:) = 0d0
+    !loop over reactions to linear interpolate
     do j=1,nrea
-       coe_tab(j) = (Tgas-ktab_T(idx)) * inv_ktab_T(idx) *&
+       coe_tab(j) = (Tgas-ktab_T(idx)) * inv_ktab_T(idx) * &
             (ktab(j,idx+1)-ktab(j,idx)) + ktab(j,idx)
     end do
 

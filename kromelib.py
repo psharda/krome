@@ -290,6 +290,24 @@ class reaction():
 		if(ndif!=0): kk +=" * (1.3806488d-22 * Tgas)**("+str(ndif)+")"
 		return kk
 
+	#***********************
+	#get rate F90
+	def getRateF90(self,context,varname="k"):
+		sTlimit = ""
+		hasTlim = (self.hasTlimitMin or self.hasTlimitMax) #Tmin or Tmax are present
+		Tlimfound = False #flag to check if endif is needed after the reaction rate
+		if(self.kphrate==None and context.useTlimits and hasTlim):
+			Tlimfound = True #need to close the if statement opened here
+			sTlimit = "if("
+			if(self.hasTlimitMin): sTlimit += "Tgas."+self.TminOp+"."+self.Tmin #Tmin is present
+			if(self.hasTlimitMin and self.hasTlimitMax): sTlimit += " .and. " #Tmin and Tmax are present
+			if(self.hasTlimitMax): sTlimit += "Tgas."+self.TmaxOp+"."+self.Tmax #Tmax is present
+			sTlimit += ") then\n"
+		kstr = "!" + self.verbatim+"\n" #reaction header
+		kstr += "\t" + sTlimit + self.ifrate + " "+varname+"("+str(self.idx)+") = " + self.krate #limit+extraif+rate
+		if(Tlimfound): kstr += "\nend if" #close the if statement for temperature
+		return truncF90(kstr, 60,"*") #truncates long reaction rates
+
 #############################################
 #find a species with the given name and return it as an object
 def searchSpeciesByName(speciesList,speciesName):

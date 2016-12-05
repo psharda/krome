@@ -1,4 +1,4 @@
-import sys,species,utils,os
+import sys,species,utils,os,urllib
 from math import log10,log,exp,sqrt
 class reaction:
 
@@ -135,6 +135,13 @@ class reaction:
 		productsName = sorted([x.nameFile for x in self.products])
 		self.reactionHash = ("_".join(reactantsName))+"__"+("_".join(productsName))
 		return self.reactionHash
+
+	#********************
+	#get reaction NON-unique (unsorted) hash, e.g. H_H__H2
+	def getReactionHashUnsorted(self):
+		reactantsName = [x.nameFile for x in self.reactants]
+		productsName = [x.nameFile for x in self.products]
+		return ("_".join(reactantsName))+"__"+("_".join(productsName))
 
 	#********************
 	#get html table row with bold mySpecies when present
@@ -451,6 +458,10 @@ class reaction:
 		fout.write("<p style=\"font-size:30px\">"+self.getVerbatimHtml()+"</p>\n")
 		fout.write("<br>\n")
 		fout.write("<a href=\"indexReactions.html\">back</a>\n")
+		fout.write("<br>\n")
+		urlencoded = urllib.quote_plus(" + ".join([x.name for x in self.reactants]))
+		urlkida = "http://kida.obs.u-bordeaux1.fr/search.html?species="+urlencoded+"&reactprod=both&astroplaneto=Both&ionneutral=ion&isomers=1&ids="
+		fout.write("<a href=\""+urlkida+"\" target=\"_blank\">search in KIDA</a>\n")
 		fout.write("<br><br>\n")
 		fout.write("<table>\n")
 		fout.write("<tr><th><th><th>\n")

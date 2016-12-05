@@ -54,7 +54,7 @@ contains
     liw = size(iwork)
     lrw = size(rwork)
     iwork(:) = 0
-    rwork(:) = 0.d0
+    rwork(:) = 0d0
     itol = 4 !both tolerances are scalar
     rtol(:) = #KROME_RTOL !relative tolerance
     atol(:) = #KROME_ATOL !absolute tolerance
@@ -82,14 +82,14 @@ contains
 #KROME_init_IAC
 
     ierr = 0 !error flag, zero==OK!
-    n(:) = 0.d0 !initialize densities
+    n(:) = 0d0 !initialize densities
 
 #IFKROME_useX
     mass(:) = get_mass() !get masses
     xin = sum(x) !store initial fractions
     !compute densities from fractions
     do i = 1,nmols
-       if(mass(i)>0.d0) n(i) = rhogas * x(i) / mass(i)
+       if(mass(i)>0d0) n(i) = rhogas * x(i) / mass(i)
     end do
 #ELSEKROME
     n(1:nmols) = x(:)
@@ -209,7 +209,7 @@ contains
 #KROME_compute_electrons
 
 #IFKROME_check_mass_conservation
-    if(abs(1.d0-totmass/sum(n(:) * mass(:)))>1d-3) then
+    if(abs(1d0-totmass/sum(n(:) * mass(:)))>1d-3) then
        print *,"ERROR: mass conservation failure!"
        print *, tloc,totmass,sum(n(:) * mass(:))
     end if
@@ -217,7 +217,7 @@ contains
 
     !avoid negative species
     do i=1,nspec
-       n(i) = max(n(i),0.d0)
+       n(i) = max(n(i),0d0)
     end do
 
 #IFKROME_conserve
@@ -251,159 +251,165 @@ contains
   !*********************************
   !integrates to equilibrium using constant temperature
 #IFKROME_useX
-  subroutine krome_equilibrium(x,rhogas,Tgas) #KROME_bindC
+  subroutine krome_equilibrium(x,rhogas,Tgas,verbosity) #KROME_bindC
 #ELSEKROME
-  subroutine krome_equilibrium(x,Tgas) #KROME_bindC
+    subroutine krome_equilibrium(x,Tgas,verbosity) #KROME_bindC
 #ENDIFKROME
-    use krome_ode
-    use krome_subs
-    use krome_commons
-    use krome_constants
-    use krome_getphys
-    implicit none
-    integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
-    integer::i,imax
+      use krome_ode
+      use krome_subs
+      use krome_commons
+      use krome_constants
+      use krome_getphys
+      implicit none
+      integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
+      integer::i,imax
+      integer,optional::verbosity
+      integer::verbose
 #KROME_double_value :: Tgas
 #KROME_double :: x(nmols)
 #IFKROME_useX
 #KROME_double_value :: rhogas
 #ELSEKROME
-    real*8 :: rhogas
+      real*8 :: rhogas
 #ENDIFKROME
-    real*8::tloc,n(nspec),mass(nspec),ni(nspec)
-    real*8::dt,xin
+      real*8::tloc,n(nspec),mass(nspec),ni(nspec)
+      real*8::dt,xin
 #KROME_iwork_array
-    real*8::atol(nspec),rtol(nspec)
+      real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
-    real*8::ertol,eatol,max_time,t_tot
-    logical::converged
+      real*8::ertol,eatol,max_time,t_tot
+      logical::converged
 
-    integer, save :: ncall=0
-    integer, parameter :: ncall_print_frequency=20000
-    integer :: ncallp
-    integer::charges(nspec)
-    real*8::masses(nspec)
-    character*16::names(nspec)
+      integer, save :: ncall=0
+      integer, parameter :: ncall_print_frequency=20000
+      integer :: ncallp
+      integer::charges(nspec)
+      real*8::masses(nspec)
+      character*16::names(nspec)
 
-    call XSETF(0)!toggle solver verbosity
-    meth = 2
-    neq = nspec !number of eqns
-    liw = size(iwork)
-    lrw = size(rwork)
-    iwork(:) = 0
-    rwork(:) = 0.d0
-    itol = 4 !both tolerances are scalar
-    rtol(:) = 1d-6 !relative tolerance
-    atol(:) = 1d-20 !absolute tolerance
+      !set verbosity from argument
+      verbose = 1 !default is verbose
+      if(present(verbosity)) verbose = verbosity
 
-    ! Switches to decide when equilibrium has been reached
-    ertol = 1d-5  ! relative min change in a species
-    eatol = 1d-12 ! absolute min change in a species
-    max_time=seconds_per_year*5d8 ! max time we will be integrating for
+      call XSETF(0)!toggle solver verbosity
+      meth = 2
+      neq = nspec !number of eqns
+      liw = size(iwork)
+      lrw = size(rwork)
+      iwork(:) = 0
+      rwork(:) = 0d0
+      itol = 4 !both tolerances are scalar
+      rtol(:) = 1d-6 !relative tolerance
+      atol(:) = 1d-20 !absolute tolerance
 
-    !for DLSODES options see its manual
-    iopt = 0
-    itask = 1
-    istate = 1
+      ! Switches to decide when equilibrium has been reached
+      ertol = 1d-5  ! relative min change in a species
+      eatol = 1d-12 ! absolute min change in a species
+      max_time=seconds_per_year*5d8 ! max time we will be integrating for
 
-    mf = 222 !internally evaluated sparsity and jacobian
-    tloc = 0d0 !initial time
+      !for DLSODES options see its manual
+      iopt = 0
+      itask = 1
+      istate = 1
 
-    n(:) = 0.d0 !initialize densities
+      mf = 222 !internally evaluated sparsity and jacobian
+      tloc = 0d0 !initial time
+
+      n(:) = 0d0 !initialize densities
 #IFKROME_useX
-    mass(:) = get_mass() !get masses
-    xin = sum(x) !store initial fractions
-    !compute densities from fractions
-    do i = 1,nmols
-       if(mass(i)>0.d0) n(i) = rhogas * x(i) / mass(i)
-    end do
+      mass(:) = get_mass() !get masses
+      xin = sum(x) !store initial fractions
+      !compute densities from fractions
+      do i = 1,nmols
+         if(mass(i)>0d0) n(i) = rhogas * x(i) / mass(i)
+      end do
 #ELSEKROME
-    !copy into array
-    n(nmols+1:) = 0d0
-    n(1:nmols) = x(:)
+      !copy into array
+      n(nmols+1:) = 0d0
+      n(1:nmols) = x(:)
 #ENDIFKROME
 
-    n(idx_Tgas) = Tgas
+      n(idx_Tgas) = Tgas
 
-    !store previous values
-    ni(:) = n(:)
+      !store previous values
+      ni(:) = n(:)
 
-    imax = 1000
+      imax = 1000
 
-    dt = seconds_per_year * 100.
-    t_tot = dt
-    converged = .false.
-    do while (.not. converged)
-       do i=1,imax
-          !solve ODE
-          CALL DLSODES(fcn_tconst, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
-               ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, jcn_dummy, MF)
-          if(istate==2) then
-             exit
-          else
-             istate=1
-          end if
-       end do
-       !check errors
-       if(istate.ne.2) then
-          print *,"ERROR: no equilibrium found!"
-          stop
-       end if
+      dt = seconds_per_year * 1d2
+      t_tot = dt
+      converged = .false.
+      do while (.not. converged)
+         do i=1,imax
+            !solve ODE
+            CALL DLSODES(fcn_tconst, NEQ(:), n(:), tloc, dt, ITOL, RTOL, ATOL,&
+                 ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, LIW, jcn_dummy, MF)
+            if(istate==2) then
+               exit
+            else
+               istate=1
+            end if
+         end do
+         !check errors
+         if(istate.ne.2) then
+            print *,"ERROR: no equilibrium found!"
+            stop
+         end if
 
-       !avoid negative species
-       do i=1,nspec
-          n(i) = max(n(i),0.d0)
-       end do
+         !avoid negative species
+         do i=1,nspec
+            n(i) = max(n(i),0d0)
+         end do
 
 #IFKROME_conserve
-       n(:) = conserve(n(:),ni(:))
+         n(:) = conserve(n(:),ni(:))
 #ENDIFKROME
-       ! check if we have converged by comparing the error in any species with an relative abundance above eatol
-       converged = maxval(abs(n(1:nmols) - ni(1:nmols)) / max(n(1:nmols),eatol*sum(n(1:nmols)))) .lt. ertol &
-                     .or. t_tot .gt. max_time
+         ! check if we have converged by comparing the error in any species with an relative abundance above eatol
+         converged = maxval(abs(n(1:nmols) - ni(1:nmols)) / max(n(1:nmols),eatol*sum(n(1:nmols)))) .lt. ertol &
+              .or. t_tot .gt. max_time
 
-       ! Increase integration time by a reasonable factor
-       if (.not. converged) then
-          dt = dt * 3.
-          t_tot = t_tot + dt
-          ni = n
-       endif
-    enddo
+         ! Increase integration time by a reasonable factor
+         if(.not. converged) then
+            dt = dt * 3.
+            t_tot = t_tot + dt
+            ni = n
+         endif
+      enddo
 #IFKROME_useX
-    x(:) = mass(1:nmols)*n(1:nmols)/rhogas !return to fractions
+      x(:) = mass(1:nmols)*n(1:nmols)/rhogas !return to fractions
 #ELSEKROME
-    !returns to user array
-    x(:) = n(1:nmols)
+      !returns to user array
+      x(:) = n(1:nmols)
 #ENDIFKROME
 
-    if (t_tot > max_time .and. &
-        maxval(abs(n(1:nmols) - ni(1:nmols)) / max(n(1:nmols),eatol*sum(n(1:nmols)))) > 0.2) then
-      print *, 'krome_equilibrium: Did not converge in ', max_time / seconds_per_year, ' years.'
-      print *, 'Tgas :', Tgas
-      names(:) = get_names()
-      charges(:) = get_charges()
-      masses(:) = get_mass()
-  
-      print '(a4,a10,a11,a5,a16)',"#","Name","m (g)","Chrg","  Current / Last"
-      do i=1,nmols
-        print '(I4,a10,E11.3,I5,2E14.6,E11.3)',i," "//names(i),masses(i),charges(i),n(i),ni(i),abs(n(i) - ni(i)) / max(n(i),eatol*sum(n(1:nmols)))
-      end do
-      print '(a30,2E14.6)'," sum",sum(n(1:nmols)),sum(ni(1:nmols))
-      print *, 'Fractional error :', maxval(abs(n(1:nmols) - ni(1:nmols)) / max(n(1:nmols),eatol*sum(n(1:nmols))))
-      print *, 'Absolute and relative floors:', eatol, ertol
-    endif
-  
-    ! Print info ever so often
-    !$omp critical
-    ncall=ncall+1
-    ncallp = ncall
-    !$omp end critical
-  
-    if (modulo(ncallp,ncall_print_frequency)==0) then
-      print *, 'Found equilibrium for ', ncallp, ' cells.'
-    endif
-  
-  end subroutine krome_equilibrium
+      if(t_tot > max_time .and. &
+           maxval(abs(n(1:nmols) - ni(1:nmols)) / max(n(1:nmols),eatol*sum(n(1:nmols)))) > 0.2 .and. verbose>0) then
+         print *, 'krome_equilibrium: Did not converge in ', max_time / seconds_per_year, ' years.'
+         print *, 'Tgas :', Tgas
+         names(:) = get_names()
+         charges(:) = get_charges()
+         masses(:) = get_mass()
+
+         print '(a4,a10,a11,a5,a16)',"#","Name","m (g)","Chrg","  Current / Last"
+         do i=1,nmols
+            print '(I4,a10,E11.3,I5,2E14.6,E11.3)',i," "//names(i),masses(i),charges(i),n(i),ni(i),abs(n(i) - ni(i)) / max(n(i),eatol*sum(n(1:nmols)))
+         end do
+         print '(a30,2E14.6)'," sum",sum(n(1:nmols)),sum(ni(1:nmols))
+         print *, 'Fractional error :', maxval(abs(n(1:nmols) - ni(1:nmols)) / max(n(1:nmols),eatol*sum(n(1:nmols))))
+         print *, 'Absolute and relative floors:', eatol, ertol
+      end if
+
+      ! Print info ever so often
+      !$omp critical
+      ncall=ncall+1
+      ncallp = ncall
+      !$omp end critical
+
+      if(modulo(ncallp,ncall_print_frequency)==0 .and. verbose>0) then
+         print *, 'Found equilibrium for ', ncallp, ' cells.'
+      end if
+
+    end subroutine krome_equilibrium
 
   !********************
   !dummy jacobian
