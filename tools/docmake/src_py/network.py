@@ -423,19 +423,20 @@ class network:
 		fout.write("<a href=\"index.html\">back</a><br>\n")
 		fout.write("<br><br>\n")
 		#reaction table
-		fout.write("<table>\n")
-		fout.write("<tr><th><th>\n")
-		fout.write("<tr><td>name<td>&Delta;H (K)\n")
-		fout.write("<tr><th><th>\n")
+		fout.write("<table width=\"60%\">\n")
+		fout.write("<tr><th><th><th>\n")
+		fout.write("<tr><td>name<td>&Delta;H@0K (kJ/mol)<td>&Delta;H@298.15K (kJ/mol)\n")
+		fout.write("<tr><th><th><th>\n")
 		icount = 0
 		#loop on reactions
 		for mySpecies in sorted(self.getSpecies(),key=lambda x:x.name):
 			bgcolor = ""
 			if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
-			enthalpy = mySpecies.getEnthalpy(self.thermochemicalData)
-			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"&nbsp;<td>"+str(enthalpy)+"\n")
+			enthalpy0 = mySpecies.getEnthalpy(self.thermochemicalData,Tgas=1e-40)
+			enthalpy298 = mySpecies.getEnthalpy(self.thermochemicalData)
+			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"<td>"+str(enthalpy0)+"<td>"+str(enthalpy298)+"\n")
 			icount += 1
-		fout.write("<tr><th><th>\n")
+		fout.write("<tr><th><th><th>\n")
 		fout.write("</table>\n")
 
 		#add footer
