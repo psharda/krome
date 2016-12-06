@@ -95,6 +95,7 @@ class network:
 		#prepare html pages for species
 		for mySpecies in self.getSpecies():
 			mySpecies.makeHtmlPage(self)
+			mySpecies.makeAllRatesHtmlPage(self,myOptions)
 
 		#plotting rates
 		print "plotting rates..."
