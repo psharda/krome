@@ -6925,7 +6925,91 @@ class krome():
 					fout.write(row)
 		if(not(self.buildCompact)):
 			fout.close()
+			#add subroutine wrappers to functions returning array
+			self.makeUserCWrappers()
+
 		print "done!"
+
+	####################################
+	#add subroutine wrappers to functions returning array
+	def makeUserCWrappers(self):
+
+		#original file
+		fh = open(self.buildFolder+"krome_user.f90","rb")
+		#temp file
+		fout = open(self.buildFolder+"krome_user.tmp","w")
+		functionName = "__NONE__"
+		wrapper = allWrappers = ""
+		arguments = []
+		#loop on user file lines
+		for row in fh:
+			srow = row.strip()
+			#look for function
+			if(srow.startswith("function")):
+				arow = srow.split("(")
+				#get function name
+				functionName = arow[0].replace("function","").strip()
+				#get arguments
+				args = arow[1].replace(")","").strip()
+				#arguments as list
+				arguments = args.split(",")
+				#define arguments for wrapper subroutine
+				argwrap = (args+","+functionName+"_var")
+				if(args==""): argwrap = functionName+"_var"
+
+				#start wrapper
+				wrapper = "!********************************\n"
+				wrapper += "!subroutine wrapper around "+functionName+" function\n"
+				wrapper += "subroutine "+functionName+"_wrap("+argwrap+")\n"
+
+				#flag: this function returns an array
+				returnsArray = False
+
+			#get use statements
+			if(srow.startswith("use krome_commons")):
+				wrapper += "\t"+srow+"\n"
+
+			#get implicit none statement
+			if(srow.startswith("implicit none")):
+				wrapper += "\t"+srow+"\n"
+
+			#loop on arguments definitions
+			for arg in arguments:
+				#arguments can be at the end of line or in a list
+				argw = arg.replace(" ","")
+				argindec = (srow.endswith(argw) or (argw+"," in srow) or (argw+"(" in srow))
+				#if argument definition keeps line
+				if(argindec and ("::" in srow)):
+					srown = srow.replace(functionName,functionName+"_var")
+					if(not(srown in wrapper)): wrapper += "\t"+srown+"\n"
+
+			#if function name in definition add line
+			if((functionName+"(" in srow) and ("::" in srow)):
+				returnsArray = True
+				srown = srow.replace(functionName,functionName+"_var")
+				if(not(srown in wrapper)): wrapper += "\t"+srown+"\n"
+
+			#when end function stores wrapper
+			if(srow.startswith("end function")):
+				wrapper += "\n\t"+functionName+"_var(:) = "+functionName+"("+args+")\n\n"
+				wrapper += "end subroutine "+functionName+"_wrap\n\n"
+				#stores only if function returns array
+				if(returnsArray): allWrappers += wrapper
+
+			#add wrappers before module
+			if(row.lower().startswith("end module")):
+				fout.write(allWrappers)
+			fout.write(row)
+
+
+		print allWrappers
+		fh.close()
+		fout.close()
+
+		#replace original file (.f90) with generated (.tmp)
+		shutil.move(self.buildFolder+"krome_user.tmp",self.buildFolder+"krome_user.f90")
+
+
 
 	####################################
 	def makeReduction(self):
