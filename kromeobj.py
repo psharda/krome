@@ -6938,9 +6938,12 @@ class krome():
 		fh = open(self.buildFolder+"krome_user.f90","rb")
 		#temp file
 		fout = open(self.buildFolder+"krome_user.tmp","w")
+
+		#default variables
 		functionName = "__NONE__"
 		wrapper = allWrappers = ""
 		arguments = []
+
 		#loop on user file lines
 		for row in fh:
 			srow = row.strip()
@@ -6953,6 +6956,7 @@ class krome():
 				args = arow[1].replace(")","").strip()
 				#arguments as list
 				arguments = args.split(",")
+
 				#define arguments for wrapper subroutine
 				argwrap = (args+","+functionName+"_var")
 				if(args==""): argwrap = functionName+"_var"
@@ -6985,13 +6989,17 @@ class krome():
 
 			#if function name in definition add line
 			if((functionName+"(" in srow) and ("::" in srow)):
+				#functionName+"(" in declarations means array returned
 				returnsArray = True
+				#add declaration line and append _var
 				srown = srow.replace(functionName,functionName+"_var")
 				if(not(srown in wrapper)): wrapper += "\t"+srown+"\n"
 
 			#when end function stores wrapper
 			if(srow.startswith("end function")):
+				#assign to return variable
 				wrapper += "\n\t"+functionName+"_var(:) = "+functionName+"("+args+")\n\n"
+				#add subroutine end
 				wrapper += "end subroutine "+functionName+"_wrap\n\n"
 				#stores only if function returns array
 				if(returnsArray): allWrappers += wrapper
@@ -7001,8 +7009,6 @@ class krome():
 				fout.write(allWrappers)
 			fout.write(row)
 
-
-		print allWrappers
 		fh.close()
 		fout.close()
 
