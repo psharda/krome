@@ -16,6 +16,15 @@ class reaction:
 	#********************
 	#parse csv reaction file row (constructor)
 	def __init__(self,row,reactionFormat,atomSet,reactionType):
+
+		if(reactionType=="KIDA"):
+			self.parseFormatKIDA(row,reactionFormat,atomSet,reactionType)
+		else:
+			self.parseFormatKROME(row,reactionFormat,atomSet,reactionType)
+
+	#********************
+	def parseFormatKROME(self,row,reactionFormat,atomSet,reactionType):
+
 		if(not(reactionFormat.startswith("@format:"))):
 			sys.exit("ERROR: wrong format "+reactionFormat)
 		splitFormat = reactionFormat.replace("@format:","").split(",")
@@ -63,7 +72,7 @@ class reaction:
 				print "ERROR: unknow format element "+part
 				sys.exit(reactionFormat)
 
-		#add cosmic ray if not present
+		#add cosmic rays if not present
 		hasCR = ("CR" in [x.name for x in self.reactants])
 		if(not(hasCR) and reactionType=="CR"):
 				spec = species.species("CR",atomSet)
@@ -71,6 +80,105 @@ class reaction:
 
 		#check mass and charge conservation
 		self.check()
+
+
+	#********************
+	def parseFormatKIDA(self,row,reactionFormat,atomSet,reactionType):
+
+
+		specials = ["","G","PHOTON"]
+
+		#variables for cosmic rays and photochemistry
+		CRvar = "user_crate" #name of the CR flux variable
+		Avvar = "user_Av" #name of the Av variable
+
+		#number of reactants and products expected in KIDA file
+		maxReactants = 3
+		maxProducts = 5
+
+		#spacing format
+		fmt = [11]*3 + [1] + 5*[11] +[1] + 3*[11] + [8,9] + [1,4,3] + 2*[7] + [3,6,3,2]
+		#keys names
+		keys = ["R"+str(i) for i in range(maxReactants)] + ["x"] \
+			+ ["P"+str(i) for i in range(maxProducts)] +["x"] \
+			+ ["a","b","c"] + ["F","g"] + ["x","unc","type"] \
+			+ ["tmin","tmax"] + ["formula","num","subnum","recom"]
+
+		self.rate = []
+		self.reactants = []
+		self.products = []
+		self.Tmin = [None]
+		self.Tmax = [None]
+		self.reactionType = reactionType
+
+		srow = row.strip()
+
+		dataRow = dict()
+		position = 0
+		#loop on format to get data from the row as a dictionary
+		for i in range(len(fmt)):
+			dataRow[keys[i]] = srow[position:position+fmt[i]].strip()
+			position += fmt[i]
+
+		self.Tmin = [dataRow["tmin"]]
+		self.Tmax = [dataRow["tmax"]]
+
+		for i in range(maxReactants):
+			v = dataRow["R"+str(i)].strip()
+			if(v=="e-"): v = "E"
+			if(v.upper() in specials): continue
+			spec = species.species(v,atomSet)
+			self.reactants.append(spec)
+
+		for i in range(maxProducts):
+			v = dataRow["P"+str(i)].strip()
+			if(v=="e-"): v = "E"
+			if(v.upper() in specials): continue
+			spec = species.species(v,atomSet)
+			self.products.append(spec)
+
+		#Formula is a number that referes to the formula needed to compute the rate coefficient of the reaction.
+		#see http://kida.obs.u-bordeaux1.fr/help
+		#1: Cosmic-ray ionization (direct and undirect)
+		#2: Photo-dissociation (Draine)
+		#3: Kooij
+		#4: ionpol1
+		#5: ionpol2
+		#6: Troe fall-off (NOT SUPPORTED!)
+		arow = dataRow
+		arow["formula"] = int(arow["formula"])
+		if(arow["formula"]==0):
+			KK = "auto"
+		elif(arow["formula"]==1):
+			KK = arow["a"]+"*"+CRvar
+		elif(arow["formula"]==2):
+			KK = arow["a"]
+			if(float(arow["c"])!=0e0): KK += "*exp(-"+arow["c"]+"*"+Avvar+")"
+		elif(arow["formula"]==3):
+			KK = arow["a"]
+			if(float(arow["b"])!=0e0): KK += "*(T32)**("+arow["b"]+")"
+			if(float(arow["c"])!=0e0): KK += "*exp(-"+arow["c"]+"*invT)"
+		elif(arow["formula"]==4):
+			KK = arow["a"]
+			if(float(arow["b"])!=1e0): KK += "*"+arow["b"]
+			gpart = ""
+			if(float(arow["c"])!=0e0): gpart = "+ 0.4767d0*"+arow["c"]+"*sqrt(3d2*invT)"
+			KK += "*(0.62d0 "+gpart+")"
+		elif(arow["formula"]==5):
+			KK = arow["a"]
+			if(float(arow["b"])!=1e0): KK += "*"+arow["b"]
+			gpart = ""
+			if(float(arow["c"])!=0e0):
+				gpart = "+ 0.0967d0*"+arow["c"]+"*sqrt(3d2*invT) + "
+				gpart += arow["c"]+"**2*28.501d0*invT"
+				KK += "*(1d0 "+gpart+")"
+		else:
+			print "ERROR: KIDA formula "+str(arow["formula"])+" not supported!"
+
+		KK = KK.replace("--","+").replace("++","+").replace("-+","-").replace("+-","-")
+
+		self.rate.append(KK)
+
 
 	#**************
 	#check reaction charge and mass conservation
