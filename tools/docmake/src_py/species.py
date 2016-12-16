@@ -16,6 +16,16 @@ class species():
 				speciesName = speciesName.replace(atom.upper(),atom)
 				print "WARNING: "+atom+" found upper case in "+orgSpeciesName+"! Replaced as "+speciesName
 
+
+		if(speciesName.startswith("J")): speciesName = speciesName[1:]+"_dust"
+
+		#replace linear and chain prefix with underscore
+		isoreplace = {"c-":"c_", "l-":"l_"}
+		for (iso,isorep) in isoreplace.iteritems():
+			if(speciesName.startswith(iso) and len(speciesName)>len(iso)):
+				speciesName = speciesName.replace(iso,isorep)
+
+
 		self.name = speciesName
 
 		self.nameLatex = self.getLatexName()
