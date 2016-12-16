@@ -10,57 +10,24 @@ class network:
 	#class constructor
 	def __init__(self,myOptions):
 
-		#default format
-		reactionFormat = "@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate"
 
 		#get network file name
 		fileName = myOptions.network
 
 		#read atoms
 		atomSet = utils.getAtomSet("atomlist.dat")
-		#read shortcuts
-		shortcuts = utils.getShortcuts()
 
 		#load thermochemical data
 		self.thermochemicalData = utils.getThermochemicalData("thermo30.dat")
 
-		inBlockCR = False
+		#read shortcuts
+		shortcuts = utils.getShortcuts()
 
-		self.reactions = []
-		print "reading network "+fileName
-		#open file to read network
-		fh = open(fileName,"rb")
-		for row in fh:
-			srow = row.strip()
-			if(srow==""): continue
-			if(srow.startswith("#")): continue
-
-			#get format if token found
-			if(srow.startswith("@format:")):
-				reactionFormat = srow
-				continue
-
-			#get extra variable definition if token found
-			if(srow.startswith("@var:")):
-				(variable,expression) = [x.strip() for x in srow.replace("@var:","").split("=")]
-				shortcuts[variable] = expression
-
-			if(srow.lower().startswith("@cr_start") or srow.lower().startswith("@cr_begin")): inBlockCR = True
-			if(srow.lower().startswith("@cr_stop") or srow.lower().startswith("@cr_end")): inBlockCR = False
-
-			#change reaction type to CR
-			reactionType = "standard" #default
-			if(inBlockCR): reactionType = "CR"
-
-			#skip other tokens
-			if(srow.startswith("@")): continue
-
-			#parse row line for reaction
-			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType)
-
-			#add parsed reaction to reactions structure in network
-			self.reactions.append(myReaction)
-		fh.close()
+		#read network file in KROME format
+		if(self.detectNetworkType(fileName)=="KIDA"):
+			self.readFileKIDA(fileName,atomSet)
+		else:
+			self.readFileKROME(fileName,atomSet,shortcuts)
 
 		#merge reactions with multiple rates
 		print "merging multiple reactions"
@@ -106,6 +73,86 @@ class network:
 			myReaction.plotRate(shortcuts,varRanges)
 			myReaction.makeHtmlPage(myOptions)
 			icount += 1
+
+
+	#********************
+	def detectNetworkType(self,fileName):
+		fh = open(fileName,"rb")
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+			if("," in srow): return "KROME"
+		fh.close()
+		return "KIDA"
+
+	#************************
+	def readFileKROME(self,fileName,atomSet,shortcuts):
+
+		#default format
+		reactionFormat = "@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate"
+
+		inBlockCR = False
+
+		self.reactions = []
+		print "reading network "+fileName
+		#open file to read network
+		fh = open(fileName,"rb")
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+
+			#get format if token found
+			if(srow.startswith("@format:")):
+				reactionFormat = srow
+				continue
+
+			#get extra variable definition if token found
+			if(srow.startswith("@var:")):
+				(variable,expression) = [x.strip() for x in srow.replace("@var:","").split("=")]
+				shortcuts[variable] = expression
+
+			if(srow.lower().startswith("@cr_start") or srow.lower().startswith("@cr_begin")): inBlockCR = True
+			if(srow.lower().startswith("@cr_stop") or srow.lower().startswith("@cr_end")): inBlockCR = False
+
+			#change reaction type to CR
+			reactionType = "standard" #default
+			if(inBlockCR): reactionType = "CR"
+
+			#skip other tokens
+			if(srow.startswith("@")): continue
+
+			#parse row line for reaction
+			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType)
+
+			#add parsed reaction to reactions structure in network
+			self.reactions.append(myReaction)
+		fh.close()
+
+
+
+	#**************
+	def readFileKIDA(self,fileName,atomSet):
+		self.reactions = []
+		print "reading network "+fileName
+
+		fh = open(fileName,"rb")
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+
+			reactionType = "KIDA"
+			reactionFormat = ""
+
+			#parse row line for reaction
+			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType)
+
+			#add parsed reaction to reactions structure in network
+			self.reactions.append(myReaction)
+
+		fh.close()
 
 	#**************
 	#get all network species
@@ -182,6 +229,9 @@ class network:
 
 		import subprocess
 
+		#maximum number of nodes
+		maxNodes = 50
+
 		#loop on all available atoms in the network
 		for refAtom in self.getAtoms():
 			print "creating graphs for "+refAtom+"..."
@@ -221,6 +271,11 @@ class network:
 
 			if(len(networkMap.keys())==0): continue
 
+			#skip network with too many nodes
+			if(len(networkMap.keys())>maxNodes):
+				print "WARNING: too many nodes, skipping graph!"
+				continue
+
 			nodeLabels = dict()
 			#loop on starting edges
 			for myR in networkMap.keys():
@@ -255,8 +310,17 @@ class network:
 		#get list of species
 		species = self.getSpecies()
 
+		#limit to produce missing reactions
+		expectedReactionsMax = int(1e4)
+
 		#evaluate expected reactions
-		print "expected reactions:",len(species)**2+len(species)
+		expectedReactions = len(species)**2+len(species)
+		print "expected reactions:", expectedReactions
+
+		#skip if too many reactions
+		if(expectedReactions>expectedReactionsMax):
+			print "WARNING: too many expected reactions skipping missing reactions!"
+			return []
 
 		#unimolecular reactants to be skipped
 		skipUnimol = ["CR","E"]
