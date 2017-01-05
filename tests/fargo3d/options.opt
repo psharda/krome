@@ -1,0 +1,8 @@
+##############
+#options for test fargo3d
+DEV
+-n networks/react_primordial3
+-compact
+-sh
+-ATOL=1d-10
+-n networks/react_primordial3

@@ -1,0 +1,6 @@
+##############
+#options for test shock1D
+
+-n networks/react_primordial
+-useX
+-n networks/react_primordial

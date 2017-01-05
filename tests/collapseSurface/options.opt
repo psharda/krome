@@ -1,0 +1,17 @@
+##############
+#options for test collapseSurface
+DEV
+-n networks/react_primordialZ_surface
+-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST
+-heating=COMPRESS,CHEM
+-H2opacity=OMUKAI
+-gamma=REDUCED
+-ATOL=1d-20
+-maxord=2
+-columnDensityMethod=JEANS
+-noSinkCheck
+-noRecCheck
+-dust=3,C
+-dustOptions=dT
+-useIndividualFloor=Z
+-n networks/react_primordialZ_surface

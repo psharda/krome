@@ -1,0 +1,10 @@
+##############
+#options for test cloud
+
+-n networks/react_cloud
+-iRHS
+-skipJacobian
+-useCustomCoe="myCoe(:)"
+-noRecCheck
+-noSinkCheck
+-n networks/react_cloud

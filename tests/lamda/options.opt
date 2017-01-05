@@ -1,0 +1,8 @@
+##############
+#options for test lamda
+
+-n networks/react_COthin
+-coolFile=data/coolO2.dat
+-cooling=O2
+-useThermoToggle
+-n networks/react_COthin

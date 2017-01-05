@@ -1,0 +1,5 @@
+##############
+#options for test customCooling
+
+-n networks/react_customCool
+-n networks/react_customCool

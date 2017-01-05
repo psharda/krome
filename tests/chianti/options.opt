@@ -1,0 +1,11 @@
+##############
+#options for test chianti
+
+-n networks/react_chianti
+-photoBins=10
+-useThermoToggle
+-coolLevels=99999
+-noRecCheck
+-cooling=CII,CIII,CIV,CV,CVI
+-coolFile=tools/coolChianti.dat
+-n networks/react_chianti

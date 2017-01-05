@@ -1,0 +1,16 @@
+##############
+#options for test collapseDUST
+DEV
+-n networks/react_primordialZ
+-cooling=H2,CONT,CI,CII,OI,OII,CHEM,DUST
+-heating=COMPRESS,CHEM
+-H2opacity=OMUKAI
+-gamma=EXACT
+-ATOL=1d-40
+-maxord=1
+-columnDensityMethod=JEANS
+-useIndividualFloor=Z
+-noSinkCheck
+-dust=5,C,Si
+-dustOptions=dT,H2
+-n networks/react_primordialZ

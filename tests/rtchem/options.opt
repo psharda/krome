@@ -1,0 +1,7 @@
+##############
+#options for test rtchem
+DEV
+-n networks/react_COthin_rt
+-photoBins=10
+-sh
+-n networks/react_COthin_rt

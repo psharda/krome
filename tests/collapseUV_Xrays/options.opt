@@ -1,0 +1,12 @@
+##############
+#options for test collapseUV_Xrays
+
+-n networks/react_xrays
+-cooling=H2,CIE,ATOMIC,FF,COMPTON
+-heating=COMPRESS,CHEM,XRAY
+-gamma=FULL
+-shielding=WG11
+-conserve
+-H2opacity=OMUKAI
+-columnDensityMethod=JEANS
+-n networks/react_xrays

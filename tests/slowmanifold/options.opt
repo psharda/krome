@@ -1,0 +1,5 @@
+##############
+#options for test slowmanifold
+
+-n networks/react_SM
+-n networks/react_SM

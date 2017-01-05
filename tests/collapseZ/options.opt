@@ -1,0 +1,12 @@
+##############
+#options for test collapseZ
+
+-n networks/react_primordialZ
+-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM
+-heating=COMPRESS,CHEM
+-noSinkCheck
+-H2opacity=OMUKAI
+-gamma=FULL
+-ATOL=1d-40
+-maxord=1
+-n networks/react_primordialZ

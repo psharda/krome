@@ -1,0 +1,8 @@
+##############
+#options for test dust
+
+-n networks/react_primordial
+-dust=10,C,Si
+-dustOptions=GROWTH,EVAP
+-dustSeed="1d-12"
+-n networks/react_primordial

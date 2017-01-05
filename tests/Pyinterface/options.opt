@@ -1,0 +1,9 @@
+##############
+#options for test Pyinterface
+DEV
+-n tests/Cinterface/network.ntw
+-interfacePy
+-coolFile=tests/Cinterface/coolX.dat
+-cooling=FeII
+-noSinkCheck
+-n tests/Cinterface/network.ntw

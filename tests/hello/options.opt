@@ -1,0 +1,6 @@
+##############
+#options for test hello
+
+-n networks/react_hello
+-noSinkCheck
+-n networks/react_hello

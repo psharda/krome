@@ -1,0 +1,12 @@
+##############
+#options for test collapseZ_induced
+DEV
+-n networks/react_primordialZ
+-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM
+-heating=COMPRESS,CHEM,PHOTO
+-H2opacity=RIPAMONTI
+-gamma=FULL
+-photoBins=10
+-usePhotoInduced
+-noSinkCheck
+-n networks/react_primordialZ
