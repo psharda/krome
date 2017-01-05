@@ -391,154 +391,27 @@ class krome():
 		else:
 			return
 
-		if(args.test=="cloud"):
-			[argv.append(x) for x in ["-iRHS","-skipJacobian","-useCustomCoe=\"myCoe(:)\""]]
-			[argv.append(x) for x in ["-noRecCheck", "-noSinkCheck"]]
-			filename = "networks/react_cloud"
-		elif(args.test=="slowmanifold"):
-			filename = "networks/react_SM"
-		elif(args.test=="auto"):
-			[argv.append(x) for x in ["-photoBins=10"]]
-			filename = "networks/react_auto"
-		elif(args.test=="chianti"):
-			[argv.append(x) for x in ["-photoBins=10","-useThermoToggle","-coolLevels=99999","-noRecCheck"]]
-			[argv.append(x) for x in ["-cooling=CII,CIII,CIV,CV,CVI"]]
-			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
-			filename = "networks/react_chianti"
-		elif(args.test=="shock1Dcool"):
-			[argv.append(x) for x in ["-cooling=H2,HD,Z,DH","-useX"]]
-			filename = "networks/react_primordial"
-		elif(args.test=="shock1D"):
-			[argv.append(x) for x in ["-useX"]]
-			filename = "networks/react_primordial"
-		elif(args.test=="shock1Dphoto"):
-			[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium",\
-				"-useX", "-photoBins=20", "-noRecCheck"]]
-			filename = "networks/react_primordial_photo"
-			test_status = "dev" #under development
-		elif(args.test=="shock1Dlarge"):
-			[argv.append(x) for x in ["-iRHS"]]
-			filename = "networks/react_WH2008"
-		elif(args.test=="dust"):
-			[argv.append(x) for x in ["-dust=10,C,Si","-dustOptions=GROWTH,EVAP","-dustSeed=\"1d-12\""]]
-			filename = "networks/react_primordial"
-		elif(args.test=="compact"):
-			[argv.append(x) for x in ["-compact","-useX"]]
-			filename = "networks/react_primordial"
-		elif(args.test=="map"):
-			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-photoBins=10","-useX"]]
-			filename = "networks/react_primordial_photoH2"
-		elif(args.test=="collapse"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL"]]
-			filename = "networks/react_primordial3"
-		elif(args.test=="collapseDUST"):
-			[argv.append(x) for x in ["-cooling=H2,CONT,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=EXACT","-ATOL=1d-40","-maxord=1",\
-				"-columnDensityMethod=JEANS","-useIndividualFloor=Z","-noSinkCheck"]]
-			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=dT,H2"]]
-			filename = "networks/react_primordialZ"
-			test_status = "dev" #under development
-		elif(args.test=="collapseSurface"):
-			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=REDUCED","-ATOL=1d-20","-maxord=2",\
-				"-columnDensityMethod=JEANS", "-noSinkCheck", "-noRecCheck"]]
-			[argv.append(x) for x in ["-dust=3,C","-dustOptions=dT","-useIndividualFloor=Z"]]
-			filename = "networks/react_primordialZ_surface"
-			test_status = "dev" #under development
-		elif(args.test=="collapseZ"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM", "-noSinkCheck"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1",
-				"-columnDensityMethod=JEANS","-coolingQuench=1e1"]]
-			filename = "networks/react_primordialZ"
-		elif(args.test=="collapse_COcool"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,CO", "-heating=COMPRESS,CHEM",\
-				"-noSinkCheck"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1",\
-				"-columnDensityMethod=JEANS"]]
-			filename = "networks/react_primordialZ"
-			test_status = "dev" #under development
-		elif(args.test=="collapseCO"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM",\
-				"-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=REDUCED","-ATOL=1d-40","-maxord=1"]]
-			[argv.append(x) for x in ["-coolingQuench=10"]]
-			filename = "networks/react_COthin_noSi"
-			test_status = "dev" #under development
-		elif(args.test=="collapseZ_UV"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM",\
-				"-heating=COMPRESS,CHEM,PHOTO","-noSinkCheck"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
-			filename = "networks/react_primordialZ_UV"
-			test_status = "dev" #under development
-		elif(args.test=="collapseZ_induced"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL","-photoBins=10","-usePhotoInduced","-noSinkCheck"]]
-			filename = "networks/react_primordialZ"
-			test_status = "dev" #under development
-                elif(args.test=="collapseUV"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,FF,DISS,ATOMIC", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
-			[argv.append(x) for x in ["-columnDensityMethod=JEANS"]]
-			filename = "networks/react_primordial_UV"
-                elif(args.test=="collapseUV_Xrays"):
-			[argv.append(x) for x in ["-cooling=H2,CIE,ATOMIC,FF,COMPTON", "-heating=COMPRESS,CHEM,XRAY"]]
-			[argv.append(x) for x in ["-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
-			[argv.append(x) for x in ["-columnDensityMethod=JEANS"]]
-			filename = "networks/react_xrays"
-                elif(args.test=="earlyUniverse"):
-			[argv.append(x) for x in ["-cooling=H2GP98,COMPTON,EXPANSION"]]
-			[argv.append(x) for x in ["-useFileIdx","-computeElectrons"]]
-			filename = "networks/react_earlyUniverse"
-		elif(args.test=="stars"):
-			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck","-noSinkCheck", "-useX"]]
-			filename = "networks/react_star"
-			test_status = "dev" #under development
-		elif(args.test=="reverse"):
-			[argv.append(x) for x in ["-reverse","-noSinkCheck"]]
-			filename = "networks/react_NO"
-		elif(args.test=="atmosphere"):
-			[argv.append(x) for x in ["-noSinkCheck"]]
-			filename = "networks/react_kast80"
-			test_status = "dev" #under development
-		elif(args.test=="lotkav"):
-			[argv.append(x) for x in ["-customODE=tests/lotkav/lotkav"]]
-			filename = "networks/react_dummy"
-		elif(args.test=="lamda"):
-			[argv.append(x) for x in ["-coolFile=data/coolO2.dat", "-cooling=O2"]]
-			[argv.append(x) for x in ["-useThermoToggle"]]
-			filename = "networks/react_COthin"
-		elif(args.test=="hello"):
-                        [argv.append(x) for x in ["-noSinkCheck"]]
-			filename = "networks/react_hello"
-		elif(args.test=="customCooling"):
-			filename = "networks/react_customCool"
-		elif(args.test=="Cinterface"):
-			[argv.append(x) for x in ["-interfaceC", "-coolFile=tests/Cinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
-			filename = "tests/Cinterface/network.ntw"
-			test_status = "dev" #under development
-		elif(args.test=="Pyinterface"):
-			[argv.append(x) for x in ["-interfacePy",  "-coolFile=tests/Cinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
-			filename = "tests/Cinterface/network.ntw"
-			test_status = "dev" #under development
-		elif(args.test=="fargo3d"):
-			#[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			#[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL"]]
-			[argv.append(x) for x in ["-compact","-sh","-ATOL=1d-10"]]
-			test_status = "dev" #under development
-			filename = "networks/react_primordial3"
-		elif(args.test=="rtchem"):
-			#[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM",\
-			#	"-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
-			#[argv.append(x) for x in ["-gamma=REDUCED"]]
-			[argv.append(x) for x in ["-photoBins=10","-sh"]]
-			filename = "networks/react_COthin_rt"
-			test_status = "dev" #under development
-		else:
-			tests = ", ".join(sorted(os.walk('tests').next()[1]))
-			print "ERROR: test \""+args.test+"\" not present!"
-			print "Available tests are: "+tests
+		#read options from file
+		optionFileName = "tests/"+args.test+"/options.opt"
+		if(not(file_exists(optionFileName))):
+			print "ERROR: problem loading test "+args.test+"!"
+			print " Missing option.opt file in tests/"+args.test+"/ folder or folder not present."
+			tests = (", ".join(sorted(os.walk('tests').next()[1])))
+			print " Available tests are: "+tests
 			sys.exit()
+		fh = open(optionFileName)
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+			if(srow.startswith("-n ")):
+				(opt, filename) = [x.strip() for x in srow.split(" ") if x!=""]
+				continue
+			if(srow=="DEV"):
+				test_status = "dev"
+				continue
+			argv.append(srow)
+		fh.close()
 
 		#append extra arguments if listed
 		# e.g. -dustOptions=H2 -dustOptions=GROWTH is merged in one
