@@ -393,23 +393,31 @@ class krome():
 
 		#read options from file
 		optionFileName = "tests/"+args.test+"/options.opt"
+		#check if test folder and option file exist
 		if(not(file_exists(optionFileName))):
 			print "ERROR: problem loading test "+args.test+"!"
 			print " Missing option.opt file in tests/"+args.test+"/ folder or folder not present."
+			#list available tests
 			tests = (", ".join(sorted(os.walk('tests').next()[1])))
 			print " Available tests are: "+tests
 			sys.exit()
+
+		#read option file
 		fh = open(optionFileName)
 		for row in fh:
 			srow = row.strip()
+			#skip comments and blank lines
 			if(srow==""): continue
 			if(srow.startswith("#")): continue
+			#store file name
 			if(srow.startswith("-n ")):
 				(opt, filename) = [x.strip() for x in srow.split(" ") if x!=""]
 				continue
+			#store test status if DEV
 			if(srow=="DEV"):
 				test_status = "dev"
 				continue
+			#append options to argv
 			argv.append(srow)
 		fh.close()
 
