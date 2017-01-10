@@ -5960,6 +5960,7 @@ class krome():
 
 	##################################################################
 	def makeHeating(self):
+		from math import log10
 
 		reacts = self.reacts
 		buildFolder = self.buildFolder
@@ -6116,11 +6117,61 @@ class krome():
 
 				#replace cosmic ray heating
 				if("#KROME_heatingCR" in srow):
-					CRheat = ""
+
+					#creates fit from arXiv:1502.03380
+					#maximum density (after this is assumed constant)
+					maxH2 = 1e10 #cm-3
+					#coeffients for the polynomial
+					coeffCR = [9.1462198642562, -0.443120145068494, 0.601271617560071, -0.0710284101055109, 0.00242079494592405]
+					#coefficients for the linear part (extrapolation)
+					coeffCRLin = [1.4510849135088, 7.23277032061136]
+
+					#number of polynomial coefficients
+					ncoef = len(coeffCR)
+					#find minimum density (i.e. when linear function goes to zero, hence before is zero)
+					minH2 = 1e1**(-coeffCRLin[1]/coeffCRLin[0])
+					#evaluate maximum to use as a constant after maxH2
+					evalMax = sum([coeffCR[i]*log10(maxH2)**i for i in range(ncoef)])
+
+					#prepare polynomial
+					QH2fit = " QH2 = " + (" &\n+ ".join([str(coeffCR[i])+"*logH2**"+str(i) for i in range(ncoef)]))
+					QH2fit = QH2fit.replace("*logH2**0", "")
+					QH2fit = QH2fit.replace("**1", "")
+					QH2fit = QH2fit.replace("+ -", "- ")
+
+					#write fitting function with conditions
+					QH2function = "!automatically generated fit function\n"
+					QH2function += "! for H2 ionization, units: eV\n"
+					QH2function += "! data from arXiv:1502.03380\n"
+					QH2function += "if(n(idx_H2)>1d10) then\n"
+					QH2function += " QH2 = "+str(evalMax)+"\n"
+					QH2function += "else if((n(idx_H2).ge."+str(minH2)+").and.(n(idx_H2)<1d5)) then\n"
+					QH2function += " QH2 = "+str(coeffCRLin[0])+"*logH2 + "+str(coeffCRLin[1])+"\n"
+					QH2function += "else if(n(idx_H2)<"+str(minH2)+") then\n"
+					QH2function += " QH2 = 0d0\n"
+					QH2function += "else\n"
+					QH2function += QH2fit+"\n"
+					QH2function += "end if\n\n"
+					QH2function += "!convert eV to erg\n"
+					QH2function += "QH2 = QH2 * ev2erg\n"
+
+					#prepare heating
+					CRheat = QH2function+"\n\n"
+					#loop on reactions
 					for rea in self.reacts:
 						if(not(rea.isCR)): continue
 						CRheat += "!"+rea.verbatim+"\n"
-						CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * Hfact\n\n"
+						reactantNames = [x.name.upper() for x in rea.reactants]
+						productNames = sorted([x.name.upper() for x in rea.products])
+						print reactantNames,productNames
+						if((reactantNames==["H"]) and (productNames==sorted(["H+","E"]))):
+							CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * QH\n\n"
+						elif((reactantNames==["H2"]) and (productNames==sorted(["H2+","E"]))):
+							CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * QH2\n\n"
+						elif((reactantNames==["HE"]) and (productNames==sorted(["HE+","E"]))):
+							CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * QHe\n\n"
+						else:
+							CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * Hfact\n\n"
 					row = row.replace("#KROME_heatingCR",CRheat)
 
 				if(len(pheatvars)>0):
