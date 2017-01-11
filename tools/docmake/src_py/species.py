@@ -1,4 +1,4 @@
-import utils,itertools,os
+import utils,itertools,os,sys
 
 class species():
 
@@ -10,11 +10,15 @@ class species():
 
 
 		#check for upper case atoms, e.g. HE instead of He
-		for atom in atomSet.keys():
-			if((atom.upper()!=atom) and (atom.upper() in speciesName)):
-				orgSpeciesName = speciesName
-				speciesName = speciesName.replace(atom.upper(),atom)
-				print "WARNING: "+atom+" found upper case in "+orgSpeciesName+"! Replaced as "+speciesName
+		# only if species (without signs) is not in the list
+		if(not(speciesName.replace("+","").replace("-","") in atomSet.keys())):
+			#loop on "atoms" names
+			for atom in atomSet.keys():
+				#if found lowercase replace it
+				if((atom.upper()!=atom) and (atom.upper() in speciesName)):
+					orgSpeciesName = speciesName
+					speciesName = speciesName.replace(atom.upper(),atom)
+					print "WARNING: "+atom+" found upper case in "+orgSpeciesName+"! Replaced as "+speciesName
 
 
 		if(speciesName.startswith("J")): speciesName = speciesName[1:]+"_dust"
@@ -73,7 +77,14 @@ class species():
 			aold = a
 
 		#store exploded with real atom names
-		self.exploded = [atoms[alpha.index(x)] for x in exploded]
+		try:
+			self.exploded = [atoms[alpha.index(x)] for x in exploded]
+		except:
+			print "ERROR: wanted to parse ",self.name
+			print " but something went wrong with ", exploded
+			print " Available atoms are:", atoms
+			print " Add to atomlist.dat if needed."
+			sys.exit()
 		self.explodedFull = self.exploded + (["+"]*positiveCount) + (["-"]*negativeCount)
 
 		#store atoms
