@@ -57,6 +57,7 @@ class network:
 		self.makeHtmlSpeciesIndex()
 		self.makeHtmlGraphIndex()
 		self.makeHtmlAllRates(myOptions)
+		self.makeHtmlMultipleRates(myOptions)
 
 
 		#prepare html pages for species
@@ -438,6 +439,7 @@ class network:
 		fout.write("<li><a href=\"indexSpecies.html\">Species</a></li>")
 		fout.write("<li><a href=\"indexGraph.html\">Graphs</a></li>")
 		fout.write("<li><a href=\"indexMissingReactions.html\">Missing reactions</a></li>")
+		fout.write("<li><a href=\"multipleRates.html\">Reactions with multiple rates</a></li>")
 		fout.write("</ul>")
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
@@ -661,5 +663,58 @@ class network:
 			fout.write(utils.getFooter("footer.php"))
 			fout.close()
 
+	#*******************
+	#prepares HTML documentation for list of rate divided by number of intervals
+	def makeHtmlMultipleRates(self,myOptions):
+
+		#divide rates by number of intervals
+		multipleRates = dict()
+		for reaction in self.reactions:
+			#get number of interval
+			intervalsNumber = len(reaction.rate)
+			#initialize the list for the corresponding dictionary key
+			if(not(intervalsNumber in multipleRates)): multipleRates[intervalsNumber] = []
+			#add the reaction to dict
+			multipleRates[intervalsNumber].append(reaction)
+
+
+		#prepare a file for each variable
+		fname = "htmls/multipleRates.html"
+
+		#standard header for rates
+		tableHeader = "<tr>"+("<th>"*30)
+
+		#open HTML file to write
+		fout = open(fname,"w")
+		#add header
+		fout.write(utils.getFile("header.php"))
+		fout.write("<a href=\"index.html\">back</a><br>\n")
+		#loop on multiple rates
+		for (intervalsNumber,reactionBlock) in multipleRates.iteritems():
+			fout.write("<br><br>\n")
+			#write plural if necessary
+			intervalString = "interval"+("s" if(intervalsNumber>1) else "")
+			#table title
+			fout.write("<p style=\"font-size:20px\">Reactions with "+str(intervalsNumber)+" "+intervalString+"</p>\n")
+			#open reaction table
+			fout.write("<table width=\"50%\">\n")
+			fout.write(tableHeader+"\n")
+			#reactions sorted by unsorted reaction hash (in the html list)
+			reactionsSorted = sorted(reactionBlock, key=lambda x:x.getReactionHashUnsorted())
+
+			icount = 0
+			#loop on reactions
+			for myReaction in reactionsSorted:
+				bgcolor = ""
+				if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
+				fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+myReaction.getReactionHtmlRow()+"\n")
+				icount += 1
+			fout.write(tableHeader+"\n")
+			fout.write("</table>\n")
+
+
+		#add footer
+		fout.write(utils.getFooter("footer.php"))
+		fout.close()
 
 
