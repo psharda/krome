@@ -1,5 +1,6 @@
 import sys,species,utils,os,urllib
 from math import log10,log,exp,sqrt
+
 class reaction:
 
 	index = -1
@@ -732,18 +733,20 @@ class reaction:
 
 
 		#extrapolation lower limit
-		TminExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TminExtrapolated"])
-		Tmin = utils.htmlExpBig(self.safeExtrapolate["Tmin"])
-		extrapolCheckMin = ("SAFE" if self.safeExtrapolate["lower"] else "NOT SAFE")
-		if(self.safeExtrapolate["TminExtrapolated"]!=self.safeExtrapolate["Tmin"]):
-			fout.write(bulletPoint+"Extrapolation in range ["+TminExtrapolated+", "+Tmin+"] K is <b>"+extrapolCheckMin+"</b><br>")
+		if self.safeExtrapolate.has_key("TminExtrapolated"):
+			TminExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TminExtrapolated"])
+			Tmin = utils.htmlExpBig(self.safeExtrapolate["Tmin"])
+			extrapolCheckMin = ("SAFE" if self.safeExtrapolate["lower"] else "NOT SAFE")
+			if(self.safeExtrapolate["TminExtrapolated"]!=self.safeExtrapolate["Tmin"]):
+				fout.write(bulletPoint+"Extrapolation in range ["+TminExtrapolated+", "+Tmin+"] K is <b>"+extrapolCheckMin+"</b><br>")
 
 		#extrapolation upper limit
-		TmaxExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TmaxExtrapolated"])
-		Tmax = utils.htmlExpBig(self.safeExtrapolate["Tmax"])
-		extrapolCheckMax = ("SAFE" if self.safeExtrapolate["upper"] else "NOT SAFE")
-		if(self.safeExtrapolate["TmaxExtrapolated"]!=self.safeExtrapolate["Tmax"]):
-			fout.write(bulletPoint+"Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
+		if self.safeExtrapolate.has_key("TmaxExtrapolated"):
+			TmaxExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TmaxExtrapolated"])
+			Tmax = utils.htmlExpBig(self.safeExtrapolate["Tmax"])
+			extrapolCheckMax = ("SAFE" if self.safeExtrapolate["upper"] else "NOT SAFE")
+			if(self.safeExtrapolate["TmaxExtrapolated"]!=self.safeExtrapolate["Tmax"]):
+				fout.write(bulletPoint+"Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
 
 		#JOINTS evaluation
 		if(len(self.evaluatedJoints)>0):
