@@ -1,0 +1,7 @@
+##############
+#options for test compact
+
+-n networks/react_primordial
+-compact
+-useX
+-n networks/react_primordial

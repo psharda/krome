@@ -1,0 +1,12 @@
+##############
+#options for test shock1Dphoto
+DEV
+-n networks/react_primordial_photo
+-usePhIoniz
+-heating=PHOTO
+-cooling=ATOMIC,H2,HD,Z
+-useEquilibrium
+-useX
+-photoBins=20
+-noRecCheck
+-n networks/react_primordial_photo

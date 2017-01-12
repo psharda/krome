@@ -1,0 +1,7 @@
+##############
+#options for test shock1Dcool
+
+-n networks/react_primordial
+-cooling=H2,HD,Z,DH
+-useX
+-n networks/react_primordial

@@ -112,12 +112,26 @@ def getAtomSet(fileName):
 	return atomSet
 
 #*********************
+#html format only if geq than maxlim
+def htmlExpBig(arg,digits=2,maxLim=1e3):
+	if(arg==0): return "0"
+	if(arg>=maxLim):
+		return htmlExp(arg,digits=digits)
+	else:
+		return str(arg)
+
+#*********************
 def htmlExp(arg,digits=2):
 	if(arg==0): return "0"
 	xp = int(math.log10(abs(arg)))
 	mt = arg/1e1**(xp)
 	mt = int(mt*1e1**digits)/1e1**digits
-	return str(mt)+"&times;10<sup>"+str(xp)+"</sup>"
+	if(mt==1e0):
+		return "10<sup>"+str(xp)+"</sup>"
+	if((mt!=1e0) and (mt==int(mt))):
+		return str(int(mt))+"&times;10<sup>"+str(xp)+"</sup>"
+	else:
+		return str(mt)+"&times;10<sup>"+str(xp)+"</sup>"
 
 #*********************
 def replaceTlims(arg):

@@ -1,0 +1,9 @@
+##############
+#options for test collapse
+
+-n networks/react_primordial3
+-cooling=H2,COMPTON,CONT,CHEM
+-heating=COMPRESS,CHEM
+-H2opacity=RIPAMONTI
+-gamma=FULL
+-n networks/react_primordial3

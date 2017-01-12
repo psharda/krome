@@ -1,0 +1,7 @@
+##############
+#options for test reverse
+
+-n networks/react_NO
+-reverse
+-noSinkCheck
+-n networks/react_NO

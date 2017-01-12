@@ -391,154 +391,35 @@ class krome():
 		else:
 			return
 
-		if(args.test=="cloud"):
-			[argv.append(x) for x in ["-iRHS","-skipJacobian","-useCustomCoe=\"myCoe(:)\""]]
-			[argv.append(x) for x in ["-noRecCheck", "-noSinkCheck"]]
-			filename = "networks/react_cloud"
-		elif(args.test=="slowmanifold"):
-			filename = "networks/react_SM"
-		elif(args.test=="auto"):
-			[argv.append(x) for x in ["-photoBins=10"]]
-			filename = "networks/react_auto"
-		elif(args.test=="chianti"):
-			[argv.append(x) for x in ["-photoBins=10","-useThermoToggle","-coolLevels=99999","-noRecCheck"]]
-			[argv.append(x) for x in ["-cooling=CII,CIII,CIV,CV,CVI"]]
-			[argv.append(x) for x in ["-coolFile=tools/coolChianti.dat"]]
-			filename = "networks/react_chianti"
-		elif(args.test=="shock1Dcool"):
-			[argv.append(x) for x in ["-cooling=H2,HD,Z,DH","-useX"]]
-			filename = "networks/react_primordial"
-		elif(args.test=="shock1D"):
-			[argv.append(x) for x in ["-useX"]]
-			filename = "networks/react_primordial"
-		elif(args.test=="shock1Dphoto"):
-			[argv.append(x) for x in ["-usePhIoniz","-heating=PHOTO","-cooling=ATOMIC,H2,HD,Z","-useEquilibrium",\
-				"-useX", "-photoBins=20", "-noRecCheck"]]
-			filename = "networks/react_primordial_photo"
-			test_status = "dev" #under development
-		elif(args.test=="shock1Dlarge"):
-			[argv.append(x) for x in ["-iRHS"]]
-			filename = "networks/react_WH2008"
-		elif(args.test=="dust"):
-			[argv.append(x) for x in ["-dust=10,C,Si","-dustOptions=GROWTH,EVAP","-dustSeed=\"1d-12\""]]
-			filename = "networks/react_primordial"
-		elif(args.test=="compact"):
-			[argv.append(x) for x in ["-compact","-useX"]]
-			filename = "networks/react_primordial"
-		elif(args.test=="map"):
-			[argv.append(x) for x in ["-cooling=ATOMIC,HD,H2", "-heating=PHOTO","-photoBins=10","-useX"]]
-			filename = "networks/react_primordial_photoH2"
-		elif(args.test=="collapse"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL"]]
-			filename = "networks/react_primordial3"
-		elif(args.test=="collapseDUST"):
-			[argv.append(x) for x in ["-cooling=H2,CONT,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=EXACT","-ATOL=1d-40","-maxord=1",\
-				"-columnDensityMethod=JEANS","-useIndividualFloor=Z","-noSinkCheck"]]
-			[argv.append(x) for x in ["-dust=5,C,Si","-dustOptions=dT,H2"]]
-			filename = "networks/react_primordialZ"
-			test_status = "dev" #under development
-		elif(args.test=="collapseSurface"):
-			[argv.append(x) for x in ["-cooling=H2,CIE,CI,CII,OI,OII,CHEM,DUST", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=REDUCED","-ATOL=1d-20","-maxord=2",\
-				"-columnDensityMethod=JEANS", "-noSinkCheck", "-noRecCheck"]]
-			[argv.append(x) for x in ["-dust=3,C","-dustOptions=dT","-useIndividualFloor=Z"]]
-			filename = "networks/react_primordialZ_surface"
-			test_status = "dev" #under development
-		elif(args.test=="collapseZ"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM", "-heating=COMPRESS,CHEM", "-noSinkCheck"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1",
-				"-columnDensityMethod=JEANS","-coolingQuench=1e1"]]
-			filename = "networks/react_primordialZ"
-		elif(args.test=="collapse_COcool"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,CONT,CHEM,CO", "-heating=COMPRESS,CHEM",\
-				"-noSinkCheck"]]
-			[argv.append(x) for x in ["-H2opacity=OMUKAI","-gamma=FULL","-ATOL=1d-40","-maxord=1",\
-				"-columnDensityMethod=JEANS"]]
-			filename = "networks/react_primordialZ"
-			test_status = "dev" #under development
-		elif(args.test=="collapseCO"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM",\
-				"-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=REDUCED","-ATOL=1d-40","-maxord=1"]]
-			[argv.append(x) for x in ["-coolingQuench=10"]]
-			filename = "networks/react_COthin_noSi"
-			test_status = "dev" #under development
-		elif(args.test=="collapseZ_UV"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM",\
-				"-heating=COMPRESS,CHEM,PHOTO","-noSinkCheck"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL","-photoBins=5","-usePhotoOpacity"]]
-			filename = "networks/react_primordialZ_UV"
-			test_status = "dev" #under development
-		elif(args.test=="collapseZ_induced"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,OII,SiII,FeII,CONT,CHEM", "-heating=COMPRESS,CHEM,PHOTO"]]
-			[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL","-photoBins=10","-usePhotoInduced","-noSinkCheck"]]
-			filename = "networks/react_primordialZ"
-			test_status = "dev" #under development
-                elif(args.test=="collapseUV"):
-			[argv.append(x) for x in ["-cooling=H2,COMPTON,CIE,FF,DISS,ATOMIC", "-heating=COMPRESS,CHEM"]]
-			[argv.append(x) for x in ["-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
-			[argv.append(x) for x in ["-columnDensityMethod=JEANS"]]
-			filename = "networks/react_primordial_UV"
-                elif(args.test=="collapseUV_Xrays"):
-			[argv.append(x) for x in ["-cooling=H2,CIE,ATOMIC,FF,COMPTON", "-heating=COMPRESS,CHEM,XRAY"]]
-			[argv.append(x) for x in ["-gamma=FULL","-shielding=WG11","-conserve","-H2opacity=OMUKAI"]]
-			[argv.append(x) for x in ["-columnDensityMethod=JEANS"]]
-			filename = "networks/react_xrays"
-                elif(args.test=="earlyUniverse"):
-			[argv.append(x) for x in ["-cooling=H2GP98,COMPTON,EXPANSION"]]
-			[argv.append(x) for x in ["-useFileIdx","-computeElectrons"]]
-			filename = "networks/react_earlyUniverse"
-		elif(args.test=="stars"):
-			[argv.append(x) for x in ["-star","-usePlainIsotopes","-nomassCheck","-noSinkCheck", "-useX"]]
-			filename = "networks/react_star"
-			test_status = "dev" #under development
-		elif(args.test=="reverse"):
-			[argv.append(x) for x in ["-reverse","-noSinkCheck"]]
-			filename = "networks/react_NO"
-		elif(args.test=="atmosphere"):
-			[argv.append(x) for x in ["-noSinkCheck"]]
-			filename = "networks/react_kast80"
-			test_status = "dev" #under development
-		elif(args.test=="lotkav"):
-			[argv.append(x) for x in ["-customODE=tests/lotkav/lotkav"]]
-			filename = "networks/react_dummy"
-		elif(args.test=="lamda"):
-			[argv.append(x) for x in ["-coolFile=data/coolO2.dat", "-cooling=O2"]]
-			[argv.append(x) for x in ["-useThermoToggle"]]
-			filename = "networks/react_COthin"
-		elif(args.test=="hello"):
-                        [argv.append(x) for x in ["-noSinkCheck"]]
-			filename = "networks/react_hello"
-		elif(args.test=="customCooling"):
-			filename = "networks/react_customCool"
-		elif(args.test=="Cinterface"):
-			[argv.append(x) for x in ["-interfaceC", "-coolFile=tests/Cinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
-			filename = "tests/Cinterface/network.ntw"
-			test_status = "dev" #under development
-		elif(args.test=="Pyinterface"):
-			[argv.append(x) for x in ["-interfacePy",  "-coolFile=tests/Cinterface/coolX.dat", "-cooling=FeII", "-noSinkCheck"]]
-			filename = "tests/Cinterface/network.ntw"
-			test_status = "dev" #under development
-		elif(args.test=="fargo3d"):
-			#[argv.append(x) for x in ["-cooling=H2,COMPTON,CONT,CHEM", "-heating=COMPRESS,CHEM"]]
-			#[argv.append(x) for x in ["-H2opacity=RIPAMONTI","-gamma=FULL"]]
-			[argv.append(x) for x in ["-compact","-sh","-ATOL=1d-10"]]
-			test_status = "dev" #under development
-			filename = "networks/react_primordial3"
-		elif(args.test=="rtchem"):
-			#[argv.append(x) for x in ["-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM",\
-			#	"-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST"]]
-			#[argv.append(x) for x in ["-gamma=REDUCED"]]
-			[argv.append(x) for x in ["-photoBins=10","-sh"]]
-			filename = "networks/react_COthin_rt"
-			test_status = "dev" #under development
-		else:
-			tests = ", ".join(sorted(os.walk('tests').next()[1]))
-			print "ERROR: test \""+args.test+"\" not present!"
-			print "Available tests are: "+tests
+		#read options from file
+		optionFileName = "tests/"+args.test+"/options.opt"
+		#check if test folder and option file exist
+		if(not(file_exists(optionFileName))):
+			print "ERROR: problem loading test "+args.test+"!"
+			print " Missing option.opt file in tests/"+args.test+"/ folder or folder not present."
+			#list available tests
+			tests = (", ".join(sorted(os.walk('tests').next()[1])))
+			print " Available tests are: "+tests
 			sys.exit()
+
+		#read option file
+		fh = open(optionFileName)
+		for row in fh:
+			srow = row.strip()
+			#skip comments and blank lines
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+			#store file name
+			if(srow.startswith("-n ")):
+				(opt, filename) = [x.strip() for x in srow.split(" ") if x!=""]
+				continue
+			#store test status if DEV
+			if(srow=="DEV"):
+				test_status = "dev"
+				continue
+			#append options to argv
+			argv.append(srow)
+		fh.close()
 
 		#append extra arguments if listed
 		# e.g. -dustOptions=H2 -dustOptions=GROWTH is merged in one
@@ -6079,6 +5960,7 @@ class krome():
 
 	##################################################################
 	def makeHeating(self):
+		from math import log10
 
 		reacts = self.reacts
 		buildFolder = self.buildFolder
@@ -6235,11 +6117,61 @@ class krome():
 
 				#replace cosmic ray heating
 				if("#KROME_heatingCR" in srow):
-					CRheat = ""
+
+					#creates fit from arXiv:1502.03380
+					#maximum density (after this is assumed constant)
+					maxH2 = 1e10 #cm-3
+					#coeffients for the polynomial
+					coeffCR = [9.1462198642562, -0.443120145068494, 0.601271617560071, -0.0710284101055109, 0.00242079494592405]
+					#coefficients for the linear part (extrapolation)
+					coeffCRLin = [1.4510849135088, 7.23277032061136]
+
+					#number of polynomial coefficients
+					ncoef = len(coeffCR)
+					#find minimum density (i.e. when linear function goes to zero, hence before is zero)
+					minH2 = 1e1**(-coeffCRLin[1]/coeffCRLin[0])
+					#evaluate maximum to use as a constant after maxH2
+					evalMax = sum([coeffCR[i]*log10(maxH2)**i for i in range(ncoef)])
+
+					#prepare polynomial
+					QH2fit = " QH2 = " + (" &\n+ ".join([str(coeffCR[i])+"*logH2**"+str(i) for i in range(ncoef)]))
+					QH2fit = QH2fit.replace("*logH2**0", "")
+					QH2fit = QH2fit.replace("**1", "")
+					QH2fit = QH2fit.replace("+ -", "- ")
+
+					#write fitting function with conditions
+					QH2function = "!automatically generated fit function\n"
+					QH2function += "! for H2 ionization, units: eV\n"
+					QH2function += "! data from arXiv:1502.03380\n"
+					QH2function += "if(n(idx_H2)>1d10) then\n"
+					QH2function += " QH2 = "+str(evalMax)+"\n"
+					QH2function += "else if((n(idx_H2).ge."+str(minH2)+").and.(n(idx_H2)<1d5)) then\n"
+					QH2function += " QH2 = "+str(coeffCRLin[0])+"*logH2 + "+str(coeffCRLin[1])+"\n"
+					QH2function += "else if(n(idx_H2)<"+str(minH2)+") then\n"
+					QH2function += " QH2 = 0d0\n"
+					QH2function += "else\n"
+					QH2function += QH2fit+"\n"
+					QH2function += "end if\n\n"
+					QH2function += "!convert eV to erg\n"
+					QH2function += "QH2 = QH2 * ev2erg\n"
+
+					#prepare heating
+					CRheat = QH2function+"\n\n"
+					#loop on reactions
 					for rea in self.reacts:
 						if(not(rea.isCR)): continue
 						CRheat += "!"+rea.verbatim+"\n"
-						CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * Hfact\n\n"
+						reactantNames = [x.name.upper() for x in rea.reactants]
+						productNames = sorted([x.name.upper() for x in rea.products])
+						print reactantNames,productNames
+						if((reactantNames==["H"]) and (productNames==sorted(["H+","E"]))):
+							CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * QH\n\n"
+						elif((reactantNames==["H2"]) and (productNames==sorted(["H2+","E"]))):
+							CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * QH2\n\n"
+						elif((reactantNames==["HE"]) and (productNames==sorted(["HE+","E"]))):
+							CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * QHe\n\n"
+						else:
+							CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * Hfact\n\n"
 					row = row.replace("#KROME_heatingCR",CRheat)
 
 				if(len(pheatvars)>0):
@@ -6925,7 +6857,97 @@ class krome():
 					fout.write(row)
 		if(not(self.buildCompact)):
 			fout.close()
+			#add subroutine wrappers to functions returning array
+			self.makeUserCWrappers()
+
 		print "done!"
+
+	####################################
+	#add subroutine wrappers to functions returning array
+	def makeUserCWrappers(self):
+
+		#original file
+		fh = open(self.buildFolder+"krome_user.f90","rb")
+		#temp file
+		fout = open(self.buildFolder+"krome_user.tmp","w")
+
+		#default variables
+		functionName = "__NONE__"
+		wrapper = allWrappers = ""
+		arguments = []
+
+		#loop on user file lines
+		for row in fh:
+			srow = row.strip()
+			#look for function
+			if(srow.startswith("function")):
+				arow = srow.split("(")
+				#get function name
+				functionName = arow[0].replace("function","").strip()
+				#get arguments
+				args = arow[1].replace(")","").strip()
+				#arguments as list
+				arguments = args.split(",")
+
+				#define arguments for wrapper subroutine
+				argwrap = (args+","+functionName+"_var")
+				if(args==""): argwrap = functionName+"_var"
+
+				#start wrapper
+				wrapper = "!********************************\n"
+				wrapper += "!subroutine wrapper around "+functionName+" function\n"
+				wrapper += "subroutine "+functionName+"_wrap("+argwrap+")\n"
+
+				#flag: this function returns an array
+				returnsArray = False
+
+			#get use statements
+			if(srow.startswith("use krome_commons")):
+				wrapper += "\t"+srow+"\n"
+
+			#get implicit none statement
+			if(srow.startswith("implicit none")):
+				wrapper += "\t"+srow+"\n"
+
+			#loop on arguments definitions
+			for arg in arguments:
+				#arguments can be at the end of line or in a list
+				argw = arg.replace(" ","")
+				argindec = (srow.endswith(argw) or (argw+"," in srow) or (argw+"(" in srow))
+				#if argument definition keeps line
+				if(argindec and ("::" in srow)):
+					srown = srow.replace(functionName,functionName+"_var")
+					if(not(srown in wrapper)): wrapper += "\t"+srown+"\n"
+
+			#if function name in definition add line
+			if((functionName+"(" in srow) and ("::" in srow)):
+				#functionName+"(" in declarations means array returned
+				returnsArray = True
+				#add declaration line and append _var
+				srown = srow.replace(functionName,functionName+"_var")
+				if(not(srown in wrapper)): wrapper += "\t"+srown+"\n"
+
+			#when end function stores wrapper
+			if(srow.startswith("end function")):
+				#assign to return variable
+				wrapper += "\n\t"+functionName+"_var(:) = "+functionName+"("+args+")\n\n"
+				#add subroutine end
+				wrapper += "end subroutine "+functionName+"_wrap\n\n"
+				#stores only if function returns array
+				if(returnsArray): allWrappers += wrapper
+
+			#add wrappers before module
+			if(row.lower().startswith("end module")):
+				fout.write(allWrappers)
+			fout.write(row)
+
+		fh.close()
+		fout.close()
+
+		#replace original file (.f90) with generated (.tmp)
+		shutil.move(self.buildFolder+"krome_user.tmp",self.buildFolder+"krome_user.f90")
+
+
 
 	####################################
 	def makeReduction(self):

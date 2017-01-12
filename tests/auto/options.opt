@@ -1,0 +1,3 @@
+#options
+-n networks/react_auto
+-photoBins=10

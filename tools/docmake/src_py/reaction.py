@@ -12,10 +12,20 @@ class reaction:
 	verbatim = verbatimLatex = reactionHash = None
 	nameHtml = verbatimHtml = reactionHtmlRow = None
 	evaluation = []
+	safeExtrapolate = dict()
 
 	#********************
 	#parse csv reaction file row (constructor)
 	def __init__(self,row,reactionFormat,atomSet,reactionType):
+
+		if(reactionType=="KIDA"):
+			self.parseFormatKIDA(row,reactionFormat,atomSet,reactionType)
+		else:
+			self.parseFormatKROME(row,reactionFormat,atomSet,reactionType)
+
+	#********************
+	def parseFormatKROME(self,row,reactionFormat,atomSet,reactionType):
+
 		if(not(reactionFormat.startswith("@format:"))):
 			sys.exit("ERROR: wrong format "+reactionFormat)
 		splitFormat = reactionFormat.replace("@format:","").split(",")
@@ -63,7 +73,7 @@ class reaction:
 				print "ERROR: unknow format element "+part
 				sys.exit(reactionFormat)
 
-		#add cosmic ray if not present
+		#add cosmic rays if not present
 		hasCR = ("CR" in [x.name for x in self.reactants])
 		if(not(hasCR) and reactionType=="CR"):
 				spec = species.species("CR",atomSet)
@@ -71,6 +81,105 @@ class reaction:
 
 		#check mass and charge conservation
 		self.check()
+
+
+	#********************
+	def parseFormatKIDA(self,row,reactionFormat,atomSet,reactionType):
+
+
+		specials = ["","G","PHOTON"]
+
+		#variables for cosmic rays and photochemistry
+		CRvar = "user_crate" #name of the CR flux variable
+		Avvar = "user_Av" #name of the Av variable
+
+		#number of reactants and products expected in KIDA file
+		maxReactants = 3
+		maxProducts = 5
+
+		#spacing format
+		fmt = [11]*3 + [1] + 5*[11] +[1] + 3*[11] + [8,9] + [1,4,3] + 2*[7] + [3,6,3,2]
+		#keys names
+		keys = ["R"+str(i) for i in range(maxReactants)] + ["x"] \
+			+ ["P"+str(i) for i in range(maxProducts)] +["x"] \
+			+ ["a","b","c"] + ["F","g"] + ["x","unc","type"] \
+			+ ["tmin","tmax"] + ["formula","num","subnum","recom"]
+
+		self.rate = []
+		self.reactants = []
+		self.products = []
+		self.Tmin = [None]
+		self.Tmax = [None]
+		self.reactionType = reactionType
+
+		srow = row.strip()
+
+		dataRow = dict()
+		position = 0
+		#loop on format to get data from the row as a dictionary
+		for i in range(len(fmt)):
+			dataRow[keys[i]] = srow[position:position+fmt[i]].strip()
+			position += fmt[i]
+
+		self.Tmin = [dataRow["tmin"]]
+		self.Tmax = [dataRow["tmax"]]
+
+		for i in range(maxReactants):
+			v = dataRow["R"+str(i)].strip()
+			if(v=="e-"): v = "E"
+			if(v.upper() in specials): continue
+			spec = species.species(v,atomSet)
+			self.reactants.append(spec)
+
+		for i in range(maxProducts):
+			v = dataRow["P"+str(i)].strip()
+			if(v=="e-"): v = "E"
+			if(v.upper() in specials): continue
+			spec = species.species(v,atomSet)
+			self.products.append(spec)
+
+		#Formula is a number that referes to the formula needed to compute the rate coefficient of the reaction.
+		#see http://kida.obs.u-bordeaux1.fr/help
+		#1: Cosmic-ray ionization (direct and undirect)
+		#2: Photo-dissociation (Draine)
+		#3: Kooij
+		#4: ionpol1
+		#5: ionpol2
+		#6: Troe fall-off (NOT SUPPORTED!)
+		arow = dataRow
+		arow["formula"] = int(arow["formula"])
+		if(arow["formula"]==0):
+			KK = "auto"
+		elif(arow["formula"]==1):
+			KK = arow["a"]+"*"+CRvar
+		elif(arow["formula"]==2):
+			KK = arow["a"]
+			if(float(arow["c"])!=0e0): KK += "*exp(-"+arow["c"]+"*"+Avvar+")"
+		elif(arow["formula"]==3):
+			KK = arow["a"]
+			if(float(arow["b"])!=0e0): KK += "*(T32)**("+arow["b"]+")"
+			if(float(arow["c"])!=0e0): KK += "*exp(-"+arow["c"]+"*invT)"
+		elif(arow["formula"]==4):
+			KK = arow["a"]
+			if(float(arow["b"])!=1e0): KK += "*"+arow["b"]
+			gpart = ""
+			if(float(arow["c"])!=0e0): gpart = "+ 0.4767d0*"+arow["c"]+"*sqrt(3d2*invT)"
+			KK += "*(0.62d0 "+gpart+")"
+		elif(arow["formula"]==5):
+			KK = arow["a"]
+			if(float(arow["b"])!=1e0): KK += "*"+arow["b"]
+			gpart = ""
+			if(float(arow["c"])!=0e0):
+				gpart = "+ 0.0967d0*"+arow["c"]+"*sqrt(3d2*invT) + "
+				gpart += arow["c"]+"**2*28.501d0*invT"
+				KK += "*(1d0 "+gpart+")"
+		else:
+			print "ERROR: KIDA formula "+str(arow["formula"])+" not supported!"
+
+		KK = KK.replace("--","+").replace("++","+").replace("-+","-").replace("+-","-")
+
+		self.rate.append(KK)
+
 
 	#**************
 	#check reaction charge and mass conservation
@@ -195,6 +304,7 @@ class reaction:
 	#plot rate coefficient
 	def plotRate(self,shortcuts,varRanges):
 		self.evalRate(shortcuts,varRanges)
+		self.evaluateExtrapolation(varRanges)
 		self.doPlot()
 		self.saveEvals()
 
@@ -367,12 +477,24 @@ class reaction:
 	#**************************
 	#do plot (PNG)
 	def doPlot(self):
+		import matplotlib
+		#try to load AGG for PNG rendering (slightly faster)
+		try:
+			matplotlib.use('AGG')
+		except:
+			pass
+
 		import matplotlib.pyplot as plt
 
+		#turn off interactivity
+		plt.ioff()
+
+		#cancel current plot
 		plt.clf()
 		#max orders of magnitude y axis
 		yspanMax = 1e-10
 		hasPlot = False
+		ydataAll = []
 		#loop on different limited ranges
 		for evaluation in self.evaluation:
 			#get loop variable and evaluated rate
@@ -390,28 +512,92 @@ class reaction:
 					#if Tgas use limited ranges and plot limit points
 					xdataRange = data["xdataRange"]
 					ydataRange = data["ydataRange"]
+					ydataAll += ydataRange
 					plt.loglog(evaluation[variable]["xlimits"], evaluation[variable]["ylimits"],"ro")
 					plt.loglog(xdataRange,ydataRange,"b-")
 				else:
 					plt.clf()
 					xdataRange = xdata
 					ydataRange = ydata
+					ydataAll += ydataRange
 					plt.loglog(xdataRange,ydataRange)
 
+		#plot only if data are available
+		if(hasPlot):
+			plt.grid(b=True, color='0.65',linestyle='--')
+			#plot limited range
+			plt.xlabel(variable)
+			plt.ylabel("rate")
+			plt.title(self.getVerbatimLatex())
+			#set limits including max span
+			plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
+			#set limits if constant
+			if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
 
-				plt.grid(b=True, color='0.65',linestyle='--')
-				#plot limited range
-				plt.xlabel(variable)
-				plt.ylabel("rate")
-				plt.title(self.getVerbatimLatex())
-				#set limits including max span
-				plt.ylim(max(max(ydataRange)*yspanMax,min(ydataRange)*1e-1), max(ydataRange)*1e1)
-				#set limits if constant
-				if(min(ydataRange)==max(ydataRange)): plt.ylim(max(ydataRange)*1e-1,max(ydataRange)*1e1)
+			#if value found save plot to png file
+			plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png", dpi=150)
 
-				#if value found save plot to png file
-				if(hasPlot): plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png")
+	#******************
+	#evaluate rate extrapolation for the current reaction
+	def evaluateExtrapolation(self,varRanges):
 
+		#init Tgas limits
+		xMin = 1e99
+		xMax = -1e99
+		#init flags
+		hasData = isIncreasingMin = isDecreasingMax = False
+		isAlwaysPositiveMin = isAlwaysPositiveMax = False
+		#loop on different limited ranges
+		for evaluation in self.evaluation:
+			#get only Tgas data
+			for (variable,vdata) in evaluation.iteritems():
+				if(variable.lower()!="tgas"): continue
+				#store data
+				data = vdata
+				#store ranges
+				varRange = varRanges[variable]
+
+			#skip missing data
+			if(data==None): continue
+			hasData = True
+			#copy data locally
+			xdataRange = data["xdataRange"]
+			ydataRange = data["ydataRange"]
+			xdata = data["xdata"]
+			ydata = data["ydata"]
+			#number of data points
+			ndata = len(xdata)
+
+			#check smaller rate interval
+			if(min(xdataRange)<xMin):
+				#store min value
+				xMin = min(xdataRange)
+				#get ydata outside interval
+				ydataOutside = [ydata[i] for i in range(ndata) if(xdata[i]<xMin)]
+				#check if ydata are increasing outside
+				isIncreasingMin = (sorted(ydataOutside)==ydataOutside)
+				#check if data are always positive outside
+				isAlwaysPositiveMin = (min(ydataOutside)>0e0)
+				#store min Tgas in data structure
+				self.safeExtrapolate["Tmin"] = xMin
+
+			if(max(xdataRange)>xMax):
+				xMax = max(xdataRange)
+				ydataOutside = [ydata[i] for i in range(ndata) if(xdata[i]>xMax)]
+				isDecreasingMax = (sorted(ydataOutside)==ydataOutside[::-1])
+				isAlwaysPositiveMax = (min(ydataOutside)>0e0)
+				self.safeExtrapolate["Tmax"] = xMax
+
+		#check extrapolation only if has data
+		if(hasData):
+			#store extrapolated Tgas limits
+			self.safeExtrapolate["TminExtrapolated"] = min(varRange)
+			self.safeExtrapolate["TmaxExtrapolated"] = max(varRange)
+			#store if extrapolation is safe or not
+			self.safeExtrapolate["lower"] = (isAlwaysPositiveMin and isIncreasingMin)
+			self.safeExtrapolate["upper"] = (isAlwaysPositiveMax and isDecreasingMax)
+
+			print self.safeExtrapolate
 
 	#****************
 	#save evaluation as a json structure
@@ -457,11 +643,12 @@ class reaction:
 		fout.write(utils.getFile("header.php"))
 		fout.write("<p style=\"font-size:30px\">"+self.getVerbatimHtml()+"</p>\n")
 		fout.write("<br>\n")
-		fout.write("<a href=\"indexReactions.html\">back</a>\n")
-		fout.write("<br>\n")
+		fout.write("<a href=\"indexReactions.html\">back</a><br>\n")
 		urlencoded = urllib.quote_plus(" + ".join([x.name for x in self.reactants]))
-		urlkida = "http://kida.obs.u-bordeaux1.fr/search.html?species="+urlencoded+"&reactprod=both&astroplaneto=Both&ionneutral=ion&isomers=1&ids="
-		fout.write("<a href=\""+urlkida+"\" target=\"_blank\">search in KIDA</a>\n")
+		urlkida = "http://kida.obs.u-bordeaux1.fr/search.html?species="+urlencoded+"&reactprod=reactants&astroplaneto=Both&ionneutral=ion&isomers=1&ids="
+		fout.write("<a href=\""+urlkida+"\" target=\"_blank\">search in KIDA</a><br>\n")
+		urlJSON = "../evals/rate_"+str(self.getReactionHash())+".json"
+		fout.write("<a href=\""+urlJSON+"\">get rate evaluation in JSON format</a>\n")
 		fout.write("<br><br>\n")
 		fout.write("<table>\n")
 		fout.write("<tr><th><th><th>\n")
@@ -471,7 +658,15 @@ class reaction:
 			if(label==""): separator = ""
 			fout.write("<tr><td>"+label+"<td>"+separator+"<td>"+value+"\n")
 		fout.write("<tr><th><th><th>\n")
-		fout.write("</table>\n")
+		fout.write("</table><br>\n")
+		TminExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TminExtrapolated"])
+		Tmin = utils.htmlExpBig(self.safeExtrapolate["Tmin"])
+		extrapolCheckMin = ("SAFE" if self.safeExtrapolate["lower"] else "NOT SAFE")
+		TmaxExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TmaxExtrapolated"])
+		Tmax = utils.htmlExpBig(self.safeExtrapolate["Tmax"])
+		extrapolCheckMax = ("SAFE" if self.safeExtrapolate["upper"] else "NOT SAFE")
+		fout.write("Extrapolation in range ["+TminExtrapolated+", "+Tmin+"] K is <b>"+extrapolCheckMin+"</b><br>")
+		fout.write("Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
 
 		for rng in myOptions.range:
 			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]

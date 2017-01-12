@@ -397,10 +397,22 @@ contains
     use krome_commons
     implicit none
     real*8::heat_CR,n(:),Tgas,Hfact,k(:)
+    real*8::logH2,QH2,QH,QHe,ev2erg
 
-    Hfact = 3.20435313d-11 !erg
+    ev2erg = 1.60217662d-12
+    Hfact = 2d1*ev2erg !erg
 
+    !precompute log10(H2)
+    logH2 = log10(n(idx_H2))
+
+    !init heating
     heat_CR = 0d0
+
+    !heating per H ionization (eV)
+    QH = 4.3d0 * ev2erg
+
+    !heating per He ionization, same as H following Glassgold+2012
+    QHe = QH
 
 #KROME_heatingCR
 

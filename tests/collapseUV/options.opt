@@ -1,0 +1,12 @@
+##############
+#options for test collapseUV
+
+-n networks/react_primordial_UV
+-cooling=H2,COMPTON,CIE,FF,DISS,ATOMIC
+-heating=COMPRESS,CHEM
+-gamma=FULL
+-shielding=WG11
+-conserve
+-H2opacity=OMUKAI
+-columnDensityMethod=JEANS
+-n networks/react_primordial_UV

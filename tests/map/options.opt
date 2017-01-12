@@ -1,0 +1,9 @@
+##############
+#options for test map
+
+-n networks/react_primordial_photoH2
+-cooling=ATOMIC,HD,H2
+-heating=PHOTO
+-photoBins=10
+-useX
+-n networks/react_primordial_photoH2

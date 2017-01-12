@@ -10,19 +10,88 @@ class network:
 	#class constructor
 	def __init__(self,myOptions):
 
-		#default format
-		reactionFormat = "@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate"
 
 		#get network file name
 		fileName = myOptions.network
 
 		#read atoms
 		atomSet = utils.getAtomSet("atomlist.dat")
-		#read shortcuts
-		shortcuts = utils.getShortcuts()
 
 		#load thermochemical data
 		self.thermochemicalData = utils.getThermochemicalData("thermo30.dat")
+
+		#read shortcuts
+		shortcuts = utils.getShortcuts()
+
+		#read network file in KROME format
+		if(self.detectNetworkType(fileName)=="KIDA"):
+			self.readFileKIDA(fileName,atomSet)
+		else:
+			self.readFileKROME(fileName,atomSet,shortcuts)
+
+		#merge reactions with multiple rates
+		print "merging multiple reactions"
+		self.mergeReactions()
+
+		#get a list with missing reactions (reactants)
+		self.missingReactions = self.getMissing()
+
+		#get ranges from option file
+		varRanges = dict()
+		for rng in myOptions.range:
+			#store range name and range limits
+			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
+			varRanges[rangeName] = [float(x) for x in rangeValue.split(",")]
+			print rangeName, varRanges[rangeName]
+
+		#clear folders (html and png)
+		self.clearFolders()
+
+		#prepare graphs
+		self.makeGraph()
+
+		#create reaction index page
+		self.makeHtmlIndex()
+		self.makeHtmlMissingReactionIndex(myOptions)
+		self.makeHtmlReactionIndex(myOptions)
+		self.makeHtmlSpeciesIndex()
+		self.makeHtmlGraphIndex()
+		self.makeHtmlAllRates(myOptions)
+		self.makeHtmlMultipleRates(myOptions)
+
+
+		#prepare html pages for species
+		for mySpecies in self.getSpecies():
+			mySpecies.makeHtmlPage(self)
+			mySpecies.makeAllRatesHtmlPage(self,myOptions)
+
+		#plotting rates
+		print "plotting rates..."
+		icount = 0
+		#loop on reactions to evaluate and plot
+		for myReaction in self.reactions:
+			print str(int(icount*1e2/len(self.reactions)))+"%", myReaction.getVerbatim()
+			myReaction.plotRate(shortcuts,varRanges)
+			myReaction.makeHtmlPage(myOptions)
+			icount += 1
+
+
+	#********************
+	def detectNetworkType(self,fileName):
+		fh = open(fileName,"rb")
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+			if("," in srow): return "KROME"
+		fh.close()
+		return "KIDA"
+
+	#************************
+	def readFileKROME(self,fileName,atomSet,shortcuts):
+
+		#default format
+		reactionFormat = "@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate"
 
 		inBlockCR = False
 
@@ -62,49 +131,29 @@ class network:
 			self.reactions.append(myReaction)
 		fh.close()
 
-		#merge reactions with multiple rates
-		print "merging multiple reactions"
-		self.mergeReactions()
-
-		#get a list with missing reactions (reactants)
-		self.missingReactions = self.getMissing()
-
-		#get ranges from option file
-		varRanges = dict()
-		for rng in myOptions.range:
-			#store range name and range limits
-			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
-			varRanges[rangeName] = [float(x) for x in rangeValue.split(",")]
-			print rangeName, varRanges[rangeName]
-
-		#clear folders (html and png)
-		self.clearFolders()
-
-		#prepare graphs
-		self.makeGraph()
-
-		#create reaction index page
-		self.makeHtmlIndex()
-		self.makeHtmlMissingReactionIndex(myOptions)
-		self.makeHtmlReactionIndex(myOptions)
-		self.makeHtmlSpeciesIndex()
-		self.makeHtmlGraphIndex()
-		self.makeHtmlAllRates(myOptions)
 
 
-		#prepare html pages for species
-		for mySpecies in self.getSpecies():
-			mySpecies.makeHtmlPage(self)
+	#**************
+	def readFileKIDA(self,fileName,atomSet):
+		self.reactions = []
+		print "reading network "+fileName
 
-		#plotting rates
-		print "plotting rates..."
-		icount = 0
-		#loop on reactions to evaluate and plot
-		for myReaction in self.reactions:
-			print str(int(icount*1e2/len(self.reactions)))+"%", myReaction.getVerbatim()
-			myReaction.plotRate(shortcuts,varRanges)
-			myReaction.makeHtmlPage(myOptions)
-			icount += 1
+		fh = open(fileName,"rb")
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+
+			reactionType = "KIDA"
+			reactionFormat = ""
+
+			#parse row line for reaction
+			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType)
+
+			#add parsed reaction to reactions structure in network
+			self.reactions.append(myReaction)
+
+		fh.close()
 
 	#**************
 	#get all network species
@@ -181,6 +230,9 @@ class network:
 
 		import subprocess
 
+		#maximum number of nodes
+		maxNodes = 50
+
 		#loop on all available atoms in the network
 		for refAtom in self.getAtoms():
 			print "creating graphs for "+refAtom+"..."
@@ -220,6 +272,11 @@ class network:
 
 			if(len(networkMap.keys())==0): continue
 
+			#skip network with too many nodes
+			if(len(networkMap.keys())>maxNodes):
+				print "WARNING: too many nodes, skipping graph!"
+				continue
+
 			nodeLabels = dict()
 			#loop on starting edges
 			for myR in networkMap.keys():
@@ -254,8 +311,17 @@ class network:
 		#get list of species
 		species = self.getSpecies()
 
+		#limit to produce missing reactions
+		expectedReactionsMax = int(1e4)
+
 		#evaluate expected reactions
-		print "expected reactions:",len(species)**2+len(species)
+		expectedReactions = len(species)**2+len(species)
+		print "expected reactions:", expectedReactions
+
+		#skip if too many reactions
+		if(expectedReactions>expectedReactionsMax):
+			print "WARNING: too many expected reactions skipping missing reactions!"
+			return []
 
 		#unimolecular reactants to be skipped
 		skipUnimol = ["CR","E"]
@@ -373,6 +439,7 @@ class network:
 		fout.write("<li><a href=\"indexSpecies.html\">Species</a></li>")
 		fout.write("<li><a href=\"indexGraph.html\">Graphs</a></li>")
 		fout.write("<li><a href=\"indexMissingReactions.html\">Missing reactions</a></li>")
+		fout.write("<li><a href=\"multipleRates.html\">Reactions with multiple rates</a></li>")
 		fout.write("</ul>")
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
@@ -423,19 +490,20 @@ class network:
 		fout.write("<a href=\"index.html\">back</a><br>\n")
 		fout.write("<br><br>\n")
 		#reaction table
-		fout.write("<table>\n")
-		fout.write("<tr><th><th>\n")
-		fout.write("<tr><td>name<td>&Delta;H (K)\n")
-		fout.write("<tr><th><th>\n")
+		fout.write("<table width=\"60%\">\n")
+		fout.write("<tr><th><th><th>\n")
+		fout.write("<tr><td>name<td>&Delta;H@0K (kJ/mol)<td>&Delta;H@298.15K (kJ/mol)\n")
+		fout.write("<tr><th><th><th>\n")
 		icount = 0
 		#loop on reactions
 		for mySpecies in sorted(self.getSpecies(),key=lambda x:x.name):
 			bgcolor = ""
 			if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
-			enthalpy = mySpecies.getEnthalpy(self.thermochemicalData)
-			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"&nbsp;<td>"+str(enthalpy)+"\n")
+			enthalpy0 = mySpecies.getEnthalpy(self.thermochemicalData,Tgas=1e-40)
+			enthalpy298 = mySpecies.getEnthalpy(self.thermochemicalData)
+			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"<td>"+str(enthalpy0)+"<td>"+str(enthalpy298)+"\n")
 			icount += 1
-		fout.write("<tr><th><th>\n")
+		fout.write("<tr><th><th><th>\n")
 		fout.write("</table>\n")
 
 		#add footer
@@ -595,5 +663,58 @@ class network:
 			fout.write(utils.getFooter("footer.php"))
 			fout.close()
 
+	#*******************
+	#prepares HTML documentation for list of rate divided by number of intervals
+	def makeHtmlMultipleRates(self,myOptions):
+
+		#divide rates by number of intervals
+		multipleRates = dict()
+		for reaction in self.reactions:
+			#get number of interval
+			intervalsNumber = len(reaction.rate)
+			#initialize the list for the corresponding dictionary key
+			if(not(intervalsNumber in multipleRates)): multipleRates[intervalsNumber] = []
+			#add the reaction to dict
+			multipleRates[intervalsNumber].append(reaction)
+
+
+		#prepare a file for each variable
+		fname = "htmls/multipleRates.html"
+
+		#standard header for rates
+		tableHeader = "<tr>"+("<th>"*30)
+
+		#open HTML file to write
+		fout = open(fname,"w")
+		#add header
+		fout.write(utils.getFile("header.php"))
+		fout.write("<a href=\"index.html\">back</a><br>\n")
+		#loop on multiple rates
+		for (intervalsNumber,reactionBlock) in multipleRates.iteritems():
+			fout.write("<br><br>\n")
+			#write plural if necessary
+			intervalString = "interval"+("s" if(intervalsNumber>1) else "")
+			#table title
+			fout.write("<p style=\"font-size:20px\">Reactions with "+str(intervalsNumber)+" "+intervalString+"</p>\n")
+			#open reaction table
+			fout.write("<table width=\"50%\">\n")
+			fout.write(tableHeader+"\n")
+			#reactions sorted by unsorted reaction hash (in the html list)
+			reactionsSorted = sorted(reactionBlock, key=lambda x:x.getReactionHashUnsorted())
+
+			icount = 0
+			#loop on reactions
+			for myReaction in reactionsSorted:
+				bgcolor = ""
+				if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
+				fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+myReaction.getReactionHtmlRow()+"\n")
+				icount += 1
+			fout.write(tableHeader+"\n")
+			fout.write("</table>\n")
+
+
+		#add footer
+		fout.write(utils.getFooter("footer.php"))
+		fout.close()
 
 

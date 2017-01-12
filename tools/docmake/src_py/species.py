@@ -1,4 +1,4 @@
-import utils,itertools
+import utils,itertools,os,sys
 
 class species():
 
@@ -10,11 +10,25 @@ class species():
 
 
 		#check for upper case atoms, e.g. HE instead of He
-		for atom in atomSet.keys():
-			if((atom.upper()!=atom) and (atom.upper() in speciesName)):
-				orgSpeciesName = speciesName
-				speciesName = speciesName.replace(atom.upper(),atom)
-				print "WARNING: "+atom+" found upper case in "+orgSpeciesName+"! Replaced as "+speciesName
+		# only if species (without signs) is not in the list
+		if(not(speciesName.replace("+","").replace("-","") in atomSet.keys())):
+			#loop on "atoms" names
+			for atom in atomSet.keys():
+				#if found lowercase replace it
+				if((atom.upper()!=atom) and (atom.upper() in speciesName)):
+					orgSpeciesName = speciesName
+					speciesName = speciesName.replace(atom.upper(),atom)
+					print "WARNING: "+atom+" found upper case in "+orgSpeciesName+"! Replaced as "+speciesName
+
+
+		if(speciesName.startswith("J")): speciesName = speciesName[1:]+"_dust"
+
+		#replace linear and chain prefix with underscore
+		isoreplace = {"c-":"c_", "l-":"l_"}
+		for (iso,isorep) in isoreplace.iteritems():
+			if(speciesName.startswith(iso) and len(speciesName)>len(iso)):
+				speciesName = speciesName.replace(iso,isorep)
+
 
 		self.name = speciesName
 
@@ -63,7 +77,14 @@ class species():
 			aold = a
 
 		#store exploded with real atom names
-		self.exploded = [atoms[alpha.index(x)] for x in exploded]
+		try:
+			self.exploded = [atoms[alpha.index(x)] for x in exploded]
+		except:
+			print "ERROR: wanted to parse ",self.name
+			print " but something went wrong with ", exploded
+			print " Available atoms are:", atoms
+			print " Add to atomlist.dat if needed."
+			sys.exit()
 		self.explodedFull = self.exploded + (["+"]*positiveCount) + (["-"]*negativeCount)
 
 		#store atoms
@@ -165,6 +186,8 @@ class species():
 		fout.write("<a href=\"indexSpecies.html\">back</a>\n")
 		fout.write("<p>Enthalpy @ 298.15K: <b>" \
 			+ str(self.getEnthalpy(myNetwork.thermochemicalData)) + "</b> kJ/mol</p>")
+		fnameURL = "species_allrates_"+str(self.nameFile)+".html"
+		fout.write("<p><a href=\""+fnameURL+"\">All plots in a single page</a></p>")
 
 		fout.write("<br><br>\n")
 		fout.write("<p style=\"font-size:20px\">Formation channels</p><br>\n")
@@ -195,7 +218,44 @@ class species():
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
 
+	#****************************
+	def makeAllRatesHtmlPage(self,myNetwork,myOptions):
 
+		fname = "htmls/species_allrates_"+str(self.nameFile)+".html"
+
+		tableFormation = []
+		tableDestruction = []
+		for reactions in myNetwork.reactions:
+			if(self.name in [x.name for x in reactions.products]):
+				tableFormation.append(reactions)
+			if(self.name in [x.name for x in reactions.reactants]):
+				tableDestruction.append(reactions)
+
+		fout = open(fname,"w")
+		fout.write(utils.getFile("header.php"))
+		fout.write("<p style=\"font-size:30px\">"+self.nameHtml+"</p>\n")
+		fout.write("<br>\n")
+		fout.write("<a href=\"indexSpecies.html\">back</a>\n")
+
+		reactions = {"formation":tableFormation, "destruction":tableDestruction}
+
+		#loop on reactions block
+		for (k,data) in reactions.iteritems():
+			fout.write("<br><br>\n")
+			fout.write("<p style=\"font-size:20px\">"+k.title()+" channels</p><br>\n")
+			#loop on reactions
+			for reaction in data:
+				#loop on variables
+				for variable in myOptions.getRanges().keys():
+					fnamePNG = "../pngs/rate_"+str(reaction.getReactionHash())+"_"+variable+".png"
+					if(reaction.hasVariable(myOptions,variable)):
+						#fout.write("<img src=\""+fnamePNG+"\">")
+						linkURL = "<a href=\"rate_"+reaction.getReactionHash()+".html\">details</a>"
+						fout.write("<img src=\""+fnamePNG+"\" alt=\"&#9888; MISSING: "+reaction.getVerbatim()+"\"><br>"+linkURL+"<br><br>")
+
+
+		fout.write(utils.getFooter("footer.php"))
+		fout.close()
 
 
 

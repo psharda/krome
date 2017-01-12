@@ -1,0 +1,10 @@
+##############
+#options for test stars
+DEV
+-n networks/react_star
+-star
+-usePlainIsotopes
+-nomassCheck
+-noSinkCheck
+-useX
+-n networks/react_star

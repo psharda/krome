@@ -2347,7 +2347,8 @@ contains
   !get the names of the reactions as a
   ! character*50 array of krome_nrea
   ! elements
-  function krome_get_rnames() !!#KROME_bindC !! cannot yet be called from C
+  !!#KROME_bindC !! cannot yet be called from C
+  function krome_get_rnames()
     use krome_commons
     use krome_subs
     use krome_getphys
@@ -2462,7 +2463,8 @@ contains
   !get an array of character*16 and size krome_nmols
   ! containing the names of all the species.
   ! alias for get_names
-  function krome_get_names() !! #KROME_bindC !! cannot yet be called from C
+  !! #KROME_bindC !! cannot yet be called from C
+  function krome_get_names()
     use krome_subs
     use krome_commons
     use krome_getphys
@@ -2535,7 +2537,8 @@ contains
   !*****************
   !get the index of the species with name name.
   ! alias for get_index
-  function krome_get_index(name) !!#KROME_bindC !! cannot yet be called from C
+  !!#KROME_bindC !! cannot yet be called from C
+  function krome_get_index(name)
     use krome_subs
     implicit none
 #KROME_integer :: krome_get_index

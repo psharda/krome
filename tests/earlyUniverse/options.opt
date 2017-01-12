@@ -1,0 +1,8 @@
+##############
+#options for test earlyUniverse
+
+-n networks/react_earlyUniverse
+-cooling=H2GP98,COMPTON,EXPANSION
+-useFileIdx
+-computeElectrons
+-n networks/react_earlyUniverse
