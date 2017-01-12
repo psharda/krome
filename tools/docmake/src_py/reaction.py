@@ -520,19 +520,20 @@ class reaction:
 					ydataAll += ydataRange
 					plt.loglog(xdataRange,ydataRange)
 
+		#plot only if data are available
+		if(hasPlot):
+			plt.grid(b=True, color='0.65',linestyle='--')
+			#plot limited range
+			plt.xlabel(variable)
+			plt.ylabel("rate")
+			plt.title(self.getVerbatimLatex())
+			#set limits including max span
+			plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
+			#set limits if constant
+			if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
 
-		plt.grid(b=True, color='0.65',linestyle='--')
-		#plot limited range
-		plt.xlabel(variable)
-		plt.ylabel("rate")
-		plt.title(self.getVerbatimLatex())
-		#set limits including max span
-		plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
-		#set limits if constant
-		if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
-
-		#if value found save plot to png file
-		if(hasPlot): plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png", dpi=150)
+			#if value found save plot to png file
+			plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png", dpi=150)
 
 
 	#****************
