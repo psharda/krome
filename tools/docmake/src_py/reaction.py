@@ -580,11 +580,12 @@ class reaction:
 		fout.write(utils.getFile("header.php"))
 		fout.write("<p style=\"font-size:30px\">"+self.getVerbatimHtml()+"</p>\n")
 		fout.write("<br>\n")
-		fout.write("<a href=\"indexReactions.html\">back</a>\n")
-		fout.write("<br>\n")
+		fout.write("<a href=\"indexReactions.html\">back</a><br>\n")
 		urlencoded = urllib.quote_plus(" + ".join([x.name for x in self.reactants]))
-		urlkida = "http://kida.obs.u-bordeaux1.fr/search.html?species="+urlencoded+"&reactprod=both&astroplaneto=Both&ionneutral=ion&isomers=1&ids="
-		fout.write("<a href=\""+urlkida+"\" target=\"_blank\">search in KIDA</a>\n")
+		urlkida = "http://kida.obs.u-bordeaux1.fr/search.html?species="+urlencoded+"&reactprod=reactants&astroplaneto=Both&ionneutral=ion&isomers=1&ids="
+		fout.write("<a href=\""+urlkida+"\" target=\"_blank\">search in KIDA</a><br>\n")
+		urlJSON = "../evals/rate_"+str(self.getReactionHash())+".json"
+		fout.write("<a href=\""+urlJSON+"\">get rate evaluation in JSON format</a>\n")
 		fout.write("<br><br>\n")
 		fout.write("<table>\n")
 		fout.write("<tr><th><th><th>\n")
