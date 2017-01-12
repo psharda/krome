@@ -576,8 +576,9 @@ class reaction:
 				ydataOutside = [ydata[i] for i in range(ndata) if(xdata[i]<xMin)]
 				#check if ydata are increasing outside
 				isIncreasingMin = (sorted(ydataOutside)==ydataOutside)
-				#check if data are always positive outside
-				isAlwaysPositiveMin = (min(ydataOutside)>0e0)
+				#check if data are always positive outside (only if data are present)
+				isAlwaysPositiveMin = True
+				if(len(ydataOutside)>0): isAlwaysPositiveMin = (min(ydataOutside)>0e0)
 				#store min Tgas in data structure
 				self.safeExtrapolate["Tmin"] = xMin
 
@@ -585,7 +586,8 @@ class reaction:
 				xMax = max(xdataRange)
 				ydataOutside = [ydata[i] for i in range(ndata) if(xdata[i]>xMax)]
 				isDecreasingMax = (sorted(ydataOutside)==ydataOutside[::-1])
-				isAlwaysPositiveMax = (min(ydataOutside)>0e0)
+				isAlwaysPositiveMax = True
+				if(len(ydataOutside)>0): isAlwaysPositiveMax = (min(ydataOutside)>0e0)
 				self.safeExtrapolate["Tmax"] = xMax
 
 		#check extrapolation only if has data
@@ -596,8 +598,6 @@ class reaction:
 			#store if extrapolation is safe or not
 			self.safeExtrapolate["lower"] = (isAlwaysPositiveMin and isIncreasingMin)
 			self.safeExtrapolate["upper"] = (isAlwaysPositiveMax and isDecreasingMax)
-
-			print self.safeExtrapolate
 
 	#****************
 	#save evaluation as a json structure
@@ -659,14 +659,20 @@ class reaction:
 			fout.write("<tr><td>"+label+"<td>"+separator+"<td>"+value+"\n")
 		fout.write("<tr><th><th><th>\n")
 		fout.write("</table><br>\n")
+
+		#extrapolation lower limit
 		TminExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TminExtrapolated"])
 		Tmin = utils.htmlExpBig(self.safeExtrapolate["Tmin"])
 		extrapolCheckMin = ("SAFE" if self.safeExtrapolate["lower"] else "NOT SAFE")
+		if(self.safeExtrapolate["TminExtrapolated"]!=self.safeExtrapolate["Tmin"]):
+			fout.write("Extrapolation in range ["+TminExtrapolated+", "+Tmin+"] K is <b>"+extrapolCheckMin+"</b><br>")
+
+		#extrapolation upper limit
 		TmaxExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TmaxExtrapolated"])
 		Tmax = utils.htmlExpBig(self.safeExtrapolate["Tmax"])
 		extrapolCheckMax = ("SAFE" if self.safeExtrapolate["upper"] else "NOT SAFE")
-		fout.write("Extrapolation in range ["+TminExtrapolated+", "+Tmin+"] K is <b>"+extrapolCheckMin+"</b><br>")
-		fout.write("Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
+		if(self.safeExtrapolate["TmaxExtrapolated"]!=self.safeExtrapolate["Tmax"]):
+			fout.write("Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
 
 		for rng in myOptions.range:
 			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
