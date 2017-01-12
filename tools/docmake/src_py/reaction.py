@@ -625,19 +625,23 @@ class reaction:
 		reactantsList = [x.getHtmlName() for x in self.reactants]
 		productsList = [x.getHtmlName() for x in self.products]
 
+		header = "<tr><th><th><th>\n"
+
 		table = []
+		tableNotes = []
 		#table.append(["reactants", (", ".join(reactantsList))])
 		#table.append(["products", (", ".join(productsList))])
 		for icount in range(len(self.rate)):
+			table.append(["header", header])
 			table.append(["rate", self.rate[icount]])
 			table.append(["Tmin", self.Tmin[icount]])
 			table.append(["Tmax", self.Tmax[icount]])
 
 		for (shortcutName,shortcutExpression) in self.shortcutsFound.iteritems():
-			table.append(["", shortcutName+" = "+shortcutExpression])
+			tableNotes.append(shortcutName+" = "+shortcutExpression)
 
 		for warning in self.warnings:
-			table.append(["", warning])
+			tableNotes.append(warning)
 
 		fout = open(fname,"w")
 		fout.write(utils.getFile("header.php"))
@@ -651,28 +655,37 @@ class reaction:
 		fout.write("<a href=\""+urlJSON+"\">get rate evaluation in JSON format</a>\n")
 		fout.write("<br><br>\n")
 		fout.write("<table>\n")
-		fout.write("<tr><th><th><th>\n")
 		for (label,value) in table:
 			if(value==None): continue
-			separator = "&nbsp;&nbsp;:&nbsp;&nbsp;"
-			if(label==""): separator = ""
-			fout.write("<tr><td>"+label+"<td>"+separator+"<td>"+value+"\n")
-		fout.write("<tr><th><th><th>\n")
-		fout.write("</table><br>\n")
+			if(label=="header"):
+				fout.write(value)
+			else:
+				separator = "&nbsp;&nbsp;:&nbsp;&nbsp;"
+				fout.write("<tr><td>"+label+"<td>"+separator+"<td>"+value+"\n")
+		fout.write(header)
+		fout.write("</table><br><br>\n")
+
+		bulletPoint = "&nbsp;&nbsp;&#9656;&nbsp;"
+		#add notes and warnings
+		if(len(tableNotes)>0):
+			fout.write("Notes and warnings:<br>\n")
+			for value in tableNotes:
+				if(value!=None): fout.write(bulletPoint+value+"<br>\n")
+
 
 		#extrapolation lower limit
 		TminExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TminExtrapolated"])
 		Tmin = utils.htmlExpBig(self.safeExtrapolate["Tmin"])
 		extrapolCheckMin = ("SAFE" if self.safeExtrapolate["lower"] else "NOT SAFE")
 		if(self.safeExtrapolate["TminExtrapolated"]!=self.safeExtrapolate["Tmin"]):
-			fout.write("Extrapolation in range ["+TminExtrapolated+", "+Tmin+"] K is <b>"+extrapolCheckMin+"</b><br>")
+			fout.write(bulletPoint+"Extrapolation in range ["+TminExtrapolated+", "+Tmin+"] K is <b>"+extrapolCheckMin+"</b><br>")
 
 		#extrapolation upper limit
 		TmaxExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TmaxExtrapolated"])
 		Tmax = utils.htmlExpBig(self.safeExtrapolate["Tmax"])
 		extrapolCheckMax = ("SAFE" if self.safeExtrapolate["upper"] else "NOT SAFE")
 		if(self.safeExtrapolate["TmaxExtrapolated"]!=self.safeExtrapolate["Tmax"]):
-			fout.write("Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
+			fout.write(bulletPoint+"Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
 
 		for rng in myOptions.range:
 			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
