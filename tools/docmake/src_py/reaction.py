@@ -475,12 +475,24 @@ class reaction:
 	#**************************
 	#do plot (PNG)
 	def doPlot(self):
+		import matplotlib
+		#try to load AGG for PNG rendering (slightly faster)
+		try:
+			matplotlib.use('AGG')
+		except:
+			pass
+
 		import matplotlib.pyplot as plt
 
+		#turn off interactivity
+		plt.ioff()
+
+		#cancel current plot
 		plt.clf()
 		#max orders of magnitude y axis
 		yspanMax = 1e-10
 		hasPlot = False
+		ydataAll = []
 		#loop on different limited ranges
 		for evaluation in self.evaluation:
 			#get loop variable and evaluated rate
@@ -498,27 +510,29 @@ class reaction:
 					#if Tgas use limited ranges and plot limit points
 					xdataRange = data["xdataRange"]
 					ydataRange = data["ydataRange"]
+					ydataAll += ydataRange
 					plt.loglog(evaluation[variable]["xlimits"], evaluation[variable]["ylimits"],"ro")
 					plt.loglog(xdataRange,ydataRange,"b-")
 				else:
 					plt.clf()
 					xdataRange = xdata
 					ydataRange = ydata
+					ydataAll += ydataRange
 					plt.loglog(xdataRange,ydataRange)
 
 
-				plt.grid(b=True, color='0.65',linestyle='--')
-				#plot limited range
-				plt.xlabel(variable)
-				plt.ylabel("rate")
-				plt.title(self.getVerbatimLatex())
-				#set limits including max span
-				plt.ylim(max(max(ydataRange)*yspanMax,min(ydataRange)*1e-1), max(ydataRange)*1e1)
-				#set limits if constant
-				if(min(ydataRange)==max(ydataRange)): plt.ylim(max(ydataRange)*1e-1,max(ydataRange)*1e1)
+		plt.grid(b=True, color='0.65',linestyle='--')
+		#plot limited range
+		plt.xlabel(variable)
+		plt.ylabel("rate")
+		plt.title(self.getVerbatimLatex())
+		#set limits including max span
+		plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
+		#set limits if constant
+		if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
 
-				#if value found save plot to png file
-				if(hasPlot): plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png")
+		#if value found save plot to png file
+		if(hasPlot): plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png", dpi=150)
 
 
 	#****************
