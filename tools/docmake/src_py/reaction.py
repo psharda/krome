@@ -305,6 +305,7 @@ class reaction:
 	def plotRate(self,shortcuts,varRanges):
 		self.evalRate(shortcuts,varRanges)
 		self.evaluateExtrapolation(varRanges)
+		self.evaluateJoints()
 		self.doPlot()
 		self.saveEvals()
 
@@ -411,6 +412,15 @@ class reaction:
 					Tmax = min(varMax,Tmax)
 					valsRange = [x for x in vals if(Tmin<=x and x<=Tmax)]
 					valsRange = [Tmin]+valsRange+[Tmax]
+
+					#add additional points close to the limits (needed by evaluate joints)
+					vals += [Tmin,Tmax]
+					for dx in [0.5,1e0]:
+						if(Tmin-dx>0): vals += [Tmin-dx]
+						vals += [Tmin+dx, Tmax-dx, Tmax+dx]
+
+					#sort Tgas values
+					vals = sorted(vals)
 
 				#when is not temperature if variable not in rate skip rate
 				if(not(isTgas)):
@@ -560,9 +570,10 @@ class reaction:
 			#skip missing data
 			if(data==None): continue
 			hasData = True
-			#copy data locally
+			#copy data locally (evaluation in the rate Tgas range)
 			xdataRange = data["xdataRange"]
 			ydataRange = data["ydataRange"]
+			#copy data locally (evaluation in the whole Tgas range)
 			xdata = data["xdata"]
 			ydata = data["ydata"]
 			#number of data points
@@ -598,6 +609,53 @@ class reaction:
 			#store if extrapolation is safe or not
 			self.safeExtrapolate["lower"] = (isAlwaysPositiveMin and isIncreasingMin)
 			self.safeExtrapolate["upper"] = (isAlwaysPositiveMax and isDecreasingMax)
+
+	#****************
+	#evaluate rate joints
+	def evaluateJoints(self):
+
+		self.evaluatedJoints = []
+
+		dataAll = []
+		#loop on different limited ranges
+		for evaluation in self.evaluation:
+			#get only Tgas data
+			for (variable,vdata) in evaluation.iteritems():
+				if(variable.lower()!="tgas"): continue
+				if(vdata==None): continue
+				#store data
+				dataAll.append(vdata)
+
+		#if less than two intervals ignore
+		if(len(dataAll)<2): return
+
+		#min distance to determine close limits
+		distanceThreshold = 2e0
+		#temperature shift
+		dx = 1e0
+		#loop on ranges
+		for data1 in dataAll:
+			#loop on ranges
+			for data2 in dataAll:
+				#check distance
+				if(abs(data1["xdataRange"][-1]-data2["xdataRange"][0])<distanceThreshold):
+					#try to pick the limit in the extrapolated other range
+					# otherwise shift by 1K
+					try:
+						idx2 = data2["xdata"].index(data1["xdataRange"][-1])
+					except:
+						idx2 = data2["xdata"].index(data1["xdataRange"][-1]+dx)
+
+					#store data
+					yrate = data1["ydataRange"][-1]
+					yeval = data2["ydata"][idx2]
+					xeval = data2["xdata"][idx2]
+					joint = dict()
+					joint["limit1"] = [data1["xdataRange"][-1], data1["ydataRange"][-1]]
+					joint["limit2"] = [data2["xdataRange"][0], data2["ydataRange"][0]]
+					joint["extrapolation"] = [xeval, yeval]
+					joint["error"] = abs(yrate-yeval)/yrate
+					self.evaluatedJoints.append(joint)
 
 	#****************
 	#save evaluation as a json structure
@@ -687,11 +745,34 @@ class reaction:
 		if(self.safeExtrapolate["TmaxExtrapolated"]!=self.safeExtrapolate["Tmax"]):
 			fout.write(bulletPoint+"Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
 
+		#JOINTS evaluation
+		if(len(self.evaluatedJoints)>0):
+			sep = "<td>&nbsp;:&nbsp;<td>"
+			header = "<tr><th><th><th><th>"
+			fout.write("<br>")
+			fout.write("Evaluated joints:<br>")
+			fout.write("<table>")
+			fout.write(header)
+			fout.write("<tr><td><td><td>Tgas/K<td>rate")
+			for joint in self.evaluatedJoints:
+				fout.write(header)
+				fout.write("<tr><td>limit1 (Tgas,rate)" + sep + ("<td>".join([str(x) for x in joint["limit1"]])))
+				fout.write("<tr><td>limit2 (Tgas,rate)" + sep + ("<td>".join([str(x) for x in joint["limit2"]])))
+				fout.write("<tr><td>extrapolated (Tgas,rate)" + sep + ("<td>".join([str(x) for x in joint["extrapolation"]])))
+				warning = ""
+				if(joint["error"]>1e-3): warning = "&#9888;"
+				fout.write("<tr><td>error" + sep + str(round(joint["error"]*100,2))+"% "+warning)
+			fout.write(header)
+			fout.write("</table>")
+
+		#PLOT
 		for rng in myOptions.range:
 			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
 			plotFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+rangeName+".png"
 			if(not(os.path.isfile(plotFileName))): continue
 			fout.write("<img width=\"700px\" src=\"../"+plotFileName+"\">\n")
+
+
 
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
