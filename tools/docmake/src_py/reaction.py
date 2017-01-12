@@ -12,6 +12,7 @@ class reaction:
 	verbatim = verbatimLatex = reactionHash = None
 	nameHtml = verbatimHtml = reactionHtmlRow = None
 	evaluation = []
+	safeExtrapolate = dict()
 
 	#********************
 	#parse csv reaction file row (constructor)
@@ -303,6 +304,7 @@ class reaction:
 	#plot rate coefficient
 	def plotRate(self,shortcuts,varRanges):
 		self.evalRate(shortcuts,varRanges)
+		self.evaluateExtrapolation(varRanges)
 		self.doPlot()
 		self.saveEvals()
 
@@ -535,6 +537,67 @@ class reaction:
 			#if value found save plot to png file
 			plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png", dpi=150)
 
+	#******************
+	#evaluate rate extrapolation for the current reaction
+	def evaluateExtrapolation(self,varRanges):
+
+		#init Tgas limits
+		xMin = 1e99
+		xMax = -1e99
+		#init flags
+		hasData = isIncreasingMin = isDecreasingMax = False
+		isAlwaysPositiveMin = isAlwaysPositiveMax = False
+		#loop on different limited ranges
+		for evaluation in self.evaluation:
+			#get only Tgas data
+			for (variable,vdata) in evaluation.iteritems():
+				if(variable.lower()!="tgas"): continue
+				#store data
+				data = vdata
+				#store ranges
+				varRange = varRanges[variable]
+
+			#skip missing data
+			if(data==None): continue
+			hasData = True
+			#copy data locally
+			xdataRange = data["xdataRange"]
+			ydataRange = data["ydataRange"]
+			xdata = data["xdata"]
+			ydata = data["ydata"]
+			#number of data points
+			ndata = len(xdata)
+
+			#check smaller rate interval
+			if(min(xdataRange)<xMin):
+				#store min value
+				xMin = min(xdataRange)
+				#get ydata outside interval
+				ydataOutside = [ydata[i] for i in range(ndata) if(xdata[i]<xMin)]
+				#check if ydata are increasing outside
+				isIncreasingMin = (sorted(ydataOutside)==ydataOutside)
+				#check if data are always positive outside
+				isAlwaysPositiveMin = (min(ydataOutside)>0e0)
+				#store min Tgas in data structure
+				self.safeExtrapolate["Tmin"] = xMin
+
+			if(max(xdataRange)>xMax):
+				xMax = max(xdataRange)
+				ydataOutside = [ydata[i] for i in range(ndata) if(xdata[i]>xMax)]
+				isDecreasingMax = (sorted(ydataOutside)==ydataOutside[::-1])
+				isAlwaysPositiveMax = (min(ydataOutside)>0e0)
+				self.safeExtrapolate["Tmax"] = xMax
+
+		#check extrapolation only if has data
+		if(hasData):
+			#store extrapolated Tgas limits
+			self.safeExtrapolate["TminExtrapolated"] = min(varRange)
+			self.safeExtrapolate["TmaxExtrapolated"] = max(varRange)
+			#store if extrapolation is safe or not
+			self.safeExtrapolate["lower"] = (isAlwaysPositiveMin and isIncreasingMin)
+			self.safeExtrapolate["upper"] = (isAlwaysPositiveMax and isDecreasingMax)
+
+			print self.safeExtrapolate
 
 	#****************
 	#save evaluation as a json structure
@@ -595,7 +658,15 @@ class reaction:
 			if(label==""): separator = ""
 			fout.write("<tr><td>"+label+"<td>"+separator+"<td>"+value+"\n")
 		fout.write("<tr><th><th><th>\n")
-		fout.write("</table>\n")
+		fout.write("</table><br>\n")
+		TminExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TminExtrapolated"])
+		Tmin = utils.htmlExpBig(self.safeExtrapolate["Tmin"])
+		extrapolCheckMin = ("SAFE" if self.safeExtrapolate["lower"] else "NOT SAFE")
+		TmaxExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TmaxExtrapolated"])
+		Tmax = utils.htmlExpBig(self.safeExtrapolate["Tmax"])
+		extrapolCheckMax = ("SAFE" if self.safeExtrapolate["upper"] else "NOT SAFE")
+		fout.write("Extrapolation in range ["+TminExtrapolated+", "+Tmin+"] K is <b>"+extrapolCheckMin+"</b><br>")
+		fout.write("Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
 
 		for rng in myOptions.range:
 			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
