@@ -50,6 +50,12 @@ class network:
 		#prepare graphs
 		self.makeGraph()
 
+
+		#loop on reactions to evaluate
+		for myReaction in self.reactions:
+			myReaction.evaluateRate(shortcuts,varRanges)
+			myReaction.makeHtmlPage(myOptions)
+
 		#create reaction index page
 		self.makeHtmlIndex()
 		self.makeHtmlMissingReactionIndex(myOptions)
@@ -68,11 +74,10 @@ class network:
 		#plotting rates
 		print "plotting rates..."
 		icount = 0
-		#loop on reactions to evaluate and plot
+		#loop on reactions to plot
 		for myReaction in self.reactions:
 			print str(int(icount*1e2/len(self.reactions)))+"%", myReaction.getVerbatim()
-			myReaction.plotRate(shortcuts,varRanges)
-			myReaction.makeHtmlPage(myOptions)
+			myReaction.plotRate()
 			icount += 1
 
 
@@ -682,7 +687,7 @@ class network:
 		fname = "htmls/multipleRates.html"
 
 		#standard header for rates
-		tableHeader = "<tr>"+("<th>"*30)
+		tableHeader = "<tr>"+("<th>"*31)
 
 		#open HTML file to write
 		fout = open(fname,"w")
@@ -690,7 +695,8 @@ class network:
 		fout.write(utils.getFile("header.php"))
 		fout.write("<a href=\"index.html\">back</a><br>\n")
 		#loop on multiple rates
-		for (intervalsNumber,reactionBlock) in multipleRates.iteritems():
+		for intervalsNumber in sorted(multipleRates.keys())[::-1]:
+			reactionBlock = multipleRates[intervalsNumber]
 			fout.write("<br><br>\n")
 			#write plural if necessary
 			intervalString = "interval"+("s" if(intervalsNumber>1) else "")
@@ -707,7 +713,7 @@ class network:
 			for myReaction in reactionsSorted:
 				bgcolor = ""
 				if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
-				fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+myReaction.getReactionHtmlRow()+"\n")
+				fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+myReaction.getReactionHtmlRow(mode="joints")+"\n")
 				icount += 1
 			fout.write(tableHeader+"\n")
 			fout.write("</table>\n")

@@ -255,7 +255,7 @@ class reaction:
 
 	#********************
 	#get html table row with bold mySpecies when present
-	def getReactionHtmlRow(self,mySpecies=None):
+	def getReactionHtmlRow(self,mySpecies=None,mode=None):
 		reactantsName = []
 		for species in self.reactants:
 			xspec = species.nameHref
@@ -281,6 +281,14 @@ class reaction:
 		self.reactionHtmlRow = "<td>&nbsp;"+rpart+"<td>"+rspace+"<td>&rarr;<td>"+ppart+"<td>"+pspace
 		self.reactionHtmlRow += "<td><a href=\"rate_"+self.getReactionHash()+".html\">details</a>"
 
+		#additional information depending on the required mode
+		if(mode=="joints"):
+			if(len(self.evaluatedJoints)>0):
+				maxJointError = max([x["error"] for x in self.evaluatedJoints])
+				warning = ("&#9888;" if(maxJointError>1e-3) else "")
+				self.reactionHtmlRow += "<td>"+str(round(maxJointError*100,2))+"% "+warning
+			else:
+				self.reactionHtmlRow += "<td>N/A"
 		return self.reactionHtmlRow
 
 
@@ -302,13 +310,16 @@ class reaction:
 		self.rate += myReaction.rate
 
 	#*******************
-	#plot rate coefficient
-	def plotRate(self,shortcuts,varRanges):
+	def evaluateRate(self,shortcuts,varRanges):
 		self.evalRate(shortcuts,varRanges)
 		self.evaluateExtrapolation(varRanges)
 		self.evaluateJoints()
-		self.doPlot()
 		self.saveEvals()
+
+	#*******************
+	#plot rate coefficient
+	def plotRate(self):
+		self.doPlot()
 
 	#********************
 	#search for rate variables in the rate
@@ -772,8 +783,16 @@ class reaction:
 		for rng in myOptions.range:
 			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
 			plotFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+rangeName+".png"
-			if(not(os.path.isfile(plotFileName))): continue
-			fout.write("<img width=\"700px\" src=\"../"+plotFileName+"\">\n")
+
+			hasPlot = False
+			#loop on different limits to check if data are present
+			for evaluation in self.evaluation:
+				if(not(rangeName in evaluation)): continue
+				if(evaluation[rangeName]!=None):
+					hasPlot = True
+					break
+
+			if(hasPlot): fout.write("<img width=\"700px\" src=\"../"+plotFileName+"\">\n")
 
 
 
