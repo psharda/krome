@@ -79,7 +79,7 @@ class network:
 		#loop on reactions to plot
 		for myReaction in self.reactions:
 			print str(int(icount*1e2/len(self.reactions)))+"%", myReaction.getVerbatim()
-			myReaction.plotRate()
+			myReaction.plotRate(myOptions)
 			icount += 1
 
 
@@ -717,8 +717,8 @@ class network:
 				if(not(myReaction.hasVariable(myOptions,variable))): continue
 				if(icount%1==0): fout.write("<tr><td>")
 				fnamePNG = "../pngs/rate_"+str(myReaction.getReactionHash())+"_"+variable+".png"
-				linkURL = "<a href=\"rate_"+myReaction.getReactionHash()+".html\">details</a>"
-				fout.write("<img src=\""+fnamePNG+"\" alt=\"&#9888; MISSING: "+myReaction.getVerbatim()+"\"><br>"+linkURL)
+				linkURL = "<a href=\"rate_"+myReaction.getReactionHash()+".html\">details</a> for "+myReaction.getVerbatimHtml()
+				fout.write("<img src=\""+fnamePNG+"\" width=\"700px\" alt=\"&#9888; MISSING: "+myReaction.getVerbatim()+"\"><br>"+linkURL)
 				fout.write("<tr height=\"10px\"><td>")
 				icount += 1
 			fout.write("</table>\n")
