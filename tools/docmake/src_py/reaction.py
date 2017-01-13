@@ -544,22 +544,22 @@ class reaction:
 					ydataAll += ydataRange
 					plt.loglog(xdataRange,ydataRange)
 
-		pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png"
+				pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png"
 
-		#plot only if data are available
-		if(hasPlot and not(os.path.exists(pngFileName))):
-			plt.grid(b=True, color='0.65',linestyle='--')
-			#plot limited range
-			plt.xlabel(variable)
-			plt.ylabel("rate")
-			plt.title(self.getVerbatimLatex())
-			#set limits including max span
-			plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
-			#set limits if constant
-			if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
+				#plot only if data are available
+				if(hasPlot and not(os.path.exists(pngFileName))):
+					plt.grid(b=True, color='0.65',linestyle='--')
+					#plot limited range
+					plt.xlabel(variable)
+					plt.ylabel("rate")
+					plt.title(self.getVerbatimLatex())
+					#set limits including max span
+					plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
+					#set limits if constant
+					if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
 
-			#if value found save plot to png file
-			plt.savefig(pngFileName, dpi=150)
+					#if value found save plot to png file
+					plt.savefig(pngFileName, dpi=150)
 
 	#******************
 	#evaluate rate extrapolation for the current reaction
@@ -785,6 +785,7 @@ class reaction:
 		for rng in myOptions.range:
 			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
 			plotFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+rangeName+".png"
+
 
 			hasPlot = False
 			#loop on different limits to check if data are present
