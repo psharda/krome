@@ -544,8 +544,10 @@ class reaction:
 					ydataAll += ydataRange
 					plt.loglog(xdataRange,ydataRange)
 
+		pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png"
+
 		#plot only if data are available
-		if(hasPlot):
+		if(hasPlot and not(os.path.exists(pngFileName))):
 			plt.grid(b=True, color='0.65',linestyle='--')
 			#plot limited range
 			plt.xlabel(variable)
@@ -557,7 +559,7 @@ class reaction:
 			if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
 
 			#if value found save plot to png file
-			plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png", dpi=150)
+			plt.savefig(pngFileName, dpi=150)
 
 	#******************
 	#evaluate rate extrapolation for the current reaction
