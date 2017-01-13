@@ -1,4 +1,4 @@
-import sys,glob,os
+import sys,glob,os,shutil,hashlib
 import reaction,utils,options
 
 class network:
@@ -46,6 +46,7 @@ class network:
 
 		#clear folders (html and png)
 		self.clearFolders()
+		self.backupEvaluationJSON()
 
 		#prepare graphs
 		self.makeGraph()
@@ -65,6 +66,7 @@ class network:
 		self.makeHtmlAllRates(myOptions)
 		self.makeHtmlMultipleRates(myOptions)
 
+		self.deleteChangedPNGs(myOptions)
 
 		#prepare html pages for species
 		for mySpecies in self.getSpecies():
@@ -199,12 +201,15 @@ class network:
 	#**************
 	#clean temporary folders
 	def clearFolders(self):
+
 		#files to be deleted (folder:extension)
-		folders = {"pngs":"png", \
-			"htmls":"html", \
-			"evals":"json", \
+		#png and json are cleaned later if different
+		folders = {"htmls":"html", \
 			"epss":"eps", \
 			"dots":"dot"}
+		#"pngs":"png", \
+		#"evals":"json", \
+
 
 		#loop on folders and extensions
 		for (path,extension) in folders.iteritems():
@@ -215,6 +220,60 @@ class network:
 			#remove files
 			for fname in filelist:
 				os.remove(fname)
+
+	#**************
+	#backup json files with rate evaluations (to avoid replotting)
+	def backupEvaluationJSON(self):
+
+		backupPath = "evals/*.json"
+		#get files list
+		filelist = glob.glob(backupPath)
+		#copy files
+		for fname in filelist:
+			shutil.copyfile(fname, fname+".bak")
+
+	#**************
+	#delete PNG files with no json.bak file or different MD5
+	# after this remove all json.bak files
+	def deleteChangedPNGs(self,myOptions):
+
+		#get file lists
+		pngList = glob.glob("pngs/rate_*.png")
+
+		#loop on variable ranges
+		for rng in myOptions.range:
+			#get range name
+			rngName = rng.split("=")[0].strip()
+			#produce end of the file name
+			fileNameEnd = "_"+rngName+".png"
+			#copy files
+			for pngFname in pngList:
+				survived = True
+				#if png files end with range name
+				if(fileNameEnd in pngFname):
+					#create json and json.bak filenames
+					jsonFname = pngFname.replace(fileNameEnd,"").replace("pngs/","evals/")+".json"
+					jsonBakFname = jsonFname+".bak"
+					#if bak file is missing remove png file
+					if(not(os.path.exists(jsonBakFname))):
+						#print "missing json bak", pngFname
+						survived = False
+						os.remove(pngFname)
+					else:
+						#check MD5 of json and json.bak
+						md5 = hashlib.md5(open(jsonFname).read()).hexdigest()
+						md5Bak = hashlib.md5(open(jsonBakFname).read()).hexdigest()
+						#if md5 are different remove png file
+						if(md5!=md5Bak):
+							#print "diff MD5", pngFname,md5, md5Bak
+							survived = False
+							os.remove(pngFname)
+					#if(survived): print "survived: "+pngFname
+
+		#remove json.bak files
+		bakList = glob.glob("evals/*.bak")
+		for jsonBak in bakList:
+			os.remove(jsonBak)
 
 	#**************
 	#merge reactions with multiple rates
