@@ -318,8 +318,8 @@ class reaction:
 
 	#*******************
 	#plot rate coefficient
-	def plotRate(self):
-		self.doPlot()
+	def plotRate(self,myOptions):
+		self.doPlot(myOptions)
 
 	#********************
 	#search for rate variables in the rate
@@ -498,7 +498,7 @@ class reaction:
 
 	#**************************
 	#do plot (PNG)
-	def doPlot(self):
+	def doPlot(self,myOptions):
 		import matplotlib
 		#try to load AGG for PNG rendering (slightly faster)
 		try:
@@ -517,10 +517,16 @@ class reaction:
 		yspanMax = 1e-10
 		hasPlot = False
 		ydataAll = []
-		#loop on different limited ranges
-		for evaluation in self.evaluation:
-			#get loop variable and evaluated rate
-			for (variable,data) in evaluation.iteritems():
+
+		#loop on range varibles
+		for rng in myOptions.range:
+			#get range name
+			variable = rng.split("=")[0].strip()
+			plt.clf()
+			#loop on different limited ranges
+			for evaluation in self.evaluation:
+				if(not(variable in evaluation)): continue
+				data = evaluation[variable]
 
 				if(data==None): continue
 				hasPlot = True
@@ -538,28 +544,27 @@ class reaction:
 					plt.loglog(evaluation[variable]["xlimits"], evaluation[variable]["ylimits"],"ro")
 					plt.loglog(xdataRange,ydataRange,"b-")
 				else:
-					plt.clf()
 					xdataRange = xdata
 					ydataRange = ydata
 					ydataAll += ydataRange
 					plt.loglog(xdataRange,ydataRange)
 
-				pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png"
+			pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png"
 
-				#plot only if data are available
-				if(hasPlot and not(os.path.exists(pngFileName))):
-					plt.grid(b=True, color='0.65',linestyle='--')
-					#plot limited range
-					plt.xlabel(variable)
-					plt.ylabel("rate")
-					plt.title(self.getVerbatimLatex())
-					#set limits including max span
-					plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
-					#set limits if constant
-					if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
+			#plot only if data are available
+			if(hasPlot and not(os.path.exists(pngFileName))):
+				plt.grid(b=True, color='0.65',linestyle='--')
+				#plot limited range
+				plt.xlabel(variable)
+				plt.ylabel("rate")
+				plt.title(self.getVerbatimLatex())
+				#set limits including max span
+				plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
+				#set limits if constant
+				if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
 
-					#if value found save plot to png file
-					plt.savefig(pngFileName, dpi=150)
+				#if value found save plot to png file
+				plt.savefig(pngFileName, dpi=150)
 
 	#******************
 	#evaluate rate extrapolation for the current reaction
