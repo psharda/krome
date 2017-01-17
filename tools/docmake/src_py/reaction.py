@@ -803,7 +803,7 @@ class reaction:
 				if(data==None): continue
 				ratedata = data["ydata"]
 				if all([yd == 0.0 for yd in ratedata]):
-					fout.write(bulletPoint+"The rate for this reaction is <b>ZERO</b> (it has a barrier)<br>")
+					fout.write(bulletPoint+"The rate for this reaction is <b>ZERO</b><br>")
 					continue
 				if(evaluation[rangeName]!=None):
 					hasPlot = True
