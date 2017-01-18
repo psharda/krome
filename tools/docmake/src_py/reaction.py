@@ -367,6 +367,8 @@ class reaction:
 			substFound = True
 			#loop until shortcut found and replaced
 			while(substFound):
+				#remove trailing comments (containing a "#")
+				rate = rate.split('#')[0]
 				#remove spaces
 				rate = rate.replace(" ","").lower()
 
