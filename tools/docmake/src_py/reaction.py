@@ -1,5 +1,6 @@
 import sys,species,utils,os,urllib
 from math import log10,log,exp,sqrt
+
 class reaction:
 
 	index = -1
@@ -254,7 +255,7 @@ class reaction:
 
 	#********************
 	#get html table row with bold mySpecies when present
-	def getReactionHtmlRow(self,mySpecies=None):
+	def getReactionHtmlRow(self,mySpecies=None,mode=None):
 		reactantsName = []
 		for species in self.reactants:
 			xspec = species.nameHref
@@ -280,6 +281,14 @@ class reaction:
 		self.reactionHtmlRow = "<td>&nbsp;"+rpart+"<td>"+rspace+"<td>&rarr;<td>"+ppart+"<td>"+pspace
 		self.reactionHtmlRow += "<td><a href=\"rate_"+self.getReactionHash()+".html\">details</a>"
 
+		#additional information depending on the required mode
+		if(mode=="joints"):
+			if(len(self.evaluatedJoints)>0):
+				maxJointError = max([x["error"] for x in self.evaluatedJoints])
+				warning = ("&#9888;" if(maxJointError>1e-3) else "")
+				self.reactionHtmlRow += "<td>"+str(round(maxJointError*100,2))+"% "+warning
+			else:
+				self.reactionHtmlRow += "<td>N/A"
 		return self.reactionHtmlRow
 
 
@@ -301,12 +310,16 @@ class reaction:
 		self.rate += myReaction.rate
 
 	#*******************
-	#plot rate coefficient
-	def plotRate(self,shortcuts,varRanges):
+	def evaluateRate(self,shortcuts,varRanges):
 		self.evalRate(shortcuts,varRanges)
 		self.evaluateExtrapolation(varRanges)
-		self.doPlot()
+		self.evaluateJoints()
 		self.saveEvals()
+
+	#*******************
+	#plot rate coefficient
+	def plotRate(self,myOptions):
+		self.doPlot(myOptions)
 
 	#********************
 	#search for rate variables in the rate
@@ -354,6 +367,8 @@ class reaction:
 			substFound = True
 			#loop until shortcut found and replaced
 			while(substFound):
+				#remove trailing comments (containing a "#")
+				rate = rate.split('#')[0]
 				#remove spaces
 				rate = rate.replace(" ","").lower()
 
@@ -411,6 +426,15 @@ class reaction:
 					Tmax = min(varMax,Tmax)
 					valsRange = [x for x in vals if(Tmin<=x and x<=Tmax)]
 					valsRange = [Tmin]+valsRange+[Tmax]
+
+					#add additional points close to the limits (needed by evaluate joints)
+					vals += [Tmin,Tmax]
+					for dx in [0.5,1e0]:
+						if(Tmin-dx>0): vals += [Tmin-dx]
+						vals += [Tmin+dx, Tmax-dx, Tmax+dx]
+
+					#sort Tgas values
+					vals = sorted(vals)
 
 				#when is not temperature if variable not in rate skip rate
 				if(not(isTgas)):
@@ -476,7 +500,7 @@ class reaction:
 
 	#**************************
 	#do plot (PNG)
-	def doPlot(self):
+	def doPlot(self,myOptions):
 		import matplotlib
 		#try to load AGG for PNG rendering (slightly faster)
 		try:
@@ -495,15 +519,24 @@ class reaction:
 		yspanMax = 1e-10
 		hasPlot = False
 		ydataAll = []
-		#loop on different limited ranges
-		for evaluation in self.evaluation:
-			#get loop variable and evaluated rate
-			for (variable,data) in evaluation.iteritems():
+
+		#loop on range varibles
+		for rng in myOptions.range:
+			#get range name
+			variable = rng.split("=")[0].strip()
+			plt.clf()
+			#loop on different limited ranges
+			for evaluation in self.evaluation:
+				if(not(variable in evaluation)): continue
+				data = evaluation[variable]
 
 				if(data==None): continue
-				hasPlot = True
 				xdata = data["xdata"]
 				ydata = data["ydata"]
+				if all([yd == 0.0 for yd in ydata]):
+					print "WARNING: The rate for {0} is zero; skipping the plot!".format(self.getVerbatim())
+					continue # all rate data are zero, so skip plotting
+				hasPlot = True
 
 				if(variable.lower()=="tgas"):
 					#plot full range
@@ -516,26 +549,27 @@ class reaction:
 					plt.loglog(evaluation[variable]["xlimits"], evaluation[variable]["ylimits"],"ro")
 					plt.loglog(xdataRange,ydataRange,"b-")
 				else:
-					plt.clf()
 					xdataRange = xdata
 					ydataRange = ydata
 					ydataAll += ydataRange
 					plt.loglog(xdataRange,ydataRange)
 
-		#plot only if data are available
-		if(hasPlot):
-			plt.grid(b=True, color='0.65',linestyle='--')
-			#plot limited range
-			plt.xlabel(variable)
-			plt.ylabel("rate")
-			plt.title(self.getVerbatimLatex())
-			#set limits including max span
-			plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
-			#set limits if constant
-			if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
+			pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png"
 
-			#if value found save plot to png file
-			plt.savefig("pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png", dpi=150)
+			#plot only if data are available
+			if(hasPlot and not(os.path.exists(pngFileName))):
+				plt.grid(b=True, color='0.65',linestyle='--')
+				#plot limited range
+				plt.xlabel(variable)
+				plt.ylabel("rate")
+				plt.title(self.getVerbatimLatex())
+				#set limits including max span
+				plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
+				#set limits if constant
+				if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
+
+				#if value found save plot to png file
+				plt.savefig(pngFileName, dpi=150)
 
 	#******************
 	#evaluate rate extrapolation for the current reaction
@@ -560,9 +594,10 @@ class reaction:
 			#skip missing data
 			if(data==None): continue
 			hasData = True
-			#copy data locally
+			#copy data locally (evaluation in the rate Tgas range)
 			xdataRange = data["xdataRange"]
 			ydataRange = data["ydataRange"]
+			#copy data locally (evaluation in the whole Tgas range)
 			xdata = data["xdata"]
 			ydata = data["ydata"]
 			#number of data points
@@ -600,6 +635,53 @@ class reaction:
 			self.safeExtrapolate["upper"] = (isAlwaysPositiveMax and isDecreasingMax)
 
 	#****************
+	#evaluate rate joints
+	def evaluateJoints(self):
+
+		self.evaluatedJoints = []
+
+		dataAll = []
+		#loop on different limited ranges
+		for evaluation in self.evaluation:
+			#get only Tgas data
+			for (variable,vdata) in evaluation.iteritems():
+				if(variable.lower()!="tgas"): continue
+				if(vdata==None): continue
+				#store data
+				dataAll.append(vdata)
+
+		#if less than two intervals ignore
+		if(len(dataAll)<2): return
+
+		#min distance to determine close limits
+		distanceThreshold = 2e0
+		#temperature shift
+		dx = 1e0
+		#loop on ranges
+		for data1 in dataAll:
+			#loop on ranges
+			for data2 in dataAll:
+				#check distance
+				if(abs(data1["xdataRange"][-1]-data2["xdataRange"][0])<distanceThreshold):
+					#try to pick the limit in the extrapolated other range
+					# otherwise shift by 1K
+					try:
+						idx2 = data2["xdata"].index(data1["xdataRange"][-1])
+					except:
+						idx2 = data2["xdata"].index(data1["xdataRange"][-1]+dx)
+
+					#store data
+					yrate = data1["ydataRange"][-1]
+					yeval = data2["ydata"][idx2]
+					xeval = data2["xdata"][idx2]
+					joint = dict()
+					joint["limit1"] = [data1["xdataRange"][-1], data1["ydataRange"][-1]]
+					joint["limit2"] = [data2["xdataRange"][0], data2["ydataRange"][0]]
+					joint["extrapolation"] = [xeval, yeval]
+					joint["error"] = abs(yrate-yeval)/(yrate + 1.0e-99)
+					self.evaluatedJoints.append(joint)
+
+	#****************
 	#save evaluation as a json structure
 	def saveEvals(self):
 		import json
@@ -625,19 +707,23 @@ class reaction:
 		reactantsList = [x.getHtmlName() for x in self.reactants]
 		productsList = [x.getHtmlName() for x in self.products]
 
+		header = "<tr><th><th><th>\n"
+
 		table = []
+		tableNotes = []
 		#table.append(["reactants", (", ".join(reactantsList))])
 		#table.append(["products", (", ".join(productsList))])
 		for icount in range(len(self.rate)):
+			table.append(["header", header])
 			table.append(["rate", self.rate[icount]])
 			table.append(["Tmin", self.Tmin[icount]])
 			table.append(["Tmax", self.Tmax[icount]])
 
 		for (shortcutName,shortcutExpression) in self.shortcutsFound.iteritems():
-			table.append(["", shortcutName+" = "+shortcutExpression])
+			tableNotes.append(shortcutName+" = "+shortcutExpression)
 
 		for warning in self.warnings:
-			table.append(["", warning])
+			tableNotes.append(warning)
 
 		fout = open(fname,"w")
 		fout.write(utils.getFile("header.php"))
@@ -651,34 +737,83 @@ class reaction:
 		fout.write("<a href=\""+urlJSON+"\">get rate evaluation in JSON format</a>\n")
 		fout.write("<br><br>\n")
 		fout.write("<table>\n")
-		fout.write("<tr><th><th><th>\n")
 		for (label,value) in table:
 			if(value==None): continue
-			separator = "&nbsp;&nbsp;:&nbsp;&nbsp;"
-			if(label==""): separator = ""
-			fout.write("<tr><td>"+label+"<td>"+separator+"<td>"+value+"\n")
-		fout.write("<tr><th><th><th>\n")
-		fout.write("</table><br>\n")
+			if(label=="header"):
+				fout.write(value)
+			else:
+				separator = "&nbsp;&nbsp;:&nbsp;&nbsp;"
+				fout.write("<tr><td>"+label+"<td>"+separator+"<td>"+value+"\n")
+		fout.write(header)
+		fout.write("</table><br><br>\n")
+
+		bulletPoint = "&nbsp;&nbsp;&#9656;&nbsp;"
+		#add notes and warnings
+		if(len(tableNotes)>0):
+			fout.write("Notes and warnings:<br>\n")
+			for value in tableNotes:
+				if(value!=None): fout.write(bulletPoint+value+"<br>\n")
+
 
 		#extrapolation lower limit
-		TminExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TminExtrapolated"])
-		Tmin = utils.htmlExpBig(self.safeExtrapolate["Tmin"])
-		extrapolCheckMin = ("SAFE" if self.safeExtrapolate["lower"] else "NOT SAFE")
-		if(self.safeExtrapolate["TminExtrapolated"]!=self.safeExtrapolate["Tmin"]):
-			fout.write("Extrapolation in range ["+TminExtrapolated+", "+Tmin+"] K is <b>"+extrapolCheckMin+"</b><br>")
+		if self.safeExtrapolate.has_key("TminExtrapolated"):
+			TminExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TminExtrapolated"])
+			Tmin = utils.htmlExpBig(self.safeExtrapolate["Tmin"])
+			extrapolCheckMin = ("SAFE" if self.safeExtrapolate["lower"] else "NOT SAFE")
+			if(self.safeExtrapolate["TminExtrapolated"]!=self.safeExtrapolate["Tmin"]):
+				fout.write(bulletPoint+"Extrapolation in range ["+TminExtrapolated+", "+Tmin+"] K is <b>"+extrapolCheckMin+"</b><br>")
 
 		#extrapolation upper limit
-		TmaxExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TmaxExtrapolated"])
-		Tmax = utils.htmlExpBig(self.safeExtrapolate["Tmax"])
-		extrapolCheckMax = ("SAFE" if self.safeExtrapolate["upper"] else "NOT SAFE")
-		if(self.safeExtrapolate["TmaxExtrapolated"]!=self.safeExtrapolate["Tmax"]):
-			fout.write("Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
+		if self.safeExtrapolate.has_key("TmaxExtrapolated"):
+			TmaxExtrapolated = utils.htmlExpBig(self.safeExtrapolate["TmaxExtrapolated"])
+			Tmax = utils.htmlExpBig(self.safeExtrapolate["Tmax"])
+			extrapolCheckMax = ("SAFE" if self.safeExtrapolate["upper"] else "NOT SAFE")
+			if(self.safeExtrapolate["TmaxExtrapolated"]!=self.safeExtrapolate["Tmax"]):
+				fout.write(bulletPoint+"Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
 
+		#JOINTS evaluation
+		if(len(self.evaluatedJoints)>0):
+			sep = "<td>&nbsp;:&nbsp;<td>"
+			header = "<tr><th><th><th><th>"
+			fout.write("<br>")
+			fout.write("Evaluated joints:<br>")
+			fout.write("<table>")
+			fout.write(header)
+			fout.write("<tr><td><td><td>Tgas/K<td>rate")
+			for joint in self.evaluatedJoints:
+				fout.write(header)
+				fout.write("<tr><td>limit1 (Tgas,rate)" + sep + ("<td>".join([str(x) for x in joint["limit1"]])))
+				fout.write("<tr><td>limit2 (Tgas,rate)" + sep + ("<td>".join([str(x) for x in joint["limit2"]])))
+				fout.write("<tr><td>extrapolated (Tgas,rate)" + sep + ("<td>".join([str(x) for x in joint["extrapolation"]])))
+				warning = ""
+				if(joint["error"]>1e-3): warning = "&#9888;"
+				fout.write("<tr><td>error" + sep + str(round(joint["error"]*100,2))+"% "+warning)
+			fout.write(header)
+			fout.write("</table>")
+
+		#PLOT
 		for rng in myOptions.range:
 			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
 			plotFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+rangeName+".png"
-			if(not(os.path.isfile(plotFileName))): continue
-			fout.write("<img width=\"700px\" src=\"../"+plotFileName+"\">\n")
+
+
+			hasPlot = False
+			#loop on different limits to check if data are present
+			for evaluation in self.evaluation:
+				if(not(rangeName in evaluation)): continue
+				data = evaluation[rangeName]
+				if(data==None): continue
+				ratedata = data["ydata"]
+				if all([yd == 0.0 for yd in ratedata]):
+					fout.write(bulletPoint+"The rate for this reaction is <b>ZERO</b><br>")
+					continue
+				if(evaluation[rangeName]!=None):
+					hasPlot = True
+					break
+
+			if(hasPlot): fout.write("<img width=\"700px\" src=\"../"+plotFileName+"\">\n")
+
+
 
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
