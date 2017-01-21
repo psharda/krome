@@ -2048,8 +2048,8 @@ class krome():
 				self.indexH2photodissociation = rcount + 1
 				nextH2photodissociation = False
 
-
 			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
+			arow[len(arow)-1] = arow[len(arow)-1].rsplit('!',1)[0].rsplit('#',1)[0] #strip end-of-line comments
 			arow = [x.strip() for x in arow] #strip single elements
 			if(len(arow)!=format_items):
 				print "WARNING: wrong format for reaction "+str(rcount+1)
