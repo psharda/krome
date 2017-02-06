@@ -367,6 +367,8 @@ class reaction:
 			substFound = True
 			#loop until shortcut found and replaced
 			while(substFound):
+				#remove trailing comments (containing a "#")
+				rate = rate.split('#')[0]
 				#remove spaces
 				rate = rate.replace(" ","").lower()
 
@@ -529,9 +531,12 @@ class reaction:
 				data = evaluation[variable]
 
 				if(data==None): continue
-				hasPlot = True
 				xdata = data["xdata"]
 				ydata = data["ydata"]
+				if all([yd == 0.0 for yd in ydata]):
+					print "WARNING: The rate for {0} is zero; skipping the plot!".format(self.getVerbatim())
+					continue # all rate data are zero, so skip plotting
+				hasPlot = True
 
 				if(variable.lower()=="tgas"):
 					#plot full range
@@ -673,7 +678,7 @@ class reaction:
 					joint["limit1"] = [data1["xdataRange"][-1], data1["ydataRange"][-1]]
 					joint["limit2"] = [data2["xdataRange"][0], data2["ydataRange"][0]]
 					joint["extrapolation"] = [xeval, yeval]
-					joint["error"] = abs(yrate-yeval)/yrate
+					joint["error"] = abs(yrate-yeval)/(yrate + 1.0e-99)
 					self.evaluatedJoints.append(joint)
 
 	#****************
@@ -796,6 +801,12 @@ class reaction:
 			#loop on different limits to check if data are present
 			for evaluation in self.evaluation:
 				if(not(rangeName in evaluation)): continue
+				data = evaluation[rangeName]
+				if(data==None): continue
+				ratedata = data["ydata"]
+				if all([yd == 0.0 for yd in ratedata]):
+					fout.write(bulletPoint+"The rate for this reaction is <b>ZERO</b><br>")
+					continue
 				if(evaluation[rangeName]!=None):
 					hasPlot = True
 					break
