@@ -5776,6 +5776,8 @@ class krome():
 			if(srow == "#IFKROME_hasH" and not("H" in speciesNames)): skip_speciesH2 = True
 			if(srow == "#IFKROME_hasHp" and not("H+" in speciesNames)): skip_speciesH2 = True
 			if(srow == "#IFKROME_hasHe" and not("HE" in speciesNames)): skip_speciesH2 = True
+			if(srow == "#IFKROME_hasHep" and not("HE+" in speciesNames)): skip_speciesH2 = True
+			if(srow == "#IFKROME_hasHepp" and not("HE++" in speciesNames)): skip_speciesH2 = True
 			if(srow == "#IFKROME_hasElectrons" and not("E" in speciesNames)): skip_speciesH2 = True
 
 
@@ -5786,6 +5788,8 @@ class krome():
 			if(srow == "#ENDIFKROME_hasH"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME_hasHp"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME_hasHe"): skip_speciesH2 = False
+			if(srow == "#ENDIFKROME_hasHep"): skip_speciesH2 = False
+			if(srow == "#ENDIFKROME_hasHepp"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME_hasElectrons"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME"): skip = False
 
