@@ -238,12 +238,23 @@ class reaction:
 		return self.verbatimHtml
 
 	#********************
+	def getRPHash(self,obj):
+		rpName = sorted([x.nameFile for x in obj])
+		return ("_".join(rpName))
+
+	#**************
+	def getReactantsHash(self):
+		return self.getRPHash(self.reactants)
+
+	#**************
+	def getProductsHash(self):
+		return self.getRPHash(self.products)
+
+	#********************
 	#get reaction unique hash, e.g. H_H__H2
 	def getReactionHash(self):
 		if(self.reactionHash!=None): return self.reactionHash
-		reactantsName = sorted([x.nameFile for x in self.reactants])
-		productsName = sorted([x.nameFile for x in self.products])
-		self.reactionHash = ("_".join(reactantsName))+"__"+("_".join(productsName))
+		self.reactionHash = self.getRPHash(self.reactants) + "__" + self.getRPHash(self.products)
 		return self.reactionHash
 
 	#********************
