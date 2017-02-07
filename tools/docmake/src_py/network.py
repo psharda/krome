@@ -59,6 +59,7 @@ class network:
 
 		#create reaction index page
 		self.makeHtmlIndex()
+		self.makeHtmlMissingBranchesIndex(myOptions)
 		self.makeHtmlMissingReactionIndex(myOptions)
 		self.makeHtmlReactionIndex(myOptions)
 		self.makeHtmlSpeciesIndex()
@@ -369,6 +370,48 @@ class network:
 
 
 	#****************
+	#return all the possible reactants combinations with the current species
+	# as an array, including unimol and bimol reactions
+	def getAllReactantsCombinations(self,returnNames=True):
+
+		#get list of species
+		species = self.getSpecies()
+
+		#unimolecular reactants to be skipped
+		skipUnimol = ["CR","E"]
+
+		allReactants = []
+		#loop on species (reactant 1)
+		for species1 in species:
+			#add unimolecular (only neutral or anion)
+			if((species1.charge<1) and not(species1.name in skipUnimol)):
+				if(returnNames):
+					allReactants.append([species1.name])
+				else:
+					allReactants.append([species1])
+			#loop on species (reactant 2) for bimolecular
+			for species2 in species:
+				#exclude repulsive
+				if(species1.charge*species2.charge>0): continue
+
+				#exclude double ionization CR
+				hasCR = (species1.name=="CR" or species2.name=="CR")
+				hasElectron = (species1.name=="E" or species2.name=="E")
+				hasCation = (species1.charge>0 or species2.charge>0)
+				if(hasCation and hasCR): continue
+				if(hasCR and hasElectron): continue
+
+				#add bimolecular
+				if(returnNames):
+					reactants = [species1.name,species2.name]
+					allReactants.append(sorted(reactants))
+				else:
+					allReactants.append([species1,species2])
+
+		return allReactants
+
+
+	#****************
 	#get a list of the missing reactions (reactants only)
 	def getMissing(self):
 
@@ -387,30 +430,8 @@ class network:
 			print "WARNING: too many expected reactions skipping missing reactions!"
 			return []
 
-		#unimolecular reactants to be skipped
-		skipUnimol = ["CR","E"]
-
-		allReactants = []
-		#loop on species (reactant 1)
-		for species1 in species:
-			#add unimolecular (only neutral or anion)
-			if((species1.charge<1) and not(species1.name in skipUnimol)): allReactants.append([species1.name])
-			#loop on species (reactant 2) for bimolecular
-			for species2 in species:
-				#exclude repulsive
-				if(species1.charge*species2.charge>0): continue
-
-				#exclude double ionization CR
-				hasCR = (species1.name=="CR" or species2.name=="CR")
-				hasElectron = (species1.name=="E" or species2.name=="E")
-				hasCation = (species1.charge>0 or species2.charge>0)
-				if(hasCation and hasCR): continue
-				if(hasCR and hasElectron): continue
-
-				#add bimolecular
-				reactants = [species1.name,species2.name]
-				allReactants.append(sorted(reactants))
-
+		#get all possible reactants combinations
+		allReactants = self.getAllReactantsCombinations()
 
 		#get species dictionary to return species objects instead of names
 		speciesDictionary = self.getSpeciesDictionary()
@@ -487,6 +508,68 @@ class network:
 		#return list of objects reactants
 		return missingReactions
 
+	#****************
+	#given a list of species objects return the sum of their exploded
+	def getExplodedSpecies(self,speciesList):
+
+		rexp = []
+		for species in speciesList:
+			rexp += species.explodedFull
+		rexpFull = ("".join(sorted(rexp)))
+		rexpFull = rexpFull.replace("-E","E")
+		rexpFull = rexpFull.replace("+-","")
+
+		return rexpFull
+
+
+	#****************
+	def getMissingBranch(self):
+
+		missingBranch = []
+
+		#get all possible reactants combinations
+		allReactants = self.getAllReactantsCombinations(returnNames=False)
+
+		dictAll = dict()
+		#create a dictionary key=exploded_species, values=possible_products
+		for reacts in allReactants:
+			explodedReact = self.getExplodedSpecies(reacts)
+			if(not(explodedReact in dictAll)): dictAll[explodedReact] = []
+			dictAll[explodedReact].append(reacts)
+
+		reactAll = dict()
+		#dictionary with key=reaction_reactants_hash, values=reaction_objects
+		for reaction in self.reactions:
+			rHash = reaction.getReactantsHash()
+			if(not(rHash in reactAll)): reactAll[rHash] = []
+			reactAll[rHash].append(reaction)
+
+		#loop reactions to find missing and present branches
+		for (rHash,reactions) in reactAll.iteritems():
+			#exploded reactants (same for all reactions by construction)
+			explodedReact = self.getExplodedSpecies(reactions[0].reactants)
+			allBranch = []
+			#loop on reactions to store products
+			for react in reactions:
+				allBranch.append(sorted([x.name for x in react.products]))
+
+			#init data branch structure
+			dataBranch = dict()
+			dataBranch["reactants"] = reactions[0].reactants
+			dataBranch["missingBranches"] = []
+			dataBranch["presentBranches"] = []
+
+			#loop to check if branch is in the all branch list or not
+			for react in dictAll[explodedReact]:
+				branch = sorted([x.name for x in react])
+				if(not(branch in allBranch)):
+					dataBranch["missingBranches"].append(react)
+				else:
+					dataBranch["presentBranches"].append(react)
+			missingBranch.append(dataBranch)
+
+		return missingBranch
+
 
 	#****************
 	def makeHtmlIndex(self):
@@ -532,7 +615,7 @@ class network:
 			fout.write("<p>&nbsp;Download <a href=\"../"+fnamePNG+"\" target=\"_blank\">PNG</a>")
 			fout.write(" <a href=\"../"+fnameEPS+"\" target=\"_blank\">EPS</a></p><br>\n")
 			fout.write("<a target=\"_blank\" href=\"../"+fnamePNG+"\">")
-			fout.write("<img src=\"../"+fnamePNG+"\" style=\"{max-width:500px;}\"></a>\n")
+			fout.write("<img src=\"../"+fnamePNG+"\" width=\"700px\" style=\"{max-width:500px;}\"></a>\n")
 			fout.write("<br><br>\n")
 
 		#add footer
@@ -606,6 +689,63 @@ class network:
 			fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+myReaction.getReactionHtmlRow()+"\n")
 			icount += 1
 		fout.write(tableHeader+"\n")
+		fout.write("</table>\n")
+
+		#add footer
+		fout.write(utils.getFooter("footer.php"))
+		fout.close()
+
+
+	#****************
+	#create reaction list index as html page
+	def makeHtmlMissingBranchesIndex(self,myOptions):
+
+		fname = "htmls/indexMissingBranches.html"
+
+		kJmol2K = 120.274 #kJ/mol->K
+
+		tableHeader = "<tr>"+("<th>"*30)
+
+		#open file to write
+		fout = open(fname,"w")
+		#add header
+		fout.write(utils.getFile("header.php"))
+		fout.write("<p style=\"font-size:30px\">Missing branches</p>\n")
+		#fout.write("<p style=\"font-size:10px\">*if reactants are present it doesn't check for missing branches!</p>\n")
+		fout.write("<a href=\"index.html\">back</a><br>\n")
+
+		fout.write("<table width=\"60%\">\n")
+		icount = 0
+		for dataBranch in self.getMissingBranch():
+			reactants = dataBranch["reactants"]
+			row = "<td>"+str(icount+1)+"<td>"+("<td>+<td>".join([x.getHtmlName() for x in reactants]))
+
+			row += ("<td>"*(20-row.count("<td>")))
+
+			#background color
+			bgcolor = utils.getHtmlProperty("tableRowBgcolor")
+
+			#add an arrow at the end of the row
+			row += "<td><td>&rarr;"
+			#write row to file
+			fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"\n")
+
+			#count <td> elements
+			ntds = row.count("<td>")
+
+
+			for products in dataBranch["missingBranches"]:
+				bgcolor = "" #this row has no bgcolor
+				productsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in products]
+				bgcolor = "" #this row has no bgcolor
+				#create row from products name
+				rowx = "<td>&rarr;<td>"+("<td>+<td>".join([x.getHtmlName() for x in products]))
+				#add n-1 td as offset
+				row = ("<td>"*(ntds-1))+rowx+("<td>"*(10-rowx.count("<td>")))
+				fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"\n")
+
+			#dataBranch["presentBranches"] = []
+			icount += 1
 		fout.write("</table>\n")
 
 		#add footer
