@@ -372,7 +372,7 @@ class network:
 	#****************
 	#return all the possible reactants combinations with the current species
 	# as an array, including unimol and bimol reactions
-	def getAllReactantsCombinations(self,returnNames=True):
+	def getAllReactantsCombinations(self,returnNames=True,includeRepulsive=False):
 
 		#get list of species
 		species = self.getSpecies()
@@ -392,7 +392,7 @@ class network:
 			#loop on species (reactant 2) for bimolecular
 			for species2 in species:
 				#exclude repulsive
-				if(species1.charge*species2.charge>0): continue
+				if(species1.charge*species2.charge>0 and not(includeRepulsive)): continue
 
 				#exclude double ionization CR
 				hasCR = (species1.name=="CR" or species2.name=="CR")
@@ -510,14 +510,39 @@ class network:
 
 	#****************
 	#given a list of species objects return the sum of their exploded
+	# taking care of charges
 	def getExplodedSpecies(self,speciesList):
 
 		rexp = []
+		#sum exploded
 		for species in speciesList:
 			rexp += species.explodedFull
-		rexpFull = ("".join(sorted(rexp)))
-		rexpFull = rexpFull.replace("-E","E")
-		rexpFull = rexpFull.replace("+-","")
+		#wrap into underscores
+		rexpFull = "_"+("_".join(sorted(rexp)))+"_"
+		#remove +/- one by one until both are present
+		while(("+" in rexpFull) and ("-" in rexpFull)):
+			rexpFull = rexpFull.replace("+","",1)
+			rexpFull = rexpFull.replace("-","",1)
+		#remove +/E one by one until both are present
+		while(("_+_" in rexpFull) and ("_E_" in rexpFull)):
+			rexpFull = rexpFull.replace("+","",1)
+			rexpFull = rexpFull.replace("E","",1)
+
+		#for this hash E is just represented  as -
+		rexpFull = rexpFull.replace("_E_","_-_")
+		#remove CRs
+		rexpFull = rexpFull.replace("CR","")
+		#remove double underscores
+		rexpFull = rexpFull.replace("__","_")
+
+		#sort again replaced
+		rexpFull = ("_".join(sorted(rexpFull.split("_"))))
+
+		#remove leading and trailing underscores
+		while(rexpFull.startswith("_")):
+			rexpFull = rexpFull[1:]
+		while(rexpFull.endswith("_")):
+			rexpFull = rexpFull[:-1]
 
 		return rexpFull
 
@@ -527,31 +552,32 @@ class network:
 
 		missingBranch = []
 
-		#get all possible reactants combinations
-		allReactants = self.getAllReactantsCombinations(returnNames=False)
+		species = self.getSpecies()
 
-		dictAll = dict()
-		#create a dictionary key=exploded_species, values=possible_products
-		for reacts in allReactants:
-			explodedReact = self.getExplodedSpecies(reacts)
-			if(not(explodedReact in dictAll)): dictAll[explodedReact] = []
-			dictAll[explodedReact].append(reacts)
+		#get all possible species combinations
+		allSpecies = dict()
+		for spec1 in species:
+			unimol = [spec1]
+			rHash = self.getExplodedSpecies(unimol)
+			if(not(rHash in allSpecies)): allSpecies[rHash] = []
+			allSpecies[rHash].append(unimol)
+			#bimolecular
+			for spec2 in species:
+				bimol = [spec1,spec2]
+				rHash = self.getExplodedSpecies(bimol)
+				if(not(rHash in allSpecies)): allSpecies[rHash] = []
+				allSpecies[rHash].append(bimol)
 
-		reactAll = dict()
-		#dictionary with key=reaction_reactants_hash, values=reaction_objects
+		#search all branches of a given reactions and store
+		allReact = dict()
 		for reaction in self.reactions:
-			rHash = reaction.getReactantsHash()
-			if(not(rHash in reactAll)): reactAll[rHash] = []
-			reactAll[rHash].append(reaction)
+			rHash = self.getExplodedSpecies(reaction.reactants)
+			if(not(rHash in allReact)): allReact[rHash] = []
+			allReact[rHash].append(reaction)
+
 
 		#loop reactions to find missing and present branches
-		for (rHash,reactions) in reactAll.iteritems():
-			#exploded reactants (same for all reactions by construction)
-			explodedReact = self.getExplodedSpecies(reactions[0].reactants)
-			allBranch = []
-			#loop on reactions to store products
-			for react in reactions:
-				allBranch.append(sorted([x.name for x in react.products]))
+		for (rHash,reactions) in allReact.iteritems():
 
 			#init data branch structure
 			dataBranch = dict()
@@ -559,13 +585,37 @@ class network:
 			dataBranch["missingBranches"] = []
 			dataBranch["presentBranches"] = []
 
-			#loop to check if branch is in the all branch list or not
-			for react in dictAll[explodedReact]:
-				branch = sorted([x.name for x in react])
-				if(not(branch in allBranch)):
-					dataBranch["missingBranches"].append(react)
+			#store all reaction branches
+			branches = []
+			for reaction in reactions:
+				branches.append(sorted([x.name for x in reaction.products]))
+
+			#get reactant names (same for all reactions)
+			reactNames = sorted([x.name for x in reactions[0].reactants])
+			reactNamesNoCR = sorted([x.name for x in reactions[0].reactants if(x.name!="CR")])
+
+			#get reaction hash for reactants only
+			rHash = self.getExplodedSpecies(reactions[0].reactants)
+			branchFound = []
+			#loop on possible species combination for the given reactant hash
+			for species in allSpecies[rHash]:
+				branch = sorted([x.name for x in species])
+				#skip CR in products
+				if("CR" in branch): continue
+				#skip X+CR->X
+				if(branch==reactNamesNoCR): continue
+				#skip already-found branches
+				if(branch in branchFound): continue
+				#skip same reactant and products
+				if(branch==reactNames): continue
+				#store branches
+				if(branch in branches):
+					dataBranch["presentBranches"].append(species)
 				else:
-					dataBranch["presentBranches"].append(react)
+					dataBranch["missingBranches"].append(species)
+				branchFound.append(branch)
+
+			#copy data to structure
 			missingBranch.append(dataBranch)
 
 		return missingBranch
@@ -733,16 +783,18 @@ class network:
 			#count <td> elements
 			ntds = row.count("<td>")
 
-
-			for products in dataBranch["missingBranches"]:
-				bgcolor = "" #this row has no bgcolor
-				productsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in products]
-				bgcolor = "" #this row has no bgcolor
-				#create row from products name
-				rowx = "<td>&rarr;<td>"+("<td>+<td>".join([x.getHtmlName() for x in products]))
-				#add n-1 td as offset
-				row = ("<td>"*(ntds-1))+rowx+("<td>"*(10-rowx.count("<td>")))
-				fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"\n")
+			for listName in ["presentBranches","missingBranches"]:
+				for products in dataBranch[listName]:
+					bgcolor = "" #this row has no bgcolor
+					productsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in products]
+					bgcolor = "" #this row has no bgcolor
+					#create row from products name
+					rowx = "<td>&rarr;<td>"+("<td>+<td>".join([x.getHtmlName() for x in products]))
+					#add n-1 td as offset
+					row = ("<td>"*(ntds-1))+rowx+("<td>"*(10-rowx.count("<td>")))
+					status = listName.replace("Branches","")
+					if(status=="missing"): status += " &#9888;"
+					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"<td style=\"font-size:10px;\">"+status.upper()+"\n")
 
 			#dataBranch["presentBranches"] = []
 			icount += 1
