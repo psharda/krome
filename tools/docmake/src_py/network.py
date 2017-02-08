@@ -567,6 +567,12 @@ class network:
 				rHash = self.getExplodedSpecies(bimol)
 				if(not(rHash in allSpecies)): allSpecies[rHash] = []
 				allSpecies[rHash].append(bimol)
+				#trimolecular
+				#for spec3 in species:
+				#	trimol = [spec1,spec2,spec3]
+				#	rHash = self.getExplodedSpecies(trimol)
+				#	if(not(rHash in allSpecies)): allSpecies[rHash] = []
+				#	allSpecies[rHash].append(trimol)
 
 		#search all branches of a given reactions and store
 		allReact = dict()
@@ -765,15 +771,19 @@ class network:
 		fout = open(fname,"w")
 		#add header
 		fout.write(utils.getFile("header.php"))
-		fout.write("<p style=\"font-size:30px\">Missing branches</p>\n")
+		fout.write("<p style=\"font-size:30px\">Missing branches, &Delta;H/K</p>\n")
 		#fout.write("<p style=\"font-size:10px\">*if reactants are present it doesn't check for missing branches!</p>\n")
-		fout.write("<a href=\"index.html\">back</a><br>\n")
+		fout.write("<a href=\"index.html\">back</a><br><br><br>\n")
+
+		#sort reactions by the name of the first reactant (reactants are also sorted)
+		sortedMissingBranch = sorted(self.getMissingBranch(),key=lambda x:sorted([sp.name for sp in x["reactants"]]))
 
 		fout.write("<table width=\"60%\">\n")
 		icount = 0
-		for dataBranch in self.getMissingBranch():
+		for dataBranch in sortedMissingBranch:
 			reactants = dataBranch["reactants"]
-			row = "<td>"+str(icount+1)+"<td>"+("<td>+<td>".join([x.getHtmlName() for x in reactants]))
+			reactantsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in reactants]
+			row = "<td>"+str(icount+1)+"<td>"+("<td>+<td>".join(sorted([x.getHtmlName() for x in reactants])))
 
 			row += ("<td>"*(20-row.count("<td>")))
 
@@ -794,12 +804,27 @@ class network:
 					productsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in products]
 					bgcolor = "" #this row has no bgcolor
 					#create row from products name
-					rowx = "<td>&rarr;<td>"+("<td>+<td>".join([x.getHtmlName() for x in products]))
+					rowx = "<td>&rarr;<td>"+("<td>+<td>".join(sorted([x.getHtmlName() for x in products])))
 					#add n-1 td as offset
 					row = ("<td>"*(ntds-1))+rowx+("<td>"*(10-rowx.count("<td>")))
 					status = listName.replace("Branches","")
 					if(status=="missing"): status += " &#9888;"
-					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"<td style=\"font-size:10px;\">"+status.upper()+"\n")
+
+					tdEnthalpy = ""
+					if(None in (productsEnthalpy+reactantsEnthalpy)):
+						tdEnthalpy += "<td>missing enthalpy data"
+					else:
+						DeltaH = sum(productsEnthalpy)-sum(reactantsEnthalpy)
+						DeltaH_K = kJmol2K*DeltaH
+						tdEnthalpy += "<td>"+utils.htmlExp(DeltaH_K)
+						if(DeltaH_K<0e0):
+							tdEnthalpy += "<td>&#10004;&#10004;"
+						elif(DeltaH_K>=0 and DeltaH_K<1e4):
+							tdEnthalpy += "<td>&#10004;"
+						else:
+							tdEnthalpy += "<td>&#10006;"
+
+					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"<td style=\"font-size:10px;\">"+status.upper()+tdEnthalpy+"\n")
 
 			#dataBranch["presentBranches"] = []
 			icount += 1
