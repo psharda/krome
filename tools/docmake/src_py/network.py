@@ -736,7 +736,7 @@ class network:
 		fout.write("<a href=\"index.html\">back</a><br>\n")
 
 		for variable in myOptions.getRanges().keys():
-			fout.write("<a href=\"allRates_"+variable+".html\">All rates with <b>"+variable+"</b></a><br>\n")
+			fout.write("<a href=\"allRates_"+variable+"_0.html\">All rates with <b>"+variable+"</b></a><br>\n")
 		fout.write("<br><br>\n")
 		#reaction table
 		fout.write("<table width=\"50%\">\n")
@@ -921,24 +921,67 @@ class network:
 		#loop on variables
 		for variable in myOptions.getRanges().keys():
 
-			#prepare a file for each variable
-			fname = "htmls/allRates_"+variable+".html"
+			#default file handler
+			fout = None
 
-			#open file to write
-			fout = open(fname,"w")
-			#add header
-			fout.write(utils.getFile("header.php"))
-			fout.write("<p style=\"font-size:30px\">All rate plots with <b>"+variable+"</b></p>\n")
-			fout.write("<a href=\"indexReactions.html\">back</a><br>\n")
-			fout.write("<br><br>\n")
-			#reaction table
-			fout.write("<table>\n")
+			#count reactions with variable
+			plotsNumber = len([x for x in self.reactions if(x.hasVariable(myOptions,variable))])
+
+			#base of relative path
+			fnameBaseRel = "allRates_"+variable+"_"
+			#base of "absolute" path
+			fnameBase = "htmls/"+fnameBaseRel
+			#init counters
 			icount = 0
+			fileCount = 0
+			maxPlotPerPage = 100
+			#get pages number
+			pagesNumber = int(plotsNumber/maxPlotPerPage)+1
 			#loop on reactions
 			for myReaction in self.reactions:
 				#skip when the variable is not in the reaction rate
 				if(not(myReaction.hasVariable(myOptions,variable))): continue
+				if(icount%maxPlotPerPage==0):
+					if(fout!=None):
+						fout.write("</table>\n")
+						fout.close()
+
+					#prepare a file for each variable
+					fname = fnameBase+str(fileCount)+".html"
+
+					#open file to write
+					fout = open(fname,"w")
+					fout.write(utils.getFile("header.php"))
+					fout.write("<p style=\"font-size:30px\">All rate plots with <b>" + variable
+						+ "</b> (page "+str(fileCount+1)+"/"+str(pagesNumber)+")</p>\n")
+
+					#multi-page menu back arrow
+					if(fileCount-1>=0):
+						pagesMenu = "<a href=\""+fnameBaseRel+str(fileCount-1)+".html\">&lt;</a> "
+					else:
+						pagesMenu = "&lt; "
+					#multi-page menu links
+					for ipage in range(pagesNumber):
+						#link only if current page
+						if(ipage!=fileCount):
+							pagesMenu += "<a href=\""+fnameBaseRel+str(ipage)+".html\">"+str(ipage+1)+"</a> "
+						else:
+							pagesMenu += "["+str(ipage+1)+"] "
+					#multi-page menu forward arrow
+					if(fileCount+1<pagesNumber):
+						pagesMenu += "<a href=\""+fnameBaseRel+str(fileCount+1)+".html\">&gt;</a>"
+					else:
+						pagesMenu += "&gt;"
+
+					fout.write(pagesMenu+"<br>")
+					fout.write("<a href=\"indexReactions.html\">back</a><br>\n")
+					fout.write("<br><br>\n")
+					#reaction table
+					fout.write("<table>\n")
+					fileCount += 1
+
 				if(icount%1==0): fout.write("<tr><td>")
+
 				fnamePNG = "../pngs/rate_"+str(myReaction.getReactionHash())+"_"+variable+".png"
 				linkURL = "<a href=\"rate_"+myReaction.getReactionHash()+".html\">details</a> for "+myReaction.getVerbatimHtml()
 				fout.write("<img src=\""+fnamePNG+"\" width=\"700px\" alt=\"&#9888; MISSING: "+myReaction.getVerbatim()+"\"><br>"+linkURL)
