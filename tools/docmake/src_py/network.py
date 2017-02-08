@@ -600,6 +600,11 @@ class network:
 			#loop on possible species combination for the given reactant hash
 			for species in allSpecies[rHash]:
 				branch = sorted([x.name for x in species])
+				totalCharge = sum([x.charge for x in species])
+				maxCharge = max([x.charge for x in species])
+				hasElectron = ("E" in [x.name for x in species])
+				#skip repulsive products
+				if(totalCharge==0 and maxCharge!=0 and not(hasElectron)): continue
 				#skip CR in products
 				if("CR" in branch): continue
 				#skip X+CR->X
