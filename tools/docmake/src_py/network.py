@@ -647,6 +647,7 @@ class network:
 		fout.write("<li><a href=\"indexSpecies.html\">Species</a></li>")
 		fout.write("<li><a href=\"indexGraph.html\">Graphs</a></li>")
 		fout.write("<li><a href=\"indexMissingReactions.html\">Missing reactions</a></li>")
+		fout.write("<li><a href=\"indexMissingBranches.html\">Missing branches</a></li>")
 		fout.write("<li><a href=\"multipleRates.html\">Reactions with multiple rates</a></li>")
 		fout.write("</ul>")
 		fout.write(utils.getFooter("footer.php"))
