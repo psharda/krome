@@ -671,6 +671,9 @@ contains
     !get machine precision
     krome_epsilon = epsilon(0d0)
 
+    !load verbatim reactions
+    call loadReactionsVerbatim()
+
   end subroutine krome_init
 
   !****************************
