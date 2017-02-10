@@ -67,13 +67,14 @@ contains
   end function get_imass
 
   !************************
-  !get species charges
+  !get verbatim reaction names
   function get_rnames()
     use krome_commons
     implicit none
     character*50::get_rnames(nrea)
 
-#KROME_reaction_names
+    !reaction names are loaded from file
+    get_rnames(:) = reactionNames(:)
 
   end function get_rnames
 
