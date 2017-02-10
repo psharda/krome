@@ -208,4 +208,7 @@ module krome_commons
   !partition functions common vars
 #KROME_var_parts
 
+  !verbatim reactions
+  character*50::reactionNames(nrea)
+
 end module krome_commons
