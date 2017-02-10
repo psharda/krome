@@ -4700,6 +4700,14 @@ class krome():
 			fout.close()
 		print "done!"
 
+	########################
+	#dump reaction verbatims to file
+	def dumpReactionsVerbatim(self):
+		fout2 = open(self.buildFolder+"reactions_verbatim.dat","w")
+		for reaction in self.reacts:
+			fout2.write(reaction.verbatim+"\n")
+		fout2.close()
+
 	################################################
 	def makeGetPhys(self):
 		buildFolder = self.buildFolder
@@ -4714,7 +4722,6 @@ class krome():
 			fout = open(buildFolder+"krome_all.f90","a")
 		else:
 			fout = open(buildFolder+"krome_getphys.f90","w")
-
 
 		#preapare metallicity functions
 		#metallicity dictionary
@@ -4828,10 +4835,10 @@ class krome():
 				for x in specs:
 					fout.write("\tget_charges("+str(x.idx)+") = " + str(x.charge) + ".d0 \t!" + x.name + "\n")
 
-			elif(srow == "#KROME_reaction_names"):
-				for x in reacts:
-					kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
-					fout.write(kstr+"\n")
+			#elif(srow == "#KROME_reaction_names"):
+			#	for x in reacts:
+			#		kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
+			#		fout.write(kstr+"\n")
 			elif(srow == "#KROME_qeff"):
 				#look for the largest qeff value
 				maxqeff = 0e0
