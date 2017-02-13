@@ -8,8 +8,11 @@ fileName = "demo.dat"
 #create network from explorer file
 network = kexplorer_network.network(fileName)
 
+network.xvarName = "density"
+network.xvarUnits = "cm-3"
+
 #find best matching criteria
-network.findBest(atom="H")
+network.findBest()
 
 #print most fluxy reactions
 network.listBest()
