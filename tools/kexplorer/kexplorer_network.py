@@ -3,6 +3,10 @@ import sys,subprocess,os,glob
 class network:
 	reactions = dict()
 
+	minFlux = 1e-5 #minimum flux to plot
+	plotLog = True #edge thickness is log of flux
+	maxPenWidth = 5. #max edge thicknes, px
+
 	#**********************
 	#network contructor read kexplorer file
 	def __init__(self,fileName):
@@ -159,10 +163,16 @@ class network:
 						productHasBase = (self.atomBase in product)
 						if(not(reactantHasBase) or not(productHasBase)): continue
 
-					#get log of flux
-					lineWidth = log10(graphMax[reactant][product]+1e-40)
-					#set a limit to flux size
-					lineWidth = max(lineWidth+5,0e0)
+					if(self.plotLog):
+						#get log of flux
+						lineWidth = log10(graphMax[reactant][product]+1e-40)
+						#set a limit to flux size
+						lineWidth = max(lineWidth-log10(self.minFlux),0e0)*self.maxPenWidth/(-log10(self.minFlux))
+					else:
+						lineWidth = graphMax[reactant][product]
+						if(lineWidth<self.minFlux): lineWidth = 0e0
+						lineWidth *= self.maxPenWidth
+
 					#default color is black
 					color = "#000000"
 					#when below threshold draw light blue edge
