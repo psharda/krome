@@ -971,6 +971,7 @@ class network:
 				if(icount%maxPlotPerPage==0):
 					if(fout!=None):
 						fout.write("</table>\n")
+						fout.write(utils.getFooter("footer.php"))
 						fout.close()
 
 					#prepare a file for each variable
@@ -1014,11 +1015,13 @@ class network:
 				fout.write("<img src=\""+fnamePNG+"\" width=\"700px\" alt=\"&#9888; MISSING: "+myReaction.getVerbatim()+"\"><br>"+linkURL)
 				fout.write("<tr height=\"10px\"><td>")
 				icount += 1
-			fout.write("</table>\n")
 
-			#add footer
-			fout.write(utils.getFooter("footer.php"))
-			fout.close()
+			if(fout!=None):
+				fout.write("</table>\n")
+
+				#add footer
+				fout.write(utils.getFooter("footer.php"))
+				fout.close()
 
 	#*******************
 	#prepares HTML documentation for list of rate divided by number of intervals
