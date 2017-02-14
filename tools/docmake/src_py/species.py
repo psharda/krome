@@ -89,7 +89,7 @@ class species():
 
 		#store atoms
 		nonAtoms = ["+","-"]
-		self.atoms = [x for x in self.exploded if not(x in nonAtoms) and not(utils.isNumber(x))]
+		self.atoms = [x for x in self.exploded if(not(x in nonAtoms) and not(utils.isNumber(x)))]
 
 		#compute mass using dictionary as reference
 		self.mass = sum([atomSet[x] for x in self.exploded])
@@ -250,8 +250,8 @@ class species():
 					fnamePNG = "../pngs/rate_"+str(reaction.getReactionHash())+"_"+variable+".png"
 					if(reaction.hasVariable(myOptions,variable)):
 						#fout.write("<img src=\""+fnamePNG+"\">")
-						linkURL = "<a href=\"rate_"+reaction.getReactionHash()+".html\">details</a>"
-						fout.write("<img src=\""+fnamePNG+"\" alt=\"&#9888; MISSING: "+reaction.getVerbatim()+"\"><br>"+linkURL+"<br><br>")
+						linkURL = "<a href=\"rate_"+reaction.getReactionHash()+".html\">details</a> for "+reaction.getVerbatimHtml()
+						fout.write("<img src=\""+fnamePNG+"\" width=\"700px\" alt=\"&#9888; MISSING: "+reaction.getVerbatim()+"\"><br>"+linkURL+"<br><br>")
 
 
 		fout.write(utils.getFooter("footer.php"))
