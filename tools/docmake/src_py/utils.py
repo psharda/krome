@@ -41,13 +41,38 @@ def getFooterInfo():
 	return "documentation generated with "+hrefWiki+" ("+bitbucketLanding+") - changeset: <a href=\""\
 		+ bitbucketLink + "\" target=\"_blank\">" + changeset[:7] + "</a> - " + getCurrentTime()
 
+
+#*********************
+#load polarizability data from file
+def getPolarizabilityData(fileName):
+
+	print "loading polarizability data from "+fileName
+
+	#data dictionary
+	polData = dict()
+
+	#open file to read
+	fh = open(fileName,"rb")
+	#loop on file
+	for row in fh:
+		srow = row.strip()
+		if(srow==""): continue
+		if(srow.startswith("#")): continue
+		srow = srow.replace("\t"," ")
+		(species,value) = [x.strip() for x in srow.split(" ") if(x!="")]
+		polData[species] = float(value)*1e-24 #AA3->cm3
+
+	fh.close()
+
+	return polData
+
+
 #*********************
 #load thermochemical data from a burcat-like file
 def getThermochemicalData(fileName):
 
 	cnum = 5 #number of coefficients per line
 	clen = 15 #number of characters per coefficient
-
 
 	print "loading thermochemical data from "+fileName
 
@@ -123,6 +148,7 @@ def getAtomSet(fileName):
 #*********************
 #html format only if geq than maxlim
 def htmlExpBig(arg,digits=2,maxLim=1e3):
+	if(arg==None): return str(arg)
 	if(arg==0): return "0"
 	if(arg>=maxLim):
 		return htmlExp(arg,digits=digits)
@@ -131,6 +157,7 @@ def htmlExpBig(arg,digits=2,maxLim=1e3):
 
 #*********************
 def htmlExp(arg,digits=2):
+	if(arg==None): return str(arg)
 	if(arg==0): return "0"
 	xp = int(math.log10(abs(arg)))
 	mt = arg/1e1**(xp)
