@@ -26,6 +26,8 @@ class network:
 		#read network file in KROME format
 		if(self.detectNetworkType(fileName)=="KIDA"):
 			self.readFileKIDA(fileName,atomSet)
+		elif(self.detectNetworkType(fileName)=="UMIST"):
+			self.readFileUMIST(fileName,atomSet)
 		else:
 			self.readFileKROME(fileName,atomSet,shortcuts)
 
@@ -93,6 +95,7 @@ class network:
 			if(srow==""): continue
 			if(srow.startswith("#")): continue
 			if("," in srow): return "KROME"
+			if(srow.count(":")>5): return "UMIST"
 		fh.close()
 		return "KIDA"
 
@@ -163,6 +166,29 @@ class network:
 			self.reactions.append(myReaction)
 
 		fh.close()
+
+	#**************
+	def readFileUMIST(self,fileName,atomSet):
+		self.reactions = []
+		print "reading network "+fileName
+
+		fh = open(fileName,"rb")
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+
+			reactionType = "UMIST"
+			reactionFormat = ""
+
+			#parse row line for reaction
+			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType)
+
+			#add parsed reaction to reactions structure in network
+			self.reactions.append(myReaction)
+
+		fh.close()
+
 
 	#**************
 	#get all network species
