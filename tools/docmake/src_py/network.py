@@ -50,6 +50,9 @@ class network:
 		self.clearFolders()
 		self.backupEvaluationJSON()
 
+		#prepare subnetwork
+		self.subNetwork(myOptions)
+
 		#prepare graphs
 		self.makeGraph()
 
@@ -60,7 +63,6 @@ class network:
 			myReaction.makeHtmlPage(myOptions)
 
 		#create reaction index page
-		self.subNetwork(myOptions)
 		self.makeHtmlIndex()
 		self.makeHtmlMissingBranchesIndex(myOptions)
 		self.makeHtmlMissingReactionIndex(myOptions)
@@ -1130,11 +1132,11 @@ class network:
 		speciesOK = []
 		for species in self.getSpecies():
 			#check atoms
-			hasSkipAtoms = hasUseAtoms = False
+			hasSkipAtoms = hasNotUseAtoms = False
 			for atom in species.atoms:
 				if(atom in fullOptions["skipAtoms"]): hasSkipAtoms = True
-				if(atom in fullOptions["useAtoms"]): hasUseAtoms = True
-			if(not(hasUseAtoms) and fullOptions["useAtoms"]!=[]): continue
+				if(not(atom in fullOptions["useAtoms"])): hasNotUseAtoms = True
+			if(hasNotUseAtoms and fullOptions["useAtoms"]!=[]): continue
 			if(hasSkipAtoms): continue
 
 			#check species names
