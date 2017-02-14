@@ -1,0 +1,32 @@
+######################
+#this file is loaded by DOCMAKE adding the option
+# suboptions: subnetwork.opt
+#in the main option file, where file name is this file
+
+#skip species with these atoms (comma-separated, can be empty)
+skipAtoms =
+
+#use species with these atoms (comma-separated, can be empty, E=electron)
+useAtoms = C,H
+
+#maximum number of atoms per molecule
+maxAtoms = 2
+
+#use cations
+cations = False
+
+#use anions
+anions = True
+
+#min/max temperature range, K
+Tmin = -1e99
+Tmax = 1e99
+
+#exclude the following species (comma-separated, can be empty)
+skipSpecies =
+
+#exclude species that contain a specific case-sensitive string (comma-separated, can be empty, e.g. l- for linear mols)
+skipString =
+
+#subnetwork file
+outputFile = subNetwork.dat
