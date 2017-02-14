@@ -1,5 +1,5 @@
 import sys,glob,os,shutil,hashlib
-import reaction,utils,options
+import reaction,utils,options,copy
 
 class network:
 
@@ -58,6 +58,7 @@ class network:
 			myReaction.makeHtmlPage(myOptions)
 
 		#create reaction index page
+		self.subNetwork(myOptions)
 		self.makeHtmlIndex()
 		self.makeHtmlMissingBranchesIndex(myOptions)
 		self.makeHtmlMissingReactionIndex(myOptions)
@@ -1047,5 +1048,147 @@ class network:
 		#add footer
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
+
+
+	#************************
+	#create a subnetwork using given options (as subkida.py does)
+	def subNetwork(self,myOptions):
+
+		#skip subnetwork if option not present
+		if(not(hasattr(myOptions, 'suboptions'))): return
+
+		#expected options divided by type
+		listOptions = {"skipAtoms":"", "useAtoms":"", "skipSpecies":"",\
+			"skipString":""}
+		floatOptions = {"Tmin":-1e99, "Tmax":1e99, "maxAtoms":999}
+		boolOptions = {"cations":True, "anions":True}
+		stringOptions = {"outputFile":"subNetwork.dat"}
+
+		#store options
+		fullOptions = dict()
+		plainOptions = dict()
+
+		#open options file
+		fh = open(myOptions.suboptions,"rb")
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+
+			#read options
+			(option,value) = [x.strip() for x in srow.split("=")]
+			plainOptions[option] = value
+			#divide options by type
+			if(option in listOptions):
+				fullOptions[option] = [x.strip() for x in value.split(",") if(x!="")]
+			elif(option in floatOptions):
+				fullOptions[option] = float(value)
+			elif(option in boolOptions):
+				sval = value.lower().strip()
+				fullOptions[option] = (sval=="t" or sval=="true")
+			elif(option in stringOptions):
+				fullOptions[option] = value
+			else:
+				print "ERROR: unknown option "+option+" in "+myOptions.suboptions
+				print " options available are (case sensitive):"
+				optionsNames = listOptions.keys() + floatOptions.keys() \
+					+ boolOptions.keys() + stringOptions.keys()
+				print (", ".join(optionsNames))
+				sys.exit()
+		fh.close()
+
+		#loop to subselect species
+		speciesOK = []
+		for species in self.getSpecies():
+			#check atoms
+			hasSkipAtoms = hasUseAtoms = False
+			for atom in species.atoms:
+				if(atom in fullOptions["skipAtoms"]): hasSkipAtoms = True
+				if(atom in fullOptions["useAtoms"]): hasUseAtoms = True
+			if(not(hasUseAtoms) and fullOptions["useAtoms"]!=[]): continue
+			if(hasSkipAtoms): continue
+
+			#check species names
+			if(species.name in fullOptions["skipSpecies"]): continue
+
+			#check special strings
+			hasSkipString = False
+			for skipString in fullOptions["skipString"]:
+				if(skipString in species.name): hasSkipString = True
+			if(hasSkipString): continue
+
+			#check max atoms
+			if(len(species.exploded)>fullOptions["maxAtoms"]): continue
+
+			#check ions
+			if(species.charge>0 and not(fullOptions["cations"])): continue
+			if(species.charge<0 and not(fullOptions["anions"])): continue
+
+			#append OK species
+			speciesOK.append(species)
+
+		#get all species names
+		allNames = [x.name for x in speciesOK]
+		reactionsOK = []
+		#loop on reactions
+		for reaction in self.reactions:
+			speciesNames = [x.name for x in (reaction.reactants+reaction.products)]
+			#check if all selected species are present
+			hasAllSpecies = True
+			for species in speciesNames:
+				if(not(species in allNames)):
+					hasAllSpecies = False
+					break
+			if(not(hasAllSpecies)): continue
+			#create a copy of the reaction to get ranges
+			reactionOK = copy.copy(reaction)
+			reactionOK.rate = []
+			reactionOK.Tmin = []
+			reactionOK.Tmax = []
+			#loop on rate ranges
+			for i in range(len(reaction.rate)):
+				#check Tmin limit
+				if(reaction.Tmin[i]!=None):
+					if(float(reaction.Tmin[i])<fullOptions["Tmin"]): continue
+				#check Tmax limit
+				if(reaction.Tmax[i]!=None):
+					if(float(reaction.Tmax[i])>fullOptions["Tmax"]): continue
+				#append limits
+				reactionOK.rate.append(reaction.rate[i])
+				reactionOK.Tmin.append(reaction.Tmin[i])
+				reactionOK.Tmax.append(reaction.Tmax[i])
+			#append reaction to OK list
+			reactionsOK.append(reactionOK)
+
+
+		#write output
+		fout = open(fullOptions["outputFile"],"w")
+		#header
+		fout.write("#########################\n")
+		fout.write("#file automatically generated with DOCMAKE on "+utils.getCurrentTime()+"\n")
+		fout.write("#changeset: "+utils.getChangeset()[:7]+"\n")
+		fout.write("#using the following options\n")
+		for (option,value) in plainOptions.iteritems():
+			fout.write("# "+option+" = "+value+"\n")
+		fout.write("\n\n")
+
+		icount = 0
+		#write reactions in KROME format
+		for reaction in reactionsOK:
+			fout.write(reaction.getKROMEformat(icount))
+			icount += len(reaction.rate)
+
+		fout.close()
+
+		#some message
+		print "subnetwork saved to "+fullOptions["outputFile"]
+
+
+
+
+
+
+
+
 
 
