@@ -20,6 +20,9 @@ class network:
 		#load thermochemical data
 		self.thermochemicalData = utils.getThermochemicalData("thermo30.dat")
 
+		#load polarizability data
+		self.polarizabilityData = utils.getPolarizabilityData("polarizability.dat")
+
 		#read shortcuts
 		shortcuts = utils.getShortcuts()
 
@@ -60,7 +63,7 @@ class network:
 		#loop on reactions to evaluate
 		for myReaction in self.reactions:
 			myReaction.evaluateRate(shortcuts,varRanges)
-			myReaction.makeHtmlPage(myOptions)
+			myReaction.makeHtmlPage(myOptions,self)
 
 		#create reaction index page
 		self.makeHtmlIndex()
@@ -719,6 +722,7 @@ class network:
 	def makeHtmlSpeciesIndex(self):
 
 		fname = "htmls/indexSpecies.html"
+		header = "<th><th><th><th>"
 
 		#open file to write
 		fout = open(fname,"w")
@@ -729,9 +733,9 @@ class network:
 		fout.write("<br><br>\n")
 		#reaction table
 		fout.write("<table width=\"60%\">\n")
-		fout.write("<tr><th><th><th>\n")
-		fout.write("<tr><td>name<td>&Delta;H@0K (kJ/mol)<td>&Delta;H@298.15K (kJ/mol)\n")
-		fout.write("<tr><th><th><th>\n")
+		fout.write("<tr>"+header+"\n")
+		fout.write("<tr><td>name<td>&Delta;H@0K (kJ/mol)<td>&Delta;H@298.15K (kJ/mol)<td>&alpha; (&Aring;<sup>3</sup>)\n")
+		fout.write("<tr>"+header+"\n")
 		icount = 0
 		#loop on reactions
 		for mySpecies in sorted(self.getSpecies(),key=lambda x:x.name):
@@ -739,9 +743,12 @@ class network:
 			if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
 			enthalpy0 = mySpecies.getEnthalpy(self.thermochemicalData,Tgas=1e-40)
 			enthalpy298 = mySpecies.getEnthalpy(self.thermochemicalData)
-			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"<td>"+str(enthalpy0)+"<td>"+str(enthalpy298)+"\n")
+			polarizability = mySpecies.getPolarizability(self.polarizabilityData)
+			if(polarizability!=None): polarizability /= 1e-24 #cm3->AA3
+			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"<td>"+str(enthalpy0) \
+				+ "<td>"+str(enthalpy298)+ "<td>"+str(polarizability)+"\n")
 			icount += 1
-		fout.write("<tr><th><th><th>\n")
+		fout.write("<tr>"+header+"\n")
 		fout.write("</table>\n")
 
 		#add footer
