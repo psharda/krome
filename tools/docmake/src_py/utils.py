@@ -17,21 +17,29 @@ def getFile(fileName):
 def getFooter(sourceFile):
 	return getFile("footer.php").replace("#FOOTER_INFO#", getFooterInfo())
 
-#***********************
-def getFooterInfo():
+#**********************
+def getChangeset():
 	#name of the git master file
 	masterfile = "../../.git/refs/heads/master"
 	changeset = ("x"*7) #default unknown changeset
 	#if git master file exists grep the changeset
 	if(os.path.isfile(masterfile)):
 		changeset = open(masterfile,"rb").read()
+	return changeset.strip()
 
-	datenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#***********************
+def getCurrentTime():
+	return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+#***********************
+def getFooterInfo():
+
+	changeset = getChangeset()
 	bitbucketLink = "https://bitbucket.org/tgrassi/krome/commits/"+changeset
 	bitbucketLanding = "<a href=\"https://bitbucket.org/tgrassi/krome\" target=\"_blank\">KROME</a>"
 	hrefWiki = "<a href=\"https://bitbucket.org/tgrassi/krome/wiki/docmaker\" target=\"_blank\">docmake</a>"
 	return "documentation generated with "+hrefWiki+" ("+bitbucketLanding+") - changeset: <a href=\""\
-		+ bitbucketLink + "\" target=\"_blank\">" + changeset[:7] + "</a> - " + datenow
+		+ bitbucketLink + "\" target=\"_blank\">" + changeset[:7] + "</a> - " + getCurrentTime()
 
 #*********************
 #load thermochemical data from a burcat-like file
