@@ -1,5 +1,5 @@
 import sys,species,utils,os,urllib
-from math import log10,log,exp,sqrt
+from math import log10,log,exp,sqrt,pi
 
 class reaction:
 
@@ -379,6 +379,28 @@ class reaction:
 	#get list of species
 	def getSpecies(self):
 		return self.reactants+self.products
+
+	#*******************
+	#compute Langevin, cm3/s
+	def computeLangevin(self,myNetwork):
+		#Lanvevin only with two reactants
+		if(len(self.reactants)!=2): return None
+		#needs a positive ion
+		if(not(+1 in [x.charge for x in self.reactants])): return None
+		#needs a neutral
+		if(not(0 in [x.charge for x in self.reactants])): return None
+
+		#get neutral polarizability, cm3
+		for reactant in self.reactants:
+			if(reactant.charge==0): polarizability = reactant.getPolarizability(myNetwork.polarizabilityData)
+		#need polarizability, cm3
+		if(polarizability==None): return None
+
+		#inverse of reduced mass, 1/g
+		invReducedMass = sum([1e0/x.mass for x in self.reactants])
+
+		elementaryCharge = 4.80320425e-10 #statC
+		return 2e0*pi*elementaryCharge*sqrt(polarizability*invReducedMass)
 
 	#********************
 	#merge limits and rates with another rate
@@ -798,7 +820,7 @@ class reaction:
 
 	#****************
 	#make corresponding HTML page
-	def makeHtmlPage(self,myOptions):
+	def makeHtmlPage(self,myOptions,myNetwork):
 
 		fname = "htmls/rate_"+str(self.getReactionHash())+".html"
 
@@ -834,6 +856,16 @@ class reaction:
 		urlJSON = "../evals/rate_"+str(self.getReactionHash())+".json"
 		fout.write("<a href=\""+urlJSON+"\">get rate evaluation in JSON format</a>\n")
 		fout.write("<br><br>\n")
+
+		langevinRate = self.computeLangevin(myNetwork)
+		if(langevinRate!=None): fout.write("Langevin rate: " + utils.htmlExp(langevinRate) \
+			+ " cm<sup>3</sup>s<sup>-1</sup><br>\n")
+
+		allSpecies = sorted(self.getSpecies(), key=lambda x:x.name)
+		hrefNames = [x.getHrefName() for x in allSpecies]
+		fout.write("Species involved: "+(", ".join(hrefNames))+"<br><br>")
+
+
 		fout.write("<table>\n")
 		for (label,value) in table:
 			if(value==None): continue
