@@ -21,6 +21,8 @@ class reaction:
 
 		if(reactionType=="KIDA"):
 			self.parseFormatKIDA(row,reactionFormat,atomSet,reactionType)
+		elif(reactionType=="UMIST"):
+			self.parseFormatUMIST(row,reactionFormat,atomSet,reactionType)
 		else:
 			self.parseFormatKROME(row,reactionFormat,atomSet,reactionType)
 
@@ -71,7 +73,7 @@ class reaction:
 			elif(part=="rate"):
 				self.rate.append(arow[i])
 			else:
-				print "ERROR: unknow format element "+part
+				print "ERROR: unknown format element "+part
 				sys.exit(reactionFormat)
 
 		#add cosmic rays if not present
@@ -86,7 +88,6 @@ class reaction:
 
 	#********************
 	def parseFormatKIDA(self,row,reactionFormat,atomSet,reactionType):
-
 
 		specials = ["","G","PHOTON"]
 
@@ -176,6 +177,72 @@ class reaction:
 				KK += "*(1d0 "+gpart+")"
 		else:
 			print "ERROR: KIDA formula "+str(arow["formula"])+" not supported!"
+
+		KK = KK.replace("--","+").replace("++","+").replace("-+","-").replace("+-","-")
+
+		self.rate.append(KK)
+
+	#********************
+	def parseFormatUMIST(self,row,reactionFormat,atomSet,reactionType):
+
+		#http://www.aanda.org/articles/aa/pdf/2013/02/aa20465-12.pdf
+		#reaction no.:type:R1:R2:P1:P2:P3:P4:NE:[a:b:c:Tl:Tu:ST:ACC:REF]
+		keys = ("idx:type:R1:R2:P1:P2:P3:P4:NE:a:b:c:Tl:Tu:ST:ACC:REF").split(":")
+
+		specials = ["","CRP","CRPHOT","PHOTON"]
+
+		#variables for cosmic rays and photochemistry
+		CRvar = "user_crate" #name of the CR flux variable
+		Avvar = "user_Av" #name of the Av variable
+		refCRflux = 1.36e-17 #CR flux to scale variables
+
+		self.rate = []
+		self.reactants = []
+		self.products = []
+		self.Tmin = [None]
+		self.Tmax = [None]
+		self.reactionType = reactionType
+
+
+		srow = row.strip()
+		arow = [x.strip() for x in srow.split(":")]
+
+		dataRow = dict()
+		#loop on format to get data from the row as a dictionary
+		for i in range(len(keys)):
+			dataRow[keys[i]] = arow[i]
+
+		self.Tmin = [dataRow["Tl"]]
+		self.Tmax = [dataRow["Tu"]]
+
+		for i in range(2):
+			v = dataRow["R"+str(i+1)].strip()
+			if(v=="e-"): v = "E"
+			if(v.upper() in specials): continue
+			spec = species.species(v,atomSet)
+			self.reactants.append(spec)
+		for i in range(4):
+			v = dataRow["P"+str(i+1)].strip()
+			if(v=="e-"): v = "E"
+			if(v.upper() in specials): continue
+			spec = species.species(v,atomSet)
+			self.products.append(spec)
+
+
+		if(dataRow["type"]=="CP"):
+			KK = str(float(dataRow["a"])/refCRflux)+"*"+CRvar
+		elif(dataRow["type"]=="CR"):
+			KK = str(float(dataRow["a"])/refCRflux)+"*"+CRvar
+			if(float(dataRow["b"])!=0e0): KK += "*(T32)**("+dataRow["b"]+")"
+			KK += "*"+dataRow["c"]+"/(1d0-dustGrainAlbedo)"
+			if(float(dataRow["c"])==0e0): KK = "0d0"
+		elif(dataRow["type"]=="PH"):
+			KK = dataRow["a"]
+			if(float(dataRow["c"])!=0e0): KK += "*exp(-"+dataRow["c"]+"*"+Avvar+")"
+		else:
+			KK = dataRow["a"]
+			if(float(dataRow["b"])!=0e0): KK += "*(T32)**("+dataRow["b"]+")"
+			if(float(dataRow["c"])!=0e0): KK += "*exp(-"+dataRow["c"]+"*invT)"
 
 		KK = KK.replace("--","+").replace("++","+").replace("-+","-").replace("+-","-")
 
