@@ -132,6 +132,13 @@ class species():
 		return ("".join(nameLatex))
 
 	#*****************
+	#get polarizability, cm3
+	def getPolarizability(self,polarizabilityData):
+
+		if(self.name in polarizabilityData): return polarizabilityData[self.name]
+		return None
+
+	#*****************
 	#get "engineered" enthalpy kJ/mol
 	def getEnthalpy(self,thermochemicalData,Tgas=298.15):
 
@@ -186,6 +193,10 @@ class species():
 		fout.write("<a href=\"indexSpecies.html\">back</a>\n")
 		fout.write("<p>Enthalpy @ 298.15K: <b>" \
 			+ str(self.getEnthalpy(myNetwork.thermochemicalData)) + "</b> kJ/mol</p>")
+		polarizability = self.getPolarizability(myNetwork.polarizabilityData)
+		if(polarizability!=None): polarizability /= 1e-24 #cm3->AA3
+		fout.write("<p>&alpha;: <b>" \
+			+ str(polarizability) + "</b> &Aring;<sup>3</sup></p>")
 		fnameURL = "species_allrates_"+str(self.nameFile)+".html"
 		fout.write("<p><a href=\""+fnameURL+"\">All plots in a single page</a></p>")
 
