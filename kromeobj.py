@@ -5800,7 +5800,7 @@ class krome():
 			if(srow == "#ENDIFKROME_hasElectrons"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME"): skip = False
 
-			if(skip or skip_nleq or skip_dTdust or skipGH or skip_speciesH2): continue
+			if(skip or skip_nleq or skip_dTdust or skipGH or skip_speciesH2 or skipPhotoDust): continue
 
 
 			#replace the small value for rates according to the maximum number of products
