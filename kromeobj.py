@@ -1893,7 +1893,7 @@ class krome():
 					print " You provided "+str(len(arow))+" elements:"
 					print " "+srow
 					sys.exit()
-				ipos = 0 #count items in the splitted line
+				ipos = 0 #count items in the split line
 				ireact = [] #reactants index array
 				iprod = [] #products index array
 				format_items = len(arow)
@@ -2048,7 +2048,7 @@ class krome():
 				self.indexH2photodissociation = rcount + 1
 				nextH2photodissociation = False
 
-			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
+			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N separations
 			arow[len(arow)-1] = arow[len(arow)-1].rsplit('!',1)[0].rsplit('#',1)[0] #strip end-of-line comments
 			arow = [x.strip() for x in arow] #strip single elements
 			if(len(arow)!=format_items):
@@ -2081,7 +2081,7 @@ class krome():
 			reactants = [arow[x].strip().upper() for x in ireact]
 			products = [arow[x].strip().upper() for x in iprod]
 
-			#store reactants "curlyness" before purge
+			#store reactants "curliness" before purge
 			myrea.curlyR = [("{" in x) for x in reactants]
 
 			#purge reactants name from curly brackets
@@ -2091,7 +2091,7 @@ class krome():
 			reags_clean = sorted([x for x in reactants if x.strip()!=""])
 			prods_clean = sorted([x for x in products if x.strip()!=""])
 
-			#check for identical ractions
+			#check for identical reactions
 			foundAlready = False
 			for i in range(len(reags)):
 				if(reags_clean==reags[i] and prods_clean==prods[i] and self.mergeTlimits):
@@ -2145,7 +2145,7 @@ class krome():
 				if(tmaxFound): myrea.Tmax = format_double(arow[iTmax]) #get Tmax
 				if(tmaxFound): TmaxAuto = max(float(arow[iTmax].lower().replace("d","e")), TmaxAuto)
 			#store other data
-			area = arow[irate].split(":",2) #raction can be if_condition:reaction_rate
+			area = arow[irate].split(":",2) #reaction can be if_condition:reaction_rate
 			if(len(area)==1):
 				myrea.ifrate = "" #store empty prepending if condition
 				myrea.krate = arow[irate] #get reaction rate written in F90 style
@@ -2170,7 +2170,7 @@ class krome():
 					mol.idx = spec_names.index(mol.name) + 1
 					myrea.reactants.append(mol) #add molecule object to reactants
 
-			#loop over prodcuts to grep molecules
+			#loop over products to grep molecules
 			for p in products:
 				if(p.strip()=="G" and not(self.use_photons)): continue
 				if(p.strip()=="E-"): p = "E"
@@ -2247,6 +2247,26 @@ class krome():
 			del myrea,row
 			if(not(noTabNextBlock)): noTabNext = False #return to default value when outside a block
 			#END LOOP ON FILE
+
+		#sort species by charge (negative first)
+		specs = sorted(specs, key=lambda x:x.charge)
+
+		#list of species names
+		speciesNames = [x.name for x in specs]
+
+		#redefine species index in each reaction
+		for react in reacts:
+			for reactant in react.reactants:
+				reactant.idx = speciesNames.index(reactant.name)+1
+			for product in react.products:
+				product.idx = speciesNames.index(product.name)+1
+
+		#reorder indexes
+		newspecs = []
+		for sp in specs:
+			sp.idx = len(newspecs)+1
+			newspecs.append(sp)
+		specs = newspecs
 
 		#after loop on file post-process special reactions
 		#shielding reactions requires fsh variable
@@ -2393,7 +2413,7 @@ class krome():
 				print "ERROR: folder "+fdbase+" not found!"
 				sys.exit()
 			file_list = sorted([f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))])
-			extraVars = dict() #dict of the extra varaibles, with key=filename
+			extraVars = dict() #dict of the extra variables, with key=filename
 			isAutoRev = False
 			for fname in file_list:
 				fname = fdbase + fname
@@ -2443,7 +2463,7 @@ class krome():
 					autor = [x.upper().strip() for x in autorea["reacts"].split(",")] #list of reacts
 					if(sorted([x.name for x in rea.reactants])!=sorted(autor)): continue
 					if(sorted([x.name for x in rea.products])!=sorted(autop)): continue
-					#if there are necessay variables in the datafile that contains this reaction,
+					#if there are necessary variables in the datafile that contains this reaction,
 					# it appends to the list of the necessaryExtraVars
 					extraVar = extraVars[autorea["autoFname"]]
 					if(len(extraVar)>0):
@@ -2488,12 +2508,12 @@ class krome():
 
 				#error if automatic reaction not found
 				if(not(dbFound)):
-					print "ERROR: reaction not found in the automatc database!"
+					print "ERROR: reaction not found in the automatic database!"
 					print rea.verbatim,[x.name for x in rea.reactants]
 					print "you can:"
 					print "1. remove it from your network"
 					print "2. provide a non-automatic reaction rate"
-					print "3. add to the databse "+fdbase
+					print "3. add to the database "+fdbase
 					sys.exit()
 
 			#append auto reactions found with different ranges of temperature
@@ -2541,7 +2561,6 @@ class krome():
 				sp.idx = len(uspecs) + 1
 				uspecs.append(sp)
 		specs = uspecs[:] #copy the extended species list to the old one
-
 
 		#increase the number of reactions to include bin-based surface reactions
 		ureacts = []
@@ -2636,16 +2655,6 @@ class krome():
 				print "ERROR: sources found, check your network ("+(", ".join(sources))+")!"
 				print " Disable this control with -noSinkCheck"
 				sys.exit()
-
-		#sort species by charge (negative first)
-		specs = sorted(specs, key=lambda x:x.charge)
-
-		#reorder indexes
-		newspecs = []
-		for sp in specs:
-			sp.idx = len(newspecs)+1
-			newspecs.append(sp)
-		specs = newspecs
 
 		#check recombination (ion species that never recombine with electrons)
 		if(self.recCheck):
