@@ -2630,13 +2630,22 @@ class krome():
 				print "WARNING: sinks found, check your network ("+(", ".join(sinks))+")!"
 				print " Disable this control with -noSinkCheck"
 				a = raw_input("Any key to ignore q to quit... ")
-                                if(a=="q"): print sys.exit()
-				#sys.exit()
+                                if(a=="q"): sys.exit()
 
 			if(len(sources)>0):
 				print "ERROR: sources found, check your network ("+(", ".join(sources))+")!"
 				print " Disable this control with -noSinkCheck"
 				sys.exit()
+
+		#sort species by charge (negative first)
+		specs = sorted(specs, key=lambda x:x.charge)
+
+		#reorder indexes
+		newspecs = []
+		for sp in specs:
+			sp.idx = len(newspecs)+1
+			newspecs.append(sp)
+		specs = newspecs
 
 		#check recombination (ion species that never recombine with electrons)
 		if(self.recCheck):
