@@ -16,28 +16,31 @@ set grid
 set xrange [1e1:1.e4] reverse
 #set size square
 
+nkrome = 4
+load 'species.gps'
+
 set yrange [1e-25:1e1]
-plot './fort.22' u 1:7  w l t "H",\
-'' u 1:5  w l t "H+",\
-'' u 1:8  w l t "H-",\
-'' u 1:9  w l t "H2",\
-'' u 1:10  w l t "H2+",\
-'' u 1:11  w l t "H3+"
+plot './fort.22' u 1:krome_idx_H  w l t "H",\
+'' u 1:krome_idx_Hj  w l t "H+",\
+'' u 1:krome_idx_Hk  w l t "H-",\
+'' u 1:krome_idx_H2  w l t "H2",\
+'' u 1:krome_idx_H2j  w l t "H2+",\
+'' u 1:krome_idx_H3j  w l t "H3+"
 
 set key b r
 set yrange [1e-25:1e1]
-plot './fort.22' u 1:14 w l t "He",\
-'' u 1:13 w l t "He+",\
-'' u 1:12 w l t "He++",\
-'' u 1:15 w l t "HeH+"
+plot './fort.22' u 1:krome_idx_HE w l t "He",\
+'' u 1:krome_idx_HEj w l t "He+",\
+'' u 1:krome_idx_HEjj w l t "He++",\
+'' u 1:krome_idx_HEHj w l t "HeH+"
 
 set yrange [1e-25:1e1]
 set key b l
-plot './fort.22' u 1:17 w l t "D",\
-'' u 1:16 w l t "D+",\
-'' u 1:18 w l t "HD",\
-'' u 1:19 w l t "HD+",\
-'' u 1:20 w l t "H2D+"
+plot './fort.22' u 1:krome_idx_D w l t "D",\
+'' u 1:krome_idx_Dj w l t "D+",\
+'' u 1:krome_idx_HD w l t "HD",\
+'' u 1:krome_idx_HDj w l t "HD+",\
+'' u 1:krome_idx_H2Dj w l t "H2D+"
 
 set ylabel "log(T[K])"
 set xlabel "log(1+z)"
