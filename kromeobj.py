@@ -6564,11 +6564,15 @@ class krome():
 
 			elif(srow == "#KROME_JAC_PD"):
 				if(not(self.doJacobian)): continue
+				#flag to determine if the IF block is open
+				isBlockOpen = False
 				#build the Jacobian as J(i,j) = df_i/dx_j
 				for i in range(neq):
 					if(i+1==electronIdx and self.useComputeElectrons): continue
-					if(i==0): fout.write("if(j=="+str(i+1)+") then\n")
-					if(i>0): fout.write("elseif(j=="+str(i+1)+") then\n")
+					if(not(isBlockOpen)):
+						fout.write("if(j=="+str(i+1)+") then\n")
+						isBlockOpen = True
+					if(isBlockOpen): fout.write("elseif(j=="+str(i+1)+") then\n")
 					if(i!=Tgas_species.idx-1):
 						spdj = ""
 						has_pdj = False
