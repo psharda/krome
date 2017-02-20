@@ -133,7 +133,7 @@ contains
 
     !verbatim reactions are loaded from file
     ! to increase compilation speed
-    open(newunit=nunit,file=trim(fname),iostat=ios)
+    open(newunit=nunit,file=trim(fname),status="old",iostat=ios)
     if(ios/=0) then
        print *,"ERROR: "//trim(fname)//" file not present!"
        stop
@@ -144,6 +144,7 @@ contains
        read(nunit,'(a)',iostat=ios) line
        if(ios/=0) then
           print *,"ERROR: problem reading "//trim(fname)
+          stop
        end if
        reactionNames(i) = trim(line)
     end do
