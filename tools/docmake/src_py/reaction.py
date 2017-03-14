@@ -439,20 +439,22 @@ class reaction:
 
 	#*****************
 	#return rate reaction in KROME format
-	def getKROMEformat(self,idx=1):
+	def getKROMEformat(self,idx=1,includeTlimits=True):
 		line = ""
 		for i in range(len(self.rate)):
 			fmt = "@format:idx,"
 			fmt += ("R,"*len(self.reactants))
 			fmt += ("P,"*len(self.products))
-			if(self.Tmin[i]!=None): fmt += "Tmin,"
-			if(self.Tmax[i]!=None): fmt += "Tmax,"
+			if(includeTlimits):
+				if(self.Tmin[i]!=None): fmt += "Tmin,"
+				if(self.Tmax[i]!=None): fmt += "Tmax,"
 			fmt += "rate\n"
 			RR = (",".join([x.name for x in self.reactants]))
 			PP = (",".join([x.name for x in self.products]))
 			Tmin = Tmax = ""
-			if(self.Tmin[i]!=None): Tmin = str(self.Tmin[i]) + ","
-			if(self.Tmax[i]!=None): Tmax = str(self.Tmax[i]) + ","
+			if(includeTlimits):
+				if(self.Tmin[i]!=None): Tmin = str(self.Tmin[i]) + ","
+				if(self.Tmax[i]!=None): Tmax = str(self.Tmax[i]) + ","
 			data = str(idx+i+1)+","+RR+","+PP+","+Tmin+Tmax+self.rate[i]+"\n\n"
 			line += fmt+data
 		return line
