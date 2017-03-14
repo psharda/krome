@@ -1097,9 +1097,9 @@ class network:
 
 		#expected options divided by type
 		listOptions = {"skipAtoms":"", "useAtoms":"", "skipSpecies":"",\
-			"skipString":""}
+			"skipString":"", "useSpecies":""}
 		floatOptions = {"Tmin":-1e99, "Tmax":1e99, "maxAtoms":999}
-		boolOptions = {"cations":True, "anions":True}
+		boolOptions = {"cations":True, "anions":True, "skipTlimitsSingle":False}
 		stringOptions = {"outputFile":"subNetwork.dat"}
 
 		#store options
@@ -1149,6 +1149,11 @@ class network:
 			#check species names
 			if(species.name in fullOptions["skipSpecies"]): continue
 
+			#include only these species
+			if(fullOptions["useSpecies"]!=[]):
+				if(not(species.name in fullOptions["useSpecies"])): continue
+
+
 			#check special strings
 			hasSkipString = False
 			for skipString in fullOptions["skipString"]:
@@ -1164,6 +1169,9 @@ class network:
 
 			#append OK species
 			speciesOK.append(species)
+
+		print "species included in the subnetwork ("+str(len(speciesOK)) \
+			+"):", (", ".join(sorted([x.name for x in speciesOK])))
 
 		#get all species names
 		allNames = [x.name for x in speciesOK]
@@ -1213,13 +1221,14 @@ class network:
 		icount = 0
 		#write reactions in KROME format
 		for reaction in reactionsOK:
-			fout.write(reaction.getKROMEformat(icount))
+			useTlims = not(fullOptions["skipTlimitsSingle"] and (len(reaction.rate)==1))
+			fout.write(reaction.getKROMEformat(icount,includeTlimits=useTlims))
 			icount += len(reaction.rate)
 
 		fout.close()
 
 		#some message
-		print "subnetwork saved to "+fullOptions["outputFile"]
+		print "subnetwork saved to "+fullOptions["outputFile"]+" with "+str(icount)+" reactions"
 
 
 
