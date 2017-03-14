@@ -1155,39 +1155,51 @@ def get_heating_index_list():
 
 ####################################
 #solar metallicities
-def get_solar_abundances():
+def get_solar_abundances(fileName="data/asplund.dat"):
 	#solar abundances from Tab.1 in Asplund+2009
 	# following their definition
 	#  log10(epsilon) = log10(n/nH) + 12
 	# where n is the number densiity of the given element,
 	# while nH is the number density of H
 	# This function returns log10(n/nH)
-	solar_abs = {
-		"D":12.00e0,
-		"He":10.93e0,
-		"Li":1.05e0,
-		"Be":1.38e0,
-		"B":2.70e0,
-		"C":8.43e0,
-		"N":7.83e0,
-		"O":8.69e0,
-		"F":4.56e0,
-		"Ne":7.93e0,
-		"Na":6.24e0,
-		"Mg":7.60e0,
-		"Al":6.45e0,
-		"Si":7.51e0,
-		"P":5.41e0,
-		"S":7.12e0,
-		"Cl":5.50e0,
-		"Ar":6.40e0,
-		"K":5.03e0,
-		"Ca":6.34e0,
-		"Ti":4.95e0,
-		"Mn":5.43e0,
-		"Fe":7.50e0,
-		"Ni":6.22e0
-		}
+
+	# Z:     Atomic number [I3]
+	# A:     Average weight [F8.3]
+	# Na:    Element name [A3]
+	# Solar: Epsilon abundance in the solar photosphere [F6.2]
+	# Err:   Error on epsilon value [F6.2]
+	# Meteo: Epsilon abundance in meteorites (specifically CI chondrites) [F6.2]
+	# Err:   Error on epsilon value [F6.2]
+
+	#format spacing and names
+	fmtSpace = [3,8,3]+[6]*4
+	fmtName = ["Z","A","Name","Solar","ErrSolar","Meteor","MeteorErr"]
+
+	solar_abs = dict()
+
+	fhz = open(fileName,"rb")
+	#loop on data file
+	for row in fhz:
+		srow = row.strip()
+		#skip comments
+		if(srow==""): continue
+		if(srow.startswith("#")): continue
+		#fill trailing with large number of spaces to avoid format problems
+		srow = srow+(""*sum(fmtSpace))
+		#cursor position
+		istep = 0
+		data = dict()
+		#loop on format pieces
+		for i in range(len(fmtSpace)):
+			#get size of data
+			nsp = fmtSpace[i]
+			#store data in dict
+			data[fmtName[i]] = srow[istep:istep+nsp]
+			#increase cursor position
+			istep += nsp
+		#if data are not empty store abundance
+		if(data["Solar"].strip()!=""):
+			solar_abs[data["Name"].strip()] = float(data["Solar"])
 
 	solar_out = dict()
 	for k,v in solar_abs.iteritems():
