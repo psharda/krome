@@ -7,16 +7,19 @@
 skipAtoms =
 
 #use species with these atoms (comma-separated, can be empty, E=electron)
-useAtoms = C,H
+useAtoms = H,C
 
 #maximum number of atoms per molecule
-maxAtoms = 2
+maxAtoms = 3
 
 #use cations
-cations = False
+cations = True
 
 #use anions
 anions = True
+
+#ignore Tlimits when reaction from the database has only one rate
+skipTlimitsSingle = True
 
 #min/max temperature range, K
 Tmin = -1e99
@@ -25,8 +28,11 @@ Tmax = 1e99
 #exclude the following species (comma-separated, can be empty)
 skipSpecies =
 
+#include the following species only (comma-separated, ignored when empty)
+useSpecies =
+
 #exclude species that contain a specific case-sensitive string (comma-separated, can be empty, e.g. l- for linear mols)
 skipString =
 
 #subnetwork file
-outputFile = subNetwork.dat
+outputFile = network_subsection.dat
