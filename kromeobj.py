@@ -6660,7 +6660,10 @@ class krome():
 				scaleZ = [] #reset scaleZ since Htot= is no longer needed
 				break #skip routine if H is not present
 			for mols in specs:
+				if(mols.name.upper()=="H"): continue #skip hydrogen
 				if(mols.name.upper()=="HE"): continue #skip helium
+				if(mols.name.upper()=="CR"): continue #avoid Cr / CR confusion
+				if(mols.name.upper()=="Co"): continue #avoid Cr / CO confusion
 				if(k.upper()==mols.name.upper()):
 					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
@@ -7772,6 +7775,8 @@ class krome():
 		if(not(os.path.exists(ramsesFolder))): os.makedirs(ramsesFolder)
 		specs = self.specs
 
+		#get_depleted()
+
 		#some initial abundances. if not found set default
 		# all in 1/cm3, except for T which is K
 		ndef = {"H": 7.5615e-1,
@@ -7787,7 +7792,7 @@ class krome():
 
 		excl = ["CR","g","Tgas","dummy"] #avoid specials
 
-		#count species excluding what is conteinted in excl list
+		#count species excluding what is contented in excl list
 		chemCount = 0
 		for x in specs:
 			if(x.name in excl): continue
@@ -7815,7 +7820,8 @@ class krome():
 				bkupdateueq += "uold(ind_leaf(i),ichem+1+"+str(ichem-1)+") = unoneq("+str(ichem)+") !"+x.name+"\n"
 				vecupdateueq += "unoneq("+str(ichem)+") = uin(i,2+"+str(ichem)+") !"+x.name+"\n"
 				vecbkupdateueq += "uout(i,2+"+str(ichem)+") = unoneq("+str(ichem)+") !"+x.name+"\n"
-		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq","#KROME_vecupdate_unoneq","#KROME_vecbackupdate_unoneq",]
+		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq",\
+			"#KROME_vecupdate_unoneq","#KROME_vecbackupdate_unoneq",]
 		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq, vecupdateueq, vecbkupdateueq]
 		#replace pragmas (org) with expressions (new)
 		self.replacein(pfold+fname, ramsesFolder+fname, org, new)
