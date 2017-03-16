@@ -17,7 +17,7 @@ testpath = "tests/" #where the tests are located
 prj_name = "alltest" #where the tests
 
 #import the list of tests from testpath
-tests = [x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath]
+tests = sorted([x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath])
 #tests = ["hello"]
 
 #start from this test (empty string start from first test)
@@ -35,7 +35,7 @@ if(mode=="check"):
 	call(["git", "pull", "origin"])
 
 	changesetFOLDER = "" #changeset of the current folder
-	proc = Popen(['git','show'],stdout=PIPE) #use git show to retrive local info
+	proc = Popen(['git','show'],stdout=PIPE) #use git show to retrieve local info
 	#loop on the output
 	for line in iter(proc.stdout.readline,''):
 		lstrip = line.rstrip()
@@ -46,7 +46,7 @@ if(mode=="check"):
 	#check if the changeset is retrieved
 	if(changesetFOLDER==""): sys.exit("ERROR: check mode enabled and git show command does not work properly")
 
-	#retireve the changeset on the SERVER
+	#retrieve the changeset on the SERVER
 	changesetSERVER = ""
 	#content = urllib2.urlopen('http://kromepackage.org/test/outcheck.log')
 	cj = cookielib.CookieJar()
@@ -64,7 +64,7 @@ if(mode=="check"):
 
 
 
-#read hastable if needed
+#read hashtable if needed
 if(mode=="check"):
 	hashtab = []
 	changeset = "unknown"
@@ -120,6 +120,8 @@ else:
 #write the changeset to file
 fout.write("changeset: "+changeset+"\n")
 
+testResults = dict()
+
 run = False #run flag
 for test in tests:
 	if(test==first): run = True #run the first test
@@ -154,7 +156,7 @@ for test in tests:
 	#run executable
 	call(["./test"])
 
-	#run zenity notification when exectutable ends (LINUX USERS ONLY)
+	#run zenity notification when executable ends (LINUX USERS ONLY)
 	#if("linux" in platform.system().lower()):
 	#	notifier = "zenity"
 	#	fpath = "/usr/bin/"+notifier
@@ -182,7 +184,8 @@ for test in tests:
 				for x in hashall:
 					print x
 				#sys.exit()
-		print "Is OK?",testOK
+		print "Is test "+test+" OK?",testOK
+		testResults[test] = testOK
 		fout.write(test+" "+str(testOK)+" "+str(time.time())+" regular\n")
 
 
@@ -202,6 +205,11 @@ for test in tests:
 #	for test in skiptests:
 #		fout.write(test+" "+str(False)+" "+str(time.time())+" skipped\n")
 fout.close()
+
+#print test results
+print "Tests result:"
+for (test,result) in testResults.iteritems():
+	print test,result
 
 #copy the results to kromepackage.org using FTP
 import traceback
