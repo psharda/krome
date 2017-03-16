@@ -1155,7 +1155,7 @@ def get_heating_index_list():
 
 ####################################
 #solar metallicities
-def get_solar_abundances(fileName="data/asplund.dat"):
+def get_solar_abundances(fileName="data/asplund.dat",keyName="Solar"):
 	#solar abundances from Tab.1 in Asplund+2009
 	# following their definition
 	#  log10(epsilon) = log10(n/nH) + 12
@@ -1198,14 +1198,82 @@ def get_solar_abundances(fileName="data/asplund.dat"):
 			#increase cursor position
 			istep += nsp
 		#if data are not empty store abundance
-		if(data["Solar"].strip()!=""):
-			solar_abs[data["Name"].strip()] = float(data["Solar"])
+		if(data[keyName].strip()!=""):
+			solar_abs[data["Name"].strip()] = float(data[keyName])
 
-	solar_out = dict()
-	for k,v in solar_abs.iteritems():
-		solar_out[k] = str(v-12e0)
+	if(keyName=="Solar"):
+		solar_out = dict()
+		for k,v in solar_abs.iteritems():
+			solar_out[k] = str(v-12e0)
+		return solar_out
+	else:
+		return solar_abs
 
-	return solar_out
+
+
+###############################
+#get abundances assuming specific depletion and dust/gas mass ratio
+def getAbundancesWithDepletion(d2g = .01):
+
+	#species not depleted (fdep=0)
+	nodep = ["H","He","Ne","Ar","Kr","Xe","Rn","Hg"]
+	#species partially depleted (0<fdep<1)
+	dep = {"O":0.8,"N":0.5,"Si":0.8}
+	#species to compute depletion
+	depFree = "C"
+
+	#list of species with fdep=0
+	nodepList = nodep+[depFree]
+
+	#get Asplund exponents of solar number densities, i.e. log(epsilon)-12
+	Zaspl = get_solar_abundances()
+	#get average atomic mass
+	Waspl = get_solar_abundances(keyName="A")
+	#compute Z in mass for each atom (not normalized)
+	Zmassn = {k:(Waspl[k]*1e1**float(v)) for (k,v) in Zaspl.iteritems()}
+	#total Z not normalized
+	Ztot = sum(Zmassn.values())
+	#normalize to have Z
+	Zmass = {k:v/Ztot for (k,v) in Zmassn.iteritems()}
+
+	#create depletion factors dictionary (1=all in dust)
+	fdep = {k:0e0 for k in nodepList}
+	fdep.update({k:1e0 for k in Zmass.keys() if(not(k in nodepList))})
+	fdep.update(dep)
+
+	#compute X,Y,Z
+	X = Zmass["H"]
+	Y = Zmass["He"]
+	Z = sum([v for (k,v) in Zmass.iteritems() if(not(k in ["H","He"]))])
+
+	#Z depleted (excluded unknown)
+	Zdep = sum([v*fdep[k] for (k,v) in Zmass.iteritems()])
+
+	#Z in dust
+	Zd = d2g/(d2g+1e0)
+	#Z in gas
+	Zg = Z - Zd
+
+	#Z of partially depleted species
+	Zx = Zd-Zdep
+
+	#get depletion of unknown species
+	ff = Zx/Zmass[depFree]
+
+	#trigger error if required depletion > 1 or negative
+	if(ff>1e0 or ff<0e0):
+		print "X:",X,"Y:",Y, "Z:", Z
+		print "Zd:",Zd, "Zg:",Zg, "Zd/Z:",Zd/Z, "Zg/Z:",Zg/Z
+		print dep
+		print depFree+":",ff
+		sys.exit("ERROR: problems with "+depFree+" depletion!")
+	fdep[depFree] = ff
+
+	nH = Zmass["H"]*(1.-fdep["H"])/Waspl["H"]
+	return {k:v*(1.-fdep[k])/Waspl[k]/nH for (k,v) in Zmass.iteritems()}
+	#print {k:v/Waspl[k] for (k,v) in Zmassn.iteritems()}
+
+
 
 ###################################
 #vibrational constant dictionary
