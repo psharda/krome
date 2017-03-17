@@ -4875,6 +4875,18 @@ class krome():
 					kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
 					fout.write(kstr+"\n")
 
+			elif(srow == "#KROME_get_Ebind_bare"):
+				Ebind = get_Ebind(surface="bare")
+				for sp in specs:
+					if(sp.name in Ebind):
+						fout.write("get_EbindBare("+sp.fidx+") = "+str(Ebind[sp.name])+"d0\n")
+
+			elif(srow == "#KROME_get_Ebind_ice"):
+				Ebind = get_Ebind(surface="ice")
+				for sp in specs:
+					if(sp.name in Ebind):
+						fout.write("get_EbindIce("+sp.fidx+") = "+str(Ebind[sp.name])+"d0\n")
+
 			elif(srow == "#KROME_metallicity_functions"):
 				solar = get_solar_abundances() #get solar abundances
 				ffs = "" #metallicity functions
