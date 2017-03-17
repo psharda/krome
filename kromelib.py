@@ -1274,6 +1274,24 @@ def getAbundancesWithDepletion(d2g = .01):
 	#print {k:v/Waspl[k] for (k,v) in Zmassn.iteritems()}
 
 
+#*****************************
+def get_Ebind(fileName="data/Ebare_ice.dat",surface="bare"):
+	fh = open(fileName,"rb")
+
+	Ebind = dict()
+	for row in fh:
+		srow = row.strip()
+		if(srow.startswith("#")): continue
+		if(srow==""): continue
+		(name, Ebare, Eice) = [x for x in srow.split(" ") if(x!="")]
+		if(surface=="bare"):
+			Ebind[name] = float(Ebare)
+		elif(surface=="ice"):
+			Ebind[name] = float(Eice)
+		else:
+			sys.exit("ERROR: unknown surface type "+surface)
+
+	return Ebind
 
 ###################################
 #vibrational constant dictionary
