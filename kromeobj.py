@@ -3702,16 +3702,16 @@ class krome():
 			chunks = len(arr_rr[i]) / chunk_length + 1
 			for j in range(chunks):
 				cstart = chunk_length * j + 1
-				cend   = min(chunk_length * (j+1), len(arr_rr[i])-1)
+				cend   = min(chunk_length * (j+1), len(arr_rr[i]))
 				implicit_arrays += ( "arr_r{0}({1}:{2}) = (/".format(i+1,cstart,cend)
-								+ (",".join([str(x) for x in arr_rr[i][cstart:cend+1]]))+"/)\n" )
+								+ (",".join([str(x) for x in arr_rr[i][cstart-1:cend]]))+"/)\n" )
 		for i in range(len(arr_pp)):
 			chunks = len(arr_pp[i]) / chunk_length + 1
 			for j in range(chunks):
 				cstart = chunk_length * j + 1
-				cend   = min(chunk_length * (j+1), len(arr_pp[i])-1)
+				cend   = min(chunk_length * (j+1), len(arr_pp[i]))
 				implicit_arrays += ( "arr_p{0}({1}:{2}) = (/".format(i+1,cstart,cend)
-								+ (",".join([str(x) for x in arr_pp[i][cstart:cend+1]]))+"/)\n" )
+								+ (",".join([str(x) for x in arr_pp[i][cstart-1:cend]]))+"/)\n" )
 		self.implicit_arrays = implicit_arrays
 
 		#wrap RHS (e.g. knn+knn=2*knn)
