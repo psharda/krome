@@ -6,13 +6,13 @@ os.chdir(".")
 #get verbosity
 verbose = ("-v" in sys.argv)
 
-hasrm = False
+rmCount = 0
 #clean all files with given extention in the root folder
 for x in [".log","~",".pyc",".dot",".gps",".tmp"]:
 	for files in glob.glob("*"+x):
 		os.unlink(files)
 		if(verbose): print "removing ./"+files
-		hasrm = True
+		rmCount += 1
 
 
 removePatterns = ["tools/*.pyc", \
@@ -31,7 +31,7 @@ for pattern in removePatterns:
 	for files in glob.glob(pattern):
 		os.unlink(files)
 		if(verbose): print "removing ./"+files
-		hasrm = True
+		rmCount += 1
 
 #remove temp files (~) from subfolders
 for root, dirnames, filenames in os.walk('.'):
@@ -40,7 +40,7 @@ for root, dirnames, filenames in os.walk('.'):
 			fname = root+"/"+fle 
 			os.unlink(fname)
 			if(verbose): print "removing ./"+fname
-			hasrm = True
+			rmCount += 1
 
 #clear build (files)
 for root, dirs, files in os.walk("./build/"):
@@ -50,7 +50,7 @@ for root, dirs, files in os.walk("./build/"):
 	for x in files:
 		if(verbose): print "removing ./"+path+x
 		os.remove(path+x)
-		hasrm = True
+		rmCount += 1
 
 #clear build (dirs)
 for root, dirs, files in os.walk("./build/"):
@@ -60,7 +60,7 @@ for root, dirs, files in os.walk("./build/"):
 	for x in dirs:
 		if(verbose): print "removing ./"+path+x
 		os.rmdir(path+x)
-		hasrm = True
+		rmCount += 1
 
 #add README file in build if not present
 fname = "build/README"
@@ -70,5 +70,5 @@ if(not(os.path.isfile(fname))):
 	fout.write("this folder will contains the built files\n")
 	fout.close()
 
-if(not(hasrm)): print "nothing to clean"
+print str(rmCount-1)+" elements cleaned"
 print "done!"
