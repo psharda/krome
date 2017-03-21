@@ -1865,6 +1865,7 @@ class krome():
 				ice = srow.replace("@ice:","").strip()
 				(iceName,rateType,krate) = ice.split(",",2)
 				mol = parser(iceName+"_total",mass_dic,atoms,self.thermodata)
+				mol.mass = 0e0 #_total species mass is zero to avoid double counting
 				if(not(mol.name in spec_names)):
 					spec_names.append(mol.name)
 					specs.append(mol)
