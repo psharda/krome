@@ -195,6 +195,43 @@ contains
 
   end function krate_stick
 
+  !********************************
+  !compact version of krate_stick
+  function krate_stickSi(n,idx,Tdust) result(k)
+    use krome_commons
+    implicit none
+    integer,intent(in)::idx
+    real*8,intent(in)::n(nspec),Tdust
+    real*8::k,amin,amax,d2g,rho0,pexp
+
+    !some default values OK for silicates
+    amin = 5d-7 !cm
+    amax = 2.5d-5 !cm
+    pexp = -3.5
+    rho0 = 3d0 !g/cm3
+    d2g = 1d-2
+
+    k = krate_stick(n(:),idx,Tdust,amin,amax,pexp,rho0,d2g)
+
+  end function krate_stickSi
+
+  !***************************
+  !evaporation rate, 1/s
+  function krate_evaporation(n,idx,Tdust) result(k)
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer,intent(in)::idx
+    real*8,intent(in)::n(nspec),Tdust
+    real*8::k,Ebind(nspec),nu0
+
+    nu0 = 1d12 !1/s
+    Ebind(:) = get_EbindBare()
+
+    k = nu0 * exp(-Ebind(idx)/Tdust)
+
+  end function krate_evaporation
+
   !***************************
   function dust_ice_fraction_array(invphi,nH2O)
     use krome_constants
