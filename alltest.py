@@ -12,6 +12,7 @@ makeOption = "debug"
 
 if("-makeopt" in argv):
 	makeOption = argv[argv.index("-makeopt")+1]
+doFTP = not("-skipFTP" in argv)
 
 testpath = "tests/" #where the tests are located
 prj_name = "alltest" #where the tests
@@ -213,7 +214,7 @@ for (test,result) in testResults.iteritems():
 
 #copy the results to kromepackage.org using FTP
 import traceback
-if(mode=="check"):
+if(mode=="check" and doFTP):
 	filename = "outcheck.log"
 	if(not(os.path.isfile(filename))): sys.exit("ERROR: "+filename+" not present. Nothing to copy.")
 	if(not(os.path.isfile("../ftplogin.dat"))): sys.exit("ERROR: ftplogin.dat not present. Can't connect.")
