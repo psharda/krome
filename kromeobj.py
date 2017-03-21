@@ -136,6 +136,7 @@ class krome():
 	customCoolList = [] #list of the custom cooling functions
 	customHeatList = [] #list of the custom heating functions
 	individualCoolingFloors = [] #list of individual floors
+	iceSpeciesList = [] #list of species on ice
 	fdbase = "data/database/" #database of reaction folder for auto reactions
 	indexSolomon = -1 #default solomon index, -1 to trigger error
 	indexH2photodissociation = -1 #default H2pd index, -1 to trigger error
@@ -1616,6 +1617,7 @@ class krome():
 			'_ortho':0e0,
 			'_meta':0e0,
 			'_ice':0e0,
+			'_total':0e0,
 			'l_':0e0,
 			'c_':0e0,
 			'CR':0e0,
@@ -1857,6 +1859,19 @@ class krome():
 						specs.append(mol)
 					mol.idx = spec_names.index(mol.name) + 1
 				continue #SKIP: a ghost line is not a reaction line
+
+			#get ice species
+			if("@ice:" in srow):
+				ice = srow.replace("@ice:","").strip()
+				self.iceSpeciesList = ice.split(",")
+				for ice in self.iceSpeciesList:
+					print "Found ice species: "+ice
+					mol = parser(ice+"_total",mass_dic,atoms,self.thermodata)
+					if(not(mol.name in spec_names)):
+						spec_names.append(mol.name)
+						specs.append(mol)
+					mol.idx = spec_names.index(mol.name) + 1
+				continue
 
 			#search for table pragma
 			if("@tabvar:" in srow):
@@ -3569,6 +3584,12 @@ class krome():
 		#maximum number of parts in RHS
 		maxDnsParts = 1000
 
+		#dictionaries for freezeout and evaporation
+		self.iceODE = {k.upper():"0.d0" for k in self.iceSpeciesList}
+		nameIceList = [k.upper()+"_ICE" for k in self.iceSpeciesList]
+		kRateEvaporation = dict()
+		kRateFreezeout = dict()
+
 		#create explicit differentials
 		dns = ["dn("+sp.fidx+") = 0.d0" for sp in specs] #initialize
 		dnsCount = [0 for sp in specs] #initialize RHS part count
@@ -3579,20 +3600,55 @@ class krome():
 			rhs = "kflux("+str(rea.idx)+")"
 			if(self.humanFlux): rhs = rea.RHS
 			for r in rea.reactants:
+				nameUpper = r.name.upper()
+				#add RHS to ice ODE
+				if(nameUpper in self.iceODE):
+					#skip evaporation/freeze-out in gas ODE
+					if(not(nameUpper+"_ICE" in [x.name.upper() for x in rea.products])):
+						self.iceODE[nameUpper] += " -"+rhs
+				#add RHS to ice ODE
+				if(nameUpper in nameIceList):
+					kRateEvaporation[nameUpper.replace("_ICE","")] = rea
 				if(r.name=="E" and self.useComputeElectrons): continue
+
 				dnsCount[r.idx-1] += 1
 				if(dnsCount[r.idx-1]%maxDnsParts==0):
 					dns[r.idx-1] += " dn("+r.fidx+") = "
 				dns[r.idx-1] = dns[r.idx-1].replace(" = 0.d0"," =")
 				dns[r.idx-1] += " -"+rhs
 			for p in rea.products:
+				nameUpper = p.name.upper()
+				if(nameUpper in self.iceODE):
+					if(not(nameUpper+"_ICE" in [x.name.upper() for x in rea.reactants])):
+						self.iceODE[nameUpper] += " +"+rhs
+				if(nameUpper in nameIceList):
+					kRateFreezeout[nameUpper.replace("_ICE","")] = rea
 				if(p.name=="E" and self.useComputeElectrons): continue
+
 				dnsCount[p.idx-1] += 1
 				if(dnsCount[p.idx-1]%maxDnsParts==0):
 					dns[p.idx-1] += " dn("+p.fidx+") = "
 				dns[p.idx-1] = dns[p.idx-1].replace(" = 0.d0"," =")
 				dns[p.idx-1] += " +"+rhs
 
+		#modify ODE if ice species are present
+		for iceSpecies in self.iceSpeciesList:
+			for species in self.specs:
+				nameUpper = species.name.upper()
+				#differential for the gas phase
+				if(nameUpper==iceSpecies):
+					#get freeze and evaporation rates index
+					idxFreeze = str(kRateFreezeout[nameUpper].idx)
+					idxEvaporation = str(kRateEvaporation[nameUpper].idx)
+					dns[species.idx-1] = "dn("+species.fidx+") = dnChem_"+iceSpecies \
+						+ " -n("+species.fidx+")*(k("+idxFreeze+")+k("+idxEvaporation+"))" \
+						+ " +k("+idxEvaporation+")*n("+species.fidx+"_total)"
+				#differential for total = ice + gas
+				if(nameUpper==iceSpecies+"_TOTAL"):
+					dns[species.idx-1] = "dn("+species.fidx+") = dnChem_"+iceSpecies
+				#differential for ice species (always zero)
+				if(nameUpper==iceSpecies+"_ICE"):
+					dns[species.idx-1] = "dn("+species.fidx+") = 0.d0"
 
 		#add dust to ODEs
 		if(self.useDust):
@@ -3683,7 +3739,7 @@ class krome():
 
 
 	###############################################
-	#build the jacobian
+	#build the Jacobian
 	def createJAC(self):
 		reacts = self.reacts
 		specs = self.specs
@@ -6488,6 +6544,20 @@ class krome():
 							fout.write("\t" + x + "\n")
 							inw += 1
 
+			#replace ice ODE variables
+			elif(srow=="#KROME_iceODEVariables"):
+				if(len(self.iceODE)>0):
+					iceODEVariables = {"dnChem_"+k.replace("_ICE","") for k in self.iceODE.keys()}
+					fout.write("real*8::"+(",".join(iceODEVariables))+"\n")
+
+			#replace ice ODE definitions
+			elif(srow=="#KROME_iceODEDefinitions"):
+				#loop on ice species
+				for (k,vODE) in self.iceODE.iteritems():
+					#break ODE into lines
+					vODEret = vODE.replace("-k("," &\n -k(")
+					vODEret = vODEret.replace("+k("," &\n +k(")
+					fout.write("dnChem_"+k.replace("_ICE","")+" = "+vODEret+"\n")
 
 			#replace the pragma with the computation of the photorates using the opacity computed with
 			# the approximation of Glover+2009 Eqn.2
