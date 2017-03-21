@@ -3698,10 +3698,21 @@ class krome():
 		self.maxnreag = maxnreag
 		self.maxnprod = maxnprod
 		implicit_arrays = ""
+		chunk_length = 10000
 		for i in range(len(arr_rr)):
-			implicit_arrays += "arr_r"+str(i+1)+"(:) = (/"+(",".join([str(x) for x in arr_rr[i]]))+"/)\n"
+			chunks = len(arr_rr[i]) / chunk_length + 1
+			for j in range(chunks):
+				cstart = chunk_length * j + 1
+				cend   = min(chunk_length * (j+1), len(arr_rr[i])-1)
+				implicit_arrays += ( "arr_r{0}({1}:{2}) = (/".format(i+1,cstart,cend)
+								+ (",".join([str(x) for x in arr_rr[i][cstart:cend+1]]))+"/)\n" )
 		for i in range(len(arr_pp)):
-			implicit_arrays += "arr_p"+str(i+1)+"(:) = (/"+(",".join([str(x) for x in arr_pp[i]]))+"/)\n"
+			chunks = len(arr_pp[i]) / chunk_length + 1
+			for j in range(chunks):
+				cstart = chunk_length * j + 1
+				cend   = min(chunk_length * (j+1), len(arr_pp[i])-1)
+				implicit_arrays += ( "arr_p{0}({1}:{2}) = (/".format(i+1,cstart,cend)
+								+ (",".join([str(x) for x in arr_pp[i][cstart:cend+1]]))+"/)\n" )
 		self.implicit_arrays = implicit_arrays
 
 		#wrap RHS (e.g. knn+knn=2*knn)
