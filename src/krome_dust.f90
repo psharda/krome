@@ -853,7 +853,7 @@ contains
   !***********************
   subroutine init_dust_tabs()
     use krome_commons
-    use krome_subs
+    use krome_fit
     implicit none
 
     call init_anytab2D("dust_table_cool.dat",dust_tab_ngas(:),&
