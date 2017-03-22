@@ -4793,6 +4793,25 @@ class krome():
 		fout2.close()
 
 	################################################
+	def makeFit(self):
+		#*********FIT****************
+		#write parameters in krome_fit.f90
+		print "- writing krome_fit.f90...",
+		fh = open(self.srcFolder+"krome_fit.f90")
+		if(self.buildCompact):
+			fout = open(self.buildFolder+"krome_all.f90","a")
+		else:
+			fout = open(self.buildFolder+"krome_fit.f90","w")
+
+		#write to file
+		for row in fh:
+			fout.write(row)
+
+		if(not(self.buildCompact)):
+			fout.close()
+
+
+	################################################
 	def makeGetPhys(self):
 		buildFolder = self.buildFolder
 		reacts = self.reacts
@@ -7597,6 +7616,7 @@ class krome():
 				indentF90(buildFolder+"krome_user.f90")
 				indentF90(buildFolder+"krome_gadiab.f90")
 				indentF90(buildFolder+"krome_phfuncs.f90")
+				indentF90(buildFolder+"krome_fit.f90")
 
 		print "done!"
 	#########################################
