@@ -313,6 +313,7 @@
     function cooling_Z_CIENOUV(n,inTgas)
       use krome_commons
       use krome_subs
+      use krome_fit
       use krome_getphys
       implicit none
       real*8::cooling_Z_CIENOUV,n(:),inTgas
@@ -711,6 +712,7 @@
     function cooling_dust(n,Tgas)
       use krome_commons
       use krome_subs
+      use krome_fit
       use krome_getphys
       implicit none
       real*8::n(:),Tgas,ntot,cooling_dust,coolFit
@@ -853,6 +855,7 @@
     ! Frommhold & Moraldi (1989), ApJ, 336, 495.
     function H2opacity_omukai(Tgas, n)
       use krome_commons
+      use krome_fit
       use krome_subs
       use krome_getphys
       implicit none
