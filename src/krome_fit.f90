@@ -1,13 +1,16 @@
 module krome_fit
 contains
+
   !********************************************
+  !load 2d tables from filename
   subroutine init_anytab2D(filename,x,y,z,xmul,ymul)
     use krome_commons
     implicit none
-    character(len=*)::filename
+    character(len=*),intent(in)::filename
     character(len=60)::row_string
-    real*8::x(:),y(:),z(:,:),rout(3),xmul,ymul
-    integer::i,j,ios
+    real*8,intent(out)::x(:),y(:),z(:,:),xmul,ymul
+    real*8::rout(3)
+    integer::i,j,ios,unit
 
     !check the size of the X input array
     if(size(x).ne.size(z,1)) then
@@ -24,7 +27,7 @@ contains
     if (krome_mpi_rank<=1) print *,"Reading tables from "//trim(filename)
 
     !open file and check if it exists
-    open(51,file=trim(filename),status="old",iostat=ios)
+    open(newunit=unit,file=trim(filename),status="old",iostat=ios)
     if(ios.ne.0) then
        print *,"ERROR: in init_anytab2D file ",trim(filename)," not found!"
        stop
@@ -33,7 +36,7 @@ contains
     !skip the comments and the first line and the sizes of the data
     ! which are already known from the pre-processing
     do
-       read(51,'(a)') row_string
+       read(unit,'(a)') row_string
        if(row_string(1:1)/="#") exit
     end do
 
@@ -50,15 +53,15 @@ contains
     !loop to read file
     do i=1,size(x)
        do j=1,size(y)
-          read(51,*,iostat=ios) rout(:)
+          read(unit,*,iostat=ios) rout(:)
           y(j) = rout(2)
           z(i,j) = rout(3)
        end do
        x(i) = rout(1)
-       read(51,*,iostat=ios) !skip blanks
+       read(unit,*,iostat=ios) !skip blanks
        if(ios.ne.0) exit
     end do
-    close(51)
+    close(unit)
 
     xmul = 1d0/(x(2)-x(1))
     ymul = 1d0/(y(2)-y(1))
@@ -66,33 +69,39 @@ contains
   end subroutine init_anytab2D
 
   !******************************
+  !test 2d fit and save to file
   subroutine test_anytab2D(fname,x,y,z,xmul,ymul)
     implicit none
-    integer::i,j
-    real*8::x(:),y(:),z(:,:),xmul,ymul,xx,yy,zz
-    character(len=*)::fname
+    integer::i,j,unit1,unit2
+    real*8,intent(in)::x(:),y(:),z(:,:),xmul,ymul
+    real*8::xx,yy,zz
+    character(len=*),intent(in)::fname
 
-    open(91,file=fname//".fit",status="replace")
-    open(92,file=fname//".org",status="replace")
+    open(newunit=unit1,file=fname//".fit",status="replace")
+    open(newunit=unit2,file=fname//".org",status="replace")
     do i=1,size(x)
        do j=1,size(y)
           xx = x(i)
           yy = y(j)
           zz = fit_anytab2D(x(:),y(:),z(:,:),xmul,ymul,xx,yy)
-          write(91,*) xx,yy,zz
-          write(92,*) x(i),y(j),z(i,j)
+          write(unit1,*) xx,yy,zz
+          write(unit2,*) x(i),y(j),z(i,j)
        end do
-       write(91,*)
-       write(92,*)
+       write(unit1,*)
+       write(unit2,*)
     end do
+    close(unit1)
+    close(unit2)
     print *,"original file wrote in ",fname//".org"
     print *,"fit test file wrote in ",fname//".fit"
 
   end subroutine test_anytab2D
 
   !******************************
+  !return 2d fit at xx,yy
   function fit_anytab2D(x,y,z,xmul,ymul,xx,yy)
-    real*8::fit_anytab2D,x(:),y(:),z(:,:),xmul,ymul,xx,yy
+    real*8::fit_anytab2D
+    real*8,intent(in)::x(:),y(:),z(:,:),xmul,ymul,xx,yy
     real*8::zleft(size(x)),zright(size(x)),zl,zr
     integer::ipos,i1,i2
 
@@ -110,8 +119,10 @@ contains
   end function fit_anytab2D
 
   !*********************
+  !return 1d fit at xx
   function fit_anytab1D(x,z,xmul,xx)
-    real*8::fit_anytab1D,x(:),z(:),xmul,xx,p
+    real*8,intent(in)::x(:),z(:),xmul,xx
+    real*8::fit_anytab1D,p
     integer::ipos,i1,i2
 
     ipos = (xx-x(1)) * xmul + 1
@@ -124,6 +135,7 @@ contains
 
   end function fit_anytab1D
 
+  !***************************
   function fit_anytab2D_linlog(x,y,z,xmul,ymul,xx,yy)
     real*8::fit_anytab2D_linlog,x(:),y(:),z(:,:),xmul,ymul,xx,yy
     real*8::zleft(size(x)),zright(size(x)),zl,zr
