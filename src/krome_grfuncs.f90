@@ -16,7 +16,16 @@ contains
 
     Tgas = n(idx_Tgas)
 
+    !default, K
+    Tdust = 1d0
+
+    !total densitym, cm-3
     ntot = sum(n(1:nmols))
+
+    !zero density returns default
+    if(ntot==0d0) return
+
+    !get dust temperature from table, K
     Tdust = 1d1**fit_anytab2D(dust_tab_ngas(:), &
          dust_tab_Tgas(:), dust_tab_Tdust(:,:), dust_mult_ngas, &
          dust_mult_Tgas, &
