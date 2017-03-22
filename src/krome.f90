@@ -559,6 +559,7 @@ contains
     use krome_dust
     use krome_cooling
     use krome_photo
+    use krome_fit
 #IFKROME_useStars
     use krome_stars
 #ENDIFKROME
