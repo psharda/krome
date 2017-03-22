@@ -64,7 +64,7 @@ class krome():
 	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = False
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
-	useHeatingPumpH2 = reducer = useFexCustom = False
+	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = False
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
@@ -1707,6 +1707,7 @@ class krome():
 		inCoolingBlock = False #block for custom cooling expression
 		inHeatingBlock = False #block for custom heating expression
 		inSurfaceBlock = False #block for reaction on surface
+		inStoreOnceBlock = False #block that stores reactions that are constants during the solver call
 		self.hasSurfaceReactions = False #true if surface reactions found
 
 		#generate a custom reaction network and replace filename with the custom one
@@ -1994,6 +1995,15 @@ class krome():
 				noTabNext = noTabNextBlock = False
 				continue #SKIP (not a reaction)
 
+			#start block of reactions with constant rate during the solver call
+			if(srow.lower()=="@storeonce_begin" or srow.lower()=="@storeonce_start"):
+				inStoreOnceBlock = self.hasStoreOnceRates = True
+				continue #SKIP (not a reaction)
+			#end block of reactions with constant rate during the solver call
+			if(srow.lower()=="@storeonce_end" or srow.lower()=="@storeonce_stop"):
+				inStoreOnceBlock = False
+				continue #SKIP (not a reaction)
+
 			#start a CR reaction block
 			if(srow.lower()=="@cr_start" or srow.lower()=="@cr_begin"):
 				inCRblock = True
@@ -2252,7 +2262,8 @@ class krome():
 			myrea.build_phrate(inPhotoBlock) #build photoionization rate
 			myrea.check(self.checkMode) #check mass and charge conservation
 			myrea.group = group #add the group to the reaction
-			myrea.canUseTabs = not(noTabNext) #check if this reaction can use tabs or not
+			myrea.canUseTabs = not(noTabNext or inStoreOnceBlock) #check if this reaction can use tabs or not
+			myrea.isStoreOnce = inStoreOnceBlock
 			if(myrea.krate.count("(")!=myrea.krate.count(")")):
 				print "ERROR: unbalanced brackets in reaction "+str(myrea.idx)
 				print " "+myrea.verbatim
@@ -4493,6 +4504,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
 			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skipGH = True
+			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 			if(srow == "#ENDIFKROME_useCoolingGH"): skipGH = False
@@ -5621,7 +5633,7 @@ class krome():
 	########################################################
 	def makeTabs(self):
 		buildFolder = self.buildFolder
-		coevars = self.coevars #copy coefficient varaibles
+		coevars = self.coevars #copy coefficient variables
 		#********* TABS ****************
 		print "- writing krome_tabs.f90...",
 		fh = open(self.srcFolder+"krome_tabs.f90")
@@ -5633,15 +5645,20 @@ class krome():
 		#include reactions that cannot be tabbed
 		countNoTab = 0
 		noTabReactions = "\n!non tabulated rates\n"
-		sclist = [] #list of the temperature shortcuts
+		storeOnceRates = ""
+		sclist = [] #list of the temperature short-cuts
 		for rea in self.reacts:
 			if(not(rea.canUseTabs)):
 
-				noTabReactions += rea.getRateF90(self,varname="coe_tab")+"\n\n"
-				#noTabReactions += "coe_tab("+str(rea.idx)+") = "+rea.krate+"\n"
-				countNoTab += 1
-				sclist = get_Tshortcut(rea,sclist,coevars) #add shotcut if needed
-
+				if(not(rea.isStoreOnce)):
+					noTabReactions += rea.getRateF90(self,varname="coe_tab")+"\n\n"
+					#noTabReactions += "coe_tab("+str(rea.idx)+") = "+rea.krate+"\n"
+					countNoTab += 1
+					sclist = get_Tshortcut(rea,sclist,coevars) #add short-cut if needed
+				else:
+					noTabReactions += "!"+rea.verbatim+"\n"
+					noTabReactions += "coe_tab("+str(rea.idx)+") = rateEvaluateOnce("+str(rea.idx)+")\n\n"
+					storeOnceRates += rea.getRateF90(self,varname="rateEvaluateOnce")+"\n\n"
 
 		#if reactions that cannot be tabbed are found
 		klist = kvars = ""
@@ -5660,7 +5677,7 @@ class krome():
 		#prepares the reaction modifiers
 		#tokenize to replace k(:) with coe_tab(:)
 		import tokenize,cStringIO
-		kModifierFull = "" #string that will contans all the lines of the rate modifier
+		kModifierFull = "" #string that will contains all the lines of the rate modifier
 		for kmod in self.kModifier:
 			#string to tokenizable object
 			src = cStringIO.StringIO(kmod).readline
@@ -5699,6 +5716,7 @@ class krome():
 			row = row.replace("#KROME_init_vars",klist)
 			row = row.replace("#KROME_noTabReactions",noTabReactions)
 			row = row.replace("#KROME_rateModifier", kModifierFull)
+			row = row.replace("#KROME_storeOnceRates",storeOnceRates)
 
 			if(row.strip() == "#KROME_Tshortcuts"):
 				ssc = ""
@@ -7241,6 +7259,7 @@ class krome():
 			if(srow == "#ELSEKROME" and not(self.useX)): skip = False
 			if(srow == "#ELSEKROME" and self.useX): skip = True
 
+			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip = True
 			if(srow == "#IFKROME_useH2pd" and not(useH2Photodissociation)): skip = True
 			if(srow == "#IFKROME_useTabs" and not(self.useTabs)): skip = True
