@@ -139,6 +139,7 @@ if(not(krome.isdry)):
 	krome.makeCommons()
 	krome.makeConstants()
 	krome.makeUserCommons()
+	krome.makeFit()
 	krome.makeGetPhys()
 	krome.makeGammaAdiabatic()
 	krome.makeGrainFuncs()
