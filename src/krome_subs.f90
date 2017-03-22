@@ -12,6 +12,7 @@ contains
     use krome_getphys
     use krome_grfuncs
     use krome_phfuncs
+    use krome_fit
     implicit none
     real*8::coe(nrea),k(nrea),Tgas,n(nspec),kmax
 #KROME_shortcut_variables
