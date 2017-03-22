@@ -23,6 +23,7 @@ contains
     use krome_reduction
     use krome_dust
     use krome_getphys
+    use krome_tabs
     implicit none
     #KROME_double :: Tgas,dt
     #KROME_double :: x(nmols)
@@ -126,6 +127,10 @@ contains
 #ENDIFKROME
     !store initial values
     ni(:) = n(:)
+
+#IFKROME_hasStoreOnceRates
+    call makeStoreOnceRates(n(:))
+#ENDIFKROME
 
     n_old(:) = -1d99
     krome_call_to_fex = 0
