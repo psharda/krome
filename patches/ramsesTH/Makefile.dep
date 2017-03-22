@@ -6,3 +6,4 @@ init_flow_fine.o : krome_all.o
 condinit.o       : krome_all.o
 umuscl.o         : krome_all.o
 interpol_hydro.o : krome_all.o
+init_hydro.o     : krome_all.o
