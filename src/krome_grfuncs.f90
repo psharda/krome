@@ -7,6 +7,24 @@ contains
 #KROME_header
 
   !**********************
+  !get Tdust from tables, K
+  function get_table_Tdust(n) result(Tdust)
+    use krome_commons
+    use krome_fit
+    real*8,intent(in)::n(nspec)
+    real*8::ntot,Tdust,Tgas
+
+    Tgas = n(idx_Tgas)
+
+    ntot = sum(n(1:nmols))
+    Tdust = 1d1**fit_anytab2D(dust_tab_ngas(:), &
+         dust_tab_Tgas(:), dust_tab_Tdust(:,:), dust_mult_ngas, &
+         dust_mult_Tgas, &
+         log10(ntot), log10(Tgas))
+
+  end function get_table_Tdust
+
+  !**********************
   !adsorpion rate Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
   function dust_adsorption_rate(nndust,ims,stick,adust2,sqrTgas)
     use krome_constants
