@@ -14,6 +14,7 @@ contains
     use krome_gadiab
     use krome_getphys
     use krome_phfuncs
+    use krome_fit
 #IFKROME_useDust
     use krome_dust
 #ENDIFKROME
