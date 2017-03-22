@@ -104,6 +104,7 @@ class reaction():
 	hasTlimitMax = hasTlimitMin = True #flag to determine the presence of Temperature limits
 	group = "__DEFAULT__"
 	canUseTabs = True #flag if this reaction can use tabs
+	isStoreOnce = False #reaction rate is stored once and never evaluated again during fex call
 	ifrate = "" #if condition on rate, e.g. if(Tgas>1d2):
 	isCR = False #flag this reaction as CR
 	isXRay = False #flag this reaction as XRay
