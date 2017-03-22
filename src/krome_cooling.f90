@@ -1382,6 +1382,7 @@
     function coolingZ_rates(inTgas)
       use krome_commons
       use krome_subs
+      use krome_fit
       implicit none
       real*8::inTgas,coolingZ_rates(nZrate),k(nZrate)
       real*8::Tgas,invT,logTgas
