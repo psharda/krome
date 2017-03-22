@@ -208,9 +208,13 @@ for test in tests:
 fout.close()
 
 #print test results
+print "***************"
 print "Tests result:"
 for (test,result) in testResults.iteritems():
-	print test,result
+	warningString = "<<<<<<<<<<<<<<<"
+	if(result): warningString = ""
+	print test,result,warningString
+print "***************"
 
 #copy the results to kromepackage.org using FTP
 import traceback
