@@ -1313,7 +1313,9 @@ class krome():
 
 		#dust tabs
 		if(args.dustTabs):
-			tabModes = ["HM2012"] #modes
+			tabPath = "data/dust_tables/"
+			tabModes = [x for x in os.listdir(tabPath) if(x.endswith("_cool.dat"))]
+			tabModes = [x.replace("dust_table_","").replace("_cool.dat","") for x in tabModes]
 			tabOpts = ["H2","COOL"] #options
 			allTabs = tabOpts + tabModes #all possible options
 
@@ -1334,7 +1336,7 @@ class krome():
 			#error if mode not found
 			if(not(modeFound)):
 				print "ERROR: you should indicate a mode when you use -dustTabs option"
-				print "Available modes:",tabModes
+				print "Available modes:",sorted(tabModes)
 				sys.exit()
 
 			#error if option not found
@@ -1875,6 +1877,7 @@ class krome():
 				myrea.reactants = []
 				myrea.krate = krate
 				myrea.idx = rcount
+				myrea.canUseTabs = False
 				myrea.hasTlimitMin = myrea.hasTlimitMax = False
 				if(not(iceName in self.iceSpeciesList)):
 					self.iceSpeciesList[iceName] = dict()
