@@ -2,12 +2,15 @@
 #options for test collapseCO
 DEV
 -n networks/react_COthin_noSi
--cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM,DUST,CO
+-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM,CO
 -heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST
 -H2opacity=RIPAMONTI
 -gamma=REDUCED
 -ATOL=1d-40
 -maxord=1
--dust=5,Si
--dustOptions=dT,H2
+#-dust=2,Si
+#-dustOptions=dT,H2
 #-coolingQuench=10
+-photoDustVarAv=user_av
+-dustTabs=H2,COOL,MC
+-useTabs
