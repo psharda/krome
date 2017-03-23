@@ -5698,13 +5698,11 @@ class krome():
 		#replace pragmas
 		skip = False
 		for row in fh:
+			if(row.strip() == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 			if(row.strip() == "#IFKROME_useCustomCoe" and not(self.useCustomCoe)): skip = True
-			if(row.strip() == "#ENDIFKROME"): skip = False
-
 			if(row.strip() == "#IFKROME_useTabs" and not(self.useTabs)): skip = True
-			if(row.strip() == "#ENDIFKROME"): skip = False
-
 			if(row.strip() == "#IFKROME_useStandardCoe" and ((self.useCustomCoe) or (self.useTabs))): skip = True
+
 			if(row.strip() == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
