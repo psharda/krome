@@ -171,7 +171,9 @@ contains
 
   end function coe_tab
 
+#IFKROME_hasStoreOnceRates
   !**************************
+  !compute rates that remain constant during solver call
   subroutine makeStoreOnceRates(n)
     use krome_commons
     implicit none
@@ -184,5 +186,6 @@ contains
 #KROME_storeOnceRates
 
   end subroutine makeStoreOnceRates
+#ENDIFKROME
 
 end module krome_tabs
