@@ -1884,8 +1884,10 @@ class krome():
 					self.iceSpeciesList[iceName] = dict()
 				self.iceSpeciesList[iceName]["ODE"] = "0.d0"
 				if(rateType.lower()=="freezeout"):
+					myrea.verbatim = iceName+" freeze-out"
 					self.iceSpeciesList[iceName]["reactionFreezeout"] = myrea
 				elif(rateType.lower()=="evaporation"):
+					myrea.verbatim = iceName+" evaporation"
 					self.iceSpeciesList[iceName]["reactionEvaporation"] = myrea
 				else:
 					sys.exit("ERROR: unknown reaction type "+rateType)
@@ -6308,7 +6310,6 @@ class krome():
 						CRheat += "!"+rea.verbatim+"\n"
 						reactantNames = [x.name.upper() for x in rea.reactants]
 						productNames = sorted([x.name.upper() for x in rea.products])
-						print reactantNames,productNames
 						if((reactantNames==["H"]) and (productNames==sorted(["H+","E"]))):
 							CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * QH\n\n"
 						elif((reactantNames==["H2"]) and (productNames==sorted(["H2+","E"]))):
