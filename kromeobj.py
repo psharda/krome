@@ -7960,7 +7960,14 @@ class krome():
 					gasSpecies = [x for x in specs if(x.name.lower()+"_total"==nameLower)][0]
 					gasSpeciesList.append(gasSpecies)
 
-				updateueq += "unoneq(krome_"+sp.fidx+") = uold(ind_leaf(i),ichem+krome_"+sp.fidx+") !"+sp.name+"\n"
+				if(isIceTotal):
+					updateueq += "unoneq(krome_"+gasSpecies.fidx + "_ice) = uold(ind_leaf(i),ichem+krome_"+gasSpecies.fidx + "_ice) !" \
+					        + gasSpecies.name+"_ICE\n"
+					vecupdateueq += "unoneq(krome_"+gasSpecies.fidx + "_ice) = uin(i,2+krome_"+gasSpecies.fidx + "_ice) !" \
+					        + gasSpecies.name+"_ICE\n"
+				else:
+					updateueq += "unoneq(krome_"+sp.fidx+") = uold(ind_leaf(i),ichem+krome_"+sp.fidx+") !"+sp.name+"\n"
+					vecupdateueq += "unoneq(krome_"+sp.fidx+") = uin(i,2+krome_"+sp.fidx+") !"+sp.name+"\n"
 				#skip species with zero mass only if not TOTAL
 				if(sp.mass>0e0 or isIceTotal):
 					#if species is TOTAL then converts ICE
@@ -7973,12 +7980,14 @@ class krome():
 				if(isIceTotal):
 					bkscaleueq += "unoneq(krome_"+gasSpecies.fidx+"_total) = unoneq(krome_"+gasSpecies.fidx+"_total)*" \
 						+ str(gasSpecies.mass)+"*iscale_d !"+gasSpecies.name+"_total\n"
-
+				        bkupdateueq += "uold(ind_leaf(i),ichem+krome_"+gasSpecies.fidx + "_ice) = unoneq(krome_"+gasSpecies.fidx + "_ice) !" \
+					        + gasSpecies.name+"_ICE\n"
+				        vecbkupdateueq += "uout(i,2+krome_"+gasSpecies.fidx + "_ice) = unoneq(krome_"+gasSpecies.fidx + "_ice) !" \
+					        + gasSpecies.name+"_ICE\n"
 				else:
 					bkscaleueq += "unoneq(krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+")*"+str(sp.mass)+"*iscale_d !"+sp.name+"\n"
-				bkupdateueq += "uold(ind_leaf(i),ichem+krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+") !"+sp.name+"\n"
-				vecupdateueq += "unoneq(krome_"+sp.fidx+") = uin(i,2+krome_"+sp.fidx+") !"+sp.name+"\n"
-				vecbkupdateueq += "uout(i,2+krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+") !"+sp.name+"\n"
+				        bkupdateueq += "uold(ind_leaf(i),ichem+krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+") !"+sp.name+"\n"
+				        vecbkupdateueq += "uout(i,2+krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+") !"+sp.name+"\n"
 
 		#loop on ices found to convert KROME<->RAMSES
 		for gasSpecies in gasSpeciesList:
