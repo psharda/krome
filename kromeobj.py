@@ -5267,17 +5267,17 @@ class krome():
 			skipa = ["CR","Tgas","dummy","g"] #skip these species
 			multi = [] #species with shared atoms
 			acount = dict() #store species per atom type (e.g. {"C":["C","CO","C2"], ...})
-			has_multiple = False #check if spcies with shared atoms are present (e.g. CO but not H2)
+			has_multiple = False #check if species with shared atoms are present (e.g. CO but not H2)
 			#loop on the species
 			for x in specs:
 				xname = x.name #species name
-				if(xname in skipa): continue #cycle if the name is prensent in the skip list
+				if(xname in skipa): continue #cycle if the name is present in the skip list
 				afound = 0 #cont founded type atoms
-				#loop on the dictionary taht count the atoms in the species
+				#loop on the dictionary that count the atoms in the species
 				for a in x.atomcount2:
 					if(a in ["+","-"]): continue #skip non-atoms
 					afound +=1 #count founded atoms (for account of shared atoms)
-					#append species to dictioanry if contains the atom a
+					#append species to dictionary if contains the atom a
 					if(a in acount):
 						acount[a].append(x)
 					else:
@@ -5377,6 +5377,8 @@ class krome():
 
 			if(skip): continue #skip
 
+			atomSkipList = [x.upper() for x in ["_total"]]
+
 			#replace the small value for rates according to the maximum number of products
 			if("#KROME_small" in srow):
 				if(self.useTabs):
@@ -5394,8 +5396,10 @@ class krome():
 				conserve_matrix = ""
 				#loop on the type of atoms (equation-wise)
 				for atomType,speciesList in acount.iteritems():
-					#loop on the type of atoms (coefficent-wise)
+					if(atomType.upper() in atomSkipList): continue
+					#loop on the type of atoms (coefficient-wise)
 					for atomType2,speciesList2 in acount.iteritems():
+						if(atomType2.upper() in atomSkipList): continue
 						#loop on the species of a given atom type
 						for species in speciesList:
 							#if the species belongs to both atom groups, e.g. CO in C and O
@@ -5405,36 +5409,48 @@ class krome():
 								#product of atoms multipliers
 								pp = str(species.atomcount[atomType2]*species.atomcount[atomType])+"d0 *"
 								if(pp=="1d0 *"): pp = ""
+								myFidxx = myFidxm = species.fidx
+								if(myFidxx.lower().endswith("_total")):
+									myFidxm = ("_".join(myFidxx.split("_")[:-1]))
+									myFidxx = myFidxm+"_ice"
 								#mfact = pp*self.mass_dic[atomType2.upper()] / species.mass
 								conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + "+str(pp) \
-									+" x("+species.fidx + ") * m(idx_"+atomType+") * m(idx_"+atomType2 \
-									+") / m("+species.fidx+")**2\n"
+									+" x("+myFidxx + ") * m(idx_"+atomType+") * m(idx_"+atomType2 \
+									+") / m("+myFidxm+")**2\n"
 				fout.write(conserve_matrix+"\n")
 
 			elif(srow=="#KROME_conserve_fscale" and self.useConserveLin):
-				specSkip = ["E","+","-","CR","g","dummy","Tgas"]
+				specSkip = [x.lower() for x in ["E","+","-","CR","g","dummy","Tgas","_total"]]
 				conserve_fscale = ""
 				for species in self.specs:
-					if(species.name in specSkip): continue
+					if(species.name.lower() in specSkip): continue
 					fmult = [str(atomCount)+"d0*m(idx_"+atomType+") * B(idx_atom_"+atomType+")" \
 						for atomType,atomCount in species.atomcount.iteritems() \
-						if not(atomType in specSkip)]
+						if(not(atomType.lower() in specSkip))]
 					fact = (" + &\n ".join(fmult))
-					rescale = "x("+species.fidx+") = x("+species.fidx+") * ("+fact+")/m("+species.fidx+")"
+					myFidxx = myFidxm = species.fidx
+					if(myFidxx.lower().endswith("_total")):
+						myFidxm = ("_".join(myFidxx.split("_")[:-1]))
+						myFidxx = myFidxm+"_ice"
+					rescale = "x("+myFidxx+") = x("+myFidxx+") * ("+fact+")/m("+myFidxm+")"
 					conserve_fscale += rescale.replace(" 1d0*"," ").replace("(1d0*","(")+"\n"
 				fout.write(conserve_fscale+"\n")
 
 			elif(srow=="#KROME_conserveLin_ref" and self.useConserveLin):
-				atomSkip = ["+","-","E"]
+				atomSkip = [x.lower() for x in ["+","-","E","_total"]]
 				refMassAll = ""
 				for species in self.specs:
-					if(species.name in atomSkip): continue
-					if(species.mass>0e0):
-						for atomType,atomCount in species.atomcount.iteritems():
-							if(atomType in atomSkip): continue
+					if(species.name.lower() in atomSkip): continue
+					if(species.mass>0e0 or species.name.lower().endswith("_total")):
+						for (atomType,atomCount) in species.atomcount.iteritems():
+							if(atomType.lower() in atomSkip): continue
 							varRef = conserveLinGetRef_x = "conserveLinGetRef_x(idx_atom_"+atomType+")"
+							myFidxx = myFidxm = species.fidx
+							if(myFidxx.lower().endswith("_total")):
+								myFidxm = ("_".join(myFidxx.split("_")[:-1]))
+								myFidxx = myFidxm+"_ice"
 							refMass = varRef + " = "+ varRef + " + " + str(atomCount) \
-								+"d0*m(idx_"+atomType+")*x("+species.fidx+")/m("+species.fidx+")\n"
+								+"d0*m(idx_"+atomType+")*x("+myFidxx+")/m("+myFidxm+")\n"
 							refMassAll += refMass.replace(" 1d0*"," ")
 				fout.write(refMassAll+"\n")
 
