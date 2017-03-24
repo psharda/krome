@@ -4884,7 +4884,9 @@ class krome():
 
 			elif(srow == "#KROME_sum_H_nuclei"):
 				hsum = []
+				iceNames = [x.name.lower().replace("_total","") for x in specs if(x.name.lower().endswith("_total"))]
 				for x in specs:
+					if(x.name.lower() in iceNames): continue
 					if(not("H" in x.atomcount2)): continue
 					if(x.atomcount2["H"]==0): continue
 					hmult = ("*"+format_double(x.atomcount2["H"]) if x.atomcount2["H"]>1 else "")
