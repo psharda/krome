@@ -2563,11 +2563,14 @@ contains
   !scale the abundances of the metals contained in n(:)
   ! to Z according to Asplund+2009.
   ! note that this applies only to neutral atoms.
-  subroutine krome_scale_Z(n,Z) #KROME_bindC
+  subroutine krome_scale_Z(x,Z) #KROME_bindC
     use krome_commons
-#KROME_double :: n(nmols)
+#KROME_double :: x(nmols)
 #KROME_double_value :: Z
-    real*8::Htot
+    real*8::Htot,n(nspec)
+
+    n(1:nmols) = x(:)
+    n(nmols+1:nspec) = 0d0
 
 #KROME_scaleZ
 
