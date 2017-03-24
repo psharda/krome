@@ -123,6 +123,13 @@ fout.write("changeset: "+changeset+"\n")
 
 testResults = dict()
 
+plotFolder = "alltests_plot/"
+#create plot directory if not present
+if(not(os.path.exists(plotFolder))): os.makedirs(plotFolder)
+#clear plot directory
+for ff in glob.glob(plotFolder+"*"):
+	os.remove(ff)
+
 run = False #run flag
 for test in tests:
 	if(test==first): run = True #run the first test
@@ -191,9 +198,32 @@ for test in tests:
 
 
 	#call gnuplot if you want graphical result
-	if(mode=="eyeball"): call(["gnuplot"])
+	if(mode=="eyeball"):
+		call(["gnuplot"])
+	else:
+		#load plot file to remove reset
+		fhp = open("plot.gps","rb")
+		plotScript = [row for row in fhp]
+		fhp.close()
 
-	#clear directory
+		#open new plot file to write
+		fop = open("plot_all.gps","w")
+		filePNG = "../"+plotFolder+"plot_"+test+".png"
+		print "plot saved to "+filePNG
+		#add PNG terminal
+		fop.write("set terminal pngcairo size 800,600 enhanced\n")
+		fop.write("set output '"+filePNG+"'\n")
+		#loop on plot script lines
+		for row in plotScript:
+			#if reset found, skip line
+			if(row.strip()=="reset"): continue
+			fop.write(row)
+		fop.close()
+		#prepare gnuplot command to load script
+		plotCommand = ["gnuplot","-e","load 'plot_all.gps'"]
+		call(plotCommand)
+
+	#clear build directory
 	for ff in glob.glob("*"):
 		os.remove(ff)
 
