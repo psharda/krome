@@ -4843,28 +4843,32 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome_getphys.f90","w")
 
-		#preapare metallicity functions
+		#prepare metallicity functions
 		#metallicity dictionary
 		metalDict = dict()
-		for x in specs:
-			for atom,count in x.atomcount2.iteritems():
+		iceList = []
+		for sp in specs:
+			if(sp.name.lower().endswith("_total")): iceList.append(sp)
+			for atom,count in sp.atomcount2.iteritems():
 				if(atom in metalDict):
-					metalDict[atom].append([x.fidx,count])
+					metalDict[atom].append([sp,count])
 				else:
-					metalDict[atom] = [[x.fidx,count]]
+					metalDict[atom] = [[sp,count]]
 
 
+		iceNames = [x.name.lower().replace("_total","") for x in iceList]
 		#metallicity functions
 		nZs = ["H","He","+","-","E"] #these are not metals
 		zGets = []
-		for k,v in metalDict.iteritems():
-			if(k in nZs): continue #skip non-metals
+		for atom,speciesList in metalDict.iteritems():
+			if(atom in nZs): continue #skip non-metals
 			parts = []
-			for x in v:
+			for sp in speciesList:
+				if(sp[0].name.lower() in iceNames): continue
 				smult = "" #multiplication factor string if >1 atom/particle
-				if(x[1]>1): smult = str(x[1])+"d0*"
-				parts.append(smult+"n("+x[0]+")")
-			zGets.append([k, "z"+k, (" &\n + ".join(parts))])
+				if(sp[1]>1): smult = str(sp[1])+"d0*"
+				parts.append(smult+"n("+sp[0].fidx+")")
+			zGets.append([atom, "z"+atom, (" &\n + ".join(parts))])
 
 
 #			if(srow == "#KROME_header"):
@@ -5001,9 +5005,9 @@ class krome():
 					ff += "function "+ffname+"(n)\n"
 					ff += "use krome_commons\n"
 					ff += "implicit none\n"
-					ff += "real*8::n(:),"+ffname+","+zg[1]+",nH\n"
-					ff += "nH = get_Hnuclei(n(:))\n"
-					ff += zg[1]+" = "+zg[2]+"\n"
+					ff += "real*8::n(:),"+ffname+","+zg[1]+",nH\n\n"
+					ff += "nH = get_Hnuclei(n(:))\n\n"
+					ff += zg[1]+" = "+zg[2]+"\n\n"
 					ff += zg[1]+" = max("+zg[1]+", 0d0)\n\n"
 					ff += ffname + " = log10("+zg[1]+"/nH+1d-40) - ("+solar[zg[0]]+")\n\n" #compute metallicity
 					ff += "phys_metallicity = "+ffname + "\n\n" #set Z in the physvariable
@@ -6774,15 +6778,8 @@ class krome():
 		scaleZ = []
 		#looks for H to rescale the metallicity otherwise skips
 		has_H = False
-		sHtot = "Htot = "
-		hasElectrons = False
-		for mols in specs:
-			if(mols.name=="E"): hasElectrons = True
-			if(not("H" in mols.atomcount2)): continue
-			Hcount = mols.atomcount2["H"]
-			if(Hcount>0): has_H = True
-			if(Hcount==1): sHtot += " &\n + n("+mols.fidx+")"
-			if(Hcount>1): sHtot += " &\n + "+str(Hcount)+"d0 * n("+mols.fidx+")"
+		sHtot = "Htot = get_Hnuclei(n(:))"
+		hasElectrons = ("E" in [x.name for x in mols])
 
 		scaleZ.append(sHtot) #Htot= is the first of the list
 		#creates the metallicity rescaling subroutine
@@ -6794,9 +6791,9 @@ class krome():
 				if(mols.name.upper()=="H"): continue #skip hydrogen
 				if(mols.name.upper()=="HE"): continue #skip helium
 				if(mols.name.upper()=="CR"): continue #avoid Cr / CR confusion
-				if(mols.name.upper()=="Co"): continue #avoid Cr / CO confusion
+				if(mols.name.upper()=="CO"): continue #avoid Co / CO confusion
 				if(k.upper()==mols.name.upper()):
-					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
+					scaleZ.append("nx"+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
 		#non-negative index means H2 photodissociation reaction is set
 		useH2Photodissociation = (self.indexH2photodissociation>-1)
