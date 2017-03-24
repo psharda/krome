@@ -249,17 +249,18 @@ print "***************"
 #copy the results to kromepackage.org using FTP
 import traceback
 if(mode=="check" and doFTP):
-	filename = "outcheck.log"
-	if(not(os.path.isfile(filename))): sys.exit("ERROR: "+filename+" not present. Nothing to copy.")
+	fileList = ["outcheck.log"] + glob.glob(plotFolder+"*png")
 	if(not(os.path.isfile("../ftplogin.dat"))): sys.exit("ERROR: ftplogin.dat not present. Can't connect.")
-	print "copying "+filename+" using FTP..."
-	usr,psw = [x.strip() for x in open("../ftplogin.dat","rb").read().split()]
+	(usr,psw) = [x.strip() for x in open("../ftplogin.dat","rb").read().split()]
 	ftp = ftplib.FTP("kromepackage.org",usr, psw)
-	try:
-		ftp.cwd("/test")
-		ftp.storbinary("STOR "+filename, file(filename,"rb"))
-	except:
-		traceback.print_exc()
+	ftp.cwd("/test")
+	for filename in fileList:
+		print "copying "+filename+" using FTP..."
+		if(not(os.path.isfile(filename))): sys.exit("ERROR: "+filename+" not present. Nothing to copy.")
+		try:
+			ftp.storbinary("STOR "+filename.split("/")[-1], file(filename,"rb"))
+		except:
+			traceback.print_exc()
 	ftp.quit()
 	print "DONE!"
 
