@@ -2565,6 +2565,7 @@ contains
   ! note that this applies only to neutral atoms.
   subroutine krome_scale_Z(x,Z) #KROME_bindC
     use krome_commons
+    use krome_getphys
 #KROME_double :: x(nmols)
 #KROME_double_value :: Z
     real*8::Htot,n(nspec)
