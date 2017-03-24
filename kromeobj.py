@@ -7949,6 +7949,7 @@ class krome():
 		updateueq = scaleueq = bkscaleueq = bkupdateueq = vecupdateueq = vecbkupdateueq = ""
 		ichem = 0
 		fname = "cooling_fine.f90"
+		gasSpeciesList = []
 		for sp in specs:
 			ichem += 1
 			#skip species in exclusion list
@@ -7958,36 +7959,44 @@ class krome():
 				#check if species is TOTAL, i.e. TOTAL=ICE+GAS
 				isIceTotal = (nameLower.endswith("_total"))
 				#if species is TOTAL, get the gas name (i.e. the name without _total)
-				if(isIceTotal): gasSpecies = [x for x in specs if(x.name.lower()+"_total"==nameLower)][0]
+				if(isIceTotal):
+					gasSpecies = [x for x in specs if(x.name.lower()+"_total"==nameLower)][0]
+					gasSpeciesList.append(gasSpecies)
 
 				updateueq += "unoneq(krome_"+sp.fidx+") = uold(ind_leaf(i),ichem+krome_"+sp.fidx+") !"+sp.name+"\n"
 				#skip species with zero mass only if not TOTAL
 				if(sp.mass>0e0 or isIceTotal):
-					#if species is TOTAL get the value from GAS and ICE
+					#if species is TOTAL then converts ICE
 					if(isIceTotal):
-						scaleueq += "!KROME requires total and gas phase "+gasSpecies.name+", here obtained from ice\n"
-						scaleueq += "unoneq(krome_" + sp.fidx + ") = (unoneq(krome_" + gasSpecies.fidx + "_ice) + unoneq(krome_" \
-							+ gasSpecies.fidx + "_gas))*scale_d/" \
+						scaleueq += "unoneq(krome_" + gasSpecies.fidx + "_ice) = unoneq(krome_" + gasSpecies.fidx + "_ice)*scale_d/" \
 							+ str(gasSpecies.mass) + " !" + gasSpecies.name+"_ICE\n"
 					else:
 						scaleueq += "unoneq(krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+")*scale_d/"+str(sp.mass)+" !"+sp.name+"\n"
 				#if the species is TOTAL get the ICE value from TOTAL and GAS
 				if(isIceTotal):
-					bkscaleueq += "\n!RAMSES works with "+gasSpecies.name+"_ice, here obtained from total and gas "+gasSpecies.name+"\n"
-					bkscaleueq += "unoneq(krome_" + gasSpecies.fidx + "_ice) = (unoneq(krome_" + gasSpecies.fidx \
-						+ "_total) - unoneq(krome_" + gasSpecies.fidx + "_gas))\n"
-					bkscaleueq += "!avoid negative ice number density\n"
-					bkscaleueq += "unoneq(krome_" + gasSpecies.fidx + "_ice) = max(unoneq(krome_" + gasSpecies.fidx \
-						+ "_ice),unoneq(krome_" + gasSpecies.fidx + "_total)*1d-40)\n"
-					bkscaleueq += "!convert mass density to number density\n"
-					bkscaleueq += "unoneq(krome_" + gasSpecies.fidx + "_ice) = unoneq(krome_" + gasSpecies.fidx + "_ice)*" \
-						+ str(gasSpecies.mass) + "*iscale_d !" + gasSpecies.name+"_ice\n\n"
+					bkscaleueq += "unoneq(krome_"+gasSpecies.fidx+"_total) = unoneq(krome_"+gasSpecies.fidx+"_total)*" \
+						+ str(gasSpecies.mass)+"*iscale_d !"+gasSpecies.name+"_total\n"
 
 				else:
 					bkscaleueq += "unoneq(krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+")*"+str(sp.mass)+"*iscale_d !"+sp.name+"\n"
 				bkupdateueq += "uold(ind_leaf(i),ichem+krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+") !"+sp.name+"\n"
-				vecupdateueq += "unoneq("+str(ichem)+") = uin(i,2+"+str(ichem)+") !"+sp.name+"\n"
-				vecbkupdateueq += "uout(i,2+"+str(ichem)+") = unoneq("+str(ichem)+") !"+sp.name+"\n"
+				vecupdateueq += "unoneq(krome_"+sp.fidx+") = uin(i,2+krome_"+sp.fidx+") !"+sp.name+"\n"
+				vecbkupdateueq += "uout(i,2+krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+") !"+sp.name+"\n"
+
+		#loop on ices found to convert KROME<->RAMSES
+		for gasSpecies in gasSpeciesList:
+			scaleueq += "\n!KROME requires total and gas phase "+gasSpecies.name+", here obtained from ice and gas\n"
+			scaleueq += "! "+gasSpecies.name+"_gas and "+gasSpecies.name+" are the same species\n"
+			scaleueq += "unoneq(krome_" + gasSpecies.fidx + "_total) = unoneq(krome_" + gasSpecies.fidx + "_ice) " \
+				+ " + unoneq(krome_" + gasSpecies.fidx + "_gas) !" + gasSpecies.name+"_TOTAL = " \
+				+ gasSpecies.name+"_GAS + " + gasSpecies.name+"_ICE\n"
+			bkscaleueq += "\n!RAMSES requires ice and gas phase "+gasSpecies.name+", here obtained from total and gas\n"
+			bkscaleueq += "unoneq(krome_"+gasSpecies.fidx+"_ice) = max(unoneq(krome_"+gasSpecies.fidx+"_total) - " \
+						+ "unoneq(krome_"+gasSpecies.fidx+"_gas), &\n unoneq(krome_"+gasSpecies.fidx+"_total)*1d-40) !" \
+						+ gasSpecies.name+"_ice = "+ gasSpecies.name+"_total - " + gasSpecies.name+"_gas\n"
+
+
+
 		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq",\
 			"#KROME_vecupdate_unoneq","#KROME_vecbackupdate_unoneq",]
 		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq, vecupdateueq, vecbkupdateueq]
