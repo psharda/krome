@@ -6776,11 +6776,11 @@ class krome():
 		solar = get_solar_abundances()
 
 		scaleZ = []
-		#looks for H to rescale the metallicity otherwise skips
-		has_H = False
-		sHtot = "Htot = get_Hnuclei(n(:))"
-		hasElectrons = ("E" in [x.name for x in mols])
+		hasElectrons = ("E" in [x.name for x in specs])
+		has_H = ("H" in [x.name for x in specs])
 
+		#looks for H to rescale the metallicity otherwise skips
+		sHtot = "Htot = get_Hnuclei(n(:))"
 		scaleZ.append(sHtot) #Htot= is the first of the list
 		#creates the metallicity rescaling subroutine
 		for (k,v) in solar.iteritems():
@@ -6793,7 +6793,7 @@ class krome():
 				if(mols.name.upper()=="CR"): continue #avoid Cr / CR confusion
 				if(mols.name.upper()=="CO"): continue #avoid Co / CO confusion
 				if(k.upper()==mols.name.upper()):
-					scaleZ.append("nx"+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
+					scaleZ.append("x("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
 		#non-negative index means H2 photodissociation reaction is set
 		useH2Photodissociation = (self.indexH2photodissociation>-1)
