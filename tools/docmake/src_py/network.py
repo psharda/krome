@@ -1170,8 +1170,14 @@ class network:
 			#append OK species
 			speciesOK.append(species)
 
+		nameOK = sorted([x.name for x in speciesOK])
 		print "species included in the subnetwork ("+str(len(speciesOK)) \
-			+"):", (", ".join(sorted([x.name for x in speciesOK])))
+			+"):", (", ".join(nameOK))
+
+		#print species not found
+		if(fullOptions["useSpecies"]!=[]):
+			speciesNotFound = [x for x in fullOptions["useSpecies"] if(not(x in nameOK))]
+			print "species from "+myOptions.suboptions+" not found:",(", ".join(speciesNotFound))
 
 		#get all species names
 		allNames = [x.name for x in speciesOK]
