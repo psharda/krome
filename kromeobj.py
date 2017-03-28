@@ -4485,11 +4485,13 @@ class krome():
 				optVariables += "real*8,allocatable::dust_opt_Em_"+dType+"(:,:),dust_opt_Tbb_"+dType+"(:)\n"
 
 		#get the list of all the atoms contained in the species, H,C,O,...
+		skipAtoms = ["+","-"]
 		atoms = []
 		for x in specs:
 			atoms += x.atomcount.keys()
 		atoms = list(set(atoms))
-		atoms = [x for x in atoms if not(x in ["+","-"])]
+		#skip atoms in skipAtoms list and every atom starting with underscore
+		atoms = [x for x in atoms if(not(x in skipAtoms) and not(x.startswith("_")))]
 
 
 		#common variables
