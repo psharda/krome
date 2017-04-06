@@ -1097,7 +1097,8 @@ class network:
 
 		#expected options divided by type
 		listOptions = {"skipAtoms":"", "useAtoms":"", "skipSpecies":"",\
-			"skipString":"", "useSpecies":""}
+			"skipString":"", "useSpecies":""} #comma-separted list
+		listPipeOptions = {"skipRateString":""} #pipe-separated list
 		floatOptions = {"Tmin":-1e99, "Tmax":1e99, "maxAtoms":999}
 		boolOptions = {"cations":True, "anions":True, "skipTlimitsSingle":False}
 		stringOptions = {"outputFile":"subNetwork.dat"}
@@ -1119,6 +1120,8 @@ class network:
 			#divide options by type
 			if(option in listOptions):
 				fullOptions[option] = [x.strip() for x in value.split(",") if(x!="")]
+			elif(option in listPipeOptions):
+				fullOptions[option] = [x.strip() for x in value.split("|") if(x!="")]
 			elif(option in floatOptions):
 				fullOptions[option] = float(value)
 			elif(option in boolOptions):
@@ -1130,7 +1133,7 @@ class network:
 				print "ERROR: unknown option "+option+" in "+myOptions.suboptions
 				print " options available are (case sensitive):"
 				optionsNames = listOptions.keys() + floatOptions.keys() \
-					+ boolOptions.keys() + stringOptions.keys()
+					+ boolOptions.keys() + stringOptions.keys() + listPipeOptions.keys()
 				print (", ".join(optionsNames))
 				sys.exit()
 		fh.close()
@@ -1152,7 +1155,6 @@ class network:
 			#include only these species
 			if(fullOptions["useSpecies"]!=[]):
 				if(not(species.name in fullOptions["useSpecies"])): continue
-
 
 			#check special strings
 			hasSkipString = False
@@ -1192,6 +1194,23 @@ class network:
 					hasAllSpecies = False
 					break
 			if(not(hasAllSpecies)): continue
+
+			#check special strings in rates
+			if(fullOptions["skipRateString"]!=[]):
+				#check special strings in rates
+				hasSkipRateString = False
+				#loop on strings
+				for skipString in fullOptions["skipRateString"]:
+					#loop on rates f90 expressions
+					for krate in reaction.rate:
+						#check if string in rate expression
+						if(skipString in krate):
+							hasSkipRateString = True
+							break
+				#skip reaction if string matches
+				if(hasSkipRateString): continue
+
+
 			#create a copy of the reaction to get ranges
 			reactionOK = copy.copy(reaction)
 			reactionOK.rate = []
