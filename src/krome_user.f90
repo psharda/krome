@@ -2733,7 +2733,7 @@ contains
     sumflux = sum(flux) !sum of all the fluxes
     !loop on reactions
     do i=1,nrea
-       write(ifile,'(I8,4E17.8e3,a3,a50)') i,xvar,flux(i),&
+       write(ifile,'(I8,5E17.8e3,a3,a50)') i,xvar,Tgas,flux(i),&
             flux(i)/fluxmax, flux(i)/sumflux," ",rname(i)
     end do
     write(ifile,*)
