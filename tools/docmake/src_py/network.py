@@ -160,6 +160,8 @@ class network:
 			srow = row.strip()
 			if(srow==""): continue
 			if(srow.startswith("#")): continue
+			#skip kida comment
+			if(srow.startswith("!")): continue
 
 			reactionType = "KIDA"
 			reactionFormat = ""
