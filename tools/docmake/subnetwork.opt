@@ -7,10 +7,11 @@
 skipAtoms =
 
 #use species with these atoms (comma-separated, can be empty, E=electron)
-useAtoms = H,C
+#note that e.g. _ortho and _para has to be listed here
+useAtoms = H,He,D,N,E,_ortho,_para,_meta
 
 #maximum number of atoms per molecule
-maxAtoms = 3
+maxAtoms = 999
 
 #use cations
 cations = True
