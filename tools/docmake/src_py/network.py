@@ -1105,6 +1105,13 @@ class network:
 		boolOptions = {"cations":True, "anions":True, "skipTlimitsSingle":False}
 		stringOptions = {"outputFile":"subNetwork.dat"}
 
+		#store all keys
+		keys = listOptions.keys()
+		keys += listPipeOptions.keys()
+		keys += floatOptions.keys()
+		keys += boolOptions.keys()
+		keys += stringOptions.keys()
+
 		#store options
 		fullOptions = dict()
 		plainOptions = dict()
@@ -1139,6 +1146,14 @@ class network:
 				print (", ".join(optionsNames))
 				sys.exit()
 		fh.close()
+
+		#loop on options keys to fix missing
+		for k in keys:
+			#replace with empty if option missing
+			if(not(k in fullOptions.keys())):
+				print "WARNING: "+k+" option is missing in " \
+					+ myOptions.suboptions + ", replaced with empty"
+				fullOptions[k] = ""
 
 		#loop to subselect species
 		speciesOK = []
