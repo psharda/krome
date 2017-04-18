@@ -85,6 +85,16 @@ class reaction:
 		#check mass and charge conservation
 		self.check()
 
+	#********************
+	#replace names from KIDA style
+	def speciesToKIDA(self,speciesName):
+
+		if(speciesName=="e-"): speciesName = "E"
+		if(speciesName.startswith("p")): speciesName = speciesName[1:]+"_para"
+		if(speciesName.startswith("o")): speciesName = speciesName[1:]+"_ortho"
+		if(speciesName.startswith("m")): speciesName = speciesName[1:]+"_meta"
+
+		return speciesName
 
 	#********************
 	def parseFormatKIDA(self,row,reactionFormat,atomSet,reactionType):
@@ -121,6 +131,15 @@ class reaction:
 		#loop on format to get data from the row as a dictionary
 		for i in range(len(fmt)):
 			dataRow[keys[i]] = srow[position:position+fmt[i]].strip()
+			startSpace = dataRow[keys[i]].startswith(" ")
+			endSpace = dataRow[keys[i]].endswith(" ")
+			hasSpace = (" " in dataRow[keys[i]])
+			if(not(startSpace) and not(endSpace) and hasSpace):
+				print "ERROR: in KIDA network row element has spaces in the middle!"
+				print " Probably format problems:", dataRow[keys[i]]
+				print " Line here below"
+				print srow
+				sys.exit()
 			position += fmt[i]
 
 		self.Tmin = [dataRow["tmin"]]
@@ -128,14 +147,14 @@ class reaction:
 
 		for i in range(maxReactants):
 			v = dataRow["R"+str(i)].strip()
-			if(v=="e-"): v = "E"
+			v = self.speciesToKIDA(v)
 			if(v.upper() in specials): continue
 			spec = species.species(v,atomSet)
 			self.reactants.append(spec)
 
 		for i in range(maxProducts):
 			v = dataRow["P"+str(i)].strip()
-			if(v=="e-"): v = "E"
+			v = self.speciesToKIDA(v)
 			if(v.upper() in specials): continue
 			spec = species.species(v,atomSet)
 			self.products.append(spec)
@@ -177,6 +196,7 @@ class reaction:
 				KK += "*(1d0 "+gpart+")"
 		else:
 			print "ERROR: KIDA formula "+str(arow["formula"])+" not supported!"
+			sys.exit()
 
 		KK = KK.replace("--","+").replace("++","+").replace("-+","-").replace("+-","-")
 
@@ -593,8 +613,14 @@ class reaction:
 
 				#evaluate rate limited range
 				if(isTgas and hasEval):
-					kmin = eval(rate.replace("#"+variable.lower()+"#",str(Tmin)).replace("#",""))
-					kmax = eval(rate.replace("#"+variable.lower()+"#",str(Tmax)).replace("#",""))
+					try:
+						kmin = eval(rate.replace("#"+variable.lower()+"#",str(Tmin)).replace("#",""))
+						kmax = eval(rate.replace("#"+variable.lower()+"#",str(Tmax)).replace("#",""))
+					except:
+						print "ERROR: problem evaluating rate at limits"
+						print "limits:",str(Tmin),str(Tmax)
+						print "rate:", rate.replace("#","")
+						sys.exit()
 
 					evaluation[variable]["xlimits"] = [Tmin,Tmax]
 					evaluation[variable]["ylimits"] = [kmin,kmax]
