@@ -99,7 +99,7 @@ class reaction:
 	#********************
 	def parseFormatKIDA(self,row,reactionFormat,atomSet,reactionType):
 
-		specials = ["","G","PHOTON"]
+		specials = ["","G","PHOTON","CR","CRP"]
 
 		#variables for cosmic rays and photochemistry
 		CRvar = "user_crate" #name of the CR flux variable
