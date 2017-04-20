@@ -1,5 +1,5 @@
 import sys,glob,os,shutil,hashlib
-import reaction,utils,options
+import reaction,utils,options,copy
 
 class network:
 
@@ -20,12 +20,17 @@ class network:
 		#load thermochemical data
 		self.thermochemicalData = utils.getThermochemicalData("thermo30.dat")
 
+		#load polarizability data
+		self.polarizabilityData = utils.getPolarizabilityData("polarizability.dat")
+
 		#read shortcuts
 		shortcuts = utils.getShortcuts()
 
 		#read network file in KROME format
 		if(self.detectNetworkType(fileName)=="KIDA"):
 			self.readFileKIDA(fileName,atomSet)
+		elif(self.detectNetworkType(fileName)=="UMIST"):
+			self.readFileUMIST(fileName,atomSet)
 		else:
 			self.readFileKROME(fileName,atomSet,shortcuts)
 
@@ -48,6 +53,9 @@ class network:
 		self.clearFolders()
 		self.backupEvaluationJSON()
 
+		#prepare subnetwork
+		self.subNetwork(myOptions)
+
 		#prepare graphs
 		self.makeGraph()
 
@@ -55,10 +63,11 @@ class network:
 		#loop on reactions to evaluate
 		for myReaction in self.reactions:
 			myReaction.evaluateRate(shortcuts,varRanges)
-			myReaction.makeHtmlPage(myOptions)
+			myReaction.makeHtmlPage(myOptions,self)
 
 		#create reaction index page
 		self.makeHtmlIndex()
+		self.makeHtmlMissingBranchesIndex(myOptions)
 		self.makeHtmlMissingReactionIndex(myOptions)
 		self.makeHtmlReactionIndex(myOptions)
 		self.makeHtmlSpeciesIndex()
@@ -91,6 +100,7 @@ class network:
 			if(srow==""): continue
 			if(srow.startswith("#")): continue
 			if("," in srow): return "KROME"
+			if(srow.count(":")>5): return "UMIST"
 		fh.close()
 		return "KIDA"
 
@@ -150,6 +160,8 @@ class network:
 			srow = row.strip()
 			if(srow==""): continue
 			if(srow.startswith("#")): continue
+			#skip kida comment
+			if(srow.startswith("!")): continue
 
 			reactionType = "KIDA"
 			reactionFormat = ""
@@ -161,6 +173,29 @@ class network:
 			self.reactions.append(myReaction)
 
 		fh.close()
+
+	#**************
+	def readFileUMIST(self,fileName,atomSet):
+		self.reactions = []
+		print "reading network "+fileName
+
+		fh = open(fileName,"rb")
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+
+			reactionType = "UMIST"
+			reactionFormat = ""
+
+			#parse row line for reaction
+			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType)
+
+			#add parsed reaction to reactions structure in network
+			self.reactions.append(myReaction)
+
+		fh.close()
+
 
 	#**************
 	#get all network species
@@ -369,6 +404,48 @@ class network:
 
 
 	#****************
+	#return all the possible reactants combinations with the current species
+	# as an array, including unimol and bimol reactions
+	def getAllReactantsCombinations(self,returnNames=True,includeRepulsive=False):
+
+		#get list of species
+		species = self.getSpecies()
+
+		#unimolecular reactants to be skipped
+		skipUnimol = ["CR","E"]
+
+		allReactants = []
+		#loop on species (reactant 1)
+		for species1 in species:
+			#add unimolecular (only neutral or anion)
+			if((species1.charge<1) and not(species1.name in skipUnimol)):
+				if(returnNames):
+					allReactants.append([species1.name])
+				else:
+					allReactants.append([species1])
+			#loop on species (reactant 2) for bimolecular
+			for species2 in species:
+				#exclude repulsive
+				if(species1.charge*species2.charge>0 and not(includeRepulsive)): continue
+
+				#exclude double ionization CR
+				hasCR = (species1.name=="CR" or species2.name=="CR")
+				hasElectron = (species1.name=="E" or species2.name=="E")
+				hasCation = (species1.charge>0 or species2.charge>0)
+				if(hasCation and hasCR): continue
+				if(hasCR and hasElectron): continue
+
+				#add bimolecular
+				if(returnNames):
+					reactants = [species1.name,species2.name]
+					allReactants.append(sorted(reactants))
+				else:
+					allReactants.append([species1,species2])
+
+		return allReactants
+
+
+	#****************
 	#get a list of the missing reactions (reactants only)
 	def getMissing(self):
 
@@ -387,30 +464,8 @@ class network:
 			print "WARNING: too many expected reactions skipping missing reactions!"
 			return []
 
-		#unimolecular reactants to be skipped
-		skipUnimol = ["CR","E"]
-
-		allReactants = []
-		#loop on species (reactant 1)
-		for species1 in species:
-			#add unimolecular (only neutral or anion)
-			if((species1.charge<1) and not(species1.name in skipUnimol)): allReactants.append([species1.name])
-			#loop on species (reactant 2) for bimolecular
-			for species2 in species:
-				#exclude repulsive
-				if(species1.charge*species2.charge>0): continue
-
-				#exclude double ionization CR
-				hasCR = (species1.name=="CR" or species2.name=="CR")
-				hasElectron = (species1.name=="E" or species2.name=="E")
-				hasCation = (species1.charge>0 or species2.charge>0)
-				if(hasCation and hasCR): continue
-				if(hasCR and hasElectron): continue
-
-				#add bimolecular
-				reactants = [species1.name,species2.name]
-				allReactants.append(sorted(reactants))
-
+		#get all possible reactants combinations
+		allReactants = self.getAllReactantsCombinations()
 
 		#get species dictionary to return species objects instead of names
 		speciesDictionary = self.getSpeciesDictionary()
@@ -487,6 +542,129 @@ class network:
 		#return list of objects reactants
 		return missingReactions
 
+	#****************
+	#given a list of species objects return the sum of their exploded
+	# taking care of charges
+	def getExplodedSpecies(self,speciesList):
+
+		rexp = []
+		#sum exploded
+		for species in speciesList:
+			rexp += species.explodedFull
+		#wrap into underscores
+		rexpFull = "_"+("_".join(sorted(rexp)))+"_"
+		#remove +/- one by one until both are present
+		while(("+" in rexpFull) and ("-" in rexpFull)):
+			rexpFull = rexpFull.replace("+","",1)
+			rexpFull = rexpFull.replace("-","",1)
+		#remove +/E one by one until both are present
+		while(("_+_" in rexpFull) and ("_E_" in rexpFull)):
+			rexpFull = rexpFull.replace("+","",1)
+			rexpFull = rexpFull.replace("E","",1)
+
+		#for this hash E is just represented  as -
+		rexpFull = rexpFull.replace("_E_","_-_")
+		#remove CRs
+		rexpFull = rexpFull.replace("CR","")
+		#remove double underscores
+		rexpFull = rexpFull.replace("__","_")
+
+		#sort again replaced
+		rexpFull = ("_".join(sorted(rexpFull.split("_"))))
+
+		#remove leading and trailing underscores
+		while(rexpFull.startswith("_")):
+			rexpFull = rexpFull[1:]
+		while(rexpFull.endswith("_")):
+			rexpFull = rexpFull[:-1]
+
+		return rexpFull
+
+
+	#****************
+	def getMissingBranch(self):
+
+		missingBranch = []
+
+		species = self.getSpecies()
+
+		#get all possible species combinations
+		allSpecies = dict()
+		for spec1 in species:
+			unimol = [spec1]
+			rHash = self.getExplodedSpecies(unimol)
+			if(not(rHash in allSpecies)): allSpecies[rHash] = []
+			allSpecies[rHash].append(unimol)
+			#bimolecular
+			for spec2 in species:
+				bimol = [spec1,spec2]
+				rHash = self.getExplodedSpecies(bimol)
+				if(not(rHash in allSpecies)): allSpecies[rHash] = []
+				allSpecies[rHash].append(bimol)
+				#trimolecular
+				#for spec3 in species:
+				#	trimol = [spec1,spec2,spec3]
+				#	rHash = self.getExplodedSpecies(trimol)
+				#	if(not(rHash in allSpecies)): allSpecies[rHash] = []
+				#	allSpecies[rHash].append(trimol)
+
+		#search all branches of a given reactions and store
+		allReact = dict()
+		for reaction in self.reactions:
+			rHash = self.getExplodedSpecies(reaction.reactants)
+			if(not(rHash in allReact)): allReact[rHash] = []
+			allReact[rHash].append(reaction)
+
+
+		#loop reactions to find missing and present branches
+		for (rHash,reactions) in allReact.iteritems():
+
+			#init data branch structure
+			dataBranch = dict()
+			dataBranch["reactants"] = reactions[0].reactants
+			dataBranch["missingBranches"] = []
+			dataBranch["presentBranches"] = []
+
+			#store all reaction branches
+			branches = []
+			for reaction in reactions:
+				branches.append(sorted([x.name for x in reaction.products]))
+
+			#get reactant names (same for all reactions)
+			reactNames = sorted([x.name for x in reactions[0].reactants])
+			reactNamesNoCR = sorted([x.name for x in reactions[0].reactants if(x.name!="CR")])
+
+			#get reaction hash for reactants only
+			rHash = self.getExplodedSpecies(reactions[0].reactants)
+			branchFound = []
+			#loop on possible species combination for the given reactant hash
+			for species in allSpecies[rHash]:
+				branch = sorted([x.name for x in species])
+				totalCharge = sum([x.charge for x in species])
+				maxCharge = max([x.charge for x in species])
+				hasElectron = ("E" in [x.name for x in species])
+				#skip repulsive products
+				if(totalCharge==0 and maxCharge!=0 and not(hasElectron)): continue
+				#skip CR in products
+				if("CR" in branch): continue
+				#skip X+CR->X
+				if(branch==reactNamesNoCR): continue
+				#skip already-found branches
+				if(branch in branchFound): continue
+				#skip same reactant and products
+				if(branch==reactNames): continue
+				#store branches
+				if(branch in branches):
+					dataBranch["presentBranches"].append(species)
+				else:
+					dataBranch["missingBranches"].append(species)
+				branchFound.append(branch)
+
+			#copy data to structure
+			missingBranch.append(dataBranch)
+
+		return missingBranch
+
 
 	#****************
 	def makeHtmlIndex(self):
@@ -503,6 +681,7 @@ class network:
 		fout.write("<li><a href=\"indexSpecies.html\">Species</a></li>")
 		fout.write("<li><a href=\"indexGraph.html\">Graphs</a></li>")
 		fout.write("<li><a href=\"indexMissingReactions.html\">Missing reactions</a></li>")
+		fout.write("<li><a href=\"indexMissingBranches.html\">Missing branches</a></li>")
 		fout.write("<li><a href=\"multipleRates.html\">Reactions with multiple rates</a></li>")
 		fout.write("</ul>")
 		fout.write(utils.getFooter("footer.php"))
@@ -532,7 +711,7 @@ class network:
 			fout.write("<p>&nbsp;Download <a href=\"../"+fnamePNG+"\" target=\"_blank\">PNG</a>")
 			fout.write(" <a href=\"../"+fnameEPS+"\" target=\"_blank\">EPS</a></p><br>\n")
 			fout.write("<a target=\"_blank\" href=\"../"+fnamePNG+"\">")
-			fout.write("<img src=\"../"+fnamePNG+"\" style=\"{max-width:500px;}\"></a>\n")
+			fout.write("<img src=\"../"+fnamePNG+"\" width=\"700px\" style=\"{max-width:500px;}\"></a>\n")
 			fout.write("<br><br>\n")
 
 		#add footer
@@ -545,6 +724,7 @@ class network:
 	def makeHtmlSpeciesIndex(self):
 
 		fname = "htmls/indexSpecies.html"
+		header = "<th><th><th><th>"
 
 		#open file to write
 		fout = open(fname,"w")
@@ -555,9 +735,9 @@ class network:
 		fout.write("<br><br>\n")
 		#reaction table
 		fout.write("<table width=\"60%\">\n")
-		fout.write("<tr><th><th><th>\n")
-		fout.write("<tr><td>name<td>&Delta;H@0K (kJ/mol)<td>&Delta;H@298.15K (kJ/mol)\n")
-		fout.write("<tr><th><th><th>\n")
+		fout.write("<tr>"+header+"\n")
+		fout.write("<tr><td>name<td>&Delta;H@0K (kJ/mol)<td>&Delta;H@298.15K (kJ/mol)<td>&alpha; (&Aring;<sup>3</sup>)\n")
+		fout.write("<tr>"+header+"\n")
 		icount = 0
 		#loop on reactions
 		for mySpecies in sorted(self.getSpecies(),key=lambda x:x.name):
@@ -565,9 +745,12 @@ class network:
 			if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
 			enthalpy0 = mySpecies.getEnthalpy(self.thermochemicalData,Tgas=1e-40)
 			enthalpy298 = mySpecies.getEnthalpy(self.thermochemicalData)
-			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"<td>"+str(enthalpy0)+"<td>"+str(enthalpy298)+"\n")
+			polarizability = mySpecies.getPolarizability(self.polarizabilityData)
+			if(polarizability!=None): polarizability /= 1e-24 #cm3->AA3
+			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"<td>"+str(enthalpy0) \
+				+ "<td>"+str(enthalpy298)+ "<td>"+str(polarizability)+"\n")
 			icount += 1
-		fout.write("<tr><th><th><th>\n")
+		fout.write("<tr>"+header+"\n")
 		fout.write("</table>\n")
 
 		#add footer
@@ -591,7 +774,7 @@ class network:
 		fout.write("<a href=\"index.html\">back</a><br>\n")
 
 		for variable in myOptions.getRanges().keys():
-			fout.write("<a href=\"allRates_"+variable+".html\">All rates with <b>"+variable+"</b></a><br>\n")
+			fout.write("<a href=\"allRates_"+variable+"_0.html\">All rates with <b>"+variable+"</b></a><br>\n")
 		fout.write("<br><br>\n")
 		#reaction table
 		fout.write("<table width=\"50%\">\n")
@@ -606,6 +789,84 @@ class network:
 			fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+myReaction.getReactionHtmlRow()+"\n")
 			icount += 1
 		fout.write(tableHeader+"\n")
+		fout.write("</table>\n")
+
+		#add footer
+		fout.write(utils.getFooter("footer.php"))
+		fout.close()
+
+
+	#****************
+	#create reaction list index as html page
+	def makeHtmlMissingBranchesIndex(self,myOptions):
+
+		fname = "htmls/indexMissingBranches.html"
+
+		kJmol2K = 120.274 #kJ/mol->K
+
+		tableHeader = "<tr>"+("<th>"*30)
+
+		#open file to write
+		fout = open(fname,"w")
+		#add header
+		fout.write(utils.getFile("header.php"))
+		fout.write("<p style=\"font-size:30px\">Missing branches, &Delta;H/K</p>\n")
+		#fout.write("<p style=\"font-size:10px\">*if reactants are present it doesn't check for missing branches!</p>\n")
+		fout.write("<a href=\"index.html\">back</a><br><br><br>\n")
+
+		#sort reactions by the name of the first reactant (reactants are also sorted)
+		sortedMissingBranch = sorted(self.getMissingBranch(),key=lambda x:sorted([sp.name for sp in x["reactants"]]))
+
+		fout.write("<table width=\"60%\">\n")
+		icount = 0
+		for dataBranch in sortedMissingBranch:
+			reactants = dataBranch["reactants"]
+			reactantsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in reactants]
+			row = "<td>"+str(icount+1)+"<td>"+("<td>+<td>".join(sorted([x.getHtmlName() for x in reactants])))
+
+			row += ("<td>"*(20-row.count("<td>")))
+
+			#background color
+			bgcolor = utils.getHtmlProperty("tableRowBgcolor")
+
+			#add an arrow at the end of the row
+			row += "<td><td>&rarr;"
+			#write row to file
+			fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"\n")
+
+			#count <td> elements
+			ntds = row.count("<td>")
+
+			for listName in ["presentBranches","missingBranches"]:
+				for products in dataBranch[listName]:
+					bgcolor = "" #this row has no bgcolor
+					productsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in products]
+					bgcolor = "" #this row has no bgcolor
+					#create row from products name
+					rowx = "<td>&rarr;<td>"+("<td>+<td>".join(sorted([x.getHtmlName() for x in products])))
+					#add n-1 td as offset
+					row = ("<td>"*(ntds-1))+rowx+("<td>"*(10-rowx.count("<td>")))
+					status = listName.replace("Branches","")
+					if(status=="missing"): status += " &#9888;"
+
+					tdEnthalpy = ""
+					if(None in (productsEnthalpy+reactantsEnthalpy)):
+						tdEnthalpy += "<td>missing enthalpy data"
+					else:
+						DeltaH = sum(productsEnthalpy)-sum(reactantsEnthalpy)
+						DeltaH_K = kJmol2K*DeltaH
+						tdEnthalpy += "<td>"+utils.htmlExp(DeltaH_K)
+						if(DeltaH_K<0e0):
+							tdEnthalpy += "<td>&#10004;&#10004;"
+						elif(DeltaH_K>=0 and DeltaH_K<1e4):
+							tdEnthalpy += "<td>&#10004;"
+						else:
+							tdEnthalpy += "<td>&#10006;"
+
+					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"<td style=\"font-size:10px;\">"+status.upper()+tdEnthalpy+"\n")
+
+			#dataBranch["presentBranches"] = []
+			icount += 1
 		fout.write("</table>\n")
 
 		#add footer
@@ -698,34 +959,80 @@ class network:
 		#loop on variables
 		for variable in myOptions.getRanges().keys():
 
-			#prepare a file for each variable
-			fname = "htmls/allRates_"+variable+".html"
+			#default file handler
+			fout = None
 
-			#open file to write
-			fout = open(fname,"w")
-			#add header
-			fout.write(utils.getFile("header.php"))
-			fout.write("<p style=\"font-size:30px\">All rate plots with <b>"+variable+"</b></p>\n")
-			fout.write("<a href=\"indexReactions.html\">back</a><br>\n")
-			fout.write("<br><br>\n")
-			#reaction table
-			fout.write("<table>\n")
+			#count reactions with variable
+			plotsNumber = len([x for x in self.reactions if(x.hasVariable(myOptions,variable))])
+
+			#base of relative path
+			fnameBaseRel = "allRates_"+variable+"_"
+			#base of "absolute" path
+			fnameBase = "htmls/"+fnameBaseRel
+			#init counters
 			icount = 0
+			fileCount = 0
+			maxPlotPerPage = 100
+			#get pages number
+			pagesNumber = int(plotsNumber/maxPlotPerPage)+1
 			#loop on reactions
 			for myReaction in self.reactions:
 				#skip when the variable is not in the reaction rate
 				if(not(myReaction.hasVariable(myOptions,variable))): continue
+				if(icount%maxPlotPerPage==0):
+					if(fout!=None):
+						fout.write("</table>\n")
+						fout.write(utils.getFooter("footer.php"))
+						fout.close()
+
+					#prepare a file for each variable
+					fname = fnameBase+str(fileCount)+".html"
+
+					#open file to write
+					fout = open(fname,"w")
+					fout.write(utils.getFile("header.php"))
+					fout.write("<p style=\"font-size:30px\">All rate plots with <b>" + variable
+						+ "</b> (page "+str(fileCount+1)+"/"+str(pagesNumber)+")</p>\n")
+
+					#multi-page menu back arrow
+					if(fileCount-1>=0):
+						pagesMenu = "<a href=\""+fnameBaseRel+str(fileCount-1)+".html\">&lt;</a> "
+					else:
+						pagesMenu = "&lt; "
+					#multi-page menu links
+					for ipage in range(pagesNumber):
+						#link only if current page
+						if(ipage!=fileCount):
+							pagesMenu += "<a href=\""+fnameBaseRel+str(ipage)+".html\">"+str(ipage+1)+"</a> "
+						else:
+							pagesMenu += "["+str(ipage+1)+"] "
+					#multi-page menu forward arrow
+					if(fileCount+1<pagesNumber):
+						pagesMenu += "<a href=\""+fnameBaseRel+str(fileCount+1)+".html\">&gt;</a>"
+					else:
+						pagesMenu += "&gt;"
+
+					fout.write(pagesMenu+"<br>")
+					fout.write("<a href=\"indexReactions.html\">back</a><br>\n")
+					fout.write("<br><br>\n")
+					#reaction table
+					fout.write("<table>\n")
+					fileCount += 1
+
 				if(icount%1==0): fout.write("<tr><td>")
+
 				fnamePNG = "../pngs/rate_"+str(myReaction.getReactionHash())+"_"+variable+".png"
 				linkURL = "<a href=\"rate_"+myReaction.getReactionHash()+".html\">details</a> for "+myReaction.getVerbatimHtml()
 				fout.write("<img src=\""+fnamePNG+"\" width=\"700px\" alt=\"&#9888; MISSING: "+myReaction.getVerbatim()+"\"><br>"+linkURL)
 				fout.write("<tr height=\"10px\"><td>")
 				icount += 1
-			fout.write("</table>\n")
 
-			#add footer
-			fout.write(utils.getFooter("footer.php"))
-			fout.close()
+			if(fout!=None):
+				fout.write("</table>\n")
+
+				#add footer
+				fout.write(utils.getFooter("footer.php"))
+				fout.close()
 
 	#*******************
 	#prepares HTML documentation for list of rate divided by number of intervals
@@ -781,5 +1088,196 @@ class network:
 		#add footer
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
+
+
+	#************************
+	#create a subnetwork using given options (as subkida.py does)
+	def subNetwork(self,myOptions):
+
+		#skip subnetwork if option not present
+		if(not(hasattr(myOptions, 'suboptions'))): return
+
+		#expected options divided by type
+		listOptions = {"skipAtoms":"", "useAtoms":"", "skipSpecies":"",\
+			"skipString":"", "useSpecies":""} #comma-separted list
+		listPipeOptions = {"skipRateString":""} #pipe-separated list
+		floatOptions = {"Tmin":-1e99, "Tmax":1e99, "maxAtoms":999}
+		boolOptions = {"cations":True, "anions":True, "skipTlimitsSingle":False}
+		stringOptions = {"outputFile":"subNetwork.dat"}
+
+		#store all keys
+		keys = listOptions.keys()
+		keys += listPipeOptions.keys()
+		keys += floatOptions.keys()
+		keys += boolOptions.keys()
+		keys += stringOptions.keys()
+
+		#store options
+		fullOptions = dict()
+		plainOptions = dict()
+
+		#open options file
+		fh = open(myOptions.suboptions,"rb")
+		for row in fh:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+
+			#read options
+			(option,value) = [x.strip() for x in srow.split("=")]
+			plainOptions[option] = value
+			#divide options by type
+			if(option in listOptions):
+				fullOptions[option] = [x.strip() for x in value.split(",") if(x!="")]
+			elif(option in listPipeOptions):
+				fullOptions[option] = [x.strip() for x in value.split("|") if(x!="")]
+			elif(option in floatOptions):
+				fullOptions[option] = float(value)
+			elif(option in boolOptions):
+				sval = value.lower().strip()
+				fullOptions[option] = (sval=="t" or sval=="true")
+			elif(option in stringOptions):
+				fullOptions[option] = value
+			else:
+				print "ERROR: unknown option "+option+" in "+myOptions.suboptions
+				print " options available are (case sensitive):"
+				optionsNames = listOptions.keys() + floatOptions.keys() \
+					+ boolOptions.keys() + stringOptions.keys() + listPipeOptions.keys()
+				print (", ".join(optionsNames))
+				sys.exit()
+		fh.close()
+
+		#loop on options keys to fix missing
+		for k in keys:
+			#replace with empty if option missing
+			if(not(k in fullOptions.keys())):
+				print "WARNING: "+k+" option is missing in " \
+					+ myOptions.suboptions + ", replaced with empty"
+				fullOptions[k] = ""
+
+		#loop to subselect species
+		speciesOK = []
+		for species in self.getSpecies():
+			#check atoms
+			hasSkipAtoms = hasNotUseAtoms = False
+			for atom in species.atoms:
+				if(atom in fullOptions["skipAtoms"]): hasSkipAtoms = True
+				if(not(atom in fullOptions["useAtoms"])): hasNotUseAtoms = True
+			if(hasNotUseAtoms and fullOptions["useAtoms"]!=[]): continue
+			if(hasSkipAtoms): continue
+
+			#check species names
+			if(species.name in fullOptions["skipSpecies"]): continue
+
+			#include only these species
+			if(fullOptions["useSpecies"]!=[]):
+				if(not(species.name in fullOptions["useSpecies"])): continue
+
+			#check special strings
+			hasSkipString = False
+			for skipString in fullOptions["skipString"]:
+				if(skipString in species.name): hasSkipString = True
+			if(hasSkipString): continue
+
+			#check max atoms
+			if(len(species.exploded)>fullOptions["maxAtoms"]): continue
+
+			#check ions
+			if(species.charge>0 and not(fullOptions["cations"])): continue
+			if(species.charge<0 and not(fullOptions["anions"])): continue
+
+			#append OK species
+			speciesOK.append(species)
+
+		nameOK = sorted([x.name for x in speciesOK])
+		print "species included in the subnetwork ("+str(len(speciesOK)) \
+			+"):", (", ".join(nameOK))
+
+		#print species not found
+		if(fullOptions["useSpecies"]!=[]):
+			speciesNotFound = [x for x in fullOptions["useSpecies"] if(not(x in nameOK))]
+			print "species from "+myOptions.suboptions+" not found:",(", ".join(speciesNotFound))
+
+		#get all species names
+		allNames = [x.name for x in speciesOK]
+		reactionsOK = []
+		#loop on reactions
+		for reaction in self.reactions:
+			speciesNames = [x.name for x in (reaction.reactants+reaction.products)]
+			#check if all selected species are present
+			hasAllSpecies = True
+			for species in speciesNames:
+				if(not(species in allNames)):
+					hasAllSpecies = False
+					break
+			if(not(hasAllSpecies)): continue
+
+			#check special strings in rates
+			if(fullOptions["skipRateString"]!=[]):
+				#check special strings in rates
+				hasSkipRateString = False
+				#loop on strings
+				for skipString in fullOptions["skipRateString"]:
+					#loop on rates f90 expressions
+					for krate in reaction.rate:
+						#check if string in rate expression
+						if(skipString in krate):
+							hasSkipRateString = True
+							break
+				#skip reaction if string matches
+				if(hasSkipRateString): continue
+
+
+			#create a copy of the reaction to get ranges
+			reactionOK = copy.copy(reaction)
+			reactionOK.rate = []
+			reactionOK.Tmin = []
+			reactionOK.Tmax = []
+			#loop on rate ranges
+			for i in range(len(reaction.rate)):
+				#check Tmin limit
+				if(reaction.Tmin[i]!=None):
+					if(float(reaction.Tmin[i])<fullOptions["Tmin"]): continue
+				#check Tmax limit
+				if(reaction.Tmax[i]!=None):
+					if(float(reaction.Tmax[i])>fullOptions["Tmax"]): continue
+				#append limits
+				reactionOK.rate.append(reaction.rate[i])
+				reactionOK.Tmin.append(reaction.Tmin[i])
+				reactionOK.Tmax.append(reaction.Tmax[i])
+			#append reaction to OK list
+			reactionsOK.append(reactionOK)
+
+
+		#write output
+		fout = open(fullOptions["outputFile"],"w")
+		#header
+		fout.write("#########################\n")
+		fout.write("#file automatically generated with DOCMAKE on "+utils.getCurrentTime()+"\n")
+		fout.write("#changeset: "+utils.getChangeset()[:7]+"\n")
+		fout.write("#using the following options\n")
+		for (option,value) in plainOptions.iteritems():
+			fout.write("# "+option+" = "+value+"\n")
+		fout.write("\n\n")
+
+		icount = 0
+		#write reactions in KROME format
+		for reaction in reactionsOK:
+			useTlims = not(fullOptions["skipTlimitsSingle"] and (len(reaction.rate)==1))
+			fout.write(reaction.getKROMEformat(icount,includeTlimits=useTlims))
+			icount += len(reaction.rate)
+
+		fout.close()
+
+		#some message
+		print "subnetwork saved to "+fullOptions["outputFile"]+" with "+str(icount)+" reactions"
+
+
+
+
+
+
+
+
 
 

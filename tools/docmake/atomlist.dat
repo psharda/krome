@@ -10,6 +10,7 @@
 #mepn = me + mp + mn
 
 H	mep
+D	mepn
 He	2*mepn
 C	6*mepn
 N	7*mepn
@@ -30,4 +31,7 @@ c_ 	0
 _dust	0
 GRAIN0  0
 GRAIN   0
+_para	0
+_ortho	0
+_meta	0
 

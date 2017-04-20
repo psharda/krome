@@ -8,7 +8,7 @@ exec = test
 lib = -llapack
 
 #if dgesv is not present non need for LAPACK
-GREP = $(shell grep -i 'dgesv' krome_subs.f90)
+GREP = $(shell grep -i 'dgesv' krome_all.f90)
 ifeq ($(GREP),)
 	lib =
 endif

@@ -15,9 +15,12 @@ set key t l
 set ylabel "log(rho[g/cm3])"
 plot './fort.24' u 3:4 w l t "density"
 
+nkrome = 3
+load 'species.gps'
+
 set key t l
 set ylabel "log(H2)"
-plot './fort.34' u 3:11 w l t " H2"
+plot './fort.34' u 3:krome_idx_H2 w l t " H2"
 
 set pm3d map
 set xlabel "log(t/yr)"

@@ -208,4 +208,12 @@ module krome_commons
   !partition functions common vars
 #KROME_var_parts
 
+  !verbatim reactions
+  character*50::reactionNames(nrea)
+
+#IFKROME_hasStoreOnceRates
+  !store evaluate once rate
+  real*8::rateEvaluateOnce(nrea)
+#ENDIFKROME
+
 end module krome_commons

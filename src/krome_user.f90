@@ -36,17 +36,17 @@ contains
   ! as computed in the tables
   function krome_get_table_Tdust(x,Tgas) #KROME_bindC
     use krome_commons
-    use krome_subs
+    use krome_grfuncs
     implicit none
     #KROME_double_value :: Tgas
     #KROME_double :: x(nmols), krome_get_table_Tdust
-    real*8::ntot
+    real*8::n(nspec)
 
-    ntot = sum(x)
-    krome_get_table_Tdust = 1d1**fit_anytab2D(dust_tab_ngas(:), &
-         dust_tab_Tgas(:), dust_tab_Tdust(:,:), dust_mult_ngas, &
-         dust_mult_Tgas, &
-         log10(ntot), log10(Tgas))
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = Tgas
+
+    krome_get_table_Tdust = get_table_Tdust(n(:))
 
   end function krome_get_table_Tdust
 
@@ -186,7 +186,7 @@ contains
   ! of size krome_nmols, and Tgas the gas temperature
   function krome_get_Tdust(x,Tgas) #KROME_bindC
     use krome_commons
-    use krome_subs
+    use krome_fit
     implicit none
     #KROME_double :: x(nmols), krome_get_Tdust
     #KROME_double_value :: Tgas
@@ -1038,6 +1038,7 @@ contains
     use krome_commons
     use krome_photo
     use krome_subs
+    use krome_fit
     implicit none
     real*8::z(59),energy(500),HM(59,500)
     real*8::z_mul,energy_mul,x,lower,upper
@@ -1100,6 +1101,7 @@ contains
     use krome_commons
     use krome_photo
     use krome_subs
+    use krome_fit
     implicit none
     real*8::z(59),energy(500),HM(59,500)
     real*8::z_mul,energy_mul,x,lower,upper
@@ -2561,11 +2563,15 @@ contains
   !scale the abundances of the metals contained in n(:)
   ! to Z according to Asplund+2009.
   ! note that this applies only to neutral atoms.
-  subroutine krome_scale_Z(n,Z) #KROME_bindC
+  subroutine krome_scale_Z(x,Z) #KROME_bindC
     use krome_commons
-#KROME_double :: n(nmols)
+    use krome_getphys
+#KROME_double :: x(nmols)
 #KROME_double_value :: Z
-    real*8::Htot
+    real*8::Htot,n(nspec)
+
+    n(1:nmols) = x(:)
+    n(nmols+1:nspec) = 0d0
 
 #KROME_scaleZ
 
@@ -2727,7 +2733,7 @@ contains
     sumflux = sum(flux) !sum of all the fluxes
     !loop on reactions
     do i=1,nrea
-       write(ifile,'(I8,4E17.8e3,a3,a50)') i,xvar,flux(i),&
+       write(ifile,'(I8,5E17.8e3,a3,a50)') i,xvar,Tgas,flux(i),&
             flux(i)/fluxmax, flux(i)/sumflux," ",rname(i)
     end do
     write(ifile,*)

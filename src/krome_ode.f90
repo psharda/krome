@@ -14,6 +14,7 @@ contains
     use krome_gadiab
     use krome_getphys
     use krome_phfuncs
+    use krome_fit
 #IFKROME_useDust
     use krome_dust
 #ENDIFKROME
@@ -21,6 +22,7 @@ contains
     integer::neq,idust
     real*8::tt,dn(neq),n(neq),k(nrea),krome_gamma
     real*8::gamma,Tgas,vgas,ntot,nH2dust,nd,nin(neq)
+#KROME_iceODEVariables
 #KROME_dustSumVariables
 #KROME_implicit_variables
 #KROME_flux_variables
@@ -49,6 +51,8 @@ contains
 #KROME_Tdust_limits
 
     k(:) = coe_tab(n(:)) !compute coefficients
+
+#KROME_iceODEDefinitions
 
 #KROME_H2pdRate
 

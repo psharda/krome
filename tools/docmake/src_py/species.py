@@ -89,7 +89,7 @@ class species():
 
 		#store atoms
 		nonAtoms = ["+","-"]
-		self.atoms = [x for x in self.exploded if not(x in nonAtoms) and not(utils.isNumber(x))]
+		self.atoms = [x for x in self.exploded if(not(x in nonAtoms) and not(utils.isNumber(x)))]
 
 		#compute mass using dictionary as reference
 		self.mass = sum([atomSet[x] for x in self.exploded])
@@ -130,6 +130,13 @@ class species():
 			nameLatex.append(y)
 
 		return ("".join(nameLatex))
+
+	#*****************
+	#get polarizability, cm3
+	def getPolarizability(self,polarizabilityData):
+
+		if(self.name in polarizabilityData): return polarizabilityData[self.name]
+		return None
 
 	#*****************
 	#get "engineered" enthalpy kJ/mol
@@ -186,6 +193,10 @@ class species():
 		fout.write("<a href=\"indexSpecies.html\">back</a>\n")
 		fout.write("<p>Enthalpy @ 298.15K: <b>" \
 			+ str(self.getEnthalpy(myNetwork.thermochemicalData)) + "</b> kJ/mol</p>")
+		polarizability = self.getPolarizability(myNetwork.polarizabilityData)
+		if(polarizability!=None): polarizability /= 1e-24 #cm3->AA3
+		fout.write("<p>&alpha;: <b>" \
+			+ str(polarizability) + "</b> &Aring;<sup>3</sup></p>")
 		fnameURL = "species_allrates_"+str(self.nameFile)+".html"
 		fout.write("<p><a href=\""+fnameURL+"\">All plots in a single page</a></p>")
 
@@ -250,8 +261,8 @@ class species():
 					fnamePNG = "../pngs/rate_"+str(reaction.getReactionHash())+"_"+variable+".png"
 					if(reaction.hasVariable(myOptions,variable)):
 						#fout.write("<img src=\""+fnamePNG+"\">")
-						linkURL = "<a href=\"rate_"+reaction.getReactionHash()+".html\">details</a>"
-						fout.write("<img src=\""+fnamePNG+"\" alt=\"&#9888; MISSING: "+reaction.getVerbatim()+"\"><br>"+linkURL+"<br><br>")
+						linkURL = "<a href=\"rate_"+reaction.getReactionHash()+".html\">details</a> for "+reaction.getVerbatimHtml()
+						fout.write("<img src=\""+fnamePNG+"\" width=\"700px\" alt=\"&#9888; MISSING: "+reaction.getVerbatim()+"\"><br>"+linkURL+"<br><br>")
 
 
 		fout.write(utils.getFooter("footer.php"))

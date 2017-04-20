@@ -104,6 +104,7 @@ class reaction():
 	hasTlimitMax = hasTlimitMin = True #flag to determine the presence of Temperature limits
 	group = "__DEFAULT__"
 	canUseTabs = True #flag if this reaction can use tabs
+	isStoreOnce = False #reaction rate is stored once and never evaluated again during fex call
 	ifrate = "" #if condition on rate, e.g. if(Tgas>1d2):
 	isCR = False #flag this reaction as CR
 	isXRay = False #flag this reaction as XRay
@@ -1155,45 +1156,143 @@ def get_heating_index_list():
 
 ####################################
 #solar metallicities
-def get_solar_abundances():
+def get_solar_abundances(fileName="data/asplund.dat",keyName="Solar"):
 	#solar abundances from Tab.1 in Asplund+2009
 	# following their definition
 	#  log10(epsilon) = log10(n/nH) + 12
 	# where n is the number densiity of the given element,
 	# while nH is the number density of H
 	# This function returns log10(n/nH)
-	solar_abs = {
-		"D":12.00e0,
-		"He":10.93e0,
-		"Li":1.05e0,
-		"Be":1.38e0,
-		"B":2.70e0,
-		"C":8.43e0,
-		"N":7.83e0,
-		"O":8.69e0,
-		"F":4.56e0,
-		"Ne":7.93e0,
-		"Na":6.24e0,
-		"Mg":7.60e0,
-		"Al":6.45e0,
-		"Si":7.51e0,
-		"P":5.41e0,
-		"S":7.12e0,
-		"Cl":5.50e0,
-		"Ar":6.40e0,
-		"K":5.03e0,
-		"Ca":6.34e0,
-		"Ti":4.95e0,
-		"Mn":5.43e0,
-		"Fe":7.50e0,
-		"Ni":6.22e0
-		}
 
-	solar_out = dict()
-	for k,v in solar_abs.iteritems():
-		solar_out[k] = str(v-12e0)
+	# Z:     Atomic number [I3]
+	# A:     Average weight [F8.3]
+	# Na:    Element name [A3]
+	# Solar: Epsilon abundance in the solar photosphere [F6.2]
+	# Err:   Error on epsilon value [F6.2]
+	# Meteo: Epsilon abundance in meteorites (specifically CI chondrites) [F6.2]
+	# Err:   Error on epsilon value [F6.2]
 
-	return solar_out
+	#format spacing and names
+	fmtSpace = [3,8,3]+[6]*4
+	fmtName = ["Z","A","Name","Solar","ErrSolar","Meteor","MeteorErr"]
+
+	solar_abs = dict()
+
+	fhz = open(fileName,"rb")
+	#loop on data file
+	for row in fhz:
+		srow = row.strip()
+		#skip comments
+		if(srow==""): continue
+		if(srow.startswith("#")): continue
+		#fill trailing with large number of spaces to avoid format problems
+		srow = srow+(""*sum(fmtSpace))
+		#cursor position
+		istep = 0
+		data = dict()
+		#loop on format pieces
+		for i in range(len(fmtSpace)):
+			#get size of data
+			nsp = fmtSpace[i]
+			#store data in dict
+			data[fmtName[i]] = srow[istep:istep+nsp]
+			#increase cursor position
+			istep += nsp
+		#if data are not empty store abundance
+		if(data[keyName].strip()!=""):
+			solar_abs[data["Name"].strip()] = float(data[keyName])
+
+	if(keyName=="Solar"):
+		solar_out = dict()
+		for k,v in solar_abs.iteritems():
+			solar_out[k] = str(v-12e0)
+		return solar_out
+	else:
+		return solar_abs
+
+
+
+###############################
+#get abundances assuming specific depletion and dust/gas mass ratio
+def getAbundancesWithDepletion(d2g = .01):
+
+	#species not depleted (fdep=0)
+	nodep = ["H","He","Ne","Ar","Kr","Xe","Rn","Hg"]
+	#species partially depleted (0<fdep<1)
+	dep = {"O":0.8,"N":0.5,"Si":0.8}
+	#species to compute depletion
+	depFree = "C"
+
+	#list of species with fdep=0
+	nodepList = nodep+[depFree]
+
+	#get Asplund exponents of solar number densities, i.e. log(epsilon)-12
+	Zaspl = get_solar_abundances()
+	#get average atomic mass
+	Waspl = get_solar_abundances(keyName="A")
+	#compute Z in mass for each atom (not normalized)
+	Zmassn = {k:(Waspl[k]*1e1**float(v)) for (k,v) in Zaspl.iteritems()}
+	#total Z not normalized
+	Ztot = sum(Zmassn.values())
+	#normalize to have Z
+	Zmass = {k:v/Ztot for (k,v) in Zmassn.iteritems()}
+
+	#create depletion factors dictionary (1=all in dust)
+	fdep = {k:0e0 for k in nodepList}
+	fdep.update({k:1e0 for k in Zmass.keys() if(not(k in nodepList))})
+	fdep.update(dep)
+
+	#compute X,Y,Z
+	X = Zmass["H"]
+	Y = Zmass["He"]
+	Z = sum([v for (k,v) in Zmass.iteritems() if(not(k in ["H","He"]))])
+
+	#Z depleted (excluded unknown)
+	Zdep = sum([v*fdep[k] for (k,v) in Zmass.iteritems()])
+
+	#Z in dust
+	Zd = d2g/(d2g+1e0)
+	#Z in gas
+	Zg = Z - Zd
+
+	#Z of partially depleted species
+	Zx = Zd-Zdep
+
+	#get depletion of unknown species
+	ff = Zx/Zmass[depFree]
+
+	#trigger error if required depletion > 1 or negative
+	if(ff>1e0 or ff<0e0):
+		print "X:",X,"Y:",Y, "Z:", Z
+		print "Zd:",Zd, "Zg:",Zg, "Zd/Z:",Zd/Z, "Zg/Z:",Zg/Z
+		print dep
+		print depFree+":",ff
+		sys.exit("ERROR: problems with "+depFree+" depletion!")
+	fdep[depFree] = ff
+
+	nH = Zmass["H"]*(1.-fdep["H"])/Waspl["H"]
+	return {k:v*(1.-fdep[k])/Waspl[k]/nH for (k,v) in Zmass.iteritems()}
+	#print {k:v/Waspl[k] for (k,v) in Zmassn.iteritems()}
+
+
+#*****************************
+def get_Ebind(fileName="data/Ebare_ice.dat",surface="bare"):
+	fh = open(fileName,"rb")
+
+	Ebind = dict()
+	for row in fh:
+		srow = row.strip()
+		if(srow.startswith("#")): continue
+		if(srow==""): continue
+		(name, Ebare, Eice) = [x for x in srow.split(" ") if(x!="")]
+		if(surface=="bare"):
+			Ebind[name] = float(Ebare)
+		elif(surface=="ice"):
+			Ebind[name] = float(Eice)
+		else:
+			sys.exit("ERROR: unknown surface type "+surface)
+
+	return Ebind
 
 ###################################
 #vibrational constant dictionary
