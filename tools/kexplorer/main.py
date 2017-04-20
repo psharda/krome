@@ -19,7 +19,7 @@ network.xvarName = "Density"
 network.xvarUnits = "g/cm^3"
 
 #find best matching criteria
-network.findBest(threshold=1e-2)
+network.findBest()
 
 #print most fluxy reactions
 network.listBest()
