@@ -1,8 +1,32 @@
-import kexplorer_reaction
+import kexplorer_reaction,kexplorer_element
 import sys,subprocess,os,glob,json,datetime
 
+import itertools #added by Jels Boulangier 30/03/2017
+########################################
+#added by Jels Boulangier 05/04/2017
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.colors as colors
+
+#plot arguments
+font = {'size'   : 21}
+lines = {'linewidth' : 5, 'markersize': 10, 'markeredgewidth': 3, }
+savefig = {'dpi': 300, 'format': 'png', 'transparent': True,'bbox': 'tight'}
+figure = {'figsize': (14, 10)}#,'autolayout':True}
+
+plt.rc('font', **font)
+plt.rc('lines', **lines)
+plt.rc('savefig', **savefig)
+plt.rc('figure', **figure)
+plt.rc('xtick.major', size=10, width=1.5)
+plt.rc('xtick.minor', size=5, width=1.5)
+plt.rc('ytick.major', size=10, width=1.5)
+plt.rc('ytick.minor', size=5, width=1.5)
+########################################
 class network:
 	reactions = dict()
+	elements = dict()#added by Jels Boulangier 05/04/2017
 
 	minFlux = 1e-5 #minimum flux to plot
 	plotLog = True #edge thickness is log of flux
@@ -10,10 +34,14 @@ class network:
 	xvarName = "" #name of independent variable
 	xvarUnits = "" #units of independent variable
 	xvarFormat = "%e" #format of independent variable
+	#added by Jels Boulangier 05/04/2017
+	minAbundance = 1e-10 #minimum mass fraction to plot
+	maxAbundance = 1 #maximum mass fraction to plot
+
 
 	#**********************
 	#network contructor read kexplorer file
-	def __init__(self,fileName):
+	def __init__(self,fileName,fileNameEvolution):
 
 		#read data from file
 		fh = open(fileName,"rb")
@@ -24,6 +52,30 @@ class network:
 			self.addReaction(srow)
 
 		fh.close()
+
+		#added by Jels Boulangier 05/04/2017
+		#read data from file
+		fg = open(fileNameEvolution,"rb")
+		#list of all elements
+		fline = fg.readline().strip().split(" ")
+		flineElem = fline[3:]
+		#add element data per block in the inout file
+		elemBlock = []
+		for row in fg:
+			srow = row.strip()
+			if(srow==""):
+				self.addElement(elemBlock,flineElem)
+				elemBlock = []
+			else:
+				elemBlock.append(srow)
+
+		fg.close()
+
+		# determine (Tgas,xvar)-grid
+		self.getRangeTgasXvar()
+
+
+
 
 	#**********************
 	#add reaction to network using explore reaction file line format
@@ -42,6 +94,42 @@ class network:
 		#add data to reaction
 		self.reactions[idx].addData(xvar, Tgas, flux, fluxNormMax, fluxNormTot)
 
+	#**********************
+	#add element data per block in the input file
+	#added by Jels Boulangier 05/04/2017
+	def addElement(self,block,elemAll):
+		newBlock = True
+		#create element objects
+		for el in elemAll:
+			if(not(el in self.elements)):
+				self.elements[el] = kexplorer_element.element()
+
+		#add data for every element
+		for row in block:
+			arow = [x for x in row.split(" ") if(x!="")]
+			(time, Tgas, xvar) = [float(x) for x in arow[0:3]]
+			for el in elemAll:
+				elIdx = elemAll.index(el)+3
+				abundance = float(arow[elIdx])
+				self.elements[el].addData(time, Tgas, xvar, abundance, newBlock)
+			newBlock = False
+
+
+	#******************
+	#find all unique Tgas,xvar values
+	#useful for determining the (tgas,xvar)-grid
+	#added by Jels Boulangier 05/04/2017
+	def getRangeTgasXvar(self):
+		#find unique xvar/Tgas values ("H" is a random choice of element)
+		xvarUniqueSet = set([i[0] for i in self.elements["H"].xvarData])
+		tgasUniqueSet = set([i[0] for i in self.elements["H"].tgasData])
+		#sorted list of unique xvar/Tgas values
+		self.xvarUnique = sorted(list(xvarUniqueSet))
+		self.tgasUnique = sorted(list(tgasUniqueSet))
+		#range of xvar/Tgas values
+		self.xvarRange = len(self.xvarUnique)
+		self.tgasRange = len(self.tgasUnique)
+
 
 	#******************
 	#search for most fluxy reactions
@@ -51,6 +139,7 @@ class network:
 		self.atomBase = atom
 
 		self.bestReactions = []
+		self.bestReactionsIdx = [] #added by Jels Boulangier 30/03/2017
 		#loop on reactions to find criteria
 		for (idx,reaction) in self.reactions.iteritems():
 			if(atom!=None):
@@ -61,6 +150,7 @@ class network:
 			#if percent flux greater than treshold then store reaction
 			if(max(reaction.fluxNormTotData)>threshold):
 				self.bestReactions.append(reaction)
+				self.bestReactionsIdx.append(idx) #added by Jels Boulangier 30/03/2017
 
 		#if no reactions found rise error
 		if(len(self.bestReactions)==0):
@@ -74,6 +164,25 @@ class network:
 	def listBest(self):
 		for reaction in self.bestReactions:
 			print reaction.verbatim
+
+	#****************
+	#create network file with most fluxy reactions
+	#added by Jels Boulangier 30/03/2017
+	def networkBest(self,oldNetwork,newNetwork="BestNetwork.ntw"):
+
+		def isa_group_separator(line):
+		    return line=='\n'
+
+		cnt = 0
+		with open(oldNetwork, 'r') as fileInput, open(newNetwork, "w") as fileOutput:
+			#split file into blocks separated by empty line, one block is one reaction
+		    for key,group in itertools.groupby(fileInput,isa_group_separator):
+		        if not key:
+					#write most fluxy reactions in new network file (+ header)
+		            if cnt in self.bestReactionsIdx or cnt==0:
+		                reactionBlock = "".join(list(group))
+		                fileOutput.write(reactionBlock + "\n")
+		            cnt += 1
 
 	#****************
 	#buld a graph map with the list of reaction partners
@@ -134,7 +243,7 @@ class network:
 			os.makedirs(pngFolder)
 
 		#clear pngs
-		for fname in glob.glob("pngs/*.png"):
+		for fname in glob.glob(pngFolder+"*.png"):
 			os.remove(fname)
 
 		#get partners
@@ -229,6 +338,150 @@ class network:
 			myCall = "dot tmp.dot -Tpng -o "+pngName
 			subprocess.call(myCall.split(" "))
 
+	#******************
+	#make (T,xvar) color plot of ALL element abundances
+	#added by Jels Boulangier 11/04/2017
+	def abundanceColormapAll(self,elemInt=None,pngFolder="pngs"):
+		#plot for all elements
+		if not elemInt:
+			for key in self.elements:
+				self.abundanceColormap(key,pngFolder)
+		#plot for elements of interest
+		else:
+			for elem in elemInt:
+				self.abundanceColormap(elem,pngFolder)
+
+	#******************
+	#make (T,xvar) color plot of element abundances
+	#added by Jels Boulangier 05/04/2017
+	def abundanceColormap(self,atom,pngFolder="pngs"):
+
+		print "Making abundance colormap of %s" %(atom)
+		#get variable data after last time step
+		x = [i[-1] for i in self.elements[atom].tgasData]
+		y = [i[-1] for i in self.elements[atom].xvarData]
+		z = [i[-1] for i in self.elements[atom].abundanceData]
+
+		#create matrix for image plot
+		Ncol = len(set(x))
+		Nrow = len(set(y))
+		z = np.reshape(z,(Nrow, Ncol))
+		x = np.array(x)
+		y = np.array(y)
+
+		zMin = max(z.min(),self.minAbundance)
+		zMax = min(z.max(),self.maxAbundance)
+		zRange = zMax/zMin
+
+		#do no make image if abundance is too small
+		if zMax<self.minAbundance:
+			print "Abundance of %s is zero everywhere" %(atom)
+			return
+
+		#create image
+		plt.figure()
+		if(zRange>10):
+			#logaritmic colorbar
+			plt.imshow(z, extent=(x.min(), x.max(),y.min(), y.max()), \
+			interpolation='gaussian', cmap='afmhot',aspect='auto',origin='lower',\
+			norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+		else:
+			#linear colorbar
+			plt.imshow(z, extent=(x.min(), x.max(),y.min(), y.max()), \
+			interpolation='gaussian', cmap='afmhot',aspect='auto',origin='lower')
+		#Acceptable interpolations are 'none', 'nearest', 'bilinear', 'bicubic',
+		#'spline16', 'spline36', 'hanning', 'hamming', 'hermite', 'kaiser',
+		#'quadric', 'catrom', 'gaussian', 'bessel', 'mitchell', 'sinc', 'lanczos'
+
+		#make plot labels
+		plt.colorbar(label='Mass fraction')
+		plt.yscale('log')
+		plt.title('Fractional abundance of %s' %(atom))
+		plt.xlabel('Temperature (K)')
+		plt.ylabel(r'%s ($%s$)' %(self.xvarName,self.xvarUnits))
+		#dump png file
+		print "Dumping colormap of %s" %(atom)
+		plt.savefig(pngFolder + '/%s' %(atom))
+		plt.close()
+
+	#******************
+	#get the block index of a (Tgas,xvar) combo
+	#added by Jels Boulangier 05/04/2017
+	def getIdxTgasXvar(self,xvar,tgas):
+
+		idxTgas = self.tgasUnique.index(tgas)
+		idxXvar = self.xvarUnique.index(xvar)
+
+		# TgasRange amount of blocks per xvar value
+		idxBlock = idxXvar*self.tgasRange + idxTgas
+
+		return idxBlock
+
+	#******************
+	#make plot of element evolution in (T,xvar)-space
+	#added by Jels Boulangier 05/04/2017
+	def abundanceEvolution(self,atom,tgasInt,xvarInt,pngFolder="pngs"):
+
+		markers = ['D','o','*','+','s','x']
+		colors = ['r','b','k','g','m','c','grey','brown','pink']
+		markerHandles = []
+		markerLabels = []
+		colorHandles = []
+		colorLabels = []
+
+		#marker counter
+		mIdx = 0
+		#loop over all xvar
+		for var in xvarInt:
+			#marker
+			m = markers[mIdx]
+			#color counter
+			cIdx = 0
+			#loop over all temperatures
+			for tgas in tgasInt:
+				#color
+				c = colors[cIdx]
+				#find index of the wanted block of input file
+				blockIdx = self.getIdxTgasXvar(var,tgas)
+
+				#get abundance and time data
+				x = self.elements[atom].timeData[blockIdx]
+				y = self.elements[atom].abundanceData[blockIdx]
+				plt.semilogy(x,y,'-'+m,color=c)
+
+				#plot fake points for legend of colors
+				if mIdx ==0:
+					line, = plt.plot(-1,-1,'-',color=c)
+					colorHandles.append(line)
+					colorLabels.append("T = %i K" %(int(tgas)))
+
+				cIdx += 1
+
+			#plot fake points for legend of markers
+			line, = plt.plot(-1,-1,'-'+m,color='grey')
+			markerHandles.append(line)
+			markerLabels.append(r"%s = %s $%s$" %(self.xvarName,str(var),self.xvarUnits))
+
+			mIdx += 1
+
+		#make legends for xvar and temperature
+		legend1 = plt.legend(colorHandles,colorLabels,loc=2,\
+		fancybox=True, shadow = True,bbox_to_anchor=(1, 1) )
+		ax = plt.gca().add_artist(legend1)
+		legend2 = plt.legend(markerHandles,markerLabels,loc=3,\
+		fancybox=True, shadow=True, bbox_to_anchor=(1, 0))
+
+		#make plot labels
+		plt.title('Abundance evolution of %s' %(atom))
+		plt.xlabel('Time (s)')
+		plt.ylabel("Mass fraction")
+		plt.xlim(xmin=0,xmax=x[-1])
+		#dump png file
+		print "Dumping abundance evolution of %s" %(atom)
+		plt.savefig(pngFolder + '/ev%s' %(atom),bbox_extra_artists=[legend1,legend2])
+		plt.close()
+
+
 	#**************
 	def loadHeader(self,fname,maxSteps):
 		fh = open(fname,"rb")
@@ -273,6 +526,3 @@ class network:
 		hrefWiki = "<a href=\"https://bitbucket.org/tgrassi/krome/wiki/kexplorer\" target=\"_blank\">kexplorer</a>"
 		return "documentation generated with "+hrefWiki+" ("+bitbucketLanding+") - changeset: <a href=\""\
 			+ bitbucketLink + "\" target=\"_blank\">" + changeset[:7] + "</a> - " + datenow
-
-
-
