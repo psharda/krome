@@ -863,7 +863,8 @@ class network:
 						else:
 							tdEnthalpy += "<td>&#10006;"
 
-					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"<td style=\"font-size:10px;\">"+status.upper()+tdEnthalpy+"\n")
+					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"<td style=\"font-size:10px;\">"\
+						+status.upper()+tdEnthalpy+"\n")
 
 			#dataBranch["presentBranches"] = []
 			icount += 1
@@ -1023,7 +1024,8 @@ class network:
 
 				fnamePNG = "../pngs/rate_"+str(myReaction.getReactionHash())+"_"+variable+".png"
 				linkURL = "<a href=\"rate_"+myReaction.getReactionHash()+".html\">details</a> for "+myReaction.getVerbatimHtml()
-				fout.write("<img src=\""+fnamePNG+"\" width=\"700px\" alt=\"&#9888; MISSING: "+myReaction.getVerbatim()+"\"><br>"+linkURL)
+				fout.write("<img src=\""+fnamePNG+"\" width=\"700px\" alt=\"&#9888; MISSING: " \
+					+myReaction.getVerbatim()+"\"><br>"+linkURL)
 				fout.write("<tr height=\"10px\"><td>")
 				icount += 1
 
@@ -1180,7 +1182,8 @@ class network:
 			if(hasSkipString): continue
 
 			#check max atoms
-			if(len(species.exploded)>fullOptions["maxAtoms"]): continue
+			explodedNoSigns = [x for x in species.exploded if(not(x in ["+","-"]))]
+			if(len(explodedNoSigns)>fullOptions["maxAtoms"]): continue
 
 			#check ions
 			if(species.charge>0 and not(fullOptions["cations"])): continue
