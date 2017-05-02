@@ -313,6 +313,7 @@
     function cooling_Z_CIENOUV(n,inTgas)
       use krome_commons
       use krome_subs
+      use krome_fit
       use krome_getphys
       implicit none
       real*8::cooling_Z_CIENOUV,n(:),inTgas
@@ -711,6 +712,7 @@
     function cooling_dust(n,Tgas)
       use krome_commons
       use krome_subs
+      use krome_fit
       use krome_getphys
       implicit none
       real*8::n(:),Tgas,ntot,cooling_dust,coolFit
@@ -853,6 +855,7 @@
     ! Frommhold & Moraldi (1989), ApJ, 336, 495.
     function H2opacity_omukai(Tgas, n)
       use krome_commons
+      use krome_fit
       use krome_subs
       use krome_getphys
       implicit none
@@ -1107,40 +1110,64 @@
       real*8::temp,T5,cool
 
 
-      temp = max(Tgas,10.d0) !K
-      T5 = temp/1.d5 !K
-      cool = 0.d0 !erg/cm3/s
+      temp = max(Tgas,10d0) !K
+      T5 = temp/1d5 !K
+      cool = 0d0 !erg/cm3/s
 
       !COLLISIONAL IONIZATION: H, He, He+, He(2S)
+#IFKROME_hasH
       cool = cool+ 1.27d-21*sqrt(temp)/(1.d0+sqrt(T5))&
            *exp(-1.578091d5/temp)*n(idx_e)*n(idx_H)
+#ENDIFKROME_hasH
+
+#IFKROME_hasHe
       cool = cool+ 9.38d-22*sqrt(temp)/(1.d0+sqrt(T5))&
            *exp(-2.853354d5/temp)*n(idx_e)*n(idx_He)
+#ENDIFKROME_hasHe
+
+
+#IFKROME_hasHep
       cool = cool+ 4.95d-22*sqrt(temp)/(1.d0+sqrt(T5))&
            *exp(-6.31515d5/temp)*n(idx_e)*n(idx_Hej)
       cool = cool+ 5.01d-27*temp**(-0.1687)/(1.d0+sqrt(T5))&
            *exp(-5.5338d4/temp)*n(idx_e)**2*n(idx_Hej)
+#ENDIFKROME_hasHep
 
       !RECOMBINATION: H+, He+,He2+
+#IFKROME_hasHp
       cool = cool+ 8.7d-27*sqrt(temp)*(temp/1.d3)**(-0.2)&
            /(1.d0+(temp/1.d6)**0.7)*n(idx_e)*n(idx_Hj)
+#ENDIFKROME_hasHp
+
+#IFKROME_hasHep
       cool = cool+ 1.55d-26*temp**(0.3647)*n(idx_e)*n(idx_Hej)
+#ENDIFKROME_hasHp
+
+#IFKROME_hasHepp
       cool = cool+ 3.48d-26*sqrt(temp)*(temp/1.d3)**(-0.2)&
            /(1.d0+(temp/1.d6)**0.7)*n(idx_e)*n(idx_Hejj)
+#ENDIFKROME_hasHepp
 
+#IFKROME_hasHe
       !DIELECTRONIC RECOMBINATION: He
       cool = cool+ 1.24d-13*temp**(-1.5)*exp(-4.7d5/temp)&
            *(1.d0+0.3d0*exp(-9.4d4/temp))*n(idx_e)*n(idx_Hej)
+#ENDIFKROME_hasHe
 
       !COLLISIONAL EXCITATION:
       !H(all n), He(n=2,3,4 triplets), He+(n=2)
+#IFKROME_hasH
       cool = cool+ 7.5d-19/(1.d0+sqrt(T5))*exp(-1.18348d5/temp)*n(idx_e)*n(idx_H)
+#ENDIFKROME_hasH
+
+#IFKROME_hasHep
       cool = cool+ 9.1d-27*temp**(-.1687)/(1.d0+sqrt(T5))&
            *exp(-1.3179d4/temp)*n(idx_e)**2*n(idx_Hej)
       cool = cool+ 5.54d-17*temp**(-.397)/(1.d0+sqrt(T5))&
            *exp(-4.73638d5/temp)*n(idx_e)*n(idx_Hej)
+#ENDIFKROME_hasHep
 
-      cooling_atomic = max(cool, 0.d0)  !erg/cm3/s
+      cooling_atomic = max(cool, 0d0)  !erg/cm3/s
 
     end function cooling_Atomic
 #ENDIFKROME
@@ -1355,6 +1382,7 @@
     function coolingZ_rates(inTgas)
       use krome_commons
       use krome_subs
+      use krome_fit
       implicit none
       real*8::inTgas,coolingZ_rates(nZrate),k(nZrate)
       real*8::Tgas,invT,logTgas

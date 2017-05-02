@@ -33,6 +33,7 @@ objs += opkdmain.o
 objs += krome_commons.o
 objs += krome_constants.o
 objs += krome_user_commons.o
+objs += krome_fit.o
 objs += krome_getphys.o
 objs += krome_gadiab.o
 objs += krome_grfuncs.o

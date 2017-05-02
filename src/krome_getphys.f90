@@ -67,13 +67,40 @@ contains
   end function get_imass
 
   !************************
-  !get species charges
+  !species binding energies (surface=BARE), K
+  function get_EbindBare()
+    use krome_commons
+    implicit none
+    real*8::get_EbindBare(nspec)
+
+    get_EbindBare(:) = 1d99
+
+#KROME_get_Ebind_bare
+
+  end function get_EbindBare
+
+  !************************
+  !species binding energies (surface=ICE), K
+  function get_EbindIce()
+    use krome_commons
+    implicit none
+    real*8::get_EbindIce(nspec)
+
+    get_EbindIce(:) = 1d99
+
+#KROME_get_Ebind_ice
+
+  end function get_EbindIce
+
+  !************************
+  !get verbatim reaction names
   function get_rnames()
     use krome_commons
     implicit none
     character*50::get_rnames(nrea)
 
-#KROME_reaction_names
+    !reaction names are loaded from file
+    get_rnames(:) = reactionNames(:)
 
   end function get_rnames
 

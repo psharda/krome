@@ -12,6 +12,7 @@ contains
     use krome_getphys
     use krome_grfuncs
     use krome_phfuncs
+    use krome_fit
     implicit none
     real*8::coe(nrea),k(nrea),Tgas,n(nspec),kmax
 #KROME_shortcut_variables
@@ -121,6 +122,36 @@ contains
 !
 !  end function get_integratedFlux
 !#ENDIFKROME
+
+  !*************************
+  subroutine loadReactionsVerbatim()
+    use krome_commons
+    implicit none
+    character*50::fname,line
+    integer::ios,i,nunit
+
+    fname = "reactions_verbatim.dat"
+
+    !verbatim reactions are loaded from file
+    ! to increase compilation speed
+    open(newunit=nunit,file=trim(fname),status="old",iostat=ios)
+    if(ios/=0) then
+       print *,"ERROR: "//trim(fname)//" file not present!"
+       stop
+    end if
+
+    !load reactions from file
+    do i=1,nrea
+       read(nunit,'(a)',iostat=ios) line
+       if(ios/=0) then
+          print *,"ERROR: problem reading "//trim(fname)
+          stop
+       end if
+       reactionNames(i) = trim(line)
+    end do
+    close(nunit)
+
+  end subroutine loadReactionsVerbatim
 
 #IFKROME_has_electrons
   !*******************
@@ -232,49 +263,49 @@ contains
 
   end function H2_solomonLW
 
-!  !**********************
-!  !planck function in eV/s/cm2/Hz/sr
-!  ! x is the energy in eV, Tbb the black body
-!  ! temperature in K
-!  function planckBB(x,Tbb)
-!    use krome_constants
-!    implicit none
-!    real*8::Tbb,x,xexp,planckBB
-!
-!    !exponent
-!    xexp = x/boltzmann_eV/Tbb
-!
-!    !default value
-!    planckBB = 0d0
-!
-!    !limit exp overflow
-!    if(xexp<3d2.and.x>1d-10) then
-!       planckBB = 2d0*x**3/planck_eV**2/clight**2 &
-!            / (exp(xexp)-1d0)
-!    end if
-!
-!  end function planckBB
-!
-!  !********************
-!  !planck function dTdust differential
-!  ! in eV/s/cm2/Hz/sr/K, where
-!  ! x is the energy in eV, Tbb the black body
-!  ! temperature in K
-!  function planckBB_dT(x,Tbb)
-!    use krome_constants
-!    real*8::a,b,x,Tbb,xexp,planckBB_dT
-!
-!    b = 1d0/boltzmann_eV
-!    xexp = b*x/Tbb
-!
-!    planckBB_dT = 0d0
-!
-!    if(xexp<3d2) then
-!       a = 2d0/planck_eV**2/clight**2
-!       planckBB_dT = a*b*x**4/Tbb/Tbb * exp(xexp)/(exp(xexp)-1d0)**2
-!    end if
-!
-!  end function planckBB_dT
+  !  !**********************
+  !  !planck function in eV/s/cm2/Hz/sr
+  !  ! x is the energy in eV, Tbb the black body
+  !  ! temperature in K
+  !  function planckBB(x,Tbb)
+  !    use krome_constants
+  !    implicit none
+  !    real*8::Tbb,x,xexp,planckBB
+  !
+  !    !exponent
+  !    xexp = x/boltzmann_eV/Tbb
+  !
+  !    !default value
+  !    planckBB = 0d0
+  !
+  !    !limit exp overflow
+  !    if(xexp<3d2.and.x>1d-10) then
+  !       planckBB = 2d0*x**3/planck_eV**2/clight**2 &
+  !            / (exp(xexp)-1d0)
+  !    end if
+  !
+  !  end function planckBB
+  !
+  !  !********************
+  !  !planck function dTdust differential
+  !  ! in eV/s/cm2/Hz/sr/K, where
+  !  ! x is the energy in eV, Tbb the black body
+  !  ! temperature in K
+  !  function planckBB_dT(x,Tbb)
+  !    use krome_constants
+  !    real*8::a,b,x,Tbb,xexp,planckBB_dT
+  !
+  !    b = 1d0/boltzmann_eV
+  !    xexp = b*x/Tbb
+  !
+  !    planckBB_dT = 0d0
+  !
+  !    if(xexp<3d2) then
+  !       a = 2d0/planck_eV**2/clight**2
+  !       planckBB_dT = a*b*x**4/Tbb/Tbb * exp(xexp)/(exp(xexp)-1d0)**2
+  !    end if
+  !
+  !  end function planckBB_dT
 
   !****************************
   !tanh smoothing function that
@@ -317,30 +348,30 @@ contains
 
   end function get_sgn
 
-!  !***********************
-!  !shielding function selected with -shield option
-!  function krome_fshield(n,Tgas)
-!    implicit none
-!    real*8::krome_fshield,n(:),Tgas
-!
-!    krome_fshield = 1d0 !default shielding value
-!
-!#IFKROME_useShieldingDB96
-!    !compute shielding from Draine+Bertoldi 1996
-!    krome_fshield = calc_H2shieldDB96(n(:), Tgas)
-!#ENDIFKROME
-!
-!#IFKROME_useShieldingWG11
-!    !compute shielding from Wolcott+Greene 2011
-!    krome_fshield =  calc_H2shieldWG11(n(:), Tgas)
-!#ENDIFKROME
-!
-!#IFKROME_useShieldingR14
-!    !compute shielding from Richings+ 2014
-!    krome_fshield =  calc_H2shieldR14(n(:), Tgas)
-!#ENDIFKROME
-!
-!  end function krome_fshield
+  !  !***********************
+  !  !shielding function selected with -shield option
+  !  function krome_fshield(n,Tgas)
+  !    implicit none
+  !    real*8::krome_fshield,n(:),Tgas
+  !
+  !    krome_fshield = 1d0 !default shielding value
+  !
+  !#IFKROME_useShieldingDB96
+  !    !compute shielding from Draine+Bertoldi 1996
+  !    krome_fshield = calc_H2shieldDB96(n(:), Tgas)
+  !#ENDIFKROME
+  !
+  !#IFKROME_useShieldingWG11
+  !    !compute shielding from Wolcott+Greene 2011
+  !    krome_fshield =  calc_H2shieldWG11(n(:), Tgas)
+  !#ENDIFKROME
+  !
+  !#IFKROME_useShieldingR14
+  !    !compute shielding from Richings+ 2014
+  !    krome_fshield =  calc_H2shieldR14(n(:), Tgas)
+  !#ENDIFKROME
+  !
+  !  end function krome_fshield
 
   !*********************
   function conserve(n,ni)
@@ -456,60 +487,60 @@ contains
 
   end function elec_recomb_ST93
 
-!  !***************************
-!  !number density to column density conversion
-!  function num2col(ncalc,n)
-!    use krome_commons
-!    implicit none
-!    real*8::num2col,ncalc,n(:),Tgas
-!    Tgas = n(idx_Tgas)
-!
-!#KROME_num2col_method
-!
-!  end function num2col
-!
-!  !***********************
-!  !column density to number density conversion
-!  function col2num(ncalc,n)
-!    use krome_commons
-!    implicit none
-!    real*8::col2num,ncalc,n(:),Tgas
-!    Tgas = n(idx_Tgas)
-!
-!#KROME_col2num_method
-!
-!  end function col2num
-!
-!  !**************************
-!  !shielding function for H2O+ and H3O+
-!  ! following Glover+2010 MNRAS sect 2.2 eqn.4
-!  function fHnOj(Av)
-!    implicit none
-!    real*8::fHnOj,Av
-!    if(Av.le.15d0) then
-!       fHnOj = exp(-2.55*Av+0.0165*Av**2)
-!    else
-!       fHnOj = exp(-2.8*Av)
-!    end if
-!  end function fHnOj
-!
-!  !******************************
-!  !self-shielding for H2
-!  ! following Glover+2010 MNRAS sect2.2 eqn.6
-!  ! N: column density (cm-2)
-!  ! b: doppler broadening (cm/s)
-!  function fselfH2(N, b)
-!    implicit none
-!    real*8::fselfH2,N,b,x,b5
-!
-!    x = N*2d-15 !normalized column density (#)
-!    b5 = b*1d-5 !normalized doppler broadening (#)
-!
-!    fselfH2 = 0.965d0/(1+x/b5)**2 + &
-!         0.035d0/sqrt(1d0+x) * &
-!         exp(max(-8.5d-4*sqrt(1+x),-250.))
-!
-!  end function fselfH2
+  !  !***************************
+  !  !number density to column density conversion
+  !  function num2col(ncalc,n)
+  !    use krome_commons
+  !    implicit none
+  !    real*8::num2col,ncalc,n(:),Tgas
+  !    Tgas = n(idx_Tgas)
+  !
+  !#KROME_num2col_method
+  !
+  !  end function num2col
+  !
+  !  !***********************
+  !  !column density to number density conversion
+  !  function col2num(ncalc,n)
+  !    use krome_commons
+  !    implicit none
+  !    real*8::col2num,ncalc,n(:),Tgas
+  !    Tgas = n(idx_Tgas)
+  !
+  !#KROME_col2num_method
+  !
+  !  end function col2num
+  !
+  !  !**************************
+  !  !shielding function for H2O+ and H3O+
+  !  ! following Glover+2010 MNRAS sect 2.2 eqn.4
+  !  function fHnOj(Av)
+  !    implicit none
+  !    real*8::fHnOj,Av
+  !    if(Av.le.15d0) then
+  !       fHnOj = exp(-2.55*Av+0.0165*Av**2)
+  !    else
+  !       fHnOj = exp(-2.8*Av)
+  !    end if
+  !  end function fHnOj
+  !
+  !  !******************************
+  !  !self-shielding for H2
+  !  ! following Glover+2010 MNRAS sect2.2 eqn.6
+  !  ! N: column density (cm-2)
+  !  ! b: doppler broadening (cm/s)
+  !  function fselfH2(N, b)
+  !    implicit none
+  !    real*8::fselfH2,N,b,x,b5
+  !
+  !    x = N*2d-15 !normalized column density (#)
+  !    b5 = b*1d-5 !normalized doppler broadening (#)
+  !
+  !    fselfH2 = 0.965d0/(1+x/b5)**2 + &
+  !         0.035d0/sqrt(1d0+x) * &
+  !         exp(max(-8.5d-4*sqrt(1+x),-250.))
+  !
+  !  end function fselfH2
 
   !********************
   subroutine load_parts()
@@ -555,475 +586,475 @@ contains
 
   end subroutine load_part
 
-!  !**************************
-!  !compute 1/(gamma-1) at Tgasin using the partition function
-!  ! provided in the array_part with a temperature step dT_part
-!  ! and a minimum Tgas value min_part
-!  function gamma_pop(array_part,dT_part,min_part,Tgasin)
-!    implicit none
-!    real*8::array_part(:),dT_part
-!    real*8::min_part,Tgas,gamma_pop,Tgas2,Tgasin
-!    real*8::logz,logz1,logz2,emed1,emed2,Cv,inTgas,T2,T1,Cv1,Cv2
-!    integer::idx
-!
-!    !temperature above minimum data point
-!    inTgas = max(Tgasin,min_part)
-!
-!    !data index
-!    idx = (inTgas-min_part)/dT_part+1
-!    !corresponding Tgas
-!    Tgas = (idx-1)*dT_part+min_part
-!    !store Tgas
-!    T1 = Tgas
-!
-!    !ln of partition functions (3 points forward)
-!    logz = log(array_part(idx))
-!    logz1 = log(array_part(idx+1))
-!    logz2 = log(array_part(idx+2))
-!
-!    !derivative for mean energy (2 points forward)
-!    emed1 = Tgas**2*(logz1-logz)/dT_part
-!    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
-!
-!    !derivative for 1/(gamma-1)
-!    Cv1 = (emed2-emed1)/dT_part
-!
-!    !next point temperature
-!    Tgas = (idx)*dT_part+min_part
-!    !store Tgas
-!    T2 = Tgas
-!    !ln of partition functions
-!    logz = logz1
-!    logz1 = logz2
-!    logz2 = log(array_part(idx+3))
-!
-!    !derivative for mean energy
-!    emed1 = Tgas**2*(logz1-logz)/dT_part
-!    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
-!
-!    !derivative for 1/(gamma-1)
-!    Cv2 = (emed2-emed1)/dT_part
-!
-!    !interpolation for 1/(gamma-1)
-!    Cv = (Cv2-Cv1)*(inTgas-T1)/(T2-T1)+Cv1
-!
-!    !returns result
-!    gamma_pop = Cv
-!
-!  end function gamma_pop
-!
-!  !*****************************
-!  !compute 1/(gamma-1) at Tgasin using the partition function
-!  ! provided in the array_part with a temperature step dT_part
-!  ! and a minimum Tgas value min_part, for H2 with a ortho/para
-!  ! ratio of opratio. Needs even and odd partition functions.
-!  function gamma_pop_H2(array_part_even,array_part_odd,dT_part,&
-!       min_part,Tgasin,opratio)
-!    implicit none
-!    real*8::array_part_even(:),array_part_odd(:),dT_part,zcut(4)
-!    real*8::min_part,Tgas,opratio,gamma_pop_H2,Tgas2,a,b,Tgasin
-!    real*8::logz,logz1,logz2,emed1,emed2,Cv,inTgas,T2,T1,Cv1,Cv2
-!    integer::idx
-!
-!    !Tgas above the data limit
-!    inTgas = max(Tgasin,min_part)
-!
-!    !exponents for ortho/para ratio
-!    a = opratio/(opratio+1d0) !exponent zo
-!    b = 1d0-a !exponent zp
-!
-!    !index in the data for the given Tgas
-!    idx = (inTgas-min_part)/dT_part+1
-!    !get the corresponding Tgas
-!    Tgas = (idx-1)*dT_part+min_part
-!    !store Tgas
-!    T1 = Tgas
-!
-!    !needed for ortho partition function (see Boley+2007)
-!    zcut(1) = exp(2d0*85.4/Tgas)
-!    zcut(2) = exp(2d0*85.4/(Tgas+dT_part))
-!    zcut(3) = exp(2d0*85.4/(Tgas+2d0*dT_part))
-!    zcut(4) = exp(2d0*85.4/(Tgas+3d0*dT_part))
-!
-!    !ln of the composite partition function
-!    logz = log(array_part_even(idx)**b*(3d0*array_part_odd(idx)*zcut(1))**a)
-!    logz1 = log(array_part_even(idx+1)**b*(3d0*array_part_odd(idx+1)*zcut(2))**a)
-!    logz2 = log(array_part_even(idx+2)**b*(3d0*array_part_odd(idx+2)*zcut(3))**a)
-!    !derivative for mean energy
-!    emed1 = Tgas**2*(logz1-logz)/dT_part
-!    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
-!
-!    !get 1/(gamma-1) for the left point
-!    Cv1 = (emed2-emed1)/dT_part
-!
-!    !Tgas of the right point
-!    Tgas = (idx)*dT_part+min_part
-!    !store Tgas
-!    T2 = Tgas
-!    !ln of the composite function
-!    logz = logz1
-!    logz1 = logz2
-!    logz2 = log(array_part_even(idx+3)**b*(3d0*array_part_odd(idx+3)*zcut(4))**a)
-!    !derivative for the mean energy
-!    emed1 = Tgas**2*(logz1-logz)/dT_part
-!    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
-!
-!    !get 1/(gamma-1) for the right point
-!    Cv2 = (emed2-emed1)/dT_part
-!
-!    !interpolation of 1/(gamma-1)
-!    Cv = (Cv2-Cv1)*(inTgas-T1)/(T2-T1)+Cv1
-!
-!    !returns the result
-!    gamma_pop_H2 = Cv
-!  end function gamma_pop_H2
-!
-!  !**************************
-!  !function to get the partition function
-!  ! of H2 at Tgas with a orto-para ratio
-!  ! equal to opratio
-!  function zfop(Tgas,opratio)
-!    implicit none
-!    real*8::Tgas,zfop,brot,ibTgas
-!    real*8::a,b,zo,zp,opratio
-!    integer::j,jmax,j1
-!    brot = 85.4d0 !H2 rotational constant in K
-!    zo = 0d0 !sum for ortho partition function
-!    zp = 0d0 !sum for para partition function
-!    jmax = 10 !number of terms in sum
-!
-!    ibTgas = brot/Tgas !pre-calc
-!
-!    !loop over levels
-!    do j=0,jmax,2 !step 2
-!       j1 = j + 1
-!       zp = zp + (2d0*j+1d0) * exp(-j*(j+1d0)*ibTgas)
-!       zo = zo + 3d0 * (2d0*j1+1d0) * exp(-j1*(j1+1d0)*ibTgas)
-!    end do
-!
-!    a = opratio/(opratio+1d0) !exponent zo
-!    b = 1d0-a !exponent zp
-!
-!    zfop = (zp**b * zo**a*exp(-2d0*ibTgas)) !final partition f
-!
-!  end function zfop
-!
-!  !*********************
-!  !get the partition function at Tgas
-!  ! of a diatom with rotational constant
-!  ! brot in K
-!  function zf(Tgas,brot)
-!    real*8::Tgas,zf,brot,z,ibTgas
-!    integer::j,jmax
-!    jmax = 10 !number of levels
-!
-!    ibTgas = brot/Tgas !store
-!    z = 0d0
-!    !loop on levels
-!    do j=0,jmax
-!       z = z + (2d0*j+1d0)*exp(-j*(j+1d0)*ibTgas)
-!    end do
-!
-!    zf = z
-!
-!  end function zf
-!
-!  !***********************
-!  !get the degrees of freedom at Tgas for
-!  ! the rotational component of H2 with
-!  ! an ortho-para ratio of opratio
-!  function gamma_rotop(Tgas_in,opratio)
-!    implicit none
-!    real*8::gamma_rotop,Tgas,dT,Tgas_in
-!    real*8::idT,dlog1,prot1,dlog2,prot2
-!    real*8::logp1,opratio
-!
-!    Tgas = max(Tgas_in,1d1)
-!
-!    dT = Tgas*1d-5 !dT for derivative
-!    idT =  1d0/dT !stored for numeric derivative
-!    logp1 = log(zfop(Tgas+dT,opratio)) !store since used twice
-!
-!    !derivative dlog(T)/dT = f(T)
-!    dlog1 = (logp1-log(zfop(Tgas,opratio)))*idT
-!    prot1 = dlog1*Tgas**2
-!
-!    !derivative dlog(T+dT)/dT = f(T+dT)
-!    dlog2 = (log(zfop(Tgas+dT+dT,opratio))-logp1)*idT
-!    prot2 = dlog2*(Tgas+dT)**2
-!
-!    !derivative df(T)/dT
-!    gamma_rotop = (prot2-prot1)*idT
-!
-!  end function gamma_rotop
-!
-!  !***********************
-!  !get the degrees of freedom at Tgas for
-!  ! the rotational component of a diatom
-!  ! with rotational constant brot in K
-!  function gamma_rot(Tgas_in,brot)
-!    implicit none
-!    real*8::gamma_rot,Tgas,dT,Tgas_in
-!    real*8::idT,dlog1,prot1,dlog2,prot2
-!    real*8::logp1,brot
-!
-!    Tgas = max(Tgas_in,1d1)
-!
-!    dT = Tgas*1d-5 !dT for derivative
-!    idT =  1d0/dT !stored for numeric derivative
-!    logp1 = log(zf(Tgas+dT,brot)) !store since used twice
-!
-!    !derivative dlog(T)/dT = f(T)
-!    dlog1 = (logp1-log(zf(Tgas,brot)))*idT
-!    prot1 = dlog1*Tgas**2
-!
-!    !derivative dlog(T+dT)/dT = f(T+dT)
-!    dlog2 = (log(zf(Tgas+dT+dT,brot))-logp1)*idT
-!    prot2 = dlog2*(Tgas+dT)**2
-!
-!    !derivative df(T)/dT
-!    gamma_rot = (prot2-prot1)*idT
-!
-!  end function gamma_rot
+  !  !**************************
+  !  !compute 1/(gamma-1) at Tgasin using the partition function
+  !  ! provided in the array_part with a temperature step dT_part
+  !  ! and a minimum Tgas value min_part
+  !  function gamma_pop(array_part,dT_part,min_part,Tgasin)
+  !    implicit none
+  !    real*8::array_part(:),dT_part
+  !    real*8::min_part,Tgas,gamma_pop,Tgas2,Tgasin
+  !    real*8::logz,logz1,logz2,emed1,emed2,Cv,inTgas,T2,T1,Cv1,Cv2
+  !    integer::idx
+  !
+  !    !temperature above minimum data point
+  !    inTgas = max(Tgasin,min_part)
+  !
+  !    !data index
+  !    idx = (inTgas-min_part)/dT_part+1
+  !    !corresponding Tgas
+  !    Tgas = (idx-1)*dT_part+min_part
+  !    !store Tgas
+  !    T1 = Tgas
+  !
+  !    !ln of partition functions (3 points forward)
+  !    logz = log(array_part(idx))
+  !    logz1 = log(array_part(idx+1))
+  !    logz2 = log(array_part(idx+2))
+  !
+  !    !derivative for mean energy (2 points forward)
+  !    emed1 = Tgas**2*(logz1-logz)/dT_part
+  !    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
+  !
+  !    !derivative for 1/(gamma-1)
+  !    Cv1 = (emed2-emed1)/dT_part
+  !
+  !    !next point temperature
+  !    Tgas = (idx)*dT_part+min_part
+  !    !store Tgas
+  !    T2 = Tgas
+  !    !ln of partition functions
+  !    logz = logz1
+  !    logz1 = logz2
+  !    logz2 = log(array_part(idx+3))
+  !
+  !    !derivative for mean energy
+  !    emed1 = Tgas**2*(logz1-logz)/dT_part
+  !    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
+  !
+  !    !derivative for 1/(gamma-1)
+  !    Cv2 = (emed2-emed1)/dT_part
+  !
+  !    !interpolation for 1/(gamma-1)
+  !    Cv = (Cv2-Cv1)*(inTgas-T1)/(T2-T1)+Cv1
+  !
+  !    !returns result
+  !    gamma_pop = Cv
+  !
+  !  end function gamma_pop
+  !
+  !  !*****************************
+  !  !compute 1/(gamma-1) at Tgasin using the partition function
+  !  ! provided in the array_part with a temperature step dT_part
+  !  ! and a minimum Tgas value min_part, for H2 with a ortho/para
+  !  ! ratio of opratio. Needs even and odd partition functions.
+  !  function gamma_pop_H2(array_part_even,array_part_odd,dT_part,&
+  !       min_part,Tgasin,opratio)
+  !    implicit none
+  !    real*8::array_part_even(:),array_part_odd(:),dT_part,zcut(4)
+  !    real*8::min_part,Tgas,opratio,gamma_pop_H2,Tgas2,a,b,Tgasin
+  !    real*8::logz,logz1,logz2,emed1,emed2,Cv,inTgas,T2,T1,Cv1,Cv2
+  !    integer::idx
+  !
+  !    !Tgas above the data limit
+  !    inTgas = max(Tgasin,min_part)
+  !
+  !    !exponents for ortho/para ratio
+  !    a = opratio/(opratio+1d0) !exponent zo
+  !    b = 1d0-a !exponent zp
+  !
+  !    !index in the data for the given Tgas
+  !    idx = (inTgas-min_part)/dT_part+1
+  !    !get the corresponding Tgas
+  !    Tgas = (idx-1)*dT_part+min_part
+  !    !store Tgas
+  !    T1 = Tgas
+  !
+  !    !needed for ortho partition function (see Boley+2007)
+  !    zcut(1) = exp(2d0*85.4/Tgas)
+  !    zcut(2) = exp(2d0*85.4/(Tgas+dT_part))
+  !    zcut(3) = exp(2d0*85.4/(Tgas+2d0*dT_part))
+  !    zcut(4) = exp(2d0*85.4/(Tgas+3d0*dT_part))
+  !
+  !    !ln of the composite partition function
+  !    logz = log(array_part_even(idx)**b*(3d0*array_part_odd(idx)*zcut(1))**a)
+  !    logz1 = log(array_part_even(idx+1)**b*(3d0*array_part_odd(idx+1)*zcut(2))**a)
+  !    logz2 = log(array_part_even(idx+2)**b*(3d0*array_part_odd(idx+2)*zcut(3))**a)
+  !    !derivative for mean energy
+  !    emed1 = Tgas**2*(logz1-logz)/dT_part
+  !    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
+  !
+  !    !get 1/(gamma-1) for the left point
+  !    Cv1 = (emed2-emed1)/dT_part
+  !
+  !    !Tgas of the right point
+  !    Tgas = (idx)*dT_part+min_part
+  !    !store Tgas
+  !    T2 = Tgas
+  !    !ln of the composite function
+  !    logz = logz1
+  !    logz1 = logz2
+  !    logz2 = log(array_part_even(idx+3)**b*(3d0*array_part_odd(idx+3)*zcut(4))**a)
+  !    !derivative for the mean energy
+  !    emed1 = Tgas**2*(logz1-logz)/dT_part
+  !    emed2 = (Tgas+dT_part)**2*(logz2-logz1)/dT_part
+  !
+  !    !get 1/(gamma-1) for the right point
+  !    Cv2 = (emed2-emed1)/dT_part
+  !
+  !    !interpolation of 1/(gamma-1)
+  !    Cv = (Cv2-Cv1)*(inTgas-T1)/(T2-T1)+Cv1
+  !
+  !    !returns the result
+  !    gamma_pop_H2 = Cv
+  !  end function gamma_pop_H2
+  !
+  !  !**************************
+  !  !function to get the partition function
+  !  ! of H2 at Tgas with a orto-para ratio
+  !  ! equal to opratio
+  !  function zfop(Tgas,opratio)
+  !    implicit none
+  !    real*8::Tgas,zfop,brot,ibTgas
+  !    real*8::a,b,zo,zp,opratio
+  !    integer::j,jmax,j1
+  !    brot = 85.4d0 !H2 rotational constant in K
+  !    zo = 0d0 !sum for ortho partition function
+  !    zp = 0d0 !sum for para partition function
+  !    jmax = 10 !number of terms in sum
+  !
+  !    ibTgas = brot/Tgas !pre-calc
+  !
+  !    !loop over levels
+  !    do j=0,jmax,2 !step 2
+  !       j1 = j + 1
+  !       zp = zp + (2d0*j+1d0) * exp(-j*(j+1d0)*ibTgas)
+  !       zo = zo + 3d0 * (2d0*j1+1d0) * exp(-j1*(j1+1d0)*ibTgas)
+  !    end do
+  !
+  !    a = opratio/(opratio+1d0) !exponent zo
+  !    b = 1d0-a !exponent zp
+  !
+  !    zfop = (zp**b * zo**a*exp(-2d0*ibTgas)) !final partition f
+  !
+  !  end function zfop
+  !
+  !  !*********************
+  !  !get the partition function at Tgas
+  !  ! of a diatom with rotational constant
+  !  ! brot in K
+  !  function zf(Tgas,brot)
+  !    real*8::Tgas,zf,brot,z,ibTgas
+  !    integer::j,jmax
+  !    jmax = 10 !number of levels
+  !
+  !    ibTgas = brot/Tgas !store
+  !    z = 0d0
+  !    !loop on levels
+  !    do j=0,jmax
+  !       z = z + (2d0*j+1d0)*exp(-j*(j+1d0)*ibTgas)
+  !    end do
+  !
+  !    zf = z
+  !
+  !  end function zf
+  !
+  !  !***********************
+  !  !get the degrees of freedom at Tgas for
+  !  ! the rotational component of H2 with
+  !  ! an ortho-para ratio of opratio
+  !  function gamma_rotop(Tgas_in,opratio)
+  !    implicit none
+  !    real*8::gamma_rotop,Tgas,dT,Tgas_in
+  !    real*8::idT,dlog1,prot1,dlog2,prot2
+  !    real*8::logp1,opratio
+  !
+  !    Tgas = max(Tgas_in,1d1)
+  !
+  !    dT = Tgas*1d-5 !dT for derivative
+  !    idT =  1d0/dT !stored for numeric derivative
+  !    logp1 = log(zfop(Tgas+dT,opratio)) !store since used twice
+  !
+  !    !derivative dlog(T)/dT = f(T)
+  !    dlog1 = (logp1-log(zfop(Tgas,opratio)))*idT
+  !    prot1 = dlog1*Tgas**2
+  !
+  !    !derivative dlog(T+dT)/dT = f(T+dT)
+  !    dlog2 = (log(zfop(Tgas+dT+dT,opratio))-logp1)*idT
+  !    prot2 = dlog2*(Tgas+dT)**2
+  !
+  !    !derivative df(T)/dT
+  !    gamma_rotop = (prot2-prot1)*idT
+  !
+  !  end function gamma_rotop
+  !
+  !  !***********************
+  !  !get the degrees of freedom at Tgas for
+  !  ! the rotational component of a diatom
+  !  ! with rotational constant brot in K
+  !  function gamma_rot(Tgas_in,brot)
+  !    implicit none
+  !    real*8::gamma_rot,Tgas,dT,Tgas_in
+  !    real*8::idT,dlog1,prot1,dlog2,prot2
+  !    real*8::logp1,brot
+  !
+  !    Tgas = max(Tgas_in,1d1)
+  !
+  !    dT = Tgas*1d-5 !dT for derivative
+  !    idT =  1d0/dT !stored for numeric derivative
+  !    logp1 = log(zf(Tgas+dT,brot)) !store since used twice
+  !
+  !    !derivative dlog(T)/dT = f(T)
+  !    dlog1 = (logp1-log(zf(Tgas,brot)))*idT
+  !    prot1 = dlog1*Tgas**2
+  !
+  !    !derivative dlog(T+dT)/dT = f(T+dT)
+  !    dlog2 = (log(zf(Tgas+dT+dT,brot))-logp1)*idT
+  !    prot2 = dlog2*(Tgas+dT)**2
+  !
+  !    !derivative df(T)/dT
+  !    gamma_rot = (prot2-prot1)*idT
+  !
+  !  end function gamma_rot
 
   !*********************
   !get gamma
-!  function gamma_index(n)
-!    use krome_commons
-!    use krome_gadiab
-!    implicit none
-!    real*8::n(:),gamma_index,krome_gamma
-!
-!#KROME_gamma
-!
-!    gamma_index = krome_gamma
-!  end function gamma_index
+  !  function gamma_index(n)
+  !    use krome_commons
+  !    use krome_gadiab
+  !    implicit none
+  !    real*8::n(:),gamma_index,krome_gamma
+  !
+  !#KROME_gamma
+  !
+  !    gamma_index = krome_gamma
+  !  end function gamma_index
 
- ! !*****************************
- ! !get the mean molecular weight in grams
- ! function get_mu(n)
- !   use krome_commons
- !   use krome_constants
- !   implicit none
- !   real*8::n(:),get_mu,m(nspec)
- !   m(:) = get_mass()
+  ! !*****************************
+  ! !get the mean molecular weight in grams
+  ! function get_mu(n)
+  !   use krome_commons
+  !   use krome_constants
+  !   implicit none
+  !   real*8::n(:),get_mu,m(nspec)
+  !   m(:) = get_mass()
 
- !   !ip_mass is 1/proton_mass_in_g
- !   get_mu = sum(n(1:nmols)*m(1:nmols)) &
- !        / sum(n(1:nmols)) * ip_mass
+  !   !ip_mass is 1/proton_mass_in_g
+  !   get_mu = sum(n(1:nmols)*m(1:nmols)) &
+  !        / sum(n(1:nmols)) * ip_mass
 
- ! end function get_mu
+  ! end function get_mu
 
- ! !***************************
- ! !get mean molecular weight in grams
- ! function get_mu_rho(n,rhogas)
- !   use krome_commons
- !   use krome_constants
- !   implicit none
- !   real*8::get_mu_rho,rhogas,n(:)
+  ! !***************************
+  ! !get mean molecular weight in grams
+  ! function get_mu_rho(n,rhogas)
+  !   use krome_commons
+  !   use krome_constants
+  !   implicit none
+  !   real*8::get_mu_rho,rhogas,n(:)
 
- !   !ip_mass is 1/proton_mass_in_g
- !   get_mu_rho = rhogas / sum(n(1:nmols)) * ip_mass
+  !   !ip_mass is 1/proton_mass_in_g
+  !   get_mu_rho = rhogas / sum(n(1:nmols)) * ip_mass
 
- ! end function get_mu_rho
+  ! end function get_mu_rho
 
-!  !************************
-!  !get species masses (g)
-!  function get_mass()
-!    use krome_commons
-!    implicit none
-!    real*8::get_mass(nspec)
-!
-!#KROME_masses
-!
-!  end function get_mass
-!
-!  !************************
-!  !get sqrt of the inverse of the masses (1/sqrt(g))
-!  function get_imass_sqrt()
-!    use krome_commons
-!    implicit none
-!    real*8::get_imass_sqrt(nspec)
-!
-!#KROME_imasses_sqrt
-!
-!  end function get_imass_sqrt
-!
-!
-!  !************************
-!  !get inverse of the species masses (1/g)
-!  function get_imass()
-!    use krome_commons
-!    implicit none
-!    real*8::get_imass(nspec)
-!
-!#KROME_imasses
-!
-!  end function get_imass
-!
-!  !************************
-!  !get species names
-!  function get_names()
-!    use krome_commons
-!    implicit none
-!    character*16::get_names(nspec)
-!
-!#KROME_names
-!
-!  end function get_names
-!
-!  !******************************
-!  !get the total number of H nuclei
-!  function get_Hnuclei(n)
-!    use krome_commons
-!    real*8::n(:),get_Hnuclei,nH
-!
-!#KROME_sum_H_nuclei
-!    get_Hnuclei = nH
-!
-!  end function get_Hnuclei
-!
-!  !***************************
-!  function get_zatoms()
-!    use krome_commons
-!    implicit none
-!    integer::get_zatoms(nspec)
-!
-!#KROME_zatoms
-!
-!  end function get_zatoms
-!
-!  !******************************
-!  function get_qeff()
-!    use krome_commons
-!    implicit none
-!    real*8::get_qeff(nrea)
-!
-!#KROME_qeff
-!
-!  end function get_qeff
+  !  !************************
+  !  !get species masses (g)
+  !  function get_mass()
+  !    use krome_commons
+  !    implicit none
+  !    real*8::get_mass(nspec)
+  !
+  !#KROME_masses
+  !
+  !  end function get_mass
+  !
+  !  !************************
+  !  !get sqrt of the inverse of the masses (1/sqrt(g))
+  !  function get_imass_sqrt()
+  !    use krome_commons
+  !    implicit none
+  !    real*8::get_imass_sqrt(nspec)
+  !
+  !#KROME_imasses_sqrt
+  !
+  !  end function get_imass_sqrt
+  !
+  !
+  !  !************************
+  !  !get inverse of the species masses (1/g)
+  !  function get_imass()
+  !    use krome_commons
+  !    implicit none
+  !    real*8::get_imass(nspec)
+  !
+  !#KROME_imasses
+  !
+  !  end function get_imass
+  !
+  !  !************************
+  !  !get species names
+  !  function get_names()
+  !    use krome_commons
+  !    implicit none
+  !    character*16::get_names(nspec)
+  !
+  !#KROME_names
+  !
+  !  end function get_names
+  !
+  !  !******************************
+  !  !get the total number of H nuclei
+  !  function get_Hnuclei(n)
+  !    use krome_commons
+  !    real*8::n(:),get_Hnuclei,nH
+  !
+  !#KROME_sum_H_nuclei
+  !    get_Hnuclei = nH
+  !
+  !  end function get_Hnuclei
+  !
+  !  !***************************
+  !  function get_zatoms()
+  !    use krome_commons
+  !    implicit none
+  !    integer::get_zatoms(nspec)
+  !
+  !#KROME_zatoms
+  !
+  !  end function get_zatoms
+  !
+  !  !******************************
+  !  function get_qeff()
+  !    use krome_commons
+  !    implicit none
+  !    real*8::get_qeff(nrea)
+  !
+  !#KROME_qeff
+  !
+  !  end function get_qeff
 
- ! !********************************
- ! function get_jeans_length(n,Tgas)
- !   !get jeans length in cm
- !   use krome_constants
- !   use krome_commons
- !   implicit none
- !   real*8::n(:),Tgas,mu,rhogas
- !   real*8::m(nspec),get_jeans_length
- !   m(:) = get_mass()
- !   rhogas = max(sum(n(1:nmols)*m(1:nmols)),1d-40)
- !   mu = get_mu_rho(n(:),rhogas)
- !   get_jeans_length = sqrt(pi*boltzmann_erg*Tgas/rhogas&
- !        /p_mass/gravity/mu)
+  ! !********************************
+  ! function get_jeans_length(n,Tgas)
+  !   !get jeans length in cm
+  !   use krome_constants
+  !   use krome_commons
+  !   implicit none
+  !   real*8::n(:),Tgas,mu,rhogas
+  !   real*8::m(nspec),get_jeans_length
+  !   m(:) = get_mass()
+  !   rhogas = max(sum(n(1:nmols)*m(1:nmols)),1d-40)
+  !   mu = get_mu_rho(n(:),rhogas)
+  !   get_jeans_length = sqrt(pi*boltzmann_erg*Tgas/rhogas&
+  !        /p_mass/gravity/mu)
 
- ! end function get_jeans_length
+  ! end function get_jeans_length
 
- ! !********************************
- ! function get_jeans_length_rho(n,Tgas,rhogas)
- !   !get jeans length in cm
- !   use krome_constants
- !   use krome_commons
- !   implicit none
- !   real*8::n(:),Tgas,mu,rhogas
- !   real*8::get_jeans_length_rho
+  ! !********************************
+  ! function get_jeans_length_rho(n,Tgas,rhogas)
+  !   !get jeans length in cm
+  !   use krome_constants
+  !   use krome_commons
+  !   implicit none
+  !   real*8::n(:),Tgas,mu,rhogas
+  !   real*8::get_jeans_length_rho
 
- !   mu = get_mu_rho(n(:),rhogas)
- !   get_jeans_length_rho = sqrt(pi*boltzmann_erg*Tgas/rhogas&
- !        /p_mass/gravity/mu)
+  !   mu = get_mu_rho(n(:),rhogas)
+  !   get_jeans_length_rho = sqrt(pi*boltzmann_erg*Tgas/rhogas&
+  !        /p_mass/gravity/mu)
 
- ! end function get_jeans_length_rho
+  ! end function get_jeans_length_rho
 
-!#IFKROME_useShieldingDB96
-!  !************************
-!  !calculate the self-shielding factor, following Draine&Bertoldi 1996
-!  !NOTE: this function is suited for collapse. Use with caution!
-!  function calc_H2shieldDB96(n,Tgas)
-!    use krome_commons
-!    real*8::n(nspec),Tgas,calc_H2shieldDB96,N_H2, nH2
-!
-!    !check on H2 abundances to avoid
-!    ! weird numerical artifacts
-!    nH2 = max(1d-40, n(idx_H2))
-!
-!!    N_H2 = nH2*get_jeans_length(n(:),Tgas)*0.5d0  !column density (cm-2)
-!    
-!    NH2  =  2d0 * num2col(nH2,n(:))
-!
-!    calc_H2shieldDB96 = min(1.d0, (N_H2*1.d-14)**(-0.75d0))
-!
-!  end function calc_H2shieldDB96
-!#ENDIFKROME
-!
-!#IFKROME_useShieldingWG11
-!  !************************
-!  !calculate the self-shielding factor, following Wolcott&Greene 2011
-!  !NOTE: this function is suited for collapse. Use with caution!
-!  function calc_H2shieldWG11(n,Tgas)
-!    use krome_commons
-!    use krome_constants
-!    real*8::n(nspec),Tgas,calc_H2shieldWG11,N_H2,nH2
-!    real*8::xN_H2,b5,H_mass
-!
-!    !check on H2 abundances to avoid weird numerical artifacts
-!    nH2 = max(1d-40, n(idx_H2))
-!
-!    NH2  =  2d0 * num2col(nH2,n(:))
-!
-!!    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
-!    xN_H2 = N_H2*2d-15 !normalized column density (#), 2d-15=1/5d14
-!    H_mass = p_mass+e_mass !H mass in g
-!
-!    !doppler broadening parameter b divided by 1d5 cm/s (#)
-!    b5 = ((boltzmann_erg*Tgas/H_mass)**0.5d0)*1.d-5
-!    calc_H2shieldWG11 = 0.965d0/(1.d0+xN_H2/b5)**1.1d0 &
-!         + (0.035d0/(1.d0+xN_H2)**0.5d0) &
-!         * exp(-8.5d-4*(1.d0+xN_H2)**0.5d0)
-!
-!  end function calc_H2shieldWG11
-!#ENDIFKROME
-!
-!#IFKROME_useShieldingR14
-!  !Temperature-dependent self-shielding as reported in Richings+2014.
-!  function calc_H2shieldR14(n,Tgas)
-!    use krome_commons
-!    use krome_constants
-!    real*8::n(nspec),Tgas,calc_H2shieldR14,N_H2,nH2
-!    real*8::xN_H2,b5,H_mass,bturb,btherm2
-!    real*8::alpha,omegaH2,Ncrit
-!
-!    !check on H2 abundances to avoid weird numerical artifacts
-!    nH2 = max(1d-40, n(idx_H2))
-!
-!    NH2  =  2d0 * num2col(nH2,n(:))
-!
-!!    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
-!    H_mass = p_mass+e_mass !H mass in g
-!    bturb = 7.1d0*km_to_cm !turbulent Doppler broadening parameter in cm/s
-!    btherm2 = boltzmann_erg*Tgas/H_mass !thermal Doppler broadening parameter cm/s
-!
-!    !doppler broadening parameter b divided by 1d5 cm/s (#)
-!    b5 = ((btherm2 + bturb**2d0)**0.5)*1.d-5
-!    omegaH2 = 0.013d0*(1d0+(Tgas/2.7d3)**1.3)**(1.0/1.3)*exp(-(Tgas/3.9d3)**14.6)
-!
-!    if(Tgas<3d3)then
-!      alpha = 1.4
-!      Ncrit = 1.3d0*(1d0+(Tgas/6d2)**0.8)
-!    elseif(Tgas>=3d3.or.Tgas<4d3)then
-!      alpha = (Tgas/4.5d3)**(-0.8)
-!      Ncrit = (Tgas/4.76d3)**(-3.8)
-!    else
-!      alpha = 1.1
-!      Ncrit = 2.d0
-!    endif
-!
-!    xN_H2 = N_H2*1d-14/Ncrit !normalized column density (#)
-!    
-!    calc_H2shieldR14 = (1d0-omegaH2)/(1d0+xN_H2/b5)**alpha*exp(-5d-7*(1d0+xN_H2)) & 
-!                      +(omegaH2/sqrt(1d0+xN_H2))*exp(-8.5d-4*sqrt(1d0+xN_H2))
-!
-!  end function calc_H2shieldR14
-!#ENDIFKROME
+  !#IFKROME_useShieldingDB96
+  !  !************************
+  !  !calculate the self-shielding factor, following Draine&Bertoldi 1996
+  !  !NOTE: this function is suited for collapse. Use with caution!
+  !  function calc_H2shieldDB96(n,Tgas)
+  !    use krome_commons
+  !    real*8::n(nspec),Tgas,calc_H2shieldDB96,N_H2, nH2
+  !
+  !    !check on H2 abundances to avoid
+  !    ! weird numerical artifacts
+  !    nH2 = max(1d-40, n(idx_H2))
+  !
+  !!    N_H2 = nH2*get_jeans_length(n(:),Tgas)*0.5d0  !column density (cm-2)
+  !
+  !    NH2  =  2d0 * num2col(nH2,n(:))
+  !
+  !    calc_H2shieldDB96 = min(1.d0, (N_H2*1.d-14)**(-0.75d0))
+  !
+  !  end function calc_H2shieldDB96
+  !#ENDIFKROME
+  !
+  !#IFKROME_useShieldingWG11
+  !  !************************
+  !  !calculate the self-shielding factor, following Wolcott&Greene 2011
+  !  !NOTE: this function is suited for collapse. Use with caution!
+  !  function calc_H2shieldWG11(n,Tgas)
+  !    use krome_commons
+  !    use krome_constants
+  !    real*8::n(nspec),Tgas,calc_H2shieldWG11,N_H2,nH2
+  !    real*8::xN_H2,b5,H_mass
+  !
+  !    !check on H2 abundances to avoid weird numerical artifacts
+  !    nH2 = max(1d-40, n(idx_H2))
+  !
+  !    NH2  =  2d0 * num2col(nH2,n(:))
+  !
+  !!    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
+  !    xN_H2 = N_H2*2d-15 !normalized column density (#), 2d-15=1/5d14
+  !    H_mass = p_mass+e_mass !H mass in g
+  !
+  !    !doppler broadening parameter b divided by 1d5 cm/s (#)
+  !    b5 = ((boltzmann_erg*Tgas/H_mass)**0.5d0)*1.d-5
+  !    calc_H2shieldWG11 = 0.965d0/(1.d0+xN_H2/b5)**1.1d0 &
+  !         + (0.035d0/(1.d0+xN_H2)**0.5d0) &
+  !         * exp(-8.5d-4*(1.d0+xN_H2)**0.5d0)
+  !
+  !  end function calc_H2shieldWG11
+  !#ENDIFKROME
+  !
+  !#IFKROME_useShieldingR14
+  !  !Temperature-dependent self-shielding as reported in Richings+2014.
+  !  function calc_H2shieldR14(n,Tgas)
+  !    use krome_commons
+  !    use krome_constants
+  !    real*8::n(nspec),Tgas,calc_H2shieldR14,N_H2,nH2
+  !    real*8::xN_H2,b5,H_mass,bturb,btherm2
+  !    real*8::alpha,omegaH2,Ncrit
+  !
+  !    !check on H2 abundances to avoid weird numerical artifacts
+  !    nH2 = max(1d-40, n(idx_H2))
+  !
+  !    NH2  =  2d0 * num2col(nH2,n(:))
+  !
+  !!    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
+  !    H_mass = p_mass+e_mass !H mass in g
+  !    bturb = 7.1d0*km_to_cm !turbulent Doppler broadening parameter in cm/s
+  !    btherm2 = boltzmann_erg*Tgas/H_mass !thermal Doppler broadening parameter cm/s
+  !
+  !    !doppler broadening parameter b divided by 1d5 cm/s (#)
+  !    b5 = ((btherm2 + bturb**2d0)**0.5)*1.d-5
+  !    omegaH2 = 0.013d0*(1d0+(Tgas/2.7d3)**1.3)**(1.0/1.3)*exp(-(Tgas/3.9d3)**14.6)
+  !
+  !    if(Tgas<3d3)then
+  !      alpha = 1.4
+  !      Ncrit = 1.3d0*(1d0+(Tgas/6d2)**0.8)
+  !    elseif(Tgas>=3d3.or.Tgas<4d3)then
+  !      alpha = (Tgas/4.5d3)**(-0.8)
+  !      Ncrit = (Tgas/4.76d3)**(-3.8)
+  !    else
+  !      alpha = 1.1
+  !      Ncrit = 2.d0
+  !    endif
+  !
+  !    xN_H2 = N_H2*1d-14/Ncrit !normalized column density (#)
+  !
+  !    calc_H2shieldR14 = (1d0-omegaH2)/(1d0+xN_H2/b5)**alpha*exp(-5d-7*(1d0+xN_H2)) &
+  !                      +(omegaH2/sqrt(1d0+xN_H2))*exp(-8.5d-4*sqrt(1d0+xN_H2))
+  !
+  !  end function calc_H2shieldR14
+  !#ENDIFKROME
 
 
   !**********************
@@ -1228,152 +1259,152 @@ contains
 
   !**********************
   !adsorpion rate Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
-!  function dust_adsorption_rate(nndust,ims,stick,adust2,sqrTgas)
-!    use krome_constants
-!    implicit none
-!    real*8::dust_adsorption_rate,nndust,ims,stick,adust2,sqrTgas
-!
-!    dust_adsorption_rate = nndust * pi * adust2 &
-!         * pre_kvgas_sqrt * ims * sqrTgas &
-!         * stick
-!
-!  end function dust_adsorption_rate
-!
-!  !*****************************
-!  !desorption rate Cazaux+2010, Hocuk+2014
-!  function dust_desorption_rate(fice,expEice,expEbare)
-!    implicit none
-!    real*8::dust_desorption_rate
-!    real*8::fice,expEice,expEbare,nu0,fbare
-!
-!    nu0 = 1d12 !1/s
-!    fbare = 1d0 - fice
-!    dust_desorption_rate = nu0 * (fbare * expEbare &
-!         + fice * expEice)
-!
-!  end function dust_desorption_rate
-!
-!  !**************************
-!  function dust_2body_rate(p,invphi,fice,expEice1,expEice2,&
-!       expEbare1,expEbare2,pesc_ice,pesc_bare)
-!    use krome_constants
-!    implicit none
-!    real*8::fice,expEice1,expEice2,expEbare1,expEbare2,invphi
-!    real*8::nu0,p,dust_2body_rate,fbare,pesc_ice,pesc_bare
-!
-!    !no need to calculate this if the dust is not present
-!    dust_2body_rate = 0d0
-!
-!    fbare = 1d0-fice
-!    nu0 = 1d12 ! 1/s
-!    dust_2body_rate = fbare * (expEbare1 + expEbare2) * pesc_bare &
-!         + fice * (expEice1 + expEice2) * pesc_ice
-!    dust_2body_rate = dust_2body_rate * p * nu0 * invphi
-!
-!  end function dust_2body_rate
-!
-!  !*************************
-!  function dust_get_inv_phi(asize2,nndust)
-!    use krome_commons
-!    use krome_constants
-!    implicit none
-!    real*8::iapp2,dust_get_inv_phi(ndust),asize2(ndust)
-!    real*8::nndust(ndust),dephi
-!    integer::i
-!
-!    iapp2 = (3d-8)**2 !1/cm2
-!    do i=1,ndust
-!       dust_get_inv_phi(i) = 0d0
-!       dephi = (4d0 * nndust(i) * pi * asize2(i))
-!       if(dephi.le.0d0) cycle
-!       dust_get_inv_phi(i) = iapp2 / dephi
-!    end do
-!
-!  end function dust_get_inv_phi
-!
-!#IFKROME_useChemisorption
-!  !***************************
-!  function dust_get_rateChem_PC(Tdust)
-!    use krome_commons
-!    implicit none
-!    real*8::dust_get_rateChem_PC(ndust), Tdust(ndust)
-!    integer::i,idx
-!
-!    do i=1,ndust
-!       idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
-!       dust_get_rateChem_PC(i) = (Tdust(i)-dust_rateChem_x(idx)) * dust_rateChem_invdx &
-!            * (dust_rateChem_PC(idx+1)-dust_rateChem_PC(idx)) &
-!            + dust_rateChem_PC(idx)
-!    end do
-!
-!  end function dust_get_rateChem_PC
-!
-!  !***************************
-!  function dust_get_rateChem_CP(Tdust)
-!    use krome_commons
-!    implicit none
-!    real*8::dust_get_rateChem_CP(ndust), Tdust(ndust)
-!    integer::i,idx
-!
-!    do i=1,ndust
-!       idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
-!       dust_get_rateChem_CP(i) = (Tdust(i)-dust_rateChem_x(idx)) * dust_rateChem_invdx &
-!            * (dust_rateChem_CP(idx+1)-dust_rateChem_CP(idx)) &
-!            + dust_rateChem_CP(idx)
-!    end do
-!
-!  end function dust_get_rateChem_CP
-!
-!  !***************************
-!  function dust_get_rateChem_CC(Tdust)
-!    use krome_commons
-!    implicit none
-!    real*8::dust_get_rateChem_CC(ndust), Tdust(ndust)
-!    integer::i,idx
-!
-!    do i=1,ndust
-!       idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
-!       dust_get_rateChem_CC(i) = (Tdust(i)-dust_rateChem_x(idx)) * dust_rateChem_invdx &
-!            * (dust_rateChem_CC(idx+1)-dust_rateChem_CC(idx)) &
-!            + dust_rateChem_CC(idx)
-!    end do
-!
-!  end function dust_get_rateChem_CC
-!#ENDIFKROME
-!
-!  !****************************
-!  !returns an array with the sticking coefficient for each bin
-!  ! following Hollenbach+McKee 1979
-!  function dust_stick_array(Tgas,Tdust)
-!    use krome_commons
-!    implicit none
-!    real*8::dust_stick_array(ndust),Tgas,Tdust(ndust)
-!    real*8::Tg100,Td100
-!    integer::i
-!
-!    Tg100 = Tgas * 1d-2
-!    do i=1,ndust
-!       Td100 = Tdust(i) * 1d-2
-!       dust_stick_array(i) = 1d0/(1d0+.4d0*sqrt(Tg100+Td100) &
-!            + .2d0*Tg100 + 0.08d0*Tg100**2)
-!    end do
-!
-!  end function dust_stick_array
-!
-!  !***************************
-!  function dust_ice_fraction_array(invphi,nH2O)
-!    use krome_constants
-!    use krome_commons
-!    implicit none
-!    integer::i
-!    real*8::dust_ice_fraction_array(ndust)
-!    real*8::invphi(ndust),nH2O(ndust)
-!
-!    do i=1,ndust
-!       dust_ice_fraction_array(i) = min(nH2O(i) * invphi(i), 1d0)
-!    end do
-!
-!  end function dust_ice_fraction_array
+  !  function dust_adsorption_rate(nndust,ims,stick,adust2,sqrTgas)
+  !    use krome_constants
+  !    implicit none
+  !    real*8::dust_adsorption_rate,nndust,ims,stick,adust2,sqrTgas
+  !
+  !    dust_adsorption_rate = nndust * pi * adust2 &
+  !         * pre_kvgas_sqrt * ims * sqrTgas &
+  !         * stick
+  !
+  !  end function dust_adsorption_rate
+  !
+  !  !*****************************
+  !  !desorption rate Cazaux+2010, Hocuk+2014
+  !  function dust_desorption_rate(fice,expEice,expEbare)
+  !    implicit none
+  !    real*8::dust_desorption_rate
+  !    real*8::fice,expEice,expEbare,nu0,fbare
+  !
+  !    nu0 = 1d12 !1/s
+  !    fbare = 1d0 - fice
+  !    dust_desorption_rate = nu0 * (fbare * expEbare &
+  !         + fice * expEice)
+  !
+  !  end function dust_desorption_rate
+  !
+  !  !**************************
+  !  function dust_2body_rate(p,invphi,fice,expEice1,expEice2,&
+  !       expEbare1,expEbare2,pesc_ice,pesc_bare)
+  !    use krome_constants
+  !    implicit none
+  !    real*8::fice,expEice1,expEice2,expEbare1,expEbare2,invphi
+  !    real*8::nu0,p,dust_2body_rate,fbare,pesc_ice,pesc_bare
+  !
+  !    !no need to calculate this if the dust is not present
+  !    dust_2body_rate = 0d0
+  !
+  !    fbare = 1d0-fice
+  !    nu0 = 1d12 ! 1/s
+  !    dust_2body_rate = fbare * (expEbare1 + expEbare2) * pesc_bare &
+  !         + fice * (expEice1 + expEice2) * pesc_ice
+  !    dust_2body_rate = dust_2body_rate * p * nu0 * invphi
+  !
+  !  end function dust_2body_rate
+  !
+  !  !*************************
+  !  function dust_get_inv_phi(asize2,nndust)
+  !    use krome_commons
+  !    use krome_constants
+  !    implicit none
+  !    real*8::iapp2,dust_get_inv_phi(ndust),asize2(ndust)
+  !    real*8::nndust(ndust),dephi
+  !    integer::i
+  !
+  !    iapp2 = (3d-8)**2 !1/cm2
+  !    do i=1,ndust
+  !       dust_get_inv_phi(i) = 0d0
+  !       dephi = (4d0 * nndust(i) * pi * asize2(i))
+  !       if(dephi.le.0d0) cycle
+  !       dust_get_inv_phi(i) = iapp2 / dephi
+  !    end do
+  !
+  !  end function dust_get_inv_phi
+  !
+  !#IFKROME_useChemisorption
+  !  !***************************
+  !  function dust_get_rateChem_PC(Tdust)
+  !    use krome_commons
+  !    implicit none
+  !    real*8::dust_get_rateChem_PC(ndust), Tdust(ndust)
+  !    integer::i,idx
+  !
+  !    do i=1,ndust
+  !       idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
+  !       dust_get_rateChem_PC(i) = (Tdust(i)-dust_rateChem_x(idx)) * dust_rateChem_invdx &
+  !            * (dust_rateChem_PC(idx+1)-dust_rateChem_PC(idx)) &
+  !            + dust_rateChem_PC(idx)
+  !    end do
+  !
+  !  end function dust_get_rateChem_PC
+  !
+  !  !***************************
+  !  function dust_get_rateChem_CP(Tdust)
+  !    use krome_commons
+  !    implicit none
+  !    real*8::dust_get_rateChem_CP(ndust), Tdust(ndust)
+  !    integer::i,idx
+  !
+  !    do i=1,ndust
+  !       idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
+  !       dust_get_rateChem_CP(i) = (Tdust(i)-dust_rateChem_x(idx)) * dust_rateChem_invdx &
+  !            * (dust_rateChem_CP(idx+1)-dust_rateChem_CP(idx)) &
+  !            + dust_rateChem_CP(idx)
+  !    end do
+  !
+  !  end function dust_get_rateChem_CP
+  !
+  !  !***************************
+  !  function dust_get_rateChem_CC(Tdust)
+  !    use krome_commons
+  !    implicit none
+  !    real*8::dust_get_rateChem_CC(ndust), Tdust(ndust)
+  !    integer::i,idx
+  !
+  !    do i=1,ndust
+  !       idx = (Tdust(i) - dust_rateChem_xmin) * dust_rateChem_xfact + 1
+  !       dust_get_rateChem_CC(i) = (Tdust(i)-dust_rateChem_x(idx)) * dust_rateChem_invdx &
+  !            * (dust_rateChem_CC(idx+1)-dust_rateChem_CC(idx)) &
+  !            + dust_rateChem_CC(idx)
+  !    end do
+  !
+  !  end function dust_get_rateChem_CC
+  !#ENDIFKROME
+  !
+  !  !****************************
+  !  !returns an array with the sticking coefficient for each bin
+  !  ! following Hollenbach+McKee 1979
+  !  function dust_stick_array(Tgas,Tdust)
+  !    use krome_commons
+  !    implicit none
+  !    real*8::dust_stick_array(ndust),Tgas,Tdust(ndust)
+  !    real*8::Tg100,Td100
+  !    integer::i
+  !
+  !    Tg100 = Tgas * 1d-2
+  !    do i=1,ndust
+  !       Td100 = Tdust(i) * 1d-2
+  !       dust_stick_array(i) = 1d0/(1d0+.4d0*sqrt(Tg100+Td100) &
+  !            + .2d0*Tg100 + 0.08d0*Tg100**2)
+  !    end do
+  !
+  !  end function dust_stick_array
+  !
+  !  !***************************
+  !  function dust_ice_fraction_array(invphi,nH2O)
+  !    use krome_constants
+  !    use krome_commons
+  !    implicit none
+  !    integer::i
+  !    real*8::dust_ice_fraction_array(ndust)
+  !    real*8::invphi(ndust),nH2O(ndust)
+  !
+  !    do i=1,ndust
+  !       dust_ice_fraction_array(i) = min(nH2O(i) * invphi(i), 1d0)
+  !    end do
+  !
+  !  end function dust_ice_fraction_array
 
   !***********************************
   subroutine init_exp_table()
@@ -1389,91 +1420,91 @@ contains
 
   end subroutine init_exp_table
 
-!  !*****************************
-!  function get_exp_table(ain,invT)
-!    use krome_commons
-!    implicit none
-!    integer::ia
-!    real*8::get_exp_table,a,invT,ain
-!    real*8::x1a,f1,f2
-!
-!    a = ain*invT
-!    a = min(a, exp_table_aMax - exp_table_da)
-!
-!    ia = (a-exp_table_aMin) * exp_table_multa + 1
-!    ia = max(ia,1)
-!
-!    x1a = (ia-1)*exp_table_da
-!
-!    f1 = exp_table(ia)
-!    f2 = exp_table(ia+1)
-!
-!    get_exp_table = (a-x1a) * exp_table_multa * (f2-f1) + f1
-!
-!  end function get_exp_table
+  !  !*****************************
+  !  function get_exp_table(ain,invT)
+  !    use krome_commons
+  !    implicit none
+  !    integer::ia
+  !    real*8::get_exp_table,a,invT,ain
+  !    real*8::x1a,f1,f2
+  !
+  !    a = ain*invT
+  !    a = min(a, exp_table_aMax - exp_table_da)
+  !
+  !    ia = (a-exp_table_aMin) * exp_table_multa + 1
+  !    ia = max(ia,1)
+  !
+  !    x1a = (ia-1)*exp_table_da
+  !
+  !    f1 = exp_table(ia)
+  !    f2 = exp_table(ia+1)
+  !
+  !    get_exp_table = (a-x1a) * exp_table_multa * (f2-f1) + f1
+  !
+  !  end function get_exp_table
 
-!  !*****************************
-!  function get_Ebareice_exp_array(invTdust)
-!    use krome_commons
-!    implicit none
-!    real*8::get_Ebareice_exp_array(2*nspec),invTdust(ndust)
-!
-!    get_Ebareice_exp_array(:) = 0d0
-!
-!#KROME_Ebareice
-!
-!  end function get_Ebareice_exp_array
-!
-!  !*****************************
-!  function get_Ebareice23_exp_array(invTdust)
-!    use krome_commons
-!    implicit none
-!    real*8::get_Ebareice23_exp_array(2*nspec),invTdust(ndust)
-!
-!    get_Ebareice23_exp_array(:) = 0d0
-!
-!#KROME_Ebareice23
-!
-!  end function get_Ebareice23_exp_array
-!
-!  !************************
-!  !returns the binding energy for ice coated grain (K)
-!  function get_Ebind_ice()
-!    use krome_commons
-!    implicit none
-!    real*8::get_Ebind_ice(nspec)
-!
-!    get_Ebind_ice(:) = 0d0
-!
-!#KROME_Ebind_ice
-!
-!  end function get_Ebind_ice
-!
-!  !************************
-!  !returns the binding energy for bare grain (K)
-!  function get_Ebind_bare()
-!    use krome_commons
-!    implicit none
-!    real*8::get_Ebind_bare(nspec)
-!
-!    get_Ebind_bare(:) = 0d0
-!
-!#KROME_Ebind_bare
-!
-!  end function get_Ebind_bare
-!
-!  !************************
-!  !returns the index of the parent dust bin (0 if none)
-!  function get_parent_dust_bin()
-!    use krome_commons
-!    implicit none
-!    integer::get_parent_dust_bin(nspec)
-!
-!    get_parent_dust_bin(:) = 0
-!
-!#KROME_parent_dust_bin
-!
-!  end function get_parent_dust_bin
+  !  !*****************************
+  !  function get_Ebareice_exp_array(invTdust)
+  !    use krome_commons
+  !    implicit none
+  !    real*8::get_Ebareice_exp_array(2*nspec),invTdust(ndust)
+  !
+  !    get_Ebareice_exp_array(:) = 0d0
+  !
+  !#KROME_Ebareice
+  !
+  !  end function get_Ebareice_exp_array
+  !
+  !  !*****************************
+  !  function get_Ebareice23_exp_array(invTdust)
+  !    use krome_commons
+  !    implicit none
+  !    real*8::get_Ebareice23_exp_array(2*nspec),invTdust(ndust)
+  !
+  !    get_Ebareice23_exp_array(:) = 0d0
+  !
+  !#KROME_Ebareice23
+  !
+  !  end function get_Ebareice23_exp_array
+  !
+  !  !************************
+  !  !returns the binding energy for ice coated grain (K)
+  !  function get_Ebind_ice()
+  !    use krome_commons
+  !    implicit none
+  !    real*8::get_Ebind_ice(nspec)
+  !
+  !    get_Ebind_ice(:) = 0d0
+  !
+  !#KROME_Ebind_ice
+  !
+  !  end function get_Ebind_ice
+  !
+  !  !************************
+  !  !returns the binding energy for bare grain (K)
+  !  function get_Ebind_bare()
+  !    use krome_commons
+  !    implicit none
+  !    real*8::get_Ebind_bare(nspec)
+  !
+  !    get_Ebind_bare(:) = 0d0
+  !
+  !#KROME_Ebind_bare
+  !
+  !  end function get_Ebind_bare
+  !
+  !  !************************
+  !  !returns the index of the parent dust bin (0 if none)
+  !  function get_parent_dust_bin()
+  !    use krome_commons
+  !    implicit none
+  !    integer::get_parent_dust_bin(nspec)
+  !
+  !    get_parent_dust_bin(:) = 0
+  !
+  !#KROME_parent_dust_bin
+  !
+  !  end function get_parent_dust_bin
 
 
   !***************************
@@ -1505,37 +1536,37 @@ contains
 
   !************************
   !get electrons by balancing charges
-!  function get_electrons(n)
-!    use krome_commons
-!    implicit none
-!    real*8::get_electrons,n(nspec)
-!
-!#KROME_electrons_balance
-!    get_electrons = max(get_electrons,0d0)
-!
-!  end function get_electrons
-!
-!  !************************
-!  !get species charges
-!  function get_charges()
-!    use krome_commons
-!    implicit none
-!    integer::get_charges(nspec)
-!
-!#KROME_charges
-!
-!  end function get_charges
+  !  function get_electrons(n)
+  !    use krome_commons
+  !    implicit none
+  !    real*8::get_electrons,n(nspec)
+  !
+  !#KROME_electrons_balance
+  !    get_electrons = max(get_electrons,0d0)
+  !
+  !  end function get_electrons
+  !
+  !  !************************
+  !  !get species charges
+  !  function get_charges()
+  !    use krome_commons
+  !    implicit none
+  !    integer::get_charges(nspec)
+  !
+  !#KROME_charges
+  !
+  !  end function get_charges
 
-!  !************************
-!  !get species charges
-!  function get_rnames()
-!    use krome_commons
-!    implicit none
-!    character*50::get_rnames(nrea)
-!
-!#KROME_reaction_names
-!
-!  end function get_rnames
+  !  !************************
+  !  !get species charges
+  !  function get_rnames()
+  !    use krome_commons
+  !    implicit none
+  !    character*50::get_rnames(nrea)
+  !
+  !#KROME_reaction_names
+  !
+  !  end function get_rnames
 
   !*****************************
   !computes revers kinetics from reaction and
@@ -1760,335 +1791,6 @@ contains
 #KROME_implicit_arrays
 
   end subroutine load_arrays
-
-  !********************************************
-  subroutine init_anytab2D(filename,x,y,z,xmul,ymul)
-    use krome_commons
-    implicit none
-    character(len=*)::filename
-    character(len=60)::row_string
-    real*8::x(:),y(:),z(:,:),rout(3),xmul,ymul
-    integer::i,j,ios
-
-    !check the size of the X input array
-    if(size(x).ne.size(z,1)) then
-       print *,"ERROR: in init_anytab2D x size differs from z"
-       stop
-    end if
-
-    !check the size of the Y input array
-    if(size(y).ne.size(z,2)) then
-       print *,"ERROR: in init_anytab2D y size differs from z"
-       stop
-    end if
-
-    if (krome_mpi_rank<=1) print *,"Reading tables from "//trim(filename)
-
-    !open file and check if it exists
-    open(51,file=trim(filename),status="old",iostat=ios)
-    if(ios.ne.0) then
-       print *,"ERROR: in init_anytab2D file ",trim(filename)," not found!"
-       stop
-    end if
-
-    !skip the comments and the first line and the sizes of the data
-    ! which are already known from the pre-processing
-    do
-       read(51,'(a)') row_string
-       if(row_string(1:1)/="#") exit
-    end do
-
-    !check if first line is OK
-    if(scan(row_string,",")==0) then
-       print *,"ERROR: file "//filename//" should"
-       print *," contain the number of rows and "
-       print *," columns in the format"
-       print *,"  RR, CC"
-       print *,row_string
-       stop
-    end if
-
-    !loop to read file
-    do i=1,size(x)
-       do j=1,size(y)
-          read(51,*,iostat=ios) rout(:)
-          y(j) = rout(2)
-          z(i,j) = rout(3)
-       end do
-       x(i) = rout(1)
-       read(51,*,iostat=ios) !skip blanks
-       if(ios.ne.0) exit
-    end do
-    close(51)
-
-    xmul = 1d0/(x(2)-x(1))
-    ymul = 1d0/(y(2)-y(1))
-
-  end subroutine init_anytab2D
-
-  !******************************
-  subroutine test_anytab2D(fname,x,y,z,xmul,ymul)
-    implicit none
-    integer::i,j
-    real*8::x(:),y(:),z(:,:),xmul,ymul,xx,yy,zz
-    character(len=*)::fname
-
-    open(91,file=fname//".fit",status="replace")
-    open(92,file=fname//".org",status="replace")
-    do i=1,size(x)
-       do j=1,size(y)
-          xx = x(i)
-          yy = y(j)
-          zz = fit_anytab2D(x(:),y(:),z(:,:),xmul,ymul,xx,yy)
-          write(91,*) xx,yy,zz
-          write(92,*) x(i),y(j),z(i,j)
-       end do
-       write(91,*)
-       write(92,*)
-    end do
-    print *,"original file wrote in ",fname//".org"
-    print *,"fit test file wrote in ",fname//".fit"
-
-  end subroutine test_anytab2D
-
-  !******************************
-  function fit_anytab2D(x,y,z,xmul,ymul,xx,yy)
-    real*8::fit_anytab2D,x(:),y(:),z(:,:),xmul,ymul,xx,yy
-    real*8::zleft(size(x)),zright(size(x)),zl,zr
-    integer::ipos,i1,i2
-
-    ipos = (yy-y(1)) * ymul + 1
-    i1 = min(max(ipos,1),size(y)-1)
-    i2 = i1 + 1
-    zleft(:) = z(:,i1)
-    zright(:) = z(:,i2)
-
-    zl = fit_anytab1D(x(:),zleft(:),xmul,xx)
-    zr = fit_anytab1D(x(:),zright(:),xmul,xx)
-
-    fit_anytab2D = (yy-y(i1))*ymul*(zr-zl)+zl
-
-  end function fit_anytab2D
-
-  !*********************
-  function fit_anytab1D(x,z,xmul,xx)
-    real*8::fit_anytab1D,x(:),z(:),xmul,xx,p
-    integer::ipos,i1,i2
-
-    ipos = (xx-x(1)) * xmul + 1
-    i1 = min(max(ipos,1),size(x)-1)
-    i2 = i1 + 1
-
-    p = (xx-x(i1)) * xmul
-
-    fit_anytab1D = p * (z(i2) - z(i1)) + z(i1)
-
-  end function fit_anytab1D
-
-  function fit_anytab2D_linlog(x,y,z,xmul,ymul,xx,yy)
-    real*8::fit_anytab2D_linlog,x(:),y(:),z(:,:),xmul,ymul,xx,yy
-    real*8::zleft(size(x)),zright(size(x)),zl,zr
-    integer::ipos,i1,i2
-
-    ipos = (yy-y(1)) * ymul + 1
-    i1 = min(max(ipos,1),size(y)-1)
-    i2 = i1 + 1
-    zleft(:) = z(:,i1)
-    zright(:) = z(:,i2)
-
-    zl = fit_anytab1D_linlog(x(:),zleft(:),xmul,xx)
-    zr = fit_anytab1D_linlog(x(:),zright(:),xmul,xx)
-
-    fit_anytab2D_linlog = (yy-y(i1))*ymul*(zr-zl)+zl
-
-  end function fit_anytab2D_linlog
-
-  !*********************
-  function fit_anytab1D_linlog(x,z,xmul,xx)
-    real*8::fit_anytab1D_linlog,x(:),z(:),xmul,xx,p,z2,z1
-    integer::ipos,i1,i2
-
-    ipos = (xx-x(1)) * xmul + 1
-    i1 = min(max(ipos,1),size(x)-1)
-    i2 = i1 + 1
-
-    p = (xx-x(i1)) * xmul
-
-    z2 = z(i2)
-    z1 = z(i1)
-    if(z1<0d0 .and. z2<0d0) then
-       z1 = log10(-z1)
-       z2 = log10(-z2)
-       fit_anytab1D_linlog = -1d1**(p * (z2 - z1) + z1)
-       return
-    end if
-
-    if(z1>0d0 .and. z2>0d0) then
-       z1 = log10(z1)
-       z2 = log10(z2)
-       fit_anytab1D_linlog = 1d1**(p * (z2 - z1) + z1)
-       return
-    end if
-
-    fit_anytab1D_linlog = (p * (z2 - z1) + z1)
-
-  end function fit_anytab1D_linlog
-
-
-  !*****************************
-  !spline interpolation at t using array  x,y (size n) as data
-  function fspline(x,y,t)
-    implicit none
-    real*8::fspline,x(:),y(:),b(size(x)),c(size(x)),d(size(x)),t
-    integer::n
-
-    n = size(x)
-    call spline(x(:),y(:),b(:),c(:),d(:),n)
-    fspline = ispline(t,x(:),y(:),b(:),c(:),d(:),n)
-
-  end function fspline
-
-  !*******************************+
-  subroutine spline(x, y, b, c, d, n)
-    !======================================================================
-    !  Calculate the coefficients b(i), c(i), and d(i), i=1,2,...,n
-    !  for cubic spline interpolation
-    !  s(x) = y(i) + b(i)*(x-x(i)) + c(i)*(x-x(i))**2 + d(i)*(x-x(i))**3
-    !  for  x(i) <= x <= x(i+1)
-    !  Alexadner L Godunov (ODU): January 2010
-    !
-    !  http://ww2.odu.edu/~agodunov/computing/programs/book2/Ch01/spline.f90
-    !----------------------------------------------------------------------
-    !  input..
-    !  x = the arrays of data abscissas (in strictly increasing order)
-    !  y = the arrays of data ordinates
-    !  n = size of the arrays xi() and yi() (n>=2)
-    !  output..
-    !  b, c, d  = arrays of spline coefficients
-    !  comments ...
-    !  spline.f90 program is based on fortran version of program spline.f
-    !  the accompanying function fspline can be used for interpolation
-    !======================================================================
-    implicit none
-    integer::n
-    real*8::x(n), y(n), b(n), c(n), d(n)
-    integer::i, j, gap
-    real*8::h
-
-    gap = n-1
-
-    !check input
-    if(n<2) return
-    if(n<3) then
-       b(1) = (y(2)-y(1))/(x(2)-x(1)) !linear interpolation
-       c(1) = 0d0
-       d(1) = 0d0
-       b(2) = b(1)
-       c(2) = 0d0
-       d(2) = 0d0
-       return
-    end if
-
-    !step 1: preparation
-    d(1) = x(2) - x(1)
-    c(2) = (y(2) - y(1))/d(1)
-    do i = 2, gap
-       d(i) = x(i+1) - x(i)
-       b(i) = 2d0*(d(i-1) + d(i))
-       c(i+1) = (y(i+1) - y(i))/d(i)
-       c(i) = c(i+1) - c(i)
-    end do
-
-    ! step 2: end conditions
-    b(1) = -d(1)
-    b(n) = -d(n-1)
-    c(1) = 0d0
-    c(n) = 0d0
-    if(n.ne.3) then
-       c(1) = c(3)/(x(4)-x(2)) - c(2)/(x(3)-x(1))
-       c(n) = c(n-1)/(x(n)-x(n-2)) - c(n-2)/(x(n-1)-x(n-3))
-       c(1) = c(1)*d(1)**2/(x(4)-x(1))
-       c(n) = -c(n)*d(n-1)**2/(x(n)-x(n-3))
-    end if
-
-    ! step 3: forward elimination
-    do i = 2, n
-       h = d(i-1)/b(i-1)
-       b(i) = b(i) - h*d(i-1)
-       c(i) = c(i) - h*c(i-1)
-    end do
-
-    ! step 4: back substitution
-    c(n) = c(n)/b(n)
-    do j = 1, gap
-       i = n-j
-       c(i) = (c(i) - d(i)*c(i+1))/b(i)
-    end do
-
-    ! step 5: compute spline coefficients
-    b(n) = (y(n) - y(gap))/d(gap) + d(gap)*(c(gap) + 2d0*c(n))
-    do i = 1, gap
-       b(i) = (y(i+1) - y(i))/d(i) - d(i)*(c(i+1) + 2d0*c(i))
-       d(i) = (c(i+1) - c(i))/d(i)
-       c(i) = 3d0*c(i)
-    end do
-    c(n) = 3d0*c(n)
-    d(n) = d(n-1)
-  end subroutine spline
-
-  !*******************************
-  function ispline(u, x, y, b, c, d, n)
-    !======================================================================
-    ! function ispline evaluates the cubic spline interpolation at point z
-    ! ispline = y(i)+b(i)*(u-x(i))+c(i)*(u-x(i))**2+d(i)*(u-x(i))**3
-    ! where  x(i) <= u <= x(i+1)
-    !  Alexadner L Godunov (ODU): January 2010
-    !
-    !  http://ww2.odu.edu/~agodunov/computing/programs/book2/Ch01/spline.f90
-    !----------------------------------------------------------------------
-    ! input..
-    ! u       = the abscissa at which the spline is to be evaluated
-    ! x, y    = the arrays of given data points
-    ! b, c, d = arrays of spline coefficients computed by spline
-    ! n       = the number of data points
-    ! output:
-    ! ispline = interpolated value at point u
-    !=======================================================================
-    implicit none
-    real*8::ispline
-    integer::n
-    real*8::u, x(n), y(n), b(n), c(n), d(n)
-    integer::i, j, k
-    real*8::dx
-
-    ! if u is ouside the x() interval take a boundary value (left or right)
-    if(u<=x(1)) then
-       ispline = y(1)
-       return
-    end if
-
-    if(u>=x(n)) then
-       ispline = y(n)
-       return
-    end if
-
-    ! binary search for for i, such that x(i) <= u <= x(i+1)
-    i = 1
-    j = n+1
-    do while (j>i+1)
-       k = (i+j)/2
-       if(u<x(k)) then
-          j=k
-       else
-          i=k
-       end if
-    end do
-
-    ! evaluate spline interpolation
-    dx = u - x(i)
-    ispline = y(i) + dx*(b(i) + dx*(c(i) + dx*d(i)))
-
-  end function ispline
 
 #IFKROME_useH2dust_constant
   !********************************

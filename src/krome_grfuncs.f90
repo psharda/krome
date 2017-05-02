@@ -1,10 +1,37 @@
-!This module contains functions and subroutines 
+!This module contains functions and subroutines
 ! for the surface chemistry, including adsorption, desorption, chemisorption
 ! and icy grains.
 module krome_grfuncs
 contains
 
 #KROME_header
+
+  !**********************
+  !get Tdust from tables, K
+  function get_table_Tdust(n) result(Tdust)
+    use krome_commons
+    use krome_fit
+    real*8,intent(in)::n(nspec)
+    real*8::ntot,Tdust,Tgas
+
+    Tgas = n(idx_Tgas)
+
+    !default, K
+    Tdust = 1d0
+
+    !total densitym, cm-3
+    ntot = sum(n(1:nmols))
+
+    !zero density returns default
+    if(ntot==0d0) return
+
+    !get dust temperature from table, K
+    Tdust = 1d1**fit_anytab2D(dust_tab_ngas(:), &
+         dust_tab_Tgas(:), dust_tab_Tdust(:,:), dust_mult_ngas, &
+         dust_mult_Tgas, &
+         log10(ntot), log10(Tgas))
+
+  end function get_table_Tdust
 
   !**********************
   !adsorpion rate Hollenbach+McKee 1979, Cazaux+2010, Hocuk+2014
@@ -139,6 +166,98 @@ contains
     end do
 
   end function dust_stick_array
+
+ !*************************
+  function dust_stick(Tgas,Tdust)
+    implicit none
+    real*8,intent(in)::Tgas,Tdust
+    real*8::dust_stick
+    real*8::Tg100,Td100
+
+      Tg100 = Tgas * 1d-2
+      Td100 = Tdust * 1d-2
+      dust_stick = 1d0/(1d0 + 0.4d0*sqrt(Tg100+Td100) &
+           + 0.2d0*Tg100 + 0.08d0*Tg100**2)
+
+  end function dust_stick
+
+  !****************************
+  !sticking rate (1/s), assuming power-law dust distribution
+  ! example rate is
+  !  @format:idx,R,P,rate
+  !  1,CO,CO_ice,krate_stick(n(:),idx_CO,1d-7,1d-5,-3.5,3d0,1d-2)
+  ! n(:): internal status array (number densities, temeperature, etc...)
+  ! idx : index of the sticking species, e.g. idx_CO
+  ! Tdust: dust temperature (assume same for all bins), K
+  ! amin: min grain size, cm
+  ! amax: max grain size, cm
+  ! pexp: power-law exponent, usually -3.5
+  ! rho0: bulk material density, g/cm3, e.g. 3 g/cm3 for silicates
+  ! d2g: dust to gass mass ratio, usually 0.01
+  function krate_stick(n,idx,Tdust,amin,amax,pexp,rho0,d2g) result(k)
+    use krome_constants
+    use krome_commons
+    use krome_getphys
+    implicit none
+    real*8,intent(in)::n(nspec),Tdust,amin,amax,pexp,rho0,d2g
+    real*8::k,imass(nspec),p4,p3,mass(nspec),rhod
+    integer,intent(in)::idx
+
+    !get inverse mass squared
+    imass(:) = get_imass_sqrt()
+    !get masses
+    mass(:) = get_mass()
+    !derived exponents
+    p3 = pexp + 3.
+    p4 = pexp + 4.
+
+    !total dust density, g/cm3
+    rhod = sum(n(1:nmols)*mass(1:nmols))*d2g
+
+    !compute rate (1/s) coefficient assuming normalization
+    k = pre_kvgas_sqrt*sqrt(n(idx_Tgas)) * imass(idx) &
+         * rhod / (4./3.*rho0) * p4 / p3 &
+         * (amax**p3-amin**p3) / (amax**p4-amin**p4) &
+         * dust_stick(n(idx_Tgas),Tdust)
+
+  end function krate_stick
+
+  !********************************
+  !compact version of krate_stick
+  function krate_stickSi(n,idx,Tdust) result(k)
+    use krome_commons
+    implicit none
+    integer,intent(in)::idx
+    real*8,intent(in)::n(nspec),Tdust
+    real*8::k,amin,amax,d2g,rho0,pexp
+
+    !some default values OK for silicates
+    amin = 5d-7 !cm
+    amax = 2.5d-5 !cm
+    pexp = -3.5
+    rho0 = 3d0 !g/cm3
+    d2g = 1d-2
+
+    k = krate_stick(n(:),idx,Tdust,amin,amax,pexp,rho0,d2g)
+
+  end function krate_stickSi
+
+  !***************************
+  !evaporation rate, 1/s
+  function krate_evaporation(n,idx,Tdust) result(k)
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer,intent(in)::idx
+    real*8,intent(in)::n(nspec),Tdust
+    real*8::k,Ebind(nspec),nu0
+
+    nu0 = 1d12 !1/s
+    Ebind(:) = get_EbindBare()
+
+    k = nu0 * exp(-Ebind(idx)/Tdust)
+
+  end function krate_evaporation
 
   !***************************
   function dust_ice_fraction_array(invphi,nH2O)

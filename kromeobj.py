@@ -64,7 +64,7 @@ class krome():
 	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = False
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
-	useHeatingPumpH2 = reducer = useFexCustom = False
+	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = False
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
@@ -136,6 +136,7 @@ class krome():
 	customCoolList = [] #list of the custom cooling functions
 	customHeatList = [] #list of the custom heating functions
 	individualCoolingFloors = [] #list of individual floors
+	iceSpeciesList = dict() #list of species on ice
 	fdbase = "data/database/" #database of reaction folder for auto reactions
 	indexSolomon = -1 #default solomon index, -1 to trigger error
 	indexH2photodissociation = -1 #default H2pd index, -1 to trigger error
@@ -1312,7 +1313,9 @@ class krome():
 
 		#dust tabs
 		if(args.dustTabs):
-			tabModes = ["HM2012"] #modes
+			tabPath = "data/dust_tables/"
+			tabModes = [x for x in os.listdir(tabPath) if(x.endswith("_cool.dat"))]
+			tabModes = [x.replace("dust_table_","").replace("_cool.dat","") for x in tabModes]
 			tabOpts = ["H2","COOL"] #options
 			allTabs = tabOpts + tabModes #all possible options
 
@@ -1333,7 +1336,7 @@ class krome():
 			#error if mode not found
 			if(not(modeFound)):
 				print "ERROR: you should indicate a mode when you use -dustTabs option"
-				print "Available modes:",tabModes
+				print "Available modes:",sorted(tabModes)
 				sys.exit()
 
 			#error if option not found
@@ -1616,6 +1619,7 @@ class krome():
 			'_ortho':0e0,
 			'_meta':0e0,
 			'_ice':0e0,
+			'_total':0e0,
 			'l_':0e0,
 			'c_':0e0,
 			'CR':0e0,
@@ -1703,6 +1707,7 @@ class krome():
 		inCoolingBlock = False #block for custom cooling expression
 		inHeatingBlock = False #block for custom heating expression
 		inSurfaceBlock = False #block for reaction on surface
+		inStoreOnceBlock = False #block that stores reactions that are constants during the solver call
 		self.hasSurfaceReactions = False #true if surface reactions found
 
 		#generate a custom reaction network and replace filename with the custom one
@@ -1858,6 +1863,38 @@ class krome():
 					mol.idx = spec_names.index(mol.name) + 1
 				continue #SKIP: a ghost line is not a reaction line
 
+			#get ice species
+			if("@ice:" in srow):
+				ice = srow.replace("@ice:","").strip()
+				(iceName,rateType,krate) = ice.split(",",2)
+				mol = parser(iceName+"_total",mass_dic,atoms,self.thermodata)
+				mol.mass = 0e0 #_total species mass is zero to avoid double counting
+				if(not(mol.name in spec_names)):
+					spec_names.append(mol.name)
+					specs.append(mol)
+				mol.idx = spec_names.index(mol.name) + 1
+				myrea = reaction()
+				myrea.products = []
+				myrea.reactants = []
+				myrea.krate = krate
+				myrea.idx = rcount
+				myrea.canUseTabs = False
+				myrea.hasTlimitMin = myrea.hasTlimitMax = False
+				if(not(iceName in self.iceSpeciesList)):
+					self.iceSpeciesList[iceName] = dict()
+				self.iceSpeciesList[iceName]["ODE"] = "0.d0"
+				if(rateType.lower()=="freezeout"):
+					myrea.verbatim = iceName+" freeze-out"
+					self.iceSpeciesList[iceName]["reactionFreezeout"] = myrea
+				elif(rateType.lower()=="evaporation"):
+					myrea.verbatim = iceName+" evaporation"
+					self.iceSpeciesList[iceName]["reactionEvaporation"] = myrea
+				else:
+					sys.exit("ERROR: unknown reaction type "+rateType)
+				reacts.append(myrea)
+				rcount += 1
+				continue
+
 			#search for table pragma
 			if("@tabvar:" in srow):
 				atab = srow.replace("@tabvar:","").split("=")
@@ -1893,7 +1930,7 @@ class krome():
 					print " You provided "+str(len(arow))+" elements:"
 					print " "+srow
 					sys.exit()
-				ipos = 0 #count items in the splitted line
+				ipos = 0 #count items in the split line
 				ireact = [] #reactants index array
 				iprod = [] #products index array
 				format_items = len(arow)
@@ -1958,6 +1995,15 @@ class krome():
 			#if requested the next reaction will not uses tabs for a BLOCK of reactions
 			if(srow.lower()=="@notab_end" or srow.lower()=="@notab_stop"):
 				noTabNext = noTabNextBlock = False
+				continue #SKIP (not a reaction)
+
+			#start block of reactions with constant rate during the solver call
+			if(srow.lower()=="@storeonce_begin" or srow.lower()=="@storeonce_start"):
+				inStoreOnceBlock = self.hasStoreOnceRates = True
+				continue #SKIP (not a reaction)
+			#end block of reactions with constant rate during the solver call
+			if(srow.lower()=="@storeonce_end" or srow.lower()=="@storeonce_stop"):
+				inStoreOnceBlock = False
 				continue #SKIP (not a reaction)
 
 			#start a CR reaction block
@@ -2048,8 +2094,8 @@ class krome():
 				self.indexH2photodissociation = rcount + 1
 				nextH2photodissociation = False
 
-
-			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N seprations
+			arow = srow.split(self.separator,format_items-1) #split only N+1 elements with N separations
+			arow[len(arow)-1] = arow[len(arow)-1].rsplit('!',1)[0].rsplit('#',1)[0] #strip end-of-line comments
 			arow = [x.strip() for x in arow] #strip single elements
 			if(len(arow)!=format_items):
 				print "WARNING: wrong format for reaction "+str(rcount+1)
@@ -2081,7 +2127,7 @@ class krome():
 			reactants = [arow[x].strip().upper() for x in ireact]
 			products = [arow[x].strip().upper() for x in iprod]
 
-			#store reactants "curlyness" before purge
+			#store reactants "curliness" before purge
 			myrea.curlyR = [("{" in x) for x in reactants]
 
 			#purge reactants name from curly brackets
@@ -2091,7 +2137,7 @@ class krome():
 			reags_clean = sorted([x for x in reactants if x.strip()!=""])
 			prods_clean = sorted([x for x in products if x.strip()!=""])
 
-			#check for identical ractions
+			#check for identical reactions
 			foundAlready = False
 			for i in range(len(reags)):
 				if(reags_clean==reags[i] and prods_clean==prods[i] and self.mergeTlimits):
@@ -2145,7 +2191,7 @@ class krome():
 				if(tmaxFound): myrea.Tmax = format_double(arow[iTmax]) #get Tmax
 				if(tmaxFound): TmaxAuto = max(float(arow[iTmax].lower().replace("d","e")), TmaxAuto)
 			#store other data
-			area = arow[irate].split(":",2) #raction can be if_condition:reaction_rate
+			area = arow[irate].split(":",2) #reaction can be if_condition:reaction_rate
 			if(len(area)==1):
 				myrea.ifrate = "" #store empty prepending if condition
 				myrea.krate = arow[irate] #get reaction rate written in F90 style
@@ -2170,7 +2216,7 @@ class krome():
 					mol.idx = spec_names.index(mol.name) + 1
 					myrea.reactants.append(mol) #add molecule object to reactants
 
-			#loop over prodcuts to grep molecules
+			#loop over products to grep molecules
 			for p in products:
 				if(p.strip()=="G" and not(self.use_photons)): continue
 				if(p.strip()=="E-"): p = "E"
@@ -2218,7 +2264,8 @@ class krome():
 			myrea.build_phrate(inPhotoBlock) #build photoionization rate
 			myrea.check(self.checkMode) #check mass and charge conservation
 			myrea.group = group #add the group to the reaction
-			myrea.canUseTabs = not(noTabNext) #check if this reaction can use tabs or not
+			myrea.canUseTabs = not(noTabNext or inStoreOnceBlock) #check if this reaction can use tabs or not
+			myrea.isStoreOnce = inStoreOnceBlock
 			if(myrea.krate.count("(")!=myrea.krate.count(")")):
 				print "ERROR: unbalanced brackets in reaction "+str(myrea.idx)
 				print " "+myrea.verbatim
@@ -2247,6 +2294,26 @@ class krome():
 			del myrea,row
 			if(not(noTabNextBlock)): noTabNext = False #return to default value when outside a block
 			#END LOOP ON FILE
+
+		#sort species by charge (negative first)
+		specs = sorted(specs, key=lambda x:x.charge)
+
+		#list of species names
+		speciesNames = [x.name for x in specs]
+
+		#redefine species index in each reaction
+		for react in reacts:
+			for reactant in react.reactants:
+				reactant.idx = speciesNames.index(reactant.name)+1
+			for product in react.products:
+				product.idx = speciesNames.index(product.name)+1
+
+		#reorder indexes
+		newspecs = []
+		for sp in specs:
+			sp.idx = len(newspecs)+1
+			newspecs.append(sp)
+		specs = newspecs
 
 		#after loop on file post-process special reactions
 		#shielding reactions requires fsh variable
@@ -2393,7 +2460,7 @@ class krome():
 				print "ERROR: folder "+fdbase+" not found!"
 				sys.exit()
 			file_list = sorted([f for f in listdir(self.fdbase) if isfile(join(self.fdbase,f))])
-			extraVars = dict() #dict of the extra varaibles, with key=filename
+			extraVars = dict() #dict of the extra variables, with key=filename
 			isAutoRev = False
 			for fname in file_list:
 				fname = fdbase + fname
@@ -2443,7 +2510,7 @@ class krome():
 					autor = [x.upper().strip() for x in autorea["reacts"].split(",")] #list of reacts
 					if(sorted([x.name for x in rea.reactants])!=sorted(autor)): continue
 					if(sorted([x.name for x in rea.products])!=sorted(autop)): continue
-					#if there are necessay variables in the datafile that contains this reaction,
+					#if there are necessary variables in the datafile that contains this reaction,
 					# it appends to the list of the necessaryExtraVars
 					extraVar = extraVars[autorea["autoFname"]]
 					if(len(extraVar)>0):
@@ -2488,12 +2555,12 @@ class krome():
 
 				#error if automatic reaction not found
 				if(not(dbFound)):
-					print "ERROR: reaction not found in the automatc database!"
+					print "ERROR: reaction not found in the automatic database!"
 					print rea.verbatim,[x.name for x in rea.reactants]
 					print "you can:"
 					print "1. remove it from your network"
 					print "2. provide a non-automatic reaction rate"
-					print "3. add to the databse "+fdbase
+					print "3. add to the database "+fdbase
 					sys.exit()
 
 			#append auto reactions found with different ranges of temperature
@@ -2541,7 +2608,6 @@ class krome():
 				sp.idx = len(uspecs) + 1
 				uspecs.append(sp)
 		specs = uspecs[:] #copy the extended species list to the old one
-
 
 		#increase the number of reactions to include bin-based surface reactions
 		ureacts = []
@@ -2630,8 +2696,7 @@ class krome():
 				print "WARNING: sinks found, check your network ("+(", ".join(sinks))+")!"
 				print " Disable this control with -noSinkCheck"
 				a = raw_input("Any key to ignore q to quit... ")
-                                if(a=="q"): print sys.exit()
-				#sys.exit()
+                                if(a=="q"): sys.exit()
 
 			if(len(sources)>0):
 				print "ERROR: sources found, check your network ("+(", ".join(sources))+")!"
@@ -3561,20 +3626,44 @@ class krome():
 			rhs = "kflux("+str(rea.idx)+")"
 			if(self.humanFlux): rhs = rea.RHS
 			for r in rea.reactants:
+				nameUpper = r.name.upper()
+				#add RHS to ice ODE
+				if(nameUpper in self.iceSpeciesList):
+					self.iceSpeciesList[nameUpper]["ODE"] += " -"+rhs
 				if(r.name=="E" and self.useComputeElectrons): continue
+
 				dnsCount[r.idx-1] += 1
 				if(dnsCount[r.idx-1]%maxDnsParts==0):
 					dns[r.idx-1] += " dn("+r.fidx+") = "
 				dns[r.idx-1] = dns[r.idx-1].replace(" = 0.d0"," =")
 				dns[r.idx-1] += " -"+rhs
 			for p in rea.products:
+				nameUpper = p.name.upper()
+				if(nameUpper in self.iceSpeciesList):
+					self.iceSpeciesList[nameUpper]["ODE"] += " +"+rhs
 				if(p.name=="E" and self.useComputeElectrons): continue
+
 				dnsCount[p.idx-1] += 1
 				if(dnsCount[p.idx-1]%maxDnsParts==0):
 					dns[p.idx-1] += " dn("+p.fidx+") = "
 				dns[p.idx-1] = dns[p.idx-1].replace(" = 0.d0"," =")
 				dns[p.idx-1] += " +"+rhs
 
+		#modify ODE if ice species are present
+		for (iceName,iceData) in self.iceSpeciesList.iteritems():
+			for species in self.specs:
+				nameUpper = species.name.upper()
+				#differential for the gas phase
+				if(nameUpper==iceName):
+					#get freeze and evaporation rates index
+					idxFreeze = str(iceData["reactionFreezeout"].idx)
+					idxEvaporation = str(iceData["reactionEvaporation"].idx)
+					dns[species.idx-1] = "dn("+species.fidx+") = dnChem_"+iceName \
+						+ " -n("+species.fidx+")*(k("+idxFreeze+")+k("+idxEvaporation+"))" \
+						+ " +k("+idxEvaporation+")*n("+species.fidx+"_total)"
+				#differential for total = ice + gas
+				if(nameUpper==iceName+"_TOTAL"):
+					dns[species.idx-1] = "dn("+species.fidx+") = dnChem_"+iceName
 
 		#add dust to ODEs
 		if(self.useDust):
@@ -3624,10 +3713,21 @@ class krome():
 		self.maxnreag = maxnreag
 		self.maxnprod = maxnprod
 		implicit_arrays = ""
+		chunk_length = 10000
 		for i in range(len(arr_rr)):
-			implicit_arrays += "arr_r"+str(i+1)+"(:) = (/"+(",".join([str(x) for x in arr_rr[i]]))+"/)\n"
+			chunks = len(arr_rr[i]) / chunk_length + 1
+			for j in range(chunks):
+				cstart = chunk_length * j + 1
+				cend   = min(chunk_length * (j+1), len(arr_rr[i]))
+				implicit_arrays += ( "arr_r{0}({1}:{2}) = (/".format(i+1,cstart,cend)
+								+ (",".join([str(x) for x in arr_rr[i][cstart-1:cend]]))+"/)\n" )
 		for i in range(len(arr_pp)):
-			implicit_arrays += "arr_p"+str(i+1)+"(:) = (/"+(",".join([str(x) for x in arr_pp[i]]))+"/)\n"
+			chunks = len(arr_pp[i]) / chunk_length + 1
+			for j in range(chunks):
+				cstart = chunk_length * j + 1
+				cend   = min(chunk_length * (j+1), len(arr_pp[i]))
+				implicit_arrays += ( "arr_p{0}({1}:{2}) = (/".format(i+1,cstart,cend)
+								+ (",".join([str(x) for x in arr_pp[i][cstart-1:cend]]))+"/)\n" )
 		self.implicit_arrays = implicit_arrays
 
 		#wrap RHS (e.g. knn+knn=2*knn)
@@ -3665,7 +3765,7 @@ class krome():
 
 
 	###############################################
-	#build the jacobian
+	#build the Jacobian
 	def createJAC(self):
 		reacts = self.reacts
 		specs = self.specs
@@ -4385,11 +4485,13 @@ class krome():
 				optVariables += "real*8,allocatable::dust_opt_Em_"+dType+"(:,:),dust_opt_Tbb_"+dType+"(:)\n"
 
 		#get the list of all the atoms contained in the species, H,C,O,...
+		skipAtoms = ["+","-"]
 		atoms = []
 		for x in specs:
 			atoms += x.atomcount.keys()
 		atoms = list(set(atoms))
-		atoms = [x for x in atoms if not(x in ["+","-"])]
+		#skip atoms in skipAtoms list and every atom starting with underscore
+		atoms = [x for x in atoms if(not(x in skipAtoms) and not(x.startswith("_")))]
 
 
 		#common variables
@@ -4406,6 +4508,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
 			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skipGH = True
+			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 			if(srow == "#ENDIFKROME_useCoolingGH"): skipGH = False
@@ -4700,6 +4803,33 @@ class krome():
 			fout.close()
 		print "done!"
 
+	########################
+	#dump reaction verbatims to file
+	def dumpReactionsVerbatim(self):
+		fout2 = open(self.buildFolder+"reactions_verbatim.dat","w")
+		for reaction in self.reacts:
+			fout2.write(reaction.verbatim+"\n")
+		fout2.close()
+
+	################################################
+	def makeFit(self):
+		#*********FIT****************
+		#write parameters in krome_fit.f90
+		print "- writing krome_fit.f90...",
+		fh = open(self.srcFolder+"krome_fit.f90")
+		if(self.buildCompact):
+			fout = open(self.buildFolder+"krome_all.f90","a")
+		else:
+			fout = open(self.buildFolder+"krome_fit.f90","w")
+
+		#write to file
+		for row in fh:
+			fout.write(row)
+
+		if(not(self.buildCompact)):
+			fout.close()
+
+
 	################################################
 	def makeGetPhys(self):
 		buildFolder = self.buildFolder
@@ -4715,29 +4845,32 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome_getphys.f90","w")
 
-
-		#preapare metallicity functions
+		#prepare metallicity functions
 		#metallicity dictionary
 		metalDict = dict()
-		for x in specs:
-			for atom,count in x.atomcount2.iteritems():
+		iceList = []
+		for sp in specs:
+			if(sp.name.lower().endswith("_total")): iceList.append(sp)
+			for atom,count in sp.atomcount2.iteritems():
 				if(atom in metalDict):
-					metalDict[atom].append([x.fidx,count])
+					metalDict[atom].append([sp,count])
 				else:
-					metalDict[atom] = [[x.fidx,count]]
+					metalDict[atom] = [[sp,count]]
 
 
+		iceNames = [x.name.lower().replace("_total","") for x in iceList]
 		#metallicity functions
 		nZs = ["H","He","+","-","E"] #these are not metals
 		zGets = []
-		for k,v in metalDict.iteritems():
-			if(k in nZs): continue #skip non-metals
+		for atom,speciesList in metalDict.iteritems():
+			if(atom in nZs): continue #skip non-metals
 			parts = []
-			for x in v:
+			for sp in speciesList:
+				if(sp[0].name.lower() in iceNames): continue
 				smult = "" #multiplication factor string if >1 atom/particle
-				if(x[1]>1): smult = str(x[1])+"d0*"
-				parts.append(smult+"n("+x[0]+")")
-			zGets.append([k, "z"+k, (" &\n + ".join(parts))])
+				if(sp[1]>1): smult = str(sp[1])+"d0*"
+				parts.append(smult+"n("+sp[0].fidx+")")
+			zGets.append([atom, "z"+atom, (" &\n + ".join(parts))])
 
 
 #			if(srow == "#KROME_header"):
@@ -4753,7 +4886,9 @@ class krome():
 
 			elif(srow == "#KROME_sum_H_nuclei"):
 				hsum = []
+				iceNames = [x.name.lower().replace("_total","") for x in specs if(x.name.lower().endswith("_total"))]
 				for x in specs:
+					if(x.name.lower() in iceNames): continue
 					if(not("H" in x.atomcount2)): continue
 					if(x.atomcount2["H"]==0): continue
 					hmult = ("*"+format_double(x.atomcount2["H"]) if x.atomcount2["H"]>1 else "")
@@ -4828,10 +4963,10 @@ class krome():
 				for x in specs:
 					fout.write("\tget_charges("+str(x.idx)+") = " + str(x.charge) + ".d0 \t!" + x.name + "\n")
 
-			elif(srow == "#KROME_reaction_names"):
-				for x in reacts:
-					kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
-					fout.write(kstr+"\n")
+			#elif(srow == "#KROME_reaction_names"):
+			#	for x in reacts:
+			#		kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
+			#		fout.write(kstr+"\n")
 			elif(srow == "#KROME_qeff"):
 				#look for the largest qeff value
 				maxqeff = 0e0
@@ -4850,6 +4985,18 @@ class krome():
 					kstr = "\tget_rnames("+str(x.idx)+") = \"" + x.verbatim +"\""
 					fout.write(kstr+"\n")
 
+			elif(srow == "#KROME_get_Ebind_bare"):
+				Ebind = get_Ebind(surface="bare")
+				for sp in specs:
+					if(sp.name in Ebind):
+						fout.write("get_EbindBare("+sp.fidx+") = "+str(Ebind[sp.name])+"d0\n")
+
+			elif(srow == "#KROME_get_Ebind_ice"):
+				Ebind = get_Ebind(surface="ice")
+				for sp in specs:
+					if(sp.name in Ebind):
+						fout.write("get_EbindIce("+sp.fidx+") = "+str(Ebind[sp.name])+"d0\n")
+
 			elif(srow == "#KROME_metallicity_functions"):
 				solar = get_solar_abundances() #get solar abundances
 				ffs = "" #metallicity functions
@@ -4862,9 +5009,9 @@ class krome():
 					ff += "function "+ffname+"(n)\n"
 					ff += "use krome_commons\n"
 					ff += "implicit none\n"
-					ff += "real*8::n(:),"+ffname+","+zg[1]+",nH\n"
-					ff += "nH = get_Hnuclei(n(:))\n"
-					ff += zg[1]+" = "+zg[2]+"\n"
+					ff += "real*8::n(:),"+ffname+","+zg[1]+",nH\n\n"
+					ff += "nH = get_Hnuclei(n(:))\n\n"
+					ff += zg[1]+" = "+zg[2]+"\n\n"
 					ff += zg[1]+" = max("+zg[1]+", 0d0)\n\n"
 					ff += ffname + " = log10("+zg[1]+"/nH+1d-40) - ("+solar[zg[0]]+")\n\n" #compute metallicity
 					ff += "phys_metallicity = "+ffname + "\n\n" #set Z in the physvariable
@@ -5122,17 +5269,17 @@ class krome():
 			skipa = ["CR","Tgas","dummy","g"] #skip these species
 			multi = [] #species with shared atoms
 			acount = dict() #store species per atom type (e.g. {"C":["C","CO","C2"], ...})
-			has_multiple = False #check if spcies with shared atoms are present (e.g. CO but not H2)
+			has_multiple = False #check if species with shared atoms are present (e.g. CO but not H2)
 			#loop on the species
 			for x in specs:
 				xname = x.name #species name
-				if(xname in skipa): continue #cycle if the name is prensent in the skip list
+				if(xname in skipa): continue #cycle if the name is present in the skip list
 				afound = 0 #cont founded type atoms
-				#loop on the dictionary taht count the atoms in the species
+				#loop on the dictionary that count the atoms in the species
 				for a in x.atomcount2:
 					if(a in ["+","-"]): continue #skip non-atoms
 					afound +=1 #count founded atoms (for account of shared atoms)
-					#append species to dictioanry if contains the atom a
+					#append species to dictionary if contains the atom a
 					if(a in acount):
 						acount[a].append(x)
 					else:
@@ -5232,6 +5379,8 @@ class krome():
 
 			if(skip): continue #skip
 
+			atomSkipList = [x.upper() for x in ["_total"]]
+
 			#replace the small value for rates according to the maximum number of products
 			if("#KROME_small" in srow):
 				if(self.useTabs):
@@ -5249,8 +5398,10 @@ class krome():
 				conserve_matrix = ""
 				#loop on the type of atoms (equation-wise)
 				for atomType,speciesList in acount.iteritems():
-					#loop on the type of atoms (coefficent-wise)
+					if(atomType.upper() in atomSkipList): continue
+					#loop on the type of atoms (coefficient-wise)
 					for atomType2,speciesList2 in acount.iteritems():
+						if(atomType2.upper() in atomSkipList): continue
 						#loop on the species of a given atom type
 						for species in speciesList:
 							#if the species belongs to both atom groups, e.g. CO in C and O
@@ -5260,36 +5411,48 @@ class krome():
 								#product of atoms multipliers
 								pp = str(species.atomcount[atomType2]*species.atomcount[atomType])+"d0 *"
 								if(pp=="1d0 *"): pp = ""
+								myFidxx = myFidxm = species.fidx
+								if(myFidxx.lower().endswith("_total")):
+									myFidxm = ("_".join(myFidxx.split("_")[:-1]))
+									myFidxx = myFidxm+"_ice"
 								#mfact = pp*self.mass_dic[atomType2.upper()] / species.mass
 								conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + "+str(pp) \
-									+" x("+species.fidx + ") * m(idx_"+atomType+") * m(idx_"+atomType2 \
-									+") / m("+species.fidx+")**2\n"
+									+" x("+myFidxx + ") * m(idx_"+atomType+") * m(idx_"+atomType2 \
+									+") / m("+myFidxm+")**2\n"
 				fout.write(conserve_matrix+"\n")
 
 			elif(srow=="#KROME_conserve_fscale" and self.useConserveLin):
-				specSkip = ["E","+","-","CR","g","dummy","Tgas"]
+				specSkip = [x.lower() for x in ["E","+","-","CR","g","dummy","Tgas","_total"]]
 				conserve_fscale = ""
 				for species in self.specs:
-					if(species.name in specSkip): continue
+					if(species.name.lower() in specSkip): continue
 					fmult = [str(atomCount)+"d0*m(idx_"+atomType+") * B(idx_atom_"+atomType+")" \
 						for atomType,atomCount in species.atomcount.iteritems() \
-						if not(atomType in specSkip)]
+						if(not(atomType.lower() in specSkip))]
 					fact = (" + &\n ".join(fmult))
-					rescale = "x("+species.fidx+") = x("+species.fidx+") * ("+fact+")/m("+species.fidx+")"
+					myFidxx = myFidxm = species.fidx
+					if(myFidxx.lower().endswith("_total")):
+						myFidxm = ("_".join(myFidxx.split("_")[:-1]))
+						myFidxx = myFidxm+"_ice"
+					rescale = "x("+myFidxx+") = x("+myFidxx+") * ("+fact+")/m("+myFidxm+")"
 					conserve_fscale += rescale.replace(" 1d0*"," ").replace("(1d0*","(")+"\n"
 				fout.write(conserve_fscale+"\n")
 
 			elif(srow=="#KROME_conserveLin_ref" and self.useConserveLin):
-				atomSkip = ["+","-","E"]
+				atomSkip = [x.lower() for x in ["+","-","E","_total"]]
 				refMassAll = ""
 				for species in self.specs:
-					if(species.name in atomSkip): continue
-					if(species.mass>0e0):
-						for atomType,atomCount in species.atomcount.iteritems():
-							if(atomType in atomSkip): continue
+					if(species.name.lower() in atomSkip): continue
+					if(species.mass>0e0 or species.name.lower().endswith("_total")):
+						for (atomType,atomCount) in species.atomcount.iteritems():
+							if(atomType.lower() in atomSkip): continue
 							varRef = conserveLinGetRef_x = "conserveLinGetRef_x(idx_atom_"+atomType+")"
+							myFidxx = myFidxm = species.fidx
+							if(myFidxx.lower().endswith("_total")):
+								myFidxm = ("_".join(myFidxx.split("_")[:-1]))
+								myFidxx = myFidxm+"_ice"
 							refMass = varRef + " = "+ varRef + " + " + str(atomCount) \
-								+"d0*m(idx_"+atomType+")*x("+species.fidx+")/m("+species.fidx+")\n"
+								+"d0*m(idx_"+atomType+")*x("+myFidxx+")/m("+myFidxm+")\n"
 							refMassAll += refMass.replace(" 1d0*"," ")
 				fout.write(refMassAll+"\n")
 
@@ -5496,7 +5659,7 @@ class krome():
 	########################################################
 	def makeTabs(self):
 		buildFolder = self.buildFolder
-		coevars = self.coevars #copy coefficient varaibles
+		coevars = self.coevars #copy coefficient variables
 		#********* TABS ****************
 		print "- writing krome_tabs.f90...",
 		fh = open(self.srcFolder+"krome_tabs.f90")
@@ -5508,15 +5671,20 @@ class krome():
 		#include reactions that cannot be tabbed
 		countNoTab = 0
 		noTabReactions = "\n!non tabulated rates\n"
-		sclist = [] #list of the temperature shortcuts
+		storeOnceRates = ""
+		sclist = [] #list of the temperature short-cuts
 		for rea in self.reacts:
 			if(not(rea.canUseTabs)):
 
-				noTabReactions += rea.getRateF90(self,varname="coe_tab")+"\n\n"
-				#noTabReactions += "coe_tab("+str(rea.idx)+") = "+rea.krate+"\n"
-				countNoTab += 1
-				sclist = get_Tshortcut(rea,sclist,coevars) #add shotcut if needed
-
+				if(not(rea.isStoreOnce)):
+					noTabReactions += rea.getRateF90(self,varname="coe_tab")+"\n\n"
+					#noTabReactions += "coe_tab("+str(rea.idx)+") = "+rea.krate+"\n"
+					countNoTab += 1
+					sclist = get_Tshortcut(rea,sclist,coevars) #add short-cut if needed
+				else:
+					noTabReactions += "!"+rea.verbatim+"\n"
+					noTabReactions += "coe_tab("+str(rea.idx)+") = rateEvaluateOnce("+str(rea.idx)+")\n\n"
+					storeOnceRates += rea.getRateF90(self,varname="rateEvaluateOnce")+"\n\n"
 
 		#if reactions that cannot be tabbed are found
 		klist = kvars = ""
@@ -5535,7 +5703,7 @@ class krome():
 		#prepares the reaction modifiers
 		#tokenize to replace k(:) with coe_tab(:)
 		import tokenize,cStringIO
-		kModifierFull = "" #string that will contans all the lines of the rate modifier
+		kModifierFull = "" #string that will contains all the lines of the rate modifier
 		for kmod in self.kModifier:
 			#string to tokenizable object
 			src = cStringIO.StringIO(kmod).readline
@@ -5556,13 +5724,11 @@ class krome():
 		#replace pragmas
 		skip = False
 		for row in fh:
+			if(row.strip() == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 			if(row.strip() == "#IFKROME_useCustomCoe" and not(self.useCustomCoe)): skip = True
-			if(row.strip() == "#ENDIFKROME"): skip = False
-
 			if(row.strip() == "#IFKROME_useTabs" and not(self.useTabs)): skip = True
-			if(row.strip() == "#ENDIFKROME"): skip = False
-
 			if(row.strip() == "#IFKROME_useStandardCoe" and ((self.useCustomCoe) or (self.useTabs))): skip = True
+
 			if(row.strip() == "#ENDIFKROME"): skip = False
 
 			if(skip): continue
@@ -5574,6 +5740,7 @@ class krome():
 			row = row.replace("#KROME_init_vars",klist)
 			row = row.replace("#KROME_noTabReactions",noTabReactions)
 			row = row.replace("#KROME_rateModifier", kModifierFull)
+			row = row.replace("#KROME_storeOnceRates",storeOnceRates)
 
 			if(row.strip() == "#KROME_Tshortcuts"):
 				ssc = ""
@@ -5776,6 +5943,8 @@ class krome():
 			if(srow == "#IFKROME_hasH" and not("H" in speciesNames)): skip_speciesH2 = True
 			if(srow == "#IFKROME_hasHp" and not("H+" in speciesNames)): skip_speciesH2 = True
 			if(srow == "#IFKROME_hasHe" and not("HE" in speciesNames)): skip_speciesH2 = True
+			if(srow == "#IFKROME_hasHep" and not("HE+" in speciesNames)): skip_speciesH2 = True
+			if(srow == "#IFKROME_hasHepp" and not("HE++" in speciesNames)): skip_speciesH2 = True
 			if(srow == "#IFKROME_hasElectrons" and not("E" in speciesNames)): skip_speciesH2 = True
 
 
@@ -5786,10 +5955,12 @@ class krome():
 			if(srow == "#ENDIFKROME_hasH"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME_hasHp"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME_hasHe"): skip_speciesH2 = False
+			if(srow == "#ENDIFKROME_hasHep"): skip_speciesH2 = False
+			if(srow == "#ENDIFKROME_hasHepp"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME_hasElectrons"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME"): skip = False
 
-			if(skip or skip_nleq or skip_dTdust or skipGH or skip_speciesH2): continue
+			if(skip or skip_nleq or skip_dTdust or skipGH or skip_speciesH2 or skipPhotoDust): continue
 
 
 			#replace the small value for rates according to the maximum number of products
@@ -6163,7 +6334,6 @@ class krome():
 						CRheat += "!"+rea.verbatim+"\n"
 						reactantNames = [x.name.upper() for x in rea.reactants]
 						productNames = sorted([x.name.upper() for x in rea.products])
-						print reactantNames,productNames
 						if((reactantNames==["H"]) and (productNames==sorted(["H+","E"]))):
 							CRheat += "heat_CR = heat_CR + k("+str(rea.idx)+") * n("+rea.reactants[0].fidx+") * QH\n\n"
 						elif((reactantNames==["H2"]) and (productNames==sorted(["H2+","E"]))):
@@ -6447,6 +6617,20 @@ class krome():
 							fout.write("\t" + x + "\n")
 							inw += 1
 
+			#replace ice ODE variables
+			elif(srow=="#KROME_iceODEVariables"):
+				if(len(self.iceSpeciesList)>0):
+					iceODEVariables = {"dnChem_"+k.replace("_ICE","") for k in self.iceSpeciesList.keys()}
+					fout.write("real*8::"+(",".join(iceODEVariables))+"\n")
+
+			#replace ice ODE definitions
+			elif(srow=="#KROME_iceODEDefinitions"):
+				#loop on ice species
+				for (k,iceData) in self.iceSpeciesList.iteritems():
+					#break ODE into lines
+					vODEret = iceData["ODE"].replace("-k("," &\n -k(")
+					vODEret = vODEret.replace("+k("," &\n +k(")
+					fout.write("dnChem_"+k.replace("_ICE","")+" = "+vODEret+"\n")
 
 			#replace the pragma with the computation of the photorates using the opacity computed with
 			# the approximation of Glover+2009 Eqn.2
@@ -6544,11 +6728,15 @@ class krome():
 
 			elif(srow == "#KROME_JAC_PD"):
 				if(not(self.doJacobian)): continue
+				#flag to determine if the IF block is open
+				isBlockOpen = False
 				#build the Jacobian as J(i,j) = df_i/dx_j
 				for i in range(neq):
 					if(i+1==electronIdx and self.useComputeElectrons): continue
-					if(i==0): fout.write("if(j=="+str(i+1)+") then\n")
-					if(i>0): fout.write("elseif(j=="+str(i+1)+") then\n")
+					if(not(isBlockOpen)):
+						fout.write("if(j=="+str(i+1)+") then\n")
+						isBlockOpen = True
+					if(isBlockOpen): fout.write("elseif(j=="+str(i+1)+") then\n")
 					if(i!=Tgas_species.idx-1):
 						spdj = ""
 						has_pdj = False
@@ -6608,18 +6796,11 @@ class krome():
 		solar = get_solar_abundances()
 
 		scaleZ = []
-		#looks for H to rescale the metallicity otherwise skips
-		has_H = False
-		sHtot = "Htot = "
-		hasElectrons = False
-		for mols in specs:
-			if(mols.name=="E"): hasElectrons = True
-			if(not("H" in mols.atomcount2)): continue
-			Hcount = mols.atomcount2["H"]
-			if(Hcount>0): has_H = True
-			if(Hcount==1): sHtot += " &\n + n("+mols.fidx+")"
-			if(Hcount>1): sHtot += " &\n + "+str(Hcount)+"d0 * n("+mols.fidx+")"
+		hasElectrons = ("E" in [x.name for x in specs])
+		has_H = ("H" in [x.name for x in specs])
 
+		#looks for H to rescale the metallicity otherwise skips
+		sHtot = "Htot = get_Hnuclei(n(:))"
 		scaleZ.append(sHtot) #Htot= is the first of the list
 		#creates the metallicity rescaling subroutine
 		for (k,v) in solar.iteritems():
@@ -6627,9 +6808,12 @@ class krome():
 				scaleZ = [] #reset scaleZ since Htot= is no longer needed
 				break #skip routine if H is not present
 			for mols in specs:
+				if(mols.name.upper()=="H"): continue #skip hydrogen
 				if(mols.name.upper()=="HE"): continue #skip helium
+				if(mols.name.upper()=="CR"): continue #avoid Cr / CR confusion
+				if(mols.name.upper()=="CO"): continue #avoid Co / CO confusion
 				if(k.upper()==mols.name.upper()):
-					scaleZ.append("n("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
+					scaleZ.append("x("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
 		#non-negative index means H2 photodissociation reaction is set
 		useH2Photodissociation = (self.indexH2photodissociation>-1)
@@ -6683,14 +6867,20 @@ class krome():
 
 			if(srow == "#KROME_species"):
 				allBasics = []
-				for x in specs:
-					if(x.is_surface and self.hasSurfaceReactions):
-						xbasic = ("_".join(x.fidx.split("_")[:-1]))
-						xname = ("_".join(x.name.split("_")[:-1]))
+				for sp in specs:
+					if(sp.is_surface and self.hasSurfaceReactions):
+						xbasic = ("_".join(sp.fidx.split("_")[:-1]))
+						xname = ("_".join(sp.name.split("_")[:-1]))
 						if(not(xbasic in allBasics)):
-							fout.write("\tinteger,parameter::" + "KROME_"+xbasic + " = " + str(x.idx) +"\t!"+xname+"\n")
+							fout.write("\tinteger,parameter::" + "KROME_"+xbasic + " = " + str(sp.idx) +"\t!"+xname+"\n")
 							allBasics.append(xbasic)
-					fout.write("\tinteger,parameter::" + "KROME_"+x.fidx + " = " + str(x.idx) +"\t!"+x.name+"\n")
+					#add _GAS and _ICE species as standard and _TOTAL alias
+					nameLower = sp.name.lower()
+					if(nameLower.endswith("_total") and self.doRamsesTH):
+						gasSpecies = [x for x in specs if(x.name.lower()+"_total"==nameLower)][0]
+						fout.write("\tinteger,parameter::" + "KROME_"+gasSpecies.fidx + "_ice = " + str(sp.idx) +"\t!"+gasSpecies.name+"_ice\n")
+						fout.write("\tinteger,parameter::" + "KROME_"+gasSpecies.fidx + "_gas = " + str(gasSpecies.idx) +"\t!"+gasSpecies.name+"_gas\n")
+					fout.write("\tinteger,parameter::" + "KROME_"+sp.fidx + " = " + str(sp.idx) +"\t!"+sp.name+"\n")
 
 			#converter from MOCASSIN abundances to KROME
 			elif(srow == "#KROME_xmoc_map"):
@@ -7085,6 +7275,7 @@ class krome():
 			if(srow == "#ELSEKROME" and not(self.useX)): skip = False
 			if(srow == "#ELSEKROME" and self.useX): skip = True
 
+			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 			if(srow == "#IFKROME_usedTdust" and not(self.usedTdust)): skip = True
 			if(srow == "#IFKROME_useH2pd" and not(useH2Photodissociation)): skip = True
 			if(srow == "#IFKROME_useTabs" and not(self.useTabs)): skip = True
@@ -7463,6 +7654,7 @@ class krome():
 				indentF90(buildFolder+"krome_user.f90")
 				indentF90(buildFolder+"krome_gadiab.f90")
 				indentF90(buildFolder+"krome_phfuncs.f90")
+				indentF90(buildFolder+"krome_fit.f90")
 
 		print "done!"
 	#########################################
@@ -7739,6 +7931,8 @@ class krome():
 		if(not(os.path.exists(ramsesFolder))): os.makedirs(ramsesFolder)
 		specs = self.specs
 
+		#get_depleted()
+
 		#some initial abundances. if not found set default
 		# all in 1/cm3, except for T which is K
 		ndef = {"H": 7.5615e-1,
@@ -7754,12 +7948,11 @@ class krome():
 
 		excl = ["CR","g","Tgas","dummy"] #avoid specials
 
-		#count species excluding what is conteinted in excl list
+		#count species excluding what is contented in excl list
 		chemCount = 0
 		for x in specs:
 			if(x.name in excl): continue
 			chemCount += 1
-
 
 		#cooling_fine
 		#prepare the array for krome and back (ramses->krome->ramses)
@@ -7773,16 +7966,65 @@ class krome():
 		updateueq = scaleueq = bkscaleueq = bkupdateueq = vecupdateueq = vecbkupdateueq = ""
 		ichem = 0
 		fname = "cooling_fine.f90"
-		for x in specs:
+		gasSpeciesList = []
+		for sp in specs:
 			ichem += 1
-			if(not(x.name in excl)):
-				updateueq += "unoneq("+str(ichem)+") = uold(ind_leaf(i),ichem+1+"+str(ichem-1)+") !"+x.name+"\n"
-				if(x.mass>0e0): scaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*scale_d/"+str(x.mass)+" !"+x.name+"\n"
-				bkscaleueq += "unoneq("+str(ichem)+") = unoneq("+str(ichem)+")*"+str(x.mass)+"*iscale_d !"+x.name+"\n"
-				bkupdateueq += "uold(ind_leaf(i),ichem+1+"+str(ichem-1)+") = unoneq("+str(ichem)+") !"+x.name+"\n"
-				vecupdateueq += "unoneq("+str(ichem)+") = uin(i,2+"+str(ichem)+") !"+x.name+"\n"
-				vecbkupdateueq += "uout(i,2+"+str(ichem)+") = unoneq("+str(ichem)+") !"+x.name+"\n"
-		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq","#KROME_vecupdate_unoneq","#KROME_vecbackupdate_unoneq",]
+			#skip species in exclusion list
+			if(not(sp.name in excl)):
+				#lower case name of the species
+				nameLower = sp.name.lower()
+				#check if species is TOTAL, i.e. TOTAL=ICE+GAS
+				isIceTotal = (nameLower.endswith("_total"))
+				#if species is TOTAL, get the gas name (i.e. the name without _total)
+				if(isIceTotal):
+					gasSpecies = [x for x in specs if(x.name.lower()+"_total"==nameLower)][0]
+					gasSpeciesList.append(gasSpecies)
+
+				if(isIceTotal):
+					updateueq += "unoneq(krome_"+gasSpecies.fidx + "_ice) = uold(ind_leaf(i),ichem+krome_"+gasSpecies.fidx + "_ice) !" \
+					        + gasSpecies.name+"_ICE\n"
+					vecupdateueq += "unoneq(krome_"+gasSpecies.fidx + "_ice) = uin(i,2+krome_"+gasSpecies.fidx + "_ice) !" \
+					        + gasSpecies.name+"_ICE\n"
+				else:
+					updateueq += "unoneq(krome_"+sp.fidx+") = uold(ind_leaf(i),ichem+krome_"+sp.fidx+") !"+sp.name+"\n"
+					vecupdateueq += "unoneq(krome_"+sp.fidx+") = uin(i,2+krome_"+sp.fidx+") !"+sp.name+"\n"
+				#skip species with zero mass only if not TOTAL
+				if(sp.mass>0e0 or isIceTotal):
+					#if species is TOTAL then converts ICE
+					if(isIceTotal):
+						scaleueq += "unoneq(krome_" + gasSpecies.fidx + "_ice) = unoneq(krome_" + gasSpecies.fidx + "_ice)*scale_d/" \
+							+ str(gasSpecies.mass) + " !" + gasSpecies.name+"_ICE\n"
+					else:
+						scaleueq += "unoneq(krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+")*scale_d/"+str(sp.mass)+" !"+sp.name+"\n"
+				#if the species is TOTAL get the ICE value from TOTAL and GAS
+				if(isIceTotal):
+					bkscaleueq += "unoneq(krome_"+gasSpecies.fidx+"_total) = unoneq(krome_"+gasSpecies.fidx+"_total)*" \
+						+ str(gasSpecies.mass)+"*iscale_d !"+gasSpecies.name+"_total\n"
+				        bkupdateueq += "uold(ind_leaf(i),ichem+krome_"+gasSpecies.fidx + "_ice) = unoneq(krome_"+gasSpecies.fidx + "_ice) !" \
+					        + gasSpecies.name+"_ICE\n"
+				        vecbkupdateueq += "uout(i,2+krome_"+gasSpecies.fidx + "_ice) = unoneq(krome_"+gasSpecies.fidx + "_ice) !" \
+					        + gasSpecies.name+"_ICE\n"
+				else:
+					bkscaleueq += "unoneq(krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+")*"+str(sp.mass)+"*iscale_d !"+sp.name+"\n"
+				        bkupdateueq += "uold(ind_leaf(i),ichem+krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+") !"+sp.name+"\n"
+				        vecbkupdateueq += "uout(i,2+krome_"+sp.fidx+") = unoneq(krome_"+sp.fidx+") !"+sp.name+"\n"
+
+		#loop on ices found to convert KROME<->RAMSES
+		for gasSpecies in gasSpeciesList:
+			scaleueq += "\n!KROME requires total and gas phase "+gasSpecies.name+", here obtained from ice and gas\n"
+			scaleueq += "! "+gasSpecies.name+"_gas and "+gasSpecies.name+" are the same species\n"
+			scaleueq += "unoneq(krome_" + gasSpecies.fidx + "_total) = unoneq(krome_" + gasSpecies.fidx + "_ice) " \
+				+ " + unoneq(krome_" + gasSpecies.fidx + "_gas) !" + gasSpecies.name+"_TOTAL = " \
+				+ gasSpecies.name+"_GAS + " + gasSpecies.name+"_ICE\n"
+			bkscaleueq += "\n!RAMSES requires ice and gas phase "+gasSpecies.name+", here obtained from total and gas\n"
+			bkscaleueq += "unoneq(krome_"+gasSpecies.fidx+"_ice) = max(unoneq(krome_"+gasSpecies.fidx+"_total) - " \
+						+ "unoneq(krome_"+gasSpecies.fidx+"_gas), &\n unoneq(krome_"+gasSpecies.fidx+"_total)*1d-40) !" \
+						+ gasSpecies.name+"_ice = "+ gasSpecies.name+"_total - " + gasSpecies.name+"_gas\n"
+
+
+
+		org = ["#KROME_update_unoneq","#KROME_scale_unoneq","#KROME_backscale_unoneq","#KROME_backupdate_unoneq",\
+			"#KROME_vecupdate_unoneq","#KROME_vecbackupdate_unoneq",]
 		new = [updateueq, scaleueq, bkscaleueq, bkupdateueq, vecupdateueq, vecbkupdateueq]
 		#replace pragmas (org) with expressions (new)
 		self.replacein(pfold+fname, ramsesFolder+fname, org, new)

@@ -1,16 +1,18 @@
 #!/usr/bin/python
 #!python
-import glob
-import os
+import glob,os,sys
 os.chdir(".")
 
-hasrm = False
+#get verbosity
+verbose = ("-v" in sys.argv)
+
+rmCount = 0
 #clean all files with given extention in the root folder
 for x in [".log","~",".pyc",".dot",".gps",".tmp"]:
 	for files in glob.glob("*"+x):
 		os.unlink(files)
-		print "removing ./"+files
-		hasrm = True
+		if(verbose): print "removing ./"+files
+		rmCount += 1
 
 
 removePatterns = ["tools/*.pyc", \
@@ -19,6 +21,7 @@ removePatterns = ["tools/*.pyc", \
 	"tools/docmake/pngs/*.png", \
 	"tools/docmake/epss/*.eps", \
 	"tools/docmake/evals/*.json", \
+	"tools/docmake/evals/*.bak", \
 	"tools/docmake/dots/*.dot", \
 	"tools/docmake/htmls/*.html", \
 	]
@@ -27,8 +30,8 @@ removePatterns = ["tools/*.pyc", \
 for pattern in removePatterns:
 	for files in glob.glob(pattern):
 		os.unlink(files)
-		print "removing ./"+files
-		hasrm = True
+		if(verbose): print "removing ./"+files
+		rmCount += 1
 
 #remove temp files (~) from subfolders
 for root, dirnames, filenames in os.walk('.'):
@@ -36,8 +39,8 @@ for root, dirnames, filenames in os.walk('.'):
 		if(fle[len(fle)-1]=="~"):
 			fname = root+"/"+fle 
 			os.unlink(fname)
-			print "removing ./"+fname
-			hasrm = True
+			if(verbose): print "removing ./"+fname
+			rmCount += 1
 
 #clear build (files)
 for root, dirs, files in os.walk("./build/"):
@@ -45,9 +48,9 @@ for root, dirs, files in os.walk("./build/"):
 	#add slash ad the end of path if needed
 	if(path[len(path)-1]!="/"): path += "/"
 	for x in files:
-		print "removing ./"+path+x
+		if(verbose): print "removing ./"+path+x
 		os.remove(path+x)
-		hasrm = True
+		rmCount += 1
 
 #clear build (dirs)
 for root, dirs, files in os.walk("./build/"):
@@ -55,17 +58,17 @@ for root, dirs, files in os.walk("./build/"):
 	#add slash ad the end of path if needed
 	if(path[len(path)-1]!="/"): path += "/"
 	for x in dirs:
-		print "removing ./"+path+x
+		if(verbose): print "removing ./"+path+x
 		os.rmdir(path+x)
-		hasrm = True
+		rmCount += 1
 
 #add README file in build if not present
 fname = "build/README"
 if(not(os.path.isfile(fname))):
-	print "adding README in ./build"
+	if(verbose): print "adding README in ./build"
 	fout = open(fname,"w")
 	fout.write("this folder will contains the built files\n")
 	fout.close()
 
-if(not(hasrm)): print "nothing to clean"
+print str(rmCount-1)+" elements cleaned"
 print "done!"

@@ -1,5 +1,5 @@
 import sys,species,utils,os,urllib
-from math import log10,log,exp,sqrt
+from math import log10,log,exp,sqrt,pi
 
 class reaction:
 
@@ -21,6 +21,8 @@ class reaction:
 
 		if(reactionType=="KIDA"):
 			self.parseFormatKIDA(row,reactionFormat,atomSet,reactionType)
+		elif(reactionType=="UMIST"):
+			self.parseFormatUMIST(row,reactionFormat,atomSet,reactionType)
 		else:
 			self.parseFormatKROME(row,reactionFormat,atomSet,reactionType)
 
@@ -71,7 +73,7 @@ class reaction:
 			elif(part=="rate"):
 				self.rate.append(arow[i])
 			else:
-				print "ERROR: unknow format element "+part
+				print "ERROR: unknown format element "+part
 				sys.exit(reactionFormat)
 
 		#add cosmic rays if not present
@@ -83,12 +85,21 @@ class reaction:
 		#check mass and charge conservation
 		self.check()
 
+	#********************
+	#replace names from KIDA style
+	def speciesToKIDA(self,speciesName):
+
+		if(speciesName=="e-"): speciesName = "E"
+		if(speciesName.startswith("p")): speciesName = speciesName[1:]+"_para"
+		if(speciesName.startswith("o")): speciesName = speciesName[1:]+"_ortho"
+		if(speciesName.startswith("m")): speciesName = speciesName[1:]+"_meta"
+
+		return speciesName
 
 	#********************
 	def parseFormatKIDA(self,row,reactionFormat,atomSet,reactionType):
 
-
-		specials = ["","G","PHOTON"]
+		specials = ["","G","PHOTON","CR","CRP"]
 
 		#variables for cosmic rays and photochemistry
 		CRvar = "user_crate" #name of the CR flux variable
@@ -120,6 +131,15 @@ class reaction:
 		#loop on format to get data from the row as a dictionary
 		for i in range(len(fmt)):
 			dataRow[keys[i]] = srow[position:position+fmt[i]].strip()
+			startSpace = dataRow[keys[i]].startswith(" ")
+			endSpace = dataRow[keys[i]].endswith(" ")
+			hasSpace = (" " in dataRow[keys[i]])
+			if(not(startSpace) and not(endSpace) and hasSpace):
+				print "ERROR: in KIDA network row element has spaces in the middle!"
+				print " Probably format problems:", dataRow[keys[i]]
+				print " Line here below"
+				print srow
+				sys.exit()
 			position += fmt[i]
 
 		self.Tmin = [dataRow["tmin"]]
@@ -127,14 +147,14 @@ class reaction:
 
 		for i in range(maxReactants):
 			v = dataRow["R"+str(i)].strip()
-			if(v=="e-"): v = "E"
+			v = self.speciesToKIDA(v)
 			if(v.upper() in specials): continue
 			spec = species.species(v,atomSet)
 			self.reactants.append(spec)
 
 		for i in range(maxProducts):
 			v = dataRow["P"+str(i)].strip()
-			if(v=="e-"): v = "E"
+			v = self.speciesToKIDA(v)
 			if(v.upper() in specials): continue
 			spec = species.species(v,atomSet)
 			self.products.append(spec)
@@ -176,6 +196,73 @@ class reaction:
 				KK += "*(1d0 "+gpart+")"
 		else:
 			print "ERROR: KIDA formula "+str(arow["formula"])+" not supported!"
+			sys.exit()
+
+		KK = KK.replace("--","+").replace("++","+").replace("-+","-").replace("+-","-")
+
+		self.rate.append(KK)
+
+	#********************
+	def parseFormatUMIST(self,row,reactionFormat,atomSet,reactionType):
+
+		#http://www.aanda.org/articles/aa/pdf/2013/02/aa20465-12.pdf
+		#reaction no.:type:R1:R2:P1:P2:P3:P4:NE:[a:b:c:Tl:Tu:ST:ACC:REF]
+		keys = ("idx:type:R1:R2:P1:P2:P3:P4:NE:a:b:c:Tl:Tu:ST:ACC:REF").split(":")
+
+		specials = ["","CRP","CRPHOT","PHOTON"]
+
+		#variables for cosmic rays and photochemistry
+		CRvar = "user_crate" #name of the CR flux variable
+		Avvar = "user_Av" #name of the Av variable
+		refCRflux = 1.36e-17 #CR flux to scale variables
+
+		self.rate = []
+		self.reactants = []
+		self.products = []
+		self.Tmin = [None]
+		self.Tmax = [None]
+		self.reactionType = reactionType
+
+
+		srow = row.strip()
+		arow = [x.strip() for x in srow.split(":")]
+
+		dataRow = dict()
+		#loop on format to get data from the row as a dictionary
+		for i in range(len(keys)):
+			dataRow[keys[i]] = arow[i]
+
+		self.Tmin = [dataRow["Tl"]]
+		self.Tmax = [dataRow["Tu"]]
+
+		for i in range(2):
+			v = dataRow["R"+str(i+1)].strip()
+			if(v=="e-"): v = "E"
+			if(v.upper() in specials): continue
+			spec = species.species(v,atomSet)
+			self.reactants.append(spec)
+		for i in range(4):
+			v = dataRow["P"+str(i+1)].strip()
+			if(v=="e-"): v = "E"
+			if(v.upper() in specials): continue
+			spec = species.species(v,atomSet)
+			self.products.append(spec)
+
+
+		if(dataRow["type"]=="CP"):
+			KK = str(float(dataRow["a"])/refCRflux)+"*"+CRvar
+		elif(dataRow["type"]=="CR"):
+			KK = str(float(dataRow["a"])/refCRflux)+"*"+CRvar
+			if(float(dataRow["b"])!=0e0): KK += "*(T32)**("+dataRow["b"]+")"
+			KK += "*"+dataRow["c"]+"/(1d0-dustGrainAlbedo)"
+			if(float(dataRow["c"])==0e0): KK = "0d0"
+		elif(dataRow["type"]=="PH"):
+			KK = dataRow["a"]
+			if(float(dataRow["c"])!=0e0): KK += "*exp(-"+dataRow["c"]+"*"+Avvar+")"
+		else:
+			KK = dataRow["a"]
+			if(float(dataRow["b"])!=0e0): KK += "*(T32)**("+dataRow["b"]+")"
+			if(float(dataRow["c"])!=0e0): KK += "*exp(-"+dataRow["c"]+"*invT)"
 
 		KK = KK.replace("--","+").replace("++","+").replace("-+","-").replace("+-","-")
 
@@ -238,12 +325,23 @@ class reaction:
 		return self.verbatimHtml
 
 	#********************
+	def getRPHash(self,obj):
+		rpName = sorted([x.nameFile for x in obj])
+		return ("_".join(rpName))
+
+	#**************
+	def getReactantsHash(self):
+		return self.getRPHash(self.reactants)
+
+	#**************
+	def getProductsHash(self):
+		return self.getRPHash(self.products)
+
+	#********************
 	#get reaction unique hash, e.g. H_H__H2
 	def getReactionHash(self):
 		if(self.reactionHash!=None): return self.reactionHash
-		reactantsName = sorted([x.nameFile for x in self.reactants])
-		productsName = sorted([x.nameFile for x in self.products])
-		self.reactionHash = ("_".join(reactantsName))+"__"+("_".join(productsName))
+		self.reactionHash = self.getRPHash(self.reactants) + "__" + self.getRPHash(self.products)
 		return self.reactionHash
 
 	#********************
@@ -302,6 +400,28 @@ class reaction:
 	def getSpecies(self):
 		return self.reactants+self.products
 
+	#*******************
+	#compute Langevin, cm3/s
+	def computeLangevin(self,myNetwork):
+		#Lanvevin only with two reactants
+		if(len(self.reactants)!=2): return None
+		#needs a positive ion
+		if(not(+1 in [x.charge for x in self.reactants])): return None
+		#needs a neutral
+		if(not(0 in [x.charge for x in self.reactants])): return None
+
+		#get neutral polarizability, cm3
+		for reactant in self.reactants:
+			if(reactant.charge==0): polarizability = reactant.getPolarizability(myNetwork.polarizabilityData)
+		#need polarizability, cm3
+		if(polarizability==None): return None
+
+		#inverse of reduced mass, 1/g
+		invReducedMass = sum([1e0/x.mass for x in self.reactants])
+
+		elementaryCharge = 4.80320425e-10 #statC
+		return 2e0*pi*elementaryCharge*sqrt(polarizability*invReducedMass)
+
 	#********************
 	#merge limits and rates with another rate
 	def merge(self,myReaction):
@@ -338,6 +458,28 @@ class reaction:
 		return list(set(rateVariables))
 
 	#*****************
+	#return rate reaction in KROME format
+	def getKROMEformat(self,idx=1,includeTlimits=True):
+		line = ""
+		for i in range(len(self.rate)):
+			fmt = "@format:idx,"
+			fmt += ("R,"*len(self.reactants))
+			fmt += ("P,"*len(self.products))
+			if(includeTlimits):
+				if(self.Tmin[i]!=None): fmt += "Tmin,"
+				if(self.Tmax[i]!=None): fmt += "Tmax,"
+			fmt += "rate\n"
+			RR = (",".join([x.name for x in self.reactants]))
+			PP = (",".join([x.name for x in self.products]))
+			Tmin = Tmax = ""
+			if(includeTlimits):
+				if(self.Tmin[i]!=None): Tmin = str(self.Tmin[i]) + ","
+				if(self.Tmax[i]!=None): Tmax = str(self.Tmax[i]) + ","
+			data = str(idx+i+1)+","+RR+","+PP+","+Tmin+Tmax+self.rate[i]+"\n\n"
+			line += fmt+data
+		return line
+
+	#*****************
 	#boolean returned if variable found in rates
 	def hasVariable(self,myOptions,variable):
 		return (variable.lower() in [x.lower() for x in self.getRateVariables(myOptions)])
@@ -367,6 +509,8 @@ class reaction:
 			substFound = True
 			#loop until shortcut found and replaced
 			while(substFound):
+				#remove trailing comments (containing a "#")
+				rate = rate.split('#')[0]
 				#remove spaces
 				rate = rate.replace(" ","").lower()
 
@@ -469,8 +613,14 @@ class reaction:
 
 				#evaluate rate limited range
 				if(isTgas and hasEval):
-					kmin = eval(rate.replace("#"+variable.lower()+"#",str(Tmin)).replace("#",""))
-					kmax = eval(rate.replace("#"+variable.lower()+"#",str(Tmax)).replace("#",""))
+					try:
+						kmin = eval(rate.replace("#"+variable.lower()+"#",str(Tmin)).replace("#",""))
+						kmax = eval(rate.replace("#"+variable.lower()+"#",str(Tmax)).replace("#",""))
+					except:
+						print "ERROR: problem evaluating rate at limits"
+						print "limits:",str(Tmin),str(Tmax)
+						print "rate:", rate.replace("#","")
+						sys.exit()
 
 					evaluation[variable]["xlimits"] = [Tmin,Tmax]
 					evaluation[variable]["ylimits"] = [kmin,kmax]
@@ -529,9 +679,12 @@ class reaction:
 				data = evaluation[variable]
 
 				if(data==None): continue
-				hasPlot = True
 				xdata = data["xdata"]
 				ydata = data["ydata"]
+				if all([yd == 0.0 for yd in ydata]):
+					print "WARNING: The rate for {0} is zero; skipping the plot!".format(self.getVerbatim())
+					continue # all rate data are zero, so skip plotting
+				hasPlot = True
 
 				if(variable.lower()=="tgas"):
 					#plot full range
@@ -673,7 +826,7 @@ class reaction:
 					joint["limit1"] = [data1["xdataRange"][-1], data1["ydataRange"][-1]]
 					joint["limit2"] = [data2["xdataRange"][0], data2["ydataRange"][0]]
 					joint["extrapolation"] = [xeval, yeval]
-					joint["error"] = abs(yrate-yeval)/yrate
+					joint["error"] = abs(yrate-yeval)/(yrate + 1.0e-99)
 					self.evaluatedJoints.append(joint)
 
 	#****************
@@ -695,7 +848,7 @@ class reaction:
 
 	#****************
 	#make corresponding HTML page
-	def makeHtmlPage(self,myOptions):
+	def makeHtmlPage(self,myOptions,myNetwork):
 
 		fname = "htmls/rate_"+str(self.getReactionHash())+".html"
 
@@ -731,6 +884,16 @@ class reaction:
 		urlJSON = "../evals/rate_"+str(self.getReactionHash())+".json"
 		fout.write("<a href=\""+urlJSON+"\">get rate evaluation in JSON format</a>\n")
 		fout.write("<br><br>\n")
+
+		langevinRate = self.computeLangevin(myNetwork)
+		if(langevinRate!=None): fout.write("Langevin rate: " + utils.htmlExp(langevinRate) \
+			+ " cm<sup>3</sup>s<sup>-1</sup><br>\n")
+
+		allSpecies = sorted(self.getSpecies(), key=lambda x:x.name)
+		hrefNames = [x.getHrefName() for x in allSpecies]
+		fout.write("Species involved: "+(", ".join(hrefNames))+"<br><br>")
+
+
 		fout.write("<table>\n")
 		for (label,value) in table:
 			if(value==None): continue
@@ -796,6 +959,12 @@ class reaction:
 			#loop on different limits to check if data are present
 			for evaluation in self.evaluation:
 				if(not(rangeName in evaluation)): continue
+				data = evaluation[rangeName]
+				if(data==None): continue
+				ratedata = data["ydata"]
+				if all([yd == 0.0 for yd in ratedata]):
+					fout.write(bulletPoint+"The rate for this reaction is <b>ZERO</b><br>")
+					continue
 				if(evaluation[rangeName]!=None):
 					hasPlot = True
 					break

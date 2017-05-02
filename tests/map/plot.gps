@@ -22,8 +22,12 @@ set style line 4 lc rgb "green" lw 1.5 lt 4
 set style increment user
 unset pm3d
 unset surface
+
+nkrome = 4
+load 'species.gps'
+
 set key l
 #set zrange [1e-5:]
-splot 'fort.66' u 1:2:12 w l t "x(H2)"
+splot 'fort.66' u 1:2:krome_idx_H2 w l t "x(H2)"
 
 unset multiplot

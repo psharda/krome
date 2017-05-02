@@ -171,4 +171,21 @@ contains
 
   end function coe_tab
 
+#IFKROME_hasStoreOnceRates
+  !**************************
+  !compute rates that remain constant during solver call
+  subroutine makeStoreOnceRates(n)
+    use krome_commons
+    implicit none
+    real*8,intent(in)::n(nspec)
+    real*8::small
+
+    small = 0d0
+    rateEvaluateOnce(:) = 0d0
+
+#KROME_storeOnceRates
+
+  end subroutine makeStoreOnceRates
+#ENDIFKROME
+
 end module krome_tabs

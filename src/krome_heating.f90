@@ -245,6 +245,7 @@ contains
     use krome_constants
     use krome_subs
     use krome_getphys
+    use krome_fit
     implicit none
     real*8::n(:),Tgas,heat_Xray,k(:),ntot
     real*8::xheat_H,xheat_He,logH,logHe

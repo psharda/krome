@@ -12,12 +12,13 @@ makeOption = "debug"
 
 if("-makeopt" in argv):
 	makeOption = argv[argv.index("-makeopt")+1]
+doFTP = not("-skipFTP" in argv)
 
 testpath = "tests/" #where the tests are located
 prj_name = "alltest" #where the tests
 
 #import the list of tests from testpath
-tests = [x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath]
+tests = sorted([x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath])
 #tests = ["hello"]
 
 #start from this test (empty string start from first test)
@@ -35,7 +36,7 @@ if(mode=="check"):
 	call(["git", "pull", "origin"])
 
 	changesetFOLDER = "" #changeset of the current folder
-	proc = Popen(['git','show'],stdout=PIPE) #use git show to retrive local info
+	proc = Popen(['git','show'],stdout=PIPE) #use git show to retrieve local info
 	#loop on the output
 	for line in iter(proc.stdout.readline,''):
 		lstrip = line.rstrip()
@@ -46,7 +47,7 @@ if(mode=="check"):
 	#check if the changeset is retrieved
 	if(changesetFOLDER==""): sys.exit("ERROR: check mode enabled and git show command does not work properly")
 
-	#retireve the changeset on the SERVER
+	#retrieve the changeset on the SERVER
 	changesetSERVER = ""
 	#content = urllib2.urlopen('http://kromepackage.org/test/outcheck.log')
 	cj = cookielib.CookieJar()
@@ -64,7 +65,7 @@ if(mode=="check"):
 
 
 
-#read hastable if needed
+#read hashtable if needed
 if(mode=="check"):
 	hashtab = []
 	changeset = "unknown"
@@ -120,6 +121,15 @@ else:
 #write the changeset to file
 fout.write("changeset: "+changeset+"\n")
 
+testResults = dict()
+
+plotFolder = "alltests_plot/"
+#create plot directory if not present
+if(not(os.path.exists(plotFolder))): os.makedirs(plotFolder)
+#clear plot directory
+for ff in glob.glob(plotFolder+"*"):
+	os.remove(ff)
+
 run = False #run flag
 for test in tests:
 	if(test==first): run = True #run the first test
@@ -154,7 +164,7 @@ for test in tests:
 	#run executable
 	call(["./test"])
 
-	#run zenity notification when exectutable ends (LINUX USERS ONLY)
+	#run zenity notification when executable ends (LINUX USERS ONLY)
 	#if("linux" in platform.system().lower()):
 	#	notifier = "zenity"
 	#	fpath = "/usr/bin/"+notifier
@@ -182,14 +192,38 @@ for test in tests:
 				for x in hashall:
 					print x
 				#sys.exit()
-		print "Is OK?",testOK
+		print "Is test "+test+" OK?",testOK
+		testResults[test] = testOK
 		fout.write(test+" "+str(testOK)+" "+str(time.time())+" regular\n")
 
 
 	#call gnuplot if you want graphical result
-	if(mode=="eyeball"): call(["gnuplot"])
+	if(mode=="eyeball"):
+		call(["gnuplot"])
+	else:
+		#load plot file to remove reset
+		fhp = open("plot.gps","rb")
+		plotScript = [row for row in fhp]
+		fhp.close()
 
-	#clear directory
+		#open new plot file to write
+		fop = open("plot_all.gps","w")
+		filePNG = "../"+plotFolder+"plot_"+test+".png"
+		print "plot saved to "+filePNG
+		#add PNG terminal
+		fop.write("set terminal pngcairo size 800,600 enhanced\n")
+		fop.write("set output '"+filePNG+"'\n")
+		#loop on plot script lines
+		for row in plotScript:
+			#if reset found, skip line
+			if(row.strip()=="reset"): continue
+			fop.write(row)
+		fop.close()
+		#prepare gnuplot command to load script
+		plotCommand = ["gnuplot","-e","load 'plot_all.gps'"]
+		call(plotCommand)
+
+	#clear build directory
 	for ff in glob.glob("*"):
 		os.remove(ff)
 
@@ -203,20 +237,30 @@ for test in tests:
 #		fout.write(test+" "+str(False)+" "+str(time.time())+" skipped\n")
 fout.close()
 
+#print test results
+print "***************"
+print "Tests result:"
+for (test,result) in testResults.iteritems():
+	warningString = "<<<<<<<<<<<<<<<"
+	if(result): warningString = ""
+	print test,result,warningString
+print "***************"
+
 #copy the results to kromepackage.org using FTP
 import traceback
-if(mode=="check"):
-	filename = "outcheck.log"
-	if(not(os.path.isfile(filename))): sys.exit("ERROR: "+filename+" not present. Nothing to copy.")
+if(mode=="check" and doFTP):
+	fileList = ["outcheck.log"] + glob.glob(plotFolder+"*png")
 	if(not(os.path.isfile("../ftplogin.dat"))): sys.exit("ERROR: ftplogin.dat not present. Can't connect.")
-	print "copying "+filename+" using FTP..."
-	usr,psw = [x.strip() for x in open("../ftplogin.dat","rb").read().split()]
+	(usr,psw) = [x.strip() for x in open("../ftplogin.dat","rb").read().split()]
 	ftp = ftplib.FTP("kromepackage.org",usr, psw)
-	try:
-		ftp.cwd("/test")
-		ftp.storbinary("STOR "+filename, file(filename,"rb"))
-	except:
-		traceback.print_exc()
+	ftp.cwd("/test")
+	for filename in fileList:
+		print "copying "+filename+" using FTP..."
+		if(not(os.path.isfile(filename))): sys.exit("ERROR: "+filename+" not present. Nothing to copy.")
+		try:
+			ftp.storbinary("STOR "+filename.split("/")[-1], file(filename,"rb"))
+		except:
+			traceback.print_exc()
 	ftp.quit()
 	print "DONE!"
 
