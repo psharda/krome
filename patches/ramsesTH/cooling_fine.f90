@@ -20,6 +20,11 @@ subroutine cooling_fine(ilevel)
   if(numbtot(1,ilevel)==0)return
   if(verbose)write(*,111)ilevel
 
+  if (do_radtrans) then
+    call make_virtual_fine_dp(uold(1,1),ilevel,3+nvar)    
+    call radiative_cooling_fine(ilevel)
+  endif  
+
   ! Operator splitting step for cooling source term by vector sweeps
   if (do_cool) then
      ncache=active(ilevel)%ngrid
@@ -37,9 +42,6 @@ subroutine cooling_fine(ilevel)
      end do
   end if
 
-  if (do_radtrans) then
-    call radiative_cooling_fine(ilevel)
-  endif
 111 format('   Entering cooling_fine for level',i2)
 
 end subroutine cooling_fine
@@ -54,6 +56,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   use cooling_mod
   use krome_main !mandatory
   use krome_user !array sizes and utils
+  use rad_variables_amr, only : heating_rate
+  use ray_m, only : T_iso
   implicit none
   integer::ilevel,ngrid
   integer,dimension(1:nvector)::ind_grid
@@ -67,6 +71,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real(kind=8),dimension(1:nvector), save :: nH,T2,delta_T2,ekk,emag
   real(kind=8), save :: time_old=-1.
   integer, save :: nprint=20
+  real*8::phbin(krome_nPhotoBins)
+  real(kind=8) :: T_tmp
 
   !KROME: additional variables requested by KROME
   real*8::unoneq(krome_nmols), Tgas
@@ -160,34 +166,45 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
            Tgas  = T2(i) * mu_noneq_old
            t2old = T2(i)
 
-           ! Normalise to Av = 1 for n ~ 1e3, and let it scale like 2/3 power.
-           ! This is roughly correct according to Glover et al (astro-ph:1403.3530)
-           call krome_set_user_Av( (Av_rho * nH(i) / mu_noneq_old)**0.66667_8 )
-
-           if(do_cool.and.chemistry) then
-              !KROME: do chemistry+cooling
-              if (any(unoneq < 0.0_dp)) then
-                 write(*,*) 'Negative densities are not allowed'
-                 write(*,*) 'N: ', unoneq
-                 stop
+           if(do_radtrans) then
+              ! Set intensity from RT
+              phbin = heating_rate(ind_leaf(i),:)
+              if(any(phbin.lt.0.0_dp)) then
+                write(*,*) 'Negative intensity found in cell ', ind_leaf(i)
+                call clean_stop
               end if
-              call krome(unoneq(:), Tgas, dtcool)
-           elseif(.not.chemistry.and.do_cool) then
-              !KROME: cooling only
-              call krome_thermo(unoneq(:), Tgas, dtcool)
-           elseif(.not.do_cool.and.chemistry) then
-              !print *,"ERROR (KROME): you cannot do chemistry without cooling"
-              !KROME: do chemistry+cooling
-              if (any(unoneq < 0.0_dp)) then
-                 write(*,*) 'Negative densities are not allowed'
-                 write(*,*) 'N: ', unoneq
-                 stop
-              end if
-              call krome(unoneq(:), Tgas, dtcool)
-              t2old = T2(i)
-              Tgas  = t2old * mu_noneq_old
+              call krome_set_photoBinJ(phbin)
            else
-              continue
+              ! Normalise to Av = 1 for n ~ 1e3, and let it scale like 2/3 power.
+              ! This is roughly correct according to Glover et al (astro-ph:1403.3530)
+              call krome_set_user_Av( (Av_rho * nH(i) / mu_noneq_old)**0.66667_8 )
+           end if
+
+           if(isothermal) then
+             !KROME: do chemistry+cooling
+             if (any(unoneq < 0.0_dp)) then
+               write(*,*) 'Negative densities are not allowed'
+               write(*,*) 'N: ', unoneq
+               stop
+             end if
+             T_tmp = T_iso
+             call krome(unoneq(:), T_tmp, dtcool)
+           elseif(do_cool.and.chemistry) then
+             !KROME: do chemistry+cooling
+             if (any(unoneq < 0.0_dp)) then
+               write(*,*) 'Negative densities are not allowed'
+               write(*,*) 'N: ', unoneq
+               stop
+             end if
+             call krome(unoneq(:), Tgas, dtcool)
+           elseif(.not.chemistry.and.do_cool) then
+             !KROME: cooling only
+             call krome_thermo(unoneq(:), Tgas, dtcool)
+           elseif(.not.do_cool.and.chemistry) then
+              print *,"ERROR (KROME): you cannot do chemistry without cooling"
+              stop
+           else
+             continue
            end if
 
            !KROME: store the adiabatic index as the first element
@@ -243,7 +260,9 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
      do i=1,nleaf
        nH(i) = nH(i)/scale_nH
        T2(i) = T2(i)*nH(i)/scale_T2/(uold(ind_leaf(i),ichem)-1.0)
-       uold(ind_leaf(i),neul) = T2(i)+ekk(i)+emag(i)
+       if(.not.isothermal) then
+         uold(ind_leaf(i),neul) = T2(i)+ekk(i)+emag(i)
+       endif
        if (T2(i) < 0.) then
          !$omp critical
          if (nprint>0) then
