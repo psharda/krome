@@ -10,6 +10,8 @@ argv = sys.argv
 
 makeOption = "debug"
 
+gnuplotCommand = "gnuplot"
+
 if("-makeopt" in argv):
 	makeOption = argv[argv.index("-makeopt")+1]
 doFTP = not("-skipFTP" in argv)
@@ -199,7 +201,7 @@ for test in tests:
 
 	#call gnuplot if you want graphical result
 	if(mode=="eyeball"):
-		call(["gnuplot"])
+		call([gnuplotCommand])
 	else:
 		#load plot file to remove reset
 		fhp = open("plot.gps","rb")
@@ -220,7 +222,7 @@ for test in tests:
 			fop.write(row)
 		fop.close()
 		#prepare gnuplot command to load script
-		plotCommand = ["gnuplot","-e","load 'plot_all.gps'"]
+		plotCommand = [gnuplotCommand,"-e","load 'plot_all.gps'"]
 		call(plotCommand)
 
 	#clear build directory
