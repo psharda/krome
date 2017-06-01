@@ -644,14 +644,20 @@ contains
     end if
 #ENDIFKROME_useBindC
 
+    !$omp parallel
     dE = abs(upper-lower)/nPhotoBins
+    !$omp end parallel
     do i=1,nPhotoBins
+       !$omp parallel
        photoBinEleft(i) = dE*(i-1) + lower
        photoBinEright(i) = dE*i + lower
        photoBinEmid(i) = 0.5d0*(photoBinEleft(i)+photoBinEright(i))
+       !$omp end parallel
     end do
+    !$omp parallel
     photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
+    !$omp end parallel
 
     !initialize xsecs table
     call init_photoBins(bTgas)
