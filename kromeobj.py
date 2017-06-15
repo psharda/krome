@@ -4616,8 +4616,9 @@ class krome():
 					fout.write("real*8::photoBinEth(nPhotoRea) !energy treshold, eV\n")
 					fout.write("real*8::photoPartners(nPhotoRea) !index of the photoreactants\n")
 					fout.write("real*8::opacityDust(nPhotoBins) !interpolated opacity from tables\n")
-					fout.write("!$omp threadprivate(photoBinJ,photoBinEleft,photoBinEright,photoBinEmid,photoBinEdelta, &\n")
-					fout.write("!$omp    photoBinEidelta,photoBinJTab,photoBinRates,photoBinHeats,photoBinEth,photoPartners)\n")
+					fout.write("!$omp threadprivate(photoBinJ,photoBinJ_org,photoBinEleft,photoBinEright,photoBinEmid, &\n")
+					fout.write("!$omp    photoBinEdelta,photoBinEidelta,photoBinJTab,photoBinRates,photoBinHeats,photoBinEth, &\n")
+					fout.write("!$omp    photoPartners)\n")
 
 			elif(srow == "#KROME_var_parts" and self.typeGamma=="POPOVAS"):
 				spec_parts = ["H2even","H2odd","CO"]
@@ -5637,14 +5638,18 @@ class krome():
 					phbinx += "\n!"+rea.verbatim+"\n"
 					phbinx += "kk = 0d0\n"
 					phbinx += "if(energy_eV>"+str(rea.Tmin)+".and.energy_eV<"+str(rea.Tmax)+") kk = "+rea.kphrate+"\n"
+					phbinx += "!$omp parallel\n"
 					phbinx += "photoBinJTab("+str(rea.idxph)+",j) = kk\n"
+					phbinx += "!$omp end parallel\n"
 				row = phbinx+"\n"
 			#replace the energy treshold assuming that it is equal to Tmin
 			elif(srow=="#KROME_photobin_Eth"):
 				phbinx = ""
 				for rea in reacts:
 					if(rea.kphrate==None): continue
+					phbinx += "!$omp parallel\n"
 					phbinx += "photoBinEth("+str(rea.idxph)+") = "+str(rea.Tmin)+" !"+rea.verbatim+"\n"
+					phbinx += "!$omp end parallel\n"
 				row = phbinx+"\n"
 			#replace pragma with the opacity calculation as N_i*sigma_i for any species
 			elif(srow=="#KROME_photobin_opacity" and self.usePhotoOpacity):
