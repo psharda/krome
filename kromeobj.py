@@ -65,6 +65,7 @@ class krome():
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
 	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = False
+	xsecKernelFunction = "" #kernel function for interpolating xsecs
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
@@ -376,6 +377,9 @@ class krome():
 		self.parser.add_argument("-v", action="store_true", help="print the current version of KROME")
 		self.parser.add_argument("-ver", action="store_true", help="same as -v")
 		self.parser.add_argument("-version", action="store_true", help="same as -v")
+		self.parser.add_argument("-xsecKernelFunction", help="use a function to scale photo cross-sections when interpolated. \
+				Function has to be a function of energy, i.e. f(energy). Store it in krome_user_commons.f90 module.", \
+			metavar="FUNCTION")
 
 
 
@@ -1062,6 +1066,11 @@ class krome():
 			self.usePhIoniz = True
 			if(self.photoBins<0): die("ERRROR: number of frequency bins < 0!")
 			print "Reading option -photoBins (NBINS="+str(self.photoBins)+")"
+
+		#kernel for xsec interpolation
+		if(args.xsecKernelFunction):
+			self.xsecKernelFunction = args.xsecKernelFunction.strip()
+			print "Reading option -xsecKernelFunction ("+self.xsecKernelFunction+")"
 
 		#determine Tgas limit operators
 		if(args.Tlimit):
@@ -5576,6 +5585,14 @@ class krome():
 			if(row.strip() == "#ENDIFKROME_photobin_heat"): skip_heat = False
 
 			if(skip or skip_heat or skip_opacity): continue
+
+			#replace pragma with kernel xsec function
+			if("#KROME_xsecKernelFunction" in srow):
+				if(self.xsecKernelFunction==""):
+					row = row.replace("#KROME_xsecKernelFunction","")
+				else:
+					fpart = "&\n* "+self.xsecKernelFunction+"(energy)"
+					row = row.replace("#KROME_xsecKernelFunction",fpart)
 
 			#precompute broadeinng in photochemistry
 			if(srow=="#KROME_broadening_shift_precalc"):
