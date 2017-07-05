@@ -56,9 +56,13 @@ class network:
 		#prepare subnetwork
 		self.subNetwork(myOptions)
 
+		#prepare html pages for species
+		for mySpecies in self.getSpecies():
+			mySpecies.makeHtmlPage(self)
+			mySpecies.makeAllRatesHtmlPage(self,myOptions)
+
 		#prepare graphs
 		self.makeGraph()
-
 
 		#loop on reactions to evaluate
 		for myReaction in self.reactions:
@@ -77,10 +81,6 @@ class network:
 
 		self.deleteChangedPNGs(myOptions)
 
-		#prepare html pages for species
-		for mySpecies in self.getSpecies():
-			mySpecies.makeHtmlPage(self)
-			mySpecies.makeAllRatesHtmlPage(self,myOptions)
 
 		#plotting rates
 		print "plotting rates..."

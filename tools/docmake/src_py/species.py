@@ -95,6 +95,68 @@ class species():
 		self.mass = sum([atomSet[x] for x in self.exploded])
 		if(speciesName.upper()!="E"): self.mass -= self.charge*me
 
+		self.xsecs = dict()
+		#try to load xsec from file
+		self.loadXsecLeiden()
+
+
+	#**********************
+	def loadXsecLeiden(self):
+
+		fname = "xsecs/"+self.name+".dat"
+		if(not(os.path.exists(fname))): return
+
+		self.xsecs["leiden"] = dict()
+		self.xsecs["leiden"]["energy"] = []
+		self.xsecs["leiden"]["xsec_phi"] = []
+		self.xsecs["leiden"]["xsec_phd"] = []
+
+		clight = 2.99792458e10 #cm/s
+		hplanck = 4.135667662e-15 #eV*s
+
+		for row in open(fname,"rb"):
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow.startswith("#")): continue
+			(wl,xabs,xphd,xphi) = [float(x) for x in srow.split(" ") if(x!="")]
+			#wl in nm
+			energy = clight*hplanck/(wl*1e-7)
+			self.xsecs["leiden"]["energy"].append(energy)
+			self.xsecs["leiden"]["xsec_phi"].append(xphi)
+			self.xsecs["leiden"]["xsec_phd"].append(xphd)
+
+
+	#****************************
+	def plotXsec(self):
+
+		pngFileName = "pngs/xsec_"+self.nameFile+".png"
+		import matplotlib.pyplot as plt
+
+		#turn off interactivity
+		plt.ioff()
+
+		#cancel current plot
+		plt.clf()
+
+		plt.grid(b=True, color='0.65',linestyle='--')
+		#plot limited range
+		plt.xlabel("energy/eV")
+		plt.ylabel("xsec/cm2")
+		plt.title(self.name)
+
+		hasPlot = False
+		for (db,data) in self.xsecs.iteritems():
+			xdata = data["energy"]
+			for (k,ydata) in data.iteritems():
+				if(k=="energy"): continue
+				if(len(ydata)>0):
+					hasPlot = True
+					plt.plot(xdata,ydata,"-",label=k+" ("+db+")")
+
+		plt.legend(loc='best')
+		if(hasPlot): plt.savefig(pngFileName, dpi=150)
+
+
 	#**********************
 	def getHtmlName(self):
 		name = list(self.name)
@@ -178,6 +240,9 @@ class species():
 
 		tableHeader = "<tr>"+("<th>"*30)
 
+		#do xsec plot
+		self.plotXsec()
+
 		tableFormation = []
 		tableDestruction = []
 		for reactions in myNetwork.reactions:
@@ -224,7 +289,13 @@ class species():
 			fout.write("<tr bgcolor=\""+bgcolor+"\" valign=\"baseline\">"+reaction.getReactionHtmlRow(self)+"\n")
 			icount += 1
 		fout.write(tableHeader+"\n")
-		fout.write("</table>\n")
+		fout.write("</table><br><br>\n")
+
+		#put xsec png if data exists
+		if(len(self.xsecs)>0):
+			xsecPNG = "../pngs/xsec_"+self.nameFile+".png"
+			fout.write("<img src=\""+xsecPNG+"\" width=\"500px\">\n")
+
 
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
