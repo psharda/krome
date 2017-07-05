@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 #move to the python source folder
 sys.path.insert(0, "./src_py/")
