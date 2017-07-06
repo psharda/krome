@@ -398,6 +398,11 @@ class species():
 			link = "http://home.strw.leidenuniv.nl/~ewine/photo/index.php?file=display_species.php&species="+urllib.quote(self.name, safe='')
 			fout.write("<a href=\""+link+"\" target=\"_blank\">search on Leiden database</a>\n")
 
+		else:
+			link = "http://home.strw.leidenuniv.nl/~ewine/photo/data/photo_data/all_cross_sections/text_continuum/"+self.name+".txt"
+			fout.write("Cross-section missing: <a href=\""+link+"\" target=\"_blank\">search on Leiden database</a> and copy to <i>xsecs/" \
+				+self.name+".dat</i>\n")
+
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
 
