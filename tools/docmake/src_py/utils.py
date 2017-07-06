@@ -159,7 +159,7 @@ def htmlExpBig(arg,digits=2,maxLim=1e3):
 def htmlExp(arg,digits=2):
 	if(arg==None): return str(arg)
 	if(arg==0): return "0"
-	xp = int(math.log10(abs(arg)))
+	xp = int(math.log10(abs(arg)))-1
 	mt = arg/1e1**(xp)
 	mt = int(mt*1e1**digits)/1e1**digits
 	if(mt==1e0):
