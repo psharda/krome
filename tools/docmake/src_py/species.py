@@ -96,8 +96,10 @@ class species():
 		if(speciesName.upper()!="E"): self.mass -= self.charge*me
 
 		self.xsecs = dict()
+		self.phrates = dict()
 		#try to load xsec from file
 		self.loadXsecLeiden()
+		self.computePhRates()
 
 
 	#**********************
@@ -108,8 +110,8 @@ class species():
 
 		self.xsecs["leiden"] = dict()
 		self.xsecs["leiden"]["energy"] = []
-		self.xsecs["leiden"]["xsec_phi"] = []
-		self.xsecs["leiden"]["xsec_phd"] = []
+		self.xsecs["leiden"]["photoionization"] = []
+		self.xsecs["leiden"]["photodissociation"] = []
 
 		clight = 2.99792458e10 #cm/s
 		hplanck = 4.135667662e-15 #eV*s
@@ -122,9 +124,45 @@ class species():
 			#wl in nm
 			energy = clight*hplanck/(wl*1e-7)
 			self.xsecs["leiden"]["energy"].append(energy)
-			self.xsecs["leiden"]["xsec_phi"].append(xphi)
-			self.xsecs["leiden"]["xsec_phd"].append(xphd)
+			self.xsecs["leiden"]["photoionization"].append(xphi)
+			self.xsecs["leiden"]["photodissociation"].append(xphd)
 
+		#reverse data
+		self.xsecs["leiden"]["energy"] = self.xsecs["leiden"]["energy"][::-1]
+		self.xsecs["leiden"]["photoionization"] = self.xsecs["leiden"]["photoionization"][::-1]
+		self.xsecs["leiden"]["photodissociation"] = self.xsecs["leiden"]["photodissociation"][::-1]
+
+	#**********************
+	def computePhRates(self):
+		import numpy as np
+		from math import pi
+		from photo import Jdraine
+
+		hplanck = 4.135667662e-15 #eV*s
+
+		frads = {"Draine1978":Jdraine}
+
+		#loop on databases
+		for (db,data) in self.xsecs.iteritems():
+			self.phrates[db] = dict()
+			xdata = data["energy"]
+			#loop on rates
+			for (k,ydata) in data.iteritems():
+				if(k=="energy"): continue
+				if(len(ydata)==0): continue
+				self.phrates[db][k] = dict()
+				#loop on radiation fluxes
+				for radName,Jfun in frads.iteritems():
+					fdata = []
+					#loop on energy range
+					for i in range(len(xdata)):
+						sigma = ydata[i] #cm2
+						energy = xdata[i] #eV
+						Jrad = Jfun(energy) #eV/cm2/sr
+						fdata.append(Jrad*sigma/energy)
+					#compute integral and rate, 1/s
+					kph = 4e0*pi*np.trapz(fdata,xdata)/hplanck
+					self.phrates[db][k][radName] = kph
 
 	#****************************
 	def plotXsec(self):
@@ -296,6 +334,22 @@ class species():
 			xsecPNG = "../pngs/xsec_"+self.nameFile+".png"
 			fout.write("<img src=\""+xsecPNG+"\" width=\"500px\">\n")
 
+
+			#table with integrated photorates
+			thead = "<tr>"+"<th>"*4
+			fout.write("<br><br>\n")
+			fout.write("<p style=\"font-size:20px\">Photochemical rates (1/s)</p><br>\n")
+			fout.write("<table width=\"50%\">\n")
+			fout.write(thead+"\n")
+			fout.write("<tr><td>process<td>database<td>radiation<td>rate/s\n")
+			fout.write(thead+"\n")
+			for (db,data) in self.phrates.iteritems():
+				#loop on rates
+				for (k,ydata) in data.iteritems():
+					for radName,kph in ydata.iteritems():
+						fout.write("<tr><td>"+k+"<td>"+db+"<td>"+radName+"<td>"+str(kph)+"\n")
+			fout.write(thead+"\n")
+			fout.write("</table><br><br>\n")
 
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
