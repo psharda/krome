@@ -1890,6 +1890,7 @@ contains
   function krome_get_coef(Tgas,x) #KROME_bindC
     use krome_commons
     use krome_subs
+    use krome_tabs
 #IFKROME_useBindC
     real(kind=c_double), value :: Tgas
     real(kind=c_double), target :: coeffs(nrea)
@@ -1902,6 +1903,10 @@ contains
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
+
+#IFKROME_hasStoreOnceRates
+    call makeStoreOnceRates(n(:))
+#ENDIFKROME
 
 #IFKROME_useBindC
     coeffs(:) = coe(n(:))
