@@ -5384,6 +5384,7 @@ class krome():
 			if(srow == "#IFKROME_useH2dust_constant" and not(self.useDustH2const)): skip = True
 			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
+			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 
 		        if(srow == "#ENDIFKROME"): skip = False
 
@@ -5480,9 +5481,13 @@ class krome():
 
 			#write reaction rates in coe function
 			if(srow == "#KROME_krates"):
-				for x in reacts:
-					#build temperature limit IF
-					kstr = x.getRateF90(self)
+				for rea in reacts:
+					#get rate expression including temperature limit conditions
+					kstr = rea.getRateF90(self)
+					#replace rates with store once if required
+					if(rea.isStoreOnce):
+						kstr = "!"+rea.verbatim+"\n"
+						kstr += "k("+str(rea.idx)+") = rateEvaluateOnce("+str(rea.idx)+")"
 					fout.write(truncF90(kstr, 60,"/")+"\n\n") #truncate
 			#replace arrays for best flux
 			elif(srow == "#KROME_arr_reactprod"):
