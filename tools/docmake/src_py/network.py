@@ -56,9 +56,13 @@ class network:
 		#prepare subnetwork
 		self.subNetwork(myOptions)
 
+		#prepare html pages for species
+		for mySpecies in self.getSpecies():
+			mySpecies.makeHtmlPage(self)
+			mySpecies.makeAllRatesHtmlPage(self,myOptions)
+
 		#prepare graphs
 		self.makeGraph()
-
 
 		#loop on reactions to evaluate
 		for myReaction in self.reactions:
@@ -77,10 +81,6 @@ class network:
 
 		self.deleteChangedPNGs(myOptions)
 
-		#prepare html pages for species
-		for mySpecies in self.getSpecies():
-			mySpecies.makeHtmlPage(self)
-			mySpecies.makeAllRatesHtmlPage(self,myOptions)
 
 		#plotting rates
 		print "plotting rates..."
@@ -724,7 +724,7 @@ class network:
 	def makeHtmlSpeciesIndex(self):
 
 		fname = "htmls/indexSpecies.html"
-		header = "<th><th><th><th>"
+		header = "<th><th><th><th><th>"
 
 		#open file to write
 		fout = open(fname,"w")
@@ -736,7 +736,7 @@ class network:
 		#reaction table
 		fout.write("<table width=\"60%\">\n")
 		fout.write("<tr>"+header+"\n")
-		fout.write("<tr><td>name<td>&Delta;H@0K (kJ/mol)<td>&Delta;H@298.15K (kJ/mol)<td>&alpha; (&Aring;<sup>3</sup>)\n")
+		fout.write("<tr><td>name<td>&Delta;H@0K (kJ/mol)<td>&Delta;H@298.15K (kJ/mol)<td>&alpha; (&Aring;<sup>3</sup>)<td>xsecs?\n")
 		fout.write("<tr>"+header+"\n")
 		icount = 0
 		#loop on reactions
@@ -747,8 +747,10 @@ class network:
 			enthalpy298 = mySpecies.getEnthalpy(self.thermochemicalData)
 			polarizability = mySpecies.getPolarizability(self.polarizabilityData)
 			if(polarizability!=None): polarizability /= 1e-24 #cm3->AA3
+			hasPhoto = ""
+			if(len(mySpecies.phrates)>0): hasPhoto = "yes"
 			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"<td>"+str(enthalpy0) \
-				+ "<td>"+str(enthalpy298)+ "<td>"+str(polarizability)+"\n")
+				+ "<td>"+str(enthalpy298)+ "<td>"+str(polarizability)+"<td>"+hasPhoto+"\n")
 			icount += 1
 		fout.write("<tr>"+header+"\n")
 		fout.write("</table>\n")
