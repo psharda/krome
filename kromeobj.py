@@ -6862,6 +6862,7 @@ class krome():
 			if(srow == "#IFKROME_has_electrons" and not(hasElectrons)): skip = True
 			if(srow == "#IFKROME_useTabsTdust" and not(self.useDustTabs)): skip = True
 			if(srow == "#IFKROME_customFex" and not(self.useFexCustom)): skip = True
+			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 			if(srow == "#IFKROME_dust_opacity" and not(self.useDust)): skipDustOpacity = True
 			if(srow == "#IFKROME_useH2pd" and not(useH2Photodissociation)): skipH2pd = True
 
