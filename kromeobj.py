@@ -3116,6 +3116,18 @@ class krome():
 		fout.write("# as framework code passive scalars, while the last "+str(len(self.specs)-self.nmols)+"\n")
 		fout.write("# are employed inside KROME.\n")
 
+		#species as a python list
+		fout.write("\n\n#********************************\n")
+		fout.write("# Species in a Python list of strings\n")
+		idx = 0
+		pylist = ""
+		for mol in self.specs:
+			idx += 1
+			pylist += "\""+mol.name+"\", "
+			if(idx%10==0): pylist += "\\\n "
+		fout.write("["+pylist+"]\n")
+
+
 		#table with info as a structure
 		addInfo = [["krome_nrea", str(self.nrea), "!number of reactions"],\
 			["krome_nmols", str(self.nmols), "!number of chemical species"],\
