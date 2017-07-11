@@ -116,6 +116,12 @@ class species():
 		fname = "xsecs/"+self.name+".dat"
 		if(not(os.path.exists(fname))): return
 
+		sizeMb = round(os.path.getsize(fname)/1024**2,1)
+
+		if(sizeMb>50):
+			print "WARNING: "+fname+" is quite large ("+str(sizeMb)+" MB) skipping..."
+			return
+
 		self.xsecs["leiden"] = dict()
 
 		clight = 2.99792458e10 #cm/s
