@@ -3,12 +3,13 @@ import reaction,utils,options,copy
 
 class network:
 
-	species = None
-	speciesDictionary = None
 
 	#************************
 	#class constructor
 	def __init__(self,myOptions):
+
+		self.species = []
+		self.speciesDictionary = []
 
 
 		#get network file name
@@ -61,6 +62,9 @@ class network:
 			mySpecies.makeHtmlPage(self)
 			mySpecies.makeAllRatesHtmlPage(self,myOptions)
 
+		#check missing file
+		self.reportXsecsFiles()
+
 		#prepare graphs
 		self.makeGraph()
 
@@ -91,6 +95,21 @@ class network:
 			myReaction.plotRate(myOptions)
 			icount += 1
 
+	#********************
+	#check xsec folder and write xsec status to log file
+	def reportXsecsFiles(self,logName="xsecs.log",folder="xsecs/"):
+
+		fout = open(logName,"w")
+		#loop on species
+		for spec in self.species:
+			fname = folder+spec.name+".dat"
+			status = "missing <<<"
+			#check if file is present
+			if(os.path.exists(fname)): status = "present"
+			specName = spec.name+(" "*(30-len(spec.name)))
+			fout.write(specName+status+"\n")
+		fout.close()
+		print "xsecs data report written to "+logName
 
 	#********************
 	def detectNetworkType(self,fileName):
@@ -142,7 +161,7 @@ class network:
 			if(srow.startswith("@")): continue
 
 			#parse row line for reaction
-			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType)
+			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType,self.species)
 
 			#add parsed reaction to reactions structure in network
 			self.reactions.append(myReaction)
@@ -200,7 +219,7 @@ class network:
 	#**************
 	#get all network species
 	def getSpecies(self):
-		if(self.species!=None): return self.species
+		if(self.species!=[]): return self.species
 		self.species = []
 		#loop on reactions
 		for reaction in self.reactions:
@@ -217,7 +236,7 @@ class network:
 	#**************
 	#get all network species in a dictionary with NAME as keys
 	def getSpeciesDictionary(self):
-		if(self.speciesDictionary!=None): return self.speciesDictionary
+		if(self.speciesDictionary!=[]): return self.speciesDictionary
 
 		#unique list of species
 		self.speciesDictionary = dict()
