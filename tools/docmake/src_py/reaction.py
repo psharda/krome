@@ -17,17 +17,17 @@ class reaction:
 
 	#********************
 	#parse csv reaction file row (constructor)
-	def __init__(self,row,reactionFormat,atomSet,reactionType):
+	def __init__(self,row,reactionFormat,atomSet,reactionType,speciesList):
 
 		if(reactionType=="KIDA"):
-			self.parseFormatKIDA(row,reactionFormat,atomSet,reactionType)
+			self.parseFormatKIDA(row,reactionFormat,atomSet,reactionType,speciesList)
 		elif(reactionType=="UMIST"):
-			self.parseFormatUMIST(row,reactionFormat,atomSet,reactionType)
+			self.parseFormatUMIST(row,reactionFormat,atomSet,reactionType,speciesList)
 		else:
-			self.parseFormatKROME(row,reactionFormat,atomSet,reactionType)
+			self.parseFormatKROME(row,reactionFormat,atomSet,reactionType,speciesList)
 
 	#********************
-	def parseFormatKROME(self,row,reactionFormat,atomSet,reactionType):
+	def parseFormatKROME(self,row,reactionFormat,atomSet,reactionType,speciesList):
 
 		if(not(reactionFormat.startswith("@format:"))):
 			sys.exit("ERROR: wrong format "+reactionFormat)
@@ -54,12 +54,12 @@ class reaction:
 			#reactant
 			elif(part=="r"):
 				if(arow[i].upper() in specials): continue
-				spec = species.species(arow[i],atomSet)
+				spec = self.linkOrCreateSpecies(arow[i],atomSet,speciesList)
 				self.reactants.append(spec)
 			#product
 			elif(part=="p"):
 				if(arow[i].upper() in specials): continue
-				spec = species.species(arow[i],atomSet)
+				spec = self.linkOrCreateSpecies(arow[i],atomSet,speciesList)
 				self.products.append(spec)
 			#min temperature
 			elif(part=="tmin"):
@@ -79,7 +79,7 @@ class reaction:
 		#add cosmic rays if not present
 		hasCR = ("CR" in [x.name for x in self.reactants])
 		if(not(hasCR) and reactionType=="CR"):
-				spec = species.species("CR",atomSet)
+				spec = self.linkOrCreateSpecies("CR",atomSet,speciesList)
 				self.reactants.append(spec)
 
 		#check mass and charge conservation
@@ -97,7 +97,7 @@ class reaction:
 		return speciesName
 
 	#********************
-	def parseFormatKIDA(self,row,reactionFormat,atomSet,reactionType):
+	def parseFormatKIDA(self,row,reactionFormat,atomSet,reactionType,speciesList):
 
 		specials = ["","G","PHOTON","CR","CRP"]
 
@@ -149,14 +149,14 @@ class reaction:
 			v = dataRow["R"+str(i)].strip()
 			v = self.speciesToKIDA(v)
 			if(v.upper() in specials): continue
-			spec = species.species(v,atomSet)
+			spec = self.linkOrCreateSpecies(v,atomSet,speciesList)
 			self.reactants.append(spec)
 
 		for i in range(maxProducts):
 			v = dataRow["P"+str(i)].strip()
 			v = self.speciesToKIDA(v)
 			if(v.upper() in specials): continue
-			spec = species.species(v,atomSet)
+			spec = self.linkOrCreateSpecies(v,atomSet,speciesList)
 			self.products.append(spec)
 
 		#Formula is a number that referes to the formula needed to compute the rate coefficient of the reaction.
@@ -203,7 +203,7 @@ class reaction:
 		self.rate.append(KK)
 
 	#********************
-	def parseFormatUMIST(self,row,reactionFormat,atomSet,reactionType):
+	def parseFormatUMIST(self,row,reactionFormat,atomSet,reactionType,speciesList):
 
 		#http://www.aanda.org/articles/aa/pdf/2013/02/aa20465-12.pdf
 		#reaction no.:type:R1:R2:P1:P2:P3:P4:NE:[a:b:c:Tl:Tu:ST:ACC:REF]
@@ -239,13 +239,13 @@ class reaction:
 			v = dataRow["R"+str(i+1)].strip()
 			if(v=="e-"): v = "E"
 			if(v.upper() in specials): continue
-			spec = species.species(v,atomSet)
+			spec = self.linkOrCreateSpecies(v,atomSet,speciesList)
 			self.reactants.append(spec)
 		for i in range(4):
 			v = dataRow["P"+str(i+1)].strip()
 			if(v=="e-"): v = "E"
 			if(v.upper() in specials): continue
-			spec = species.species(v,atomSet)
+			spec = self.linkOrCreateSpecies(v,atomSet,speciesList)
 			self.products.append(spec)
 
 
@@ -268,6 +268,23 @@ class reaction:
 
 		self.rate.append(KK)
 
+	#**************
+	#create a new species if not known, otherwise use known from list
+	def linkOrCreateSpecies(self,speciesName,atomSet,speciesList):
+
+		#loop on species
+		for spec in speciesList:
+			#if name found return known
+			if(spec.name==speciesName):
+				return spec
+
+		#create new species
+		newSpecies = species.species(speciesName,atomSet)
+
+		#append to list of species
+		speciesList.append(newSpecies)
+
+		return newSpecies
 
 	#**************
 	#check reaction charge and mass conservation
