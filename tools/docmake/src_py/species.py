@@ -116,11 +116,16 @@ class species():
 		fname = "xsecs/"+self.name+".dat"
 		if(not(os.path.exists(fname))): return
 
-		sizeMb = round(os.path.getsize(fname)/1024**2,1)
+		sizeMB = round(os.path.getsize(fname)/1024**2,1)
 
-		if(sizeMb>50):
-			print "WARNING: "+fname+" is quite large ("+str(sizeMb)+" MB) skipping..."
-			return
+		if(sizeMB > 50.0):
+			print "WARNING: "+fname+" is quite large ("+str(sizeMB)+" MB)"
+			while 1:
+				reply = raw_input("Load Xsec file? (y/n) ").lower().strip()
+				if reply[0] == 'y':
+					break
+				if reply[0] == 'n':
+					return
 
 		self.xsecs["leiden"] = dict()
 
@@ -199,6 +204,8 @@ class species():
 					#store rate, 1/s
 					self.phrates[db][k][radName] = kph
 
+		if (len(self.xsecs)!=0):
+			print "  Photochemical rates for {0} calculated".format(self.name)
 
 	#****************************
 	#plot xsecs to PNG
