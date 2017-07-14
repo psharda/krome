@@ -10,6 +10,7 @@ class network:
 
 		self.species = []
 		self.speciesDictionary = []
+		self.myOptions = myOptions
 
 
 		#get network file name
@@ -44,7 +45,7 @@ class network:
 
 		#get ranges from option file
 		varRanges = dict()
-		for rng in myOptions.range:
+		for rng in self.myOptions.range:
 			#store range name and range limits
 			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
 			varRanges[rangeName] = [float(x) for x in rangeValue.split(",")]
@@ -55,36 +56,60 @@ class network:
 		self.backupEvaluationJSON()
 
 		#prepare subnetwork
-		self.subNetwork(myOptions)
+		self.subNetwork(self.myOptions)
 
-		#prepare html pages for species
-		for mySpecies in self.getSpecies():
-			mySpecies.makeHtmlPage(self)
-			mySpecies.makeAllRatesHtmlPage(self,myOptions)
-
-		#check missing file
+		#check missing xsecs file
 		self.reportXsecsFiles()
 
-		#prepare graphs
-		self.makeGraph()
 
 		#loop on reactions to evaluate
 		for myReaction in self.reactions:
 			myReaction.evaluateRate(shortcuts,varRanges)
-			myReaction.makeHtmlPage(myOptions,self)
 
-		#create reaction index page
+	#******************************
+	#prepare complete documentation
+	def makeAllDoc(self):
+
+		#prepare graphs
+		self.makeGraph()
+
+		#prepare html
+		self.makeHTML()
+
+		#plot all rates
+		self.plotRates()
+
+	#********************
+	#prepare all the html pages
+	def makeHTML(self):
+
+
+		#prepare html pages for species
+		for mySpecies in self.getSpecies():
+			mySpecies.makeHtmlPage(self)
+			mySpecies.makeAllRatesHtmlPage(self,self.myOptions)
+
+		#loop on reactions to evaluate
+		for myReaction in self.reactions:
+			myReaction.makeHtmlPage(self.myOptions,self)
+
+		#create HTML pages
 		self.makeHtmlIndex()
-		self.makeHtmlMissingBranchesIndex(myOptions)
-		self.makeHtmlMissingReactionIndex(myOptions)
-		self.makeHtmlReactionIndex(myOptions)
+		self.makeHtmlMissingBranchesIndex(self.myOptions)
+		self.makeHtmlMissingReactionIndex(self.myOptions)
+		self.makeHtmlReactionIndex(self.myOptions)
 		self.makeHtmlSpeciesIndex()
 		self.makeHtmlGraphIndex()
-		self.makeHtmlAllRates(myOptions)
-		self.makeHtmlMultipleRates(myOptions)
+		self.makeHtmlAllRates(self.myOptions)
+		self.makeHtmlMultipleRates(self.myOptions)
 
-		self.deleteChangedPNGs(myOptions)
 
+	#**********************
+	#plot all rates to PNG
+	def plotRates(self):
+
+		#delete plots that are not changed
+		self.deleteChangedPNGs(self.myOptions)
 
 		#plotting rates
 		print "plotting rates..."
@@ -92,7 +117,7 @@ class network:
 		#loop on reactions to plot
 		for myReaction in self.reactions:
 			print str(int(icount*1e2/len(self.reactions)))+"%", myReaction.getVerbatim()
-			myReaction.plotRate(myOptions)
+			myReaction.plotRate(self.myOptions)
 			icount += 1
 
 	#********************
