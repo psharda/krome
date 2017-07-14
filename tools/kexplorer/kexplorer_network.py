@@ -41,7 +41,7 @@ class network:
 
 	#**********************
 	#network contructor read kexplorer file
-	def __init__(self,fileName,fileNameEvolution):
+	def __init__(self,fileName,fileNameEvolution=None):
 
 		#read data from file
 		fh = open(fileName,"rb")
@@ -53,26 +53,28 @@ class network:
 
 		fh.close()
 
-		#added by Jels Boulangier 05/04/2017
-		#read data from file
-		fg = open(fileNameEvolution,"rb")
-		#list of all elements
-		fline = fg.readline().strip().split(" ")
-		flineElem = fline[3:]
-		#add element data per block in the inout file
-		elemBlock = []
-		for row in fg:
-			srow = row.strip()
-			if(srow==""):
-				self.addElement(elemBlock,flineElem)
-				elemBlock = []
-			else:
-				elemBlock.append(srow)
+		#uses evolution data only if file name is present
+		if(fileNameEvolution!=None):
+			#added by Jels Boulangier 05/04/2017
+			#read data from file
+			fg = open(fileNameEvolution,"rb")
+			#list of all elements
+			fline = fg.readline().strip().split(" ")
+			flineElem = fline[3:]
+			#add element data per block in the inout file
+			elemBlock = []
+			for row in fg:
+				srow = row.strip()
+				if(srow==""):
+					self.addElement(elemBlock,flineElem)
+					elemBlock = []
+				else:
+					elemBlock.append(srow)
 
-		fg.close()
+			fg.close()
 
-		# determine (Tgas,xvar)-grid
-		self.getRangeTgasXvar()
+			# determine (Tgas,xvar)-grid
+			self.getRangeTgasXvar()
 
 
 
@@ -278,9 +280,11 @@ class network:
 						#store all species
 						allSpecies.append(product)
 						#init variable data
-						if(not(product in graphMax[reactant])): graphMax[reactant][product] = 0e0
+						if(not(product in graphMax[reactant])):
+							graphMax[reactant][product] = 0e0
 						#store maxium edge value
-						graphMax[reactant][product] = max(reaction.fluxNormTotData[i],graphMax[reactant][product])
+						graphMax[reactant][product] = \
+							max(reaction.fluxNormTotData[i], graphMax[reactant][product])
 
 			#create temporary dot file
 			fout = open("tmp.dot","w")
@@ -315,7 +319,8 @@ class network:
 						#get log of flux
 						lineWidth = log10(graphMax[reactant][product]+1e-40)
 						#set a limit to flux size
-						lineWidth = max(lineWidth-log10(self.minFlux),0e0)*self.maxPenWidth/(-log10(self.minFlux))
+						lineWidth = max(lineWidth-log10(self.minFlux),0e0) \
+							* self.maxPenWidth/(-log10(self.minFlux))
 					else:
 						lineWidth = graphMax[reactant][product]
 						if(lineWidth<self.minFlux): lineWidth = 0e0
@@ -330,7 +335,7 @@ class network:
 					#edge style
 					style = "[penwidth="+str(lineWidth)+", color=\""+color+"\", arrowsize=.5]"
 					#write to dot file
-					fout.write("\""+reactant+"\" -> \""+product+"\" "+style+";\n") #self.graphMap[reactant][product]
+					fout.write("\""+reactant+"\" -> \""+product+"\" "+style+";\n")
 			fout.write("}\n")
 			fout.close()
 
@@ -523,6 +528,8 @@ class network:
 		datenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		bitbucketLink = "https://bitbucket.org/tgrassi/krome/commits/"+changeset
 		bitbucketLanding = "<a href=\"https://bitbucket.org/tgrassi/krome\" target=\"_blank\">KROME</a>"
-		hrefWiki = "<a href=\"https://bitbucket.org/tgrassi/krome/wiki/kexplorer\" target=\"_blank\">kexplorer</a>"
+		hrefWiki = "<a href=\"https://bitbucket.org/tgrassi/krome/wiki/kexplorer\" " \
+			+ " target=\"_blank\">kexplorer</a>"
 		return "documentation generated with "+hrefWiki+" ("+bitbucketLanding+") - changeset: <a href=\""\
 			+ bitbucketLink + "\" target=\"_blank\">" + changeset[:7] + "</a> - " + datenow
+
