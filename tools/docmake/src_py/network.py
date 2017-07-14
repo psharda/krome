@@ -18,6 +18,7 @@ class network:
 
 		#read atoms
 		atomSet = utils.getAtomSet("atomlist.dat")
+		self.atomSet = atomSet
 
 		#load thermochemical data
 		self.thermochemicalData = utils.getThermochemicalData("thermo30.dat")
@@ -61,6 +62,9 @@ class network:
 		#check missing xsecs file
 		self.reportXsecsFiles()
 
+		#loop on reactions to update attributes
+		for myReaction in self.reactions:
+			myReaction.updateAttributes()
 
 		#loop on reactions to evaluate
 		for myReaction in self.reactions:
@@ -175,8 +179,10 @@ class network:
 				(variable,expression) = [x.strip() for x in srow.replace("@var:","").split("=")]
 				shortcuts[variable] = expression
 
-			if(srow.lower().startswith("@cr_start") or srow.lower().startswith("@cr_begin")): inBlockCR = True
-			if(srow.lower().startswith("@cr_stop") or srow.lower().startswith("@cr_end")): inBlockCR = False
+			if(srow.lower().startswith("@cr_start") or srow.lower().startswith("@cr_begin")):
+				inBlockCR = True
+			if(srow.lower().startswith("@cr_stop") or srow.lower().startswith("@cr_end")):
+				inBlockCR = False
 
 			#change reaction type to CR
 			reactionType = "standard" #default
@@ -191,8 +197,6 @@ class network:
 			#add parsed reaction to reactions structure in network
 			self.reactions.append(myReaction)
 		fh.close()
-
-
 
 	#**************
 	def readFileKIDA(self,fileName,atomSet):
@@ -211,7 +215,7 @@ class network:
 			reactionFormat = ""
 
 			#parse row line for reaction
-			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType)
+			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType,self.species)
 
 			#add parsed reaction to reactions structure in network
 			self.reactions.append(myReaction)
@@ -233,13 +237,12 @@ class network:
 			reactionFormat = ""
 
 			#parse row line for reaction
-			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType)
+			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType,self.species)
 
 			#add parsed reaction to reactions structure in network
 			self.reactions.append(myReaction)
 
 		fh.close()
-
 
 	#**************
 	#get all network species
@@ -269,6 +272,17 @@ class network:
 			self.speciesDictionary[mySpecies.name] = mySpecies
 
 		return self.speciesDictionary
+
+	#*****************
+	#get species object from species list
+	def getSpeciesByName(self,name):
+		speciesDictionary = self.getSpeciesDictionary()
+		if(not(name in speciesDictionary)):
+			print "ERROR: species "+name+" unknown!"
+			print " Available species are:"
+			print ", ".join(speciesDictionary.keys())
+			sys.exit()
+		return speciesDictionary[name]
 
 	#*******************
 	def getAtoms(self):
@@ -430,7 +444,8 @@ class network:
 					labelList = sorted(list(set(partners)))
 					label = ",".join(labelList)
 					#write edge to dot
-					fout.write("\""+myR.lower()+"\" -> \""+myP.lower()+"\" [label=\""+label+"\"];\n")
+					fout.write("\""+myR.lower()+"\" -> \""+myP.lower()+"\" [label=\"" \
+						+ label+"\"];\n")
 
 			for (k,v) in nodeLabels.iteritems():
 				fout.write("\""+k+"\" [label=\""+v+"\"];\n")
@@ -531,7 +546,8 @@ class network:
 			if(not(reactExp in productDictionary)):
 				productDictionary[reactExp] = []
 			#store unique products
-			if(not(reactants in productDictionary[reactExp])): productDictionary[reactExp].append(reactants)
+			if(not(reactants in productDictionary[reactExp])):
+				productDictionary[reactExp].append(reactants)
 
 
 		#write number of potential reactions found
@@ -571,7 +587,8 @@ class network:
 			#remove mutual sign neutralization
 			reactExp = reactExp.replace("+_-_","")
 			#skip reactants==products, e.g. H+OH -> H+OH (and convert names into species objects)
-			productsList = [[speciesDictionary[x] for x in products] for products in productDictionary[reactExp] if(products!=reactants)]
+			productsList = [[speciesDictionary[x] for x in products] \
+				for products in productDictionary[reactExp] if(products!=reactants)]
 			productsListPrune = []
 			for products in productsList:
 				charges = [x.charge for x in products]
@@ -780,7 +797,8 @@ class network:
 		#reaction table
 		fout.write("<table width=\"60%\">\n")
 		fout.write("<tr>"+header+"\n")
-		fout.write("<tr><td>name<td>&Delta;H@0K (kJ/mol)<td>&Delta;H@298.15K (kJ/mol)<td>&alpha; (&Aring;<sup>3</sup>)<td>xsecs?\n")
+		fout.write("<tr><td>name<td>&Delta;H@0K (kJ/mol)<td>&Delta;H@298.15K (kJ/mol)" \
+			+ "<td>&alpha; (&Aring;<sup>3</sup>)<td>xsecs?\n")
 		fout.write("<tr>"+header+"\n")
 		icount = 0
 		#loop on reactions
@@ -793,8 +811,9 @@ class network:
 			if(polarizability!=None): polarizability /= 1e-24 #cm3->AA3
 			hasPhoto = ""
 			if(len(mySpecies.phrates)>0): hasPhoto = "yes"
-			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"<td>"+str(enthalpy0) \
-				+ "<td>"+str(enthalpy298)+ "<td>"+str(polarizability)+"<td>"+hasPhoto+"\n")
+			fout.write("<tr bgcolor=\""+bgcolor+"\"><td>&nbsp;"+mySpecies.getHrefName()+"<td>" \
+				+ str(enthalpy0) + "<td>"+str(enthalpy298)+ "<td>" \
+				+ str(polarizability)+"<td>"+hasPhoto+"\n")
 			icount += 1
 		fout.write("<tr>"+header+"\n")
 		fout.write("</table>\n")
@@ -820,7 +839,8 @@ class network:
 		fout.write("<a href=\"index.html\">back</a><br>\n")
 
 		for variable in myOptions.getRanges().keys():
-			fout.write("<a href=\"allRates_"+variable+"_0.html\">All rates with <b>"+variable+"</b></a><br>\n")
+			fout.write("<a href=\"allRates_"+variable+"_0.html\">All rates with <b>" \
+				+ variable+"</b></a><br>\n")
 		fout.write("<br><br>\n")
 		#reaction table
 		fout.write("<table width=\"50%\">\n")
@@ -832,7 +852,8 @@ class network:
 		for myReaction in reactionsSorted:
 			bgcolor = ""
 			if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
-			fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+myReaction.getReactionHtmlRow()+"\n")
+			fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">" \
+				+ myReaction.getReactionHtmlRow()+"\n")
 			icount += 1
 		fout.write(tableHeader+"\n")
 		fout.write("</table>\n")
@@ -857,18 +878,19 @@ class network:
 		#add header
 		fout.write(utils.getFile("header.php"))
 		fout.write("<p style=\"font-size:30px\">Missing branches, &Delta;H/K</p>\n")
-		#fout.write("<p style=\"font-size:10px\">*if reactants are present it doesn't check for missing branches!</p>\n")
 		fout.write("<a href=\"index.html\">back</a><br><br><br>\n")
 
 		#sort reactions by the name of the first reactant (reactants are also sorted)
-		sortedMissingBranch = sorted(self.getMissingBranch(),key=lambda x:sorted([sp.name for sp in x["reactants"]]))
+		sortedMissingBranch = sorted(self.getMissingBranch(), \
+			key=lambda x:sorted([sp.name for sp in x["reactants"]]))
 
 		fout.write("<table width=\"60%\">\n")
 		icount = 0
 		for dataBranch in sortedMissingBranch:
 			reactants = dataBranch["reactants"]
 			reactantsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in reactants]
-			row = "<td>"+str(icount+1)+"<td>"+("<td>+<td>".join(sorted([x.getHtmlName() for x in reactants])))
+			row = "<td>"+str(icount+1)+"<td>" \
+				+ ("<td>+<td>".join(sorted([x.getHtmlName() for x in reactants])))
 
 			row += ("<td>"*(20-row.count("<td>")))
 
@@ -889,7 +911,8 @@ class network:
 					productsEnthalpy = [x.getEnthalpy(self.thermochemicalData) for x in products]
 					bgcolor = "" #this row has no bgcolor
 					#create row from products name
-					rowx = "<td>&rarr;<td>"+("<td>+<td>".join(sorted([x.getHtmlName() for x in products])))
+					rowx = "<td>&rarr;<td>" \
+						+ ("<td>+<td>".join(sorted([x.getHtmlName() for x in products])))
 					#add n-1 td as offset
 					row = ("<td>"*(ntds-1))+rowx+("<td>"*(10-rowx.count("<td>")))
 					status = listName.replace("Branches","")
@@ -909,7 +932,8 @@ class network:
 						else:
 							tdEnthalpy += "<td>&#10006;"
 
-					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+row+"<td style=\"font-size:10px;\">"\
+					fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">" + row \
+						+ "<td style=\"font-size:10px;\">"\
 						+status.upper()+tdEnthalpy+"\n")
 
 			#dataBranch["presentBranches"] = []
@@ -935,7 +959,7 @@ class network:
 		#add header
 		fout.write(utils.getFile("header.php"))
 		fout.write("<p style=\"font-size:30px\">Missing reactions*</p>\n")
-		fout.write("<p style=\"font-size:10px\">*if reactants are present it doesn't check for missing branches!</p>\n")
+		fout.write("<p style=\"font-size:10px\">*if reactants are present no check for missing branches!</p>\n")
 		fout.write("<a href=\"index.html\">back</a><br>\n")
 
 
@@ -956,7 +980,8 @@ class network:
 				#background color
 				bgcolor = utils.getHtmlProperty("tableRowBgcolor")
 				#create html row
-				row = "<td>"+str(icount+1)+"<td>"+("<td>+<td>".join([x.getHtmlName() for x in reactants]))
+				row = "<td>"+str(icount+1)+"<td>" \
+					+ ("<td>+<td>".join([x.getHtmlName() for x in reactants]))
 				#if no branches available (given the network, skip)
 				if(len(reaction["products"])==0): continue
 
@@ -1043,19 +1068,22 @@ class network:
 
 					#multi-page menu back arrow
 					if(fileCount-1>=0):
-						pagesMenu = "<a href=\""+fnameBaseRel+str(fileCount-1)+".html\">&lt;</a> "
+						pagesMenu = "<a href=\""+fnameBaseRel+str(fileCount-1) \
+							+ ".html\">&lt;</a> "
 					else:
 						pagesMenu = "&lt; "
 					#multi-page menu links
 					for ipage in range(pagesNumber):
 						#link only if current page
 						if(ipage!=fileCount):
-							pagesMenu += "<a href=\""+fnameBaseRel+str(ipage)+".html\">"+str(ipage+1)+"</a> "
+							pagesMenu += "<a href=\""+fnameBaseRel+str(ipage)+".html\">" \
+							+ str(ipage+1)+"</a> "
 						else:
 							pagesMenu += "["+str(ipage+1)+"] "
 					#multi-page menu forward arrow
 					if(fileCount+1<pagesNumber):
-						pagesMenu += "<a href=\""+fnameBaseRel+str(fileCount+1)+".html\">&gt;</a>"
+						pagesMenu += "<a href=\""+fnameBaseRel+str(fileCount+1) \
+							+ ".html\">&gt;</a>"
 					else:
 						pagesMenu += "&gt;"
 
@@ -1069,7 +1097,8 @@ class network:
 				if(icount%1==0): fout.write("<tr><td>")
 
 				fnamePNG = "../pngs/rate_"+str(myReaction.getReactionHash())+"_"+variable+".png"
-				linkURL = "<a href=\"rate_"+myReaction.getReactionHash()+".html\">details</a> for "+myReaction.getVerbatimHtml()
+				linkURL = "<a href=\"rate_"+myReaction.getReactionHash() \
+					+ ".html\">details</a> for "+myReaction.getVerbatimHtml()
 				fout.write("<img src=\""+fnamePNG+"\" width=\"700px\" alt=\"&#9888; MISSING: " \
 					+myReaction.getVerbatim()+"\"><br>"+linkURL)
 				fout.write("<tr height=\"10px\"><td>")
@@ -1115,7 +1144,8 @@ class network:
 			#write plural if necessary
 			intervalString = "interval"+("s" if(intervalsNumber>1) else "")
 			#table title
-			fout.write("<p style=\"font-size:20px\">Reactions with "+str(intervalsNumber)+" "+intervalString+"</p>\n")
+			fout.write("<p style=\"font-size:20px\">Reactions with "+str(intervalsNumber)+" " \
+				+ intervalString + "</p>\n")
 			#open reaction table
 			fout.write("<table width=\"50%\">\n")
 			fout.write(tableHeader+"\n")
@@ -1127,7 +1157,8 @@ class network:
 			for myReaction in reactionsSorted:
 				bgcolor = ""
 				if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
-				fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor+"\">"+myReaction.getReactionHtmlRow(mode="joints")+"\n")
+				fout.write("<tr valign=\"baseline\" bgcolor=\""+bgcolor + "\">" \
+					+ myReaction.getReactionHtmlRow(mode="joints")+"\n")
 				icount += 1
 			fout.write(tableHeader+"\n")
 			fout.write("</table>\n")
@@ -1320,13 +1351,5 @@ class network:
 
 		#some message
 		print "subnetwork saved to "+fullOptions["outputFile"]+" with "+str(icount)+" reactions"
-
-
-
-
-
-
-
-
 
 
