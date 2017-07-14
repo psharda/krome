@@ -18,7 +18,8 @@ class species():
 				if((atom.upper()!=atom) and (atom.upper() in speciesName)):
 					orgSpeciesName = speciesName
 					speciesName = speciesName.replace(atom.upper(),atom)
-					print "WARNING: "+atom+" found upper case in "+orgSpeciesName+"! Replaced as "+speciesName
+					print "WARNING: "+atom+" found upper case in " + orgSpeciesName \
+						+ "! Replaced as "+speciesName
 
 
 		if(speciesName.startswith("J")): speciesName = speciesName[1:]+"_dust"
@@ -116,15 +117,18 @@ class species():
 		fname = "xsecs/"+self.name+".dat"
 		if(not(os.path.exists(fname))): return
 
+		#get file size in MB
 		sizeMB = round(os.path.getsize(fname)/1024**2,1)
 
+		#check if xsec size is relatively large
 		if(sizeMB > 50.0):
 			print "WARNING: "+fname+" is quite large ("+str(sizeMB)+" MB)"
-			while 1:
-				reply = raw_input("Load Xsec file? (y/n) ").lower().strip()
-				if reply[0] == 'y':
+			#ask if to load xsec, N is default
+			while(True):
+				reply = raw_input("Load Xsec file? (y/N) ").lower().strip()
+				if(reply=="y"):
 					break
-				if reply[0] == 'n':
+				if(reply=="n" or reply==""):
 					return
 
 		self.xsecs["leiden"] = dict()
@@ -207,12 +211,21 @@ class species():
 		if (len(self.xsecs)!=0):
 			print "  Photochemical rates for {0} calculated".format(self.name)
 
+
+	#*******************
+	#return rate (interface to dictionary), 1/s
+	def getPhotoRate(self,database,process,radiation):
+		return self.phrates[database][process][radiation]
+
 	#****************************
 	#plot xsecs to PNG
-	def plotXsec(self):
+	def plotXsec(self,pngFileName=None):
 
-		pngFileName = "pngs/xsec_"+self.nameFile+".png"
 		import matplotlib.pyplot as plt
+
+		#if name argument missing uses default
+		if(pngFileName==None):
+			pngFileName = "pngs/xsec_"+self.nameFile+".png"
 
 		#turn off interactivity
 		plt.ioff()
@@ -283,13 +296,14 @@ class species():
 	#get polarizability, cm3
 	def getPolarizability(self,polarizabilityData):
 
-		if(self.name in polarizabilityData): return polarizabilityData[self.name]
+		#get polarizability from database
+		if(self.name in polarizabilityData):
+			return polarizabilityData[self.name]
 		return None
 
 	#*****************
 	#get "engineered" enthalpy kJ/mol
 	def getEnthalpy(self,thermochemicalData,Tgas=298.15):
-
 
 		#gas constant kJ/mol/K
 		Rgas = 8.3144598
