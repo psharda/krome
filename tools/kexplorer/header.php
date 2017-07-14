@@ -71,11 +71,11 @@
       <h1>KROME explorer</h1>
     </div>
     <!---logo ends here -->
-    <div class="menu">
+    <!--<div class="menu">
       <ul>
         <li><a class="active" href="index.html">Home</a>me</li>
       </ul>
-    </div>
+    </div>-->
     <!--- menu ends here -->
   </div>
   <!---headerends here -->
