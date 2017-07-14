@@ -314,6 +314,14 @@ class reaction:
 				print PP.name, PP.mass
 			sys.exit()
 
+	#******************
+	#update all reaction attributes
+	def updateAttributes(self):
+		self.getVerbatim()
+		self.getVerbatimLatex()
+		self.getVerbatimHtml()
+		self.getReactionHash()
+
 	#********************
 	#get verbatim reaction, e.g.H2+H2->H+H+H2
 	def getVerbatim(self):
@@ -371,7 +379,9 @@ class reaction:
 	#********************
 	#get html table row with bold mySpecies when present
 	def getReactionHtmlRow(self,mySpecies=None,mode=None):
+
 		reactantsName = []
+		#set bold to mySpecies name (reactants)
 		for species in self.reactants:
 			xspec = species.nameHref
 			if(mySpecies!=None):
@@ -380,6 +390,7 @@ class reaction:
 			reactantsName.append(xspec)
 
 		productsName = []
+		#set bold to mySpecies name (products)
 		for species in self.products:
 			xspec = species.nameHref
 			if(mySpecies!=None):
@@ -429,7 +440,8 @@ class reaction:
 
 		#get neutral polarizability, cm3
 		for reactant in self.reactants:
-			if(reactant.charge==0): polarizability = reactant.getPolarizability(myNetwork.polarizabilityData)
+			if(reactant.charge==0): polarizability = \
+				reactant.getPolarizability(myNetwork.polarizabilityData)
 		#need polarizability, cm3
 		if(polarizability==None): return None
 
@@ -454,9 +466,9 @@ class reaction:
 		self.saveEvals()
 
 	#*******************
-	#plot rate coefficient
-	def plotRate(self,myOptions):
-		self.doPlot(myOptions)
+	#plot rate coefficient (alias)
+	def plotRate(self,myOptions,pngFileName=None):
+		self.doPlot(myOptions,pngFileName=pngFileName)
 
 	#********************
 	#search for rate variables in the rate
@@ -631,8 +643,10 @@ class reaction:
 				#evaluate rate limited range
 				if(isTgas and hasEval):
 					try:
-						kmin = eval(rate.replace("#"+variable.lower()+"#",str(Tmin)).replace("#",""))
-						kmax = eval(rate.replace("#"+variable.lower()+"#",str(Tmax)).replace("#",""))
+						kmin = eval(rate.replace("#"+variable.lower()+"#", \
+							str(Tmin)).replace("#",""))
+						kmax = eval(rate.replace("#"+variable.lower()+"#", \
+							str(Tmax)).replace("#",""))
 					except:
 						print "ERROR: problem evaluating rate at limits"
 						print "limits:",str(Tmin),str(Tmax)
@@ -665,7 +679,7 @@ class reaction:
 
 	#**************************
 	#do plot (PNG)
-	def doPlot(self,myOptions):
+	def doPlot(self,myOptions,pngFileName=None):
 		import matplotlib
 		#try to load AGG for PNG rendering (slightly faster)
 		try:
@@ -699,7 +713,8 @@ class reaction:
 				xdata = data["xdata"]
 				ydata = data["ydata"]
 				if all([yd == 0.0 for yd in ydata]):
-					print "WARNING: The rate for {0} is zero; skipping the plot!".format(self.getVerbatim())
+					print "WARNING: The rate for {0} is zero; skipping the plot!" \
+						.format(self.getVerbatim())
 					continue # all rate data are zero, so skip plotting
 				hasPlot = True
 
@@ -711,7 +726,8 @@ class reaction:
 					xdataRange = data["xdataRange"]
 					ydataRange = data["ydataRange"]
 					ydataAll += ydataRange
-					plt.loglog(evaluation[variable]["xlimits"], evaluation[variable]["ylimits"],"ro")
+					plt.loglog(evaluation[variable]["xlimits"], \
+						evaluation[variable]["ylimits"],"ro")
 					plt.loglog(xdataRange,ydataRange,"b-")
 				else:
 					xdataRange = xdata
@@ -719,7 +735,9 @@ class reaction:
 					ydataAll += ydataRange
 					plt.loglog(xdataRange,ydataRange)
 
-			pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png"
+			#if argument is not present automatic file
+			if(pngFileName==None):
+				pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png"
 
 			#plot only if data are available
 			if(hasPlot and not(os.path.exists(pngFileName))):
@@ -896,7 +914,8 @@ class reaction:
 		fout.write("<br>\n")
 		fout.write("<a href=\"indexReactions.html\">back</a><br>\n")
 		urlencoded = urllib.quote_plus(" + ".join([x.name for x in self.reactants]))
-		urlkida = "http://kida.obs.u-bordeaux1.fr/search.html?species="+urlencoded+"&reactprod=reactants&astroplaneto=Both&ionneutral=ion&isomers=1&ids="
+		urlkida = "http://kida.obs.u-bordeaux1.fr/search.html?species=" + urlencoded \
+			+"&reactprod=reactants&astroplaneto=Both&ionneutral=ion&isomers=1&ids="
 		fout.write("<a href=\""+urlkida+"\" target=\"_blank\">search in KIDA</a><br>\n")
 		urlJSON = "../evals/rate_"+str(self.getReactionHash())+".json"
 		fout.write("<a href=\""+urlJSON+"\">get rate evaluation in JSON format</a>\n")
@@ -936,7 +955,8 @@ class reaction:
 			Tmin = utils.htmlExpBig(self.safeExtrapolate["Tmin"])
 			extrapolCheckMin = ("SAFE" if self.safeExtrapolate["lower"] else "NOT SAFE")
 			if(self.safeExtrapolate["TminExtrapolated"]!=self.safeExtrapolate["Tmin"]):
-				fout.write(bulletPoint+"Extrapolation in range ["+TminExtrapolated+", "+Tmin+"] K is <b>"+extrapolCheckMin+"</b><br>")
+				fout.write(bulletPoint+"Extrapolation in range ["+TminExtrapolated \
+					+ ", "+Tmin+"] K is <b>" + extrapolCheckMin + "</b><br>")
 
 		#extrapolation upper limit
 		if self.safeExtrapolate.has_key("TmaxExtrapolated"):
@@ -944,7 +964,8 @@ class reaction:
 			Tmax = utils.htmlExpBig(self.safeExtrapolate["Tmax"])
 			extrapolCheckMax = ("SAFE" if self.safeExtrapolate["upper"] else "NOT SAFE")
 			if(self.safeExtrapolate["TmaxExtrapolated"]!=self.safeExtrapolate["Tmax"]):
-				fout.write(bulletPoint+"Extrapolation in range ["+Tmax+", "+TmaxExtrapolated+"] K is <b>"+extrapolCheckMax+"</b><br>")
+				fout.write(bulletPoint+"Extrapolation in range ["+Tmax+", " \
+					+ TmaxExtrapolated + "] K is <b>" + extrapolCheckMax + "</b><br>")
 
 		#JOINTS evaluation
 		if(len(self.evaluatedJoints)>0):
@@ -957,9 +978,12 @@ class reaction:
 			fout.write("<tr><td><td><td>Tgas/K<td>rate")
 			for joint in self.evaluatedJoints:
 				fout.write(header)
-				fout.write("<tr><td>limit1 (Tgas,rate)" + sep + ("<td>".join([str(x) for x in joint["limit1"]])))
-				fout.write("<tr><td>limit2 (Tgas,rate)" + sep + ("<td>".join([str(x) for x in joint["limit2"]])))
-				fout.write("<tr><td>extrapolated (Tgas,rate)" + sep + ("<td>".join([str(x) for x in joint["extrapolation"]])))
+				fout.write("<tr><td>limit1 (Tgas,rate)" + sep \
+					+ ("<td>".join([str(x) for x in joint["limit1"]])))
+				fout.write("<tr><td>limit2 (Tgas,rate)" + sep \
+					+ ("<td>".join([str(x) for x in joint["limit2"]])))
+				fout.write("<tr><td>extrapolated (Tgas,rate)" + sep \
+					+ ("<td>".join([str(x) for x in joint["extrapolation"]])))
 				warning = ""
 				if(joint["error"]>1e-3): warning = "&#9888;"
 				fout.write("<tr><td>error" + sep + str(round(joint["error"]*100,2))+"% "+warning)
