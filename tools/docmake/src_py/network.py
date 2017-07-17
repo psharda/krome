@@ -1313,14 +1313,28 @@ class network:
 			reactionOK.rate = []
 			reactionOK.Tmin = []
 			reactionOK.Tmax = []
+
+			#replace string in Trange
+			TrangeExtras = [x.lower() for x in [".lt.",".gt.",".ge.",".le.",">","<","="]]
+
 			#loop on rate ranges
 			for i in range(len(reaction.rate)):
 				#check Tmin limit
 				if(reaction.Tmin[i]!=None):
-					if(float(reaction.Tmin[i])<fullOptions["Tmin"]): continue
+					#replace Trange string from Tmin
+					repTmin = reaction.Tmin[i].lower()
+					for TrangeEx in TrangeExtras:
+						repTmin = repTmin.replace(TrangeEx,"")
+					#check Tmin limit
+					if(float(repTmin)<fullOptions["Tmin"]): continue
 				#check Tmax limit
 				if(reaction.Tmax[i]!=None):
-					if(float(reaction.Tmax[i])>fullOptions["Tmax"]): continue
+					#replace Trange string from Tmin
+					repTmax = reaction.Tmax[i].lower()
+					for TrangeEx in TrangeExtras:
+						repTmax = repTmax.replace(TrangeEx,"")
+					#check Tmax limit
+					if(float(repTmax)>fullOptions["Tmax"]): continue
 				#append limits
 				reactionOK.rate.append(reaction.rate[i])
 				reactionOK.Tmin.append(reaction.Tmin[i])
