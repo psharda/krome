@@ -64,7 +64,7 @@ class krome():
 	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = False
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
-	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = False
+	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = useBroadening = False
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
@@ -335,6 +335,8 @@ class krome():
 			if the T limits for a given reaction are 10. and 1d4 the option -Tlmit GE,LE will provide (Tgas>=10. AND Tgas<=1d4) as\
 			the reaction range of validity. Operators opLow and opHigh must be one of the following: LE, GE, LT, GT.")
 		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
+		self.parser.add_argument("-useBroadening", action="store_true", help="use broadening (note: be careful!).")
+
 		self.parser.add_argument("-useCoolFloor", action="store_true", help="include a cooling floor given by the Tfloor temperature.\
 			note that you must define Tfloor by using the subroutine krome_set_Tfloor(your_Tfloor) before calling krome.")
 		#self.parser.add_argument("-useCoolCMBFloorZ", action="store_true", help="as -useCoolCMBFloor, but for metals only.")
@@ -752,6 +754,11 @@ class krome():
 				print "ERROR: option -useCoolFloor needs at least one active cooling option. See -cooling="
 				sys.exit()
 			print "Reading option -useCoolFloor"
+
+		#use broadening
+		if(args.useBroadening):
+			self.useBroadening = True
+			print "Reading option -useBroadening"
 
 		#apply an individual cooling floor (SB, mod TG)
 		if(args.useIndividualFloor):
@@ -5612,9 +5619,9 @@ class krome():
 					row = row.replace("#KROME_xsecKernelFunction",fpart)
 
 			#precompute broadeinng in photochemistry
-			if(srow=="#KROME_broadening_shift_precalc"):
+			if(srow=="#KROME_broadening_shift_precalc" and self.useBroadening):
 				row = "kt2 = 2d0*boltzmann_erg*Tgas\n"
-				row += "dshift(:) = 0d0\n"
+				#row += "dshift(:) = 0d0\n"
 				foundPartner = [] #unique photoreaction partners
 				#loop on reactions to get photoreaction partners
 				for rea in reacts:
