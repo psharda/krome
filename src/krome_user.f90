@@ -552,11 +552,13 @@ contains
     end if
 #ENDIFKROME_useBindC
 
+    !$omp parallel
     photoBinEleft(:) = phbinleft(:)
     photoBinEright(:) = phbinright(:)
     photoBinEmid(:) = 0.5d0*(phbinleft(:)+phbinright(:))
     photoBinEdelta(:) = phbinright(:)-phbinleft(:)
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
+    !$omp end parallel
 
     !initialize xsecs table
     call init_photoBins(bTgas)
@@ -611,11 +613,13 @@ contains
     end if
 #ENDIFKROME_useBindC
 
+    !$omp parallel
     photoBinEleft(:) = binPos(:)-binWidth(:)/2d0
     photoBinEright(:) = binPos(:)+binWidth(:)/2d0
     photoBinEmid(:) = binPos(:)
     photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
+    !$omp end parallel
 
     !initialize xsecs table
     call init_photoBins(bTgas)
@@ -644,14 +648,20 @@ contains
     end if
 #ENDIFKROME_useBindC
 
+    !$omp parallel
     dE = abs(upper-lower)/nPhotoBins
+    !$omp end parallel
     do i=1,nPhotoBins
+       !$omp parallel
        photoBinEleft(i) = dE*(i-1) + lower
        photoBinEright(i) = dE*i + lower
        photoBinEmid(i) = 0.5d0*(photoBinEleft(i)+photoBinEright(i))
+       !$omp end parallel
     end do
+    !$omp parallel
     photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
+    !$omp end parallel
 
     !initialize xsecs table
     call init_photoBins(bTgas)
@@ -686,14 +696,20 @@ contains
     end if
     loglow = log10(lower)
     logup = log10(upper)
+    !$omp parallel
     dE = 1d1**(abs(logup-loglow)/nPhotoBins)
+    !$omp end parallel
     do i=1,nPhotoBins
+       !$omp parallel
        photoBinEleft(i) = 1d1**((i-1)*(logup-loglow)/nPhotoBins + loglow)
        photoBinEright(i) = 1d1**(i*(logup-loglow)/nPhotoBins + loglow)
        photoBinEmid(i) = 0.5d0*(photoBinEleft(i)+photoBinEright(i))
+       !$omp end parallel
     end do
+    !$omp parallel
     photoBinEdelta(:) = photoBinEright(:)-photoBinEleft(:)
     photoBinEidelta(:) = 1d0/photoBinEdelta(:)
+    !$omp end parallel
 
     !initialize xsecs table
     call init_photoBins(bTgas)
@@ -1874,6 +1890,7 @@ contains
   function krome_get_coef(Tgas,x) #KROME_bindC
     use krome_commons
     use krome_subs
+    use krome_tabs
 #IFKROME_useBindC
     real(kind=c_double), value :: Tgas
     real(kind=c_double), target :: coeffs(nrea)
@@ -1886,6 +1903,10 @@ contains
     n(:) = 0d0
     n(1:nmols) = x(:)
     n(idx_Tgas) = Tgas
+
+#IFKROME_hasStoreOnceRates
+    call makeStoreOnceRates(n(:))
+#ENDIFKROME
 
 #IFKROME_useBindC
     coeffs(:) = coe(n(:))

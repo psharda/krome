@@ -3,13 +3,13 @@
 # of png files to show the system evolution while evolving
 import kexplorer_network
 
-fileName = "demo.dat"
+fileName = "../../build/explore.dat"
 
 #create network from explorer file
 network = kexplorer_network.network(fileName)
 
 network.xvarName = "density"
-network.xvarUnits = "cm-3"
+network.xvarUnits = "g/cm^3"
 
 #find best matching criteria
 network.findBest()
@@ -18,5 +18,5 @@ network.findBest()
 network.listBest()
 
 #dump to png folder
-network.dumpBest()
+network.dumpBest("pngs/")
 

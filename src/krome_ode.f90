@@ -166,6 +166,7 @@ contains
     use krome_commons
     use krome_subs
     use krome_tabs
+    use krome_getphys
     integer::fnum,i
     real*8::n(:),rrmax,k(:),kmax,kperc
     character*16::names(nspec)

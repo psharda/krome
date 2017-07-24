@@ -1,0 +1,22 @@
+# Cross sections for H3+
+# From the Leiden database for photodissociation and photoionization of astrophysically relevant molecules, http://home.strw.leidenuniv.nl/~ewine/photo/
+# Converted from earlier Leiden database cross sections by Alan Heays 2016-02-24
+# Photodissociation source: H3+ PHOTODISSOCIATION, V=0 CALC. van Dishoeck
+# Lines represented with gaussian of width 1.0 nm FWHM
+# wavelength: (nm)
+# photoabsorption:    cross section (cm2)
+# photodissociation:  cross section (cm2)
+# wavelength   photoabsorption photodissociation   photoionisation
+  41.3000000       0.00000e+00       0.00000e+00       0.00000e+00
+  44.3000000       2.20000e-18       2.20000e-18       0.00000e+00
+  47.7000000       5.60000e-18       5.60000e-18       0.00000e+00
+  51.7000000       1.50000e-17       1.50000e-17       0.00000e+00
+  56.4000000       2.40000e-17       2.40000e-17       0.00000e+00
+  59.0000000       2.60000e-17       2.60000e-17       0.00000e+00
+  62.0000000       2.40000e-17       2.40000e-17       0.00000e+00
+  65.3000000       1.80000e-17       1.80000e-17       0.00000e+00
+  68.9000000       9.60000e-18       9.60000e-18       0.00000e+00
+  72.9000000       4.40000e-18       4.40000e-18       0.00000e+00
+  77.5000000       2.20000e-18       2.20000e-18       0.00000e+00
+  88.6000000       0.00000e+00       0.00000e+00       0.00000e+00
+  91.2000000       0.00000e+00       0.00000e+00       0.00000e+00

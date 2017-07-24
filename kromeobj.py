@@ -65,6 +65,7 @@ class krome():
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
 	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = False
+	xsecKernelFunction = "" #kernel function for interpolating xsecs
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
 	typeGamma = "DEFAULT"
@@ -376,6 +377,9 @@ class krome():
 		self.parser.add_argument("-v", action="store_true", help="print the current version of KROME")
 		self.parser.add_argument("-ver", action="store_true", help="same as -v")
 		self.parser.add_argument("-version", action="store_true", help="same as -v")
+		self.parser.add_argument("-xsecKernelFunction", help="use a function to scale photo cross-sections when interpolated. \
+				Function has to be a function of energy, i.e. f(energy). Store it in krome_user_commons.f90 module.", \
+			metavar="FUNCTION")
 
 
 
@@ -1062,6 +1066,11 @@ class krome():
 			self.usePhIoniz = True
 			if(self.photoBins<0): die("ERRROR: number of frequency bins < 0!")
 			print "Reading option -photoBins (NBINS="+str(self.photoBins)+")"
+
+		#kernel for xsec interpolation
+		if(args.xsecKernelFunction):
+			self.xsecKernelFunction = args.xsecKernelFunction.strip()
+			print "Reading option -xsecKernelFunction ("+self.xsecKernelFunction+")"
 
 		#determine Tgas limit operators
 		if(args.Tlimit):
@@ -3107,6 +3116,18 @@ class krome():
 		fout.write("# as framework code passive scalars, while the last "+str(len(self.specs)-self.nmols)+"\n")
 		fout.write("# are employed inside KROME.\n")
 
+		#species as a python list
+		fout.write("\n\n#********************************\n")
+		fout.write("# Species in a Python list of strings\n")
+		idx = 0
+		pylist = ""
+		for mol in self.specs:
+			idx += 1
+			pylist += "\""+mol.name+"\", "
+			if(idx%10==0): pylist += "\\\n "
+		fout.write("["+pylist+"]\n")
+
+
 		#table with info as a structure
 		addInfo = [["krome_nrea", str(self.nrea), "!number of reactions"],\
 			["krome_nmols", str(self.nmols), "!number of chemical species"],\
@@ -4607,8 +4628,9 @@ class krome():
 					fout.write("real*8::photoBinEth(nPhotoRea) !energy treshold, eV\n")
 					fout.write("real*8::photoPartners(nPhotoRea) !index of the photoreactants\n")
 					fout.write("real*8::opacityDust(nPhotoBins) !interpolated opacity from tables\n")
-					fout.write("!$omp threadprivate(photoBinJ,photoBinEleft,photoBinEright,photoBinEmid,photoBinEdelta, &\n")
-					fout.write("!$omp    photoBinEidelta,photoBinJTab,photoBinRates,photoBinHeats,photoBinEth,photoPartners)\n")
+					fout.write("!$omp threadprivate(photoBinJ,photoBinJ_org,photoBinEleft,photoBinEright,photoBinEmid, &\n")
+					fout.write("!$omp    photoBinEdelta,photoBinEidelta,photoBinJTab,photoBinRates,photoBinHeats,photoBinEth, &\n")
+					fout.write("!$omp    photoPartners)\n")
 
 			elif(srow == "#KROME_var_parts" and self.typeGamma=="POPOVAS"):
 				spec_parts = ["H2even","H2odd","CO"]
@@ -5374,6 +5396,7 @@ class krome():
 			if(srow == "#IFKROME_useH2dust_constant" and not(self.useDustH2const)): skip = True
 			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
+			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 
 		        if(srow == "#ENDIFKROME"): skip = False
 
@@ -5470,9 +5493,13 @@ class krome():
 
 			#write reaction rates in coe function
 			if(srow == "#KROME_krates"):
-				for x in reacts:
-					#build temperature limit IF
-					kstr = x.getRateF90(self)
+				for rea in reacts:
+					#get rate expression including temperature limit conditions
+					kstr = rea.getRateF90(self)
+					#replace rates with store once if required
+					if(rea.isStoreOnce):
+						kstr = "!"+rea.verbatim+"\n"
+						kstr += "k("+str(rea.idx)+") = rateEvaluateOnce("+str(rea.idx)+")"
 					fout.write(truncF90(kstr, 60,"/")+"\n\n") #truncate
 			#replace arrays for best flux
 			elif(srow == "#KROME_arr_reactprod"):
@@ -5576,6 +5603,14 @@ class krome():
 
 			if(skip or skip_heat or skip_opacity): continue
 
+			#replace pragma with kernel xsec function
+			if("#KROME_xsecKernelFunction" in srow):
+				if(self.xsecKernelFunction==""):
+					row = row.replace("#KROME_xsecKernelFunction","")
+				else:
+					fpart = "&\n* "+self.xsecKernelFunction+"(energy)"
+					row = row.replace("#KROME_xsecKernelFunction",fpart)
+
 			#precompute broadeinng in photochemistry
 			if(srow=="#KROME_broadening_shift_precalc"):
 				row = "kt2 = 2d0*boltzmann_erg*Tgas\n"
@@ -5620,14 +5655,18 @@ class krome():
 					phbinx += "\n!"+rea.verbatim+"\n"
 					phbinx += "kk = 0d0\n"
 					phbinx += "if(energy_eV>"+str(rea.Tmin)+".and.energy_eV<"+str(rea.Tmax)+") kk = "+rea.kphrate+"\n"
+					phbinx += "!$omp parallel\n"
 					phbinx += "photoBinJTab("+str(rea.idxph)+",j) = kk\n"
+					phbinx += "!$omp end parallel\n"
 				row = phbinx+"\n"
 			#replace the energy treshold assuming that it is equal to Tmin
 			elif(srow=="#KROME_photobin_Eth"):
 				phbinx = ""
 				for rea in reacts:
 					if(rea.kphrate==None): continue
+					phbinx += "!$omp parallel\n"
 					phbinx += "photoBinEth("+str(rea.idxph)+") = "+str(rea.Tmin)+" !"+rea.verbatim+"\n"
+					phbinx += "!$omp end parallel\n"
 				row = phbinx+"\n"
 			#replace pragma with the opacity calculation as N_i*sigma_i for any species
 			elif(srow=="#KROME_photobin_opacity" and self.usePhotoOpacity):
@@ -6835,6 +6874,7 @@ class krome():
 			if(srow == "#IFKROME_has_electrons" and not(hasElectrons)): skip = True
 			if(srow == "#IFKROME_useTabsTdust" and not(self.useDustTabs)): skip = True
 			if(srow == "#IFKROME_customFex" and not(self.useFexCustom)): skip = True
+			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 			if(srow == "#IFKROME_dust_opacity" and not(self.useDust)): skipDustOpacity = True
 			if(srow == "#IFKROME_useH2pd" and not(useH2Photodissociation)): skipH2pd = True
 
