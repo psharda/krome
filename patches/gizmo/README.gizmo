@@ -228,22 +228,32 @@ run.c:
 
 Makefile:
 
-1) You have to add the krome interface file to the list of compiled files (you can put the krome.c file into a directory called cooling, where you will also 
-have to put the f90 krome files
+1) First, go to the cooling directory and compile the opkda1.f, opkda2.f, and opkdmain.f files separately. For instance:
 
-------------------------------------------------
-ifeq (KROME,$(findstring KROME,$(CONFIGVARS)))
-OBJS    += cooling/krome.o
-OBJS    += cooling/krome_header.o
-FOBJS   += cooling/krome_user_commons.o
-FOBJS   += cooling/krome_all.o
-endif
-------------------------------------------------
+ifort -c opkda1.f
+ifort -c opkda2.f
+ifort -c opkdmain.f
 
-2) You have to add the compiled f90 files from the krome build directory to the list of files linked with gizmo.
-This is an example of the command:
-$(CC) $(OPTIMIZE) $(OBJS) $(FOBJS) $(LIBS) $(RLIBS) cooling/opkd*.o -o $(EXEC)_KR
+2) Second, edit the Makefile, adding the necessary block to include the KROME files amongst the compiled and linked ones:
 
+- Add the krome interface files to the list of compiled files (which should be into a directory called ``cooling``)
+
+  ------------------------------------------------
+  ifeq (KROME,$(findstring KROME,$(CONFIGVARS)))
+  OBJS    += cooling/krome.o
+  OBJS    += cooling/krome_header.o
+  FOBJS   += cooling/krome_user_commons.o
+  FOBJS   += cooling/krome_all.o
+  endif
+  ------------------------------------------------
+        
+- Add a link to the opkda1.o, opkda2.o, and opkdmain.o files to the list of files to be linked with gizmo.
+  This is an example of the command:
+  $(CC) $(OPTIMIZE) $(OBJS) $(FOBJS) $(LIBS) $(RLIBS) cooling/opkd*.o -o $(EXEC)_KR
+
+Config.sh:
+
+1) Add a new option named KROME
 
 merge_split.c (only if you have gas particles transferring mass):
 
