@@ -1,0 +1,270 @@
+Config.sh:
+
+1) Define the KROME_NUM_SPECIES variable according to the number of species in the krome configuration
+!!! check the krome_nmols value in the info.log file generated during the krome pre-compilation !!!
+2) Set the KROME variable to enable the krome chemistry packaga in gizmo
+
+allvars.h:
+
+1) Define the krome variables for the hydro cells
+------------------------------------------------
+#if defined(COOLING) && defined(KROME)
+    MyFloat krome_species[KROME_NUM_SPECIES];
+    MyFloat krome_gamma;
+#endif
+------------------------------------------------
+
+2) Define the IO_* variables used to store the species information into the snapshot
+------------------------------------------------
+  ...
+  IO_KROME,
+  IO_KROME_MMW,
+  IO_KROME_GAMMA,
+  IO_KROME_TEMP,
+  ...
+------------------------------------------------
+!!! These variables must be defined BEFORE the IO_LASTENTRY entry !!!
+
+io.c:
+
+1) Define the IO blocks for the krome variables in the fill_write_buffer routine:
+------------------------------------------------
+	...
+        case IO_KROME_MMW:
+#ifdef KROME
+            for(n = 0; n < pc; pindex++)
+                if(P[pindex].Type == type)
+                {
+                    *fp++ = krome_get_mmw(pindex);
+                    n++;
+                }
+#endif
+            break;
+        case IO_KROME_GAMMA:
+#ifdef KROME
+            for(n = 0; n < pc; pindex++)
+                if(P[pindex].Type == type)
+                {
+                    *fp++ = SphP[pindex].krome_gamma;
+                    n++;
+                }
+#endif
+            break;
+        case IO_KROME_TEMP:
+#ifdef KROME
+            for(n = 0; n < pc; pindex++)
+                if(P[pindex].Type == type)
+                {
+                    *fp++ = CallKrome(SphP[pindex].InternalEnergyPred ,SphP[pindex].Density * All.cf_a3inv , 0., SphP[pindex].Ne, pindex, 2);
+                    n++;
+                }
+#endif
+            break;
+        case IO_KROME:
+#ifdef KROME
+            for(n = 0; n < pc; pindex++){
+                if(P[pindex].Type == type){
+                    for(k = 0; k < KROME_NUM_SPECIES; k++) 
+                    {
+                        fp[k] = SphP[pindex].krome_species[k];
+                    }
+                    fp += KROME_NUM_SPECIES;
+                    n++;
+                }
+            }
+#endif
+            break;
+	...
+------------------------------------------------
+
+2) Add the krome IO blocks to the get_bytes_per_blockelement routine:
+!!! all but IO_KROME can be added to the first group, i.e. 1 float per variable !!!
+------------------------------------------------
+	...
+        case IO_KROME:
+#ifdef KROME
+            if(mode)
+                bytes_per_blockelement = KROME_NUM_SPECIES * sizeof(MyInputFloat);
+            else
+                bytes_per_blockelement = KROME_NUM_SPECIES * sizeof(MyOutputFloat);
+#endif
+            break;
+	...
+------------------------------------------------
+
+3) Add the krome IO blocks to the get_values_per_blockelement routine:
+!!! all but IO_KROME can be added to the first group, i.e. 1 float per variable !!!
+------------------------------------------------
+	...
+	case IO_KROME:
+#ifdef KROME
+	    values = KROME_NUM_SPECIES;
+#endif
+	...
+------------------------------------------------
+
+4) Add the krome IO blocks to the get_particles_in_block routine: 
+!!! all the krome blocks must be added for gas particles only !!!
+
+5) Add the krome IO blocks to the blockpresent routine:
+------------------------------------------------
+	...
+        case IO_KROME_HEAT:
+        case IO_KROME_MMW:
+        case IO_KROME_GAMMA:
+        case IO_KROME_TEMP:
+        case IO_KROME:
+#ifdef KROME
+            return 1;
+#else
+            return 0;
+#endif
+	...
+------------------------------------------------
+
+6) Add the krome IO blocks to the get_Tab_IO_Label routine (you can change the labels if you are not comfortable with them):
+------------------------------------------------
+	...
+        case IO_KROME_MMW:
+            strncpy(label, "KRMU", 4);
+            break;
+        case IO_KROME_GAMMA:
+            strncpy(label, "KRGM", 4);
+            break;
+        case IO_KROME_TEMP:
+            strncpy(label, "KRT ", 4);
+            break;
+        case IO_KROME:
+            strncpy(label, "KRSP", 4);
+            break;
+	...
+------------------------------------------------
+
+7) Add the krome IO blocks to the get_dataset_name routine (you can change the labels if you are not comfortable with them):
+------------------------------------------------
+	...
+        case IO_KROME_MMW:
+            strcpy(buf, "KromeMMW");
+            break;
+        case IO_KROME_GAMMA:
+            strcpy(buf, "KromeGamma");
+            break;
+        case IO_KROME_TEMP:
+            strcpy(buf, "KromeTemperature");
+            break;
+        case IO_KROME:
+            strcpy(buf, "KromeSpecies");
+            break;
+	...
+------------------------------------------------
+
+read_ic.c:
+
+1) Add the krome IO blocks to the empty_read_buffer routine:
+!!! only gamma and the species are necessary (the others can be added in the empty read group) !!!
+------------------------------------------------
+	...
+        case IO_KROME_GAMMA:
+#ifdef KROME
+            for(n = 0; n < pc; n++)
+                SphP[offset + n].krome_gamma = *fp++;
+#endif
+            break;
+        case IO_KROME:  
+#ifdef KROME
+            for(n = 0; n < pc; n++)
+                for(k = 0; k < KROME_NUM_SPECIES; k++)
+                        SphP[offset + n].krome_species[k] = *fp++;
+#endif
+            break;
+	...
+------------------------------------------------
+
+begrun.c:
+
+1) Initialise the krome library by adding a call to InitKrome in the begrun routine, immediately after the unit setup:
+------------------------------------------------
+  ...
+  set_units();
+  set_cosmo_factors_for_current_time();
+  All.Time = All.TimeBegin;
+  ...
+
+#ifdef KROME
+  InitKrome();
+#endif
+------------------------------------------------
+
+2) You have to manually rescale the minimum specific internal energy for the gas cells (which is computed assuming fully atomic gas with mmw=1.22),
+if you have more complex networks where the mmw can be larger than 1.22. An example is reported here:
+------------------------------------------------
+#ifdef KROME
+  All.MinEgySpec /= 2.5; //(To avoid hitting the minimum energy before the minimum temperature set for Krome)
+#endif
+------------------------------------------------
+
+init.c:
+
+1) You have to add a call to the species initialisation routine immediately after the first density computation (as reported here below):
+------------------------------------------------
+    ...
+    /* HELLO! This here is where you should insert custom code for hard-wiring the ICs of various test problems */    
+    density();
+
+#if defined(KROME)
+    if(RestartFlag == 0) init_species();
+#endif
+    ...
+------------------------------------------------
+
+2) If you use tables for metal cooling, be sure that the solar metallicity definition in gizmo is consistent with the solar metallicity definition used in the tables
+If this is not the case, change the All.SolarAbundances[0] value to match the table definition
+
+run.c:
+
+1) You have to add a call to the do_cooling routine in the krome.c file from the calculate_non_standard_physics routine in the run.c file
+2) You have to add a call to the SetIonisationKrome routine in the krome.c file from the set_non_standard_physics_for_current_time routine in the run.c file
+(the routine takes 1 argument, responsible for the update of the photo-chemistry rates, if included)
+
+Makefile:
+
+1) You have to add the krome interface file to the list of compiled files (you can put the krome.c file into a directory called cooling, where you will also 
+have to put the f90 krome files
+
+------------------------------------------------
+ifeq (KROME,$(findstring KROME,$(CONFIGVARS)))
+OBJS    += cooling/krome.o
+OBJS    += cooling/krome_header.o
+FOBJS   += cooling/krome_user_commons.o
+FOBJS   += cooling/krome_all.o
+endif
+------------------------------------------------
+
+2) You have to add the compiled f90 files from the krome build directory to the list of files linked with gizmo.
+This is an example of the command:
+$(CC) $(OPTIMIZE) $(OBJS) $(FOBJS) $(LIBS) $(RLIBS) cooling/opkd*.o -o $(EXEC)_KR
+
+
+merge_split.c (only if you have gas particles transferring mass):
+
+1) In the case of gas particles which need to be merged together, you have to rescale the species abundances consistently in the merge routine:
+------------------------------------------------
+#ifdef KROME
+    for(k=0;k<KROME_NUM_SPECIES;k++)
+        SphP[j].krome_species[k] = wt_j*SphP[j].krome_species[k] + wt_i*SphP[i].krome_species[k];
+#endif
+------------------------------------------------
+
+proto.h:
+
+1) Add the following block to the file to ensure the interface routines are defined
+------------------------------------------------
+#ifdef KROME
+void InitKrome(void);
+void init_species();
+void SetIonizationKrome(int);
+double krome_get_mmw(int target);
+double CallKrome(double u_old, double rho, double dt, double ne_guess, int target, int mode);
+void convert(double *in, double rho, int mode, double *out);
+#endif
+

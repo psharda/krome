@@ -12,13 +12,13 @@
 
 #IFKROME_useX
 extern void krome(double* x, double rhogas, double *Tgas, double *dt);
-extern void krome_equilibrium(double* x, double rhogas, double Tgas);
+extern void krome_equilibrium(double* x, double rhogas, double Tgas, int* verbosity);
 #ELSEKROME
 extern void krome(double* x, double *Tgas, double *dt);
-extern void krome_equilibrium(double* x, double Tgas);
+extern void krome_equilibrium(double* x, double Tgas, int* verbosity);
 #ENDIFKROME
 extern void krome_init();
-extern double *krome_get_coe(double* x, double *Tgas);
-extern double *krome_get_coeT(double *Tgas);
+extern void krome_get_coe(double* x, double *Tgas, double* krome_get_coe_var);
+extern void krome_get_coet(double *Tgas, double* krome_get_coeT_var);
 
 #ENDIF
