@@ -7,9 +7,11 @@ contains
     use krome_commons
     use krome_subs
     use krome_photo
+    implicit none
     integer::i,j,ierror,kwarnup(nrea),kwarndown(nrea),pblock
     real*8::kk(nrea),valmax,n(nspec)
     logical::is_rank_zero
+
     !temperature limits
 #KROME_logTlow
 #KROME_logTup
@@ -19,7 +21,7 @@ contains
     !loop to create tabs (it may take a while)
     valmax = 1d0
     ierror = 0 !error count
-    pblock = ktab_n/10 !ouput frequency
+    pblock = ktab_n/10 !ouput cadence
     if(is_rank_zero) print *,"KROME: creating tabs..."
     kwarnup(:) = 0 !store warnings
     kwarndown(:) = 0 !store warnings
@@ -28,11 +30,11 @@ contains
        if(mod(i,pblock)==0 .and. is_rank_zero) print *,i/pblock*10,"%"
        ktab_T(i) = 1d1**((i-1)*(ktab_logTup-ktab_logTlow)/(ktab_n-1)&
             +ktab_logTlow)
-       n(:) = 0.d0
+       n(:) = 1d-40
        n(idx_Tgas) = ktab_T(i)
        kk(:) = coe(n(:))
        !check for errors or discrepancies
-       if((maxval(kk)>valmax.or.minval(kk)<0.d0)) then
+       if((maxval(kk)>valmax.or.minval(kk)<0d0)) then
           ierror = ierror + 1
           if(ierror==1.and. is_rank_zero) print '(a16,a5,2a11)',"",&
                "idx","Tgas","rate"
@@ -53,11 +55,11 @@ contains
 
     !store inverse values of deltaT to speed-up at runtime
     do i=1,ktab_n-1
-       inv_ktab_T(i) = 1.d0 / (ktab_T(i+1)-ktab_T(i))
+       inv_ktab_T(i) = 1d0 / (ktab_T(i+1)-ktab_T(i))
     end do
 
     !store inverse to go fast at runtime
-    inv_ktab_idx = 1.d0 / (ktab_logTup - ktab_logTlow) * (ktab_n - 1)
+    inv_ktab_idx = 1d0 / (ktab_logTup - ktab_logTlow) * (ktab_n - 1)
 
   end subroutine make_ktab
 
@@ -65,6 +67,7 @@ contains
   subroutine check_tabs()
     use krome_commons
     use krome_subs
+    implicit none
     integer::i,j,pblock,ii
     real*8::kk(nrea),kktab(nrea),Tgas,kmax,n(nspec),kold(nrea),dk
     logical::is_rank_zero
@@ -77,11 +80,11 @@ contains
     do i=1,ktab_n
        if(mod(i,pblock)==0.and.is_rank_zero) print *,i/pblock*10,"%" !output
        Tgas = 1d1**((i-1)*(ktab_logTup-ktab_logTlow)/(ktab_n-1)+ktab_logTlow)
-       n(:) = 0.d0 !rates do not depends on densities
+       n(:) = 1d-40 !rates do not depends on densities
        n(idx_Tgas) = Tgas !rates depend on temperature
        kk(:) = coe(n(:)) !get rates
        kktab(:) = coe_tab(n(:)) !get rates from tabs
-       kold(:) = 0.d0 !old rate value to skip discontinuities
+       kold(:) = 0d0 !old rate value to skip discontinuities
        !loop on reactions
        do j=1,nrea
           kmax = kk(j)
@@ -132,6 +135,7 @@ contains
     use krome_constants
     use krome_commons
     use krome_user_commons
+    implicit none
     integer::idx,j
     real*8::Tgas, coe_tab(nrea),n(nspec),small
 #KROME_define_vars
@@ -164,7 +168,7 @@ contains
             (ktab(j,idx+1)-ktab(j,idx)) + ktab(j,idx)
     end do
 
-    #KROME_noTabReactions
+#KROME_noTabReactions
 #ENDIFKROME
 
 #KROME_rateModifier

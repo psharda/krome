@@ -61,10 +61,10 @@ class krome():
 	usePhotoOpacity = useXRay = hasSurfaceReactions = shieldHabingDust = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = shortHead = True
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = False
-	doRamses = doRamsesTH = doFlash = doEnzo = interfaceC = interfacePy = mergeTlimits = False
+	doRamses = doRamsesTH = doFlash = doEnzo = doGizmo = interfaceC = interfacePy = mergeTlimits = False
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
-	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = False
+	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = useBroadening = False
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
@@ -147,6 +147,7 @@ class krome():
 	KindDoubleValueOptional = "real*8,optional"
 	KindInteger = "integer"
 	KindIntegerValue = "integer"
+	KindBoolValueOptional = "logical,optional"
 	KindCharacter = "character"
 	BindC = ""
 	version = "14.08.dev"
@@ -261,6 +262,7 @@ class krome():
                         adiabatic index accurately taking into account both contributions, or REDUCED to use only H2 and CO as diatomic\
 			molecules (faster). Finally a custom F90 expression e.g. -gamma=\"1d0\"\
 			can also be used. Default value is 5/3.",metavar="OPTION")
+		self.parser.add_argument("-gizmo", action="store_true", help="create patches for Gizmo")
 		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be RIPAMONTI or OMUKAI")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM\
 			, DH, CR, PHOTOAV,VISCOUS. If you want a complete list of the available heating options type -heating=?")
@@ -335,6 +337,8 @@ class krome():
 			if the T limits for a given reaction are 10. and 1d4 the option -Tlmit GE,LE will provide (Tgas>=10. AND Tgas<=1d4) as\
 			the reaction range of validity. Operators opLow and opHigh must be one of the following: LE, GE, LT, GT.")
 		self.parser.add_argument("-unsafe", action="store_true", help="skip to check if the build folder is empty or not")
+		self.parser.add_argument("-useBroadening", action="store_true", help="use broadening (note: be careful!).")
+
 		self.parser.add_argument("-useCoolFloor", action="store_true", help="include a cooling floor given by the Tfloor temperature.\
 			note that you must define Tfloor by using the subroutine krome_set_Tfloor(your_Tfloor) before calling krome.")
 		#self.parser.add_argument("-useCoolCMBFloorZ", action="store_true", help="as -useCoolCMBFloor, but for metals only.")
@@ -470,50 +474,10 @@ class krome():
 			print " Bye!"
 			sys.exit()
 
-		#project name folder (required for dev.skip file)
-		if(args.project):
-			self.projectName = projectName = args.project
-			print "Reading option -project (name="+str(projectName)+")"
-			self.buildFolder = "build_"+projectName+"/"
-			fout = open(projectName+".kpj","w")
-			fout.write((" ".join(argv)))
-			fout.close()
-
-
-		#EXIT if development test found and skipDevTest enabled
-		if(args.skipDevTest and self.test_status=="dev"):
-			fh = open(self.buildFolder+"dev.skip","w")
-			fh.close()
-			sys.exit("THIS IS A DEV TEST (and -skipDevTest enabled): KROME ENDS!")
-
-		#print a warning if the test is under development
-		if(args.test and self.test_status=="dev"):
-			print "************************************************"
-			print "WARNING: the test \""+self.test_name+"\" is currently"
-			print " UNDER DEVELOPMENT and its results could be"
-			print " horribly wrong. "
-			print " Some details about the test can be found in the"
-			print " test_list file in the main KROME directory."
-			print " Do you want to proceed?"
-			print "************************************************"
-			a = raw_input("Any key to ignore q to quit... ")
-			if(a=="q"): print sys.exit()
-			print
-
-
-		#list arguments if test
-		if(args.test):
-			print "This TEST is running with the following arguments:"
-			for k in args.__dict__:
-				arg = args.__dict__[k]
-				if(arg): print " -"+k+" = "+str(arg)
-			print " -n = "+self.filename
-			print
-
 		#use custom option file (load options from a file and append to argv)
 		if(args.options):
 			fopt = args.options.strip() #get filename
-			print "Reading option -option="+fopt
+			print "Reading option -options="+fopt
 			#check if option file exists
 			if(not(file_exists(fopt))):
 				print "ERROR: custom option file \""+fopt+"\" does not exist!"
@@ -555,6 +519,47 @@ class krome():
 					sys.exit()
 
 			args = self.parser.parse_args() #return updated namespace
+
+		#project name folder (required for dev.skip file)
+		if(args.project):
+			self.projectName = projectName = args.project
+			print "Reading option -project (name="+str(projectName)+")"
+			self.buildFolder = "build_"+projectName+"/"
+			fout = open(projectName+".kpj","w")
+			fout.write((" ".join(argv)))
+			fout.close()
+
+
+		#EXIT if development test found and skipDevTest enabled
+		if(args.skipDevTest and self.test_status=="dev"):
+			fh = open(self.buildFolder+"dev.skip","w")
+			fh.close()
+			sys.exit("THIS IS A DEV TEST (and -skipDevTest enabled): KROME ENDS!")
+
+		#print a warning if the test is under development
+		if(args.test and self.test_status=="dev"):
+			print "************************************************"
+			print "WARNING: the test \""+self.test_name+"\" is currently"
+			print " UNDER DEVELOPMENT and its results could be"
+			print " horribly wrong. "
+			print " Some details about the test can be found in the"
+			print " test_list file in the main KROME directory."
+			print " Do you want to proceed?"
+			print "************************************************"
+			a = raw_input("Any key to ignore q to quit... ")
+			if(a=="q"): print sys.exit()
+			print
+
+
+		#list arguments if test
+		if(args.test):
+			print "This TEST is running with the following arguments:"
+			for k in args.__dict__:
+				arg = args.__dict__[k]
+				if(arg): print " -"+k+" = "+str(arg)
+			print " -n = "+self.filename
+			print
+
 
 		#list all the automatic reactions available from the files in the fdbase folder and exit
 		if(args.listAutomatics):
@@ -752,6 +757,11 @@ class krome():
 				print "ERROR: option -useCoolFloor needs at least one active cooling option. See -cooling="
 				sys.exit()
 			print "Reading option -useCoolFloor"
+
+		#use broadening
+		if(args.useBroadening):
+			self.useBroadening = True
+			print "Reading option -useBroadening"
 
 		#apply an individual cooling floor (SB, mod TG)
 		if(args.useIndividualFloor):
@@ -1021,10 +1031,35 @@ class krome():
 				print "WARNING: default ATOL set to 1e-10 due to -enzo flag."
 				self.ATOL = 1e-10
 
+		#creates gizmo patches
+		if(args.gizmo):
+			self.doGizmo = True
+			print "Reading option -gizmo"
+			if(not(args.compact)):
+				print "ERROR: the patch for Gizmo requires the -compact option!"
+				sys.exit()
+			if(self.is_test):
+				print "ERROR: -test option and -gizmo are incompatible!"
+				sys.exit()
+			if(not args.useX):
+				print "ERROR: the patch for Gizmo requires mass fractions, please add -useX option"
+				sys.exit()
+			if(not args.interfaceC):
+				print "ERROR: the patch for Gizmo requires the C interface, please add -interfaceC option"
+				sys.exit()
+			if(args.heating):
+				if("COMPR" in args.heating):
+					print "ERROR: -heating=COMPRESS is intended only for one-zone gravitational collapse!"
+					sys.exit()
+			if(not(args.customATOL) and not(args.ATOL)):
+				print "WARNING: default ATOL set to 1e-10 due to -enzo flag."
+				self.ATOL = 1e-10
+
 		#creates C and Python wrappers
 		if(args.interfaceC or args.interfacePy):
 			self.KindInteger = "integer(kind=c_int)"
 			self.KindIntegerValue = "integer(kind=c_int), value"
+			self.KindBoolValueOptional = "logical(kind=c_bool), optional"
 			self.KindSingle = "real(kind=c_float)"
 			self.KindDouble = "real(kind=c_double)"
 			self.KindDoubleValue = "real(kind=c_double), value"
@@ -4920,16 +4955,16 @@ class krome():
 
 			elif(srow == "#KROME_col2num_method"):
 				if(self.columnDensityMethod=="DEFAULT"):
-					fout.write("col2num = 1d3 * (ncalc/1.87d21)**1.5\n")
+					fout.write("col2num = 1d3 * (max(ncalc,1d-40)/1.87d21)**1.5\n")
 				elif(self.columnDensityMethod=="JEANS"):
-					fout.write("col2num = 2d0 * ncalc / get_jeans_length(n(:),Tgas)\n")
+					fout.write("col2num = 2d0 * max(ncalc,1d-40) / get_jeans_length(n(:),Tgas)\n")
 				else:
 					sys.exit("ERROR: method "+self.columnDensityMethod+" unknown for col2num")
 			elif(srow == "#KROME_num2col_method"):
 				if(self.columnDensityMethod=="DEFAULT"):
 					fout.write("num2col = 1.87d21*(max(ncalc,1d-40)*1d-3)**(2./3.)\n")
 				elif(self.columnDensityMethod=="JEANS"):
-					fout.write("num2col = 0.5d0 * ncalc * get_jeans_length(n(:),Tgas)\n")
+					fout.write("num2col = 0.5d0 * max(ncalc,1d-40) * get_jeans_length(n(:),Tgas)\n")
 				else:
 					sys.exit("ERROR: method "+self.columnDensityMethod+" unknown for num2col")
 			elif(srow == "#KROME_masses"):
@@ -5612,9 +5647,9 @@ class krome():
 					row = row.replace("#KROME_xsecKernelFunction",fpart)
 
 			#precompute broadeinng in photochemistry
-			if(srow=="#KROME_broadening_shift_precalc"):
+			if(srow=="#KROME_broadening_shift_precalc" and self.useBroadening):
 				row = "kt2 = 2d0*boltzmann_erg*Tgas\n"
-				row += "dshift(:) = 0d0\n"
+				#row += "dshift(:) = 0d0\n"
 				foundPartner = [] #unique photoreaction partners
 				#loop on reactions to get photoreaction partners
 				for rea in reacts:
@@ -6898,6 +6933,7 @@ class krome():
 			row = row.replace("#KROME_double",self.KindDouble)
 			row = row.replace("#KROME_integer_value",self.KindIntegerValue)
 			row = row.replace("#KROME_integer",self.KindInteger)
+			row = row.replace("#KROME_bool_optional",self.KindBoolValueOptional)
 			row = row.replace("#KROME_character",self.KindCharacter)
 
 			if(self.interfaceC or self.interfacePy):
@@ -7085,10 +7121,9 @@ class krome():
 					if(row[0]!="#"): fout.write(row)
 				else:
 					fout.write(row)
-		if(not(self.buildCompact)):
-			fout.close()
-			#add subroutine wrappers to functions returning array
-			self.makeUserCWrappers()
+                fout.close()
+                #add subroutine wrappers to functions returning array
+                self.makeUserCWrappers()
 
 		print "done!"
 
@@ -7096,16 +7131,24 @@ class krome():
 	#add subroutine wrappers to functions returning array
 	def makeUserCWrappers(self):
 
-		#original file
-		fh = open(self.buildFolder+"krome_user.f90","rb")
-		#temp file
-		fout = open(self.buildFolder+"krome_user.tmp","w")
-
-		#default variables
-		functionName = "__NONE__"
-		wrapper = allWrappers = ""
-		arguments = []
-
+                #original file
+                if(not(self.buildCompact)):
+                        fh = open(self.buildFolder+"krome_user.f90","rb")
+                else:
+                        fh = open(self.buildFolder+"krome_all.f90","rb")
+                #Cheader file
+                #ch = open(self.srcFolder+"krome_user.h","rb")
+                #temp file
+                fout = open(self.buildFolder+"krome_user.tmp","w")
+                functionName = "__NONE__"
+                wrapper = allWrappers = ""
+                arguments = []
+                #cproto = []
+                #value_dec =""
+                #value_init=""
+                for row in fh:
+                        fout.write(row)
+                        if row.startswith("module krome_user"): break
 		#loop on user file lines
 		for row in fh:
 			srow = row.strip()
@@ -7114,6 +7157,8 @@ class krome():
 				arow = srow.split("(")
 				#get function name
 				functionName = arow[0].replace("function","").strip()
+
+				#print functionName
 				#get arguments
 				args = arow[1].replace(")","").strip()
 				#arguments as list
@@ -7126,7 +7171,7 @@ class krome():
 				#start wrapper
 				wrapper = "!********************************\n"
 				wrapper += "!subroutine wrapper around "+functionName+" function\n"
-				wrapper += "subroutine "+functionName+"_wrap("+argwrap+")\n"
+				wrapper += "subroutine "+functionName+"_wrap("+argwrap+") bind(C,name='%s')\n" %(functionName.lower())
 
 				#flag: this function returns an array
 				returnsArray = False
@@ -7146,15 +7191,21 @@ class krome():
 				argindec = (srow.endswith(argw) or (argw+"," in srow) or (argw+"(" in srow))
 				#if argument definition keeps line
 				if(argindec and ("::" in srow)):
-					srown = srow.replace(functionName,functionName+"_var")
+					srown = srow.replace("real*8","real(kind=c_double)")
+					srown = srown.replace("real*4","real(kind=c_float)")
+					srown = srown.replace("integer","integer(kind=c_int)")
+					srown = srown.replace(functionName,functionName+"_var")
 					if(not(srown in wrapper)): wrapper += "\t"+srown+"\n"
 
 			#if function name in definition add line
-			if((functionName+"(" in srow) and ("::" in srow)):
+			if((functionName+"(" in srow) and ("::" in srow) and not 'names' in functionName):
 				#functionName+"(" in declarations means array returned
 				returnsArray = True
 				#add declaration line and append _var
-				srown = srow.replace(functionName,functionName+"_var")
+				srown = srow.replace("real*8","real(kind=c_double)")
+				srown = srown.replace("real*4","real(kind=c_float)")
+				srown = srown.replace("integer","integer(kind=c_int)")
+				srown = srown.replace(functionName,functionName+"_var")
 				if(not(srown in wrapper)): wrapper += "\t"+srown+"\n"
 
 			#when end function stores wrapper
@@ -7173,9 +7224,12 @@ class krome():
 
 		fh.close()
 		fout.close()
-
-		#replace original file (.f90) with generated (.tmp)
-		shutil.move(self.buildFolder+"krome_user.tmp",self.buildFolder+"krome_user.f90")
+                #ch.close()
+                #replace original file (.f90) with generated (.tmp)
+                if(not(self.buildCompact)):
+                        shutil.move(self.buildFolder+"krome_user.tmp",self.buildFolder+"krome_user.f90")
+                else:
+                     	shutil.move(self.buildFolder+"krome_user.tmp",self.buildFolder+"krome_all.f90")
 
 
 
@@ -7364,6 +7418,7 @@ class krome():
 			row = row.replace("#KROME_double",self.KindDouble)
 			row = row.replace("#KROME_integer_value",self.KindIntegerValue)
 			row = row.replace("#KROME_integer",self.KindInteger)
+			row = row.replace("#KROME_bool_optional",self.KindBoolValueOptional)
 			row = row.replace("#KROME_character",self.KindCharacter)
 
 			row = row.replace("#KROME_ATOL",str(ATOL))
@@ -7851,6 +7906,26 @@ class krome():
 		shutil.move(buildFolder+"opkda2.f", ramsesFolder+"opkda2.f")
 		shutil.move(buildFolder+"opkdmain.f", ramsesFolder+"opkdmain.f")
 
+	def gizmo_patch(self):
+		#move the krome files into the gizmo patch folder
+                pfold = "patches/gizmo/"
+                gizmoFolder = self.buildFolder+"krome_gizmo_patch/"
+                buildFolder = self.buildFolder
+                if(not(os.path.exists(gizmoFolder))): os.makedirs(gizmoFolder)
+
+		fname = "krome.c"
+                shutil.copy(pfold+fname,gizmoFolder+fname)
+
+		fname = "README.gizmo"
+                self.replacein(pfold+fname,gizmoFolder+fname,[],[])
+
+                #shutil.move(buildFolder+"krome_all.h", gizmoFolder+"krome_all.h")
+                #shutil.move(buildFolder+"krome_header.c", gizmoFolder+"krome_header.c")
+                shutil.move(buildFolder+"krome_all.f90", gizmoFolder+"krome_all.f90")
+                shutil.move(buildFolder+"krome_user_commons.f90", gizmoFolder+"krome_user_commons.f90")
+                shutil.move(buildFolder+"opkda1.f", gizmoFolder+"opkda1.f")
+                shutil.move(buildFolder+"opkda2.f", gizmoFolder+"opkda2.f")
+                shutil.move(buildFolder+"opkdmain.f", gizmoFolder+"opkdmain.f")
 
 	#########################################
 	def ramses_patch(self):
@@ -8487,6 +8562,7 @@ class krome():
 		#if(self.doRamses2011): self.ramses_patch()
 		if(self.doRamsesTH): self.ramsesTH_patch()
 		if(self.doEnzo): self.enzo_patch()
+		if(self.doGizmo): self.gizmo_patch()
 		return
 
 	#########################################

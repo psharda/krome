@@ -170,6 +170,8 @@ contains
 
     psi = GHabing*sqrt(Tgas)/n(idx_E)
 
+    if(psi<=0) return
+
     H_recombination_on_dust =  1.225d-13*dust2gas_ratio &
          /(1.d0+8.074d-6*psi**(1.378)*(1.d0+5.087d2 &
          *Tgas**(0.01586)*psi**(-0.4723-1.102d-5*log(Tgas))))
@@ -187,6 +189,8 @@ contains
     if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
 
     psi = GHabing*sqrt(Tgas)/n(idx_E)
+
+    if(psi<=0) return
 
     He_recombination_on_dust = 5.572d-14*dust2gas_ratio&
          /(1.d0+3.185d-7*psi**(1.512)*(1.d0+5.115d3&
@@ -206,6 +210,8 @@ contains
 
     psi = GHabing*sqrt(Tgas)/n(idx_E)
 
+    if(psi<=0) return
+
     C_recombination_on_dust = 4.558d-13*dust2gas_ratio&
          /(1.d0+6.089d-3*psi**(1.128)*(1.d0+4.331d2&
          *Tgas**(0.04845)*psi**(-0.8120-1.333d-4*log(Tgas))))
@@ -223,6 +229,8 @@ contains
     if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
 
     psi = GHabing*sqrt(Tgas)/n(idx_E)
+
+    if(psi<=0) return
 
     Si_recombination_on_dust = 2.166d-14*dust2gas_ratio&
          /(1.d0+5.678d-8*psi**(1.874)*(1.d0+4.375d4&
