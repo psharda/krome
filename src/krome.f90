@@ -12,10 +12,27 @@ contains
 
   !********************************
   !KROME main (interface to the solver library)
+#IFKROME_useBindC
+  subroutine krome_c(x,rhogas,Tgas,dt) bind(C,name='krome')
+    use krome_commons
+    use krome_user
+    implicit none
+    #KROME_double :: Tgas,dt
+    #KROME_double :: x(nmols)
 #IFKROME_useX
-  subroutine krome(x,rhogas,Tgas,dt #KROME_dust_arguments #KROME_fexCustom) #KROME_bindC
+    #KROME_double_value :: rhogas
+    call krome(x,rhogas,Tgas,dt #KROME_dust_arguments #KROME_fexCustom)
 #ELSEKROME
-  subroutine krome(x,Tgas,dt #KROME_dust_arguments #KROME_fexCustom) #KROME_bindC
+    real*8 :: rhogas
+    call krome(x,Tgas,dt #KROME_dust_arguments #KROME_fexCustom)
+#ENDIFKROME
+  end subroutine krome_c
+#ENDIFKROME_useBindC
+
+#IFKROME_useX
+  subroutine krome(x,rhogas,Tgas,dt #KROME_dust_arguments #KROME_fexCustom)
+#ELSEKROME
+  subroutine krome(x,Tgas,dt #KROME_dust_arguments #KROME_fexCustom)
 #ENDIFKROME
     use krome_commons
     use krome_subs
@@ -25,10 +42,10 @@ contains
     use krome_getphys
     use krome_tabs
     implicit none
-    #KROME_double :: Tgas,dt
-    #KROME_double :: x(nmols)
+    real*8 :: Tgas,dt
+    real*8 :: x(nmols)
 #IFKROME_useX
-    #KROME_double_value :: rhogas
+    real*8, value :: rhogas
 #ELSEKROME
     real*8 :: rhogas
 #ENDIFKROME
@@ -36,7 +53,7 @@ contains
     real*8::mass(nspec),n(nspec),tloc,xin
     real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
     integer::icount,i,icount_max
-    #KROME_integer :: ierr
+    integer:: ierr
 
     !DLSODES variables
     integer,parameter::meth=2 !1=adam, 2=BDF
