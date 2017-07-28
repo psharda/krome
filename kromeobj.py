@@ -2291,11 +2291,11 @@ class krome():
 			if(myrea.hasTlimitMin):
 				if(tminFound): myrea.Tmin = format_double(arow[iTmin])
 			#if file is SWRI convert to KROME
-			if(myrea.krate.strip()=="@xsecFile=SWRI"):
-				SWRI2KROME(self.buildFolder,myrea.reactants[0],myrea.products,myrea.Tmin)
+			if("@xsecFile=SWRI" in myrea.krate):
+				SWRI2KROME(self.buildFolder, myrea.reactants[0], myrea.products, myrea.Tmin)
 			#if file is LEIDEN convert to KROME
-			if(myrea.krate.strip()=="@xsecFile=LEIDEN"):
-				LEIDEN2KROME(self.buildFolder,myrea.reactants[0],myrea.products)
+			if("@xsecFile=LEIDEN" in myrea.krate):
+				LEIDEN2KROME(self.buildFolder, myrea.reactants[0], myrea.products)
 
 			#this reaction is on surface
 			if(inSurfaceBlock):
@@ -7122,8 +7122,10 @@ class krome():
 				else:
 					fout.write(row)
                 fout.close()
+
                 #add subroutine wrappers to functions returning array
-                self.makeUserCWrappers()
+		if(self.interfaceC or self.interfacePy):
+	                self.makeUserCWrappers()
 
 		print "done!"
 
