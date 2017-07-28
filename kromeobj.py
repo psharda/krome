@@ -474,50 +474,10 @@ class krome():
 			print " Bye!"
 			sys.exit()
 
-		#project name folder (required for dev.skip file)
-		if(args.project):
-			self.projectName = projectName = args.project
-			print "Reading option -project (name="+str(projectName)+")"
-			self.buildFolder = "build_"+projectName+"/"
-			fout = open(projectName+".kpj","w")
-			fout.write((" ".join(argv)))
-			fout.close()
-
-
-		#EXIT if development test found and skipDevTest enabled
-		if(args.skipDevTest and self.test_status=="dev"):
-			fh = open(self.buildFolder+"dev.skip","w")
-			fh.close()
-			sys.exit("THIS IS A DEV TEST (and -skipDevTest enabled): KROME ENDS!")
-
-		#print a warning if the test is under development
-		if(args.test and self.test_status=="dev"):
-			print "************************************************"
-			print "WARNING: the test \""+self.test_name+"\" is currently"
-			print " UNDER DEVELOPMENT and its results could be"
-			print " horribly wrong. "
-			print " Some details about the test can be found in the"
-			print " test_list file in the main KROME directory."
-			print " Do you want to proceed?"
-			print "************************************************"
-			a = raw_input("Any key to ignore q to quit... ")
-			if(a=="q"): print sys.exit()
-			print
-
-
-		#list arguments if test
-		if(args.test):
-			print "This TEST is running with the following arguments:"
-			for k in args.__dict__:
-				arg = args.__dict__[k]
-				if(arg): print " -"+k+" = "+str(arg)
-			print " -n = "+self.filename
-			print
-
 		#use custom option file (load options from a file and append to argv)
 		if(args.options):
 			fopt = args.options.strip() #get filename
-			print "Reading option -option="+fopt
+			print "Reading option -options="+fopt
 			#check if option file exists
 			if(not(file_exists(fopt))):
 				print "ERROR: custom option file \""+fopt+"\" does not exist!"
@@ -559,6 +519,47 @@ class krome():
 					sys.exit()
 
 			args = self.parser.parse_args() #return updated namespace
+
+		#project name folder (required for dev.skip file)
+		if(args.project):
+			self.projectName = projectName = args.project
+			print "Reading option -project (name="+str(projectName)+")"
+			self.buildFolder = "build_"+projectName+"/"
+			fout = open(projectName+".kpj","w")
+			fout.write((" ".join(argv)))
+			fout.close()
+
+
+		#EXIT if development test found and skipDevTest enabled
+		if(args.skipDevTest and self.test_status=="dev"):
+			fh = open(self.buildFolder+"dev.skip","w")
+			fh.close()
+			sys.exit("THIS IS A DEV TEST (and -skipDevTest enabled): KROME ENDS!")
+
+		#print a warning if the test is under development
+		if(args.test and self.test_status=="dev"):
+			print "************************************************"
+			print "WARNING: the test \""+self.test_name+"\" is currently"
+			print " UNDER DEVELOPMENT and its results could be"
+			print " horribly wrong. "
+			print " Some details about the test can be found in the"
+			print " test_list file in the main KROME directory."
+			print " Do you want to proceed?"
+			print "************************************************"
+			a = raw_input("Any key to ignore q to quit... ")
+			if(a=="q"): print sys.exit()
+			print
+
+
+		#list arguments if test
+		if(args.test):
+			print "This TEST is running with the following arguments:"
+			for k in args.__dict__:
+				arg = args.__dict__[k]
+				if(arg): print " -"+k+" = "+str(arg)
+			print " -n = "+self.filename
+			print
+
 
 		#list all the automatic reactions available from the files in the fdbase folder and exit
 		if(args.listAutomatics):
