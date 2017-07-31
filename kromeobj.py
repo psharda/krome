@@ -1926,12 +1926,12 @@ class krome():
 				myrea.hasTlimitMin = myrea.hasTlimitMax = False
 				if(not(iceName in self.iceSpeciesList)):
 					self.iceSpeciesList[iceName] = dict()
-				self.iceSpeciesList[iceName]["ODE"] = "0.d0"
+				self.iceSpeciesList[iceName]["ODE"] = "0d0"
 				if(rateType.lower()=="freezeout"):
-					myrea.verbatim = iceName+" freeze-out"
+					myrea.verbatim = iceName+" -> "+iceName+"_ice"
 					self.iceSpeciesList[iceName]["reactionFreezeout"] = myrea
 				elif(rateType.lower()=="evaporation"):
-					myrea.verbatim = iceName+" evaporation"
+					myrea.verbatim = iceName+"_ice -> "+iceName
 					self.iceSpeciesList[iceName]["reactionEvaporation"] = myrea
 				else:
 					sys.exit("ERROR: unknown reaction type "+rateType)

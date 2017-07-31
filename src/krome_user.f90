@@ -2598,6 +2598,7 @@ contains
     use krome_commons
     use krome_subs
     use krome_getphys
+    implicit none
     integer::i,charges(nspec)
 #KROME_double :: x(nmols)
 #KROME_double_value :: Tgas
@@ -2617,14 +2618,17 @@ contains
     print '(a14,E11.3)',"Tgas",Tgas
   end subroutine krome_get_info
 
+  !*****************************
   subroutine krome_set_mpi_rank(xarg) #KROME_bindC
     use krome_commons
+    implicit none
     #KROME_integer_value :: xarg
     krome_mpi_rank=xarg
   end subroutine krome_set_mpi_rank
 
 #IFKROME_usePhotoBins
 #IFKROME_useBindC
+  !*****************************
   function krome_get_photoIntensity(energy) bind(C)
     use krome_commons
     use krome_photo
@@ -2634,6 +2638,6 @@ contains
     krome_get_photoIntensity = get_photoIntensity(energy)
   end function krome_get_photoIntensity
 #ENDIFKROME_useBindC
-#ENDIFKROME_usePhotoBins
+#ENDIFKROME
 
 end module krome_user
