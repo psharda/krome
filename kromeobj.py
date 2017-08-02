@@ -3673,7 +3673,7 @@ class krome():
 		maxDnsParts = 1000
 
 		#create explicit differentials
-		dns = ["dn("+sp.fidx+") = 0.d0" for sp in specs] #initialize
+		dns = ["\n!"+sp.name+"\ndn("+sp.fidx+") = 0.d0" for sp in specs] #initialize
 		dnsCount = [0 for sp in specs] #initialize RHS part count
 		idxs = [] #already employed indexes
 		for rea in reacts:
@@ -3714,12 +3714,14 @@ class krome():
 					#get freeze and evaporation rates index
 					idxFreeze = str(iceData["reactionFreezeout"].idx)
 					idxEvaporation = str(iceData["reactionEvaporation"].idx)
-					dns[species.idx-1] = "dn("+species.fidx+") = dnChem_"+iceName \
+					dns[species.idx-1] = "\n!"+iceName+"_GAS\n" \
+						+ "dn("+species.fidx+") = dnChem_"+iceName \
 						+ " -n("+species.fidx+")*(k("+idxFreeze+")+k("+idxEvaporation+"))" \
 						+ " +k("+idxEvaporation+")*n("+species.fidx+"_total)"
 				#differential for total = ice + gas
 				if(nameUpper==iceName+"_TOTAL"):
-					dns[species.idx-1] = "dn("+species.fidx+") = dnChem_"+iceName
+					dns[species.idx-1] = "\n!"+iceName+"_TOTAL\n" \
+						+ "dn("+species.fidx+") = dnChem_"+iceName
 
 		#add dust to ODEs
 		if(self.useDust):
