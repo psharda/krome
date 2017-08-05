@@ -3786,7 +3786,11 @@ class krome():
 					#if iceName has surface reactions changes ODE accordingly
 					for react in thisReacts:
 						#build reactants multiplication
-						RHS = "*".join(["n("+x.fidx+")" for x in react.reactants])
+						RRs = react.reactants
+						#function to write nTOTAL-nGAS
+						def ndiff(myfidx):
+							return "(n("+myfidx+")-n("+myfidx.replace("_total","")+"))"
+						RHS = "*".join([ndiff(x.fidx) for x in RRs])
 						#get sign depending if iceName is reactant or product
 						signRHS = "+"
 						if(nameUpper in [x.name.upper() for x in react.reactants]):
