@@ -3763,17 +3763,13 @@ class krome():
 		for (iceName,iceData) in self.iceSpeciesList.iteritems():
 			for species in self.specs:
 				nameUpper = species.name.upper()
-				thisReact = speciesRole = None
+				thisReacts = []
 				#search for reaction where iceName is present
 				for react in self.reacts:
 					#check reactants
-					if(nameUpper in [x.name.upper() for x in react.reactants]):
-						thisReact = react
-						speciesRole = "-" #reactant has negative ODE
-					#check products
-					if(nameUpper in [x.name.upper() for x in react.products]):
-						thisReact = react
-						speciesRole = "+" #product has positive ODE
+					RP = react.reactants+react.products
+					if(nameUpper in [x.name.upper() for x in RP]):
+						thisReacts.append(react)
 				#differential for the GAS phase
 				if(nameUpper==iceName):
 					#get freeze and evaporation rates index
@@ -3787,13 +3783,17 @@ class krome():
 				if(nameUpper==iceName+"_TOTAL"):
 					dns[species.idx-1] = "\n!"+iceName+"_TOTAL\n" \
 						+ "dn("+species.fidx+") = dnChem_"+iceName
-					#if iceName has a surface reaction changes ODE accordingly
-					if(thisReact!=None):
+					#if iceName has surface reactions changes ODE accordingly
+					for react in thisReacts:
 						#build reactants multiplication
-						RHS = "*".join(["n("+x.fidx+")" for x in thisReact.reactants])
+						RHS = "*".join(["n("+x.fidx+")" for x in react.reactants])
+						#get sign depending if iceName is reactant or product
+						signRHS = "+"
+						if(nameUpper in [x.name.upper() for x in react.reactants]):
+							signRHS = "-"
 						#add complete RHS to ODE
-						dns[species.idx-1] += " &\n" + speciesRole \
-							+ "k("+str(thisReact.idx) +")" + "*" + RHS
+						dns[species.idx-1] += " &\n" + signRHS \
+							+ "k("+str(react.idx) +")" + "*" + RHS
 
 		#add dust to ODEs
 		if(self.useDust):
