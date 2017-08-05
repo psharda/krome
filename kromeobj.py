@@ -1939,6 +1939,60 @@ class krome():
 				rcount += 1
 				continue
 
+
+			#read surface reaction
+			# e.g. @surface:RRP,H,OH,H2O,krate_2bodySi(n(:),idx_H,idx_OH,0d0,tabTdust)
+			if("@surface:" in row):
+				surf = srow.replace("@surface:","").strip()
+				asurf = surf.split(",")
+
+				#read format
+				fmt = list(asurf[0])
+
+				#create reaction object
+				myrea = reaction()
+				myrea.products = []
+				myrea.reactants = []
+
+				#loop on format (e.g. RRPP) to store species
+				for i in range(len(fmt)):
+					sp = asurf[i+1]
+					#parse species
+					mol = parser(sp+"_total", mass_dic, atoms, self.thermodata)
+					mol.mass = 0e0
+					#add species to list if not present
+					if(not(mol.name in spec_names)):
+						spec_names.append(mol.name)
+						specs.append(mol)
+					mol.idx = spec_names.index(mol.name) + 1
+
+					#store species depending on format element (R or P)
+					if(fmt[i]=="R"):
+						myrea.reactants.append(mol)
+						myrea.curlyR.append(False)
+					elif(fmt[i]=="P"):
+						myrea.products.append(mol)
+						myrea.curlyP.append(False)
+					else:
+						print "ERROR: unknown surface reaction format"
+						print fmt
+						sys.exit()
+
+				#ending part is rate coefficients
+				myrea.krate = (",".join(asurf[len(fmt)+1:]))
+				myrea.idx = rcount
+				myrea.canUseTabs = False
+				myrea.hasTlimitMin = myrea.hasTlimitMax = False
+
+				#create verbatim and use _ice
+				myrea.build_verbatim()
+				myrea.verbatim = myrea.verbatim.replace("_total","_ice")
+
+				#append reaction
+				reacts.append(myrea)
+				rcount += 1
+				continue
+
 			#search for table pragma
 			if("@tabvar:" in srow):
 				atab = srow.replace("@tabvar:","").split("=")
@@ -3709,7 +3763,18 @@ class krome():
 		for (iceName,iceData) in self.iceSpeciesList.iteritems():
 			for species in self.specs:
 				nameUpper = species.name.upper()
-				#differential for the gas phase
+				thisReact = speciesRole = None
+				#search for reaction where iceName is present
+				for react in self.reacts:
+					#check reactants
+					if(nameUpper in [x.name.upper() for x in react.reactants]):
+						thisReact = react
+						speciesRole = "-" #reactant has negative ODE
+					#check products
+					if(nameUpper in [x.name.upper() for x in react.products]):
+						thisReact = react
+						speciesRole = "+" #product has positive ODE
+				#differential for the GAS phase
 				if(nameUpper==iceName):
 					#get freeze and evaporation rates index
 					idxFreeze = str(iceData["reactionFreezeout"].idx)
@@ -3718,10 +3783,17 @@ class krome():
 						+ "dn("+species.fidx+") = dnChem_"+iceName \
 						+ " -n("+species.fidx+")*(k("+idxFreeze+")+k("+idxEvaporation+"))" \
 						+ " +k("+idxEvaporation+")*n("+species.fidx+"_total)"
-				#differential for total = ice + gas
+				#differential for TOTAL = ice + gas
 				if(nameUpper==iceName+"_TOTAL"):
 					dns[species.idx-1] = "\n!"+iceName+"_TOTAL\n" \
 						+ "dn("+species.fidx+") = dnChem_"+iceName
+					#if iceName has a surface reaction changes ODE accordingly
+					if(thisReact!=None):
+						#build reactants multiplication
+						RHS = "*".join(["n("+x.fidx+")" for x in thisReact.reactants])
+						#add complete RHS to ODE
+						dns[species.idx-1] += " &\n" + speciesRole \
+							+ "k("+str(thisReact.idx) +")" + "*" + RHS
 
 		#add dust to ODEs
 		if(self.useDust):
