@@ -217,6 +217,7 @@ class reaction():
 			pname.append(p.name)
 		self.pseudo_hash = ("_".join(sorted(rname)))+"|"+("_".join(sorted(pname)))
 
+	#*********************
 	#method: check reaction (mass and charge conservation)
 	def check(self,mode="ALL"):
 		mass_reactants = mass_products = 0.e0
@@ -287,6 +288,13 @@ class reaction():
 		if(available): self.dH = (rH-pH)*1.60217657e-12 #eV->erg (cooling<0)
 
 
+	#*********************
+	#alias for enthalpy calculation
+	def computeEnthalpy(self):
+		self.enthalpy()
+
+
+	#*********************
 	#calculate reverse reaction using polynomials
 	def doReverse(self):
 		pidx = "(/"+(",".join([x.fidx for x in self.products]))+"/)"
