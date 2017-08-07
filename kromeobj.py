@@ -1954,11 +1954,16 @@ class krome():
 				myrea.products = []
 				myrea.reactants = []
 
+				enthalpy = 0e0 #init total enthalpy @ 300K, eV
 				#loop on format (e.g. RRPP) to store species
 				for i in range(len(fmt)):
 					sp = asurf[i+1]
 					#parse species
 					mol = parser(sp+"_total", mass_dic, atoms, self.thermodata)
+					#parse species without _total to get enthalpy
+					mol2 = parser(sp, mass_dic, atoms, self.thermodata)
+					kboltzmann_eV = 8.617332478e-5 #eV/K
+
 					mol.mass = 0e0
 					#add species to list if not present
 					if(not(mol.name in spec_names)):
@@ -1970,9 +1975,11 @@ class krome():
 					if(fmt[i]=="R"):
 						myrea.reactants.append(mol)
 						myrea.curlyR.append(False)
+						enthalpy += mol2.enthalpy
 					elif(fmt[i]=="P"):
 						myrea.products.append(mol)
 						myrea.curlyP.append(False)
+						enthalpy -= mol2.enthalpy
 					else:
 						print "ERROR: unknown surface reaction format"
 						print fmt
@@ -1983,6 +1990,8 @@ class krome():
 				myrea.idx = rcount
 				myrea.canUseTabs = False
 				myrea.hasTlimitMin = myrea.hasTlimitMax = False
+				#store enthalpy in K
+				myrea.enthalpyK = enthalpy/kboltzmann_eV
 
 				#create verbatim and use _ice
 				myrea.build_verbatim()
@@ -3766,10 +3775,14 @@ class krome():
 				thisReacts = []
 				#search for reaction where iceName is present
 				for react in self.reacts:
-					#check reactants
 					RP = react.reactants+react.products
-					if(nameUpper in [x.name.upper() for x in RP]):
+					#add _TOTAL at end of species name if missing
+					if(not(nameUpper.endswith("_TOTAL"))):
+						nameCheck = nameUpper+"_TOTAL"
+					#check if iceName_TOTAL is in reactants+products
+					if(nameCheck in [x.name.upper() for x in RP]):
 						thisReacts.append(react)
+
 				#differential for the GAS phase
 				if(nameUpper==iceName):
 					#get freeze and evaporation rates index
@@ -3779,11 +3792,36 @@ class krome():
 						+ "dn("+species.fidx+") = dnChem_"+iceName \
 						+ " -n("+species.fidx+")*(k("+idxFreeze+")+k("+idxEvaporation+"))" \
 						+ " +k("+idxEvaporation+")*n("+species.fidx+"_total)"
+					#if iceName has surface reactions changes GAS ODE accordingly
+					for react in thisReacts:
+						#build reactants multiplication
+						RRs = react.reactants
+						#function to write nTOTAL-nGAS
+						def ndiff(myfidx):
+							return "(n("+myfidx+")-n("+myfidx.replace("_total","")+"))"
+						RHS = "*".join([ndiff(x.fidx) for x in RRs])
+						#GAS can only get evaporated part from 2body, skip loss
+						if(nameUpper+"_TOTAL" in [x.name.upper() for x in react.reactants]):
+							continue
+
+						#fraction of 2body in the gas phase
+						# see https://arxiv.org/pdf/1510.03218.pdf
+						mamu = 130.
+						protonMass = 1.6726219e-24 #g
+						Mass = mamu*protonMass
+						epsM = (Mass-species.mass)**2/(Mass+species.mass)**2
+						dof = 3e0*sum(species.atomcount.values())
+						deltaGas = "exp(-Ebind/" + str(epsM) + "/" + str(react.enthalpyK) \
+							+ "/" + str(dof) +")"
+						#add complete RHS to ODE
+						dns[species.idx-1] += " &\n+"+deltaGas+"*k(" + str(react.idx) \
+							+ ")" + "*" + RHS
+
 				#differential for TOTAL = ice + gas
 				if(nameUpper==iceName+"_TOTAL"):
 					dns[species.idx-1] = "\n!"+iceName+"_TOTAL\n" \
 						+ "dn("+species.fidx+") = dnChem_"+iceName
-					#if iceName has surface reactions changes ODE accordingly
+					#if iceName has surface reactions changes TOTAL ODE accordingly
 					for react in thisReacts:
 						#build reactants multiplication
 						RRs = react.reactants
