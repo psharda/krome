@@ -3768,6 +3768,19 @@ class krome():
 				dns[p.idx-1] = dns[p.idx-1].replace(" = 0.d0"," =")
 				dns[p.idx-1] += " +"+rhs
 
+
+		#load binding energies from file
+		fhbind = open("data/Ebare_ice.dat","rb")
+		Ebind = dict()
+		for row in fhbind:
+			srow = row.strip()
+			if(srow==""): continue
+			if(srow[0]=="#"): continue
+			Ebind_spec, Ebind_bare, Ebind_ice = [x for x in srow.split(" ") if x!=""]
+			Ebind[Ebind_spec] = {"Ebare": Ebind_bare, "Eice":Ebind_ice}
+		fhbind.close()
+
+
 		#modify ODE if ice species are present
 		for (iceName,iceData) in self.iceSpeciesList.iteritems():
 			for species in self.specs:
@@ -3810,9 +3823,15 @@ class krome():
 						protonMass = 1.6726219e-24 #g
 						Mass = mamu*protonMass
 						epsM = (Mass-species.mass)**2/(Mass+species.mass)**2
-						dof = 3e0*sum(species.atomcount.values())
-						deltaGas = "exp(-Ebind/" + str(epsM) + "/" + str(react.enthalpyK) \
+						dof = 3e0*sum(species.atomcount.values()) #DOF molecule
+						Ebind_bare = float(Ebind[species.name]["Ebare"])
+						deltaGas = "exp(-"+str(Ebind_bare) + "/" + str(epsM) \
+							+ "/" + str(react.enthalpyK) \
 							+ "/" + str(dof) +")"
+						from math import exp
+						#evaluate to check evaporation probability
+						if(eval(deltaGas)>1e0):
+							sys.exit("ERROR: 2body evaporation probability >1!")
 						#add complete RHS to ODE
 						dns[species.idx-1] += " &\n+"+deltaGas+"*k(" + str(react.idx) \
 							+ ")" + "*" + RHS
