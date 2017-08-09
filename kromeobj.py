@@ -4960,6 +4960,9 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome_grfuncs.f90","w")
 
+
+		hasH2O = ("H2O" in [x.name for x in specs])
+
   		skip = False
 		#loop on src file and replace pragmas
 		for row in fh:
@@ -4968,6 +4971,7 @@ class krome():
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
+			if(srow == "#IFKROME_hasH2O" and not(hasH2O)): skip = True
 		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
