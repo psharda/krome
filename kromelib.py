@@ -153,10 +153,12 @@ class reaction():
 				PP = ("_".join([x.name for x in self.products]))
 				self.xsecFile = "leiden_"+RR+"__"+PP+".dat"
 
-		#replace with rate
-		self.krate = self.krate.replace("@xsecFile=SWRI", "#XSECS#")
-		self.krate = self.krate.replace("@xsecFile=LEIDEN", "#XSECS#")
-		self.krate = self.krate.replace("#XSECS#", "photoBinRates("+str(self.idxph)+")")
+			#replace with rate
+			self.krate = self.krate.replace("@xsecFile=SWRI", "#XSECS#")
+			self.krate = self.krate.replace("@xsecFile=LEIDEN", "#XSECS#")
+			self.krate = self.krate.replace("#XSECS#", "photoBinRates("+str(self.idxph)+")")
+		else:
+			self.krate = "photoBinRates("+str(self.idxph)+")"
 
 		#if(self.krate.strip()=="krome_kph_auto"):
 		#	self.krate = "krome_kph_"+myr[0].phname
