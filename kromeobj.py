@@ -4961,7 +4961,7 @@ class krome():
 			fout = open(buildFolder+"krome_grfuncs.f90","w")
 
 
-		hasH2O = ("H2O" in [x.name for x in specs])
+		hasH2O = ("H2O_TOTAL" in [x.name.upper() for x in specs])
 
   		skip = False
 		#loop on src file and replace pragmas
