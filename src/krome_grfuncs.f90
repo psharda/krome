@@ -128,8 +128,11 @@ contains
          / (amax**p4-amin**p4) * p4 / p3
 
     !ice/bare fraction
+    fbare = 1d0
+#IFKROME_hasH2O
     fice = (n(idx_H2O_total)-n(idx_H2O))/ndns
     fbare = 1d0 - fice
+#ENDIFKROME
 
     !reduced mass
     mred = mass(idx1)*mass(idx2)/(mass(idx1)+mass(idx2))
@@ -142,11 +145,15 @@ contains
 
     !get Ebind, K
     Ebare(:) = get_Ebind_bare()
+#IFKROME_hasH2O
     Eice(:) = get_Ebind_ice()
+#ENDIFKROME
 
     !compute rate
     krate = fbare*(exp(-Ebare(idx1)*iTd23)+exp(-Ebare(idx2)*iTd23))
+#IFKROME_hasH2O
     krate = krate + fice*(exp(-Eice(idx1)*iTd23)+exp(-Eice(idx2)*iTd23))
+#ENDIFKROME
 
     !rate in cm3/s
     krate = nu0*Preac/ndns*krate
