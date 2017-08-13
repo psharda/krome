@@ -20,6 +20,8 @@ void do_cooling()
   if(All.TimeStep==0) return;
   for(i=FirstActiveParticle;i>=0;i=NextActiveParticle[i])
   {
+    if(P[i].Type !=0) continue;
+    if(P[i].Mass <=0) continue;
     uold  = DMAX(All.MinEgySpec, SphP[i].InternalEnergy);
     dtime = (P[i].TimeBin ? (1 << P[i].TimeBin) : 0) * All.Timebase_interval;
     dtime /= All.cf_hubble_a;
