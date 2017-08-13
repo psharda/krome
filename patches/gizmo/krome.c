@@ -17,6 +17,7 @@ void do_cooling()
   int i;
   double uold,unew;
   double dtime;
+  if(All.TimeStep==0) return;
   for(i=FirstActiveParticle;i>=0;i=NextActiveParticle[i])
   {
     uold  = DMAX(All.MinEgySpec, SphP[i].InternalEnergy);
