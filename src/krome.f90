@@ -19,6 +19,9 @@ contains
     implicit none
     #KROME_double :: Tgas,dt
     #KROME_double :: x(nmols)
+#IFKROME_ierr
+    integer :: ierr
+#ENDIFKROME
 #IFKROME_useX
     #KROME_double_value :: rhogas
     call krome(x,rhogas,Tgas,dt #KROME_dust_arguments #KROME_fexCustom)
