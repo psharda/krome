@@ -31,6 +31,7 @@ objs += opkdmain.o
 objs += krome_commons.o
 objs += krome_constants.o
 objs += krome_user_commons.o
+objs += krome_fit.o
 objs += krome_getphys.o
 objs += krome_gadiab.o
 objs += krome_grfuncs.o
@@ -64,6 +65,17 @@ gfortran: switch = -ffree-line-length-none -fPIC
 gfortran: nowarn = $(nowarnGNU)
 gfortran: clib = -lm -lgfortran
 gfortran: all
+
+#gfortran debug target
+gfortran_dbg: fc = gfortran
+gfortran_dbg: cc = gcc
+gfortran_dbg: switch = -fbacktrace -g
+gfortran_dbg: switch += -ffpe-trap=zero,overflow,invalid
+gfortran_dbg: switch += -fbounds-check -ffree-line-length-none
+gfortran_dbg: switchc = switch
+gfortran_dbg: nowarn = $(nowarnGNU)
+gfortran_dbg: clib = -lm -lgfortran
+gfortran_dbg: all
 
 #clean target
 clean:
