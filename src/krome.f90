@@ -13,7 +13,11 @@ contains
   !********************************
   !KROME main (interface to the solver library)
 #IFKROME_useBindC
-  subroutine krome_c(x,rhogas,Tgas,dt) bind(C,name='krome')
+#IFKROME_useX
+  subroutine krome_c(x,rhogas,Tgas,dt #KROME_dust_arguments #KROME_fexCustom) bind(C,name='krome')
+#ELSEKROME
+  subroutine krome_c(x,Tgas,dt #KROME_dust_arguments #KROME_fexCustom) bind(C,name='krome')
+#ENDIFKROME
     use krome_commons
     use krome_user
     implicit none
