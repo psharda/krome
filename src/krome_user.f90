@@ -66,7 +66,7 @@ contains
     use krome_getphys
     implicit none
     real*4,intent(in):: xmoc(:,:)
-    real*8::x(nmols),n(spec)
+    real*8::x(nmols),n(nspec)
     integer,intent(in)::imap(:)
 
     x(:) = 0d0
