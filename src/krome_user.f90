@@ -78,7 +78,6 @@ contains
 #IFKROME_has_electrons
     x(idx_e) = get_electrons(n(:))
 #ENDIFKROME
-    krome_convert_xmoc(:) = x(:)
 
   end function krome_convert_xmoc
 
