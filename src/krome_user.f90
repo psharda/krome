@@ -50,20 +50,24 @@ contains
 
   end function krome_get_table_Tdust
 
+#IFKROME_useBindC
+  !MOCASSIN interface not used when C interface is active
+
+#ELSEKROME_useBindC
   !**********************
   !convert from MOCASSIN abundances to KROME
-  ! xmoc: MOCASSIN matrix (note: cm-3, real*4),
+  ! xmoc(i,j): MOCASSIN matrix (note: cm-3, real*4)
+  !  i=species, j=ionization level
   ! imap: matrix position index map, integer
   ! returns KROME abundances (cm-3, real*8)
-  function krome_convert_xmoc(xmoc,imap)
+  function krome_convert_xmoc(xmoc,imap) result(x)
     use krome_commons
     use krome_subs
     use krome_getphys
     implicit none
-    real*4 :: xmoc(:,:)
-    real*8 :: krome_convert_xmoc(nmols),x(nmols)
-    integer :: imap(:)
-    real*8::n(nspec)
+    real*4,intent(in):: xmoc(:,:)
+    real*8::x(nmols),n(spec)
+    integer,intent(in)::imap(:)
 
     x(:) = 0d0
 
@@ -80,21 +84,23 @@ contains
 
   !*************************
   !convert from KROME abundances to MOCASSIN
-  ! xmoc: KROME matrix (cm-3, real*4),
+  ! x: KROME abuances (cm-3, real*8)
   ! imap: matrix position index map, integer
-  ! xmoc (out), matrix MOCASSIN abundances (cm-3, real*4)
-  subroutine krome_return_xmoc(x,imap,xmoc) #KROME_bindC
+  ! xmoc(i,j): MOCASSIN matrix (note: cm-3, real*4)
+  !  i=species, j=ionization level
+  subroutine krome_return_xmoc(x,imap,xmoc)
     use krome_commons
     implicit none
-    #KROME_double :: x(nmols)
-    #KROME_single :: xmoc(:,:)
-    #KROME_integer :: imap(:)
+    real*8,intent(in)::x(nmols)
+    real*4,intent(out)::xmoc(:,:)
+    integer,intent(in)::imap(:)
 
     xmoc(:,:) = 0d0
 
 #KROME_xmoc_map_return
 
   end subroutine krome_return_xmoc
+#ENDIFKROME_useBindC
 
   !**********************
   !convert number density (cm-3) into column
