@@ -43,7 +43,7 @@ int main() {
   t = 0.0;
   dt = 1.0e-2 * spy;
   nstep = 0;
-  fp = fopen("idoff.c.dat","w");
+  fp = fopen("fort.66","w");
   if (fp == NULL) {
     printf("Cannot open outputfile!\n");
     return 1;
@@ -101,7 +101,7 @@ int main() {
   t = 0.0;
   dt = 1.0e-2 * spy;
   nstep = 0;
-  fp = fopen("idon.c.dat","w");
+  fp = fopen("fort.67","w");
   if (fp == NULL) {
     printf("Cannot open outputfile!\n");
     return 1;
