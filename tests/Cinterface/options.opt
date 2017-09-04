@@ -5,3 +5,5 @@
 -coolFile=tests/Cinterface/coolX.dat
 -cooling=FeII
 -noSinkCheck
+-nomassCheck
+
