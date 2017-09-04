@@ -1,9 +1,7 @@
 ##############
 #options for test Cinterface
-DEV
 -n tests/Cinterface/network.ntw
 -interfaceC
 -coolFile=tests/Cinterface/coolX.dat
 -cooling=FeII
 -noSinkCheck
--n tests/Cinterface/network.ntw
