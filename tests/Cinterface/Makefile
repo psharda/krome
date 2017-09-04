@@ -56,7 +56,7 @@ cobjs = krome_header.o
 #note that Fortran is used as the linker
 all: 	$(objs) $(cobjs) testC.o testF.o
 	$(fc) $(objs) testF.o -o testF $(switch) $(lib)
-	$(fc) $(objs) $(cobjs) testC.o -o testC $(switchc) $(clib)
+	$(fc) $(objs) $(cobjs) testC.o -o test $(switchc) $(clib)
 
 #ifort full debug target
 debug: switch = $(switchDBG)
@@ -83,7 +83,7 @@ gfortran_dbg: all
 
 cinterface: $(cobjs)
 cinterface: cc = gcc
-cinterface: switchc = 
+cinterface: switchc =
 cinterface: clib = -lm -lgfortran
 cinterface: gfortran
 
