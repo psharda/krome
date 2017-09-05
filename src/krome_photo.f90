@@ -63,6 +63,7 @@ contains
     imass(:) = get_imass()
 
     !precompute adimensional line broadening
+    dshift(:) = 0d0
 #KROME_broadening_shift_precalc
 
 #KROME_load_xsecs_from_file
@@ -267,6 +268,7 @@ contains
   !return averaged xsec in the energy range [xL,xR]
   ! units: eV, cm2; broadening shift is adimensional
   function xsec_interp(xL,xR,xsec_val,xsec_Emin,xsec_idE,dshift) result(xsecA)
+    use krome_user_commons
     implicit none
     real*8::xsecA,dE,dshift,dE_shift,eL,eR,dxi
     real*8::energy,xsec_val(:),xsec_Emin,xsec_idE,xL,xR
@@ -294,7 +296,7 @@ contains
           xsecA = xsecA + 0d0
        else
           !renormalize xsec area considering partial overlap
-          xsecA = xsecA +xsec_val(idx) * (min(eR,xR)-max(eL,xL)) * dxi
+          xsecA = xsecA +xsec_val(idx) * (min(eR,xR)-max(eL,xL)) * dxi #KROME_xsecKernelFunction
        end if
     end do
 

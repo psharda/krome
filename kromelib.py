@@ -133,7 +133,7 @@ class reaction():
 		self.verbatim = " + ".join(myr)+" -> "+" + ".join(myp)
 
 	#method: build photochemical rate
-	def build_phrate(self,photoBlock=False):
+	def build_phrate(self, photoBlock=False):
 		if(not("krome_kph_auto" in self.krate) and not(photoBlock)): return
 		myr = self.reactants
 		self.kphrate = self.krate.replace("krome_kph_auto=","")
@@ -143,16 +143,23 @@ class reaction():
 			#args += "xsec"+sidx+"_n,"
 			args += "xsec"+sidx+"_idE, dshift("+self.reactants[0].fidx+")"
 			self.kphrate = "xsec_interp(energyL, energyR, "+args+")"
-			self.xsecFile = self.krate.replace("@xsecFile=","").strip()
-			if(self.xsecFile.upper()=="SWRI"):
+			#self.xsecFile = self.krate.replace("@xsecFile=","").strip()
+			if("SWRI" in self.xsecFile.upper()):
 				RR = self.reactants[0].name
 				PP = ("_".join([x.name for x in self.products]))
 				self.xsecFile = "swri_"+RR+"__"+PP+".dat"
-			if(self.xsecFile.upper()=="LEIDEN"):
+			if("LEIDEN" in self.xsecFile.upper()):
 				RR = self.reactants[0].name
 				PP = ("_".join([x.name for x in self.products]))
 				self.xsecFile = "leiden_"+RR+"__"+PP+".dat"
-		self.krate = "photoBinRates("+str(self.idxph)+")"
+
+			#replace with rate
+			self.krate = self.krate.replace("@xsecFile=SWRI", "#XSECS#")
+			self.krate = self.krate.replace("@xsecFile=LEIDEN", "#XSECS#")
+			self.krate = self.krate.replace("#XSECS#", "photoBinRates("+str(self.idxph)+")")
+		else:
+			self.krate = "photoBinRates("+str(self.idxph)+")"
+
 		#if(self.krate.strip()=="krome_kph_auto"):
 		#	self.krate = "krome_kph_"+myr[0].phname
 		#else:
@@ -212,6 +219,7 @@ class reaction():
 			pname.append(p.name)
 		self.pseudo_hash = ("_".join(sorted(rname)))+"|"+("_".join(sorted(pname)))
 
+	#*********************
 	#method: check reaction (mass and charge conservation)
 	def check(self,mode="ALL"):
 		mass_reactants = mass_products = 0.e0
@@ -282,6 +290,13 @@ class reaction():
 		if(available): self.dH = (rH-pH)*1.60217657e-12 #eV->erg (cooling<0)
 
 
+	#*********************
+	#alias for enthalpy calculation
+	def computeEnthalpy(self):
+		self.enthalpy()
+
+
+	#*********************
 	#calculate reverse reaction using polynomials
 	def doReverse(self):
 		pidx = "(/"+(",".join([x.fidx for x in self.products]))+"/)"
@@ -328,7 +343,7 @@ def LEIDEN2KROME(build_folder,reactant,products):
 		print " This module is necessary to use LEIDEN xsecs."
 		sys.exit()
 
-	prods = [x.name for x in products]
+	prods = sorted([x.name for x in products])
 	data_folder = "data/database/leiden_xsecs/"
 	fname1 = data_folder+reactant.name+"__"+("_".join(prods))+".dat"
 	fname2 = data_folder+reactant.name+"__"+("_".join(prods[::-1]))+".dat"
@@ -349,60 +364,58 @@ def LEIDEN2KROME(build_folder,reactant,products):
 		print " e.g. "+fname1
 		sys.exit()
 
+	print "automatic reaction from LEIDEN database found: "+reactant.name+" -> "+(" + ".join(prods))
+
+	#columns references: wavelength, absorption, dissociation, and ionization
+	header = ["wlen","abs","diss","ion"]
+	data = {k:[] for k in header}
 	#read data from the file and store the data and the header
 	fleiden = open(fname,"rb")
-	rowCont = []
-	rowLine = []
-	icount = 0
 	for row in fleiden:
 		srow = row.strip()
 		if(srow==""): continue
-		icount += 1
-		if(icount==1): continue #skip title
-		if(icount==2):
-			nCont = int(srow) #number of continuum lines
-			continue #skip title
-		arow = [x.strip() for x in srow.split(" ") if x!=""]
-		if(icount>4+nCont): rowCont.append(arow)
-		if(icount>2 and icount<2+nCont): rowCont.append(arow)
+		if(srow.startswith("#")): continue
+		arow = [float(x) for x in srow.split(" ") if(x!="")]
+		#append data to array
+		for i in range(len(header)):
+			data[header[i]].append(arow[i])
 	fleiden.close()
 
-	if(len(rowCont)==0):
-		print "ERROR: "+reactant.name+" photodissociation doesn't have continuum data!"
-		sys.exit()
-
-
-	print "automatic reaction from LEIDEN database found: "+reactant.name+" -> "+(" + ".join(prods))
-
-	#some constants to convert AA to eV
+	#some constants to convert nm to eV
 	clight = 2.99792458e10 #cm/s
 	hplanck = 4.135667516e-15 #eV*s
 
-	#prepare data for interpolation and dump original data for comparison
-	xdata = []
-	ydata = []
-	foutorg = open(build_folder+"leiden_"+reactant.name+"__"+("_".join(prods))+".org","w")
-	#reverse array to have increasing energy
-	for row in rowCont[::-1]:
-		xenergy = clight*hplanck/(float(row[1])*1e-8) #AA->eV
-		xsec = float(row[2]) #cross section cm2
-		xdata.append(xenergy)
-		ydata.append(xsec)
-		foutorg.write(str(xenergy)+" "+str(xsec)+"\n")
-	foutorg.close()
-	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
+	#nm->cm->eV
+	energyList = [clight*hplanck/(x*1e-7) for x in data["wlen"][::-1]]
 
+	#determine if photoionization or not (check if electron in products)
+	process = "diss"
+	if("E" in prods): process = "ion"
+	xsecList = data[process][::-1]
+
+	fout = open(build_folder+"leiden_"+reactant.name+"__"+("_".join(prods))+".org","w")
+	fout.write("#original xsecs (cm2) from Leiden database\n")
+	fout.write("#http://home.strw.leidenuniv.nl/~ewine/photo/\n")
+	for i in range(len(energyList)):
+		fout.write(str(energyList[i])+" "+str(xsecList[i])+"\n")
+	fout.close()
+
+	#create interpolated function from Leiden file
+	finterp = interpolate.interp1d(energyList, xsecList,kind='linear')
 
 	#write the file to the build folder
 	foutx = open(build_folder+"leiden_"+reactant.name+"__"+("_".join(prods))+".dat","w")
-	imax = 100
-	emax = min(max(xdata),4e1)
+	imax = 5000 #number of interpolated points
+	emax = min(max(energyList), 3e1) #this is the maximum energy limit for creating tables (eV)
+	emin = min(energyList)
+	foutx.write("#interpolated xsecs, "+str(imax)+" points in range ["+str(emin)+","+str(emax)+"] eV\n")
+	#write data to file using a regular xenergy grid
 	for i in range(imax):
-		xenergy = i*(emax-min(xdata))/(imax-1)+min(xdata)
-		foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
-
+		xenergy = i*(emax-emin)/(imax-1)+emin
+		#if not line-based interpolates with numpy
+		xsec = finterp(xenergy)
+		foutx.write(str(xenergy)+" "+str(xsec)+"\n")
 	foutx.close()
-
 
 
 ###############################
@@ -465,9 +478,9 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 			for i in range(len(okrow)):
 				okrow[i][j] = float(okrow[i][j])+float(okrow[i][icol])
 
-	#write branches slash separated and include electrons if needed
+	#write branches slash-separated and include electrons if needed
 	lastLambda = [sorted((x.replace("+","+/E/")).split("/")) for x in lastLambda]
-	#remove empty prdoducts if any
+	#remove empty products if any
 	lastLambda = [[y for y in x if y!=""] for x in lastLambda]
 	lastLambda = [sorted([x.upper() if x=="e" else x for x in block]) for block in lastLambda]
 
@@ -532,13 +545,13 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 		xsec_old = xsec
 		xenergy_old = xenergy
 	foutorg.close()
-	#note: swri uses the sequence 1e-35 value 1e-35 in the xsec
+	#note: swri uses the sequence "1e-35 value 1e-35" in the xsec
 	# to indicate the with of the line and the averaged xsec.
 	# the boolean isDirac is true when reading line, hence
-	# if not closed (still False ad EOF) rises an error.
-	# False beacuse of double 1e-35 to close the line part
+	# if not closed (i.e. still False at EOF) rises an error.
+	# False because of double 1e-35 to close the line part
 	if(not(isDirac) and hasDirac):
-		print "ERROR: in SWRI read line with openen token"
+		print "ERROR: in SWRI read line with opened token"
 		print " but never closed!"
 		print " check:"+data_folder+reactant.name + ".dat"
 		sys.exit()

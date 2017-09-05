@@ -19,10 +19,9 @@ program test_krome
   xH = 2d4 !Hydrogen density
 
   !user commons for opacity and CR rate
-  tau = 1d1 !opacity Av (#)
-  zrate = 1.3d-17 !CR rate (1/s)
-  gas_dust_ratio = 7.57d11 !gas/dust
-  pah_size = 4d-8 !cm
+  call krome_set_user_av(1d1) !opacity Av (#)
+  call krome_set_user_crate(1.3d-17) !CR rate (1/s)
+  call krome_set_user_gas_dust_ratio(7.57d11) !gas/dust
 
   call krome_init()
 

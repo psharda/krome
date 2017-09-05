@@ -18,7 +18,8 @@ class species():
 				if((atom.upper()!=atom) and (atom.upper() in speciesName)):
 					orgSpeciesName = speciesName
 					speciesName = speciesName.replace(atom.upper(),atom)
-					print "WARNING: "+atom+" found upper case in "+orgSpeciesName+"! Replaced as "+speciesName
+					print "WARNING: "+atom+" found upper case in " + orgSpeciesName \
+						+ "! Replaced as "+speciesName
 
 
 		if(speciesName.startswith("J")): speciesName = speciesName[1:]+"_dust"
@@ -95,6 +96,166 @@ class species():
 		self.mass = sum([atomSet[x] for x in self.exploded])
 		if(speciesName.upper()!="E"): self.mass -= self.charge*me
 
+		#init photochem variables
+		self.xsecs = dict()
+		self.phrates = dict()
+
+		#load xsec from file
+		self.loadXsecLeiden()
+
+		#compute photo rates
+		self.computePhRates()
+
+
+	#**********************
+	#load xsecs, structure is a dict
+	# database_name
+	#   |---energy---[list of energies, eV]
+	#   |---phd/phi---[list of xsecs, eV]
+	def loadXsecLeiden(self):
+
+		fname = "xsecs/"+self.name+".dat"
+		if(not(os.path.exists(fname))): return
+
+		#get file size in MB
+		sizeMB = round(os.path.getsize(fname)/1024**2,1)
+
+		#check if xsec size is relatively large
+		if(sizeMB > 50.0):
+			print "WARNING: "+fname+" is quite large ("+str(sizeMB)+" MB)"
+			#ask if to load xsec, N is default
+			while(True):
+				reply = raw_input("Load Xsec file? (y/N) ").lower().strip()
+				if(reply=="y"):
+					break
+				if(reply=="n" or reply==""):
+					return
+
+		self.xsecs["leiden"] = dict()
+
+		clight = 2.99792458e10 #cm/s
+		hplanck = 4.135667662e-15 #eV*s
+
+		#loop on file rows
+		for row in open(fname,"rb"):
+			srow = row.strip()
+			if(srow==""): continue
+			#look for format
+			if(srow.startswith("# wavelength")):
+				fmt = [x for x in srow.split(" ") if(x!="")][1:]
+				#init arrays
+				for fm in fmt:
+					self.xsecs["leiden"][fm] = []
+			if(srow.startswith("#")): continue
+			arow = [float(x) for x in srow.split(" ") if(x!="")]
+			#loop on data
+			for i in range(len(fmt)):
+				self.xsecs["leiden"][fmt[i]].append(arow[i])
+
+		self.xsecs["leiden"]["energy"] = [clight*hplanck/(wl*1e-7) for wl in self.xsecs["leiden"]["wavelength"]]
+
+		#reverse data
+		for (k,v) in self.xsecs["leiden"].iteritems():
+			self.xsecs["leiden"][k] = v[::-1]
+
+	#**********************
+	#compute photo rates, structure is a dict
+	# database_name
+	#   |---phd/phi
+	#          |---radiation_fields---(rate,1/s)
+	def computePhRates(self):
+		import numpy as np
+		from math import pi
+		from photo import Jdraine,JBB,intJdraine,intJBB
+
+		hplanck = 4.135667662e-15 #eV*s
+
+		#radiation types
+		frads = {"Draine1978":Jdraine, \
+			"BB@4e3K":JBB, \
+			"BB@1e4K":JBB, \
+			"BB@2e4K":JBB}
+
+		#loop on databases
+		for (db,data) in self.xsecs.iteritems():
+			self.phrates[db] = dict()
+			xdata = data["energy"]
+			#loop on rates
+			for (k,ydata) in data.iteritems():
+				#skip these keys
+				if(k in ["energy","wavelength","photoabsorption"]): continue
+				if(len(ydata)==0): continue
+				self.phrates[db][k] = dict()
+				#loop on radiation fluxes
+				for radName,Jfun in frads.iteritems():
+					if(radName.startswith("BB@")):
+						Tbb = float(radName.replace("BB@","").replace("K",""))
+						fscale = intJdraine()/intJBB(Tbb)
+					fdata = []
+					#loop on energy range
+					for i in range(len(xdata)):
+						sigma = ydata[i] #cm2
+						energy = xdata[i] #eV
+						if(radName.startswith("BB@")):
+							Jrad = fscale*Jfun(energy,Tbb) #eV/cm2/sr
+						else:
+							Jrad = Jfun(energy) #eV/cm2/sr
+						fdata.append(Jrad*sigma/energy)
+
+					#compute integral and rate, 1/s
+					kph = 4e0*pi*np.trapz(fdata,xdata)/hplanck
+
+					#store rate, 1/s
+					self.phrates[db][k][radName] = kph
+
+		if (len(self.xsecs)!=0):
+			print "  Photochemical rates for {0} calculated".format(self.name)
+
+
+	#*******************
+	#return rate (interface to dictionary), 1/s
+	def getPhotoRate(self,database,process,radiation):
+		return self.phrates[database][process][radiation]
+
+	#****************************
+	#plot xsecs to PNG
+	def plotXsec(self,pngFileName=None):
+
+		import matplotlib.pyplot as plt
+
+		#if name argument missing uses default
+		if(pngFileName==None):
+			pngFileName = "pngs/xsec_"+self.nameFile+".png"
+
+		#turn off interactivity
+		plt.ioff()
+
+		#cancel current plot
+		plt.clf()
+
+		#set aesthetics
+		plt.grid(b=True, color='0.65',linestyle='--')
+		plt.xlabel("energy/eV")
+		plt.ylabel("xsec/cm2")
+		plt.title(self.name)
+
+		hasPlot = False
+		#loop on databases
+		for (db,data) in self.xsecs.iteritems():
+			xdata = data["energy"]
+			#loop on processes
+			for (k,ydata) in data.iteritems():
+				#skip these keys
+				if(k in ["energy","wavelength","photoabsorption"]): continue
+				#if no data no need to plot
+				if(len(ydata)>0):
+					hasPlot = True
+					plt.plot(xdata,ydata,"-",label=k+" ("+db+")")
+
+		plt.legend(loc='best')
+		if(hasPlot): plt.savefig(pngFileName, dpi=150)
+
+
 	#**********************
 	def getHtmlName(self):
 		name = list(self.name)
@@ -135,13 +296,14 @@ class species():
 	#get polarizability, cm3
 	def getPolarizability(self,polarizabilityData):
 
-		if(self.name in polarizabilityData): return polarizabilityData[self.name]
+		#get polarizability from database
+		if(self.name in polarizabilityData):
+			return polarizabilityData[self.name]
 		return None
 
 	#*****************
 	#get "engineered" enthalpy kJ/mol
 	def getEnthalpy(self,thermochemicalData,Tgas=298.15):
-
 
 		#gas constant kJ/mol/K
 		Rgas = 8.3144598
@@ -173,10 +335,14 @@ class species():
 
 	#*********************
 	def makeHtmlPage(self,myNetwork):
+		import urllib
 
 		fname = "htmls/species_"+str(self.nameFile)+".html"
 
 		tableHeader = "<tr>"+("<th>"*30)
+
+		#do xsec plot
+		self.plotXsec()
 
 		tableFormation = []
 		tableDestruction = []
@@ -224,7 +390,45 @@ class species():
 			fout.write("<tr bgcolor=\""+bgcolor+"\" valign=\"baseline\">"+reaction.getReactionHtmlRow(self)+"\n")
 			icount += 1
 		fout.write(tableHeader+"\n")
-		fout.write("</table>\n")
+		fout.write("</table><br><br>\n")
+
+		#put xsec png if data exists
+		if(len(self.xsecs)>0):
+			xsecPNG = "../pngs/xsec_"+self.nameFile+".png"
+			fout.write("<img src=\""+xsecPNG+"\" width=\"500px\">\n")
+
+			rows = []
+			for (db,data) in self.phrates.iteritems():
+				#loop on rates
+				for (k,ydata) in data.iteritems():
+					for radName,kph in ydata.iteritems():
+						tr = "<td>&nbsp;"+k+"<td>"+db+"<td>"+radName+"<td>"+utils.htmlExp(kph)+"\n"
+						rows.append([k+"_"+db+"_"+radName, tr])
+
+
+			#table with integrated photorates
+			thead = "<tr>"+"<th>"*4
+			fout.write("<br><br>\n")
+			fout.write("<p style=\"font-size:20px\">Photochemical rates (1/s)</p><br>\n")
+			fout.write("<table width=\"50%\">\n")
+			fout.write(thead+"\n")
+			fout.write("<tr><td>&nbsp;process<td>database<td>radiation<td>rate (1/s)\n")
+			fout.write(thead+"\n")
+			icount = 0
+			for row in sorted(rows,key=lambda x:x[0]):
+				bgcolor = ""
+				if(icount%2!=0): bgcolor = utils.getHtmlProperty("tableRowBgcolor")
+				fout.write("<tr bgcolor=\""+bgcolor+"\">"+row[1])
+				icount += 1
+			fout.write(thead+"\n")
+			fout.write("</table><br><br>\n")
+			link = "http://home.strw.leidenuniv.nl/~ewine/photo/index.php?file=display_species.php&species="+urllib.quote(self.name, safe='')
+			fout.write("<a href=\""+link+"\" target=\"_blank\">search on Leiden database</a>\n")
+
+		else:
+			link = "http://home.strw.leidenuniv.nl/~ewine/photo/data/photo_data/all_cross_sections/text_continuum/"+self.name+".txt"
+			fout.write("Cross-section missing: <a href=\""+link+"\" target=\"_blank\">search on Leiden database</a> and copy to <i>xsecs/" \
+				+self.name+".dat</i>\n")
 
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()

@@ -448,7 +448,7 @@
       integer::ios,iout(3),i
       real*8::rout(5)
 
-      print *,"load Z_CIE2012 cooling..."
+      if(krome_mpi_rank<=1) print *,"load Z_CIE2012 cooling..."
       open(33,file="coolZ_CIE2012.dat",status="old",iostat=ios)
       !check if file exists
       if(ios.ne.0) then

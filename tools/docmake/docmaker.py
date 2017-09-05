@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 #move to the python source folder
 sys.path.insert(0, "./src_py/")
@@ -18,6 +19,9 @@ myOptions = options.options(fname)
 
 #load network
 myNetwork = network.network(myOptions)
+
+#prepare full documentation
+myNetwork.makeAllDoc()
 
 
 

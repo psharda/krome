@@ -199,6 +199,7 @@ module krome_commons
   ! and clumping factor for H2 formation
   ! on dust by Jura/Gnedin
   real*8::GHabing,Ghabing_thin,clump_factor
+  !$omp threadprivate(GHabing,GHabing_thin)
 
   ! Photo reaction rates relevant for Gnedin-Hollon cooling/heating function
 #IFKROME_useCoolingGnedinHollon
@@ -214,6 +215,7 @@ module krome_commons
 #IFKROME_hasStoreOnceRates
   !store evaluate once rate
   real*8::rateEvaluateOnce(nrea)
+  !$omp threadprivate(rateEvaluateOnce)
 #ENDIFKROME
 
 end module krome_commons
