@@ -1,4 +1,4 @@
-import kexplorer_reaction,kexplorer_element
+import kexplorer_reaction,kexplorer_element,kexplorer_utils
 import sys,subprocess,os,glob,json,datetime
 
 import itertools #added by Jels Boulangier 30/03/2017
@@ -185,6 +185,113 @@ class network:
 		                reactionBlock = "".join(list(group))
 		                fileOutput.write(reactionBlock + "\n")
 		            cnt += 1
+
+	#****************
+	#create latex format for network
+	def network2latex(self,networkFile,networkLatex="NetworkLatex.ntw" ):
+
+		def isa_group_separator(line):
+		    return line=='\n'
+
+		with open(networkFile, 'r') as fileInput, open(networkLatex, "w") as fileOutput:
+			#split file into blocks separated by empty line, one block is one reaction
+		    for key,group in itertools.groupby(fileInput,isa_group_separator):
+				if not key:
+					reactionBlockList = list(group)
+					varList = [] #dictionary with possibly needed rate variables
+					for item in reactionBlockList:
+						if item.startswith("#"): continue
+						if item.startswith("@var"):
+							varLine  = item.split(":")[-1].split("=")
+							varValue = varLine[-1].strip() #variable value
+							varName  = varLine[0].strip()  #variable
+							#
+							# #store variable value as float
+							# if(kexplorer_utils.isNumber(varValue)==True):
+							# 	varList.append((varName,float(varValue)))
+							# #if variable if function of other variables, store as string
+							# else:
+							#adapt string to avoid math mistakes later on
+							varValue = "(" + varValue + ")"
+							varList.append((varName,varValue))
+
+						elif item.startswith("@"):
+							continue
+
+						elif int(item[0]):
+							#get reaction rare
+							reactionRate = item.split(",")[-1].strip("\n")
+							#transform into LaTeX format
+							reactionRateTex = self.rate2latex(reactionRate,varList)
+							#dump line to output file
+							fileOutput.write(reactionRateTex + "\n")
+
+
+
+
+	#****************
+	#KROME network format to LaTeX format
+	def rate2latex(self,rate,varList):
+		import re
+		import sympy as sp
+		#list of symbols you want to keep in the LaTeX format
+		T = sp.Symbol("T")
+		T32 = sp.Symbol("(T/300)")
+		Te = sp.Symbol("Te")
+		exp = sp.Symbol("exp")
+		ln = sp.Symbol("ln")
+		log = sp.Symbol("log")
+
+		#put all variables with corresponding values in rate
+		if varList:
+			#loop needs to be reversed order for variable dependencies
+			for var in reversed(varList):
+				if var[0] in rate:
+					rate = rate.replace(var[0],var[1])
+
+		#list with all temperature shortcuts element = (var, replaceWith)
+		tempShort = kexplorer_utils.getShortcuts()
+		#replace shortcuts, loop needs to be reversed order for variable dependencies
+		#skip T32, to keep as symbol
+		for tshort in reversed(tempShort[2:]):
+			rate = rate.replace(tshort[0],tshort[1])
+
+		#make sympy friendly
+		rate = rate.replace("d","e")
+		rate = rate.replace("log", "ln")
+		rate = rate.replace("ln10", "log")
+
+		#transform to LaTeX format
+		try:
+			rateTex = sp.latex(eval(rate))
+
+		#undefined variable will become a symbol
+		except (NameError,),err:
+			varIssue = str(err).split("'")[1]
+			symb = varIssue + " = sp.Symbol(\""+varIssue+"\")"
+			exec(symb)
+			#try again
+			rateTex = sp.latex(eval(rate))
+
+
+		#fix mistakes by sympy
+		stringFrac = r'\frac{1}'
+		#print stringFrac
+		if stringFrac in rateTex:
+			tempsTex = rateTex.replace(stringFrac, "")
+			newsTex = tempsTex.replace("}^{", "}^{-")
+			splitstt = re.split("\}\}",newsTex)
+			a = splitstt[0][1:]+"}"
+			if "exp" in splitstt[-1]:
+				b = splitstt[-1].split("\operatorname")
+				out = b[0] + a + "\operatorname" + b[1]
+			else:
+				out = splitstt[-1] + a
+
+			rateTex = out
+
+		rateTex = re.sub("T_\{32\}","(T/300)",rateTex)
+		return rateTex
 
 	#****************
 	#buld a graph map with the list of reaction partners
@@ -532,4 +639,3 @@ class network:
 			+ " target=\"_blank\">kexplorer</a>"
 		return "documentation generated with "+hrefWiki+" ("+bitbucketLanding+") - changeset: <a href=\""\
 			+ bitbucketLink + "\" target=\"_blank\">" + changeset[:7] + "</a> - " + datenow
-

@@ -19,24 +19,28 @@ network.xvarName = "Density"
 network.xvarUnits = "g/cm^3"
 
 #find best matching criteria
-network.findBest()
+#network.findBest()
 
 #print most fluxy reactions
-network.listBest()
+#network.listBest()
 
 #dump to png folder
-network.dumpBest("pngs/")
+#network.dumpBest("pngs/")
 
 #all below added by Jels Boulangier 30/03/2017
 #create new network file for most fluxy reactions
-network.networkBest(oldNetwork,newNetwork)
+#network.networkBest(oldNetwork,newNetwork)
 
 #make abundace colormaps for model grid
 #network.abundanceColormapAll(elemInt=elemInterest,pngFolder=pngsOut)
 #if elemInt not specified, this will do all elements
-network.abundanceColormapAll(pngFolder="pngs/")
+#network.abundanceColormapAll(pngFolder="pngs/")
 
 
 #make time evolution plot for interesting model grid points
-network.abundanceEvolution(atom="H2",tgasInt=TgasInterest,xvarInt=xvarInterest)
-network.abundanceEvolution(atom="H",tgasInt=TgasInterest,xvarInt=xvarInterest)
+#network.abundanceEvolution(atom="H2",tgasInt=TgasInterest,xvarInt=xvarInterest)
+#network.abundanceEvolution(atom="H",tgasInt=TgasInterest,xvarInt=xvarInterest)
+
+#ntw2tex = "/home/jels/krome/networks/react_galaxy_ism"
+ntw2tex = "/media/jels/Elements/IvS/KROME/networks/Reduced_TimeDep/UMIST_manEx_TDR_1e-7Bis_noHejj.ntw"
+network.network2latex(ntw2tex)
