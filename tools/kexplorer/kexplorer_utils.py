@@ -43,3 +43,25 @@ def parentheticContents(string):
 #get content in parentses
 def getParentheticContents(string):
 	return list(parentheticContents(string))
+
+#********************
+#find all indices of an element in a list
+def indicesElemList(list,elem):
+	indices = [i for i, x in enumerate(list) if x == elem]
+	return indices
+
+#********************
+#sub and super script to LaTeX format
+def subSuper2latex(name):
+	if(name=="E"):
+		name = "e$^-$"
+		return name
+
+	for part in name:
+		if(isNumber(name)):
+			newPart = "$_"+part+"$"
+			name = name.replace(part,newPart)
+		if(part=="+" or part=="-"):
+			newPart = "$^"+part+"$"
+			name = name.replace(part,newPart)
+	return name

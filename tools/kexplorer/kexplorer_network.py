@@ -37,7 +37,7 @@ class network:
 	#added by Jels Boulangier 05/04/2017
 	minAbundance = 1e-10 #minimum mass fraction to plot
 	maxAbundance = 1 #maximum mass fraction to plot
-
+	reaFormat = "idx,R,R,R,P,P,P,P,Tmin,Tmax,rate" #default format
 
 	#**********************
 	#network contructor read kexplorer file
@@ -187,10 +187,13 @@ class network:
 	#create latex format for network
 	def network2latex(self,networkFile,networkLatex="NetworkLatex.ntw" ):
 
+		reactionFormat = self.reaFormat #use default reaction format
+
 		with open(networkFile, 'r') as fileInput, open(networkLatex, "w") as fileOutput:
 			#split file into blocks separated by empty line, one block is one reaction
 		    for key,group in itertools.groupby(fileInput,kexplorer_utils.blockSeparator):
 				if not key:
+					newReaction = True #keep track if new reaction or not (double rates)
 					reactionBlockList = list(group)
 					varList = [] #dictionary with possibly needed rate variables
 					for item in reactionBlockList:
@@ -204,16 +207,69 @@ class network:
 							varValue = "(" + varValue + ")"
 							varList.append((varName,varValue))
 
+						#use new format if detected, if not, keep using previous
+						if item.startswith("@format"):
+							reactionFormat = item.split(":")[-1]
+
+						#skip other special lines
 						elif item.startswith("@"):
 							continue
 
 						elif int(item[0]):
+							reactionInfo = item.split(",")
 							#get reaction rare
-							reactionRate = item.split(",")[-1].strip("\n")
+							reactionRate = reactionInfo[-1].strip("\n")
 							#transform into LaTeX format
 							reactionRateTex = self.rate2latex(reactionRate,varList)
+
+							if newReaction:
+								formatList = reactionFormat.split(",")
+								firstReactantIdx = kexplorer_utils.indicesElemList(formatList,"R")[0]
+								lastProductIdx = kexplorer_utils.indicesElemList(formatList,"P")[-1]
+
+								reactionIdx = reactionInfo[0]
+
+								formatReaProd = formatList[firstReactantIdx:lastProductIdx+1]
+								verbReaction = reactionInfo[firstReactantIdx:lastProductIdx+1]
+								verbReactionTex = self.reaction2latex(verbReaction,formatReaProd)
+
 							#dump line to output file
-							fileOutput.write(reactionRateTex + "\n")
+							#fileOutput.write(reactionRateTex + "\n")
+							fileOutput.write(verbReactionTex + "\n")
+							newReaction = False
+
+	#****************
+	#KROME reaction format to LaTeX format
+	def reaction2latex(self,reaction,format):
+		reaTex = ""
+		totalReact = format.count("R")
+		totalProd  = format.count("P")
+		#print totalProd,format
+
+		#loop over all reactants
+		for i in range(totalReact):
+			elem = reaction[i]
+			#sub and superscrits to LaTeX format
+			elem = kexplorer_utils.subSuper2latex(elem)
+			if i==0:
+				reaTex = reaTex + " " + elem + " "
+			else:
+				reaTex = reaTex + "$+$" + " " + elem + " "
+
+		reaTex = reaTex + "$\\to$"
+		#print reaTex
+		#loop over all products
+		for i in range(totalProd):
+			#print i, reaction
+			elem = reaction[i+totalReact]
+			elem = kexplorer_utils.subSuper2latex(elem)
+			if i==0:
+				reaTex = reaTex + " " + elem + " "
+			else:
+				reaTex = reaTex + "$+$" + " " + elem + " "
+
+		return reaTex
+
 
 	#****************
 	#KROME network format to LaTeX format
@@ -265,6 +321,7 @@ class network:
 			except (SyntaxError,),err:
 				print "Syntax Error in rate", err
 				return rate
+
 
 
 
