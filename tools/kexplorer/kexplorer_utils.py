@@ -1,6 +1,7 @@
 #useful functions
 
 #*********************
+#check if arg is a number
 def isNumber(arg):
 	try:
 		float(arg)
@@ -9,6 +10,7 @@ def isNumber(arg):
 		return False
 
 #********************
+#get shortcuts of temperature that can be used in network
 def getShortcuts():
 	shortcut = []
 	fileName = "temperatureShortcuts.dat"
@@ -20,3 +22,8 @@ def getShortcuts():
 		(variable,expression) = [x.strip() for x in srow.split("!")[0].split("=")]
 		shortcut.append((variable,expression))
 	return shortcut
+
+#********************
+#uses empty line as separator
+def blockSeparator(line):
+	return line=='\n'

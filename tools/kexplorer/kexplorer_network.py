@@ -172,13 +172,10 @@ class network:
 	#added by Jels Boulangier 30/03/2017
 	def networkBest(self,oldNetwork,newNetwork="BestNetwork.ntw"):
 
-		def isa_group_separator(line):
-		    return line=='\n'
-
 		cnt = 0
 		with open(oldNetwork, 'r') as fileInput, open(newNetwork, "w") as fileOutput:
 			#split file into blocks separated by empty line, one block is one reaction
-		    for key,group in itertools.groupby(fileInput,isa_group_separator):
+		    for key,group in itertools.groupby(fileInput,kexplorer_utils.blockSeparator):
 		        if not key:
 					#write most fluxy reactions in new network file (+ header)
 		            if cnt in self.bestReactionsIdx or cnt==0:
@@ -190,12 +187,9 @@ class network:
 	#create latex format for network
 	def network2latex(self,networkFile,networkLatex="NetworkLatex.ntw" ):
 
-		def isa_group_separator(line):
-		    return line=='\n'
-
 		with open(networkFile, 'r') as fileInput, open(networkLatex, "w") as fileOutput:
 			#split file into blocks separated by empty line, one block is one reaction
-		    for key,group in itertools.groupby(fileInput,isa_group_separator):
+		    for key,group in itertools.groupby(fileInput,kexplorer_utils.blockSeparator):
 				if not key:
 					reactionBlockList = list(group)
 					varList = [] #dictionary with possibly needed rate variables
