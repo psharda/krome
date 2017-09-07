@@ -27,3 +27,19 @@ def getShortcuts():
 #uses empty line as separator
 def blockSeparator(line):
 	return line=='\n'
+
+#********************
+#Generate parenthesized contents in string as pairs (level, contents)
+def parentheticContents(string):
+	stack = []
+	for i, c in enumerate(string):
+	    if c == '{':
+	        stack.append(i)
+	    elif c == '}' and stack:
+	        start = stack.pop()
+	        yield (len(stack), string[start + 1: i])
+
+#********************
+#get content in parentses
+def getParentheticContents(string):
+	return list(parentheticContents(string))

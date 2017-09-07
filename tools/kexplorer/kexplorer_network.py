@@ -229,9 +229,8 @@ class network:
 		import re
 		import sympy as sp
 		#list of symbols you want to keep in the LaTeX format
-		T = sp.Symbol("T")
-		T32 = sp.Symbol("(T/300)")
-		Te = sp.Symbol("Te")
+		Tsymbols = ["T","(T/300)", "T_{e}"]
+		T, T32, Te = sp.symbols(Tsymbols)
 		exp = sp.Symbol("exp")
 		ln = sp.Symbol("ln")
 		log = sp.Symbol("log")
@@ -269,22 +268,41 @@ class network:
 
 
 		#fix mistakes by sympy
-		stringFrac = r'\frac{1}'
-		#print stringFrac
+		#it automatically makes a fraction out of negative exponents
+		stringFrac = r'\frac{1}{'
 		if stringFrac in rateTex:
-			tempsTex = rateTex.replace(stringFrac, "")
-			newsTex = tempsTex.replace("}^{", "}^{-")
-			splitstt = re.split("\}\}",newsTex)
-			a = splitstt[0][1:]+"}"
-			if "exp" in splitstt[-1]:
-				b = splitstt[-1].split("\operatorname")
-				out = b[0] + a + "\operatorname" + b[1]
-			else:
-				out = splitstt[-1] + a
+			for Tsym in Tsymbols:
+				rateTex = rateTex.replace(stringFrac + Tsym + "^{", "{"+Tsym+"^{-")
+			#change the order of the factors to match modified Arrhenius
+			#avoid chaning stuff in more complex rates
+			if len(rateTex) < 100:
+				rateTexSplit = re.split("\}\}",rateTex)
+				beta = rateTexSplit[0][1:]+"}" #beta containing factor
+				if "exp" in rateTexSplit[-1]:
+					alphaGamma = rateTexSplit[-1].split("\operatorname") #alpha and gamma factor
+					rateTex = alphaGamma[0] + beta + "\operatorname" + alphaGamma[1]
+				else:
+					rateTex = rateTexSplit[-1] + beta
 
-			rateTex = out
+		#mistake: large fractions
+		#solution: to the power -1 (solution can be improved)
+		if rateTex.startswith(r"\frac"):
+			cnt = 0
+			pieces = []
+			#get content between parenteses for each level
+			parenticList = kexplorer_utils.getParentheticContents(rateTex)
+			#only get the first \frac{}{} parts
+			for part in parenticList:
+				if part[0]==0 and cnt<3:
+					pieces.append(part[1])
+					cnt = cnt +1
 
-		rateTex = re.sub("T_\{32\}","(T/300)",rateTex)
+			#replace \frac{a}{b} with a*b^{-1}
+			fracStringOriginal = r"\frac{"+pieces[0]+"}{"+pieces[1]+"}"
+			fracStringReplace = "\left("+pieces[0]+r"\right)\left("+pieces[1]+r"\right)^{-1}"
+			rateTex = rateTex.replace(fracStringOriginal,fracStringReplace)
+		#add LaTeX symbols
+		rateTex = "$" + rateTex + "$"
 		return rateTex
 
 	#****************
