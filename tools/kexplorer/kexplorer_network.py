@@ -199,12 +199,7 @@ class network:
 							varLine  = item.split(":")[-1].split("=")
 							varValue = varLine[-1].strip() #variable value
 							varName  = varLine[0].strip()  #variable
-							#
-							# #store variable value as float
-							# if(kexplorer_utils.isNumber(varValue)==True):
-							# 	varList.append((varName,float(varValue)))
-							# #if variable if function of other variables, store as string
-							# else:
+
 							#adapt string to avoid math mistakes later on
 							varValue = "(" + varValue + ")"
 							varList.append((varName,varValue))
@@ -220,20 +215,19 @@ class network:
 							#dump line to output file
 							fileOutput.write(reactionRateTex + "\n")
 
-
-
-
 	#****************
 	#KROME network format to LaTeX format
 	def rate2latex(self,rate,varList):
 		import re
 		import sympy as sp
+
 		#list of symbols you want to keep in the LaTeX format
 		Tsymbols = ["T","(T/300)", "T_{e}"]
 		T, T32, Te = sp.symbols(Tsymbols)
 		exp = sp.Symbol("exp")
 		ln = sp.Symbol("ln")
 		log = sp.Symbol("log")
+		sqrt = sp.Symbol("sqrt")
 
 		#put all variables with corresponding values in rate
 		if varList:
@@ -255,16 +249,23 @@ class network:
 		rate = rate.replace("ln10", "log")
 
 		#transform to LaTeX format
-		try:
-			rateTex = sp.latex(eval(rate))
+		#keep trying i
+		while True:
+			try:
+				rateTex = sp.latex(eval(rate))
+				break
+			#undefined variable will become a symbol
+			except (NameError,),err:
+				print "Name error in rate", err
+				varIssue = str(err).split("'")[1]
+				symb = varIssue + " = sp.Symbol(\""+varIssue+"\")"
+				exec(symb)
 
-		#undefined variable will become a symbol
-		except (NameError,),err:
-			varIssue = str(err).split("'")[1]
-			symb = varIssue + " = sp.Symbol(\""+varIssue+"\")"
-			exec(symb)
-			#try again
-			rateTex = sp.latex(eval(rate))
+			#special case rate	will be prited as it is
+			except (SyntaxError,),err:
+				print "Syntax Error in rate", err
+				return rate
+
 
 
 		#fix mistakes by sympy
@@ -298,8 +299,17 @@ class network:
 					cnt = cnt +1
 
 			#replace \frac{a}{b} with a*b^{-1}
-			fracStringOriginal = r"\frac{"+pieces[0]+"}{"+pieces[1]+"}"
-			fracStringReplace = "\left("+pieces[0]+r"\right)\left("+pieces[1]+r"\right)^{-1}"
+			firstTerm = pieces[0]
+			secondTerm = pieces[1]
+
+			fracStringOriginal = r"\frac{"+firstTerm+"}{"+secondTerm+"}"
+
+			# Put parenteses around first term if composite term
+			if " + " not in firstTerm or " - " not in firstTerm:
+				fracStringReplace = firstTerm+"\left["+secondTerm+r"\right]^{-1}"
+			else:
+				fracStringReplace = "\left["+firstTerm+r"\right]\left["+secondTerm+r"\right]^{-1}"
+
 			rateTex = rateTex.replace(fracStringOriginal,fracStringReplace)
 		#add LaTeX symbols
 		rateTex = "$" + rateTex + "$"
