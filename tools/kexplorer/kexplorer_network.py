@@ -335,10 +335,15 @@ class network:
 				print "Syntax Error in rate", err
 				return rate
 
-
-
-
 		#fix mistakes by sympy
+		#no 10^{} for short rates
+		for t in Tsymbols:
+			if t in rateTex:
+				break
+			else:
+				rateTex = rateTex.replace("e-","\\cdot 10^{-") + "}"
+				break
+
 		#it automatically makes a fraction out of negative exponents
 		stringFrac = r'\frac{1}{'
 		if stringFrac in rateTex:
