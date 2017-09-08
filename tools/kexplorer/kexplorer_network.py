@@ -38,6 +38,7 @@ class network:
 	minAbundance = 1e-10 #minimum mass fraction to plot
 	maxAbundance = 1 #maximum mass fraction to plot
 	reaFormat = "idx,R,R,R,P,P,P,P,Tmin,Tmax,rate" #default format
+	rateLength = 100 #maximum length of rate
 
 	#**********************
 	#network contructor read kexplorer file
@@ -224,6 +225,11 @@ class network:
 							reactionRate = reactionInfo[-1].strip("\n")
 							#transform into LaTeX format
 							reactionRateTex = self.rate2latex(reactionRate,varList)
+							#break long rates (in LaTeX format)
+							if len(reactionRateTex) > self.rateLength:
+								reactionRateTex, message = self.breakRateTex(reactionRateTex)
+								#print warning message
+								if message != "": fileOutput.write(message + "\n")
 
 							if newReaction:
 								formatList = reactionFormat.split(",")
@@ -237,7 +243,6 @@ class network:
 								formatReaProd = formatList[firstReactantIdx:lastProductIdx+1]
 								verbReaction = reactionInfo[firstReactantIdx:lastProductIdx+1]
 								verbReactionTex = self.reaction2latex(verbReaction,formatReaProd)
-
 							else:
 								verbReactionTex = ""
 								reactionIdx = ""
@@ -351,7 +356,7 @@ class network:
 				rateTex = rateTex.replace(stringFrac + Tsym + "^{", "{"+Tsym+"^{-")
 			#change the order of the factors to match modified Arrhenius
 			#avoid chaning stuff in more complex rates
-			if len(rateTex) < 100:
+			if len(rateTex) < self.rateLength:
 				rateTexSplit = re.split("\}\}",rateTex)
 				beta = rateTexSplit[0][1:]+"}" #beta containing factor
 				if "exp" in rateTexSplit[-1]:
@@ -386,9 +391,30 @@ class network:
 				fracStringReplace = "\left["+firstTerm+r"\right]\left["+secondTerm+r"\right]^{-1}"
 
 			rateTex = rateTex.replace(fracStringOriginal,fracStringReplace)
+
 		#add LaTeX symbols
 		rateTex = "$" + rateTex + "$"
 		return rateTex
+
+	#****************
+	#break long rates and put in LateX table format
+	def breakRateTex(self,rate):
+
+		rate = rate.replace(" + "," \\\\ & + " )
+		rate = rate.replace(" - "," \\\\ & - " )
+		rate = "\\begin{aligned}[t] &" + rate + "\\end{aligned}"
+
+		allLines = rate.split("&")
+		for line in allLines:
+			Nleft = line.count("\\left")
+			Nright = line.count("\\right")
+			if Nleft!=Nright:
+				warning = "%%*********************\n%% Line  (%s)  is missing closed parenteses" %(line)
+				# auto replace was not always succesful...
+				# newline = line.replace("\\right","\\left.\\right")
+				# rate = rate.replace(line,newline)
+
+		return rate, warning
 
 	#****************
 	#dump colums in LateX table format
