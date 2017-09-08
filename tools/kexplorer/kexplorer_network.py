@@ -233,6 +233,8 @@ class network:
 								verbReaction = reactionInfo[firstReactantIdx:lastProductIdx+1]
 								verbReactionTex = self.reaction2latex(verbReaction,formatReaProd)
 
+							else:
+								verbReactionTex = " "
 							#dump line to output file
 							#fileOutput.write(reactionRateTex + "\n")
 							fileOutput.write(verbReactionTex + "\n")
@@ -241,35 +243,33 @@ class network:
 	#****************
 	#KROME reaction format to LaTeX format
 	def reaction2latex(self,reaction,format):
+
 		reaTex = ""
 		totalReact = format.count("R")
 		totalProd  = format.count("P")
-		#print totalProd,format
 
-		#loop over all reactants
-		for i in range(totalReact):
-			elem = reaction[i]
+		#***************-
+		def reaProdTex(out,it):
+			elem = reaction[it]
+			#skip empty elem (due to non-asdapted format)
+			if elem =="": return ""
 			#sub and superscrits to LaTeX format
 			elem = kexplorer_utils.subSuper2latex(elem)
-			if i==0:
-				reaTex = reaTex + " " + elem + " "
-			else:
-				reaTex = reaTex + "$+$" + " " + elem + " "
+			if it==0 or it==totalReact: out = elem
+			else: out = " $+$ " + elem
+			return out
 
-		reaTex = reaTex + "$\\to$"
-		#print reaTex
+		#loop over all reactants
+		for i in range(totalReact): reaTex += reaProdTex(reaTex,i)
+		if totalReact==1: reaTex += " $+$ CR"
+		# add reaction arrow
+		reaTex = reaTex + " $\\to$ "
 		#loop over all products
-		for i in range(totalProd):
-			#print i, reaction
-			elem = reaction[i+totalReact]
-			elem = kexplorer_utils.subSuper2latex(elem)
-			if i==0:
-				reaTex = reaTex + " " + elem + " "
-			else:
-				reaTex = reaTex + "$+$" + " " + elem + " "
+		for i in range(totalReact,totalReact+totalProd): reaTex += reaProdTex(reaTex,i)
+		#add photon to reaction with only one product
+		if totalProd==1: reaTex += " $+$ $\\gamma$ "
 
 		return reaTex
-
 
 	#****************
 	#KROME network format to LaTeX format
