@@ -255,6 +255,7 @@ class network:
 			if elem =="": return ""
 			#sub and superscrits to LaTeX format
 			elem = kexplorer_utils.subSuper2latex(elem)
+			elem = kexplorer_utils.special2latex(elem)
 			if it==0 or it==totalReact: out = elem
 			else: out = " $+$ " + elem
 			return out

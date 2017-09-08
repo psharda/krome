@@ -53,15 +53,24 @@ def indicesElemList(list,elem):
 #********************
 #sub and super script to LaTeX format
 def subSuper2latex(name):
-	if(name=="E"):
-		name = "e$^-$"
-		return name
-
+	#maks subcripts of numbers
 	for part in name:
-		if(isNumber(name)):
-			newPart = "$_"+part+"$"
+		if(isNumber(part)):
+			newPart = "$_{"+part+"}$"
 			name = name.replace(part,newPart)
-		if(part=="+" or part=="-"):
-			newPart = "$^"+part+"$"
-			name = name.replace(part,newPart)
+
+	#make superscript of all ions
+	for sign in ["+","-"]:
+		if sign in name:
+			allSigns = name.count(sign)*sign
+			name = name.replace(allSigns,"$^{"+allSigns+"}$")
+	return name
+
+#********************
+#specials to LaTeX format
+def special2latex(name):
+	if name =="E": name = "e$^-$"
+	if name =="g": name = "\\gamma"
+	if "_c" in name: name = name.replace("_c","$_c$")
+	if "_dust" in name: name = name.replace("_dust","$_{dust}$")
 	return name
