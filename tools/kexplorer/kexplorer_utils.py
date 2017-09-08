@@ -56,8 +56,7 @@ def subSuper2latex(name):
 	#maks subcripts of numbers
 	for part in name:
 		if(isNumber(part)):
-			newPart = "$_{"+part+"}$"
-			name = name.replace(part,newPart)
+			name = name.replace(part,"$_{"+part+"}$")
 
 	#make superscript of all ions
 	for sign in ["+","-"]:

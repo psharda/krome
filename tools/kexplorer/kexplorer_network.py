@@ -185,13 +185,16 @@ class network:
 
 	#****************
 	#create latex format for network
-	def network2latex(self,networkFile,networkLatex="NetworkLatex.ntw" ):
+	def network2latex(self,networkFile,networkLatex="NetworkLatex.log" ):
 
 		reactionFormat = self.reaFormat #use default reaction format
+		reactionCnt = 0 #reaction counter
 
 		with open(networkFile, 'r') as fileInput, open(networkLatex, "w") as fileOutput:
+			#dump header of the file
+			self.dumpLatexTableHeader(fileOutput)
 			#split file into blocks separated by empty line, one block is one reaction
-		    for key,group in itertools.groupby(fileInput,kexplorer_utils.blockSeparator):
+			for key,group in itertools.groupby(fileInput,kexplorer_utils.blockSeparator):
 				if not key:
 					newReaction = True #keep track if new reaction or not (double rates)
 					reactionBlockList = list(group)
@@ -227,18 +230,27 @@ class network:
 								firstReactantIdx = kexplorer_utils.indicesElemList(formatList,"R")[0]
 								lastProductIdx = kexplorer_utils.indicesElemList(formatList,"P")[-1]
 
-								reactionIdx = reactionInfo[0]
+								#increment reaction counter
+								reactionCnt += 1
+								reactionIdx = str(reactionCnt)
 
 								formatReaProd = formatList[firstReactantIdx:lastProductIdx+1]
 								verbReaction = reactionInfo[firstReactantIdx:lastProductIdx+1]
 								verbReactionTex = self.reaction2latex(verbReaction,formatReaProd)
 
 							else:
-								verbReactionTex = " "
+								verbReactionTex = ""
+								reactionIdx = ""
 							#dump line to output file
 							#fileOutput.write(reactionRateTex + "\n")
-							fileOutput.write(verbReactionTex + "\n")
+							#fileOutput.write(verbReactionTex + "\n")
 							newReaction = False
+							#temporatry empty
+							tempRangeTex = ""
+							refTex = ""
+
+							latexColums = [reactionIdx,verbReactionTex,reactionRateTex,tempRangeTex,refTex]
+							self.dumpLatexTable(latexColums,fileOutput)
 
 	#****************
 	#KROME reaction format to LaTeX format
@@ -372,6 +384,26 @@ class network:
 		#add LaTeX symbols
 		rateTex = "$" + rateTex + "$"
 		return rateTex
+
+	#****************
+	#dump colums in LateX table format
+	def dumpLatexTableHeader(self,tableFile="latexTable.log"):
+
+		tableFile.write("#********************************\n")
+		tableFile.write("#Chemical reaction network (LaTeX format)\n")
+		tableFile.write("#Table columns format {"+5*"l"+"}\n\n")
+
+	#****************
+	#build colums in LateX table format
+	def dumpLatexTable(self,colums,tableFile="latexTable.log"):
+		row = ""
+		cnt = 1
+		for el in colums:
+			if cnt==len(colums): row += el + " \\\\"
+			else: row += el + " & "
+			cnt += 1
+
+		tableFile.write(row + "\n")
 
 	#****************
 	#buld a graph map with the list of reaction partners
