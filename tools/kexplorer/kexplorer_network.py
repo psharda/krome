@@ -220,6 +220,7 @@ class network:
 							continue
 
 						elif int(item[0]):
+							formatList = reactionFormat.split(",")
 							reactionInfo = item.split(",")
 							#get reaction rare
 							reactionRate = reactionInfo[-1].strip("\n")
@@ -231,8 +232,15 @@ class network:
 								#print warning message
 								if message != "": fileOutput.write(message + "\n")
 
+							tempMinIdx = kexplorer_utils.indicesElemList(formatList,"Tmin")[0]
+							tempMaxIdx = kexplorer_utils.indicesElemList(formatList,"Tmax")[0]
+
+							if tempMinIdx != None or tempMaxIdx != None:
+								tempRange = reactionInfo[tempMinIdx:tempMaxIdx+1]
+								tempRangeTex = self.tempRange2latex(tempRange)
+							else: tempRangeTex = ""
+
 							if newReaction:
-								formatList = reactionFormat.split(",")
 								firstReactantIdx = kexplorer_utils.indicesElemList(formatList,"R")[0]
 								lastProductIdx = kexplorer_utils.indicesElemList(formatList,"P")[-1]
 
@@ -251,7 +259,7 @@ class network:
 							#fileOutput.write(verbReactionTex + "\n")
 							newReaction = False
 							#temporatry empty
-							tempRangeTex = ""
+							#tempRangeTex = ""
 							refTex = ""
 
 							latexColums = [reactionIdx,verbReactionTex,reactionRateTex,tempRangeTex,refTex]
@@ -279,6 +287,7 @@ class network:
 
 		#loop over all reactants
 		for i in range(totalReact): reaTex += reaProdTex(reaTex,i)
+		#add cosmic ray to reaction with only one product
 		if totalReact==1: reaTex += " $+$ CR"
 		# add reaction arrow
 		reaTex = reaTex + " $\\to$ "
@@ -340,6 +349,7 @@ class network:
 				print "Syntax Error in rate", err
 				return rate
 
+		##########################
 		#fix mistakes by sympy
 		#no 10^{} for short rates
 		for t in Tsymbols:
@@ -355,7 +365,7 @@ class network:
 			for Tsym in Tsymbols:
 				rateTex = rateTex.replace(stringFrac + Tsym + "^{", "{"+Tsym+"^{-")
 			#change the order of the factors to match modified Arrhenius
-			#avoid chaning stuff in more complex rates
+			#avoid chaging stuff in more complex rates
 			if len(rateTex) < self.rateLength:
 				rateTexSplit = re.split("\}\}",rateTex)
 				beta = rateTexSplit[0][1:]+"}" #beta containing factor
@@ -400,9 +410,10 @@ class network:
 	#break long rates and put in LateX table format
 	def breakRateTex(self,rate):
 
-		rate = rate.replace(" + "," \\\\ & + " )
-		rate = rate.replace(" - "," \\\\ & - " )
-		rate = "\\begin{aligned}[t] &" + rate + "\\end{aligned}"
+		rate = rate.replace(" + "," \\\\ \n& + " )
+		rate = rate.replace(" - "," \\\\ \n& - " )
+		rate = "$\\begin{aligned}[t] &" + rate + "\\end{aligned}$"
+		warning = ""
 
 		allLines = rate.split("&")
 		for line in allLines:
@@ -414,15 +425,54 @@ class network:
 				# newline = line.replace("\\right","\\left.\\right")
 				# rate = rate.replace(line,newline)
 
+
 		return rate, warning
+
+	#****************
+	#temperature rage to LateX format
+	def tempRange2latex(self,limits):
+		import sympy as sp
+		#change limits to uniform format
+		low = kexplorer_utils.limitsSimple(limits[0])
+		high = kexplorer_utils.limitsSimple(limits[1])
+
+		#algorithm to account for differnt KROME formater of limits
+		# e.g. with or without ">", "<",
+		#put in correct order and switch symbols if needed
+		if low != "":
+			if ">" not in low:
+				low = " > " + low
+			else:
+				low = low.replace(">="," >= ").replace(">"," > ")
+			if high == "":
+				lowhigh = " T " + low  + " K "
+			else:
+				low = low.split()[-1] + " " + "".join(low.split()[:-1])
+				low = low.replace(">","<")
+
+		if high != "":
+			if "<" not in high:
+				high = " < " + high
+			lowhigh = low  + " T " + high + " K "
+
+		if low == "" and high=="":
+			lowhigh = ""
+
+		#change limits symbols to latex format
+		lowhighTex = kexplorer_utils.limits2latex(lowhigh)
+		#turn numbers into integers in latex format
+		lowhighTex = [str(kexplorer_utils.char2int(part)) for part in lowhighTex.split()]
+		limitTex = "".join(lowhighTex)
+
+		return limitTex
 
 	#****************
 	#dump colums in LateX table format
 	def dumpLatexTableHeader(self,tableFile="latexTable.log"):
 
-		tableFile.write("#********************************\n")
-		tableFile.write("#Chemical reaction network (LaTeX format)\n")
-		tableFile.write("#Table columns format {"+5*"l"+"}\n\n")
+		tableFile.write("%********************************\n")
+		tableFile.write("% Chemical reaction network (LaTeX format)\n")
+		tableFile.write("% Table columns format {"+5*"l"+"}\n\n")
 
 	#****************
 	#build colums in LateX table format

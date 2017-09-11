@@ -48,6 +48,9 @@ def getParentheticContents(string):
 #find all indices of an element in a list
 def indicesElemList(list,elem):
 	indices = [i for i, x in enumerate(list) if x == elem]
+	if indices == []:
+		indices = [None]
+
 	return indices
 
 #********************
@@ -69,7 +72,39 @@ def subSuper2latex(name):
 #specials to LaTeX format
 def special2latex(name):
 	if name =="E": name = "e$^-$"
-	if name =="g": name = "\\gamma"
+	if name =="g": name = "$\\gamma$"
 	if "_c" in name: name = name.replace("_c","$_c$")
 	if "_dust" in name: name = name.replace("_dust","$_{dust}$")
 	return name
+
+#********************
+#limits to LaTeX format
+def limits2latex(name):
+	name = name.replace("<=", " $\leqslant$ ").replace(">="," $\geqslant$ ")
+	name = name.replace("<","$ < $").replace(">"," $>$ ")
+	return name
+
+#********************
+#simplify KROME limits
+def limitsSimple(name):
+	name = name.replace(".LE.","<=").replace(".GE.",">=")
+	name = name.replace(".LT.","<").replace(".GT.",">")
+	name = name.replace("NONE","")
+	name = name.replace("d","e")
+	return name
+
+#********************
+#character to float
+def char2float(arg):
+	if isNumber(arg):
+		return float(arg)
+	else:
+		return arg
+
+#********************
+#character to int
+def char2int(arg):
+	if isNumber(arg):
+		return int(float(arg))
+	else:
+		return arg
