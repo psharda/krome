@@ -409,18 +409,33 @@ class network:
 	#****************
 	#break long rates and put in LateX table format
 	def breakRateTex(self,rate):
+		nextReplace = False
 
+		#get rid of unclosed "{}" on a line, when breaking equation
+		parList = kexplorer_utils.getParentheticContents(rate)
+		for part in parList:
+			#replace when level 0 and after exp
+			if part[0] == 0 and nextReplace:
+				rate = rate.replace("{"+part[1]+"}",part[1])
+				nextReplace = False
+			#only for exp
+			if part == (0,"exp"):
+				#next level 0 parenteses need to be replaced
+				nextReplace = True
+
+		rate = rate[1:-1]	#remove $ signs
 		rate = rate.replace(" + "," \\\\ \n& + " )
 		rate = rate.replace(" - "," \\\\ \n& - " )
 		rate = "$\\begin{aligned}[t] &" + rate + "\\end{aligned}$"
 		warning = ""
+
 
 		allLines = rate.split("&")
 		for line in allLines:
 			Nleft = line.count("\\left")
 			Nright = line.count("\\right")
 			if Nleft!=Nright:
-				warning = "%%*********************\n%% Line  (%s)  is missing closed parenteses" %(line)
+				warning = "%%*********************\n%% Manually add \\left. \\right. for needed lines."
 				# auto replace was not always succesful...
 				# newline = line.replace("\\right","\\left.\\right")
 				# rate = rate.replace(line,newline)
