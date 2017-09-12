@@ -20,3 +20,6 @@ network.listBest()
 #dump to png folder
 network.dumpBest("pngs/")
 
+#make LaTeX table form KROME network
+ntwKROME = "networkLatex.ntw"
+network.network2latex(ntwKROME)
