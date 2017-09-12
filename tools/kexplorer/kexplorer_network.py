@@ -247,6 +247,8 @@ class network:
 								#increment reaction counter
 								reactionCnt += 1
 								reactionIdx = str(reactionCnt)
+								prefix = "k$_{" + reactionIdx +"}$"
+
 
 								formatReaProd = formatList[firstReactantIdx:lastProductIdx+1]
 								verbReaction = reactionInfo[firstReactantIdx:lastProductIdx+1]
@@ -254,13 +256,10 @@ class network:
 							else:
 								verbReactionTex = ""
 								reactionIdx = ""
-							#dump line to output file
-							#fileOutput.write(reactionRateTex + "\n")
-							#fileOutput.write(verbReactionTex + "\n")
+
+							reactionRateTex = prefix + reactionRateTex
 							newReaction = False
-							#temporatry empty
-							#tempRangeTex = ""
-							refTex = ""
+							refTex = "" #column for references
 
 							latexColums = [reactionIdx,verbReactionTex,reactionRateTex,tempRangeTex,refTex]
 							self.dumpLatexTable(latexColums,fileOutput)
@@ -403,7 +402,7 @@ class network:
 			rateTex = rateTex.replace(fracStringOriginal,fracStringReplace)
 
 		#add LaTeX symbols
-		rateTex = "$" + rateTex + "$"
+		rateTex = " $= " + rateTex + "$"
 		return rateTex
 
 	#****************
@@ -435,7 +434,7 @@ class network:
 			Nleft = line.count("\\left")
 			Nright = line.count("\\right")
 			if Nleft!=Nright:
-				warning = "%%*********************\n%% Manually add \\left. \\right. for needed lines."
+				warning = "%%*********************\n%% Manually add \\left. \\right. or close bracktes for needed lines."
 				# auto replace was not always succesful...
 				# newline = line.replace("\\right","\\left.\\right")
 				# rate = rate.replace(line,newline)
