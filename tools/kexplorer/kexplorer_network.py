@@ -458,7 +458,7 @@ class network:
 			if ">" not in low:
 				low = " > " + low
 			else:
-				low = low.replace(">="," >= ").replace(">"," > ")
+				low = low.replace(">"," > ").replace("> ="," >= ")
 			if high == "":
 				lowhigh = " T " + low  + " K "
 			else:
@@ -468,6 +468,8 @@ class network:
 		if high != "":
 			if "<" not in high:
 				high = " < " + high
+			else:
+				high = high.replace("<"," < ").replace("< ="," <= ")
 			lowhigh = low  + " T " + high + " K "
 
 		if low == "" and high=="":
@@ -477,7 +479,7 @@ class network:
 		lowhighTex = kexplorer_utils.limits2latex(lowhigh)
 		#turn numbers into integers in latex format
 		lowhighTex = [str(kexplorer_utils.char2int(part)) for part in lowhighTex.split()]
-		limitTex = "".join(lowhighTex)
+		limitTex = " ".join(lowhighTex)
 
 		return limitTex
 
