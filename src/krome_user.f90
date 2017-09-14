@@ -929,14 +929,23 @@ contains
   ! energy/eV, flux/(eV/cm2/sr)
   ! Flux is interpolated over the existing binning
   ! constant-area method
-  subroutine krome_load_photoBin_file_2col(fname)
+  subroutine krome_load_photoBin_file_2col(fname, logarithmic)
     use krome_commons
     implicit none
     integer,parameter::imax=int(1e4)
     character(len=*) :: fname
+    logical, optional :: logarithmic
+    logical :: is_log
     integer::unit,ios,icount,j,i
     real*8::xtmp(imax),ftmp(imax),intA,eL,eR
     real*8::xL,xR,pL,pR,fL,fR,Jflux(nPhotoBins)
+    real*8::a,b
+
+    if(present(logarithmic)) then
+      is_log = logarithmic
+    else
+      is_log = .false.
+    end if
 
     !open file to read
     open(newunit=unit,file=trim(fname),iostat=ios)
@@ -954,6 +963,7 @@ contains
     end do
     close(unit)
 
+    if(is_log) ftmp = log(merge(ftmp,1d-40,ftmp>0d0))
     !loop on photobins for interpolation
     do j=1,nPhotoBins
        intA = 0d0
@@ -970,11 +980,33 @@ contains
           !get the interval limit (consider partial overlapping)
           pL = max(xL,eL)
           pR = min(xR,eR)
+          if(is_log) then
+            pL = log(max(pL,1d-40))
+            pR = log(max(pR,1d-40))
+            xL = log(max(xL,1d-40))
+            xR = log(max(xR,1d-40))
+          end if
           !interpolate to get the flux at the interval limit
           fL = (ftmp(i+1)-ftmp(i))*(pL-xL)/(xR-xL)+ftmp(i)
           fR = (ftmp(i+1)-ftmp(i))*(pR-xL)/(xR-xL)+ftmp(i)
-          !compute area of the overlapped area
-          intA = intA + (fL+fR)*(pR-pL)/2d0
+          if(is_log) then
+            fL = exp(fL)
+            fR = exp(fR)
+            pL = exp(pL)
+            pR = exp(pR)
+
+            ! Compute coeficients for exponential approximation
+            ! between pL and pR
+            ! f(x) = a*exp(b*x)
+            b = (log(fR)-log(fL))/(pR-pL)
+            a = 0.5d0*(fL/exp(b*pL) + fR/exp(b*pR))
+
+            !compute area of the overlapped area
+            intA = intA + a/b*(exp(b*pR)-exp(b*pL))
+          else
+            !compute area of the overlapped area
+            intA = intA + (fL+fR)*(pR-pL)/2d0
+          end if
        end do
        !distribute the flux in the photobin
        Jflux(j) = intA / (eR-eL)
