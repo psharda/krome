@@ -63,6 +63,7 @@ contains
     imass(:) = get_imass()
 
     !precompute adimensional line broadening
+    dshift(:) = 0d0
 #KROME_broadening_shift_precalc
 
 #KROME_load_xsecs_from_file

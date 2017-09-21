@@ -33,15 +33,16 @@ objs += opkdmain.o
 objs += krome_commons.o
 objs += krome_constants.o
 objs += krome_user_commons.o
+objs += krome_fit.o
 objs += krome_getphys.o
 objs += krome_gadiab.o
 objs += krome_grfuncs.o
 objs += krome_phfuncs.o
 objs += krome_subs.o
 objs += krome_stars.o
-objs += krome_tabs.o
 objs += krome_dust.o
 objs += krome_photo.o
+objs += krome_tabs.o
 objs += krome_cooling.o
 objs += krome_heating.o
 objs += krome_ode.o
@@ -49,11 +50,13 @@ objs += krome_user.o
 objs += krome_reduction.o
 objs += krome.o
 
+cobjs = krome_header.o
+
 #default target
 #note that Fortran is used as the linker
-all: 	$(objs) testC.o testF.o
+all: 	$(objs) $(cobjs) testC.o testF.o
 	$(fc) $(objs) testF.o -o testF $(switch) $(lib)
-	$(fc) $(objs) testC.o -o testC $(switchc) $(clib)
+	$(fc) $(objs) $(cobjs) testC.o -o test $(switchc) $(clib)
 
 #ifort full debug target
 debug: switch = $(switchDBG)
@@ -65,10 +68,33 @@ debug: all
 gfortran: fc = gfortran
 gfortran: cc = gcc
 gfortran: switch = -ffree-line-length-none
-gfortran: switchc = 
-gfortran: nowarn = $(nowarnGNU)
+gfortran: switchc =
 gfortran: clib = -lm -lgfortran
+gfortran: nowarn = $(nowarnGNU)
 gfortran: all
+
+#gfortran debug target
+gfortran_dbg: fc = gfortran
+gfortran_dbg: switch = -fbacktrace -g
+gfortran_dbg: switch += -ffpe-trap=zero,overflow,invalid
+gfortran_dbg: switch += -fbounds-check -ffree-line-length-none
+gfortran_dbg: nowarn = $(nowarnGNU)
+gfortran_dbg: all
+
+cinterface: $(cobjs)
+cinterface: cc = gcc
+cinterface: switchc =
+cinterface: clib = -lm -lgfortran
+cinterface: gfortran
+
+cinterface_opt: $(cobjs)
+cinterface_opt: fc = gfortran
+cinterface_opt: cc = gcc
+cinterface_opt: switch = -O3 -ffree-line-length-none
+cinterface_opt: switchc = -O3
+cinterface_opt: nowarn = $(nowarnGNU)
+cinterface_opt: clib = -lm -lgfortran
+cinterface_opt: all
 
 #clean target
 clean:

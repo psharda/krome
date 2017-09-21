@@ -215,6 +215,7 @@ module krome_commons
 #IFKROME_hasStoreOnceRates
   !store evaluate once rate
   real*8::rateEvaluateOnce(nrea)
+  !$omp threadprivate(rateEvaluateOnce)
 #ENDIFKROME
 
 end module krome_commons

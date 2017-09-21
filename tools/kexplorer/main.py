@@ -3,19 +3,12 @@
 # of png files to show the system evolution while evolving
 import kexplorer_network
 
-fileName = "Fluxes_demoJB.dat"
-fileNameEvolution = "Grid_demoJB.dat"
-oldNetwork = "react_primordial3"
-newNetwork = "react_primordial3_reduced"
-
-TgasInterest = [1e3,5e3,1e4]
-xvarInterest = [1e-11,1e-13]
-elemInterest = ["H","H2"]
+fileName = "../../build/explore.dat"
 
 #create network from explorer file
-network = kexplorer_network.network(fileName,fileNameEvolution)
+network = kexplorer_network.network(fileName)
 
-network.xvarName = "Density"
+network.xvarName = "density"
 network.xvarUnits = "g/cm^3"
 
 #find best matching criteria
@@ -27,16 +20,6 @@ network.listBest()
 #dump to png folder
 network.dumpBest("pngs/")
 
-#all below added by Jels Boulangier 30/03/2017
-#create new network file for most fluxy reactions
-network.networkBest(oldNetwork,newNetwork)
-
-#make abundace colormaps for model grid
-#network.abundanceColormapAll(elemInt=elemInterest,pngFolder=pngsOut)
-#if elemInt not specified, this will do all elements
-network.abundanceColormapAll(pngFolder="pngs/")
-
-
-#make time evolution plot for interesting model grid points
-network.abundanceEvolution(atom="H2",tgasInt=TgasInterest,xvarInt=xvarInterest)
-network.abundanceEvolution(atom="H",tgasInt=TgasInterest,xvarInt=xvarInterest)
+#make LaTeX table form KROME network
+ntwKROME = "networkLatex.ntw"
+network.network2latex(ntwKROME)
