@@ -20,6 +20,9 @@ myOptions = options.options(fname)
 #load network
 myNetwork = network.network(myOptions)
 
+#prepare full documentation
+myNetwork.makeAllDoc()
+
 
 
 

@@ -14,8 +14,8 @@ contains
     m(:) = get_mass()
 
     !ip_mass is 1/proton_mass_in_g
-    get_mu = sum(n(1:nmols)*m(1:nmols)) &
-         / sum(n(1:nmols)) * ip_mass
+    get_mu = max(sum(n(1:nmols)*m(1:nmols)),1d-40) &
+         / max(sum(n(1:nmols)),1d-40) * ip_mass
 
   end function get_mu
 
@@ -28,7 +28,7 @@ contains
     real*8::get_mu_rho,rhogas,n(:)
 
     !ip_mass is 1/proton_mass_in_g
-    get_mu_rho = rhogas / sum(n(1:nmols)) * ip_mass
+    get_mu_rho = rhogas / max(sum(n(1:nmols)),1d-40) * ip_mass
 
   end function get_mu_rho
 
@@ -234,7 +234,7 @@ contains
     use krome_commons
     implicit none
     real*8::num2col,ncalc,n(:),Tgas
-    Tgas = n(idx_Tgas)
+    Tgas = max(n(idx_Tgas),phys_Tcmb)
 
 #KROME_num2col_method
 
@@ -246,7 +246,7 @@ contains
     use krome_commons
     implicit none
     real*8::col2num,ncalc,n(:),Tgas
-    Tgas = n(idx_Tgas)
+    Tgas = max(n(idx_Tgas),phys_Tcmb)
 
 #KROME_col2num_method
 
