@@ -70,6 +70,40 @@ class network:
 		for myReaction in self.reactions:
 			myReaction.evaluateRate(shortcuts,varRanges)
 
+	#*****************************
+	#assign index to species from info.log file produced by KROME
+	def assignIndex(self, fileName="info.log"):
+
+		inBlock = False #flag in reading block
+		self.indexDictionary = dict() #index dictionary, key=species name, value=index
+
+		#loop on log file
+		for row in open(fileName, "rb"):
+			#check beginning line to read
+			if(row.startswith("# Species list with their indexes")):
+				inBlock = True
+				continue
+			#if outside reading block skip
+			if(not inBlock):
+				continue
+			#check ending of reading block and break from reading
+			if(inBlock and row.strip()==""):
+				break
+			#replace tabs with spaces
+			srow = row.strip().replace("\t", " ")
+			#read data
+			(idx, speciesName, idxF90) = [x.strip() for x in srow.split(" ") if x!=""]
+			#assign data to dictionary
+			self.indexDictionary[speciesName] = int(idx)
+
+		#assign index to class species dictionary
+		for species in self.species:
+			#check for capital names
+			if(not species.name in self.indexDictionary):
+				species.idx = self.indexDictionary[species.name.upper()]
+			else:
+				species.idx = self.indexDictionary[species.name]
+
 	#******************************
 	#prepare complete documentation
 	def makeAllDoc(self):
