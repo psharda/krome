@@ -189,7 +189,9 @@ def isNumber(arg):
 def getShortcuts():
 	shortcut = dict()
 	fileName = "shortcuts.dat"
-	fh = open(fileName,"rb")
+        absPath = os.path.join(os.path.dirname(__file__), "..", fileName)
+        absPath = os.path.abspath(absPath)
+	fh = open(absPath,"rb")
 	for row in fh:
 		srow = row.strip()
 		if(srow==""): continue
