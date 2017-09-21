@@ -994,19 +994,10 @@ contains
             fR = exp(fR)
             pL = exp(pL)
             pR = exp(pR)
-
-            ! Compute coeficients for exponential approximation
-            ! between pL and pR
-            ! f(x) = a*exp(b*x)
-            b = (log(fR)-log(fL))/(pR-pL)
-            a = 0.5d0*(fL/exp(b*pL) + fR/exp(b*pR))
-
-            !compute area of the overlapped area
-            intA = intA + a/b*(exp(b*pR)-exp(b*pL))
-          else
-            !compute area of the overlapped area
-            intA = intA + (fL+fR)*(pR-pL)/2d0
           end if
+
+          !compute area of the overlapped area
+          intA = intA + (fL+fR)*(pR-pL)/2d0
        end do
        !distribute the flux in the photobin
        Jflux(j) = intA / (eR-eL)

@@ -193,6 +193,25 @@ contains
   end function sigma_v96
 
   !********************
+  !Verner+96 cross section fit (cm2)
+  !Average by numerical integration
+  function sigma_v96_int(E_low,E_high,E0,sigma_0,ya,P,yw,y0,y1)
+    real*8::sigma_v96_int,E_low,E_high,sigma_0,integral,yw,x,y,E0
+    real*8::y0,y1,ya,P
+    real*8::binWidth,dE,E
+    integer::i
+    integer,parameter::N=100
+    integral = 0d0
+    binWidth = E_high-E_low
+    dE = binWidth/real(N,kind=8)
+    do i=1,N
+      E = E_low + (i-0.5)*dE
+      integral = integral + sigma_v96(E,E0,sigma_0,ya,P,yw,y0,y1)*dE
+    end do
+    sigma_v96_int = integral / binWidth !cm2
+  end function sigma_v96_int
+
+  !********************
   function heat_v96(energy_eV,Eth,E0,sigma_0,ya,P,yw,y0,y1)
     !Heating with Verner+96 cross section fit (cm2*eV)
     use krome_constants
