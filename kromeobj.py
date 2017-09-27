@@ -65,6 +65,7 @@ class krome():
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
 	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = useBroadening = False
+	useVerbatimFile = True
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
@@ -288,6 +289,7 @@ class krome():
 			 recombine with electrons).")
 		self.parser.add_argument("-noSinkCheck", action="store_true", help="skip sink check (species that are only formed)")
 		self.parser.add_argument("-noTlimits", action="store_true", help="ignore rate coefficient temperature limits.")
+		self.parser.add_argument("-noVerbatimFile", action="store_true", help="do not read the file with reaction names")
 		self.parser.add_argument("-nuclearMult", action="store_true", help="keep into account reactants multeplicity, and modify\
 			fluxes according to this. Intended for nuclear networks.")
 		self.parser.add_argument("-options", metavar="filename", help="read the options from a file instead of command line\
@@ -793,6 +795,11 @@ class krome():
 		if(args.noTlimits):
 			self.useTlimits = False
 			print "Reading option -noTlimits"
+
+		#do not read the file with reaction names
+		if(args.noVerbatimFile):
+			self.useVerbatimFile = False
+			print "Reading option -noVerbatimFile"
 
 		#skip duplicated reactions
 		if(args.skipDup):
@@ -5741,7 +5748,11 @@ class krome():
 					spart = "call load_part(\"part"+spec_part+".dat\", zpart"+spec_part+", zpartMin"\
 						+spec_part+", zpartdT"+spec_part+")"
 					fout.write(spart+"\n")
-
+			elif(srow == "#KROME_no_verbatim_file" and not self.useVerbatimFile):
+				for x in reacts:
+					kstr = "\treactionNames("+str(x.idx)+") = \"" + x.verbatim +"\""
+					fout.write(kstr+"\n")
+				fout.write("return\n")
 			else:
                                 if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):

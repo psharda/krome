@@ -12,19 +12,25 @@ class network:
 		self.speciesDictionary = []
 		self.myOptions = myOptions
 
+                basePath = os.path.join(os.path.dirname(__file__), "..")
+                basePath = os.path.abspath(basePath)
+
 
 		#get network file name
 		fileName = myOptions.network
 
 		#read atoms
-		atomSet = utils.getAtomSet("atomlist.dat")
+                absPath = os.path.join(basePath, "atomlist.dat")
+		atomSet = utils.getAtomSet(absPath)
 		self.atomSet = atomSet
 
 		#load thermochemical data
-		self.thermochemicalData = utils.getThermochemicalData("thermo30.dat")
+                absPath = os.path.join(basePath, "thermo30.dat")
+		self.thermochemicalData = utils.getThermochemicalData(absPath)
 
 		#load polarizability data
-		self.polarizabilityData = utils.getPolarizabilityData("polarizability.dat")
+                absPath = os.path.join(basePath, "polarizability.dat")
+		self.polarizabilityData = utils.getPolarizabilityData(absPath)
 
 		#read shortcuts
 		shortcuts = utils.getShortcuts()
