@@ -6,7 +6,7 @@ class species():
 
 	#*****************
 	#constructor
-	def __init__(self,speciesName,atomSet):
+	def __init__(self, speciesName, atomSet, skipPhotochemistry=False):
 
 
 		#check for upper case atoms, e.g. HE instead of He
@@ -96,15 +96,17 @@ class species():
 		self.mass = sum([atomSet[x] for x in self.exploded])
 		if(speciesName.upper()!="E"): self.mass -= self.charge*me
 
-		#init photochem variables
-		self.xsecs = dict()
-		self.phrates = dict()
+		#skip photochemistry if required
+		if(not skipPhotochemistry):
+			#init photochem variables
+			self.xsecs = dict()
+			self.phrates = dict()
 
-		#load xsec from file
-		self.loadXsecLeiden()
+			#load xsec from file
+			self.loadXsecLeiden()
 
-		#compute photo rates
-		self.computePhRates()
+			#compute photo rates
+			self.computePhRates()
 
 
 	#**********************
