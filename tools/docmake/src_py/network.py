@@ -281,18 +281,6 @@ class network:
 	#**************
 	#get all network species
 	def getSpecies(self):
-		if(self.species!=[]): return self.species
-		self.species = []
-		#loop on reactions
-		for reaction in self.reactions:
-			self.species += reaction.reactants + reaction.products
-
-		#unique list of species
-		dicSpec = dict()
-		for mySpecies in self.species:
-			dicSpec[mySpecies.nameHash] = mySpecies
-		self.species = dicSpec.values()
-
 		return self.species
 
 	#**************
