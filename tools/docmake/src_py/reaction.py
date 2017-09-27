@@ -272,14 +272,17 @@ class reaction:
 	#create a new species if not known, otherwise use known from list
 	def linkOrCreateSpecies(self,speciesName,atomSet,speciesList):
 
+		#create temporary species to compare parsed names
+		tmpSpecies = species.species(speciesName, atomSet, skipPhotochemistry=True)
+
 		#loop on species
 		for spec in speciesList:
 			#if name found return known
-			if(spec.name==speciesName):
+			if(spec.name==tmpSpecies.name):
 				return spec
 
 		#create new species
-		newSpecies = species.species(speciesName,atomSet)
+		newSpecies = species.species(speciesName, atomSet)
 
 		#append to list of species
 		speciesList.append(newSpecies)
