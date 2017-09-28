@@ -143,7 +143,7 @@ class reaction():
 			#args += "xsec"+sidx+"_n,"
 			args += "xsec"+sidx+"_idE, dshift("+self.reactants[0].fidx+")"
 			self.kphrate = "xsec_interp(energyL, energyR, "+args+")"
-			#self.xsecFile = self.krate.replace("@xsecFile=","").strip()
+                        #self.xsecFile = self.krate.replace("@xsecFile=","").strip()
 			if("SWRI" in self.krate.upper()):
 				RR = self.reactants[0].name
 				PP = ("_".join([x.name for x in self.products]))
