@@ -69,7 +69,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real(dp)      :: scale_nH,scale_T2,scale_l,scale_d,scale_t,scale_v
   real(kind=8)  :: dtcool
   integer,dimension(1:nvector),      save :: ind_cell,ind_leaf,ind_grid_leaf
-  real(kind=8),dimension(1:nvector), save :: nH,T2,delta_T2,ekk,emag, xleaf
+  real(kind=8),dimension(1:nvector), save :: nH,T2,delta_T2,ekk,emag
+  real(kind=8),dimension(1:nvector) :: xleaf
   real(kind=8), save :: time_old=-1.
   integer, save :: nprint=20
   real*8::phbin(krome_nPhotoBins)
@@ -80,7 +81,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   !KROME: additional variables requested by KROME
   real*8::unoneq(krome_nmols), Tgas
   real*8::mu_noneq,mu_noneq_old,iscale_d,t2old,t2gas
-  !$omp threadprivate(nH,T2,delta_T2,ekk,emag,ind_cell,ind_leaf)
+  !$omp threadprivate(nH,T2,delta_T2,ekk,emag,ind_cell,ind_leaf,ind_grid_leaf)
 
   ! Conversion factor from user units to cgs units
   call units(scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2)
@@ -194,9 +195,11 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
         if(isothermal) then
           if(first_call) then
             ! Store initial mu and gamma
+             !$omp critical
             first_call = .false.
             mu_iso = mu_noneq_old
             gamma_iso = uold(ind_leaf(i),ichem)
+            !$omp end critical
           endif
           !KROME: do chemistry+cooling
           if (any(unoneq < 0.0_dp)) then
@@ -213,7 +216,9 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
             T_tmp = T_iso
           endif
           if(c_verbose > 1) then
+            !$omp critical
             write(32,*) xleaf(i), T_tmp
+            !$omp end critical
           end if
           call krome(unoneq(:), T_tmp, dtcool)
         elseif(do_cool.and.chemistry) then
