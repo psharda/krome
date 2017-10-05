@@ -57,6 +57,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   use krome_main !mandatory
   use krome_user !array sizes and utils
   use rad_variables_amr, only : heating_rate
+  use radiation_microphysics_amr_m, only : nBin, nBinTot, nBinSS, ibin_H2, ibin_CO
+  use richtings_dissociation_rates, only : gamma_H2_thin, gamma_CO_thin
   use ray_m, only : T_iso
   use stars_m,          only : xc
   implicit none
@@ -72,7 +74,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real(kind=8),dimension(1:nvector), save :: nH,T2,delta_T2,ekk,emag, xleaf
   real(kind=8), save :: time_old=-1.
   integer, save :: nprint=20
-  real*8::phbin(krome_nPhotoBins)
+  real*8::phbin(nBin)
+  real*8::phbin_ss(nBinSS)
   real(kind=8) :: T_tmp
   real(kind=8), save :: gamma_iso, mu_iso
   logical, save :: first_call = .true.
@@ -80,7 +83,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   !KROME: additional variables requested by KROME
   real*8::unoneq(krome_nmols), Tgas
   real*8::mu_noneq,mu_noneq_old,iscale_d,t2old,t2gas
-  !$omp threadprivate(nH,T2,delta_T2,ekk,emag,ind_cell,ind_leaf)
+  !$omp threadprivate(nH,T2,delta_T2,ekk,emag,ind_cell,ind_leaf,ind_grid_leaf,xleaf)
 
   ! Conversion factor from user units to cgs units
   call units(scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2)
@@ -179,12 +182,15 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
         if(do_radtrans) then
           ! Set intensity from RT
-          phbin = heating_rate(ind_leaf(i),:)
+          phbin = heating_rate(ind_leaf(i),1:nBin)
           if(any(phbin.lt.0.0_dp)) then
             write(*,*) 'Negative intensity found in cell ', ind_leaf(i)
             call clean_stop
           end if
           call krome_set_photoBinJ(phbin)
+          phbin_ss = heating_rate(ind_leaf(i),nBin+1:nBinTot)
+          call krome_set_user_gamma_H2(phbin_ss(ibin_H2)*gamma_H2_thin)
+          call krome_set_user_gamma_CO(phbin_ss(ibin_CO)*gamma_CO_thin)
         else
           ! Normalise to Av = 1 for n ~ 1e3, and let it scale like 2/3 power.
           ! This is roughly correct according to Glover et al (astro-ph:1403.3530)
@@ -195,8 +201,10 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
           if(first_call) then
             ! Store initial mu and gamma
             first_call = .false.
+            !$omp critical
             mu_iso = mu_noneq_old
             gamma_iso = uold(ind_leaf(i),ichem)
+            !$omp end critical
           endif
           !KROME: do chemistry+cooling
           if (any(unoneq < 0.0_dp)) then
@@ -213,7 +221,9 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
             T_tmp = T_iso
           endif
           if(c_verbose > 1) then
+            !$omp critical
             write(32,*) xleaf(i), T_tmp
+            !$omp end critical
           end if
           call krome(unoneq(:), T_tmp, dtcool)
         elseif(do_cool.and.chemistry) then
