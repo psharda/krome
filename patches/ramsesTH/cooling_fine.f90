@@ -71,8 +71,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real(dp)      :: scale_nH,scale_T2,scale_l,scale_d,scale_t,scale_v
   real(kind=8)  :: dtcool
   integer,dimension(1:nvector),      save :: ind_cell,ind_leaf,ind_grid_leaf
-  real(kind=8),dimension(1:nvector), save :: nH,T2,delta_T2,ekk,emag
-  real(kind=8),dimension(1:nvector) :: xleaf
+  real(kind=8),dimension(1:nvector), save :: nH,T2,delta_T2,ekk,emag, xleaf
   real(kind=8), save :: time_old=-1.
   integer, save :: nprint=20
   real*8::phbin(nBin)
@@ -203,7 +202,6 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
             ! Store initial mu and gamma
              !$omp critical
             first_call = .false.
-            !$omp critical
             mu_iso = mu_noneq_old
             gamma_iso = uold(ind_leaf(i),ichem)
             !$omp end critical
