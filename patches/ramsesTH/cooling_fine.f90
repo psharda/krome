@@ -1,9 +1,11 @@
 subroutine cooling_fine(ilevel)
+  use amr_parameters, only : ifout
   use amr_commons
   use hydro_commons
   use cooling_module
   !use cooling_mod, only : do_radtrans, do_cool,chemistry
   use cooling_mod
+  use ray_utils_m, only : file_location
   implicit none
 #ifndef WITHOUTMPI
   include 'mpif.h'
@@ -14,6 +16,7 @@ subroutine cooling_fine(ilevel)
   !-------------------------------------------------------------------
   integer::ncache,i,igrid,ngrid,info,isink
   integer,dimension(1:nvector) :: ind_grid
+  character(len=80) :: filename
 
   if(.not. cooling) return
 
@@ -24,6 +27,12 @@ subroutine cooling_fine(ilevel)
     call make_virtual_fine_dp(uold(1,1),ilevel,3+nvar)
     call radiative_cooling_fine(ilevel)
   endif
+
+  ! Open files for debug dump
+  if(c_verbose > 1) then
+     filename = file_location("temperature",ifout-1)
+     open(32, file=filename, action="write")
+  end if
 
   ! Operator splitting step for cooling source term by vector sweeps
   if (do_cool) then
@@ -42,6 +51,10 @@ subroutine cooling_fine(ilevel)
     end do
   end if
 
+  if(c_verbose > 1) then
+    close(32)
+  endif
+
 111 format('   Entering cooling_fine for level',i2)
 
 end subroutine cooling_fine
@@ -57,7 +70,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   use krome_main !mandatory
   use krome_user !array sizes and utils
   use rad_variables_amr, only : heating_rate
-  use radiation_microphysics_amr_m, only : nBin, nBinTot, nBinSS, ibin_H2, ibin_CO
+  use radiation_microphysics_amr_m, only : nBin, nBinTot, nBinSS, ibin_H2, ibin_CO, mu_iso, gamma_iso
   use richtings_dissociation_rates, only : gamma_H2_thin, gamma_CO_thin
   use ray_m, only : T_iso
   use stars_m,          only : xc
@@ -77,8 +90,6 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real*8::phbin(nBin)
   real*8::phbin_ss(nBinSS)
   real(kind=8) :: T_tmp
-  real(kind=8), save :: gamma_iso, mu_iso
-  logical, save :: first_call = .true.
 
   !KROME: additional variables requested by KROME
   real*8::unoneq(krome_nmols), Tgas
@@ -198,14 +209,6 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
         end if
 
         if(isothermal) then
-          if(first_call) then
-            ! Store initial mu and gamma
-             !$omp critical
-            first_call = .false.
-            mu_iso = mu_noneq_old
-            gamma_iso = uold(ind_leaf(i),ichem)
-            !$omp end critical
-          endif
           !KROME: do chemistry+cooling
           if (any(unoneq < 0.0_dp)) then
             write(*,*) 'Negative densities are not allowed'
