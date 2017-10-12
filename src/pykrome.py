@@ -60,10 +60,6 @@ class PyKROME(object):
 		#krome_user.f90 argument and return (result) types
 		fortran.krome_get_table_tdust.restype = None
 		fortran.krome_get_table_tdust.argtypes = [array_1d_double, dble_byref]
-		fortran.krome_convert_xmoc.restype = array_1d_double
-		fortran.krome_convert_xmoc.argtypes = [array_2d_double, array_1d_int]
-		fortran.krome_return_xmoc.restype = None
-		fortran.krome_return_xmoc.argtypes = [array_1d_double, array_1d_int, array_2d_double]
 		fortran.krome_num2col.restype = dble_byref
 		fortran.krome_num2col.argtypes = [ctypes.c_double, array_1d_double, ctypes.c_double]
 		fortran.krome_print_phys_variables.restype = None
