@@ -200,8 +200,10 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
           end if
           call krome_set_photoBinJ(phbin)
           phbin_ss = heating_rate(ind_leaf(i),nBin+1:nBinTot)
+#ifdef SELFSHIELDING
           call krome_set_user_gamma_H2(phbin_ss(ibin_H2)*gamma_H2_thin)
           call krome_set_user_gamma_CO(phbin_ss(ibin_CO)*gamma_CO_thin)
+#endif
         else
           ! Normalise to Av = 1 for n ~ 1e3, and let it scale like 2/3 power.
           ! This is roughly correct according to Glover et al (astro-ph:1403.3530)
