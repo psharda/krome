@@ -7036,6 +7036,8 @@ class krome():
 				if(mols.name.upper()=="HE"): continue #skip helium
 				if(mols.name.upper()=="CR"): continue #avoid Cr / CR confusion
 				if(mols.name.upper()=="CO"): continue #avoid Co / CO confusion
+				if(mols.name.upper()=="PD"): continue #avoid Pd / PD confusion
+				if(mols.name.upper()=="ND"): continue #avoid Nd / ND confusion
 				if(k.upper()==mols.name.upper()):
 					scaleZ.append("x("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
