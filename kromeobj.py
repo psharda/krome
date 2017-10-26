@@ -6458,7 +6458,7 @@ class krome():
 				pheatvars.append("photoBinHeats("+str(react.idxph)+") * n(" + react.reactants[0].fidx + ")")
 
 		#replace pragma with strings built above
-		skip = skipGH = False
+		skip = False
 		for row in fh:
 			srow = row.strip()
 			if(row.strip() == "#KROME_header"):
@@ -6476,14 +6476,13 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingVisc" and not(self.useHeatingVisc)): skip = True
 				#if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingZCIE" and not(self.useCoolingZCIE)): skip = True
-				if(row.strip() == "#IFKROME_useHeatingGH" and not(self.useCoolingGH)): skipGH = True
+				if(row.strip() == "#IFKROME_useHeatingGH" and not(self.useCoolingGH)): skip = True
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
 				if(row.strip() == "#IFKROME_useHeatingChem" and skipBool): skip = True
 
 				if(row.strip() == "#ENDIFKROME"): skip = False
-				if(row.strip() == "#ENDIFKROME_useHeatingGH"): skipGH = False
 
-				if(skip or skipGH): continue
+				if(skip): continue
 
 				if("#KROME_custom_heating_expr" in row.strip()):
 					heatAll = ""
