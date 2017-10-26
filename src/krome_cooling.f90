@@ -1655,7 +1655,7 @@
            PHI_last=PHI
            PHeI_last=PHeI
            PCVI_last=PCVI
-           if (ierr .ne. 0) then
+           if (ierr > 0) then
               print *,'Problems with caching Gnedin and Hollon cooling table.'
               print *,' Stopping. Error code :', ierr
               print *,'Input variables ntot, Tgas, PLW, PHI, PHeI, PCVI: ', ntot, Tgas, PLW, PHI, PHeI, PCVI
