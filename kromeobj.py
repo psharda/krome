@@ -4714,8 +4714,13 @@ class krome():
 			if(skip or skipGH): continue
 
 			if(srow == "#KROME_species_index"):
-				for x in specs:
-					fout.write("\tinteger,parameter::" + x.fidx + "=" + str(x.idx) + "\n")
+				for sp in specs:
+					nameLower = sp.name.lower()
+					if(nameLower.endswith("_total") and self.doRamsesTH):
+						gasSpecies = [x for x in specs if(x.name.lower()+"_total"==nameLower)][0]
+						fout.write("\tinteger,parameter::" + gasSpecies.fidx + "_ice = " + str(sp.idx) +"\t!"+gasSpecies.name+"_ice\n")
+						fout.write("\tinteger,parameter::" + gasSpecies.fidx + "_gas = " + str(gasSpecies.idx) +"\t!"+gasSpecies.name+"_gas\n")
+					fout.write("\tinteger,parameter::" + sp.fidx + "=" + str(sp.idx) + "\n")
 			if(srow == "#KROME_atom_index" and self.useConserveLin):
 					for atom in atoms:
 						fout.write("integer,parameter::idx_atom_" + atom + "=" + str(atoms.index(atom)+1) + "\n")
@@ -7101,12 +7106,14 @@ class krome():
 						if(not(xbasic in allBasics)):
 							fout.write("\tinteger,parameter::" + "KROME_"+xbasic + " = " + str(sp.idx) +"\t!"+xname+"\n")
 							allBasics.append(xbasic)
+
 					#add _GAS and _ICE species as standard and _TOTAL alias
 					nameLower = sp.name.lower()
 					if(nameLower.endswith("_total") and self.doRamsesTH):
 						gasSpecies = [x for x in specs if(x.name.lower()+"_total"==nameLower)][0]
 						fout.write("\tinteger,parameter::" + "KROME_"+gasSpecies.fidx + "_ice = " + str(sp.idx) +"\t!"+gasSpecies.name+"_ice\n")
 						fout.write("\tinteger,parameter::" + "KROME_"+gasSpecies.fidx + "_gas = " + str(gasSpecies.idx) +"\t!"+gasSpecies.name+"_gas\n")
+
 					fout.write("\tinteger,parameter::" + "KROME_"+sp.fidx + " = " + str(sp.idx) +"\t!"+sp.name+"\n")
 
 			#converter from MOCASSIN abundances to KROME
