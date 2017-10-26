@@ -69,6 +69,7 @@ contains
     heats(idx_heat_ZCIE) = heat_ZCIE(n(:),Tgas)
 #ENDIFKROME
 
+    f2 = 1.
 #IFKROME_useHeatingGH
     !this parameter controls the smoothness of the
     ! merge between the two cooling functions
@@ -78,17 +79,20 @@ contains
     !f1 = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0
     f2 = (tanh(smooth*(-Tgas+1d4))+1.d0)*0.5d0
 
-    !heating is already included in the cooling function (that thus can be negative)
+    !heating is already included in the GH cooling function (that thus can be negative), and f1 is not needed
+#ENDIFKROME
 
- #IFKROME_useHeatingXRay
+#IFKROME_useHeatingPhotoAv
+    heats(idx_heat_photoAv) = f2 * heats(idx_heat_photoAv)
+#ENDIFKROME
+
+#IFKROME_useHeatingXRay
     heats(idx_heat_xray) = f2 * heats(idx_heat_xray)
- #ENDIFKROME
+#ENDIFKROME
 
- #IFKROME_useHeatingZCIE
+#IFKROME_useHeatingZCIE
     heats(idx_heat_ZCIE) = f2 * heats(idx_heat_ZCIE)
- #ENDIFKROME
-
-#ENDIFKROME_useHeatingGH
+#ENDIFKROME
 
     heats(idx_heat_custom) = heat_custom(n(:),Tgas)
 

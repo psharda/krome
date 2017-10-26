@@ -25,6 +25,12 @@ module krome_commons
   integer::krome_thermo_toggle
   !$omp threadprivate(krome_thermo_toggle)
 
+  !debug bit flag, print and array with fallback values for extreme environments
+  integer:: red_flag
+  real*8::n_global(nspec)
+  integer, save :: nprint_negative=10
+  !$omp threadprivate(n_global,nprint_negative,red_flag)
+
   !commons for implicit RHS
 #KROME_implicit_arr_r
 #KROME_implicit_arr_p
@@ -201,11 +207,12 @@ module krome_commons
   real*8::GHabing,Ghabing_thin,clump_factor
   !$omp threadprivate(GHabing,GHabing_thin)
 
-  ! Photo reaction rates relevant for Gnedin-Hollon cooling/heating function
 #IFKROME_useCoolingGnedinHollon
-  real*8::QLW,QHI,QHeI,QCVI
-  !$omp threadprivate(QLW,QHI,QHeI,QCVI)
+  ! Photo reaction rates relevant for Gnedin-Hollon cooling/heating function
+  real*8::PLW,PHI,PHeI,PCVI
+  !$omp threadprivate(PLW,PHI,PHeI,PCVI)
 #ENDIFKROME
+
   !partition functions common vars
 #KROME_var_parts
 

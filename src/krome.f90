@@ -151,6 +151,7 @@ contains
 #ENDIFKROME
     !store initial values
     ni(:) = n(:)
+    n_global(:) = n(:)
 
 #IFKROME_hasStoreOnceRates
     call makeStoreOnceRates(n(:))
