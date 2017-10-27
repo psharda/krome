@@ -27,11 +27,11 @@
       real*8::get_cooling_array(ncools),cools(ncools)
       real*8::f1,f2,smooth
 
-      f1 = 1.
-      f2 = 1.
+      f1 = 1d0
+      f2 = 1d0
 
       !returns cooling in erg/cm3/s
-      cools(:) = 0.d0
+      cools(:) = 0d0
 
 #IFKROME_useCoolingH2
       cools(idx_cool_H2) = cooling_H2(n(:), Tgas) #KROME_floorH2
@@ -123,7 +123,7 @@
       endif
 
       if (f1 > 1d-20) cools(idx_cool_GH) = f1 * cooling_GH(n(:), Tgas)
-#ENDIFKROME_useCoolingGH
+#ENDIFKROME
 
       cools(idx_cool_custom) = cooling_custom(n(:),Tgas)
 
@@ -1311,7 +1311,7 @@
       cooling_GH = ntot**2 * (cfun-hfun)
 
     end function cooling_GH
-#ENDIFKROME_useCoolingGH
+#ENDIFKROME
 
 #IFKROME_useCoolingZ_function
     !*********************************************
