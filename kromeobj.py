@@ -4693,7 +4693,7 @@ class krome():
 
 
 		#common variables
-		skip = skipGH = False
+		skip = False
 		for row in fh:
 			srow = row.strip()
 
@@ -4705,13 +4705,12 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
-			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skipGH = True
+			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
 			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
-			if(srow == "#ENDIFKROME_useCoolingGH"): skipGH = False
 
-			if(skip or skipGH): continue
+			if(skip): continue
 
 			if(srow == "#KROME_species_index"):
 				for sp in specs:
