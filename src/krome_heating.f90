@@ -408,7 +408,7 @@ contains
     Hfact = 2d1*ev2erg !erg
 
     !precompute log10(H2)
-    logH2 = log10(n(idx_H2))
+    logH2 = log10(max(n(idx_H2),1d-40))
 
     !init heating
     heat_CR = 0d0
