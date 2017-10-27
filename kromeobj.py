@@ -6068,6 +6068,35 @@ class krome():
 			fout.close()
 		print "done!"
 
+	################################
+	def makeCoolingGH(self):
+		buildFolder = self.buildFolder
+
+		#*********COOLING GH****************
+		print "- writing krome_coolingGH.f90...",
+		fh = open(self.srcFolder+"krome_coolingGH.f90")
+
+		if(self.buildCompact):
+			fout = open(buildFolder+"krome_all.f90","a")
+		else:
+			fout = open(buildFolder+"krome_coolingGH.f90","w")
+
+		skip = False
+		#loop on source to replace pragmas
+		for row in fh:
+			srow = row.strip()
+			#cooling pragmas
+			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+			if(skip): continue
+
+			if(not srow.startswith("#")):
+				fout.write(row)
+
+		if(not(self.buildCompact)):
+			fout.close()
+		print "done!"
 
 	################################
 	def makeCooling(self):
@@ -6134,7 +6163,7 @@ class krome():
 			#Z: atomic number, ion: ionization degree (e.g. HII=1), energy_eV: ioniz potential, n0: principal quantum number
 			fbdata.append({"Z":int(arow[0]), "ion":int(arow[1]), "energy_eV":float(arow[5]), "n0":int(arow[6])})
 
-		skip = skip_nleq = skip_dTdust = skipGH = skipPhotoDust = False
+		skip = skip_nleq = skip_dTdust = skipPhotoDust = False
 		skip_speciesH2 = False
 		useCoolingZ = self.useCoolingZ
 		#loop on source to replace pragmas
@@ -6162,7 +6191,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingZCIE_function" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZExtended" and not(self.useCoolingZExtended)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
-			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skipGH = True
+			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
@@ -6178,7 +6207,6 @@ class krome():
 
 			if(srow == "#ENDIFKROME_usedTdust"): skip_dTdust = False
 			if(srow == "#ENDIFKROME_use_NLEQ"): skip_nleq = False
-			if(srow == "#ENDIFKROME_useCoolingGH"): skipGH = False
 			if(srow == "#ENDIFKROME_usePhotoDust"): skipPhotoDust = False
 			if(srow == "#ENDIFKROME_hasH"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME_hasHp"): skip_speciesH2 = False
@@ -6188,7 +6216,7 @@ class krome():
 			if(srow == "#ENDIFKROME_hasElectrons"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME"): skip = False
 
-			if(skip or skip_nleq or skip_dTdust or skipGH or skip_speciesH2 or skipPhotoDust): continue
+			if(skip or skip_nleq or skip_dTdust or skip_speciesH2 or skipPhotoDust): continue
 
 
 			#replace the small value for rates according to the maximum number of products
