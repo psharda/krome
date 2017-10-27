@@ -150,6 +150,7 @@ if(not(krome.isdry)):
 	krome.makeDust()
 	krome.makePhoto()
 	krome.makeTabs()
+	krome.makeCoolingGH()
 	krome.makeCooling()
 	krome.makeHeating()
 	krome.makeODE()
