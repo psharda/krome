@@ -207,7 +207,7 @@ module krome_commons
   real*8::GHabing,Ghabing_thin,clump_factor
   !$omp threadprivate(GHabing,GHabing_thin)
 
-#IFKROME_useCoolingGnedinHollon
+#IFKROME_useCoolingGH
   ! Photo reaction rates relevant for Gnedin-Hollon cooling/heating function
   real*8::PLW,PHI,PHeI,PCVI
   !$omp threadprivate(PLW,PHI,PHeI,PCVI)
