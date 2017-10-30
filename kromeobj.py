@@ -21,9 +21,9 @@
 # stefano.bovino@uni-hamburg.de
 # Hamburger Sternwarte, Hamburg.
 #
-# Others (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
-# A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
-# E.Tognelli
+# Contributors: J.Boulangier, T.Frostholm, D.Galli, F.A.Gianturco, T.Haugboelle,
+#  A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
+#  E.Tognelli
 #
 # KROME is provided "as it is", without any warranty.
 # The Authors assume no liability for any damages of any kind
