@@ -5211,6 +5211,8 @@ class krome():
 				for sp in specs:
 					if(sp.name in Ebind):
 						fout.write("get_kevap70("+sp.fidx+") = "+str(nu0*exp(-Ebind[sp.name]/7e1))+"\n")
+					else:
+						fout.write("get_kevap70("+sp.fidx+") = 0d0\n")
 
 			elif(srow == "#KROME_metallicity_functions"):
 				solar = get_solar_abundances() #get solar abundances
