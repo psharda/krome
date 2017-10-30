@@ -173,9 +173,9 @@ class krome():
 		ver = sys.version_info
 		aver = list(ver)
 		sver = (".".join([str(x) for x in aver[:3]]))
-		if(not(aver[0]>=2 and aver[1]>=5)):
+		if(not(aver[0]>=2 and aver[1]>=7)):
 			print "ERROR: your version of Python ("+sver+") is not supported by KROME!"
-			print " KROME needs at least Python 2.5!"
+			print " KROME needs at least Python 2.7.x!"
 			sys.exit()
 
 		#check necessary files
