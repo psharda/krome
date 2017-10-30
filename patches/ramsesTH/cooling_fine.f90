@@ -1,9 +1,11 @@
 subroutine cooling_fine(ilevel)
+  use amr_parameters, only : ifout
   use amr_commons
   use hydro_commons
   use cooling_module
   !use cooling_mod, only : do_radtrans, do_cool,chemistry
   use cooling_mod
+  use ray_utils_m, only : file_location
   implicit none
 #ifndef WITHOUTMPI
   include 'mpif.h'
@@ -14,6 +16,7 @@ subroutine cooling_fine(ilevel)
   !-------------------------------------------------------------------
   integer::ncache,i,igrid,ngrid,info,isink
   integer,dimension(1:nvector) :: ind_grid
+  character(len=80) :: filename
 
   if(.not. cooling) return
 
@@ -24,6 +27,12 @@ subroutine cooling_fine(ilevel)
     call make_virtual_fine_dp(uold(1,1),ilevel,3+nvar)
     call radiative_cooling_fine(ilevel)
   endif
+
+  ! Open files for debug dump
+  if(c_verbose > 1) then
+     filename = file_location("temperature",ifout-1)
+     open(32, file=filename, action="write")
+  end if
 
   ! Operator splitting step for cooling source term by vector sweeps
   if (do_cool) then
@@ -42,6 +51,10 @@ subroutine cooling_fine(ilevel)
     end do
   end if
 
+  if(c_verbose > 1) then
+    close(32)
+  endif
+
 111 format('   Entering cooling_fine for level',i2)
 
 end subroutine cooling_fine
@@ -57,6 +70,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   use krome_main !mandatory
   use krome_user !array sizes and utils
   use rad_variables_amr, only : heating_rate
+  use radiation_microphysics_amr_m, only : nBin, nBinTot, nBinSS, ibin_H2, ibin_CO, mu_iso, gamma_iso
+  use richtings_dissociation_rates, only : gamma_H2_thin, gamma_CO_thin
   use ray_m, only : T_iso
   use stars_m,          only : xc
   implicit none
@@ -69,19 +84,17 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real(dp)      :: scale_nH,scale_T2,scale_l,scale_d,scale_t,scale_v
   real(kind=8)  :: dtcool
   integer,dimension(1:nvector),      save :: ind_cell,ind_leaf,ind_grid_leaf
-  real(kind=8),dimension(1:nvector), save :: nH,T2,delta_T2,ekk,emag
-  real(kind=8),dimension(1:nvector) :: xleaf
+  real(kind=8),dimension(1:nvector), save :: nH,T2,delta_T2,ekk,emag, xleaf
   real(kind=8), save :: time_old=-1.
   integer, save :: nprint=20
-  real*8::phbin(krome_nPhotoBins)
+  real*8::phbin(nBin)
+  real*8::phbin_ss(nBinSS)
   real(kind=8) :: T_tmp
-  real(kind=8), save :: gamma_iso, mu_iso
-  logical, save :: first_call = .true.
 
   !KROME: additional variables requested by KROME
   real*8::unoneq(krome_nmols), Tgas
   real*8::mu_noneq,mu_noneq_old,iscale_d,t2old,t2gas
-  !$omp threadprivate(nH,T2,delta_T2,ekk,emag,ind_cell,ind_leaf,ind_grid_leaf)
+  !$omp threadprivate(nH,T2,delta_T2,ekk,emag,ind_cell,ind_leaf,ind_grid_leaf,xleaf)
 
   ! Conversion factor from user units to cgs units
   call units(scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2)
@@ -180,12 +193,17 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
         if(do_radtrans) then
           ! Set intensity from RT
-          phbin = heating_rate(ind_leaf(i),:)
+          phbin = heating_rate(ind_leaf(i),1:nBin)
           if(any(phbin.lt.0.0_dp)) then
             write(*,*) 'Negative intensity found in cell ', ind_leaf(i)
             call clean_stop
           end if
           call krome_set_photoBinJ(phbin)
+          phbin_ss = heating_rate(ind_leaf(i),nBin+1:nBinTot)
+#ifdef SELFSHIELDING
+          call krome_set_user_gamma_H2(phbin_ss(ibin_H2)*gamma_H2_thin)
+          call krome_set_user_gamma_CO(phbin_ss(ibin_CO)*gamma_CO_thin)
+#endif
         else
           ! Normalise to Av = 1 for n ~ 1e3, and let it scale like 2/3 power.
           ! This is roughly correct according to Glover et al (astro-ph:1403.3530)
@@ -193,14 +211,6 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
         end if
 
         if(isothermal) then
-          if(first_call) then
-            ! Store initial mu and gamma
-             !$omp critical
-            first_call = .false.
-            mu_iso = mu_noneq_old
-            gamma_iso = uold(ind_leaf(i),ichem)
-            !$omp end critical
-          endif
           !KROME: do chemistry+cooling
           if (any(unoneq < 0.0_dp)) then
             write(*,*) 'Negative densities are not allowed'
