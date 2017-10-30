@@ -5204,6 +5204,14 @@ class krome():
 					if(sp.name in Ebind):
 						fout.write("get_EbindIce("+sp.fidx+") = "+str(Ebind[sp.name])+"d0\n")
 
+			elif(srow == "#KROME_get_kevap70"):
+				from math import exp
+				Ebind = get_Ebind(surface="bare")
+				nu0 = 1e12 #Debye frequency, 1/s
+				for sp in specs:
+					if(sp.name in Ebind):
+						fout.write("get_kevap70("+sp.fidx+") = "+str(nu0*exp(-Ebind[sp.name]/7e1))+"\n")
+
 			elif(srow == "#KROME_metallicity_functions"):
 				solar = get_solar_abundances() #get solar abundances
 				ffs = "" #metallicity functions
