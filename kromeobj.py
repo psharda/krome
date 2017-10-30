@@ -3495,7 +3495,7 @@ class krome():
 				for x in self.specs:
 					atoms += x.atomcount.keys()
 				atoms = list(set(atoms))
-				atoms = [x for x in atoms if not(x in ["+","-"])]
+				atoms = [x for x in atoms if not(x in ["+","-"]) and not x.startswith("_")]
 
 				fout.write("extern const int krome_nrea;\n")
                                 fout.write("extern const int krome_nmols;\n")
@@ -7274,7 +7274,7 @@ class krome():
 				for x in specs:
 					atoms += x.atomcount.keys()
 				atoms = list(set(atoms))
-				atoms = [x for x in atoms if not(x in ["+","-"])]
+				atoms = [x for x in atoms if not(x in ["+","-"]) and not x.startswith("_")]
 
 				fout.write("\tinteger,parameter::krome_nrea=" + str(self.nrea) + "\n")
 				fout.write("\tinteger,parameter::krome_nmols=" + str(nmols) + "\n")
