@@ -552,6 +552,10 @@
 @ice:CO,evaporation,krate_evaporation(n(:),idx_CO,tabTdust)
 @ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,tabTdust)
 @ice:H2O,evaporation,krate_evaporation(n(:),idx_H2O,tabTdust)
+
+#NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux
+@ice:CO,evaporation,krate_nonthermal_evaporation(1.78d0, user_Av, user_crate, 1d-3)
+
 @noTab_stop
 
 #PHOTOREACTIONS THIN WITH Av
