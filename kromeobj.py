@@ -173,9 +173,9 @@ class krome():
 		ver = sys.version_info
 		aver = list(ver)
 		sver = (".".join([str(x) for x in aver[:3]]))
-		if(not(aver[0]>=2 and aver[1]>=5)):
+		if(not(aver[0]>=2 and aver[1]>=7)):
 			print "ERROR: your version of Python ("+sver+") is not supported by KROME!"
-			print " KROME needs at least Python 2.5!"
+			print " KROME needs at least Python 2.7.x!"
 			sys.exit()
 
 		#check necessary files
@@ -3495,7 +3495,7 @@ class krome():
 				for x in self.specs:
 					atoms += x.atomcount.keys()
 				atoms = list(set(atoms))
-				atoms = [x for x in atoms if not(x in ["+","-"])]
+				atoms = [x for x in atoms if not(x in ["+","-"]) and not x.startswith("_")]
 
 				fout.write("extern const int krome_nrea;\n")
                                 fout.write("extern const int krome_nmols;\n")
@@ -4693,7 +4693,7 @@ class krome():
 
 
 		#common variables
-		skip = skipGH = False
+		skip = False
 		for row in fh:
 			srow = row.strip()
 
@@ -4705,17 +4705,21 @@ class krome():
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
-			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skipGH = True
+			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
 			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
-			if(srow == "#ENDIFKROME_useCoolingGH"): skipGH = False
 
-			if(skip or skipGH): continue
+			if(skip): continue
 
 			if(srow == "#KROME_species_index"):
-				for x in specs:
-					fout.write("\tinteger,parameter::" + x.fidx + "=" + str(x.idx) + "\n")
+				for sp in specs:
+					nameLower = sp.name.lower()
+					if(nameLower.endswith("_total") and self.doRamsesTH):
+						gasSpecies = [x for x in specs if(x.name.lower()+"_total"==nameLower)][0]
+						fout.write("\tinteger,parameter::" + gasSpecies.fidx + "_ice = " + str(sp.idx) +"\t!"+gasSpecies.name+"_ice\n")
+						fout.write("\tinteger,parameter::" + gasSpecies.fidx + "_gas = " + str(gasSpecies.idx) +"\t!"+gasSpecies.name+"_gas\n")
+					fout.write("\tinteger,parameter::" + sp.fidx + "=" + str(sp.idx) + "\n")
 			if(srow == "#KROME_atom_index" and self.useConserveLin):
 					for atom in atoms:
 						fout.write("integer,parameter::idx_atom_" + atom + "=" + str(atoms.index(atom)+1) + "\n")
@@ -5199,6 +5203,16 @@ class krome():
 				for sp in specs:
 					if(sp.name in Ebind):
 						fout.write("get_EbindIce("+sp.fidx+") = "+str(Ebind[sp.name])+"d0\n")
+
+			elif(srow == "#KROME_get_kevap70"):
+				from math import exp
+				Ebind = get_Ebind(surface="bare")
+				nu0 = 1e12 #Debye frequency, 1/s
+				for sp in specs:
+					if(sp.name in Ebind):
+						fout.write("get_kevap70("+sp.fidx+") = "+str(nu0*exp(-Ebind[sp.name]/7e1))+"\n")
+					else:
+						fout.write("get_kevap70("+sp.fidx+") = 0d0\n")
 
 			elif(srow == "#KROME_metallicity_functions"):
 				solar = get_solar_abundances() #get solar abundances
@@ -6064,6 +6078,35 @@ class krome():
 			fout.close()
 		print "done!"
 
+	################################
+	def makeCoolingGH(self):
+		buildFolder = self.buildFolder
+
+		#*********COOLING GH****************
+		print "- writing krome_coolingGH.f90...",
+		fh = open(self.srcFolder+"krome_coolingGH.f90")
+
+		if(self.buildCompact):
+			fout = open(buildFolder+"krome_all.f90","a")
+		else:
+			fout = open(buildFolder+"krome_coolingGH.f90","w")
+
+		skip = False
+		#loop on source to replace pragmas
+		for row in fh:
+			srow = row.strip()
+			#cooling pragmas
+			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
+			if(srow == "#ENDIFKROME"): skip = False
+
+			if(skip): continue
+
+			if(not srow.startswith("#")):
+				fout.write(row)
+
+		if(not(self.buildCompact)):
+			fout.close()
+		print "done!"
 
 	################################
 	def makeCooling(self):
@@ -6130,7 +6173,7 @@ class krome():
 			#Z: atomic number, ion: ionization degree (e.g. HII=1), energy_eV: ioniz potential, n0: principal quantum number
 			fbdata.append({"Z":int(arow[0]), "ion":int(arow[1]), "energy_eV":float(arow[5]), "n0":int(arow[6])})
 
-		skip = skip_nleq = skip_dTdust = skipGH = skipPhotoDust = False
+		skip = skip_nleq = skip_dTdust = skipPhotoDust = False
 		skip_speciesH2 = False
 		useCoolingZ = self.useCoolingZ
 		#loop on source to replace pragmas
@@ -6158,7 +6201,7 @@ class krome():
 			if(srow == "#IFKROME_useCoolingZCIE_function" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZExtended" and not(self.useCoolingZExtended)): skip = True
 			if(srow == "#IFKROME_useCoolingContinuum" and not(self.useCoolingCont)): skip = True
-			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skipGH = True
+			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_useH2esc_omukai" and (self.H2opacity!="OMUKAI")): skip = True
 			if(srow == "#IFKROME_use_NLEQ" and not(self.useNLEQ)): skip_nleq = True #skip calls to NLEQ
@@ -6174,7 +6217,6 @@ class krome():
 
 			if(srow == "#ENDIFKROME_usedTdust"): skip_dTdust = False
 			if(srow == "#ENDIFKROME_use_NLEQ"): skip_nleq = False
-			if(srow == "#ENDIFKROME_useCoolingGH"): skipGH = False
 			if(srow == "#ENDIFKROME_usePhotoDust"): skipPhotoDust = False
 			if(srow == "#ENDIFKROME_hasH"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME_hasHp"): skip_speciesH2 = False
@@ -6184,7 +6226,7 @@ class krome():
 			if(srow == "#ENDIFKROME_hasElectrons"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME"): skip = False
 
-			if(skip or skip_nleq or skip_dTdust or skipGH or skip_speciesH2 or skipPhotoDust): continue
+			if(skip or skip_nleq or skip_dTdust or skip_speciesH2 or skipPhotoDust): continue
 
 
 			#replace the small value for rates according to the maximum number of products
@@ -6458,7 +6500,7 @@ class krome():
 				pheatvars.append("photoBinHeats("+str(react.idxph)+") * n(" + react.reactants[0].fidx + ")")
 
 		#replace pragma with strings built above
-		skip = skipGH = False
+		skip = False
 		for row in fh:
 			srow = row.strip()
 			if(row.strip() == "#KROME_header"):
@@ -6476,14 +6518,13 @@ class krome():
 				if(row.strip() == "#IFKROME_useHeatingVisc" and not(self.useHeatingVisc)): skip = True
 				#if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
 				if(row.strip() == "#IFKROME_useHeatingZCIE" and not(self.useCoolingZCIE)): skip = True
-				if(row.strip() == "#IFKROME_useHeatingGH" and not(self.useCoolingGH)): skipGH = True
+				if(row.strip() == "#IFKROME_useHeatingGH" and not(self.useCoolingGH)): skip = True
 				skipBool = (not(self.useHeatingChem) and not(self.useCoolingChem) and not(self.useCoolingDISS))
 				if(row.strip() == "#IFKROME_useHeatingChem" and skipBool): skip = True
 
 				if(row.strip() == "#ENDIFKROME"): skip = False
-				if(row.strip() == "#ENDIFKROME_useHeatingGH"): skipGH = False
 
-				if(skip or skipGH): continue
+				if(skip): continue
 
 				if("#KROME_custom_heating_expr" in row.strip()):
 					heatAll = ""
@@ -7036,6 +7077,8 @@ class krome():
 				if(mols.name.upper()=="HE"): continue #skip helium
 				if(mols.name.upper()=="CR"): continue #avoid Cr / CR confusion
 				if(mols.name.upper()=="CO"): continue #avoid Co / CO confusion
+				if(mols.name.upper()=="PD"): continue #avoid Pd / PD confusion
+				if(mols.name.upper()=="ND"): continue #avoid Nd / ND confusion
 				if(k.upper()==mols.name.upper()):
 					scaleZ.append("x("+mols.fidx+") = max(Htot * 1d1**(Z+("+str(v)+")), 1d-40)")
 
@@ -7100,12 +7143,14 @@ class krome():
 						if(not(xbasic in allBasics)):
 							fout.write("\tinteger,parameter::" + "KROME_"+xbasic + " = " + str(sp.idx) +"\t!"+xname+"\n")
 							allBasics.append(xbasic)
+
 					#add _GAS and _ICE species as standard and _TOTAL alias
 					nameLower = sp.name.lower()
 					if(nameLower.endswith("_total") and self.doRamsesTH):
 						gasSpecies = [x for x in specs if(x.name.lower()+"_total"==nameLower)][0]
 						fout.write("\tinteger,parameter::" + "KROME_"+gasSpecies.fidx + "_ice = " + str(sp.idx) +"\t!"+gasSpecies.name+"_ice\n")
 						fout.write("\tinteger,parameter::" + "KROME_"+gasSpecies.fidx + "_gas = " + str(gasSpecies.idx) +"\t!"+gasSpecies.name+"_gas\n")
+
 					fout.write("\tinteger,parameter::" + "KROME_"+sp.fidx + " = " + str(sp.idx) +"\t!"+sp.name+"\n")
 
 			#converter from MOCASSIN abundances to KROME
@@ -7239,7 +7284,7 @@ class krome():
 				for x in specs:
 					atoms += x.atomcount.keys()
 				atoms = list(set(atoms))
-				atoms = [x for x in atoms if not(x in ["+","-"])]
+				atoms = [x for x in atoms if not(x in ["+","-"]) and not x.startswith("_")]
 
 				fout.write("\tinteger,parameter::krome_nrea=" + str(self.nrea) + "\n")
 				fout.write("\tinteger,parameter::krome_nmols=" + str(nmols) + "\n")

@@ -341,6 +341,32 @@ contains
   end function krate_evaporation
 
   !***************************
+  !non-thermal evaporation rate (1/s) following Hollenbach 2009,
+  ! http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:0809.1642
+  !Gnot is the habing flux (1.78 is Draine)
+  !Av is the visual extinction
+  !crflux the ionization flux of cosmic rays, 1/s
+  !yield is the efficiency of the photons to desorb the given molecule
+  function krate_nonthermal_evaporation(idx, Gnot, Av, crflux, yield) result(k)
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer,intent(in)::idx
+    real*8,parameter::crnot=1.3d-17
+    real*8,parameter::Fnot=1d8 !desorbing photons flux, 1/s
+    real*8,parameter::ap2=(3d-8)**2 !sites separation squared, cm2
+    real*8,intent(in)::Gnot, Av, crflux, yield
+    real*8::k,f70,kevap70(nspec)
+
+    f70 = 3.16d-19*crflux/crnot
+    kevap70(:) = get_kevap70()
+
+    k = Gnot*Fnot*ap2*yield*exp(-1.8*Av)
+    k = k + f70*kevap70(idx)
+
+  end function krate_nonthermal_evaporation
+
+  !***************************
   function dust_ice_fraction_array(invphi,nH2O)
     use krome_constants
     use krome_commons

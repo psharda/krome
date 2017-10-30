@@ -26,8 +26,6 @@
 #KROME_cooling_functions
 
 extern double krome_get_table_tdust(double *x,double *Tgas);
-extern void krome_convert_xmoc(double** xmoc, int *imap, double* krome_convert_xmoc_var);
-extern void krome_return_xmoc(double *x, int *imap, double **xmoc);
 extern double krome_num2col(double num, double *x, double Tgas);
 extern void krome_print_phys_variables();
 extern void krome_set_mpi_rank(int rank);

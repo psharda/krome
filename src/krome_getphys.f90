@@ -93,6 +93,16 @@ contains
   end function get_EbindIce
 
   !************************
+  function get_kevap70()
+    use krome_commons
+    implicit none
+    real*8::get_kevap70(nspec)
+
+#KROME_get_kevap70
+
+  end function get_kevap70
+
+  !************************
   !get verbatim reaction names
   function get_rnames()
     use krome_commons
