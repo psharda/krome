@@ -21,7 +21,7 @@ prj_name = "alltest" #where the tests
 
 #import the list of tests from testpath
 tests = sorted([x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath])
-#tests = ["hello"]
+#tests = ["customCooling"]
 
 #start from this test (empty string start from first test)
 first = ""
@@ -189,7 +189,7 @@ for test in tests:
 		testOK = True
 		for hashblock in hashall:
 			if(hashblock not in hashtab):
-				print "ERROR with "+(",".join(hashblock))
+				print "ERROR with "+(", ".join(hashblock))
 				testOK = False
 				for x in hashall:
 					print x
@@ -211,6 +211,7 @@ for test in tests:
 		#open new plot file to write
 		fop = open("plot_all.gps","w")
 		filePNG = "../"+plotFolder+"plot_"+test+".png"
+		filePNG_OK = "../"+plotFolder+"plot_"+test+"_OK.png"
 		print "plot saved to "+filePNG
 		#add PNG terminal
 		fop.write("set terminal pngcairo size 800,600 enhanced\n")
@@ -224,6 +225,11 @@ for test in tests:
 		#prepare gnuplot command to load script
 		plotCommand = [gnuplotCommand,"-e","load 'plot_all.gps'"]
 		call(plotCommand)
+
+		#if test is OK copy to _OK png file as reference
+		if(testOK):
+			print "TEST is OK -> copying to " + filePNG_OK
+			shutil.copyfile(filePNG, filePNG_OK)
 
 	#clear build directory
 	for ff in glob.glob("*"):
