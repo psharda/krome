@@ -7,6 +7,7 @@ condinit.o                      : krome_all.o
 umuscl.o                        : krome_all.o
 interpol_hydro.o                : krome_all.o
 init_hydro.o                    : krome_all.o
-transfer_ss_amr.o               : richings_dissociation_rates.o radiative_transfer_amr.o
+radiative_transfer_amr.o        : transfer_ss_amr.o
+transfer_ss_amr.o               : richings_dissociation_rates.o
 richings_dissociation_rates.o   : leiden_shielding.o
 leiden_shielding.o              : krome_all.o
