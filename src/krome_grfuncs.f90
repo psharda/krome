@@ -347,14 +347,22 @@ contains
   !Av is the visual extinction
   !crflux the ionization flux of cosmic rays, 1/s
   !yield is the efficiency of the photons to desorb the given molecule
-  function krate_nonthermal_evaporation(Gnot, Av, crflux, yield) result(k)
+  function krate_nonthermal_evaporation(idx, Gnot, Av, crflux, yield) result(k)
+    use krome_commons
+    use krome_getphys
     implicit none
+    integer,intent(in)::idx
+    real*8,parameter::crnot=1.3d-17
     real*8,parameter::Fnot=1d8 !desorbing photons flux, 1/s
     real*8,parameter::ap2=(3d-8)**2 !sites separation squared, cm2
     real*8,intent(in)::Gnot, Av, crflux, yield
-    real*8::k
+    real*8::k,f70,kevap70(nspec)
+
+    f70 = 3.16d-19*crflux/crnot
+    kevap70(:) = get_kevap70()
 
     k = Gnot*Fnot*ap2*yield*exp(-1.8*Av)
+    k = k + f70*kevap70(idx)
 
   end function krate_nonthermal_evaporation
 
