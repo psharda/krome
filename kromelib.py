@@ -24,9 +24,9 @@
 # stefano.bovino@uni-hamburg.de
 # Hamburger Sternwarte, Hamburg.
 #
-# Others (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
-# A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
-# E.Tognelli
+# Contributors: J.Boulangier, T.Frostholm, D.Galli, F.A.Gianturco, T.Haugboelle,
+#  A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
+#  E.Tognelli
 #
 # KROME is provided "as it is", without any warranty.
 # The Authors assume no liability for any damages of any kind
@@ -1969,9 +1969,8 @@ def get_licence_header(version, codename, short=False):
 	!!  stefano.bovino@uni-hamburg.de
 	!!  Hamburger Sternwarte, Hamburg.
 	!!
-	!! Contributors (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
-	!!  A. Lupi, J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried,
-	!!  E. Simoncini, E. Tognelli
+	!! Contributors:
+	!! #contributors#
 	!!
 	!!
 	!! KROME is provided \"as it is\", without any warranty.
@@ -1994,11 +1993,28 @@ def get_licence_header(version, codename, short=False):
 	!!
 	!! Written and developed by Tommaso Grassi and Stefano Bovino
 	!!
-	!! Contributors (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
-	!!  A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
-	!!  E.Tognelli
+	!! Contributors:
+	!! #contributors#
 	!! KROME is provided \"as it is\", without any warranty.
 	!!*************************************************************\n"""
+
+	#list of contributors
+	contribs = ["D.Galli", "F.A.Gianturco", "T.Haugboelle", "A.Lupi", "J.Prieto", "J.Ramsey", \
+		"D.R.G.Schleicher", "D.Seifried", "E.Simoncini", "E.Tognelli", "T.Frostholm", "J.Boulangier"]
+
+	#sort alphabetically
+	contribs = sorted(contribs, key=lambda x:x.split(".")[-1])
+
+	#divide in rows with limited length
+	contributors = rowtmp = ""
+	for contr in contribs:
+		rowtmp += contr+", "
+		contributors += contr+", "
+		if(len(rowtmp)>60):
+			rowtmp = ""
+			contributors += "\n\t!! "
+	#remove the last space+comma
+	contributors = contributors[:-2]
 
 	#name of the git master file
 	masterfile = ".git/refs/heads/master"
@@ -2007,9 +2023,11 @@ def get_licence_header(version, codename, short=False):
 	if(file_exists(masterfile)):
 		changeset = open(masterfile,"rb").read()
 
+	#replace comments pragmas
 	datenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-	header = header.replace("#date#",datenow).replace("#version#",version)
-	header = header.replace("#codename#",codename).replace("#changeset#",changeset[:7])
+	header = header.replace("#date#",datenow).replace("#version#", version)
+	header = header.replace("#codename#",codename).replace("#changeset#", changeset[:7])
+	header = header.replace("#contributors#", contributors)
 	return header.replace("\t","").replace("!!","   ! ")
 
 #################################
