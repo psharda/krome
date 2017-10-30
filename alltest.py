@@ -183,10 +183,10 @@ for test in tests:
 		print test,fort,md5
 		if(mode!="check"): fout.write(test+" "+fort+" "+md5+"\n")
 
+	testOK = True
 	#control the hash found if needed
 	if(mode=="check"):
 		print "checking..."
-		testOK = True
 		for hashblock in hashall:
 			if(hashblock not in hashtab):
 				print "ERROR with "+(", ".join(hashblock))
