@@ -634,13 +634,13 @@ contains
 
 #KROME_init_anytab
 
+#IFKROME_useDustTabs
+    call init_dust_tabs()
+#ENDIFKROME
+
 #IFKROME_useTabs
     call make_ktab()
     call check_tabs()
-#ENDIFKROME
-
-#IFKROME_useDustTabs
-    call init_dust_tabs()
 #ENDIFKROME
 
 #IFKROME_useStars
