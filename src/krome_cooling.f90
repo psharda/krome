@@ -147,7 +147,7 @@
       integer,parameter::kmax=coolCOn3
       integer::i,j,k
       real*8,parameter::eps=1d-5
-      real*8::cooling_CO,n(:),inTgas,Tgas
+      real*8::cooling_CO,n(:),inTgas
       real*8::v1,v2,v3,prev1,prev2,cH
       real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
       real*8::x1(imax),x2(jmax),x3(kmax)
@@ -179,8 +179,10 @@
         ! Set red flag if not due to small excursion in n_H2
         ! Only relevant for low temperatures, bc otherwise H is ionised
         ! And CO cooling only relevant at high densities
-        if (abs(n(idx_H2)) / (abs(n(idx_H)) + 1d-40) > 1d-6 .and. Tgas < 5d4 .and. abs(n(idx_H)) > abs(n(idx_Hj)) .and. sum(n(1:nmols)) > 100.) &
-          red_flag = ibset(red_flag,5)
+        if (abs(n(idx_H2)) / (abs(n(idx_H)) + 1d-40) > 1d-6 .and. &
+                                               inTgas < 5d4 .and. &
+            abs(n(idx_H)) > abs(n(idx_Hj)) .and. sum(n(1:nmols)) > 100.) &
+                 red_flag = ibset(red_flag,5)
       endif
 
       v2 = cH
@@ -1247,11 +1249,12 @@
       use krome_coolingGH
       implicit none
       real*8::n(:),Tgas
-      real*8:: PLW_last=0d0,PHI_last=0d0,PHeI_last=0d0, &
-           PCVI_last=0d0,ntot_last=0d0,rch(NRCH)
       real*8:: cooling_GH
-      integer:: ich(NICH)
-      !$omp threadprivate(PLW_last,PHI_last,PHeI_last,PCVI_last,ntot_last)
+      real*8:: PLW_last=0d0,PHI_last=0d0,PHeI_last=0d0, &
+               PCVI_last=0d0,ntot_last=0d0
+      real*8,  save :: rch(NRCH)
+      integer, save :: ich(NICH)
+      !$omp threadprivate(PLW_last,PHI_last,PHeI_last,PCVI_last,ntot_last,rch,ich)
       real*8::log10Tgas,ntot,cfun,hfun
       logical, save :: first_call=.true.
       integer       :: ierr
@@ -1300,8 +1303,8 @@
            end if
         end if
 
-        !call frtCFGetLn(log(max(1d0,Tgas)),ich,rch,cfun,hfun)
-        call frtGetCF(Tgas, ntot, 1d0, Plw, Phi, Phei, Pcvi, cfun, hfun, ierr)
+        call frtCFGetLn(log(max(1d0,Tgas)),ich,rch,cfun,hfun)
+        !call frtGetCF(Tgas, ntot, 1d0, Plw, Phi, Phei, Pcvi, cfun, hfun, ierr)
 
       else
         cfun = 0d0
