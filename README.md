@@ -57,8 +57,9 @@ and Stefano Bovino
  Hamburger Sternwarte, Hamburg
 ```
 
-Contributors: D. Galli, F.A. Gianturco, T.Haugbølle, A. Lupi, J. Prieto,
- J. Ramsey, D.R.G. Schleicher, D. Seifried, E. Simoncini, E. Tognelli 
+Contributors: J.Boulangier, T.Frostholm, D.Galli, F.A.Gianturco, T.Haugboelle,
+  A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
+  E.Tognelli
 
 ---
 

@@ -12,19 +12,25 @@ class network:
 		self.speciesDictionary = []
 		self.myOptions = myOptions
 
+                basePath = os.path.join(os.path.dirname(__file__), "..")
+                basePath = os.path.abspath(basePath)
+
 
 		#get network file name
 		fileName = myOptions.network
 
 		#read atoms
-		atomSet = utils.getAtomSet("atomlist.dat")
+                absPath = os.path.join(basePath, "atomlist.dat")
+		atomSet = utils.getAtomSet(absPath)
 		self.atomSet = atomSet
 
 		#load thermochemical data
-		self.thermochemicalData = utils.getThermochemicalData("thermo30.dat")
+                absPath = os.path.join(basePath, "thermo30.dat")
+		self.thermochemicalData = utils.getThermochemicalData(absPath)
 
 		#load polarizability data
-		self.polarizabilityData = utils.getPolarizabilityData("polarizability.dat")
+                absPath = os.path.join(basePath, "polarizability.dat")
+		self.polarizabilityData = utils.getPolarizabilityData(absPath)
 
 		#read shortcuts
 		shortcuts = utils.getShortcuts()
@@ -69,6 +75,40 @@ class network:
 		#loop on reactions to evaluate
 		for myReaction in self.reactions:
 			myReaction.evaluateRate(shortcuts,varRanges)
+
+	#*****************************
+	#assign index to species from info.log file produced by KROME
+	def assignIndex(self, fileName="info.log"):
+
+		inBlock = False #flag in reading block
+		self.indexDictionary = dict() #index dictionary, key=species name, value=index
+
+		#loop on log file
+		for row in open(fileName, "rb"):
+			#check beginning line to read
+			if(row.startswith("# Species list with their indexes")):
+				inBlock = True
+				continue
+			#if outside reading block skip
+			if(not inBlock):
+				continue
+			#check ending of reading block and break from reading
+			if(inBlock and row.strip()==""):
+				break
+			#replace tabs with spaces
+			srow = row.strip().replace("\t", " ")
+			#read data
+			(idx, speciesName, idxF90) = [x.strip() for x in srow.split(" ") if x!=""]
+			#assign data to dictionary
+			self.indexDictionary[speciesName] = int(idx)
+
+		#assign index to class species dictionary
+		for species in self.species:
+			#check for capital names
+			if(not species.name in self.indexDictionary):
+				species.idx = self.indexDictionary[species.name.upper()]
+			else:
+				species.idx = self.indexDictionary[species.name]
 
 	#******************************
 	#prepare complete documentation
@@ -247,18 +287,6 @@ class network:
 	#**************
 	#get all network species
 	def getSpecies(self):
-		if(self.species!=[]): return self.species
-		self.species = []
-		#loop on reactions
-		for reaction in self.reactions:
-			self.species += reaction.reactants + reaction.products
-
-		#unique list of species
-		dicSpec = dict()
-		for mySpecies in self.species:
-			dicSpec[mySpecies.nameHash] = mySpecies
-		self.species = dicSpec.values()
-
 		return self.species
 
 	#**************

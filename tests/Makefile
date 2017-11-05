@@ -1,5 +1,7 @@
 #default fortran compiler
 fc = ifort
+cc = icc
+clib = -nofor_main
 
 #executable name
 exec = test
@@ -21,6 +23,7 @@ switchOMP = $(switchOPT) -openmp
 
 #default switch
 switch = $(switchOPT)
+switchc = $(switchOPT)
 
 #no warning switch (for DLSODES)
 nowarnIfort = -nowarn
@@ -43,6 +46,7 @@ objs += krome_stars.o
 objs += krome_dust.o
 objs += krome_photo.o
 objs += krome_tabs.o
+objs += krome_coolingGH.o
 objs += krome_cooling.o
 objs += krome_heating.o
 objs += krome_ode.o
@@ -50,12 +54,15 @@ objs += krome_user.o
 objs += krome_reduction.o
 objs += krome.o
 
+cobjs = krome_header.o
+
 #default target
 all: 	$(objs) test.o
 	$(fc) $(objs) test.o -o $(exec) $(switch) $(lib)
 
 #ifort full debug target
 debug: switch = $(switchDBG)
+debug: switchc = -traceback
 debug: nowarn = $(nowarnIfort)
 debug: all
 
@@ -87,16 +94,25 @@ pyinterface: switch = -ffree-line-length-none -fPIC
 pyinterface: nowarn = $(nowarnGNU)
 pyinterface: sharedlib
 
-cinterface: gfortran
-
 pyinterface_opt: fc = gfortran
 pyinterface_opt: switch = -O3 -ffree-line-length-none -fPIC
 pyinterface_opt: nowarn = $(nowarnGNU)
 pyinterface_opt: sharedlib
 
+cinterface: $(cobjs)
+cinterface: objs += $(cobjs)
+cinterface: cc = gcc
+cinterface: switchc =
+cinterface: clib = -lm -lgfortran
+cinterface: gfortran
+
+cinterface_opt: $(cobjs)
 cinterface_opt: fc = gfortran
-cinterface_opt: switch = -O3 -ffree-line-length-none -fPIC
+cinterface_opt: cc = gcc
+cinterface_opt: switch = -O3 -ffree-line-length-none
+cinterface_opt: switchc = -O3
 cinterface_opt: nowarn = $(nowarnGNU)
+cinterface_opt: clib = -lm -lgfortran
 cinterface_opt: all
 
 #clean target
@@ -111,3 +127,6 @@ clean:
 %.o:%.f
 	$(fc) $(switch) $(nowarn) -c $^ -o $@
 
+#rule for c
+%.o:%.c
+	$(cc) $(switchc) $(nowarn) -c $^ -o $@

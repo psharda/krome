@@ -1,0 +1,15 @@
+#####
+reset
+set log x
+set format "%g"
+set format x "%L"
+
+set xlabel "log(time/yr)"
+set ylabel "Tgas/K"
+n = 2 #yvariable column, 2=Tgas, 3=electrons, 4=H+
+lwv = 2 #line width
+set grid
+
+plot 'fort.66' u 1:n w l t "w isotope decay" lw lwv,\
+ 'fort.67' u 1:n w l t "w/out isotope decay" lw lwv
+

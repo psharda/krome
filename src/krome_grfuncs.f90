@@ -79,6 +79,87 @@ contains
 
   end function dust_2body_rate
 
+  !******************
+  function krate_2bodySi(n,idx1,idx2,Ea,Tdust) result(krate)
+    use krome_commons
+    implicit none
+    real*8,intent(in)::n(nspec),Ea,Tdust
+    integer,intent(in)::idx1,idx2
+    real*8::krate,amin,amax,pexp,d2g,rho0
+
+    !some default values OK for silicates
+    amin = 5d-7 !cm
+    amax = 2.5d-5 !cm
+    pexp = -3.5
+    rho0 = 3d0 !g/cm3
+    d2g = 1d-2
+
+    krate = krate_2body(n(:),idx1,idx2,amin,amax,pexp,d2g,rho0,Ea,Tdust)
+
+  end function krate_2bodySi
+
+  !********************
+  function krate_2body(n,idx1,idx2,amin,amax,pexp,d2g,rho0, &
+       Ea,Tdust) result(krate)
+    use krome_commons
+    use krome_constants
+    use krome_getphys
+    implicit none
+    integer,intent(in)::idx1,idx2
+    real*8,intent(in)::n(nspec),amin,amax,pexp,d2g,rho0,Ea,Tdust
+    real*8::rhog,p3,p4,ndns,krate,mred,fice,fbare,Preac
+    real*8::iTd23,Ebare(nspec),Eice(nspec),mass(nspec)
+    real*8,parameter::app2=(3d-8)**2 !cm^2 (Hocuk+2015)
+    real*8,parameter::nu0=1d12 !1/s
+    real*8,parameter::hbar=planck_erg/2d0/pi !erg*s
+    real*8,parameter::ar=1d-8 !cm
+
+    mass(:) = get_mass()
+
+    !gas density, g/cm3
+    rhog = sum(mass(1:nmols)*n(1:nmols))
+
+    !exponentes
+    p3 = pexp + 3d0
+    p4 = pexp + 4d0
+
+    !number of sites cm-3/mly
+    ndns = rhog/(4d0/3d0*rho0*app2)*(amax**p3-amin**p3) &
+         / (amax**p4-amin**p4) * p4 / p3
+
+    !ice/bare fraction
+    fbare = 1d0
+#IFKROME_hasH2O
+    fice = (n(idx_H2O_total)-n(idx_H2O))/ndns
+    fbare = 1d0 - fice
+#ENDIFKROME
+
+    !reduced mass
+    mred = mass(idx1)*mass(idx2)/(mass(idx1)+mass(idx2))
+
+    !tunneling probability
+    Preac = exp(-2d0*ar/hbar*sqrt(2d0*mred*Ea*boltzmann_erg))
+
+    !exponent
+    iTd23 = 2d0/3d0/Tdust
+
+    !get Ebind, K
+    Ebare(:) = get_Ebind_bare()
+#IFKROME_hasH2O
+    Eice(:) = get_Ebind_ice()
+#ENDIFKROME
+
+    !compute rate
+    krate = fbare*(exp(-Ebare(idx1)*iTd23)+exp(-Ebare(idx2)*iTd23))
+#IFKROME_hasH2O
+    krate = krate + fice*(exp(-Eice(idx1)*iTd23)+exp(-Eice(idx2)*iTd23))
+#ENDIFKROME
+
+    !rate in cm3/s
+    krate = nu0*Preac/ndns*krate
+
+  end function krate_2body
+
   !*************************
   function dust_get_inv_phi(asize2,nndust)
     use krome_commons
@@ -258,6 +339,32 @@ contains
     k = nu0 * exp(-Ebind(idx)/Tdust)
 
   end function krate_evaporation
+
+  !***************************
+  !non-thermal evaporation rate (1/s) following Hollenbach 2009,
+  ! http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:0809.1642
+  !Gnot is the habing flux (1.78 is Draine)
+  !Av is the visual extinction
+  !crflux the ionization flux of cosmic rays, 1/s
+  !yield is the efficiency of the photons to desorb the given molecule
+  function krate_nonthermal_evaporation(idx, Gnot, Av, crflux, yield) result(k)
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer,intent(in)::idx
+    real*8,parameter::crnot=1.3d-17
+    real*8,parameter::Fnot=1d8 !desorbing photons flux, 1/s
+    real*8,parameter::ap2=(3d-8)**2 !sites separation squared, cm2
+    real*8,intent(in)::Gnot, Av, crflux, yield
+    real*8::k,f70,kevap70(nspec)
+
+    f70 = 3.16d-19*crflux/crnot
+    kevap70(:) = get_kevap70()
+
+    k = Gnot*Fnot*ap2*yield*exp(-1.8*Av)
+    k = k + f70*kevap70(idx)
+
+  end function krate_nonthermal_evaporation
 
   !***************************
   function dust_ice_fraction_array(invphi,nH2O)

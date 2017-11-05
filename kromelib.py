@@ -24,9 +24,9 @@
 # stefano.bovino@uni-hamburg.de
 # Hamburger Sternwarte, Hamburg.
 #
-# Others (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
-# A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
-# E.Tognelli
+# Contributors: J.Boulangier, T.Frostholm, D.Galli, F.A.Gianturco, T.Haugboelle,
+#  A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
+#  E.Tognelli
 #
 # KROME is provided "as it is", without any warranty.
 # The Authors assume no liability for any damages of any kind
@@ -143,20 +143,22 @@ class reaction():
 			#args += "xsec"+sidx+"_n,"
 			args += "xsec"+sidx+"_idE, dshift("+self.reactants[0].fidx+")"
 			self.kphrate = "xsec_interp(energyL, energyR, "+args+")"
-			#self.xsecFile = self.krate.replace("@xsecFile=","").strip()
-			if("SWRI" in self.xsecFile.upper()):
+                        #self.xsecFile = self.krate.replace("@xsecFile=","").strip()
+			if("SWRI" in self.krate.upper()):
 				RR = self.reactants[0].name
 				PP = ("_".join([x.name for x in self.products]))
 				self.xsecFile = "swri_"+RR+"__"+PP+".dat"
-			if("LEIDEN" in self.xsecFile.upper()):
+			if("LEIDEN" in self.krate.upper()):
 				RR = self.reactants[0].name
 				PP = ("_".join([x.name for x in self.products]))
 				self.xsecFile = "leiden_"+RR+"__"+PP+".dat"
 
-		#replace with rate
-		self.krate = self.krate.replace("@xsecFile=SWRI", "#XSECS#")
-		self.krate = self.krate.replace("@xsecFile=LEIDEN", "#XSECS#")
-		self.krate = self.krate.replace("#XSECS#", "photoBinRates("+str(self.idxph)+")")
+			#replace with rate
+			self.krate = self.krate.replace("@xsecFile=SWRI", "#XSECS#")
+			self.krate = self.krate.replace("@xsecFile=LEIDEN", "#XSECS#")
+			self.krate = self.krate.replace("#XSECS#", "photoBinRates("+str(self.idxph)+")")
+		else:
+			self.krate = "photoBinRates("+str(self.idxph)+")"
 
 		#if(self.krate.strip()=="krome_kph_auto"):
 		#	self.krate = "krome_kph_"+myr[0].phname
@@ -217,6 +219,7 @@ class reaction():
 			pname.append(p.name)
 		self.pseudo_hash = ("_".join(sorted(rname)))+"|"+("_".join(sorted(pname)))
 
+	#*********************
 	#method: check reaction (mass and charge conservation)
 	def check(self,mode="ALL"):
 		mass_reactants = mass_products = 0.e0
@@ -287,6 +290,13 @@ class reaction():
 		if(available): self.dH = (rH-pH)*1.60217657e-12 #eV->erg (cooling<0)
 
 
+	#*********************
+	#alias for enthalpy calculation
+	def computeEnthalpy(self):
+		self.enthalpy()
+
+
+	#*********************
 	#calculate reverse reaction using polynomials
 	def doReverse(self):
 		pidx = "(/"+(",".join([x.fidx for x in self.products]))+"/)"
@@ -1115,7 +1125,7 @@ def get_cooling_dict():
 	#the number is the corresponding integer index for the given cooling
 	idxcoo = {"H2":1,"H2GP":2,"atomic":3, "CEN":3, "HD":4, "Z":5, "metal":5, "dH":6, "enthalpic":6, "dust":7,\
 		"compton":8,"CIE":9, "continuum":10, "cont":10,"exp":11,"expansion":11,"ff":12,"bss":12,"custom":13,\
-		"CO":14, "ZCIE":15, "ZCIENOUV":16, "ZExtend":17}
+		"CO":14, "ZCIE":15, "ZCIENOUV":16, "ZExtend":17, "GH":18}
 	idxcoo = {k.lower():v for (k,v) in idxcoo.iteritems()}
 	return idxcoo
 
@@ -1959,9 +1969,8 @@ def get_licence_header(version, codename, short=False):
 	!!  stefano.bovino@uni-hamburg.de
 	!!  Hamburger Sternwarte, Hamburg.
 	!!
-	!! Contributors (alphabetically): D. Galli, F.A. Gianturco, T. Haugboelle,
-	!!  A. Lupi, J.Prieto, J.Ramsey, D.R.G. Schleicher, D. Seifried,
-	!!  E. Simoncini, E. Tognelli
+	!! Contributors:
+	!! #contributors#
 	!!
 	!!
 	!! KROME is provided \"as it is\", without any warranty.
@@ -1984,11 +1993,28 @@ def get_licence_header(version, codename, short=False):
 	!!
 	!! Written and developed by Tommaso Grassi and Stefano Bovino
 	!!
-	!! Contributors (alphabetically): D.Galli, F.A.Gianturco, T.Haugboelle,
-	!!  A.Lupi, J.Prieto, J.Ramsey, D.R.G.Schleicher, D.Seifried, E.Simoncini,
-	!!  E.Tognelli
+	!! Contributors:
+	!! #contributors#
 	!! KROME is provided \"as it is\", without any warranty.
 	!!*************************************************************\n"""
+
+	#list of contributors
+	contribs = ["D.Galli", "F.A.Gianturco", "T.Haugboelle", "A.Lupi", "J.Prieto", "J.Ramsey", \
+		"D.R.G.Schleicher", "D.Seifried", "E.Simoncini", "E.Tognelli", "T.Frostholm", "J.Boulangier"]
+
+	#sort alphabetically
+	contribs = sorted(contribs, key=lambda x:x.split(".")[-1])
+
+	#divide in rows with limited length
+	contributors = rowtmp = ""
+	for contr in contribs:
+		rowtmp += contr+", "
+		contributors += contr+", "
+		if(len(rowtmp)>60):
+			rowtmp = ""
+			contributors += "\n\t!! "
+	#remove the last space+comma
+	contributors = contributors[:-2]
 
 	#name of the git master file
 	masterfile = ".git/refs/heads/master"
@@ -1997,9 +2023,11 @@ def get_licence_header(version, codename, short=False):
 	if(file_exists(masterfile)):
 		changeset = open(masterfile,"rb").read()
 
+	#replace comments pragmas
 	datenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-	header = header.replace("#date#",datenow).replace("#version#",version)
-	header = header.replace("#codename#",codename).replace("#changeset#",changeset[:7])
+	header = header.replace("#date#",datenow).replace("#version#", version)
+	header = header.replace("#codename#",codename).replace("#changeset#", changeset[:7])
+	header = header.replace("#contributors#", contributors)
 	return header.replace("\t","").replace("!!","   ! ")
 
 #################################

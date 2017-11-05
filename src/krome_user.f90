@@ -50,20 +50,24 @@ contains
 
   end function krome_get_table_Tdust
 
+#IFKROME_useBindC
+  !MOCASSIN interface not used when C interface is active
+
+#ELSEKROME_useBindC
   !**********************
   !convert from MOCASSIN abundances to KROME
-  ! xmoc: MOCASSIN matrix (note: cm-3, real*4),
+  ! xmoc(i,j): MOCASSIN matrix (note: cm-3, real*4)
+  !  i=species, j=ionization level
   ! imap: matrix position index map, integer
   ! returns KROME abundances (cm-3, real*8)
-  function krome_convert_xmoc(xmoc,imap)
+  function krome_convert_xmoc(xmoc,imap) result(x)
     use krome_commons
     use krome_subs
     use krome_getphys
     implicit none
-    real*4 :: xmoc(:,:)
-    real*8 :: krome_convert_xmoc(nmols),x(nmols)
-    integer :: imap(:)
-    real*8::n(nspec)
+    real*4,intent(in):: xmoc(:,:)
+    real*8::x(nmols),n(nspec)
+    integer,intent(in)::imap(:)
 
     x(:) = 0d0
 
@@ -74,27 +78,28 @@ contains
 #IFKROME_has_electrons
     x(idx_e) = get_electrons(n(:))
 #ENDIFKROME
-    krome_convert_xmoc(:) = x(:)
 
   end function krome_convert_xmoc
 
   !*************************
   !convert from KROME abundances to MOCASSIN
-  ! xmoc: KROME matrix (cm-3, real*4),
+  ! x: KROME abuances (cm-3, real*8)
   ! imap: matrix position index map, integer
-  ! xmoc (out), matrix MOCASSIN abundances (cm-3, real*4)
-  subroutine krome_return_xmoc(x,imap,xmoc) #KROME_bindC
+  ! xmoc(i,j): MOCASSIN matrix (note: cm-3, real*4)
+  !  i=species, j=ionization level
+  subroutine krome_return_xmoc(x,imap,xmoc)
     use krome_commons
     implicit none
-    #KROME_double :: x(nmols)
-    #KROME_single :: xmoc(:,:)
-    #KROME_integer :: imap(:)
+    real*8,intent(in)::x(nmols)
+    real*4,intent(out)::xmoc(:,:)
+    integer,intent(in)::imap(:)
 
     xmoc(:,:) = 0d0
 
 #KROME_xmoc_map_return
 
   end subroutine krome_return_xmoc
+#ENDIFKROME_useBindC
 
   !**********************
   !convert number density (cm-3) into column
@@ -830,14 +835,23 @@ contains
   ! energy/eV, flux/(eV/cm2/sr)
   ! Flux is interpolated over the existing binning
   ! constant-area method
-  subroutine krome_load_photoBin_file_2col(fname)
+  subroutine krome_load_photoBin_file_2col(fname, logarithmic)
     use krome_commons
     implicit none
     integer,parameter::imax=int(1e4)
     character(len=*) :: fname
+    logical, optional :: logarithmic
+    logical :: is_log
     integer::unit,ios,icount,j,i
     real*8::xtmp(imax),ftmp(imax),intA,eL,eR
     real*8::xL,xR,pL,pR,fL,fR,Jflux(nPhotoBins)
+    real*8::a,b
+
+    if(present(logarithmic)) then
+      is_log = logarithmic
+    else
+      is_log = .false.
+    end if
 
     !open file to read
     open(newunit=unit,file=trim(fname),iostat=ios)
@@ -855,6 +869,7 @@ contains
     end do
     close(unit)
 
+    if(is_log) ftmp = log(merge(ftmp,1d-40,ftmp>0d0))
     !loop on photobins for interpolation
     do j=1,nPhotoBins
        intA = 0d0
@@ -871,9 +886,22 @@ contains
           !get the interval limit (consider partial overlapping)
           pL = max(xL,eL)
           pR = min(xR,eR)
+          if(is_log) then
+            pL = log(max(pL,1d-40))
+            pR = log(max(pR,1d-40))
+            xL = log(max(xL,1d-40))
+            xR = log(max(xR,1d-40))
+          end if
           !interpolate to get the flux at the interval limit
           fL = (ftmp(i+1)-ftmp(i))*(pL-xL)/(xR-xL)+ftmp(i)
           fR = (ftmp(i+1)-ftmp(i))*(pR-xL)/(xR-xL)+ftmp(i)
+          if(is_log) then
+            fL = exp(fL)
+            fR = exp(fR)
+            pL = exp(pL)
+            pR = exp(pR)
+          end if
+
           !compute area of the overlapped area
           intA = intA + (fL+fR)*(pR-pL)/2d0
        end do

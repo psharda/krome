@@ -59,6 +59,8 @@ contains
 
     fname = "reactions_verbatim.dat"
 
+#KROME_no_verbatim_file
+
     !verbatim reactions are loaded from file
     ! to increase compilation speed
     open(newunit=nunit,file=trim(fname),status="old",iostat=ios)

@@ -6,13 +6,13 @@ program test
   integer, parameter:: ioin = 10
   integer, parameter:: nsp=krome_nmols !number of species (common)
   real*8:: Tgas, dt, x(nsp), spy, t, ntot, eVperg, fe60_xi, x_Fe60
-  
+
   spy = krome_seconds_per_year !seconds per year
-  
+
   call krome_init() !init krome (mandatory)
 
   ! ----==== Isotope decay off ====---- !
-  
+
   x(:) = 1d-20 !default abundances
   ntot = 1.0d4 ! cm**-3
   x(krome_idx_Hj) = ntot !hydrogen ion initial abundance
@@ -37,7 +37,7 @@ program test
 
   Tgas = 1.0d3 !gas temperature (K)
 
-  open (66, file='idoff.f.dat', status='unknown', form='formatted')
+  !open (66, file='idoff.f.dat', status='unknown', form='formatted')
 
   t = 0.0d0
   dt = 1d-2 * spy ! yr -> s
@@ -47,15 +47,15 @@ program test
     t = t + dt
     !call KROME
     call krome(x(:), Tgas, dt)
-    nstep = nstep + 1 
+    nstep = nstep + 1
     if (mod(nstep,10) .eq. 0) then
       write (*,'(a,i5.1)') "nstep = ", nstep
     endif
-    write (66,'(60(1pe15.8))') t/spy, Tgas, x(:)/ntot
+    write (77,'(60(1pe15.8))') t/spy, Tgas, x(:)/ntot
     call krome_popcool_dump(t/spy, 69)
     if (t > 1.0d8 * spy) exit
   enddo
-  close(66)
+  !close(66)
 
   write (*,'(a,i5.1)') "Finished. Number of steps = ", nstep
 
@@ -84,7 +84,7 @@ program test
 
   Tgas = 1.0d3 !gas temperature (K)
 
-  open (66, file='idon.f.dat', status='unknown', form='formatted')
+  !open (66, file='idon.f.dat', status='unknown', form='formatted')
 
   t = 0.0d0
   dt = 1d-2 * spy ! yr -> s
@@ -94,15 +94,15 @@ program test
     t = t + dt
     !call KROME
     call krome(x(:), Tgas, dt)
-    nstep = nstep + 1 
+    nstep = nstep + 1
     if (mod(nstep,10) .eq. 0) then
       write (*,'(a,i5.1)') "nstep = ", nstep
     endif
-    write (66,'(60(1pe15.8))') t/spy, Tgas, x(:)/ntot
+    write (78,'(60(1pe15.8))') t/spy, Tgas, x(:)/ntot
     call krome_popcool_dump(t/spy, 70)
     if (t > 1.0d8 * spy) exit
   enddo
-  close(66)
+  !close(66)
 
   write (*,'(a,i5.1)') "Finished. Number of steps = ", nstep
 
