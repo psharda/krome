@@ -46,6 +46,7 @@ objs += krome_stars.o
 objs += krome_dust.o
 objs += krome_photo.o
 objs += krome_tabs.o
+objs += krome_coolingGH.o
 objs += krome_cooling.o
 objs += krome_heating.o
 objs += krome_ode.o
@@ -101,7 +102,7 @@ pyinterface_opt: sharedlib
 cinterface: $(cobjs)
 cinterface: objs += $(cobjs)
 cinterface: cc = gcc
-cinterface: switchc = 
+cinterface: switchc =
 cinterface: clib = -lm -lgfortran
 cinterface: gfortran
 

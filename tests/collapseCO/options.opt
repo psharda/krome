@@ -1,6 +1,5 @@
 ##############
 #options for test collapseCO
-DEV
 -n networks/react_COthin_ice
 -cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM,CO
 -heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST

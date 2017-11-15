@@ -151,6 +151,7 @@ contains
 #ENDIFKROME
     !store initial values
     ni(:) = n(:)
+    n_global(:) = n(:)
 
 #IFKROME_hasStoreOnceRates
     call makeStoreOnceRates(n(:))
@@ -289,6 +290,7 @@ contains
       use krome_commons
       use krome_constants
       use krome_getphys
+      use krome_tabs
       implicit none
       integer::mf,liw,lrw,itol,meth,iopt,itask,istate,neq(1)
       integer::i,imax
@@ -306,7 +308,7 @@ contains
 #KROME_iwork_array
       real*8::atol(nspec),rtol(nspec)
 #KROME_rwork_array
-      real*8::ertol,eatol,max_time,t_tot
+      real*8::ertol,eatol,max_time,t_tot,ntot_tol,err_species
       logical::converged
 
       integer, save :: ncall=0
@@ -319,6 +321,13 @@ contains
       !set verbosity from argument
       verbose = 1 !default is verbose
       if(present(verbosity)) verbose = verbosity
+
+#IFKROME_useCoolingGH
+      PLW = 2.11814e-13
+      PHI = 1.08928e-13
+      PHEI = 2.76947e-14
+      PCVI = 1.03070e-17
+#ENDIFKROME
 
       call XSETF(0)!toggle solver verbosity
       meth = 2
@@ -362,6 +371,11 @@ contains
 
       !store previous values
       ni(:) = n(:)
+      n_global(:) = ni(:)
+
+#IFKROME_hasStoreOnceRates
+      call makeStoreOnceRates(n(:))
+#ENDIFKROME
 
       imax = 1000
 
@@ -402,6 +416,7 @@ contains
             dt = dt * 3.
             t_tot = t_tot + dt
             ni = n
+            n_global = n
          endif
       enddo
 #IFKROME_useX
@@ -633,13 +648,13 @@ contains
 
 #KROME_init_anytab
 
+#IFKROME_useDustTabs
+    call init_dust_tabs()
+#ENDIFKROME
+
 #IFKROME_useTabs
     call make_ktab()
     call check_tabs()
-#ENDIFKROME
-
-#IFKROME_useDustTabs
-    call init_dust_tabs()
 #ENDIFKROME
 
 #IFKROME_useStars

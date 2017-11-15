@@ -559,7 +559,7 @@
 #FROM GLOVER+2009
 224,H-,H,E,7.1d-7*exp(-.5*user_Av)
 225,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
-@var: user_H2self = fselfH2(1.87d21*(n(idx_H2)*1d-3)**(2./3.), 1d5)
+@var: user_H2self = fselfH2(1.87d21*(merge(n(idx_H2),n_global(idx_H2),n(idx_H2) > 0.0_8)*1d-3)**(2./3.), 1d5)
 226,H2,H,H,5.6d-11*exp(-3.74*user_Av)*user_H2self
 227,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
 228,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
