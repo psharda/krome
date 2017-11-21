@@ -648,7 +648,7 @@
       end if
 
       !opacity according to RA04
-      tauCIE = (n(idx_H2) * 1.4285714e-16)**2.8 !note: 1/7e15 = 1.4285714e-16
+      tauCIE = (n(idx_H2) * 1.4285714d-16)**2.8 !note: 1/7d15 = 1.4285714d-16
       cool = p_mass * 1d1**logcool !erg*cm3/s
 
       cooling_CIE = cool * min(1.d0, (1.d0-exp(-tauCIE))/tauCIE) &
