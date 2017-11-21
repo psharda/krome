@@ -608,8 +608,8 @@
       real*8::cool,tauCIE,logcool
 
       cooling_CIE = 0d0
-      !under 1e-12 1/cm3 cooling is zero
-      if(n(idx_H2)<1d-12) return
+      !under 1e12 1/cm3 cooling is zero
+      if(n(idx_H2)<1d12) return
 
       Tgas = inTgas
       !temperature limit
