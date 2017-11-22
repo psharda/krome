@@ -215,8 +215,8 @@ module KROME_coolingGH
       integer, dimension(:) :: ich
       integer :: ierr
       !
-      real*8 :: q(3), qh1, qg1, qc6, dl, w
-      integer     :: j, il(3), is(3)
+      real*8  :: q(3), qh1, qg1, qc6, dl, w
+      integer :: j, il(3), is(3)
 
       !  Convert from nb to nH from Cloudy models
       dl = max(1.0e-10,den*(1.0-0.02*Z)/1.4)
@@ -296,7 +296,7 @@ module KROME_coolingGH
     !  ln(T) from the cached dat
     subroutine frtCFGetLn(alt,ich,rch,cfun,hfun)
       real*8 :: alt
-      real*8,    dimension(:) :: rch
+      real*8,  dimension(:) :: rch
       integer, dimension(:) :: ich
       real*8 :: cfun, hfun
       real*8, dimension(NC) :: v
@@ -354,6 +354,13 @@ module KROME_coolingGH
 
       call frtCFCache(den,Z,Plw,Ph1,Pg1,Pc6,ich,rch,ierr)
       call frtCFGetLn(log(max(1.0,tem)),ich,rch,cfun,hfun)
+
+      if (ierr > 0) then
+        print *,'frtGetCF: Problems with caching Gnedin and Hollon cooling table.'
+        print *,'frtGetCF:  Stopping. Error code :', ierr
+        print *,'frtGetCF: Input variables ntot, Tgas, PLW, PHI, PHeI, PCVI: ', den, tem, Plw, Ph1, Pg1, Pc6
+        stop
+      end if
 
     end subroutine frtGetCF
 
