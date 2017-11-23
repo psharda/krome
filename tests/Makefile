@@ -16,7 +16,7 @@ ifeq ($(GREP),)
 endif
 
 #flags
-switchOPT = -O3 -ipo -ip -unroll -xHost
+switchOPT = -O3 -ipo -ip -unroll -xHost -g
 switchDBG = -O0 -check all -warn all -fpe0 -u -traceback -warn nounused
 switchPRO = $(switchOPT) -pg -traceback
 switchOMP = $(switchOPT) -openmp
