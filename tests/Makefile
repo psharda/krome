@@ -9,6 +9,12 @@ exec = test
 #default libraries
 lib = -llapack
 
+#guess if you have MKL
+GREP_MKL = $(shell export | grep 'mkl')
+ifneq ($(GREP_MKL),)
+	lib = -mkl
+endif
+
 #if dgesv is not present non need for LAPACK
 GREP = $(shell grep -i 'dgesv' krome_subs.f90)
 ifeq ($(GREP),)
