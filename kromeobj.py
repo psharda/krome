@@ -3417,16 +3417,17 @@ class krome():
 			if(srow == "#KROME_species"):
 				# write out KROME species
 				allBasics = []
-				for x in self.specs:
-					if(x.is_surface):
-						xbasic = ("_".join(x.fidx.split("_")[:-1]))
-						xname = ("_".join(x.name.split("_")[:-1]))
+				for sp in self.specs:
+					if(sp.is_surface and self.hasSurfaceReactions):
+						xbasic = ("_".join(sp.fidx.split("_")[:-1]))
+						xname = ("_".join(sp.name.split("_")[:-1]))
 						if(not(xbasic in allBasics)):
-							fout.write("extern const int krome_"+xbasic + "; //"+mol.name+"\n")
-							foutc.write("const int krome_"+xbasic + " = " + str(x.idx-1) +"; //"+mol.name+"\n")
-						allBasics.append(xbasic)
-					fout.write("extern const int krome_"+x.fidx + "; // "+x.name+"\n")
-					foutc.write("const int krome_"+x.fidx + " = " + str(x.idx-1) +"; // "+x.name+"\n")
+							fout.write("extern const int krome_"+xbasic + "; //"+xname+"\n")
+							foutc.write("const int krome_"+xbasic + " = " + str(sp.idx-1) +"; //"+xname+"\n")
+							allBasics.append(xbasic)
+
+					fout.write("extern const int krome_"+sp.fidx + "; // "+sp.name+"\n")
+					foutc.write("const int krome_"+sp.fidx + " = " + str(sp.idx-1) +"; // "+sp.name+"\n")
 
 				# write out the names of the species
 				fout.write("extern const char* krome_names[];\n")
@@ -3585,14 +3586,15 @@ class krome():
 			if(srow == "#KROME_species"):
 				# write out KROME species
 				allBasics = []
-				for x in self.specs:
-					if(x.is_surface):
-						xbasic = ("_".join(x.fidx.split("_")[:-1]))
-						xname = ("_".join(x.name.split("_")[:-1]))
+				for sp in self.specs:
+					if(sp.is_surface and self.hasSurfaceReactions):
+						xbasic = ("_".join(sp.fidx.split("_")[:-1]))
+						xname = ("_".join(sp.name.split("_")[:-1]))
 						if(not(xbasic in allBasics)):
-							fout.write("\t\tself.krome_"+xbasic + " = " + str(x.idx-1) +" # "+mol.name+"\n")
-						allBasics.append(xbasic)
-					fout.write("\t\tself.krome_"+x.fidx + " = " + str(x.idx-1) +" # "+x.name+"\n")
+							fout.write("\t\tself.krome_"+xbasic + " = " + str(sp.idx-1) +" # "+xname+"\n")
+							allBasics.append(xbasic)
+
+					fout.write("\t\tself.krome_"+sp.fidx + " = " + str(sp.idx-1) +" # "+sp.name+"\n")
 
 				# write out the names of the species
 				fout.write("\t\tself.krome_names = (\n")
