@@ -608,8 +608,8 @@
       real*8::cool,tauCIE,logcool
 
       cooling_CIE = 0d0
-      !under 1e-12 1/cm3 cooling is zero
-      if(n(idx_H2)<1d-12) return
+      !under 1e12 1/cm3 cooling is zero
+      if(n(idx_H2)<1d12) return
 
       Tgas = inTgas
       !temperature limit
@@ -648,7 +648,7 @@
       end if
 
       !opacity according to RA04
-      tauCIE = (n(idx_H2) * 1.4285714e-16)**2.8 !note: 1/7e15 = 1.4285714e-16
+      tauCIE = (n(idx_H2) * 1.4285714d-16)**2.8 !note: 1/7d15 = 1.4285714d-16
       cool = p_mass * 1d1**logcool !erg*cm3/s
 
       cooling_CIE = cool * min(1.d0, (1.d0-exp(-tauCIE))/tauCIE) &
