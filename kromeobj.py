@@ -5927,7 +5927,7 @@ class krome():
 					storeOnceRates += rea.getRateF90(self,varname="rateEvaluateOnce")+"\n\n"
 
 		#if reactions that cannot be tabbed are found
-		klist = kvars = ""
+		klist = kvars = shortcutVars = ""
 		if(countNoTab>0 and self.useTabs):
 			if(len(coevars)!=0):
 				#define variables
@@ -5939,6 +5939,8 @@ class krome():
 					klist.append([k+" = "+v[1]+"\n",v[0]]) #this mess is to sort dict
 				klist = sorted(klist, key=lambda x: x[1])
 				klist = "".join([x[0] for x in klist])
+			if(len(sclist) != 0):
+				shortcutVars = "real*8::"+(", ".join([x.split("=")[0].strip() for x in sclist]))
 
 		#prepares the reaction modifiers
 		#tokenize to replace k(:) with coe_tab(:)
@@ -5976,6 +5978,7 @@ class krome():
 			row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(2.73d0)")
 			row = row.replace("#KROME_logTup", "ktab_logTup = log10(1d9)")
 			#row = row.replace("#KROME_logTup", "ktab_logTup = log10(min("+str(self.TmaxAuto)+",1d8))")
+			row = row.replace("#KROME_shortcut_variables",shortcutVars)
 			row = row.replace("#KROME_define_vars",kvars)
 			row = row.replace("#KROME_init_vars",klist)
 			row = row.replace("#KROME_noTabReactions",noTabReactions)
