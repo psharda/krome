@@ -3424,16 +3424,17 @@ class krome():
 			if(srow == "#KROME_species"):
 				# write out KROME species
 				allBasics = []
-				for x in self.specs:
-					if(x.is_surface):
-						xbasic = ("_".join(x.fidx.split("_")[:-1]))
-						xname = ("_".join(x.name.split("_")[:-1]))
+				for sp in self.specs:
+					if(sp.is_surface and self.hasSurfaceReactions):
+						xbasic = ("_".join(sp.fidx.split("_")[:-1]))
+						xname = ("_".join(sp.name.split("_")[:-1]))
 						if(not(xbasic in allBasics)):
-							fout.write("extern const int krome_"+xbasic + "; //"+mol.name+"\n")
-							foutc.write("const int krome_"+xbasic + " = " + str(x.idx-1) +"; //"+mol.name+"\n")
-						allBasics.append(xbasic)
-					fout.write("extern const int krome_"+x.fidx + "; // "+x.name+"\n")
-					foutc.write("const int krome_"+x.fidx + " = " + str(x.idx-1) +"; // "+x.name+"\n")
+							fout.write("extern const int krome_"+xbasic + "; //"+xname+"\n")
+							foutc.write("const int krome_"+xbasic + " = " + str(sp.idx-1) +"; //"+xname+"\n")
+							allBasics.append(xbasic)
+
+					fout.write("extern const int krome_"+sp.fidx + "; // "+sp.name+"\n")
+					foutc.write("const int krome_"+sp.fidx + " = " + str(sp.idx-1) +"; // "+sp.name+"\n")
 
 				# write out the names of the species
 				fout.write("extern const char* krome_names[];\n")
@@ -3592,14 +3593,15 @@ class krome():
 			if(srow == "#KROME_species"):
 				# write out KROME species
 				allBasics = []
-				for x in self.specs:
-					if(x.is_surface):
-						xbasic = ("_".join(x.fidx.split("_")[:-1]))
-						xname = ("_".join(x.name.split("_")[:-1]))
+				for sp in self.specs:
+					if(sp.is_surface and self.hasSurfaceReactions):
+						xbasic = ("_".join(sp.fidx.split("_")[:-1]))
+						xname = ("_".join(sp.name.split("_")[:-1]))
 						if(not(xbasic in allBasics)):
-							fout.write("\t\tself.krome_"+xbasic + " = " + str(x.idx-1) +" # "+mol.name+"\n")
-						allBasics.append(xbasic)
-					fout.write("\t\tself.krome_"+x.fidx + " = " + str(x.idx-1) +" # "+x.name+"\n")
+							fout.write("\t\tself.krome_"+xbasic + " = " + str(sp.idx-1) +" # "+xname+"\n")
+							allBasics.append(xbasic)
+
+					fout.write("\t\tself.krome_"+sp.fidx + " = " + str(sp.idx-1) +" # "+sp.name+"\n")
 
 				# write out the names of the species
 				fout.write("\t\tself.krome_names = (\n")
@@ -5938,7 +5940,7 @@ class krome():
 					storeOnceRates += rea.getRateF90(self,varname="rateEvaluateOnce")+"\n\n"
 
 		#if reactions that cannot be tabbed are found
-		klist = kvars = ""
+		klist = kvars = shortcutVars = ""
 		if(countNoTab>0 and self.useTabs):
 			if(len(coevars)!=0):
 				#define variables
@@ -5950,6 +5952,8 @@ class krome():
 					klist.append([k+" = "+v[1]+"\n",v[0]]) #this mess is to sort dict
 				klist = sorted(klist, key=lambda x: x[1])
 				klist = "".join([x[0] for x in klist])
+			if(len(sclist) != 0):
+				shortcutVars = "real*8::"+(", ".join([x.split("=")[0].strip() for x in sclist]))
 
 		#prepares the reaction modifiers
 		#tokenize to replace k(:) with coe_tab(:)
@@ -5987,6 +5991,7 @@ class krome():
 			row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(2.73d0)")
 			row = row.replace("#KROME_logTup", "ktab_logTup = log10(1d9)")
 			#row = row.replace("#KROME_logTup", "ktab_logTup = log10(min("+str(self.TmaxAuto)+",1d8))")
+			row = row.replace("#KROME_shortcut_variables",shortcutVars)
 			row = row.replace("#KROME_define_vars",kvars)
 			row = row.replace("#KROME_init_vars",klist)
 			row = row.replace("#KROME_noTabReactions",noTabReactions)
