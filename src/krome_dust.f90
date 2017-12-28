@@ -856,7 +856,8 @@ contains
     use krome_fit
     implicit none
 
-    call init_anytab2D("dust_table_cool.dat",dust_tab_ngas(:),&
+#IFKROME_dust_table_2D
+    call init_anytab2D("dust_table_cool.dat",dust_tab_ngas(:), &
          dust_tab_Tgas(:), dust_tab_cool(:,:), dust_mult_ngas, &
          dust_mult_Tgas)
     call init_anytab2D("dust_table_Tdust.dat",dust_tab_ngas(:), &
@@ -865,6 +866,22 @@ contains
     call init_anytab2D("dust_table_H2.dat",dust_tab_ngas(:), &
          dust_tab_Tgas(:), dust_tab_H2(:,:), dust_mult_ngas, &
          dust_mult_Tgas)
+#ENDIFKROME
+
+#IFKROME_dust_table_3D
+    call init_anytab3D("dust_table_cool.dat",dust_tab_ngas(:), &
+         dust_tab_Tgas(:), dust_tab_AvVariable(:), &
+         dust_tab_cool(:,:,:), dust_mult_ngas, &
+         dust_mult_Tgas, dust_mult_AvVariable)
+    call init_anytab3D("dust_table_Tdust.dat",dust_tab_ngas(:), &
+         dust_tab_Tgas(:), dust_tab_AvVariable(:), &
+         dust_tab_Tdust(:,:,:), dust_mult_ngas, &
+         dust_mult_Tgas, dust_mult_AvVariable)
+    call init_anytab3D("dust_table_H2.dat",dust_tab_ngas(:), &
+         dust_tab_Tgas(:), dust_tab_AvVariable(:), &
+         dust_tab_H2(:,:,:), dust_mult_ngas, &
+         dust_mult_Tgas, dust_mult_AvVariable)
+#ENDIFKROME
 
   end subroutine init_dust_tabs
 

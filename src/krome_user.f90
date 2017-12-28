@@ -175,6 +175,20 @@ contains
 #ENDIFKROME
 
 #IFKROME_useTabsTdust
+
+  !************************************
+  ! when using 3D variables set the value of the 3rd dimension
+  ! (usually Av). The other 2 dimensions are ntot and Tgas
+  ! (take from internal KROME)
+  subroutine krome_set_dust_table_3D_variable(variable_value)
+    use krome_commons
+    implicit none
+    real*8,intent(in)::variable_value
+
+    dust_table_AvVariable_log = log10(variable_value)
+
+  end subroutine krome_set_dust_table_3D_variable
+
   !*****************************
   !get averaged Tdust from tables, with x(:) species array
   ! of size krome_nmols, and Tgas the gas temperature
@@ -187,9 +201,18 @@ contains
     real*8 :: ntot
 
     ntot = sum(x(1:nmols))
+#IFKROME_dust_table_2D
     krome_get_Tdust = 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
          dust_tab_Tdust(:,:), dust_mult_ngas, dust_mult_Tgas, &
          log10(ntot), log10(Tgas))
+#ENDIFKROME_dust_table_2D
+
+#IFKROME_dust_table_3D
+    krome_get_Tdust = 1d1**fit_anytab3D(dust_tab_ngas(:), dust_tab_Tgas(:), &
+         dust_tab_AvVariable(:), dust_tab_Tdust(:,:,:), dust_mult_ngas, &
+         dust_mult_Tgas, dust_mult_AvVariable, &
+         log10(ntot), log10(Tgas), dust_table_AvVariable_log)
+#ENDIFKROME_dust_table_3D
 
   end function krome_get_Tdust
 

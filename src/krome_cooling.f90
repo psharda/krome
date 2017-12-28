@@ -712,9 +712,19 @@
       logn = log10(ntot)
       logt = log10(Tgas)
       !cooling fit from tables
+#IFKROME_dust_table_2D
       coolFit = fit_anytab2D_linlog(dust_tab_ngas(:), dust_tab_Tgas(:), &
            dust_tab_cool(:,:), dust_mult_ngas, dust_mult_Tgas, &
            logn, logt)
+#ENDIFKROME_dust_table_2D
+
+#IFKROME_dust_table_3D
+      coolFit = fit_anytab3D_linlinlog(dust_tab_ngas(:), dust_tab_Tgas(:), &
+           dust_tab_AvVariable(:), &
+           dust_tab_cool(:,:,:), dust_mult_ngas, dust_mult_Tgas, &
+           dust_mult_AvVariable, &
+           logn, logt, dust_table_AvVariable_log)
+#ENDIFKROME_dust_table_3D
 
       cooling_dust = get_mu(n) * coolFit * ntot * ntot
 
