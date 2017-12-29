@@ -1,0 +1,29 @@
+################
+
+reset
+set logscale
+set autoscale
+set format x "%L"
+set format y "%L"
+set format y2 "%L"
+
+set ylabel "log(T/K)"
+set xlabel "log(n/cm-3)"
+set y2label "n/ntot"
+
+set key L rev outside
+set grid
+set y2tics
+set ytics nomirror
+
+nkrome = 3
+load 'species.gps'
+
+plot './fort.22' w l t "Tgas/K" axes x1y1 lw 2, \
+	'' u 1:3 w l t "Tdust/K" axes x1y1 lw 2,\
+	'' u 1:krome_idx_CO w l axes x1y2 t "CO_gas",\
+	'' u 1:(column(krome_idx_CO_total)-column(krome_idx_CO)) w l axes x1y2 t "CO_ice",\
+	'' u 1:krome_idx_H2O w l axes x1y2 t "H2O_gas",\
+	'' u 1:(column(krome_idx_H2O_total)-column(krome_idx_H2O)) w l axes x1y2 t "H2O_ice" lc 0,\
+
+

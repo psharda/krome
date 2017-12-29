@@ -1,6 +1,83 @@
 module krome_fit
 contains
 
+  !*****************************
+  subroutine init_anytab3D(filename,x,y,z,f,xmul,ymul,zmul)
+    use krome_commons
+    implicit none
+    character(len=*),intent(in)::filename
+    character(len=60)::row_string
+    real*8,intent(out)::x(:),y(:),z(:),f(:,:,:),xmul,ymul,zmul
+    real*8::rout(4)
+    integer::i,j,k,ios,unit
+
+    !check the size of the X input array
+    if(size(x).ne.size(f,1)) then
+       print *,"ERROR: in init_anytab3D x size differs from f(x,y,z)"
+       stop
+    end if
+
+    !check the size of the Y input array
+    if(size(y).ne.size(f,2)) then
+       print *,"ERROR: in init_anytab3D y size differs from f(x,y,z)"
+       stop
+    end if
+
+    !check the size of the Z input array
+    if(size(z).ne.size(f,3)) then
+       print *,"ERROR: in init_anytab3D z size differs from f(x,y,z)"
+       stop
+    end if
+
+    !open file and check if it exists
+    open(newunit=unit,file=trim(filename),status="old",iostat=ios)
+    if(ios.ne.0) then
+       print *,"ERROR: in init_anytab3D file ",trim(filename)," not found!"
+       stop
+    end if
+
+    !skip the comments and the first line and the sizes of the data
+    ! which are already known from the pre-processing
+    do
+       read(unit,'(a)') row_string
+       if(row_string(1:1)/="#") exit
+    end do
+
+    !check if first line is OK
+    if(scan(row_string,",")==0) then
+       print *,"ERROR: file "//filename//" should"
+       print *," contain the number of grid points"
+       print *," per dimension in the format"
+       print *,"  XX, YY, ZZ"
+       print *,row_string
+       stop
+    end if
+
+    !loop to read file (3rd dimension of f() is
+    ! first in the tables. i.e. tables are z,x,y,
+    ! while f() is x,y,z
+    do i=1,size(z)
+       do j=1,size(x)
+          do k=1,size(y)
+             read(unit,*,iostat=ios) rout(:)
+             y(k) = rout(3)
+             f(j,k,i) = rout(4)
+          end do
+          x(j) = rout(2)
+          read(unit,*,iostat=ios) !skip blanks
+       end do
+       z(i) = rout(1)
+       read(unit,*,iostat=ios) !skip blanks
+       if(ios.ne.0) exit
+    end do
+    close(unit)
+
+    xmul = 1d0/(x(2)-x(1))
+    ymul = 1d0/(y(2)-y(1))
+    zmul = 1d0/(z(2)-z(1))
+
+  end subroutine init_anytab3D
+
   !********************************************
   !load 2d tables from filename
   subroutine init_anytab2D(filename,x,y,z,xmul,ymul)
@@ -97,9 +174,32 @@ contains
 
   end subroutine test_anytab2D
 
+  !*****************************
+  function fit_anytab3D(x,y,z,f,xmul,ymul,zmul,xx,yy,zz)
+    implicit none
+    real*8,intent(in)::x(:),y(:),z(:),f(:,:,:),xmul,ymul,zmul
+    real*8,intent(in)::xx,yy,zz
+    real*8::fleft(size(x),size(y)), fright(size(x),size(y))
+    real*8::fit_anytab3D,fl,fr
+    integer::ipos,i1,i2
+
+    ipos = (zz-z(1)) * zmul + 1
+    i1 = min(max(ipos,1), size(z)-1)
+    i2 = i1 + 1
+    fleft(:,:) = f(:,:,i1)
+    fright(:,:) = f(:,:,i2)
+
+    fl = fit_anytab2D(x(:), y(:), fleft(:,:), xmul, ymul, xx, yy)
+    fr = fit_anytab2D(x(:), y(:), fright(:,:), xmul, ymul, xx, yy)
+
+    fit_anytab3D = (zz-z(i1))*zmul*(fr-fl)+fl
+
+  end function fit_anytab3D
+
   !******************************
   !return 2d fit at xx,yy
   function fit_anytab2D(x,y,z,xmul,ymul,xx,yy)
+    implicit none
     real*8::fit_anytab2D
     real*8,intent(in)::x(:),y(:),z(:,:),xmul,ymul,xx,yy
     real*8::zleft(size(x)),zright(size(x)),zl,zr
@@ -134,6 +234,28 @@ contains
     fit_anytab1D = p * (z(i2) - z(i1)) + z(i1)
 
   end function fit_anytab1D
+
+  !*****************************
+  function fit_anytab3D_linlinlog(x,y,z,f,xmul,ymul,zmul,xx,yy,zz)
+    implicit none
+    real*8,intent(in)::x(:),y(:),z(:),f(:,:,:),xmul,ymul,zmul
+    real*8,intent(in)::xx,yy,zz
+    real*8::fleft(size(x),size(y)), fright(size(x),size(y))
+    real*8::fit_anytab3D_linlinlog,fl,fr
+    integer::ipos,i1,i2
+
+    ipos = (zz-z(1)) * zmul + 1
+    i1 = min(max(ipos,1), size(z)-1)
+    i2 = i1 + 1
+    fleft(:,:) = f(:,:,i1)
+    fright(:,:) = f(:,:,i2)
+
+    fl = fit_anytab2D_linlog(x(:), y(:), fleft(:,:), xmul, ymul, xx, yy)
+    fr = fit_anytab2D_linlog(x(:), y(:), fright(:,:), xmul, ymul, xx, yy)
+
+    fit_anytab3D_linlinlog = (zz-z(i1))*zmul*(fr-fl)+fl
+
+  end function fit_anytab3D_linlinlog
 
   !***************************
   function fit_anytab2D_linlog(x,y,z,xmul,ymul,xx,yy)

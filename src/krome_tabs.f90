@@ -138,6 +138,7 @@ contains
     implicit none
     integer::idx,j
     real*8::Tgas, coe_tab(nrea),n(nspec),small
+#KROME_shortcut_variables
 #KROME_define_vars
 
     Tgas = max(n(idx_Tgas),phys_Tcmb)

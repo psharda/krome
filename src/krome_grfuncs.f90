@@ -11,6 +11,7 @@ contains
   function get_table_Tdust(n) result(Tdust)
     use krome_commons
     use krome_fit
+    implicit none
     real*8,intent(in)::n(nspec)
     real*8::ntot,Tdust,Tgas
 
@@ -25,11 +26,22 @@ contains
     !zero density returns default
     if(ntot==0d0) return
 
+#IFKROME_dust_table_2D
     !get dust temperature from table, K
     Tdust = 1d1**fit_anytab2D(dust_tab_ngas(:), &
          dust_tab_Tgas(:), dust_tab_Tdust(:,:), dust_mult_ngas, &
          dust_mult_Tgas, &
          log10(ntot), log10(Tgas))
+#ENDIFKROME
+
+#IFKROME_dust_table_3D
+    !get dust temperature from table, K
+    Tdust = 1d1**fit_anytab3D(dust_tab_ngas(:), &
+         dust_tab_Tgas(:), dust_tab_AvVariable(:), &
+         dust_tab_Tdust(:,:,:), dust_mult_ngas, &
+         dust_mult_Tgas, dust_mult_AvVariable, &
+         log10(ntot), log10(Tgas), dust_table_AvVariable_log)
+#ENDIFKROME
 
   end function get_table_Tdust
 

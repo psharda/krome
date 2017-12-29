@@ -608,8 +608,8 @@
       real*8::cool,tauCIE,logcool
 
       cooling_CIE = 0d0
-      !under 1e-12 1/cm3 cooling is zero
-      if(n(idx_H2)<1d-12) return
+      !under 1e12 1/cm3 cooling is zero
+      if(n(idx_H2)<1d12) return
 
       Tgas = inTgas
       !temperature limit
@@ -648,7 +648,7 @@
       end if
 
       !opacity according to RA04
-      tauCIE = (n(idx_H2) * 1.4285714e-16)**2.8 !note: 1/7e15 = 1.4285714e-16
+      tauCIE = (n(idx_H2) * 1.4285714d-16)**2.8 !note: 1/7d15 = 1.4285714d-16
       cool = p_mass * 1d1**logcool !erg*cm3/s
 
       cooling_CIE = cool * min(1.d0, (1.d0-exp(-tauCIE))/tauCIE) &
@@ -712,9 +712,19 @@
       logn = log10(ntot)
       logt = log10(Tgas)
       !cooling fit from tables
+#IFKROME_dust_table_2D
       coolFit = fit_anytab2D_linlog(dust_tab_ngas(:), dust_tab_Tgas(:), &
            dust_tab_cool(:,:), dust_mult_ngas, dust_mult_Tgas, &
            logn, logt)
+#ENDIFKROME_dust_table_2D
+
+#IFKROME_dust_table_3D
+      coolFit = fit_anytab3D_linlinlog(dust_tab_ngas(:), dust_tab_Tgas(:), &
+           dust_tab_AvVariable(:), &
+           dust_tab_cool(:,:,:), dust_mult_ngas, dust_mult_Tgas, &
+           dust_mult_AvVariable, &
+           logn, logt, dust_table_AvVariable_log)
+#ENDIFKROME_dust_table_3D
 
       cooling_dust = get_mu(n) * coolFit * ntot * ntot
 

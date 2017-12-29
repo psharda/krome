@@ -52,7 +52,7 @@ class krome():
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = False
 	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
         useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
-	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = False
+	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = False
@@ -69,6 +69,7 @@ class krome():
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
 	humanFlux = True
 	dustTableMode = "" #type of dust tables required
+	dustTableDimension = "2D"
 	typeGamma = "DEFAULT"
 	test_name = "default"
 	test_status = "OK"
@@ -1367,12 +1368,17 @@ class krome():
 			tabPath = "data/dust_tables/"
 			tabModes = [x for x in os.listdir(tabPath) if(x.endswith("_cool.dat"))]
 			tabModes = [x.replace("dust_table_","").replace("_cool.dat","") for x in tabModes]
-			tabOpts = ["H2","COOL"] #options
+			tabOpts = ["H2","COOL","3D"] #options
 			allTabs = tabOpts + tabModes #all possible options
 
 			if(self.useDust): die("ERROR: -dustTabs and -dust options are not compatible!")
 			dustTabs = [x.strip() for x in args.dustTabs.split(",")]
 			modeFound = optFound = False
+
+			#use additional dimension for tables (Av)
+			if("3D" in dustTabs):
+				self.dustTableDimension = "3D"
+
 			for dTab in dustTabs:
 				if(not(dTab in allTabs)):
 					print "ERROR: option (or mode) "+dTab+" in -dustTabs unknown!"
@@ -1398,6 +1404,7 @@ class krome():
 
 			if("H2" in dustTabs): self.dustTabsH2 = True
 			if("COOL" in dustTabs): self.dustTabsCool = True
+			if("Av" in dustTabs): self.dustTabsAvVariable = True
 			self.useDustTabs = True
 			print "Reading option -dustTabs (options="+(",".join(dustTabs))+")"
 
@@ -3417,16 +3424,17 @@ class krome():
 			if(srow == "#KROME_species"):
 				# write out KROME species
 				allBasics = []
-				for x in self.specs:
-					if(x.is_surface):
-						xbasic = ("_".join(x.fidx.split("_")[:-1]))
-						xname = ("_".join(x.name.split("_")[:-1]))
+				for sp in self.specs:
+					if(sp.is_surface and self.hasSurfaceReactions):
+						xbasic = ("_".join(sp.fidx.split("_")[:-1]))
+						xname = ("_".join(sp.name.split("_")[:-1]))
 						if(not(xbasic in allBasics)):
-							fout.write("extern const int krome_"+xbasic + "; //"+mol.name+"\n")
-							foutc.write("const int krome_"+xbasic + " = " + str(x.idx-1) +"; //"+mol.name+"\n")
-						allBasics.append(xbasic)
-					fout.write("extern const int krome_"+x.fidx + "; // "+x.name+"\n")
-					foutc.write("const int krome_"+x.fidx + " = " + str(x.idx-1) +"; // "+x.name+"\n")
+							fout.write("extern const int krome_"+xbasic + "; //"+xname+"\n")
+							foutc.write("const int krome_"+xbasic + " = " + str(sp.idx-1) +"; //"+xname+"\n")
+							allBasics.append(xbasic)
+
+					fout.write("extern const int krome_"+sp.fidx + "; // "+sp.name+"\n")
+					foutc.write("const int krome_"+sp.fidx + " = " + str(sp.idx-1) +"; // "+sp.name+"\n")
 
 				# write out the names of the species
 				fout.write("extern const char* krome_names[];\n")
@@ -3585,14 +3593,15 @@ class krome():
 			if(srow == "#KROME_species"):
 				# write out KROME species
 				allBasics = []
-				for x in self.specs:
-					if(x.is_surface):
-						xbasic = ("_".join(x.fidx.split("_")[:-1]))
-						xname = ("_".join(x.name.split("_")[:-1]))
+				for sp in self.specs:
+					if(sp.is_surface and self.hasSurfaceReactions):
+						xbasic = ("_".join(sp.fidx.split("_")[:-1]))
+						xname = ("_".join(sp.name.split("_")[:-1]))
 						if(not(xbasic in allBasics)):
-							fout.write("\t\tself.krome_"+xbasic + " = " + str(x.idx-1) +" # "+mol.name+"\n")
-						allBasics.append(xbasic)
-					fout.write("\t\tself.krome_"+x.fidx + " = " + str(x.idx-1) +" # "+x.name+"\n")
+							fout.write("\t\tself.krome_"+xbasic + " = " + str(sp.idx-1) +" # "+xname+"\n")
+							allBasics.append(xbasic)
+
+					fout.write("\t\tself.krome_"+sp.fidx + " = " + str(sp.idx-1) +" # "+sp.name+"\n")
 
 				# write out the names of the species
 				fout.write("\t\tself.krome_names = (\n")
@@ -4699,7 +4708,8 @@ class krome():
 
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
-			if(srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT) and self.useSurface)): skip = True
+			if(srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT) \
+				and self.useSurface)): skip = True
 			if(srow == "#IFKROME_useOmukaiOpacity" and self.H2opacity!="OMUKAI"): skip = True
 			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
 			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
@@ -4707,6 +4717,8 @@ class krome():
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
 			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
 			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
+			if(srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D")): skip = True
+			if(srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D")): skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -4983,6 +4995,9 @@ class krome():
 
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skip = True
 			if(srow == "#IFKROME_hasH2O" and not(hasH2O)): skip = True
+			if(srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D")): skip = True
+			if(srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D")): skip = True
+
 		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
@@ -5925,7 +5940,7 @@ class krome():
 					storeOnceRates += rea.getRateF90(self,varname="rateEvaluateOnce")+"\n\n"
 
 		#if reactions that cannot be tabbed are found
-		klist = kvars = ""
+		klist = kvars = shortcutVars = ""
 		if(countNoTab>0 and self.useTabs):
 			if(len(coevars)!=0):
 				#define variables
@@ -5937,6 +5952,8 @@ class krome():
 					klist.append([k+" = "+v[1]+"\n",v[0]]) #this mess is to sort dict
 				klist = sorted(klist, key=lambda x: x[1])
 				klist = "".join([x[0] for x in klist])
+			if(len(sclist) != 0):
+				shortcutVars = "real*8::"+(", ".join([x.split("=")[0].strip() for x in sclist]))
 
 		#prepares the reaction modifiers
 		#tokenize to replace k(:) with coe_tab(:)
@@ -5974,6 +5991,7 @@ class krome():
 			row = row.replace("#KROME_logTlow", "ktab_logTlow = log10(2.73d0)")
 			row = row.replace("#KROME_logTup", "ktab_logTup = log10(1d9)")
 			#row = row.replace("#KROME_logTup", "ktab_logTup = log10(min("+str(self.TmaxAuto)+",1d8))")
+			row = row.replace("#KROME_shortcut_variables",shortcutVars)
 			row = row.replace("#KROME_define_vars",kvars)
 			row = row.replace("#KROME_init_vars",klist)
 			row = row.replace("#KROME_noTabReactions",noTabReactions)
@@ -5995,9 +6013,6 @@ class krome():
 		if(not(self.buildCompact)):
 			fout.close()
 		print "done!"
-
-
-
 
 	###############################
 	def makeDust(self):
@@ -6026,7 +6041,8 @@ class krome():
 			for dType in self.dustTypes:
 				itype += 1 #increase index
 				dustPartnerIdx += "krome_dust_partner_idx("+str(itype)+") = idx_"+dType+"\n"
-				dustGrainDensity += "krome_grain_rho("+str(itype)+") = "+format_double(dustBulkDensity[dType])+"\n"
+				dustGrainDensity += "krome_grain_rho("+str(itype)+") = " \
+					+ format_double(dustBulkDensity[dType])+"\n"
 				i1mult = str(itype-1)+"*nd+1"
 				i2mult = str(itype)+"*nd"
 				if(itype==1):
@@ -6034,9 +6050,11 @@ class krome():
 					i2mult = "nd"
 				if(itype==2):
 					i1mult = "nd+1"
-				dustEvaporationTemperature += "krome_dust_Tbind("+i1mult+":"+i2mult+") = "+format_double(dustTEvap[dType])+"\n"
+				dustEvaporationTemperature += "krome_dust_Tbind("+i1mult+":"+i2mult+") = " \
+					+ format_double(dustTEvap[dType])+"\n"
 				dustKeyFraction += "keyFrac("+str(itype)+") = 1d1**("+zsun[dustKey[dType]]+")\n"
-				if(useDustT or usedTdust): dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\","+str(itype)+")\n" #,dust_opt_Qabs_"+dType
+				if(useDustT or usedTdust): dustQabs += "call dust_load_Qabs(\"opt"+dType+".dat\"," \
+					+str(itype)+")\n" #,dust_opt_Qabs_"+dType
 			if(useDustT or usedTdust): dustOptInt += "call dust_init_intBB()"
 		if(not(useDustEvol)): dustPartnerIdx = ""
 
@@ -6044,6 +6062,8 @@ class krome():
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
+			if(srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D")): skip = True
+			if(srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D")): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(srow == "#IFKROME_useChemisorption" and not(self.useChemisorption)): skipChemisorption = True
@@ -6173,7 +6193,7 @@ class krome():
 			#Z: atomic number, ion: ionization degree (e.g. HII=1), energy_eV: ioniz potential, n0: principal quantum number
 			fbdata.append({"Z":int(arow[0]), "ion":int(arow[1]), "energy_eV":float(arow[5]), "n0":int(arow[6])})
 
-		skip = skip_nleq = skip_dTdust = skipPhotoDust = False
+		skip = skip_nleq = skip_dTdust = skipPhotoDust = skip_tab_2D = skip_tab_3D = False
 		skip_speciesH2 = False
 		useCoolingZ = self.useCoolingZ
 		#loop on source to replace pragmas
@@ -6213,7 +6233,8 @@ class krome():
 			if(srow == "#IFKROME_hasHep" and not("HE+" in speciesNames)): skip_speciesH2 = True
 			if(srow == "#IFKROME_hasHepp" and not("HE++" in speciesNames)): skip_speciesH2 = True
 			if(srow == "#IFKROME_hasElectrons" and not("E" in speciesNames)): skip_speciesH2 = True
-
+			if(srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D")): skip_tab_2D = True
+			if(srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D")): skip_tab_3D = True
 
 			if(srow == "#ENDIFKROME_usedTdust"): skip_dTdust = False
 			if(srow == "#ENDIFKROME_use_NLEQ"): skip_nleq = False
@@ -6224,10 +6245,12 @@ class krome():
 			if(srow == "#ENDIFKROME_hasHep"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME_hasHepp"): skip_speciesH2 = False
 			if(srow == "#ENDIFKROME_hasElectrons"): skip_speciesH2 = False
+			if(srow == "#ENDIFKROME_dust_table_2D"): skip_tab_2D = False
+			if(srow == "#ENDIFKROME_dust_table_3D"): skip_tab_3D = False
 			if(srow == "#ENDIFKROME"): skip = False
 
-			if(skip or skip_nleq or skip_dTdust or skip_speciesH2 or skipPhotoDust): continue
-
+			if(skip or skip_nleq or skip_dTdust or skip_speciesH2 or \
+				skipPhotoDust or skip_tab_2D or skip_tab_3D): continue
 
 			#replace the small value for rates according to the maximum number of products
 			if("#KROME_small" in srow):
@@ -6731,9 +6754,18 @@ class krome():
 		#H2 on dust from tables
 		if(self.dustTabsH2):
 			dustH2 = "ntot = sum(n(1:nmols))\n"
-			dustH2 += "nH2dust = get_mu(n(:)) * n(idx_H) * 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &\n\
-				dust_tab_H2(:,:), dust_mult_ngas, dust_mult_Tgas, &\n\
-				log10(ntot), log10(Tgas)) * ntot"
+			if(self.dustTableDimension=="2D"):
+				dustH2 += "nH2dust = get_mu(n(:)) * n(idx_H) * 1d1**fit_anytab2D(dust_tab_ngas(:),\
+					dust_tab_Tgas(:), &\n\
+					dust_tab_H2(:,:), dust_mult_ngas, dust_mult_Tgas, &\n\
+					log10(ntot), log10(Tgas)) * ntot"
+			elif(self.dustTableDimension=="3D"):
+				dustH2 += "nH2dust = get_mu(n(:)) * n(idx_H) * 1d1**fit_anytab3D(dust_tab_ngas(:),\
+					dust_tab_Tgas(:), dust_tab_AvVariable(:), &\n\
+					dust_tab_H2(:,:,:), dust_mult_ngas, dust_mult_Tgas, dust_mult_AvVariable, &\n\
+					log10(ntot), log10(Tgas), dust_table_AvVariable_log) * ntot"
+			else:
+				sys.exit("ERROR: table dimension unknown!")
 
 
 		#replace pragma with built strings
@@ -7085,7 +7117,7 @@ class krome():
 		#non-negative index means H2 photodissociation reaction is set
 		useH2Photodissociation = (self.indexH2photodissociation>-1)
 
-		skip = skipDustOpacity = skipBindC = skipH2pd = False
+		skip = skipDustOpacity = skipBindC = skipH2pd = skip_tab_2D = skip_tab_3D = False
 		#loop on source to pre-process pragmas
 		for row in fh:
 
@@ -7105,8 +7137,13 @@ class krome():
 			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 			if(srow == "#IFKROME_dust_opacity" and not(self.useDust)): skipDustOpacity = True
 			if(srow == "#IFKROME_useH2pd" and not(useH2Photodissociation)): skipH2pd = True
+			if(srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D")): skip_tab_2D = True
+			if(srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D")): skip_tab_3D = True
+
 
 			if(srow == "#ENDIFKROME"): skip = False
+			if(srow == "#ENDIFKROME_dust_table_2D"): skip_tab_2D = False
+			if(srow == "#ENDIFKROME_dust_table_3D"): skip_tab_3D = False
 			if(srow == "#ENDIFKROME_dust_opacity"): skipDustOpacity = False
 			if(srow == "#ENDIFKROME_useH2pd"): skipH2pd = False
 
@@ -7119,6 +7156,7 @@ class krome():
 			if(skipDustOpacity): continue
 			if(skipBindC): continue
 			if(skipH2pd): continue
+			if(skip_tab_2D or skip_tab_3D): continue
 
 			row = row.replace("#KROME_single",self.KindSingle)
 			row = row.replace("#KROME_double_value_optional",self.KindDoubleValueOptional)
@@ -7850,17 +7888,33 @@ class krome():
 
 		#copy H2 dust tables
 		if(self.dustTabsH2):
-			dtableFname = "dust_table_"+self.dustTableMode+"_H2.dat"
+			if(self.dustTableDimension=="2D"):
+				dtableFname = "dust_table_"+self.dustTableMode+"_H2.dat"
+			elif(self.dustTableDimension=="3D"):
+				dtableFname = "dust_table_"+self.dustTableMode+"_H2_3D.dat"
+			else:
+				sys.exit("ERROR: table dimension unknown!")
 			shutil.copyfile("data/dust_tables/"+dtableFname, buildFolder+"dust_table_H2.dat")
 
 		#copy cool dust tables
 		if(self.dustTabsCool):
-			dtableFname = "dust_table_"+self.dustTableMode+"_cool.dat"
+			if(self.dustTableDimension=="2D"):
+				dtableFname = "dust_table_"+self.dustTableMode+"_cool.dat"
+			elif(self.dustTableDimension=="3D"):
+				dtableFname = "dust_table_"+self.dustTableMode+"_cool_3D.dat"
+			else:
+				sys.exit("ERROR: table dimension unknown!")
 			shutil.copyfile("data/dust_tables/"+dtableFname, buildFolder+"dust_table_cool.dat")
 
 		#copy averaged Tdust dust tables
 		if(self.dustTabsH2 and self.dustTabsCool):
-			dtableFname = "dust_table_"+self.dustTableMode+"_Tdust.dat"
+			if(self.dustTableDimension=="2D"):
+				dtableFname = "dust_table_"+self.dustTableMode+"_Tdust.dat"
+			elif(self.dustTableDimension=="3D"):
+				dtableFname = "dust_table_"+self.dustTableMode+"_Tdust_3D.dat"
+			else:
+				sys.exit("ERROR: table dimension unknown!")
+
 			shutil.copyfile("data/dust_tables/"+dtableFname, buildFolder+"dust_table_Tdust.dat")
 
 
