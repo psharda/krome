@@ -225,6 +225,15 @@ def getShortcutsLatex():
 	return shortcut
 
 #********************
+#check if variable is already a temperature shortcut
+def isTemperatureShortcut(var):
+	shortcuts = getShortcutsLatex()
+	if var in [item[0] for item in shortcuts]:
+		return True
+	else:
+		return False
+
+#********************
 #Generate parenthesized contents in string as pairs (level, contents)
 def parentheticContents(string):
 	stack = []

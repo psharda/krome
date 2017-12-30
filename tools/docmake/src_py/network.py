@@ -262,7 +262,9 @@ class network:
 			if(srow.startswith("@var:")):
 				(variable,expression) = [x.strip() for x in srow.replace("@var:","").split("=")]
 				shortcuts[variable] = expression
-				shortcutsList.append((variable,expression))
+				#check if not already in temperature shortcuts
+				if not(utils.isTemperatureShortcut(variable)):
+					shortcutsList.append((variable,expression))
 
 			if(srow.lower().startswith("@cr_start") or srow.lower().startswith("@cr_begin")):
 				inBlockCR = True
