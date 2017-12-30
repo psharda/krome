@@ -186,6 +186,14 @@ def isNumber(arg):
 		return False
 
 #********************
+#character to int
+def char2int(arg):
+	if isNumber(arg):
+		return int(float(arg))
+	else:
+		return arg
+
+#********************
 def getShortcuts():
 	shortcut = dict()
 	fileName = "shortcuts.dat"
@@ -200,3 +208,50 @@ def getShortcuts():
 		shortcut[variable] = expression
 	return shortcut
 
+#********************
+#get shortcuts of temperature that can be used in network
+def getShortcutsLatex():
+	shortcut = []
+	fileName = "temperatureShortcuts.dat"
+        absPath = os.path.join(os.path.dirname(__file__), "..", fileName)
+        absPath = os.path.abspath(absPath)
+	fh = open(absPath,"rb")
+	for row in fh:
+		srow = row.strip()
+		if(srow==""): continue
+		if(srow.startswith("#")): continue
+		(variable,expression) = [x.strip() for x in srow.split("!")[0].split("=")]
+		shortcut.append((variable,expression))
+	return shortcut
+
+#********************
+#Generate parenthesized contents in string as pairs (level, contents)
+def parentheticContents(string):
+	stack = []
+	for i, c in enumerate(string):
+	    if c == '{':
+	        stack.append(i)
+	    elif c == '}' and stack:
+	        start = stack.pop()
+	        yield (len(stack), string[start + 1: i])
+
+#********************
+#get content in parentses
+def getParentheticContents(string):
+	return list(parentheticContents(string))
+
+#********************
+#simplify KROME limits
+def simplifyLimits(name):
+	if name:
+		name = name.replace(".LE.","<=").replace(".GE.",">=")
+		name = name.replace(".LT.","<").replace(".GT.",">")
+	return name
+
+#********************
+#limits to LaTeX format
+def limits2latex(name):
+	if name:
+		name = name.replace("<=", " $\leqslant$ ").replace(">="," $\geqslant$ ")
+		name = name.replace("<","$ < $").replace(">"," $ > $ ")
+	return name
