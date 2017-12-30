@@ -170,9 +170,12 @@ class network:
 	#********************
 	#make a LaTeX table of the network
 	def network2latex(self, networkLatex="NetworkLatex.log"):
-
+		#NOTE: Make sure the network input file has incrementing reaction indices.
+		# If double indices exist, the LaTeX table will be incorrect.
+		
 		#list with all temperature shortcuts element = (var, replaceWith)
 		shortcutsTemperature = utils.getShortcutsLatex()
+		cntMergedReactions = 0
 
 		with open(networkLatex, "w") as fileOutput:
 			#dump header of the file
@@ -181,11 +184,17 @@ class network:
 			for myReaction in self.reactions:
 				#list with all variable shortcuts (excl. temperature ones)
 				shortcutsVariables = myReaction.shortcuts
-				latexColums, message = myReaction.reaction2latex(shortcutsTemperature, shortcutsVariables)
-				#print warning message
-				if message:
-					fileOutput.write(message + "\n")
-				self.dumpLatexTable(latexColums, fileOutput)
+
+				for cnt in range(len(myReaction.rate)):
+					print cnt
+					latexColums, message = myReaction.reaction2latex(shortcutsTemperature,
+											shortcutsVariables, cntMergedReactions, cnt)
+					if cnt > 0:
+						cntMergedReactions += 1
+					#print warning message
+					if message:
+						fileOutput.write(message + "\n")
+					self.dumpLatexTable(latexColums, fileOutput)
 
 	#****************
 	#dump colums in LateX table format

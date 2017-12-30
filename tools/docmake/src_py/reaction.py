@@ -1023,66 +1023,72 @@ class reaction:
 
 	#********************
 	#make a LaTeX format of reaction
-	def reaction2latex(self, temperatureShortcuts, variableShortcuts):
+	def reaction2latex(self, temperatureShortcuts, variableShortcuts,
+						cntMergedReactions, idxMerged):
 		#latex format uses \usepackage{chemformula} in LaTeX
 		#e.g. \ch{H2 + H -> H + H + H}
 
-		#LaTeX index
-		idxTex = str(self.index)
+		#index of unique reactions
+		idxUniqueReaction = str(self.index - cntMergedReactions)
 
-		#latex reaction
-		reactionTex = "\\ch{"
-		#loop over reactants
-		for r in self.reactants:
-			spec = r.name
-			if spec == "E":
-				spec = "e-"
-			#remove CR as species in LaTeX format
-			#this can be changed if the user prefers otherwise
-			if spec == "CR":
-				continue
+		if idxMerged == 0:
+			#LaTeX index
+			idxTex = idxUniqueReaction
 
-			reactionTex += spec + " + "
-		reactionTex = reactionTex.strip(" + ")
+			#latex reaction
+			reactionTex = "\\ch{"
+			#loop over reactants
+			for r in self.reactants:
+				spec = r.name
+				if spec == "E":
+					spec = "e-"
+				#remove CR as species in LaTeX format
+				#this can be changed if the user prefers otherwise
+				if spec == "CR":
+					continue
 
-		#if cosmic ray reaction, make LaTeX format
-		#e.g. \ch{H2 ->[CR] H + H}
-		if self.reactionType == "CR":
-			reactionTex += " ->[CR] "
-		else:
-			reactionTex += " -> "
-
-		#loop over products
-		for p in self.products:
-			spec = p.name
-			if spec == "E":
-				spec = "e-"
-			reactionTex += spec + " + "
-
-		#add photon to reaction with only one product
-		if len(self.products) == 1:
-			reactionTex += "\\gamma"
-		else:
+				reactionTex += spec + " + "
 			reactionTex = reactionTex.strip(" + ")
 
-		reactionTex += "}"
+			#if cosmic ray reaction, make LaTeX format
+			#e.g. \ch{H2 ->[CR] H + H}
+			if self.reactionType == "CR":
+				reactionTex += " ->[CR] "
+			else:
+				reactionTex += " -> "
 
+			#loop over products
+			for p in self.products:
+				spec = p.name
+				if spec == "E":
+					spec = "e-"
+				reactionTex += spec + " + "
+
+			#add photon to reaction with only one product
+			if len(self.products) == 1:
+				reactionTex += "\\gamma"
+			else:
+				reactionTex = reactionTex.strip(" + ")
+
+			reactionTex += "}"
+
+			#LaTeX reference
+			#can be changed by the user
+			refTex = "UMIST"
+
+		else:
+			idxTex = ""
+			reactionTex = ""
+			refTex = ""
 
 		#LaTeX rate
-		print self.index
-		rateTex, message = self.rate2latex(self.rate[0], temperatureShortcuts, variableShortcuts)
-		rateTex = "k$_{" + idxTex +"}$" + rateTex
+		rateTex, message = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts)
+		rateTex = "k$_{" + idxUniqueReaction +"}$" + rateTex
 
 		#LaTeX temperature limits
-		limitsTex = self.tempRange2latex()
-
-		#LaTeX reference
-		#can be changed by the user
-		refTex = "UMIST"
+		limitsTex = self.tempRange2latex(idxMerged)
 
 		return [idxTex, reactionTex, rateTex, limitsTex, refTex], message
-
-
 
 	#********************
 	#make a LaTeX format of reaction
@@ -1242,11 +1248,11 @@ class reaction:
 
 	#****************
 	#temperature rage to LateX format
-	def tempRange2latex(self):
+	def tempRange2latex(self, idxMerged):
 		import sympy as sp
 		#change limits to uniform format
-		low = utils.simplifyLimits(self.Tmin[0])
-		high = utils.simplifyLimits(self.Tmax[0])
+		low = utils.simplifyLimits(self.Tmin[idxMerged])
+		high = utils.simplifyLimits(self.Tmax[idxMerged])
 
 		#algorithm to account for differnt KROME formater of limits
 		# e.g. with or without ">", "<",
