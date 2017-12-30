@@ -1256,7 +1256,7 @@ class reaction:
 				low = " > " + low
 			else:
 				low = low.replace(">"," > ").replace("> ="," >= ")
-			if high == None:
+			if not(high):
 				lowhigh = " T " + low  + " K "
 			else:
 				low = low.split()[-1] + " " + "".join(low.split()[:-1])
@@ -1267,9 +1267,11 @@ class reaction:
 				high = " < " + high
 			else:
 				high = high.replace("<"," < ").replace("< ="," <= ")
+			if not(low):
+				low = ""
 			lowhigh = low  + " T " + high + " K "
 
-		if low == None and high == None:
+		if not(low) and not(high):
 			lowhigh = ""
 
 		#change limits symbols to latex format
