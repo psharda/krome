@@ -54,46 +54,6 @@ def indicesElemList(list,elem):
 	return indices
 
 #********************
-#sub and super script to LaTeX format
-def subSuper2latex(name):
-	#maks subcripts of numbers
-	for part in name:
-		if(isNumber(part)):
-			name = name.replace(part,"$_{"+part+"}$")
-
-	#make superscript of all ions
-	for sign in ["+","-"]:
-		if sign in name:
-			allSigns = name.count(sign)*sign
-			name = name.replace(allSigns,"$^{"+allSigns+"}$")
-	return name
-
-#********************
-#specials to LaTeX format
-def special2latex(name):
-	if name =="E": name = "e$^-$"
-	if name =="g": name = "$\\gamma$"
-	if "_c" in name: name = name.replace("_c","$_c$")
-	if "_dust" in name: name = name.replace("_dust","$_{dust}$")
-	return name
-
-#********************
-#limits to LaTeX format
-def limits2latex(name):
-	name = name.replace("<=", " $\leqslant$ ").replace(">="," $\geqslant$ ")
-	name = name.replace("<","$ < $").replace(">"," $ > $ ")
-	return name
-
-#********************
-#simplify KROME limits
-def limitsSimple(name):
-	name = name.replace(".LE.","<=").replace(".GE.",">=")
-	name = name.replace(".LT.","<").replace(".GT.",">")
-	name = name.replace("NONE","")
-	name = name.replace("d","e")
-	return name
-
-#********************
 #character to float
 def char2float(arg):
 	if isNumber(arg):
