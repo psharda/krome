@@ -17,17 +17,17 @@ class reaction:
 
 	#********************
 	#parse csv reaction file row (constructor)
-	def __init__(self,row,reactionFormat,atomSet,reactionType,speciesList):
+	def __init__(self,row,reactionFormat,atomSet,reactionType,speciesList,shortcuts=None):
 
 		if(reactionType=="KIDA"):
 			self.parseFormatKIDA(row,reactionFormat,atomSet,reactionType,speciesList)
 		elif(reactionType=="UMIST"):
 			self.parseFormatUMIST(row,reactionFormat,atomSet,reactionType,speciesList)
 		else:
-			self.parseFormatKROME(row,reactionFormat,atomSet,reactionType,speciesList)
+			self.parseFormatKROME(row,reactionFormat,atomSet,reactionType,speciesList,shortcuts)
 
 	#********************
-	def parseFormatKROME(self,row,reactionFormat,atomSet,reactionType,speciesList):
+	def parseFormatKROME(self,row,reactionFormat,atomSet,reactionType,speciesList,shortcuts=None):
 
 		if(not(reactionFormat.startswith("@format:"))):
 			sys.exit("ERROR: wrong format "+reactionFormat)
@@ -44,6 +44,7 @@ class reaction:
 		self.Tmin = [None]
 		self.Tmax = [None]
 		self.reactionType = reactionType
+		self.shortcuts = shortcuts
 
 		#loop on format parts (and parse species)
 		for i in range(len(splitFormat)):
@@ -1020,3 +1021,269 @@ class reaction:
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
 
+	#********************
+	#make a LaTeX format of reaction
+	def reaction2latex(self, temperatureShortcuts, variableShortcuts,
+						cntMergedReactions, idxMerged):
+		#latex format uses \usepackage{chemformula} in LaTeX
+		#e.g. \ch{H2 + H -> H + H + H}
+
+		#index of unique reactions
+		idxUniqueReaction = str(self.index - cntMergedReactions)
+
+		if idxMerged == 0:
+			#LaTeX index
+			idxTex = idxUniqueReaction
+
+			#latex reaction
+			reactionTex = "\\ch{"
+			#loop over reactants
+			for r in self.reactants:
+				spec = r.name
+				if spec == "E":
+					spec = "e-"
+				#remove CR as species in LaTeX format
+				#this can be changed if the user prefers otherwise
+				if spec == "CR":
+					continue
+
+				reactionTex += spec + " + "
+			reactionTex = reactionTex.strip(" + ")
+
+			#if cosmic ray reaction, make LaTeX format
+			#e.g. \ch{H2 ->[CR] H + H}
+			if self.reactionType == "CR":
+				reactionTex += " ->[CR] "
+			else:
+				reactionTex += " -> "
+
+			#loop over products
+			for p in self.products:
+				spec = p.name
+				if spec == "E":
+					spec = "e-"
+				reactionTex += spec + " + "
+
+			#add photon to reaction with only one product
+			if len(self.products) == 1:
+				reactionTex += "\\gamma"
+			else:
+				reactionTex = reactionTex.strip(" + ")
+
+			reactionTex += "}"
+
+			#LaTeX reference
+			#can be changed by the user
+			refTex = "UMIST"
+
+		else:
+			idxTex = ""
+			reactionTex = ""
+			refTex = ""
+
+		#LaTeX rate
+		rateTex, message = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts)
+		rateTex = "k$_{" + idxUniqueReaction +"}$" + rateTex
+
+		#LaTeX temperature limits
+		limitsTex = self.tempRange2latex(idxMerged)
+
+		return [idxTex, reactionTex, rateTex, limitsTex, refTex], message
+
+	#********************
+	#make a LaTeX format of reaction
+	def rate2latex(self, rate, temperatureShortcuts, variableShortcuts):
+		import re
+		import sympy as sp
+		maxRateLength = 100
+		message = "" #optional warning
+
+		#list of symbols you want to keep in the LaTeX format
+		Tsymbols = ["T","(T/300)", "T_{e}"]
+		T, T32, Te = sp.symbols(Tsymbols)
+		exp = sp.Symbol("exp")
+		ln = sp.Symbol("ln")
+		log = sp.Symbol("log")
+		sqrt = sp.Symbol("sqrt")
+
+		#put all variables with corresponding values in rate
+		if variableShortcuts:
+			#loop needs to be reversed order for variable dependencies
+			for var in reversed(variableShortcuts):
+				if var[0] in rate:
+					rate = rate.replace(var[0], var[1])
+
+		#replace shortcuts, loop needs to be reversed order for variable dependencies
+		#skip T32 and Te to keep as symbol
+		for tshort in reversed(temperatureShortcuts[2:]):
+			rate = rate.replace(tshort[0],tshort[1])
+
+		#make sympy friendly
+		rate = rate.replace("d","e")
+		rate = rate.replace("log", "ln")
+		rate = rate.replace("ln10", "log")
+
+		#transform to LaTeX format
+		#keep trying i
+		while True:
+			try:
+				rateTex = sp.latex(eval(rate))
+				break
+			#undefined variable will become a symbol
+			except (NameError,),err:
+				print "Name error in rate", err
+				varIssue = str(err).split("'")[1]
+				symb = varIssue + " = sp.Symbol(\""+varIssue+"\")"
+				exec(symb)
+
+			#special case rate	will be prited as it is
+			except (SyntaxError,),err:
+				print "Syntax Error in rate", err
+				return rate, message
+
+		##########################
+		#fix mistakes by sympy
+		#no 10^{} for short rates
+		for t in Tsymbols:
+			if t in rateTex:
+				break
+			else:
+				rateTex = rateTex.replace("e-","\\cdot 10^{-") + "}"
+				break
+
+		#it automatically makes a fraction out of negative exponents
+		stringFrac = r'\frac{1}{'
+		if stringFrac in rateTex:
+			for Tsym in Tsymbols:
+				rateTex = rateTex.replace(stringFrac + Tsym + "^{", "{"+Tsym+"^{-")
+			#change the order of the factors to match modified Arrhenius
+			#avoid chaging stuff in more complex rates
+			if len(rateTex) < maxRateLength:
+				rateTexSplit = re.split("\}\}",rateTex)
+				beta = rateTexSplit[0][1:]+"}" #beta containing factor
+				if "exp" in rateTexSplit[-1]:
+					alphaGamma = rateTexSplit[-1].split("\operatorname") #alpha and gamma factor
+					rateTex = alphaGamma[0] + beta + "\operatorname" + alphaGamma[1]
+				else:
+					rateTex = rateTexSplit[-1] + beta
+
+		#mistake: large fractions
+		#solution: to the power -1 (solution can be improved)
+		if rateTex.startswith(r"\frac"):
+			cnt = 0
+			pieces = []
+			#get content between parenteses for each level
+			parenticList = utils.getParentheticContents(rateTex)
+			#only get the first \frac{}{} parts
+			for part in parenticList:
+				if part[0]==0 and cnt<3:
+					pieces.append(part[1])
+					cnt = cnt +1
+
+			#replace \frac{a}{b} with a*b^{-1}
+			firstTerm = pieces[0]
+			secondTerm = pieces[1]
+
+			fracStringOriginal = r"\frac{"+firstTerm+"}{"+secondTerm+"}"
+
+			# Put parenteses around first term if composite term
+			if " + " not in firstTerm or " - " not in firstTerm:
+				fracStringReplace = firstTerm+"\left["+secondTerm+r"\right]^{-1}"
+			else:
+				fracStringReplace = "\left["+firstTerm+r"\right]\left["+secondTerm+r"\right]^{-1}"
+
+			rateTex = rateTex.replace(fracStringOriginal,fracStringReplace)
+
+		# remove unwanted zeros
+		rateTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", rateTex)
+		rateTex = re.sub(r"(\d+)\.(?=\D)", r"\1", rateTex)
+		rateTex = re.sub(r"0*(\d+\.*)", r"\1", rateTex)
+
+		#add LaTeX symbols
+		rateTex = " $= " + rateTex + "$"
+
+		#break long rates in multiple lines
+		if len(rateTex) > maxRateLength:
+			rateTex, message = self.breakRateTex(rateTex)
+
+
+		return rateTex, message
+
+	#****************
+	#break long rates and put in LateX table format
+	def breakRateTex(self, rate):
+		nextReplace = False
+
+		#get rid of unclosed "{}" on a line, when breaking equation
+		parList = utils.getParentheticContents(rate)
+		for part in parList:
+			#replace when level 0 and after exp
+			if part[0] == 0 and nextReplace:
+				rate = rate.replace("{"+part[1]+"}",part[1])
+				nextReplace = False
+			#only for exp
+			if part == (0,"exp"):
+				#next level 0 parenteses need to be replaced
+				nextReplace = True
+
+		rate = rate[1:-1]	#remove $ signs
+		rate = rate.replace(" + "," \\\\ \n& + " )
+		rate = rate.replace(" - "," \\\\ \n& - " )
+		rate = "$\\begin{aligned}[t] &" + rate + "\\end{aligned}$"
+		warning = ""
+
+
+		allLines = rate.split("&")
+		for line in allLines:
+			Nleft = line.count("\\left")
+			Nright = line.count("\\right")
+			if Nleft!=Nright:
+				warning = "%%*********************\n%% Manually add \\left. \\right. or close bracktes for needed lines."
+				# auto replace was not always succesful...
+				# newline = line.replace("\\right","\\left.\\right")
+				# rate = rate.replace(line,newline)
+
+		return rate, warning
+
+
+	#****************
+	#temperature rage to LateX format
+	def tempRange2latex(self, idxMerged):
+		import sympy as sp
+		#change limits to uniform format
+		low = utils.simplifyLimits(self.Tmin[idxMerged])
+		high = utils.simplifyLimits(self.Tmax[idxMerged])
+
+		#algorithm to account for differnt KROME formater of limits
+		# e.g. with or without ">", "<",
+		#put in correct order and switch symbols if needed
+		if low:
+			if ">" not in low:
+				low = " > " + low
+			else:
+				low = low.replace(">"," > ").replace("> ="," >= ")
+			if not(high):
+				lowhigh = " T " + low  + " K "
+			else:
+				low = low.split()[-1] + " " + "".join(low.split()[:-1])
+				low = low.replace(">","<")
+
+		if high:
+			if "<" not in high:
+				high = " < " + high
+			else:
+				high = high.replace("<"," < ").replace("< ="," <= ")
+			if not(low):
+				low = ""
+			lowhigh = low  + " T " + high + " K "
+
+		if not(low) and not(high):
+			lowhigh = ""
+
+		#change limits symbols to latex format
+		lowhighTex = utils.limits2latex(lowhigh)
+		#turn numbers into integers in latex format
+		lowhighTex = [str(utils.char2int(part)) for part in lowhighTex.split()]
+		limitTex = " ".join(lowhighTex)
+
+		return limitTex
