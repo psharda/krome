@@ -21,7 +21,7 @@ prj_name = "alltest" #where the tests
 
 #import the list of tests from testpath
 tests = sorted([x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath])
-#tests = ["customCooling"]
+#tests = ["customCooling", "cloud", "auto", "hello"]
 
 #start from this test (empty string start from first test)
 first = ""
@@ -124,6 +124,7 @@ else:
 fout.write("changeset: "+changeset+"\n")
 
 testResults = dict()
+execution_times = dict()
 
 plotFolder = "alltests_plot/"
 #create plot directory if not present
@@ -163,8 +164,12 @@ for test in tests:
 	#compile full debug
 	call(["make",makeOption])
 
+	#store starting time
+	time_start = time.time()
 	#run executable
 	call(["./test"])
+	#store execution time
+	execution_times[test] = time.time() - time_start
 
 	#run zenity notification when executable ends (LINUX USERS ONLY)
 	#if("linux" in platform.system().lower()):
@@ -245,13 +250,18 @@ for test in tests:
 #		fout.write(test+" "+str(False)+" "+str(time.time())+" skipped\n")
 fout.close()
 
+def table_row(arg_list, col_width=20):
+	row = [str(x)+(" "*(col_width-len(str(x)))) for x in arg_list]
+	return "".join(row)
+
 #print test results
 print "***************"
 print "Tests result:"
+print table_row(["name", "working?", "time(s)"])
 for (test,result) in testResults.iteritems():
 	warningString = "<<<<<<<<<<<<<<<"
 	if(result): warningString = ""
-	print test,result,warningString
+	print table_row([test, result, execution_times[test], warningString])
 print "***************"
 
 #copy the results to kromepackage.org using FTP
