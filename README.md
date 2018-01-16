@@ -63,6 +63,10 @@ Contributors: J.Boulangier, T.Frostholm, D.Galli, F.A.Gianturco, T.Haugboelle,
 
 ---
 
+If you want to test how much fast is KROME on your machine go [here](https://bitbucket.org/tgrassi/krome_speed_test/overview).
+
+---
+
 KROME is provided "as it is", without any warranty. 
  The Authors assume no liability for any damages of any kind 
  (direct or indirect damages, contractual or non-contractual 
