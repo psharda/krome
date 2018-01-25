@@ -68,11 +68,11 @@ def relativeAbundanceColormap(networkFull, networkReduced, species, pngFolder="p
     plt.figure()
     if(zRange>10):
         #logaritmic colorbar
-        pcolormesh(x, y, z, cmap='viridis', rasterized=True,
+        plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True,
         norm=colors.LogNorm(vmin=zMin, vmax=zMax))
     else:
         #linear colorbar
-        pcolormesh(x, y, z, cmap='viridis', rasterized=True)
+        plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True)
 
     #make plot labels
     plt.colorbar(label='Relative abundance', extend='min')

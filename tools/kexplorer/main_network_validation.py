@@ -10,8 +10,7 @@
 # of all species at multiple time steps in a choosen grid space.
 # Example format: Grid_demo.dat
 import kexplorer_network
-import kexplorer_compareNetworks
-
+from kexplorer_compareNetworks import compareAbundances
 
 fileName = "Fluxes_demo.dat"
 # "fileNameEvolution" is a .dat files with abundances of species in temperature
@@ -47,8 +46,8 @@ network_reduced.abundanceColormapAll(elemInt=elemInterest,pngFolder="tpngsRed/")
 #network.abundanceColormapAll(pngFolder="pngs/")
 
 # Make relative abundace colormaps between full and reduced network
-kexplorer_compareNetworks.compareAbundances(network_full, network_reduced,
-                                            pngFolder="tpngsCompare/")
+compareAbundances(network_full, network_reduced,
+                pngFolder="tpngsCompare/")
 # Do this only for species in elemInt
 # kexplorer_compareNetworks.compareAbundances(network_full, network_reduced,
 #                                             elemInt=elemInterest,

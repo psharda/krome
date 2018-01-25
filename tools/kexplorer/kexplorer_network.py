@@ -372,11 +372,11 @@ class network:
 		plt.figure()
 		if(zRange>10):
 			#logaritmic colorbar
-			pcolormesh(x, y, z, cmap='viridis', rasterized=True,
+			plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True,
 			norm=colors.LogNorm(vmin=zMin, vmax=zMax))
 		else:
 			#linear colorbar
-			pcolormesh(x, y, z, cmap='viridis', rasterized=True)
+			plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True)
 
 		#make plot labels
 		plt.colorbar(label='Mass fraction', extend='min')
