@@ -1,4 +1,4 @@
-import kexplorer_reaction,kexplorer_element,kexplorer_utils
+import kexplorer_reaction,kexplorer_element,kexplorer_utils, figureSettings
 import sys,subprocess,os,glob,json,datetime
 
 import itertools #added by Jels Boulangier 30/03/2017
@@ -9,20 +9,6 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 
-#plot arguments
-font = {'size'   : 21}
-lines = {'linewidth' : 5, 'markersize': 10, 'markeredgewidth': 3, }
-savefig = {'dpi': 300, 'format': 'png', 'transparent': True,'bbox': 'tight'}
-figure = {'figsize': (14, 10)}#,'autolayout':True}
-
-plt.rc('font', **font)
-plt.rc('lines', **lines)
-plt.rc('savefig', **savefig)
-plt.rc('figure', **figure)
-plt.rc('xtick.major', size=10, width=1.5)
-plt.rc('xtick.minor', size=5, width=1.5)
-plt.rc('ytick.major', size=10, width=1.5)
-plt.rc('ytick.minor', size=5, width=1.5)
 ########################################
 class network:
 	reactions = dict()
@@ -397,7 +383,7 @@ class network:
 		plt.yscale('log')
 		plt.title('Fractional abundance of %s' %(atom))
 		plt.xlabel('Temperature (K)')
-		plt.ylabel(r'%s ($%s$)' %(self.xvarName,self.xvarUnits))
+		plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
 		#dump png file
 		print "Dumping colormap of %s" %(atom)
 		plt.savefig(pngFolder + '/%s' %(atom))
@@ -459,7 +445,7 @@ class network:
 			#plot fake points for legend of markers
 			line, = plt.plot(-1,-1,'-'+m,color='grey')
 			markerHandles.append(line)
-			markerLabels.append(r"%s = %s $%s$" %(self.xvarName,str(var),self.xvarUnits))
+			markerLabels.append(r"%s = %s %s" %(self.xvarName,str(var),self.xvarUnits))
 
 			mIdx += 1
 

@@ -33,9 +33,9 @@ network_full = kexplorer_network.network(fileName,fileNameEvolutionFull)
 
 # used variable besides temperature
 network_reduced.xvarName = "Density"
-network_reduced.xvarUnits = "g/cm^3"
+network_reduced.xvarUnits = "g/cm$^3$"
 network_full.xvarName = "Density"
-network_full.xvarUnits = "g/cm^3"
+network_full.xvarUnits = "g/cm$^3$"
 
 
 #### Validation of new reduced network.

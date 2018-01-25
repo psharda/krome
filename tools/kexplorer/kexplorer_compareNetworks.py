@@ -68,13 +68,13 @@ def relativeAbundanceColormap(networkFull, networkReduced, species, pngFolder="p
     else:
         #linear colorbar
         pcolormesh(x, y, z, cmap='viridis', rasterized=True)
-        
+
     #make plot labels
     plt.colorbar(label='Relative abundance', extend='min')
     plt.yscale('log')
     plt.title('Relative abundance of %s' %(species))
     plt.xlabel('Temperature (K)')
-    plt.ylabel(r'%s ($%s$)' %(networkReduced.xvarName,networkReduced.xvarUnits))
+    plt.ylabel(r'%s (%s)' %(networkReduced.xvarName,networkReduced.xvarUnits))
     #dump png file
     print "Dumping colormap of %s" %(species)
     plt.savefig(pngFolder + '/%s' %(species))
