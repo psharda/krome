@@ -26,7 +26,6 @@ plt.rc('ytick.minor', size=5, width=1.5)
 ########################################
 class network:
 	reactions = dict()
-	elements = dict()#added by Jels Boulangier 05/04/2017
 
 	minFlux = 1e-5 #minimum flux to plot
 	plotLog = True #edge thickness is log of flux
@@ -44,6 +43,8 @@ class network:
 	#network contructor read kexplorer file
 	def __init__(self,fileName,fileNameEvolution=None):
 
+		#make dict to store element objects
+		self.elements = dict()
 		#read data from file
 		fh = open(fileName,"rb")
 		for row in fh:
