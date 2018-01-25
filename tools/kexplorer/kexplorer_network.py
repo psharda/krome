@@ -369,8 +369,9 @@ class network:
 		Ncol = len(set(x))
 		Nrow = len(set(y))
 		z = np.reshape(z,(Nrow, Ncol))
-		x = np.array(x)
-		y = np.array(y)
+		x = np.reshape(x,(Nrow, Ncol))
+		y = np.reshape(y,(Nrow, Ncol))
+
 
 		zMin = max(z.min(),self.minAbundance)
 		zMax = min(z.max(),self.maxAbundance)
@@ -385,19 +386,14 @@ class network:
 		plt.figure()
 		if(zRange>10):
 			#logaritmic colorbar
-			plt.imshow(z, extent=(x.min(), x.max(),y.min(), y.max()), \
-			interpolation='gaussian', cmap='afmhot',aspect='auto',origin='lower',\
+			pcolormesh(x, y, z, cmap='viridis', rasterized=True,
 			norm=colors.LogNorm(vmin=zMin, vmax=zMax))
 		else:
 			#linear colorbar
-			plt.imshow(z, extent=(x.min(), x.max(),y.min(), y.max()), \
-			interpolation='gaussian', cmap='afmhot',aspect='auto',origin='lower')
-		#Acceptable interpolations are 'none', 'nearest', 'bilinear', 'bicubic',
-		#'spline16', 'spline36', 'hanning', 'hamming', 'hermite', 'kaiser',
-		#'quadric', 'catrom', 'gaussian', 'bessel', 'mitchell', 'sinc', 'lanczos'
+			pcolormesh(x, y, z, cmap='viridis', rasterized=True)
 
 		#make plot labels
-		plt.colorbar(label='Mass fraction')
+		plt.colorbar(label='Mass fraction', extend='min')
 		plt.yscale('log')
 		plt.title('Fractional abundance of %s' %(atom))
 		plt.xlabel('Temperature (K)')
