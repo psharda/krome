@@ -8,11 +8,16 @@ maxAbsAbundance = 1
 minRelAbundance = 1e-3
 maxRelAbundance = 1e3
 
-def compareAbundances(networkFull, networkReduced, pngFolder="pngs"):
+def compareAbundances(networkFull, networkReduced, elemInt=None, pngFolder="pngs"):
 
-    for key in networkReduced.elements:
-        relativeAbundanceColormap(networkFull, networkReduced, key, pngFolder)
-    #relativeAbundanceColormap(networkFull, networkReduced, 'SIO', pngFolder)
+    # loop over species of interest
+    if elemInt:
+        for key in elemInt:
+            relativeAbundanceColormap(networkFull, networkReduced, key, pngFolder)
+    # loop over all species of reduced network
+    else:
+        for key in networkReduced.elements:
+            relativeAbundanceColormap(networkFull, networkReduced, key, pngFolder)
 
 def relativeAbundanceColormap(networkFull, networkReduced, species, pngFolder="pngs"):
 

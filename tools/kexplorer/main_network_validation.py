@@ -49,6 +49,10 @@ network_reduced.abundanceColormapAll(elemInt=elemInterest,pngFolder="tpngsRed/")
 # Make relative abundace colormaps between full and reduced network
 kexplorer_compareNetworks.compareAbundances(network_full, network_reduced,
                                             pngFolder="tpngsCompare/")
+# Do this only for species in elemInt
+# kexplorer_compareNetworks.compareAbundances(network_full, network_reduced,
+#                                             elemInt=elemInterest,
+#                                             pngFolder="tpngsCompare/")
 
 
 #make time evolution plot for interesting model grid points
