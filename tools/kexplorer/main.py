@@ -4,6 +4,8 @@
 import kexplorer_network
 
 fileName = "demo.dat"
+oldNetwork = "../../networks/react_primordial3"
+newNetwork = "react_primordial3_reduced"
 
 #create network from explorer file
 network = kexplorer_network.network(fileName)
@@ -19,3 +21,6 @@ network.listBest()
 
 #dump to png folder
 network.dumpBest("pngs/")
+
+#create new network file for most fluxy reactions
+network.networkBest(oldNetwork, newNetwork)
