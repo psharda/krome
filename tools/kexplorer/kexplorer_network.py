@@ -1,4 +1,4 @@
-import kexplorer_reaction,kexplorer_element,kexplorer_utils
+import kexplorer_reaction,kexplorer_element,kexplorer_utils, figureSettings
 import sys,subprocess,os,glob,json,datetime
 
 import itertools #added by Jels Boulangier 30/03/2017
@@ -9,24 +9,9 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 
-#plot arguments
-font = {'size'   : 21}
-lines = {'linewidth' : 5, 'markersize': 10, 'markeredgewidth': 3, }
-savefig = {'dpi': 300, 'format': 'png', 'transparent': True,'bbox': 'tight'}
-figure = {'figsize': (14, 10)}#,'autolayout':True}
-
-plt.rc('font', **font)
-plt.rc('lines', **lines)
-plt.rc('savefig', **savefig)
-plt.rc('figure', **figure)
-plt.rc('xtick.major', size=10, width=1.5)
-plt.rc('xtick.minor', size=5, width=1.5)
-plt.rc('ytick.major', size=10, width=1.5)
-plt.rc('ytick.minor', size=5, width=1.5)
 ########################################
 class network:
 	reactions = dict()
-	elements = dict()#added by Jels Boulangier 05/04/2017
 
 	minFlux = 1e-5 #minimum flux to plot
 	plotLog = True #edge thickness is log of flux
@@ -44,6 +29,8 @@ class network:
 	#network contructor read kexplorer file
 	def __init__(self,fileName,fileNameEvolution=None):
 
+		#make dict to store element objects
+		self.elements = dict()
 		#read data from file
 		fh = open(fileName,"rb")
 		for row in fh:
@@ -368,8 +355,9 @@ class network:
 		Ncol = len(set(x))
 		Nrow = len(set(y))
 		z = np.reshape(z,(Nrow, Ncol))
-		x = np.array(x)
-		y = np.array(y)
+		x = np.reshape(x,(Nrow, Ncol))
+		y = np.reshape(y,(Nrow, Ncol))
+
 
 		zMin = max(z.min(),self.minAbundance)
 		zMax = min(z.max(),self.maxAbundance)
@@ -384,23 +372,18 @@ class network:
 		plt.figure()
 		if(zRange>10):
 			#logaritmic colorbar
-			plt.imshow(z, extent=(x.min(), x.max(),y.min(), y.max()), \
-			interpolation='gaussian', cmap='afmhot',aspect='auto',origin='lower',\
+			plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True,
 			norm=colors.LogNorm(vmin=zMin, vmax=zMax))
 		else:
 			#linear colorbar
-			plt.imshow(z, extent=(x.min(), x.max(),y.min(), y.max()), \
-			interpolation='gaussian', cmap='afmhot',aspect='auto',origin='lower')
-		#Acceptable interpolations are 'none', 'nearest', 'bilinear', 'bicubic',
-		#'spline16', 'spline36', 'hanning', 'hamming', 'hermite', 'kaiser',
-		#'quadric', 'catrom', 'gaussian', 'bessel', 'mitchell', 'sinc', 'lanczos'
+			plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True)
 
 		#make plot labels
-		plt.colorbar(label='Mass fraction')
+		plt.colorbar(label='Mass fraction', extend='min')
 		plt.yscale('log')
 		plt.title('Fractional abundance of %s' %(atom))
 		plt.xlabel('Temperature (K)')
-		plt.ylabel(r'%s ($%s$)' %(self.xvarName,self.xvarUnits))
+		plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
 		#dump png file
 		print "Dumping colormap of %s" %(atom)
 		plt.savefig(pngFolder + '/%s' %(atom))
@@ -462,7 +445,7 @@ class network:
 			#plot fake points for legend of markers
 			line, = plt.plot(-1,-1,'-'+m,color='grey')
 			markerHandles.append(line)
-			markerLabels.append(r"%s = %s $%s$" %(self.xvarName,str(var),self.xvarUnits))
+			markerLabels.append(r"%s = %s %s" %(self.xvarName,str(var),self.xvarUnits))
 
 			mIdx += 1
 
