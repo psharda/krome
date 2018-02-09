@@ -1,0 +1,14 @@
+# This is test network for kinetic nucleation theory (KNT).
+# This KNT is based on cluster growth of molecules via monomer addition.
+# There is no assumption of chemical equilibrium (as compared to classical
+# or modified nucleation theory).
+# Theory is explained in chapter 13 of Gail and Sedlmayr 2013
+# (https://doi.org/10.1017/CBO9780511985607)
+
+# Cluster growth reactions
+# cluster_growth_rate(index_of_monomer, cluster_size, temperature, sticking_coefficient)
+@format:idx,R,R,P,rate
+1,TiO2,TiO2,Ti2O4,cluster_growth_rate(idx_TiO2, 1, Tgas)
+
+@format:idx,R,R,P,rate
+2,Ti2O4,TiO2,Ti3O6,cluster_growth_rate(idx_TiO2, 2, Tgas)

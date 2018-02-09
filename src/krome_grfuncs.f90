@@ -479,4 +479,58 @@ contains
 
   end function get_exp_table
 
+
+  !**********************
+  ! Cluster growth rate based on kinetic nucleation theory (KNT)
+  ! Theory is explained in chapter 13 of Gail and Sedlmayr 2013
+  ! (https://doi.org/10.1017/CBO9780511985607)
+  function cluster_growth_rate(monomer_idx, cluster_size, temperature, stick) result(rate)
+    ! k_N = v_thermal * cross_sectrion_N * stick_N
+    ! with N the cluster size of the reactant
+    use krome_constants
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer, parameter :: dp=kind(0.d0) ! double precision
+
+    integer, intent(in) :: monomer_idx
+    integer, intent(in) :: cluster_size
+    real(dp), intent(in) :: temperature
+    real(dp), intent(in), optional :: stick
+    real(dp) :: rate
+
+    real(dp) :: v_thermal
+    real(dp) :: cross_section
+    real(dp) :: stick_coefficient
+    real(dp) :: monomer_radius
+    real(dp) :: monomer_mass
+    real(dp) :: mass(nspec)
+
+    mass(:) = get_mass()
+
+    if(monomer_idx == idx_TiO2) then
+      ! Interatomic distance from Jeong et al 2000 DOI:10.1088/0953-4075/33/17/319
+      monomer_radius = 1.78e-8_dp ! in cm
+    else
+      print *, "Monomer radius not yet defined"
+    end if
+
+    monomer_mass = mass(monomer_idx)
+
+    v_thermal = sqrt(8._dp * boltzmann_erg * temperature &
+              / (pi * monomer_mass))
+
+    cross_section = pi * monomer_radius**2._dp * cluster_size**(2._dp/3._dp)
+
+    ! Sticking coefficiet is set to one for simplicity
+    if(present(stick)) then
+      stick_coefficient = stick
+    else
+      stick_coefficient = 1._dp
+    end if
+
+    rate = v_thermal * cross_section * stick_coefficient
+
+  end function cluster_growth_rate
+
 end module krome_grfuncs
