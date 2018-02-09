@@ -12,3 +12,24 @@
 
 @format:idx,R,R,P,rate
 2,Ti2O4,TiO2,Ti3O6,cluster_growth_rate(idx_TiO2, 2, Tgas)
+
+@format:idx,R,R,P,rate
+3,Ti3O6,TiO2,Ti4O8,cluster_growth_rate(idx_TiO2, 3, Tgas)
+
+@format:idx,R,R,P,rate
+4,Ti4O8,TiO2,Ti5O10,cluster_growth_rate(idx_TiO2, 4, Tgas)
+
+# Cluster destruction reactions
+# cluster_destruction_rate(index_of_monomer, number_density_of_monomer,
+# cluster_size, temperature, sticking_coefficient)
+@format:idx,R,P,P,rate
+5,Ti2O4,TiO2,TiO2,cluster_destruction_rate(idx_TiO2, n(idx_TiO2), 2, Tgas)
+
+@format:idx,R,P,P,rate
+6,Ti3O6,Ti2O4,TiO2,cluster_destruction_rate(idx_TiO2, n(idx_TiO2), 3, Tgas)
+
+@format:idx,R,P,P,rate
+7,Ti4O8,Ti3O6,TiO2,cluster_destruction_rate(idx_TiO2, n(idx_TiO2), 4, Tgas)
+
+@format:idx,R,P,P,rate
+8,Ti5O10,Ti4O8,TiO2,cluster_destruction_rate(idx_TiO2, n(idx_TiO2), 5, Tgas)
