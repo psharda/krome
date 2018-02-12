@@ -405,65 +405,86 @@ class network:
 	#******************
 	#make plot of element evolution in (T,xvar)-space
 	#added by Jels Boulangier 05/04/2017
-	def abundanceEvolution(self,atom,tgasInt,xvarInt,pngFolder="pngs"):
+	def abundanceEvolution(self,species,tgasInt,xvarInt,pngFolder="pngs"):
 
-		markers = ['D','o','*','+','s','x']
-		colors = ['r','b','k','g','m','c','grey','brown','pink']
+		markers = ['D','+','*','o','s','x','v','3','d','8']
+		colors = ['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9']
+		styles = ["-",":","--","-."]
 		markerHandles = []
 		markerLabels = []
+		styleHandles = []
+		styleLabels = []
 		colorHandles = []
 		colorLabels = []
 
-		#marker counter
-		mIdx = 0
+		#style counter
+		sIdx = 0
 		#loop over all xvar
 		for var in xvarInt:
-			#marker
-			m = markers[mIdx]
+			#style
+			s = styles[sIdx]
 			#color counter
-			cIdx = 0
+			mIdx = 0
 			#loop over all temperatures
 			for tgas in tgasInt:
 				#color
-				c = colors[cIdx]
+				m = markers[mIdx]
 				#find index of the wanted block of input file
 				blockIdx = self.getIdxTgasXvar(var,tgas)
+				#marker counter
+				cIdx = 0
+				#loop over al species
+				for spec in species:
+					#marker
+					c = colors[cIdx]
+					#get abundance and time data
+					x = self.elements[spec].timeData[blockIdx]
+					y = self.elements[spec].abundanceData[blockIdx]
+					plt.semilogy(x,y,s+m,color=c,markevery=5)
 
-				#get abundance and time data
-				x = self.elements[atom].timeData[blockIdx]
-				y = self.elements[atom].abundanceData[blockIdx]
-				plt.semilogy(x,y,'-'+m,color=c)
+					#plot fake points for legend of markers
+					if sIdx ==0 and mIdx ==0:
+						line, = plt.plot(-1,-1,'-',color=c)
+						colorHandles.append(line)
+						colorLabels.append("%s" %(spec))
+
+					cIdx += 1
 
 				#plot fake points for legend of colors
-				if mIdx ==0:
-					line, = plt.plot(-1,-1,'-',color=c)
-					colorHandles.append(line)
-					colorLabels.append("T = %i K" %(int(tgas)))
+				if sIdx ==0:
+					line, = plt.plot(-1,-1,m,color='grey')
+					markerHandles.append(line)
+					markerLabels.append("T = %i K" %(int(tgas)))
 
-				cIdx += 1
+				mIdx += 1
 
-			#plot fake points for legend of markers
-			line, = plt.plot(-1,-1,'-'+m,color='grey')
-			markerHandles.append(line)
-			markerLabels.append(r"%s = %s %s" %(self.xvarName,str(var),self.xvarUnits))
+			#plot fake points for legend of styles
+			line, = plt.plot(-1,-1,s,color='grey')
+			styleHandles.append(line)
+			styleLabels.append(r"%s = %s %s" %(self.xvarName,str(var),self.xvarUnits))
 
-			mIdx += 1
+			sIdx += 1
 
 		#make legends for xvar and temperature
-		legend1 = plt.legend(colorHandles,colorLabels,loc=2,\
+		legend1 = plt.legend(colorHandles,colorLabels,loc=2,
 		fancybox=True, shadow = True,bbox_to_anchor=(1, 1) )
 		ax = plt.gca().add_artist(legend1)
-		legend2 = plt.legend(markerHandles,markerLabels,loc=3,\
+		legend2 = plt.legend(markerHandles,markerLabels,loc=2,
+		fancybox=True, shadow=True, bbox_to_anchor=(1, 0.3))
+		ax = plt.gca().add_artist(legend2)
+		legend3 = plt.legend(styleHandles,styleLabels,loc=3,
 		fancybox=True, shadow=True, bbox_to_anchor=(1, 0))
 
 		#make plot labels
-		plt.title('Abundance evolution of %s' %(atom))
+		plt.title('Abundance evolution of %s' %(spec))
 		plt.xlabel('Time (s)')
 		plt.ylabel("Mass fraction")
 		plt.xlim(xmin=0,xmax=x[-1])
+		#plt.ylim(ymin=1e-7)
 		#dump png file
-		print "Dumping abundance evolution of %s" %(atom)
-		plt.savefig(pngFolder + '/ev%s' %(atom),bbox_extra_artists=[legend1,legend2])
+		print "Dumping abundance evolution of %s" %(spec)
+		# plt.show()
+		plt.savefig(pngFolder + '/ev%s' %(spec),bbox_extra_artists=[legend1,legend2,legend3])
 		plt.close()
 
 

@@ -55,11 +55,14 @@ compareAbundances(network_full, network_reduced,
 
 
 #make time evolution plot for interesting model grid points
-network_full.abundanceEvolution(atom="H2", tgasInt=TgasInterest,
+network_full.abundanceEvolution(species="H2", tgasInt=TgasInterest,
                                 xvarInt=xvarInterest, pngFolder="pngsFull/")
-network_full.abundanceEvolution(atom="H", tgasInt=TgasInterest,
+network_full.abundanceEvolution(species="H", tgasInt=TgasInterest,
                                 xvarInt=xvarInterest, pngFolder="pngsFull/")
-network_red.abundanceEvolution(atom="H2", tgasInt=TgasInterest,
+network_red.abundanceEvolution(species="H2", tgasInt=TgasInterest,
                                 xvarInt=xvarInterest, pngFolder="pngsRed/")
-network_red.abundanceEvolution(atom="H", tgasInt=TgasInterest,
+network_red.abundanceEvolution(species="H", tgasInt=TgasInterest,
                                 xvarInt=xvarInterest, pngFolder="pngsRed/")
+#make time evolution plot with multiple species on one plot
+network_full.abundanceEvolution(species=elemInterest, tgasInt=TgasInterest,
+                                xvarInt=xvarInterest, pngFolder="pngsFull/")
