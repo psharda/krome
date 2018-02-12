@@ -110,9 +110,9 @@ class network:
 	#useful for determining the (tgas,xvar)-grid
 	#added by Jels Boulangier 05/04/2017
 	def getRangeTgasXvar(self):
-		#find unique xvar/Tgas values ("H" is a random choice of element)
-		xvarUniqueSet = set([i[0] for i in self.elements["H"].xvarData])
-		tgasUniqueSet = set([i[0] for i in self.elements["H"].tgasData])
+		#find unique xvar/Tgas values (take first as random choice of element)
+		xvarUniqueSet = set([i[0] for i in self.elements[self.elements.keys()[0]].xvarData])
+		tgasUniqueSet = set([i[0] for i in self.elements[self.elements.keys()[0]].tgasData])
 		#sorted list of unique xvar/Tgas values
 		self.xvarUnique = sorted(list(xvarUniqueSet))
 		self.tgasUnique = sorted(list(tgasUniqueSet))
