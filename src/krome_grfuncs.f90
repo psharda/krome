@@ -541,10 +541,11 @@ contains
   ! This reversed reaction is infered from detailed balance
   function cluster_destruction_rate(monomer_idx, monomer_number, cluster_size,&
      temperature, stick) result(rate)
-    ! k_N = v_thermal * cross_sectrion_(N-1) * stick_(N-1) * [n_(N-1)/n_N]_equilibrium
+    ! k_N = v_thermal * cross_section_(N-1) * stick_(N-1)
+    ! * [n_1 * n_(N-1)/n_N]_equilibrium
     ! with N the cluster size of the reactant
-    ! and [n_(N-1)/n_N]_equilibrium is the ratio of number density in equilibrium
-    ! k_N_destr = k_(N-1)_growth * [n_(N-1)/n_N]_equi
+    ! and [n_1 * n_(N-1)/n_N]_equilibrium are numbers densities in equilibrium
+    ! k_N_destr = k_(N-1)_growth * [n_1 * n_(N-1)/n_N]_equi
     use krome_constants
     use krome_commons
     implicit none
@@ -558,22 +559,28 @@ contains
     real(dp) :: rate
 
     real(dp) :: k_growth
-    real(dp) :: gibbs1, gibbs2
-    real(dp) :: equi_ratio
+    real(dp) :: gibbs_big, gibbs_small, gibbs_monomer
+    real(dp) :: equi_part
 
-    ! [n_(N-1)/n_N]_equi = (kb * T * n(monomer) )^(-1) * exp((dG_N - dG_(N-1))/RT)
+    ! [n_(N-1)/n_N]_equi = (n_1_equi)^(-1) * exp( (dG_N - dG_(N-1) - dG_1) / RT )
     ! with dG_N "is the change in free enthalpy in the reaction of formation
     ! of 1 mol of clusters of size N from N mol of monomers."
     ! - Gail & Sedlmayr 2013, sec. 13.4.1
-    gibbs1 = gibbs_free_energy(monomer_idx, cluster_size, temperature) ! kJ*mol**(-1)
-    gibbs2 = gibbs_free_energy(monomer_idx, cluster_size-1, temperature)! kJ*mol**(-1)
+    ! See Clouet 2010 https://arxiv.org/abs/1001.4131v2
+    ! pages 15+ for a more detailed derivation of
+    ! the Gibbs free enegery of the system.
+    ! This assumes the clusters to be dilute compared to the total gas
+    ! which is resonable
+    gibbs_big = gibbs_free_energy(monomer_idx, cluster_size, temperature) ! kJ*mol**(-1)
+    gibbs_small = gibbs_free_energy(monomer_idx, cluster_size-1, temperature)! kJ*mol**(-1)
+    gibbs_monomer = gibbs_free_energy(monomer_idx, 1, temperature)! kJ*mol**(-1)
 
-    equi_ratio = (boltzmann_erg * temperature * monomer_number)**(-1)&
-                * exp( (gibbs1 - gibbs2)/( Rgas_kJ * temperature ) )
+    equi_part = exp( (gibbs_big - gibbs_small - gibbs_monomer)&
+                / ( Rgas_kJ * temperature ) )
 
     k_growth = cluster_growth_rate(monomer_idx, cluster_size-1, temperature)
 
-    rate = k_growth * equi_ratio
+    rate = k_growth * equi_part
 
   end function cluster_destruction_rate
 
