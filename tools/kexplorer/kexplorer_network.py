@@ -20,8 +20,8 @@ class network:
 	xvarUnits = "" #units of independent variable
 	xvarFormat = "%e" #format of independent variable
 	#added by Jels Boulangier 05/04/2017
-	minAbundance = 1e-10 #minimum mass fraction to plot
-	maxAbundance = 1 #maximum mass fraction to plot
+	minAbundance = 1e-32 #minimum mass fraction to plot
+	maxAbundance = 1e10 #maximum mass fraction to plot
 	reaFormat = "idx,R,R,R,P,P,P,P,Tmin,Tmax,rate" #default format
 	rateLength = 100 #maximum length of rate
 
@@ -330,26 +330,53 @@ class network:
 	#******************
 	#make (T,xvar) color plot of ALL element abundances
 	#added by Jels Boulangier 11/04/2017
-	def abundanceColormapAll(self,elemInt=None,pngFolder="pngs"):
-		#plot for all elements
-		if not elemInt:
-			for key in self.elements:
-				self.abundanceColormap(key,pngFolder)
-		#plot for elements of interest
+	def abundanceColormapAll(self,elemInt=None,timeEvolution=False,pngFolder="pngs"):
+
+		if timeEvolution:
+			# number of time grid points
+			timeStart = 0
+			timeStop = len(self.elements[self.elements.keys()[0]].timeData[0]) - 1
+			print timeStop
 		else:
-			for elem in elemInt:
-				self.abundanceColormap(elem,pngFolder)
+			timeStart = -1
+			timeStop = 0
+
+		for timeIndex in range(timeStart,timeStop):
+			#plot for all elements
+			if not elemInt:
+				for key in self.elements:
+					if timeIndex==timeStart:
+						self.maxAbundance = max(max(self.elements[key].abundanceData,
+											key=lambda x: x[:] ) )
+
+					self.abundanceColormap(key,timeIndex,pngFolder)
+			#plot for elements of interest
+			else:
+				for elem in elemInt:
+					if timeIndex==timeStart:
+						self.maxAbundance = max(max(self.elements[elem].abundanceData,
+											key=lambda x: x[:] ))
+
+					self.abundanceColormap(elem,timeIndex,pngFolder)
+
 
 	#******************
 	#make (T,xvar) color plot of element abundances
 	#added by Jels Boulangier 05/04/2017
-	def abundanceColormap(self,atom,pngFolder="pngs"):
+	def abundanceColormap(self,atom,idxTime=-1,pngFolder="pngs"):
 
 		print "Making abundance colormap of %s" %(atom)
+
+		if idxTime!=-1:
+			evolution = True
+		else:
+			evolution = False
+
+
 		#get variable data after last time step
-		x = [i[-1] for i in self.elements[atom].tgasData]
-		y = [i[-1] for i in self.elements[atom].xvarData]
-		z = [i[-1] for i in self.elements[atom].abundanceData]
+		x = [i[idxTime] for i in self.elements[atom].tgasData]
+		y = [i[idxTime] for i in self.elements[atom].xvarData]
+		z = [i[idxTime] for i in self.elements[atom].abundanceData]
 
 		#create matrix for image plot
 		Ncol = len(set(x))
@@ -358,9 +385,14 @@ class network:
 		x = np.reshape(x,(Nrow, Ncol))
 		y = np.reshape(y,(Nrow, Ncol))
 
-
-		zMin = max(z.min(),self.minAbundance)
-		zMax = min(z.max(),self.maxAbundance)
+		# zMin = z.min()
+		# zMax = 	z.max()
+		if evolution:
+			zMax = self.maxAbundance
+			zMin = self.minAbundance
+		else:
+			zMin = max(z.min(),self.minAbundance)
+			zMax = min(z.max(),self.maxAbundance)
 		zRange = zMax/zMin
 
 		#do no make image if abundance is too small
@@ -381,12 +413,15 @@ class network:
 		#make plot labels
 		plt.colorbar(label='Mass fraction', extend='min')
 		plt.yscale('log')
-		plt.title('Fractional abundance of %s' %(atom))
+		if evolution:
+			plt.title('Abundance of %s time step %03i' %(atom,idxTime))
+		else:
+			plt.title('Fractional abundance of %s' %(atom))
 		plt.xlabel('Temperature (K)')
 		plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
 		#dump png file
 		print "Dumping colormap of %s" %(atom)
-		plt.savefig(pngFolder + '/%s' %(atom))
+		plt.savefig(pngFolder + '/%s_%03i' %(atom,idxTime))
 		plt.close()
 
 	#******************
