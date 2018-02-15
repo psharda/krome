@@ -40,14 +40,16 @@ network_full.xvarUnits = "g/cm$^3$"
 #### Validation of new reduced network.
 
 # Make abundace colormaps for model grid for species of interest
-network_full.abundanceColormapAll(elemInt=elemInterest,pngFolder="tpngsFull/")
+network_full.abundanceColormapAll(elemInt=elemInterest, timeEvolution=True, pngFolder="tpngsFull/")
 network_reduced.abundanceColormapAll(elemInt=elemInterest,pngFolder="tpngsRed/")
 # If elemInt not specified, this will do all species
 # network.abundanceColormapAll(pngFolder="pngs/")
-# Option to make colormaps for every time step to visualise
+# timeEvolution is an option to make colormaps for every time step to visualise
 # temporal evolution in temparature-rho space
-# network_full.abundanceColormapAll(elemInt=elemInterest,timeEvolution=True
-                                # ,pngFolder="tpngsFull/")
+
+# Make a video of all time evolution color plots for species of interest
+network_full.makeEvolutionVideo(elemInt=elemInterest, pngFolder="tpngsFull/")
+
 
 
 # Make relative abundace colormaps between full and reduced network

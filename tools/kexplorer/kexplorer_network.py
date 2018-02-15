@@ -359,6 +359,28 @@ class network:
 
 					self.abundanceColormap(elem,timeIndex,pngFolder)
 
+	#******************
+	# Make a video of all the abundance colormap to visualise the
+	# temporal evolution in temperature-xvar space
+	# It reads in png files that were created with
+	# abundanceColormapAll(timeEvolution=True)
+	def makeEvolutionVideo(self, elemInt=None,pngFolder="pngs"):
+
+		if elemInt:
+			#do for elements of interest
+			speciesTodo = elemInt
+		else:
+			#do for all elements
+			speciesTodo = self.elements
+
+		for species in speciesTodo:
+			# change video setting if desired
+			# this uses ffmpeg
+			os.system("ffmpeg -framerate 5 -pattern_type glob -i "
+					"\'" + pngFolder + species + "*.png\' "
+					"-c:v libx264 -r 30 -pix_fmt yuv420p "
+					+ pngFolder + species + "evolution.mp4" )
+
 
 	#******************
 	#make (T,xvar) color plot of element abundances
