@@ -332,32 +332,34 @@ class network:
 	#added by Jels Boulangier 11/04/2017
 	def abundanceColormapAll(self,elemInt=None,timeEvolution=False,pngFolder="pngs"):
 
+		if elemInt:
+			#do for elements of interest
+			speciesTodo = elemInt
+		else:
+			#do for all elements
+			speciesTodo = self.elements
+
 		if timeEvolution:
 			# number of time grid points
 			timeStart = 0
-			timeStop = len(self.elements[self.elements.keys()[0]].timeData[0]) - 1
-			print timeStop
+			timeStop = len(self.elements[self.elements.keys()[0]].timeData[0])
 		else:
 			timeStart = -1
 			timeStop = 0
-
-		for timeIndex in range(timeStart,timeStop):
-			#plot for all elements
-			if not elemInt:
-				for key in self.elements:
-					if timeIndex==timeStart:
-						self.maxAbundance = max(max(self.elements[key].abundanceData,
+		for species in speciesTodo:
+			for timeIndex in range(timeStart,timeStop):
+				if timeIndex==timeStart:
+					globalMaxmimum = max(max(self.elements[species].abundanceData,
 											key=lambda x: x[:] ) )
+					minima = min(self.elements[species].abundanceData,
+											key=lambda x: x[:] )
+					#remove zero abundances, e.g. initial value
+					minima = [x for x in minima if x != 0.]
+					globalMinimum = min(minima)
+					limits = [globalMinimum, globalMaxmimum]
 
-					self.abundanceColormap(key,timeIndex,pngFolder)
-			#plot for elements of interest
-			else:
-				for elem in elemInt:
-					if timeIndex==timeStart:
-						self.maxAbundance = max(max(self.elements[elem].abundanceData,
-											key=lambda x: x[:] ))
+				self.abundanceColormap(species, timeIndex, limits, pngFolder)
 
-					self.abundanceColormap(elem,timeIndex,pngFolder)
 
 	#******************
 	# Make a video of all the abundance colormap to visualise the
@@ -378,14 +380,14 @@ class network:
 			# this uses ffmpeg
 			os.system("ffmpeg -framerate 5 -pattern_type glob -i "
 					"\'" + pngFolder + species + "*.png\' "
-					"-c:v libx264 -r 30 -pix_fmt yuv420p "
+					"-c:v libx264 -s 1920x1080 -r 30 -pix_fmt yuv420p "
 					+ pngFolder + species + "evolution.mp4" )
 
 
 	#******************
 	#make (T,xvar) color plot of element abundances
 	#added by Jels Boulangier 05/04/2017
-	def abundanceColormap(self,atom,idxTime=-1,pngFolder="pngs"):
+	def abundanceColormap(self,atom,idxTime=-1,limits=None,pngFolder="pngs"):
 
 		print "Making abundance colormap of %s" %(atom)
 
@@ -410,8 +412,9 @@ class network:
 		# zMin = z.min()
 		# zMax = 	z.max()
 		if evolution:
-			zMax = self.maxAbundance
-			zMin = self.minAbundance
+			zMin = max(limits[0],self.minAbundance)
+			zMax = min(limits[1],self.maxAbundance)
+
 		else:
 			zMin = max(z.min(),self.minAbundance)
 			zMax = min(z.max(),self.maxAbundance)
