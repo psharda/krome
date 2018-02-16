@@ -558,9 +558,9 @@ contains
     real(dp), intent(in), optional :: stick
     real(dp) :: rate
 
-    real(dp) :: k_growth, ngas
+    real(dp) :: k_growth, ngas, pressure_scaled
     real(dp) :: gibbs_big, gibbs_small, gibbs_monomer
-    real(dp) :: gibbs_part
+    real(dp) :: gibbs_part, gibbs_corr
 
     ! [n_(N-1)/n_N]_equi = (n_gas/n_1_equi) * exp( (dG_N - dG_(N-1) - dG_1) / RT )
     ! with dG_N "is the change in free enthalpy in the reaction of formation
@@ -571,14 +571,7 @@ contains
     ! the Gibbs free enegery of the system.
     ! This assumes the clusters to be dilute compared to the total gas
     ! which is resonable
-    gibbs_big = gibbs_free_energy(monomer_idx, cluster_size, temperature) ! kJ*mol**(-1)
-    gibbs_small = gibbs_free_energy(monomer_idx, cluster_size-1, temperature)! kJ*mol**(-1)
-    gibbs_monomer = gibbs_free_energy(monomer_idx, 1, temperature)! kJ*mol**(-1)
 
-    gibbs_part = exp( (gibbs_big - gibbs_small - gibbs_monomer)&
-                / ( Rgas_kJ * temperature ) )
-
-    k_growth = cluster_growth_rate(monomer_idx, cluster_size-1, temperature)
 
     ! ngas = everything besides the clusters, but as clusters are assumed to be dilute
     ! their number density can be neglected compared to the total
@@ -588,6 +581,24 @@ contains
     else
       print *, "Clusters other than TiO2 are not yet defined"
     endif
+
+    ! total gas pressure in units of 1 bar
+    pressure_scaled = ngas * boltzmann_erg * temperature * 1.e-6_dp
+
+    gibbs_big = gibbs_free_energy(monomer_idx, cluster_size, temperature) ! kJ*mol**(-1)
+    gibbs_small = gibbs_free_energy(monomer_idx, cluster_size-1, temperature)! kJ*mol**(-1)
+    gibbs_monomer = gibbs_free_energy(monomer_idx, 1, temperature)! kJ*mol**(-1)
+    ! correction to the Gibbs free enegery under non-standard pressure of 1 bar.
+    ! This only differs in the translational partition function.
+    gibbs_corr = temperature * Rgas_kJ *log(pressure_scaled)
+
+    ! gibss correction needs to be added to each gibss energy but _big and _small cancel
+    gibbs_part = exp( (gibbs_big - gibbs_small - gibbs_monomer - gibbs_corr)&
+                / ( Rgas_kJ * temperature ) )
+
+    k_growth = cluster_growth_rate(monomer_idx, cluster_size-1, temperature)
+
+
 
     rate = k_growth * ngas * gibbs_part ! s^(-1)
 
