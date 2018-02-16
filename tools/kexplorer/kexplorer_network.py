@@ -20,7 +20,7 @@ class network:
 	xvarUnits = "" #units of independent variable
 	xvarFormat = "%e" #format of independent variable
 	#added by Jels Boulangier 05/04/2017
-	minAbundance = 1e-32 #minimum mass fraction to plot
+	minAbundance = 1e-20 #minimum mass fraction to plot
 	maxAbundance = 1e10 #maximum mass fraction to plot
 	reaFormat = "idx,R,R,R,P,P,P,P,Tmin,Tmax,rate" #default format
 	rateLength = 100 #maximum length of rate
@@ -379,9 +379,9 @@ class network:
 			# change video setting if desired
 			# this uses ffmpeg
 			os.system("ffmpeg -framerate 5 -pattern_type glob -i "
-					"\'" + pngFolder + species + "*.png\' "
+					"\'" + pngFolder + "/" + species + "*.png\' "
 					"-c:v libx264 -s 1920x1080 -r 30 -pix_fmt yuv420p "
-					+ pngFolder + species + "evolution.mp4" )
+					+ pngFolder + "/" + species + "evolution.mp4" )
 
 
 	#******************
@@ -409,8 +409,6 @@ class network:
 		x = np.reshape(x,(Nrow, Ncol))
 		y = np.reshape(y,(Nrow, Ncol))
 
-		# zMin = z.min()
-		# zMax = 	z.max()
 		if evolution:
 			zMin = max(limits[0],self.minAbundance)
 			zMax = min(limits[1],self.maxAbundance)
@@ -436,7 +434,8 @@ class network:
 			plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True)
 
 		#make plot labels
-		plt.colorbar(label='Mass fraction', extend='min')
+		#BUG sometime there are no labels/ticks on the colorbar...
+		plt.colorbar(label='Number density', extend='min')
 		plt.yscale('log')
 		if evolution:
 			plt.title('Abundance of %s time step %03i' %(atom,idxTime))
