@@ -684,7 +684,12 @@ class reaction:
 							 										rateArgumentsNew[1],
 																	rateArgumentsNew[2])
 							hasEval = True
-
+						elif rateFunction == "cluster_destruction_rate":
+							yvalue = ratefunctions.cluster_destruction_rate(rateArgumentsNew[0],
+							 												rateArgumentsNew[1],
+																			rateArgumentsNew[2],
+																			rateArgumentsNew[3])
+							hasEval = True
 						else:
 							yvalue = None
 							print 'ERROR: %s not defined in rateFunction.py' %(rateFunction)
@@ -727,6 +732,16 @@ class reaction:
 							 										rateArguments[1],
 																	argmax)
 
+						elif rateFunction == "cluster_destruction_rate":
+							kmin = ratefunctions.cluster_destruction_rate(rateArguments[0],
+							 												rateArguments[1],
+																			rateArguments[2],
+																			argmin)
+
+							kmax = ratefunctions.cluster_destruction_rate(rateArguments[0],
+																			rateArguments[1],
+																			rateArguments[2],
+																			argmax)
 						else:
 							print '%s not defined in rateFunction.py' %(rateFunction)
 
@@ -763,6 +778,12 @@ class reaction:
 																			rateArgumentsNew[2])
 								hasEval = True
 
+							elif rateFunction == "cluster_destruction_rate":
+								yvalue = ratefunctions.cluster_destruction_rate(rateArgumentsNew[0],
+								 												rateArgumentsNew[1],
+																				rateArgumentsNew[2],
+																				rateArgumentsNew[3])
+								hasEval = True
 							else:
 								yvalue = None
 								print '%s not defined in rateFunction.py' %(rateFunction)
@@ -810,7 +831,7 @@ class reaction:
 		#cancel current plot
 		plt.clf()
 		#max orders of magnitude y axis
-		yspanMax = 1e-10
+		yspanMax = 1e-30
 		hasPlot = False
 		ydataAll = []
 
