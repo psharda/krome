@@ -1,4 +1,5 @@
 import sys,species,utils,os,urllib
+import ratefunctions
 from math import log10,log,exp,sqrt,pi
 
 class reaction:
@@ -33,7 +34,7 @@ class reaction:
 			sys.exit("ERROR: wrong format "+reactionFormat)
 		splitFormat = reactionFormat.replace("@format:","").split(",")
 		splitFormat = [x.lower() for x in splitFormat]
-		arow = row.strip().split(",",len(splitFormat))
+		arow = row.strip().split(",",len(splitFormat)-1)
 		arow = [x.strip() for x in arow]
 
 		specials = ["","G"]
@@ -532,51 +533,84 @@ class reaction:
 		#F90 expected operators in F90 rate expression
 		ops = ["+","-","/","*","(",")"]
 
-
 		#loop on rates parts
 		for icount in range(len(self.rate)):
 			#get current rate
 			rate = self.rate[icount]
 			evaluation = dict()
+			# check if rate is a function
+			# that is defined in functionList
+			# Currently only nucleation rate functions
+			# TODO: extend with more functions
+			# TODO: generalise for rates that are not only a function
+			for specialRate in ratefunctions.functionList:
+				if specialRate in rate:
+					hasSpecialRate = True
+					# name of the function
+					rateFunction = specialRate
+					break
+				else:
+					hasSpecialRate = False
 
-			substFound = True
-			#loop until shortcut found and replaced
-			while(substFound):
-				#remove trailing comments (containing a "#")
-				rate = rate.split('#')[0]
-				#remove spaces
-				rate = rate.replace(" ","").lower()
+			if hasSpecialRate:
+				# get list of the rate function arguments
+				rateArguments = utils.getParentheticContents(rate, '()')[0][1].split(', ')
+
+				for idx, arg in enumerate(rateArguments):
+					# replace "idx_species" with species object
+					if 'idx_' in arg:
+						speciesName = arg[4:]
+						for spec in self.getSpecies():
+							if spec.name == speciesName:
+								rateArguments[idx] = spec
+
+					# replace numbers with floats
+					elif utils.isNumber(arg):
+						rateArguments[idx] = utils.char2int(arg)
+
+					# surronds variables with "#"
+					else:
+						rateArguments[idx] = "#" + arg + "#"
+
+			else:
+				substFound = True
+				#loop until shortcut found and replaced
+				while(substFound):
+					#remove trailing comments (containing a "#")
+					rate = rate.split('#')[0]
+					#remove spaces
+					rate = rate.replace(" ","").lower()
+
+					#surround F90 operators with # symbols
+					for op in ops:
+						rate = "#"+rate.replace(op,"#"+op+"#")+"#"
+
+					#remove double exponent operator
+					rate = rate.replace("#dexp#","#exp#")
+
+					substFound = False
+					#split rate at #s
+					splitRate = [x for x in rate.split("#") if x!=""]
+					#sort shortcuts by size
+					var = sorted(shortcuts,key=lambda x:len(x),reverse=True)
+					#loop on shortcuts to replace
+					for variable in var:
+						#loop on rate parts
+						for i in range(len(splitRate)):
+							#if shortcut found replace with expression
+							if(splitRate[i]==variable.lower()):
+								splitRate[i] = "("+shortcuts[variable]+")"
+								self.shortcutsFound[variable] = shortcuts[variable]
+								substFound = True
+					#join rate back
+					rate = ("".join(splitRate))
+
+				#replace F90 numbers for evaluation, d->e
+				rate = rate.replace("d","e")
 
 				#surround F90 operators with # symbols
 				for op in ops:
 					rate = "#"+rate.replace(op,"#"+op+"#")+"#"
-
-				#remove double exponent operator
-				rate = rate.replace("#dexp#","#exp#")
-
-				substFound = False
-				#split rate at #s
-				splitRate = [x for x in rate.split("#") if x!=""]
-				#sort shortcuts by size
-				var = sorted(shortcuts,key=lambda x:len(x),reverse=True)
-				#loop on shortcuts to replace
-				for variable in var:
-					#loop on rate parts
-					for i in range(len(splitRate)):
-						#if shortcut found replace with expression
-						if(splitRate[i]==variable.lower()):
-							splitRate[i] = "("+shortcuts[variable]+")"
-							self.shortcutsFound[variable] = shortcuts[variable]
-							substFound = True
-				#join rate back
-				rate = ("".join(splitRate))
-
-			#replace F90 numbers for evaluation, d->e
-			rate = rate.replace("d","e")
-
-			#surround F90 operators with # symbols
-			for op in ops:
-				rate = "#"+rate.replace(op,"#"+op+"#")+"#"
 
 			#loop on available ranges
 			for (variable,vrange) in varRanges.iteritems():
@@ -611,7 +645,7 @@ class reaction:
 					#sort Tgas values
 					vals = sorted(vals)
 
-				#when is not temperature if variable not in rate skip rate
+				#when is not temperature, if variable not in rate, skip rate
 				if(not(isTgas)):
 					if(not("#"+variable.lower()+"#" in rate)): continue
 
@@ -630,12 +664,40 @@ class reaction:
 				hasEval = False
 				#evaluate rate full range
 				for val in vals:
-					k = rate.replace("#"+variable.lower()+"#",str(val)).replace("#","")
-					try:
-						evaluation[variable]["ydata"].append(eval(k))
-						hasEval = True
-					except:
-						evaluation[variable]["ydata"].append(None)
+					# check if rate is a function
+					if hasSpecialRate:
+						# copy list to avoid replacing arguments permanetly
+						rateArgumentsNew = rateArguments[:]
+						for idx, arg in enumerate(rateArguments):
+							# replace variable with its float value
+							try:
+								rateArgumentsNew[idx] = float(arg.replace("#"+variable+"#",str(val)))
+							except:
+								continue
+						# call the special rate function
+						# NOTE: I tried using 'exec(rate)'
+						# but python finds this illegal
+						# so an ugly if elif for all functions
+						# in the solution...
+						if rateFunction == "cluster_growth_rate":
+							yvalue = ratefunctions.cluster_growth_rate(rateArgumentsNew[0],
+							 										rateArgumentsNew[1],
+																	rateArgumentsNew[2])
+							hasEval = True
+
+						else:
+							yvalue = None
+							print 'ERROR: %s not defined in rateFunction.py' %(rateFunction)
+
+					else:
+						k = rate.replace("#"+variable.lower()+"#",str(val)).replace("#","")
+						try:
+							yvalue = eval(k)
+							hasEval = True
+						except:
+							yvalue = None
+
+					evaluation[variable]["ydata"].append(yvalue)
 
 				#check if negative values found
 				if(min(evaluation[variable]["ydata"])<0 and hasEval):
@@ -646,26 +708,75 @@ class reaction:
 
 				#evaluate rate limited range
 				if(isTgas and hasEval):
-					try:
-						kmin = eval(rate.replace("#"+variable.lower()+"#", \
-							str(Tmin)).replace("#",""))
-						kmax = eval(rate.replace("#"+variable.lower()+"#", \
-							str(Tmax)).replace("#",""))
-					except:
-						print "ERROR: problem evaluating rate at limits"
-						print "limits:",str(Tmin),str(Tmax)
-						print "rate:", rate.replace("#","")
-						sys.exit()
+					if hasSpecialRate:
+						# replace variable with its float value
+						for idx, arg in enumerate(rateArguments):
+							try:
+								argmin = float(arg.replace("#"+variable+"#",str(Tmin)))
+								argmax = float(arg.replace("#"+variable+"#",str(Tmax)))
+							except:
+								continue
+
+						# call special rate function
+						# same note as above
+						if rateFunction == "cluster_growth_rate":
+							kmin = ratefunctions.cluster_growth_rate(rateArguments[0],
+							 										rateArguments[1],
+																	argmin)
+							kmax = ratefunctions.cluster_growth_rate(rateArguments[0],
+							 										rateArguments[1],
+																	argmax)
+
+						else:
+							print '%s not defined in rateFunction.py' %(rateFunction)
+
+					else:
+						try:
+							kmin = eval(rate.replace("#"+variable.lower()+"#", \
+								str(Tmin)).replace("#",""))
+							kmax = eval(rate.replace("#"+variable.lower()+"#", \
+								str(Tmax)).replace("#",""))
+						except:
+							print "ERROR: problem evaluating rate at limits"
+							print "limits:",str(Tmin),str(Tmax)
+							print "rate:", rate.replace("#","")
+							sys.exit()
 
 					evaluation[variable]["xlimits"] = [Tmin,Tmax]
 					evaluation[variable]["ylimits"] = [kmin,kmax]
 					for val in valsRange:
-						k = rate.replace("#"+variable.lower()+"#",str(val)).replace("#","")
-						try:
-							evaluation[variable]["ydataRange"].append(eval(k))
-							hasEval = True
-						except:
-							evaluation[variable]["ydataRange"].append(None)
+						if hasSpecialRate:
+							# copy list t avoid permanent replacements
+							rateArgumentsNew = rateArguments[:]
+							# replace variable with its float value
+							for idx, arg in enumerate(rateArguments):
+								try:
+									rateArgumentsNew[idx] = float(arg.replace("#"+variable+"#",str(val)))
+								except:
+									continue
+
+							# call special rate function
+							# same note as above
+							if rateFunction == "cluster_growth_rate":
+								yvalue = ratefunctions.cluster_growth_rate(rateArgumentsNew[0],
+								 											rateArgumentsNew[1],
+																			rateArgumentsNew[2])
+								hasEval = True
+
+							else:
+								yvalue = None
+								print '%s not defined in rateFunction.py' %(rateFunction)
+
+						else:
+							k = rate.replace("#"+variable.lower()+"#",str(val)).replace("#","")
+							try:
+								yvalue = eval(k)
+								hasEval = True
+							except:
+								yvalue = None
+
+						evaluation[variable]["ydataRange"].append(yvalue)
+
 
 					#check if negative values found (when limited range)
 					if(min(evaluation[variable]["ydataRange"])<0 and hasEval):
