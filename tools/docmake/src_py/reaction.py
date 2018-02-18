@@ -1284,7 +1284,7 @@ class reaction:
 			cnt = 0
 			pieces = []
 			#get content between parenteses for each level
-			parenticList = utils.getParentheticContents(rateTex)
+			parenticList = utils.getParentheticContents(rateTex, "{}")
 			#only get the first \frac{}{} parts
 			for part in parenticList:
 				if part[0]==0 and cnt<3:
@@ -1326,7 +1326,7 @@ class reaction:
 		nextReplace = False
 
 		#get rid of unclosed "{}" on a line, when breaking equation
-		parList = utils.getParentheticContents(rate)
+		parList = utils.getParentheticContents(rate, "{}")
 		for part in parList:
 			#replace when level 0 and after exp
 			if part[0] == 0 and nextReplace:
