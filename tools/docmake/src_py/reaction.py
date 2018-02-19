@@ -872,7 +872,7 @@ class reaction:
 					plt.loglog(xdataRange,ydataRange)
 
 			#if argument is not present automatic file
-			if(pngFileName==None):
+			if(pngFileName==None and hasPlot):
 				pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png"
 
 			#plot only if data are available
