@@ -124,7 +124,7 @@ class species():
 		sizeMB = round(os.path.getsize(fname)/1024**2,1)
 
 		#check if xsec size is relatively large
-		if(sizeMB > 50.0):
+		if(sizeMB > 10.0):
 			print "WARNING: "+fname+" is quite large ("+str(sizeMB)+" MB)"
 			#ask if to load xsec, N is default
 			while(True):
