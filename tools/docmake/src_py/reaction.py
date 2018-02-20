@@ -923,14 +923,24 @@ class reaction:
 			Nrow = len(ydata)
 			Ncol = len(xdata)
 			zdata = np.reshape(zdata,(Nrow, Ncol))
-			zmin = max(zdata.max()*yspanMax,zdata.min())
 
-			plt.pcolormesh(xdata, ydata, zdata, cmap='viridis', rasterized=True,
-			norm=colors.LogNorm(vmin=zmin, vmax=zdata.max()))
+			zmin = max(zdata.max()*yspanMax,zdata.min())
+			zmax = zdata.max()
+			xRange = max(xdata)/min(xdata)
+			yRange = max(ydata)/min(ydata)
+			zRange = zmax/zmin
+
+			if zRange > 10:
+				plt.pcolormesh(xdata, ydata, zdata, cmap='viridis', rasterized=True,
+				norm=colors.LogNorm(vmin=zmin, vmax=zdata.max()))
+			else:
+				plt.pcolormesh(xdata, ydata, zdata, cmap='viridis', rasterized=True)
+
 			plt.colorbar(label='Reaction rate', extend='min')
-			if max(xdata)/min(xdata) > 99:
+			
+			if xRange > 99:
 				plt.xscale('log')
-			if max(ydata)/min(ydata) > 99:
+			if yRange > 99:
 				plt.yscale('log')
 
 			plt.title(self.getVerbatimLatex())
