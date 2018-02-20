@@ -6,6 +6,7 @@
 # List of all special functions
 functionList = ["cluster_growth_rate",
                 "cluster_destruction_rate",
+                "steady_state_nucleation_rate",
                 ]
 
 def cluster_growth_rate(monomer, cluster_size, temperature, stick=1.0):
@@ -88,6 +89,56 @@ def cluster_destruction_rate(monomer, n, cluster_size,
     rate = k_growth * ngas * gibbs_part # s^(-1)
 
     return rate
+
+# nucleation rate based on the assumption of a steady state (number densities
+# of the cluster don't change anymore). More details on how this is derived:
+# see chapter 13.3.5 of Gail and Sedlmayr 2013
+# (https://doi.org/10.1017/CBO9780511985607)
+# NOTE: this is not useful when evolving a kinetic network
+# which is inhernetly time dependent.
+# However, it is frequently used in literature, and therefore useful as
+# a way of comparing (mainly qualitatively/roughly)
+def steady_state_nucleation_rate(monomer, ngas, max_cluster_size, temperature):
+    # ngas can be changed with a different input parameter
+    # e.g. total or partial pressure
+    boltzmann_erg = 1.380648e-16
+    p_mass = 1.67262158e-24
+    monomer_frac = 1e-10
+    # Frequently used units (Who even thinks in pressure?! o.O)
+    # convert pressure (in bar) to number density (in cm^(-3))
+    # ngas = pressure/(boltzmann_erg * temperature * 1.e-6)
+    # convert 1 bar tonumber density (in cm^(-3))
+    # ngas = 1. /(boltzmann_erg * temperature * 1.e-6)
+    # convert mass density (in g cm^(-3)) to number density (in cm^(-3))
+    # mu = 2.35 (70/30 H2/He in mass density)
+    # ngas = rhogas / (mu * p_mass)
+
+    n_monomer = ngas * monomer_frac
+    # or get directly/conversion as input
+    # n_monomer = pressure/(boltzmann_erg * temperature)
+
+    # See eq. 13.17 for definition of rate with last term << 1 (in s^-1 cm^-3 )
+    # We prefer to work with the growth and destruction rate as described
+    # in above functions (see Eq. II in Bromley+2016 DOI:10.1039/c6cp03629e)
+    part1 = cluster_growth_rate(monomer, 1, temperature) * n_monomer**2
+
+    sumpart = 0.
+    for j in range(2,max_cluster_size+1):
+        kmin = 1.
+        kplus = 1.
+        for i in range(2,j+1):
+            kmin *= cluster_destruction_rate(monomer, ngas, i, temperature)
+            kplus *= n_monomer * cluster_growth_rate(monomer, i-1, temperature)
+
+        sumpart +=  (kmin / kplus)
+
+    totpart = 1 + sumpart
+
+    rate = part1 / totpart
+
+
+    return rate
+
 
 #**********************
 # Change in free enthalpy in the reaction of formation

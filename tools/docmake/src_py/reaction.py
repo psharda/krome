@@ -732,6 +732,19 @@ class reaction:
 								hasEval[keyVars[1]] = True
 							else:
 								hasEval[keyVars[0]] = True
+						elif rateFunction == "steady_state_nucleation_rate":
+							yvalue = ratefunctions.steady_state_nucleation_rate(rateArgumentsNew[0],
+							 									rateArgumentsNew[1],
+																rateArgumentsNew[2],
+																rateArgumentsNew[3])
+							if self.rate2D:
+								hasEval[keyVars[0]] = True
+								hasEval[keyVars[1]] = True
+							elif keyVars[0] == 'dummy':
+								hasEval[keyVars[1]] = True
+							else:
+								hasEval[keyVars[0]] = True
+
 						else:
 							yvalue = None
 							print 'ERROR: %s not defined in rateFunction.py' %(rateFunction)
