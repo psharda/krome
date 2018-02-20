@@ -66,8 +66,7 @@ def cluster_destruction_rate(monomer, n, cluster_size,
     # ngas = sum(n(1:nmols))
 
     # total gas number density
-    ngas = 1e12 # cm^(-3)
-
+    ngas = n # cm^(-3)
     # total gas pressure in units of 1 bar
     pressure_scaled = ngas * boltzmann_erg * temperature * 1.e-6
 
