@@ -486,7 +486,7 @@ class reaction:
 				#append when variable found
 				if self.hasSpecialRate:
 					rate = utils.getParentheticContents(rate, '()')[0][1]
-					
+
 				if(variable.lower() in rate.lower()): rateVariables.append(variable)
 		#if no variable found assumes Tgas
 		if(len(rateVariables)==0): rateVariables = ["tgas"]
@@ -910,6 +910,7 @@ class reaction:
 		yspanMax = 1e-20
 		hasPlot = False
 		ydataAll = []
+		saveVariables = []
 
 		if self.rate2D:
 			#loop on range varibles
@@ -921,17 +922,18 @@ class reaction:
 					if variable not in evaluation:
 						continue
 					data = evaluation[variable]
+
 					if data['zdata']:
 						zdata = data['zdata']
 						ydata = data['xdata']
 						plt.ylabel(variable)
-						saveVariable = variable
 
 					else:
 						xdata = data['xdata']
 						plt.xlabel(variable)
 
 					hasPlot = True
+					saveVariables.append(variable)
 
 			Nrow = len(ydata)
 			Ncol = len(xdata)
@@ -960,7 +962,9 @@ class reaction:
 
 			#if argument is not present automatic file
 			if(pngFileName==None and hasPlot):
-				pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+saveVariable+".png"
+				# make two plots for 2D rats so they appear twice in the html
+				for var in saveVariables:
+					pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+var+".png"
 
 			#plot only if data are available
 			if(hasPlot and not(os.path.exists(pngFileName))):
