@@ -484,7 +484,10 @@ class reaction:
 			#loop on rates to search variable name
 			for rate in self.rate:
 				#append when variable found
-				if(variable in rate.lower()): rateVariables.append(variable)
+				if self.hasSpecialRate:
+					rate = utils.getParentheticContents(rate, '()')[0][1]
+					
+				if(variable.lower() in rate.lower()): rateVariables.append(variable)
 		#if no variable found assumes Tgas
 		if(len(rateVariables)==0): rateVariables = ["tgas"]
 
@@ -547,14 +550,14 @@ class reaction:
 			# TODO: generalise for rates that are not only a function
 			for specialRate in ratefunctions.functionList:
 				if specialRate in rate:
-					hasSpecialRate = True
+					self.hasSpecialRate = True
 					# name of the function
 					rateFunction = specialRate
 					break
 				else:
-					hasSpecialRate = False
+					self.hasSpecialRate = False
 
-			if hasSpecialRate:
+			if self.hasSpecialRate:
 				# get list of the rate function arguments
 				rateArguments = utils.getParentheticContents(rate, '()')[0][1].split(', ')
 
@@ -693,7 +696,7 @@ class reaction:
 				#evaluate rate full range
 				for valSecond in vals[keyVars[1]]:
 					# check if rate is a function
-					if hasSpecialRate:
+					if self.hasSpecialRate:
 						# copy list to avoid replacing arguments permanetly
 						rateArgumentsNew = rateArguments[:]
 						for idx, arg in enumerate(rateArguments):
@@ -788,7 +791,7 @@ class reaction:
 					isTgas = (variable.lower()=="tgas")
 					#evaluate rate limited range
 					if(isTgas and hasEval[variable]):
-						if hasSpecialRate:
+						if self.hasSpecialRate:
 							# replace variable with its float value
 							for idx, arg in enumerate(rateArguments):
 								try:
@@ -833,7 +836,7 @@ class reaction:
 						evaluation[variable]["xlimits"] = [Tmin,Tmax]
 						evaluation[variable]["ylimits"] = [kmin,kmax]
 						for val in valsRange[variable]:
-							if hasSpecialRate:
+							if self.hasSpecialRate:
 								# copy list t avoid permanent replacements
 								rateArgumentsNew = rateArguments[:]
 								# replace variable with its float value
@@ -922,11 +925,12 @@ class reaction:
 						zdata = data['zdata']
 						ydata = data['xdata']
 						plt.ylabel(variable)
+						saveVariable = variable
 
 					else:
 						xdata = data['xdata']
 						plt.xlabel(variable)
-					saveVariable = variable
+
 					hasPlot = True
 
 			Nrow = len(ydata)
@@ -1264,14 +1268,16 @@ class reaction:
 			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
 			plotFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+rangeName+".png"
 
-
 			hasPlot = False
 			#loop on different limits to check if data are present
 			for evaluation in self.evaluation:
 				if(not(rangeName in evaluation)): continue
 				data = evaluation[rangeName]
 				if(data==None): continue
-				ratedata = data["ydata"]
+				if self.rate2D:
+					ratedata = data["zdata"]
+				else:
+					ratedata = data["ydata"]
 				if all([yd == 0.0 for yd in ratedata]):
 					fout.write(bulletPoint+"The rate for this reaction is <b>ZERO</b><br>")
 					continue
