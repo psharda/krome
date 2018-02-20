@@ -723,8 +723,7 @@ class reaction:
 						elif rateFunction == "cluster_destruction_rate":
 							yvalue = ratefunctions.cluster_destruction_rate(rateArgumentsNew[0],
 							 												rateArgumentsNew[1],
-																			rateArgumentsNew[2],
-																			rateArgumentsNew[3])
+																			rateArgumentsNew[2])
 							if self.rate2D:
 								hasEval[keyVars[0]] = True
 								hasEval[keyVars[1]] = True
@@ -811,12 +810,10 @@ class reaction:
 							elif rateFunction == "cluster_destruction_rate":
 								kmin = ratefunctions.cluster_destruction_rate(rateArguments[0],
 								 												rateArguments[1],
-																				rateArguments[2],
 																				argmin)
 
 								kmax = ratefunctions.cluster_destruction_rate(rateArguments[0],
 																				rateArguments[1],
-																				rateArguments[2],
 																				argmax)
 							else:
 								print '%s not defined in rateFunction.py' %(rateFunction)
@@ -857,8 +854,7 @@ class reaction:
 								elif rateFunction == "cluster_destruction_rate":
 									yvalue = ratefunctions.cluster_destruction_rate(rateArgumentsNew[0],
 									 												rateArgumentsNew[1],
-																					rateArgumentsNew[2],
-																					rateArgumentsNew[3])
+																					rateArgumentsNew[2])
 									hasEval[variable] = True
 								else:
 									yvalue = None
@@ -950,7 +946,7 @@ class reaction:
 				plt.pcolormesh(xdata, ydata, zdata, cmap='viridis', rasterized=True)
 
 			plt.colorbar(label='Reaction rate', extend='min')
-			
+
 			if xRange > 99:
 				plt.xscale('log')
 			if yRange > 99:

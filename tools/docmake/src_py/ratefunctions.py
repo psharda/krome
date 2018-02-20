@@ -41,7 +41,7 @@ def cluster_growth_rate(monomer, cluster_size, temperature, stick=1.0):
 # (https://doi.org/10.1017/CBO9780511985607)
 # This reversed reaction is infered from detailed balance
 #NOTE: n is currently fixed (for testing)###
-def cluster_destruction_rate(monomer, n, cluster_size,
+def cluster_destruction_rate(monomer, cluster_size,
                             temperature, stick=1.):
     # k_N = v_thermal * cross_section_(N-1) * stick_(N-1)
     # * [n_1 * n_(N-1)/n_N]_equilibrium
@@ -61,32 +61,35 @@ def cluster_destruction_rate(monomer, n, cluster_size,
     # This assumes the clusters to be dilute compared to the total gas
     # which is resonable
 
-
+    ### uncorrected rate
     # ngas = everything besides the clusters, but as clusters are assumed to be dilute
     # their number density can be neglected compared to the total
     # ngas = sum(n(1:nmols))
-
     # total gas number density
-    ngas = n # cm^(-3)
-    # total gas pressure in units of 1 bar
-    pressure_scaled = ngas * boltzmann_erg * temperature * 1.e-6
+    # ngas = n # cm^(-3)
+    ###
 
     gibbs_big = gibbs_free_energy(monomer, cluster_size, temperature) # kJ*mol**(-1)
     gibbs_small = gibbs_free_energy(monomer, cluster_size-1, temperature)# kJ*mol**(-1)
     gibbs_monomer = gibbs_free_energy(monomer, 1, temperature)# kJ*mol**(-1)
     # correction to the Gibbs free enegery under non-standard pressure of 1 bar.
     # This only differs in the translational partition function.
-    gibbs_corr = temperature * Rgas_kJ * log(pressure_scaled)
-
+    # # total gas pressure in units of 1 bar
+    # pressure_scaled = ngas * boltzmann_erg * temperature * 1.e-6
+    # gibbs_corr = temperature * Rgas_kJ * log(pressure_scaled)
     # gibss correction needs to be added to each gibss energy but _big and _small cancel
-    gibbs_part = ( exp( (gibbs_big - gibbs_small - gibbs_monomer - gibbs_corr)
+    # The gibbs_corr factor ultimately cancels out ngas and reduced to:
+    non_standard_correction = (1.e-6 * boltzmann_erg * temperature)**(-1)
+
+    gibbs_part = ( exp( (gibbs_big - gibbs_small - gibbs_monomer)
                 / ( Rgas_kJ * temperature ) ) )
 
     k_growth = cluster_growth_rate(monomer, cluster_size-1, temperature)
 
-
-
-    rate = k_growth * ngas * gibbs_part # s^(-1)
+    # uncorrected rate
+    # rate = k_growth * ngas * gibbs_part
+    # corrected rate
+    rate = k_growth * gibbs_part * non_standard_correction # s^(-1)
 
     return rate
 
@@ -127,7 +130,7 @@ def steady_state_nucleation_rate(monomer, ngas, max_cluster_size, temperature):
         kmin = 1.
         kplus = 1.
         for i in range(2,j+1):
-            kmin *= cluster_destruction_rate(monomer, ngas, i, temperature)
+            kmin *= cluster_destruction_rate(monomer, i, temperature)
             kplus *= n_monomer * cluster_growth_rate(monomer, i-1, temperature)
 
         sumpart +=  (kmin / kplus)
