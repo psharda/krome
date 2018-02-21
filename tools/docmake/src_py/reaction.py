@@ -543,6 +543,11 @@ class reaction:
 			#get current rate
 			rate = self.rate[icount]
 			evaluation = dict()
+			loopVariables = dict() # variables present in rate
+			vals = dict()	 # variable range
+			valsRange = dict()  # extra variable range for Tgas/extrapolation
+			hasEval = dict() #evaluation exist flag
+
 			# check if rate is a function
 			# that is defined in functionList
 			# Currently only nucleation rate functions
@@ -553,6 +558,7 @@ class reaction:
 					self.hasSpecialRate = True
 					# name of the function
 					rateFunction = specialRate
+					# NOTE: currently it can only handle one function
 					break
 				else:
 					self.hasSpecialRate = False
@@ -577,6 +583,8 @@ class reaction:
 					else:
 						rateArguments[idx] = "#" + arg + "#"
 
+				# remake rate string
+				# objects also becomes a string (=unsuable)
 				rate = re.sub(r'\(.*\)', '(' +
 					", ".join([str(i) for i in rateArguments]) + ')', rate)
 
@@ -620,21 +628,26 @@ class reaction:
 				for op in ops:
 					rate = "#"+rate.replace(op,"#"+op+"#")+"#"
 
-			loopVariables = dict()
+			# check which/how many variables are in the rate
+			# save the ones that are present
 			for (variable,vrange) in varRanges.iteritems():
 				if "#"+variable.lower()+"#" in rate.lower():
 					loopVariables[variable] = vrange
 
-			if len(loopVariables)==1:
+			# if no variables present, skip rate
+			if not loopVariables:
+				continue
+			# when only one variable, create a dummy for generalised 2D loop
+			elif len(loopVariables)==1:
 				loopVariables['dummy'] = ['DUMMY']
-			else:
+			#
+			elif len(loopVariables)==2:
 				self.rate2D = True
 
+			else:
+				print "Cannot handle %s number of variables in rate" %(len(loopVariables))
+
 			#loop on available ranges
-			vals = dict()
-			valsRange = dict()
-			#evaluation exist flag
-			hasEval = dict()
 			for (variable,vrange) in loopVariables.iteritems():
 				hasEval[variable] = False
 				#check if Tgas
@@ -671,10 +684,6 @@ class reaction:
 					#sort Tgas values
 					vals[variable] = sorted(vals[variable])
 
-				#when is not temperature, if variable not in rate, skip rate
-				if(not(isTgas)):
-					if(not("#"+variable.lower()+"#" in rate)): continue
-
 				#store evaluated rate
 				self.evalRate.append(rate)
 				#store xdata and init ydata
@@ -686,14 +695,15 @@ class reaction:
 					evaluation[variable]["xdataRange"] = valsRange[variable]
 					evaluation[variable]["ydataRange"] = []
 
-				if 'dummy' not in loopVariables:
+				if self.rate2D:
 					evaluation[variable]["zdata"] = []
 					if isTgas:
 						evaluation[variable]["zdataRange"] = []
 
+			#evaluate rate full range
+			# loop over ranges of all found variables
 			keyVars = loopVariables.keys()
 			for valFirst in vals[keyVars[0]]:
-				#evaluate rate full range
 				for valSecond in vals[keyVars[1]]:
 					# check if rate is a function
 					if self.hasSpecialRate:
@@ -715,7 +725,8 @@ class reaction:
 							yvalue = ratefunctions.cluster_growth_rate(rateArgumentsNew[0],
 							 										rateArgumentsNew[1],
 																	rateArgumentsNew[2])
-
+							# save evaluation flag
+							# I know it looks ugly... :/ => TODO
 							if self.rate2D:
 								hasEval[keyVars[0]] = True
 								hasEval[keyVars[1]] = True
@@ -727,6 +738,7 @@ class reaction:
 							yvalue = ratefunctions.cluster_destruction_rate(rateArgumentsNew[0],
 							 												rateArgumentsNew[1],
 																			rateArgumentsNew[2])
+							# save evaluation flag
 							if self.rate2D:
 								hasEval[keyVars[0]] = True
 								hasEval[keyVars[1]] = True
@@ -739,6 +751,7 @@ class reaction:
 							 									rateArgumentsNew[1],
 																rateArgumentsNew[2],
 																rateArgumentsNew[3])
+							# save evaluation flag
 							if self.rate2D:
 								hasEval[keyVars[0]] = True
 								hasEval[keyVars[1]] = True
@@ -752,6 +765,7 @@ class reaction:
 							print 'ERROR: %s not defined in rateFunction.py' %(rateFunction)
 
 					else:
+						#replace variables with their floats
 						k = rate.replace("#"+keyVars[0].lower()+"#",str(valFirst))
 						k = k.replace("#"+keyVars[1].lower()+"#",str(valSecond)).replace("#","")
 						try:
@@ -910,8 +924,10 @@ class reaction:
 		yspanMax = 1e-20
 		hasPlot = False
 		ydataAll = []
+		# variable names to save plots for
 		saveVariables = []
 
+		# check if rate has two variables
 		if self.rate2D:
 			#loop on range varibles
 			for rng in myOptions.range:
@@ -919,6 +935,7 @@ class reaction:
 				variable = rng.split("=")[0].strip()
 				#loop on different limited ranges
 				for evaluation in self.evaluation:
+					# skip variables that are not in the rate
 					if variable not in evaluation:
 						continue
 					data = evaluation[variable]
@@ -935,16 +952,19 @@ class reaction:
 					hasPlot = True
 					saveVariables.append(variable)
 
+			# adapt data to enable 2D color plot
 			Nrow = len(ydata)
 			Ncol = len(xdata)
 			zdata = np.reshape(zdata,(Nrow, Ncol))
 
+			# set ranges
 			zmin = max(zdata.max()*yspanMax,zdata.min())
 			zmax = zdata.max()
 			xRange = max(xdata)/min(xdata)
 			yRange = max(ydata)/min(ydata)
 			zRange = zmax/zmin
 
+			# with data range is too large, make logaritmic color plot
 			if zRange > 10:
 				plt.pcolormesh(xdata, ydata, zdata, cmap='viridis', rasterized=True,
 				norm=colors.LogNorm(vmin=zmin, vmax=zdata.max()))
@@ -953,6 +973,7 @@ class reaction:
 
 			plt.colorbar(label='Reaction rate', extend='min')
 
+			# make logaritmic when range is too large
 			if xRange > 99:
 				plt.xscale('log')
 			if yRange > 99:
@@ -1031,6 +1052,7 @@ class reaction:
 	#evaluate rate extrapolation for the current reaction
 	def evaluateExtrapolation(self,varRanges):
 
+		# skip when rate has two variables
 		if self.rate2D:
 			return
 
