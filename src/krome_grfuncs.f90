@@ -539,7 +539,7 @@ contains
   ! Theory is explained in chapter 13 of Gail and Sedlmayr 2013
   ! (https://doi.org/10.1017/CBO9780511985607)
   ! This reversed reaction is infered from detailed balance
-  function cluster_destruction_rate(monomer_idx, n, cluster_size,&
+  function cluster_destruction_rate(monomer_idx, cluster_size,&
      temperature, stick) result(rate)
     ! k_N = v_thermal * cross_section_(N-1) * stick_(N-1)
     ! * [n_1 * n_(N-1)/n_N]_equilibrium
@@ -552,15 +552,14 @@ contains
     integer, parameter :: dp=kind(0.d0) ! double precision
 
     integer, intent(in) :: monomer_idx
-    real(dp), intent(in) :: n(nspec)
     integer, intent(in) :: cluster_size
     real(dp), intent(in) :: temperature
     real(dp), intent(in), optional :: stick
     real(dp) :: rate
 
-    real(dp) :: k_growth, ngas, pressure_scaled
+    real(dp) :: k_growth
     real(dp) :: gibbs_big, gibbs_small, gibbs_monomer
-    real(dp) :: gibbs_part, gibbs_corr
+    real(dp) :: gibbs_part, non_standard_correction
 
     ! [n_(N-1)/n_N]_equi = (n_gas/n_1_equi) * exp( (dG_N - dG_(N-1) - dG_1) / RT )
     ! with dG_N "is the change in free enthalpy in the reaction of formation
@@ -572,35 +571,41 @@ contains
     ! This assumes the clusters to be dilute compared to the total gas
     ! which is resonable
 
-
+    !! UNCORRECTED
     ! ngas = everything besides the clusters, but as clusters are assumed to be dilute
     ! their number density can be neglected compared to the total
     ! ngas = sum(n(1:nmols))
-    if(monomer_idx == idx_TiO2 )then
-      ngas = sum(n(1:nmols))-sum(n(idx_TiO2:idx_Ti10O20))
-    else
-      print *, "Clusters other than TiO2 are not yet defined"
-    endif
+    ! if(monomer_idx == idx_TiO2 )then
+    !   ngas = sum(n(1:nmols))-sum(n(idx_TiO2:idx_Ti10O20))
+    ! else
+    !   print *, "Clusters other than TiO2 are not yet defined"
+    ! endif
 
-    ! total gas pressure in units of 1 bar
-    pressure_scaled = ngas * boltzmann_erg * temperature * 1.e-6_dp
 
     gibbs_big = gibbs_free_energy(monomer_idx, cluster_size, temperature) ! kJ*mol**(-1)
     gibbs_small = gibbs_free_energy(monomer_idx, cluster_size-1, temperature)! kJ*mol**(-1)
     gibbs_monomer = gibbs_free_energy(monomer_idx, 1, temperature)! kJ*mol**(-1)
     ! correction to the Gibbs free enegery under non-standard pressure of 1 bar.
     ! This only differs in the translational partition function.
-    gibbs_corr = temperature * Rgas_kJ *log(pressure_scaled)
-
+    ! ! total gas pressure in units of 1 bar
+    ! pressure_scaled = ngas * boltzmann_erg * temperature * 1.e-6
+    ! gibbs_corr = temperature * Rgas_kJ * log(pressure_scaled)
     ! gibss correction needs to be added to each gibss energy but _big and _small cancel
-    gibbs_part = exp( (gibbs_big - gibbs_small - gibbs_monomer - gibbs_corr)&
+    ! The gibbs_corr factor ultimately cancels out ngas and reduced to:
+    ! gibbs_corr = temperature * Rgas_kJ *log(pressure_scaled)
+    non_standard_correction = (1.e-6_dp * boltzmann_erg * temperature)**(-1)
+
+    gibbs_part = exp( (gibbs_big - gibbs_small - gibbs_monomer)&
                 / ( Rgas_kJ * temperature ) )
 
     k_growth = cluster_growth_rate(monomer_idx, cluster_size-1, temperature)
 
 
+    !! UNCORRECTED rate
+    ! rate = k_growth * ngas * gibbs_part
 
-    rate = k_growth * ngas * gibbs_part ! s^(-1)
+    ! corrected rate
+    rate = k_growth * gibbs_part * non_standard_correction! s^(-1)
 
   end function cluster_destruction_rate
 
