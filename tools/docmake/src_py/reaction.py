@@ -1064,6 +1064,7 @@ class reaction:
 		isAlwaysPositiveMin = isAlwaysPositiveMax = False
 		#loop on different limited ranges
 		for evaluation in self.evaluation:
+			data = dict()
 			#get only Tgas data
 			for (variable,vdata) in evaluation.iteritems():
 				if(variable.lower()!="tgas"):
@@ -1074,7 +1075,7 @@ class reaction:
 				varRange = varRanges[variable]
 
 			#skip missing data
-			if(data==None): continue
+			if not data: continue
 			hasData = True
 			#copy data locally (evaluation in the rate Tgas range)
 			xdataRange = data["xdataRange"]
