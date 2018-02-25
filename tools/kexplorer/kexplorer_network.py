@@ -20,8 +20,8 @@ class network:
 	xvarUnits = "" #units of independent variable
 	xvarFormat = "%e" #format of independent variable
 	#added by Jels Boulangier 05/04/2017
-	minAbundance = 1e-10 #minimum mass fraction to plot
-	maxAbundance = 1 #maximum mass fraction to plot
+	minAbundance = 1e-20 #minimum mass fraction to plot
+	maxAbundance = 1e10 #maximum mass fraction to plot
 	reaFormat = "idx,R,R,R,P,P,P,P,Tmin,Tmax,rate" #default format
 	rateLength = 100 #maximum length of rate
 
@@ -110,9 +110,9 @@ class network:
 	#useful for determining the (tgas,xvar)-grid
 	#added by Jels Boulangier 05/04/2017
 	def getRangeTgasXvar(self):
-		#find unique xvar/Tgas values ("H" is a random choice of element)
-		xvarUniqueSet = set([i[0] for i in self.elements["H"].xvarData])
-		tgasUniqueSet = set([i[0] for i in self.elements["H"].tgasData])
+		#find unique xvar/Tgas values (take first as random choice of element)
+		xvarUniqueSet = set([i[0] for i in self.elements[self.elements.keys()[0]].xvarData])
+		tgasUniqueSet = set([i[0] for i in self.elements[self.elements.keys()[0]].tgasData])
 		#sorted list of unique xvar/Tgas values
 		self.xvarUnique = sorted(list(xvarUniqueSet))
 		self.tgasUnique = sorted(list(tgasUniqueSet))
@@ -330,26 +330,77 @@ class network:
 	#******************
 	#make (T,xvar) color plot of ALL element abundances
 	#added by Jels Boulangier 11/04/2017
-	def abundanceColormapAll(self,elemInt=None,pngFolder="pngs"):
-		#plot for all elements
-		if not elemInt:
-			for key in self.elements:
-				self.abundanceColormap(key,pngFolder)
-		#plot for elements of interest
+	def abundanceColormapAll(self,elemInt=None,timeEvolution=False,pngFolder="pngs"):
+
+		if elemInt:
+			#do for elements of interest
+			speciesTodo = elemInt
 		else:
-			for elem in elemInt:
-				self.abundanceColormap(elem,pngFolder)
+			#do for all elements
+			speciesTodo = self.elements
+
+		if timeEvolution:
+			# number of time grid points
+			timeStart = 0
+			timeStop = len(self.elements[self.elements.keys()[0]].timeData[0])
+		else:
+			timeStart = -1
+			timeStop = 0
+		for species in speciesTodo:
+			for timeIndex in range(timeStart,timeStop):
+				if timeIndex==timeStart:
+					globalMaxmimum = max(max(self.elements[species].abundanceData,
+											key=lambda x: x[:] ) )
+					minima = min(self.elements[species].abundanceData,
+											key=lambda x: x[:] )
+					#remove zero abundances, e.g. initial value
+					minima = [x for x in minima if x != 0.]
+					globalMinimum = min(minima)
+					limits = [globalMinimum, globalMaxmimum]
+
+				self.abundanceColormap(species, timeIndex, limits, pngFolder)
+
+
+	#******************
+	# Make a video of all the abundance colormap to visualise the
+	# temporal evolution in temperature-xvar space
+	# It reads in png files that were created with
+	# abundanceColormapAll(timeEvolution=True)
+	def makeEvolutionVideo(self, elemInt=None,pngFolder="pngs"):
+
+		if elemInt:
+			#do for elements of interest
+			speciesTodo = elemInt
+		else:
+			#do for all elements
+			speciesTodo = self.elements
+
+		for species in speciesTodo:
+			# change video setting if desired
+			# this uses ffmpeg
+			os.system("ffmpeg -framerate 5 -pattern_type glob -i "
+					"\'" + pngFolder + "/" + species + "*.png\' "
+					"-c:v libx264 -s 1920x1080 -r 30 -pix_fmt yuv420p "
+					+ pngFolder + "/" + species + "evolution.mp4" )
+
 
 	#******************
 	#make (T,xvar) color plot of element abundances
 	#added by Jels Boulangier 05/04/2017
-	def abundanceColormap(self,atom,pngFolder="pngs"):
+	def abundanceColormap(self,atom,idxTime=-1,limits=None,pngFolder="pngs"):
 
 		print "Making abundance colormap of %s" %(atom)
+
+		if idxTime!=-1:
+			evolution = True
+		else:
+			evolution = False
+
+
 		#get variable data after last time step
-		x = [i[-1] for i in self.elements[atom].tgasData]
-		y = [i[-1] for i in self.elements[atom].xvarData]
-		z = [i[-1] for i in self.elements[atom].abundanceData]
+		x = [i[idxTime] for i in self.elements[atom].tgasData]
+		y = [i[idxTime] for i in self.elements[atom].xvarData]
+		z = [i[idxTime] for i in self.elements[atom].abundanceData]
 
 		#create matrix for image plot
 		Ncol = len(set(x))
@@ -358,9 +409,13 @@ class network:
 		x = np.reshape(x,(Nrow, Ncol))
 		y = np.reshape(y,(Nrow, Ncol))
 
+		if evolution:
+			zMin = max(limits[0],self.minAbundance)
+			zMax = min(limits[1],self.maxAbundance)
 
-		zMin = max(z.min(),self.minAbundance)
-		zMax = min(z.max(),self.maxAbundance)
+		else:
+			zMin = max(z.min(),self.minAbundance)
+			zMax = min(z.max(),self.maxAbundance)
 		zRange = zMax/zMin
 
 		#do no make image if abundance is too small
@@ -379,14 +434,18 @@ class network:
 			plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True)
 
 		#make plot labels
-		plt.colorbar(label='Mass fraction', extend='min')
+		#BUG sometime there are no labels/ticks on the colorbar...
+		plt.colorbar(label='Number density', extend='min')
 		plt.yscale('log')
-		plt.title('Fractional abundance of %s' %(atom))
+		if evolution:
+			plt.title('Abundance of %s time step %03i' %(atom,idxTime))
+		else:
+			plt.title('Fractional abundance of %s' %(atom))
 		plt.xlabel('Temperature (K)')
 		plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
 		#dump png file
 		print "Dumping colormap of %s" %(atom)
-		plt.savefig(pngFolder + '/%s' %(atom))
+		plt.savefig(pngFolder + '/%s_%03i' %(atom,idxTime))
 		plt.close()
 
 	#******************
@@ -405,65 +464,86 @@ class network:
 	#******************
 	#make plot of element evolution in (T,xvar)-space
 	#added by Jels Boulangier 05/04/2017
-	def abundanceEvolution(self,atom,tgasInt,xvarInt,pngFolder="pngs"):
+	def abundanceEvolution(self,species,tgasInt,xvarInt,pngFolder="pngs"):
 
-		markers = ['D','o','*','+','s','x']
-		colors = ['r','b','k','g','m','c','grey','brown','pink']
+		markers = ['D','+','*','o','s','x','v','3','d','8']
+		colors = ['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9']
+		styles = ["-",":","--","-."]
 		markerHandles = []
 		markerLabels = []
+		styleHandles = []
+		styleLabels = []
 		colorHandles = []
 		colorLabels = []
 
-		#marker counter
-		mIdx = 0
+		#style counter
+		sIdx = 0
 		#loop over all xvar
 		for var in xvarInt:
-			#marker
-			m = markers[mIdx]
+			#style
+			s = styles[sIdx]
 			#color counter
-			cIdx = 0
+			mIdx = 0
 			#loop over all temperatures
 			for tgas in tgasInt:
 				#color
-				c = colors[cIdx]
+				m = markers[mIdx]
 				#find index of the wanted block of input file
 				blockIdx = self.getIdxTgasXvar(var,tgas)
+				#marker counter
+				cIdx = 0
+				#loop over al species
+				for spec in species:
+					#marker
+					c = colors[cIdx]
+					#get abundance and time data
+					x = self.elements[spec].timeData[blockIdx]
+					y = self.elements[spec].abundanceData[blockIdx]
+					plt.semilogy(x,y,s+m,color=c,markevery=5)
 
-				#get abundance and time data
-				x = self.elements[atom].timeData[blockIdx]
-				y = self.elements[atom].abundanceData[blockIdx]
-				plt.semilogy(x,y,'-'+m,color=c)
+					#plot fake points for legend of markers
+					if sIdx ==0 and mIdx ==0:
+						line, = plt.plot(-1,-1,'-',color=c)
+						colorHandles.append(line)
+						colorLabels.append("%s" %(spec))
+
+					cIdx += 1
 
 				#plot fake points for legend of colors
-				if mIdx ==0:
-					line, = plt.plot(-1,-1,'-',color=c)
-					colorHandles.append(line)
-					colorLabels.append("T = %i K" %(int(tgas)))
+				if sIdx ==0:
+					line, = plt.plot(-1,-1,m,color='grey')
+					markerHandles.append(line)
+					markerLabels.append("T = %i K" %(int(tgas)))
 
-				cIdx += 1
+				mIdx += 1
 
-			#plot fake points for legend of markers
-			line, = plt.plot(-1,-1,'-'+m,color='grey')
-			markerHandles.append(line)
-			markerLabels.append(r"%s = %s %s" %(self.xvarName,str(var),self.xvarUnits))
+			#plot fake points for legend of styles
+			line, = plt.plot(-1,-1,s,color='grey')
+			styleHandles.append(line)
+			styleLabels.append(r"%s = %s %s" %(self.xvarName,str(var),self.xvarUnits))
 
-			mIdx += 1
+			sIdx += 1
 
 		#make legends for xvar and temperature
-		legend1 = plt.legend(colorHandles,colorLabels,loc=2,\
+		legend1 = plt.legend(colorHandles,colorLabels,loc=2,
 		fancybox=True, shadow = True,bbox_to_anchor=(1, 1) )
 		ax = plt.gca().add_artist(legend1)
-		legend2 = plt.legend(markerHandles,markerLabels,loc=3,\
+		legend2 = plt.legend(markerHandles,markerLabels,loc=2,
+		fancybox=True, shadow=True, bbox_to_anchor=(1, 0.3))
+		ax = plt.gca().add_artist(legend2)
+		legend3 = plt.legend(styleHandles,styleLabels,loc=3,
 		fancybox=True, shadow=True, bbox_to_anchor=(1, 0))
 
 		#make plot labels
-		plt.title('Abundance evolution of %s' %(atom))
+		plt.title('Abundance evolution of %s' %(spec))
 		plt.xlabel('Time (s)')
 		plt.ylabel("Mass fraction")
 		plt.xlim(xmin=0,xmax=x[-1])
+		#plt.ylim(ymin=1e-7)
 		#dump png file
-		print "Dumping abundance evolution of %s" %(atom)
-		plt.savefig(pngFolder + '/ev%s' %(atom),bbox_extra_artists=[legend1,legend2])
+		print "Dumping abundance evolution of %s" %(spec)
+		# plt.show()
+		plt.savefig(pngFolder + '/ev%s' %(spec),bbox_extra_artists=[legend1,legend2,legend3])
 		plt.close()
 
 

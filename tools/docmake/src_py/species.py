@@ -435,7 +435,7 @@ class species():
 	#get "engineered" enthalpy kJ/mol
 	def getEnthalpy(self,thermochemicalData,Tgas=298.15):
 
-		#gas constant kJ/mol/K
+		#gas constant J/mol/K
 		Rgas = 8.3144598
 
 		#use so-called electron convention

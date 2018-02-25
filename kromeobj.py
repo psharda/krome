@@ -1625,10 +1625,46 @@ class krome():
 						print spec
 						print srow
 						sys.exit()
-					thermo[spec] = coef #append coefficients to the dictionary
+					thermo[spec] = dict()
+					thermo[spec]["NASA"] = coef #append coefficients to the dictionary
 		fth.close()
+
+		with open("data/thermoNIST.dat", "r") as thermofile:
+			#previous species
+			spec_prev = ''
+			#loop over file line per line
+			for row in thermofile:
+				srow = row.strip()
+				#skip newlines
+				if not srow:
+					continue
+				#skip comments
+				if srow[0] == "#":
+					continue
+				arow = srow.split(":")
+				# convert numbers to floats
+				arow = [arow[0]] + [float(x) for x in arow[1:]]
+				spec = arow[0].upper()
+				# Tmin = arow[1]
+				# Tmax = arow[2]
+				# no need for the last coefficient = H(T=298K)
+				# coe = arow[3:-1]
+				mypoly = arow[1:-1]
+
+				#creat new dict for new species
+				if spec not in thermo:
+					thermo[spec] = dict()
+				# if no NIST data for species yet, make new
+				if "NIST" not in thermo[spec]:
+					thermo[spec]["NIST"] = mypoly
+				# else append to same species
+				else:
+					thermo[spec]["NIST"].append(mypoly)
+
+				spec_prev = spec
+
 		self.thermodata = thermo
-		#print "Thermochemistry data loaded!"
+		# print "Thermochemistry data loaded!"
 
 
 
@@ -1660,6 +1696,7 @@ class krome():
 			'P':15.*(menp)+mn,
 			'S':(menp)*16,
 			'Cl':(menp)*17+mn,
+			'Ti':(menp)*22+4*mn,
 			'Fe':(me+mp)*26+mn*29,
 			'GRAIN0': 100*6*(menp),
 			'GRAIN-': 100*6*(menp)+me,

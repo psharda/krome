@@ -1,0 +1,74 @@
+# This is test network for kinetic nucleation theory (KNT).
+# This KNT is based on cluster growth of molecules via monomer addition.
+# There is no assumption of chemical equilibrium (as compared to classical
+# or modified nucleation theory).
+# Theory is explained in chapter 13 of Gail and Sedlmayr 2013
+# (https://doi.org/10.1017/CBO9780511985607)
+@ghost:H2,He
+
+# Cluster growth reactions
+# cluster_growth_rate(index_of_monomer, cluster_size, temperature, sticking_coefficient)
+@format:idx,R,R,P,rate
+1,TiO2,TiO2,Ti2O4,cluster_growth_rate(idx_TiO2, 1, Tgas)
+
+@format:idx,R,R,P,rate
+2,Ti2O4,TiO2,Ti3O6,cluster_growth_rate(idx_TiO2, 2, Tgas)
+
+@format:idx,R,R,P,rate
+3,Ti3O6,TiO2,Ti4O8,cluster_growth_rate(idx_TiO2, 3, Tgas)
+
+@format:idx,R,R,P,rate
+4,Ti4O8,TiO2,Ti5O10,cluster_growth_rate(idx_TiO2, 4, Tgas)
+
+@format:idx,R,R,P,rate
+5,Ti5O10,TiO2,Ti6O12,cluster_growth_rate(idx_TiO2, 5, Tgas)
+
+@format:idx,R,R,P,rate
+6,Ti6O12,TiO2,Ti7O14,cluster_growth_rate(idx_TiO2, 6, Tgas)
+
+@format:idx,R,R,P,rate
+7,Ti7O14,TiO2,Ti8O16,cluster_growth_rate(idx_TiO2, 7, Tgas)
+
+@format:idx,R,R,P,rate
+8,Ti8O16,TiO2,Ti9O18,cluster_growth_rate(idx_TiO2, 8, Tgas)
+
+@format:idx,R,R,P,rate
+9,Ti9O18,TiO2,Ti10O20,cluster_growth_rate(idx_TiO2, 9, Tgas)
+
+# Cluster destruction reactions
+# cluster_destruction_rate(index_of_monomer, number_density_of_monomer,
+# cluster_size, temperature, sticking_coefficient)
+@format:idx,R,P,P,rate
+10,Ti2O4,TiO2,TiO2,cluster_destruction_rate(idx_TiO2, 2, Tgas)
+
+@format:idx,R,P,P,rate
+11,Ti3O6,Ti2O4,TiO2,cluster_destruction_rate(idx_TiO2, 3, Tgas)
+
+@format:idx,R,P,P,rate
+12,Ti4O8,Ti3O6,TiO2,cluster_destruction_rate(idx_TiO2, 4, Tgas)
+
+@format:idx,R,P,P,rate
+13,Ti5O10,Ti4O8,TiO2,cluster_destruction_rate(idx_TiO2, 5, Tgas)
+
+@format:idx,R,P,P,rate
+14,Ti6O12,Ti5O10,TiO2,cluster_destruction_rate(idx_TiO2, 6, Tgas)
+
+@format:idx,R,P,P,rate
+15,Ti7O14,Ti6O12,TiO2,cluster_destruction_rate(idx_TiO2, 7, Tgas)
+
+@format:idx,R,P,P,rate
+16,Ti8O16,Ti7O14,TiO2,cluster_destruction_rate(idx_TiO2, 8, Tgas)
+
+@format:idx,R,P,P,rate
+17,Ti9O18,Ti8O16,TiO2,cluster_destruction_rate(idx_TiO2, 9, Tgas)
+
+@format:idx,R,P,P,rate
+18,Ti10O20,Ti9O18,TiO2,cluster_destruction_rate(idx_TiO2, 10, Tgas)
+
+# non-nucleation reactions
+# Lian,L.+1994, NIST (experiment)
+#@format:idx,R,R,P,P,rate
+#19,Ti,O2,TiO,O,2.81e-12
+
+#@format:idx,R,R,P,P,rate
+#20,TiO,O2,TiO,O,2.81e-12

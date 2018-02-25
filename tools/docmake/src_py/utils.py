@@ -235,19 +235,21 @@ def isTemperatureShortcut(var):
 
 #********************
 #Generate parenthesized contents in string as pairs (level, contents)
-def parentheticContents(string):
+def parentheticContents(string, parenteses):
+	opened = parenteses[0]
+	closed = parenteses[1]
 	stack = []
 	for i, c in enumerate(string):
-	    if c == '{':
+	    if c == opened:
 	        stack.append(i)
-	    elif c == '}' and stack:
+	    elif c == closed and stack:
 	        start = stack.pop()
 	        yield (len(stack), string[start + 1: i])
 
 #********************
-#get content in parentses
-def getParentheticContents(string):
-	return list(parentheticContents(string))
+#get content in parenteses
+def getParentheticContents(string, parenteses):
+	return list(parentheticContents(string, parenteses))
 
 #********************
 #simplify KROME limits
