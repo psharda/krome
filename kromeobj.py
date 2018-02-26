@@ -5794,14 +5794,14 @@ class krome():
 			elif(srow == "#KROME_var_reverse"):
 				slen = str(len(specs))
 				fout.write("real*8::p1("+slen+",7), p2("+slen+",7), Tlim("+slen+",3), p(7)\n")
-			elif(srow == "#KROME_kc_reverse"):
+			elif(srow == "#KROME_kc_reverse_nasa"):
 				datarev = ""
 				sp1 = sp2 = spt = ""
 				for x in specs:
-					if(min(x.poly1)==0 and max(x.poly1)==0): continue
-					sp1 += "p1("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly1])) + "/)\n"
-					sp2 += "p2("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2])) + "/)\n"
-					spt += "Tlim("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.Tpoly])) + "/)\n"
+					if all(i == 0 for i in x.poly1_nasa): continue
+					sp1 += "p1("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly1_nasa])) + "/)\n"
+					sp2 += "p2("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2_nasa])) + "/)\n"
+					spt += "Tlim("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.Tpoly_nasa])) + "/)\n"
 				fout.write(sp1+sp2+spt)
 			elif(srow == "#KROME_shortcut_variables"):
 				fout.write(shortcutVars)

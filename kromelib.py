@@ -62,9 +62,12 @@ class molec():
 	Ebind_ice = Ebind_bare = 0e0 #binding energy on surface for ice and bare grain
 	parentDustBin = 0 #for surface species: belongs to this dust bin (1-based)
 	chempot = 0. #chemical potential (J/mol)
-	poly1 = [0.e0]*7 #nasa polynomials (usually 200-1000K)
-	poly2 = [0.e0]*7 #nasa polynomials (usually 1000-5000K)
-	Tpoly = [0.e0]*3 #temperature limits
+	poly1_nasa = [0.e0]*7 #nasa polynomials (usually 200-1000K)
+	poly2_nasa = [0.e0]*7 #nasa polynomials (usually 1000-5000K)
+	Tpoly_nasa = [0.e0]*3 #temperature limits
+	poly1_nist = [0.e0]*7 #nist polynomials
+	poly2_nist = [0.e0]*7 #nist polynomials
+	Tpoly_nist = [0.e0]*3 #temperature limits
 	idx = 0 #species index
 	enthalpy = 0.e0 #enthalpy of formation
 	atomcount = dict() #dictionary containin the count of atoms including zero (e.g H2O is {"H":2, "O":1, "C":0, ...})
@@ -76,9 +79,12 @@ class molec():
 	nameLatex = "" #name in LaTeX format
 
 	def __init__(self):
-		self.poly1 = [0.e0]*7
-		self.poly2 = [0.e0]*7
-		self.Tpoly = [0.e0]*3
+		self.poly1_nasa = [0.e0]*7
+		self.poly2_nasa = [0.e0]*7
+		self.Tpoly_nasa = [0.e0]*3
+		self.poly1_nist = [0.e0]*7
+		self.poly2_nist = [0.e0]*7
+		self.Tpoly_nist = [0.e0]*3
 		self.atomcount = dict()
 ##################################
 class reaction():
@@ -1818,15 +1824,25 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 
 	#thermal data
 	if(mymol.name in thermo_data):
-		mymol.poly1 = thermo_data[mymol.name][10:] #NASA polynomials lower T interval (min-med)
-		mymol.poly2 = thermo_data[mymol.name][3:10] #NASA polynomials upper T interval (med-max)
-		mymol.Tpoly = thermo_data[mymol.name][0:3] #(K) [min,med,max] T interval limits
+		if "NASA" in thermo_data[mymol.name]:
+			mymol.poly1_nasa = thermo_data[mymol.name]["NASA"][10:] #NASA polynomials lower T interval (min-med)
+			mymol.poly2_nasa = thermo_data[mymol.name]["NASA"][3:10] #NASA polynomials upper T interval (med-max)
+			mymol.Tpoly_nasa = thermo_data[mymol.name]["NASA"][0:3] #(K) [min,med,max] T interval limits
+
+		if "NIST" in thermo_data[mymol.name]:
+			mymol.poly1_nist = thermo_data[mymol.name]["NIST"][2:10] #NIST polynomials lower T interval (min-med)
+			mymol.Tpoly_nist = thermo_data[mymol.name]["NIST"][0:2]  #(K) [min,med] T interval limits
+
+			#check for multiple temperature ranges
+			if len(thermo_data[mymol.name]["NIST"]) > 9:
+				mymol.Tpoly_nist.append(thermo_data[mymol.name]["NIST"][11]) #(K) [med,max] T interval limits
+				mymol.poly2_nist = thermo_data[mymol.name]["NIST"][12:20] #NIST polynomials upper T interval
 
 	#compute enthaly @300K using NASA poly
-	if(mymol.Tpoly[1]<3e2):
-		p = mymol.poly1 #copy polynomials in the lower range
+	if(mymol.Tpoly_nasa[1]<3e2):
+		p = mymol.poly1_nasa #copy polynomials in the lower range
 	else:
-		p = mymol.poly2 #copy poly in the upper range
+		p = mymol.poly2_nasa #copy poly in the upper range
 	Tgas = 300. #K
 	polyH = p[0] + p[1]*0.5*Tgas + p[2]*Tgas**2/3. + p[3]*Tgas**3*0.25 + p[4]*Tgas**4*0.2 + p[5]/Tgas
 	mymol.enthalpy = polyH*8.314472e-3*Tgas*0.01036410e0 #eV
@@ -2278,4 +2294,3 @@ def get_quote(qall=False):
 		if(i==qrange-1):
 			print "*"*lqt
 			print
-
