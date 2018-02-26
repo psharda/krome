@@ -5024,7 +5024,7 @@ class krome():
 		hasH2O = ("H2O_TOTAL" in [x.name.upper() for x in specs])
 
 		# check if growable species are present
-		clusterables = ["TiO2"]
+		clusterables = ["TIO2"]
 		specs_names = [x.name for x in specs]
 		has_clusterable = all([(xc in specs_names) for xc in clusterables])
 
