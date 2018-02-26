@@ -479,7 +479,7 @@ contains
 
   end function get_exp_table
 
-
+#IFKROME_use_cluster_growth
   !**********************
   ! Cluster growth rate based on kinetic nucleation theory (KNT)
   ! Theory is explained in chapter 13 of Gail and Sedlmayr 2013
@@ -710,5 +710,5 @@ contains
     end if
 
   end function gibbs_free_energy
-
+#ENDIFKROME
 end module krome_grfuncs
