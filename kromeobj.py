@@ -5020,8 +5020,13 @@ class krome():
 		else:
 			fout = open(buildFolder+"krome_grfuncs.f90","w")
 
-
+		# check if total water is in the species list
 		hasH2O = ("H2O_TOTAL" in [x.name.upper() for x in specs])
+
+		# check if growable species are present
+		clusterables = ["TiO2"]
+		specs_names = [x.name for x in specs]
+		has_clusterable = all([(xc in specs_names) for xc in clusterables])
 
   		skip = False
 		#loop on src file and replace pragmas
@@ -5034,6 +5039,7 @@ class krome():
 			if(srow == "#IFKROME_hasH2O" and not(hasH2O)): skip = True
 			if(srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D")): skip = True
 			if(srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D")): skip = True
+			if(srow == "#IFKROME_use_cluster_growth" and not(has_clusterable)): skip = True
 
 		        if(srow == "#ENDIFKROME"): skip = False
 
