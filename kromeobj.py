@@ -5799,15 +5799,30 @@ class krome():
 					fout.write("arr_flux(i) = k(i)*"+("*".join(["n(r"+str(j+1)+")" for j in range(self.maxnreag)]))+"\n")
 			elif(srow == "#KROME_var_reverse"):
 				slen = str(len(specs))
-				fout.write("real*8::p1("+slen+",7), p2("+slen+",7), Tlim("+slen+",3), p(7)\n")
+				fout.write("real*8::p1_nasa("+slen+",7), p2_nasa("+slen+",7), Tlim_nasa("+slen+",3), p(7)\n")
+				fout.write("real*8::p1_nist("+slen+",7), p2_nist("+slen+",7), Tlim_nist("+slen+",3)\n")
 			elif(srow == "#KROME_kc_reverse_nasa"):
 				datarev = ""
 				sp1 = sp2 = spt = ""
 				for x in specs:
 					if all(i == 0 for i in x.poly1_nasa): continue
-					sp1 += "p1("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly1_nasa])) + "/)\n"
-					sp2 += "p2("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2_nasa])) + "/)\n"
-					spt += "Tlim("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.Tpoly_nasa])) + "/)\n"
+					sp1 += "p1_nasa("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly1_nasa])) + "/)\n"
+					sp2 += "p2_nasa("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2_nasa])) + "/)\n"
+					spt += "Tlim_nasa("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.Tpoly_nasa])) + "/)\n"
+				fout.write(sp1+sp2+spt)
+			elif(srow == "#KROME_kc_reverse_nist"):
+				datarev = ""
+				sp1 = sp2 = spt = ""
+				for x in specs:
+					if all(i == 0 for i in x.poly1_nist):
+						continue
+
+					sp1 += "p1_nist("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly1_nist])) + "/)\n"
+					spt += "Tlim_nist("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.Tpoly_nasa])) + "/)\n"
+
+					if any(i != 0 for i in x.poly2_nist):
+						sp2 += "p2_nist("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2_nist])) + "/)\n"
+
 				fout.write(sp1+sp2+spt)
 			elif(srow == "#KROME_shortcut_variables"):
 				fout.write(shortcutVars)
