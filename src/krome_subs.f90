@@ -670,37 +670,88 @@ contains
   ! when temperature is Tgas
   function revHS(Tgas,idx)
     use krome_commons
+    use krome_constants
     real*8::revHS,Tgas,Tgas2,Tgas3,Tgas4,invT,lnT,H,S
+    real*8::Tnist,Tnist2,Tnist3,Tnist4,invTnist,invTnist2,lnTnist
 #KROME_var_reverse
     integer::idx
 
-    p1(:,:) = 0.d0
-    p2(:,:) = 0.d0
-    Tlim(:,:) = 0.d0
+    p(:) = 0.d0
+    p1_nasa(:,:) = 0.d0
+    p2_nasa(:,:) = 0.d0
+    Tlim_nasa(:,:) = 0.d0
+    p1_nist(:,:) = 0.d0
+    p2_nist(:,:) = 0.d0
+    Tlim_nist(:,:) = 0.d0
     Tgas2 = Tgas * Tgas
     Tgas3 = Tgas2 * Tgas
     Tgas4 = Tgas3 * Tgas
     invT = 1d0/Tgas
     lnT = log(Tgas)
+    ! NIST polynomials are quite differernt
+    ! it doesn't like easy stuff...
+    Tnist = Tgas * 1.d-3
+    Tnist2 = Tnist * Tnist
+    Tnist3 = Tnist2 * Tnist
+    Tnist4 = Tnist3 * Tnist2
+    invTnist = 1d0/Tnist
+    invTnist2 = invTnist * invTnist
+    lnTnist = log(Tnist)
 
-#KROME_kc_reverse
+#KROME_kc_reverse_nasa
+#KROME_kc_reverse_nist
 
-    if(Tlim(idx,2)==0.d0) then
-       revHS = 0.d0
-       return
+    ! pick NASA data if present for species
+    if (Tlim_nasa(idx,2) /= 0.d0) then
+      !select set of NASA polynomials using temperature
+      if(Tlim_nasa(idx,1).le.Tgas .and. Tgas.le.Tlim_nasa(idx,2)) then
+         p(:) = p1_nasa(idx,:)
+
+      else if(Tlim_nasa(idx,2)<Tgas .and. Tgas.le.Tlim_nasa(idx,3)) then
+         p(:) = p2_nasa(idx,:)
+
+      ! currently no option when Tgas not in Tlim range p(:) = 0
+      end if
+
+      !compute NASA polynomials for enthalpy and enthropy (unitless)
+      H = p(1) + p(2)*0.5d0*Tgas + p(3)*Tgas2/3.d0 + p(4)*Tgas3*0.25d0 + &
+           p(5)*Tgas4*0.2d0 + p(6)*invT
+      S = p(1)*lnT + p(2)*Tgas + p(3)*Tgas2*0.5d0 + p(4)*Tgas3/3.d0 + &
+           p(5)*Tgas4*0.25d0 + p(7)
+
+      revHS = H - S
+
+    ! else pick NIST data (if present)
+    else if (Tlim_nist(idx,2) /= 0.d0) then
+      if (Tlim_nist(idx,1) < Tgas .and. Tgas < Tlim_nist(idx,2)) then
+        p(:) = p1_nist(idx,:)
+
+      else if (Tlim_nist(idx,2) < Tgas .and. Tgas < Tlim_nist(idx,3)) then
+        p(:) = p2_nist(idx,:)
+
+      ! currently no option when Tgas not in Tlim range p(:) = 0
+      end if
+
+      !compute NIST polynomials for enthalpy and enthropy
+      ! H in (kJ/mol)
+      H = p(1)*Tnist + p(2)*0.5d0*Tnist2 + p(3)*Tnist3/3.d0 + p(4)*Tnist4*0.25d0&
+           - p(5)*invTnist + p(6)
+      !  Unitsless
+      H = H / Rgas_kJ
+
+      ! S in (J/mol*K)
+      S = p(1)*lnTnist + p(2)*Tnist + p(3)*Tnist2*0.5d0 + p(4)*Tnist3/3.d0&
+           - p(5)*invTnist2*0.5d0 + p(7)
+      !  Unitless. Note: do not use Tnist
+      S = S / (Rgas_J * Tgas)
+
+      revHS = H - S
+
+    ! return zero is no data exists
+    else
+      revHS = 0.d0
+
     end if
-
-    !select set of NASA polynomials using temperature
-    if(Tlim(idx,1).le.Tgas .and. Tgas.le.Tlim(idx,2)) p(:) = p1(idx,:)
-    if(Tlim(idx,2)<Tgas .and. Tgas.le.Tlim(idx,3)) p(:) = p2(idx,:)
-
-    !compute NASA polynomials for enthalpy and enthropy
-    H = p(1) + p(2)*0.5d0*Tgas + p(3)*Tgas2/3.d0 + p(4)*Tgas3*0.25d0 + &
-         p(5)*Tgas4*0.2d0 + p(6)*invT
-    S = p(1)*lnT + p(2)*Tgas + p(3)*Tgas2*0.5d0 + p(4)*Tgas3/3.d0 + &
-         p(5)*Tgas4*0.25d0 + p(7)
-
-    revHS = H - S
 
   end function revHS
 
