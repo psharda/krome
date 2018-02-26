@@ -308,7 +308,7 @@ class reaction():
 		pidx = "(/"+(",".join([x.fidx for x in self.products]))+"/)"
 		ridx = "(/"+(",".join([x.fidx for x in self.reactants]))+"/)"
 		ndif = len(self.reactants)-len(self.products)
-		kk = "("+self.krate+") / exp(revKc(Tgas,"+ridx+","+pidx+"))"
+		kk = "("+self.krate+") * revKc(Tgas,n,"+ridx+","+pidx+")"
 		if(ndif!=0): kk +=" * (1.3806488d-22 * Tgas)**("+str(ndif)+")"
 		return kk
 
@@ -1830,13 +1830,12 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 			mymol.Tpoly_nasa = thermo_data[mymol.name]["NASA"][0:3] #(K) [min,med,max] T interval limits
 
 		if "NIST" in thermo_data[mymol.name]:
-			mymol.poly1_nist = thermo_data[mymol.name]["NIST"][2:10] #NIST polynomials lower T interval (min-med)
-			mymol.Tpoly_nist = thermo_data[mymol.name]["NIST"][0:2]  #(K) [min,med] T interval limits
-
+			mymol.poly1_nist = thermo_data[mymol.name]["NIST"][2:9] #NIST polynomials lower T interval (min-med)
+			mymol.Tpoly_nist = thermo_data[mymol.name]["NIST"][0:2] + [0]  #(K) [min,max,0] T interval limits
 			#check for multiple temperature ranges
 			if len(thermo_data[mymol.name]["NIST"]) > 9:
-				mymol.Tpoly_nist.append(thermo_data[mymol.name]["NIST"][11]) #(K) [med,max] T interval limits
-				mymol.poly2_nist = thermo_data[mymol.name]["NIST"][12:20] #NIST polynomials upper T interval
+				mymol.Tpoly_nist[-1] = thermo_data[mymol.name]["NIST"][10]  #(K) [min,med,max] T interval limits
+				mymol.poly2_nist = thermo_data[mymol.name]["NIST"][11:] #NIST polynomials upper T interval
 
 	#compute enthaly @300K using NASA poly
 	if(mymol.Tpoly_nasa[1]<3e2):
