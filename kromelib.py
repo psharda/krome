@@ -1644,7 +1644,7 @@ def is_number(s):
 
 ##################################
 #parse molecule name using dictionary and atoms list
-def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
+def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 
 	mymol = molec() #oggetto molec
 	namecp = name.upper()

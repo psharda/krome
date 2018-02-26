@@ -1659,7 +1659,7 @@ class krome():
 					thermo[spec]["NIST"] = mypoly
 				# else append to same species
 				else:
-					thermo[spec]["NIST"].append(mypoly)
+					thermo[spec]["NIST"] += mypoly
 
 				spec_prev = spec
 

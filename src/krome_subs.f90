@@ -200,7 +200,6 @@ contains
 
   end function H2_solomonLW
 
-  
   !****************************
   !tanh smoothing function that
   ! increses when xarg increases.
@@ -242,7 +241,6 @@ contains
 
   end function get_sgn
 
-  
   !*********************
   function conserve(n,ni)
     use krome_commons
@@ -357,7 +355,6 @@ contains
 
   end function elec_recomb_ST93
 
-  
   !********************
   subroutine load_parts()
     use krome_commons
@@ -683,7 +680,7 @@ contains
     invT = 1d0/Tgas
     lnT = log(Tgas)
 
-#KROME_kc_reverse
+#KROME_kc_reverse_nasa
 
     if(Tlim(idx,2)==0.d0) then
        revHS = 0.d0
