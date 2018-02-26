@@ -40,10 +40,17 @@ network_full.xvarUnits = "g/cm$^3$"
 #### Validation of new reduced network.
 
 # Make abundace colormaps for model grid for species of interest
-network_full.abundanceColormapAll(elemInt=elemInterest,pngFolder="tpngsFull/")
+network_full.abundanceColormapAll(elemInt=elemInterest, timeEvolution=True, pngFolder="tpngsFull/")
 network_reduced.abundanceColormapAll(elemInt=elemInterest,pngFolder="tpngsRed/")
-#if elemInt not specified, this will do all species
-#network.abundanceColormapAll(pngFolder="pngs/")
+# If elemInt not specified, this will do all species
+# network.abundanceColormapAll(pngFolder="pngs/")
+# timeEvolution is an option to make colormaps for every time step to visualise
+# temporal evolution in temparature-rho space
+
+# Make a video of all time evolution color plots for species of interest
+network_full.makeEvolutionVideo(elemInt=elemInterest, pngFolder="tpngsFull/")
+
+
 
 # Make relative abundace colormaps between full and reduced network
 compareAbundances(network_full, network_reduced,
@@ -55,11 +62,14 @@ compareAbundances(network_full, network_reduced,
 
 
 #make time evolution plot for interesting model grid points
-network_full.abundanceEvolution(atom="H2", tgasInt=TgasInterest,
+network_full.abundanceEvolution(species=["H2"], tgasInt=TgasInterest,
                                 xvarInt=xvarInterest, pngFolder="pngsFull/")
-network_full.abundanceEvolution(atom="H", tgasInt=TgasInterest,
+network_full.abundanceEvolution(species=["H"], tgasInt=TgasInterest,
                                 xvarInt=xvarInterest, pngFolder="pngsFull/")
-network_red.abundanceEvolution(atom="H2", tgasInt=TgasInterest,
+network_red.abundanceEvolution(species=["H2"], tgasInt=TgasInterest,
                                 xvarInt=xvarInterest, pngFolder="pngsRed/")
-network_red.abundanceEvolution(atom="H", tgasInt=TgasInterest,
+network_red.abundanceEvolution(species=["H"], tgasInt=TgasInterest,
                                 xvarInt=xvarInterest, pngFolder="pngsRed/")
+#make time evolution plot with multiple species on one plot
+network_full.abundanceEvolution(species=elemInterest, tgasInt=TgasInterest,
+                                xvarInt=xvarInterest, pngFolder="pngsFull/")

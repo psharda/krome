@@ -172,7 +172,7 @@ class network:
 	def network2latex(self, networkLatex="NetworkLatex.log"):
 		#NOTE: Make sure the network input file has incrementing reaction indices.
 		# If double indices exist, the LaTeX table will be incorrect.
-		
+
 		#list with all temperature shortcuts element = (var, replaceWith)
 		shortcutsTemperature = utils.getShortcutsLatex()
 		cntMergedReactions = 0
@@ -186,7 +186,6 @@ class network:
 				shortcutsVariables = myReaction.shortcuts
 
 				for cnt in range(len(myReaction.rate)):
-					print cnt
 					latexColums, message = myReaction.reaction2latex(shortcutsTemperature,
 											shortcutsVariables, cntMergedReactions, cnt)
 					if cnt > 0:

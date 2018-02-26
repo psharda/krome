@@ -479,4 +479,236 @@ contains
 
   end function get_exp_table
 
+
+  !**********************
+  ! Cluster growth rate based on kinetic nucleation theory (KNT)
+  ! Theory is explained in chapter 13 of Gail and Sedlmayr 2013
+  ! (https://doi.org/10.1017/CBO9780511985607)
+  function cluster_growth_rate(monomer_idx, cluster_size, temperature, stick) result(rate)
+    ! k_N = v_thermal * cross_sectrion_N * stick_N
+    ! with N the cluster size of the reactant
+    use krome_constants
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer, parameter :: dp=kind(0.d0) ! double precision
+
+    integer, intent(in) :: monomer_idx
+    integer, intent(in) :: cluster_size
+    real(dp), intent(in) :: temperature
+    real(dp), intent(in), optional :: stick
+    real(dp) :: rate
+
+    real(dp) :: v_thermal
+    real(dp) :: cross_section
+    real(dp) :: stick_coefficient
+    real(dp) :: monomer_radius
+    real(dp) :: monomer_mass
+    real(dp) :: mass(nspec)
+
+    mass(:) = get_mass()
+
+    if(monomer_idx == idx_TiO2) then
+      ! Interatomic distance from Jeong et al 2000 DOI:10.1088/0953-4075/33/17/319
+      monomer_radius = 1.78e-8_dp ! in cm
+    else
+      print *, "Monomer radius not yet defined"
+    end if
+
+    monomer_mass = mass(monomer_idx)
+
+    v_thermal = sqrt(8._dp * boltzmann_erg * temperature &
+              / (pi * monomer_mass))
+
+    cross_section = pi * monomer_radius**2._dp * cluster_size**(2._dp/3._dp)
+
+    ! Sticking coefficiet is set to one for simplicity
+    if(present(stick)) then
+      stick_coefficient = stick
+    else
+      stick_coefficient = 1._dp
+    end if
+
+    rate = v_thermal * cross_section * stick_coefficient
+
+  end function cluster_growth_rate
+
+
+  !**********************
+  ! Cluster destruction rate based on kinetic nucleation theory (KNT)
+  ! Theory is explained in chapter 13 of Gail and Sedlmayr 2013
+  ! (https://doi.org/10.1017/CBO9780511985607)
+  ! This reversed reaction is infered from detailed balance
+  function cluster_destruction_rate(monomer_idx, cluster_size,&
+     temperature, stick) result(rate)
+    ! k_N = v_thermal * cross_section_(N-1) * stick_(N-1)
+    ! * [n_1 * n_(N-1)/n_N]_equilibrium
+    ! with N the cluster size of the reactant
+    ! and [n_1 * n_(N-1)/n_N]_equilibrium are numbers densities in equilibrium
+    ! k_N_destr = k_(N-1)_growth * [n_1 * n_(N-1)/n_N]_equi
+    use krome_constants
+    use krome_commons
+    implicit none
+    integer, parameter :: dp=kind(0.d0) ! double precision
+
+    integer, intent(in) :: monomer_idx
+    integer, intent(in) :: cluster_size
+    real(dp), intent(in) :: temperature
+    real(dp), intent(in), optional :: stick
+    real(dp) :: rate
+
+    real(dp) :: k_growth
+    real(dp) :: gibbs_big, gibbs_small, gibbs_monomer
+    real(dp) :: gibbs_part, non_standard_correction
+
+    ! [n_(N-1)/n_N]_equi = (n_gas/n_1_equi) * exp( (dG_N - dG_(N-1) - dG_1) / RT )
+    ! with dG_N "is the change in free enthalpy in the reaction of formation
+    ! of 1 mol of clusters of size N from N mol of monomers."
+    ! - Gail & Sedlmayr 2013, sec. 13.4.1
+    ! See Clouet 2010 https://arxiv.org/abs/1001.4131v2
+    ! pages 15+ for a more detailed derivation of
+    ! the Gibbs free enegery of the system.
+    ! This assumes the clusters to be dilute compared to the total gas
+    ! which is resonable
+
+    !! UNCORRECTED
+    ! ngas = everything besides the clusters, but as clusters are assumed to be dilute
+    ! their number density can be neglected compared to the total
+    ! ngas = sum(n(1:nmols))
+    ! if(monomer_idx == idx_TiO2 )then
+    !   ngas = sum(n(1:nmols))-sum(n(idx_TiO2:idx_Ti10O20))
+    ! else
+    !   print *, "Clusters other than TiO2 are not yet defined"
+    ! endif
+
+
+    gibbs_big = gibbs_free_energy(monomer_idx, cluster_size, temperature) ! kJ*mol**(-1)
+    gibbs_small = gibbs_free_energy(monomer_idx, cluster_size-1, temperature)! kJ*mol**(-1)
+    gibbs_monomer = gibbs_free_energy(monomer_idx, 1, temperature)! kJ*mol**(-1)
+    ! correction to the Gibbs free enegery under non-standard pressure of 1 bar.
+    ! This only differs in the translational partition function.
+    ! ! total gas pressure in units of 1 bar
+    ! pressure_scaled = ngas * boltzmann_erg * temperature * 1.e-6
+    ! gibbs_corr = temperature * Rgas_kJ * log(pressure_scaled)
+    ! gibss correction needs to be added to each gibss energy but _big and _small cancel
+    ! The gibbs_corr factor ultimately cancels out ngas and reduced to:
+    ! gibbs_corr = temperature * Rgas_kJ *log(pressure_scaled)
+    non_standard_correction = (1.e-6_dp * boltzmann_erg * temperature)**(-1)
+
+    gibbs_part = exp( (gibbs_big - gibbs_small - gibbs_monomer)&
+                / ( Rgas_kJ * temperature ) )
+
+    k_growth = cluster_growth_rate(monomer_idx, cluster_size-1, temperature)
+
+
+    !! UNCORRECTED rate
+    ! rate = k_growth * ngas * gibbs_part
+
+    ! corrected rate
+    rate = k_growth * gibbs_part * non_standard_correction! s^(-1)
+
+  end function cluster_destruction_rate
+
+
+  !**********************
+  ! Change in free enthalpy in the reaction of formation
+  ! of 1 mol of clusters of size N from N mol of monomers."
+  ! - Gail & Sedlmayr 2013, sec. 13.4.1
+  function gibbs_free_energy(monomer_idx, cluster_size, temperature) result(gibbs)
+    use krome_constants
+    use krome_commons
+    implicit none
+    integer, parameter :: dp=kind(0.d0) ! double precision
+
+    integer, intent(in) :: monomer_idx
+    integer, intent(in) :: cluster_size
+    real(dp), intent(in) :: temperature
+    real(dp) :: gibbs
+
+    real(dp) :: Tinv, T, T2, T3
+    real(dp) :: a, b, c, d, e
+
+    T = temperature
+    Tinv = T**(-1._dp)
+    T2 = T*T
+    T3 = T2*T
+
+    if(monomer_idx == idx_TiO2) then
+      ! Data taken from Lee, G et al. 2015 (10.1051/0004-6361/201424621)
+      ! Lee, G. et al. 2018 fitted their own results (https://arxiv.org/pdf/1801.08482.pdf)
+      ! dG = a*T**-1 + b + c*T + d*T**2 + e*T**3
+      ! This fit is valid for 500 < T < 2000 K
+      if(cluster_size == 1) then
+        a = -1.63472903e3_dp
+        b = -2.29197239e2_dp
+        c = -3.60996766e-2_dp
+        d = 1.60056318e-5_dp
+        e =-2.02075337e-9_dp
+      else if(cluster_size == 2) then
+        a = -4.39367806e3_dp
+        b = -9.77431160e2_dp
+        c = 1.01656231e-1_dp
+        d = 2.16685151e-5_dp
+        e = -2.90960794e-9_dp
+      else if(cluster_size == 3) then
+        a = -7.27464297e3_dp
+        b = -1.72789122e3_dp
+        c = 2.40409836e-1_dp
+        d = 2.74002833e-5_dp
+        e = -3.81294573e-9_dp
+      else if(cluster_size == 4) then
+        a = -1.02808569e4_dp
+        b = -2.51074121e3_dp
+        c = 4.15061961e-1_dp
+        d = 3.30076021e-5_dp
+        e = -4.69138304e-9_dp
+      else if(cluster_size == 5) then
+        a = -1.37139638e4_dp
+        b = -3.27506794e3_dp
+        c = 5.73212328e-1_dp
+        d = 4.12461166e-5_dp
+        e = -6.14829810e-9_dp
+      else if(cluster_size == 6) then
+        a = -1.60124756e4_dp
+        b = -4.13772573e3_dp
+        c = 7.32672450e-1_dp
+        d = 4.44131101e-5_dp
+        e = -6.48290229e-9_dp
+      else if(cluster_size == 7) then
+        a = -1.89334054e4_dp
+        b = -4.91964308e3_dp
+        c = 8.93689186e-1_dp
+        d = 4.99942488e-5_dp
+        e = -7.35905348e-9_dp
+      else if(cluster_size == 8) then
+        a = -2.17672541e4_dp
+        b = -5.72492348e3_dp
+        c = 1.05703014e0_dp
+        d = 5.57819924e-5_dp
+        e = -8.27043313e-9_dp
+      else if(cluster_size == 9) then
+        a = -2.48377680e4_dp
+        b = -6.51357184e3_dp
+        c = 1.22288686e0_dp
+        d = 6.10116309e-5_dp
+        e = -0.08225913e-9_dp
+      else if(cluster_size == 10) then
+        a = -2.76078426e4_dp
+        b = -7.34516329e3_dp
+        c = 1.37500651e0_dp
+        d = 6.70631142e-5_dp
+        e = -1.00410219e-8_dp
+      else
+        print *, "There is no thermochemical data on &
+         TiO2 clusters larger than 10."
+       end if
+       gibbs = a*Tinv + b + c*T + d*T2 + e*T3 ! kJ*mol**(-1)
+
+     else
+       print *, "There is no thermochemical data on &
+       clusters ofther than TiO2."
+    end if
+
+  end function gibbs_free_energy
+
 end module krome_grfuncs

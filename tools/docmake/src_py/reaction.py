@@ -1,4 +1,5 @@
 import sys,species,utils,os,urllib
+import ratefunctions
 from math import log10,log,exp,sqrt,pi
 
 class reaction:
@@ -33,7 +34,7 @@ class reaction:
 			sys.exit("ERROR: wrong format "+reactionFormat)
 		splitFormat = reactionFormat.replace("@format:","").split(",")
 		splitFormat = [x.lower() for x in splitFormat]
-		arow = row.strip().split(",",len(splitFormat))
+		arow = row.strip().split(",",len(splitFormat)-1)
 		arow = [x.strip() for x in arow]
 
 		specials = ["","G"]
@@ -483,7 +484,10 @@ class reaction:
 			#loop on rates to search variable name
 			for rate in self.rate:
 				#append when variable found
-				if(variable in rate.lower()): rateVariables.append(variable)
+				if self.hasSpecialRate:
+					rate = utils.getParentheticContents(rate, '()')[0][1]
+
+				if(variable.lower() in rate.lower()): rateVariables.append(variable)
 		#if no variable found assumes Tgas
 		if(len(rateVariables)==0): rateVariables = ["tgas"]
 
@@ -520,6 +524,7 @@ class reaction:
 	#********************
 	#evaluate rates
 	def evalRate(self,shortcuts,varRanges):
+		import re
 
 		#number of points in the plot
 		imax = 100
@@ -528,68 +533,136 @@ class reaction:
 		self.evalRate = []
 		self.warnings = []
 		self.shortcutsFound = dict()
+		self.rate2D = False
 
 		#F90 expected operators in F90 rate expression
 		ops = ["+","-","/","*","(",")"]
-
 
 		#loop on rates parts
 		for icount in range(len(self.rate)):
 			#get current rate
 			rate = self.rate[icount]
 			evaluation = dict()
+			loopVariables = dict() # variables present in rate
+			vals = dict()	 # variable range
+			valsRange = dict()  # extra variable range for Tgas/extrapolation
+			hasEval = dict() #evaluation exist flag
 
-			substFound = True
-			#loop until shortcut found and replaced
-			while(substFound):
-				#remove trailing comments (containing a "#")
-				rate = rate.split('#')[0]
-				#remove spaces
-				rate = rate.replace(" ","").lower()
+			# check if rate is a function
+			# that is defined in functionList
+			# Currently only nucleation rate functions
+			# TODO: extend with more functions
+			# TODO: generalise for rates that are not only a function
+			for specialRate in ratefunctions.functionList:
+				if specialRate in rate:
+					self.hasSpecialRate = True
+					# name of the function
+					rateFunction = specialRate
+					# NOTE: currently it can only handle one function
+					break
+				else:
+					self.hasSpecialRate = False
+
+			if self.hasSpecialRate:
+				# get list of the rate function arguments
+				rateArguments = utils.getParentheticContents(rate, '()')[0][1].split(', ')
+
+				for idx, arg in enumerate(rateArguments):
+					# replace "idx_species" with species object
+					if 'idx_' in arg:
+						speciesName = arg[4:]
+						for spec in self.getSpecies():
+							if spec.name == speciesName:
+								rateArguments[idx] = spec
+
+					# replace numbers with floats
+					elif utils.isNumber(arg):
+						rateArguments[idx] = utils.char2int(arg)
+
+					# surronds variables with "#"
+					else:
+						rateArguments[idx] = "#" + arg + "#"
+
+				# remake rate string
+				# objects also becomes a string (=unsuable)
+				rate = re.sub(r'\(.*\)', '(' +
+					", ".join([str(i) for i in rateArguments]) + ')', rate)
+
+			else:
+				substFound = True
+				#loop until shortcut found and replaced
+				while(substFound):
+					#remove trailing comments (containing a "#")
+					rate = rate.split('#')[0]
+					#remove spaces
+					rate = rate.replace(" ","").lower()
+
+					#surround F90 operators with # symbols
+					for op in ops:
+						rate = "#"+rate.replace(op,"#"+op+"#")+"#"
+
+					#remove double exponent operator
+					rate = rate.replace("#dexp#","#exp#")
+
+					substFound = False
+					#split rate at #s
+					splitRate = [x for x in rate.split("#") if x!=""]
+					#sort shortcuts by size
+					var = sorted(shortcuts,key=lambda x:len(x),reverse=True)
+					#loop on shortcuts to replace
+					for variable in var:
+						#loop on rate parts
+						for i in range(len(splitRate)):
+							#if shortcut found replace with expression
+							if(splitRate[i]==variable.lower()):
+								splitRate[i] = "("+shortcuts[variable]+")"
+								self.shortcutsFound[variable] = shortcuts[variable]
+								substFound = True
+					#join rate back
+					rate = ("".join(splitRate))
+
+				#replace F90 numbers for evaluation, d->e
+				rate = rate.replace("d","e")
 
 				#surround F90 operators with # symbols
 				for op in ops:
 					rate = "#"+rate.replace(op,"#"+op+"#")+"#"
 
-				#remove double exponent operator
-				rate = rate.replace("#dexp#","#exp#")
+			# check which/how many variables are in the rate
+			# save the ones that are present
+			for (variable,vrange) in varRanges.iteritems():
+				if "#"+variable.lower()+"#" in rate.lower():
+					loopVariables[variable] = vrange
 
-				substFound = False
-				#split rate at #s
-				splitRate = [x for x in rate.split("#") if x!=""]
-				#sort shortcuts by size
-				var = sorted(shortcuts,key=lambda x:len(x),reverse=True)
-				#loop on shortcuts to replace
-				for variable in var:
-					#loop on rate parts
-					for i in range(len(splitRate)):
-						#if shortcut found replace with expression
-						if(splitRate[i]==variable.lower()):
-							splitRate[i] = "("+shortcuts[variable]+")"
-							self.shortcutsFound[variable] = shortcuts[variable]
-							substFound = True
-				#join rate back
-				rate = ("".join(splitRate))
+			# if no variables present, skip rate
+			if not loopVariables:
+				continue
+			# when only one variable, create a dummy for generalised 2D loop
+			elif len(loopVariables)==1:
+				loopVariables['dummy'] = ['DUMMY']
+			#
+			elif len(loopVariables)==2:
+				self.rate2D = True
 
-			#replace F90 numbers for evaluation, d->e
-			rate = rate.replace("d","e")
-
-			#surround F90 operators with # symbols
-			for op in ops:
-				rate = "#"+rate.replace(op,"#"+op+"#")+"#"
+			else:
+				print "Cannot handle %s number of variables in rate" %(len(loopVariables))
 
 			#loop on available ranges
-			for (variable,vrange) in varRanges.iteritems():
+			for (variable,vrange) in loopVariables.iteritems():
+				hasEval[variable] = False
 				#check if Tgas
 				isTgas = (variable.lower()=="tgas")
+				if variable == 'dummy':
+					vals[variable] = ['']
+					continue
 				#get range limits
 				(varMin,varMax) = vrange
 				#log limits
 				logVarMin = log10(varMin)
 				logVarMax = log10(varMax)
 				#create variable range
-				vals = [i*(logVarMax-logVarMin)/(imax-1)+logVarMin for i in range(imax)]
-				vals = [1e1**x for x in vals]
+				vals[variable] = [i*(logVarMax-logVarMin)/(imax-1)+logVarMin for i in range(imax)]
+				vals[variable] = [1e1**x for x in vals[variable]]
 
 				#when Tgas check add limits if any
 				if(isTgas):
@@ -599,92 +672,241 @@ class reaction:
 					if(self.Tmax[icount]!=None): Tmax = float(utils.replaceTlims(self.Tmax[icount]))
 					Tmin = max(varMin,Tmin)
 					Tmax = min(varMax,Tmax)
-					valsRange = [x for x in vals if(Tmin<=x and x<=Tmax)]
-					valsRange = [Tmin]+valsRange+[Tmax]
+					valsRange[variable] = [x for x in vals[variable] if(Tmin<=x and x<=Tmax)]
+					valsRange[variable] = [Tmin]+valsRange[variable]+[Tmax]
 
 					#add additional points close to the limits (needed by evaluate joints)
-					vals += [Tmin,Tmax]
+					vals[variable] += [Tmin,Tmax]
 					for dx in [0.5,1e0]:
-						if(Tmin-dx>0): vals += [Tmin-dx]
-						vals += [Tmin+dx, Tmax-dx, Tmax+dx]
+						if(Tmin-dx>0): vals[variable] += [Tmin-dx]
+						vals[variable] += [Tmin+dx, Tmax-dx, Tmax+dx]
 
 					#sort Tgas values
-					vals = sorted(vals)
-
-				#when is not temperature if variable not in rate skip rate
-				if(not(isTgas)):
-					if(not("#"+variable.lower()+"#" in rate)): continue
+					vals[variable] = sorted(vals[variable])
 
 				#store evaluated rate
 				self.evalRate.append(rate)
 				#store xdata and init ydata
 				evaluation[variable] = dict()
-				evaluation[variable]["xdata"] = vals
+				evaluation[variable]["xdata"] = vals[variable]
 				evaluation[variable]["ydata"] = []
 				#if Tgas store as interval
 				if(isTgas):
-					evaluation[variable]["xdataRange"] = valsRange
+					evaluation[variable]["xdataRange"] = valsRange[variable]
 					evaluation[variable]["ydataRange"] = []
 
-				#evaluation exist flag
-				hasEval = False
-				#evaluate rate full range
-				for val in vals:
-					k = rate.replace("#"+variable.lower()+"#",str(val)).replace("#","")
-					try:
-						evaluation[variable]["ydata"].append(eval(k))
-						hasEval = True
-					except:
-						evaluation[variable]["ydata"].append(None)
+				if self.rate2D:
+					evaluation[variable]["zdata"] = []
+					if isTgas:
+						evaluation[variable]["zdataRange"] = []
 
-				#check if negative values found
-				if(min(evaluation[variable]["ydata"])<0 and hasEval):
-					if(isTgas):
-						self.warnings.append("negative values when extrapolated")
+			#evaluate rate full range
+			# loop over ranges of all found variables
+			keyVars = loopVariables.keys()
+			for valFirst in vals[keyVars[0]]:
+				for valSecond in vals[keyVars[1]]:
+					# check if rate is a function
+					if self.hasSpecialRate:
+						# copy list to avoid replacing arguments permanetly
+						rateArgumentsNew = rateArguments[:]
+						for idx, arg in enumerate(rateArguments):
+							# replace variable with its float value
+							try:
+								arg = arg.replace("#"+keyVars[0]+"#",str(valFirst))
+								rateArgumentsNew[idx] = float(arg.replace("#"+keyVars[1]+"#",str(valSecond)))
+							except:
+								continue
+						# call the special rate function
+						# NOTE: I tried using 'exec(rate)'
+						# but python finds this illegal
+						# so an ugly if elif for all functions
+						# in the solution...
+						if rateFunction == "cluster_growth_rate":
+							yvalue = ratefunctions.cluster_growth_rate(rateArgumentsNew[0],
+							 										rateArgumentsNew[1],
+																	rateArgumentsNew[2])
+							# save evaluation flag
+							# I know it looks ugly... :/ => TODO
+							if self.rate2D:
+								hasEval[keyVars[0]] = True
+								hasEval[keyVars[1]] = True
+							elif keyVars[0] == 'dummy':
+								hasEval[keyVars[1]] = True
+							else:
+								hasEval[keyVars[0]] = True
+						elif rateFunction == "cluster_destruction_rate":
+							yvalue = ratefunctions.cluster_destruction_rate(rateArgumentsNew[0],
+							 												rateArgumentsNew[1],
+																			rateArgumentsNew[2])
+							# save evaluation flag
+							if self.rate2D:
+								hasEval[keyVars[0]] = True
+								hasEval[keyVars[1]] = True
+							elif keyVars[0] == 'dummy':
+								hasEval[keyVars[1]] = True
+							else:
+								hasEval[keyVars[0]] = True
+						elif rateFunction == "steady_state_nucleation_rate":
+							yvalue = ratefunctions.steady_state_nucleation_rate(rateArgumentsNew[0],
+							 									rateArgumentsNew[1],
+																rateArgumentsNew[2],
+																rateArgumentsNew[3])
+							# save evaluation flag
+							if self.rate2D:
+								hasEval[keyVars[0]] = True
+								hasEval[keyVars[1]] = True
+							elif keyVars[0] == 'dummy':
+								hasEval[keyVars[1]] = True
+							else:
+								hasEval[keyVars[0]] = True
+
+						else:
+							yvalue = None
+							print 'ERROR: %s not defined in rateFunction.py' %(rateFunction)
+
 					else:
-						self.warnings.append("negative values found")
-
-				#evaluate rate limited range
-				if(isTgas and hasEval):
-					try:
-						kmin = eval(rate.replace("#"+variable.lower()+"#", \
-							str(Tmin)).replace("#",""))
-						kmax = eval(rate.replace("#"+variable.lower()+"#", \
-							str(Tmax)).replace("#",""))
-					except:
-						print "ERROR: problem evaluating rate at limits"
-						print "limits:",str(Tmin),str(Tmax)
-						print "rate:", rate.replace("#","")
-						sys.exit()
-
-					evaluation[variable]["xlimits"] = [Tmin,Tmax]
-					evaluation[variable]["ylimits"] = [kmin,kmax]
-					for val in valsRange:
-						k = rate.replace("#"+variable.lower()+"#",str(val)).replace("#","")
+						#replace variables with their floats
+						k = rate.replace("#"+keyVars[0].lower()+"#",str(valFirst))
+						k = k.replace("#"+keyVars[1].lower()+"#",str(valSecond)).replace("#","")
 						try:
-							evaluation[variable]["ydataRange"].append(eval(k))
-							hasEval = True
+							yvalue = eval(k)
+							if self.rate2D:
+								hasEval[keyVars[0]] = True
+								hasEval[keyVars[1]] = True
+							elif keyVars[0] == 'dummy':
+								hasEval[keyVars[1]] = True
+							else:
+								hasEval[keyVars[0]] = True
 						except:
-							evaluation[variable]["ydataRange"].append(None)
+							yvalue = None
+					if self.rate2D:
+						#save in one of two variable dicts
+						evaluation[keyVars[0]]["zdata"].append(yvalue)
+					else:
+						#save in variable dicts that is not 'dummy'
+						if keyVars[0] == 'dummy':
+							evaluation[keyVars[1]]["ydata"].append(yvalue)
+						else:
+							evaluation[keyVars[0]]["ydata"].append(yvalue)
 
-					#check if negative values found (when limited range)
-					if(min(evaluation[variable]["ydataRange"])<0 and hasEval):
-						self.warnings.append("negative values found")
+
+				# #check if negative values found
+				# if not self.rate2D:
+				# 	if( min(evaluation[variable]["ydata"]) < 0 and hasEval[variable]):
+				# 		if(isTgas):
+				# 			self.warnings.append("negative values when extrapolated")
+				# 		else:
+				# 			self.warnings.append("negative values found")
+
+			# no extrapolation for 2D color plots
+			if not self.rate2D:
+				for (variable,vrange) in loopVariables.iteritems():
+					#check if Tgas
+					isTgas = (variable.lower()=="tgas")
+					#evaluate rate limited range
+					if(isTgas and hasEval[variable]):
+						if self.hasSpecialRate:
+							# replace variable with its float value
+							for idx, arg in enumerate(rateArguments):
+								try:
+									argmin = float(arg.replace("#"+variable+"#",str(Tmin)))
+									argmax = float(arg.replace("#"+variable+"#",str(Tmax)))
+								except:
+									continue
+
+							# call special rate function
+							# same note as above
+							if rateFunction == "cluster_growth_rate":
+								kmin = ratefunctions.cluster_growth_rate(rateArguments[0],
+								 										rateArguments[1],
+																		argmin)
+								kmax = ratefunctions.cluster_growth_rate(rateArguments[0],
+								 										rateArguments[1],
+																		argmax)
+
+							elif rateFunction == "cluster_destruction_rate":
+								kmin = ratefunctions.cluster_destruction_rate(rateArguments[0],
+								 												rateArguments[1],
+																				argmin)
+
+								kmax = ratefunctions.cluster_destruction_rate(rateArguments[0],
+																				rateArguments[1],
+																				argmax)
+							else:
+								print '%s not defined in rateFunction.py' %(rateFunction)
+
+						else:
+							try:
+								kmin = eval(rate.replace("#"+variable.lower()+"#", \
+									str(Tmin)).replace("#",""))
+								kmax = eval(rate.replace("#"+variable.lower()+"#", \
+									str(Tmax)).replace("#",""))
+							except:
+								print "ERROR: problem evaluating rate at limits"
+								print "limits:",str(Tmin),str(Tmax)
+								print "rate:", rate.replace("#","")
+								sys.exit()
+
+						evaluation[variable]["xlimits"] = [Tmin,Tmax]
+						evaluation[variable]["ylimits"] = [kmin,kmax]
+						for val in valsRange[variable]:
+							if self.hasSpecialRate:
+								# copy list t avoid permanent replacements
+								rateArgumentsNew = rateArguments[:]
+								# replace variable with its float value
+								for idx, arg in enumerate(rateArguments):
+									try:
+										rateArgumentsNew[idx] = float(arg.replace("#"+variable+"#",str(val)))
+									except:
+										continue
+
+								# call special rate function
+								# same note as above
+								if rateFunction == "cluster_growth_rate":
+									yvalue = ratefunctions.cluster_growth_rate(rateArgumentsNew[0],
+									 											rateArgumentsNew[1],
+																				rateArgumentsNew[2])
+									hasEval[variable] = True
+
+								elif rateFunction == "cluster_destruction_rate":
+									yvalue = ratefunctions.cluster_destruction_rate(rateArgumentsNew[0],
+									 												rateArgumentsNew[1],
+																					rateArgumentsNew[2])
+									hasEval[variable] = True
+								else:
+									yvalue = None
+									print '%s not defined in rateFunction.py' %(rateFunction)
+
+							else:
+								k = rate.replace("#"+variable.lower()+"#",str(val)).replace("#","")
+								try:
+									yvalue = eval(k)
+									hasEval[variable] = True
+								except:
+									yvalue = None
+
+							evaluation[variable]["ydataRange"].append(yvalue)
 
 
+						#check if negative values found (when limited range)
+						if(min(evaluation[variable]["ydataRange"])<0 and hasEval[variable]):
+							self.warnings.append("negative values found")
+			for (variable,vrange) in loopVariables.iteritems():
 				#if not evaluated put none
-				if(not(hasEval)):
+				if not hasEval[variable]:
 					#add warning if rate not evaluated
 					self.warnings.append("no rate evaluation")
 					evaluation[variable] = None
 
-			#store as class attribute
-			self.evaluation.append(evaluation)
+		#store as class attribute
+		self.evaluation.append(evaluation)
 
 	#**************************
 	#do plot (PNG)
 	def doPlot(self,myOptions,pngFileName=None):
 		import matplotlib
+		import numpy as np
+		import matplotlib.colors as colors
 		#try to load AGG for PNG rendering (slightly faster)
 		try:
 			matplotlib.use('AGG')
@@ -699,68 +921,140 @@ class reaction:
 		#cancel current plot
 		plt.clf()
 		#max orders of magnitude y axis
-		yspanMax = 1e-10
+		yspanMax = 1e-20
 		hasPlot = False
 		ydataAll = []
+		# variable names to save plots for
+		saveVariables = []
 
-		#loop on range varibles
-		for rng in myOptions.range:
-			#get range name
-			variable = rng.split("=")[0].strip()
-			plt.clf()
-			#loop on different limited ranges
-			for evaluation in self.evaluation:
-				if(not(variable in evaluation)): continue
-				data = evaluation[variable]
+		# check if rate has two variables
+		if self.rate2D:
+			#loop on range varibles
+			for rng in myOptions.range:
+				#get range name
+				variable = rng.split("=")[0].strip()
+				#loop on different limited ranges
+				for evaluation in self.evaluation:
+					# skip variables that are not in the rate
+					if variable not in evaluation:
+						continue
+					data = evaluation[variable]
 
-				if(data==None): continue
-				xdata = data["xdata"]
-				ydata = data["ydata"]
-				if all([yd == 0.0 for yd in ydata]):
-					print "WARNING: The rate for {0} is zero; skipping the plot!" \
-						.format(self.getVerbatim())
-					continue # all rate data are zero, so skip plotting
-				hasPlot = True
+					if data['zdata']:
+						zdata = data['zdata']
+						ydata = data['xdata']
+						plt.ylabel(variable)
 
-				if(variable.lower()=="tgas"):
-					#plot full range
-					plt.loglog(xdata,ydata,"r--")
+					else:
+						xdata = data['xdata']
+						plt.xlabel(variable)
 
-					#if Tgas use limited ranges and plot limit points
-					xdataRange = data["xdataRange"]
-					ydataRange = data["ydataRange"]
-					ydataAll += ydataRange
-					plt.loglog(evaluation[variable]["xlimits"], \
-						evaluation[variable]["ylimits"],"ro")
-					plt.loglog(xdataRange,ydataRange,"b-")
-				else:
-					xdataRange = xdata
-					ydataRange = ydata
-					ydataAll += ydataRange
-					plt.loglog(xdataRange,ydataRange)
+					hasPlot = True
+					saveVariables.append(variable)
+
+			# adapt data to enable 2D color plot
+			Nrow = len(ydata)
+			Ncol = len(xdata)
+			zdata = np.reshape(zdata,(Nrow, Ncol))
+
+			# set ranges
+			zmin = max(zdata.max()*yspanMax,zdata.min())
+			zmax = zdata.max()
+			xRange = max(xdata)/min(xdata)
+			yRange = max(ydata)/min(ydata)
+			zRange = zmax/zmin
+
+			# with data range is too large, make logaritmic color plot
+			if zRange > 10:
+				plt.pcolormesh(xdata, ydata, zdata, cmap='viridis', rasterized=True,
+				norm=colors.LogNorm(vmin=zmin, vmax=zdata.max()))
+			else:
+				plt.pcolormesh(xdata, ydata, zdata, cmap='viridis', rasterized=True)
+
+			plt.colorbar(label='Reaction rate', extend='min')
+
+			# make logaritmic when range is too large
+			if xRange > 99:
+				plt.xscale('log')
+			if yRange > 99:
+				plt.yscale('log')
+
+			plt.title(self.getVerbatimLatex())
 
 			#if argument is not present automatic file
-			if(pngFileName==None):
-				pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png"
+			if(pngFileName==None and hasPlot):
+				# make two plots for 2D rats so they appear twice in the html
+				for var in saveVariables:
+					pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+var+".png"
 
 			#plot only if data are available
 			if(hasPlot and not(os.path.exists(pngFileName))):
-				plt.grid(b=True, color='0.65',linestyle='--')
-				#plot limited range
-				plt.xlabel(variable)
-				plt.ylabel("rate")
-				plt.title(self.getVerbatimLatex())
-				#set limits including max span
-				plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
-				#set limits if constant
-				if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
-
 				#if value found save plot to png file
 				plt.savefig(pngFileName, dpi=150)
+
+		else:
+
+			#loop on range varibles
+			for rng in myOptions.range:
+				#get range name
+				variable = rng.split("=")[0].strip()
+				plt.clf()
+				#loop on different limited ranges
+				for evaluation in self.evaluation:
+					if(not(variable in evaluation)): continue
+					data = evaluation[variable]
+					if(data==None): continue
+					xdata = data["xdata"]
+					ydata = data["ydata"]
+					if all([yd == 0.0 for yd in ydata]):
+						print "WARNING: The rate for {0} is zero; skipping the plot!" \
+							.format(self.getVerbatim())
+						continue # all rate data are zero, so skip plotting
+					hasPlot = True
+
+					if(variable.lower()=="tgas"):
+						#plot full range
+						plt.loglog(xdata,ydata,"r--")
+
+						#if Tgas use limited ranges and plot limit points
+						xdataRange = data["xdataRange"]
+						ydataRange = data["ydataRange"]
+						ydataAll += ydataRange
+						plt.loglog(evaluation[variable]["xlimits"], \
+							evaluation[variable]["ylimits"],"ro")
+						plt.loglog(xdataRange,ydataRange,"b-")
+					else:
+						xdataRange = xdata
+						ydataRange = ydata
+						ydataAll += ydataRange
+						plt.loglog(xdataRange,ydataRange)
+
+				#if argument is not present automatic file
+				if(pngFileName==None and hasPlot):
+					pngFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+variable+".png"
+
+				#plot only if data are available
+				if(hasPlot and not(os.path.exists(pngFileName))):
+					plt.grid(b=True, color='0.65',linestyle='--')
+					#plot limited range
+					plt.xlabel(variable)
+					plt.ylabel("rate")
+					plt.title(self.getVerbatimLatex())
+					#set limits including max span
+					plt.ylim(max(max(ydataAll)*yspanMax,min(ydataAll)*1e-1), max(ydataAll)*1e1)
+					#set limits if constant
+					if(min(ydataAll)==max(ydataAll)): plt.ylim(max(ydataAll)*1e-1,max(ydataAll)*1e1)
+
+					#if value found save plot to png file
+					plt.savefig(pngFileName, dpi=150)
 
 	#******************
 	#evaluate rate extrapolation for the current reaction
 	def evaluateExtrapolation(self,varRanges):
+
+		# skip when rate has two variables
+		if self.rate2D:
+			return
 
 		#init Tgas limits
 		xMin = 1e99
@@ -770,16 +1064,18 @@ class reaction:
 		isAlwaysPositiveMin = isAlwaysPositiveMax = False
 		#loop on different limited ranges
 		for evaluation in self.evaluation:
+			data = dict()
 			#get only Tgas data
 			for (variable,vdata) in evaluation.iteritems():
-				if(variable.lower()!="tgas"): continue
+				if(variable.lower()!="tgas"):
+					continue
 				#store data
 				data = vdata
 				#store ranges
 				varRange = varRanges[variable]
 
 			#skip missing data
-			if(data==None): continue
+			if not data: continue
 			hasData = True
 			#copy data locally (evaluation in the rate Tgas range)
 			xdataRange = data["xdataRange"]
@@ -999,14 +1295,16 @@ class reaction:
 			(rangeName,rangeValue) = [x.strip() for x in rng.split("=")]
 			plotFileName = "pngs/rate_"+str(self.getReactionHash())+"_"+rangeName+".png"
 
-
 			hasPlot = False
 			#loop on different limits to check if data are present
 			for evaluation in self.evaluation:
 				if(not(rangeName in evaluation)): continue
 				data = evaluation[rangeName]
 				if(data==None): continue
-				ratedata = data["ydata"]
+				if self.rate2D:
+					ratedata = data["zdata"]
+				else:
+					ratedata = data["ydata"]
 				if all([yd == 0.0 for yd in ratedata]):
 					fout.write(bulletPoint+"The rate for this reaction is <b>ZERO</b><br>")
 					continue
@@ -1173,7 +1471,7 @@ class reaction:
 			cnt = 0
 			pieces = []
 			#get content between parenteses for each level
-			parenticList = utils.getParentheticContents(rateTex)
+			parenticList = utils.getParentheticContents(rateTex, "{}")
 			#only get the first \frac{}{} parts
 			for part in parenticList:
 				if part[0]==0 and cnt<3:
@@ -1215,7 +1513,7 @@ class reaction:
 		nextReplace = False
 
 		#get rid of unclosed "{}" on a line, when breaking equation
-		parList = utils.getParentheticContents(rate)
+		parList = utils.getParentheticContents(rate, "{}")
 		for part in parList:
 			#replace when level 0 and after exp
 			if part[0] == 0 and nextReplace:

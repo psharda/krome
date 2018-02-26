@@ -201,7 +201,7 @@ for test in tests:
 				#sys.exit()
 		print "Is test "+test+" OK?",testOK
 		testResults[test] = testOK
-		fout.write(test+" "+str(testOK)+" "+str(time.time())+" regular\n")
+		fout.write(test+" "+str(testOK)+" "+str(execution_times[test])+" regular\n")
 
 
 	#call gnuplot if you want graphical result
