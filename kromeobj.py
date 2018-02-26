@@ -1659,7 +1659,7 @@ class krome():
 					thermo[spec]["NIST"] = mypoly
 				# else append to same species
 				else:
-					thermo[spec]["NIST"].append(mypoly)
+					thermo[spec]["NIST"] += mypoly
 
 				spec_prev = spec
 
@@ -5812,7 +5812,7 @@ class krome():
 						continue
 
 					sp1 += "p1_nist("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly1_nist])) + "/)\n"
-					spt += "Tlim_nist("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.Tpoly_nasa])) + "/)\n"
+					spt += "Tlim_nist("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.Tpoly_nist])) + "/)\n"
 
 					if any(i != 0 for i in x.poly2_nist):
 						sp2 += "p2_nist("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2_nist])) + "/)\n"
