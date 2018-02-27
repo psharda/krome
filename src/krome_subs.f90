@@ -679,8 +679,6 @@ contains
        stoichiometricChange = stoichiometricChange - 1
     end do
 
-    ! pressure dependence of Gibss/RT = Gibss/RT + ln(p_tot/p_a1tm)
-    ! when taking exp(-dGibss) this gives an extra factor (ngas*kb*T/1e6)**-1
      revKc = (boltzmann_erg * Tgas * 1e-6)**(stoichiometricChange)&
          * exp(-dgibss)
 
