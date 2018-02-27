@@ -737,13 +737,13 @@ contains
       H = p(1)*Tnist + p(2)*0.5d0*Tnist2 + p(3)*Tnist3/3.d0 + p(4)*Tnist4*0.25d0&
            - p(5)*invTnist + p(6)
       !  Unitsless
-      H = H / Rgas_kJ
+      H = H / (Rgas_kJ * Tgas)
 
       ! S in (J/mol*K)
       S = p(1)*lnTnist + p(2)*Tnist + p(3)*Tnist2*0.5d0 + p(4)*Tnist3/3.d0&
            - p(5)*invTnist2*0.5d0 + p(7)
       !  Unitless. Note: do not use Tnist
-      S = S / (Rgas_J * Tgas)
+      S = S / Rgas_J
 
       revHS = H - S
 
@@ -752,6 +752,7 @@ contains
       revHS = 0.d0
 
     end if
+
 
   end function revHS
 

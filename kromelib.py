@@ -1832,7 +1832,6 @@ def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
 		if "NIST" in thermo_data[mymol.name]:
 			mymol.poly1_nist = thermo_data[mymol.name]["NIST"][2:9] #NIST polynomials lower T interval (min-med)
 			mymol.Tpoly_nist = thermo_data[mymol.name]["NIST"][0:2] + [0]  #(K) [min,max,0] T interval limits
-
 			#check for multiple temperature ranges
 			if len(thermo_data[mymol.name]["NIST"]) > 9:
 				mymol.Tpoly_nist[-1] = thermo_data[mymol.name]["NIST"][10]  #(K) [min,med,max] T interval limits
