@@ -648,22 +648,26 @@ contains
   ! k_rev = k_for * revKc
   ! Note that reaction constant revKc is calculated with
   ! reactants and products from reverse reaction
-  function revKc(Tgas,n,ridx,pidx)
+  function revKc(Tgas,ridx,pidx)
     use krome_constants
     use krome_commons
     implicit none
-    real*8::revKc,Tgas,n(:),ngasinv,dgibss,stoichiometricChange
+    real*8::revKc,Tgas,dgibss,stoichiometricChange
     integer::ridx(:),pidx(:),i
 
     ! when considering forward reaction:
-    ! Kc = (kb*T/1e6)**(p+p-r-r) * exp(-dGibss_forward)
+    ! Kc = (P°)**(p+p-r-r) * exp(-dGibss_forward°)
+    ! where ° means at standard conditions of
+    ! P° = 1 bar = (kb*T/1e6) dyn/cm^2 (cgs)
     ! when considering reverse:
-    ! 1/Kc = revKc = (kb*T/10e6)**(p+p-r-r) * exp(-dGibss_reverse)
+    ! 1/Kc = revKc = (kb*T/1e6)**(p+p-r-r) * exp(-dGibss_reverse°)
     ! kb*T/1e6 is to go from 1 atm pressure to number density cm^-3
+    ! When not at standard pressure this does not change:
+    ! revKc = P**(p+p-r-r) *exp(-dGibss_reverse° - (p+p-r-r)*ln(P/P°))
+    !       = (P°)**(p+p-r-r) * exp(-dGibss_reverse°)
 
     dgibss = 0.d0 ! Gibbs free energy/(R*T)
     stoichiometricChange = 0d0
-    ngasinv = 1.d0/sum(n(1:nmols))
 
     do i=1,size(pidx)
        dgibss = dgibss + revHS(Tgas,pidx(i))
@@ -677,8 +681,8 @@ contains
 
     ! pressure dependence of Gibss/RT = Gibss/RT + ln(p_tot/p_a1tm)
     ! when taking exp(-dGibss) this gives an extra factor (ngas*kb*T/1e6)**-1
-     revKc = (boltzmann_erg * Tgas * 1e-6)**(stoichiometricChange - 1)&
-        * ngasinv * exp(-dgibss)
+     revKc = (boltzmann_erg * Tgas * 1e-6)**(stoichiometricChange)&
+         * exp(-dgibss)
 
   end function revKc
 

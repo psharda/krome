@@ -308,7 +308,7 @@ class reaction():
 		pidx = "(/"+(",".join([x.fidx for x in self.products]))+"/)"
 		ridx = "(/"+(",".join([x.fidx for x in self.reactants]))+"/)"
 		ndif = len(self.reactants)-len(self.products)
-		kk = "("+self.krate+") * revKc(Tgas,n,"+ridx+","+pidx+")"
+		kk = "("+self.krate+") * revKc(Tgas,"+ridx+","+pidx+")"
 		if(ndif!=0): kk +=" * (1.3806488d-22 * Tgas)**("+str(ndif)+")"
 		return kk
 
