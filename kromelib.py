@@ -308,7 +308,7 @@ class reaction():
 		pidx = "(/"+(",".join([x.fidx for x in self.products]))+"/)"
 		ridx = "(/"+(",".join([x.fidx for x in self.reactants]))+"/)"
 		ndif = len(self.reactants)-len(self.products)
-		kk = "("+self.krate+") / exp(revKc(Tgas,"+ridx+","+pidx+"))"
+		kk = "("+self.krate+") * revKc(Tgas,"+ridx+","+pidx+")"
 		if(ndif!=0): kk +=" * (1.3806488d-22 * Tgas)**("+str(ndif)+")"
 		return kk
 
@@ -1644,7 +1644,7 @@ def is_number(s):
 
 ##################################
 #parse molecule name using dictionary and atoms list
-def parser(name, mass_dic, atoms, thermo_data,dustIdx=0):
+def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 
 	mymol = molec() #oggetto molec
 	namecp = name.upper()

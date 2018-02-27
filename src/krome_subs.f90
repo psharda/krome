@@ -200,7 +200,6 @@ contains
 
   end function H2_solomonLW
 
-  
   !****************************
   !tanh smoothing function that
   ! increses when xarg increases.
@@ -242,7 +241,6 @@ contains
 
   end function get_sgn
 
-  
   !*********************
   function conserve(n,ni)
     use krome_commons
@@ -357,7 +355,6 @@ contains
 
   end function elec_recomb_ST93
 
-  
   !********************
   subroutine load_parts()
     use krome_commons
@@ -648,20 +645,42 @@ contains
   !*****************************
   !computes revers kinetics from reaction and
   ! product indexes
+  ! k_rev = k_for * revKc
+  ! Note that reaction constant revKc is calculated with
+  ! reactants and products from reverse reaction
   function revKc(Tgas,ridx,pidx)
+    use krome_constants
+    use krome_commons
     implicit none
-    real*8::revKc,Tgas
+    real*8::revKc,Tgas,dgibss,stoichiometricChange
     integer::ridx(:),pidx(:),i
 
-    revKc = 0.d0
+    ! when considering forward reaction:
+    ! Kc = (P°)**(p+p-r-r) * exp(-dGibss_forward°)
+    ! where ° means at standard conditions of
+    ! P° = 1 bar = (kb*T/1e6) dyn/cm^2 (cgs)
+    ! when considering reverse:
+    ! 1/Kc = revKc = (kb*T/1e6)**(p+p-r-r) * exp(-dGibss_reverse°)
+    ! kb*T/1e6 is to go from 1 atm pressure to number density cm^-3
+    ! When not at standard pressure this does not change:
+    ! revKc = P**(p+p-r-r) *exp(-dGibss_reverse° - (p+p-r-r)*ln(P/P°))
+    !       = (P°)**(p+p-r-r) * exp(-dGibss_reverse°)
+
+    dgibss = 0.d0 ! Gibbs free energy/(R*T)
+    stoichiometricChange = 0d0
 
     do i=1,size(pidx)
-       revKc = revKc + revHS(Tgas,pidx(i))
+       dgibss = dgibss + revHS(Tgas,pidx(i))
+       stoichiometricChange = stoichiometricChange + 1
     end do
 
     do i=1,size(ridx)
-       revKc = revKc - revHS(Tgas,ridx(i))
+       dgibss = dgibss - revHS(Tgas,ridx(i))
+       stoichiometricChange = stoichiometricChange - 1
     end do
+
+     revKc = (boltzmann_erg * Tgas * 1e-6)**(stoichiometricChange)&
+         * exp(-dgibss)
 
   end function revKc
 
