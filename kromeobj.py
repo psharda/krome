@@ -1630,8 +1630,6 @@ class krome():
 		fth.close()
 
 		with open("data/thermoNIST.dat", "r") as thermofile:
-			#previous species
-			spec_prev = ''
 			#loop over file line per line
 			for row in thermofile:
 				srow = row.strip()
@@ -1660,8 +1658,6 @@ class krome():
 				# else append to same species
 				else:
 					thermo[spec]["NIST"] += mypoly
-
-				spec_prev = spec
 
 		self.thermodata = thermo
 		# print "Thermochemistry data loaded!"
