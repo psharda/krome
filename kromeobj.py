@@ -2805,6 +2805,11 @@ class krome():
 
 		reacts = ureacts[:] #copy the extended list of reactions to the old one
 
+		#make thermo data tables
+		for sp in specs:
+			if sp.hasThermoTable:
+				janaf2krome(self.buildFolder, sp)
+
 
 
 		#update number of connection per species

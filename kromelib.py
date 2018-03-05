@@ -59,6 +59,7 @@ class molec():
 	is_atom = False #flag to identify atoms
 	is_surface = False #flag for species on surface
 	is_chemisorbed = False #flag for chemisorbed species
+	hasThermoTable = False #flag for having thermo data in a (JANAF) table
 	Ebind_ice = Ebind_bare = 0e0 #binding energy on surface for ice and bare grain
 	parentDustBin = 0 #for surface species: belongs to this dust bin (1-based)
 	chempot = 0. #chemical potential (J/mol)
@@ -595,6 +596,55 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 			foutx.write(str(xenergy)+" "+str(xsec)+"\n")
 
 	foutx.close()
+
+###############################
+#convert a JANAF datafile to KROME format in the build folder
+def janaf2krome(build_folder, species):
+	try:
+		from scipy import interpolate
+	except:
+		print "ERROR: scipy not installed!"
+		print "This module is necessary to use JANAF thermo tables."
+		sys.exit()
+
+	name = species.name
+	filepath = "data/database/janaf/" + name + ".dat"
+
+	temperature = [] #temperature in K
+	gibbs = [] #formation gibbs free energy in kJ/mol
+	# add more lists if needed from janaf file
+
+	with open(filepath, "r") as janaffile:
+		for row in janaffile:
+			srow = row.strip()
+			if srow == "":
+				continue
+			if not is_number(srow[0]):
+				continue
+			arow = [x.strip() for x in srow.split("\t")]
+			temperature.append(float(arow[0]))
+			# JANAF provides gibbs formation energy w.r.t. reference
+			# value. To get the uncorreect value, we need to add HminH0.
+			HminH0 = arow[4] #enthalpy - reference enthalpy in kJ/mol
+			gib = arow[6] #formation gibbs in kJ/mol
+			gibbs.append( float(gib) + float(HminH0) )
+
+	#create interpolated function from JANAF file
+	fdata = interpolate.interp1d(temperature, gibbs, kind='linear')
+	imax = 200 #number of interpolated points
+	tmax = max(temperature)
+	tmin = min(temperature)
+	#write data to file using a regular xtemp grid
+	with open(build_folder + "janaf_" + name + ".dat", "w") as fout:
+		fout.write("#Regularly spaced JANAF table for " + name + "\n")
+		fout.write("#temperature (K) formation gibbs free energy (kJ/mol)" + "\n")
+
+		for i in range(imax):
+			xtemp = i*(tmax-tmin)/(imax-1)+tmin
+			fout.write(str(xtemp) + " " + str(fdata(xtemp)) + "\n")
+
+	print "written JANAF " + name + " table"
+
 
 ################################
 #split molecule name assuming elements written as He
@@ -1836,6 +1886,12 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 			if len(thermo_data[mymol.name]["NIST"]) > 9:
 				mymol.Tpoly_nist[-1] = thermo_data[mymol.name]["NIST"][10]  #(K) [min,med,max] T interval limits
 				mymol.poly2_nist = thermo_data[mymol.name]["NIST"][11:] #NIST polynomials upper T interval
+
+	#check if species has thermo data as JANAF table
+	thermoTabPath = "data/database/janaf/" + mymol.name + ".dat"
+	if file_exists(thermoTabPath):
+		mymol.hasThermoTable = True
+
 
 	#compute enthaly @300K using NASA poly
 	if(mymol.Tpoly_nasa[1]<3e2):
