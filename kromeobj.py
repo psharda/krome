@@ -2409,7 +2409,7 @@ class krome():
 			if("@xsecFile=LEIDEN" in myrea.krate):
 				LEIDEN2KROME(self.buildFolder, myrea.reactants[0], myrea.products)
 			#when reversed reactions need to be computed
-			if "revKC" in myrea.krate or self.useReverse:
+			if "revKc" in myrea.krate or self.useReverse:
 				self.useThermoTable = True
 
 			#this reaction is on surface
@@ -5821,6 +5821,9 @@ class krome():
 				slen = str(len(specs))
 				fout.write("real*8::p1_nasa("+slen+",7), p2_nasa("+slen+",7), Tlim_nasa("+slen+",3), p(7)\n")
 				fout.write("real*8::p1_nist("+slen+",7), p2_nist("+slen+",7), Tlim_nist("+slen+",3)\n")
+				fout.write("logical::hasthermoTable(" + slen + ")\n")
+				if self.useThermoTable:
+					fout.write("real*8::yThermoTable(" + slen + ",200)\n")
 			elif(srow == "#KROME_kc_reverse_nasa"):
 				datarev = ""
 				sp1 = sp2 = spt = ""
@@ -5844,6 +5847,12 @@ class krome():
 						sp2 += "p2_nist("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2_nist])) + "/)\n"
 
 				fout.write(sp1+sp2+spt)
+			elif srow == "#KROME_thermo_tables":
+				sp1 = sp2 = ""
+				for sp in self.thermoTableSpecies:
+					sp1 += "hasThermoTable(" + sp.fidx + ") = .true.\n"
+					sp2 += "yThermoTable(" + sp.fidx + ",:) = janaf_tab_gibbs_" + sp.name + "(:)\n"
+				fout.write(sp1+sp2)
 			elif(srow == "#KROME_shortcut_variables"):
 				fout.write(shortcutVars)
 			elif(srow == "#KROME_header"):
