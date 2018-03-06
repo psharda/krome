@@ -621,7 +621,17 @@ def janaf2krome(build_folder, species):
 				continue
 			if not is_number(srow[0]):
 				continue
+			if "FUGACITY" in srow:
+				continue
 			arow = [x.strip() for x in srow.split("\t")]
+			if len(arow) < 8:
+				print ("ERROR: there is a problem with row " + str(arow) +
+				" This is most likely the bug in JANAF tables where spaces are"
+				"used instead of tabs when going above the fugacity pressure. "
+				"Please change this in the input table" + filepath
+				)
+				sys.exit()
+				
 			temperature.append(float(arow[0]))
 			# JANAF provides gibbs formation energy w.r.t. reference
 			# value. To get the uncorreect value, we need to add HminH0.
