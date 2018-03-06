@@ -205,6 +205,9 @@ module krome_commons
   !xsecs from file variables
 #KROME_xsecs_from_file
 
+  ! thermochemical data from file variables
+#KROME_thermochem_from_file
+
   !partition function from file
   integer,parameter::zpart_nCO=641
   integer,parameter::zpart_nH2even=2000
