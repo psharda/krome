@@ -378,8 +378,8 @@ class network:
 		for species in speciesTodo:
 			# change video setting if desired
 			# this uses ffmpeg
-			os.system("ffmpeg -framerate 5 -pattern_type glob -i "
-					"\'" + pngFolder + "/" + species + "*.png\' "
+			os.system("ffmpeg -framerate 3 -pattern_type glob -i "
+					"\'" + pngFolder + "/" + species + "_*.png\' "
 					"-c:v libx264 -s 1920x1080 -r 30 -pix_fmt yuv420p "
 					+ pngFolder + "/" + species + "evolution.mp4" )
 
@@ -423,6 +423,10 @@ class network:
 			print "Abundance of %s is zero everywhere" %(atom)
 			return
 
+		# replace all extremely small numbers with a 'okay' small number
+		# to avoid NaNs
+		z[z < 1e-60] = 1e-60
+
 		#create image
 		plt.figure()
 		if(zRange>10):
@@ -445,7 +449,11 @@ class network:
 		plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
 		#dump png file
 		print "Dumping colormap of %s" %(atom)
-		plt.savefig(pngFolder + '/%s_%03i' %(atom,idxTime))
+		if evolution:
+			plt.savefig(pngFolder + '/%s_%03i.png' %(atom,idxTime),
+						format='png', dpi=200)
+		else:
+			plt.savefig(pngFolder + '/%s' %(atom))
 		plt.close()
 
 	#******************
@@ -529,7 +537,7 @@ class network:
 		fancybox=True, shadow = True,bbox_to_anchor=(1, 1) )
 		ax = plt.gca().add_artist(legend1)
 		legend2 = plt.legend(markerHandles,markerLabels,loc=2,
-		fancybox=True, shadow=True, bbox_to_anchor=(1, 0.3))
+		fancybox=True, shadow=True, bbox_to_anchor=(1, 0.7))
 		ax = plt.gca().add_artist(legend2)
 		legend3 = plt.legend(styleHandles,styleLabels,loc=3,
 		fancybox=True, shadow=True, bbox_to_anchor=(1, 0))
@@ -539,7 +547,7 @@ class network:
 		plt.xlabel('Time (s)')
 		plt.ylabel("Mass fraction")
 		plt.xlim(xmin=0,xmax=x[-1])
-		#plt.ylim(ymin=1e-7)
+		plt.ylim(ymin=self.minAbundance)
 		#dump png file
 		print "Dumping abundance evolution of %s" %(spec)
 		# plt.show()
