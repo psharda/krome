@@ -40,6 +40,8 @@ network_full.xvarUnits = "g/cm$^3$"
 #### Validation of new reduced network.
 
 # Make abundace colormaps for model grid for species of interest
+# NOTE: the user can choose between two kind of colormaps
+# see 'abundanceColormap()' in kexplorer_network for details
 network_full.abundanceColormapAll(elemInt=elemInterest, timeEvolution=True, pngFolder="tpngsFull/")
 network_reduced.abundanceColormapAll(elemInt=elemInterest,pngFolder="tpngsRed/")
 # If elemInt not specified, this will do all species
