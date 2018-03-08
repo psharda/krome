@@ -25,11 +25,14 @@ def cluster_growth_rate(monomer, cluster_size, temperature, stick=1.0):
 
     # monomer_radius = monomer.radius
     monomer_radius = 1.78e-8  # in cm
-    monomer_mass = monomer.mass
+    inv_monomer_mass = 1./monomer.mass
+    inv_cluster_mass = 1./cluster_size * inv_monomer_mass
+    inv_reduced_mass = inv_monomer_mass + inv_cluster_mass
 
-    v_thermal = sqrt(8.0 * boltzmann_erg * temperature
-                        / (pi * monomer_mass))
-    cross_section = pi * monomer_radius**2 * cluster_size**(2./3.)
+    v_thermal = sqrt(8.0 * boltzmann_erg * temperature * inv_reduced_mass
+                        / pi)
+    cluster_radius = monomer_radius * cluster_size**(1./3.)
+    cross_section = pi * (monomer_radius+cluster_radius)**2.
 
     rate = v_thermal * cross_section * stick
 
