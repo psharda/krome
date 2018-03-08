@@ -27,7 +27,7 @@ class network:
 
 	#**********************
 	#network contructor read kexplorer file
-	def __init__(self,fileName,fileNameEvolution=None):
+	def __init__(self,fileName,fileNameEvolution=None,elemInterest=None):
 
 		#make dict to store element objects
 		self.elements = dict()
@@ -42,13 +42,16 @@ class network:
 		fh.close()
 
 		#uses evolution data only if file name is present
-		if(fileNameEvolution!=None):
+		if not fileNameEvolution:
 			#added by Jels Boulangier 05/04/2017
 			#read data from file
 			fg = open(fileNameEvolution,"rb")
 			#list of all elements
-			fline = fg.readline().strip().split(" ")
-			flineElem = fline[3:]
+			self.allSpecieslist = fg.readline().strip().split(" ")[3:]
+			if elemInterest:
+				flineElem = elemInterest
+			else:
+				flineElem = self.allSpecieslist
 			#add element data per block in the inout file
 			elemBlock = []
 			for row in fg:
@@ -99,7 +102,7 @@ class network:
 			arow = [x for x in row.split(" ") if(x!="")]
 			(time, Tgas, xvar) = [float(x) for x in arow[0:3]]
 			for el in elemAll:
-				elIdx = elemAll.index(el)+3
+				elIdx = self.allSpecieslist.index(el)+3
 				abundance = float(arow[elIdx])
 				self.elements[el].addData(time, Tgas, xvar, abundance, newBlock)
 			newBlock = False
@@ -119,7 +122,6 @@ class network:
 		#range of xvar/Tgas values
 		self.xvarRange = len(self.xvarUnique)
 		self.tgasRange = len(self.tgasUnique)
-
 
 	#******************
 	#search for most fluxy reactions
@@ -349,13 +351,15 @@ class network:
 		for species in speciesTodo:
 			for timeIndex in range(timeStart,timeStop):
 				if timeIndex==timeStart:
-					globalMaxmimum = max(max(self.elements[species].abundanceData,
-											key=lambda x: x[:] ) )
-					minima = min(self.elements[species].abundanceData,
-											key=lambda x: x[:] )
-					#remove zero abundances, e.g. initial value
-					minima = [x for x in minima if x != 0.]
-					globalMinimum = min(minima)
+					globalMinimum = 1e64
+					globalMaxmimum = 0
+					for i in self.elements[species].abundanceData:
+						for j in i:
+							if j < globalMinimum and j != 0:
+								globalMinimum = j
+							if j > globalMaxmimum:
+								globalMaxmimum = j
+
 					limits = [globalMinimum, globalMaxmimum]
 
 				self.abundanceColormap(species, timeIndex, limits, pngFolder)

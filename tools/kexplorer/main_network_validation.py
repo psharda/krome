@@ -29,6 +29,8 @@ elemInterest = ["H","H2"]
 #create network objects for full and reduced from explorer file
 network_reduced = kexplorer_network.network(fileName,fileNameEvolutionReduced)
 network_full = kexplorer_network.network(fileName,fileNameEvolutionFull)
+# Possibility to only read and store elemInterest when dealing with large networks
+# network_full = kexplorer_network.network(fileName,fileNameEvolutionFull,elemInterest)
 
 # used variable besides temperature
 network_reduced.xvarName = "Density"
