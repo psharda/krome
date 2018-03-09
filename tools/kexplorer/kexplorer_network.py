@@ -42,7 +42,7 @@ class network:
 		fh.close()
 
 		#uses evolution data only if file name is present
-		if not fileNameEvolution:
+		if fileNameEvolution:
 			#added by Jels Boulangier 05/04/2017
 			#read data from file
 			fg = open(fileNameEvolution,"rb")
