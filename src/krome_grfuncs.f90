@@ -513,7 +513,7 @@ contains
 
     if(monomer_idx == idx_TiO2) then
       ! Interatomic distance from Jeong et al 2000 DOI:10.1088/0953-4075/33/17/319
-      monomer_radius = 1.78e-8_dp ! in cm
+      monomer_radius = 1.62e-8_dp ! in cm
     else
       print *, "Monomer radius not yet defined"
     end if
