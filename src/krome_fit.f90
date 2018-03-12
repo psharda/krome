@@ -145,6 +145,64 @@ contains
 
   end subroutine init_anytab2D
 
+  !********************************************
+  !load 1d tables from filename
+  subroutine init_anytab1D(filename,x,y,xmul)
+    use krome_commons
+    implicit none
+    character(len=*),intent(in)::filename
+    character(len=60)::row_string
+    real*8,intent(out)::x(:),y(:),xmul
+    real*8::rout(2)
+    integer::i,ios,unit
+
+    !check the size of the X input array
+    if(size(x) /= size(y)) then
+       print *,"ERROR: in init_anytab1D x size differs from y"
+       stop
+    end if
+
+    if (krome_mpi_rank <= 1) print *,"Reading tables from "//trim(filename)
+
+    !open file and check if it exists
+    open(newunit=unit,file=trim(filename),status="old",iostat=ios)
+    if(ios /= 0) then
+       print *,"ERROR: in init_anytab1D file ",trim(filename)," not found!"
+       stop
+    end if
+
+    !skip the comments and the first line and the sizes of the data
+    ! which are already known from the pre-processing
+    do
+       read(unit,'(a)') row_string
+       if(row_string(1:1)/="#") exit
+    end do
+
+    ! !check if first line is OK
+    ! if(scan(row_string,",")==0) then
+    !    print *,"ERROR: file "//filename//" should"
+    !    print *," contain the number of rows and "
+    !    print *," columns in the format"
+    !    print *,"  RR, CC"
+    !    print *,row_string
+    !    stop
+    ! end if
+
+    !loop to read file
+    do i=1,size(x)
+      read(unit,*,iostat=ios) rout(:)
+      y(i) = rout(2)
+      x(i) = rout(1)
+      read(unit,*,iostat=ios) !skip blanks
+      if(ios /= 0) exit
+
+    end do
+    close(unit)
+
+    xmul = 1d0/(x(2)-x(1))
+
+  end subroutine init_anytab1D
+
   !******************************
   !test 2d fit and save to file
   subroutine test_anytab2D(fname,x,y,z,xmul,ymul)

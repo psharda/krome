@@ -652,6 +652,11 @@ contains
     call init_dust_tabs()
 #ENDIFKROME
 
+#IFKROME_useThermoTables
+    !init thermochemical tables
+#KROME_init_thermoTables
+#ENDIFKROME
+
 #IFKROME_useTabs
     call make_ktab()
     call check_tabs()

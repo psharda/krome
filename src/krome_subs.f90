@@ -690,8 +690,10 @@ contains
   function revHS(Tgas,idx)
     use krome_commons
     use krome_constants
+    use krome_fit
     real*8::revHS,Tgas,Tgas2,Tgas3,Tgas4,invT,lnT,H,S
     real*8::Tnist,Tnist2,Tnist3,Tnist4,invTnist,invTnist2,lnTnist
+    real*8::xtable(200),multable
 #KROME_var_reverse
     integer::idx
 
@@ -717,11 +719,25 @@ contains
     invTnist2 = invTnist * invTnist
     lnTnist = log(Tnist)
 
+    hasThermoTable(:) = .false.
+#IFKROME_useThermoTables
+    yThermoTable(:,:) = 0.d0
+    xtable(:) = janaf_tab_Tgas
+    multable = janaf_mult_Tgas
+#ENDIFKROME
+
 #KROME_kc_reverse_nasa
 #KROME_kc_reverse_nist
+#KROME_thermo_tables
+
+    !use Janaf thermochemical table if available
+    if (hasThermoTable(idx)) then
+      !NOTE: currently not extrapolation outside tgas table limits
+      revHS = fit_anytab1D(xtable, yThermoTable(idx,:), multable, Tgas)
+      revHS = revHS/(Rgas_kJ * Tgas)
 
     ! pick NASA data if present for species
-    if (Tlim_nasa(idx,2) /= 0.d0) then
+    else if (Tlim_nasa(idx,2) /= 0.d0) then
       !select set of NASA polynomials using temperature
       if(Tlim_nasa(idx,1).le.Tgas .and. Tgas.le.Tlim_nasa(idx,2)) then
          p(:) = p1_nasa(idx,:)
