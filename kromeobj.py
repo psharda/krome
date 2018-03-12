@@ -4890,16 +4890,13 @@ class krome():
 
 			elif(srow == "#KROME_thermochem_from_file"):
 				lines = ""
-				foundOne = False
-				for sp in specs:
-					if sp.hasThermoTable:
-						if not foundOne:
-							lines += "integer, parameter :: janaf_tab_imax = 200\n"
-							lines += "real*8 :: janaf_tab_Tgas(janaf_tab_imax)\n"
-							lines += "real*8 :: janaf_mult_Tgas\n"
-							foundOne = True
-
-						lines += ("real*8 :: janaf_tab_gibbs_" + sp.name +
+				if self.useThermoTable:
+					lines += "integer, parameter :: janaf_tab_imax = 200\n"
+					lines += "real*8 :: janaf_tab_Tgas(janaf_tab_imax)\n"
+					lines += "real*8 :: janaf_mult_Tgas\n"
+					for sp in specs:
+						if sp.hasThermoTable:
+							lines += ("real*8 :: janaf_tab_gibbs_" + sp.name +
 								"(janaf_tab_imax)\n" )
 				fout.write(lines + "\n")
 
@@ -5664,14 +5661,14 @@ class krome():
 		for row in fh:
 			srow = row.strip()
 
-                        #skip when find IF pragmas
-                        if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
+			#skip when find IF pragmas
+			if(srow == "#IFKROME_useXrays" and not(self.useXRay)): skip = True
 			if(srow == "#IFKROME_useH2dust_constant" and not(self.useDustH2const)): skip = True
 			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 			if(srow == "#IFKROME_useThermoTables" and not self.useThermoTable) : skip = True
-		        if(srow == "#ENDIFKROME"): skip = False
+			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
 
@@ -7682,7 +7679,6 @@ class krome():
 
 		#non-negative index means H2 photodissociation reaction is set
 		useH2Photodissociation = (self.indexH2photodissociation>-1)
-
 		skip = skipBindC = False
 		for row in fh:
 			srow = row.strip()
