@@ -5670,7 +5670,7 @@ class krome():
 			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
-
+			if(srow == "#IFKROME_useThermoTables" and not self.useThermoTable) : skip = True
 		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
@@ -5822,8 +5822,7 @@ class krome():
 				fout.write("real*8::p1_nasa("+slen+",7), p2_nasa("+slen+",7), Tlim_nasa("+slen+",3), p(7)\n")
 				fout.write("real*8::p1_nist("+slen+",7), p2_nist("+slen+",7), Tlim_nist("+slen+",3)\n")
 				fout.write("logical::hasthermoTable(" + slen + ")\n")
-				if self.useThermoTable:
-					fout.write("real*8::yThermoTable(" + slen + ",200)\n")
+				fout.write("real*8::yThermoTable(" + slen + ",200)\n")
 			elif(srow == "#KROME_kc_reverse_nasa"):
 				datarev = ""
 				sp1 = sp2 = spt = ""
