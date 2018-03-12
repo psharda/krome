@@ -1346,8 +1346,8 @@ class reaction:
 					continue
 
 				reactionTex += spec + " + "
-			reactionTex = reactionTex.strip(" + ")
-
+			#remove trailing " + "
+			reactionTex = reactionTex[:-3]
 			#if cosmic ray reaction, make LaTeX format
 			#e.g. \ch{H2 ->[CR] H + H}
 			if self.reactionType == "CR":
@@ -1364,9 +1364,10 @@ class reaction:
 
 			#add photon to reaction with only one product
 			if len(self.products) == 1:
-				reactionTex += "\\gamma"
+				reactionTex += "$\\gamma$"
 			else:
-				reactionTex = reactionTex.strip(" + ")
+				#remove trailing " + "
+				reactionTex = reactionTex[:-3]
 
 			reactionTex += "}"
 
@@ -1381,7 +1382,7 @@ class reaction:
 
 		#LaTeX rate
 		rateTex, message = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts)
-		rateTex = "k$_{" + idxUniqueReaction +"}$" + rateTex
+		rateTex = "k$_{" + idxUniqueReaction +"}" + rateTex
 
 		#LaTeX temperature limits
 		limitsTex = self.tempRange2latex(idxMerged)
@@ -1498,7 +1499,7 @@ class reaction:
 		rateTex = re.sub(r"0*(\d+\.*)", r"\1", rateTex)
 
 		#add LaTeX symbols
-		rateTex = " $= " + rateTex + "$"
+		rateTex = " = " + rateTex + "$"
 
 		#break long rates in multiple lines
 		if len(rateTex) > maxRateLength:
@@ -1527,7 +1528,7 @@ class reaction:
 		rate = rate[1:-1]	#remove $ signs
 		rate = rate.replace(" + "," \\\\ \n& + " )
 		rate = rate.replace(" - "," \\\\ \n& - " )
-		rate = "$\\begin{aligned}[t] &" + rate + "\\end{aligned}$"
+		rate = "\\begin{aligned}[t] & " + rate + "\\end{aligned}$"
 		warning = ""
 
 

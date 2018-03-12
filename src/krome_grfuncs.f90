@@ -485,7 +485,7 @@ contains
   ! Theory is explained in chapter 13 of Gail and Sedlmayr 2013
   ! (https://doi.org/10.1017/CBO9780511985607)
   function cluster_growth_rate(monomer_idx, cluster_size, temperature, stick) result(rate)
-    ! k_N = v_thermal * cross_sectrion_N * stick_N
+    ! k_N = v_thermal * cross_section_N * stick_N
     ! with N the cluster size of the reactant
     use krome_constants
     use krome_commons
@@ -503,24 +503,34 @@ contains
     real(dp) :: cross_section
     real(dp) :: stick_coefficient
     real(dp) :: monomer_radius
-    real(dp) :: monomer_mass
-    real(dp) :: mass(nspec)
+    real(dp) :: cluster_radius
+    real(dp) :: inverse_monomer_mass
+    real(dp) :: inverse_cluster_mass
+    real(dp) :: inverse_reduced_mass
+    real(dp) :: inverse_mass(nspec)
 
-    mass(:) = get_mass()
+    inverse_mass(:) = get_imass()
 
     if(monomer_idx == idx_TiO2) then
       ! Interatomic distance from Jeong et al 2000 DOI:10.1088/0953-4075/33/17/319
-      monomer_radius = 1.78e-8_dp ! in cm
+      monomer_radius = 1.62e-8_dp ! in cm
     else
       print *, "Monomer radius not yet defined"
     end if
 
-    monomer_mass = mass(monomer_idx)
+    inverse_monomer_mass = inverse_mass(monomer_idx)
+    inverse_cluster_mass = 1._dp/cluster_size * inverse_monomer_mass
+    inverse_reduced_mass = inverse_monomer_mass + inverse_cluster_mass
 
     v_thermal = sqrt(8._dp * boltzmann_erg * temperature &
-              / (pi * monomer_mass))
+              * inverse_reduced_mass / pi )
 
-    cross_section = pi * monomer_radius**2._dp * cluster_size**(2._dp/3._dp)
+    ! Assuming cluster volume is proportional to monomer volume
+    ! V_N = N * V_1, and both are considered as a hypothetical sphere
+    cluster_radius = monomer_radius * cluster_size**(1._dp/3._dp)
+
+    ! Geometrical cross section
+    cross_section = pi * (monomer_radius + cluster_radius)**2._dp
 
     ! Sticking coefficiet is set to one for simplicity
     if(present(stick)) then
@@ -546,6 +556,10 @@ contains
     ! with N the cluster size of the reactant
     ! and [n_1 * n_(N-1)/n_N]_equilibrium are numbers densities in equilibrium
     ! k_N_destr = k_(N-1)_growth * [n_1 * n_(N-1)/n_N]_equi
+    ! NOTE: this entire rate is equivalent to calling revKc() on
+    ! cluster_growth_rate() given that the Gibbs free eneries (polynomials)
+    ! of the clusters are stored in the thermochemical data of the species
+    ! or provided as tables cfr. data/database/janaf/
     use krome_constants
     use krome_commons
     implicit none

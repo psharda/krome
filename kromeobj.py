@@ -1630,8 +1630,6 @@ class krome():
 		fth.close()
 
 		with open("data/thermoNIST.dat", "r") as thermofile:
-			#previous species
-			spec_prev = ''
 			#loop over file line per line
 			for row in thermofile:
 				srow = row.strip()
@@ -1660,8 +1658,6 @@ class krome():
 				# else append to same species
 				else:
 					thermo[spec]["NIST"] += mypoly
-
-				spec_prev = spec
 
 		self.thermodata = thermo
 		# print "Thermochemistry data loaded!"
@@ -1804,6 +1800,8 @@ class krome():
 		inSurfaceBlock = False #block for reaction on surface
 		inStoreOnceBlock = False #block that stores reactions that are constants during the solver call
 		self.hasSurfaceReactions = False #true if surface reactions found
+		self.useThermoTable = False #flag for using thermochemical tables
+		self.thermoTableSpecies = [] #list of species with available thermotable
 
 		#generate a custom reaction network and replace filename with the custom one
 		if(self.useCustom):
@@ -2410,6 +2408,9 @@ class krome():
 			#if file is LEIDEN convert to KROME
 			if("@xsecFile=LEIDEN" in myrea.krate):
 				LEIDEN2KROME(self.buildFolder, myrea.reactants[0], myrea.products)
+			#when reversed reactions need to be computed
+			if "revKc" in myrea.krate or self.useReverse:
+				self.useThermoTable = True
 
 			#this reaction is on surface
 			if(inSurfaceBlock):
@@ -2809,7 +2810,11 @@ class krome():
 
 		reacts = ureacts[:] #copy the extended list of reactions to the old one
 
-
+		#make thermo data tables
+		for sp in specs:
+			if sp.hasThermoTable:
+				janaf2krome(self.buildFolder, sp)
+				self.thermoTableSpecies.append(sp)
 
 		#update number of connection per species
 		for rea in reacts:
@@ -4883,6 +4888,21 @@ class krome():
 					stab += "real*8::" + tabvar+"_anytabymul\n"
 				fout.write(stab+"\n")
 
+			elif(srow == "#KROME_thermochem_from_file"):
+				lines = ""
+				foundOne = False
+				for sp in specs:
+					if sp.hasThermoTable:
+						if not foundOne:
+							lines += "integer, parameter :: janaf_tab_imax = 200\n"
+							lines += "real*8 :: janaf_tab_Tgas(janaf_tab_imax)\n"
+							lines += "real*8 :: janaf_mult_Tgas\n"
+							foundOne = True
+
+						lines += ("real*8 :: janaf_tab_gibbs_" + sp.name +
+								"(janaf_tab_imax)\n" )
+				fout.write(lines + "\n")
+
 			else:
 				if(row[0]!="#"): fout.write(row)
 
@@ -5650,7 +5670,7 @@ class krome():
 			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
-
+			if(srow == "#IFKROME_useThermoTables" and not self.useThermoTable) : skip = True
 		        if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
@@ -5801,6 +5821,8 @@ class krome():
 				slen = str(len(specs))
 				fout.write("real*8::p1_nasa("+slen+",7), p2_nasa("+slen+",7), Tlim_nasa("+slen+",3), p(7)\n")
 				fout.write("real*8::p1_nist("+slen+",7), p2_nist("+slen+",7), Tlim_nist("+slen+",3)\n")
+				fout.write("logical::hasthermoTable(" + slen + ")\n")
+				fout.write("real*8::yThermoTable(" + slen + ",200)\n")
 			elif(srow == "#KROME_kc_reverse_nasa"):
 				datarev = ""
 				sp1 = sp2 = spt = ""
@@ -5824,6 +5846,12 @@ class krome():
 						sp2 += "p2_nist("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2_nist])) + "/)\n"
 
 				fout.write(sp1+sp2+spt)
+			elif srow == "#KROME_thermo_tables":
+				sp1 = sp2 = ""
+				for sp in self.thermoTableSpecies:
+					sp1 += "hasThermoTable(" + sp.fidx + ") = .true.\n"
+					sp2 += "yThermoTable(" + sp.fidx + ",:) = janaf_tab_gibbs_" + sp.name + "(:)\n"
+				fout.write(sp1+sp2)
 			elif(srow == "#KROME_shortcut_variables"):
 				fout.write(shortcutVars)
 			elif(srow == "#KROME_header"):
@@ -7693,6 +7721,7 @@ class krome():
 			if(srow == "#ELSEKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = False
 			if(srow == "#ELSEKROME_useBindC" and (self.interfaceC or self.interfacePy)): skipBindC = True
 			if(srow == "#ENDIFKROME_useBindC"): skipBindC = False
+			if(srow == "#IFKROME_useThermoTables" and not self.useThermoTable) : skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -7818,6 +7847,17 @@ class krome():
 					stab += "call test_anytab2D(\""+tabvar+"\","+anytabx+",&\n"\
 						+anytaby+","+anytabz+",&\n"+anytabxmul+","\
 						+anytabymul+")\n"
+				fout.write(stab+"\n")
+			elif srow == "#KROME_init_thermoTables":
+				stab = ""
+				for sp in self.thermoTableSpecies:
+					tabfile = "janaf_" + sp.name + ".dat"
+					tabx = "janaf_tab_Tgas(:)"
+					taby = "janaf_tab_gibbs_" + sp.name + "(:)"
+					tabmul = "janaf_mult_Tgas"
+					stab += ("call init_anytab1D(\"" + tabfile + "\"," + tabx + ",&\n"
+							+ taby + "," + tabmul + ")\n"
+							)
 				fout.write(stab+"\n")
 			#dump photopartners
 			elif(srow == "#KROME_photopartners"):

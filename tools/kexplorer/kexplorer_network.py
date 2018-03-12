@@ -27,7 +27,7 @@ class network:
 
 	#**********************
 	#network contructor read kexplorer file
-	def __init__(self,fileName,fileNameEvolution=None):
+	def __init__(self,fileName,fileNameEvolution=None,elemInterest=None):
 
 		#make dict to store element objects
 		self.elements = dict()
@@ -42,13 +42,16 @@ class network:
 		fh.close()
 
 		#uses evolution data only if file name is present
-		if(fileNameEvolution!=None):
+		if fileNameEvolution:
 			#added by Jels Boulangier 05/04/2017
 			#read data from file
 			fg = open(fileNameEvolution,"rb")
 			#list of all elements
-			fline = fg.readline().strip().split(" ")
-			flineElem = fline[3:]
+			self.allSpecieslist = fg.readline().strip().split(" ")[3:]
+			if elemInterest:
+				flineElem = elemInterest
+			else:
+				flineElem = self.allSpecieslist
 			#add element data per block in the inout file
 			elemBlock = []
 			for row in fg:
@@ -99,7 +102,7 @@ class network:
 			arow = [x for x in row.split(" ") if(x!="")]
 			(time, Tgas, xvar) = [float(x) for x in arow[0:3]]
 			for el in elemAll:
-				elIdx = elemAll.index(el)+3
+				elIdx = self.allSpecieslist.index(el)+3
 				abundance = float(arow[elIdx])
 				self.elements[el].addData(time, Tgas, xvar, abundance, newBlock)
 			newBlock = False
@@ -119,7 +122,6 @@ class network:
 		#range of xvar/Tgas values
 		self.xvarRange = len(self.xvarUnique)
 		self.tgasRange = len(self.tgasUnique)
-
 
 	#******************
 	#search for most fluxy reactions
@@ -349,13 +351,15 @@ class network:
 		for species in speciesTodo:
 			for timeIndex in range(timeStart,timeStop):
 				if timeIndex==timeStart:
-					globalMaxmimum = max(max(self.elements[species].abundanceData,
-											key=lambda x: x[:] ) )
-					minima = min(self.elements[species].abundanceData,
-											key=lambda x: x[:] )
-					#remove zero abundances, e.g. initial value
-					minima = [x for x in minima if x != 0.]
-					globalMinimum = min(minima)
+					globalMinimum = 1e64
+					globalMaxmimum = 0
+					for i in self.elements[species].abundanceData:
+						for j in i:
+							if j < globalMinimum and j != 0:
+								globalMinimum = j
+							if j > globalMaxmimum:
+								globalMaxmimum = j
+
 					limits = [globalMinimum, globalMaxmimum]
 
 				self.abundanceColormap(species, timeIndex, limits, pngFolder)
@@ -378,8 +382,8 @@ class network:
 		for species in speciesTodo:
 			# change video setting if desired
 			# this uses ffmpeg
-			os.system("ffmpeg -framerate 5 -pattern_type glob -i "
-					"\'" + pngFolder + "/" + species + "*.png\' "
+			os.system("ffmpeg -framerate 3 -pattern_type glob -i "
+					"\'" + pngFolder + "/" + species + "_*.png\' "
 					"-c:v libx264 -s 1920x1080 -r 30 -pix_fmt yuv420p "
 					+ pngFolder + "/" + species + "evolution.mp4" )
 
@@ -423,15 +427,77 @@ class network:
 			print "Abundance of %s is zero everywhere" %(atom)
 			return
 
+		# replace all extremely small numbers with a 'okay' small number
+		# to avoid NaNs
+		z[z < 1e-60] = 1e-60
+
 		#create image
-		plt.figure()
 		if(zRange>10):
-			#logaritmic colorbar
-			plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True,
-			norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+			# logaritmic colorbar
+			# Two options are presented here, and the user can choose
+			# by commenting one or the other
+
+			### Color plot with a gradient color bar
+			# rasterized=True is needed for pdfs.
+
+			# plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True,
+			# norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+
+			### Color plot with filled contours and (connected) contour lines
+			# NOTE: that there is a bug in matplotlib when using 'extend':
+			# "ValueError: extend kwarg does not work yet with log scale"
+			# Note that there is no 'extend' arrow on the color bar...
+			#
+			## OPTION 1: do a quick and dirty fix by replacing all
+			# values below lower limit, with lower limit.
+			#
+			## OPTION 2: wait till my pull request 10705 gets accepted
+			# (https://github.com/matplotlib/matplotlib/pull/10705)
+			# OR fix this in your own matplotlib version.
+			# e.g. path where the file typically resides:
+			# /anaconda3/envs/py27/lib/python2.7/site-packages/matplotlib/contour.py
+			# Step 1: in def _init_, remove the ValueError if statement
+			# Step 2: in def _process_levels,
+			# change :
+			# if self.extend in ('both', 'min'):
+			# 	self.layers[0] = -1e150
+			# to:
+			# if self.extend in ('both', 'min'):
+			# 	if self.logscale:
+            #     self.layers[0] = 1e-150
+            # 	else:
+            #     self.layers[0] = -1e150
+			# Reason: very large negative number gives NaN when using log,
+			# so replace with very small number.
+			#
+			## OPTION 1:
+
+			# exp_min = np.floor(np.log10(zMin)-1)
+			# exp_max = np.ceil(np.log10(zMax)+1)
+			# lev_exp = np.arange(exp_min, exp_max)
+			# levs = np.power(10, lev_exp)
+			# #replace all values below lower limit, with lower limit.
+			# z[z < levs[0] ] = levs[0]
+			#
+			# plt.contourf(x, y, z, levels=levs,
+			# 			cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+
+			## OPTION 2:
+			exp_min = np.floor(np.log10(zMin))
+			exp_max = np.ceil(np.log10(zMax)+1)
+			lev_exp = np.arange(exp_min, exp_max)
+			levs = np.power(10, lev_exp)
+
+			plt.contourf(x, y, z, levels=levs, extend='min',
+						cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+
 		else:
 			#linear colorbar
-			plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True)
+			# same as in the logaritmic case:
+
+			# plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True)
+
+			plt.contourf(x, y, z, cmap='viridis')
 
 		#make plot labels
 		#BUG sometime there are no labels/ticks on the colorbar...
@@ -445,7 +511,11 @@ class network:
 		plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
 		#dump png file
 		print "Dumping colormap of %s" %(atom)
-		plt.savefig(pngFolder + '/%s_%03i' %(atom,idxTime))
+		if evolution:
+			plt.savefig(pngFolder + '/%s_%03i.png' %(atom,idxTime),
+						format='png', dpi=200)
+		else:
+			plt.savefig(pngFolder + '/%s' %(atom))
 		plt.close()
 
 	#******************
@@ -529,7 +599,7 @@ class network:
 		fancybox=True, shadow = True,bbox_to_anchor=(1, 1) )
 		ax = plt.gca().add_artist(legend1)
 		legend2 = plt.legend(markerHandles,markerLabels,loc=2,
-		fancybox=True, shadow=True, bbox_to_anchor=(1, 0.3))
+		fancybox=True, shadow=True, bbox_to_anchor=(1, 0.7))
 		ax = plt.gca().add_artist(legend2)
 		legend3 = plt.legend(styleHandles,styleLabels,loc=3,
 		fancybox=True, shadow=True, bbox_to_anchor=(1, 0))
@@ -539,7 +609,7 @@ class network:
 		plt.xlabel('Time (s)')
 		plt.ylabel("Mass fraction")
 		plt.xlim(xmin=0,xmax=x[-1])
-		#plt.ylim(ymin=1e-7)
+		plt.ylim(ymin=self.minAbundance)
 		#dump png file
 		print "Dumping abundance evolution of %s" %(spec)
 		# plt.show()
