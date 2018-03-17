@@ -5,7 +5,7 @@ module krome_getphys
 contains
 
   !*****************************
-  !get the mean molecular weight in grams
+  !get the mean molecular weight
   function get_mu(n)
     use krome_commons
     use krome_constants
@@ -20,7 +20,7 @@ contains
   end function get_mu
 
   !***************************
-  !get mean molecular weight in grams
+  !get mean molecular weight
   function get_mu_rho(n,rhogas)
     use krome_commons
     use krome_constants
