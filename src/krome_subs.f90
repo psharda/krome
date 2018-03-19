@@ -1122,7 +1122,7 @@ contains
     else
        a = top / bot
     end if
-    
+
     b = ybar - a * xbar
 
   end subroutine llsq
