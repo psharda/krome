@@ -614,23 +614,29 @@ contains
        ksum = 0d0
        do i=1,icount-2
           ! integrate only in the bin range
-          if(tmp_energy(i)>=photoBinEleft(j) &
-               .and. tmp_energy(i+1)<=photoBinEright(j)) then
-             ! numerator integral Jdraine(E)kabs(E)/E
-             f1 = tmp_data(i)*Jdraine(i)/tmp_energy(i)
-             f2 = tmp_data(i+1)*Jdraine(i+1)/tmp_energy(i+1)
-             kavg = kavg + (f1+f2) / 2d0 &
-                  * (tmp_energy(i+1)-tmp_energy(i))
-
-             ! denominator integral Jdraine(E)/E
-             f1 = Jdraine(i)/tmp_energy(i)
-             f2 = Jdraine(i+1)/tmp_energy(i+1)
-             ksum = ksum + (f1+f2) / 2d0 &
-                  * (tmp_energy(i+1)-tmp_energy(i))
-          end if
+!!$          if(tmp_energy(i)>=photoBinEleft(j) &
+!!$               .and. tmp_energy(i+1)<=photoBinEright(j)) then
+!!$             ! numerator integral Jdraine(E)kabs(E)/E
+!!$             f1 = tmp_data(i)*Jdraine(i)/tmp_energy(i)
+!!$             f2 = tmp_data(i+1)*Jdraine(i+1)/tmp_energy(i+1)
+!!$             kavg = kavg + (f1+f2) / 2d0 &
+!!$                  * (tmp_energy(i+1)-tmp_energy(i))
+!!$
+!!$             ! denominator integral Jdraine(E)/E
+!!$             f1 = Jdraine(i)/tmp_energy(i)
+!!$             f2 = Jdraine(i+1)/tmp_energy(i+1)
+!!$             ksum = ksum + (f1+f2) / 2d0 &
+!!$                  * (tmp_energy(i+1)-tmp_energy(i))
+!!$          end if
+           if(tmp_energy(i)<photoBinEmid(j) &
+                .and. tmp_energy(i+1)>photoBinEmid(j)) then
+              kavg = (photoBinEmid(j) - tmp_energy(i)) &
+                   / (tmp_energy(i+1) - tmp_energy(i)) &
+                   * (tmp_data(i+1) - tmp_data(i)) + tmp_data(i)
+           end if
        end do
        ! ratio of the integral is average absorption in the bin
-       find_Av_draine_kabs(j) = kavg / (ksum+1d-40)
+       find_Av_draine_kabs(j) = kavg !/ (ksum+1d-40)
     end do
 
   end subroutine find_Av_load_kabs
@@ -672,7 +678,7 @@ contains
     end do
 
     ! needs at least one bin
-    if(icount<=0) then
+    if(icount<=1) then
        print *,"ERROR: you want to estimate G0 and Av with no bins in the"
        print *," Draine range, 5-13.6 eV!"
        stop
