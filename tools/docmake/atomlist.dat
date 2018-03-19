@@ -21,6 +21,7 @@ Mg	12*mepn
 P	15*mep+16*mn
 S	16*mepn
 Cl	17*mep+18*mn
+Ti	22*mepn+4*mn
 Fe	26*mep+30*mn
 E	me
 Si	14*mepn
@@ -34,4 +35,3 @@ GRAIN   0
 _para	0
 _ortho	0
 _meta	0
-

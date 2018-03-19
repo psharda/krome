@@ -101,6 +101,7 @@ class species():
 			#init photochem variables
 			self.xsecs = dict()
 			self.phrates = dict()
+			self.phrates_extinction = dict()
 
 			#load xsec from file
 			self.loadXsecLeiden()
@@ -123,7 +124,7 @@ class species():
 		sizeMB = round(os.path.getsize(fname)/1024**2,1)
 
 		#check if xsec size is relatively large
-		if(sizeMB > 50.0):
+		if(sizeMB > 10.0):
 			print "WARNING: "+fname+" is quite large ("+str(sizeMB)+" MB)"
 			#ask if to load xsec, N is default
 			while(True):
@@ -178,6 +179,10 @@ class species():
 			"BB@1e4K":JBB, \
 			"BB@2e4K":JBB}
 
+		if (len(self.xsecs)!=0):
+			print "  Computing {0} photochemical rates...".format(self.name)
+
+
 		#loop on databases
 		for (db,data) in self.xsecs.iteritems():
 			self.phrates[db] = dict()
@@ -210,9 +215,132 @@ class species():
 					#store rate, 1/s
 					self.phrates[db][k][radName] = kph
 
-		if (len(self.xsecs)!=0):
-			print "  Photochemical rates for {0} calculated".format(self.name)
+		#compute b in a*exp(-b*Av) WITHOUT SCATTERING!
+		self.computeExtinction()
 
+
+	#*******************
+	#compute rate extinction WITHOUT SCATTERING!
+	def computeExtinction(self):
+		import numpy as np
+		from scipy.interpolate import interp1d
+		from scipy.optimize import curve_fit
+		from math import pi,exp
+		from photo import Jdraine, JBB,intJdraine,intJBB
+
+
+		#file with dust information, from Draine
+		# https://www.astro.princeton.edu/~draine/dust/dustmix.html
+		fname = "kext_albedo_WD_MW_3.1_60_D03.all"
+
+		#some constants
+		clight = 2.99792458e10 #speed of light, cm/s
+		hplanck = 4.135667662e-15 #planck constant, eV*s
+		mp = 1.6726219e-24 #proton mass, g
+
+		energyList = []
+		kabsList = []
+		cos2List = []
+		albedoList = []
+		#flag to skip header
+		inRead = False
+		#loop to read dust file
+		for row in open(fname):
+			srow = row.strip()
+			#starts to read when this string has found
+			if(srow.startswith("-----------")):
+				inRead = True
+				continue
+			#skip if still inside comments
+			if(not inRead):
+				continue
+
+			#read data
+			arow = [x for x in srow.split(" ") if x!=""]
+			#convert data to float, comments are not included
+			(wavelength, albedo, cosAvg, cext, kabs, cos2Avg) = [float(x) for x in arow[:6]]
+
+			#convert wavelenght into energy, note wavelenght is descending
+			# hence no need to reverse array after conversion
+			energyList.append(clight*hplanck/(wavelength*1e-4))
+			#store opacity, cm2/g
+			kabsList.append(kabs)
+			#store averaged scattering angle squared <cos2(theta)>
+			cos2List.append(cos2Avg)
+			#store albedo
+			albedoList.append(albedo)
+
+		#interpolate stored quantities as functions of energy
+		fkabs = interp1d(energyList, kabsList)
+		fcos2 = interp1d(energyList, cos2List)
+		falbedo = interp1d(energyList, albedoList)
+
+		#set a gas model to propagate radiation
+		ngas = 1e0 #gas density, 1/cm3
+		d2g = 0.00806451612 #dust/gas mass ratio, 1/124
+		mu = 1e0 #mean mol weight
+		rho_dust = ngas*mp*mu*d2g #dust density, cm2/g
+		minAv = 0.1 #min Av of the seminfinite slab
+		maxAv = 3e0 #max Av of the seminfinite slab
+
+		#Av->col, cm2
+		av2ncol = 1.6e21
+
+		#compute min/max position
+		xmin = minAv*av2ncol/ngas
+		xmax = maxAv*av2ncol/ngas
+
+		#number of grid points in space
+		imax = 30
+
+		#loop on database
+		for (db, data) in self.xsecs.iteritems():
+			self.phrates_extinction[db] = dict()
+			xdata = data["energy"]
+			#loop on rates
+			for (k, ydata) in data.iteritems():
+				#skip these keys
+				if(k in ["energy","wavelength","photoabsorption"]):
+					continue
+				#skip empty data
+				if(len(ydata)==0):
+					continue
+
+				self.phrates_extinction[db][k] = dict()
+
+				kphList = []
+				avList = []
+
+				#loop on grid points
+				for xpos in [i*(xmax-xmin)/(imax-1)+xmin for i in range(imax)]:
+					#loop on radiation fluxes
+					edata = []
+					fdata = []
+					#loop on energy range
+					for i in range(len(xdata)):
+						sigma = ydata[i] #cm2
+						energy = xdata[i] #eV
+						if energy < min(energyList) or energy > max(energyList): continue
+						edata.append(energy)
+						tau = rho_dust*xpos*fkabs(energy)
+						#Jrad = fscale*JBB(energy, 4e3)*exp(-tau)*fcos2(energy)/(1e0-falbedo(energy))
+						Jrad = Jdraine(energy)*exp(-tau)
+						fdata.append(Jrad*sigma/energy)
+
+					#compute integral and rate, 1/s
+					kph = 4e0*pi*np.trapz(fdata, edata)/hplanck
+					kphList.append(kph)
+					avList.append(xpos*ngas/av2ncol)
+
+				#exponential function to fit, a*exp(-b*Av)
+				def fexp(x, a, b):
+					return a*np.exp(-b*x)
+
+				#fit exponential
+				popt, pcov = curve_fit(fexp, avList, kphList)
+
+				#store rate, 1/s
+				self.phrates_extinction[db][k]["Draine1978"] = popt[1]
 
 	#*******************
 	#return rate (interface to dictionary), 1/s
@@ -307,7 +435,7 @@ class species():
 	#get "engineered" enthalpy kJ/mol
 	def getEnthalpy(self,thermochemicalData,Tgas=298.15):
 
-		#gas constant kJ/mol/K
+		#gas constant J/mol/K
 		Rgas = 8.3144598
 
 		#use so-called electron convention
@@ -403,18 +531,26 @@ class species():
 			for (db,data) in self.phrates.iteritems():
 				#loop on rates
 				for (k,ydata) in data.iteritems():
-					for radName,kph in ydata.iteritems():
-						tr = "<td>&nbsp;"+k+"<td>"+db+"<td>"+radName+"<td>"+utils.htmlExp(kph)+"\n"
+					for radName, kph in ydata.iteritems():
+						bexp_str = ""
+						#include b from a*exp(-b*Av), WITHOUT SCATTERING!
+						if(radName in self.phrates_extinction[db][k]):
+							bexp = self.phrates_extinction[db][k][radName]
+							bexp_str = str(round(bexp,2))
+						tr = "<td>&nbsp;" + k + "<td>" + db + "<td>" + radName \
+							+ "<td>" + utils.htmlExp(kph) + "<td>" \
+							+ bexp_str + "\n"
 						rows.append([k+"_"+db+"_"+radName, tr])
 
 
 			#table with integrated photorates
-			thead = "<tr>"+"<th>"*4
+			thead = "<tr>"+"<th>"*5
 			fout.write("<br><br>\n")
 			fout.write("<p style=\"font-size:20px\">Photochemical rates (1/s)</p><br>\n")
 			fout.write("<table width=\"50%\">\n")
 			fout.write(thead+"\n")
-			fout.write("<tr><td>&nbsp;process<td>database<td>radiation<td>rate (1/s)\n")
+			btd = "b<sub>exp</sub><sup>*</sup>"
+			fout.write("<tr><td>&nbsp;process<td>database<td>radiation<td>rate (1/s)<td>"+btd+"\n")
 			fout.write(thead+"\n")
 			icount = 0
 			for row in sorted(rows,key=lambda x:x[0]):
@@ -423,14 +559,19 @@ class species():
 				fout.write("<tr bgcolor=\""+bgcolor+"\">"+row[1])
 				icount += 1
 			fout.write(thead+"\n")
-			fout.write("</table><br><br>\n")
-			link = "http://home.strw.leidenuniv.nl/~ewine/photo/index.php?file=display_species.php&species="+urllib.quote(self.name, safe='')
-			fout.write("<a href=\""+link+"\" target=\"_blank\">search on Leiden database</a>\n")
+			fout.write("</table>\n")
+			fout.write("<sup>*</sup>b from a*exp(-b*Av) extinction (WITHOUT SCATTERING!)\n")
+			fout.write("<br><br>")
 
+			link = "http://home.strw.leidenuniv.nl/~ewine/photo/index.php?file=display_species.php&species=" \
+				+ urllib.quote(self.name, safe='')
+			fout.write("<a href=\""+link+"\" target=\"_blank\">search on Leiden database</a><br>\n")
 		else:
-			link = "http://home.strw.leidenuniv.nl/~ewine/photo/data/photo_data/all_cross_sections/text_continuum/"+self.name+".txt"
-			fout.write("Cross-section missing: <a href=\""+link+"\" target=\"_blank\">search on Leiden database</a> and copy to <i>xsecs/" \
-				+self.name+".dat</i>\n")
+			link = "http://home.strw.leidenuniv.nl/~ewine/photo/data/photo_data/all_cross_sections/text_continuum/" \
+				+ self.name + ".txt"
+			fout.write("Cross-section missing: <a href=\""+link \
+				+ "\" target=\"_blank\">search on Leiden database</a> and copy to <i>xsecs/" \
+				+ self.name + ".dat</i>\n")
 
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()

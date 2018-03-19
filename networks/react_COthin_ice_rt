@@ -4,12 +4,13 @@
 #rates for CO network similar to Glover+2010 MNRAS from there and other authors
 @var:Hnuclei = get_Hnuclei(n(:))
 @var:ntot=sum(n(1:nmols))
-@common: user_crate,user_Av,user_Tdust
+@common: user_crate,user_Av
 
 @var: T32 = Tgas/3d2
 @var: Te = Tgas*8.617343d-5
 @var: invT = 1d0/Tgas
 @var: lnTe = log(Te)
+@var: T = Tgas
 @var: invT32 = 1d0/T32
 
 #Janev 1987
@@ -100,6 +101,7 @@
 @format:idx,R,R,P,P,rate
 21,H2+,H,H2,H+,6d-10
 
+@noTab_start
 #fit by Savin et al. 2004, see also Grassi et al. 2011, lower limits is extended below 100K
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 @var:asav0=-1.9153214d2
@@ -120,8 +122,10 @@
 @var:bsav7= 2.1675387d-2
 @var:sumsav=asav0+asav1*log10(Tgas)+asav2*(log10(Tgas))**2+asav3*(log10(Tgas))**3+asav4*(log10(Tgas))**4+asav5*(log10(Tgas))**5+asav6*(log10(Tgas))**6+asav7*(log10(Tgas))**7
 @var:sumsbv=bsav0+bsav1*log10(Tgas)+bsav2*(log10(Tgas))**2+bsav3*(log10(Tgas))**3+bsav4*(log10(Tgas))**4+bsav5*(log10(Tgas))**5+bsav6*(log10(Tgas))**6+bsav7*(log10(Tgas))**7
-14,H2,H+,H2+,H,NONE,.LT.1.d5,10**sumsav
-15,H2,H+,H2+,H,.GE.1.d5,NONE,10**sumsbv
+14,H2,H+,H2+,H,NONE,.LT.1d5,1d1**sumsav
+15,H2,H+,H2+,H,.GE.1d5,NONE,1d1**sumsbv
+@noTab_stop
+
 
 #fit by Mitchell & Deveau 1983 of data by Corrigan 1965
 @format:idx,R,R,P,P,P,rate
@@ -541,61 +545,77 @@
 222,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
 223,OH,H,H2O,,NONE,NONE,5.26d-18*T32**(-5.22)*exp(-9d1*invT)
 
-#H2 ON GRAINS WITH RATE APPROXIMATION
-@format:idx,R,R,P,rate
-@var:fA = 1d0/(1d0+1d4*exp(-6d2/(user_Tdust+1d-40)))
-@noTabNext
-223,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0 + 0.04d0*sqrt(Tgas+user_Tdust) + 0.002d0*Tgas + 8d-6*Tgas**2)/(n(idx_H)+1d-40)*Hnuclei
+@noTab_start
+#DUST FREEZE-OUT/EVAPORATION
+@var:tabTdust = get_table_Tdust(n(:))
+@ice:CO,freezeout,krate_stickSi(n(:),idx_CO,tabTdust)
+@ice:CO,evaporation,krate_evaporation(n(:),idx_CO,tabTdust)
+@ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,tabTdust)
+@ice:H2O,evaporation,krate_evaporation(n(:),idx_H2O,tabTdust)
+
+#NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux
+@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0, user_Av, user_crate, 1d-3)
+
+@noTab_stop
 
 #PHOTOREACTIONS THIN WITH Av
 @format:idx,R,P,P,rate
 
-@noTab_start
-
 #integrated with J21*13.6/E flux, up to 200eV
 #223,H,H+,E,2.19e-12*exp(-1.14e4*user_Av)
 
-#FROM GLOVER+2009
-224,H-,H,E,7.1d-7*exp(-.5*user_Av)
-225,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
-@var: user_H2self = fselfH2(1.87d21*(merge(n(idx_H2),n_global(idx_H2),n(idx_H2) > 0.0_8)*1d-3)**(2./3.), 1d5)
-226,H2,H,H,5.6d-11*exp(-3.74*user_Av)*user_H2self
-227,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
-228,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
-229,C,C+,E,3.1d-10*exp(-3.*user_Av)
-230,C-,C,E,2.4d-7*exp(-.9*user_Av)
-231,CH,C,H,8.7d-10*exp(-1.2*user_Av)
-232,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)
-233,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)
-234,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)
-235,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)
-236,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)
-237,CH3+,CH2+,H,1d-9*exp(-1.7*user_Av)
-238,CH3+,CH+,H2,1d-9*exp(-1.7*user_Av)
-239,C2,C,C,1.5d-10*exp(-2.1*user_Av)
-240,O-,O,E,2.4d-7*exp(-.5*user_Av)
-241,OH,O,H,3.7d-10*exp(-1.7*user_Av)
-242,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)
-243,OH+,O,H+,1d-12*exp(-1.8*user_Av)
-244,H2O,OH,H,6d-10*exp(-1.7*user_Av)
-245,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)
-@var: HnOj = fHnOj(user_Av)
-246,H2O+,H2+,O,5.d-11*HnOj
-247,H2O+,H+,OH,5.d-11*HnOj
-248,H2O+,O+,H2,5.d-11*HnOj
-249,H2O+,OH+,H,1.5d-10*HnOj
-250,H3O+,H+,H2O,2.5d-11*HnOj
-251,H3O+,H2+,OH,2.5d-11*HnOj
-252,H3O+,H2O+,H,7.5d-12*HnOj
-253,H3O+,OH+,H2,2.5d-11*HnOj
-254,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)
-255,O2,O,O,7d-10*exp(-1.8*user_Av)
-256,CO,C,O,2.d-10*exp(-3.53*user_Av)
-@noTab_end
+@format:idx,R,P,P,rate
 
+@photo_start
+401,H,H+,E,auto
+401,He,He+,E,auto
+402,C,C+,E,@xsecFile=SWRI
+403,O,O+,E,auto
+404,CO,C,O,@xsecFile=SWRI
+405,H2,H,H,@xsecFile=SWRI
+406,H2,H2+,E,@xsecFile=SWRI
+
+407,H-,H,E,@xsecFile=SWRI
+408,CH,C,H,@xsecFile=SWRI
+409,CH,CH+,E,@xsecFile=SWRI
+410,C2,C,C,@xsecFile=SWRI
+411,OH,O,H,@xsecFile=SWRI
+412,OH,OH+,E,@xsecFile=SWRI
+413,H2O,OH,H,@xsecFile=SWRI
+414,H2O,H2O+,E,@xsecFile=SWRI
+415,O2,O2+,E,@xsecFile=SWRI
+416,O2,O,O,@xsecFile=SWRI
+
+@format:idx,R,P,P,P,rate
+417,H2,H+,H,E,@xsecFile=SWRI
+@photo_end
+
+@format:idx,R,P,P,rate
+@var:fscale=get_ratioFluxDraine()
+225,H2+,H,H+,1.1d-9*fscale
+227,H3+,H2,H+,4.9d-13*fscale
+228,H3+,H2+,H,4.9d-13*fscale
+230,C-,C,E,2.4d-7*fscale
+233,CH+,C,H+,2.6d-10*fscale
+234,CH2,CH,H,7.1d-10*fscale
+235,CH2,CH2+,E,5.9d-10*fscale
+236,CH2+,CH+,H,4.6d-10*fscale
+237,CH3+,CH2+,H,1d-9*fscale
+238,CH3+,CH+,H2,1d-9*fscale
+240,O-,O,E,2.4d-7*fscale
+243,OH+,O,H+,1d-12*fscale
+246,H2O+,H2+,O,5.d-11*fscale
+247,H2O+,H+,OH,5.d-11*fscale
+248,H2O+,O+,H2,5.d-11*fscale
+249,H2O+,OH+,H,1.5d-10*fscale
+250,H3O+,H+,H2O,2.5d-11*fscale
+251,H3O+,H2+,OH,2.5d-11*fscale
+252,H3O+,H2O+,H,7.5d-12*fscale
+253,H3O+,OH+,H2,2.5d-11*fscale
 
 #cosmic rays processes from OSU
 @CR_start
+@storeOnce_start
 257,H,H+,E,4.6d-1*user_crate
 258,He,He+,E,5.d-1*user_crate
 259,O,O+,E,2.8d0*user_crate
@@ -616,6 +636,7 @@
 275,HCO,HCO+,E,1.17d3*user_crate
 @format:idx,R,P,P,P,rate
 279,H2,H,H+,E,9.3d-1*user_crate
+@storeOnce_stop
 @CR_stop
 
 

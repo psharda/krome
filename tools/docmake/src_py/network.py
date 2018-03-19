@@ -123,6 +123,9 @@ class network:
 		#plot all rates
 		self.plotRates()
 
+		#make latex table of network
+		self.network2latex()
+
 	#********************
 	#prepare all the html pages
 	def makeHTML(self):
@@ -165,6 +168,55 @@ class network:
 			icount += 1
 
 	#********************
+	#make a LaTeX table of the network
+	def network2latex(self, networkLatex="NetworkLatex.log"):
+		#NOTE: Make sure the network input file has incrementing reaction indices.
+		# If double indices exist, the LaTeX table will be incorrect.
+
+		#list with all temperature shortcuts element = (var, replaceWith)
+		shortcutsTemperature = utils.getShortcutsLatex()
+		cntMergedReactions = 0
+
+		with open(networkLatex, "w") as fileOutput:
+			#dump header of the file
+			self.dumpLatexTableHeader(fileOutput)
+			#loop on reactions to evaluate
+			for myReaction in self.reactions:
+				#list with all variable shortcuts (excl. temperature ones)
+				shortcutsVariables = myReaction.shortcuts
+
+				for cnt in range(len(myReaction.rate)):
+					latexColums, message = myReaction.reaction2latex(shortcutsTemperature,
+											shortcutsVariables, cntMergedReactions, cnt)
+					if cnt > 0:
+						cntMergedReactions += 1
+					#print warning message
+					if message:
+						fileOutput.write(message + "\n")
+					self.dumpLatexTable(latexColums, fileOutput)
+
+	#****************
+	#dump colums in LateX table format
+	def dumpLatexTableHeader(self, tableFile):
+
+		tableFile.write("%********************************\n")
+		tableFile.write("% Include \usepackage{chemformula}\n")
+		tableFile.write("% Chemical reaction network (LaTeX format)\n")
+		tableFile.write("% Table columns format {"+5*"l"+"}\n")
+		tableFile.write("% Set \"h\" as table-spec for the column to hide it\n")
+		tableFile.write("%%\\newcolumntype{h}{>{\setbox0=\hbox\\bgroup}c<{\egroup}@{}}\n")
+	#****************
+	#build colums in LateX table format
+	def dumpLatexTable(self, colums, tableFile):
+		row = ""
+		cnt = 1
+		for el in colums:
+			if cnt==len(colums): row += el + " \\\\"
+			else: row += el + " & "
+			cnt += 1
+
+		tableFile.write(row + "\n")
+	#********************
 	#check xsec folder and write xsec status to log file
 	def reportXsecsFiles(self,logName="xsecs.log",folder="xsecs/"):
 
@@ -197,7 +249,7 @@ class network:
 
 		#default format
 		reactionFormat = "@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate"
-
+		shortcutsList = [] #used in network2latex, list because dict loses order
 		inBlockCR = False
 
 		self.reactions = []
@@ -218,6 +270,9 @@ class network:
 			if(srow.startswith("@var:")):
 				(variable,expression) = [x.strip() for x in srow.replace("@var:","").split("=")]
 				shortcuts[variable] = expression
+				#check if not already in temperature shortcuts
+				if not(utils.isTemperatureShortcut(variable)):
+					shortcutsList.append((variable,expression))
 
 			if(srow.lower().startswith("@cr_start") or srow.lower().startswith("@cr_begin")):
 				inBlockCR = True
@@ -232,10 +287,11 @@ class network:
 			if(srow.startswith("@")): continue
 
 			#parse row line for reaction
-			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType,self.species)
-
+			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType,self.species,shortcutsList)
 			#add parsed reaction to reactions structure in network
 			self.reactions.append(myReaction)
+			#clear list for new reaction
+			shortcutsList = []
 		fh.close()
 
 	#**************
@@ -407,9 +463,8 @@ class network:
 				reactionList[myHash].merge(myReaction)
 			else:
 				reactionList[myHash] = myReaction
-		self.reactions = [v for (k,v) in reactionList.iteritems()]
-
-
+		unsortedReactions = [v for (k,v) in reactionList.iteritems()]
+		self.reactions = sorted(unsortedReactions, key=lambda x:x.index)
 	#***************
 	def makeGraph(self):
 
@@ -1393,5 +1448,3 @@ class network:
 
 		#some message
 		print "subnetwork saved to "+fullOptions["outputFile"]+" with "+str(icount)+" reactions"
-
-

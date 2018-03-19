@@ -1,4 +1,4 @@
-import kexplorer_reaction,kexplorer_element,kexplorer_utils
+import kexplorer_reaction,kexplorer_element,kexplorer_utils, figureSettings
 import sys,subprocess,os,glob,json,datetime
 
 import itertools #added by Jels Boulangier 30/03/2017
@@ -9,24 +9,9 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 
-#plot arguments
-font = {'size'   : 21}
-lines = {'linewidth' : 5, 'markersize': 10, 'markeredgewidth': 3, }
-savefig = {'dpi': 300, 'format': 'png', 'transparent': True,'bbox': 'tight'}
-figure = {'figsize': (14, 10)}#,'autolayout':True}
-
-plt.rc('font', **font)
-plt.rc('lines', **lines)
-plt.rc('savefig', **savefig)
-plt.rc('figure', **figure)
-plt.rc('xtick.major', size=10, width=1.5)
-plt.rc('xtick.minor', size=5, width=1.5)
-plt.rc('ytick.major', size=10, width=1.5)
-plt.rc('ytick.minor', size=5, width=1.5)
 ########################################
 class network:
 	reactions = dict()
-	elements = dict()#added by Jels Boulangier 05/04/2017
 
 	minFlux = 1e-5 #minimum flux to plot
 	plotLog = True #edge thickness is log of flux
@@ -35,15 +20,17 @@ class network:
 	xvarUnits = "" #units of independent variable
 	xvarFormat = "%e" #format of independent variable
 	#added by Jels Boulangier 05/04/2017
-	minAbundance = 1e-10 #minimum mass fraction to plot
-	maxAbundance = 1 #maximum mass fraction to plot
+	minAbundance = 1e-20 #minimum mass fraction to plot
+	maxAbundance = 1e10 #maximum mass fraction to plot
 	reaFormat = "idx,R,R,R,P,P,P,P,Tmin,Tmax,rate" #default format
 	rateLength = 100 #maximum length of rate
 
 	#**********************
 	#network contructor read kexplorer file
-	def __init__(self,fileName,fileNameEvolution=None):
+	def __init__(self,fileName,fileNameEvolution=None,elemInterest=None):
 
+		#make dict to store element objects
+		self.elements = dict()
 		#read data from file
 		fh = open(fileName,"rb")
 		for row in fh:
@@ -55,13 +42,16 @@ class network:
 		fh.close()
 
 		#uses evolution data only if file name is present
-		if(fileNameEvolution!=None):
+		if fileNameEvolution:
 			#added by Jels Boulangier 05/04/2017
 			#read data from file
 			fg = open(fileNameEvolution,"rb")
 			#list of all elements
-			fline = fg.readline().strip().split(" ")
-			flineElem = fline[3:]
+			self.allSpecieslist = fg.readline().strip().split(" ")[3:]
+			if elemInterest:
+				flineElem = elemInterest
+			else:
+				flineElem = self.allSpecieslist
 			#add element data per block in the inout file
 			elemBlock = []
 			for row in fg:
@@ -112,7 +102,7 @@ class network:
 			arow = [x for x in row.split(" ") if(x!="")]
 			(time, Tgas, xvar) = [float(x) for x in arow[0:3]]
 			for el in elemAll:
-				elIdx = elemAll.index(el)+3
+				elIdx = self.allSpecieslist.index(el)+3
 				abundance = float(arow[elIdx])
 				self.elements[el].addData(time, Tgas, xvar, abundance, newBlock)
 			newBlock = False
@@ -123,16 +113,15 @@ class network:
 	#useful for determining the (tgas,xvar)-grid
 	#added by Jels Boulangier 05/04/2017
 	def getRangeTgasXvar(self):
-		#find unique xvar/Tgas values ("H" is a random choice of element)
-		xvarUniqueSet = set([i[0] for i in self.elements["H"].xvarData])
-		tgasUniqueSet = set([i[0] for i in self.elements["H"].tgasData])
+		#find unique xvar/Tgas values (take first as random choice of element)
+		xvarUniqueSet = set([i[0] for i in self.elements[self.elements.keys()[0]].xvarData])
+		tgasUniqueSet = set([i[0] for i in self.elements[self.elements.keys()[0]].tgasData])
 		#sorted list of unique xvar/Tgas values
 		self.xvarUnique = sorted(list(xvarUniqueSet))
 		self.tgasUnique = sorted(list(tgasUniqueSet))
 		#range of xvar/Tgas values
 		self.xvarRange = len(self.xvarUnique)
 		self.tgasRange = len(self.tgasUnique)
-
 
 	#******************
 	#search for most fluxy reactions
@@ -170,7 +159,6 @@ class network:
 
 	#****************
 	#create network file with most fluxy reactions
-	#added by Jels Boulangier 30/03/2017
 	def networkBest(self,oldNetwork,newNetwork="BestNetwork.ntw"):
 
 		cnt = 0
@@ -183,324 +171,6 @@ class network:
 		                reactionBlock = "".join(list(group))
 		                fileOutput.write(reactionBlock + "\n")
 		            cnt += 1
-
-	#****************
-	#create latex format for network
-	def network2latex(self,networkFile,networkLatex="NetworkLatex.log" ):
-
-		reactionFormat = self.reaFormat #use default reaction format
-		reactionCnt = 0 #reaction counter
-
-		with open(networkFile, 'r') as fileInput, open(networkLatex, "w") as fileOutput:
-			#dump header of the file
-			self.dumpLatexTableHeader(fileOutput)
-			#split file into blocks separated by empty line, one block is one reaction
-			for key,group in itertools.groupby(fileInput,kexplorer_utils.blockSeparator):
-				if not key:
-					newReaction = True #keep track if new reaction or not (double rates)
-					reactionBlockList = list(group)
-					varList = [] #dictionary with possibly needed rate variables
-					for item in reactionBlockList:
-						if item.startswith("#"): continue
-						if item.startswith("@var"):
-							varLine  = item.split(":")[-1].split("=")
-							varValue = varLine[-1].strip() #variable value
-							varName  = varLine[0].strip()  #variable
-
-							#adapt string to avoid math mistakes later on
-							varValue = "(" + varValue + ")"
-							varList.append((varName,varValue))
-
-						#use new format if detected, if not, keep using previous
-						if item.startswith("@format"):
-							reactionFormat = item.split(":")[-1]
-
-						#skip other special lines
-						elif item.startswith("@"):
-							continue
-
-						elif int(item[0]):
-							formatList = reactionFormat.split(",")
-							reactionInfo = item.split(",")
-							#get reaction rare
-							reactionRate = reactionInfo[-1].strip("\n")
-							#transform into LaTeX format
-							reactionRateTex = self.rate2latex(reactionRate,varList)
-							#break long rates (in LaTeX format)
-							if len(reactionRateTex) > self.rateLength:
-								reactionRateTex, message = self.breakRateTex(reactionRateTex)
-								#print warning message
-								if message != "": fileOutput.write(message + "\n")
-
-							tempMinIdx = kexplorer_utils.indicesElemList(formatList,"Tmin")[0]
-							tempMaxIdx = kexplorer_utils.indicesElemList(formatList,"Tmax")[0]
-
-							if tempMinIdx != None or tempMaxIdx != None:
-								tempRange = reactionInfo[tempMinIdx:tempMaxIdx+1]
-								tempRangeTex = self.tempRange2latex(tempRange)
-							else: tempRangeTex = ""
-
-							if newReaction:
-								firstReactantIdx = kexplorer_utils.indicesElemList(formatList,"R")[0]
-								lastProductIdx = kexplorer_utils.indicesElemList(formatList,"P")[-1]
-
-								#increment reaction counter
-								reactionCnt += 1
-								reactionIdx = str(reactionCnt)
-								prefix = "k$_{" + reactionIdx +"}$"
-
-
-								formatReaProd = formatList[firstReactantIdx:lastProductIdx+1]
-								verbReaction = reactionInfo[firstReactantIdx:lastProductIdx+1]
-								verbReactionTex = self.reaction2latex(verbReaction,formatReaProd)
-							else:
-								verbReactionTex = ""
-								reactionIdx = ""
-
-							reactionRateTex = prefix + reactionRateTex
-							newReaction = False
-							refTex = "" #column for references
-
-							latexColums = [reactionIdx,verbReactionTex,reactionRateTex,tempRangeTex,refTex]
-							self.dumpLatexTable(latexColums,fileOutput)
-
-	#****************
-	#KROME reaction format to LaTeX format
-	def reaction2latex(self,reaction,format):
-
-		reaTex = ""
-		totalReact = format.count("R")
-		totalProd  = format.count("P")
-
-		#***************-
-		def reaProdTex(out,it):
-			elem = reaction[it]
-			#skip empty elem (due to non-asdapted format)
-			if elem =="": return ""
-			#sub and superscrits to LaTeX format
-			elem = kexplorer_utils.subSuper2latex(elem)
-			elem = kexplorer_utils.special2latex(elem)
-			if it==0 or it==totalReact: out = elem
-			else: out = " $+$ " + elem
-			return out
-
-		#loop over all reactants
-		for i in range(totalReact): reaTex += reaProdTex(reaTex,i)
-		#add cosmic ray to reaction with only one product
-		if totalReact==1: reaTex += " $+$ CR"
-		# add reaction arrow
-		reaTex = reaTex + " $\\to$ "
-		#loop over all products
-		for i in range(totalReact,totalReact+totalProd): reaTex += reaProdTex(reaTex,i)
-		#add photon to reaction with only one product
-		if totalProd==1: reaTex += " $+$ $\\gamma$ "
-
-		return reaTex
-
-	#****************
-	#KROME network format to LaTeX format
-	def rate2latex(self,rate,varList):
-		import re
-		import sympy as sp
-
-		#list of symbols you want to keep in the LaTeX format
-		Tsymbols = ["T","(T/300)", "T_{e}"]
-		T, T32, Te = sp.symbols(Tsymbols)
-		exp = sp.Symbol("exp")
-		ln = sp.Symbol("ln")
-		log = sp.Symbol("log")
-		sqrt = sp.Symbol("sqrt")
-
-		#put all variables with corresponding values in rate
-		if varList:
-			#loop needs to be reversed order for variable dependencies
-			for var in reversed(varList):
-				if var[0] in rate:
-					rate = rate.replace(var[0],var[1])
-
-		#list with all temperature shortcuts element = (var, replaceWith)
-		tempShort = kexplorer_utils.getShortcuts()
-		#replace shortcuts, loop needs to be reversed order for variable dependencies
-		#skip T32, to keep as symbol
-		for tshort in reversed(tempShort[2:]):
-			rate = rate.replace(tshort[0],tshort[1])
-
-		#make sympy friendly
-		rate = rate.replace("d","e")
-		rate = rate.replace("log", "ln")
-		rate = rate.replace("ln10", "log")
-
-		#transform to LaTeX format
-		#keep trying i
-		while True:
-			try:
-				rateTex = sp.latex(eval(rate))
-				break
-			#undefined variable will become a symbol
-			except (NameError,),err:
-				print "Name error in rate", err
-				varIssue = str(err).split("'")[1]
-				symb = varIssue + " = sp.Symbol(\""+varIssue+"\")"
-				exec(symb)
-
-			#special case rate	will be prited as it is
-			except (SyntaxError,),err:
-				print "Syntax Error in rate", err
-				return rate
-
-		##########################
-		#fix mistakes by sympy
-		#no 10^{} for short rates
-		for t in Tsymbols:
-			if t in rateTex:
-				break
-			else:
-				rateTex = rateTex.replace("e-","\\cdot 10^{-") + "}"
-				break
-
-		#it automatically makes a fraction out of negative exponents
-		stringFrac = r'\frac{1}{'
-		if stringFrac in rateTex:
-			for Tsym in Tsymbols:
-				rateTex = rateTex.replace(stringFrac + Tsym + "^{", "{"+Tsym+"^{-")
-			#change the order of the factors to match modified Arrhenius
-			#avoid chaging stuff in more complex rates
-			if len(rateTex) < self.rateLength:
-				rateTexSplit = re.split("\}\}",rateTex)
-				beta = rateTexSplit[0][1:]+"}" #beta containing factor
-				if "exp" in rateTexSplit[-1]:
-					alphaGamma = rateTexSplit[-1].split("\operatorname") #alpha and gamma factor
-					rateTex = alphaGamma[0] + beta + "\operatorname" + alphaGamma[1]
-				else:
-					rateTex = rateTexSplit[-1] + beta
-
-		#mistake: large fractions
-		#solution: to the power -1 (solution can be improved)
-		if rateTex.startswith(r"\frac"):
-			cnt = 0
-			pieces = []
-			#get content between parenteses for each level
-			parenticList = kexplorer_utils.getParentheticContents(rateTex)
-			#only get the first \frac{}{} parts
-			for part in parenticList:
-				if part[0]==0 and cnt<3:
-					pieces.append(part[1])
-					cnt = cnt +1
-
-			#replace \frac{a}{b} with a*b^{-1}
-			firstTerm = pieces[0]
-			secondTerm = pieces[1]
-
-			fracStringOriginal = r"\frac{"+firstTerm+"}{"+secondTerm+"}"
-
-			# Put parenteses around first term if composite term
-			if " + " not in firstTerm or " - " not in firstTerm:
-				fracStringReplace = firstTerm+"\left["+secondTerm+r"\right]^{-1}"
-			else:
-				fracStringReplace = "\left["+firstTerm+r"\right]\left["+secondTerm+r"\right]^{-1}"
-
-			rateTex = rateTex.replace(fracStringOriginal,fracStringReplace)
-
-		#add LaTeX symbols
-		rateTex = " $= " + rateTex + "$"
-		return rateTex
-
-	#****************
-	#break long rates and put in LateX table format
-	def breakRateTex(self,rate):
-		nextReplace = False
-
-		#get rid of unclosed "{}" on a line, when breaking equation
-		parList = kexplorer_utils.getParentheticContents(rate)
-		for part in parList:
-			#replace when level 0 and after exp
-			if part[0] == 0 and nextReplace:
-				rate = rate.replace("{"+part[1]+"}",part[1])
-				nextReplace = False
-			#only for exp
-			if part == (0,"exp"):
-				#next level 0 parenteses need to be replaced
-				nextReplace = True
-
-		rate = rate[1:-1]	#remove $ signs
-		rate = rate.replace(" + "," \\\\ \n& + " )
-		rate = rate.replace(" - "," \\\\ \n& - " )
-		rate = "$\\begin{aligned}[t] &" + rate + "\\end{aligned}$"
-		warning = ""
-
-
-		allLines = rate.split("&")
-		for line in allLines:
-			Nleft = line.count("\\left")
-			Nright = line.count("\\right")
-			if Nleft!=Nright:
-				warning = "%%*********************\n%% Manually add \\left. \\right. or close bracktes for needed lines."
-				# auto replace was not always succesful...
-				# newline = line.replace("\\right","\\left.\\right")
-				# rate = rate.replace(line,newline)
-
-
-		return rate, warning
-
-	#****************
-	#temperature rage to LateX format
-	def tempRange2latex(self,limits):
-		import sympy as sp
-		#change limits to uniform format
-		low = kexplorer_utils.limitsSimple(limits[0])
-		high = kexplorer_utils.limitsSimple(limits[1])
-
-		#algorithm to account for differnt KROME formater of limits
-		# e.g. with or without ">", "<",
-		#put in correct order and switch symbols if needed
-		if low != "":
-			if ">" not in low:
-				low = " > " + low
-			else:
-				low = low.replace(">"," > ").replace("> ="," >= ")
-			if high == "":
-				lowhigh = " T " + low  + " K "
-			else:
-				low = low.split()[-1] + " " + "".join(low.split()[:-1])
-				low = low.replace(">","<")
-
-		if high != "":
-			if "<" not in high:
-				high = " < " + high
-			else:
-				high = high.replace("<"," < ").replace("< ="," <= ")
-			lowhigh = low  + " T " + high + " K "
-
-		if low == "" and high=="":
-			lowhigh = ""
-
-		#change limits symbols to latex format
-		lowhighTex = kexplorer_utils.limits2latex(lowhigh)
-		#turn numbers into integers in latex format
-		lowhighTex = [str(kexplorer_utils.char2int(part)) for part in lowhighTex.split()]
-		limitTex = " ".join(lowhighTex)
-
-		return limitTex
-
-	#****************
-	#dump colums in LateX table format
-	def dumpLatexTableHeader(self,tableFile="latexTable.log"):
-
-		tableFile.write("%********************************\n")
-		tableFile.write("% Chemical reaction network (LaTeX format)\n")
-		tableFile.write("% Table columns format {"+5*"l"+"}\n\n")
-
-	#****************
-	#build colums in LateX table format
-	def dumpLatexTable(self,colums,tableFile="latexTable.log"):
-		row = ""
-		cnt = 1
-		for el in colums:
-			if cnt==len(colums): row += el + " \\\\"
-			else: row += el + " & "
-			cnt += 1
-
-		tableFile.write(row + "\n")
 
 	#****************
 	#buld a graph map with the list of reaction partners
@@ -662,36 +332,94 @@ class network:
 	#******************
 	#make (T,xvar) color plot of ALL element abundances
 	#added by Jels Boulangier 11/04/2017
-	def abundanceColormapAll(self,elemInt=None,pngFolder="pngs"):
-		#plot for all elements
-		if not elemInt:
-			for key in self.elements:
-				self.abundanceColormap(key,pngFolder)
-		#plot for elements of interest
+	def abundanceColormapAll(self,elemInt=None,timeEvolution=False,pngFolder="pngs"):
+
+		if elemInt:
+			#do for elements of interest
+			speciesTodo = elemInt
 		else:
-			for elem in elemInt:
-				self.abundanceColormap(elem,pngFolder)
+			#do for all elements
+			speciesTodo = self.elements
+
+		if timeEvolution:
+			# number of time grid points
+			timeStart = 0
+			timeStop = len(self.elements[self.elements.keys()[0]].timeData[0])
+		else:
+			timeStart = -1
+			timeStop = 0
+		for species in speciesTodo:
+			for timeIndex in range(timeStart,timeStop):
+				if timeIndex==timeStart:
+					globalMinimum = 1e64
+					globalMaxmimum = 0
+					for i in self.elements[species].abundanceData:
+						for j in i:
+							if j < globalMinimum and j != 0:
+								globalMinimum = j
+							if j > globalMaxmimum:
+								globalMaxmimum = j
+
+					limits = [globalMinimum, globalMaxmimum]
+
+				self.abundanceColormap(species, timeIndex, limits, pngFolder)
+
+
+	#******************
+	# Make a video of all the abundance colormap to visualise the
+	# temporal evolution in temperature-xvar space
+	# It reads in png files that were created with
+	# abundanceColormapAll(timeEvolution=True)
+	def makeEvolutionVideo(self, elemInt=None,pngFolder="pngs"):
+
+		if elemInt:
+			#do for elements of interest
+			speciesTodo = elemInt
+		else:
+			#do for all elements
+			speciesTodo = self.elements
+
+		for species in speciesTodo:
+			# change video setting if desired
+			# this uses ffmpeg
+			os.system("ffmpeg -framerate 3 -pattern_type glob -i "
+					"\'" + pngFolder + "/" + species + "_*.png\' "
+					"-c:v libx264 -s 1920x1080 -r 30 -pix_fmt yuv420p "
+					+ pngFolder + "/" + species + "evolution.mp4" )
+
 
 	#******************
 	#make (T,xvar) color plot of element abundances
 	#added by Jels Boulangier 05/04/2017
-	def abundanceColormap(self,atom,pngFolder="pngs"):
+	def abundanceColormap(self,atom,idxTime=-1,limits=None,pngFolder="pngs"):
 
 		print "Making abundance colormap of %s" %(atom)
+
+		if idxTime!=-1:
+			evolution = True
+		else:
+			evolution = False
+
+
 		#get variable data after last time step
-		x = [i[-1] for i in self.elements[atom].tgasData]
-		y = [i[-1] for i in self.elements[atom].xvarData]
-		z = [i[-1] for i in self.elements[atom].abundanceData]
+		x = [i[idxTime] for i in self.elements[atom].tgasData]
+		y = [i[idxTime] for i in self.elements[atom].xvarData]
+		z = [i[idxTime] for i in self.elements[atom].abundanceData]
 
 		#create matrix for image plot
 		Ncol = len(set(x))
 		Nrow = len(set(y))
 		z = np.reshape(z,(Nrow, Ncol))
-		x = np.array(x)
-		y = np.array(y)
+		x = np.reshape(x,(Nrow, Ncol))
+		y = np.reshape(y,(Nrow, Ncol))
 
-		zMin = max(z.min(),self.minAbundance)
-		zMax = min(z.max(),self.maxAbundance)
+		if evolution:
+			zMin = max(limits[0],self.minAbundance)
+			zMax = min(limits[1],self.maxAbundance)
+
+		else:
+			zMin = max(z.min(),self.minAbundance)
+			zMax = min(z.max(),self.maxAbundance)
 		zRange = zMax/zMin
 
 		#do no make image if abundance is too small
@@ -699,30 +427,95 @@ class network:
 			print "Abundance of %s is zero everywhere" %(atom)
 			return
 
+		# replace all extremely small numbers with a 'okay' small number
+		# to avoid NaNs
+		z[z < 1e-60] = 1e-60
+
 		#create image
-		plt.figure()
 		if(zRange>10):
-			#logaritmic colorbar
-			plt.imshow(z, extent=(x.min(), x.max(),y.min(), y.max()), \
-			interpolation='gaussian', cmap='afmhot',aspect='auto',origin='lower',\
-			norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+			# logaritmic colorbar
+			# Two options are presented here, and the user can choose
+			# by commenting one or the other
+
+			### Color plot with a gradient color bar
+			# rasterized=True is needed for pdfs.
+
+			# plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True,
+			# norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+
+			### Color plot with filled contours and (connected) contour lines
+			# NOTE: that there is a bug in matplotlib when using 'extend':
+			# "ValueError: extend kwarg does not work yet with log scale"
+			# Note that there is no 'extend' arrow on the color bar...
+			#
+			## OPTION 1: do a quick and dirty fix by replacing all
+			# values below lower limit, with lower limit.
+			#
+			## OPTION 2: wait till my pull request 10705 gets accepted
+			# (https://github.com/matplotlib/matplotlib/pull/10705)
+			# OR fix this in your own matplotlib version.
+			# e.g. path where the file typically resides:
+			# /anaconda3/envs/py27/lib/python2.7/site-packages/matplotlib/contour.py
+			# Step 1: in def _init_, remove the ValueError if statement
+			# Step 2: in def _process_levels,
+			# change :
+			# if self.extend in ('both', 'min'):
+			# 	self.layers[0] = -1e150
+			# to:
+			# if self.extend in ('both', 'min'):
+			# 	if self.logscale:
+            #     self.layers[0] = 1e-150
+            # 	else:
+            #     self.layers[0] = -1e150
+			# Reason: very large negative number gives NaN when using log,
+			# so replace with very small number.
+			#
+			## OPTION 1:
+
+			# exp_min = np.floor(np.log10(zMin)-1)
+			# exp_max = np.ceil(np.log10(zMax)+1)
+			# lev_exp = np.arange(exp_min, exp_max)
+			# levs = np.power(10, lev_exp)
+			# #replace all values below lower limit, with lower limit.
+			# z[z < levs[0] ] = levs[0]
+			#
+			# plt.contourf(x, y, z, levels=levs,
+			# 			cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+
+			## OPTION 2:
+			exp_min = np.floor(np.log10(zMin))
+			exp_max = np.ceil(np.log10(zMax)+1)
+			lev_exp = np.arange(exp_min, exp_max)
+			levs = np.power(10, lev_exp)
+
+			plt.contourf(x, y, z, levels=levs, extend='min',
+						cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+
 		else:
 			#linear colorbar
-			plt.imshow(z, extent=(x.min(), x.max(),y.min(), y.max()), \
-			interpolation='gaussian', cmap='afmhot',aspect='auto',origin='lower')
-		#Acceptable interpolations are 'none', 'nearest', 'bilinear', 'bicubic',
-		#'spline16', 'spline36', 'hanning', 'hamming', 'hermite', 'kaiser',
-		#'quadric', 'catrom', 'gaussian', 'bessel', 'mitchell', 'sinc', 'lanczos'
+			# same as in the logaritmic case:
+
+			# plt.pcolormesh(x, y, z, cmap='viridis', rasterized=True)
+
+			plt.contourf(x, y, z, cmap='viridis')
 
 		#make plot labels
-		plt.colorbar(label='Mass fraction')
+		#BUG sometime there are no labels/ticks on the colorbar...
+		plt.colorbar(label='Number density', extend='min')
 		plt.yscale('log')
-		plt.title('Fractional abundance of %s' %(atom))
+		if evolution:
+			plt.title('Abundance of %s time step %03i' %(atom,idxTime))
+		else:
+			plt.title('Fractional abundance of %s' %(atom))
 		plt.xlabel('Temperature (K)')
-		plt.ylabel(r'%s ($%s$)' %(self.xvarName,self.xvarUnits))
+		plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
 		#dump png file
 		print "Dumping colormap of %s" %(atom)
-		plt.savefig(pngFolder + '/%s' %(atom))
+		if evolution:
+			plt.savefig(pngFolder + '/%s_%03i.png' %(atom,idxTime),
+						format='png', dpi=200)
+		else:
+			plt.savefig(pngFolder + '/%s' %(atom))
 		plt.close()
 
 	#******************
@@ -741,65 +534,86 @@ class network:
 	#******************
 	#make plot of element evolution in (T,xvar)-space
 	#added by Jels Boulangier 05/04/2017
-	def abundanceEvolution(self,atom,tgasInt,xvarInt,pngFolder="pngs"):
+	def abundanceEvolution(self,species,tgasInt,xvarInt,pngFolder="pngs"):
 
-		markers = ['D','o','*','+','s','x']
-		colors = ['r','b','k','g','m','c','grey','brown','pink']
+		markers = ['D','+','*','o','s','x','v','3','d','8']
+		colors = ['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9']
+		styles = ["-",":","--","-."]
 		markerHandles = []
 		markerLabels = []
+		styleHandles = []
+		styleLabels = []
 		colorHandles = []
 		colorLabels = []
 
-		#marker counter
-		mIdx = 0
+		#style counter
+		sIdx = 0
 		#loop over all xvar
 		for var in xvarInt:
-			#marker
-			m = markers[mIdx]
+			#style
+			s = styles[sIdx]
 			#color counter
-			cIdx = 0
+			mIdx = 0
 			#loop over all temperatures
 			for tgas in tgasInt:
 				#color
-				c = colors[cIdx]
+				m = markers[mIdx]
 				#find index of the wanted block of input file
 				blockIdx = self.getIdxTgasXvar(var,tgas)
+				#marker counter
+				cIdx = 0
+				#loop over al species
+				for spec in species:
+					#marker
+					c = colors[cIdx]
+					#get abundance and time data
+					x = self.elements[spec].timeData[blockIdx]
+					y = self.elements[spec].abundanceData[blockIdx]
+					plt.semilogy(x,y,s+m,color=c,markevery=5)
 
-				#get abundance and time data
-				x = self.elements[atom].timeData[blockIdx]
-				y = self.elements[atom].abundanceData[blockIdx]
-				plt.semilogy(x,y,'-'+m,color=c)
+					#plot fake points for legend of markers
+					if sIdx ==0 and mIdx ==0:
+						line, = plt.plot(-1,-1,'-',color=c)
+						colorHandles.append(line)
+						colorLabels.append("%s" %(spec))
+
+					cIdx += 1
 
 				#plot fake points for legend of colors
-				if mIdx ==0:
-					line, = plt.plot(-1,-1,'-',color=c)
-					colorHandles.append(line)
-					colorLabels.append("T = %i K" %(int(tgas)))
+				if sIdx ==0:
+					line, = plt.plot(-1,-1,m,color='grey')
+					markerHandles.append(line)
+					markerLabels.append("T = %i K" %(int(tgas)))
 
-				cIdx += 1
+				mIdx += 1
 
-			#plot fake points for legend of markers
-			line, = plt.plot(-1,-1,'-'+m,color='grey')
-			markerHandles.append(line)
-			markerLabels.append(r"%s = %s $%s$" %(self.xvarName,str(var),self.xvarUnits))
+			#plot fake points for legend of styles
+			line, = plt.plot(-1,-1,s,color='grey')
+			styleHandles.append(line)
+			styleLabels.append(r"%s = %s %s" %(self.xvarName,str(var),self.xvarUnits))
 
-			mIdx += 1
+			sIdx += 1
 
 		#make legends for xvar and temperature
-		legend1 = plt.legend(colorHandles,colorLabels,loc=2,\
+		legend1 = plt.legend(colorHandles,colorLabels,loc=2,
 		fancybox=True, shadow = True,bbox_to_anchor=(1, 1) )
 		ax = plt.gca().add_artist(legend1)
-		legend2 = plt.legend(markerHandles,markerLabels,loc=3,\
+		legend2 = plt.legend(markerHandles,markerLabels,loc=2,
+		fancybox=True, shadow=True, bbox_to_anchor=(1, 0.7))
+		ax = plt.gca().add_artist(legend2)
+		legend3 = plt.legend(styleHandles,styleLabels,loc=3,
 		fancybox=True, shadow=True, bbox_to_anchor=(1, 0))
 
 		#make plot labels
-		plt.title('Abundance evolution of %s' %(atom))
+		plt.title('Abundance evolution of %s' %(spec))
 		plt.xlabel('Time (s)')
 		plt.ylabel("Mass fraction")
 		plt.xlim(xmin=0,xmax=x[-1])
+		plt.ylim(ymin=self.minAbundance)
 		#dump png file
-		print "Dumping abundance evolution of %s" %(atom)
-		plt.savefig(pngFolder + '/ev%s' %(atom),bbox_extra_artists=[legend1,legend2])
+		print "Dumping abundance evolution of %s" %(spec)
+		# plt.show()
+		plt.savefig(pngFolder + '/ev%s' %(spec),bbox_extra_artists=[legend1,legend2,legend3])
 		plt.close()
 
 
