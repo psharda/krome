@@ -1611,7 +1611,7 @@ contains
   ! column 1 is energy or wavelenght in un units of unitEnergy
   ! (default eV), column 2 is opacity in cm2/g.
   ! opacity is interpolated over the current photo-binning.
-  subroutine krome_load_opacity_table(fname,unitEnergy)
+  subroutine krome_load_opacity_table(fname, unitEnergy)
     use krome_commons
     use krome_constants
     implicit none
