@@ -614,29 +614,30 @@ contains
        ksum = 0d0
        do i=1,icount-2
           ! integrate only in the bin range
-!!$          if(tmp_energy(i)>=photoBinEleft(j) &
-!!$               .and. tmp_energy(i+1)<=photoBinEright(j)) then
-!!$             ! numerator integral Jdraine(E)kabs(E)/E
-!!$             f1 = tmp_data(i)*Jdraine(i)/tmp_energy(i)
-!!$             f2 = tmp_data(i+1)*Jdraine(i+1)/tmp_energy(i+1)
-!!$             kavg = kavg + (f1+f2) / 2d0 &
-!!$                  * (tmp_energy(i+1)-tmp_energy(i))
-!!$
-!!$             ! denominator integral Jdraine(E)/E
-!!$             f1 = Jdraine(i)/tmp_energy(i)
-!!$             f2 = Jdraine(i+1)/tmp_energy(i+1)
-!!$             ksum = ksum + (f1+f2) / 2d0 &
-!!$                  * (tmp_energy(i+1)-tmp_energy(i))
-!!$          end if
-           if(tmp_energy(i)<photoBinEmid(j) &
-                .and. tmp_energy(i+1)>photoBinEmid(j)) then
-              kavg = (photoBinEmid(j) - tmp_energy(i)) &
-                   / (tmp_energy(i+1) - tmp_energy(i)) &
-                   * (tmp_data(i+1) - tmp_data(i)) + tmp_data(i)
-           end if
+          if(tmp_energy(i)>=photoBinEleft(j) &
+               .and. tmp_energy(i+1)<=photoBinEright(j)) then
+             ! numerator integral Jdraine(E)kabs(E)/E
+             f1 = tmp_data(i)*Jdraine(i)/tmp_energy(i)
+             f2 = tmp_data(i+1)*Jdraine(i+1)/tmp_energy(i+1)
+             kavg = kavg + (f1+f2) / 2d0 &
+                  * (tmp_energy(i+1)-tmp_energy(i))
+
+             ! denominator integral Jdraine(E)/E
+             f1 = Jdraine(i)/tmp_energy(i)
+             f2 = Jdraine(i+1)/tmp_energy(i+1)
+             ksum = ksum + (f1+f2) / 2d0 &
+                  * (tmp_energy(i+1)-tmp_energy(i))
+          end if
+!!$           if(tmp_energy(i)<photoBinEmid(j) &
+!!$                .and. tmp_energy(i+1)>photoBinEmid(j)) then
+!!$              kavg = (photoBinEmid(j) - tmp_energy(i)) &
+!!$                   / (tmp_energy(i+1) - tmp_energy(i)) &
+!!$                   * (tmp_data(i+1) - tmp_data(i)) + tmp_data(i)
+!!$              print *,photoBinEmid(j), kavg
+!!$           end if
        end do
        ! ratio of the integral is average absorption in the bin
-       find_Av_draine_kabs(j) = kavg !/ (ksum+1d-40)
+       find_Av_draine_kabs(j) = kavg / (ksum+1d-40)
     end do
 
   end subroutine find_Av_load_kabs
@@ -670,7 +671,7 @@ contains
           icount = icount + 1
           ! compute x and y in y = Av*x + ln(G0)
           x = -find_Av_draine_kabs(i) * 1.8d21 * mu * p_mass * d2g
-          y = log(photoBinJ(i) + 1d-40) - log(Jdraine(i))
+          y = log(photoBinJ(i) + 1d-200) - log(Jdraine(i))
           ! store data for least square analysis
           xdata(icount) = x
           ydata(icount) = y
