@@ -76,9 +76,8 @@ contains
     end do
 
   end function get_integratedFlux
+
 #ENDIFKROME
-
-
 
   !**********************
   !planck function in eV/s/cm2/Hz/sr
@@ -266,8 +265,9 @@ contains
 
     xN_H2 = N_H2*1d-14/Ncrit !normalized column density (#)
 
-    calc_H2shieldR14 = (1d0-omegaH2)/(1d0+xN_H2/b5)**alpha*exp(-5d-7*(1d0+xN_H2)) &
-                      +(omegaH2/sqrt(1d0+xN_H2))*exp(-8.5d-4*sqrt(1d0+xN_H2))
+    calc_H2shieldR14 = (1d0-omegaH2) / (1d0+xN_H2/b5)**alpha &
+         * exp(-5d-7*(1d0+xN_H2)) &
+         + (omegaH2/sqrt(1d0+xN_H2)) * exp(-8.5d-4*sqrt(1d0+xN_H2))
 
   end function calc_H2shieldR14
 #ENDIFKROME

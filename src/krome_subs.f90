@@ -1060,4 +1060,71 @@ contains
   end subroutine mydgesv
 #ENDIFKROME
 
+  ! ************************************
+  ! solves linear least squares
+  subroutine llsq(n, x, y, a, b)
+
+    !****************************************************
+    !
+    !! LLSQ solves a linear least squares problem matching a line to data.
+    !
+    !  Discussion:
+    !
+    !    A formula for a line of the form Y = A * X + B is sought, which
+    !    will minimize the root-mean-square error to N data points
+    !    ( X(I), Y(I) );
+    !
+    !  Licensing:
+    !
+    !    This code is distributed under the GNU LGPL license.
+    !
+    !  Modified:
+    !
+    !    07 March 2012
+    !
+    !  Author:
+    !
+    !    John Burkardt
+    !
+    !  Parameters:
+    !
+    !    In: N, the number of data values.
+    !
+    !    In: X(N), Y(N), the coordinates of the data points.
+    !
+    !    Out: A, B, the slope and Y-intercept of the
+    !    least-squares approximant to the data.
+    !
+    implicit none
+    integer,intent(in)::n
+    real*8,intent(out)::a, b
+    real*8,intent(in)::x(n), y(n)
+    real*8::bot, top, xbar, ybar
+
+    ! special case
+    if(n == 1) then
+       a = 0d0
+       b = y(1)
+       return
+    end if
+
+    ! average X and Y
+    xbar = sum(x) / n
+    ybar = sum(y) / n
+
+    ! compute beta
+    top = dot_product(x(:) - xbar, y(:) - ybar)
+    bot = dot_product(x(:) - xbar, x(:) - xbar)
+
+    ! if top is zero a is zero
+    if(top==0d0) then
+       a = 0d0
+    else
+       a = top / bot
+    end if
+
+    b = ybar - a * xbar
+
+  end subroutine llsq
+
 end module krome_subs

@@ -1,0 +1,5 @@
+##############
+#options for test av_finder
+DEV
+-n networks/react_COthin_ice
+-photoBins=5

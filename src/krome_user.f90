@@ -1611,7 +1611,7 @@ contains
   ! column 1 is energy or wavelenght in un units of unitEnergy
   ! (default eV), column 2 is opacity in cm2/g.
   ! opacity is interpolated over the current photo-binning.
-  subroutine krome_load_opacity_table(fname,unitEnergy)
+  subroutine krome_load_opacity_table(fname, unitEnergy)
     use krome_commons
     use krome_constants
     implicit none
@@ -1756,6 +1756,36 @@ contains
     close(fileUnit)
 
   end subroutine krome_load_opacity_table
+
+  ! ******************************
+  ! load absorption data data from file, cm2/g
+  subroutine krome_load_average_kabs()
+    use krome_photo
+    implicit none
+
+    call find_Av_load_kabs()
+
+  end subroutine krome_load_average_kabs
+
+  ! *******************************
+  ! use linear least squares and the current Jflux distribution
+  ! to return G0 and Av.
+  ! x(:) are the abundances (use for mean molecular weight)
+  ! and d2g is dust to gas mass ratio
+  subroutine krome_find_G0_Av(G0, Av, x, d2g)
+    use krome_commons
+    use krome_photo
+    implicit none
+    real*8,intent(out)::G0, Av
+    real*8,intent(in)::d2g, x(nmols)
+    real*8::n(nspec)
+
+    n(1:nmols) = x(:)
+    n(nmols+1:nspec) = 0d0
+
+    call estimate_G0_Av(G0, Av, n(:), d2g)
+
+  end subroutine krome_find_G0_Av
 
   !*******************************
   !dump the Jflux profile to the file

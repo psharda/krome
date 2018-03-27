@@ -64,6 +64,10 @@ module krome_commons
   !commons for frequency bins
 #KROME_photobins_array
 
+  ! Draine dust absorption data loaded from file, via load_kabs
+  ! in krome_photo module
+  real*8::find_Av_draine_kabs(nPhotoBins)
+
   !commons for H2 photodissociation (Solomon)
   ! note: paramters here are set depending on the data
   ! but if you have a different file you should modify them
