@@ -175,6 +175,20 @@ contains
 #ENDIFKROME
 
 #IFKROME_useTabsTdust
+
+  !************************************
+  ! when using 3D variables set the value of the 3rd dimension
+  ! (usually Av). The other 2 dimensions are ntot and Tgas
+  ! (take from internal KROME)
+  subroutine krome_set_dust_table_3D_variable(variable_value)
+    use krome_commons
+    implicit none
+    real*8,intent(in)::variable_value
+
+    dust_table_AvVariable_log = log10(variable_value)
+
+  end subroutine krome_set_dust_table_3D_variable
+
   !*****************************
   !get averaged Tdust from tables, with x(:) species array
   ! of size krome_nmols, and Tgas the gas temperature
@@ -187,9 +201,18 @@ contains
     real*8 :: ntot
 
     ntot = sum(x(1:nmols))
+#IFKROME_dust_table_2D
     krome_get_Tdust = 1d1**fit_anytab2D(dust_tab_ngas(:), dust_tab_Tgas(:), &
          dust_tab_Tdust(:,:), dust_mult_ngas, dust_mult_Tgas, &
          log10(ntot), log10(Tgas))
+#ENDIFKROME_dust_table_2D
+
+#IFKROME_dust_table_3D
+    krome_get_Tdust = 1d1**fit_anytab3D(dust_tab_ngas(:), dust_tab_Tgas(:), &
+         dust_tab_AvVariable(:), dust_tab_Tdust(:,:,:), dust_mult_ngas, &
+         dust_mult_Tgas, dust_mult_AvVariable, &
+         log10(ntot), log10(Tgas), dust_table_AvVariable_log)
+#ENDIFKROME_dust_table_3D
 
   end function krome_get_Tdust
 
@@ -1588,7 +1611,7 @@ contains
   ! column 1 is energy or wavelenght in un units of unitEnergy
   ! (default eV), column 2 is opacity in cm2/g.
   ! opacity is interpolated over the current photo-binning.
-  subroutine krome_load_opacity_table(fname,unitEnergy)
+  subroutine krome_load_opacity_table(fname, unitEnergy)
     use krome_commons
     use krome_constants
     implicit none
@@ -1733,6 +1756,36 @@ contains
     close(fileUnit)
 
   end subroutine krome_load_opacity_table
+
+  ! ******************************
+  ! load absorption data data from file, cm2/g
+  subroutine krome_load_average_kabs()
+    use krome_photo
+    implicit none
+
+    call find_Av_load_kabs()
+
+  end subroutine krome_load_average_kabs
+
+  ! *******************************
+  ! use linear least squares and the current Jflux distribution
+  ! to return G0 and Av.
+  ! x(:) are the abundances (use for mean molecular weight)
+  ! and d2g is dust to gas mass ratio
+  subroutine krome_find_G0_Av(G0, Av, x, d2g)
+    use krome_commons
+    use krome_photo
+    implicit none
+    real*8,intent(out)::G0, Av
+    real*8,intent(in)::d2g, x(nmols)
+    real*8::n(nspec)
+
+    n(1:nmols) = x(:)
+    n(nmols+1:nspec) = 0d0
+
+    call estimate_G0_Av(G0, Av, n(:), d2g)
+
+  end subroutine krome_find_G0_Av
 
   !*******************************
   !dump the Jflux profile to the file

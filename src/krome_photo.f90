@@ -206,8 +206,8 @@ contains
     binWidth = E_high-E_low
     dE = binWidth/real(N,kind=8)
     do i=1,N
-      E = E_low + (i-0.5)*dE
-      integral = integral + sigma_v96(E,E0,sigma_0,ya,P,yw,y0,y1)*dE
+       E = E_low + (i-0.5)*dE
+       integral = integral + sigma_v96(E,E0,sigma_0,ya,P,yw,y0,y1)*dE
     end do
     sigma_v96_int = integral / binWidth !cm2
   end function sigma_v96_int
@@ -315,7 +315,8 @@ contains
           xsecA = xsecA + 0d0
        else
           !renormalize xsec area considering partial overlap
-          xsecA = xsecA +xsec_val(idx) * (min(eR,xR)-max(eL,xL)) * dxi #KROME_xsecKernelFunction
+          xsecA = xsecA +xsec_val(idx) * (min(eR,xR)-max(eL,xL)) &
+               * dxi #KROME_xsecKernelFunction
        end if
     end do
 
@@ -553,6 +554,167 @@ contains
     H2_sigmaLW = fact*(sL0+sW0)+(1d0-fact)*(sL1+sW1)
 
   end function H2_sigmaLW
+
+  ! *****************************
+  ! load kabs from file
+  subroutine find_Av_load_kabs(file_name)
+    use krome_commons
+    use krome_constants
+    implicit none
+    integer,parameter::imax=10000
+    character(len=*),intent(in),optional::file_name
+    character(len=200)::fname
+    integer::ios, unit, icount, i, j
+    real*8::tmp_energy(imax), tmp_data(imax), f1, f2, kavg, ksum
+    real*8,allocatable::Jdraine(:)
+
+    ! check if energy bins are set
+    if(maxval(photoBinEleft)==0d0) then
+       print *, "ERROR: to load kabs for Av G0 finder you"
+       print *, " have to initialize some energy bins!"
+       stop
+    end if
+
+    ! check if optional argument is present
+    fname = "kabs_draine_Rv31.dat"
+    if(present(file_name)) then
+       fname = trim(file_name)
+    end if
+
+    ! open file to read
+    open(newunit=unit, file=fname, status="old", iostat=ios)
+    ! check if file is there
+    if(ios/=0) then
+       print *, "ERROR: Kabs file not found!"
+       print *, trim(fname)
+       stop
+    end if
+
+    ! loop on file lines
+    icount = 1
+    do
+       read(unit, *, iostat=ios) tmp_energy(icount), &
+            tmp_data(icount)
+       if(ios/=0) exit
+       icount = icount + 1
+    end do
+    close(unit)
+
+    ! convert microns to eV
+    tmp_energy(1:icount-1) = planck_eV * clight &
+         / (tmp_energy(1:icount-1) * 1d-4)
+
+    ! get corresponding draine flux
+    allocate(Jdraine(icount-1))
+    Jdraine(:) = get_draine(tmp_energy(1:icount-1))
+
+    ! loop on photobins to get average kabs
+    do j=1,nPhotoBins
+       kavg = 0d0
+       ksum = 0d0
+       do i=1,icount-2
+          ! integrate only in the bin range
+          if(tmp_energy(i)>=photoBinEleft(j) &
+               .and. tmp_energy(i+1)<=photoBinEright(j)) then
+             ! numerator integral Jdraine(E)kabs(E)/E
+             f1 = tmp_data(i)*Jdraine(i)/tmp_energy(i)
+             f2 = tmp_data(i+1)*Jdraine(i+1)/tmp_energy(i+1)
+             kavg = kavg + (f1+f2) / 2d0 &
+                  * (tmp_energy(i+1)-tmp_energy(i))
+
+             ! denominator integral Jdraine(E)/E
+             f1 = Jdraine(i)/tmp_energy(i)
+             f2 = Jdraine(i+1)/tmp_energy(i+1)
+             ksum = ksum + (f1+f2) / 2d0 &
+                  * (tmp_energy(i+1)-tmp_energy(i))
+          end if
+!!$           if(tmp_energy(i)<photoBinEmid(j) &
+!!$                .and. tmp_energy(i+1)>photoBinEmid(j)) then
+!!$              kavg = (photoBinEmid(j) - tmp_energy(i)) &
+!!$                   / (tmp_energy(i+1) - tmp_energy(i)) &
+!!$                   * (tmp_data(i+1) - tmp_data(i)) + tmp_data(i)
+!!$              print *,photoBinEmid(j), kavg
+!!$           end if
+       end do
+       ! ratio of the integral is average absorption in the bin
+       find_Av_draine_kabs(j) = kavg / (ksum+1d-40)
+    end do
+
+  end subroutine find_Av_load_kabs
+
+  ! *********************************
+  ! given the current photo bin intensity distribution
+  ! estimates G0 and Av using the bins in the Draine range
+  subroutine estimate_G0_Av(G0, Av, n, d2g)
+    use krome_constants
+    use krome_commons
+    use krome_getphys
+    use krome_subs
+    implicit none
+    real*8,intent(out)::G0, Av
+    real*8,intent(in)::d2g, n(nspec)
+    real*8::mu, Jdraine(nPhotoBins), x, y, lnG0
+    real*8::xdata(nPhotoBins), ydata(nPhotoBins)
+    integer::i, icount
+
+    ! mean molecular weight
+    mu = get_mu(n(:))
+
+    ! get non-attenuated draine flux
+    Jdraine(:) = get_draine(photoBinEmid(:))
+
+    icount = 0
+    ! loop on photo bins
+    do i=1,nPhotoBins
+       ! only consider bins that have non-attenuated draine radiation
+       if(Jdraine(i)>0d0) then
+          icount = icount + 1
+          ! compute x and y in y = Av*x + ln(G0)
+          x = -find_Av_draine_kabs(i) * 1.8d21 * mu * p_mass * d2g
+          y = log(photoBinJ(i) + 1d-200) - log(Jdraine(i))
+          ! store data for least square analysis
+          xdata(icount) = x
+          ydata(icount) = y
+       end if
+    end do
+
+    ! needs at least one bin
+    if(icount<=1) then
+       print *,"ERROR: you want to estimate G0 and Av with no bins in the"
+       print *," Draine range, 5-13.6 eV!"
+       stop
+    end if
+
+    ! call least squares to compute Av and ln(G0)
+    call llsq(icount, xdata(1:icount), ydata(1:icount), &
+         Av, lnG0)
+
+    ! return G0
+    G0 = exp(lnG0)
+
+  end subroutine estimate_G0_Av
+
+  ! ************************
+  function get_draine(energy_list) result(Jdraine)
+    use krome_commons
+    use krome_constants
+    implicit none
+    integer::i
+    real*8,intent(in)::energy_list(:)
+    real*8::x, Jdraine(size(energy_list))
+
+    do i=1,size(energy_list)
+       x = energy_list(i) !eV
+       !eV/cm2/sr
+       if(x<13.6d0.and.x>5d0) then
+          Jdraine(i) = (1.658d6*x - 2.152d5*x**2 + 6.919d3*x**3) &
+               * x *planck_eV
+       else
+          Jdraine(i) = 0d0
+       end if
+    end do
+  end function get_draine
+
 #ENDIFKROME
 
 end module krome_photo

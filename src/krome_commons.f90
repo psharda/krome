@@ -16,7 +16,7 @@ module krome_commons
   real*8::arr_k(nrea)
 
   !commons for rate tables
-  !modify ktab_n according to the requested precision
+  !modify ktab_n according to the required precision
   integer,parameter::ktab_n=int(1e3)
   real*8::ktab(nrea,ktab_n),ktab_logTlow, ktab_logTup, ktab_T(ktab_n)
   real*8::inv_ktab_T(ktab_n-1), inv_ktab_idx
@@ -63,6 +63,10 @@ module krome_commons
 
   !commons for frequency bins
 #KROME_photobins_array
+
+  ! Draine dust absorption data loaded from file, via load_kabs
+  ! in krome_photo module
+  real*8::find_Av_draine_kabs(nPhotoBins)
 
   !commons for H2 photodissociation (Solomon)
   ! note: paramters here are set depending on the data
@@ -138,16 +142,28 @@ module krome_commons
   real*8::coolZCIEdvn1,coolZCIEdvn2,coolZCIEdvn3
 #ENDIFKROME
 
-
   !commons for dust tabs (cool,H2,Tdust)
-  integer,parameter::dust_tab_imax=50,dust_tab_jmax=50
+  integer,parameter::dust_tab_imax=50, dust_tab_jmax=50
   real*8::dust_tab_ngas(dust_tab_imax)
   real*8::dust_tab_Tgas(dust_tab_jmax)
-  real*8::dust_tab_cool(dust_tab_imax,dust_tab_jmax)
-  real*8::dust_tab_heat(dust_tab_imax,dust_tab_jmax)
-  real*8::dust_tab_Tdust(dust_tab_imax,dust_tab_jmax)
-  real*8::dust_tab_H2(dust_tab_imax,dust_tab_jmax)
-  real*8::dust_mult_ngas,dust_mult_Tgas
+  real*8::dust_mult_Tgas,dust_mult_ngas
+  real*8::dust_table_AvVariable_log
+
+#IFKROME_dust_table_2D
+  real*8::dust_tab_cool(dust_tab_imax, dust_tab_jmax)
+  real*8::dust_tab_heat(dust_tab_imax, dust_tab_jmax)
+  real*8::dust_tab_Tdust(dust_tab_imax, dust_tab_jmax)
+  real*8::dust_tab_H2(dust_tab_imax, dust_tab_jmax)
+#ENDIFKROME
+
+#IFKROME_dust_table_3D
+  integer,parameter::dust_tab_kmax=10
+  real*8::dust_mult_AvVariable,dust_tab_AvVariable(dust_tab_kmax)
+  real*8::dust_tab_cool(dust_tab_imax, dust_tab_jmax, dust_tab_kmax)
+  real*8::dust_tab_heat(dust_tab_imax, dust_tab_jmax, dust_tab_kmax)
+  real*8::dust_tab_Tdust(dust_tab_imax, dust_tab_jmax, dust_tab_kmax)
+  real*8::dust_tab_H2(dust_tab_imax, dust_tab_jmax, dust_tab_kmax)
+#ENDIFKROME
 
   !commons for exp(-a) table
   integer,parameter::exp_table_na=int(1d5)
@@ -192,6 +208,9 @@ module krome_commons
 
   !xsecs from file variables
 #KROME_xsecs_from_file
+
+  ! thermochemical data from file variables
+#KROME_thermochem_from_file
 
   !partition function from file
   integer,parameter::zpart_nCO=641

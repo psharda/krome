@@ -1,0 +1,13 @@
+##############
+#options for test collapseCO
+DEV
+-n networks/react_COthin_ice
+-cooling=H2,COMPTON,CI,CII,OI,CONT,CHEM,CO
+-heating=COMPRESS,CHEM,CR,PHOTOAV,PHOTODUST
+-H2opacity=RIPAMONTI
+-gamma=REDUCED
+-ATOL=1d-40
+-maxord=1
+-photoDustVarAv=user_av
+-dustTabs=H2,COOL,3D,MC
+-useTabs

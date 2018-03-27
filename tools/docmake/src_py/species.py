@@ -124,7 +124,7 @@ class species():
 		sizeMB = round(os.path.getsize(fname)/1024**2,1)
 
 		#check if xsec size is relatively large
-		if(sizeMB > 50.0):
+		if(sizeMB > 10.0):
 			print "WARNING: "+fname+" is quite large ("+str(sizeMB)+" MB)"
 			#ask if to load xsec, N is default
 			while(True):
@@ -314,18 +314,21 @@ class species():
 				#loop on grid points
 				for xpos in [i*(xmax-xmin)/(imax-1)+xmin for i in range(imax)]:
 					#loop on radiation fluxes
+					edata = []
 					fdata = []
 					#loop on energy range
 					for i in range(len(xdata)):
 						sigma = ydata[i] #cm2
 						energy = xdata[i] #eV
+						if energy < min(energyList) or energy > max(energyList): continue
+						edata.append(energy)
 						tau = rho_dust*xpos*fkabs(energy)
 						#Jrad = fscale*JBB(energy, 4e3)*exp(-tau)*fcos2(energy)/(1e0-falbedo(energy))
 						Jrad = Jdraine(energy)*exp(-tau)
 						fdata.append(Jrad*sigma/energy)
 
 					#compute integral and rate, 1/s
-					kph = 4e0*pi*np.trapz(fdata, xdata)/hplanck
+					kph = 4e0*pi*np.trapz(fdata, edata)/hplanck
 					kphList.append(kph)
 					avList.append(xpos*ngas/av2ncol)
 
@@ -432,7 +435,7 @@ class species():
 	#get "engineered" enthalpy kJ/mol
 	def getEnthalpy(self,thermochemicalData,Tgas=298.15):
 
-		#gas constant kJ/mol/K
+		#gas constant J/mol/K
 		Rgas = 8.3144598
 
 		#use so-called electron convention

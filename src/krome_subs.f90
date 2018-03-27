@@ -200,7 +200,6 @@ contains
 
   end function H2_solomonLW
 
-  
   !****************************
   !tanh smoothing function that
   ! increses when xarg increases.
@@ -242,7 +241,6 @@ contains
 
   end function get_sgn
 
-  
   !*********************
   function conserve(n,ni)
     use krome_commons
@@ -357,7 +355,6 @@ contains
 
   end function elec_recomb_ST93
 
-  
   !********************
   subroutine load_parts()
     use krome_commons
@@ -648,20 +645,42 @@ contains
   !*****************************
   !computes revers kinetics from reaction and
   ! product indexes
+  ! k_rev = k_for * revKc
+  ! Note that reaction constant revKc is calculated with
+  ! reactants and products from reverse reaction
   function revKc(Tgas,ridx,pidx)
+    use krome_constants
+    use krome_commons
     implicit none
-    real*8::revKc,Tgas
+    real*8::revKc,Tgas,dgibss,stoichiometricChange
     integer::ridx(:),pidx(:),i
 
-    revKc = 0.d0
+    ! when considering forward reaction:
+    ! Kc = (P°)**(p+p-r-r) * exp(-dGibss_forward°)
+    ! where ° means at standard conditions of
+    ! P° = 1 bar = (kb*T/1e6) dyn/cm^2 (cgs)
+    ! when considering reverse:
+    ! 1/Kc = revKc = (kb*T/1e6)**(p+p-r-r) * exp(-dGibss_reverse°)
+    ! kb*T/1e6 is to go from 1 atm pressure to number density cm^-3
+    ! When not at standard pressure this does not change:
+    ! revKc = P**(p+p-r-r) *exp(-dGibss_reverse° - (p+p-r-r)*ln(P/P°))
+    !       = (P°)**(p+p-r-r) * exp(-dGibss_reverse°)
+
+    dgibss = 0.d0 ! Gibbs free energy/(R*T)
+    stoichiometricChange = 0d0
 
     do i=1,size(pidx)
-       revKc = revKc + revHS(Tgas,pidx(i))
+       dgibss = dgibss + revHS(Tgas,pidx(i))
+       stoichiometricChange = stoichiometricChange + 1
     end do
 
     do i=1,size(ridx)
-       revKc = revKc - revHS(Tgas,ridx(i))
+       dgibss = dgibss - revHS(Tgas,ridx(i))
+       stoichiometricChange = stoichiometricChange - 1
     end do
+
+     revKc = (boltzmann_erg * Tgas * 1e-6)**(stoichiometricChange)&
+         * exp(-dgibss)
 
   end function revKc
 
@@ -670,37 +689,105 @@ contains
   ! when temperature is Tgas
   function revHS(Tgas,idx)
     use krome_commons
+    use krome_constants
+    use krome_fit
     real*8::revHS,Tgas,Tgas2,Tgas3,Tgas4,invT,lnT,H,S
+    real*8::Tnist,Tnist2,Tnist3,Tnist4,invTnist,invTnist2,lnTnist
+    real*8::xtable(200),multable
 #KROME_var_reverse
     integer::idx
 
-    p1(:,:) = 0.d0
-    p2(:,:) = 0.d0
-    Tlim(:,:) = 0.d0
+    p(:) = 0.d0
+    p1_nasa(:,:) = 0.d0
+    p2_nasa(:,:) = 0.d0
+    Tlim_nasa(:,:) = 0.d0
+    p1_nist(:,:) = 0.d0
+    p2_nist(:,:) = 0.d0
+    Tlim_nist(:,:) = 0.d0
     Tgas2 = Tgas * Tgas
     Tgas3 = Tgas2 * Tgas
     Tgas4 = Tgas3 * Tgas
     invT = 1d0/Tgas
     lnT = log(Tgas)
+    ! NIST polynomials are quite differernt
+    ! it doesn't like easy stuff...
+    Tnist = Tgas * 1.d-3
+    Tnist2 = Tnist * Tnist
+    Tnist3 = Tnist2 * Tnist
+    Tnist4 = Tnist3 * Tnist2
+    invTnist = 1d0/Tnist
+    invTnist2 = invTnist * invTnist
+    lnTnist = log(Tnist)
 
-#KROME_kc_reverse
+    hasThermoTable(:) = .false.
+#IFKROME_useThermoTables
+    yThermoTable(:,:) = 0.d0
+    xtable(:) = janaf_tab_Tgas
+    multable = janaf_mult_Tgas
+#ENDIFKROME
 
-    if(Tlim(idx,2)==0.d0) then
-       revHS = 0.d0
-       return
+#KROME_kc_reverse_nasa
+#KROME_kc_reverse_nist
+#KROME_thermo_tables
+
+    !use Janaf thermochemical table if available
+    if (hasThermoTable(idx)) then
+      !NOTE: currently not extrapolation outside tgas table limits
+      revHS = fit_anytab1D(xtable, yThermoTable(idx,:), multable, Tgas)
+      revHS = revHS/(Rgas_kJ * Tgas)
+
+    ! pick NASA data if present for species
+    else if (Tlim_nasa(idx,2) /= 0.d0) then
+      !select set of NASA polynomials using temperature
+      if(Tlim_nasa(idx,1).le.Tgas .and. Tgas.le.Tlim_nasa(idx,2)) then
+         p(:) = p1_nasa(idx,:)
+
+      else if(Tlim_nasa(idx,2)<Tgas .and. Tgas.le.Tlim_nasa(idx,3)) then
+         p(:) = p2_nasa(idx,:)
+
+      ! currently no option when Tgas not in Tlim range p(:) = 0
+      end if
+
+      !compute NASA polynomials for enthalpy and enthropy (unitless)
+      H = p(1) + p(2)*0.5d0*Tgas + p(3)*Tgas2/3.d0 + p(4)*Tgas3*0.25d0 + &
+           p(5)*Tgas4*0.2d0 + p(6)*invT
+      S = p(1)*lnT + p(2)*Tgas + p(3)*Tgas2*0.5d0 + p(4)*Tgas3/3.d0 + &
+           p(5)*Tgas4*0.25d0 + p(7)
+
+      revHS = H - S
+
+    ! else pick NIST data (if present)
+    else if (Tlim_nist(idx,2) /= 0.d0) then
+      if (Tlim_nist(idx,1) < Tgas .and. Tgas < Tlim_nist(idx,2)) then
+        p(:) = p1_nist(idx,:)
+
+      else if (Tlim_nist(idx,2) < Tgas .and. Tgas < Tlim_nist(idx,3)) then
+        p(:) = p2_nist(idx,:)
+
+      ! currently no option when Tgas not in Tlim range p(:) = 0
+      end if
+
+      !compute NIST polynomials for enthalpy and enthropy
+      ! H in (kJ/mol)
+      H = p(1)*Tnist + p(2)*0.5d0*Tnist2 + p(3)*Tnist3/3.d0 + p(4)*Tnist4*0.25d0&
+           - p(5)*invTnist + p(6)
+      !  Unitsless
+      H = H / (Rgas_kJ * Tgas)
+
+      ! S in (J/mol*K)
+      S = p(1)*lnTnist + p(2)*Tnist + p(3)*Tnist2*0.5d0 + p(4)*Tnist3/3.d0&
+           - p(5)*invTnist2*0.5d0 + p(7)
+      !  Unitless. Note: do not use Tnist
+      S = S / Rgas_J
+
+      revHS = H - S
+
+    ! return zero is no data exists
+    else
+      revHS = 0.d0
+
     end if
 
-    !select set of NASA polynomials using temperature
-    if(Tlim(idx,1).le.Tgas .and. Tgas.le.Tlim(idx,2)) p(:) = p1(idx,:)
-    if(Tlim(idx,2)<Tgas .and. Tgas.le.Tlim(idx,3)) p(:) = p2(idx,:)
-
-    !compute NASA polynomials for enthalpy and enthropy
-    H = p(1) + p(2)*0.5d0*Tgas + p(3)*Tgas2/3.d0 + p(4)*Tgas3*0.25d0 + &
-         p(5)*Tgas4*0.2d0 + p(6)*invT
-    S = p(1)*lnT + p(2)*Tgas + p(3)*Tgas2*0.5d0 + p(4)*Tgas3/3.d0 + &
-         p(5)*Tgas4*0.25d0 + p(7)
-
-    revHS = H - S
 
   end function revHS
 
@@ -972,5 +1059,72 @@ contains
 
   end subroutine mydgesv
 #ENDIFKROME
+
+  ! ************************************
+  ! solves linear least squares
+  subroutine llsq(n, x, y, a, b)
+
+    !****************************************************
+    !
+    !! LLSQ solves a linear least squares problem matching a line to data.
+    !
+    !  Discussion:
+    !
+    !    A formula for a line of the form Y = A * X + B is sought, which
+    !    will minimize the root-mean-square error to N data points
+    !    ( X(I), Y(I) );
+    !
+    !  Licensing:
+    !
+    !    This code is distributed under the GNU LGPL license.
+    !
+    !  Modified:
+    !
+    !    07 March 2012
+    !
+    !  Author:
+    !
+    !    John Burkardt
+    !
+    !  Parameters:
+    !
+    !    In: N, the number of data values.
+    !
+    !    In: X(N), Y(N), the coordinates of the data points.
+    !
+    !    Out: A, B, the slope and Y-intercept of the
+    !    least-squares approximant to the data.
+    !
+    implicit none
+    integer,intent(in)::n
+    real*8,intent(out)::a, b
+    real*8,intent(in)::x(n), y(n)
+    real*8::bot, top, xbar, ybar
+
+    ! special case
+    if(n == 1) then
+       a = 0d0
+       b = y(1)
+       return
+    end if
+
+    ! average X and Y
+    xbar = sum(x) / n
+    ybar = sum(y) / n
+
+    ! compute beta
+    top = dot_product(x(:) - xbar, y(:) - ybar)
+    bot = dot_product(x(:) - xbar, x(:) - xbar)
+
+    ! if top is zero a is zero
+    if(top==0d0) then
+       a = 0d0
+    else
+       a = top / bot
+    end if
+
+    b = ybar - a * xbar
+
+  end subroutine llsq
 
 end module krome_subs

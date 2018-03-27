@@ -186,6 +186,14 @@ def isNumber(arg):
 		return False
 
 #********************
+#character to int
+def char2int(arg):
+	if isNumber(arg):
+		return int(float(arg))
+	else:
+		return arg
+
+#********************
 def getShortcuts():
 	shortcut = dict()
 	fileName = "shortcuts.dat"
@@ -200,3 +208,61 @@ def getShortcuts():
 		shortcut[variable] = expression
 	return shortcut
 
+#********************
+#get shortcuts of temperature that can be used in network
+def getShortcutsLatex():
+	shortcut = []
+	fileName = "temperatureShortcuts.dat"
+        absPath = os.path.join(os.path.dirname(__file__), "..", fileName)
+        absPath = os.path.abspath(absPath)
+	fh = open(absPath,"rb")
+	for row in fh:
+		srow = row.strip()
+		if(srow==""): continue
+		if(srow.startswith("#")): continue
+		(variable,expression) = [x.strip() for x in srow.split("!")[0].split("=")]
+		shortcut.append((variable,expression))
+	return shortcut
+
+#********************
+#check if variable is already a temperature shortcut
+def isTemperatureShortcut(var):
+	shortcuts = getShortcutsLatex()
+	if var in [item[0] for item in shortcuts]:
+		return True
+	else:
+		return False
+
+#********************
+#Generate parenthesized contents in string as pairs (level, contents)
+def parentheticContents(string, parenteses):
+	opened = parenteses[0]
+	closed = parenteses[1]
+	stack = []
+	for i, c in enumerate(string):
+	    if c == opened:
+	        stack.append(i)
+	    elif c == closed and stack:
+	        start = stack.pop()
+	        yield (len(stack), string[start + 1: i])
+
+#********************
+#get content in parenteses
+def getParentheticContents(string, parenteses):
+	return list(parentheticContents(string, parenteses))
+
+#********************
+#simplify KROME limits
+def simplifyLimits(name):
+	if name:
+		name = name.replace(".LE.","<=").replace(".GE.",">=")
+		name = name.replace(".LT.","<").replace(".GT.",">")
+	return name
+
+#********************
+#limits to LaTeX format
+def limits2latex(name):
+	if name:
+		name = name.replace("<=", " $\leqslant$ ").replace(">="," $\geqslant$ ")
+		name = name.replace("<","$ < $").replace(">"," $ > $ ")
+	return name

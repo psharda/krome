@@ -10,7 +10,6 @@
 @var: Te = Tgas*8.617343d-5
 @var: invT = 1d0/Tgas
 @var: lnTe = log(Te)
-@var: T = Tgas
 @var: invT32 = 1d0/T32
 
 #Janev 1987
@@ -640,4 +639,3 @@
 290,O,O,O2,NONE,NONE,9.2d-34*(T32)**(-1)*ntot
 
 @noTab_stop
-
