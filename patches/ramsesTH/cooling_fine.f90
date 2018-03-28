@@ -84,7 +84,8 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real(dp)      :: scale_nH,scale_T2,scale_l,scale_d,scale_t,scale_v
   real(kind=8)  :: dtcool
   integer,dimension(1:nvector),      save :: ind_cell,ind_leaf,ind_grid_leaf
-  real(kind=8),dimension(1:nvector), save :: nH,T2,delta_T2,ekk,emag, xleaf
+  real(kind=8),dimension(1:nvector), save :: nH,T2,delta_T2,ekk,emag
+  real(kind=8),dimension(1:nvector,3), save :: xleaf
   real(kind=8), save :: time_old=-1.
   integer, save :: nprint=20
   real*8::phbin(nBin)
@@ -119,7 +120,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
     if(c_verbose > 1) then 
       ! Store leaf position for debug output
       do i=1,nleaf
-        xleaf(i) = xg(ind_grid_leaf(i),1) + xc(ind,1,ilevel)
+        xleaf(i,:) = xg(ind_grid_leaf(i),:) + xc(ind,:,ilevel)
       end do
     end if
 
@@ -227,7 +228,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
           endif
           if(c_verbose > 1) then
             !$omp critical
-            write(32,*) xleaf(i), T_tmp
+            write(32,*) xleaf(i,:), T_tmp
             !$omp end critical
           end if
           call krome(unoneq(:), T_tmp, dtcool)
