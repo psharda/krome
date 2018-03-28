@@ -69,10 +69,13 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   use cooling_mod
   use krome_main !mandatory
   use krome_user !array sizes and utils
-  use rad_variables_amr, only : heating_rate
-  use radiation_microphysics_amr_m, only : nBin, nBinTot, nBinSS, ibin_H2, ibin_CO, mu_iso, gamma_iso
+  use lampray, only : radiation_field
+  use lampray_parameters, only : nBin, nBinTot, nBinSS
+#ifdef SELFSHIELDING
+  use lampray_parameters, only : ibin_H2, ibin_CO
   use richtings_dissociation_rates, only : gamma_H2_thin, gamma_CO_thin
-  use ray_m, only : T_iso
+#endif
+
   use stars_m,          only : xc
   implicit none
   integer::ilevel,ngrid
@@ -194,13 +197,13 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
         if(do_radtrans) then
           ! Set intensity from RT
-          phbin = heating_rate(ind_leaf(i),1:nBin)
+          phbin = radiation_field(ind_leaf(i),1:nBin)
           if(any(phbin.lt.0.0_dp)) then
             write(*,*) 'Negative intensity found in cell ', ind_leaf(i)
             call clean_stop
           end if
           call krome_set_photoBinJ(phbin)
-          phbin_ss = heating_rate(ind_leaf(i),nBin+1:nBinTot)
+          phbin_ss = radiation_field(ind_leaf(i),nBin+1:nBinTot)
 #ifdef SELFSHIELDING
           call krome_set_user_gamma_H2(phbin_ss(ibin_H2)*gamma_H2_thin)
           call krome_set_user_gamma_CO(phbin_ss(ibin_CO)*gamma_CO_thin)
@@ -211,28 +214,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
           call krome_set_user_Av( (Av_rho * nH(i) / mu_noneq_old)**0.66667_8 )
         end if
 
-        if(isothermal) then
-          !KROME: do chemistry+cooling
-          if (any(unoneq < 0.0_dp)) then
-            write(*,*) 'Negative densities are not allowed'
-            write(*,*) 'N: ', unoneq
-            stop
-          end if
-          if(T_iso == 0_dp) then
-            ! Compute temperature assuming globally constant molecular mass and adiabatic index
-            T_tmp = (gamma_iso-1.0)*(uold(ind_leaf(i),neul)-ekk(i)-emag(i))/uold(ind_leaf(i),1)*scale_T2
-            T_tmp = T_tmp*mu_iso
-          else
-            ! Use globally constant temperature
-            T_tmp = T_iso
-          endif
-          if(c_verbose > 1) then
-            !$omp critical
-            write(32,*) xleaf(i,:), T_tmp
-            !$omp end critical
-          end if
-          call krome(unoneq(:), T_tmp, dtcool)
-        elseif(do_cool.and.chemistry) then
+        if(do_cool.and.chemistry) then
           !KROME: do chemistry+cooling
           if (any(unoneq < 0.0_dp)) then
             write(*,*) 'Negative densities are not allowed'
@@ -301,9 +283,6 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
     do i=1,nleaf
       nH(i) = nH(i)/scale_nH
       T2(i) = T2(i)*nH(i)/scale_T2/(uold(ind_leaf(i),ichem)-1.0)
-      if(.not.isothermal) then
-        uold(ind_leaf(i),neul) = T2(i)+ekk(i)+emag(i)
-      endif
       if (T2(i) < 0.) then
         !$omp critical
         if (nprint>0) then
