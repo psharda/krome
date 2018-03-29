@@ -73,11 +73,19 @@ class network:
 	#**********************
 	#add reaction to network using explore reaction file line format
 	def addReaction(self,row):
-		srow = row.strip()
+		srow = row.strip().replace("\t", " ")
 		arow = [x for x in srow.split(" ") if(x!="")]
 		idx = int(arow[0])
-		#parse data
-		(xvar, Tgas, flux, fluxNormMax, fluxNormTot) = [float(x) for x in arow[1:6]]
+
+		try:
+			#parse data
+			(xvar, Tgas, flux, fluxNormMax, fluxNormTot) = [float(x) for x in arow[1:6]]
+		except:
+			print "ERROR: problem while parsing line"
+			print srow
+			print " line must have space-separated format"
+			print "idx, xvar, Tgas, flux, fluxNormMax, fluxNormTot, verbatim rate"
+			sys.exit()
 
 		#parse verbatim reaction and create reaction object
 		if(not(idx in self.reactions)):
