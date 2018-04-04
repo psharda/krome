@@ -73,7 +73,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   use lampray_parameters, only : nBin, nBinTot, nBinSS
 #ifdef SELFSHIELDING
   use lampray_parameters, only : ibin_H2, ibin_CO
-  use richtings_dissociation_rates, only : gamma_H2_thin, gamma_CO_thin
+  use richings_dissociation_rates, only : gamma_H2_thin, gamma_CO_thin
 #endif
 
   use stars_m,          only : xc
@@ -199,8 +199,9 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
           ! Set intensity from RT
           phbin = radiation_field(ind_leaf(i),1:nBin)
           if(any(phbin.lt.0.0_dp)) then
-            write(*,*) 'Negative intensity found in cell ', ind_leaf(i)
-            call clean_stop
+             write(*,*) 'Warning: Negative intensity found in cell ', ind_leaf(i)
+             phbin = merge(phbin, 0.0_dp, phbin.ge.0.0_dp)
+             !call clean_stop
           end if
           call krome_set_photoBinJ(phbin)
           phbin_ss = radiation_field(ind_leaf(i),nBin+1:nBinTot)
@@ -283,6 +284,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
     do i=1,nleaf
       nH(i) = nH(i)/scale_nH
       T2(i) = T2(i)*nH(i)/scale_T2/(uold(ind_leaf(i),ichem)-1.0)
+      uold(ind_leaf(i),neul) = T2(i)+ekk(i)+emag(i)
       if (T2(i) < 0.) then
         !$omp critical
         if (nprint>0) then
