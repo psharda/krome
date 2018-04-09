@@ -18,24 +18,31 @@ subroutine cooling_fine(ilevel)
   integer,dimension(1:nvector) :: ind_grid
   character(len=80) :: filename
 
+  integer, parameter :: u_dbg = 204   ! File unit for debug dump
+  logical :: dump_temperature
+  character(len=255) ::dbg_fname     ! File name for debug dump
+
   if(.not. cooling) return
 
   if(numbtot(1,ilevel)==0)return
   if(verbose)write(*,111)ilevel
 
   if (do_radtrans) then
+    if(c_verbose > 0 .and. myid==1) print*, "Solving radiative transfer"
     call make_virtual_fine_dp(uold(1,1),ilevel,3+nvar)
     call radiative_cooling_fine(ilevel)
   endif
 
-  ! Open files for debug dump
-  if(c_verbose > 1) then
-     filename = file_location("temperature",ifout-1)
-     open(32, file=filename, action="write")
+  ! Open file for debug dump of temperature
+  dump_temperature = (c_verbose > 1)
+  if(dump_temperature) then
+     write(dbg_fname, "(a,i5.5,a)") "temperature_",myid,".dat"
+     open(u_dbg, file=trim(dbg_fname))
   end if
-
+  
   ! Operator splitting step for cooling source term by vector sweeps
   if (do_cool) then
+     if(c_verbose > 0 .and. myid==1) print*, "Solving chemistry with KROME"
     ncache=active(ilevel)%ngrid
     !$omp parallel do private(igrid,ngrid,i,ind_grid) schedule(dynamic,1)
     do igrid=1,ncache,nvector
@@ -49,11 +56,13 @@ subroutine cooling_fine(ilevel)
         call coolfine1(ind_grid,ngrid,ilevel)
       end if
     end do
+ end if
+
+   ! Close file for debug dump of temperature
+  if(dump_temperature) then
+     close(u_dbg)
   end if
 
-  if(c_verbose > 1) then
-    close(32)
-  endif
 
 111 format('   Entering cooling_fine for level',i2)
 
@@ -63,6 +72,7 @@ end subroutine cooling_fine
 !###########################################################
 !###########################################################
 subroutine coolfine1(ind_grid,ngrid,ilevel)
+  use amr_parameters, only : icoarse_min, jcoarse_min, kcoarse_min
   use amr_commons
   use hydro_commons
   use cooling_module
@@ -94,14 +104,21 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
   real*8::phbin(nBin)
   real*8::phbin_ss(nBinSS)
   real(kind=8) :: T_tmp
+  real(kind=8) :: c(3)
 
   !KROME: additional variables requested by KROME
   real*8::unoneq(krome_nmols), Tgas
   real*8::mu_noneq,mu_noneq_old,iscale_d,t2old,t2gas
+
+  integer, parameter :: u_dbg = 204   ! File unit for debug dump
+  logical :: dump_temperature
+  
   !$omp threadprivate(nH,T2,delta_T2,ekk,emag,ind_cell,ind_leaf,ind_grid_leaf,xleaf)
 
   ! Conversion factor from user units to cgs units
   call units(scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2)
+
+  dump_temperature = (c_verbose > 1)
 
   ! Loop over cells
   do ind=1,twotondim
@@ -221,7 +238,17 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
             write(*,*) 'Negative densities are not allowed'
             write(*,*) 'N: ', unoneq
             stop
-          end if
+         end if
+
+         c(1)  = xg(ind_grid_leaf(i),1) + xc(ind,1,ilevel) - icoarse_min
+#if NDIM>1
+         c(2)  = xg(ind_grid_leaf(i),2) + xc(ind,2,ilevel) - jcoarse_min
+#endif
+#if NDIM>2
+         c(3)  = xg(ind_grid_leaf(i),3) + xc(ind,3,ilevel) - kcoarse_min
+#endif
+         if(dump_temperature) write(u_dbg,*) c(1), Tgas
+         
           call krome(unoneq(:), Tgas, dtcool)
         elseif(.not.chemistry.and.do_cool) then
           !KROME: cooling only
@@ -298,6 +325,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
   end do
   ! End loop over cells
+
 
 end subroutine coolfine1
 !###########################################################
