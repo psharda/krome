@@ -29,8 +29,10 @@ subroutine cooling_fine(ilevel)
 
   if (do_radtrans) then
     if(c_verbose > 0 .and. myid==1) print*, "Solving radiative transfer"
+    call timer("hydro - cooling - lampray", "start")
     call make_virtual_fine_dp(uold(1,1),ilevel,3+nvar)
     call radiative_cooling_fine(ilevel)
+    call timer('hydro - cooling','start)')
   endif
 
   ! Open file for debug dump of temperature
@@ -42,7 +44,8 @@ subroutine cooling_fine(ilevel)
   
   ! Operator splitting step for cooling source term by vector sweeps
   if (do_cool) then
-     if(c_verbose > 0 .and. myid==1) print*, "Solving chemistry with KROME"
+    if(c_verbose > 0 .and. myid==1) print*, "Solving chemistry with KROME"
+    call timer("hydro - cooling - KROME", 'start') 
     ncache=active(ilevel)%ngrid
     !$omp parallel do private(igrid,ngrid,i,ind_grid) schedule(dynamic,1)
     do igrid=1,ncache,nvector
@@ -56,6 +59,7 @@ subroutine cooling_fine(ilevel)
         call coolfine1(ind_grid,ngrid,ilevel)
       end if
     end do
+    call timer('hydro - cooling','start')
  end if
 
    ! Close file for debug dump of temperature
