@@ -33,12 +33,13 @@ multiple = True  # include multiple reactions (same reactants and same products)
 recom = [1, 2, 3]  # recomandations to include (see above)
 
 # Processes (selected using fitting formula)
+# 0: dust reaction as in Majumdar+2017
 # 1: Cosmic-ray ionization (direct and undirect)
 # 2: Photo-dissociation (Draine)
 # 3: Kooij
 # 4: ionpol1
 # 5: ionpol2
-processes = [1, 2, 3, 4, 5]  # processes included (see above)
+processes = [0, 1, 2, 3, 4, 5]  # processes included (see above)
 
 # variables for cosmic rays and photochemistry
 CRvar = "user_crflux"  # name of the CR flux variable
@@ -123,7 +124,7 @@ class mol:
             print "ERROR: problem when parsing " + self.name
             print name, cname
             return None
-            sys.exit()
+
         ii = 0
         while True:
             mult = 1  # multeplicity (e.g. H2 => mult=2)
@@ -202,14 +203,15 @@ fout.write("@format:idx,R,R,R,P,P,P,P,P,Tmin,Tmax,rate\n")
 formula_not_found_count = 0
 rems = ["Photon", "CRP", "CRPHOT", "CR", ""]
 for row in fh:
-    totcount += 1
     srow = row.strip()
     if srow == "":
         continue  # skip empty lines
-    if srow[0] == "#":
+    if srow.startswith("#"):
         continue  # skip comments
-    if srow[0] == "!":
+    if srow.startswith("!"):
         continue  # skip comments
+    totcount += 1
+
     p = 0
     arow = dict()
     for i in range(len(fmt)):
@@ -275,13 +277,17 @@ for row in fh:
     ok = True
     if int(arow["formula"]) not in processes:
         ok = False
+        print "skip reaction with process", int(arow["formula"])
     if int(arow["recom"]) not in recom:
+        print "skip reaction according to recom", int(arow["recom"])
         ok = False
     if (arow["formula"] != 1) and (arow["formula"] != 2):
         if float(arow["tmin"]) < Tmin:
             ok = False
+            print "skip reaction according to Tmin", Tmin
         if float(arow["tmax"]) > Tmax:
             ok = False
+            print "skip reaction according to Tmax", Tmax
     if not ok:
         continue
 
@@ -442,16 +448,16 @@ if len(multi) > 1:
 print "Total reactions:", totcount
 print "Rections INCLUDED:", okcount
 print "Rections NOT INCLUDED:", totcount - okcount
-print "Multiple reactions:", len(multi)
+print "Multiple reactions (same reactants and products):", len(multi)
 print "Formula not found reactions:", formula_not_found_count
 print "Different Trange reactions:", trangecount
-print "Reactions with Tmin==Tmax:", singlecount, "as"
 if len(tsingle) > 0:
-    print " T", "count"
+    print "WARNING: Found reactions with Tmin==Tmax:", singlecount, "as"
+    print " Tmin=Tmax", "count"
     for k, v in tsingle.iteritems():
         print " "+str(k), v
 print "Formula count per type:"
-rtype = {1: "CR ioniz", 2: "Photo-diss", 3: "Kooij", 4: "ionpol1", 5: "ionpol2"}
+rtype = {0: "Dust/Special", 1: "CR ioniz", 2: "Photo-diss", 3: "Kooij", 4: "ionpol1", 5: "ionpol2"}
 if len(formulahist) > 0:
     for k, v in formulahist.iteritems():
         print " "+rtype[k]+":", v
