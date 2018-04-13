@@ -176,24 +176,28 @@ class network:
 		#list with all temperature shortcuts element = (var, replaceWith)
 		shortcutsTemperature = utils.getShortcutsLatex()
 		cntMergedReactions = 0
+		cntTotalReactions = 1
 
 		with open(networkLatex, "w") as fileOutput:
 			#dump header of the file
 			self.dumpLatexTableHeader(fileOutput)
 			#loop on reactions to evaluate
-			for myReaction in self.reactions:
+			for myReaction in sorted(self.reactions, key=lambda x: x.reactants[0].name):
 				#list with all variable shortcuts (excl. temperature ones)
 				shortcutsVariables = myReaction.shortcuts
 
 				for cnt in range(len(myReaction.rate)):
 					latexColums, message = myReaction.reaction2latex(shortcutsTemperature,
-											shortcutsVariables, cntMergedReactions, cnt)
+											shortcutsVariables, cntMergedReactions, cnt,
+											cntTotalReactions)
 					if cnt > 0:
 						cntMergedReactions += 1
 					#print warning message
 					if message:
 						fileOutput.write(message + "\n")
 					self.dumpLatexTable(latexColums, fileOutput)
+
+				cntTotalReactions += 1
 
 	#****************
 	#dump colums in LateX table format
