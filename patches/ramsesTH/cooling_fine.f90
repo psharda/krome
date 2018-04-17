@@ -251,7 +251,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 #if NDIM>2
          c(3)  = xg(ind_grid_leaf(i),3) + xc(ind,3,ilevel) - kcoarse_min
 #endif
-         if(dump_temperature) write(u_dbg,*) c(1), Tgas
+         if(dump_temperature) write(u_dbg,*) c, Tgas
          
           call krome(unoneq(:), Tgas, dtcool)
         elseif(.not.chemistry.and.do_cool) then
