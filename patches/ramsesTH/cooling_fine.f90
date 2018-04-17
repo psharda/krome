@@ -253,7 +253,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 #endif
          if(dump_temperature) then
             !$omp critical
-            write(u_dbg,*) c(1), Tgas
+            write(u_dbg,*) c, Tgas
             !$omp end critical
          endif
          
