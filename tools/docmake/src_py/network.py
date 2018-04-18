@@ -182,7 +182,7 @@ class network:
 			#dump header of the file
 			self.dumpLatexTableHeader(fileOutput)
 			#loop on reactions to evaluate
-			for myReaction in sorted(self.reactions, key=lambda x: x.reactants[0].name):
+			for myReaction in sorted(self.reactions, key=lambda x: (x.reactants[0].name, x.reactants[1].name)):
 				#list with all variable shortcuts (excl. temperature ones)
 				shortcutsVariables = myReaction.shortcuts
 
