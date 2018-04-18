@@ -1322,12 +1322,12 @@ class reaction:
 	#********************
 	#make a LaTeX format of reaction
 	def reaction2latex(self, temperatureShortcuts, variableShortcuts,
-						cntMergedReactions, idxMerged):
+						cntMergedReactions, idxMerged, cntTotalReactions):
 		#latex format uses \usepackage{chemformula} in LaTeX
 		#e.g. \ch{H2 + H -> H + H + H}
 
 		#index of unique reactions
-		idxUniqueReaction = str(self.index - cntMergedReactions)
+		idxUniqueReaction = str(cntTotalReactions - cntMergedReactions)
 
 		if idxMerged == 0:
 			#LaTeX index
