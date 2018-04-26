@@ -3,11 +3,18 @@
 # THIS FILE IS PROVIDED AS IT IS, PLEASE CAREFULLY CHECK THE OUTPUT PRODUCED.
 # SEE THE DISCLAIMER AT THE END OF THIS SECTION.
 #
+# This script is a part of KROME.
+#
+# see https://bitbucket.org/tgrassi/krome
+#
+# Contact Tommaso Grassi for further details
+# tgrassi@usm.lmu.de
+
 
 # convert from KIDA file to KROME network (including a set of option to chose a subset)
 
-# input filename (provided by KIDA website)
-fname = "deuspin.kida.uva.2017.in"
+# input filename (in KIDA format, see http://kida.obs.u-bordeaux1.fr/networks.html)
+fname = "kida_demo.dat"
 # output filename for KROME
 foutname = "react_subkida"
 # filename for multiple reactions (same reactants and same products)
@@ -15,15 +22,19 @@ fmultname = "react_multi"
 
 # several options to select your own reaction subset
 avoid = []  # avoid atoms (can be empty)
-use = []  # use atoms (can be empty, e=electron)
+# use atoms (can be empty, e.g. ["H", "He"]. "e"=electron, "grain", "_ortho", "_para", ...)
+# example use = ["H", "He", "D", "e", "_para", "_ortho", "_meta", "GRAIN"]
+use = []
 maxatoms = 999  # maximum number of atoms
 ions = True  # use ions
 anions = True  # use anions
 Tmin = -1e99  # minimum temperature
 Tmax = 1e99  # maximum temperature
-exclude = []  # species to exclude (can be empty)
-excludein = []  # exclude species that contain a specific case-sensitive string (can be empty, e.g. l- for linear mols)
+include = []  # include these species (ignored if empty)
+exclude = []  # species to exclude (ignored if empty)
+excludein = []  # exclude species that contain a specific case-sensitive string (ignored if empty e.g. l- for linear mols)
 multiple = True  # include multiple reactions (same reactants and same products)
+extend_single = True  # remove temperature limits for reactions with Tmin=Tmax
 
 # Recommendation is the recommendation given by experts in KIDA. (from KIDA help)
 # 0 means that the value is not recommended.
@@ -45,15 +56,6 @@ processes = [0, 1, 2, 3, 4, 5]  # processes included (see above)
 CRvar = "user_crflux"  # name of the CR flux variable
 Avvar = "user_Av"  # name of the Av variable
 
-# This script is a part of KROME.
-#
-# more details in http://kromepackage.org/
-# also see https://bitbucket.org/tgrassi/krome
-#
-# Contact Tommaso Grassi for further details
-# tgrassi@usm.lmu.de
-
-
 # ******************************************************************
 # ******************************************************************
 # ******************************************************************
@@ -65,10 +67,16 @@ Avvar = "user_Av"  # name of the Av variable
 use = [x.upper() for x in use]
 avoid = [x.upper() for x in avoid]
 exclude = [x.upper() for x in exclude]
+include = [x.upper() for x in include]
 recom = [int(x) for x in recom]
 processes = [int(x) for x in processes]
 
 import sys
+import datetime
+
+# define number of reactants and products
+reactants_number = 3
+products_number = 5
 
 
 # ************************
@@ -81,9 +89,18 @@ def is_number(s):
         return False
 
 
+# *********************
+# format items list as tlen-sized columns
+def tabrow(items, tlen=20):
+    frow = ""
+    for item in items:
+        frow += str(item) + " "*(tlen-len(str(item)))
+    return frow
+
+
 # ************************
 # molecule class
-class mol:
+class Mol:
     name = ""  # name
     atoms = []  # list of atoms
     natoms = 0  # count atoms
@@ -163,7 +180,7 @@ print "******************************"
 
 print "reading file "+fname+", wait..."
 
-okcount = totcount = trangecount = singlecount = 0
+okcount = totcount = trangecount = single_count = 0
 nhist = dict()
 idxdic = dict()
 trange = dict()
@@ -172,13 +189,22 @@ formulahist = dict()
 fh = open(fname, "rb")
 fout = open(foutname, "w")
 fmult = open(fmultname, "w")
-fmt = [11]*3 + [1] + 5*[11] + [1] + 3*[11] + [8, 9] + [1, 4, 3] + 2*[7] + [3, 6, 3, 2]
-keys = ["R"+str(i) for i in range(3)] + ["x"] + \
-        ["P"+str(i) for i in range(5)] + ["x"] + ["a", "b", "c"] \
+fmt = [11]*reactants_number + [1] + products_number*[11] + [1] + 3*[11] \
+      + [8, 9] + [1, 4, 3] + 2*[7] + [3, 6, 3, 2]
+keys = ["R"+str(i) for i in range(reactants_number)] + ["x"] + \
+        ["P"+str(i) for i in range(products_number)] + ["x"] + ["a", "b", "c"] \
         + ["F", "g"] + ["x", "unc", "type"] + ["tmin", "tmax"] \
         + ["formula", "num", "subnum", "recom"]
 reacts = []
-fout.write("#reaction subset from KIDA created with KROME (see Grassi+2014)\n")
+fout.write("# reaction subset from KIDA created with KROME (see Grassi+2014)\n")
+
+# time as string
+date_fmt = "%Y-%m-%d %H:%M:%S"
+date_string = "# creation date:" + datetime.datetime.now().strftime(date_fmt) + "\n"
+
+# write creation time to output files
+fout.write(date_string)
+fmult.write(date_string)
 
 if len(avoid) > 0:
     fout.write("#avoid=" + (",".join(avoid)) + "\n")
@@ -217,9 +243,9 @@ for row in fh:
     for i in range(len(fmt)):
         arow[keys[i]] = srow[p:p+fmt[i]].strip()
         p += fmt[i]
-    RR = ",".join([arow["R"+str(i)] for i in range(3)])
-    PP = ",".join([arow["P"+str(i)] for i in range(5)])
-    TT = arow["tmin"]+","+arow["tmax"]
+    RR = ",".join([arow["R"+str(i)] for i in range(reactants_number)])
+    PP = ",".join([arow["P"+str(i)] for i in range(products_number)])
+    TT = arow["tmin"] + "," + arow["tmax"]
 
     # Formula is a number that referes to the formula needed to compute the rate
     # coefficient of the reaction.
@@ -240,7 +266,7 @@ for row in fh:
                 KK += "*exp(-"+arow["c"]+"*"+Avvar+")"
     elif arow["formula"] in [0, 3]:
         if arow["formula"] == 0:
-            print "WARNING: found rate with Formula type 0 treated as Kojii (type 3)"
+            print "WARNING: found rate with Formula type 0 treated as Kojii (i.e. type 3)"
         KK = arow["a"]
         if float(arow["b"]) != 0e0:
             KK += "*(T32)**("+arow["b"]+")"
@@ -266,13 +292,10 @@ for row in fh:
     else:
         print "WARNING: Formula not found!", arow["formula"]
         formula_not_found_count += 1
-        print srow
+        print srow[:60] + "..."
         continue
 
     KK = KK.replace("--", "+").replace("++", "+").replace("-+", "-").replace("+-", "-")
-    krow = (RR+","+PP+","+TT+","+KK+"\n")
-    for x in rems:
-        krow = krow.replace(x, "")
 
     ok = True
     if int(arow["formula"]) not in processes:
@@ -291,10 +314,11 @@ for row in fh:
     if not ok:
         continue
 
-    for i in range(3):
+    RR_obj = []
+    for i in range(reactants_number):
         if not ok:
             break
-        mymol = mol()
+        mymol = Mol()
         R = arow["R"+str(i)]
         if R in rems:
             continue
@@ -306,12 +330,20 @@ for row in fh:
                 if ex in R:
                     ok = False
                     break
+
         mymol.name = R
+
         check = mymol.parse()
         if check is None:
             print "ERROR: problem when parsing a species in line"
             print srow
             sys.exit()
+
+	if include:
+		if mymol.name not in include:
+			ok = False
+
+        RR_obj.append(mymol)
 
         if mymol.natoms > maxatoms:
             ok = False
@@ -327,10 +359,11 @@ for row in fh:
                 if x not in use:
                     ok = False
 
-    for i in range(5):
+    PP_obj = []
+    for i in range(products_number):
         if not ok:
             break
-        mymol = mol()
+        mymol = Mol()
         P = arow["P"+str(i)]
         if P in rems:
             continue
@@ -344,10 +377,17 @@ for row in fh:
                     break
         mymol.name = P
         check = mymol.parse()
+
         if check is None:
             print "ERROR: problem when parsing a species in line"
             print srow
             sys.exit()
+
+	if include:
+		if mymol.name not in include:
+			ok = False
+
+        PP_obj.append(mymol)
 
         if mymol.natoms > maxatoms:
             ok = False
@@ -365,18 +405,20 @@ for row in fh:
     if not ok:
         continue
 
-    # chek for reactions with Tmax==Tmin
+    # check reactions with Tmax==Tmin
     if float(arow["tmin"]) == float(arow["tmax"]):
-        singlecount += 1
-        if float(arow["tmin"]) in tsingle:
-            tsingle[float(arow["tmin"])] += 1
+        single_count += 1
+        if extend_single:
+            arow["tmin"] = 0e0
+            arow["tmax"] = 1e10
         else:
-            tsingle[float(arow["tmin"])] = 1
+            if float(arow["tmin"]) not in tsingle:
+                tsingle[float(arow["tmin"])] = 0
+            tsingle[float(arow["tmin"])] += 1
 
     if arow["formula"] not in formulahist:
-        formulahist[arow["formula"]] = 1
-    else:
-        formulahist[arow["formula"]] += 1
+        formulahist[arow["formula"]] = 0
+    formulahist[arow["formula"]] += 1
 
     isMult = False
     if arow["num"] in nhist:
@@ -397,11 +439,22 @@ for row in fh:
             continue
         if sameTRange:
             nhist[arow["num"]].append(arow["subnum"])
-            idxdic[arow["num"]] = okcount+1
+            idxdic[arow["num"]] = okcount + 1
             isMult = True
-    else: 
+    else:
         nhist[arow["num"]] = [arow["subnum"]]
         trange[arow["num"]] = [float(arow["tmin"]), float(arow["tmax"])]
+
+    RR_names = ",".join([x.name for x in RR_obj])
+    PP_names = ",".join([x.name for x in PP_obj])
+    if len(RR_obj) < reactants_number:
+        RR_names += ","*(reactants_number - len(RR_obj))
+    if len(PP_obj) < products_number:
+        PP_names += ","*(products_number - len(PP_obj))
+
+    krow = (RR_names + "," + PP_names + "," + TT + "," + KK + "\n")
+    for x in rems:
+        krow = krow.replace(x, "")
 
     # @format:idx,R,R,R,P,P,P,P,P,Tmin,Tmax,rate
     akrow = krow.split(",")
@@ -417,8 +470,8 @@ for row in fh:
 
     okcount += 1
     if isMult:
-        fmult.write(str(okcount)+","+krow)
-    fout.write(str(okcount)+","+krow)
+        fmult.write(str(okcount) + "," + krow)
+    fout.write(str(okcount) + "," + krow)
     reacts.append(arow)
 
 fmult.close()
@@ -436,31 +489,37 @@ multi = [str(k) + "("+str(idxdic[k])+") [" +
          (",".join(v)) + "]" for (k, v) in nhist.iteritems() if len(v) > 1]
 
 if len(multi) > 1:
-    print "-------------------"
-    print "The following reactions have multiple values:"
-    for x in multi:
-        print x
-    print " as KIDA_index (KROME_index)"
-    print " please check!"
-    print "Reactions with multiple values written in", fmultname
-    print "-------------------"
+    print "WARNING: there are " + str(len(multi)) + " reactions with multiple values"
+    print " Reactions with multiple values written in", fmultname
 
 print "Total reactions:", totcount
 print "Rections INCLUDED:", okcount
 print "Rections NOT INCLUDED:", totcount - okcount
 print "Multiple reactions (same reactants and products):", len(multi)
 print "Formula not found reactions:", formula_not_found_count
-print "Different Trange reactions:", trangecount
+print "Joined Trange reactions:", trangecount
 if len(tsingle) > 0:
-    print "WARNING: Found reactions with Tmin==Tmax:", singlecount, "as"
-    print " Tmin=Tmax", "count"
+    print "WARNING: Found reactions with Tmin==Tmax:", sum(tsingle.values()), "as"
+    print "----------------------------------------"
+    print " " + tabrow(["Tmin=Tmax", "count"])
+    print "----------------------------------------"
     for k, v in tsingle.iteritems():
-        print " "+str(k), v
+        print " " + tabrow([str(k), v])
+    print "----------------------------------------"
+if extend_single and (single_count > 0):
+    print "WARNING: temperature limits removed for " + str(single_count) \
+          + " reactions with Tmin=Tmax"
 print "Formula count per type:"
-rtype = {0: "Dust/Special", 1: "CR ioniz", 2: "Photo-diss", 3: "Kooij", 4: "ionpol1", 5: "ionpol2"}
+
+rtype = {0: "Dust/Special",
+         1: "CR ioniz",
+         2: "Photo-diss",
+         3: "Kooij",
+         4: "ionpol1",
+         5: "ionpol2"}
 if len(formulahist) > 0:
     for k, v in formulahist.iteritems():
-        print " "+rtype[k]+":", v
+        print " " + tabrow([rtype[k], ":", v])
 print "File written in:", foutname
 print "Reactions with multiple values written in", fmultname
 
