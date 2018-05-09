@@ -631,16 +631,22 @@ contains
     real(dp) :: inverse_mass(nspec)
 
     inverse_mass(:) = get_imass()
-
+    
+    !TODO: Don't hard code this here
     if(monomer_idx == idx_TiO2) then
       ! Interatomic distance from Jeong et al 2000 DOI:10.1088/0953-4075/33/17/319
       monomer_radius = 1.62e-8_dp ! in cm
     else if(monomer_idx == idx_Al2O3) then
-      monomer_radius = 1.62e-8_dp ! in cm
+      ! Interatomic distance O-Al-O (linear geometry) from Archibong et al 1999
+      ! doi: 10.1021/jp983695n
+      ! NOTE: temporary value
+      monomer_radius = 3.304e-8_dp ! in cm
     else if(monomer_idx == idx_MgO) then
-      monomer_radius = 1.62e-8_dp ! in cm
+      ! Half a bond length form Farrow et al 2014 doi:10.1039/C4CP01825G
+      monomer_radius = 0.865e-8_dp ! in cm
     else if(monomer_idx == idx_SiO) then
-      monomer_radius = 1.62e-8_dp ! in cm
+      ! Bond length from Bromley et al 2016 doi:10.1039/c6cp03629e
+      monomer_radius = 0.75765e-8_dp ! in cm
     else
       print *, "Monomer radius not yet defined"
     end if
