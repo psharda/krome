@@ -728,11 +728,11 @@ contains
     !   print *, "Clusters other than TiO2 are not yet defined"
     ! endif
 
-    print *, "temp", temperature
+    ! print *, "temp", temperature
     gibbs_big = gibbs_free_energy(monomer_idx, cluster_size, temperature) ! kJ*mol**(-1)
     gibbs_small = gibbs_free_energy(monomer_idx, cluster_size-1, temperature)! kJ*mol**(-1)
     gibbs_monomer = gibbs_free_energy(monomer_idx, 1, temperature)! kJ*mol**(-1)
-    print *, gibbs_big, gibbs_small, gibbs_monomer
+    ! print *, gibbs_big, gibbs_small, gibbs_monomer
     ! correction to the Gibbs free enegery under non-standard pressure of 1 bar.
     ! This only differs in the translational partition function.
     ! ! total gas pressure in units of 1 bar
@@ -852,11 +852,22 @@ contains
          TiO2 clusters larger than 10."
        end if
        gibbs = a*Tinv + b + c*T + d*T2 + e*T3 ! kJ*mol**(-1)
-       print *, "TIO",cluster_size,gibbs, T, temperature
+    !    print *, "TIO",cluster_size,gibbs, T, temperature
     else
-      molecule_idx = monomer_idx + cluster_size - 1
+        if (cluster_size == 1) then
+            molecule_idx = monomer_idx
+        else
+            if(monomer_idx == idx_SiO) then
+                molecule_idx = idx_SI2O2 + cluster_size -2
+            else if (monomer_idx == idx_MgO) then
+                molecule_idx = idx_Mg2O2 + cluster_size -2
+            else if (monomer_idx == idx_Al2O3) then
+                molecule_idx = idx_Al4O6 + cluster_size -2
+            end if
+        endif
+
       gibbs = revHS(T,molecule_idx)*T*Rgas_kJ
-      print *, "revHS",molecule_idx,gibbs, T
+    !   print *, "revHS",gibbs,monomer_idx,molecule_idx, T
 
         ! print *, "There is no thermochemical data on &
         ! clusters ofther than TiO2."
