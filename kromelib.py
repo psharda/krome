@@ -59,7 +59,8 @@ class molec():
 	is_atom = False #flag to identify atoms
 	is_surface = False #flag for species on surface
 	is_chemisorbed = False #flag for chemisorbed species
-	hasThermoTable = False #flag for having thermo data in a (JANAF) table
+	hasThermoTable = False #flag for having thermo data
+	hasJanafThermoTable = False #flag for having thermo data from JANAF database
 	Ebind_ice = Ebind_bare = 0e0 #binding energy on surface for ice and bare grain
 	parentDustBin = 0 #for surface species: belongs to this dust bin (1-based)
 	chempot = 0. #chemical potential (J/mol)
@@ -631,7 +632,7 @@ def janaf2krome(build_folder, species):
 				"Please change this in the input table" + filepath
 				)
 				sys.exit()
-				
+
 			temperature.append(float(arow[0]))
 			# JANAF provides gibbs formation energy w.r.t. reference
 			# value. To get the uncorreect value, we need to add HminH0.
@@ -645,7 +646,7 @@ def janaf2krome(build_folder, species):
 	tmax = max(temperature)
 	tmin = min(temperature)
 	#write data to file using a regular xtemp grid
-	with open(build_folder + "janaf_" + name + ".dat", "w") as fout:
+	with open(build_folder + "thermo_" + name + ".dat", "w") as fout:
 		fout.write("#Regularly spaced JANAF table for " + name + "\n")
 		fout.write("#temperature (K) formation gibbs free energy (kJ/mol)" + "\n")
 
@@ -1897,10 +1898,17 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 				mymol.Tpoly_nist[-1] = thermo_data[mymol.name]["NIST"][10]  #(K) [min,med,max] T interval limits
 				mymol.poly2_nist = thermo_data[mymol.name]["NIST"][11:] #NIST polynomials upper T interval
 
-	#check if species has thermo data as JANAF table
-	thermoTabPath = "data/database/janaf/" + mymol.name + ".dat"
+	#check if species has thermochemical data
+	# either priority for manually added to KROME
+	# over JANAF database
+	thermoTabPath = "data/thermochemistry/" + mymol.name + ".dat"
+	thermoJanafTabPath = "data/database/janaf/" + mymol.name + ".dat"
 	if file_exists(thermoTabPath):
 		mymol.hasThermoTable = True
+	elif file_exists(thermoJanafTabPath):
+		mymol.hasThermoTable = True
+		mymol.hasJanafThermoTable = True
+
 
 
 	#compute enthaly @300K using NASA poly

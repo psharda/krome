@@ -141,6 +141,7 @@ class krome():
 	individualCoolingFloors = [] #list of individual floors
 	iceSpeciesList = dict() #list of species on ice
 	fdbase = "data/database/" #database of reaction folder for auto reactions
+	thermochemistryFolder = "data/thermochemistry/"
 	indexSolomon = -1 #default solomon index, -1 to trigger error
 	indexH2photodissociation = -1 #default H2pd index, -1 to trigger error
 	KindSingle = "real*4"
@@ -2810,11 +2811,17 @@ class krome():
 
 		reacts = ureacts[:] #copy the extended list of reactions to the old one
 
-		#make thermo data tables
+		# copy thermo data tables to build folder
+		# and make them if not yet done (e.g. JANAF)
 		for sp in specs:
 			if sp.hasThermoTable:
-				janaf2krome(self.buildFolder, sp)
 				self.thermoTableSpecies.append(sp)
+				if sp.hasJanafThermoTable:
+					janaf2krome(self.buildFolder, sp)
+				else:
+					shutil.copyfile(self.thermochemistryFolder + sp.name + ".dat",
+					 			self.buildFolder + "thermo_" + sp.name + ".dat")
+					print "copied " + sp.name + ".dat"
 
 		#update number of connection per species
 		for rea in reacts:
@@ -4891,13 +4898,13 @@ class krome():
 			elif(srow == "#KROME_thermochem_from_file"):
 				lines = ""
 				if self.useThermoTable:
-					lines += "integer, parameter :: janaf_tab_imax = 200\n"
-					lines += "real*8 :: janaf_tab_Tgas(janaf_tab_imax)\n"
-					lines += "real*8 :: janaf_mult_Tgas\n"
+					lines += "integer, parameter :: thermo_tab_imax = 200\n"
+					lines += "real*8 :: thermo_tab_Tgas(thermo_tab_imax)\n"
+					lines += "real*8 :: thermo_mult_Tgas\n"
 					for sp in specs:
 						if sp.hasThermoTable:
-							lines += ("real*8 :: janaf_tab_gibbs_" + sp.name +
-								"(janaf_tab_imax)\n" )
+							lines += ("real*8 :: thermo_tab_gibbs_" + sp.name +
+								"(thermo_tab_imax)\n" )
 				fout.write(lines + "\n")
 
 			else:
@@ -5040,11 +5047,6 @@ class krome():
 		# check if total water is in the species list
 		hasH2O = ("H2O_TOTAL" in [x.name.upper() for x in specs])
 
-		# check if growable species are present
-		clusterables = ["TIO2"]
-		specs_names = [x.name for x in specs]
-		has_clusterable = all([(xc in specs_names) for xc in clusterables])
-
   		skip = False
 		#loop on src file and replace pragmas
 		for row in fh:
@@ -5056,9 +5058,8 @@ class krome():
 			if(srow == "#IFKROME_hasH2O" and not(hasH2O)): skip = True
 			if(srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D")): skip = True
 			if(srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D")): skip = True
-			if(srow == "#IFKROME_use_cluster_growth" and not(has_clusterable)): skip = True
 
-		        if(srow == "#ENDIFKROME"): skip = False
+			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
 
@@ -5656,7 +5657,12 @@ class krome():
 			krome_conserve += "\n!********** E **********\n"
 			krome_conserve += consE + "\n"
 
+		# check if growable species are present
+		clusterables = ["TIO2", "MGO", "SIO", "AL2O3"]
+		specs_names = [x.name for x in specs]
+		has_clusterable = all([(xc in specs_names) for xc in clusterables])
 		#loop on src file and replace pragmas
+
 		skip = False
 		for row in fh:
 			srow = row.strip()
@@ -5668,6 +5674,7 @@ class krome():
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
 			if(srow == "#IFKROME_useThermoTables" and not self.useThermoTable) : skip = True
+			if(srow == "#IFKROME_use_cluster_growth" and not(has_clusterable)): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
@@ -5847,7 +5854,7 @@ class krome():
 				sp1 = sp2 = ""
 				for sp in self.thermoTableSpecies:
 					sp1 += "hasThermoTable(" + sp.fidx + ") = .true.\n"
-					sp2 += "yThermoTable(" + sp.fidx + ",:) = janaf_tab_gibbs_" + sp.name + "(:)\n"
+					sp2 += "yThermoTable(" + sp.fidx + ",:) = thermo_tab_gibbs_" + sp.name + "(:)\n"
 				fout.write(sp1+sp2)
 			elif(srow == "#KROME_shortcut_variables"):
 				fout.write(shortcutVars)
@@ -5866,7 +5873,7 @@ class krome():
 					fout.write(kstr+"\n")
 				fout.write("return\n")
 			else:
-                                if(row[0]!="#"): fout.write(row)
+				if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):
 			fout.close()
 		print "done!"
@@ -7847,10 +7854,10 @@ class krome():
 			elif srow == "#KROME_init_thermoTables":
 				stab = ""
 				for sp in self.thermoTableSpecies:
-					tabfile = "janaf_" + sp.name + ".dat"
-					tabx = "janaf_tab_Tgas(:)"
-					taby = "janaf_tab_gibbs_" + sp.name + "(:)"
-					tabmul = "janaf_mult_Tgas"
+					tabfile = "thermo_" + sp.name + ".dat"
+					tabx = "thermo_tab_Tgas(:)"
+					taby = "thermo_tab_gibbs_" + sp.name + "(:)"
+					tabmul = "thermo_mult_Tgas"
 					stab += ("call init_anytab1D(\"" + tabfile + "\"," + tabx + ",&\n"
 							+ taby + "," + tabmul + ")\n"
 							)
