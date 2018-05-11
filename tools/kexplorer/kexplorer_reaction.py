@@ -6,8 +6,17 @@ class reaction:
 	#object constructor use reaction verbatim to init reactants and products
 	def __init__(self,verbatim):
 
+
 		#get reactants and products
-		(RR,PP) = verbatim.split("->")
+		if verbatim.endswith("freeze-out"):
+			RR = verbatim.split(" ")[0]
+			PP = RR + "_grain"
+		elif verbatim.endswith("evaporation"):
+			PP = verbatim.split(" ")[0]
+			RR = PP + "_grain"
+		else:
+			(RR,PP) = verbatim.split("->")
+
 		self.reactants = [x for x in RR.split(" ") if(x!="" and x!="+")]
 		self.products = [x for x in PP.split(" ") if(x!="" and x!="+")]
 
