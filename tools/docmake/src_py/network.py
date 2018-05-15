@@ -169,7 +169,7 @@ class network:
 
 	#********************
 	#make a LaTeX table of the network
-	def network2latex(self, networkLatex="NetworkLatex.log"):
+	def network2latex(self, networkLatex="NetworkLatex.tex"):
 		#NOTE: Make sure the network input file has incrementing reaction indices.
 		# If double indices exist, the LaTeX table will be incorrect.
 
@@ -182,7 +182,7 @@ class network:
 			#dump header of the file
 			self.dumpLatexTableHeader(fileOutput)
 			#loop on reactions to evaluate
-			for myReaction in sorted(self.reactions, key=lambda x: (x.reactants[0].name, x.reactants[1].name)):
+			for myReaction in sorted(self.reactions, key=lambda x: [xx.name for xx in x.reactants]):
 				#list with all variable shortcuts (excl. temperature ones)
 				shortcutsVariables = myReaction.shortcuts
 
@@ -209,6 +209,7 @@ class network:
 		tableFile.write("% Table columns format {"+5*"l"+"}\n")
 		tableFile.write("% Set \"h\" as table-spec for the column to hide it\n")
 		tableFile.write("%%\\newcolumntype{h}{>{\setbox0=\hbox\\bgroup}c<{\egroup}@{}}\n")
+
 	#****************
 	#build colums in LateX table format
 	def dumpLatexTable(self, colums, tableFile):
@@ -220,6 +221,7 @@ class network:
 			cnt += 1
 
 		tableFile.write(row + "\n")
+
 	#********************
 	#check xsec folder and write xsec status to log file
 	def reportXsecsFiles(self,logName="xsecs.log",folder="xsecs/"):
