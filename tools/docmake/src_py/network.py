@@ -177,6 +177,7 @@ class network:
 		shortcutsTemperature = utils.getShortcutsLatex()
 		cntMergedReactions = 0
 		cntTotalReactions = 1
+		cntAllReactions = 0
 
 		with open(networkLatex, "w") as fileOutput:
 			#dump header of the file
@@ -188,8 +189,12 @@ class network:
 
 				for cnt in range(len(myReaction.rate)):
 					latexColums, message = myReaction.reaction2latex(shortcutsTemperature,
-											shortcutsVariables, cntMergedReactions, cnt,
-											cntTotalReactions)
+											shortcutsVariables,
+											cntMergedReactions,
+											cnt,
+											cntTotalReactions,
+											cntAllReactions)
+					cntAllReactions += 1
 					if cnt > 0:
 						cntMergedReactions += 1
 					#print warning message
