@@ -24,6 +24,7 @@ endif
 #flags
 switchOPT = -O3 -ipo -ip -unroll -xHost -g -fp-model precise
 switchDBG = -O0 -check all -warn all -fpe0 -u -traceback -warn nounused
+switchDBG += -fp-model precise
 switchPRO = $(switchOPT) -pg -traceback
 switchOMP = $(switchOPT) -openmp
 
