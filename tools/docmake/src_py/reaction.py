@@ -1322,7 +1322,7 @@ class reaction:
 	#********************
 	#make a LaTeX format of reaction
 	def reaction2latex(self, temperatureShortcuts, variableShortcuts,
-						cntMergedReactions, idxMerged, cntTotalReactions):
+						cntMergedReactions, idxMerged, cntTotalReactions, cntAllReactions):
 		#latex format uses \usepackage{chemformula} in LaTeX
 		#e.g. \ch{H2 + H -> H + H + H}
 
@@ -1331,7 +1331,7 @@ class reaction:
 
 		if idxMerged == 0:
 			#LaTeX index
-			idxTex = idxUniqueReaction
+			idxTex = str(cntAllReactions+1)
 
 			#latex reaction
 			reactionTex = "\\ch{"
@@ -1381,7 +1381,7 @@ class reaction:
 
 		#LaTeX rate
 		rateTex, message = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts)
-		rateTex = "k$_{" + idxUniqueReaction +"}" + rateTex
+		rateTex = "k$_{" + str(cntAllReactions+1) +"}" + rateTex
 
 		#LaTeX temperature limits
 		limitsTex = self.tempRange2latex(idxMerged)
