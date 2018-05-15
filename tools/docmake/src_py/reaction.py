@@ -1371,9 +1371,8 @@ class reaction:
 
 			reactionTex += "}"
 
-			#LaTeX reference
-			#can be changed by the user
-			refTex = "UMIST"
+			# default LaTeX reference as a LaTeX command
+			refTex = "\\dbDefault{}"
 
 		else:
 			idxTex = ""
@@ -1398,7 +1397,7 @@ class reaction:
 		message = "" #optional warning
 
 		#list of symbols you want to keep in the LaTeX format
-		Tsymbols = ["T","(T/300)", "T_{e}"]
+		Tsymbols = ["T", "(T/300)", "T_{e}"]
 		T, T32, Te = sp.symbols(Tsymbols)
 		exp = sp.Symbol("exp")
 		ln = sp.Symbol("ln")
@@ -1415,12 +1414,16 @@ class reaction:
 		#replace shortcuts, loop needs to be reversed order for variable dependencies
 		#skip T32 and Te to keep as symbol
 		for tshort in reversed(temperatureShortcuts[2:]):
-			rate = rate.replace(tshort[0],tshort[1])
+			rate = rate.replace(tshort[0], tshort[1])
 
 		#make sympy friendly
-		rate = rate.replace("d","e")
+		rate = rate.replace("d", "e")
 		rate = rate.replace("log", "ln")
 		rate = rate.replace("ln10", "log")
+		rate = rate.replace("_8", "")
+
+		# store for debugging
+		rateTexAfterShortcutsReplaced = rate
 
 		#transform to LaTeX format
 		#keep trying i
@@ -1440,19 +1443,31 @@ class reaction:
 				print "Syntax Error in rate", err
 				return rate, message
 
-		##########################
+		# store for debugging
+		rateTextAfterSympy = rateTex
+
 		#fix mistakes by sympy
 		#no 10^{} for short rates
-		for t in Tsymbols:
-			if t in rateTex:
-				break
-			else:
-				rateTex = rateTex.replace("e-","\\cdot 10^{-") + "}"
-				break
+		#for t in Tsymbols:
+		#	if t in rateTex:
+		#		break
+		#	else:
+		#		print "YYYYYYYYYYYYYYYY"
+		#		print rateTex
+		#		rateTex = rateTex.replace("e-", "\\cdot 10^{-") + "}X"
+		#		break
+
+		# use a\cdot 10^-b for reaction that are just numbers
+		try:
+			float(rateTex.replace("=", ""))
+			rateTex = rateTex.replace("e-", "\\cdot 10^{-") + "}"
+		except:
+			pass
 
 		#it automatically makes a fraction out of negative exponents
+		# TODO: make more generic, it fails with some reactions
 		stringFrac = r'\frac{1}{'
-		if stringFrac in rateTex:
+		if stringFrac in rateTex and False:
 			for Tsym in Tsymbols:
 				rateTex = rateTex.replace(stringFrac + Tsym + "^{", "{"+Tsym+"^{-")
 			#change the order of the factors to match modified Arrhenius
@@ -1468,7 +1483,8 @@ class reaction:
 
 		#mistake: large fractions
 		#solution: to the power -1 (solution can be improved)
-		if rateTex.startswith(r"\frac"):
+		# TODO: make more generic, it fails with some reactions
+		if rateTex.startswith(r"\frac") and False:
 			cnt = 0
 			pieces = []
 			#get content between parenteses for each level
@@ -1491,7 +1507,7 @@ class reaction:
 			else:
 				fracStringReplace = "\left["+firstTerm+r"\right]\left["+secondTerm+r"\right]^{-1}"
 
-			rateTex = rateTex.replace(fracStringOriginal,fracStringReplace)
+			rateTex = rateTex.replace(fracStringOriginal, fracStringReplace)
 
 		# remove unwanted zeros
 		rateTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", rateTex)
@@ -1501,10 +1517,18 @@ class reaction:
 		#add LaTeX symbols
 		rateTex = " = " + rateTex + "$"
 
+		# store rate before breaking
+		rateTextFull = rateTex
+
 		#break long rates in multiple lines
-		if len(rateTex) > maxRateLength:
+		if len(rateTex) > maxRateLength*1e6:
 			rateTex, message = self.breakRateTex(rateTex)
 
+		message += "\n%These comments below are for debugging, ignore them"
+		message += "\n%original rate: " + rate
+		message += "\n%after shortcuts replacing: " + rateTexAfterShortcutsReplaced
+		message += "\n%rate after sympy: " + rateTextAfterSympy
+		message += "\n%full rate (before breaking): " + rateTextFull
 
 		return rateTex, message
 
@@ -1518,29 +1542,42 @@ class reaction:
 		for part in parList:
 			#replace when level 0 and after exp
 			if part[0] == 0 and nextReplace:
-				rate = rate.replace("{"+part[1]+"}",part[1])
+				rate = rate.replace("{"+part[1]+"}", part[1])
 				nextReplace = False
 			#only for exp
-			if part == (0,"exp"):
+			if part == (0, "exp"):
 				#next level 0 parenteses need to be replaced
 				nextReplace = True
 
 		rate = rate[1:-1]	#remove $ signs
-		rate = rate.replace(" + "," \\\\ \n& + " )
-		rate = rate.replace(" - "," \\\\ \n& - " )
+		rate = rate.replace(" + ", " \\\\ \n& + " )
+		rate = rate.replace(" - ", " \\\\ \n& - " )
 		rate = "\\begin{aligned}[t] & " + rate + "\\end{aligned}$"
 		warning = ""
 
 
-		allLines = rate.split("&")
-		for line in allLines:
+		newLines = []
+		for line_rn in rate.split("&"):
+			ends_rn = line_rn.strip().endswith("\\\\")
+			line = line_rn.strip().replace("\\\\", "")
 			Nleft = line.count("\\left")
 			Nright = line.count("\\right")
-			if Nleft!=Nright:
-				warning = "%%*********************\n%% Manually add \\left. \\right. or close bracktes for needed lines."
+			if Nleft > Nright:
+				warning = "\n%%*********************\n%% added some \\right to balance \\left"
 				# auto replace was not always succesful...
-				# newline = line.replace("\\right","\\left.\\right")
-				# rate = rate.replace(line,newline)
+				#newline = line.replace("\\left","\\left\\right.", Nleft-Nright)
+				line += "\\right." * (Nleft-Nright)
+				#rate = rate.replace(line, newline)
+			elif Nleft < Nright:
+				warning = "\n%%*********************\n%% added some \\left to balance \\right"
+				#newline = line.replace("\\right","\\left.\\right", Nright-Nleft)
+				line = "\\left." * (Nright-Nleft) + line
+				#rate = rate.replace(line, newline)
+			if ends_rn:
+				line += "\\\\\n"
+			newLines.append(line)
+
+		rate = " & ".join(newLines)
 
 		return rate, warning
 
@@ -1586,3 +1623,4 @@ class reaction:
 		limitTex = " ".join(lowhighTex)
 
 		return limitTex
+
