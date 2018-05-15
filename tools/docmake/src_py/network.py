@@ -212,14 +212,8 @@ class network:
 
 	#****************
 	#build colums in LateX table format
-	def dumpLatexTable(self, colums, tableFile):
-		row = ""
-		cnt = 1
-		for el in colums:
-			if cnt==len(colums): row += el + " \\\\"
-			else: row += el + " & "
-			cnt += 1
-
+	def dumpLatexTable(self, columns, tableFile):
+		row = " & ".join(columns) + " \\\\"
 		tableFile.write(row + "\n")
 
 	#********************

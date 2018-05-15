@@ -1393,6 +1393,7 @@ class reaction:
 	def rate2latex(self, rate, temperatureShortcuts, variableShortcuts):
 		import re
 		import sympy as sp
+		debug = True
 		maxRateLength = 100
 		message = "" #optional warning
 
@@ -1426,22 +1427,27 @@ class reaction:
 		rateTexAfterShortcutsReplaced = rate
 
 		#transform to LaTeX format
-		#keep trying i
+		#keep trying
 		while True:
 			try:
 				rateTex = sp.latex(eval(rate))
 				break
 			#undefined variable will become a symbol
-			except (NameError,),err:
+			except (NameError,), err:
 				print "Name error in rate", err
 				varIssue = str(err).split("'")[1]
 				symb = varIssue + " = sp.Symbol(\""+varIssue+"\")"
 				exec(symb)
 
-			#special case rate	will be prited as it is
-			except (SyntaxError,),err:
+			#special case rate will be prited as it is
+			except (SyntaxError,), err:
 				print "Syntax Error in rate", err
-				return rate, message
+				return "=" + rate + "$", message
+
+			#special case rate will be prited as it is
+			except(ValueError,), err:
+				print "Value Error in rate", err
+				return "=" + rate + "$", message
 
 		# store for debugging
 		rateTextAfterSympy = rateTex
@@ -1467,7 +1473,7 @@ class reaction:
 		#it automatically makes a fraction out of negative exponents
 		# TODO: make more generic, it fails with some reactions
 		stringFrac = r'\frac{1}{'
-		if stringFrac in rateTex and False:
+		if stringFrac in rateTex and not debug:
 			for Tsym in Tsymbols:
 				rateTex = rateTex.replace(stringFrac + Tsym + "^{", "{"+Tsym+"^{-")
 			#change the order of the factors to match modified Arrhenius
@@ -1484,7 +1490,7 @@ class reaction:
 		#mistake: large fractions
 		#solution: to the power -1 (solution can be improved)
 		# TODO: make more generic, it fails with some reactions
-		if rateTex.startswith(r"\frac") and False:
+		if rateTex.startswith(r"\frac") and not debug:
 			cnt = 0
 			pieces = []
 			#get content between parenteses for each level
@@ -1521,7 +1527,8 @@ class reaction:
 		rateTextFull = rateTex
 
 		#break long rates in multiple lines
-		if len(rateTex) > maxRateLength*1e6:
+		# TODO: generalize breaking, it tries to break inside \frac{}{}
+		if len(rateTex) > maxRateLength and not debug:
 			rateTex, message = self.breakRateTex(rateTex)
 
 		message += "\n%These comments below are for debugging, ignore them"
