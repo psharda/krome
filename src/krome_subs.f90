@@ -1059,6 +1059,7 @@ contains
 
     ! return zero is no data exists
     else
+      print *, "No thermochemical data of species index", idx
       revHS = 0.d0
 
     end if
