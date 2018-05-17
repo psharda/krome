@@ -5660,7 +5660,7 @@ class krome():
 		# check if growable species are present
 		clusterables = ["TIO2", "MGO", "SIO", "AL2O3"]
 		specs_names = [x.name for x in specs]
-		has_clusterable = all([(xc in specs_names) for xc in clusterables])
+		has_clusterable = any([(xc in specs_names) for xc in clusterables])
 		#loop on src file and replace pragmas
 
 		skip = False
