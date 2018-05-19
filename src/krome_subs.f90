@@ -631,25 +631,8 @@ contains
     real(dp) :: inverse_mass(nspec)
 
     inverse_mass(:) = get_imass()
-    
-    !TODO: Don't hard code this here
-    if(monomer_idx == idx_TiO2) then
-      ! Interatomic distance from Jeong et al 2000 DOI:10.1088/0953-4075/33/17/319
-      monomer_radius = 1.62e-8_dp ! in cm
-    else if(monomer_idx == idx_Al2O3) then
-      ! Interatomic distance O-Al-O (linear geometry) from Archibong et al 1999
-      ! doi: 10.1021/jp983695n
-      ! NOTE: temporary value
-      monomer_radius = 3.304e-8_dp ! in cm
-    else if(monomer_idx == idx_MgO) then
-      ! Half a bond length form Farrow et al 2014 doi:10.1039/C4CP01825G
-      monomer_radius = 0.865e-8_dp ! in cm
-    else if(monomer_idx == idx_SiO) then
-      ! Bond length from Bromley et al 2016 doi:10.1039/c6cp03629e
-      monomer_radius = 0.75765e-8_dp ! in cm
-    else
-      print *, "Monomer radius not yet defined"
-    end if
+
+#KROME_nucleation_radii
 
     inverse_monomer_mass = inverse_mass(monomer_idx)
     inverse_cluster_mass = 1._dp/cluster_size * inverse_monomer_mass
@@ -771,13 +754,15 @@ contains
     integer, intent(in) :: monomer_idx
     integer, intent(in) :: cluster_size
     real(dp), intent(in) :: temperature
-    real(dp) :: gibbs
-    integer :: molecule_idx
+    real(dp) :: gibbs, T
+    integer :: cluster_inx
 
-    real(dp) :: Tinv, T, T2, T3
+#IFKROME_hasTiO2
+    real(dp) :: Tinv, T2, T3
     real(dp) :: a, b, c, d, e
-
+#ENDIFKROME
     T = temperature
+#IFKROME_hasTiO2
     Tinv = T**(-1._dp)
     T2 = T*T
     T3 = T2*T
@@ -853,25 +838,8 @@ contains
        end if
        gibbs = a*Tinv + b + c*T + d*T2 + e*T3 ! kJ*mol**(-1)
     !    print *, "TIO",cluster_size,gibbs, T, temperature
-    else
-        if (cluster_size == 1) then
-            molecule_idx = monomer_idx
-        else
-            if(monomer_idx == idx_SiO) then
-                molecule_idx = idx_SI2O2 + cluster_size -2
-            else if (monomer_idx == idx_MgO) then
-                molecule_idx = idx_Mg2O2 + cluster_size -2
-            else if (monomer_idx == idx_Al2O3) then
-                molecule_idx = idx_Al4O6 + cluster_size -2
-            end if
-        endif
-
-      gibbs = revHS(T,molecule_idx)*T*Rgas_kJ
-    !   print *, "revHS",gibbs,monomer_idx,molecule_idx, T
-
-        ! print *, "There is no thermochemical data on &
-        ! clusters ofther than TiO2."
-    end if
+#ENDIFKROME
+#KROME_cluster_index
 
   end function gibbs_free_energy
 #ENDIFKROME
