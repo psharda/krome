@@ -49,6 +49,7 @@ class molec():
 	name = "" #molecule name
 	charge = 0 #charge (0=neutral)
 	mass = 0e0 #mass in g
+	radius = 0 # 'radius' of species in cm
 	zatom = 0 #atomic number (also for molecules)
 	neutrons = 0 #total number of neutrons
 	ename = "" #exploded name (e.g. H2C4=CCCCHH)
@@ -59,6 +60,7 @@ class molec():
 	is_atom = False #flag to identify atoms
 	is_surface = False #flag for species on surface
 	is_chemisorbed = False #flag for chemisorbed species
+	is_clustarable = False #flag for species that can grow into larger clusters
 	hasThermoTable = False #flag for having thermo data
 	hasJanafThermoTable = False #flag for having thermo data from JANAF database
 	Ebind_ice = Ebind_bare = 0e0 #binding energy on surface for ice and bare grain
@@ -1419,6 +1421,23 @@ def get_be_rot(arg):
 	else:
 		False
 
+# Equivalent radius of a species in cm
+def get_radius(arg):
+	radius = {"TIO2": 1.62e-8,
+	# Interatomic distance from Jeong et al 2000 DOI:10.1088/0953-4075/33/17/319
+			"AL2O3": 3.304e-8,
+	# Interatomic distance O-Al-O (linear geometry) from Archibong et al 1999
+	# doi: 10.1021/jp983695n
+			"MGO":  0.865e-8,
+	# Half a bond length form Farrow et al 2014 doi:10.1039/C4CP01825G
+			"SIO": 0.75765e-8
+	# Bond length from Bromley et al 2016 doi:10.1039/c6cp03629e
+			}
+	if arg in radius:
+		return radius[arg]
+	else:
+		return None
+
 ##################################
 #check if a file exists
 def file_exists(fname):
@@ -1781,6 +1800,11 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 	#chemisorbed species
 	if("_c_dust" in name.lower()):
 		mymol.is_chemisorbed = True
+
+	clusterables = ["TIO2", "MGO", "SIO", "AL2O3"]
+	if name in clusterables:
+		mymol.is_clustarable = True
+		mymol.radius = get_radius(name)
 
 	#when belongs to dust+idx remove _dust in the name
 	if(dustIdx>0 and not(mymol.is_surface)):
