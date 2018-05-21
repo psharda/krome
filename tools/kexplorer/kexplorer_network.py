@@ -496,22 +496,24 @@ class network:
 			lev_exp = np.arange(exp_min, exp_max)
 			levs = np.power(10, lev_exp)
 			# Try best/newest matplotlib option (OPTION 2).
-	        # If not present, then do OPTION 1.
-	        try:
-	            plt.contourf(x, y, z, levels=levs, extend='both',
-	                        cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+			# If not present, then do OPTION 1.
+			# print zMin, zMax
+			try:
+				# print 'zzzz'
+				plt.contourf(x, y, z, levels=levs, extend='min',
+							cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+				# plt.show()
+			except(ValueError,), err:
+				# replace this with the pcolormesh option if desired.
+				exp_min = np.floor(np.log10(zMin)-1)
+				exp_max = np.ceil(np.log10(zMax)+1)
+				lev_exp = np.arange(exp_min, exp_max)
+				levs = np.power(10, lev_exp)
+				#replace all values below lower limit, with lower limit.
+				z[z < levs[0] ] = levs[0]
 
-	        except(ValueError,), err:
-	            # replace this with the pcolormesh option if desired.
-	            exp_min = np.floor(np.log10(zMin)-1)
-	            exp_max = np.ceil(np.log10(zMax)+1)
-	            lev_exp = np.arange(exp_min, exp_max)
-	            levs = np.power(10, lev_exp)
-	            #replace all values below lower limit, with lower limit.
-	            z[z < levs[0] ] = levs[0]
-
-	            plt.contourf(x, y, z, levels=levs,
-	            			cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+				plt.contourf(x, y, z, levels=levs,
+							cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
 
 		else:
 			#linear colorbar
