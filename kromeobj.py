@@ -1692,6 +1692,7 @@ class krome():
 			'P':15.*(menp)+mn,
 			'S':(menp)*16,
 			'Cl':(menp)*17+mn,
+			'Ar':(menp)*18+4*mn,
 			'Ti':(menp)*22+4*mn,
 			'Fe':(me+mp)*26+mn*29,
 			'GRAIN0': 100*6*(menp),
