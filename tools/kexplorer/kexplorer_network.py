@@ -67,6 +67,10 @@ class network:
 			# determine (Tgas,xvar)-grid
 			self.getRangeTgasXvar()
 
+			# sort data on tgas and xvar if the input file is not
+			for el in self.elements.values():
+				el.sortData()
+
 
 
 
