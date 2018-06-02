@@ -2,13 +2,20 @@
 \usepackage{amsmath}
 \usepackage{chemformula}
 \usepackage{amssymb}
+\usepackage{longtable,tabu}
 \newcommand{\dbDefault}{\textsc{KIDA}}
+\newcolumntype{h}{>{\setbox0=\hbox\bgroup}c<{\egroup}@{}}
 
 \begin{document}
+\centering
+ \begin{longtable}{rllll}
+    \input{NetworkLatex.tex}
+ \end{longtable}
 
- \begin{tabular}{lllll}
-  \input{NetworkLatex.tex}
- \end{tabular}
+ % References can be added in the network file with
+ % #@ref: <latex citation>
+ % The reference will be used for all subsequent reactions until the next occurance of #@ref:
+ \input{NetworkLatexReferences.tex}
 
 \end{document}
 

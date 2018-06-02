@@ -183,7 +183,8 @@ class network:
 			#dump header of the file
 			self.dumpLatexTableHeader(fileOutput)
 			#loop on reactions to evaluate
-			for myReaction in sorted(self.reactions, key=lambda x: [xx.name for xx in x.reactants]):
+#			for myReaction in sorted(self.reactions, key=lambda x: [x.reactionType] + [xx.name for xx in x.reactants]):
+			for myReaction in sorted(self.reactions, key=lambda x: x.uid):
 				#list with all variable shortcuts (excl. temperature ones)
 				shortcutsVariables = myReaction.shortcuts
 
@@ -204,6 +205,8 @@ class network:
 
 				cntTotalReactions += 1
 
+                self.dumpLatexReferences()
+
 	#****************
 	#dump colums in LateX table format
 	def dumpLatexTableHeader(self, tableFile):
@@ -220,6 +223,14 @@ class network:
 	def dumpLatexTable(self, columns, tableFile):
 		row = " & ".join(columns) + " \\\\"
 		tableFile.write(row + "\n")
+
+        #****************
+	#make a Latex list of references for the reaction table
+        def dumpLatexReferences(self, filename="NetworkLatexReferences.tex"):
+                with open(filename, "w") as fileOutput:
+                        for reference in sorted(self.referenceId.keys()):
+                                fileOutput.write("("+str(self.referenceId[reference])+") "+reference)
+
 
 	#********************
 	#check xsec folder and write xsec status to log file
@@ -256,14 +267,26 @@ class network:
 		reactionFormat = "@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate"
 		shortcutsList = [] #used in network2latex, list because dict loses order
 		inBlockCR = False
+                inBlockPhoto = False
 
 		self.reactions = []
+                reactionId = {}
+                self.referenceId = {}
+                nextReactionId = 0
+                nextReferenceId = 0
 		print "reading network "+fileName
 		#open file to read network
 		fh = open(fileName,"rb")
+                reference = ""
 		for row in fh:
 			srow = row.strip()
 			if(srow==""): continue
+                        if(srow.startswith("#@ref:")):
+                                reference = srow.replace("#@ref:","")
+                                if not reference in self.referenceId:
+                                        nextReferenceId += 1
+                                        self.referenceId[reference] = nextReferenceId
+                                        print "Added reference :", self.referenceId[reference], reference
 			if(srow.startswith("#")): continue
 
 			#get format if token found
@@ -284,15 +307,32 @@ class network:
 			if(srow.lower().startswith("@cr_stop") or srow.lower().startswith("@cr_end")):
 				inBlockCR = False
 
+                        if(srow.lower().startswith("@photo_start") or srow.lower().startswith("@photo_begin")):
+				inBlockPhoto = True
+			if(srow.lower().startswith("@photo_stop") or srow.lower().startswith("@photo_end")):
+				inBlockPhoto = False
+
 			#change reaction type to CR
 			reactionType = "standard" #default
 			if(inBlockCR): reactionType = "CR"
+                        if(inBlockPhoto): reactionType = "photo"
 
 			#skip other tokens
 			if(srow.startswith("@")): continue
 
-			#parse row line for reaction
-			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType,self.species,shortcutsList)
+                        #parse row line for reaction
+                        ref = (self.referenceId[reference], reference)
+			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType,self.species,shortcutsList,reference=ref)
+
+                        #update reaction id
+                        key = (str(myReaction.reactants), str(myReaction.products), str(myReaction.reactionType))
+                        if key in reactionId:
+                                myReaction.uid = reactionId[key]
+                        else:
+                                nextReactionId += 1
+                                myReaction.uid = nextReactionId
+                                reactionId[key] = myReaction.uid
+
 			#add parsed reaction to reactions structure in network
 			self.reactions.append(myReaction)
 			#clear list for new reaction

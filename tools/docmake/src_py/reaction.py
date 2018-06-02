@@ -18,17 +18,17 @@ class reaction:
 
 	#********************
 	#parse csv reaction file row (constructor)
-	def __init__(self,row,reactionFormat,atomSet,reactionType,speciesList,shortcuts=None):
+	def __init__(self,row,reactionFormat,atomSet,reactionType,speciesList,shortcuts=None,reference=None):
 
 		if(reactionType=="KIDA"):
 			self.parseFormatKIDA(row,reactionFormat,atomSet,reactionType,speciesList)
 		elif(reactionType=="UMIST"):
 			self.parseFormatUMIST(row,reactionFormat,atomSet,reactionType,speciesList)
 		else:
-			self.parseFormatKROME(row,reactionFormat,atomSet,reactionType,speciesList,shortcuts)
+			self.parseFormatKROME(row,reactionFormat,atomSet,reactionType,speciesList,shortcuts,reference)
 
 	#********************
-	def parseFormatKROME(self,row,reactionFormat,atomSet,reactionType,speciesList,shortcuts=None):
+	def parseFormatKROME(self,row,reactionFormat,atomSet,reactionType,speciesList,shortcuts=None,reference=None):
 
 		if(not(reactionFormat.startswith("@format:"))):
 			sys.exit("ERROR: wrong format "+reactionFormat)
@@ -46,6 +46,7 @@ class reaction:
 		self.Tmax = [None]
 		self.reactionType = reactionType
 		self.shortcuts = shortcuts
+                self.reference = reference
 
 		#loop on format parts (and parse species)
 		for i in range(len(splitFormat)):
@@ -1331,7 +1332,8 @@ class reaction:
 
 		if idxMerged == 0:
 			#LaTeX index
-			idxTex = str(cntAllReactions+1)
+			#idxTex = str(cntAllReactions+1)
+                        idxTex = str(self.uid)
 
 			#latex reaction
 			reactionTex = "\\ch{"
@@ -1346,8 +1348,12 @@ class reaction:
 					continue
 
 				reactionTex += spec + " + "
-			#remove trailing " + "
-			reactionTex = reactionTex[:-3]
+                        #if photo-reaction, add photon as reactant
+                        if(self.reactionType == "photo"):
+                                reactionTex += "$\\gamma$"
+                        else:
+			        #remove trailing " + "
+			        reactionTex = reactionTex[:-3]
 			#if cosmic ray reaction, make LaTeX format
 			#e.g. \ch{H2 ->[CR] H + H}
 			if self.reactionType == "CR":
@@ -1372,7 +1378,10 @@ class reaction:
 			reactionTex += "}"
 
 			# default LaTeX reference as a LaTeX command
-			refTex = "\\dbDefault{}"
+                        if(self.reference == None):
+			        refTex = "\\dbDefault{}"
+                        else:
+                                refTex = str(self.reference[0])
 
 		else:
 			idxTex = ""
