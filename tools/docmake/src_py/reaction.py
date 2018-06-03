@@ -1388,18 +1388,34 @@ class reaction:
 			reactionTex = ""
 			refTex = ""
 
-		#LaTeX rate
-		rateTex, message = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts)
-                if(idxMerged==0):
-		        rateTex = "k$_{" + idxTex +"}" + rateTex
-#                        rateTex = "k$_{" + str(cntAllReactions+1) +"}" + rateTex
-                else:
-                        rateTex = "$\quad " + rateTex
-
+		#LaTeX rates
+                nrates = len(self.rate)
+                for cnt in range(nrates):
+		        rateTex, message = self.rate2latex(self.rate[cnt], temperatureShortcuts, variableShortcuts)
+                        if(cnt==0):
+                                ratesTex = "k$_{" + idxTex +"}"
+                                if(nrates>1):
+                                        ratesTex = "$\\begin{aligned}[t] \mathrm{k}_{" + idxTex +"} & "
+                                ratesTex += rateTex
+                                if(nrates>1): ratesTex += " \\\\"
+                        else:
+                                ratesTex += " & " + rateTex
+                        if(cnt < nrates - 1 and nrates > 1): ratesTex += " \\\\"
+                if(nrates>1): ratesTex += "\\end{aligned}"
+                ratesTex += "$"
+                
 		#LaTeX temperature limits
-		limitsTex = self.tempRange2latex(idxMerged)
+                limitsTex = "$"
+                if (nrates > 1): limitsTex += "\\begin{aligned}[t]"
+                        
+                for cnt in range(nrates):
+                        if(nrates > 1): limitsTex += " & "
+		        limitsTex += self.tempRange2latex(cnt)
+                        if(nrates > 1 and cnt < nrates - 1): limitsTex += " \\\\"
+                if(nrates > 1): limitsTex += "\\end{aligned}"
+                limitsTex += "$"
 
-		return [idxTex, reactionTex, rateTex, limitsTex, refTex], message
+		return [idxTex, reactionTex, ratesTex, limitsTex, refTex], message
 
 	#********************
 	#make a LaTeX format of reaction
@@ -1535,7 +1551,7 @@ class reaction:
 		rateTex = re.sub(r"0*(\d+\.*)", r"\1", rateTex)
 
 		#add LaTeX symbols
-		rateTex = " = " + rateTex + "$"
+		rateTex = " = " + rateTex
 
 		# store rate before breaking
 		rateTextFull = rateTex

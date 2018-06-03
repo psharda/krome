@@ -263,6 +263,6 @@ def simplifyLimits(name):
 #limits to LaTeX format
 def limits2latex(name):
 	if name:
-		name = name.replace("<=", " $\leqslant$ ").replace(">="," $\geqslant$ ")
-		name = name.replace("<","$ < $").replace(">"," $ > $ ")
+		name = name.replace("<=", " \leqslant ").replace(">="," \geqslant ")
+		name = name.replace("K","\, \mathrm{K}")
 	return name
