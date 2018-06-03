@@ -1390,7 +1390,11 @@ class reaction:
 
 		#LaTeX rate
 		rateTex, message = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts)
-		rateTex = "k$_{" + str(cntAllReactions+1) +"}" + rateTex
+                if(idxMerged==0):
+		        rateTex = "k$_{" + idxTex +"}" + rateTex
+#                        rateTex = "k$_{" + str(cntAllReactions+1) +"}" + rateTex
+                else:
+                        rateTex = "$\quad " + rateTex
 
 		#LaTeX temperature limits
 		limitsTex = self.tempRange2latex(idxMerged)
@@ -1427,6 +1431,7 @@ class reaction:
 			rate = rate.replace(tshort[0], tshort[1])
 
 		#make sympy friendly
+                rate = rate.replace("dexp", "exp")
 		rate = rate.replace("d", "e")
 		rate = rate.replace("log", "ln")
 		rate = rate.replace("ln10", "log")
