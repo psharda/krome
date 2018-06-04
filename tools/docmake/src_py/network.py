@@ -328,8 +328,7 @@ class network:
 
 			#add parsed reaction to reactions structure in network
 			self.reactions.append(myReaction)
-			#clear list for new reaction
-			shortcutsList = []
+
 		fh.close()
 
 	#**************

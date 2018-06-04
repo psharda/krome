@@ -22,3 +22,5 @@ T02       = T0*T0
 T03       = T02*T0
 T04       = T03*T0
 T0inv     = 1.e0/T0
+ntot      = ntot
+Hnuclei   = Hnuclei

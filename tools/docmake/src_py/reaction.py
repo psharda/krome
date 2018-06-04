@@ -1427,8 +1427,8 @@ class reaction:
 		message = "" #optional warning
 
 		#list of symbols you want to keep in the LaTeX format
-		Tsymbols = ["T", "(T/300)", "T_{e}"]
-		T, T32, Te = sp.symbols(Tsymbols)
+		Tsymbols = ["T", "(T/300)", "T_{e}", "f_{H_nO^+}", "A_v", "G_0", "\\zeta_{H_I}", "n_{\mathrm{tot}}", "n_{H_{tot}}"]
+		T, T32, Te, fHnOj, user_Av, user_G0, user_crate, ntot, Hnuclei = sp.symbols(Tsymbols)
 		exp = sp.Symbol("exp")
 		ln = sp.Symbol("ln")
 		log = sp.Symbol("log")
@@ -1473,6 +1473,7 @@ class reaction:
 			except (SyntaxError,), err:
                                 if rate=="@xsecFile=SWRI": return "= \\textrm{table}", message
                                 print "Syntax Error in rate", err
+                                print "in ", rate
 				return "=" + rate, message
 
 			#special case rate will be prited as it is
@@ -1558,9 +1559,9 @@ class reaction:
 		rateTextFull = rateTex
 
 		#break long rates in multiple lines
-		# TODO: generalize breaking, it tries to break inside \frac{}{}
-		if len(rateTex) > maxRateLength and not debug:
-			rateTex, message = self.breakRateTex(rateTex)
+		# TODO: rewrite long fractions to '/' and break them
+		if len(rateTex) > maxRateLength:
+			rateTex = self.breakRateTex(rateTex)
 
 		message += "\n%These comments below are for debugging, ignore them"
 		message += "\n%original rate: " + rate
@@ -1570,9 +1571,19 @@ class reaction:
 
 		return rateTex, message
 
+        #****************
+	#break long rates and put in LateX table format
+        def breakRateTex(self,rate):
+                rate = utils.raiseBracketsOnOperators(rate)
+#                rate = utils.replaceLongFracByDivide(rate)
+                rate = utils.replaceLeftRightbyBigLR(rate)
+                rate = utils.breakLatexEquation(rate)
+                rate = "\\begin{aligned}[t] & " + rate + "\\end{aligned}"
+                return rate
+
 	#****************
 	#break long rates and put in LateX table format
-	def breakRateTex(self, rate):
+	def breakRateTexDeprecated(self, rate):
 		nextReplace = False
 
 		#get rid of unclosed "{}" on a line, when breaking equation

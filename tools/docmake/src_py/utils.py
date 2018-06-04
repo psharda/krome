@@ -1,4 +1,4 @@
-import os,datetime,math,re
+import os,datetime,math,re,regex
 
 #***********************
 def getHtmlProperty(item):
@@ -285,3 +285,44 @@ def replaceFortranVar(varname, replacement, string):
         string = re.sub("^"+varname+"([^a-zA-Z0-9_])", replacement+r'\g<1>', string)
         string = re.sub("([^a-zA-Z])"+varname+"([^a-zA-Z0-9_])", r'\g<1>'+replacement+r'\g<2>', string)
         return string
+
+#********************
+#adds line breaks to latex equation
+def breakLatexEquation(string):
+        opened = '{'
+        closed = '}'
+        stack = []
+        depth = 0
+	breakChars = ['+', '-']
+        result = ""
+        previousWasOpenParan = False
+        for i, c in enumerate(string):
+                if c == opened:
+                        depth += 1
+                elif c == closed:
+			depth -= 1
+                	#break on breakChars unless inside block or after opening paranthesis
+                if c in breakChars and depth==0 and not previousWasOpenParan:
+			c = " \\\\ \n& " + c
+                result += c
+                if not c in ["(", " "]: previousWasOpenParan = False
+                if c == "(": previousWasOpenParan = True
+
+        return result
+
+#********************
+#replaces \left and \right by \bigL and \bigR in latex equation
+# to allow parantheses to span multiple lines
+def replaceLeftRightbyBigLR(rate):
+        rate = rate.replace("\\left", "\\Bigl")
+        rate = rate.replace("\\right", "\\Bigr")
+        return rate
+
+#********************
+#raises curly brackets around expressions that belong to operators
+def raiseBracketsOnOperators(rate):
+        # Solution by scary recursive regular expression
+        # ?2 means 'recursively add paranthesized group #2 here'
+        # See e.g. http://www.rexegg.com/regex-recursion.html
+        rate = regex.sub(r'(\operatorname\{[a-zA-Z]{1,}\})(\{(([^{}]|(?2))*)\})', r'\1\3', rate)
+        return rate
