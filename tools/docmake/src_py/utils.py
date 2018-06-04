@@ -1,4 +1,4 @@
-import os,datetime,math
+import os,datetime,math,re
 
 #***********************
 def getHtmlProperty(item):
@@ -187,11 +187,12 @@ def isNumber(arg):
 
 #********************
 #character to int
-def char2int(arg):
+def char2int(arg, when_below=1e4):
 	if isNumber(arg):
-		return int(float(arg))
-	else:
-		return arg
+                f = float(arg)
+                if(f < when_below):
+		        return int(float(arg))
+	return arg
 
 #********************
 def getShortcuts():
@@ -266,3 +267,13 @@ def limits2latex(name):
 		name = name.replace("<=", " \leqslant ").replace(">="," \geqslant ")
 		name = name.replace("K","\, \mathrm{K}")
 	return name
+
+#********************
+#wrap exponential notation numbers in \num
+def exp2latex(string):
+        if(string):
+                #replace 1e<x> by e<x> to get 10^x instead of 1x10^x
+                string = re.sub("1e([+]*[0-9]{1,})", r"e\1",string)
+                string = re.sub("([0-9]*\.*[0-9]*e[+]*[0-9]{1,})", r"\\num{\1}",string)
+        return string
+                        

@@ -1655,9 +1655,11 @@ class reaction:
 
 		#change limits symbols to latex format
 		lowhighTex = utils.limits2latex(lowhigh)
+
 		#turn numbers into integers in latex format
 		lowhighTex = [str(utils.char2int(part)) for part in lowhighTex.split()]
 		limitTex = " ".join(lowhighTex)
+                limitTex = utils.exp2latex(limitTex)
 
 		return limitTex
 
