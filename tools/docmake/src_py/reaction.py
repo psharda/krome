@@ -1439,7 +1439,7 @@ class reaction:
 			#loop needs to be reversed order for variable dependencies
 			for var in reversed(variableShortcuts):
 				if var[0] in rate:
-					rate = rate.replace(var[0], var[1])
+                                        rate = utils.replaceFortranVar(var[0], var[1], rate)
 
 		#replace shortcuts, loop needs to be reversed order for variable dependencies
 		#skip T32 and Te to keep as symbol
@@ -1471,13 +1471,14 @@ class reaction:
 
 			#special case rate will be prited as it is
 			except (SyntaxError,), err:
-				print "Syntax Error in rate", err
-				return "=" + rate + "$", message
+                                if rate=="@xsecFile=SWRI": return "= \\textrm{table}", message
+                                print "Syntax Error in rate", err
+				return "=" + rate, message
 
 			#special case rate will be prited as it is
 			except(ValueError,), err:
 				print "Value Error in rate", err
-				return "=" + rate + "$", message
+				return "=" + rate, message
 
 		# store for debugging
 		rateTextAfterSympy = rateTex

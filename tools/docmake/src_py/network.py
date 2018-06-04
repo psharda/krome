@@ -197,7 +197,7 @@ class network:
 
                                 if message:
 					fileOutput.write(message + "\n")
-					self.dumpLatexTable(latexColums, fileOutput)
+				self.dumpLatexTable(latexColums, fileOutput)
 
                 self.dumpLatexReferences()
 
@@ -280,7 +280,6 @@ class network:
                                 if not reference in self.referenceId:
                                         nextReferenceId += 1
                                         self.referenceId[reference] = nextReferenceId
-                                        print "Added reference :", self.referenceId[reference], reference
 			if(srow.startswith("#")): continue
 
 			#get format if token found

@@ -276,4 +276,12 @@ def exp2latex(string):
                 string = re.sub("1e([+]*[0-9]{1,})", r"e\1",string)
                 string = re.sub("([0-9]*\.*[0-9]*e[+]*[0-9]{1,})", r"\\num{\1}",string)
         return string
-                        
+
+#********************
+#replaces fortran variable name with <replacement> in string
+def replaceFortranVar(varname, replacement, string):
+        string = re.sub("^"+varname+"$", replacement, string)
+        string = re.sub("([^a-zA-Z])"+varname+"$", r'\g<1>'+replacement, string)
+        string = re.sub("^"+varname+"([^a-zA-Z0-9_])", replacement+r'\g<1>', string)
+        string = re.sub("([^a-zA-Z])"+varname+"([^a-zA-Z0-9_])", r'\g<1>'+replacement+r'\g<2>', string)
+        return string
