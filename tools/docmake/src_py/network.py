@@ -175,6 +175,7 @@ class network:
 
 		#list with all temperature shortcuts element = (var, replaceWith)
 		shortcutsTemperature = utils.getShortcutsLatex()
+                deferredShortcuts = utils.getDeferredShortcuts()
 		cntMergedReactions = 0
 		cntTotalReactions = 1
 		cntAllReactions = 0
@@ -190,6 +191,7 @@ class network:
 
                                 latexColums, message = myReaction.reaction2latex(shortcutsTemperature,
 										 shortcutsVariables,
+                                                                                 deferredShortcuts,
 										 cntMergedReactions,
 										 0,
 										 cntTotalReactions,
@@ -199,6 +201,7 @@ class network:
 					fileOutput.write(message + "\n")
 				self.dumpLatexTable(latexColums, fileOutput)
 
+                self.dumpDeferredShortcuts(shortcutsTemperature, shortcutsVariables, deferredShortcuts)
                 self.dumpLatexReferences()
 
 	#****************
@@ -218,6 +221,45 @@ class network:
 		row = " & ".join(columns) + " \\\\"
 		tableFile.write(row + "\n")
 
+        #****************
+	#dump a list of equations for deferred variables
+        def dumpDeferredShortcuts(self, temperatureShortcuts, variableShortcuts, deferredShortcuts, filename="NetworkLatexSymbols.tex"):
+                import sympy as sp
+                import re
+                symboltable = utils.getSymbolTable()
+                with open(filename, "w") as fileOutput:
+                        for expr, symbol in deferredShortcuts.iteritems():
+                                expr = utils.replaceShortcuts(expr, variableShortcuts, {})
+                                expr = utils.replaceShortcuts(expr, temperatureShortcuts, {})
+                                expr = expr.replace("dexp", "exp")
+		                expr = expr.replace("d", "e")
+		                expr = expr.replace("log", "ln")
+		                expr = expr.replace("ln10", "log")
+		                expr = expr.replace("_8", "")
+                                while True:
+		                        try:
+			                        exprTex = sp.latex(eval(expr,symboltable))
+			                        break
+		                        #undefined variable will become a symbol
+		                        except (NameError,), err:
+			                        print "Name error in expressino", err
+			                        varIssue = str(err).split("'")[1]
+                                                symboltable[varIssue] = varIssue
+                                                
+		                # use a\cdot 10^-b for reaction that are just numbers
+                                try:
+			                float(exprTex.replace("=", ""))
+			                exprTex = exprTex.replace("e-", "\\cdot 10^{-") + "}"
+		                except:
+			                pass
+
+                                # remove unwanted zeros
+		                exprTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", exprTex)
+		                exprTex = re.sub(r"(\d+)\.(?=\D)", r"\1", exprTex)
+		                exprTex = re.sub(r"0*(\d+\.*)", r"\1", exprTex)
+
+                                fileOutput.write("$"+symbol + "$ & $ = " + exprTex+"$ \\\\ \n")
+                
         #****************
 	#make a Latex list of references for the reaction table
         def dumpLatexReferences(self, filename="NetworkLatexReferences.tex"):

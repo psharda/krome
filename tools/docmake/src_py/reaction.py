@@ -1322,7 +1322,7 @@ class reaction:
 
 	#********************
 	#make a LaTeX format of reaction
-	def reaction2latex(self, temperatureShortcuts, variableShortcuts,
+	def reaction2latex(self, temperatureShortcuts, variableShortcuts, deferredShortcuts,
 						cntMergedReactions, idxMerged, cntTotalReactions, cntAllReactions):
 		#latex format uses \usepackage{chemformula} in LaTeX
 		#e.g. \ch{H2 + H -> H + H + H}
@@ -1391,7 +1391,7 @@ class reaction:
 		#LaTeX rates
                 nrates = len(self.rate)
                 for cnt in range(nrates):
-		        rateTex, message = self.rate2latex(self.rate[cnt], temperatureShortcuts, variableShortcuts)
+		        rateTex, message = self.rate2latex(self.rate[cnt], temperatureShortcuts, variableShortcuts, deferredShortcuts)
                         if(cnt==0):
                                 ratesTex = "k$_{" + idxTex +"}"
                                 if(nrates>1):
@@ -1419,32 +1419,22 @@ class reaction:
 
 	#********************
 	#make a LaTeX format of reaction
-	def rate2latex(self, rate, temperatureShortcuts, variableShortcuts):
+	def rate2latex(self, rate, temperatureShortcuts, variableShortcuts, deferredShortcuts):
 		import re
 		import sympy as sp
 		debug = True
 		maxRateLength = 100
 		message = "" #optional warning
 
-		#list of symbols you want to keep in the LaTeX format
-		Tsymbols = ["T", "(T/300)", "T_{e}", "f_{H_nO^+}", "A_v", "G_0", "\\zeta_{H_I}", "n_{\mathrm{tot}}", "n_{H_{tot}}"]
-		T, T32, Te, fHnOj, user_Av, user_G0, user_crate, ntot, Hnuclei = sp.symbols(Tsymbols)
-		exp = sp.Symbol("exp")
-		ln = sp.Symbol("ln")
-		log = sp.Symbol("log")
-		sqrt = sp.Symbol("sqrt")
-
+                symboltable = utils.getSymbolTable()
+                        
 		#put all variables with corresponding values in rate
 		if variableShortcuts:
-			#loop needs to be reversed order for variable dependencies
-			for var in reversed(variableShortcuts):
-				if var[0] in rate:
-                                        rate = utils.replaceFortranVar(var[0], var[1], rate)
+                        rate = utils.replaceShortcuts(rate, variableShortcuts, deferredShortcuts)
 
 		#replace shortcuts, loop needs to be reversed order for variable dependencies
 		#skip T32 and Te to keep as symbol
-		for tshort in reversed(temperatureShortcuts[2:]):
-			rate = rate.replace(tshort[0], tshort[1])
+                rate = utils.replaceShortcuts(rate, temperatureShortcuts[2:], deferredShortcuts)
 
 		#make sympy friendly
                 rate = rate.replace("dexp", "exp")
@@ -1460,14 +1450,13 @@ class reaction:
 		#keep trying
 		while True:
 			try:
-				rateTex = sp.latex(eval(rate))
+				rateTex = sp.latex(eval(rate,symboltable))
 				break
 			#undefined variable will become a symbol
 			except (NameError,), err:
 				print "Name error in rate", err
 				varIssue = str(err).split("'")[1]
-				symb = varIssue + " = sp.Symbol(\""+varIssue+"\")"
-				exec(symb)
+                                symboltable[varIssue] = varIssue
 
 			#special case rate will be prited as it is
 			except (SyntaxError,), err:
@@ -1551,6 +1540,9 @@ class reaction:
 		rateTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", rateTex)
 		rateTex = re.sub(r"(\d+)\.(?=\D)", r"\1", rateTex)
 		rateTex = re.sub(r"0*(\d+\.*)", r"\1", rateTex)
+
+                # truncate numbers at 5 decimal places
+                rateTex = re.sub(r'(\d+\.[0-9]{5})\d*', r'\1', rateTex)
 
 		#add LaTeX symbols
 		rateTex = " = " + rateTex

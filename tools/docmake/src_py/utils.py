@@ -326,3 +326,48 @@ def raiseBracketsOnOperators(rate):
         # See e.g. http://www.rexegg.com/regex-recursion.html
         rate = regex.sub(r'(\operatorname\{[a-zA-Z]{1,}\})(\{(([^{}]|(?2))*)\})', r'\1\3', rate)
         return rate
+
+#********************
+#resolve Krome variables in 'shortcuts', exept those in 'deferredShortcuts')
+def replaceShortcuts(string, shortcuts, deferredShortcuts):
+        for var in reversed(shortcuts):
+                if var[0] in deferredShortcuts.keys(): continue
+		if var[0] in string:
+                        string = replaceFortranVar(var[0], var[1], string)
+        return string
+                     
+def getDeferredShortcuts():
+        return { "kh11" : "k_{H11}",
+                 "a11"  : "a_{11}",
+                 "kh21" : "k_{H21}",
+                 "a21"  : "a_{21}",
+                 "kl21" : "k_{L21}" }
+
+def getSymbolTable():
+        import sympy as sp
+        #list of symbols you want to keep in the LaTeX format
+        symboltable = {
+                "T" : "T",
+                "T32" : "(T/300)",
+                "Te" : "T_{e}",
+                "fHnOj" : "f_{H_nO^+}",
+                "user_Av" : "A_v",
+                "user_G0" : "G_0",
+                "user_crate" : "\\zeta_{H_I}",
+                "ntot" : "n_{\mathrm{tot}}",
+                "Hnuclei" : "n_{H_{tot}}",
+                "exp" : "exp",
+                "ln" : "ln",
+                "log" : "log",
+                "sqrt" : "sqrt"
+        }
+
+        # Add deferred symbols
+        ds = getDeferredShortcuts()
+        for key, value in ds.iteritems():
+                symboltable[key] = value
+
+        # Convert to sympy symbols
+        for key in symboltable:
+                symboltable[key] = sp.Symbol(symboltable[key])
+        return symboltable
