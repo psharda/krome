@@ -293,7 +293,7 @@ def breakLatexEquation(string):
 			depth -= 1
                 	#break on breakChars unless inside block or after opening paranthesis
                 if c in breakChars and depth==0 and not previousWasOpenParan:
-			c = " \\\\ \n& " + c
+			c = " \\\\ \n &" + c
                 result += c
                 if not c in ["(", " "]: previousWasOpenParan = False
                 if c == "(": previousWasOpenParan = True

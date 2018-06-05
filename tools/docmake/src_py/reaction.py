@@ -1388,34 +1388,21 @@ class reaction:
 			reactionTex = ""
 			refTex = ""
 
-		#LaTeX rates
-                nrates = len(self.rate)
-                for cnt in range(nrates):
-		        rateTex, message = self.rate2latex(self.rate[cnt], temperatureShortcuts, variableShortcuts, deferredShortcuts)
-                        if(cnt==0):
-                                ratesTex = "k$_{" + idxTex +"}"
-                                if(nrates>1):
-                                        ratesTex = "$\\begin{aligned}[t] \mathrm{k}_{" + idxTex +"} & "
-                                ratesTex += rateTex
-                                if(nrates>1): ratesTex += " \\\\"
-                        else:
-                                ratesTex += " & " + rateTex
-                        if(cnt < nrates - 1 and nrates > 1): ratesTex += " \\\\"
-                if(nrates>1): ratesTex += "\\end{aligned}"
-                ratesTex += "$"
+		#LaTeX rate
+		rateTex, message = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts, deferredShortcuts)
+                rateTex = "$" + rateTex + "$"
                 
 		#LaTeX temperature limits
-                limitsTex = "$"
-                if (nrates > 1): limitsTex += "\\begin{aligned}[t]"
-                        
-                for cnt in range(nrates):
-                        if(nrates > 1): limitsTex += " & "
-		        limitsTex += self.tempRange2latex(cnt)
-                        if(nrates > 1 and cnt < nrates - 1): limitsTex += " \\\\"
-                if(nrates > 1): limitsTex += "\\end{aligned}"
-                limitsTex += "$"
+		limitsTex = self.tempRange2latex(idxMerged)
+                limitsTex = "$" + limitsTex + "$"
 
-		return [idxTex, reactionTex, ratesTex, limitsTex, refTex], message
+                #k symbol
+                if idxMerged==0:
+                        kTex="k$_{"+idxTex+"}$"
+                else:
+                        kTex=""
+
+		return [idxTex, reactionTex, kTex, rateTex, limitsTex, refTex], message
 
 	#********************
 	#make a LaTeX format of reaction
@@ -1544,9 +1531,6 @@ class reaction:
                 # truncate numbers at 5 decimal places
                 rateTex = re.sub(r'(\d+\.[0-9]{5})\d*', r'\1', rateTex)
 
-		#add LaTeX symbols
-		rateTex = " = " + rateTex
-
 		# store rate before breaking
 		rateTextFull = rateTex
 
@@ -1554,6 +1538,9 @@ class reaction:
 		# TODO: rewrite long fractions to '/' and break them
 		if len(rateTex) > maxRateLength:
 			rateTex = self.breakRateTex(rateTex)
+                else:
+                        #add LaTeX symbols
+		        rateTex = " = " + rateTex
 
 		message += "\n%These comments below are for debugging, ignore them"
 		message += "\n%original rate: " + rate
@@ -1570,7 +1557,7 @@ class reaction:
 #                rate = utils.replaceLongFracByDivide(rate)
                 rate = utils.replaceLeftRightbyBigLR(rate)
                 rate = utils.breakLatexEquation(rate)
-                rate = "\\begin{aligned}[t] & " + rate + "\\end{aligned}"
+                rate = "\\begin{aligned}[t] = &" + rate + "\\end{aligned}"
                 return rate
 
 	#****************
