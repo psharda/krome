@@ -212,18 +212,8 @@ def getShortcuts():
 #********************
 #get shortcuts of temperature that can be used in network
 def getShortcutsLatex():
-	shortcut = []
-	fileName = "temperatureShortcuts.dat"
-        absPath = os.path.join(os.path.dirname(__file__), "..", fileName)
-        absPath = os.path.abspath(absPath)
-	fh = open(absPath,"rb")
-	for row in fh:
-		srow = row.strip()
-		if(srow==""): continue
-		if(srow.startswith("#")): continue
-		(variable,expression) = [x.strip() for x in srow.split("!")[0].split("=")]
-		shortcut.append((variable,expression))
-	return shortcut
+        from options import latexoptions
+        return latexoptions.substitutions
 
 #********************
 #check if variable is already a temperature shortcut
@@ -269,7 +259,7 @@ def limits2latex(name):
 	return name
 
 #********************
-#wrap exponential notation numbers in \num
+#wrap exponential notation numbers in \num in latex string
 def exp2latex(string):
         if(string):
                 #replace 1e<x> by e<x> to get 10^x instead of 1x10^x
@@ -319,7 +309,7 @@ def replaceLeftRightbyBigLR(rate):
         return rate
 
 #********************
-#raises curly brackets around expressions that belong to operators
+#raises curly brackets around latex expressions that belong to operators
 def raiseBracketsOnOperators(rate):
         # Solution by scary recursive regular expression
         # ?2 means 'recursively add paranthesized group #2 here'
@@ -328,46 +318,35 @@ def raiseBracketsOnOperators(rate):
         return rate
 
 #********************
-#resolve Krome variables in 'shortcuts', exept those in 'deferredShortcuts')
-def replaceShortcuts(string, shortcuts, deferredShortcuts):
+#resolve Krome variables in 'shortcuts', exept those in 'exceptions')
+def replaceShortcuts(string, shortcuts, exceptions):
         for var in reversed(shortcuts):
-                if var[0] in deferredShortcuts.keys(): continue
+                if var[0] in exceptions: continue
 		if var[0] in string:
                         string = replaceFortranVar(var[0], var[1], string)
         return string
-                     
-def getDeferredShortcuts():
-        return { "kh11" : "k_{H11}",
-                 "a11"  : "a_{11}",
-                 "kh21" : "k_{H21}",
-                 "a21"  : "a_{21}",
-                 "kl21" : "k_{L21}" }
 
+#********************
+#get dictionary with shorcuts whose evaluation is deferred to end of latex table
+def getDeferredShortcuts():
+        from options import latexoptions
+        return latexoptions.deferred_substitutions
+
+#********************
+#get table of sympy symbols for latex table
 def getSymbolTable():
         import sympy as sp
-        #list of symbols you want to keep in the LaTeX format
-        symboltable = {
-                "T" : "T",
-                "T32" : "(T/300)",
-                "Te" : "T_{e}",
-                "fHnOj" : "f_{H_nO^+}",
-                "user_Av" : "A_v",
-                "user_G0" : "G_0",
-                "user_crate" : "\\zeta_{H_I}",
-                "ntot" : "n_{\mathrm{tot}}",
-                "Hnuclei" : "n_{H_{tot}}",
-                "exp" : "exp",
-                "ln" : "ln",
-                "log" : "log",
-                "sqrt" : "sqrt"
-        }
+        from options import latexoptions
+
+        symbols = latexoptions.symbols.copy()
 
         # Add deferred symbols
         ds = getDeferredShortcuts()
         for key, value in ds.iteritems():
-                symboltable[key] = value
+                symbols[key] = value
 
         # Convert to sympy symbols
-        for key in symboltable:
-                symboltable[key] = sp.Symbol(symboltable[key])
+        symboltable = {}
+        for key in symbols:
+                symboltable[key] = sp.Symbol(symbols[key])
         return symboltable

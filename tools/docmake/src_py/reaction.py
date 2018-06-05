@@ -1430,11 +1430,11 @@ class reaction:
                         
 		#put all variables with corresponding values in rate
 		if variableShortcuts:
-                        rate = utils.replaceShortcuts(rate, variableShortcuts, deferredShortcuts)
+                        rate = utils.replaceShortcuts(rate, variableShortcuts, deferredShortcuts.keys())
 
 		#replace shortcuts, loop needs to be reversed order for variable dependencies
 		#skip T32 and Te to keep as symbol
-                rate = utils.replaceShortcuts(rate, temperatureShortcuts[2:], deferredShortcuts)
+                rate = utils.replaceShortcuts(rate, temperatureShortcuts[1:], deferredShortcuts.keys())
 
 		#make sympy friendly
                 rate = rate.replace("dexp", "exp")

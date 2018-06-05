@@ -1,0 +1,32 @@
+{
+    "substitutions" : [
+	["T32"       , "Tgas/300"],
+	["invTgas"   , "1e0/Tgas"],
+	["invT32"    , "1.e0/T32"],
+	["lnT"       , "log(Tgas)"],
+	["sqrTgas"   , "sqrt(Tgas)"],
+	["ntot"      , "ntot"],
+	["Hnuclei"   , "Hnuclei"]
+    ],
+    "deferred_substitutions" : { "kh11" : "k_{H11}",
+				 "a11"  : "a_{11}",
+				 "kh21" : "k_{H21}",
+				 "a21"  : "a_{21}",
+				 "kl21" : "k_{L21}",
+				 "Te"   : "T_{e}"
+			       },
+    "symbols" : {
+        "Tgas" : "T",
+        "T32" : "(T/300)",
+        "fHnOj" : "f_{H_nO^+}",
+        "user_Av" : "A_v",
+        "user_G0" : "G_0",
+        "user_crate" : "\\zeta_{H_I}",
+        "ntot" : "n_{\\mathrm{tot}}",
+        "Hnuclei" : "n_{H_{tot}}",
+        "exp" : "exp",
+        "ln" : "ln",
+        "log" : "log",
+        "sqrt" : "sqrt"
+    }
+}

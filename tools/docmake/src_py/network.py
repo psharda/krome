@@ -184,7 +184,6 @@ class network:
 			#dump header of the file
 			self.dumpLatexTableHeader(fileOutput)
 			#loop on reactions to evaluate
-#			for myReaction in sorted(self.reactions, key=lambda x: [x.reactionType] + [xx.name for xx in x.reactants]):
 			for myReaction in sorted(self.reactions, key=lambda x: x.uid):
 				#list with all variable shortcuts (excl. temperature ones)
 				shortcutsVariables = myReaction.shortcuts
@@ -229,8 +228,8 @@ class network:
                 symboltable = utils.getSymbolTable()
                 with open(filename, "w") as fileOutput:
                         for expr, symbol in deferredShortcuts.iteritems():
-                                expr = utils.replaceShortcuts(expr, variableShortcuts, {})
-                                expr = utils.replaceShortcuts(expr, temperatureShortcuts, {})
+                                expr = utils.replaceShortcuts(expr, variableShortcuts, [])
+                                expr = utils.replaceShortcuts(expr, temperatureShortcuts[1:], [])
                                 expr = expr.replace("dexp", "exp")
 		                expr = expr.replace("d", "e")
 		                expr = expr.replace("log", "ln")
@@ -242,7 +241,7 @@ class network:
 			                        break
 		                        #undefined variable will become a symbol
 		                        except (NameError,), err:
-			                        print "Name error in expressino", err
+			                        print "Name error in expression", err
 			                        varIssue = str(err).split("'")[1]
                                                 symboltable[varIssue] = varIssue
                                                 
