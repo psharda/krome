@@ -1554,7 +1554,7 @@ class reaction:
 	#break long rates and put in LateX table format
         def breakRateTex(self,rate):
                 rate = utils.raiseBracketsOnOperators(rate)
-#                rate = utils.replaceLongFracByDivide(rate)
+                rate = utils.replaceLongFracByDivide(rate)
                 rate = utils.replaceLeftRightbyBigLR(rate)
                 rate = utils.breakLatexEquation(rate)
                 rate = "\\begin{aligned}[t] = &" + rate + "\\end{aligned}"

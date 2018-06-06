@@ -317,6 +317,55 @@ def raiseBracketsOnOperators(rate):
         rate = regex.sub(r'(\operatorname\{[a-zA-Z]{1,}\})(\{(([^{}]|(?2))*)\})', r'\1\3', rate)
         return rate
 
+def string_from(expr, string):
+        for i in xrange(len(string)):
+                if string[i:i+len(expr)] == expr:
+                        splitAt = i + len(expr)
+                        return (string[:splitAt], string[splitAt:])
+        return string, ""
+
+def next_parenthesis(string, left="{", right="}"):
+        depth = 0
+        acc = ""
+        pos = 0
+        
+        for c in string:
+                if c==left: depth += 1
+                if c==right: depth -= 1
+                acc += c
+                if depth==0: break
+                pos += 1
+        
+        return (acc, string[pos+1:])
+
+def skip_spaces(string):
+        acc = ""
+        pos = 0
+        for c in string:
+                if c != " ": break
+                pos += 1
+        return (string[:pos],string[pos:])
+
+#********************
+#replaces fractions with divisor or dividend longer than maxlen by / sign
+def replaceLongFracByDivide(rate,maxlen=100):
+        acc=""
+        while True:
+                before, fromFrac = string_from("\\frac", rate)
+                if len(fromFrac) <= 0:
+                        return acc + rate
+                spaces, rest = skip_spaces(fromFrac)
+                numerator,rest = next_parenthesis(rest)
+                denominator, rest = next_parenthesis(rest)
+                
+                rate = rest
+                if max(len(numerator), len(denominator)) > maxlen:
+                        acc += before[:-5] + spaces
+                        acc += "\\left("+numerator[1:-1]+"\\right) / \\left("+denominator[1:-1] + "\\right)"
+                else:
+                        acc += before + spaces
+                        acc += numerator + denominator
+
 #********************
 #resolve Krome variables in 'shortcuts', exept those in 'exceptions')
 def replaceShortcuts(string, shortcuts, exceptions):
