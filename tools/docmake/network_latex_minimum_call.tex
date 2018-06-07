@@ -1,23 +1,29 @@
 \documentclass[10pt]{report}
+\usepackage[a4paper, total={8in, 11in}]{geometry}
 \usepackage{amsmath}
 \usepackage{chemformula}
 \usepackage{amssymb}
 \usepackage{longtable,tabu}
+\usepackage{array}
+\usepackage{siunitx}
 \newcommand{\dbDefault}{\textsc{KIDA}}
 \newcolumntype{h}{>{\setbox0=\hbox\bgroup}c<{\egroup}@{}}
+\newcolumntype{H}{@{}>{\lrbox0}l<{\endlrbox}}
 
 \begin{document}
-\centering
- \begin{longtable}{rllll}
-    \input{NetworkLatex.tex}
- \end{longtable}
+\setlength\tabcolsep{1.0pt}
+\begin{longtable}{llrlll}
+  \input{NetworkLatex.tex}
+\end{longtable}
 
- % References can be added in the network file with
- % #@ref: <latex citation>
- % The reference will be used for all subsequent reactions until the next occurance of #@ref:
- \input{NetworkLatexReferences.tex}
+\begin{tabular}{ll}
+  \input{NetworkLatexSymbols.tex}
+\end{tabular}
+
+% References can be added in the network file with
+% #@ref: <latex citation>
+% The reference will be used for all subsequent reactions until the next occurance of #@ref:
+\input{NetworkLatexReferences.tex}
+% \bibliography{references.bib}
 
 \end{document}
-
-
-

@@ -27,6 +27,7 @@
         "exp" : "exp",
         "ln" : "ln",
         "log" : "log",
-        "sqrt" : "sqrt"
+        "sqrt" : "sqrt",
+	"user_Tdust" : "T_d"
     }
 }
