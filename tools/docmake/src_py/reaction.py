@@ -1424,11 +1424,13 @@ class reaction:
                 rate = utils.replaceShortcuts(rate, temperatureShortcuts[1:], deferredShortcuts.keys())
 
 		#make sympy friendly
-                rate = rate.replace("dexp", "exp")
-		rate = rate.replace("d", "e")
-		rate = rate.replace("log", "ln")
-		rate = rate.replace("ln10", "log")
-		rate = rate.replace("_8", "")
+                rate = utils.replaceFortranVar("dexp", "exp", rate)
+		rate = utils.replaceFortranVar("log", "ln", rate)
+		rate = utils.replaceFortranVar("ln10", "log", rate)
+                # Double prec exp notation to use e, e.g. 2d3 -> 2e3
+                rate = re.sub("([0-9]*\.*[0-9]*)d([+-]*[0-9]{1,})", r"\1e\2",rate)
+                # Remove double prec suffix, e.g. 1.0_8 -> 1.0
+                rate = re.sub("([0-9])_8", r"\1", rate)
 
 		# store for debugging
 		rateTexAfterShortcutsReplaced = rate
@@ -1443,7 +1445,7 @@ class reaction:
 			except (NameError,), err:
 				print "Name error in rate", err
 				varIssue = str(err).split("'")[1]
-                                symboltable[varIssue] = varIssue
+                                symboltable[varIssue] = sp.Symbol(varIssue)
 
 			#special case rate will be prited as it is
 			except (SyntaxError,), err:
@@ -1531,11 +1533,17 @@ class reaction:
                 # truncate numbers at 5 decimal places
                 rateTex = re.sub(r'(\d+\.[0-9]{5})\d*', r'\1', rateTex)
 
+                rateTex = re.sub("([ \)_]*)idx_{([A-Za-z0-9_]{1,})}", r"\1idx_\2", rateTex)
+                rateTexIdxReplaced = rateTex
+                # Rename number density, e.g. n(idx_H) -> n_idx_H
+                rateTex = re.sub(r"([^A-Za-z])?n\{(\\left|) *\( *([A-Za-z0-9_]{1,}) *(\\right|) *\)\}", r"\1n_{\3}", rateTex)
+                # Rename species id to name wrapped in \ch, e.g. idx_H2 -> \ch{H2}
+                rateTex = re.sub("([ \)_]*)idx_([A-Za-z0-9_]{1,})( *)", r"\1\ch{\2}\3", rateTex)
+
 		# store rate before breaking
 		rateTextFull = rateTex
 
 		#break long rates in multiple lines
-		# TODO: rewrite long fractions to '/' and break them
 		if len(rateTex) > maxRateLength:
 			rateTex = self.breakRateTex(rateTex)
                 else:
@@ -1546,6 +1554,7 @@ class reaction:
 		message += "\n%original rate: " + rate
 		message += "\n%after shortcuts replacing: " + rateTexAfterShortcutsReplaced
 		message += "\n%rate after sympy: " + rateTextAfterSympy
+                message += "\n%rate after replacing idx: " + rateTexIdxReplaced
 		message += "\n%full rate (before breaking): " + rateTextFull
 
 		return rateTex, message

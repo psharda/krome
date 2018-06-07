@@ -264,7 +264,7 @@ def exp2latex(string):
         if(string):
                 #replace 1e<x> by e<x> to get 10^x instead of 1x10^x
                 string = re.sub("1e([+]*[0-9]{1,})", r"e\1",string)
-                string = re.sub("([0-9]*\.*[0-9]*e[+]*[0-9]{1,})", r"\\num{\1}",string)
+                string = re.sub("([0-9]*\.*[0-9]*e[+-]*[0-9]{1,})", r"\\num{\1}",string)
         return string
 
 #********************
@@ -399,3 +399,4 @@ def getSymbolTable():
         for key in symbols:
                 symboltable[key] = sp.Symbol(symbols[key])
         return symboltable
+
