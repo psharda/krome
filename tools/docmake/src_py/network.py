@@ -314,7 +314,7 @@ class network:
 		print "reading network "+fileName
 		#open file to read network
 		fh = open(fileName,"rb")
-                reference = ""
+                reference = None
 		for row in fh:
 			srow = row.strip()
 			if(srow==""): continue
@@ -357,7 +357,11 @@ class network:
 			if(srow.startswith("@")): continue
 
                         #parse row line for reaction
-                        ref = (self.referenceId[reference], reference)
+                        if reference == None:
+                                ref = None
+                        else:
+                                ref = (self.referenceId[reference], reference)
+
 			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType,self.species,shortcutsList,reference=ref)
 
                         #update reaction id
