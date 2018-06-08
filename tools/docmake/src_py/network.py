@@ -265,8 +265,10 @@ class network:
 	#make a Latex list of references for the reaction table
         def dumpLatexReferences(self, filename="NetworkLatexReferences.tex"):
                 with open(filename, "w") as fileOutput:
-                        for reference in sorted(self.referenceId.keys()):
-                                fileOutput.write("("+str(self.referenceId[reference])+") "+reference)
+                        refs = [(id, ref) for ref, id in self.referenceId.items()]
+                        refs = ["("+str(id)+") "+ref for id, ref in sorted(refs)]
+                        refstex = ", ".join(refs[:-1]) + " and " + refs[-1]
+                        fileOutput.write(refstex)
 
 
 	#********************
