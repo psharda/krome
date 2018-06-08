@@ -408,22 +408,4 @@ def getSymbolTable():
                 symboltable[key] = sp.Symbol(symbols[key])
         return symboltable
 
-#********************
-#get table of sympy symbols for latex table
-def getSymbolTable():
-        import sympy as sp
-        from options import latexoptions
-
-        symbols = latexoptions.symbols.copy()
-
-        # Add deferred symbols
-        ds = getDeferredShortcuts()
-        for key, value in ds.iteritems():
-                symbols[key] = value
-
-        # Convert to sympy symbols
-        symboltable = {}
-        for key in symbols:
-                symboltable[key] = sp.Symbol(symbols[key])
-        return symboltable
 
