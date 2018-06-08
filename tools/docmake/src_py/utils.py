@@ -382,6 +382,33 @@ def getDeferredShortcuts():
         return latexoptions.deferred_substitutions
 
 #********************
+#get table of symbols for latex table
+def getSymbols():
+        from options import latexoptions
+
+        symbols = latexoptions.symbols.copy()
+
+        # Add deferred symbols
+        ds = getDeferredShortcuts()
+        for key, value in ds.iteritems():
+                symbols[key] = value
+
+        return symbols
+
+#********************
+#get table of sympy symbols for latex table
+def getSymbolTable():
+        import sympy as sp
+
+        symbols = getSymbols()
+
+        # Convert to sympy symbols
+        symboltable = {}
+        for key in symbols:
+                symboltable[key] = sp.Symbol(symbols[key])
+        return symboltable
+
+#********************
 #get table of sympy symbols for latex table
 def getSymbolTable():
         import sympy as sp

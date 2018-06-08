@@ -29,5 +29,6 @@
         "log" : "log",
         "sqrt" : "sqrt",
 	"user_Tdust" : "T_d"
-    }
+    },
+    "latex_backend" : "pytexit"
 }
