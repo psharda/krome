@@ -189,18 +189,23 @@ class network:
 				shortcutsVariables = myReaction.shortcuts
 
                                 nrates = len(myReaction.rate)
+                                rateColumns = []
+                                messages = []
                                 for cnt in range(nrates):
-                                        latexColums, message = myReaction.reaction2latex(shortcutsTemperature,
-										         shortcutsVariables,
-                                                                                         deferredShortcuts,
-										         cntMergedReactions,
-										         cnt,
-										         cntTotalReactions,
-										         cntAllReactions)
+                                        latexColumns, message = myReaction.reaction2latex(shortcutsTemperature,
+										          shortcutsVariables,
+                                                                                          deferredShortcuts,
+										          cntMergedReactions,
+										          cnt,
+										          cntTotalReactions,
+										          cntAllReactions)
+                                        rateColumns.append(latexColumns)
+                                        messages.append(message)
 
+                                for columns, message in zip(rateColumns, messages):
                                         if message:
 					        fileOutput.write(message + "\n")
-				        self.dumpLatexTable(latexColums, fileOutput)
+				        self.dumpLatexTable(columns, fileOutput)
 
                 self.dumpDeferredShortcuts(shortcutsTemperature, shortcutsVariables, deferredShortcuts)
                 self.dumpLatexReferences()
