@@ -281,11 +281,11 @@ def replaceFortranVar(varname, replacement, string):
 def breakLatexEquation(string):
         opened = '{'
         closed = '}'
-        stack = []
         depth = 0
 	breakChars = ['+', '-']
         result = ""
         previousWasOpenParan = False
+        numlines = 1
         for i, c in enumerate(string):
                 if c == opened:
                         depth += 1
@@ -294,11 +294,12 @@ def breakLatexEquation(string):
                 	#break on breakChars unless inside block or after opening paranthesis
                 if c in breakChars and depth==0 and not previousWasOpenParan:
 			c = " \\\\ \n &" + c
+                        numlines += 1
                 result += c
                 if not c in ["(", " "]: previousWasOpenParan = False
                 if c == "(": previousWasOpenParan = True
 
-        return result
+        return result, numlines
 
 #********************
 #replaces \left and \right by \bigL and \bigR in latex equation

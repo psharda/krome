@@ -1389,7 +1389,7 @@ class reaction:
 			refTex = ""
 
 		#LaTeX rate
-		rateTex, message = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts, deferredShortcuts)
+		rateTex, message, numlines = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts, deferredShortcuts)
                 rateTex = "$" + rateTex + "$"
                 
 		#LaTeX temperature limits
@@ -1402,7 +1402,7 @@ class reaction:
                 else:
                         kTex=""
 
-		return [idxTex, reactionTex, kTex, rateTex, limitsTex, refTex], message
+		return [idxTex, reactionTex, kTex, rateTex, limitsTex, refTex], message, numlines
 
 	#********************
 	#make a LaTeX format of reaction
@@ -1458,7 +1458,7 @@ class reaction:
 
 			#special case rate will be prited as it is
 			except (SyntaxError,), err:
-                                if rate=="@xsecFile=SWRI": return "= \\textrm{table}", message
+                                if rate=="@xsecFile=SWRI": return "= \\textrm{table}", message, 1
                                 print "Syntax Error in rate", err
                                 print "in ", rate
 				return "=" + rate, message
@@ -1466,7 +1466,7 @@ class reaction:
 			#special case rate will be prited as it is
 			except(ValueError,), err:
 				print "Value Error in rate", err
-				return "=" + rate, message
+				return "=" + rate, message, 1
 
 		# store for debugging
 		rateTextAfterSympy = rateTex
@@ -1565,10 +1565,11 @@ class reaction:
 
 		#break long rates in multiple lines
 		if len(rateTex) > maxRateLength:
-			rateTex = self.breakRateTex(rateTex)
+			rateTex, numlines = self.breakRateTex(rateTex)
                 else:
                         #add LaTeX symbols
 		        rateTex = " = " + rateTex
+                        numlines = 1
 
 		message += "\n%These comments below are for debugging, ignore them"
 		message += "\n%original rate: " + rate
@@ -1577,7 +1578,7 @@ class reaction:
                 message += "\n%rate after replacing idx: " + rateTexIdxReplaced
 		message += "\n%full rate (before breaking): " + rateTextFull
 
-		return rateTex, message
+		return rateTex, message, numlines
 
         #****************
 	#break long rates and put in LateX table format
@@ -1585,9 +1586,9 @@ class reaction:
                 rate = utils.raiseBracketsOnOperators(rate)
                 rate = utils.replaceLongFracByDivide(rate)
                 rate = utils.replaceLeftRightbyBigLR(rate)
-                rate = utils.breakLatexEquation(rate)
+                rate, numlines = utils.breakLatexEquation(rate)
                 rate = "\\begin{aligned}[t] = &" + rate + "\\end{aligned}"
-                return rate
+                return rate, numlines
 
 	#****************
 	#break long rates and put in LateX table format

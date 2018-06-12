@@ -3,7 +3,6 @@
 \usepackage{amsmath}
 \usepackage{chemformula}
 \usepackage{amssymb}
-\usepackage{longtable,tabu}
 \usepackage{natbib}
 \usepackage{lscape}
 \usepackage{array}
@@ -15,24 +14,37 @@
 
 \newcommand{\mnras}{~MNRAS}
 
+\newcommand{\chemicalNetworkTableCaption}{\caption{Chemical network}}
+\newcommand{\chemicalNetworkTableCaptionCont}{\caption{Chemical network}}
+\newcommand{\chemicalNetworkTableLabel}{tab:chemical_network}
+\newcommand{\chemicalNetworkTableNotes}{
+
+  \textbf{Parameters:}
+  \begin{tabular}{ll}
+    \input{NetworkLatexSymbols.tex}
+  \end{tabular}
+
+  \textbf{References:} \input{NetworkLatexReferences.tex}
+  }
+
+\newenvironment{chemical_network_table}[1]{
+  \begin{table*}
+      #1 }{
+  \end{table*} }
+
+\newenvironment{chemical_network_tabular}{
+  \begin{tabular}{llrlll}
+    \hline
+    No. & Reaction & \multicolumn{2}{l@{\:}}{Rate coefficient} & Notes & Ref.\\
+    \hline }{
+    \hline
+  \end{tabular} }
+
 \begin{document}
-%\begin{landscape}\small
 \setlength\tabcolsep{1.0pt}
-\begin{longtable}{llrlll}
-%\begin{longtable}{p{1cm}llll}
-  \input{NetworkLatex.tex}
-\end{longtable}
+\input{NetworkLatex.tex}
 
- % References can be added in the network file with
- % #@ref: <latex citation>
-% The reference will be used for all subsequent reactions until the next occurance of #@ref:
-\begin{tabular}{ll}
-  \input{NetworkLatexSymbols.tex}
-\end{tabular}
-
-\input{NetworkLatexReferences.tex}
 \bibliography{references.bib}
- %\end{landscape}
 
 \end{document}
 

@@ -170,6 +170,7 @@ class network:
 	#********************
 	#make a LaTeX table of the network
 	def network2latex(self, networkLatex="NetworkLatex.tex"):
+                from options import latexoptions as opts
 		#NOTE: Make sure the network input file has incrementing reaction indices.
 		# If double indices exist, the LaTeX table will be incorrect.
 
@@ -179,10 +180,13 @@ class network:
 		cntMergedReactions = 0
 		cntTotalReactions = 1
 		cntAllReactions = 0
+                linesOnPage = 0
 
 		with open(networkLatex, "w") as fileOutput:
 			#dump header of the file
 			self.dumpLatexTableHeader(fileOutput)
+                        #dump beginning of table float, table environment and header row
+                        self.dumpLatexBeginTable(fileOutput)
 			#loop on reactions to evaluate
 			for myReaction in sorted(self.reactions, key=lambda x: x.uid):
 				#list with all variable shortcuts (excl. temperature ones)
@@ -191,21 +195,33 @@ class network:
                                 nrates = len(myReaction.rate)
                                 rateColumns = []
                                 messages = []
+                                linesInReaction = 0
                                 for cnt in range(nrates):
-                                        latexColumns, message = myReaction.reaction2latex(shortcutsTemperature,
-										          shortcutsVariables,
-                                                                                          deferredShortcuts,
-										          cntMergedReactions,
-										          cnt,
-										          cntTotalReactions,
-										          cntAllReactions)
+                                        latexColumns, message, linesInRate = myReaction.reaction2latex(shortcutsTemperature,
+										                       shortcutsVariables,
+                                                                                                       deferredShortcuts,
+										                       cntMergedReactions,
+										                       cnt,
+										                       cntTotalReactions,
+										                       cntAllReactions)
                                         rateColumns.append(latexColumns)
                                         messages.append(message)
+                                        linesInReaction += linesInRate
+                                linesOnPage += linesInReaction
+                                        
+                                if linesOnPage > opts.lines_per_page:
+                                        # Dump page break
+                                        self.dumpLatexEndTable(fileOutput)
+                                        self.dumpLatexBeginTable(fileOutput, first=False)
+                                        linesOnPage = linesInReaction
 
                                 for columns, message in zip(rateColumns, messages):
                                         if message:
 					        fileOutput.write(message + "\n")
 				        self.dumpLatexTable(columns, fileOutput)
+
+                        # Dump end of table environment and - float
+                        self.dumpLatexEndTable(fileOutput, last=True)
 
                 self.dumpDeferredShortcuts(shortcutsTemperature, shortcutsVariables, deferredShortcuts)
                 self.dumpLatexReferences()
@@ -220,6 +236,23 @@ class network:
 		tableFile.write("% Table columns format {"+5*"l"+"}\n")
 		tableFile.write("% Set \"h\" as table-spec for the column to hide it\n")
 		tableFile.write("%%\\newcolumntype{h}{>{\setbox0=\hbox\\bgroup}c<{\egroup}@{}}\n")
+
+        #****************
+	#dump headers for table float and - environment
+        def dumpLatexBeginTable(self, tableFile, first=True):
+                arg = "\\chemicalNetworkTableCaption"
+                if not first: arg += "Cont"
+                if first: arg += "\n\\label{\\chemicalNetworkTableLabel}"
+                tableFile.write("\\begin{chemical_network_table}{"+arg+"}\n")
+                tableFile.write("  \\begin{chemical_network_tabular}\n")
+
+        #****************
+	#dump footers for table float and - environment
+        def dumpLatexEndTable(self, tableFile, last=False):
+                tableFile.write("  \\end{chemical_network_tabular}\n")
+                if last:
+                        tableFile.write("  \\chemicalNetworkTableNotes\n")
+                tableFile.write("\\end{chemical_network_table}\n\n")
 
 	#****************
 	#build colums in LateX table format
@@ -272,7 +305,12 @@ class network:
                 with open(filename, "w") as fileOutput:
                         refs = [(id, ref) for ref, id in self.referenceId.items()]
                         refs = ["("+str(id)+") "+ref for id, ref in sorted(refs)]
-                        refstex = ", ".join(refs[:-1]) + " and " + refs[-1]
+                        if len(refs) > 1:
+                                refstex = ", ".join(refs[:-1]) + " and " + refs[-1]
+                        elif len(refs) == 1:
+                                refstex = refs[0]
+                        else:
+                                refstex = ""
                         fileOutput.write(refstex)
 
 

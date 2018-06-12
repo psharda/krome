@@ -30,5 +30,6 @@
         "sqrt" : "sqrt",
 	"user_Tdust" : "T_d"
     },
-    "latex_backend" : "pytexit"
+    "latex_backend" : "pytexit",
+    "lines_per_page": 46
 }
