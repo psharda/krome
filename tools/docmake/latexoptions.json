@@ -30,7 +30,8 @@
         "sqrt" : "sqrt",
 	"user_Tdust" : "T_{\\mathrm{d}}",
 	"user_gamma_H2" : "\\Gamma_{\\mathrm{H}_2}",
-	"user_gamma_CO" : "\\Gamma_{\\mathrm{CO}}"
+	"user_gamma_CO" : "\\Gamma_{\\mathrm{CO}}",
+	"auto" : "\\mathrm{(see\\, ref.)}"
     },
     "latex_backend" : "pytexit",
     "lines_per_page": 46,
