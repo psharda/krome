@@ -31,5 +31,6 @@
 	"user_Tdust" : "T_{\\mathrm{d}}"
     },
     "latex_backend" : "pytexit",
-    "lines_per_page": 46
+    "lines_per_page": 46,
+    "max_fraction_length": 150
 }
