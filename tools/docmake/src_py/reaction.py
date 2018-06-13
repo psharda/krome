@@ -1476,8 +1476,12 @@ class reaction:
                         # pytexit doesn't replace symbols, so it is done here
                         for sym, expr in utils.getSymbols().iteritems():
                                 symtex = pytexit.for2tex(sym, print_latex=False, print_formula=False)[2:-2]
-                                rateTex = utils.replaceFortranVar(symtex, expr, rateTex)
-
+                                #print "Replacing symbol: ", sym, " -> ", symtex, " -> ", expr
+                                if sym==symtex:
+                                        rateTex = utils.replaceFortranVar(symtex, expr, rateTex)
+                                else:
+                                        rateTex = rateTex.replace(symtex, expr)
+                                        
                         # it also leaves in factors of 1
                         rateTex = re.sub(r"\\times *1\.0([^0-9\.]|$)", r"\1", rateTex)
                         
