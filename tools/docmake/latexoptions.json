@@ -8,27 +8,27 @@
 	["ntot"      , "ntot"],
 	["Hnuclei"   , "Hnuclei"]
     ],
-    "deferred_substitutions" : { "kh11" : "k_{H11}",
+    "deferred_substitutions" : { "kh11" : "k_{\\mathrm{H11}}",
 				 "a11"  : "a_{11}",
-				 "kh21" : "k_{H21}",
+				 "kh21" : "k_{\\mathrm{H21}}",
 				 "a21"  : "a_{21}",
-				 "kl21" : "k_{L21}",
-				 "Te"   : "T_{e}"
+				 "kl21" : "k_{\\mathrm{L21}}",
+				 "Te"   : "T_{\\mathrm{e}}"
 			       },
     "symbols" : {
         "Tgas" : "T",
         "T32" : "(T/300)",
-        "fHnOj" : "f_{H_nO^+}",
-        "user_Av" : "A_v",
+        "fHnOj" : "f_{\\mathrm{H}_{\\mathrm{n}}\\mathrm{O}^+}",
+        "user_Av" : "A_{\\mathrm{v}}",
         "user_G0" : "G_0",
-        "user_crate" : "\\zeta_{H_I}",
+        "user_crate" : "\\zeta_{\\mathrm{H}_{\\mathrm{I}}}",
         "ntot" : "n_{\\mathrm{tot}}",
-        "Hnuclei" : "n_{H_{tot}}",
+        "Hnuclei" : "n_{\\mathrm{H}_{\\mathrm{tot}}}",
         "exp" : "exp",
         "ln" : "ln",
         "log" : "log",
         "sqrt" : "sqrt",
-	"user_Tdust" : "T_d"
+	"user_Tdust" : "T_{\\mathrm{d}}"
     },
     "latex_backend" : "pytexit",
     "lines_per_page": 46
