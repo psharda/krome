@@ -169,9 +169,11 @@ class network:
 
 	#********************
 	#make a LaTeX table of the network
-	def network2latex(self, networkLatex="NetworkLatex.tex"):
+	def network2latex(self):
 		#NOTE: Make sure the network input file has incrementing reaction indices.
 		# If double indices exist, the LaTeX table will be incorrect.
+
+		networkLatex="NetworkLatex"
 
 		#list with all temperature shortcuts element = (var, replaceWith)
 		shortcutsTemperature = utils.getShortcutsLatex()
@@ -179,30 +181,42 @@ class network:
 		cntTotalReactions = 1
 		cntAllReactions = 0
 
-		with open(networkLatex, "w") as fileOutput:
-			#dump header of the file
-			self.dumpLatexTableHeader(fileOutput)
-			#loop on reactions to evaluate
-			for myReaction in sorted(self.reactions, key=lambda x: [xx.name for xx in x.reactants]):
-				#list with all variable shortcuts (excl. temperature ones)
-				shortcutsVariables = myReaction.shortcuts
+		# number of reactions per table
+		maxRowsNumber = 40
+		# default output file handler
+		fileOutput = None
 
-				for cnt in range(len(myReaction.rate)):
-					latexColums, message = myReaction.reaction2latex(shortcutsTemperature,
-											shortcutsVariables,
-											cntMergedReactions,
-											cnt,
-											cntTotalReactions,
-											cntAllReactions)
-					cntAllReactions += 1
-					if cnt > 0:
-						cntMergedReactions += 1
-					#print warning message
-					if message:
-						fileOutput.write(message + "\n")
-					self.dumpLatexTable(latexColums, fileOutput)
+		#loop on reactions to evaluate
+		for myReaction in sorted(self.reactions, key=lambda x: [xx.name for xx in x.reactants]):
 
-				cntTotalReactions += 1
+			if cntAllReactions % maxRowsNumber == 0:
+				if fileOutput is not None:
+					fileOutput.close()
+				fname = networkLatex + "_" + str(100+int(cntAllReactions / maxRowsNumber)) + ".tex"
+				fileOutput = open(fname, "w")
+				#dump header of the file
+				self.dumpLatexTableHeader(fileOutput)
+
+			#list with all variable shortcuts (excl. temperature ones)
+			shortcutsVariables = myReaction.shortcuts
+
+			for cnt in range(len(myReaction.rate)):
+				latexColums, message = myReaction.reaction2latex(shortcutsTemperature,
+										shortcutsVariables,
+										cntMergedReactions,
+										cnt,
+										cntTotalReactions,
+										cntAllReactions)
+				cntAllReactions += 1
+				if cnt > 0:
+					cntMergedReactions += 1
+				#print warning message
+				if message:
+					fileOutput.write(message + "\n")
+				self.dumpLatexTable(latexColums, fileOutput)
+
+			cntTotalReactions += 1
+		fileOutput.close()
 
 	#****************
 	#dump colums in LateX table format

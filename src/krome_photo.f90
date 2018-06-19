@@ -653,40 +653,64 @@ contains
     implicit none
     real*8,intent(out)::G0, Av
     real*8,intent(in)::d2g, n(nspec)
-    real*8::mu, Jdraine(nPhotoBins), x, y, lnG0
-    real*8::xdata(nPhotoBins), ydata(nPhotoBins)
-    integer::i, icount
+    real*8::lnG0, mu, ntot
+    real*8::ydata(nPhotoBins)
+    integer::i
+    logical, save ::first_call=.true.
+    real*8,  save ::XH,Jdraine(nPhotoBins),xdata(nPhotoBins)
+    integer, save ::lb,ub,ndraine
+    !$omp threadprivate(first_call,XH,Jdraine,xdata,lb,ub,ndraine)
 
-    ! mean molecular weight
-    mu = get_mu(n(:))
+    if (first_call) then
+       ! get non-attenuated draine flux
+       Jdraine(:) = get_draine(photoBinEmid(:))
 
-    ! get non-attenuated draine flux
-    Jdraine(:) = get_draine(photoBinEmid(:))
-
-    icount = 0
-    ! loop on photo bins
-    do i=1,nPhotoBins
        ! only consider bins that have non-attenuated draine radiation
-       if(Jdraine(i)>0d0) then
-          icount = icount + 1
-          ! compute x and y in y = Av*x + ln(G0)
-          x = -find_Av_draine_kabs(i) * 1.8d21 * mu * p_mass * d2g
-          y = log(photoBinJ(i) + 1d-200) - log(Jdraine(i))
-          ! store data for least square analysis
-          xdata(icount) = x
-          ydata(icount) = y
-       end if
+       lb=0
+       do i=1,nPhotoBins
+          if (Jdraine(i)>0 .and. lb==0) lb=i
+          if (Jdraine(i)>0) ub=i
+       end do
+       ndraine = ub - lb + 1
+
+       ! mean molecular weight and gas density
+       mu = get_mu(n(:))
+       ntot = sum(n(1:nspec))
+
+       ! find mass fraction of H-nuclei as xH = mp * n_H / rho
+       xH = (p_mass * get_Hnuclei(n(:))) / (p_mass * mu * ntot)
+
+       ! now we can calculate the xdata, which are constant:
+
+       ! loop on photo bins
+       do i=lb,ub
+          ! compute x in y = Av*x + ln(G0)
+          xdata(i-lb+1) = -find_Av_draine_kabs(i) * 1.8d21 * p_mass * d2g / xH
+       end do
+
+       ! make sure we only do this once
+       ! NOTICE: we assume hydrogen mass fraction is constant
+       ! NOTICE: but this is implicitly the case anyway
+       ! NOTICE: because below we translate between
+       ! NOTICE: column density and Av
+       first_call = .false.
+    end if
+
+    ! loop on photo bins
+    do i=lb,ub
+       ! compute y in y = Av*x + ln(G0)
+       ydata(i - lb + 1) = log(photoBinJ(i) + 1d-200) - log(Jdraine(i))
     end do
 
     ! needs at least one bin
-    if(icount<=1) then
-       print *,"ERROR: you want to estimate G0 and Av with no bins in the"
-       print *," Draine range, 5-13.6 eV!"
+    if(ndraine<=1) then
+       print *,"ERROR: you want to estimate G0 and Av with less than 2 bins in the"
+       print *," Draine range, 5-13.6 eV! Nbins(Draine)=",ndraine
        stop
     end if
 
     ! call least squares to compute Av and ln(G0)
-    call llsq(icount, xdata(1:icount), ydata(1:icount), &
+    call llsq(ndraine, xdata(1:ndraine), ydata(1:ndraine), &
          Av, lnG0)
 
     ! return G0
