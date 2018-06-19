@@ -39,7 +39,7 @@ program main
      call krome_photoBin_scale_array(exp(-tau(:)))
      call krome_find_G0_Av(G0, Av_f, x(:), d2g)
 
-     Av = ntot * r / 1.8d21
+     Av = 2. * ntot * r / 1.8d21 ! there are 2 Hnuclei per H2 molecule(!)
      write(66, '(99E17.8e3)') r, G0, Av_f, Av
      rold = r
   end do
