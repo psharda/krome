@@ -545,6 +545,9 @@
 222,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
 223,OH,H,H2O,,NONE,NONE,5.26d-18*T32**(-5.22)*exp(-9d1*invT)
 
+#H2 formation on dust grains. No idea about ref. Will be replaced by table lookup
+224,H,H,H2,,NONE,NONE,2.121d-17
+
 @noTab_start
 #DUST FREEZE-OUT/EVAPORATION
 @var:tabTdust = get_table_Tdust(n(:))
@@ -571,8 +574,8 @@
 401,He,He+,E,auto
 402,C,C+,E,@xsecFile=SWRI
 403,O,O+,E,auto
-404,CO,C,O,@xsecFile=SWRI
-405,H2,H,H,@xsecFile=SWRI
+#404,CO,C,O,@xsecFile=SWRI
+#405,H2,H,H,@xsecFile=SWRI
 406,H2,H2+,E,@xsecFile=SWRI
 
 407,H-,H,E,@xsecFile=SWRI
@@ -589,6 +592,12 @@
 @format:idx,R,P,P,P,rate
 417,H2,H+,H,E,@xsecFile=SWRI
 @photo_end
+
+# External rates for self-shielding species
+@common: user_gamma_CO, user_gamma_H2
+@format:idx,R,P,P,rate
+404,CO,C,O,user_gamma_CO
+405,H2,H,H,user_gamma_H2
 
 @format:idx,R,P,P,rate
 @var:fscale=get_ratioFluxDraine()
