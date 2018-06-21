@@ -884,6 +884,7 @@ contains
     end if
 
     !read file line by line and store to temporary
+    ftmp(:) = 0d0
     icount = 1
     do
        read(unit,*,iostat=ios) xtmp(icount), ftmp(icount)
@@ -891,6 +892,7 @@ contains
        icount = icount + 1
     end do
     close(unit)
+    icount = icount - 1
 
     if(is_log) ftmp = log(merge(ftmp,1d-40,ftmp>0d0))
     !loop on photobins for interpolation
