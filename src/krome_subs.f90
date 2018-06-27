@@ -599,8 +599,8 @@ contains
     dissH2_Martin96 = k_CID
 
   end function dissH2_Martin96
-#IFKROME_use_cluster_growth
 
+#IFKROME_use_cluster_growth
   !**********************
   ! Cluster growth rate based on kinetic nucleation theory (KNT)
   ! Theory is explained in chapter 13 of Gail and Sedlmayr 2013
@@ -660,189 +660,7 @@ contains
   end function cluster_growth_rate
 
 
-  !**********************
-  ! Cluster destruction rate based on kinetic nucleation theory (KNT)
-  ! Theory is explained in chapter 13 of Gail and Sedlmayr 2013
-  ! (https://doi.org/10.1017/CBO9780511985607)
-  ! This reversed reaction is infered from detailed balance
-  function cluster_destruction_rate(monomer_idx, cluster_size,&
-     temperature, stick) result(rate)
-    ! k_N = v_thermal * cross_section_(N-1) * stick_(N-1)
-    ! * [n_1 * n_(N-1)/n_N]_equilibrium
-    ! with N the cluster size of the reactant
-    ! and [n_1 * n_(N-1)/n_N]_equilibrium are numbers densities in equilibrium
-    ! k_N_destr = k_(N-1)_growth * [n_1 * n_(N-1)/n_N]_equi
-    ! NOTE: this entire rate is equivalent to calling revKc() on
-    ! cluster_growth_rate() given that the Gibbs free eneries (polynomials)
-    ! of the clusters are stored in the thermochemical data of the species
-    ! or provided as tables cfr. data/database/janaf/
-    use krome_constants
-    use krome_commons
-    implicit none
-    integer, parameter :: dp=kind(0.d0) ! double precision
 
-    integer, intent(in) :: monomer_idx
-    integer, intent(in) :: cluster_size
-    real(dp), intent(in) :: temperature
-    real(dp), intent(in), optional :: stick
-    real(dp) :: rate
-
-    real(dp) :: k_growth
-    real(dp) :: gibbs_big, gibbs_small, gibbs_monomer
-    real(dp) :: gibbs_part, non_standard_correction
-
-    ! [n_(N-1)/n_N]_equi = (n_gas/n_1_equi) * exp( (dG_N - dG_(N-1) - dG_1) / RT )
-    ! with dG_N "is the change in free enthalpy in the reaction of formation
-    ! of 1 mol of clusters of size N from N mol of monomers."
-    ! - Gail & Sedlmayr 2013, sec. 13.4.1
-    ! See Clouet 2010 https://arxiv.org/abs/1001.4131v2
-    ! pages 15+ for a more detailed derivation of
-    ! the Gibbs free enegery of the system.
-    ! This assumes the clusters to be dilute compared to the total gas
-    ! which is resonable
-
-    !! UNCORRECTED
-    ! ngas = everything besides the clusters, but as clusters are assumed to be dilute
-    ! their number density can be neglected compared to the total
-    ! ngas = sum(n(1:nmols))
-    ! if(monomer_idx == idx_TiO2 )then
-    !   ngas = sum(n(1:nmols))-sum(n(idx_TiO2:idx_Ti10O20))
-    ! else
-    !   print *, "Clusters other than TiO2 are not yet defined"
-    ! endif
-
-    ! print *, "temp", temperature
-    gibbs_big = gibbs_free_energy(monomer_idx, cluster_size, temperature) ! kJ*mol**(-1)
-    gibbs_small = gibbs_free_energy(monomer_idx, cluster_size-1, temperature)! kJ*mol**(-1)
-    gibbs_monomer = gibbs_free_energy(monomer_idx, 1, temperature)! kJ*mol**(-1)
-    ! print *, gibbs_big, gibbs_small, gibbs_monomer
-    ! correction to the Gibbs free enegery under non-standard pressure of 1 bar.
-    ! This only differs in the translational partition function.
-    ! ! total gas pressure in units of 1 bar
-    ! pressure_scaled = ngas * boltzmann_erg * temperature * 1.e-6
-    ! gibbs_corr = temperature * Rgas_kJ * log(pressure_scaled)
-    ! gibss correction needs to be added to each gibss energy but _big and _small cancel
-    ! The gibbs_corr factor ultimately cancels out ngas and reduced to:
-    ! gibbs_corr = temperature * Rgas_kJ *log(pressure_scaled)
-    non_standard_correction = (1.e-6_dp * boltzmann_erg * temperature)**(-1)
-
-    gibbs_part = exp( (gibbs_big - gibbs_small - gibbs_monomer)&
-                / ( Rgas_kJ * temperature ) )
-
-    k_growth = cluster_growth_rate(monomer_idx, cluster_size-1, temperature)
-
-
-    !! UNCORRECTED rate
-    ! rate = k_growth * ngas * gibbs_part
-
-    ! corrected rate
-    rate = k_growth * gibbs_part * non_standard_correction! s^(-1)
-
-  end function cluster_destruction_rate
-
-
-  !**********************
-  ! Change in free enthalpy in the reaction of formation
-  ! of 1 mol of clusters of size N from N mol of monomers."
-  ! - Gail & Sedlmayr 2013, sec. 13.4.1
-  function gibbs_free_energy(monomer_idx, cluster_size, temperature) result(gibbs)
-    use krome_constants
-    use krome_commons
-    implicit none
-    integer, parameter :: dp=kind(0.d0) ! double precision
-
-    integer, intent(in) :: monomer_idx
-    integer, intent(in) :: cluster_size
-    real(dp), intent(in) :: temperature
-    real(dp) :: gibbs, T
-    integer :: cluster_inx
-
-#IFKROME_hasTiO2
-    real(dp) :: Tinv, T2, T3
-    real(dp) :: a, b, c, d, e
-#ENDIFKROME
-    T = temperature
-#IFKROME_hasTiO2
-    Tinv = T**(-1._dp)
-    T2 = T*T
-    T3 = T2*T
-
-    if(monomer_idx == idx_TiO2) then
-      ! Data taken from Lee, G et al. 2015 (10.1051/0004-6361/201424621)
-      ! Lee, G. et al. 2018 fitted their own results (https://arxiv.org/pdf/1801.08482.pdf)
-      ! dG = a*T**-1 + b + c*T + d*T**2 + e*T**3
-      ! This fit is valid for 500 < T < 2000 K
-      if(cluster_size == 1) then
-        a = -1.63472903e3_dp
-        b = -2.29197239e2_dp
-        c = -3.60996766e-2_dp
-        d = 1.60056318e-5_dp
-        e =-2.02075337e-9_dp
-      else if(cluster_size == 2) then
-        a = -4.39367806e3_dp
-        b = -9.77431160e2_dp
-        c = 1.01656231e-1_dp
-        d = 2.16685151e-5_dp
-        e = -2.90960794e-9_dp
-      else if(cluster_size == 3) then
-        a = -7.27464297e3_dp
-        b = -1.72789122e3_dp
-        c = 2.40409836e-1_dp
-        d = 2.74002833e-5_dp
-        e = -3.81294573e-9_dp
-      else if(cluster_size == 4) then
-        a = -1.02808569e4_dp
-        b = -2.51074121e3_dp
-        c = 4.15061961e-1_dp
-        d = 3.30076021e-5_dp
-        e = -4.69138304e-9_dp
-      else if(cluster_size == 5) then
-        a = -1.37139638e4_dp
-        b = -3.27506794e3_dp
-        c = 5.73212328e-1_dp
-        d = 4.12461166e-5_dp
-        e = -6.14829810e-9_dp
-      else if(cluster_size == 6) then
-        a = -1.60124756e4_dp
-        b = -4.13772573e3_dp
-        c = 7.32672450e-1_dp
-        d = 4.44131101e-5_dp
-        e = -6.48290229e-9_dp
-      else if(cluster_size == 7) then
-        a = -1.89334054e4_dp
-        b = -4.91964308e3_dp
-        c = 8.93689186e-1_dp
-        d = 4.99942488e-5_dp
-        e = -7.35905348e-9_dp
-      else if(cluster_size == 8) then
-        a = -2.17672541e4_dp
-        b = -5.72492348e3_dp
-        c = 1.05703014e0_dp
-        d = 5.57819924e-5_dp
-        e = -8.27043313e-9_dp
-      else if(cluster_size == 9) then
-        a = -2.48377680e4_dp
-        b = -6.51357184e3_dp
-        c = 1.22288686e0_dp
-        d = 6.10116309e-5_dp
-        e = -0.08225913e-9_dp
-      else if(cluster_size == 10) then
-        a = -2.76078426e4_dp
-        b = -7.34516329e3_dp
-        c = 1.37500651e0_dp
-        d = 6.70631142e-5_dp
-        e = -1.00410219e-8_dp
-      else
-        print *, "There is no thermochemical data on &
-         TiO2 clusters larger than 10."
-       end if
-       gibbs = a*Tinv + b + c*T + d*T2 + e*T3 ! kJ*mol**(-1)
-    !    print *, "TIO",cluster_size,gibbs, T, temperature
-#ENDIFKROME
-#KROME_cluster_index
-
-  end function gibbs_free_energy
-#ENDIFKROME
   !***********************************
   subroutine init_exp_table()
     use krome_commons
@@ -936,7 +754,6 @@ contains
     use krome_fit
     real*8::revHS,Tgas,Tgas2,Tgas3,Tgas4,invT,lnT,H,S
     real*8::Tnist,Tnist2,Tnist3,Tnist4,invTnist,invTnist2,lnTnist
-    real*8::xtable(200),multable
 #KROME_var_reverse
     integer::idx
 
@@ -962,25 +779,11 @@ contains
     invTnist2 = invTnist * invTnist
     lnTnist = log(Tnist)
 
-    hasThermoTable(:) = .false.
-#IFKROME_useThermoTables
-    yThermoTable(:,:) = 0.d0
-    xtable(:) = thermo_tab_Tgas
-    multable = thermo_mult_Tgas
-#KROME_thermo_tables
-#ENDIFKROME
-
 #KROME_kc_reverse_nasa
 #KROME_kc_reverse_nist
 
-    !use thermochemical table if available
-    if (hasThermoTable(idx)) then
-      !NOTE: currently not extrapolation outside tgas table limits
-      revHS = fit_anytab1D(xtable, yThermoTable(idx,:), multable, Tgas)
-      revHS = revHS/(Rgas_kJ * Tgas)
-
     ! pick NASA data if present for species
-    else if (Tlim_nasa(idx,2) /= 0.d0) then
+    if (Tlim_nasa(idx,2) /= 0.d0) then
       !select set of NASA polynomials using temperature
       if(Tlim_nasa(idx,1).le.Tgas .and. Tgas.le.Tlim_nasa(idx,2)) then
          p(:) = p1_nasa(idx,:)
@@ -1035,6 +838,70 @@ contains
 
   end function revHS
 
+#IFKROME_use_GFE_tables
+  function revKc_with_GFE(Tgas, ridx, pidx) result(revKc)
+    use krome_constants
+    use krome_commons
+    implicit none
+    integer, parameter :: dp=kind(0.d0) ! double precision
+
+    real(dp), intent(in) :: Tgas
+    integer, intent(in) :: ridx(:), pidx(:)
+    real(dp) :: revKc
+
+    real(dp) :: dgibss, stoichiometricChange
+    integer :: i
+
+    ! when considering forward reaction:
+    ! Kc = (P°)**(p+p-r-r) * exp(-dGibss_forward°)
+    ! where ° means at standard conditions of
+    ! P° = 1 bar = (kb*T/1e6) dyn/cm^2 (cgs)
+    ! when considering reverse:
+    ! 1/Kc = revKc = (kb*T/1e6)**(p+p-r-r) * exp(-dGibss_reverse°)
+    ! kb*T/1e6 is to go from 1 atm pressure to number density cm^-3
+    ! When not at standard pressure this does not change:
+    ! revKc = P**(p+p-r-r) *exp(-dGibss_reverse° - (p+p-r-r)*ln(P/P°))
+    !       = (P°)**(p+p-r-r) * exp(-dGibss_reverse°)
+
+    dgibss = 0._dp ! Gibbs free energy
+    stoichiometricChange = 0._dp
+
+    do i=1,size(pidx)
+       dgibss = dgibss + gibbs_free_energy(Tgas, pidx(i))
+       stoichiometricChange = stoichiometricChange + 1
+    end do
+
+    do i=1,size(ridx)
+       dgibss = dgibss - gibbs_free_energy(Tgas, ridx(i))
+       stoichiometricChange = stoichiometricChange - 1
+    end do
+
+     revKc = (boltzmann_erg * Tgas * 1e-6_dp)**(stoichiometricChange)&
+            * exp(-dgibss)
+
+  end function revKc_with_GFE
+
+!**********************
+! Calculate Gibbs free energy of species with index idx at temperature Tgas
+  function gibbs_free_energy(Tgas, idx) result(gfe)
+    use krome_constants
+    use krome_commons
+    use krome_fit
+    implicit none
+    integer, parameter :: dp=kind(0.d0) ! double precision
+
+    real(dp), intent(in) :: Tgas
+    integer, intent(in) :: idx
+    #KROME_GFE_vars
+
+    real(dp) :: gfe
+    y_GFE_table(:,:) = 0._dp
+    #KROME_GFE_tables
+
+    gfe = fit_anytab1D(GFE_tab_Tgas, y_GFE_table(idx,:), GFE_mult_Tgas, Tgas)
+
+  end function gibbs_free_energy
+#ENDIFKROME
   !******************************
   subroutine print_best_flux(n,Tgas,nbestin)
     !print the first nbestin fluxes

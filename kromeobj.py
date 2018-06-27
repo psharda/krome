@@ -1801,8 +1801,8 @@ class krome():
 		inSurfaceBlock = False #block for reaction on surface
 		inStoreOnceBlock = False #block that stores reactions that are constants during the solver call
 		self.hasSurfaceReactions = False #true if surface reactions found
-		self.useThermoTable = False #flag for using thermochemical tables
-		self.thermoTableSpecies = [] #list of species with available thermotable
+		self.use_GFE_tables = False #flag for using Gibbs free energy tables
+		self.GFE_species = [] #list of species with available Gibbs free energy
 		self.clusterablesPresent = [] #list the clusterable species that are present in the network
 
 		#generate a custom reaction network and replace filename with the custom one
@@ -2410,10 +2410,10 @@ class krome():
 			#if file is LEIDEN convert to KROME
 			if("@xsecFile=LEIDEN" in myrea.krate):
 				LEIDEN2KROME(self.buildFolder, myrea.reactants[0], myrea.products)
-			#when reversed reactions need to be computed
-			if ("revKc" in myrea.krate or "cluster_destruction" in myrea.krate
-				or self.useReverse):
-				self.useThermoTable = True
+			# When reversed reactions need to be computed with Gibbs free
+			# energy tables
+			if "revKc_with_GFE" in myrea.krate:
+				self.use_GFE_tables = True
 
 			#this reaction is on surface
 			if(inSurfaceBlock):
@@ -2813,17 +2813,18 @@ class krome():
 
 		reacts = ureacts[:] #copy the extended list of reactions to the old one
 
-		# copy thermo data tables to build folder
+		# copy Gibss free energy data tables to build folder
 		# and make them if not yet done (e.g. JANAF)
 		for sp in specs:
-			if sp.hasThermoTable:
-				self.thermoTableSpecies.append(sp)
-				if sp.hasJanafThermoTable:
-					janaf2krome(self.buildFolder, sp)
-				else:
-					shutil.copyfile(self.thermochemistryFolder + sp.name + ".dat",
-					 			self.buildFolder + "thermo_" + sp.name + ".dat")
-					print "copied " + sp.name + ".dat"
+			if sp.has_GFE_table:
+				self.GFE_species.append(sp)
+				# if sp.hasJanafThermoTable:
+				# 	janaf2krome(self.buildFolder, sp)
+				# else:
+				gfe_file = sp.name + ".gfe"
+				shutil.copyfile(self.thermochemistryFolder + gfe_file,
+				 			self.buildFolder + gfe_file)
+				print "copied " + gfe_file
 
 			# check which clusterable species are present
 			if sp.is_clustarable:
@@ -4901,16 +4902,15 @@ class krome():
 					stab += "real*8::" + tabvar+"_anytabymul\n"
 				fout.write(stab+"\n")
 
-			elif(srow == "#KROME_thermochem_from_file"):
+			elif(srow == "#KROME_GFE_from_file"):
 				lines = ""
-				if self.useThermoTable:
-					lines += "integer, parameter :: thermo_tab_imax = 200\n"
-					lines += "real*8 :: thermo_tab_Tgas(thermo_tab_imax)\n"
-					lines += "real*8 :: thermo_mult_Tgas\n"
-					for sp in specs:
-						if sp.hasThermoTable:
-							lines += ("real*8 :: thermo_tab_gibbs_" + sp.name +
-								"(thermo_tab_imax)\n" )
+				if self.use_GFE_tables:
+					lines += "integer, parameter :: GFE_tab_imax = 300\n"
+					lines += "real*8 :: GFE_tab_Tgas(GFE_tab_imax)\n"
+					lines += "real*8 :: GFE_mult_Tgas\n"
+					for sp in self.GFE_species:
+						lines += ("real*8 :: GFE_tab_gibbs_" + sp.name +
+								"(GFE_tab_imax)\n" )
 				fout.write(lines + "\n")
 
 			else:
@@ -5663,12 +5663,6 @@ class krome():
 			krome_conserve += "\n!********** E **********\n"
 			krome_conserve += consE + "\n"
 
-		# Check if TiO2 is present
-		# This species has a build-in fit to its Gibbs free energy
-		has_TiO2 = False
-		for cluster in self.clusterablesPresent:
-			if cluster.name == 'TIO2':
-				has_TiO2 = True
 
 		#loop on src file and replace pragmas
 		skip = False
@@ -5681,9 +5675,8 @@ class krome():
 			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
-			if(srow == "#IFKROME_useThermoTables" and not self.useThermoTable) : skip = True
+			if(srow == "#IFKROME_use_GFE_tables" and not self.use_GFE_tables) : skip = True
 			if(srow == "#IFKROME_use_cluster_growth" and not self.clusterablesPresent): skip = True
-			if srow == "#IFKROME_hasTiO2" and not has_TiO2: skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
@@ -5834,8 +5827,6 @@ class krome():
 				slen = str(len(specs))
 				fout.write("real*8::p1_nasa("+slen+",7), p2_nasa("+slen+",7), Tlim_nasa("+slen+",3), p(7)\n")
 				fout.write("real*8::p1_nist("+slen+",7), p2_nist("+slen+",7), Tlim_nist("+slen+",3)\n")
-				fout.write("logical::hasthermoTable(" + slen + ")\n")
-				fout.write("real*8::yThermoTable(" + slen + ",200)\n")
 			elif(srow == "#KROME_kc_reverse_nasa"):
 				datarev = ""
 				sp1 = sp2 = spt = ""
@@ -5859,12 +5850,16 @@ class krome():
 						sp2 += "p2_nist("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2_nist])) + "/)\n"
 
 				fout.write(sp1+sp2+spt)
-			elif srow == "#KROME_thermo_tables":
-				sp1 = sp2 = ""
-				for sp in self.thermoTableSpecies:
-					sp1 += "hasThermoTable(" + sp.fidx + ") = .true.\n"
-					sp2 += "yThermoTable(" + sp.fidx + ",:) = thermo_tab_gibbs_" + sp.name + "(:)\n"
-				fout.write(sp1+sp2)
+			elif srow == "#KROME_GFE_vars":
+				sp_len = str(len(specs))
+				fout.write("real(dp) :: y_GFE_table(" + sp_len + ", GFE_tab_imax)\n")
+
+			elif srow == "#KROME_GFE_tables":
+				sp1 = ""
+				for sp in self.GFE_species:
+					sp1 += "y_GFE_table(" + sp.fidx + ",:) = GFE_tab_gibbs_" + sp.name + "(:)\n"
+				fout.write(sp1)
+
 			elif(srow == "#KROME_shortcut_variables"):
 				fout.write(shortcutVars)
 			elif(srow == "#KROME_header"):
@@ -5901,39 +5896,6 @@ class krome():
 								+ sp.name + ' in cm')
 				fout.write(lines + '\n')
 
-			elif srow == "#KROME_cluster_index":
-				length_cluster_list = len(self.clusterablesPresent)
-				lines = ''
-				if length_cluster_list == 1 and has_TiO2:
-					lines += 'end if\n'
-				else:
-					if has_TiO2:
-						lines += 'else\n '
-
-					lines += ('if (cluster_size == 1) then\n'
-							+ 'cluster_inx = monomer_idx\n else\n'
-							)
-					cnt = 0
-					for sp in self.clusterablesPresent:
-						if sp.name == 'TIO2': continue
-						if cnt == 0:
-							elseif = ''
-						else:
-							elseif = 'else '
-						if sp.name == 'SIO':
-							dimer_idx = 'idx_SI2O2'
-						elif sp.name == "AL2O3":
-							dimer_idx = 'idx_AL4O6'
-						elif sp.name == 'MGO':
-							dimer_idx = 'idx_MG2O2'
-						lines += (elseif + 'if(monomer_idx == '+ sp.fidx + ') then\n'
-								 + 'cluster_inx = '+ dimer_idx +' + cluster_size -2\n'
-								 )
-						cnt += 1
-					lines += 'end if\nend if\ngibbs = revHS(T,cluster_inx)*T*Rgas_kJ\n'
-				if length_cluster_list > 1 and has_TiO2:
-					lines += '\nend if'
-				fout.write(lines + '\n')
 			else:
 				if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):
@@ -7786,7 +7748,7 @@ class krome():
 			if(srow == "#ELSEKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = False
 			if(srow == "#ELSEKROME_useBindC" and (self.interfaceC or self.interfacePy)): skipBindC = True
 			if(srow == "#ENDIFKROME_useBindC"): skipBindC = False
-			if(srow == "#IFKROME_useThermoTables" and not self.useThermoTable) : skip = True
+			if(srow == "#IFKROME_use_GFE_tables" and not self.use_GFE_tables) : skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -7913,13 +7875,13 @@ class krome():
 						+anytaby+","+anytabz+",&\n"+anytabxmul+","\
 						+anytabymul+")\n"
 				fout.write(stab+"\n")
-			elif srow == "#KROME_init_thermoTables":
+			elif srow == "#KROME_init_GFE_tables":
 				stab = ""
-				for sp in self.thermoTableSpecies:
-					tabfile = "thermo_" + sp.name + ".dat"
-					tabx = "thermo_tab_Tgas(:)"
-					taby = "thermo_tab_gibbs_" + sp.name + "(:)"
-					tabmul = "thermo_mult_Tgas"
+				for sp in self.GFE_species:
+					tabfile = sp.name + ".gfe"
+					tabx = "GFE_tab_Tgas(:)"
+					taby = "GFE_tab_gibbs_" + sp.name + "(:)"
+					tabmul = "GFE_mult_Tgas"
 					stab += ("call init_anytab1D(\"" + tabfile + "\"," + tabx + ",&\n"
 							+ taby + "," + tabmul + ")\n"
 							)
