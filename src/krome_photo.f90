@@ -902,12 +902,12 @@ contains
     if(lnG0 < -7d0 .or. lnG0 > 7d0) then
       if(lnG0 < -7d0) lnG0 = -7d0
       if(lnG0 > 7d0) lnG0 = 7d0
-      Av = sum((ydata-lnG0)*xdata)/sum(xdata**2)
+      Av = sum(( ydata(1:ndraine)-lnG0)*xdata(1:ndraine))/sum(xdata(1:ndraine)**2)
     end if
 
     if(Av < 0d0) then
       Av = 0d0
-      lnG0 = sum(ydata)/ndraine
+      lnG0 = sum( ydata(1:ndraine))/ndraine
     endif
 
     ! return G0
