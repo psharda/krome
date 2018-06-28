@@ -4,7 +4,7 @@
 #rates for CO network similar to Glover+2010 MNRAS from there and other authors
 @var:Hnuclei = get_Hnuclei(n(:))
 @var:ntot=sum(n(1:nmols))
-@common: user_crate,user_Av
+@common: user_crate,user_Av,user_G0
 
 @var: T32 = Tgas/3d2
 @var: Te = Tgas*8.617343d-5
@@ -122,7 +122,7 @@
 @var:bsav7= 2.1675387d-2
 @var:sumsav=asav0+asav1*log10(Tgas)+asav2*(log10(Tgas))**2+asav3*(log10(Tgas))**3+asav4*(log10(Tgas))**4+asav5*(log10(Tgas))**5+asav6*(log10(Tgas))**6+asav7*(log10(Tgas))**7
 @var:sumsbv=bsav0+bsav1*log10(Tgas)+bsav2*(log10(Tgas))**2+bsav3*(log10(Tgas))**3+bsav4*(log10(Tgas))**4+bsav5*(log10(Tgas))**5+bsav6*(log10(Tgas))**6+bsav7*(log10(Tgas))**7
-14,H2,H+,H2+,H,NONE,.LT.1d5,1d1**sumsav
+#14,H2,H+,H2+,H,NONE,.LT.1d5,1d1**sumsav
 15,H2,H+,H2+,H,.GE.1d5,NONE,1d1**sumsbv
 @noTab_stop
 
@@ -546,7 +546,9 @@
 223,OH,H,H2O,,NONE,NONE,5.26d-18*T32**(-5.22)*exp(-9d1*invT)
 
 #H2 formation on dust grains. No idea about ref. Will be replaced by table lookup
-224,H,H,H2,,NONE,NONE,2.121d-17
+#224,H,H,H2,,NONE,NONE,2.121d-17
+224,H,H,H2,,NONE,NONE,2.121d-17*2.647
+#224,H,H,H2,,NONE,NONE,2.121d-17*5.0
 
 @noTab_start
 #DUST FREEZE-OUT/EVAPORATION
@@ -557,7 +559,7 @@
 @ice:H2O,evaporation,krate_evaporation(n(:),idx_H2O,tabTdust)
 
 #NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux
-@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0, user_Av, user_crate, 1d-3)
+@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0*user_G0, user_Av, user_crate, 1d-3)
 
 @noTab_stop
 
@@ -599,28 +601,57 @@
 404,CO,C,O,user_gamma_CO
 405,H2,H,H,user_gamma_H2
 
-@format:idx,R,P,P,rate
-@var:fscale=get_ratioFluxDraine()
-225,H2+,H,H+,1.1d-9*fscale
-227,H3+,H2,H+,4.9d-13*fscale
-228,H3+,H2+,H,4.9d-13*fscale
-230,C-,C,E,2.4d-7*fscale
-233,CH+,C,H+,2.6d-10*fscale
-234,CH2,CH,H,7.1d-10*fscale
-235,CH2,CH2+,E,5.9d-10*fscale
-236,CH2+,CH+,H,4.6d-10*fscale
-237,CH3+,CH2+,H,1d-9*fscale
-238,CH3+,CH+,H2,1d-9*fscale
-240,O-,O,E,2.4d-7*fscale
-243,OH+,O,H+,1d-12*fscale
-246,H2O+,H2+,O,5.d-11*fscale
-247,H2O+,H+,OH,5.d-11*fscale
-248,H2O+,O+,H2,5.d-11*fscale
-249,H2O+,OH+,H,1.5d-10*fscale
-250,H3O+,H+,H2O,2.5d-11*fscale
-251,H3O+,H2+,OH,2.5d-11*fscale
-252,H3O+,H2O+,H,7.5d-12*fscale
-253,H3O+,OH+,H2,2.5d-11*fscale
+#@format:idx,R,P,P,rate
+#@var:fscale=get_ratioFluxDraine()
+#225,H2+,H,H+,1.1d-9*fscale
+#227,H3+,H2,H+,4.9d-13*fscale
+#228,H3+,H2+,H,4.9d-13*fscale
+#230,C-,C,E,2.4d-7*fscale
+#233,CH+,C,H+,2.6d-10*fscale
+#234,CH2,CH,H,7.1d-10*fscale
+#235,CH2,CH2+,E,5.9d-10*fscale
+#236,CH2+,CH+,H,4.6d-10*fscale
+#237,CH3+,CH2+,H,1d-9*fscale
+#238,CH3+,CH+,H2,1d-9*fscale
+#240,O-,O,E,2.4d-7*fscale
+#243,OH+,O,H+,1d-12*fscale
+#246,H2O+,H2+,O,5.d-11*fscale
+#247,H2O+,H+,OH,5.d-11*fscale
+#248,H2O+,O+,H2,5.d-11*fscale
+#249,H2O+,OH+,H,1.5d-10*fscale
+#250,H3O+,H+,H2O,2.5d-11*fscale
+#251,H3O+,H2+,OH,2.5d-11*fscale
+#252,H3O+,H2O+,H,7.5d-12*fscale
+#253,H3O+,OH+,H2,2.5d-11*fscale
+
+#PHOTOREACTIONS THIN WITH Av
+#@storeOnce_start
+#FROM GLOVER+2009
+225,H2+,H,H+,user_G0*1.1d-9*exp(-1.9*user_Av)
+227,H3+,H2,H+,user_G0*4.9d-13*exp(-1.8*user_Av)
+228,H3+,H2+,H,user_G0*4.9d-13*exp(-2.3*user_Av)
+230,C-,C,E,user_G0*2.4d-7*exp(-.9*user_Av)
+233,CH+,C,H+,user_G0*2.6d-10*exp(-2.5*user_Av)
+234,CH2,CH,H,user_G0*7.1d-10*exp(-1.7*user_Av)
+235,CH2,CH2+,E,user_G0*5.9d-10*exp(-2.3*user_Av)
+236,CH2+,CH+,H,user_G0*4.6d-10*exp(-1.7*user_Av)
+237,CH3+,CH2+,H,user_G0*1d-9*exp(-1.7*user_Av)
+238,CH3+,CH+,H2,user_G0*1d-9*exp(-1.7*user_Av)
+240,O-,O,E,user_G0*2.4d-7*exp(-.5*user_Av)
+243,OH+,O,H+,user_G0*1d-12*exp(-1.8*user_Av)
+#@storeOnce_stop
+
+@noTab_start
+@var: HnOj = fHnOj(user_Av)
+246,H2O+,H2+,O,user_G0*5.d-11*HnOj
+247,H2O+,H+,OH,user_G0*5.d-11*HnOj
+248,H2O+,O+,H2,user_G0*5.d-11*HnOj
+249,H2O+,OH+,H,user_G0*1.5d-10*HnOj
+250,H3O+,H+,H2O,user_G0*2.5d-11*HnOj
+251,H3O+,H2+,OH,user_G0*2.5d-11*HnOj
+252,H3O+,H2O+,H,user_G0*7.5d-12*HnOj
+253,H3O+,OH+,H2,user_G0*2.5d-11*HnOj
+@noTab_end
 
 #cosmic rays processes from OSU
 @CR_start
