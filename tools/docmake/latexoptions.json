@@ -8,13 +8,17 @@
 	["ntot"      , "ntot"],
 	["Hnuclei"   , "Hnuclei"]
     ],
-    "deferred_substitutions" : { "kh11" : "k_{\\mathrm{H11}}",
-				 "a11"  : "a_{11}",
-				 "kh21" : "k_{\\mathrm{H21}}",
-				 "a21"  : "a_{21}",
-				 "kl21" : "k_{\\mathrm{L21}}",
-				 "Te"   : "T_{\\mathrm{e}}"
-			       },
+    "deferred_substitutions" : { 
+        "kh11" : "k_{\\mathrm{H11}}",
+    	"a11"  : "a_{11}",
+    	"Te"   : "T_{\\mathrm{e}}",
+        "kHdiss" : "k_{\\mathrm{H,diss}}",
+        "kLdiss" : "k_{\\mathrm{L,diss}}",
+        "ncrdiss" : "n_{\\mathrm{cr,diss}}",
+        "kHdissH2" : "k_{\\mathrm{H,diss,H}_2}",
+        "kLdissH2" : "k_{\\mathrm{L,diss,H}_2}",
+        "ncrdissH2" : "n_{\\mathrm{cr,diss,H}_2}"
+    },
     "symbols" : {
         "Tgas" : "T",
         "T32" : "(T/300)",
@@ -28,10 +32,10 @@
         "ln" : "ln",
         "log" : "log",
         "sqrt" : "sqrt",
-	"user_Tdust" : "T_{\\mathrm{d}}",
-	"user_gamma_H2" : "\\Gamma_{\\mathrm{H}_2}",
-	"user_gamma_CO" : "\\Gamma_{\\mathrm{CO}}",
-	"auto" : "\\mathrm{(see\\, ref.)}"
+	   "user_Tdust" : "T_{\\mathrm{d}}",
+	   "user_gamma_H2" : "\\Gamma_{\\mathrm{H}_2}",
+	   "user_gamma_CO" : "\\Gamma_{\\mathrm{CO}}",
+	   "auto" : "\\mathrm{(see\\, ref.)}"
     },
     "latex_backend" : "pytexit",
     "lines_per_page": 46,
