@@ -739,7 +739,7 @@ contains
        stoichiometricChange = stoichiometricChange - 1
     end do
 
-     revKc = (boltzmann_erg * Tgas * 1e-6)**(stoichiometricChange)&
+     revKc = (boltzmann_erg * Tgas * 1e-6)**(-stoichiometricChange)&
          * exp(-dgibss)
 
   end function revKc
@@ -875,7 +875,7 @@ contains
        stoichiometricChange = stoichiometricChange - 1
     end do
 
-    revKc = (boltzmann_erg * Tgas * 1e-6_dp)**(stoichiometricChange)&
+    revKc = (boltzmann_erg * Tgas * 1e-6_dp)**(-stoichiometricChange)&
             * exp(-dgibss/(Rgas_kJ*Tgas))
 
   end function revKc_with_GFE
