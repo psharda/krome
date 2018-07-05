@@ -46,7 +46,6 @@ contains
     !      if(k(i)<0d0.or.k(i)>kmax) print *,i,k(i)
     !   end do
     !end if
-
   end function coe
 
 
@@ -876,8 +875,8 @@ contains
        stoichiometricChange = stoichiometricChange - 1
     end do
 
-     revKc = (boltzmann_erg * Tgas * 1e-6_dp)**(stoichiometricChange)&
-            * exp(-dgibss)
+    revKc = (boltzmann_erg * Tgas * 1e-6_dp)**(stoichiometricChange)&
+            * exp(-dgibss/(Rgas_kJ*Tgas))
 
   end function revKc_with_GFE
 
