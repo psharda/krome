@@ -1,24 +1,47 @@
 \documentclass[10pt]{report}
+\usepackage[a4paper, total={8in, 11in}]{geometry}
 \usepackage{amsmath}
 \usepackage{chemformula}
 \usepackage{amssymb}
+\usepackage{array}
+\usepackage{siunitx}
 \newcommand{\dbDefault}{\textsc{KIDA}}
+\newcolumntype{h}{>{\setbox0=\hbox\bgroup}c<{\egroup}@{}}
+\newcolumntype{H}{@{}>{\lrbox0}l<{\endlrbox}}
+
+\newcommand{\chemicalNetworkTableCaption}{\caption{Chemical network}}
+\newcommand{\chemicalNetworkTableCaptionCont}{\caption{Chemical network}}
+\newcommand{\chemicalNetworkTableLabel}{tab:chemical_network}
+\newcommand{\chemicalNetworkTableNotes}{
+
+  \textbf{Parameters:}
+  \begin{tabular}{ll}
+    \input{NetworkLatexSymbols.tex}
+  \end{tabular}
+
+  \textbf{References:} \input{NetworkLatexReferences.tex}
+  }
+
+\newenvironment{chemical_network_table}[1]{
+  \begin{table*}
+      #1 }{
+  \end{table*} }
+
+\newenvironment{chemical_network_tabular}{
+  \begin{tabular}{llrlll}
+    \hline
+    No. & Reaction & \multicolumn{2}{l@{\:}}{Rate coefficient} & Notes & Ref.\\
+    \hline }{
+    \hline
+  \end{tabular} }
 
 \begin{document}
+\setlength\tabcolsep{1.0pt}
+\input{NetworkLatex.tex}
 
- \begin{tabular}{lllll}
-  \input{NetworkLatex_100.tex}
- \end{tabular}
-
- \begin{tabular}{lllll}
-  \input{NetworkLatex_101.tex}
- \end{tabular}
-
- \begin{tabular}{lllll}
-  \input{NetworkLatex_102.tex}
- \end{tabular}
+% References can be added in the network file with
+% #@ref: <latex citation>
+% The reference will be used for all subsequent reactions until the next occurance of #@ref:
+% \bibliography{references.bib}
 
 \end{document}
-
-
-
