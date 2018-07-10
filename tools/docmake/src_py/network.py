@@ -12,24 +12,23 @@ class network:
 		self.speciesDictionary = []
 		self.myOptions = myOptions
 
-                basePath = os.path.join(os.path.dirname(__file__), "..")
-                basePath = os.path.abspath(basePath)
-
+		basePath = os.path.join(os.path.dirname(__file__), "..")
+		basePath = os.path.abspath(basePath)
 
 		#get network file name
 		fileName = myOptions.network
 
 		#read atoms
-                absPath = os.path.join(basePath, "atomlist.dat")
+		absPath = os.path.join(basePath, "atomlist.dat")
 		atomSet = utils.getAtomSet(absPath)
 		self.atomSet = atomSet
 
 		#load thermochemical data
-                absPath = os.path.join(basePath, "thermo30.dat")
+		absPath = os.path.join(basePath, "thermo30.dat")
 		self.thermochemicalData = utils.getThermochemicalData(absPath)
 
 		#load polarizability data
-                absPath = os.path.join(basePath, "polarizability.dat")
+		absPath = os.path.join(basePath, "polarizability.dat")
 		self.polarizabilityData = utils.getPolarizabilityData(absPath)
 
 		#read shortcuts
@@ -262,56 +261,63 @@ class network:
 
         #****************
 	#dump a list of equations for deferred variables
-        def dumpDeferredShortcuts(self, temperatureShortcuts, variableShortcuts, deferredShortcuts, filename="NetworkLatexSymbols.tex"):
-                import sympy as sp
-                import re
-                symboltable = utils.getSymbolTable()
-                with open(filename, "w") as fileOutput:
-                        for expr, symbol in deferredShortcuts.iteritems():
-                                expr = utils.replaceShortcuts(expr, variableShortcuts, [])
-                                expr = utils.replaceShortcuts(expr, temperatureShortcuts[1:], [])
-                                expr = expr.replace("dexp", "exp")
-		                expr = expr.replace("d", "e")
-		                expr = expr.replace("log", "ln")
-		                expr = expr.replace("ln10", "log")
-		                expr = expr.replace("_8", "")
-                                while True:
-		                        try:
-			                        exprTex = sp.latex(eval(expr,symboltable))
-			                        break
-		                        #undefined variable will become a symbol
-		                        except (NameError,), err:
-			                        print "Name error in expression", err
-			                        varIssue = str(err).split("'")[1]
-                                                symboltable[varIssue] = varIssue
-                                                
-		                # use a\cdot 10^-b for reaction that are just numbers
-                                try:
-			                float(exprTex.replace("=", ""))
-			                exprTex = exprTex.replace("e-", "\\cdot 10^{-") + "}"
-		                except:
-			                pass
+	def dumpDeferredShortcuts(self, temperatureShortcuts, variableShortcuts, deferredShortcuts, filename="NetworkLatexSymbols.tex"):
+		import sympy as sp
+		import re
+		from options import latexoptions as opt
+		import pytexit
+		symboltable = utils.getSymbolTable()
+		with open(filename, "w") as fileOutput:
+			for expr, symbol in deferredShortcuts.iteritems():
+				expr = utils.replaceShortcuts(expr, variableShortcuts, [])
+				expr = utils.replaceShortcuts(expr, temperatureShortcuts[1:], [])
+				expr = expr.replace("dexp", "exp")
+				expr = expr.replace("d", "e")
+				expr = expr.replace("log", "ln")
+				expr = expr.replace("ln10", "log")
+				expr = expr.replace("_8", "")
+				if opt.latex_backend == "pytexit":
+					exprTex = pytexit.for2tex(expr, print_latex=False, print_formula=False)
+					exprTex = exprTex[2:-2]
+				else:
+					while True:
 
-                                # remove unwanted zeros
-		                exprTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", exprTex)
-		                exprTex = re.sub(r"(\d+)\.(?=\D)", r"\1", exprTex)
-		                exprTex = re.sub(r"0*(\d+\.*)", r"\1", exprTex)
+						try:
+							exprTex = sp.latex(eval(expr,symboltable))
+							break
+						#undefined variable will become a symbol
+						except (NameError,), err:
+							print "Name error in expression", err
+							varIssue = str(err).split("'")[1]
+							symboltable[varIssue] = varIssue
+							
+				# use a\cdot 10^-b for reaction that are just numbers
+				try:
+					float(exprTex.replace("=", ""))
+					exprTex = exprTex.replace("e-", "\\cdot 10^{-") + "}"
+				except:
+					pass
 
-                                fileOutput.write("$"+symbol + "$ & $ = " + exprTex+"$ \\\\ \n")
+				# remove unwanted zeros
+				exprTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", exprTex)
+				exprTex = re.sub(r"(\d+)\.(?=\D)", r"\1", exprTex)
+				exprTex = re.sub(r"0*(\d+\.*)", r"\1", exprTex)
+
+				fileOutput.write("$"+symbol + "$ & $ = " + exprTex+"$ \\\\ \n")
                 
-        #****************
+	#****************
 	#make a Latex list of references for the reaction table
-        def dumpLatexReferences(self, filename="NetworkLatexReferences.tex"):
-                with open(filename, "w") as fileOutput:
-                        refs = [(id, ref) for ref, id in self.referenceId.items()]
-                        refs = ["("+str(id)+") "+ref for id, ref in sorted(refs)]
-                        if len(refs) > 1:
-                                refstex = ", ".join(refs[:-1]) + " and " + refs[-1]
-                        elif len(refs) == 1:
-                                refstex = refs[0]
-                        else:
-                                refstex = ""
-                        fileOutput.write(refstex)
+	def dumpLatexReferences(self, filename="NetworkLatexReferences.tex"):
+		with open(filename, "w") as fileOutput:
+			refs = [(id, ref) for ref, id in self.referenceId.items()]
+			refs = ["("+str(id)+") "+ref for id, ref in sorted(refs)]
+			if len(refs) > 1:
+				refstex = ", ".join(refs[:-1]) + " and " + refs[-1]
+			elif len(refs) == 1:
+				refstex = refs[0]
+			else:
+				refstex = ""
+			fileOutput.write(refstex)
 
 
 	#********************

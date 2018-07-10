@@ -35,7 +35,9 @@
 	    "user_Tdust" : "T_{\\mathrm{d}}",
 	    "user_gamma_H2" : "\\mathrm{(see\\, sec.\\, \\ref{sec:external-isrf-as-diffuse-emission})}",
 	    "user_gamma_CO" : "\\mathrm{(see\\, sec.\\, \\ref{sec:external-isrf-as-diffuse-emission})}",
-	    "auto" : "\\mathrm{(see\\, ref.)}"
+	    "auto" : "\\mathrm{(see\\, ref.)}",
+        "sigma_v96" : "\\int \\mathrm{d}E\\, J(E)\\, \\sigma_{\\mathrm{v96}}",
+        "energy_ev" : "E"
     },
     "latex_backend" : "pytexit",
     "lines_per_page": 46,

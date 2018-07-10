@@ -1393,6 +1393,10 @@ class reaction:
 			reactionTex = ""
 			refTex = ""
 
+		#look in database if this is an auto rate
+		if self.rate[idxMerged] == "auto":
+			self.rate[idxMerged], Emin, Emax = self.find_auto_rate(self.reactants, self.products, self.reactionType)
+
 		#LaTeX rate
 		rateTex, message, numlines = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts, deferredShortcuts)
                 rateTex = "$" + rateTex + "$"
@@ -1413,34 +1417,34 @@ class reaction:
 	#make a LaTeX format of reaction
 	def rate2latex(self, rate, temperatureShortcuts, variableShortcuts, deferredShortcuts):
 		import re
-                from options import latexoptions as opt
-                if opt.latex_backend=="pytexit":
-                        import pytexit
-                else:
-		        import sympy as sp
+		from options import latexoptions as opt
+		if opt.latex_backend=="pytexit":
+			import pytexit
+		else:
+			import sympy as sp
                 
 		debug = True
 		maxRateLength = 100
 		message = "" #optional warning
 
-                symboltable = utils.getSymbolTable()
+		symboltable = utils.getSymbolTable()
                         
 		#put all variables with corresponding values in rate
 		if variableShortcuts:
-                        rate = utils.replaceShortcuts(rate, variableShortcuts, deferredShortcuts.keys())
+			rate = utils.replaceShortcuts(rate, variableShortcuts, deferredShortcuts.keys())
 
 		#replace shortcuts, loop needs to be reversed order for variable dependencies
 		#skip T32 and Te to keep as symbol
-                rate = utils.replaceShortcuts(rate, temperatureShortcuts[1:], deferredShortcuts.keys())
+		rate = utils.replaceShortcuts(rate, temperatureShortcuts[1:], deferredShortcuts.keys())
 
 		#make sympy friendly
-                rate = utils.replaceFortranVar("dexp", "exp", rate)
+		rate = utils.replaceFortranVar("dexp", "exp", rate)
 		rate = utils.replaceFortranVar("log", "ln", rate)
 		rate = utils.replaceFortranVar("ln10", "log", rate)
-                # Double prec exp notation to use e, e.g. 2d3 -> 2e3
-                rate = re.sub("([0-9]*\.*[0-9]*)d([+-]*[0-9]{1,})", r"\1e\2",rate)
-                # Remove double prec suffix, e.g. 1.0_8 -> 1.0
-                rate = re.sub("([0-9])_8", r"\1", rate)
+		# Double prec exp notation to use e, e.g. 2d3 -> 2e3
+		rate = re.sub("([0-9]*\.*[0-9]*)d([+-]*[0-9]{1,})", r"\1e\2",rate)
+		# Remove double prec suffix, e.g. 1.0_8 -> 1.0
+		rate = re.sub("([0-9])_8", r"\1", rate)
 
 		# store for debugging
 		rateTexAfterShortcutsReplaced = rate
@@ -1589,17 +1593,62 @@ class reaction:
 
 		return rateTex, message, numlines
 
-        #****************
+	#****************
+	#look up auto rate in database
+	def find_auto_rate(self, reactants, products, reactionType):
+		import os,re
+
+		reactants = ",".join(map(lambda x: x.name.replace("+", '\+'), reactants))
+		products = " *, *".join(map(lambda x: x.name.replace("+", '\+'), products))
+		print reactants, products
+
+		expr_w_limits = """ *@type: *{}ion
+ *@reacts: *{}
+ *@prods: *{}
+ *@limits: ([0-9\.de\+\<\>]*), *([0-9\.de\+\<\>]*)
+ *@rate: *(.*)""".format(reactionType, reactants, products)
+
+		expr_wo_limits = """ *@type: *{}ion
+ *@reacts: *{}
+ *@prods: *{}
+ *@rate: *(.*)""".format(reactionType, reactants, products)
+
+ 		print "Searching for :"
+ 		print expr_wo_limits
+ 		print
+ 		print expr_w_limits
+
+ 		re_w_limits = re.compile(expr_w_limits, re.MULTILINE)
+ 		re_wo_limits = re.compile(expr_wo_limits, re.MULTILINE)
+
+		self.database_path = "../../data/database"
+		for filename in os.listdir(self.database_path):
+			fullpath = os.path.join(self.database_path, filename)
+			if os.path.isfile(fullpath):
+				with open(fullpath, 'r') as f:
+					contents = f.read()
+					result = re_wo_limits.search(contents) or re_w_limits.search(contents)
+					if(result):
+						groups = list(result.groups())
+						rate = groups.pop()
+						if len(groups) > 0:
+							Emax = groups.pop()
+						if len(groups) > 0:
+							Emin = groups.pop()
+						return (rate, [Emin.replace("d","e")], [Emax.replace("d","e")])
+		raise Exception("Auto rate not found in database for reaction " + self.getVerbatim())
+
+  #****************
 	#break long rates and put in LateX table format
-        def breakRateTex(self,rate):
-                from options import latexoptions as opts
-                
-                rate = utils.raiseBracketsOnOperators(rate)
-                rate = utils.replaceLongFracByDivide(rate, maxlen=opts.max_fraction_length)
-                rate = utils.replaceLeftRightbyBigLR(rate)
-                rate, numlines = utils.breakLatexEquation(rate)
-                rate = "\\begin{aligned}[t] = &" + rate + "\\end{aligned}"
-                return rate, numlines
+	def breakRateTex(self,rate):
+		from options import latexoptions as opts
+
+		rate = utils.raiseBracketsOnOperators(rate)
+		rate = utils.replaceLongFracByDivide(rate, maxlen=opts.max_fraction_length)
+		rate = utils.replaceLeftRightbyBigLR(rate)
+		rate, numlines = utils.breakLatexEquation(rate)
+		rate = "\\begin{aligned}[t] = &" + rate + "\\end{aligned}"
+		return rate, numlines
 
 	#****************
 	#break long rates and put in LateX table format
@@ -1656,7 +1705,7 @@ class reaction:
 	def tempRange2latex(self, idxMerged):
 		import sympy as sp
 		#change limits to uniform format
-		low = utils.simplifyLimits(self.Tmin[idxMerged])
+		low  = utils.simplifyLimits(self.Tmin[idxMerged])
 		high = utils.simplifyLimits(self.Tmax[idxMerged])
 
 		#algorithm to account for differnt KROME formater of limits
