@@ -736,6 +736,7 @@
 
 
 #3body catalysis
+@catalysis_start
 @noTab_start
 @format:idx,R,R,P,Tmin,Tmax,rate
 280,C,C,C2,NONE,5d3,5.99d-33*(Tgas/5d3)**(-1.6)*ntot
@@ -755,3 +756,4 @@
 290,O,O,O2,NONE,NONE,9.2d-34*(T32)**(-1)*ntot
 
 @noTab_stop
+@catalysis_stop

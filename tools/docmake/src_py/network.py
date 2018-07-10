@@ -349,7 +349,8 @@ class network:
 		reactionFormat = "@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate"
 		shortcutsList = [] #used in network2latex, list because dict loses order
 		inBlockCR = False
-                inBlockPhoto = False
+		inBlockPhoto = False
+		inBlockCatalysis = False
 
 		self.reactions = []
                 reactionId = {}
@@ -388,15 +389,21 @@ class network:
 			if(srow.lower().startswith("@cr_stop") or srow.lower().startswith("@cr_end")):
 				inBlockCR = False
 
-                        if(srow.lower().startswith("@photo_start") or srow.lower().startswith("@photo_begin")):
+			if(srow.lower().startswith("@photo_start") or srow.lower().startswith("@photo_begin")):
 				inBlockPhoto = True
 			if(srow.lower().startswith("@photo_stop") or srow.lower().startswith("@photo_end")):
 				inBlockPhoto = False
 
+			if(srow.lower().startswith("@catalysis_start") or srow.lower().startswith("@catalysis_begin")):
+				inBlockCatalysis = True
+			if(srow.lower().startswith("@catalysis_stop") or srow.lower().startswith("@catalysis_end")):
+				inBlockCatalysis = False
+
 			#change reaction type to CR
 			reactionType = "standard" #default
 			if(inBlockCR): reactionType = "CR"
-                        if(inBlockPhoto): reactionType = "photo"
+			if(inBlockPhoto): reactionType = "photo"
+			if(inBlockCatalysis): reactionType = "catalysis"
 
 			#skip other tokens
 			if(srow.startswith("@")): continue

@@ -46,7 +46,7 @@ class reaction:
 		self.Tmax = [None]
 		self.reactionType = reactionType
 		self.shortcuts = shortcuts
-                self.reference = reference
+		self.reference = reference
 
 		#loop on format parts (and parse species)
 		for i in range(len(splitFormat)):
@@ -369,10 +369,10 @@ class reaction:
 		return self.getRPHash(self.products)
 
 	#********************
-	#get reaction unique hash, e.g. H_H__H2
+	#get reaction unique hash, e.g. H_H__H2__standard
 	def getReactionHash(self):
 		if(self.reactionHash!=None): return self.reactionHash
-		self.reactionHash = self.getRPHash(self.reactants) + "__" + self.getRPHash(self.products)
+		self.reactionHash = self.getRPHash(self.reactants) + "__" + self.getRPHash(self.products) + "__" + self.reactionType
 		return self.reactionHash
 
 	#********************
@@ -1358,6 +1358,8 @@ class reaction:
 			#e.g. \ch{H2 ->[CR] H + H}
 			if self.reactionType == "CR":
 				reactionTex += " ->[CR] "
+			elif self.reactionType == "catalysis":
+				reactionTex += " + M -> "
 			else:
 				reactionTex += " -> "
 
@@ -1368,8 +1370,11 @@ class reaction:
 					spec = "e-"
 				reactionTex += spec + " + "
 
+			#add generic catalysist to catalysis reaction
+			if self.reactionType == "catalysis":
+				reactionTex += "M"
 			#add photon to reaction with only one product
-			if len(self.products) == 1:
+			elif len(self.products) == 1:
 				reactionTex += "$\\gamma$"
 			else:
 				#remove trailing " + "
