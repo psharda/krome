@@ -174,15 +174,13 @@ class network:
 		#NOTE: Make sure the network input file has incrementing reaction indices.
 		# If double indices exist, the LaTeX table will be incorrect.
 
-		networkLatex="NetworkLatex"
-
 		#list with all temperature shortcuts element = (var, replaceWith)
 		shortcutsTemperature = utils.getShortcutsLatex()
-                deferredShortcuts = utils.getDeferredShortcuts()
+		deferredShortcuts = utils.getDeferredShortcuts()
 		cntMergedReactions = 0
 		cntTotalReactions = 1
 		cntAllReactions = 0
-                linesOnPage = 0
+		linesOnPage = 0
 
 		with open(networkLatex, "w") as fileOutput:
 			#dump header of the file
@@ -201,7 +199,7 @@ class network:
                                 for cnt in range(nrates):
                                         latexColumns, message, linesInRate = myReaction.reaction2latex(shortcutsTemperature,
 										                       shortcutsVariables,
-                                                                                                       deferredShortcuts,
+                                           deferredShortcuts,
 										                       cntMergedReactions,
 										                       cnt,
 										                       cntTotalReactions,
