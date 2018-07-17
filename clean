@@ -15,15 +15,18 @@ for x in [".log","~",".pyc",".dot",".gps",".tmp"]:
 		rmCount += 1
 
 
-removePatterns = ["tools/*.pyc", \
-	"tools/docmake/*.pyc", \
-	"tools/docmake/src_py/*.pyc", \
-	"tools/docmake/pngs/*.png", \
-	"tools/docmake/epss/*.eps", \
-	"tools/docmake/evals/*.json", \
-	"tools/docmake/evals/*.bak", \
-	"tools/docmake/dots/*.dot", \
-	"tools/docmake/htmls/*.html", \
+removePatterns = ["tools/*.pyc",
+	"tools/docmake/*.pyc",
+	"tools/docmake/NetworkLatex_*.tex",
+	"tools/docmake/src_py/*.pyc",
+	"tools/docmake/pngs/*.png",
+	"tools/docmake/epss/*.eps",
+	"tools/docmake/evals/*.json",
+	"tools/docmake/evals/*.bak",
+	"tools/docmake/dots/*.dot",
+	"tools/docmake/htmls/*.html",
+	"tools/kexplorer/*.pyc",
+	"tools/kexplorer/*.dot",
 	]
 
 #clean patterns

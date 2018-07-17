@@ -4,7 +4,7 @@
 #rates for CO network similar to Glover+2010 MNRAS from there and other authors
 @var:Hnuclei = get_Hnuclei(n(:))
 @var:ntot=sum(n(1:nmols))
-@common: user_crate,user_Av
+@common: user_crate,user_Av,user_G0
 
 @var: T32 = Tgas/3d2
 @var: Te = Tgas*8.617343d-5
@@ -14,32 +14,39 @@
 @var: invT32 = 1d0/T32
 
 #Janev 1987
+#@ref:\cite{Janev1987Springer}
 @format:idx,R,R,P,P,P,rate
 1,H,E,H+,E,E,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
 
 #Abel et al. 1997, fit by data from Ferland et al. 1992
+#@ref:\cite{Abel1997NewAstronomy,Ferland1992ApJ}
 @format:idx,R,R,P,Tmin,Tmax,rate
 2,H+,E,H,2.73d0,.LE.5.5e3,3.92d-13*invTe**0.6353d0
 3,H+,E,H,>5.5e3,1e8,exp(-28.61303380689232d0-0.7241125657826851d0*lnTe-0.02026044731984691d0*lnTe**2-0.002380861877349834d0*lnTe**3-0.0003212605213188796d0*lnTe**4-0.00001421502914054107d0*lnTe**5+4.989108920299513d-6*lnTe**6+5.755614137575758d-7*lnTe**7-1.856767039775261d-8*lnTe**8-3.071135243196595d-9*lnTe**9)
 
 #Janev 1987
+#@ref:\cite{Janev1987Springer}
 @format:idx,R,R,P,P,P,rate
 4,He,E,He+,E,E,exp(-44.09864886d0+23.91596563d0*lnTe-10.7532302d0*(lnTe**2)+3.05803875d0*(lnTe**3)-0.56851189d0*(lnTe**4)+6.79539123d-2*(lnTe**5)-5.00905610d-3*(lnTe**6)+2.06723616d-4*(lnTe**7)-3.64916141d-6*(lnTe**8))
 
 #Radiative+dielectronic from Cen 1992, Aldrovandi & Pequignot 1973
+#@ref:\cite{Cen1992ApJS,Aldrovandi1973A&A}
 @format:idx,R,R,P,Tmin,Tmax,rate
 5,He+,E,He,2.73d0,.LE.9.28e3,3.92d-13*invTe**0.6353d0
 6,He+,E,He,>9.28e3,1e8,1.54d-9*(1.d0+0.3d0/exp(8.099328789667d0*invTe))/(exp(40.49664394833662d0*invTe)*Te**1.5d0)+3.92d-13/Te**0.6353d0
 
 #Aladdin database 1989 (see Abel et al. 1997)
+#@ref:Aladdin database\footnote{https://www-amdis.iaea.org/ALADDIN}; \cite{Abel1997NewAstronomy}
 @format:idx,R,R,P,P,P,rate
 7,He+,E,He++,E,E,exp(-68.71040990212001d0+43.93347632635d0*lnTe-18.48066993568d0*lnTe**2+4.701626486759002d0*lnTe**3-0.7692466334492d0*lnTe**4+0.08113042097303d0*lnTe**5-0.005324020628287001d0*lnTe**6+0.0001975705312221d0*lnTe**7-3.165581065665d-6*lnTe**8)
 
 #Yoshida 2006, ApJ-652
+#@ref:\cite{Yoshida2006ApJ}
 @format:idx,R,R,P,P,rate
 8,He+,H,He,H+,1.2d-15*(T32)*.25
 
 # De Jong (1972)
+#@ref:MISSING CITATION!
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 9,He,H+,He+,H,NONE,1d4,1.26d-9*Tgas**(-.75)*exp(-1.275d5*invT)
 10,He,H+,He+,H,1d4,NONE,4d-37*Tgas**4.74
@@ -65,10 +72,12 @@
 13,H2,He+,He,H,H+,3.7d-14*exp(-35d0*invT)
 
 #KIDA Harada+2010
+#@ref:\cite{Harada2010APJ}
 @format:idx,R,R,P,P,P,rate
 14,H2,He+,He+,H,H,3d-11*sqrt(T32)*exp(-5.2d4*invT)
 
 #Verner & Ferland 1996
+#@ref:\cite{Verner1996ApJ}
 @format:idx,R,R,P,rate
 8,He++,E,He+,1.891d-10/(sqrt(Tgas/9.37)*(1.+sqrt(Tgas/9.37))**0.2476*(1.+sqrt(Tgas/2.774d6))**1.7524)
 
@@ -77,6 +86,7 @@
 16,H,E,H-,1.4d-18*Tgas**0.928*exp(-Tgas/16200.)
 
 # fit by Kreckel et al. 2010
+#@ref:\cite{Kreckel2010Sci}
 @format:idx,R,R,P,P,rate
 @var:a1=1.3500e-09
 @var:a2=9.8493e-02
@@ -93,16 +103,19 @@
 10,H-,H,H2,E,a1*(Tgas**a2+a3*Tgas**a4+a5*Tgas**a6)/(1.+a7*Tgas**a8+a9*Tgas**a10+a11*Tgas**a12)
 
 # fit to Ramaker & Peek 1976, corrected by Coppola
+#@ref:\cite{Coppola2011ApJS,Ramaker1976PhRvA}
 @format:idx,R,R,P,Tmin,Tmax,rate
 11,H,H+,H2+,NONE,.LT.3d1,2.10e-20*(Tgas/30.)**(-0.15)
 12,H,H+,H2+,.GE.3d1,NONE,10**(-18.20-3.194*log10(Tgas)+1.786*(log10(Tgas))**2-0.2072*(log10(Tgas))**3)
 
 #Karpas 1979 ####XXXX###
+#@ref:\cite{Karpas1979JChPh}
 @format:idx,R,R,P,P,rate
 21,H2+,H,H2,H+,6d-10
 
 @noTab_start
 #fit by Savin et al. 2004, see also Grassi et al. 2011, lower limits is extended below 100K
+#@ref:\cite{Grassi2011A&A,Savin2004ApJ}
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 @var:asav0=-1.9153214d2
 @var:asav1= 4.0129114d2
@@ -122,17 +135,19 @@
 @var:bsav7= 2.1675387d-2
 @var:sumsav=asav0+asav1*log10(Tgas)+asav2*(log10(Tgas))**2+asav3*(log10(Tgas))**3+asav4*(log10(Tgas))**4+asav5*(log10(Tgas))**5+asav6*(log10(Tgas))**6+asav7*(log10(Tgas))**7
 @var:sumsbv=bsav0+bsav1*log10(Tgas)+bsav2*(log10(Tgas))**2+bsav3*(log10(Tgas))**3+bsav4*(log10(Tgas))**4+bsav5*(log10(Tgas))**5+bsav6*(log10(Tgas))**6+bsav7*(log10(Tgas))**7
-14,H2,H+,H2+,H,NONE,.LT.1d5,1d1**sumsav
+#14,H2,H+,H2+,H,NONE,.LT.1d5,1d1**sumsav
 15,H2,H+,H2+,H,.GE.1d5,NONE,1d1**sumsbv
 @noTab_stop
 
 
 #fit by Mitchell & Deveau 1983 of data by Corrigan 1965
+#@ref:\cite{Mitchell1983ApJ,Corrigan1965JChPh}
 @format:idx,R,R,P,P,P,rate
 17,H2,E,H,H,E,4.38d-10*exp(-1.02d5*invT)*Tgas**(0.35)
 
 
 #Lepp+Shull 1983, updated with Glover+2010
+#@ref:\cite{Lepp1983ApJ,Glover2010MNRAS}
 @format:idx,R,R,P,P,P,rate
 @var:kHdiss=3.52d-9*exp(-4.39d4*invT) + 1d-40
 @var:kLdiss=6.67d-12*sqrt(Tgas)*exp(-(1d0+63590.*invT)) + 1d-40
@@ -142,31 +157,38 @@
 
 
 #Janev 1987
+#@ref:\cite{Janev1987Springer}
 25,H-,E,H,E,E,exp(-18.01849334273d0+2.360852208681d0*lnTe-0.2827443061704d0*lnTe**2+0.01623316639567d0*lnTe**3-0.03365012031362999d0*lnTe**4+0.01178329782711d0*lnTe**5-0.001656194699504d0*lnTe**6+0.0001068275202678d0*lnTe**7-2.631285809207d-6*lnTe**8)
 
 #Abel+1997, based on Janev 1987
+#@ref:\cite{Abel1997NewAstronomy,Janev1987Springer}
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
 26,H-,H,H,H,E,NONE,.LE.1.16e3,2.56d-9*Te**1.78186
 27,H-,H,H,H,E,>1.16e3,NONE,exp(-20.37260896533324d0+1.139449335841631d0*lnTe-0.1421013521554148d0*lnTe**2+0.00846445538663d0*lnTe**3-0.0014327641212992d0*lnTe**4+0.0002012250284791d0*lnTe**5+0.0000866396324309d0*lnTe**6-0.00002585009680264d0*lnTe**7+2.4555011970392d-6*lnTe**8-8.06838246118d-8*lnTe**9)
 
 #Stenrup+2009, extended to higher temperature (extrapolation from xsecs, but new calculations are required)
+#@ref:\cite{Stenrup2009PhRvA}
 @format:idx,R,R,P,P,rate
 28,H-,H+,H,H,(2.96d-6/sqrt(Tgas) - 1.73d-9 + 2.50d-10*sqrt(Tgas))
 
 #Poulart 1978
+#@ref:MISSING CITATION!
 @format:idx,R,R,P,P,rate
 29,H-,H+,H2+,E,1.d-8*Tgas**(-0.4)
 
 #Abel et al. 1997, fit by data from Schneider 1994
+#@ref:\cite{Abel1997NewAstronomy,Schneider1994ApJ}
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 24,H2+,E,H,H,NONE,.LE.6.17e2,1.d-8
 25,H2+,E,H,H,>6.17e2,NONE,1.32d-6*Tgas**(-0.76)
 
 #Dalgarno+Lepp 1987
+#@ref:\cite{Dalgarno1987IAUS}
 @format:idx,R,R,P,P,rate
 32,H2+,H-,H,H2,5d-7*sqrt(1d2*invT)
 
 #Lepp+Shull 1983, updated with Glover+2010
+#@ref:\cite{Lepp1983ApJ,Glover2010MNRAS}
 @format:idx,R,R,P,P,P,rate
 @var:kHdissH2=1.3d-9*exp(-5.33d4*invT) + 1d-40
 @var:kLdissH2=5.996d-30*Tgas**4.1881/(1.+6.761d-6*Tgas)**5.6881 * exp(-5.46574d4*invT) + 1d-40
@@ -175,17 +197,21 @@
 24,H2,H2,H2,H,H,1d1**(log10(kHdissH2)-log10(kHdissH2/kLdissH2)/(1d0+ntot/ncrdissH2))
 
 #Glover+2010
+#@ref:\cite{Glover2010MNRAS}
 @format:idx,R,R,R,P,P,rate
 34,H,H,He,H2,He,6.9d-32*Tgas**(-.4)
 
 #Forrey 2013
+#@ref:\cite{Forrey2013ApJ}
 @format:idx,R,R,R,P,P,rate
 25,H,H,H,H2,H,6d-32*Tgas**(-.25) + 2d-31*Tgas**(-.5)
 
 #Glover&Abel 2008
+#@ref:\cite{Glover2008MNRAS}
 26,H2,H,H,H2,H2,(6d-32*Tgas**(-0.25) + 2d-31*Tgas**(-.5)) / 8d0
 
 #METALS FROM Glover&Jappsen 2010 from
+#@ref:MISSING CITATION!
 @format:idx,R,R,P,Tmin,Tmax,rate
 39,C+,E,C,NONE,.LE.7950d0,4.67d-12*(T32)**(-0.6)
 40,C+,E,C,>7950d0,.LE.21140d0,1.23d-17*(T32)**2.49*exp(21845.6d0*invT)
@@ -232,13 +258,16 @@
 73,CH,O,CO,H,1.02d-10*exp(-914d0*invT)
 
 #UMIST
+#@ref:\UMIST\, \cite{MacGregor1973JpB}
 @format:idx,R,R,P,P,rate
 74,CH,O,HCO+,E,1.9d-11*(T32)**(-2.2)*exp(-165.1d0*invT)
 
 #UMIST
+#@ref:\UMIST\, \cite{MURRELL1986JoMS}
 75,CH,O,OH,C,2.52d-11*exp(-2381d0*invT)
 
 #KIDA
+#@ref:\KIDA
 76,CH2,H,CH,H2,2.2d-10
 
 #KIDA
@@ -264,13 +293,16 @@
 83,O,H2,OH,H,NONE,NONE,1.46e-12*exp(-9650.*invT)
 
 #Glover+2010
+#@ref:\cite{Glover2010MNRAS}
 84,OH,H,O,H2,NONE,280.,6.99d-14*T32**2.8*exp(-1950d0*invT)
 85,OH,H,O,H2,280.,NONE,5.45d-17
 
 #from Baluch+2005
+#@ref:MISSING CITATION!
 87,H2,OH,H2O,H,NONE,NONE,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
 
 #KIDA, recomended, below 10K constant
+#@ref:\KIDA
 88,C,OH,H,CO,NONE,1d1,7.051e-11
 89,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(-.108d0*invT)
 
@@ -279,6 +311,7 @@
 93,O,OH,H,O2,NONE,150.,4.997d-11
 
 #Glover+2010
+#@ref:\cite{Glover2010MNRAS}
 93,OH,OH,H2O,O,NONE,NONE,1.65d-12*(T32)**1.14*exp(-5d1*invT)
 
 #Glover+2010
@@ -307,12 +340,14 @@
 102,C,H2+,CH+,H,NONE,NONE,2.4d-9
 
 #O'Connor+2014 (http://arxiv.org/abs/1408.4696), original range 10-1e4 K, here extended
+#@ref:\cite{OConnor2015ApJS}
 103,C,H3+,CH+,H2,NONE,NONE,(1.0218d-9 + 7.2733d-11*sqrt(Tgas) + 5.9203d-14*Tgas)/(Tgas**0.1667 + 4.4914d-2*sqrt(Tgas) - 5.9203d-14*Tgas + 2.6397d-6*Tgas**1.5)
 
 #additional channel from O'Connor+2014 (http://arxiv.org/abs/1408.4696), original range 10-1e4 K, here extended
 103,C,H3+,CH2+,H,NONE,NONE,(8.5145d-10)/(Tgas**(.1667) + 9.5666d-4*sqrt(Tgas) - 4.404d-5*Tgas + 2.3496d-6 * Tgas**1.5)
 
 #Glover+2010
+#@ref:\cite{Glover2010MNRAS}
 104,C+,H2,CH+,H,NONE,NONE,1d-10*exp(-4640d0*invT)
 
 #Glover+2010
@@ -337,6 +372,7 @@
 111,CH3+,H,CH2+,H2,NONE,NONE,7.d-10*exp(-10560d0*invT)
 
 #KIDA, including additional channel, while H2CO+ channel ignored
+#@ref:\KIDA
 112,CH3+,O,HOC+,H2,NONE,NONE,2.5d-10
 113,CH3+,O,HCO+,H2,NONE,NONE,2.5d-10
 
@@ -347,9 +383,11 @@
 116,O+,H2,H,OH+,NONE,NONE,1.69d-9
 
 #Glover+2010
+#@ref:\cite{Glover2010MNRAS}
 117,O,H2+,H,OH+,NONE,NONE,1.5d-9
 
 #KIDA and additional channel both recomended
+#@ref:\KIDA
 118,O,H3+,H2,OH+,NONE,NONE,7.98d-10*T32**(-.156)*exp(-1.41d0*invT)
 119,O,H3+,H,H2O+,NONE,NONE,3.42d-10*T32**(-.156)*exp(-1.41d0*invT)
 
@@ -362,33 +400,43 @@
 123,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #Glover+2010
+#@ref:\cite{Glover2010MNRAS}
 124,OH+,H2,H2O+,H,NONE,NONE,1.01d-9
 
 #Glover+2010
 125,H2O+,H2,H3O+,H,NONE,NONE,6.4d-10
 
 #KIDA, constant below 10K
+#@ref:\KIDA
 126,H2O,H3+,H2,H3O+,NONE,1d1,2.55d-8
 127,H2O,H3+,H2,H3O+,1d1,NONE,1.73d-9*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 
 #Glover+2010, KIDA, constant below 10K, and KIDA for additional channel
+#@ref:\KIDA
 128,H2O,C+,HOC+,H,NONE,NONE,1.8d-9
 129,H2O,C+,HCO+,H,NONE,1d1,5.027d-9
+#@ref:\cite{Glover2010MNRAS}
 130,H2O,C+,HCO+,H,1d1,NONE,3.4093e-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
+#@ref:\KIDA
 131,H2O,C+,H2O+,C,NONE,NONE,2.4d-10
 
 #Glover+2010
+#@ref:\cite{Glover2010MNRAS}
 132,H3O+,C,HCO+,H2,NONE,NONE,1d-11
 
 #KIDA, both recomended
+#@ref:\KIDA
 133,O2,C+,CO+,O,NONE,NONE,3.42d-10
 134,O2,C+,CO,O+,NONE,NONE,4.53d-10
 
 #Glover+2010, KIDA HOCO+ channel ignored
+#@ref:\KIDA; \cite{Glover2010MNRAS}
 135,O2,CH2+,HCO+,OH,NONE,NONE,9.1d-10
 
 #Glover+2010, KIDA additional channel
+#@ref:\cite{Glover2010MNRAS}
 136,C,O2+,O,CO+,NONE,NONE,5.2d-11
+#@ref:\KIDA
 137,C,O2+,O2,C+,NONE,NONE,5.2d-11
 
 #KIDA, constant below 10K
@@ -455,6 +503,7 @@
 166,H2O,He+,He,H2O+,1d1,NONE,5.1282d-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 
 #G+10
+#@ref:\cite{Glover2010MNRAS}
 167,O2,H+,O2+,H,NONE,NONE,2d-9
 
 #G+10
@@ -537,6 +586,7 @@
 216,C+,H,CH+,,NONE,NONE,4.46d-16*Tgas**(-.5)*exp(-4.93*Tgas**(-.6667))
 
 #KIDA, recomended
+#@ref:\KIDA
 217,C+,H2,CH2+,,NONE,NONE,2d-16*T32**(-1.3)*exp(-23d0*invTgas)
 218,C+,O,CO+,,NONE,3d2,2.5d-18
 219,C+,O,CO+,,3d2,NONE,3.14d-18*T32**(-.15)*exp(-68d0*invT)
@@ -544,6 +594,12 @@
 221,O,H,OH,,NONE,NONE,9.9d-19*T32**(-.38)
 222,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
 223,OH,H,H2O,,NONE,NONE,5.26d-18*T32**(-5.22)*exp(-9d1*invT)
+
+#H2 formation on dust grains. No idea about ref. Will be replaced by table lookup
+#@ref:MISSING CITATION!
+#224,H,H,H2,,NONE,NONE,2.121d-17
+224,H,H,H2,,NONE,NONE,2.121d-17*2.647
+#224,H,H,H2,,NONE,NONE,2.121d-17*5.0
 
 @noTab_start
 #DUST FREEZE-OUT/EVAPORATION
@@ -554,7 +610,7 @@
 @ice:H2O,evaporation,krate_evaporation(n(:),idx_H2O,tabTdust)
 
 #NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux
-@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0, user_Av, user_crate, 1d-3)
+@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0*user_G0, user_Av, user_crate, 1d-3)
 
 @noTab_stop
 
@@ -567,12 +623,14 @@
 @format:idx,R,P,P,rate
 
 @photo_start
+#@ref:\cite{Verner1996ApJ}
 401,H,H+,E,auto
 401,He,He+,E,auto
-402,C,C+,E,@xsecFile=SWRI
 403,O,O+,E,auto
-404,CO,C,O,@xsecFile=SWRI
-405,H2,H,H,@xsecFile=SWRI
+#@ref:~PHIDRATES database\footnote{\url{http://phidrates.space.swri.edu}} \citep{Huebner1992ApSS}
+402,C,C+,E,@xsecFile=SWRI
+#404,CO,C,O,@xsecFile=SWRI
+#405,H2,H,H,@xsecFile=SWRI
 406,H2,H2+,E,@xsecFile=SWRI
 
 407,H-,H,E,@xsecFile=SWRI
@@ -590,28 +648,65 @@
 417,H2,H+,H,E,@xsecFile=SWRI
 @photo_end
 
+# External rates for self-shielding species
+#@ref:\cite{Richings2014II}
+@common: user_gamma_CO, user_gamma_H2
 @format:idx,R,P,P,rate
-@var:fscale=get_ratioFluxDraine()
-225,H2+,H,H+,1.1d-9*fscale
-227,H3+,H2,H+,4.9d-13*fscale
-228,H3+,H2+,H,4.9d-13*fscale
-230,C-,C,E,2.4d-7*fscale
-233,CH+,C,H+,2.6d-10*fscale
-234,CH2,CH,H,7.1d-10*fscale
-235,CH2,CH2+,E,5.9d-10*fscale
-236,CH2+,CH+,H,4.6d-10*fscale
-237,CH3+,CH2+,H,1d-9*fscale
-238,CH3+,CH+,H2,1d-9*fscale
-240,O-,O,E,2.4d-7*fscale
-243,OH+,O,H+,1d-12*fscale
-246,H2O+,H2+,O,5.d-11*fscale
-247,H2O+,H+,OH,5.d-11*fscale
-248,H2O+,O+,H2,5.d-11*fscale
-249,H2O+,OH+,H,1.5d-10*fscale
-250,H3O+,H+,H2O,2.5d-11*fscale
-251,H3O+,H2+,OH,2.5d-11*fscale
-252,H3O+,H2O+,H,7.5d-12*fscale
-253,H3O+,OH+,H2,2.5d-11*fscale
+404,CO,C,O,user_gamma_CO
+405,H2,H,H,user_gamma_H2
+
+#@format:idx,R,P,P,rate
+#@var:fscale=get_ratioFluxDraine()
+#225,H2+,H,H+,1.1d-9*fscale
+#227,H3+,H2,H+,4.9d-13*fscale
+#228,H3+,H2+,H,4.9d-13*fscale
+#230,C-,C,E,2.4d-7*fscale
+#233,CH+,C,H+,2.6d-10*fscale
+#234,CH2,CH,H,7.1d-10*fscale
+#235,CH2,CH2+,E,5.9d-10*fscale
+#236,CH2+,CH+,H,4.6d-10*fscale
+#237,CH3+,CH2+,H,1d-9*fscale
+#238,CH3+,CH+,H2,1d-9*fscale
+#240,O-,O,E,2.4d-7*fscale
+#243,OH+,O,H+,1d-12*fscale
+#246,H2O+,H2+,O,5.d-11*fscale
+#247,H2O+,H+,OH,5.d-11*fscale
+#248,H2O+,O+,H2,5.d-11*fscale
+#249,H2O+,OH+,H,1.5d-10*fscale
+#250,H3O+,H+,H2O,2.5d-11*fscale
+#251,H3O+,H2+,OH,2.5d-11*fscale
+#252,H3O+,H2O+,H,7.5d-12*fscale
+#253,H3O+,OH+,H2,2.5d-11*fscale
+
+#PHOTOREACTIONS THIN WITH Av
+#@storeOnce_start
+#FROM GLOVER+2009
+#@ref:MISSING CITATION!
+225,H2+,H,H+,user_G0*1.1d-9*exp(-1.9*user_Av)
+227,H3+,H2,H+,user_G0*4.9d-13*exp(-1.8*user_Av)
+228,H3+,H2+,H,user_G0*4.9d-13*exp(-2.3*user_Av)
+230,C-,C,E,user_G0*2.4d-7*exp(-.9*user_Av)
+233,CH+,C,H+,user_G0*2.6d-10*exp(-2.5*user_Av)
+234,CH2,CH,H,user_G0*7.1d-10*exp(-1.7*user_Av)
+235,CH2,CH2+,E,user_G0*5.9d-10*exp(-2.3*user_Av)
+236,CH2+,CH+,H,user_G0*4.6d-10*exp(-1.7*user_Av)
+237,CH3+,CH2+,H,user_G0*1d-9*exp(-1.7*user_Av)
+238,CH3+,CH+,H2,user_G0*1d-9*exp(-1.7*user_Av)
+240,O-,O,E,user_G0*2.4d-7*exp(-.5*user_Av)
+243,OH+,O,H+,user_G0*1d-12*exp(-1.8*user_Av)
+#@storeOnce_stop
+
+@noTab_start
+@var: HnOj = fHnOj(user_Av)
+246,H2O+,H2+,O,user_G0*5.d-11*HnOj
+247,H2O+,H+,OH,user_G0*5.d-11*HnOj
+248,H2O+,O+,H2,user_G0*5.d-11*HnOj
+249,H2O+,OH+,H,user_G0*1.5d-10*HnOj
+250,H3O+,H+,H2O,user_G0*2.5d-11*HnOj
+251,H3O+,H2+,OH,user_G0*2.5d-11*HnOj
+252,H3O+,H2O+,H,user_G0*7.5d-12*HnOj
+253,H3O+,OH+,H2,user_G0*2.5d-11*HnOj
+@noTab_end
 
 #cosmic rays processes from OSU
 @CR_start
