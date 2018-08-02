@@ -36,7 +36,7 @@
 6,He+,E,He,>9.28e3,1e8,1.54d-9*(1.d0+0.3d0/exp(8.099328789667d0*invTe))/(exp(40.49664394833662d0*invTe)*Te**1.5d0)+3.92d-13/Te**0.6353d0
 
 #Aladdin database 1989 (see Abel et al. 1997)
-#@ref:Aladdin database\footnote{https://www-amdis.iaea.org/ALADDIN}; \cite{Abel1997NewAstronomy}
+#@ref:\ALADDIN; \cite{Abel1997NewAstronomy}
 @format:idx,R,R,P,P,P,rate
 7,He+,E,He++,E,E,exp(-68.71040990212001d0+43.93347632635d0*lnTe-18.48066993568d0*lnTe**2+4.701626486759002d0*lnTe**3-0.7692466334492d0*lnTe**4+0.08113042097303d0*lnTe**5-0.005324020628287001d0*lnTe**6+0.0001975705312221d0*lnTe**7-3.165581065665d-6*lnTe**8)
 
@@ -258,12 +258,12 @@
 73,CH,O,CO,H,1.02d-10*exp(-914d0*invT)
 
 #UMIST
-#@ref:\UMIST\, \cite{MacGregor1973JpB}
+#@ref:\UMIST
 @format:idx,R,R,P,P,rate
 74,CH,O,HCO+,E,1.9d-11*(T32)**(-2.2)*exp(-165.1d0*invT)
 
 #UMIST
-#@ref:\UMIST\, \cite{MURRELL1986JoMS}
+#@ref:\UMIST
 75,CH,O,OH,C,2.52d-11*exp(-2381d0*invT)
 
 #KIDA
@@ -430,7 +430,7 @@
 134,O2,C+,CO,O+,NONE,NONE,4.53d-10
 
 #Glover+2010, KIDA HOCO+ channel ignored
-#@ref:\KIDA; \cite{Glover2010MNRAS}
+#@ref:\cite{Glover2010MNRAS}
 135,O2,CH2+,HCO+,OH,NONE,NONE,9.1d-10
 
 #Glover+2010, KIDA additional channel
@@ -553,7 +553,7 @@
 190,H3O+,E,O,H,H2,NONE,NONE,5.6d-9*T32**(-.5)
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 191,H3O+,E,H,H2O,NONE,NONE,1.08d-7*T32**(-.5)
-192,H3O+,E,OH,H2,NONE,NONE,6.02d-7*T32**(-.5)
+192,H3O+,E,OH,H2,NONE,NONE,6.02d-8*T32**(-.5)
 193,O2+,E,O,O,NONE,NONE,1.95d-7*T32**(-.7)
 194,CO+,E,C,O,NONE,NONE,2.75d-7*T32**(-.55)
 195,HCO+,E,CO,H,NONE,NONE,2.76d-7*T32**(-.64)
@@ -598,7 +598,7 @@
 #H2 formation on dust grains. No idea about ref. Will be replaced by table lookup
 #@ref:MISSING CITATION!
 #224,H,H,H2,,NONE,NONE,2.121d-17
-224,H,H,H2,,NONE,NONE,2.121d-17*2.647
+224,H,H,H2,,NONE,NONE,2.121d-17*2.0
 #224,H,H,H2,,NONE,NONE,2.121d-17*5.0
 
 @noTab_start
@@ -626,7 +626,9 @@
 #@ref:\cite{Verner1996ApJ}
 401,H,H+,E,auto
 401,He,He+,E,auto
+402,He+,He++,E,auto
 403,O,O+,E,auto
+
 #@ref:~PHIDRATES database\footnote{\url{http://phidrates.space.swri.edu}} \citep{Huebner1992ApSS}
 402,C,C+,E,@xsecFile=SWRI
 #404,CO,C,O,@xsecFile=SWRI
@@ -731,9 +733,9 @@
 275,HCO,HCO+,E,1.17d3*user_crate
 @format:idx,R,P,P,P,rate
 279,H2,H,H+,E,9.3d-1*user_crate
+
 @storeOnce_stop
 @CR_stop
-
 
 #3body catalysis
 @catalysis_start
