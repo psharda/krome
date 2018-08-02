@@ -266,6 +266,8 @@ class network:
 		import re
 		from options import latexoptions as opt
 		import pytexit
+		import utils
+
 		symboltable = utils.getSymbolTable()
 		with open(filename, "w") as fileOutput:
 			for expr, symbol in deferredShortcuts.iteritems():
@@ -302,6 +304,10 @@ class network:
 				exprTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", exprTex)
 				exprTex = re.sub(r"(\d+)\.(?=\D)", r"\1", exprTex)
 				exprTex = re.sub(r"0*(\d+\.*)", r"\1", exprTex)
+
+				# pytexit doesn't replace symbols, so it is done here
+				if opt.latex_backend == "pytexit":
+					exprTex = utils.replaceSymbols(exprTex)
 
 				fileOutput.write("$"+symbol + "$ & $ = " + exprTex+"$ \\\\ \n")
                 

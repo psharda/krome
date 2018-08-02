@@ -1417,6 +1417,7 @@ class reaction:
 	#make a LaTeX format of reaction
 	def rate2latex(self, rate, temperatureShortcuts, variableShortcuts, deferredShortcuts):
 		import re
+		import utils
 		from options import latexoptions as opt
 		if opt.latex_backend=="pytexit":
 			import pytexit
@@ -1480,20 +1481,9 @@ class reaction:
 		# store for debugging
 		rateTextAfterSympy = rateTex
 
-
-                if opt.latex_backend == "pytexit":
-                        # pytexit doesn't replace symbols, so it is done here
-                        for sym, expr in utils.getSymbols().iteritems():
-                                symtex = pytexit.for2tex(sym, print_latex=False, print_formula=False)[2:-2]
-                                #print "Replacing symbol: ", sym, " -> ", symtex, " -> ", expr
-                                if sym==symtex:
-                                        rateTex = utils.replaceFortranVar(symtex, expr, rateTex)
-                                else:
-                                        rateTex = rateTex.replace(symtex, expr)
-                                        
-                        # it also leaves in factors of 1
-                        rateTex = re.sub(r"\\times *1\.0([^0-9\.]|$)", r"\1", rateTex)
-                        
+		# pytexit doesn't replace symbols, so it is done here
+		if opt.latex_backend == "pytexit":
+			rateTex = utils.replaceSymbols(rateTex)
 
 		#fix mistakes by sympy
 		#no 10^{} for short rates

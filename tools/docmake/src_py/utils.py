@@ -409,4 +409,20 @@ def getSymbolTable():
                 symboltable[key] = sp.Symbol(symbols[key])
         return symboltable
 
+# Replaces symbols with their LaTeX representation
+def replaceSymbols(rateTex):
+  import pytexit
+  import re
 
+  for sym, expr in getSymbols().iteritems():
+    symtex = pytexit.for2tex(sym, print_latex=False, print_formula=False)[2:-2]
+    #print "Replacing symbol: ", sym, " -> ", symtex, " -> ", expr
+    if sym==symtex:
+      rateTex = replaceFortranVar(symtex, expr, rateTex)
+    else:
+      rateTex = rateTex.replace(symtex, expr)
+                  
+  # it also leaves in factors of 1
+  rateTex = re.sub(r"\\times *1\.0([^0-9\.]|$)", r"\1", rateTex)
+
+  return rateTex
