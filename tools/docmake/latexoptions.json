@@ -2,13 +2,15 @@
     "substitutions" : [
 	["T32"       , "Tgas/300"],
 	["invTgas"   , "1e0/Tgas"],
+    ["invT"   , "1e0/Tgas"],
 	["invT32"    , "1.e0/T32"],
 	["lnT"       , "log(Tgas)"],
+    ["lnTe"       , "log(Te)"],
 	["sqrTgas"   , "sqrt(Tgas)"],
 	["ntot"      , "ntot"],
 	["Hnuclei"   , "Hnuclei"]
     ],
-    "deferred_substitutions" : { 
+    "deferred_substitutions" : {
         "kh11" : "k_{\\mathrm{H11}}",
     	"a11"  : "a_{11}",
     	"Te"   : "T_{\\mathrm{e}}",
