@@ -1560,7 +1560,9 @@ class reaction:
         rateTex = re.sub("([ \)_]*)idx_{([A-Za-z0-9_]{1,})}", r"\1idx_\2", rateTex)
         rateTexIdxReplaced = rateTex
         # Rename number density, e.g. n(idx_H) -> n_idx_H
-        rateTex = re.sub(r"([^A-Za-z])?n\{(\\left|) *\( *([A-Za-z0-9_]{1,}) *(\\right|) *\)\}", r"\1n_{\3}", rateTex)
+        # "(?<!\l)" is a negative lookback that ensures "\ln{...}" is not
+        # captured by this regex
+        rateTex = re.sub(r"([^A-Za-z])?(?<!\l)n\{(\\left|) *\( *([A-Za-z0-9_]{1,}) *(\\right|) *\)\}", r"\1n_{\3}", rateTex)
         # Rename species id to name wrapped in \ch, e.g. idx_H2 -> \ch{H2}
         rateTex = re.sub("([ \)_]*)idx_([A-Za-z0-9_]{1,})( *)", r"\1\ch{\2}\3", rateTex)
 
