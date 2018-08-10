@@ -1555,7 +1555,7 @@ class reaction:
         rateTex = re.sub(r"0*(\d+\.*)", r"\1", rateTex)
 
         # truncate numbers at 5 decimal places
-        rateTex = re.sub(r'(\d+\.[0-9]{5})\d*', r'\1', rateTex)
+        rateTex = re.sub(r'(\d+\.[0-9]{'+str(opt.truncate_numbers)+'})\d*', r'\1', rateTex)
 
         rateTex = re.sub("([ \)_]*)idx_{([A-Za-z0-9_]{1,})}", r"\1idx_\2", rateTex)
         rateTexIdxReplaced = rateTex

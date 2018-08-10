@@ -41,5 +41,6 @@
     },
     "latex_backend" : "pytexit",
     "lines_per_page": 46,
-    "max_fraction_length": 150
+    "max_fraction_length": 150,
+    "truncate_numbers": 5
 }
