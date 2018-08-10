@@ -107,7 +107,7 @@ class species():
 			self.loadXsecLeiden()
 
 			#compute photo rates
-			self.computePhRates()
+			# self.computePhRates()
 
 
 	#**********************
@@ -165,7 +165,7 @@ class species():
 	#compute photo rates, structure is a dict
 	# database_name
 	#   |---phd/phi
-	#          |---radiation_fields---(rate,1/s)
+	#	  |---radiation_fields---(rate,1/s)
 	def computePhRates(self):
 		import numpy as np
 		from math import pi
@@ -614,6 +614,3 @@ class species():
 
 		fout.write(utils.getFooter("footer.php"))
 		fout.close()
-
-
-

@@ -34,9 +34,9 @@ class options:
 		for (k,v) in optionsData.iteritems():
 			setattr(self,k,v)
 
-                #read latex options from json file
-                if "latexoptions" in optionsData:
-                        latexoptions.load(optionsData["latexoptions"])
+		#read latex options from json file
+		if "latexoptions" in optionsData:
+			latexoptions.load(optionsData["latexoptions"])
 
 
 	#*******************
@@ -53,16 +53,16 @@ class options:
 		return varRanges
 
 class latexoptions:
-        @classmethod
-        def load(cls,filename):
-                import json
-                
-                #read latex options from json file
-                with open(filename) as f:
-                        optionsData = json.load(f)
-                for (key,value) in optionsData.iteritems():
-                        if type(value)==dict:
-                                value = {str(k) : str(v) for k, v in value.iteritems()}
-                        elif type(value)==list:
-                                value = [(str(k), str(v)) for k, v in value]
-	                setattr(cls,key,value)
+	@classmethod
+	def load(cls,filename):
+		import json
+
+		#read latex options from json file
+		with open(filename) as f:
+			optionsData = json.load(f)
+		for (key,value) in optionsData.iteritems():
+			if type(value)==dict:
+				value = {str(k) : str(v) for k, v in value.iteritems()}
+			elif type(value)==list:
+				value = [(str(k), str(v)) for k, v in value]
+			setattr(cls,key,value)

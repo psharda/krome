@@ -12,24 +12,24 @@ class network:
 		self.speciesDictionary = []
 		self.myOptions = myOptions
 
-                basePath = os.path.join(os.path.dirname(__file__), "..")
-                basePath = os.path.abspath(basePath)
+		basePath = os.path.join(os.path.dirname(__file__), "..")
+		basePath = os.path.abspath(basePath)
 
 
 		#get network file name
 		fileName = myOptions.network
 
 		#read atoms
-                absPath = os.path.join(basePath, "atomlist.dat")
+		absPath = os.path.join(basePath, "atomlist.dat")
 		atomSet = utils.getAtomSet(absPath)
 		self.atomSet = atomSet
 
 		#load thermochemical data
-                absPath = os.path.join(basePath, "thermo30.dat")
+		absPath = os.path.join(basePath, "thermo30.dat")
 		self.thermochemicalData = utils.getThermochemicalData(absPath)
 
 		#load polarizability data
-                absPath = os.path.join(basePath, "polarizability.dat")
+		absPath = os.path.join(basePath, "polarizability.dat")
 		self.polarizabilityData = utils.getPolarizabilityData(absPath)
 
 		#read shortcuts
@@ -114,14 +114,14 @@ class network:
 	#prepare complete documentation
 	def makeAllDoc(self):
 
-		#prepare graphs
-		self.makeGraph()
-
-		#prepare html
-		self.makeHTML()
-
-		#plot all rates
-		self.plotRates()
+		# #prepare graphs
+		# self.makeGraph()
+		#
+		# #prepare html
+		# self.makeHTML()
+		#
+		# #plot all rates
+		# self.plotRates()
 
 		#make latex table of network
 		self.network2latex()
@@ -170,7 +170,7 @@ class network:
 	#********************
 	#make a LaTeX table of the network
 	def network2latex(self, networkLatex="NetworkLatex.tex"):
-                from options import latexoptions as opts
+		from options import latexoptions as opts
 		#NOTE: Make sure the network input file has incrementing reaction indices.
 		# If double indices exist, the LaTeX table will be incorrect.
 
@@ -178,55 +178,56 @@ class network:
 
 		#list with all temperature shortcuts element = (var, replaceWith)
 		shortcutsTemperature = utils.getShortcutsLatex()
-                deferredShortcuts = utils.getDeferredShortcuts()
+		deferredShortcuts = utils.getDeferredShortcuts()
 		cntMergedReactions = 0
 		cntTotalReactions = 1
 		cntAllReactions = 0
-                linesOnPage = 0
+		linesOnPage = 0
 
 		with open(networkLatex, "w") as fileOutput:
 			#dump header of the file
 			self.dumpLatexTableHeader(fileOutput)
-                        #dump beginning of table float, table environment and header row
-                        self.dumpLatexBeginTable(fileOutput)
+			#dump beginning of table float, table environment and header row
+			self.dumpLatexBeginTable(fileOutput)
 			#loop on reactions to evaluate
-			for myReaction in sorted(self.reactions, key=lambda x: x.uid):
+			# for myReaction in sorted(self.reactions, key=lambda x: x.uid):
+			for myReaction in sorted(self.reactions, key=lambda x: [xx.name for xx in x.reactants]):
 				#list with all variable shortcuts (excl. temperature ones)
 				shortcutsVariables = myReaction.shortcuts
 
-                                nrates = len(myReaction.rate)
-                                rateColumns = []
-                                messages = []
-                                linesInReaction = 0
-                                for cnt in range(nrates):
-                                        latexColumns, message, linesInRate = myReaction.reaction2latex(shortcutsTemperature,
-										                       shortcutsVariables,
-                                                                                                       deferredShortcuts,
-										                       cntMergedReactions,
-										                       cnt,
-										                       cntTotalReactions,
-										                       cntAllReactions)
-                                        rateColumns.append(latexColumns)
-                                        messages.append(message)
-                                        linesInReaction += linesInRate
-                                linesOnPage += linesInReaction
-                                        
-                                if linesOnPage > opts.lines_per_page:
-                                        # Dump page break
-                                        self.dumpLatexEndTable(fileOutput)
-                                        self.dumpLatexBeginTable(fileOutput, first=False)
-                                        linesOnPage = linesInReaction
+				nrates = len(myReaction.rate)
+				rateColumns = []
+				messages = []
+				linesInReaction = 0
+				for cnt in range(nrates):
+					latexColumns, message, linesInRate = myReaction.reaction2latex(shortcutsTemperature,
+												       shortcutsVariables,
+												       deferredShortcuts,
+												       cntMergedReactions,
+												       cnt,
+												       cntTotalReactions,
+												       cntAllReactions)
+					rateColumns.append(latexColumns)
+					messages.append(message)
+					linesInReaction += linesInRate
+				linesOnPage += linesInReaction
 
-                                for columns, message in zip(rateColumns, messages):
-                                        if message:
-					        fileOutput.write(message + "\n")
-				        self.dumpLatexTable(columns, fileOutput)
+				if linesOnPage > opts.lines_per_page:
+					# Dump page break
+					self.dumpLatexEndTable(fileOutput)
+					self.dumpLatexBeginTable(fileOutput, first=False)
+					linesOnPage = linesInReaction
 
-                        # Dump end of table environment and - float
-                        self.dumpLatexEndTable(fileOutput, last=True)
+				for columns, message in zip(rateColumns, messages):
+					if message:
+						fileOutput.write(message + "\n")
+					self.dumpLatexTable(columns, fileOutput)
 
-                self.dumpDeferredShortcuts(shortcutsTemperature, shortcutsVariables, deferredShortcuts)
-                self.dumpLatexReferences()
+			# Dump end of table environment and - float
+			self.dumpLatexEndTable(fileOutput, last=True)
+
+		self.dumpDeferredShortcuts(shortcutsTemperature, shortcutsVariables, deferredShortcuts)
+		self.dumpLatexReferences()
 
 	#****************
 	#dump colums in LateX table format
@@ -239,22 +240,22 @@ class network:
 		tableFile.write("% Set \"h\" as table-spec for the column to hide it\n")
 		tableFile.write("%%\\newcolumntype{h}{>{\setbox0=\hbox\\bgroup}c<{\egroup}@{}}\n")
 
-        #****************
+	#****************
 	#dump headers for table float and - environment
-        def dumpLatexBeginTable(self, tableFile, first=True):
-                arg = "\\chemicalNetworkTableCaption"
-                if not first: arg += "Cont"
-                if first: arg += "\n\\label{\\chemicalNetworkTableLabel}"
-                tableFile.write("\\begin{chemical_network_table}{"+arg+"}\n")
-                tableFile.write("  \\begin{chemical_network_tabular}\n")
+	def dumpLatexBeginTable(self, tableFile, first=True):
+		arg = "\\chemicalNetworkTableCaption"
+		if not first: arg += "Cont"
+		if first: arg += "\n\\label{\\chemicalNetworkTableLabel}"
+		tableFile.write("\\begin{chemical_network_table}{"+arg+"}\n")
+		tableFile.write("  \\begin{chemical_network_tabular}\n")
 
-        #****************
+	#****************
 	#dump footers for table float and - environment
-        def dumpLatexEndTable(self, tableFile, last=False):
-                tableFile.write("  \\end{chemical_network_tabular}\n")
-                if last:
-                        tableFile.write("  \\chemicalNetworkTableNotes\n")
-                tableFile.write("\\end{chemical_network_table}\n\n")
+	def dumpLatexEndTable(self, tableFile, last=False):
+		tableFile.write("  \\end{chemical_network_tabular}\n")
+		if last:
+			tableFile.write("  \\chemicalNetworkTableNotes\n")
+		tableFile.write("\\end{chemical_network_table}\n\n")
 
 	#****************
 	#build colums in LateX table format
@@ -262,58 +263,58 @@ class network:
 		row = " & ".join(columns) + " \\\\"
 		tableFile.write(row + "\n")
 
-        #****************
+	#****************
 	#dump a list of equations for deferred variables
-        def dumpDeferredShortcuts(self, temperatureShortcuts, variableShortcuts, deferredShortcuts, filename="NetworkLatexSymbols.tex"):
-                import sympy as sp
-                import re
-                symboltable = utils.getSymbolTable()
-                with open(filename, "w") as fileOutput:
-                        for expr, symbol in deferredShortcuts.iteritems():
-                                expr = utils.replaceShortcuts(expr, variableShortcuts, [])
-                                expr = utils.replaceShortcuts(expr, temperatureShortcuts[1:], [])
-                                expr = expr.replace("dexp", "exp")
-		                expr = expr.replace("d", "e")
-		                expr = expr.replace("log", "ln")
-		                expr = expr.replace("ln10", "log")
-		                expr = expr.replace("_8", "")
-                                while True:
-		                        try:
-			                        exprTex = sp.latex(eval(expr,symboltable))
-			                        break
-		                        #undefined variable will become a symbol
-		                        except (NameError,), err:
-			                        print "Name error in expression", err
-			                        varIssue = str(err).split("'")[1]
-                                                symboltable[varIssue] = varIssue
-                                                
-		                # use a\cdot 10^-b for reaction that are just numbers
-                                try:
-			                float(exprTex.replace("=", ""))
-			                exprTex = exprTex.replace("e-", "\\cdot 10^{-") + "}"
-		                except:
-			                pass
+	def dumpDeferredShortcuts(self, temperatureShortcuts, variableShortcuts, deferredShortcuts, filename="NetworkLatexSymbols.tex"):
+		import sympy as sp
+		import re
+		symboltable = utils.getSymbolTable()
+		with open(filename, "w") as fileOutput:
+			for expr, symbol in deferredShortcuts.iteritems():
+				expr = utils.replaceShortcuts(expr, variableShortcuts, [])
+				expr = utils.replaceShortcuts(expr, temperatureShortcuts[1:], [])
+				expr = expr.replace("dexp", "exp")
+				expr = expr.replace("d", "e")
+				expr = expr.replace("log", "ln")
+				expr = expr.replace("ln10", "log")
+				expr = expr.replace("_8", "")
+				while True:
+					try:
+						exprTex = sp.latex(eval(expr,symboltable))
+						break
+					#undefined variable will become a symbol
+					except (NameError,), err:
+						print "Name error in expression", err
+						varIssue = str(err).split("'")[1]
+						symboltable[varIssue] = varIssue
 
-                                # remove unwanted zeros
-		                exprTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", exprTex)
-		                exprTex = re.sub(r"(\d+)\.(?=\D)", r"\1", exprTex)
-		                exprTex = re.sub(r"0*(\d+\.*)", r"\1", exprTex)
+				# use a\cdot 10^-b for reaction that are just numbers
+				try:
+					float(exprTex.replace("=", ""))
+					exprTex = exprTex.replace("e-", "\\cdot 10^{-") + "}"
+				except:
+					pass
 
-                                fileOutput.write("$"+symbol + "$ & $ = " + exprTex+"$ \\\\ \n")
-                
-        #****************
+				# remove unwanted zeros
+				exprTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", exprTex)
+				exprTex = re.sub(r"(\d+)\.(?=\D)", r"\1", exprTex)
+				exprTex = re.sub(r"0*(\d+\.*)", r"\1", exprTex)
+
+				fileOutput.write("$"+symbol + "$ & $ = " + exprTex+"$ \\\\ \n")
+
+	#****************
 	#make a Latex list of references for the reaction table
-        def dumpLatexReferences(self, filename="NetworkLatexReferences.tex"):
-                with open(filename, "w") as fileOutput:
-                        refs = [(id, ref) for ref, id in self.referenceId.items()]
-                        refs = ["("+str(id)+") "+ref for id, ref in sorted(refs)]
-                        if len(refs) > 1:
-                                refstex = ", ".join(refs[:-1]) + " and " + refs[-1]
-                        elif len(refs) == 1:
-                                refstex = refs[0]
-                        else:
-                                refstex = ""
-                        fileOutput.write(refstex)
+	def dumpLatexReferences(self, filename="NetworkLatexReferences.tex"):
+		with open(filename, "w") as fileOutput:
+			refs = [(id, ref) for ref, id in self.referenceId.items()]
+			refs = ["("+str(id)+") "+ref for id, ref in sorted(refs)]
+			if len(refs) > 1:
+				refstex = ", ".join(refs[:-1]) + " and " + refs[-1]
+			elif len(refs) == 1:
+				refstex = refs[0]
+			else:
+				refstex = ""
+			fileOutput.write(refstex)
 
 
 	#********************
@@ -351,25 +352,25 @@ class network:
 		reactionFormat = "@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate"
 		shortcutsList = [] #used in network2latex, list because dict loses order
 		inBlockCR = False
-                inBlockPhoto = False
+		inBlockPhoto = False
 
 		self.reactions = []
-                reactionId = {}
-                self.referenceId = {}
-                nextReactionId = 0
-                nextReferenceId = 0
+		reactionId = {}
+		self.referenceId = {}
+		nextReactionId = 0
+		nextReferenceId = 0
 		print "reading network "+fileName
 		#open file to read network
 		fh = open(fileName,"rb")
-                reference = None
+		reference = None
 		for row in fh:
 			srow = row.strip()
 			if(srow==""): continue
-                        if(srow.startswith("#@ref:")):
-                                reference = srow.replace("#@ref:","")
-                                if not reference in self.referenceId:
-                                        nextReferenceId += 1
-                                        self.referenceId[reference] = nextReferenceId
+			if(srow.startswith("#@ref:")):
+				reference = srow.replace("#@ref:","")
+				if not reference in self.referenceId:
+					nextReferenceId += 1
+					self.referenceId[reference] = nextReferenceId
 			if(srow.startswith("#")): continue
 
 			#get format if token found
@@ -390,7 +391,7 @@ class network:
 			if(srow.lower().startswith("@cr_stop") or srow.lower().startswith("@cr_end")):
 				inBlockCR = False
 
-                        if(srow.lower().startswith("@photo_start") or srow.lower().startswith("@photo_begin")):
+			if(srow.lower().startswith("@photo_start") or srow.lower().startswith("@photo_begin")):
 				inBlockPhoto = True
 			if(srow.lower().startswith("@photo_stop") or srow.lower().startswith("@photo_end")):
 				inBlockPhoto = False
@@ -398,27 +399,27 @@ class network:
 			#change reaction type to CR
 			reactionType = "standard" #default
 			if(inBlockCR): reactionType = "CR"
-                        if(inBlockPhoto): reactionType = "photo"
+			if(inBlockPhoto): reactionType = "photo"
 
 			#skip other tokens
 			if(srow.startswith("@")): continue
 
-                        #parse row line for reaction
-                        if reference == None:
-                                ref = None
-                        else:
-                                ref = (self.referenceId[reference], reference)
+			#parse row line for reaction
+			if reference == None:
+				ref = None
+			else:
+				ref = (self.referenceId[reference], reference)
 
 			myReaction = reaction.reaction(srow,reactionFormat,atomSet,reactionType,self.species,shortcutsList,reference=ref)
 
-                        #update reaction id
-                        key = (str(myReaction.reactants), str(myReaction.products), str(myReaction.reactionType))
-                        if key in reactionId:
-                                myReaction.uid = reactionId[key]
-                        else:
-                                nextReactionId += 1
-                                myReaction.uid = nextReactionId
-                                reactionId[key] = myReaction.uid
+			#update reaction id
+			key = (str(myReaction.reactants), str(myReaction.products), str(myReaction.reactionType))
+			if key in reactionId:
+				myReaction.uid = reactionId[key]
+			else:
+				nextReactionId += 1
+				myReaction.uid = nextReactionId
+				reactionId[key] = myReaction.uid
 
 			#add parsed reaction to reactions structure in network
 			self.reactions.append(myReaction)

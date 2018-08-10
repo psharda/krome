@@ -46,7 +46,7 @@ class reaction:
 		self.Tmax = [None]
 		self.reactionType = reactionType
 		self.shortcuts = shortcuts
-                self.reference = reference
+		self.reference = reference
 
 		#loop on format parts (and parse species)
 		for i in range(len(splitFormat)):
@@ -1333,7 +1333,7 @@ class reaction:
 		if idxMerged == 0:
 			#LaTeX index
 			#idxTex = str(cntAllReactions+1)
-                        idxTex = str(self.uid)
+			idxTex = str(self.uid)
 
 			#latex reaction
 			reactionTex = "\\ch{"
@@ -1348,12 +1348,12 @@ class reaction:
 					continue
 
 				reactionTex += spec + " + "
-                        #if photo-reaction, add photon as reactant
-                        if(self.reactionType == "photo"):
-                                reactionTex += "$\\gamma$"
-                        else:
-			        #remove trailing " + "
-			        reactionTex = reactionTex[:-3]
+			#if photo-reaction, add photon as reactant
+			if(self.reactionType == "photo"):
+				reactionTex += "$\\gamma$"
+			else:
+				#remove trailing " + "
+				reactionTex = reactionTex[:-3]
 			#if cosmic ray reaction, make LaTeX format
 			#e.g. \ch{H2 ->[CR] H + H}
 			if self.reactionType == "CR":
@@ -1378,10 +1378,10 @@ class reaction:
 			reactionTex += "}"
 
 			# default LaTeX reference as a LaTeX command
-                        if(self.reference == None):
-			        refTex = "\\dbDefault{}"
-                        else:
-                                refTex = str(self.reference[0])
+			if(self.reference == None):
+				refTex = "\\dbDefault{}"
+			else:
+				refTex = str(self.reference[0])
 
 		else:
 			idxTex = ""
@@ -1390,17 +1390,17 @@ class reaction:
 
 		#LaTeX rate
 		rateTex, message, numlines = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts, deferredShortcuts)
-                rateTex = "$" + rateTex + "$"
-                
+		rateTex = "$" + rateTex + "$"
+
 		#LaTeX temperature limits
 		limitsTex = self.tempRange2latex(idxMerged)
-                limitsTex = "$" + limitsTex + "$"
+		limitsTex = "$" + limitsTex + "$"
 
-                #k symbol
-                if idxMerged==0:
-                        kTex="k$_{"+idxTex+"}$"
-                else:
-                        kTex=""
+		#k symbol
+		if idxMerged==0:
+			kTex="k$_{"+idxTex+"}$"
+		else:
+			kTex=""
 
 		return [idxTex, reactionTex, kTex, rateTex, limitsTex, refTex], message, numlines
 
@@ -1408,34 +1408,34 @@ class reaction:
 	#make a LaTeX format of reaction
 	def rate2latex(self, rate, temperatureShortcuts, variableShortcuts, deferredShortcuts):
 		import re
-                from options import latexoptions as opt
-                if opt.latex_backend=="pytexit":
-                        import pytexit
-                else:
-		        import sympy as sp
-                
+		from options import latexoptions as opt
+		if opt.latex_backend=="pytexit":
+			import pytexit
+		else:
+			import sympy as sp
+
 		debug = True
 		maxRateLength = 100
 		message = "" #optional warning
 
-                symboltable = utils.getSymbolTable()
-                        
+		symboltable = utils.getSymbolTable()
+
 		#put all variables with corresponding values in rate
 		if variableShortcuts:
-                        rate = utils.replaceShortcuts(rate, variableShortcuts, deferredShortcuts.keys())
+			rate = utils.replaceShortcuts(rate, variableShortcuts, deferredShortcuts.keys())
 
 		#replace shortcuts, loop needs to be reversed order for variable dependencies
 		#skip T32 and Te to keep as symbol
-                rate = utils.replaceShortcuts(rate, temperatureShortcuts[1:], deferredShortcuts.keys())
+		rate = utils.replaceShortcuts(rate, temperatureShortcuts[1:], deferredShortcuts.keys())
 
 		#make sympy friendly
-                rate = utils.replaceFortranVar("dexp", "exp", rate)
+		rate = utils.replaceFortranVar("dexp", "exp", rate)
 		rate = utils.replaceFortranVar("log", "ln", rate)
 		rate = utils.replaceFortranVar("ln10", "log", rate)
-                # Double prec exp notation to use e, e.g. 2d3 -> 2e3
-                rate = re.sub("([0-9]*\.*[0-9]*)d([+-]*[0-9]{1,})", r"\1e\2",rate)
-                # Remove double prec suffix, e.g. 1.0_8 -> 1.0
-                rate = re.sub("([0-9])_8", r"\1", rate)
+		# Double prec exp notation to use e, e.g. 2d3 -> 2e3
+		rate = re.sub("([0-9]*\.*[0-9]*)d([+-]*[0-9]{1,})", r"\1e\2",rate)
+		# Remove double prec suffix, e.g. 1.0_8 -> 1.0
+		rate = re.sub("([0-9])_8", r"\1", rate)
 
 		# store for debugging
 		rateTexAfterShortcutsReplaced = rate
@@ -1444,23 +1444,23 @@ class reaction:
 		#keep trying
 		while True:
 			try:
-                                if opt.latex_backend == "pytexit":
-                                        rateTex = pytexit.for2tex(rate, print_latex=False, print_formula=False)
-                                        rateTex = rateTex[2:-2]
-                                else:
-                                        rateTex = sp.latex(eval(rate,symboltable))
+				if opt.latex_backend == "pytexit":
+					rateTex = pytexit.for2tex(rate, print_latex=False, print_formula=False)
+					rateTex = rateTex[2:-2]
+				else:
+					rateTex = sp.latex(eval(rate,symboltable))
 				break
 			#undefined variable will become a symbol
 			except (NameError,), err:
 				print "Name error in rate", err
 				varIssue = str(err).split("'")[1]
-                                symboltable[varIssue] = sp.Symbol(varIssue)
+				symboltable[varIssue] = sp.Symbol(varIssue)
 
 			#special case rate will be prited as it is
 			except (SyntaxError,), err:
-                                if rate=="@xsecFile=SWRI": return "= \\textrm{table}", message, 1
-                                print "Syntax Error in rate", err
-                                print "in ", rate
+				if rate=="@xsecFile=SWRI": return "= \\textrm{table}", message, 1
+				print "Syntax Error in rate", err
+				print "in ", rate
 				return "=" + rate, message
 
 			#special case rate will be prited as it is
@@ -1472,19 +1472,19 @@ class reaction:
 		rateTextAfterSympy = rateTex
 
 
-                if opt.latex_backend == "pytexit":
-                        # pytexit doesn't replace symbols, so it is done here
-                        for sym, expr in utils.getSymbols().iteritems():
-                                symtex = pytexit.for2tex(sym, print_latex=False, print_formula=False)[2:-2]
-                                #print "Replacing symbol: ", sym, " -> ", symtex, " -> ", expr
-                                if sym==symtex:
-                                        rateTex = utils.replaceFortranVar(symtex, expr, rateTex)
-                                else:
-                                        rateTex = rateTex.replace(symtex, expr)
-                                        
-                        # it also leaves in factors of 1
-                        rateTex = re.sub(r"\\times *1\.0([^0-9\.]|$)", r"\1", rateTex)
-                        
+		if opt.latex_backend == "pytexit":
+			# pytexit doesn't replace symbols, so it is done here
+			for sym, expr in utils.getSymbols().iteritems():
+				symtex = pytexit.for2tex(sym, print_latex=False, print_formula=False)[2:-2]
+				#print "Replacing symbol: ", sym, " -> ", symtex, " -> ", expr
+				if sym==symtex:
+					rateTex = utils.replaceFortranVar(symtex, expr, rateTex)
+				else:
+					rateTex = rateTex.replace(symtex, expr)
+
+			# it also leaves in factors of 1
+			rateTex = re.sub(r"\\times *1\.0([^0-9\.]|$)", r"\1", rateTex)
+
 
 		#fix mistakes by sympy
 		#no 10^{} for short rates
@@ -1554,15 +1554,15 @@ class reaction:
 		rateTex = re.sub(r"(\d+)\.(?=\D)", r"\1", rateTex)
 		rateTex = re.sub(r"0*(\d+\.*)", r"\1", rateTex)
 
-                # truncate numbers at 5 decimal places
-                rateTex = re.sub(r'(\d+\.[0-9]{5})\d*', r'\1', rateTex)
+		# truncate numbers at 5 decimal places
+		rateTex = re.sub(r'(\d+\.[0-9]{5})\d*', r'\1', rateTex)
 
-                rateTex = re.sub("([ \)_]*)idx_{([A-Za-z0-9_]{1,})}", r"\1idx_\2", rateTex)
-                rateTexIdxReplaced = rateTex
-                # Rename number density, e.g. n(idx_H) -> n_idx_H
-                rateTex = re.sub(r"([^A-Za-z])?n\{(\\left|) *\( *([A-Za-z0-9_]{1,}) *(\\right|) *\)\}", r"\1n_{\3}", rateTex)
-                # Rename species id to name wrapped in \ch, e.g. idx_H2 -> \ch{H2}
-                rateTex = re.sub("([ \)_]*)idx_([A-Za-z0-9_]{1,})( *)", r"\1\ch{\2}\3", rateTex)
+		rateTex = re.sub("([ \)_]*)idx_{([A-Za-z0-9_]{1,})}", r"\1idx_\2", rateTex)
+		rateTexIdxReplaced = rateTex
+		# Rename number density, e.g. n(idx_H) -> n_idx_H
+		rateTex = re.sub(r"([^A-Za-z])?n\{(\\left|) *\( *([A-Za-z0-9_]{1,}) *(\\right|) *\)\}", r"\1n_{\3}", rateTex)
+		# Rename species id to name wrapped in \ch, e.g. idx_H2 -> \ch{H2}
+		rateTex = re.sub("([ \)_]*)idx_([A-Za-z0-9_]{1,})( *)", r"\1\ch{\2}\3", rateTex)
 
 		# store rate before breaking
 		rateTextFull = rateTex
@@ -1570,31 +1570,31 @@ class reaction:
 		#break long rates in multiple lines
 		if len(rateTex) > maxRateLength:
 			rateTex, numlines = self.breakRateTex(rateTex)
-                else:
-                        #add LaTeX symbols
-		        rateTex = " = " + rateTex
-                        numlines = 1
+		else:
+			#add LaTeX symbols
+			rateTex = " = " + rateTex
+			numlines = 1
 
 		message += "\n%These comments below are for debugging, ignore them"
 		message += "\n%original rate: " + rate
 		message += "\n%after shortcuts replacing: " + rateTexAfterShortcutsReplaced
 		message += "\n%rate after sympy: " + rateTextAfterSympy
-                message += "\n%rate after replacing idx: " + rateTexIdxReplaced
+		message += "\n%rate after replacing idx: " + rateTexIdxReplaced
 		message += "\n%full rate (before breaking): " + rateTextFull
 
 		return rateTex, message, numlines
 
-        #****************
+	#****************
 	#break long rates and put in LateX table format
-        def breakRateTex(self,rate):
-                from options import latexoptions as opts
-                
-                rate = utils.raiseBracketsOnOperators(rate)
-                rate = utils.replaceLongFracByDivide(rate, maxlen=opts.max_fraction_length)
-                rate = utils.replaceLeftRightbyBigLR(rate)
-                rate, numlines = utils.breakLatexEquation(rate)
-                rate = "\\begin{aligned}[t] = &" + rate + "\\end{aligned}"
-                return rate, numlines
+	def breakRateTex(self,rate):
+		from options import latexoptions as opts
+
+		rate = utils.raiseBracketsOnOperators(rate)
+		rate = utils.replaceLongFracByDivide(rate, maxlen=opts.max_fraction_length)
+		rate = utils.replaceLeftRightbyBigLR(rate)
+		rate, numlines = utils.breakLatexEquation(rate)
+		rate = "\\begin{aligned}[t] = &" + rate + "\\end{aligned}"
+		return rate, numlines
 
 	#****************
 	#break long rates and put in LateX table format
@@ -1686,7 +1686,6 @@ class reaction:
 		#turn numbers into integers in latex format
 		lowhighTex = [str(utils.char2int(part)) for part in lowhighTex.split()]
 		limitTex = " ".join(lowhighTex)
-                limitTex = utils.exp2latex(limitTex)
+		limitTex = utils.exp2latex(limitTex)
 
 		return limitTex
-

@@ -189,17 +189,17 @@ def isNumber(arg):
 #character to int
 def char2int(arg, when_below=1e4):
 	if isNumber(arg):
-                f = float(arg)
-                if(f < when_below):
-		        return int(float(arg))
+		f = float(arg)
+		if(f < when_below):
+			return int(float(arg))
 	return arg
 
 #********************
 def getShortcuts():
 	shortcut = dict()
 	fileName = "shortcuts.dat"
-        absPath = os.path.join(os.path.dirname(__file__), "..", fileName)
-        absPath = os.path.abspath(absPath)
+	absPath = os.path.join(os.path.dirname(__file__), "..", fileName)
+	absPath = os.path.abspath(absPath)
 	fh = open(absPath,"rb")
 	for row in fh:
 		srow = row.strip()
@@ -212,8 +212,8 @@ def getShortcuts():
 #********************
 #get shortcuts of temperature that can be used in network
 def getShortcutsLatex():
-        from options import latexoptions
-        return latexoptions.substitutions
+	from options import latexoptions
+	return latexoptions.substitutions
 
 #********************
 #check if variable is already a temperature shortcut
@@ -231,11 +231,11 @@ def parentheticContents(string, parenteses):
 	closed = parenteses[1]
 	stack = []
 	for i, c in enumerate(string):
-	    if c == opened:
-	        stack.append(i)
-	    elif c == closed and stack:
-	        start = stack.pop()
-	        yield (len(stack), string[start + 1: i])
+		if c == opened:
+			stack.append(i)
+		elif c == closed and stack:
+			start = stack.pop()
+		yield (len(stack), string[start + 1: i])
 
 #********************
 #get content in parenteses
@@ -261,152 +261,150 @@ def limits2latex(name):
 #********************
 #wrap exponential notation numbers in \num in latex string
 def exp2latex(string):
-        if(string):
-                #replace 1e<x> by e<x> to get 10^x instead of 1x10^x
-                string = re.sub("1e([+]*[0-9]{1,})", r"e\1",string)
-                string = re.sub("([0-9]*\.*[0-9]*e[+-]*[0-9]{1,})", r"\\num{\1}",string)
-        return string
+	if(string):
+		#replace 1e<x> by e<x> to get 10^x instead of 1x10^x
+		string = re.sub("1e([+]*[0-9]{1,})", r"e\1",string)
+		string = re.sub("([0-9]*\.*[0-9]*e[+-]*[0-9]{1,})", r"\\num{\1}",string)
+	return string
 
 #********************
 #replaces fortran variable name with <replacement> in string
 def replaceFortranVar(varname, replacement, string):
-        string = re.sub("^"+varname+"$", replacement, string)
-        string = re.sub("([^a-zA-Z])"+varname+"$", r'\g<1>'+replacement, string)
-        string = re.sub("^"+varname+"([^a-zA-Z0-9_])", replacement+r'\g<1>', string)
-        string = re.sub("([^a-zA-Z])"+varname+"([^a-zA-Z0-9_])", r'\g<1>'+replacement+r'\g<2>', string)
-        return string
+	string = re.sub("^"+varname+"$", replacement, string)
+	string = re.sub("([^a-zA-Z])"+varname+"$", r'\g<1>'+replacement, string)
+	string = re.sub("^"+varname+"([^a-zA-Z0-9_])", replacement+r'\g<1>', string)
+	string = re.sub("([^a-zA-Z])"+varname+"([^a-zA-Z0-9_])", r'\g<1>'+replacement+r'\g<2>', string)
+	return string
 
 #********************
 #adds line breaks to latex equation
 def breakLatexEquation(string):
-        opened = '{'
-        closed = '}'
-        depth = 0
+	opened = '{'
+	closed = '}'
+	depth = 0
 	breakChars = ['+', '-']
-        result = ""
-        previousWasOpenParan = False
-        numlines = 1
-        for i, c in enumerate(string):
-                if c == opened:
-                        depth += 1
-                elif c == closed:
+	result = ""
+	previousWasOpenParan = False
+	numlines = 1
+	for i, c in enumerate(string):
+		if c == opened:
+			depth += 1
+		elif c == closed:
 			depth -= 1
-                	#break on breakChars unless inside block or after opening paranthesis
-                if c in breakChars and depth==0 and not previousWasOpenParan:
+			#break on breakChars unless inside block or after opening paranthesis
+		if c in breakChars and depth==0 and not previousWasOpenParan:
 			c = " \\\\ \n &" + c
-                        numlines += 1
-                result += c
-                if not c in ["(", " "]: previousWasOpenParan = False
-                if c == "(": previousWasOpenParan = True
+			numlines += 1
+		result += c
+		if not c in ["(", " "]: previousWasOpenParan = False
+		if c == "(": previousWasOpenParan = True
 
-        return result, numlines
+	return result, numlines
 
 #********************
 #replaces \left and \right by \bigL and \bigR in latex equation
 # to allow parantheses to span multiple lines
 def replaceLeftRightbyBigLR(rate):
-        rate = rate.replace("\\left", "\\Bigl")
-        rate = rate.replace("\\right", "\\Bigr")
-        return rate
+	rate = rate.replace("\\left", "\\Bigl")
+	rate = rate.replace("\\right", "\\Bigr")
+	return rate
 
 #********************
 #raises curly brackets around latex expressions that belong to operators
 def raiseBracketsOnOperators(rate):
-        # Solution by scary recursive regular expression
-        # ?2 means 'recursively add paranthesized group #2 here'
-        # See e.g. http://www.rexegg.com/regex-recursion.html
-        rate = regex.sub(r'(\operatorname\{[a-zA-Z]{1,}\})(\{(([^{}]|(?2))*)\})', r'\1\3', rate)
-        return rate
+	# Solution by scary recursive regular expression
+	# ?2 means 'recursively add paranthesized group #2 here'
+	# See e.g. http://www.rexegg.com/regex-recursion.html
+	rate = regex.sub(r'(\operatorname\{[a-zA-Z]{1,}\})(\{(([^{}]|(?2))*)\})', r'\1\3', rate)
+	return rate
 
 def string_from(expr, string):
-        for i in xrange(len(string)):
-                if string[i:i+len(expr)] == expr:
-                        splitAt = i + len(expr)
-                        return (string[:splitAt], string[splitAt:])
-        return string, ""
+	for i in xrange(len(string)):
+		if string[i:i+len(expr)] == expr:
+			splitAt = i + len(expr)
+			return (string[:splitAt], string[splitAt:])
+	return string, ""
 
 def next_parenthesis(string, left="{", right="}"):
-        depth = 0
-        acc = ""
-        pos = 0
-        
-        for c in string:
-                if c==left: depth += 1
-                if c==right: depth -= 1
-                acc += c
-                if depth==0: break
-                pos += 1
-        
-        return (acc, string[pos+1:])
+	depth = 0
+	acc = ""
+	pos = 0
+
+	for c in string:
+		if c==left: depth += 1
+		if c==right: depth -= 1
+		acc += c
+		if depth==0: break
+		pos += 1
+
+	return (acc, string[pos+1:])
 
 def skip_spaces(string):
-        acc = ""
-        pos = 0
-        for c in string:
-                if c != " ": break
-                pos += 1
-        return (string[:pos],string[pos:])
+	acc = ""
+	pos = 0
+	for c in string:
+		if c != " ": break
+		pos += 1
+	return (string[:pos],string[pos:])
 
 #********************
 #replaces fractions with divisor or dividend longer than maxlen by / sign
 def replaceLongFracByDivide(rate,maxlen=100):
-        acc=""
-        while True:
-                before, fromFrac = string_from("\\frac", rate)
-                if len(fromFrac) <= 0:
-                        return acc + rate
-                spaces, rest = skip_spaces(fromFrac)
-                numerator,rest = next_parenthesis(rest)
-                denominator, rest = next_parenthesis(rest)
-                
-                rate = rest
-                if max(len(numerator), len(denominator)) > maxlen:
-                        acc += before[:-5] + spaces
-                        acc += "\\left("+numerator[1:-1]+"\\right) / \\left("+denominator[1:-1] + "\\right)"
-                else:
-                        acc += before + spaces
-                        acc += numerator + denominator
+	acc=""
+	while True:
+		before, fromFrac = string_from("\\frac", rate)
+		if len(fromFrac) <= 0:
+			return acc + rate
+		spaces, rest = skip_spaces(fromFrac)
+		numerator,rest = next_parenthesis(rest)
+		denominator, rest = next_parenthesis(rest)
+
+		rate = rest
+		if max(len(numerator), len(denominator)) > maxlen:
+			acc += before[:-5] + spaces
+			acc += "\\left("+numerator[1:-1]+"\\right) / \\left("+denominator[1:-1] + "\\right)"
+		else:
+			acc += before + spaces
+			acc += numerator + denominator
 
 #********************
 #resolve Krome variables in 'shortcuts', exept those in 'exceptions')
 def replaceShortcuts(string, shortcuts, exceptions):
-        for var in reversed(shortcuts):
-                if var[0] in exceptions: continue
+	for var in reversed(shortcuts):
+		if var[0] in exceptions: continue
 		if var[0] in string:
-                        string = replaceFortranVar(var[0], var[1], string)
-        return string
+			string = replaceFortranVar(var[0], var[1], string)
+	return string
 
 #********************
 #get dictionary with shorcuts whose evaluation is deferred to end of latex table
 def getDeferredShortcuts():
-        from options import latexoptions
-        return latexoptions.deferred_substitutions
+	from options import latexoptions
+	return latexoptions.deferred_substitutions
 
 #********************
 #get table of symbols for latex table
 def getSymbols():
-        from options import latexoptions
+	from options import latexoptions
 
-        symbols = latexoptions.symbols.copy()
+	symbols = latexoptions.symbols.copy()
 
-        # Add deferred symbols
-        ds = getDeferredShortcuts()
-        for key, value in ds.iteritems():
-                symbols[key] = value
+	# Add deferred symbols
+	ds = getDeferredShortcuts()
+	for key, value in ds.iteritems():
+		symbols[key] = value
 
-        return symbols
+	return symbols
 
 #********************
 #get table of sympy symbols for latex table
 def getSymbolTable():
-        import sympy as sp
+	import sympy as sp
 
-        symbols = getSymbols()
+	symbols = getSymbols()
 
-        # Convert to sympy symbols
-        symboltable = {}
-        for key in symbols:
-                symboltable[key] = sp.Symbol(symbols[key])
-        return symboltable
-
-
+	# Convert to sympy symbols
+	symboltable = {}
+	for key in symbols:
+		symboltable[key] = sp.Symbol(symbols[key])
+	return symboltable
