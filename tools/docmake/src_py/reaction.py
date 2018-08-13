@@ -1322,8 +1322,10 @@ class reaction:
 
     #********************
     #make a LaTeX format of reaction
+    # TODO: remove deprecated arguments
     def reaction2latex(self, temperatureShortcuts, variableShortcuts, deferredShortcuts,
                         cntMergedReactions, idxMerged, cntTotalReactions, cntAllReactions):
+        from options import latexoptions as opts
         #latex format uses \usepackage{chemformula} in LaTeX
         #e.g. \ch{H2 + H -> H + H + H}
 
@@ -1332,8 +1334,10 @@ class reaction:
 
         if idxMerged == 0:
             #LaTeX index
-            #idxTex = str(cntAllReactions+1)
-            idxTex = str(self.uid)
+            if opts.sorted_by == 'alphabetic':
+                idxTex = idxUniqueReaction
+            else:
+                idxTex = str(self.uid)
 
             #latex reaction
             reactionTex = "\\ch{"

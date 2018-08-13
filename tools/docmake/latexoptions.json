@@ -42,6 +42,7 @@
     },
     "latex_backend" : "sympy",
     "lines_per_page": 46,
+    "sorted_by": "alphabetic",
     "max_fraction_length": 150,
     "truncate_numbers": 5
 }

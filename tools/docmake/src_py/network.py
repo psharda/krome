@@ -184,14 +184,21 @@ class network:
         cntAllReactions = 0
         linesOnPage = 0
 
+        if opts.sorted_by == 'alphabetic':
+            def reaction_sort_function(x):
+                return [xx.name for xx in x.reactants]
+        else:
+            # default is on index
+            def reaction_sort_function(x):
+                return x.uid
+
         with open(networkLatex, "w") as fileOutput:
             #dump header of the file
             self.dumpLatexTableHeader(fileOutput)
             #dump beginning of table float, table environment and header row
             self.dumpLatexBeginTable(fileOutput)
             #loop on reactions to evaluate
-            # for myReaction in sorted(self.reactions, key=lambda x: x.uid):
-            for myReaction in sorted(self.reactions, key=lambda x: [xx.name for xx in x.reactants]):
+            for myReaction in sorted(self.reactions, key=reaction_sort_function):
                 #list with all variable shortcuts (excl. temperature ones)
                 shortcutsVariables = myReaction.shortcuts
 
@@ -223,6 +230,7 @@ class network:
                         fileOutput.write(message + "\n")
                     self.dumpLatexTable(columns, fileOutput)
 
+                cntTotalReactions += 1
             # Dump end of table environment and - float
             self.dumpLatexEndTable(fileOutput, last=True)
 
