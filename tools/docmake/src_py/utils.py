@@ -235,8 +235,24 @@ def parentheticContents(string, parenteses):
             stack.append(i)
         elif c == closed and stack:
             start = stack.pop()
-        yield (len(stack), string[start + 1: i])
+            yield (len(stack), string[start + 1: i])
 
+# Replace fraction with inverse denominator
+# NOTE: This only works for denominators with a single power
+def replaceFracsWithInvDenominators(string, numerator):
+    fracs = re.findall(r'\\frac\{'+numerator+r'\}\{[^\\]+\}', string)
+    denoms = re.findall(r'\\frac\{'+numerator+r'\}\{([^\\]+)\}', string)
+
+    if fracs and denoms:
+        for frac, denom in zip(fracs,denoms):
+            denom = denom.replace('^{', '^{-')
+            string = string.replace(frac, denom)
+
+        if numerator != '1':
+            string = numerator + string
+
+    return string
+    
 #********************
 #get content in parenteses
 def getParentheticContents(string, parenteses):

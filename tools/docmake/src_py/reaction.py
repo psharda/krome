@@ -1414,7 +1414,7 @@ class reaction:
         else:
             import sympy as sp
 
-        debug = True
+        debug = False
         maxRateLength = 100
         message = "" #optional warning
 
@@ -1504,25 +1504,29 @@ class reaction:
         except:
             pass
 
-        #it automatically makes a fraction out of negative exponents
-        # TODO: make more generic, it fails with some reactions
-        stringFrac = r'\frac{1}{'
-        if stringFrac in rateTex and not debug:
-            for Tsym in Tsymbols:
-                rateTex = rateTex.replace(stringFrac + Tsym + "^{", "{"+Tsym+"^{-")
-            #change the order of the factors to match modified Arrhenius
-            #avoid chaging stuff in more complex rates
-            if len(rateTex) < maxRateLength:
-                rateTexSplit = re.split("\}\}",rateTex)
-                beta = rateTexSplit[0][1:]+"}" #beta containing factor
-                if "exp" in rateTexSplit[-1]:
-                    alphaGamma = rateTexSplit[-1].split("\operatorname") #alpha and gamma factor
-                    rateTex = alphaGamma[0] + beta + "\operatorname" + alphaGamma[1]
-                else:
-                    rateTex = rateTexSplit[-1] + beta
 
-        #mistake: large fractions
-        #solution: to the power -1 (solution can be improved)
+        # old algorithm
+        #
+        # #it automatically makes a fraction out of negative exponents
+        # # TODO: make more generic, it fails with some reactions
+        # stringFrac = r'\frac{1}{'
+        # if stringFrac in rateTex: and not debug:
+        #     for Tsym in Tsymbols:
+        #         rateTex = rateTex.replace(stringFrac + Tsym + "^{", "{"+Tsym+"^{-")
+        #     #change the order of the factors to match modified Arrhenius
+        #     #avoid chaging stuff in more complex rates
+        #     if len(rateTex) < maxRateLength:
+        #         rateTexSplit = re.split("\}\}",rateTex)
+        #         beta = rateTexSplit[0][1:]+"}" #beta containing factor
+        #         if "exp" in rateTexSplit[-1]:
+        #             alphaGamma = rateTexSplit[-1].split("\operatorname") #alpha and gamma factor
+        #             rateTex = alphaGamma[0] + beta + "\operatorname" + alphaGamma[1]
+        #         else:
+        #             rateTex = rateTexSplit[-1] + beta
+
+
+        # mistake: large fractions
+        # solution: to the power -1 (solution can be improved)
         # TODO: make more generic, it fails with some reactions
         if rateTex.startswith(r"\frac") and not debug:
             cnt = 0
@@ -1538,16 +1542,49 @@ class reaction:
             #replace \frac{a}{b} with a*b^{-1}
             firstTerm = pieces[0]
             secondTerm = pieces[1]
-
+            InvsecondTerm = None
             fracStringOriginal = r"\frac{"+firstTerm+"}{"+secondTerm+"}"
+            restStringOriginal = rateTex.replace(fracStringOriginal, '')
 
+            # invert denominator with changed sign
+            if secondTerm.count('^{') == 1:
+                InvsecondTerm = secondTerm.replace('^{', '^{-')
+            # remove '1' as numerator
+            if firstTerm.strip() == '1':
+                firstTerm = ''
+
+            if InvsecondTerm:
+                fracStringReplace = firstTerm + InvsecondTerm
             # Put parenteses around first term if composite term
-            if " + " not in firstTerm or " - " not in firstTerm:
+            elif " + " not in firstTerm or " - " not in firstTerm:
                 fracStringReplace = firstTerm+"\left["+secondTerm+r"\right]^{-1}"
             else:
                 fracStringReplace = "\left["+firstTerm+r"\right]\left["+secondTerm+r"\right]^{-1}"
 
-            rateTex = rateTex.replace(fracStringOriginal, fracStringReplace)
+            # change the order of the factors to match modified Arrhenius
+            # avoid changing stuff in more complex rates
+            # TODO: Replace with regex expression similar to
+            # utils.replaceFracsWithInvDenominators()
+            if len(rateTex) < opt.max_fraction_length:
+                # rateTexSplit = re.split("\}\}",rateTex)
+                # print rateTexSplit
+                # beta = rateTexSplit[0][1:]+"}" #beta containing factor
+                if "exp" in restStringOriginal:
+                    alphaFactor, gammaFactor = restStringOriginal.split("\operatorname") #alpha and gamma factor
+                    rateTex = alphaFactor + fracStringReplace + "\operatorname" + gammaFactor
+                elif " + " in restStringOriginal:
+                    splitted = restStringOriginal.split(" + ")
+                    rateTex = splitted[0] + fracStringReplace + " + " + splitted[1]
+                elif " - " in restStringOriginal:
+                    splitted = restStringOriginal.split(" - ")
+                    rateTex = splitted[0] + fracStringReplace + " - " + splitted[1]
+                else:
+                    rateTex = restStringOriginal + fracStringReplace
+
+        # replaces fractions with numerator = 1 and denominators with power
+        # their inversed denominator
+        # TODO: This functions can/should be used for more general purposes
+        rateTex = utils.replaceFracsWithInvDenominators(rateTex, numerator='1')
 
         # remove unwanted zeros
         rateTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", rateTex)
@@ -1555,10 +1592,12 @@ class reaction:
         rateTex = re.sub(r"0*(\d+\.*)", r"\1", rateTex)
 
         # truncate numbers at 5 decimal places
+        # TODO: properly round the values
         rateTex = re.sub(r'(\d+\.[0-9]{'+str(opt.truncate_numbers)+'})\d*', r'\1', rateTex)
 
         rateTex = re.sub("([ \)_]*)idx_{([A-Za-z0-9_]{1,})}", r"\1idx_\2", rateTex)
         rateTexIdxReplaced = rateTex
+
         # Rename number density, e.g. n(idx_H) -> n_idx_H
         # "(?<!\l)" is a negative lookback that ensures "\ln{...}" is not
         # captured by this regex
@@ -1570,7 +1609,7 @@ class reaction:
         rateTextFull = rateTex
 
         #break long rates in multiple lines
-        if len(rateTex) > maxRateLength:
+        if len(rateTex) > opt.max_fraction_length:
             rateTex, numlines = self.breakRateTex(rateTex)
         else:
             #add LaTeX symbols
