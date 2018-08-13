@@ -1408,14 +1408,14 @@ class reaction:
     #make a LaTeX format of reaction
     def rate2latex(self, rate, temperatureShortcuts, variableShortcuts, deferredShortcuts):
         import re
-        from options import latexoptions as opt
-        if opt.latex_backend == "pytexit":
+        from options import latexoptions as opts
+        if opts.latex_backend == "pytexit":
             import pytexit
-        elif opt.latex_backend == "sympy":
+        elif opts.latex_backend == "sympy":
             import sympy as sp
         else:
             print("WARNING: Option '{}' is not reconized as LaTeX convertor"
-                  + "Adapt the '{}' file").format(opt.latex_backend, opt.__name__)
+                  + "Adapt the '{}' file").format(opts.latex_backend, opts.__name__)
             exit()
 
 
@@ -1449,10 +1449,10 @@ class reaction:
         #keep trying
         while True:
             try:
-                if opt.latex_backend == "pytexit":
+                if opts.latex_backend == "pytexit":
                     rateTex = pytexit.for2tex(rate, print_latex=False, print_formula=False)
                     rateTex = rateTex[2:-2]
-                else opt.latex_backend == "sympy":
+                elif opts.latex_backend == "sympy":
                     rateTex = sp.latex(eval(rate,symboltable))
                 break
             #undefined variable will become a symbol
@@ -1477,7 +1477,7 @@ class reaction:
         rateTextAfterSympy = rateTex
 
 
-        if opt.latex_backend == "pytexit":
+        if opts.latex_backend == "pytexit":
             # pytexit doesn't replace symbols, so it is done here
             for sym, expr in utils.getSymbols().iteritems():
                 symtex = pytexit.for2tex(sym, print_latex=False, print_formula=False)[2:-2]
@@ -1570,7 +1570,7 @@ class reaction:
             # avoid changing stuff in more complex rates
             # TODO: Replace with regex expression similar to
             # utils.replaceFracsWithInvDenominators()
-            if len(rateTex) < opt.max_fraction_length:
+            if len(rateTex) < opts.max_fraction_length:
                 # rateTexSplit = re.split("\}\}",rateTex)
                 # print rateTexSplit
                 # beta = rateTexSplit[0][1:]+"}" #beta containing factor
@@ -1598,7 +1598,7 @@ class reaction:
 
         # truncate numbers at 5 decimal places
         # TODO: properly round the values
-        rateTex = re.sub(r'(\d+\.[0-9]{'+str(opt.truncate_numbers)+'})\d*', r'\1', rateTex)
+        rateTex = re.sub(r'(\d+\.[0-9]{'+str(opts.truncate_numbers)+'})\d*', r'\1', rateTex)
 
         rateTex = re.sub("([ \)_]*)idx_{([A-Za-z0-9_]{1,})}", r"\1idx_\2", rateTex)
         rateTexIdxReplaced = rateTex
@@ -1614,7 +1614,7 @@ class reaction:
         rateTextFull = rateTex
 
         #break long rates in multiple lines
-        if len(rateTex) > opt.max_fraction_length:
+        if len(rateTex) > opts.max_fraction_length:
             rateTex, numlines = self.breakRateTex(rateTex)
         else:
             #add LaTeX symbols
