@@ -1409,10 +1409,15 @@ class reaction:
     def rate2latex(self, rate, temperatureShortcuts, variableShortcuts, deferredShortcuts):
         import re
         from options import latexoptions as opt
-        if opt.latex_backend=="pytexit":
+        if opt.latex_backend == "pytexit":
             import pytexit
-        else:
+        elif opt.latex_backend == "sympy":
             import sympy as sp
+        else:
+            print("WARNING: Option '{}' is not reconized as LaTeX convertor"
+                  + "Adapt the '{}' file").format(opt.latex_backend, opt.__name__)
+            exit()
+
 
         debug = False
         maxRateLength = 100
@@ -1447,7 +1452,7 @@ class reaction:
                 if opt.latex_backend == "pytexit":
                     rateTex = pytexit.for2tex(rate, print_latex=False, print_formula=False)
                     rateTex = rateTex[2:-2]
-                else:
+                else opt.latex_backend == "sympy":
                     rateTex = sp.latex(eval(rate,symboltable))
                 break
             #undefined variable will become a symbol
