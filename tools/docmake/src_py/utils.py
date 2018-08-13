@@ -373,7 +373,7 @@ def replaceShortcuts(string, shortcuts, exceptions):
     for var in reversed(shortcuts):
         if var[0] in exceptions: continue
         if var[0] in string:
-            string = replaceFortranVar(var[0], var[1], string)
+            string = replaceFortranVar(var[0], '('+var[1]+')', string)
     return string
 
 #********************
