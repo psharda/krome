@@ -53,7 +53,7 @@ class krome():
 	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
         useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
-	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = False
+	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
@@ -1368,7 +1368,7 @@ class krome():
 			tabPath = "data/dust_tables/"
 			tabModes = [x for x in os.listdir(tabPath) if(x.endswith("_cool.dat"))]
 			tabModes = [x.replace("dust_table_","").replace("_cool.dat","") for x in tabModes]
-			tabOpts = ["H2","COOL","3D"] #options
+			tabOpts = ["H2","COOL","3D","Photo3D"] #options
 			allTabs = tabOpts + tabModes #all possible options
 
 			if(self.useDust): die("ERROR: -dustTabs and -dust options are not compatible!")
@@ -1378,6 +1378,9 @@ class krome():
 			#use additional dimension for tables (Av)
 			if("3D" in dustTabs):
 				self.dustTableDimension = "3D"
+
+			if("Photo3D" in dustTabs):
+			        self.usePhotoDust_3D = True
 
 			for dTab in dustTabs:
 				if(not(dTab in allTabs)):
@@ -6146,7 +6149,8 @@ class krome():
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
-			if(srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D")): skip = True
+			if(srow == "#IFKROME_usePhotoDust_3D" and not(self.usePhotoDust_3D)): skip = True
+			if(srow == "#IFKROME_dust_table_2D" and (not(self.dustTableDimension=="2D") or self.usePhotoDust_3D)): skip = True
 			if(srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D")): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
