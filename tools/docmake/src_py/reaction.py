@@ -1324,11 +1324,9 @@ class reaction:
 	#make a LaTeX format of reaction
 	def reaction2latex(self, temperatureShortcuts, variableShortcuts, deferredShortcuts,
 						cntMergedReactions, idxMerged, cntTotalReactions, cntAllReactions):
+		import sys
 		#latex format uses \usepackage{chemformula} in LaTeX
 		#e.g. \ch{H2 + H -> H + H + H}
-
-		#index of unique reactions
-		idxUniqueReaction = str(cntTotalReactions - cntMergedReactions)
 
 		if idxMerged == 0:
 			#LaTeX index
@@ -1400,6 +1398,7 @@ class reaction:
 		#LaTeX rate
 		rateTex, message, numlines = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts, deferredShortcuts)
                 rateTex = "$" + rateTex + "$"
+
                 
 		#LaTeX temperature limits
 		limitsTex = self.tempRange2latex(idxMerged)
@@ -1446,6 +1445,7 @@ class reaction:
 		rate = re.sub("([0-9]*\.*[0-9]*)d([+-]*[0-9]{1,})", r"\1e\2",rate)
 		# Remove double prec suffix, e.g. 1.0_8 -> 1.0
 		rate = re.sub("([0-9])_8", r"\1", rate)
+		rate = re.sub("\\*1e0/([a-zA-Z][a-zA-Z0-9_]*)", "/\\1", rate) # Replace *1/x by /x to avoid pytexit bug
 
 		# store for debugging
 		rateTexAfterShortcutsReplaced = rate
@@ -1590,7 +1590,6 @@ class reaction:
 
 		reactants = ",".join(map(lambda x: x.name.replace("+", '\+'), reactants))
 		products = " *, *".join(map(lambda x: x.name.replace("+", '\+'), products))
-		print reactants, products
 
 		expr_w_limits = """ *@type: *{}ion
  *@reacts: *{}
@@ -1602,11 +1601,6 @@ class reaction:
  *@reacts: *{}
  *@prods: *{}
  *@rate: *(.*)""".format(reactionType, reactants, products)
-
- 		print "Searching for :"
- 		print expr_wo_limits
- 		print
- 		print expr_w_limits
 
  		re_w_limits = re.compile(expr_w_limits, re.MULTILINE)
  		re_wo_limits = re.compile(expr_wo_limits, re.MULTILINE)

@@ -278,6 +278,7 @@ class network:
 				expr = expr.replace("log", "ln")
 				expr = expr.replace("ln10", "log")
 				expr = expr.replace("_8", "")
+				expr = re.sub("\\*1e0/([a-zA-Z][a-zA-Z0-9_]*)", "/\\1", expr) # Replace *1/x by /x to avoid pytexit bug
 				if opt.latex_backend == "pytexit":
 					exprTex = pytexit.for2tex(expr, print_latex=False, print_formula=False)
 					exprTex = exprTex[2:-2]
