@@ -46,7 +46,6 @@ contains
     !      if(k(i)<0d0.or.k(i)>kmax) print *,i,k(i)
     !   end do
     !end if
-
   end function coe
 
 
@@ -600,6 +599,67 @@ contains
 
   end function dissH2_Martin96
 
+#IFKROME_use_cluster_growth
+  !**********************
+  ! Cluster growth rate based on kinetic nucleation theory (KNT)
+  ! Theory is explained in chapter 13 of Gail and Sedlmayr 2013
+  ! (https://doi.org/10.1017/CBO9780511985607)
+  function cluster_growth_rate(monomer_idx, cluster_size, temperature, stick) result(rate)
+    ! k_N = v_thermal * cross_section_N * stick_N
+    ! with N the cluster size of the reactant
+    use krome_constants
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer, parameter :: dp=kind(0.d0) ! double precision
+
+    integer, intent(in) :: monomer_idx
+    integer, intent(in) :: cluster_size
+    real(dp), intent(in) :: temperature
+    real(dp), intent(in), optional :: stick
+    real(dp) :: rate
+
+    real(dp) :: v_thermal
+    real(dp) :: cross_section
+    real(dp) :: stick_coefficient
+    real(dp) :: monomer_radius
+    real(dp) :: cluster_radius
+    real(dp) :: inverse_monomer_mass
+    real(dp) :: inverse_cluster_mass
+    real(dp) :: inverse_reduced_mass
+    real(dp) :: inverse_mass(nspec)
+
+    inverse_mass(:) = get_imass()
+
+#KROME_nucleation_radii
+
+    inverse_monomer_mass = inverse_mass(monomer_idx)
+    inverse_cluster_mass = 1._dp/cluster_size * inverse_monomer_mass
+    inverse_reduced_mass = inverse_monomer_mass + inverse_cluster_mass
+
+    v_thermal = sqrt(8._dp * boltzmann_erg * temperature &
+              * inverse_reduced_mass / pi )
+
+    ! Assuming cluster volume is proportional to monomer volume
+    ! V_N = N * V_1, and both are considered as a hypothetical sphere
+    cluster_radius = monomer_radius * cluster_size**(1._dp/3._dp)
+
+    ! Geometrical cross section
+    cross_section = pi * (monomer_radius + cluster_radius)**2._dp
+
+    ! Sticking coefficiet is set to one for simplicity
+    if(present(stick)) then
+      stick_coefficient = stick
+    else
+      stick_coefficient = 1._dp
+    end if
+
+    rate = v_thermal * cross_section * stick_coefficient
+
+  end function cluster_growth_rate
+
+
+
   !***********************************
   subroutine init_exp_table()
     use krome_commons
@@ -679,7 +739,7 @@ contains
        stoichiometricChange = stoichiometricChange - 1
     end do
 
-     revKc = (boltzmann_erg * Tgas * 1e-6)**(stoichiometricChange)&
+     revKc = (boltzmann_erg * Tgas * 1e-6)**(-stoichiometricChange)&
          * exp(-dgibss)
 
   end function revKc
@@ -693,7 +753,6 @@ contains
     use krome_fit
     real*8::revHS,Tgas,Tgas2,Tgas3,Tgas4,invT,lnT,H,S
     real*8::Tnist,Tnist2,Tnist3,Tnist4,invTnist,invTnist2,lnTnist
-    real*8::xtable(200),multable
 #KROME_var_reverse
     integer::idx
 
@@ -719,25 +778,11 @@ contains
     invTnist2 = invTnist * invTnist
     lnTnist = log(Tnist)
 
-    hasThermoTable(:) = .false.
-#IFKROME_useThermoTables
-    yThermoTable(:,:) = 0.d0
-    xtable(:) = janaf_tab_Tgas
-    multable = janaf_mult_Tgas
-#ENDIFKROME
-
 #KROME_kc_reverse_nasa
 #KROME_kc_reverse_nist
-#KROME_thermo_tables
-
-    !use Janaf thermochemical table if available
-    if (hasThermoTable(idx)) then
-      !NOTE: currently not extrapolation outside tgas table limits
-      revHS = fit_anytab1D(xtable, yThermoTable(idx,:), multable, Tgas)
-      revHS = revHS/(Rgas_kJ * Tgas)
 
     ! pick NASA data if present for species
-    else if (Tlim_nasa(idx,2) /= 0.d0) then
+    if (Tlim_nasa(idx,2) /= 0.d0) then
       !select set of NASA polynomials using temperature
       if(Tlim_nasa(idx,1).le.Tgas .and. Tgas.le.Tlim_nasa(idx,2)) then
          p(:) = p1_nasa(idx,:)
@@ -784,6 +829,7 @@ contains
 
     ! return zero is no data exists
     else
+      print *, "No thermochemical data of species index", idx
       revHS = 0.d0
 
     end if
@@ -791,6 +837,70 @@ contains
 
   end function revHS
 
+#IFKROME_use_GFE_tables
+  function revKc_with_GFE(Tgas, ridx, pidx) result(revKc)
+    use krome_constants
+    use krome_commons
+    implicit none
+    integer, parameter :: dp=kind(0.d0) ! double precision
+
+    real(dp), intent(in) :: Tgas
+    integer, intent(in) :: ridx(:), pidx(:)
+    real(dp) :: revKc
+
+    real(dp) :: dgibss, stoichiometricChange
+    integer :: i
+
+    ! when considering forward reaction:
+    ! Kc = (P°)**(p+p-r-r) * exp(-dGibss_forward°)
+    ! where ° means at standard conditions of
+    ! P° = 1 bar = (kb*T/1e6) dyn/cm^2 (cgs)
+    ! when considering reverse:
+    ! 1/Kc = revKc = (kb*T/1e6)**(p+p-r-r) * exp(-dGibss_reverse°)
+    ! kb*T/1e6 is to go from 1 atm pressure to number density cm^-3
+    ! When not at standard pressure this does not change:
+    ! revKc = P**(p+p-r-r) *exp(-dGibss_reverse° - (p+p-r-r)*ln(P/P°))
+    !       = (P°)**(p+p-r-r) * exp(-dGibss_reverse°)
+
+    dgibss = 0._dp ! Gibbs free energy
+    stoichiometricChange = 0._dp
+
+    do i=1,size(pidx)
+       dgibss = dgibss + gibbs_free_energy(Tgas, pidx(i))
+       stoichiometricChange = stoichiometricChange + 1
+    end do
+
+    do i=1,size(ridx)
+       dgibss = dgibss - gibbs_free_energy(Tgas, ridx(i))
+       stoichiometricChange = stoichiometricChange - 1
+    end do
+
+    revKc = (boltzmann_erg * Tgas * 1e-6_dp)**(-stoichiometricChange)&
+            * exp(-dgibss/(Rgas_kJ*Tgas))
+
+  end function revKc_with_GFE
+
+!**********************
+! Calculate Gibbs free energy of species with index idx at temperature Tgas
+  function gibbs_free_energy(Tgas, idx) result(gfe)
+    use krome_constants
+    use krome_commons
+    use krome_fit
+    implicit none
+    integer, parameter :: dp=kind(0.d0) ! double precision
+
+    real(dp), intent(in) :: Tgas
+    integer, intent(in) :: idx
+    #KROME_GFE_vars
+
+    real(dp) :: gfe
+    y_GFE_table(:,:) = 0._dp
+    #KROME_GFE_tables
+
+    gfe = fit_anytab1D(GFE_tab_Tgas, y_GFE_table(idx,:), GFE_mult_Tgas, Tgas)
+
+  end function gibbs_free_energy
+#ENDIFKROME
   !******************************
   subroutine print_best_flux(n,Tgas,nbestin)
     !print the first nbestin fluxes
