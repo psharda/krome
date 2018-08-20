@@ -1041,7 +1041,7 @@ contains
        allocate(Av_tab(nrec), lambda_tab(nrec))
      end function convert_to_log10_Av
   end subroutine setup_2D_dust_tables
-#ENDIFKROME_usePhotoDust_3D
+#ENDIFKROME
 
   !***********************
   subroutine init_dust_tabs()
