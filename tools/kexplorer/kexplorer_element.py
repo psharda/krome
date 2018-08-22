@@ -32,3 +32,11 @@ class element:
 		self.abundanceData[idx].append(abundance)
 
 	#*******************
+	# sort on tgas and xvar
+	def sortData(self):
+		zipped = zip(self.tgasData, self.xvarData, self.timeData, self.abundanceData)
+		sorted_zipped = sorted(zipped, key=lambda x: (x[1], x[0]))
+		(self.tgasData,
+		self.xvarData,
+		self.timeData,
+		self.abundanceData) = (list(t) for t in zip(*sorted_zipped))
