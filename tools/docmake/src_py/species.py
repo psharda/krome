@@ -96,6 +96,8 @@ class species():
 		self.mass = sum([atomSet[x] for x in self.exploded])
 		if(speciesName.upper()!="E"): self.mass -= self.charge*me
 
+		#store radius
+		self.radius = self.getRadius(self.name)
 		#skip photochemistry if required
 		if(not skipPhotochemistry):
 			#init photochem variables
@@ -462,6 +464,25 @@ class species():
 
 		#kJ/mol
 		return HRT*Rgas*Tgas/1e3
+
+	def getRadius(self, key):
+		# return molecule radius in cm
+		radii = {
+				# Interatomic distance from Jeong et al 2000
+				#DOI:10.1088/0953-4075/33/17/319
+				"TiO2": 1.62e-8,
+				# Interatomic distance O-Al-O (linear geometry) from
+				# Archibong et al 1999 doi: 10.1021/jp983695n
+				"Al2O3": 3.304e-8,
+				# Half a bond length form Farrow et al 2014 doi:10.1039/C4CP01825G
+				"MgO": 0.865e-8,
+				# Half a bond length from Bromley et al 2016 doi:10.1039/c6cp03629e
+				"SiO":0.75765e-8
+			}
+		try:
+			return radii[key]
+		except KeyError:
+			return None
 
 	#*********************
 	def makeHtmlPage(self,myNetwork):
