@@ -883,15 +883,15 @@ contains
        energyR = photoBinEright(j) * eV_to_erg !energy of the bin in erg
        integrand(i) = 0.0_8
        do j = 1, nrec
-          if (el(j) <= energyR .and. eu(j) >= energyR) then
+          if (el(j) <= energyR .and. eu(j) >= energyL) then
              if (el(j) >= energyL .and. eu(j) <= energyR) &
                integrand(i) = integrand(i) + tGamma(j)
              if (el(j) >= energyL .and. eu(j) > energyR) &
                integrand(i) = integrand(i) + tGamma(j) * (energyR - el(j)) / (eu(j) - el(j))
-             if (el(j) < energyL .and. eu(j) <= energyU) &
+             if (el(j) < energyL .and. eu(j) <= energyR) &
                integrand(i) = integrand(i) + tGamma(j) * (eu(j) - energyL) / (eu(j) - el(j))
-             if (el(j) < energyL .and. eu(j) > energyU) &
-               integrand(i) = integrand(i) + tGamma(j) * (energyU - energyL) / (eu(j) - el(j))
+             if (el(j) < energyL .and. eu(j) > energyR) &
+               integrand(i) = integrand(i) + tGamma(j) * (energyR - energyL) / (eu(j) - el(j))
           end if
        end do
     end do
