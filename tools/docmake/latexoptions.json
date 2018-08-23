@@ -2,13 +2,16 @@
     "substitutions" : [
 	["T32"       , "Tgas/300"],
 	["invTgas"   , "1e0/Tgas"],
+    ["invT"   , "1e0/Tgas"],
 	["invT32"    , "1.e0/T32"],
+    ["invTe"    , "1.e0/Te"],
 	["lnT"       , "log(Tgas)"],
+    ["lnTe"       , "log(Te)"],
 	["sqrTgas"   , "sqrt(Tgas)"],
 	["ntot"      , "ntot"],
 	["Hnuclei"   , "Hnuclei"]
     ],
-    "deferred_substitutions" : { 
+    "deferred_substitutions" : {
         "kh11" : "k_{\\mathrm{H11}}",
     	"a11"  : "a_{11}",
     	"Te"   : "T_{\\mathrm{e}}",
@@ -37,7 +40,9 @@
 	    "user_gamma_CO" : "\\mathrm{(see\\, sec.\\, \\ref{sec:external-isrf-as-diffuse-emission})}",
 	    "auto" : "\\mathrm{(see\\, ref.)}"
     },
-    "latex_backend" : "pytexit",
+    "latex_backend" : "sympy",
     "lines_per_page": 46,
-    "max_fraction_length": 150
+    "sorted_by": "alphabetic",
+    "max_fraction_length": 150,
+    "truncate_numbers": 5
 }
