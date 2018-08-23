@@ -850,6 +850,199 @@ contains
 
 #ENDIFKROME
 
+#IFKROME_usePhotoDust_3D
+  subroutine load_int_JQabs_tab(integrand)
+    use krome_commons
+    use krome_constants
+    !
+    real*8,dimension(nPhotoBins) :: integrand ! tGamma in each photobin
+    ! table related local variables
+    character(len=255) :: fname
+    integer :: nrec, lunit, i, j
+    real(kind=8) :: energyL, energyR
+    real(kind=8), allocatable, dimension(:) :: emid, el, eu, tGamma
+    !
+    ! open file, get nr of records, and read data
+    fname = 'dust_table_absorption.dat'
+    nrec = 0
+    open(newunit=lunit, file=fname) 
+    do 
+       read(lunit,*, end=100)
+       nrec = nrec + 1
+    end do
+    100 rewind(lunit)
+    allocate(emid(nrec),el(nrec), eu(nrec), tGamma(nrec))
+    do j=1,nrec
+       read(lunit,*) emid(j), el(j), eu(j), tGamma(j)
+    end do
+    close(lunit)
+    !
+    ! use table to find tGamma integrated across each photo bin
+    do i=1,nPhotoBins
+       energyL = photoBinEleft(j) * eV_to_erg
+       energyR = photoBinEright(j) * eV_to_erg !energy of the bin in erg
+       integrand(i) = 0.0_8
+       do j = 1, nrec
+          if (el(j) <= energyR .and. eu(j) >= energyL) then
+             if (el(j) >= energyL .and. eu(j) <= energyR) &
+               integrand(i) = integrand(i) + tGamma(j)
+             if (el(j) >= energyL .and. eu(j) > energyR) &
+               integrand(i) = integrand(i) + tGamma(j) * (energyR - el(j)) / (eu(j) - el(j))
+             if (el(j) < energyL .and. eu(j) <= energyR) &
+               integrand(i) = integrand(i) + tGamma(j) * (eu(j) - energyL) / (eu(j) - el(j))
+             if (el(j) < energyL .and. eu(j) > energyR) &
+               integrand(i) = integrand(i) + tGamma(j) * (energyR - energyL) / (eu(j) - el(j))
+          end if
+       end do
+    end do
+    !
+    deallocate(emid,el,eu,tGamma)
+  end subroutine load_int_JQabs_tab
+  !***********************
+  !compute the absorbed radiation by the dust by integrating over the photobins
+  !asuming a tabularised dust distribution
+  function get_int_JQabs_tab
+    use krome_commons
+    implicit none
+    real*8::get_int_JQabs_tab
+    real*8,dimension(nPhotoBins), save :: integrand ! tGamma in each photobin
+    logical, save :: first_call = .true.
+    !
+    ! Load tabularised data on first call.
+    ! Make a double-nested threadprivate check of if this is first call
+    ! to avoid race-condition without parallel overhead once table has been loaded
+    !
+    if (first_call) then
+       !$omp critical
+       if (first_call) call load_int_JQabs_tab(integrand)
+       first_call = .true.
+       !$omp end critical
+    end if
+
+    !loop over photo bins
+    get_int_JQabs_tab = sum(photoBinJ * integrand) / eV_to_erg ! make sure result is in erg s^-1 cm^-3 as for table file
+    !
+  end function get_int_JQabs_tab
+  !
+  subroutine setup_2D_dust_tables
+    implicit none
+    integer       :: nAv, iAv
+    real(kind=8)  :: lambda_abs, wl, wu, log10_Av, log10_Av_lb, dlog10_Av
+    logical, save :: first_call=.true.
+    real(kind=8), allocatable, dimension(:), save :: Av_tab, lambda_tab
+    real(kind=8), allocatable, dimension(:,:,:), save :: dust_tab_H2_3D, dust_tab_cool_3Dd, dust_tab_Tdust_3D
+
+    ! Compute absorption from radiation field
+    lambda_abs = get_int_JQabs_tab()
+
+    ! Make sure 3D tables are loaded
+    !
+    ! This will also define
+    !    dust_tab_ngas, dust_tab_Tgas,
+    !    dust_mult_ngas, dust_mult_Tgas
+    ! for 2D table operation, and log10_Av_lb, dlog10_Av
+    if (first_call) then
+       !$omp critical
+       if (first_call) call load_tables()
+       first_call = .false.
+       !$omp end critical
+    end if
+
+    ! Translate from absorption to an Av
+    log10_Av = convert_to_Av(lambda_abs)
+
+    ! Find index (iAv) and weights(wl,wu; wl+wu=1)
+    iAv = floor((log10_Av - log10_Av_lb)/dlog10_Av)+1
+    iAv = min(max(iAv,1),nAv)
+    wu  = min(max(log10_Av - ((iAv-1)*dlog10_Av + log10_Av_lb),0.0_8),1.0_8)
+    wl = 1.0_8 - wl
+
+    ! Interpolate in 3D table to generate 2D tables. Check if we are on edge point for ub (then wl==1.)
+    if (iAv < nAv) then
+      dust_tab_H2    = dust_tab_H2_3D(:,:,iAv)*wl + dust_tab_H2_3D(:,:,iAv+1)*wu
+      dust_tab_cool  = dust_tab_cool_3D(:,:,iAv)*wl + dust_tab_cool_3D(:,:,iAv+1)*wu
+      dust_tab_Tdust = dust_tab_Tdust_3D(:,:,iAv)*wl + dust_tab_Tdust_3D(:,:,iAv+1)*wu
+    else
+      dust_tab_H2    = dust_tab_H2_3D(:,:,nAv)
+      dust_tab_cool  = dust_tab_cool_3D(:,:,nAv)
+      dust_tab_Tdust = dust_tab_Tdust_3D(:,:,nAv)
+    endif
+  contains
+     subroutine load_tables
+       implicit none
+       integer :: lunit, i, j, nAv, nTgas, nngas, nrec
+       real(kind=8), dimension(:), allocatable :: dust_tab_Av
+       character(len=255) :: fname
+       ! Load Av-Lambda table
+       fname = 'dust_table_Av_Lambda.dat'
+       open(newunit=lunit, file=fname)
+       nrec = 0
+       do
+          read(lunit,*, end=200)
+          nrec = nrec + 1
+       end do
+       200 rewind(lunit)
+       allocate(Av_tab(nrec), lambda_tab(nrec))
+       do j=1,nrec
+          read(lunit,*) Av_tab(j), lambda_tab(j)
+       end do
+       close(lunit)
+       ! Load the three 3D tables
+       nTgas = 50 ! FIXME, hardcoded!
+       nngas = 50
+       nAv = 20
+       allocate(dust_tab_Tdust_3D(nTgas,nngas,nAv), &
+                dust_tab_cool_3D(nTgas,nngas,nAv), &
+                dust_tab_H2_3D(nTgas,nngas,nAv), &
+                dust_tab_Av(nAv))
+       !
+       call init_anytab3D("dust_table_cool_3D.dat",dust_tab_ngas(:), &
+            dust_tab_Tgas(:), dust_tab_Av(:), &
+            dust_tab_cool_3D(:,:,:), dust_mult_ngas, &
+            dust_mult_Tgas, dlog10_Av)
+       call init_anytab3D("dust_table_Tdust_3D.dat",dust_tab_ngas(:), &
+            dust_tab_Tgas(:), dust_tab_Av(:), &
+            dust_tab_Tdust_3D(:,:,:), dust_mult_ngas, &
+            dust_mult_Tgas, dlog10_Av)
+       call init_anytab3D("dust_table_H2_3D.dat",dust_tab_ngas(:), &
+            dust_tab_Tgas(:), dust_tab_Av(:), &
+            dust_tab_H2_3D(:,:,:), dust_mult_ngas, &
+            dust_mult_Tgas, dlog10_Av)
+
+       log10_Av_lb = dust_tab_Av(1)
+       deallocate(dust_tab_Av)
+     end subroutine load_tables
+     !
+     function convert_to_log10_Av(lambda_abs) result(Av)
+       implicit none
+       real(kind=8), intent(in) :: lambda_abs
+       real(kind=8)             :: Av
+       !
+       real(kind=8) :: w
+       integer :: i
+       !
+       if (lambda_abs >= lambda_tab(1)) then
+         Av = Av_tab(1)
+         return
+       endif
+       !
+       if (lambda_abs <= lambda_tab(nrec)) then
+         Av = Av_tab(nrec)
+         return
+       endif
+       ! linear interpolation for Av in log of lambda_abs
+       do i=2,nrec
+          if (lambda_tab > lambda_tab(i)) then
+            w = (alog(lambda_abs) - alog(lambda_tab(i))) / (alog(lambda_tab(i-1)) - alog(lambda_tab(i)))
+            Av = Av_tab(i) * (1.0_8 - w) + Av_tab(i-1) * w
+            return
+          end if
+       end do
+       allocate(Av_tab(nrec), lambda_tab(nrec))
+     end function convert_to_log10_Av
+  end subroutine setup_2D_dust_tables
+#ENDIFKROME
+
   !***********************
   subroutine init_dust_tabs()
     use krome_commons

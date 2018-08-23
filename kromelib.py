@@ -49,6 +49,7 @@ class molec():
 	name = "" #molecule name
 	charge = 0 #charge (0=neutral)
 	mass = 0e0 #mass in g
+	radius = 0 # 'radius' of species in cm
 	zatom = 0 #atomic number (also for molecules)
 	neutrons = 0 #total number of neutrons
 	ename = "" #exploded name (e.g. H2C4=CCCCHH)
@@ -59,7 +60,12 @@ class molec():
 	is_atom = False #flag to identify atoms
 	is_surface = False #flag for species on surface
 	is_chemisorbed = False #flag for chemisorbed species
-	hasThermoTable = False #flag for having thermo data in a (JANAF) table
+	is_clustarable = False #flag for species that can grow into larger clusters
+	has_GFE_table = False #flag for having Gibbs free energy data
+	# NOTE: Using JANAF tables is discouraged because it is unclear on the exact
+	# calculations/data and it is incompatible with other databases like NASA
+	# polynomial ones.
+	# hasJanafThermoTable = False #flag for having thermo data from JANAF database
 	Ebind_ice = Ebind_bare = 0e0 #binding energy on surface for ice and bare grain
 	parentDustBin = 0 #for surface species: belongs to this dust bin (1-based)
 	chempot = 0. #chemical potential (J/mol)
@@ -598,63 +604,70 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	foutx.close()
 
 ###############################
-#convert a JANAF datafile to KROME format in the build folder
-def janaf2krome(build_folder, species):
-	try:
-		from scipy import interpolate
-	except:
-		print "ERROR: scipy not installed!"
-		print "This module is necessary to use JANAF thermo tables."
-		sys.exit()
-
-	name = species.name
-	filepath = "data/database/janaf/" + name + ".dat"
-
-	temperature = [] #temperature in K
-	gibbs = [] #formation gibbs free energy in kJ/mol
-	# add more lists if needed from janaf file
-
-	with open(filepath, "r") as janaffile:
-		for row in janaffile:
-			srow = row.strip()
-			if srow == "":
-				continue
-			if not is_number(srow[0]):
-				continue
-			if "FUGACITY" in srow:
-				continue
-			arow = [x.strip() for x in srow.split("\t")]
-			if len(arow) < 8:
-				print ("ERROR: there is a problem with row " + str(arow) +
-				" This is most likely the bug in JANAF tables where spaces are"
-				"used instead of tabs when going above the fugacity pressure. "
-				"Please change this in the input table" + filepath
-				)
-				sys.exit()
-				
-			temperature.append(float(arow[0]))
-			# JANAF provides gibbs formation energy w.r.t. reference
-			# value. To get the uncorreect value, we need to add HminH0.
-			HminH0 = arow[4] #enthalpy - reference enthalpy in kJ/mol
-			gib = arow[6] #formation gibbs in kJ/mol
-			gibbs.append( float(gib) + float(HminH0) )
-
-	#create interpolated function from JANAF file
-	fdata = interpolate.interp1d(temperature, gibbs, kind='linear')
-	imax = 200 #number of interpolated points
-	tmax = max(temperature)
-	tmin = min(temperature)
-	#write data to file using a regular xtemp grid
-	with open(build_folder + "janaf_" + name + ".dat", "w") as fout:
-		fout.write("#Regularly spaced JANAF table for " + name + "\n")
-		fout.write("#temperature (K) formation gibbs free energy (kJ/mol)" + "\n")
-
-		for i in range(imax):
-			xtemp = i*(tmax-tmin)/(imax-1)+tmin
-			fout.write(str(xtemp) + " " + str(fdata(xtemp)) + "\n")
-
-	print "written JANAF " + name + " table"
-
+# NOTE: Using JANAF tables is discouraged because it is unclear on the exact
+# calculations/data and it is incompatible with other databases like NASA
+# polynomial ones.
+# #convert a JANAF datafile to KROME format in the build folder
+# def janaf2krome(build_folder, species):
+# 	try:
+# 		from scipy import interpolate
+# 	except:
+# 		print "ERROR: scipy not installed!"
+# 		print "This module is necessary to use JANAF thermo tables."
+# 		sys.exit()
+#
+# 	name = species.name
+# 	filepath = "data/database/janaf/" + name + ".dat"
+#
+# 	temperature = [] #temperature in K
+# 	gibbs = [] #formation gibbs free energy in kJ/mol
+# 	# add more lists if needed from janaf file
+#
+# 	with open(filepath, "r") as janaffile:
+# 		for row in janaffile:
+# 			srow = row.strip()
+# 			if srow == "":
+# 				continue
+# 			if not is_number(srow[0]):
+# 				continue
+# 			if "FUGACITY" in srow:
+# 				continue
+# 			arow = [x.strip() for x in srow.split("\t")]
+# 			if len(arow) < 8:
+# 				print ("ERROR: there is a problem with row " + str(arow) +
+# 				" This is most likely the bug in JANAF tables where spaces are"
+# 				"used instead of tabs when going above the fugacity pressure. "
+# 				"Please change this in the input table" + filepath
+# 				)
+# 				sys.exit()
+#
+# 			temperature.append(float(arow[0]))
+# 			# JANAF provides gibbs formation energy w.r.t. reference
+# 			# value. To get the uncorreect value, we need to add HminH0.
+# 			HminH0 = arow[4] #enthalpy - reference enthalpy in kJ/mol
+# 			gib = arow[6] #formation gibbs in kJ/mol
+# 			# NOTE: It is unclear from the JANAF database what should be
+# 			# used as formation Gibbs free energy (if it needs a correction).
+# 			gibbs.append( float(gib) )
+# 			# gibbs.append( float(gib) + float(HminH0) )
+#
+#
+# 	#create interpolated function from JANAF file
+# 	fdata = interpolate.interp1d(temperature, gibbs, kind='linear')
+# 	imax = 200 #number of interpolated points
+# 	tmax = max(temperature)
+# 	tmin = min(temperature)
+# 	#write data to file using a regular xtemp grid
+# 	with open(build_folder + "thermo_" + name + ".dat", "w") as fout:
+# 		fout.write("#Regularly spaced JANAF table for " + name + "\n")
+# 		fout.write("#temperature (K) formation gibbs free energy (kJ/mol)" + "\n")
+#
+# 		for i in range(imax):
+# 			xtemp = i*(tmax-tmin)/(imax-1)+tmin
+# 			fout.write(str(xtemp) + " " + str(fdata(xtemp)) + "\n")
+#
+# 	print "written JANAF " + name + " table"
+#
 
 ################################
 #split molecule name assuming elements written as He
@@ -1418,6 +1431,23 @@ def get_be_rot(arg):
 	else:
 		False
 
+# Equivalent radius of a species in cm
+def get_radius(arg):
+	radius = {"TIO2": 1.62e-8,
+	# Interatomic distance from Jeong et al 2000 DOI:10.1088/0953-4075/33/17/319
+			"AL2O3": 3.304e-8,
+	# Interatomic distance O-Al-O (linear geometry) from Archibong et al 1999
+	# doi: 10.1021/jp983695n
+			"MGO":  0.865e-8,
+	# Half a bond length form Farrow et al 2014 doi:10.1039/C4CP01825G
+			"SIO": 0.75765e-8
+	# Bond length from Bromley et al 2016 doi:10.1039/c6cp03629e
+			}
+	if arg in radius:
+		return radius[arg]
+	else:
+		return None
+
 ##################################
 #check if a file exists
 def file_exists(fname):
@@ -1781,6 +1811,11 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 	if("_c_dust" in name.lower()):
 		mymol.is_chemisorbed = True
 
+	clusterables = ["TIO2", "MGO", "SIO", "AL2O3"]
+	if name in clusterables:
+		mymol.is_clustarable = True
+		mymol.radius = get_radius(name)
+
 	#when belongs to dust+idx remove _dust in the name
 	if(dustIdx>0 and not(mymol.is_surface)):
 		print "ERROR: in parser, dustIdx>0 with a non-surface species"
@@ -1897,10 +1932,20 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 				mymol.Tpoly_nist[-1] = thermo_data[mymol.name]["NIST"][10]  #(K) [min,med,max] T interval limits
 				mymol.poly2_nist = thermo_data[mymol.name]["NIST"][11:] #NIST polynomials upper T interval
 
-	#check if species has thermo data as JANAF table
-	thermoTabPath = "data/database/janaf/" + mymol.name + ".dat"
-	if file_exists(thermoTabPath):
-		mymol.hasThermoTable = True
+	# Check if species has Gibbs free energy data
+	# priority for tables manually added to KROME
+	# over some database
+	GFE_path = "data/thermochemistry/" + mymol.name + ".gfe"
+	# thermoJanafTabPath = "data/database/janaf/" + mymol.name + ".dat"
+	if file_exists(GFE_path):
+		mymol.has_GFE_table = True
+	# NOTE: Using JANAF tables is discouraged because it is unclear on the exact
+	# calculations/data and it is incompatible with other databases like NASA
+	# polynomial ones.
+	# elif file_exists(thermoJanafTabPath):
+	# 	mymol.has_GFE_table = True
+	# 	mymol.hasJanafThermoTable = True
+
 
 
 	#compute enthaly @300K using NASA poly
