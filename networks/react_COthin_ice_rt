@@ -626,9 +626,8 @@
 
 #H2 formation on dust grains. No idea about ref. Will be replaced by table lookup
 #@ref:MISSING CITATION!
-#224,H,H,H2,,NONE,NONE,2.121d-17
-224,H,H,H2,,NONE,NONE,2.121d-17*2.0
-#224,H,H,H2,,NONE,NONE,2.121d-17*5.0
+#224,H,H,H2,,NONE,NONE,2.121d-17*2.0
+
 
 @noTab_start
 #DUST FREEZE-OUT/EVAPORATION
