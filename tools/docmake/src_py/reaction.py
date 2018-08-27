@@ -1445,7 +1445,8 @@ class reaction:
 		rate = re.sub("([0-9]*\.*[0-9]*)d([+-]*[0-9]{1,})", r"\1e\2",rate)
 		# Remove double prec suffix, e.g. 1.0_8 -> 1.0
 		rate = re.sub("([0-9])_8", r"\1", rate)
-		rate = re.sub("\\*1e0/([a-zA-Z][a-zA-Z0-9_]*)", "/\\1", rate) # Replace *1/x by /x to avoid pytexit bug
+		rate = re.sub("\\*1e0/([a-zA-Z][a-zA-Z0-9_]*)", "/\\1", rate) # Replace *1/x by /x to avoid dangling *1 in fractions
+		rate = re.sub("\\+ *\\-", "-", rate) # Replace + - by -
 
 		# store for debugging
 		rateTexAfterShortcutsReplaced = rate
