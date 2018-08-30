@@ -1486,6 +1486,9 @@ class reaction:
 		if opt.latex_backend == "pytexit":
 			rateTex = utils.replaceSymbols(rateTex)
 
+		# store for debugging
+		rateTextAfterReplaceSymbols = rateTex
+
 		#fix mistakes by sympy
 		#no 10^{} for short rates
 		#for t in Tsymbols:
@@ -1500,9 +1503,13 @@ class reaction:
 		# use a\cdot 10^-b for reaction that are just numbers
 		try:
 			float(rateTex.replace("=", ""))
-			rateTex = rateTex.replace("e-", "\\cdot 10^{-") + "}"
+			if "e-" in rateTex:
+				rateTex = rateTex.replace("e-", "\\cdot 10^{-") + "}"
 		except:
 			pass
+
+		# store for debugging
+		rateTextAfterReplaceExpNot = rateTex
 
 		#it automatically makes a fraction out of negative exponents
 		# TODO: make more generic, it fails with some reactions
@@ -1520,6 +1527,9 @@ class reaction:
 					rateTex = alphaGamma[0] + beta + "\operatorname" + alphaGamma[1]
 				else:
 					rateTex = rateTexSplit[-1] + beta
+
+		# store for debugging
+		rateTextAfterReplaceFractions = rateTex
 
 		#mistake: large fractions
 		#solution: to the power -1 (solution can be improved)
@@ -1549,20 +1559,23 @@ class reaction:
 
 			rateTex = rateTex.replace(fracStringOriginal, fracStringReplace)
 
+		# store for debugging
+		rateTextAfterLargeFractsToExp = rateTex
+
 		# remove unwanted zeros
 		rateTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", rateTex)
 		rateTex = re.sub(r"(\d+)\.(?=\D)", r"\1", rateTex)
-		rateTex = re.sub(r"0*(\d+\.*)", r"\1", rateTex)
+		rateTex = re.sub(r"([^0-9\.])0*(\d+\.*)", r"\1\2", rateTex)
 
-                # truncate numbers at 5 decimal places
-                rateTex = re.sub(r'(\d+\.[0-9]{5})\d*', r'\1', rateTex)
+		# truncate numbers at 5 decimal places
+		rateTex = re.sub(r'(\d+\.[0-9]{5})\d*', r'\1', rateTex)
 
-                rateTex = re.sub("([ \)_]*)idx_{([A-Za-z0-9_]{1,})}", r"\1idx_\2", rateTex)
-                rateTexIdxReplaced = rateTex
-                # Rename number density, e.g. n(idx_H) -> n_idx_H
-                rateTex = re.sub(r"([^A-Za-z])?n\{(\\left|) *\( *([A-Za-z0-9_]{1,}) *(\\right|) *\)\}", r"\1n_{\3}", rateTex)
-                # Rename species id to name wrapped in \ch, e.g. idx_H2 -> \ch{H2}
-                rateTex = re.sub("([ \)_]*)idx_([A-Za-z0-9_]{1,})( *)", r"\1\ch{\2}\3", rateTex)
+		rateTex = re.sub("([ \)_]*)idx_{([A-Za-z0-9_]{1,})}", r"\1idx_\2", rateTex)
+		rateTexIdxReplaced = rateTex
+		# Rename number density, e.g. n(idx_H) -> n_idx_H
+		rateTex = re.sub(r"([^A-Za-z])?n\{(\\left|) *\( *([A-Za-z0-9_]{1,}) *(\\right|) *\)\}", r"\1n_{\3}", rateTex)
+		# Rename species id to name wrapped in \ch, e.g. idx_H2 -> \ch{H2}
+		rateTex = re.sub("([ \)_]*)idx_([A-Za-z0-9_]{1,})( *)", r"\1\ch{\2}\3", rateTex)
 
 		# store rate before breaking
 		rateTextFull = rateTex
@@ -1579,7 +1592,11 @@ class reaction:
 		message += "\n%original rate: " + rate
 		message += "\n%after shortcuts replacing: " + rateTexAfterShortcutsReplaced
 		message += "\n%rate after sympy: " + rateTextAfterSympy
-                message += "\n%rate after replacing idx: " + rateTexIdxReplaced
+		message += "\n%rate after replace symbols" + rateTextAfterReplaceSymbols
+		message += "\n%rate after replace exp. not." + rateTextAfterReplaceExpNot
+		message += "\n%rate after replace fractions" + rateTextAfterReplaceFractions
+		message += "\n%rate after replace large fracts. w. exp. not" + rateTextAfterLargeFractsToExp
+		message += "\n%rate after replacing idx: " + rateTexIdxReplaced
 		message += "\n%full rate (before breaking): " + rateTextFull
 
 		return rateTex, message, numlines
