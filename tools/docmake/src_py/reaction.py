@@ -1373,6 +1373,10 @@ class reaction:
 				spec = p.name
 				if spec == "E":
 					spec = "e-"
+				if "++" in spec:
+					spec = re.sub(r"(\+{2,})", r"^{\1}", spec)
+				if "--" in spec:
+					spec = re.sub(r"(\-{2,})", r"^{\1}", spec)
 				reactionTex += spec + " + "
 
 			#add generic catalysist to catalysis reaction
