@@ -1325,6 +1325,7 @@ class reaction:
 	def reaction2latex(self, temperatureShortcuts, variableShortcuts, deferredShortcuts,
 						cntMergedReactions, idxMerged, cntTotalReactions, cntAllReactions):
 		import sys
+		import re
 		#latex format uses \usepackage{chemformula} in LaTeX
 		#e.g. \ch{H2 + H -> H + H + H}
 
@@ -1344,6 +1345,12 @@ class reaction:
 				#this can be changed if the user prefers otherwise
 				if spec == "CR":
 					continue
+
+				# chemformula requires species with more than one ionizations to have them bracketed
+				if "++" in spec:
+					spec = re.sub(r"(\+{2,})", r"^{\1}", spec)
+				if "--" in spec:
+					spec = re.sub(r"(\-{2,})", r"^{\1}", spec)
 
 				reactionTex += spec + " + "
                         #if photo-reaction, add photon as reactant
@@ -1428,6 +1435,8 @@ class reaction:
 		message = "" #optional warning
 
 		symboltable = utils.getSymbolTable()
+
+		originalRate = rate
                         
 		#put all variables with corresponding values in rate
 		if variableShortcuts:
@@ -1577,6 +1586,9 @@ class reaction:
 		# Rename species id to name wrapped in \ch, e.g. idx_H2 -> \ch{H2}
 		rateTex = re.sub("([ \)_]*)idx_([A-Za-z0-9_]{1,})( *)", r"\1\ch{\2}\3", rateTex)
 
+		rateTexBeforeReplacePm = rateTex
+		rateTex = re.sub("\\+ *\\-", "-", rateTex) # Replace + - by -
+
 		# store rate before breaking
 		rateTextFull = rateTex
 
@@ -1589,7 +1601,8 @@ class reaction:
                         numlines = 1
 
 		message += "\n%These comments below are for debugging, ignore them"
-		message += "\n%original rate: " + rate
+		message += "\n%original rate: " + originalRate
+		message += "\n%sympy friendly rate: " + rate
 		message += "\n%after shortcuts replacing: " + rateTexAfterShortcutsReplaced
 		message += "\n%rate after sympy: " + rateTextAfterSympy
 		message += "\n%rate after replace symbols" + rateTextAfterReplaceSymbols
@@ -1597,6 +1610,7 @@ class reaction:
 		message += "\n%rate after replace fractions" + rateTextAfterReplaceFractions
 		message += "\n%rate after replace large fracts. w. exp. not" + rateTextAfterLargeFractsToExp
 		message += "\n%rate after replacing idx: " + rateTexIdxReplaced
+		message += "\n%rate before replaceing +-: " + rateTexBeforeReplacePm
 		message += "\n%full rate (before breaking): " + rateTextFull
 
 		return rateTex, message, numlines
@@ -1647,6 +1661,7 @@ class reaction:
 
 		rate = utils.raiseBracketsOnOperators(rate)
 		rate = utils.replaceLongFracByDivide(rate, maxlen=opts.max_fraction_length)
+		rate = utils.replaceLongExponentByHat(rate, maxlen=opts.max_exponent_length)
 		rate = utils.replaceLeftRightbyBigLR(rate)
 		rate, numlines = utils.breakLatexEquation(rate)
 		rate = "\\begin{aligned}[t] = &" + rate + "\\end{aligned}"

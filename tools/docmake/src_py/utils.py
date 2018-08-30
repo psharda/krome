@@ -370,12 +370,31 @@ def replaceLongFracByDivide(rate,maxlen=100):
                         acc += numerator + denominator
 
 #********************
+#replaces operator in front of exponents longer than maxlen by \hat{ }
+def replaceLongExponentByHat(rate,maxlen=100):
+        acc=""
+        while True:
+                before, fromPow = string_from("^", rate)
+                if len(fromPow) <= 0:
+                        return acc + rate
+                spaces, rest = skip_spaces(fromPow)
+                exponent,rest = next_parenthesis(rest)
+                
+                rate = rest
+                if len(exponent) > maxlen:
+                        acc += before[:-1] + spaces
+                        acc += "\\, \\hat{ }\\, \\left("+exponent[1:-1]+"\\right)"
+                else:
+                        acc += before + spaces
+                        acc += exponent
+
+#********************
 #resolve Krome variables in 'shortcuts', exept those in 'exceptions')
 def replaceShortcuts(string, shortcuts, exceptions):
         for var in reversed(shortcuts):
                 if var[0] in exceptions: continue
 		if var[0] in string:
-                        string = replaceFortranVar(var[0], var[1], string)
+                        string = replaceFortranVar(var[0], "("+var[1]+")", string)
         return string
 
 #********************

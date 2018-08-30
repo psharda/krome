@@ -40,6 +40,7 @@
         "energy_ev" : "E"
     },
     "latex_backend" : "pytexit",
-    "lines_per_page": 46,
-    "max_fraction_length": 150
+    "lines_per_page": 45,
+    "max_fraction_length": 150,
+    "max_exponent_length": 130
 }
