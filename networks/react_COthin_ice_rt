@@ -73,7 +73,7 @@
 13,H2,He+,He,H,H+,3.7d-14*exp(-35d0*invT)
 
 #KIDA Harada+2010
-#@ref:\cite{Harada2010APJ}
+#@ref:\cite{Harada2010ApJ}
 @format:idx,R,R,P,P,P,rate
 14,H2,He+,He+,H,H,3d-11*sqrt(T32)*exp(-5.2d4*invT)
 
@@ -280,7 +280,7 @@
 #@ref:\cite{LeTeuff2000}
 70,CH,H2,CH2,H,5.46d-10*exp(-1943d0*invT)
 
-#@ref:\cite{Loison2014}
+#@ref:\cite{Loison2014MNRAS}
 71,CH,C,C2,H,2.40d-10
 
 #@ref:\cite{Murrell1986}
@@ -327,7 +327,7 @@
 85,OH,H,O,H2,280.,NONE,5.45d-17
 
 #from Baulch+2005
-#@ref:\cite{Baulch2005}
+#@ref:\cite{Baulch2005JPCRD}
 87,H2,OH,H2O,H,NONE,NONE,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
 
 #KIDA, recomended, below 10K constant
@@ -624,10 +624,11 @@
 222,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
 223,OH,H,H2O,,NONE,NONE,5.26d-18*T32**(-5.22)*exp(-9d1*invT)
 
-#H2 formation on dust grains. No idea about ref. Will be replaced by table lookup
-#@ref:MISSING CITATION!
-#224,H,H,H2,,NONE,NONE,2.121d-17*2.0
-
+#H2 formation on dust grains
+##Same value as used in Richings 2014 I+II (eq. 2.12)
+##From exprs. from Cazaux & Tielens 2002, with cross section from Krumholz, Leroy & McKee (2011) 
+##and sticking probability form Hollenbach & McKee (1979).
+##@ref:\cite{Richings2014I}
 
 @noTab_start
 #DUST FREEZE-OUT/EVAPORATION
@@ -638,7 +639,7 @@
 @ice:H2O,evaporation,krate_evaporation(n(:),idx_H2O,tabTdust)
 
 #NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux
-@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0*user_G0, user_Av, user_crate, 1d-3)
+@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0*user_G0, user_Av, user_crate, #1d-3)
 
 @noTab_stop
 
@@ -710,7 +711,6 @@
 #PHOTOREACTIONS THIN WITH Av
 #@storeOnce_start
 #FROM GLOVER+2009
-#@ref:MISSING CITATION!
 #@ref:\cite{Dunn1968}
 225,H2+,H,H+,user_G0*1.1d-9*exp(-1.9*user_Av)
 
@@ -813,7 +813,7 @@
 #@ref:\cite{LeTeuff2000}
 281,C,C,C2,5d3,NONE,5.99d-33*(Tgas/5d3)**(-0.64)*exp(5255./Tgas)*ntot
 
-#@ref:\cite{Baulch1992}
+#@ref:\cite{Baulch1992JPCRD}
 282,C,O,CO,NONE,2d3,6.16d-29*(Tgas/3d2)**(-3.08)*ntot
 
 #@ref:\cite{Petuchowski1989}
@@ -834,7 +834,7 @@
 #@ref:\cite{Tsang1986}
 288,H,O,OH,NONE,NONE,4.33d-32*(T32)**(-1)*ntot
 
-#@ref:\cite{Baulch1992}
+#@ref:\cite{Baulch1992JPCRD}
 289,OH,H,H2O,NONE,NONE,2.56d-31*(T32)**(-2)*ntot
 
 #@ref:\cite{Warnatz1984}
