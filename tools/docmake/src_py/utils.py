@@ -187,12 +187,14 @@ def isNumber(arg):
 
 #********************
 #character to int
-def char2int(arg, when_below=1e4):
-	if isNumber(arg):
-                f = float(arg)
-                if(f < when_below):
-		        return int(float(arg))
-	return arg
+def char2int(arg, when_below=1e4, when_above=1e2):
+  if isNumber(arg):
+    f = float(arg)
+    if(f < when_below and (f % 1 == 0 or f > when_above)):
+      return int(float(arg))
+    if f <= when_above:
+      return "{0:.2f}".format(f)
+  return arg
 
 #********************
 def getShortcuts():
