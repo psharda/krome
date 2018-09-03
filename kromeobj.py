@@ -1684,6 +1684,7 @@ class krome():
 			'He':2.*(menp),
 			'Li':3.*(me+mp)+4.*mn,
 			'Be':4.*(me+mp)+5.*mn,
+			'B':5.*(menp)+mn,
 			'C':6.*(menp),
 			'N':7.*(menp),
 			'O':8.*(menp),
@@ -5770,7 +5771,7 @@ class krome():
 					conserveLinElectrons.append(sgn + " " + str(abs(species.charge)) \
 						+ "d0*x(" + species.fidx +") / m("+species.fidx+")")
 				srow = srow.replace("#KROME_conserveLin_electrons",(" &\n".join(conserveLinElectrons)))
-				srow = srow.replace("1d0*","")
+				# srow = srow.replace("1d0*","")
 				fout.write(srow+"\n")
 				continue
 
