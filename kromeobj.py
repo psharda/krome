@@ -2827,6 +2827,13 @@ class krome():
 				# 	janaf2krome(self.buildFolder, sp)
 				# else:
 				gfe_file = sp.name + ".gfe"
+
+				#import os
+				buildFolder = self.buildFolder
+				if not os.path.exists(buildFolder):
+					os.mkdir(buildFolder)
+					print "Created " + buildFolder
+
 				shutil.copyfile(self.thermochemistryFolder + gfe_file,
 				 			self.buildFolder + gfe_file)
 				print "copied " + gfe_file
