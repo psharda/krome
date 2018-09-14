@@ -1838,7 +1838,7 @@ class krome():
 		noTabNext = False #flag for use tabs for the next reaction
 		nextSolomon = False #next reaction is Solomon (to store index for H2 pumping)
 		nextH2photodissociation = False #next reaction is H2 photodissociation
-		for row in allrows:
+		for line_number, row in enumerate(allrows):
 			srow = row.strip() #stripped row
 			if(srow.strip()==""): continue #looks for blank line
 			if(srow[0]=="#"): continue #looks for comment line
@@ -1903,11 +1903,11 @@ class krome():
 				continue #not a reaction
 
 			#search for variables
-			if("@var:" in srow):
-				arow = srow.replace("@var:","").split("=")
-				if(len(arow)!=2):
+			if "@var:" in srow:
+				arow = srow.replace("@var:", "").split("=")
+				if len(arow) != 2:
 					print "ERROR: variable line must be @var:variable=F90_expression"
-					print "found: "+srow
+					print "found: " + srow
 					sys.exit()
 
 
@@ -1917,21 +1917,31 @@ class krome():
 				#check if the current @var is allowed
 				notAllowedVars = ["k","tgas","energy_ev","n"]
 				for nav in notAllowedVars:
-					if(nav.lower()==arow[0].split("(")[0].strip().lower()):
-						sys.exit("ERROR: you can't use "+nav+" as an @var variable")
+					if nav.lower() == arow[0].split("(")[0].strip().lower():
+						sys.exit("ERROR: you can't use " + nav + " as an @var variable")
 
 				#check if the variable belongs to cooling or rate coefficient variables
-				if(not(inCoolingBlock) and not(inHeatingBlock)):
-					if(arow[0] in self.coevars): continue #skip already found variables
-					self.coevars[arow[0]] = [ivarcoe,arow[1]]
+				if not inCoolingBlock  and not inHeatingBlock:
+					if arow[0] in self.coevars:
+						print "ERROR: @var:" + arow[0] + " already defined in the network!"
+						print "Around these lines in the network file:"
+						lmin = max(0, line_number-2)
+						lmax = min(line_number+3, len(allrows)-1)
+						print " " + "\n ".join(allrows[lmin:lmax])
+						print "Change name otherwise will be ovewritten!"
+						sys.exit()
+						continue #skip already found variables
+					self.coevars[arow[0]] = [ivarcoe, arow[1]]
 					ivarcoe += 1 #count variables for later sorting
-				elif(inHeatingBlock):
-					if(arow[0] in self.heatVars): continue #skip already found variables
-					self.heatVars[arow[0]] = [ivarHeat,arow[1]]
+				elif inHeatingBlock:
+					if arow[0] in self.heatVars:
+						continue #skip already found variables
+					self.heatVars[arow[0]] = [ivarHeat, arow[1]]
 					ivarHeat += 1 #count variables for later sorting
-				elif(inCoolingBlock):
-					if(arow[0] in self.coolVars): continue #skip already found variables
-					self.coolVars[arow[0]] = [ivarCool,arow[1]]
+				elif inCoolingBlock:
+					if arow[0] in self.coolVars:
+						continue #skip already found variables
+					self.coolVars[arow[0]] = [ivarCool, arow[1]]
 					ivarCool += 1 #count variables for later sorting
 				continue #SKIP: a variable line is not a reaction line
 
