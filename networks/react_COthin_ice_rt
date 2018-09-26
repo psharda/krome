@@ -59,9 +59,9 @@
 @var:kl11 = 1d1**(-27.029d0+3.801d0*logT-29487d0*invT)
 @var:kh11 = 1d1**(-2.729d0-1.75d0*logT-23474d0*invT)
 @var:ncr11 = 1d1**(5.0792d0*(1d0-1.23d-5*(Tgas-2d3)))
-@var:a11_ratio=1.d0/(1.d0+(Hnuclei/(ncr11+1d-40)))
+@var:ax11=1.d0/(1.d0+(Hnuclei/(ncr11+1d-40)))
 @noTabNext
-11,H2,He,H,H,He,kh11**(1.-a11_ratio)*kl11**a11_ratio
+11,H2,He,H,H,He,kh11**(1.-ax11)*kl11**ax11
 
 
 #@ref:\cite{Millar1997}
