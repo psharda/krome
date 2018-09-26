@@ -1684,6 +1684,7 @@ class krome():
 			'He':2.*(menp),
 			'Li':3.*(me+mp)+4.*mn,
 			'Be':4.*(me+mp)+5.*mn,
+			'B':5.*(menp)+mn,
 			'C':6.*(menp),
 			'N':7.*(menp),
 			'O':8.*(menp),
@@ -2826,6 +2827,13 @@ class krome():
 				# 	janaf2krome(self.buildFolder, sp)
 				# else:
 				gfe_file = sp.name + ".gfe"
+
+				#import os
+				buildFolder = self.buildFolder
+				if not os.path.exists(buildFolder):
+					os.mkdir(buildFolder)
+					print "Created " + buildFolder
+
 				shutil.copyfile(self.thermochemistryFolder + gfe_file,
 				 			self.buildFolder + gfe_file)
 				print "copied " + gfe_file
@@ -5770,7 +5778,7 @@ class krome():
 					conserveLinElectrons.append(sgn + " " + str(abs(species.charge)) \
 						+ "d0*x(" + species.fidx +") / m("+species.fidx+")")
 				srow = srow.replace("#KROME_conserveLin_electrons",(" &\n".join(conserveLinElectrons)))
-				srow = srow.replace("1d0*","")
+				# srow = srow.replace("1d0*","")
 				fout.write(srow+"\n")
 				continue
 
