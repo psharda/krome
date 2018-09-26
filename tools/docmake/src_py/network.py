@@ -114,14 +114,14 @@ class network:
     #prepare complete documentation
     def makeAllDoc(self):
 
-        # #prepare graphs
-        # self.makeGraph()
-        #
-        # #prepare html
-        # self.makeHTML()
-        #
-        # #plot all rates
-        # self.plotRates()
+        #prepare graphs
+        self.makeGraph()
+        
+        #prepare html
+        self.makeHTML()
+        
+        #plot all rates
+        self.plotRates()
 
         #make latex table of network
         self.network2latex()
@@ -173,8 +173,6 @@ class network:
         from options import latexoptions as opts
         #NOTE: Make sure the network input file has incrementing reaction indices.
         # If double indices exist, the LaTeX table will be incorrect.
-
-        networkLatex="NetworkLatex"
 
         #list with all temperature shortcuts element = (var, replaceWith)
         shortcutsTemperature = utils.getShortcutsLatex()
@@ -276,6 +274,9 @@ class network:
     def dumpDeferredShortcuts(self, temperatureShortcuts, variableShortcuts, deferredShortcuts, filename="NetworkLatexSymbols.tex"):
         import sympy as sp
         import re
+        from options import latexoptions as opt
+        import pytexit
+        import utils
         symboltable = utils.getSymbolTable()
         with open(filename, "w") as fileOutput:
             for expr, symbol in deferredShortcuts.iteritems():
@@ -286,15 +287,21 @@ class network:
                 expr = expr.replace("log", "ln")
                 expr = expr.replace("ln10", "log")
                 expr = expr.replace("_8", "")
-                while True:
-                    try:
-                        exprTex = sp.latex(eval(expr,symboltable))
-                        break
-                    #undefined variable will become a symbol
-                    except (NameError,), err:
-                        print "Name error in expression", err
-                        varIssue = str(err).split("'")[1]
-                        symboltable[varIssue] = varIssue
+                expr = re.sub("\\*1e0/([a-zA-Z][a-zA-Z0-9_]*)", "/\\1", expr) # Replace *1/x by /x to avoid dangling *1 in fractions
+                expr = re.sub("\\+ *\\-", "-", expr) # Replace + - by -
+                if opt.latex_backend == "pytexit":
+                    exprTex = pytexit.for2tex(expr, print_latex=False, print_formula=False)
+                    exprTex = exprTex[2:-2]
+                else:
+                    while True:
+                        try:
+                            exprTex = sp.latex(eval(expr,symboltable))
+                            break
+                        #undefined variable will become a symbol
+                        except (NameError,), err:
+                            print "Name error in expression", err
+                            varIssue = str(err).split("'")[1]
+                            symboltable[varIssue] = varIssue
 
                 # use a\cdot 10^-b for reaction that are just numbers
                 try:
@@ -307,6 +314,10 @@ class network:
                 exprTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", exprTex)
                 exprTex = re.sub(r"(\d+)\.(?=\D)", r"\1", exprTex)
                 exprTex = re.sub(r"0*(\d+\.*)", r"\1", exprTex)
+
+                # pytexit doesn't replace symbols, so it is done here
+                if opt.latex_backend == "pytexit":
+                    exprTex = utils.replaceSymbols(exprTex)
 
                 fileOutput.write("$"+symbol + "$ & $ = " + exprTex+"$ \\\\ \n")
 
@@ -361,6 +372,7 @@ class network:
         shortcutsList = [] #used in network2latex, list because dict loses order
         inBlockCR = False
         inBlockPhoto = False
+        inBlockCatalysis = False
 
         self.reactions = []
         reactionId = {}
@@ -404,10 +416,16 @@ class network:
             if(srow.lower().startswith("@photo_stop") or srow.lower().startswith("@photo_end")):
                 inBlockPhoto = False
 
+            if(srow.lower().startswith("@catalysis_start") or srow.lower().startswith("@catalysis_begin")):
+                inBlockCatalysis = True
+            if(srow.lower().startswith("@catalysis_stop") or srow.lower().startswith("@catalysis_end")):
+                inBlockCatalysis = False
+
             #change reaction type to CR
             reactionType = "standard" #default
             if(inBlockCR): reactionType = "CR"
             if(inBlockPhoto): reactionType = "photo"
+            if(inBlockCatalysis): reactionType = "catalysis"
 
             #skip other tokens
             if(srow.startswith("@")): continue

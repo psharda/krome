@@ -4,6 +4,7 @@ from math import log10,log,exp,sqrt,pi
 
 class reaction:
 
+
     index = -1
     verbatim = None
     reactants = []
@@ -369,10 +370,10 @@ class reaction:
         return self.getRPHash(self.products)
 
     #********************
-    #get reaction unique hash, e.g. H_H__H2
+    #get reaction unique hash, e.g. H_H__H2__standard
     def getReactionHash(self):
         if(self.reactionHash!=None): return self.reactionHash
-        self.reactionHash = self.getRPHash(self.reactants) + "__" + self.getRPHash(self.products)
+        self.reactionHash = self.getRPHash(self.reactants) + "__" + self.getRPHash(self.products) + "__" + self.reactionType
         return self.reactionHash
 
     #********************
@@ -1325,6 +1326,8 @@ class reaction:
     # TODO: remove deprecated arguments
     def reaction2latex(self, temperatureShortcuts, variableShortcuts, deferredShortcuts,
                         cntMergedReactions, idxMerged, cntTotalReactions, cntAllReactions):
+        import sys
+        import re
         from options import latexoptions as opts
         #latex format uses \usepackage{chemformula} in LaTeX
         #e.g. \ch{H2 + H -> H + H + H}
@@ -1351,6 +1354,12 @@ class reaction:
                 if spec == "CR":
                     continue
 
+                # chemformula requires species with more than one ionizations to have them bracketed
+                if "++" in spec:
+                    spec = re.sub(r"(\+{2,})", r"^{\1}", spec)
+                if "--" in spec:
+                    spec = re.sub(r"(\-{2,})", r"^{\1}", spec)
+
                 reactionTex += spec + " + "
             #if photo-reaction, add photon as reactant
             if(self.reactionType == "photo"):
@@ -1362,6 +1371,8 @@ class reaction:
             #e.g. \ch{H2 ->[CR] H + H}
             if self.reactionType == "CR":
                 reactionTex += " ->[CR] "
+            elif self.reactionType == "catalysis":
+                reactionTex += " + M -> "
             else:
                 reactionTex += " -> "
 
@@ -1370,10 +1381,17 @@ class reaction:
                 spec = p.name
                 if spec == "E":
                     spec = "e-"
+                if "++" in spec:
+                    spec = re.sub(r"(\+{2,})", r"^{\1}", spec)
+                if "--" in spec:
+                    spec = re.sub(r"(\-{2,})", r"^{\1}", spec)
                 reactionTex += spec + " + "
 
+            #add generic catalysist to catalysis reaction
+            if self.reactionType == "catalysis":
+                reactionTex += "M"
             #add photon to reaction with only one product
-            if len(self.products) == 1:
+            elif len(self.products) == 1:
                 reactionTex += "$\\gamma$"
             else:
                 #remove trailing " + "
@@ -1391,6 +1409,10 @@ class reaction:
             idxTex = ""
             reactionTex = ""
             refTex = ""
+
+        #look in database if this is an auto rate
+        if self.rate[idxMerged] == "auto":
+            self.rate[idxMerged], Emin, Emax = self.find_auto_rate(self.reactants, self.products, self.reactionType)
 
         #LaTeX rate
         rateTex, message, numlines = self.rate2latex(self.rate[idxMerged], temperatureShortcuts, variableShortcuts, deferredShortcuts)
@@ -1429,6 +1451,8 @@ class reaction:
 
         symboltable = utils.getSymbolTable()
 
+        originalRate = rate
+
         #put all variables with corresponding values in rate
         if variableShortcuts:
             rate = utils.replaceShortcuts(rate, variableShortcuts, deferredShortcuts.keys())
@@ -1445,6 +1469,9 @@ class reaction:
         rate = re.sub("([0-9]*\.*[0-9]*)d([+-]*[0-9]{1,})", r"\1e\2",rate)
         # Remove double prec suffix, e.g. 1.0_8 -> 1.0
         rate = re.sub("([0-9])_8", r"\1", rate)
+        rate = re.sub("\\*1e0/([a-zA-Z][a-zA-Z0-9_]*)", "/\\1", rate) # Replace *1/x by /x to avoid dangling *1 in fractions
+        rate = re.sub("\\*\\(1e0/([a-zA-Z][a-zA-Z0-9_]*)\\)", "/\\1", rate) # Replace *1/x by /x to avoid dangling *1 in fractions
+        rate = re.sub("\\+ *\\-", "-", rate) # Replace + - by -
 
         # store for debugging
         rateTexAfterShortcutsReplaced = rate
@@ -1482,18 +1509,10 @@ class reaction:
 
 
         if opts.latex_backend == "pytexit":
-            # pytexit doesn't replace symbols, so it is done here
-            for sym, expr in utils.getSymbols().iteritems():
-                symtex = pytexit.for2tex(sym, print_latex=False, print_formula=False)[2:-2]
-                #print "Replacing symbol: ", sym, " -> ", symtex, " -> ", expr
-                if sym==symtex:
-                    rateTex = utils.replaceFortranVar(symtex, expr, rateTex)
-                else:
-                    rateTex = rateTex.replace(symtex, expr)
+            rateTex = utils.replaceSymbols(rateTex)
 
-            # it also leaves in factors of 1
-            rateTex = re.sub(r"\\times *1\.0([^0-9\.]|$)", r"\1", rateTex)
-
+        # store for debugging
+        rateTextAfterReplaceSymbols = rateTex
 
         #fix mistakes by sympy
         #no 10^{} for short rates
@@ -1509,9 +1528,13 @@ class reaction:
         # use a\cdot 10^-b for reaction that are just numbers
         try:
             float(rateTex.replace("=", ""))
-            rateTex = rateTex.replace("e-", "\\cdot 10^{-") + "}"
+            if "e-" in rateTex:
+                rateTex = rateTex.replace("e-", "\\cdot 10^{-") + "}"
         except:
             pass
+
+        # store for debugging
+        rateTextAfterReplaceExpNot = rateTex
 
 
         # old algorithm
@@ -1590,6 +1613,9 @@ class reaction:
                 else:
                     rateTex = restStringOriginal + fracStringReplace
 
+        # store for debugging
+        rateTextAfterLargeFractsToExp = rateTex
+
         # replaces fractions with numerator = 1 and denominators with power
         # their inversed denominator
         # TODO: This functions can/should be used for more general purposes
@@ -1598,7 +1624,7 @@ class reaction:
         # remove unwanted zeros
         rateTex = re.sub(r"(\d+\.[1-9]*)0*(?=\D)", r"\1", rateTex)
         rateTex = re.sub(r"(\d+)\.(?=\D)", r"\1", rateTex)
-        rateTex = re.sub(r"0*(\d+\.*)", r"\1", rateTex)
+        rateTex = re.sub(r"([^0-9\.])0*(\d+\.*)", r"\1\2", rateTex)
 
         # truncate numbers at 5 decimal places
         # TODO: properly round the values
@@ -1614,6 +1640,9 @@ class reaction:
         # Rename species id to name wrapped in \ch, e.g. idx_H2 -> \ch{H2}
         rateTex = re.sub("([ \)_]*)idx_([A-Za-z0-9_]{1,})( *)", r"\1\ch{\2}\3", rateTex)
 
+        rateTexBeforeReplacePm = rateTex
+        rateTex = re.sub("\\+ *\\-", "-", rateTex) # Replace + - by -
+
         # store rate before breaking
         rateTextFull = rateTex
 
@@ -1626,13 +1655,57 @@ class reaction:
             numlines = 1
 
         message += "\n%These comments below are for debugging, ignore them"
-        message += "\n%original rate: " + rate
+        message += "\n%original rate: " + originalRate
+        message += "\n%sympy friendly rate: " + rate
         message += "\n%after shortcuts replacing: " + rateTexAfterShortcutsReplaced
         message += "\n%rate after sympy: " + rateTextAfterSympy
+        message += "\n%rate after replace symbols" + rateTextAfterReplaceSymbols
+        message += "\n%rate after replace exp. not." + rateTextAfterReplaceExpNot
+        message += "\n%rate after replace large fracts. w. exp. not" + rateTextAfterLargeFractsToExp
         message += "\n%rate after replacing idx: " + rateTexIdxReplaced
+        message += "\n%rate before replaceing +-: " + rateTexBeforeReplacePm
         message += "\n%full rate (before breaking): " + rateTextFull
 
         return rateTex, message, numlines
+
+    #****************
+    #look up auto rate in database
+    def find_auto_rate(self, reactants, products, reactionType):
+        import os,re
+
+        reactants = ",".join(map(lambda x: x.name.replace("+", '\+'), reactants))
+        products = " *, *".join(map(lambda x: x.name.replace("+", '\+'), products))
+
+        expr_w_limits = """ *@type: *{}ion
+ *@reacts: *{}
+ *@prods: *{}
+ *@limits: ([0-9\.de\+\<\>]*), *([0-9\.de\+\<\>]*)
+ *@rate: *(.*)""".format(reactionType, reactants, products)
+
+        expr_wo_limits = """ *@type: *{}ion
+ *@reacts: *{}
+ *@prods: *{}
+ *@rate: *(.*)""".format(reactionType, reactants, products)
+
+        re_w_limits = re.compile(expr_w_limits, re.MULTILINE)
+        re_wo_limits = re.compile(expr_wo_limits, re.MULTILINE)
+
+        self.database_path = "../../data/database"
+        for filename in os.listdir(self.database_path):
+            fullpath = os.path.join(self.database_path, filename)
+            if os.path.isfile(fullpath):
+                with open(fullpath, 'r') as f:
+                    contents = f.read()
+                    result = re_wo_limits.search(contents) or re_w_limits.search(contents)
+                    if(result):
+                        groups = list(result.groups())
+                        rate = groups.pop()
+                        if len(groups) > 0:
+                            Emax = groups.pop()
+                        if len(groups) > 0:
+                            Emin = groups.pop()
+                        return (rate, [Emin.replace("d","e")], [Emax.replace("d","e")])
+        raise Exception("Auto rate not found in database for reaction " + self.getVerbatim())
 
     #****************
     #break long rates and put in LateX table format
@@ -1641,6 +1714,7 @@ class reaction:
 
         rate = utils.raiseBracketsOnOperators(rate)
         rate = utils.replaceLongFracByDivide(rate, maxlen=opts.max_fraction_length)
+        rate = utils.replaceLongExponentByHat(rate, maxlen=opts.max_exponent_length)
         rate = utils.replaceLeftRightbyBigLR(rate)
         rate, numlines = utils.breakLatexEquation(rate)
         rate = "\\begin{aligned}[t] = &" + rate + "\\end{aligned}"

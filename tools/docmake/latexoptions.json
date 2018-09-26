@@ -38,11 +38,14 @@
 	    "user_Tdust" : "T_{\\mathrm{d}}",
 	    "user_gamma_H2" : "\\mathrm{(see\\, sec.\\, \\ref{sec:external-isrf-as-diffuse-emission})}",
 	    "user_gamma_CO" : "\\mathrm{(see\\, sec.\\, \\ref{sec:external-isrf-as-diffuse-emission})}",
-	    "auto" : "\\mathrm{(see\\, ref.)}"
+	    "auto" : "\\mathrm{(see\\, ref.)}",
+        "sigma_v96" : "\\int \\mathrm{d}E\\, J(E)\\, \\sigma_{\\mathrm{v96}}",
+        "energy_ev" : "E"
     },
-    "latex_backend" : "sympy",
-    "lines_per_page": 46,
-    "sorted_by": "alphabetic",
+    "latex_backend" : "pytexit",
+    "lines_per_page": 45,
     "max_fraction_length": 150,
-    "truncate_numbers": 5
+    "max_exponent_length": 130,
+    "truncate_numbers": 5,
+    "sorted_by": "alphabetic"
 }

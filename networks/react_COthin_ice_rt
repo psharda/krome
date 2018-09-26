@@ -36,7 +36,7 @@
 6,He+,E,He,>9.28e3,1e8,1.54d-9*(1.d0+0.3d0/exp(8.099328789667d0*invTe))/(exp(40.49664394833662d0*invTe)*Te**1.5d0)+3.92d-13/Te**0.6353d0
 
 #Aladdin database 1989 (see Abel et al. 1997)
-#@ref:Aladdin database\footnote{https://www-amdis.iaea.org/ALADDIN}; \cite{Abel1997NewAstronomy}
+#@ref:\ALADDIN; \cite{Abel1997NewAstronomy}
 @format:idx,R,R,P,P,P,rate
 7,He+,E,He++,E,E,exp(-68.71040990212001d0+43.93347632635d0*lnTe-18.48066993568d0*lnTe**2+4.701626486759002d0*lnTe**3-0.7692466334492d0*lnTe**4+0.08113042097303d0*lnTe**5-0.005324020628287001d0*lnTe**6+0.0001975705312221d0*lnTe**7-3.165581065665d-6*lnTe**8)
 
@@ -46,12 +46,12 @@
 8,He+,H,He,H+,1.2d-15*(T32)*.25
 
 # De Jong (1972)
-#@ref:MISSING CITATION!
+#@ref:\cite{Glover2007}
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 9,He,H+,He+,H,NONE,1d4,1.26d-9*Tgas**(-.75)*exp(-1.275d5*invT)
 10,He,H+,He+,H,1d4,NONE,4d-37*Tgas**4.74
 
-
+#@ref:\cite{Omukai2000}
 @format:idx,R,R,P,P,P,rate
 @var:invTe=1d0/Te
 @var:logT=log10(Tgas)
@@ -64,15 +64,16 @@
 11,H2,He,H,H,He,kh11**(1.-ax11)*kl11**ax11
 
 
-#Glover+2011 ####XXXX#####
+#@ref:\cite{Millar1997}
 @format:idx,R,R,P,P,rate
 12,H2,He+,He,H2+,7.2d-15
 
+#@ref:\cite{Millar1997}
 @format:idx,R,R,P,P,P,rate
 13,H2,He+,He,H,H+,3.7d-14*exp(-35d0*invT)
 
 #KIDA Harada+2010
-#@ref:\cite{Harada2010APJ}
+#@ref:\cite{Harada2010ApJ}
 @format:idx,R,R,P,P,P,rate
 14,H2,He+,He+,H,H,3d-11*sqrt(T32)*exp(-5.2d4*invT)
 
@@ -172,7 +173,7 @@
 28,H-,H+,H,H,(2.96d-6/sqrt(Tgas) - 1.73d-9 + 2.50d-10*sqrt(Tgas))
 
 #Poulart 1978
-#@ref:MISSING CITATION!
+#@ref:\cite{Poulaert1978}
 @format:idx,R,R,P,P,rate
 29,H-,H+,H2+,E,1.d-8*Tgas**(-0.4)
 
@@ -197,7 +198,7 @@
 24,H2,H2,H2,H,H,1d1**(log10(kHdissH2)-log10(kHdissH2/kLdissH2)/(1d0+ntot/ncrdissH2))
 
 #Glover+2010
-#@ref:\cite{Glover2010MNRAS}
+#@ref:\cite{WALKAUSKAS1975691}
 @format:idx,R,R,R,P,P,rate
 34,H,H,He,H2,He,6.9d-32*Tgas**(-.4)
 
@@ -211,12 +212,13 @@
 26,H2,H,H,H2,H2,(6d-32*Tgas**(-0.25) + 2d-31*Tgas**(-.5)) / 8d0
 
 #METALS FROM Glover&Jappsen 2010 from
-#@ref:MISSING CITATION!
+#@ref:\cite{Nahar1997}
 @format:idx,R,R,P,Tmin,Tmax,rate
 39,C+,E,C,NONE,.LE.7950d0,4.67d-12*(T32)**(-0.6)
 40,C+,E,C,>7950d0,.LE.21140d0,1.23d-17*(T32)**2.49*exp(21845.6d0*invT)
 41,C+,E,C,>21140d0,NONE,9.62d-8*(T32)**(-1.37)*exp(-115786.2d0*invT)
 
+#@ref:\cite{Nahar1999}
 @format:idx,R,R,P,Tmin,Tmax,rate
 44,O+,E,O,NONE,.LE.4d2,1.30d-10*(Tgas)**(-0.64)
 45,O+,E,O,>4d2,NONE,1.41d-10*(Tgas)**(-0.66) + 7.4d-4*(Tgas)**(-1.5)*exp(-1.75d5*invT)*(1d0 + 0.062d0*exp(-1.45d5*invT))
@@ -224,46 +226,73 @@
 @var:u1 = 11.26d0*invTe
 @var:u2 = 8.2d0*invTe
 @var:u3 = 13.6*invTe
+
+#@ref:\cite{Voronov1997}
 @format:idx,R,R,P,P,P,rate
 46,C,E,C+,E,E,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
+
+#@ref:\cite{Voronov1997}
 48,O,E,O+,E,E,3.59d-8*u3**0.34*exp(-u3)/(0.073d0+u3)
 
 @format:idx,R,R,P,P,rate
+#@ref:\cite{Stancil1999}
 49,O+,H,O,H+,4.99d-11*Tgas**0.405 + 7.54d-10*invT**(0.458)
+
+#@ref:\cite{Stancil1998}
 50,O,H+,O+,H,(1.08d-11*Tgas**0.517 + 4d-10*Tgas**(0.00669))*exp(-2.27d2*invT)
+
+#@ref:\cite{Zhao2004}
 51,O,He+,O+,He,4.991d-15*(Tgas*1d-4)**0.3794*exp(-Tgas*8.9206d-7) + 2.78d-15*(Tgas*1d-4)**(-0.2163)*exp(-Tgas*1.2258d-6)
+
+#@ref:\cite{Stancil1998}
 52,C,H+,C+,H,3.9d-16*Tgas**(0.213)
+
+#@ref:\cite{Stancil1998}
 53,C+,H,C,H+,6.08d-14*(Tgas*1d-4)**(1.96)*exp(-1.7d5*invT)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
+#@ref:\cite{Kimura1993}
 54,C,He+,C+,He,NONE,.LE.2d2,8.58d-17*Tgas**(0.757)
 55,C,He+,C+,He,>2d2,.LE.2d3,3.25d-17*Tgas**(0.968)
 56,C,He+,C+,He,>2d3,1d8,2.77d-19*Tgas**(1.597)
 
+#@ref:\cite{LeTeuff2000}
 @format:idx,R,R,P,P,P,rate
 64,OH,H,O,H,H,6d-9*exp(-5.09d4*invT)
+
+#@ref:\cite{Smith2002ApJ}
 @format:idx,R,R,P,P,rate
-65,HOC+,H2,HCO+,H2,3d-10
+65,HOC+,H2,HCO+,H2,3.8d-10
 
 #ionpol1 rate from 10 K. Below this limit constant ionpol1(T=10K), otherwise explodes
+#@ref:\cite{Anicich2003}
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 66,HOC+,CO,HCO+,CO,NONE,1d1,1.604d-9
 67,HOC+,CO,HCO+,CO,1d1,NONE,8.68d-10*(1.+2.42717d-2*sqrt(3e2*invT)+7.1537*invT)
 
 @format:idx,R,R,P,P,rate
+#@ref:\cite{Dean1991}
 68,C,H2,CH,H,6.64d-10*exp(-11700d0*invT)
+
+#@ref:\cite{Harding1993}
 69,CH,H,C,H2,1.31d-10*exp(-8d1*invT)
+
+#@ref:\cite{LeTeuff2000}
 70,CH,H2,CH2,H,5.46d-10*exp(-1943d0*invT)
+
+#@ref:\cite{Loison2014MNRAS}
 71,CH,C,C2,H,2.40d-10
+
+#@ref:\cite{Murrell1986}
 73,CH,O,CO,H,1.02d-10*exp(-914d0*invT)
 
 #UMIST
-#@ref:\UMIST\, \cite{MacGregor1973JpB}
+#@ref:\UMIST
 @format:idx,R,R,P,P,rate
 74,CH,O,HCO+,E,1.9d-11*(T32)**(-2.2)*exp(-165.1d0*invT)
 
 #UMIST
-#@ref:\UMIST\, \cite{MURRELL1986JoMS}
+#@ref:\UMIST
 75,CH,O,OH,C,2.52d-11*exp(-2381d0*invT)
 
 #KIDA
@@ -293,12 +322,12 @@
 83,O,H2,OH,H,NONE,NONE,1.46e-12*exp(-9650.*invT)
 
 #Glover+2010
-#@ref:\cite{Glover2010MNRAS}
+#@ref:\cite{1986JPCRD..15.1087T}
 84,OH,H,O,H2,NONE,280.,6.99d-14*T32**2.8*exp(-1950d0*invT)
 85,OH,H,O,H2,280.,NONE,5.45d-17
 
-#from Baluch+2005
-#@ref:MISSING CITATION!
+#from Baulch+2005
+#@ref:\cite{Baulch2005JPCRD}
 87,H2,OH,H2O,H,NONE,NONE,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
 
 #KIDA, recomended, below 10K constant
@@ -311,32 +340,40 @@
 93,O,OH,H,O2,NONE,150.,4.997d-11
 
 #Glover+2010
-#@ref:\cite{Glover2010MNRAS}
+#@ref:\cite{2004MNRAS.350..323S}
 93,OH,OH,H2O,O,NONE,NONE,1.65d-12*(T32)**1.14*exp(-5d1*invT)
 
 #Glover+2010
+#@ref:\cite{cohen1979evaluation}
 94,H2O,H,H2,OH,NONE,NONE,1.59d-11*(T32)*1.2*exp(-9610.*invT)
 
 #Glover+2010
+#@ref:\cite{Glover2010MNRAS}
 95,O2,H,OH,O,NONE,NONE,2.61d-10*1.2*exp(-8156.*invT)
 
 #Glover+2010
+#@ref:\cite{osti_4089545}
 96,O2,H2,OH,OH,NONE,NONE,3.16d-10*exp(-21890.d0*invT)
 
 #Glover+2010 (limit 1052. for continuity)
+#@ref:\cite{Glover2010MNRAS}
 97,O2,C,CO,O,NONE,1052d0,4.7d-11*T32**(-.34)
 98,O2,C,CO,O,1052d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
 
 #Glover+2010
+#@ref:\cite{LeTeuff2000}
 99,CO,H,C,OH,NONE,NONE,1.1d-10*T32**0.5*exp(-77700d0*invT)
 
 #Glover+2010
+#@ref:\cite{linder1995reactive}
 100,H2+,H2,H3+,H,NONE,NONE,2.24d-9*T32**.042*exp(-Tgas/46600.)
 
 #Glover+2010
+#@ref:\cite{1992A&A...255..453S}
 101,H3+,H,H2+,H2,NONE,NONE,7.7d-9*exp(-17560d0*invT)
 
 #Glover+2010
+#@ref:\cite{LeTeuff2000}
 102,C,H2+,CH+,H,NONE,NONE,2.4d-9
 
 #O'Connor+2014 (http://arxiv.org/abs/1408.4696), original range 10-1e4 K, here extended
@@ -347,28 +384,35 @@
 103,C,H3+,CH2+,H,NONE,NONE,(8.5145d-10)/(Tgas**(.1667) + 9.5666d-4*sqrt(Tgas) - 4.404d-5*Tgas + 2.3496d-6 * Tgas**1.5)
 
 #Glover+2010
-#@ref:\cite{Glover2010MNRAS}
+#@ref:\cite{1984MNRAS.211..857A}
 104,C+,H2,CH+,H,NONE,NONE,1d-10*exp(-4640d0*invT)
 
 #Glover+2010
+#@ref:\cite{1999ApJ...513..287M}
 105,CH+,H,C+,H2,NONE,NONE,7.5d-10
 
 #Glover+2010
+#@ref:\cite{1999ApJ...513..287M}
 106,CH+,H2,CH2+,H,NONE,NONE,1.2d-9
 
 #Glover+2010
+#@ref:\cite{1980ApJ...236..492V}
 107,CH+,O,CO+,H,NONE,NONE,3.5d-10
 
 #Glover+2010
+#@ref:\cite{1980ApJ...236..492V}
 108,CH2+,H,CH+,H2,NONE,NONE,1d-9*exp(-7080d0*invT)
 
 #Glover+2010
+#@ref:\cite{1977IJMSI..23..123S,1977CPL....47..383A}
 109,CH2+,H2,CH3+,H,NONE,NONE,1.6d-9
 
 #Glover+2010
+#@ref:\cite{1980ApJ...236..492V}
 110,CH2+,O,HCO+,H,NONE,NONE,7.5d-10
 
 #Glover+2010
+#@ref:\cite{1980ApJ...236..492V}
 111,CH3+,H,CH2+,H2,NONE,NONE,7.d-10*exp(-10560d0*invT)
 
 #KIDA, including additional channel, while H2CO+ channel ignored
@@ -383,7 +427,7 @@
 116,O+,H2,H,OH+,NONE,NONE,1.69d-9
 
 #Glover+2010
-#@ref:\cite{Glover2010MNRAS}
+#@ref:\cite{1980ApJ...236..492V}
 117,O,H2+,H,OH+,NONE,NONE,1.5d-9
 
 #KIDA and additional channel both recomended
@@ -400,10 +444,11 @@
 123,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
 #Glover+2010
-#@ref:\cite{Glover2010MNRAS}
+#@ref:\cite{1981CPL....77..484J}
 124,OH+,H2,H2O+,H,NONE,NONE,1.01d-9
 
 #Glover+2010
+#@ref:\cite{F29807601084}
 125,H2O+,H2,H3O+,H,NONE,NONE,6.4d-10
 
 #KIDA, constant below 10K
@@ -421,7 +466,7 @@
 131,H2O,C+,H2O+,C,NONE,NONE,2.4d-10
 
 #Glover+2010
-#@ref:\cite{Glover2010MNRAS}
+#@ref:\cite{1980ApJ...236..492V}
 132,H3O+,C,HCO+,H2,NONE,NONE,1d-11
 
 #KIDA, both recomended
@@ -430,7 +475,7 @@
 134,O2,C+,CO,O+,NONE,NONE,4.53d-10
 
 #Glover+2010, KIDA HOCO+ channel ignored
-#@ref:\KIDA; \cite{Glover2010MNRAS}
+#@ref:\cite{1977IJMSI..23..123S,1977CPL....47..383A}
 135,O2,CH2+,HCO+,OH,NONE,NONE,9.1d-10
 
 #Glover+2010, KIDA additional channel
@@ -503,62 +548,92 @@
 166,H2O,He+,He,H2O+,1d1,NONE,5.1282d-10*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 
 #G+10
-#@ref:\cite{Glover2010MNRAS}
+#@ref:\cite{1992IJMSI.117..457S}
 167,O2,H+,O2+,H,NONE,NONE,2d-9
 
 #G+10
+#@ref:\cite{1977IJMSI..23..123S,1977CPL....47..383A}
 168,O2,He+,O2+,He,NONE,NONE,3.3d-11
 
 #G+10
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
+#@ref:\cite{1977IJMSI..23..123S,1977CPL....47..383A}
 169,O2,He+,O+,He,O,NONE,NONE,1.1d-9
 
 #G+10
+#@ref:\cite{Petuchowski1989}
 170,CO,He+,C+,He,O,NONE,NONE,1.4d-9*(T32)**(-.5)
 171,CO,He+,C,He,O+,NONE,NONE,1.4d-16*(T32)**(-.5)
 
 #G+10
+#@ref:\cite{1984PhRvL..52.2084F}
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 172,CO+,H,CO,H+,NONE,NONE,7.5d-10
 
 #G+10
+#@ref:\cite{LeTeuff2000}
 173,C-,H+,C,H,NONE,NONE,2.3d-7*(T32)**(-.5)
 
 #G+10
+#@ref:\cite{LeTeuff2000}
 174,O-,H+,O,H,NONE,NONE,2.3d-7*(T32)**(-.5)
 
 #G+10
+#@ref:\cite{1994JPhB...27.2551P}
 175,HE+,H-,H,HE,NONE,NONE,2.3d-7*T32**(-.5)
+#@ref:\cite{2007A&A...466.1197W,2004PhRvA..70e2716M}
 176,H3+,E,H2,H,NONE,NONE,2.34d-8*T32**(-.52)
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
+#@ref:\cite{2007A&A...466.1197W,2004PhRvA..70e2716M}
 177,H3+,E,H,H,H,NONE,NONE,4.36d-8*T32**(-.52)
 @format:idx,R,R,P,P,Tmin,Tmax,rate
+#@ref:\cite{0953-4075-24-3-026}
 178,CH+,E,C,H,NONE,NONE,7d-8*T32**(-.5)
+#@ref:\cite{1998ApJ...505..459L}
 179,CH2+,E,CH,H,NONE,NONE,1.6d-7*T32**(-.6)
+#@ref:\cite{1998ApJ...505..459L}
 180,CH2+,E,C,H2,NONE,NONE,7.68d-8*T32**(-.6)
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
+#@ref:\cite{1998ApJ...505..459L}
 181,CH2+,E,C,H,H,NONE,NONE,4.03d-7*T32**(-.6)
 @format:idx,R,R,P,P,Tmin,Tmax,rate
+#@ref:\cite{1990PhR...186..215M}
 182,CH3+,E,CH2,H,NONE,NONE,7.75d-8*T32**(-.5)
+#@ref:\cite{1990PhR...186..215M}
 183,CH3+,E,CH,H2,NONE,NONE,1.95d-7*T32**(-.5)
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
+#@ref:\cite{LeTeuff2000}
 184,CH3+,E,CH,H,H,NONE,NONE,2d-7*T32**(-.5)
 @format:idx,R,R,P,P,Tmin,Tmax,rate
+#@ref:\cite{1995JChPh.102.1699G}
 185,OH+,E,O,H,NONE,NONE,6.3d-9*T32**(-.48)
+#@ref:\cite{2000FaDi..115..295R}
 186,H2O+,E,O,H2,NONE,NONE,3.9d-8*T32**(-.5)
+#@ref:\cite{2000FaDi..115..295R}
 187,H2O+,E,OH,H,NONE,NONE,8.6d-8*T32**(-.5)
+#@ref:\cite{2000FaDi..115..295R}
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
 188,H2O+,E,O,H,H,NONE,NONE,3.05d-7*T32**(-.5)
+#@ref:\cite{2000ApJ...543..764J}
 189,H3O+,E,OH,H,H,NONE,NONE,2.58d-7*T32**(-.5)
+#@ref:\cite{2000ApJ...543..764J}
 190,H3O+,E,O,H,H2,NONE,NONE,5.6d-9*T32**(-.5)
 @format:idx,R,R,P,P,Tmin,Tmax,rate
+#@ref:\cite{2000ApJ...543..764J}
 191,H3O+,E,H,H2O,NONE,NONE,1.08d-7*T32**(-.5)
-192,H3O+,E,OH,H2,NONE,NONE,6.02d-7*T32**(-.5)
+#@ref:\cite{2000ApJ...543..764J}
+192,H3O+,E,OH,H2,NONE,NONE,6.02d-8*T32**(-.5)
+#@ref:\cite{1983JPhB...16.1433A}
 193,O2+,E,O,O,NONE,NONE,1.95d-7*T32**(-.7)
+#@ref:\cite{1998PhRvA..57.4462R}
 194,CO+,E,C,O,NONE,NONE,2.75d-7*T32**(-.55)
+#@ref:\cite{2005JPhCS...4...26G}
 195,HCO+,E,CO,H,NONE,NONE,2.76d-7*T32**(-.64)
+#@ref:\cite{2005JPhCS...4...26G}
 196,HCO+,E,OH,C,NONE,NONE,2.4d-8*T32**(-.64)
+#@ref:\cite{LeTeuff2000}
 197,HOC+,E,CO,H,NONE,NONE,1.1d-7*invT32
+#@ref:\cite{LeTeuff2000}
 198,H-,C,CH,E,NONE,NONE,1d-9
 199,H-,O,OH,E,NONE,NONE,1d-10
 200,H-,OH,H2O,E,NONE,NONE,5d-10
@@ -570,19 +645,27 @@
 207,O-,C,CO,E,NONE,NONE,5d-10
 
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
+#@ref:\cite{Glover2010MNRAS}
 209,H2,H+,H,H,H+,NONE,NONE,3d-11*T32**(.5)*exp(-52000d0*invT)
 
 @format:idx,R,R,P,Tmin,Tmax,rate
+#@ref:\cite{gerlich1992experimental}
 209,H2,H+,H3+,NONE,NONE,1d-16
 
 
 #G+10
 @format:idx,R,R,P,P,Tmin,Tmax,rate
+#@ref:\cite{1998FaDi..109...61S}
 210,C,E,C-,,NONE,NONE,2.25d-15
+#@ref:\cite{Prasad1980ApJS}
 211,C,H,CH,,NONE,NONE,1d-17
+#@ref:\cite{Prasad1980ApJS}
 212,C,H2,CH2,,NONE,NONE,1d-17
+#@ref:\cite{1997MNRAS.287..287A}
 213,C,C,C2,,NONE,NONE,4.36d-18*T32**.35*exp(-161.3d0*invT)
+#@ref:\cite{1999MNRAS.303..235S}
 215,C,O,CO,,NONE,NONE,3.09d-17*T32**.33*exp(-1629d0*invT)
+#@ref:\cite{2006ApJ...636..923B}
 216,C+,H,CH+,,NONE,NONE,4.46d-16*Tgas**(-.5)*exp(-4.93*Tgas**(-.6667))
 
 #KIDA, recomended
@@ -595,11 +678,11 @@
 222,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
 223,OH,H,H2O,,NONE,NONE,5.26d-18*T32**(-5.22)*exp(-9d1*invT)
 
-#H2 formation on dust grains. No idea about ref. Will be replaced by table lookup
-#@ref:MISSING CITATION!
-#224,H,H,H2,,NONE,NONE,2.121d-17
-224,H,H,H2,,NONE,NONE,2.121d-17*2.647
-#224,H,H,H2,,NONE,NONE,2.121d-17*5.0
+#H2 formation on dust grains
+##Same value as used in Richings 2014 I+II (eq. 2.12)
+##From exprs. from Cazaux & Tielens 2002, with cross section from Krumholz, Leroy & McKee (2011) 
+##and sticking probability form Hollenbach & McKee (1979).
+##@ref:\cite{Richings2014I}
 
 @noTab_start
 #DUST FREEZE-OUT/EVAPORATION
@@ -626,6 +709,7 @@
 #@ref:\cite{Verner1996ApJ}
 401,H,H+,E,auto
 401,He,He+,E,auto
+402,He+,He++,E,auto
 403,O,O+,E,auto
 #@ref:~PHIDRATES database\footnote{\url{http://phidrates.space.swri.edu}} \citep{Huebner1992ApSS}
 402,C,C+,E,@xsecFile=SWRI
@@ -681,36 +765,74 @@
 #PHOTOREACTIONS THIN WITH Av
 #@storeOnce_start
 #FROM GLOVER+2009
-#@ref:MISSING CITATION!
+#@ref:\cite{Dunn1968}
 225,H2+,H,H+,user_G0*1.1d-9*exp(-1.9*user_Av)
+
+#@ref:\cite{vanDishoeck1987}
 227,H3+,H2,H+,user_G0*4.9d-13*exp(-1.8*user_Av)
+
+#@ref:\cite{vanDishoeck1987}
 228,H3+,H2+,H,user_G0*4.9d-13*exp(-2.3*user_Av)
+
+#@ref:\cite{LeTeuff2000}
 230,C-,C,E,user_G0*2.4d-7*exp(-.9*user_Av)
+
+#@ref:\cite{Roberge1991}
 233,CH+,C,H+,user_G0*2.6d-10*exp(-2.5*user_Av)
+
+#@ref:\cite{Roberge1991}
 234,CH2,CH,H,user_G0*7.1d-10*exp(-1.7*user_Av)
+
+#@ref:\cite{LeTeuff2000}
 235,CH2,CH2+,E,user_G0*5.9d-10*exp(-2.3*user_Av)
+
+#@ref:\cite{vanDishoeck2006}
 236,CH2+,CH+,H,user_G0*4.6d-10*exp(-1.7*user_Av)
+
+#@ref:\cite{LeTeuff2000}
 237,CH3+,CH2+,H,user_G0*1d-9*exp(-1.7*user_Av)
+
+#@ref:\cite{LeTeuff2000}
 238,CH3+,CH+,H2,user_G0*1d-9*exp(-1.7*user_Av)
+
+#@ref:\cite{LeTeuff2000}
 240,O-,O,E,user_G0*2.4d-7*exp(-.5*user_Av)
+
+#@ref:\cite{vanDishoeck1987}
 243,OH+,O,H+,user_G0*1d-12*exp(-1.8*user_Av)
 #@storeOnce_stop
 
 @noTab_start
 @var: HnOj = fHnOj(user_Av)
+#@ref:\cite{Sternberg1995}
 246,H2O+,H2+,O,user_G0*5.d-11*HnOj
+
+#@ref:\cite{Sternberg1995}
 247,H2O+,H+,OH,user_G0*5.d-11*HnOj
+
+#@ref:\cite{Sternberg1995}
 248,H2O+,O+,H2,user_G0*5.d-11*HnOj
+
+#@ref:\cite{Sternberg1995}
 249,H2O+,OH+,H,user_G0*1.5d-10*HnOj
+
+#@ref:\cite{Sternberg1995}
 250,H3O+,H+,H2O,user_G0*2.5d-11*HnOj
+
+#@ref:\cite{Sternberg1995}
 251,H3O+,H2+,OH,user_G0*2.5d-11*HnOj
+
+#@ref:\cite{Sternberg1995}
 252,H3O+,H2O+,H,user_G0*7.5d-12*HnOj
+
+#@ref:\cite{Sternberg1995}
 253,H3O+,OH+,H2,user_G0*2.5d-11*HnOj
 @noTab_end
 
 #cosmic rays processes from OSU
 @CR_start
 @storeOnce_start
+#@ref:\KIDA
 257,H,H+,E,4.6d-1*user_crate
 258,He,He+,E,5.d-1*user_crate
 259,O,O+,E,2.8d0*user_crate
@@ -736,22 +858,41 @@
 
 
 #3body catalysis
+@catalysis_start
 @noTab_start
 @format:idx,R,R,P,Tmin,Tmax,rate
+#@ref:\cite{LeTeuff2000,1969RSPSA.312..207F,1976JChPh..64..228S}
 280,C,C,C2,NONE,5d3,5.99d-33*(Tgas/5d3)**(-1.6)*ntot
+
+#@ref:\cite{LeTeuff2000,1969RSPSA.312..207F,1976JChPh..64..228S}
 281,C,C,C2,5d3,NONE,5.99d-33*(Tgas/5d3)**(-0.64)*exp(5255./Tgas)*ntot
 
+#@ref:\cite{Baulch1992JPCRD}
 282,C,O,CO,NONE,2d3,6.16d-29*(Tgas/3d2)**(-3.08)*ntot
+
+#@ref:\cite{Petuchowski1989}
 283,C,O,CO,2d3,NONE,2.14d-29*(Tgas/3d2)**(-3.08)*exp(2114./Tgas)*ntot
 
+#@ref:\cite{Petuchowski1989}
 284,C+,O,CO+,NONE,2d3,6.16d-27*(Tgas/3d2)**(-3.08)*ntot
+
+#@ref:\cite{Petuchowski1989}
 285,C+,O,CO+,2d3,NONE,2.14d-27*(Tgas/3d2)**(-3.08)*exp(2114./Tgas)*ntot
 
+#@ref:\cite{Petuchowski1989}
 286,C,O+,CO+,NONE,2d3,6.16d-27*(Tgas/3d2)**(-3.08)*ntot
+
+#@ref:\cite{Petuchowski1989}
 287,C,O+,CO+,2d3,NONE,2.14d-27*(Tgas/3d2)**(-3.08)*exp(2114./Tgas)*ntot
 
+#@ref:\cite{Tsang1986}
 288,H,O,OH,NONE,NONE,4.33d-32*(T32)**(-1)*ntot
+
+#@ref:\cite{Baulch1992JPCRD}
 289,OH,H,H2O,NONE,NONE,2.56d-31*(T32)**(-2)*ntot
+
+#@ref:\cite{Warnatz1984}
 290,O,O,O2,NONE,NONE,9.2d-34*(T32)**(-1)*ntot
 
 @noTab_stop
+@catalysis_stop

@@ -879,8 +879,8 @@ contains
     !
     ! use table to find tGamma integrated across each photo bin
     do i=1,nPhotoBins
-       energyL = photoBinEleft(j) * eV_to_erg
-       energyR = photoBinEright(j) * eV_to_erg !energy of the bin in erg
+       energyL = photoBinEleft(i) * eV_to_erg
+       energyR = photoBinEright(i) * eV_to_erg !energy of the bin in erg
        integrand(i) = 0.0_8
        do j = 1, nrec
           if (el(j) <= energyR .and. eu(j) >= energyL) then
@@ -901,8 +901,9 @@ contains
   !***********************
   !compute the absorbed radiation by the dust by integrating over the photobins
   !asuming a tabularised dust distribution
-  function get_int_JQabs_tab
+  function get_int_JQabs_tab()
     use krome_commons
+    use krome_constants
     implicit none
     real*8::get_int_JQabs_tab
     real*8,dimension(nPhotoBins), save :: integrand ! tGamma in each photobin
@@ -920,17 +921,20 @@ contains
     end if
 
     !loop over photo bins
-    get_int_JQabs_tab = sum(photoBinJ * integrand) / eV_to_erg ! make sure result is in erg s^-1 cm^-3 as for table file
+    get_int_JQabs_tab = sum(photoBinJ * integrand) * eV_to_erg ! make sure result is in erg s^-1 cm^-3 as for table file
     !
   end function get_int_JQabs_tab
   !
   subroutine setup_2D_dust_tables
+    use krome_commons
     implicit none
-    integer       :: nAv, iAv
-    real(kind=8)  :: lambda_abs, wl, wu, log10_Av, log10_Av_lb, dlog10_Av
-    logical, save :: first_call=.true.
+    integer       :: iAv
+    real(kind=8)  :: lambda_abs, wl, wu, log10_Av
+    logical,      save :: first_call=.true.
+    integer,      save :: nAv, nrec
+    real(kind=8), save :: log10_Av_lb, dlog10_Av
     real(kind=8), allocatable, dimension(:), save :: Av_tab, lambda_tab
-    real(kind=8), allocatable, dimension(:,:,:), save :: dust_tab_H2_3D, dust_tab_cool_3Dd, dust_tab_Tdust_3D
+    real(kind=8), allocatable, dimension(:,:,:), save :: dust_tab_H2_3D, dust_tab_cool_3D, dust_tab_Tdust_3D
 
     ! Compute absorption from radiation field
     lambda_abs = get_int_JQabs_tab()
@@ -949,13 +953,13 @@ contains
     end if
 
     ! Translate from absorption to an Av
-    log10_Av = convert_to_Av(lambda_abs)
+    log10_Av = log10(convert_to_Av(lambda_abs))
 
     ! Find index (iAv) and weights(wl,wu; wl+wu=1)
     iAv = floor((log10_Av - log10_Av_lb)/dlog10_Av)+1
     iAv = min(max(iAv,1),nAv)
     wu  = min(max(log10_Av - ((iAv-1)*dlog10_Av + log10_Av_lb),0.0_8),1.0_8)
-    wl = 1.0_8 - wl
+    wl = 1.0_8 - wu
 
     ! Interpolate in 3D table to generate 2D tables. Check if we are on edge point for ub (then wl==1.)
     if (iAv < nAv) then
@@ -969,8 +973,9 @@ contains
     endif
   contains
      subroutine load_tables
+       use krome_fit
        implicit none
-       integer :: lunit, i, j, nAv, nTgas, nngas, nrec
+       integer :: lunit, i, j, nTgas, nngas
        real(kind=8), dimension(:), allocatable :: dust_tab_Av
        character(len=255) :: fname
        ! Load Av-Lambda table
@@ -1010,10 +1015,12 @@ contains
             dust_mult_Tgas, dlog10_Av)
 
        log10_Av_lb = dust_tab_Av(1)
+       dlog10_Av   = dust_tab_Av(2) - dust_tab_Av(1)
+
        deallocate(dust_tab_Av)
      end subroutine load_tables
      !
-     function convert_to_log10_Av(lambda_abs) result(Av)
+     function convert_to_Av(lambda_abs) result(Av)
        implicit none
        real(kind=8), intent(in) :: lambda_abs
        real(kind=8)             :: Av
@@ -1032,14 +1039,14 @@ contains
        endif
        ! linear interpolation for Av in log of lambda_abs
        do i=2,nrec
-          if (lambda_tab > lambda_tab(i)) then
-            w = (alog(lambda_abs) - alog(lambda_tab(i))) / (alog(lambda_tab(i-1)) - alog(lambda_tab(i)))
+          if (lambda_abs > lambda_tab(i)) then
+            w = (log(lambda_abs) - log(lambda_tab(i))) / (log(lambda_tab(i-1)) - log(lambda_tab(i)))
             Av = Av_tab(i) * (1.0_8 - w) + Av_tab(i-1) * w
             return
           end if
        end do
        allocate(Av_tab(nrec), lambda_tab(nrec))
-     end function convert_to_log10_Av
+     end function convert_to_Av
   end subroutine setup_2D_dust_tables
 #ENDIFKROME
 

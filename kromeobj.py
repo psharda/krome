@@ -135,6 +135,7 @@ class krome():
 	compiler = "ifort" #default compiler
 	ramses_offset = 2 #offset in the array for ramses
 	photoDustVarAv = "" #variable for visual extinction in the photoelectric heating
+	photoDustVarG0 = "" #variable for normalization in the photoelectric heating
 	coolFile = ["data/coolZ.dat"]
 	customCoolList = [] #list of the custom cooling functions
 	customHeatList = [] #list of the custom heating functions
@@ -299,8 +300,12 @@ class krome():
 		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
 		self.parser.add_argument("-photoDustVarAv", metavar="common_variable", help="set the name of the common variable that\
 			is employed for the visual extinction Av to attenuate the photoelectric effect on the dust. It follows\
-			exp(-2.5*Av) where Av is the variable. The variable should be set in the network file using the token\
+			G0*exp(-2.5*Av) where Av is the variable. The variable should be set in the network file using the token\
 			@common: user_Av, or any other custom name. This option must be used togheter with -heating=PHOTODUST")
+		self.parser.add_argument("-photoDustVarG0", metavar="common_variable", help="set the name of the common variable that\
+			is employed for the normalization G0 to attenuate the photoelectric effect on the dust. It follows\
+			G0*exp(-2.5*Av) where G0 is the variable. The variable should be set in the network file using the token\
+			@common: user_G0, or any other custom name. This option must be used togheter with -heating=PHOTODUST")
 		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the\
 			default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
 		self.parser.add_argument("-quote", action="store_true", help="print a citation and exit")
@@ -1298,6 +1303,11 @@ class krome():
 			self.photoDustVarAv = args.photoDustVarAv.strip()
 			if(not(self.useHeatingPhotoDust)): sys.exit("ERROR: -photoDustVarAv should be used with -heating=PHOTODUST")
 			print "Reading option -photoDustVarAv (variable name: "+self.photoDustVarAv+")"
+
+		if(args.photoDustVarG0):
+			self.photoDustVarG0 = args.photoDustVarG0.strip()
+			if(not(self.useHeatingPhotoDust)): sys.exit("ERROR: -photoDustVarG0 should be used with -heating=PHOTODUST")
+			print "Reading option -photoDustVarG0 (variable name: "+self.photoDustVarG0+")"
 
                 #use number densities instead of mass fractions (default, retrocompatibility)
 		if(args.useN):
@@ -6657,7 +6667,10 @@ class krome():
 				#fake_opacity = ""
 				#if(self.useFakeOpacity): fake_opacity = " * exp(-n(" + reag[0].fidx + ") / n0)"
 				if(react.idxph<=0): continue
-				pheatvars.append("photoBinHeats("+str(react.idxph)+") * n(" + react.reactants[0].fidx + ")")
+				prefac = ""
+				if(react.reactants[0].name in ["O","Oj","C","Cj","Si","Sij","Fe","Fej","Fejj","Mg","Mgj"]):
+					prefac = "f2 *"
+				pheatvars.append(prefac+"photoBinHeats("+str(react.idxph)+") * n(" + react.reactants[0].fidx + ")")
 
 		#replace pragma with strings built above
 		skip = False
@@ -6807,7 +6820,10 @@ class krome():
 
 					row = row.replace("#KROME_RdissH2",rateDissH2) #replace pragma with H2 photodissociation rate
 
-				#add attenuation from Av for photoelectric effect
+				#add attenuation from G0 and Av for photoelectric effect
+				if(row.strip() == "#KROME_GhabG0"):
+					row = "Ghab  = "+self.photoDustVarG0+"\n"
+					if(self.photoDustVarG0 == ""): row = "\n"
 				if(row.strip() == "#KROME_GhabAv"):
 					row = "Ghab  = Ghab * exp(-2.5*"+self.photoDustVarAv+")\n"
 					if(self.photoDustVarAv == ""): row = "\n"

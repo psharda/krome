@@ -187,11 +187,13 @@ def isNumber(arg):
 
 #********************
 #character to int
-def char2int(arg, when_below=1e4):
+def char2int(arg, when_below=1e4, when_above=1e2):
     if isNumber(arg):
         f = float(arg)
-        if(f < when_below):
+        if(f < when_below and (f % 1 == 0 or f > when_above)):
             return int(float(arg))
+        if f <= when_above:
+            return "{0:.2f}".format(f)
     return arg
 
 #********************
@@ -384,6 +386,25 @@ def replaceLongFracByDivide(rate,maxlen=100):
             acc += numerator + denominator
 
 #********************
+#replaces operator in front of exponents longer than maxlen by \hat{ }
+def replaceLongExponentByHat(rate,maxlen=100):
+        acc=""
+        while True:
+                before, fromPow = string_from("^", rate)
+                if len(fromPow) <= 0:
+                        return acc + rate
+                spaces, rest = skip_spaces(fromPow)
+                exponent,rest = next_parenthesis(rest)
+                
+                rate = rest
+                if len(exponent) > maxlen:
+                        acc += before[:-1] + spaces
+                        acc += "\\, \\hat{ }\\, \\left("+exponent[1:-1]+"\\right)"
+                else:
+                        acc += before + spaces
+                        acc += exponent
+
+#********************
 #resolve Krome variables in 'shortcuts', exept those in 'exceptions')
 def replaceShortcuts(string, shortcuts, exceptions):
     for var in reversed(shortcuts):
@@ -424,3 +445,21 @@ def getSymbolTable():
     for key in symbols:
         symboltable[key] = sp.Symbol(symbols[key])
     return symboltable
+
+# Replaces symbols with their LaTeX representation
+def replaceSymbols(rateTex):
+    import pytexit
+    import re
+
+    for sym, expr in getSymbols().iteritems():
+        symtex = pytexit.for2tex(sym, print_latex=False, print_formula=False)[2:-2]
+        #print "Replacing symbol: ", sym, " -> ", symtex, " -> ", expr
+        if sym==symtex:
+            rateTex = replaceFortranVar(symtex, expr, rateTex)
+        else:
+            rateTex = rateTex.replace(symtex, expr)
+                  
+    # it also leaves in factors of 1
+    rateTex = re.sub(r"\\times *1\.0([^0-9\.]|$)", r"\1", rateTex)
+
+    return rateTex
