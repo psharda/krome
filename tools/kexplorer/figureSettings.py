@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 font = {'size'   : 40}
 text = {'usetex': True}
-lines = {'linewidth': 8, 'markersize': 8, 'markeredgewidth': 1, 'scale_dashes': True}
+lines = {'linewidth': 8, 'markersize': 8, 'markeredgewidth': 1}
 axes = {'xmargin': 0}
 #markers = {'fillstyle': 'none'}
 #savefig = {'dpi': 220, 'format': 'png', 'transparent': True,'bbox': 'tight'}
@@ -13,8 +13,8 @@ savefig = {'format': 'pdf', 'transparent': True, 'bbox': 'tight'}
 #figure = {'figsize': (16, 27)}
 figure = {'figsize': (14, 10)}
 legend = {'markerscale': 1.5, 'numpoints': 1, 'fontsize': 'xx-small', 'frameon': False, 'handlelength': 2.7}
-xtick = {'top': True}
-ytick = {'right': True}
+xtick = {}
+ytick = {}
 plt.rc('font', **font)
 #plt.rc('markers',**markers)
 plt.rc('text', **text)

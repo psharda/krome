@@ -53,7 +53,7 @@ class krome():
 	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
         useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
-	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = False
+	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
@@ -135,12 +135,14 @@ class krome():
 	compiler = "ifort" #default compiler
 	ramses_offset = 2 #offset in the array for ramses
 	photoDustVarAv = "" #variable for visual extinction in the photoelectric heating
+	photoDustVarG0 = "" #variable for normalization in the photoelectric heating
 	coolFile = ["data/coolZ.dat"]
 	customCoolList = [] #list of the custom cooling functions
 	customHeatList = [] #list of the custom heating functions
 	individualCoolingFloors = [] #list of individual floors
 	iceSpeciesList = dict() #list of species on ice
 	fdbase = "data/database/" #database of reaction folder for auto reactions
+	thermochemistryFolder = "data/thermochemistry/"
 	indexSolomon = -1 #default solomon index, -1 to trigger error
 	indexH2photodissociation = -1 #default H2pd index, -1 to trigger error
 	KindSingle = "real*4"
@@ -298,8 +300,12 @@ class krome():
 		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
 		self.parser.add_argument("-photoDustVarAv", metavar="common_variable", help="set the name of the common variable that\
 			is employed for the visual extinction Av to attenuate the photoelectric effect on the dust. It follows\
-			exp(-2.5*Av) where Av is the variable. The variable should be set in the network file using the token\
+			G0*exp(-2.5*Av) where Av is the variable. The variable should be set in the network file using the token\
 			@common: user_Av, or any other custom name. This option must be used togheter with -heating=PHOTODUST")
+		self.parser.add_argument("-photoDustVarG0", metavar="common_variable", help="set the name of the common variable that\
+			is employed for the normalization G0 to attenuate the photoelectric effect on the dust. It follows\
+			G0*exp(-2.5*Av) where G0 is the variable. The variable should be set in the network file using the token\
+			@common: user_G0, or any other custom name. This option must be used togheter with -heating=PHOTODUST")
 		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the\
 			default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
 		self.parser.add_argument("-quote", action="store_true", help="print a citation and exit")
@@ -1298,6 +1304,11 @@ class krome():
 			if(not(self.useHeatingPhotoDust)): sys.exit("ERROR: -photoDustVarAv should be used with -heating=PHOTODUST")
 			print "Reading option -photoDustVarAv (variable name: "+self.photoDustVarAv+")"
 
+		if(args.photoDustVarG0):
+			self.photoDustVarG0 = args.photoDustVarG0.strip()
+			if(not(self.useHeatingPhotoDust)): sys.exit("ERROR: -photoDustVarG0 should be used with -heating=PHOTODUST")
+			print "Reading option -photoDustVarG0 (variable name: "+self.photoDustVarG0+")"
+
                 #use number densities instead of mass fractions (default, retrocompatibility)
 		if(args.useN):
 			self.usex = False
@@ -1368,7 +1379,7 @@ class krome():
 			tabPath = "data/dust_tables/"
 			tabModes = [x for x in os.listdir(tabPath) if(x.endswith("_cool.dat"))]
 			tabModes = [x.replace("dust_table_","").replace("_cool.dat","") for x in tabModes]
-			tabOpts = ["H2","COOL","3D"] #options
+			tabOpts = ["H2","COOL","3D","Photo3D"] #options
 			allTabs = tabOpts + tabModes #all possible options
 
 			if(self.useDust): die("ERROR: -dustTabs and -dust options are not compatible!")
@@ -1378,6 +1389,9 @@ class krome():
 			#use additional dimension for tables (Av)
 			if("3D" in dustTabs):
 				self.dustTableDimension = "3D"
+
+			if("Photo3D" in dustTabs):
+			        self.usePhotoDust_3D = True
 
 			for dTab in dustTabs:
 				if(not(dTab in allTabs)):
@@ -1680,6 +1694,7 @@ class krome():
 			'He':2.*(menp),
 			'Li':3.*(me+mp)+4.*mn,
 			'Be':4.*(me+mp)+5.*mn,
+			'B':5.*(menp)+mn,
 			'C':6.*(menp),
 			'N':7.*(menp),
 			'O':8.*(menp),
@@ -1692,6 +1707,7 @@ class krome():
 			'P':15.*(menp)+mn,
 			'S':(menp)*16,
 			'Cl':(menp)*17+mn,
+			'Ar':(menp)*18+4*mn,
 			'Ti':(menp)*22+4*mn,
 			'Fe':(me+mp)*26+mn*29,
 			'GRAIN0': 100*6*(menp),
@@ -1800,8 +1816,9 @@ class krome():
 		inSurfaceBlock = False #block for reaction on surface
 		inStoreOnceBlock = False #block that stores reactions that are constants during the solver call
 		self.hasSurfaceReactions = False #true if surface reactions found
-		self.useThermoTable = False #flag for using thermochemical tables
-		self.thermoTableSpecies = [] #list of species with available thermotable
+		self.use_GFE_tables = False #flag for using Gibbs free energy tables
+		self.GFE_species = [] #list of species with available Gibbs free energy
+		self.clusterablesPresent = [] #list the clusterable species that are present in the network
 
 		#generate a custom reaction network and replace filename with the custom one
 		if(self.useCustom):
@@ -1831,7 +1848,7 @@ class krome():
 		noTabNext = False #flag for use tabs for the next reaction
 		nextSolomon = False #next reaction is Solomon (to store index for H2 pumping)
 		nextH2photodissociation = False #next reaction is H2 photodissociation
-		for row in allrows:
+		for line_number, row in enumerate(allrows):
 			srow = row.strip() #stripped row
 			if(srow.strip()==""): continue #looks for blank line
 			if(srow[0]=="#"): continue #looks for comment line
@@ -1896,11 +1913,11 @@ class krome():
 				continue #not a reaction
 
 			#search for variables
-			if("@var:" in srow):
-				arow = srow.replace("@var:","").split("=")
-				if(len(arow)!=2):
+			if "@var:" in srow:
+				arow = srow.replace("@var:", "").split("=")
+				if len(arow) != 2:
 					print "ERROR: variable line must be @var:variable=F90_expression"
-					print "found: "+srow
+					print "found: " + srow
 					sys.exit()
 
 
@@ -1910,21 +1927,31 @@ class krome():
 				#check if the current @var is allowed
 				notAllowedVars = ["k","tgas","energy_ev","n"]
 				for nav in notAllowedVars:
-					if(nav.lower()==arow[0].split("(")[0].strip().lower()):
-						sys.exit("ERROR: you can't use "+nav+" as an @var variable")
+					if nav.lower() == arow[0].split("(")[0].strip().lower():
+						sys.exit("ERROR: you can't use " + nav + " as an @var variable")
 
 				#check if the variable belongs to cooling or rate coefficient variables
-				if(not(inCoolingBlock) and not(inHeatingBlock)):
-					if(arow[0] in self.coevars): continue #skip already found variables
-					self.coevars[arow[0]] = [ivarcoe,arow[1]]
+				if not inCoolingBlock  and not inHeatingBlock:
+					if arow[0] in self.coevars:
+						print "ERROR: @var:" + arow[0] + " already defined in the network!"
+						print "Around these lines in the network file:"
+						lmin = max(0, line_number-2)
+						lmax = min(line_number+3, len(allrows)-1)
+						print " " + "\n ".join(allrows[lmin:lmax])
+						print "Change name otherwise will be ovewritten!"
+						sys.exit()
+						continue #skip already found variables
+					self.coevars[arow[0]] = [ivarcoe, arow[1]]
 					ivarcoe += 1 #count variables for later sorting
-				elif(inHeatingBlock):
-					if(arow[0] in self.heatVars): continue #skip already found variables
-					self.heatVars[arow[0]] = [ivarHeat,arow[1]]
+				elif inHeatingBlock:
+					if arow[0] in self.heatVars:
+						continue #skip already found variables
+					self.heatVars[arow[0]] = [ivarHeat, arow[1]]
 					ivarHeat += 1 #count variables for later sorting
-				elif(inCoolingBlock):
-					if(arow[0] in self.coolVars): continue #skip already found variables
-					self.coolVars[arow[0]] = [ivarCool,arow[1]]
+				elif inCoolingBlock:
+					if arow[0] in self.coolVars:
+						continue #skip already found variables
+					self.coolVars[arow[0]] = [ivarCool, arow[1]]
 					ivarCool += 1 #count variables for later sorting
 				continue #SKIP: a variable line is not a reaction line
 
@@ -2408,9 +2435,10 @@ class krome():
 			#if file is LEIDEN convert to KROME
 			if("@xsecFile=LEIDEN" in myrea.krate):
 				LEIDEN2KROME(self.buildFolder, myrea.reactants[0], myrea.products)
-			#when reversed reactions need to be computed
-			if "revKc" in myrea.krate or self.useReverse:
-				self.useThermoTable = True
+			# When reversed reactions need to be computed with Gibbs free
+			# energy tables
+			if "revKc_with_GFE" in myrea.krate:
+				self.use_GFE_tables = True
 
 			#this reaction is on surface
 			if(inSurfaceBlock):
@@ -2810,11 +2838,29 @@ class krome():
 
 		reacts = ureacts[:] #copy the extended list of reactions to the old one
 
-		#make thermo data tables
+		# copy Gibss free energy data tables to build folder
+		# and make them if not yet done (e.g. JANAF)
 		for sp in specs:
-			if sp.hasThermoTable:
-				janaf2krome(self.buildFolder, sp)
-				self.thermoTableSpecies.append(sp)
+			if sp.has_GFE_table:
+				self.GFE_species.append(sp)
+				# if sp.hasJanafThermoTable:
+				# 	janaf2krome(self.buildFolder, sp)
+				# else:
+				gfe_file = sp.name + ".gfe"
+
+				#import os
+				buildFolder = self.buildFolder
+				if not os.path.exists(buildFolder):
+					os.mkdir(buildFolder)
+					print "Created " + buildFolder
+
+				shutil.copyfile(self.thermochemistryFolder + gfe_file,
+				 			self.buildFolder + gfe_file)
+				print "copied " + gfe_file
+
+			# check which clusterable species are present
+			if sp.is_clustarable:
+				self.clusterablesPresent.append(sp)
 
 		#update number of connection per species
 		for rea in reacts:
@@ -4888,16 +4934,15 @@ class krome():
 					stab += "real*8::" + tabvar+"_anytabymul\n"
 				fout.write(stab+"\n")
 
-			elif(srow == "#KROME_thermochem_from_file"):
+			elif(srow == "#KROME_GFE_from_file"):
 				lines = ""
-				if self.useThermoTable:
-					lines += "integer, parameter :: janaf_tab_imax = 200\n"
-					lines += "real*8 :: janaf_tab_Tgas(janaf_tab_imax)\n"
-					lines += "real*8 :: janaf_mult_Tgas\n"
-					for sp in specs:
-						if sp.hasThermoTable:
-							lines += ("real*8 :: janaf_tab_gibbs_" + sp.name +
-								"(janaf_tab_imax)\n" )
+				if self.use_GFE_tables:
+					lines += "integer, parameter :: GFE_tab_imax = 300\n"
+					lines += "real*8 :: GFE_tab_Tgas(GFE_tab_imax)\n"
+					lines += "real*8 :: GFE_mult_Tgas\n"
+					for sp in self.GFE_species:
+						lines += ("real*8 :: GFE_tab_gibbs_" + sp.name +
+								"(GFE_tab_imax)\n" )
 				fout.write(lines + "\n")
 
 			else:
@@ -5040,11 +5085,6 @@ class krome():
 		# check if total water is in the species list
 		hasH2O = ("H2O_TOTAL" in [x.name.upper() for x in specs])
 
-		# check if growable species are present
-		clusterables = ["TIO2"]
-		specs_names = [x.name for x in specs]
-		has_clusterable = all([(xc in specs_names) for xc in clusterables])
-
   		skip = False
 		#loop on src file and replace pragmas
 		for row in fh:
@@ -5056,9 +5096,8 @@ class krome():
 			if(srow == "#IFKROME_hasH2O" and not(hasH2O)): skip = True
 			if(srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D")): skip = True
 			if(srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D")): skip = True
-			if(srow == "#IFKROME_use_cluster_growth" and not(has_clusterable)): skip = True
 
-		        if(srow == "#ENDIFKROME"): skip = False
+			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
 
@@ -5656,6 +5695,7 @@ class krome():
 			krome_conserve += "\n!********** E **********\n"
 			krome_conserve += consE + "\n"
 
+
 		#loop on src file and replace pragmas
 		skip = False
 		for row in fh:
@@ -5667,7 +5707,8 @@ class krome():
 			if(srow == "#IFKROME_has_electrons" and not(has_electrons)): skip = True
 			if(srow == "#IFKROME_useLAPACK" and not(self.needLAPACK)): skip = True #skip calls to LAPACK
 			if(srow == "#IFKROME_hasStoreOnceRates" and not(self.hasStoreOnceRates)): skip = True
-			if(srow == "#IFKROME_useThermoTables" and not self.useThermoTable) : skip = True
+			if(srow == "#IFKROME_use_GFE_tables" and not self.use_GFE_tables) : skip = True
+			if(srow == "#IFKROME_use_cluster_growth" and not self.clusterablesPresent): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
 			if(skip): continue #skip
@@ -5757,7 +5798,7 @@ class krome():
 					conserveLinElectrons.append(sgn + " " + str(abs(species.charge)) \
 						+ "d0*x(" + species.fidx +") / m("+species.fidx+")")
 				srow = srow.replace("#KROME_conserveLin_electrons",(" &\n".join(conserveLinElectrons)))
-				srow = srow.replace("1d0*","")
+				# srow = srow.replace("1d0*","")
 				fout.write(srow+"\n")
 				continue
 
@@ -5818,8 +5859,6 @@ class krome():
 				slen = str(len(specs))
 				fout.write("real*8::p1_nasa("+slen+",7), p2_nasa("+slen+",7), Tlim_nasa("+slen+",3), p(7)\n")
 				fout.write("real*8::p1_nist("+slen+",7), p2_nist("+slen+",7), Tlim_nist("+slen+",3)\n")
-				fout.write("logical::hasthermoTable(" + slen + ")\n")
-				fout.write("real*8::yThermoTable(" + slen + ",200)\n")
 			elif(srow == "#KROME_kc_reverse_nasa"):
 				datarev = ""
 				sp1 = sp2 = spt = ""
@@ -5843,12 +5882,16 @@ class krome():
 						sp2 += "p2_nist("+x.fidx+",:)  = (/" + (",&\n".join([format_double(pp) for pp in x.poly2_nist])) + "/)\n"
 
 				fout.write(sp1+sp2+spt)
-			elif srow == "#KROME_thermo_tables":
-				sp1 = sp2 = ""
-				for sp in self.thermoTableSpecies:
-					sp1 += "hasThermoTable(" + sp.fidx + ") = .true.\n"
-					sp2 += "yThermoTable(" + sp.fidx + ",:) = janaf_tab_gibbs_" + sp.name + "(:)\n"
-				fout.write(sp1+sp2)
+			elif srow == "#KROME_GFE_vars":
+				sp_len = str(len(specs))
+				fout.write("real(dp) :: y_GFE_table(" + sp_len + ", GFE_tab_imax)\n")
+
+			elif srow == "#KROME_GFE_tables":
+				sp1 = ""
+				for sp in self.GFE_species:
+					sp1 += "y_GFE_table(" + sp.fidx + ",:) = GFE_tab_gibbs_" + sp.name + "(:)\n"
+				fout.write(sp1)
+
 			elif(srow == "#KROME_shortcut_variables"):
 				fout.write(shortcutVars)
 			elif(srow == "#KROME_header"):
@@ -5865,8 +5908,28 @@ class krome():
 					kstr = "\treactionNames("+str(x.idx)+") = \"" + x.verbatim +"\""
 					fout.write(kstr+"\n")
 				fout.write("return\n")
+
+			elif srow == "#KROME_nucleation_radii":
+				lines = '! References in kromelib.py\n'
+				if len(self.clusterablesPresent) > 1:
+					cnt = 0
+					for sp in self.clusterablesPresent:
+						if cnt == 0:
+							elseif = ''
+						else:
+							elseif = 'else '
+						lines += (elseif + 'if(monomer_idx == ' + sp.fidx + ') then\n'
+								'  monomer_radius = ' + str(sp.radius) +'_dp ! in cm\n')
+						cnt += 1
+					lines += 'end if\n'
+				else:
+					sp = self.clusterablesPresent[0]
+					lines += ('monomer_radius = ' + str(sp.radius) +'_dp ! '
+								+ sp.name + ' in cm')
+				fout.write(lines + '\n')
+
 			else:
-                                if(row[0]!="#"): fout.write(row)
+				if(row[0]!="#"): fout.write(row)
 		if(not(self.buildCompact)):
 			fout.close()
 		print "done!"
@@ -6145,7 +6208,8 @@ class krome():
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
-			if(srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D")): skip = True
+			if(srow == "#IFKROME_usePhotoDust_3D" and not(self.usePhotoDust_3D)): skip = True
+			if(srow == "#IFKROME_dust_table_2D" and (not(self.dustTableDimension=="2D") or self.usePhotoDust_3D)): skip = True
 			if(srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D")): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -6603,7 +6667,10 @@ class krome():
 				#fake_opacity = ""
 				#if(self.useFakeOpacity): fake_opacity = " * exp(-n(" + reag[0].fidx + ") / n0)"
 				if(react.idxph<=0): continue
-				pheatvars.append("photoBinHeats("+str(react.idxph)+") * n(" + react.reactants[0].fidx + ")")
+				prefac = ""
+				if(react.reactants[0].name in ["O","Oj","C","Cj","Si","Sij","Fe","Fej","Fejj","Mg","Mgj"]):
+					prefac = "f2 *"
+				pheatvars.append(prefac+"photoBinHeats("+str(react.idxph)+") * n(" + react.reactants[0].fidx + ")")
 
 		#replace pragma with strings built above
 		skip = False
@@ -6753,7 +6820,10 @@ class krome():
 
 					row = row.replace("#KROME_RdissH2",rateDissH2) #replace pragma with H2 photodissociation rate
 
-				#add attenuation from Av for photoelectric effect
+				#add attenuation from G0 and Av for photoelectric effect
+				if(row.strip() == "#KROME_GhabG0"):
+					row = "Ghab  = "+self.photoDustVarG0+"\n"
+					if(self.photoDustVarG0 == ""): row = "\n"
 				if(row.strip() == "#KROME_GhabAv"):
 					row = "Ghab  = Ghab * exp(-2.5*"+self.photoDustVarAv+")\n"
 					if(self.photoDustVarAv == ""): row = "\n"
@@ -7717,7 +7787,7 @@ class krome():
 			if(srow == "#ELSEKROME_useBindC" and not(self.interfaceC or self.interfacePy)): skipBindC = False
 			if(srow == "#ELSEKROME_useBindC" and (self.interfaceC or self.interfacePy)): skipBindC = True
 			if(srow == "#ENDIFKROME_useBindC"): skipBindC = False
-			if(srow == "#IFKROME_useThermoTables" and not self.useThermoTable) : skip = True
+			if(srow == "#IFKROME_use_GFE_tables" and not self.use_GFE_tables) : skip = True
 
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -7844,13 +7914,13 @@ class krome():
 						+anytaby+","+anytabz+",&\n"+anytabxmul+","\
 						+anytabymul+")\n"
 				fout.write(stab+"\n")
-			elif srow == "#KROME_init_thermoTables":
+			elif srow == "#KROME_init_GFE_tables":
 				stab = ""
-				for sp in self.thermoTableSpecies:
-					tabfile = "janaf_" + sp.name + ".dat"
-					tabx = "janaf_tab_Tgas(:)"
-					taby = "janaf_tab_gibbs_" + sp.name + "(:)"
-					tabmul = "janaf_mult_Tgas"
+				for sp in self.GFE_species:
+					tabfile = sp.name + ".gfe"
+					tabx = "GFE_tab_Tgas(:)"
+					taby = "GFE_tab_gibbs_" + sp.name + "(:)"
+					tabmul = "GFE_mult_Tgas"
 					stab += ("call init_anytab1D(\"" + tabfile + "\"," + tabx + ",&\n"
 							+ taby + "," + tabmul + ")\n"
 							)

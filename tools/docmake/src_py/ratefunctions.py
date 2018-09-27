@@ -23,8 +23,8 @@ def cluster_growth_rate(monomer, cluster_size, temperature, stick=1.0):
     # else:
     #     print "Monomer radius not yet defined"
 
-    # monomer_radius = monomer.radius
-    monomer_radius = 1.78e-8  # in cm
+    monomer_radius = monomer.radius
+    # monomer_radius = 1.78e-8  # in cm
     inv_monomer_mass = 1./monomer.mass
     inv_cluster_mass = 1./cluster_size * inv_monomer_mass
     inv_reduced_mass = inv_monomer_mass + inv_cluster_mass

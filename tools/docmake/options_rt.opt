@@ -1,0 +1,6 @@
+network:	../../networks/react_COthin_ice_rt
+range: 		Tgas = 1e0,1e8
+range: 		user_crate = 1e-19,1e-15
+range: 		user_av = 0.1,2e1
+suboptions:	subnetwork.opt
+latexoptions:   latexoptions.json

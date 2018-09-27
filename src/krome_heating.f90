@@ -25,6 +25,19 @@ contains
 
     heats(:) = 0.d0
 
+    f2 = 1.
+#IFKROME_useHeatingGH
+    !this parameter controls the smoothness of the
+    ! merge between the two cooling / heating functions
+    smooth = 1.d-3
+
+    !smoothing functions | f1+f2=1
+    !f1 = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0
+    f2 = (tanh(smooth*(-Tgas+1d4))+1.d0)*0.5d0
+
+    !heating is already included in the GH cooling function (that thus can be negative), and f1 is not needed
+#ENDIFKROME
+
 #IFKROME_useHeatingChem
     heats(idx_heat_chem) = heatingChem(n(:), Tgas, k(:), nH2dust)
 #ENDIFKROME
@@ -34,7 +47,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_useHeatingPhoto
-    heats(idx_heat_photo) = photo_heating(n(:))
+    heats(idx_heat_photo) = photo_heating(n(:),f2)
 #ENDIFKROME
 
 #IFKROME_useHeatingdH
@@ -67,23 +80,6 @@ contains
 
 #IFKROME_useHeatingZCIE
     heats(idx_heat_ZCIE) = heat_ZCIE(n(:),Tgas)
-#ENDIFKROME
-
-    f2 = 1.
-#IFKROME_useHeatingGH
-    !this parameter controls the smoothness of the
-    ! merge between the two cooling functions
-    smooth = 1.d-3
-
-    !smoothing functions | f1+f2=1
-    !f1 = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0
-    f2 = (tanh(smooth*(-Tgas+1d4))+1.d0)*0.5d0
-
-    !heating is already included in the GH cooling function (that thus can be negative), and f1 is not needed
-#ENDIFKROME
-
-#IFKROME_useHeatingPhotoAv
-    heats(idx_heat_photoAv) = f2 * heats(idx_heat_photoAv)
 #ENDIFKROME
 
 #IFKROME_useHeatingXRay
@@ -309,6 +305,7 @@ contains
 
     ntot = get_Hnuclei(n(:))
     Ghab = 1.69d0 !habing flux, 1.69 is Draine78
+#KROME_GhabG0
 #KROME_GhabAv
     if(n(idx_e)>0d0) then
        psi = Ghab * sqrt(Tgas) / n(idx_e)
@@ -458,14 +455,14 @@ contains
 
 #IFKROME_useHeatingPhoto
   !**************************
-  function photo_heating(n)
+  function photo_heating(n,f2)
     !photo heating in erg/cm3/s using bin-based
     ! approach. Terms are computed in the
     ! krome_photo module
     use krome_commons
     use krome_constants
     implicit none
-    real*8::photo_heating,n(:)
+    real*8::photo_heating,n(:),f2
 
     photo_heating = 0.d0
 #KROME_photo_heating

@@ -652,9 +652,10 @@ contains
     call init_dust_tabs()
 #ENDIFKROME
 
-#IFKROME_useThermoTables
-    !init thermochemical tables
-#KROME_init_thermoTables
+#IFKROME_use_GFE_tables
+    !init Gibss free energy tables
+#KROME_init_GFE_tables
+
 #ENDIFKROME
 
 #IFKROME_useTabs

@@ -67,17 +67,29 @@ class network:
 			# determine (Tgas,xvar)-grid
 			self.getRangeTgasXvar()
 
+			# sort data on tgas and xvar if the input file is not
+			for el in self.elements.values():
+				el.sortData()
+
 
 
 
 	#**********************
 	#add reaction to network using explore reaction file line format
 	def addReaction(self,row):
-		srow = row.strip()
+		srow = row.strip().replace("\t", " ")
 		arow = [x for x in srow.split(" ") if(x!="")]
 		idx = int(arow[0])
-		#parse data
-		(xvar, Tgas, flux, fluxNormMax, fluxNormTot) = [float(x) for x in arow[1:6]]
+
+		try:
+			#parse data
+			(xvar, Tgas, flux, fluxNormMax, fluxNormTot) = [float(x) for x in arow[1:6]]
+		except:
+			print "ERROR: problem while parsing line"
+			print srow
+			print " line must have space-separated format"
+			print "idx, xvar, Tgas, flux, fluxNormMax, fluxNormTot, verbatim rate"
+			sys.exit()
 
 		#parse verbatim reaction and create reaction object
 		if(not(idx in self.reactions)):
@@ -487,9 +499,25 @@ class network:
 			exp_max = np.ceil(np.log10(zMax)+1)
 			lev_exp = np.arange(exp_min, exp_max)
 			levs = np.power(10, lev_exp)
+			# Try best/newest matplotlib option (OPTION 2).
+			# If not present, then do OPTION 1.
+			# print zMin, zMax
+			try:
+				# print 'zzzz'
+				plt.contourf(x, y, z, levels=levs, extend='min',
+							cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+				# plt.show()
+			except(ValueError,), err:
+				# replace this with the pcolormesh option if desired.
+				exp_min = np.floor(np.log10(zMin)-1)
+				exp_max = np.ceil(np.log10(zMax)+1)
+				lev_exp = np.arange(exp_min, exp_max)
+				levs = np.power(10, lev_exp)
+				#replace all values below lower limit, with lower limit.
+				z[z < levs[0] ] = levs[0]
 
-			plt.contourf(x, y, z, levels=levs, extend='min',
-						cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
+				plt.contourf(x, y, z, levels=levs,
+							cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
 
 		else:
 			#linear colorbar
