@@ -69,41 +69,37 @@
       cools(idx_cool_CO) = cooling_CO(n(:), Tgas) #KROME_floorCO
 #ENDIFKROME
 
+#IFKROME_useCoolingAtomic
+      cools(idx_cool_atomic) = cooling_Atomic(n(:), Tgas) #KROME_floorAtomic
+#ENDIFKROME
+
+#IFKROME_useCoolingFF
+      cools(idx_cool_ff) = cooling_ff(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingContinuum
+      cools(idx_cool_cont) = cooling_continuum(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useCoolingGH
       !this parameter controls the smoothness of the
       ! merge between the two cooling functions
-      smooth = 1.d-3
+      smooth = 1./500.
 
       !smoothing functions | f1+f2=1
-      f1 = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0
-      f2 = (tanh(smooth*(-Tgas+1d4))+1.d0)*0.5d0
+      f1 = (tanh(smooth*(Tgas-2.5d3))+1.d0)*0.5d0
+      f2 = (tanh(smooth*(-Tgas+2.5d3))+1.d0)*0.5d0
 
       ! Only compute cooling terms if it really matters
       if (f2 > 1d-20) then
-#ENDIFKROME
-
-#IFKROME_useCoolingAtomic
-      cools(idx_cool_atomic) = f2 * ( cooling_Atomic(n(:), Tgas) #KROME_floorAtomic )
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
       cools(idx_cool_Z) = f2 * ( cooling_Z(n(:), Tgas) #KROME_floorZ )
 #ENDIFKROME
 
-#IFKROME_useCoolingCompton
-      cools(idx_cool_compton) = f2 * cooling_compton(n(:), Tgas)
-#ENDIFKROME
-
 #IFKROME_useCoolingCIE
       cools(idx_cool_CIE) = f2 * cooling_CIE(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingContinuum
-      cools(idx_cool_cont) = f2 * cooling_continuum(n(:), Tgas)
-#ENDIFKROME
-
-#IFKROME_useCoolingFF
-      cools(idx_cool_ff) = f2 * cooling_ff(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIE
@@ -1257,19 +1253,22 @@
     !******************************
     function cooling_GH(n, Tgas)
       use krome_commons
+      use krome_constants, only : ip_mass
       use krome_coolingGH
+      use krome_getphys, only : get_mass, get_metallicityC, get_metallicityO
       implicit none
       real*8::n(:),Tgas
       real*8:: cooling_GH
       real*8:: PLW_last=0d0,PHI_last=0d0,PHeI_last=0d0, &
-               PCVI_last=0d0,ntot_last=0d0
+               PCVI_last=0d0,nb_last=0d0
       real*8,  save :: rch(NRCH)
       integer, save :: ich(NICH)
-      !$omp threadprivate(PLW_last,PHI_last,PHeI_last,PCVI_last,ntot_last,rch,ich)
-      real*8::log10Tgas,ntot,cfun,hfun
+      !$omp threadprivate(PLW_last,PHI_last,PHeI_last,PCVI_last,nb_last,rch,ich)
+      real*8::log10Tgas,nb,Zmetal,ZAsplund,cfun,hfun
       logical, save :: first_call=.true.
       integer       :: ierr
-
+      ! Parameters related to dust destruction at high temperatures
+      real*8, parameter :: Tdestruct=1e6, smooth=1./(0.1*Tdestruct)
       ! Check if we have to load table -- only done by one thread
       ! Do the double if-block so that we only enter the critical region
       ! if first_call has not happened or is in progress
@@ -1277,7 +1276,10 @@
       if (first_call) then
          !$omp critical
          if (first_call) then
-            ierr = 0
+            ! NOTICE ierr is double duty.
+            ! On input: sets mode of tables. =0: full heating nd cooling function. =1: only metals
+            ! On output: error code
+            ierr = 1
             call frtInitCF(ierr,'cf_table.I2.dat')
             if(ierr .ne. 0) then
                print *,'Error in reading Gnedin and Hollon'
@@ -1291,17 +1293,28 @@
          !$omp end critical
       end if
 
-      ntot = sum(n(1:nmols))
+      nb = sum(n(1:nspec)*get_mass()) * ip_mass
 
       if (Tgas > 1d3) then
         !check input values to see if we have to regenerate the cache
-        if (abs(ntot-ntot_last) > 1d-6*ntot .or. &
+        if (abs(nb-nb_last) > 1d-6*nb .or. &
              PLW  .ne. PLW_last  .or. &
              PHI  .ne. PHI_last  .or. &
              PHeI .ne. PHeI_last .or. &
              PCVI .ne. PCVI_last) then
-           call frtCFCache(ntot, 1d0, PLW, PHI, PHeI, PCVI, ich, rch, ierr)
-           ntot_last=ntot
+           ! Gas-phase metallicity based on an average of C and O in case they differ wrt dust depletion
+           Zasplund = 10.**(0.5*(get_metallicityC(n)+get_metallicityO(n))) ! Normalised to Asplund 2009 value of Z=0.0134
+           Zmetal = Zasplund * 0.0134 / 0.02 ! Metallicity of gas in units of 0.02
+           ! Above a certain temperature, Tdestruct, correct depletion by
+           ! assuming dust-to-gas = 0.01 and all dust sublimated and therefore
+           ! Zmetal = (Zmetal * 0.02 + 0.01) / 0.02
+           ! At Tdestruct = 10^6 K 1% of protons have v > 150 km/s and can directly destruct dust grains
+           Zmetal = (Zmetal * 0.02 + &
+                     0.01 * ((tanh(smooth*(Tgas-Tdestruct))+1.d0)*0.5d0) &
+                    ) / 0.02
+           !
+           call frtCFCache(nb, Zmetal, PLW, PHI, PHeI, PCVI, ich, rch, ierr)
+           nb_last=nb
            PLW_last=PLW
            PHI_last=PHI
            PHeI_last=PHeI
@@ -1309,26 +1322,27 @@
            if (ierr > 0) then
               print *,'Problems with caching Gnedin and Hollon cooling table.'
               print *,' Stopping. Error code :', ierr
-              print *,'Input variables ntot, Tgas, PLW, PHI, PHeI, PCVI: ', ntot, Tgas, PLW, PHI, PHeI, PCVI
+              print *,'Input variables nb, Tgas, PLW, PHI, PHeI, PCVI: ', nb, Tgas, PLW, PHI, PHeI, PCVI
               stop
            end if
         end if
 
         call frtCFGetLn(log(max(1d0,Tgas)),ich,rch,cfun,hfun)
-        !call frtGetCF(Tgas, ntot, 1d0, Plw, Phi, Phei, Pcvi, cfun, hfun, ierr)
+        !call frtGetCF(Tgas, nb, 1d0, Plw, Phi, Phei, Pcvi, cfun, hfun, ierr)
 
       else
         cfun = 0d0
         hfun = 0d0
       endif
 
-      cooling_GH = ntot**2 * (cfun-hfun)
+      cooling_GH = nb**2 * (cfun-hfun)
 
     end function cooling_GH
 #ENDIFKROME
 
 #IFKROME_useCoolingZ_function
     !*********************************************
+
     !function for linear interpolation of f(x), using xval(:)
     ! and the corresponding yval(:) as reference values
     ! note: slow function, use only for initializations
