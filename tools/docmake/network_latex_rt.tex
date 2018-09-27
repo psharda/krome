@@ -1,0 +1,83 @@
+\documentclass[10pt]{report}
+\usepackage[a4paper, total={7in, 10.7in}]{geometry}
+\usepackage{amsmath}
+\usepackage{chemformula}
+\usepackage{amssymb}
+\usepackage{natbib}
+\usepackage{lscape}
+\usepackage{array}
+\usepackage{siunitx}
+\newcommand{\dbDefault}{\textsc{KIDA}}
+\newcommand{\KIDA}{\textsc{KIDA} database\footnote{http://kida.obs.u-bordeaux1.fr} \citep{Wakelam2012ApJS}}
+\newcommand{\UMIST}{\textsc{UMIST} database\footnote{http://udfa.ajmarkwick.net} \citep{McElroy2013A&A}}
+\newcommand{\ALADDIN}{Aladdin database\footnote{\url{https://www-amdis.iaea.org/ALADDIN}}}
+\newcolumntype{h}{>{\setbox0=\hbox\bgroup}c<{\egroup}@{}}
+\newcolumntype{H}{@{}>{\lrbox0}l<{\endlrbox}}
+\bibliographystyle{plainnat}
+
+\newcommand{\mnras}{~MNRAS}
+\newcommand{\apj}{~APJ}
+\newcommand{\apjl}{~APJL}
+\newcommand{\apjs}{~APJS}
+\newcommand{\apss}{~APSS}
+\newcommand{\aaps}{~AAPS}
+\newcommand{\na}{~NA}
+\newcommand{\jcp}{~JCP}
+\newcommand{\aap}{~A\&A}
+\newcommand{\pra}{~PRA}
+
+
+\newcommand{\url}[1]{#1}
+
+\newcommand{\chemicalNetworkTableCaption}{\caption{Chemical network}}
+\newcommand{\chemicalNetworkTableCaptionCont}{\caption{Chemical network}}
+\newcommand{\chemicalNetworkTableLabel}{tab:chemical_network}
+%% \newcommand{\chemicalNetworkTableNotes}{
+
+%%   \textbf{Parameters:}
+%%   \begin{tabular}{ll}
+%%     \input{NetworkLatexSymbols.tex}
+%%   \end{tabular}
+
+%%   \textbf{References:} \input{NetworkLatexReferences.tex}
+%%   }
+\def\ontop#1{\vtop{\null\hbox{#1}}}
+\newcommand{\chemicalNetworkTableNotes}{
+  
+  \begin{minipage}{13cm}
+    \textbf{Parameters:}
+
+    \begin{tabular}{@{}r@{\:}l@{\:}@{}}
+      \input{NetworkLatexSymbols.tex}
+      \input{NetworkLatexPredefinedSymbols.tex}
+    \end{tabular}
+
+    \textbf{References:} \input{NetworkLatexReferences.tex}
+  \end{minipage}
+  }
+
+\newenvironment{chemical_network_table}[1]{
+  \begin{table*}
+    \begin{center}
+      #1 }{
+    \end{center}
+  \end{table*} }
+
+\newenvironment{chemical_network_tabular}{
+  \begin{tabular}{llr@{\:}lll}
+    \hline
+    No. & Reaction & \multicolumn{2}{l@{\:}}{Rate coefficient} & Notes & Ref.\\
+    \hline }{
+    \hline
+  \end{tabular} }
+
+\begin{document}
+\setlength\tabcolsep{1.0pt}
+\input{NetworkLatex.tex}
+
+\bibliography{references.bib}
+
+\end{document}
+
+
+

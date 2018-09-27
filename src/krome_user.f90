@@ -884,6 +884,7 @@ contains
     end if
 
     !read file line by line and store to temporary
+    ftmp(:) = 0d0
     icount = 1
     do
        read(unit,*,iostat=ios) xtmp(icount), ftmp(icount)
@@ -891,6 +892,7 @@ contains
        icount = icount + 1
     end do
     close(unit)
+    icount = icount - 1
 
     if(is_log) ftmp = log(merge(ftmp,1d-40,ftmp>0d0))
     !loop on photobins for interpolation
@@ -1606,7 +1608,7 @@ contains
     call krome_photoBin_scale_array(xscale(:))
   end subroutine krome_opacity_scale_size
 
-  !*******************************
+   !*******************************
   !load a frequency-dependent opacity table stored in fname file,
   ! column 1 is energy or wavelenght in un units of unitEnergy
   ! (default eV), column 2 is opacity in cm2/g.
@@ -1614,6 +1616,7 @@ contains
   subroutine krome_load_opacity_table(fname, unitEnergy)
     use krome_commons
     use krome_constants
+    use krome_photo
     implicit none
     integer,parameter::ntmp=int(1e5)
     character(len=*)::fname
@@ -1627,135 +1630,12 @@ contains
     !read energy unit optional argument
     eunit = "eV" !default is eV
     if(present(unitEnergy)) then
-       eunit = trim(unitEnergy)
+      eunit = trim(unitEnergy)
     end if
 
-    !read form file
-    open(newunit=fileUnit,file=trim(fname),status="old",iostat=ios)
-    !error if problems reading file
-    if(ios/=0) then
-       print *,"ERROR: problem while loading "//trim(fname)
-       stop
-    end if
-    icount = 0
-    !loop on file lines
-    do
-       !read wavelength and opacity
-       read(fileUnit,*,iostat=ios) wl,opac
-       if(ios/=0) exit
-       icount = icount + 1
-       wls(icount) = wl
-       opacs(icount) = opac
-    end do
-    close(fileUnit)
+    call load_opacity_table(fname, eunit)
 
-    !allocate arrays
-    allocate(energy(icount), kappa(icount))
-    !copy temp arrays into allocated arrays, converting units
-    if(trim(eunit)=="eV") then
-       !eV->eV (default)
-       kappa(:) = opacs(1:icount)
-       energy(:) = wls(1:icount)
-    elseif(trim(eunit)=="micron") then
-       !micron->eV
-       kappa(:) = opacs(1:icount)
-       energy(:) = planck_eV*clight/(wls(1:icount)*1d-4)
-    else
-       print *,"ERROR: in load opacity table energy unit unknow",trim(eunit)
-       stop
-    end if
-
-    !reverse array if necessary
-    if(energy(2)<energy(1)) then
-       energy(:) = energy(size(energy):1:-1)
-       kappa(:) = kappa(size(kappa):1:-1)
-    end if
-
-    !check if photobins are intialized
-    if(maxval(photoBinEleft)==0d0) then
-       print *,"ERROR: empty photobins when interpolating dust Qabs"
-       print *," from file "//trim(fname)
-       print *,"You probably need to define a photobins metric before"
-       print *," the call to krome_load_opacity_table"
-       stop
-    end if
-
-    !check lower limit
-    if(photoBinEleft(1)<energy(1)) then
-       print *,"ERROR: dust table "//trim(fname)//" energy lower bound (eV)"
-       print *,photoBinEleft(1), "<", energy(1)
-       stop
-    end if
-
-    !check upper limit
-    if(photoBinEright(nPhotoBins)>energy(size(energy))) then
-       print *,"ERROR: dust table "//trim(fname)//" energy upper bound (eV)"
-       print *,photoBinEright(nPhotoBins), ">", energy(size(energy))
-       stop
-    end if
-
-    !interpolate on current energy distribution
-    do j=1,nPhotoBins
-       do i=2,size(energy)
-          !find left bound position
-          if(photoBinEleft(j)>energy(i-1) &
-               .and. photoBinEleft(j)<energy(i)) then
-             dE = energy(i)-energy(i-1)
-             fL = (photoBinEleft(j)-energy(i-1))/dE &
-                  * (kappa(i)-kappa(i-1)) + kappa(i-1)
-             iL = i
-          end if
-
-          !find right bound position
-          if(photoBinEright(j)>energy(i-1) &
-               .and. photoBinEright(j)<energy(i)) then
-             dE = energy(i)-energy(i-1)
-             fR = (photoBinEright(j)-energy(i-1))/dE &
-                  * (kappa(i)-kappa(i-1)) + kappa(i-1)
-             iR = i
-          end if
-       end do
-
-       !sum opacity for the given photo bin
-       kk = 0d0
-       !if there are other opacity points in between left and right limits
-       if(iR-iL>0) then
-          kk = kk + (energy(iL)-photoBinEleft(j))*(fL+kappa(iL))/2d0
-          kk = kk + (photoBinEright(j)-energy(iR-1))*(fR+kappa(iR-1))/2d0
-          !sum points in between
-          do i=iL,iR-2
-             kk = kk + (energy(i+1)-energy(i))*(kappa(i+1)+kappa(i))/2d0
-          end do
-       elseif(iR==iL) then
-          !no opacity points in between
-          kk = kk + (fL+fR)*(photoBinEright(j)-photoBinEleft(j))/2d0
-       else
-          print *,"ERROR: dust opacity interpolation error, iR-iL<0!"
-          print *,"iR,iL:",iR,iL
-          stop
-       end if
-
-       !copy to common and scale to bin size
-       dE = photoBinEright(j)-photoBinEleft(j)
-       opacityDust(j) = kk/dE
-
-    end do
-
-    !dump interpolated opacity
-    open(newunit=fileUnit,file="opacityDust.interp",status="replace")
-    do j=1,nPhotoBins
-       write(fileUnit,*) photoBinEmid(j),opacityDust(j)
-    end do
-    close(fileUnit)
-
-    !dump original opacity file (as loaded by krome)
-    open(newunit=fileUnit,file="opacityDust.org",status="replace")
-    do i=1,size(energy)
-       write(fileUnit,*) energy(i),kappa(i)
-    end do
-    close(fileUnit)
-
-  end subroutine krome_load_opacity_table
+end subroutine krome_load_opacity_table
 
   ! ******************************
   ! load absorption data data from file, cm2/g

@@ -53,7 +53,7 @@ class krome():
 	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
         useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
-	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = False
+	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
@@ -135,6 +135,7 @@ class krome():
 	compiler = "ifort" #default compiler
 	ramses_offset = 2 #offset in the array for ramses
 	photoDustVarAv = "" #variable for visual extinction in the photoelectric heating
+	photoDustVarG0 = "" #variable for normalization in the photoelectric heating
 	coolFile = ["data/coolZ.dat"]
 	customCoolList = [] #list of the custom cooling functions
 	customHeatList = [] #list of the custom heating functions
@@ -299,8 +300,12 @@ class krome():
 		self.parser.add_argument("-pedantic", action="store_true", help="uses a pedantic Makefile (debug purposes)")
 		self.parser.add_argument("-photoDustVarAv", metavar="common_variable", help="set the name of the common variable that\
 			is employed for the visual extinction Av to attenuate the photoelectric effect on the dust. It follows\
-			exp(-2.5*Av) where Av is the variable. The variable should be set in the network file using the token\
+			G0*exp(-2.5*Av) where Av is the variable. The variable should be set in the network file using the token\
 			@common: user_Av, or any other custom name. This option must be used togheter with -heating=PHOTODUST")
+		self.parser.add_argument("-photoDustVarG0", metavar="common_variable", help="set the name of the common variable that\
+			is employed for the normalization G0 to attenuate the photoelectric effect on the dust. It follows\
+			G0*exp(-2.5*Av) where G0 is the variable. The variable should be set in the network file using the token\
+			@common: user_G0, or any other custom name. This option must be used togheter with -heating=PHOTODUST")
 		self.parser.add_argument("-project", help="build everything in a folder called build_NAME instead of building all in the\
 			default build folder. It also creates a NAME.kpj file with the krome input used.",metavar="NAME")
 		self.parser.add_argument("-quote", action="store_true", help="print a citation and exit")
@@ -1299,6 +1304,11 @@ class krome():
 			if(not(self.useHeatingPhotoDust)): sys.exit("ERROR: -photoDustVarAv should be used with -heating=PHOTODUST")
 			print "Reading option -photoDustVarAv (variable name: "+self.photoDustVarAv+")"
 
+		if(args.photoDustVarG0):
+			self.photoDustVarG0 = args.photoDustVarG0.strip()
+			if(not(self.useHeatingPhotoDust)): sys.exit("ERROR: -photoDustVarG0 should be used with -heating=PHOTODUST")
+			print "Reading option -photoDustVarG0 (variable name: "+self.photoDustVarG0+")"
+
                 #use number densities instead of mass fractions (default, retrocompatibility)
 		if(args.useN):
 			self.usex = False
@@ -1369,7 +1379,7 @@ class krome():
 			tabPath = "data/dust_tables/"
 			tabModes = [x for x in os.listdir(tabPath) if(x.endswith("_cool.dat"))]
 			tabModes = [x.replace("dust_table_","").replace("_cool.dat","") for x in tabModes]
-			tabOpts = ["H2","COOL","3D"] #options
+			tabOpts = ["H2","COOL","3D","Photo3D"] #options
 			allTabs = tabOpts + tabModes #all possible options
 
 			if(self.useDust): die("ERROR: -dustTabs and -dust options are not compatible!")
@@ -1379,6 +1389,9 @@ class krome():
 			#use additional dimension for tables (Av)
 			if("3D" in dustTabs):
 				self.dustTableDimension = "3D"
+
+			if("Photo3D" in dustTabs):
+			        self.usePhotoDust_3D = True
 
 			for dTab in dustTabs:
 				if(not(dTab in allTabs)):
@@ -1681,6 +1694,7 @@ class krome():
 			'He':2.*(menp),
 			'Li':3.*(me+mp)+4.*mn,
 			'Be':4.*(me+mp)+5.*mn,
+			'B':5.*(menp)+mn,
 			'C':6.*(menp),
 			'N':7.*(menp),
 			'O':8.*(menp),
@@ -1693,6 +1707,7 @@ class krome():
 			'P':15.*(menp)+mn,
 			'S':(menp)*16,
 			'Cl':(menp)*17+mn,
+			'Ar':(menp)*18+4*mn,
 			'Ti':(menp)*22+4*mn,
 			'Fe':(me+mp)*26+mn*29,
 			'GRAIN0': 100*6*(menp),
@@ -1833,7 +1848,7 @@ class krome():
 		noTabNext = False #flag for use tabs for the next reaction
 		nextSolomon = False #next reaction is Solomon (to store index for H2 pumping)
 		nextH2photodissociation = False #next reaction is H2 photodissociation
-		for row in allrows:
+		for line_number, row in enumerate(allrows):
 			srow = row.strip() #stripped row
 			if(srow.strip()==""): continue #looks for blank line
 			if(srow[0]=="#"): continue #looks for comment line
@@ -1898,11 +1913,11 @@ class krome():
 				continue #not a reaction
 
 			#search for variables
-			if("@var:" in srow):
-				arow = srow.replace("@var:","").split("=")
-				if(len(arow)!=2):
+			if "@var:" in srow:
+				arow = srow.replace("@var:", "").split("=")
+				if len(arow) != 2:
 					print "ERROR: variable line must be @var:variable=F90_expression"
-					print "found: "+srow
+					print "found: " + srow
 					sys.exit()
 
 
@@ -1912,21 +1927,31 @@ class krome():
 				#check if the current @var is allowed
 				notAllowedVars = ["k","tgas","energy_ev","n"]
 				for nav in notAllowedVars:
-					if(nav.lower()==arow[0].split("(")[0].strip().lower()):
-						sys.exit("ERROR: you can't use "+nav+" as an @var variable")
+					if nav.lower() == arow[0].split("(")[0].strip().lower():
+						sys.exit("ERROR: you can't use " + nav + " as an @var variable")
 
 				#check if the variable belongs to cooling or rate coefficient variables
-				if(not(inCoolingBlock) and not(inHeatingBlock)):
-					if(arow[0] in self.coevars): continue #skip already found variables
-					self.coevars[arow[0]] = [ivarcoe,arow[1]]
+				if not inCoolingBlock  and not inHeatingBlock:
+					if arow[0] in self.coevars:
+						print "ERROR: @var:" + arow[0] + " already defined in the network!"
+						print "Around these lines in the network file:"
+						lmin = max(0, line_number-2)
+						lmax = min(line_number+3, len(allrows)-1)
+						print " " + "\n ".join(allrows[lmin:lmax])
+						print "Change name otherwise will be ovewritten!"
+						sys.exit()
+						continue #skip already found variables
+					self.coevars[arow[0]] = [ivarcoe, arow[1]]
 					ivarcoe += 1 #count variables for later sorting
-				elif(inHeatingBlock):
-					if(arow[0] in self.heatVars): continue #skip already found variables
-					self.heatVars[arow[0]] = [ivarHeat,arow[1]]
+				elif inHeatingBlock:
+					if arow[0] in self.heatVars:
+						continue #skip already found variables
+					self.heatVars[arow[0]] = [ivarHeat, arow[1]]
 					ivarHeat += 1 #count variables for later sorting
-				elif(inCoolingBlock):
-					if(arow[0] in self.coolVars): continue #skip already found variables
-					self.coolVars[arow[0]] = [ivarCool,arow[1]]
+				elif inCoolingBlock:
+					if arow[0] in self.coolVars:
+						continue #skip already found variables
+					self.coolVars[arow[0]] = [ivarCool, arow[1]]
 					ivarCool += 1 #count variables for later sorting
 				continue #SKIP: a variable line is not a reaction line
 
@@ -2822,6 +2847,13 @@ class krome():
 				# 	janaf2krome(self.buildFolder, sp)
 				# else:
 				gfe_file = sp.name + ".gfe"
+
+				#import os
+				buildFolder = self.buildFolder
+				if not os.path.exists(buildFolder):
+					os.mkdir(buildFolder)
+					print "Created " + buildFolder
+
 				shutil.copyfile(self.thermochemistryFolder + gfe_file,
 				 			self.buildFolder + gfe_file)
 				print "copied " + gfe_file
@@ -5766,7 +5798,7 @@ class krome():
 					conserveLinElectrons.append(sgn + " " + str(abs(species.charge)) \
 						+ "d0*x(" + species.fidx +") / m("+species.fidx+")")
 				srow = srow.replace("#KROME_conserveLin_electrons",(" &\n".join(conserveLinElectrons)))
-				srow = srow.replace("1d0*","")
+				# srow = srow.replace("1d0*","")
 				fout.write(srow+"\n")
 				continue
 
@@ -6176,7 +6208,8 @@ class krome():
 		for row in fh:
 			srow = row.strip()
 			if(srow == "#IFKROME_useDust" and not(self.useDust)): skip = True
-			if(srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D")): skip = True
+			if(srow == "#IFKROME_usePhotoDust_3D" and not(self.usePhotoDust_3D)): skip = True
+			if(srow == "#IFKROME_dust_table_2D" and (not(self.dustTableDimension=="2D") or self.usePhotoDust_3D)): skip = True
 			if(srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D")): skip = True
 			if(srow == "#ENDIFKROME"): skip = False
 
@@ -6634,7 +6667,10 @@ class krome():
 				#fake_opacity = ""
 				#if(self.useFakeOpacity): fake_opacity = " * exp(-n(" + reag[0].fidx + ") / n0)"
 				if(react.idxph<=0): continue
-				pheatvars.append("photoBinHeats("+str(react.idxph)+") * n(" + react.reactants[0].fidx + ")")
+				prefac = ""
+				if(react.reactants[0].name in ["O","Oj","C","Cj","Si","Sij","Fe","Fej","Fejj","Mg","Mgj"]):
+					prefac = "f2 *"
+				pheatvars.append(prefac+"photoBinHeats("+str(react.idxph)+") * n(" + react.reactants[0].fidx + ")")
 
 		#replace pragma with strings built above
 		skip = False
@@ -6784,7 +6820,10 @@ class krome():
 
 					row = row.replace("#KROME_RdissH2",rateDissH2) #replace pragma with H2 photodissociation rate
 
-				#add attenuation from Av for photoelectric effect
+				#add attenuation from G0 and Av for photoelectric effect
+				if(row.strip() == "#KROME_GhabG0"):
+					row = "Ghab  = "+self.photoDustVarG0+"\n"
+					if(self.photoDustVarG0 == ""): row = "\n"
 				if(row.strip() == "#KROME_GhabAv"):
 					row = "Ghab  = Ghab * exp(-2.5*"+self.photoDustVarAv+")\n"
 					if(self.photoDustVarAv == ""): row = "\n"

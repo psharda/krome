@@ -7,8 +7,8 @@ import network,options
 
 #check argv
 if(len(sys.argv)!=2):
-	print "USAGE is: python docmaker.py OPTION_FILE"
-	sys.exit()
+    print "USAGE is: python docmaker.py OPTION_FILE"
+    sys.exit()
 
 
 #get filename
@@ -22,8 +22,3 @@ myNetwork = network.network(myOptions)
 
 #prepare full documentation
 myNetwork.makeAllDoc()
-
-
-
-
-

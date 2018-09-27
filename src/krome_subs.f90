@@ -657,8 +657,7 @@ contains
     rate = v_thermal * cross_section * stick_coefficient
 
   end function cluster_growth_rate
-
-
+#ENDIFKROME
 
   !***********************************
   subroutine init_exp_table()
@@ -673,7 +672,6 @@ contains
     end do
 
   end subroutine init_exp_table
-
 
   !***************************
   !get the index of the specie name
@@ -901,6 +899,7 @@ contains
 
   end function gibbs_free_energy
 #ENDIFKROME
+
   !******************************
   subroutine print_best_flux(n,Tgas,nbestin)
     !print the first nbestin fluxes
