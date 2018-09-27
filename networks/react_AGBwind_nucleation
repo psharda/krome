@@ -1188,30 +1188,44 @@
 # and references therein
 @format:idx,R,R,P,P,rate
 321,Al,O2,AlO,O,3.836d-11*Tgas**(.17)
-#
+
 @format:idx,R,R,P,P,rate
 322,AlO,O2,AlO2,O,1.182d-11*Tgas**(.5)*exp(-1.315d4*invT)
-#
-@format:idx,R,P,P,rate
-323,AlO2,AlO,O,1.661d-9*exp(-44564.6*invT)
 
+# manually added ntot term bacause this is a high density regime
+# and a collision partner can aid in crossing this high barrier
 @format:idx,R,P,P,rate
-324,Al2O,AlO,Al,1.661d-9*exp(-67035.7*invT)
+323,AlO2,AlO,O,1.661d-9*exp(-44564.6*invT) * ntot
 
+# manually added ntot term bacause this is a high density regime
+# and a collision partner can aid in crossing this high barrier
 @format:idx,R,P,P,rate
-325,Al2O2,AlO,AlO,1.661d-9*exp(-59335.7*invT)
+324,Al2O,AlO,Al,1.661d-9*exp(-67035.7*invT) * ntot
 
+# manually added ntot term bacause this is a high density regime
+# and a collision partner can aid in crossing this high barrier
 @format:idx,R,P,P,rate
-326,Al2O2,Al,AlO2,1.661d-9*exp(-74937.1*invT)
+325,Al2O2,AlO,AlO,1.661d-9*exp(-59335.7*invT) * ntot
 
+# manually added ntot term bacause this is a high density regime
+# and a collision partner can aid in crossing this high barrier
 @format:idx,R,P,P,rate
-327,Al2O2,Al2O,O,1.661d-9*exp(-52466.*invT)
+326,Al2O2,Al,AlO2,1.661d-9*exp(-74937.1*invT) * ntot
 
+# manually added ntot term bacause this is a high density regime
+# and a collision partner can aid in crossing this high barrier
 @format:idx,R,P,P,rate
-328,Al2O3,Al2O2,O,4.982d-9*exp(-49144.4*invT)
+327,Al2O2,Al2O,O,1.661d-9*exp(-52466.*invT) * ntot
 
+# manually added ntot term bacause this is a high density regime
+# and a collision partner can aid in crossing this high barrier
 @format:idx,R,P,P,rate
-329,Al2O3,AlO2,AlO,4.982d-9*exp(-63915.4*invT)
+328,Al2O3,Al2O2,O,4.982d-9*exp(-49144.4*invT) * ntot
+
+# manually added ntot term bacause this is a high density regime
+# and a collision partner can aid in crossing this high barrier
+@format:idx,R,P,P,rate
+329,Al2O3,AlO2,AlO,4.982d-9*exp(-63915.4*invT) * ntot
 
 @format:idx,R,R,P,P,rate
 330,Al,H2O,AlOH,H,3.255d-10*Tgas**(-0.09)*exp(-3744.*invT) + 4.616d-18*Tgas**(2.06)*exp(-438.*invT)
@@ -1237,12 +1251,15 @@
 @format:idx,R,R,P,P,rate
 337,AlO2H,O,AlOH,O2,3.554d-11*Tgas**(.17)
 
+# high density limit
 @format:idx,R,R,P,rate
 338,AlO2H,H,AlO2H2,1.227d-10*Tgas**(.17)
 
+# high density limit
 @format:idx,R,R,P,rate
 339,AlOH,OH,AlO2H2,4.118d-11*Tgas**(.16)*exp(23.*invT)
 
+# high density limit
 @format:idx,R,R,P,rate
 340,AlO2H2,OH,AlO3H3,4.218d-11*Tgas**(.15)*exp(48.*invT)
 
@@ -1294,27 +1311,48 @@
 @format:idx,R,R,P,P,rate
 353,AlO2,O,AlO,O2,1.182d-11*Tgas**(.5)*exp(-1.315d4*invT) * revKc_with_GFE(Tgas, [idx_AlO2,idx_O], [idx_AlO,idx_O2])
 
+# manually added third body (ntot) term bacause this is a high density regime
+# and this is not an association reaction
+# also see non-reversed reaction
 @format:idx,R,R,P,rate
-354,AlO,O,AlO2,1.661d-9*exp(-44564.6*invT) * revKc_with_GFE(Tgas, [idx_AlO,idx_O], [idx_AlO2])
+354,AlO,O,AlO2,1.661d-9*exp(-44564.6*invT) * ntot * revKc_with_GFE(Tgas, [idx_AlO,idx_O], [idx_AlO2])
 
+# manually added third body (ntot) term bacause this is a high density regime
+# and this is not an association reaction
+# also see non-reversed reaction
 @format:idx,R,R,P,rate
-355,AlO,Al,Al2O,1.661d-9*exp(-67035.7*invT) * revKc_with_GFE(Tgas, [idx_AlO,idx_Al], [idx_Al2O])
+355,AlO,Al,Al2O,1.661d-9*exp(-67035.7*invT) * ntot * revKc_with_GFE(Tgas, [idx_AlO,idx_Al], [idx_Al2O])
 
+# manually added third body (ntot) term bacause this is a high density regime
+# and this is not an association reaction
+# also see non-reversed reaction
 @format:idx,R,R,P,rate
-356,AlO,AlO,Al2O2,1.661d-9*exp(-59335.7*invT) * revKc_with_GFE(Tgas, [idx_AlO,idx_AlO], [idx_Al2O2])
+356,AlO,AlO,Al2O2,1.661d-9*exp(-59335.7*invT) * ntot * revKc_with_GFE(Tgas, [idx_AlO,idx_AlO], [idx_Al2O2])
 
+# manually added third body (ntot) term bacause this is a high density regime
+# and this is not an association reaction
+# also see non-reversed reaction
 @format:idx,R,R,P,rate
-357,Al,AlO2,Al2O2,1.661d-9*exp(-74937.1*invT) * revKc_with_GFE(Tgas, [idx_Al,idx_AlO2], [idx_Al2O2])
+357,Al,AlO2,Al2O2,1.661d-9*exp(-74937.1*invT) * ntot * revKc_with_GFE(Tgas, [idx_Al,idx_AlO2], [idx_Al2O2])
 
+# manually added third body (ntot) term bacause this is a high density regime
+# and this is not an association reaction
+# also see non-reversed reaction
 @format:idx,R,R,P,rate
-358,Al2O,O,Al2O2,1.661d-9*exp(-52466.*invT) * revKc_with_GFE(Tgas, [idx_Al2O,idx_O], [idx_Al2O2])
+358,Al2O,O,Al2O2,1.661d-9*exp(-52466.*invT) * ntot * revKc_with_GFE(Tgas, [idx_Al2O,idx_O], [idx_Al2O2])
 
+# manually added third body (ntot) term bacause this is a high density regime
+# and this is not an association reaction
+# also see non-reversed reaction
 @format:idx,R,R,P,rate
-359,Al2O2,O,Al2O3,4.982d-9*exp(-49144.4*invT) * revKc_with_GFE(Tgas, [idx_Al2O2,idx_O], [idx_Al2O3])
-#
+359,Al2O2,O,Al2O3,4.982d-9*exp(-49144.4*invT) * ntot * revKc_with_GFE(Tgas, [idx_Al2O2,idx_O], [idx_Al2O3])
+
+# manually added third body (ntot) term bacause this is a high density regime
+# and this is not an association reaction
+# also see non-reversed reaction
 @format:idx,R,R,P,rate
-360,AlO2,AlO,Al2O3,4.982d-9*exp(-63915.4*invT) * revKc_with_GFE(Tgas, [idx_AlO2,idx_AlO], [idx_Al2O3])
-#
+360,AlO2,AlO,Al2O3,4.982d-9*exp(-63915.4*invT) * ntot * revKc_with_GFE(Tgas, [idx_AlO2,idx_AlO], [idx_Al2O3])
+
 @format:idx,R,R,P,P,rate
 361,AlOH,H,Al,H2O,(3.255d-10*Tgas**(-.09)*exp(-3744.*invT) + 4.616d-18*Tgas**(2.06)*exp(-438.*invT)) * revKc_with_GFE(Tgas, [idx_AlOH,idx_H], [idx_Al,idx_H2O])
 
