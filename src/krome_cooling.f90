@@ -73,6 +73,10 @@
       cools(idx_cool_atomic) = cooling_Atomic(n(:), Tgas) #KROME_floorAtomic
 #ENDIFKROME
 
+#IFKROME_useCoolingCompton
+      cools(idx_cool_compton) = cooling_compton(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useCoolingFF
       cools(idx_cool_ff) = cooling_ff(n(:), Tgas)
 #ENDIFKROME
