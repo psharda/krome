@@ -1688,17 +1688,25 @@
 @format:idx,R,R,P,P,rate
 441,Mg,O3,MgO,O2,2.3d-10 * exp(-139.*invT)
 
+#REVERSED
+@format:idx,R,R,P,P,rate
+442,MgO,O2,Mg,O3,2.3d-10 * exp(-139.*invT) * revKc_with_GFE(Tgas, [idx_MgO,idx_O2], [idx_Mg,idx_O3])
+
 # Plane & Whalley 2012 (PW12) (doi:10.1021/jp211526h)
 @format:idx,R,R,P,P,rate
-442,MgO,O,Mg,O2,6.2d-10 * (Tgas/300.)**(1./6.)
+443,MgO,O,Mg,O2,6.2d-10 * (Tgas/300.)**(1./6.)
+
+#REVERSED
+@format:idx,R,R,P,P,rate
+444,Mg,O2,MgO,O,6.2d-10 * (Tgas/300.)**(1./6.) * revKc_with_GFE(Tgas, [idx_MgO,idx_O2], [idx_MgO,idx_O])
 
 # PH95
 @format:idx,R,R,P,P,rate
-443,MgO,O3,MgO2,O2,2.2d-10 * exp(-548.*invT)
+445,MgO,O3,MgO2,O2,2.2d-10 * exp(-548.*invT)
 
 # PW12
 @format:idx,R,R,P,P,rate
-444,MgO2,O,MgO,O2,8.4d-11 * (Tgas/300.)**(1./6.)
+446,MgO2,O,MgO,O2,8.4d-11 * (Tgas/300.)**(1./6.)
 
 # Rollason & Plane 2001 (RP01) (doi:10.1039/b105673p)
 # 3 Body
@@ -1710,12 +1718,18 @@
 # @var: Fc = 0.28
 @noTabNext
 @format:idx,R,R,P,rate
-445,MgO,H2O,MgO2H2, troe_falloff(( 10**(-32.75 + 7.894*log10(Tgas) - 2.127*(log10(Tgas))**2) ), ( 3.52d-10 * exp(-334.*invT) ), (0.28d0), ntot)
+447,MgO,H2O,MgO2H2, troe_falloff(( 10**(-32.75 + 7.894*log10(Tgas) - 2.127*(log10(Tgas))**2) ), ( 3.52d-10 * exp(-334.*invT) ), (0.28d0), ntot)
+
+#REVERSED
+@noTabNext
+@format:idx,R,P,P,rate
+448,MgO2H2,MgO,H2O, troe_falloff(( 10**(-32.75 + 7.894*log10(Tgas) - 2.127*(log10(Tgas))**2) ), ( 3.52d-10 * exp(-334.*invT) ), (0.28d0), ntot) * revKc_with_GFE(Tgas, [idx_MgO2H2], [idx_MgO,idx_H2O])
+
 
 # PW12 (says "fast") PFD15 (estimate?)
 @storeonce_start
 @format:idx,R,R,P,P,rate
-446,MgO3,H2O,MgO2H2,O2,1d-12
+449,MgO3,H2O,MgO2H2,O2,1d-12
 @storeonce_stop
 
 # Rollason & Plane 2001 (RP01) (doi:10.1039/b105673p)
@@ -1728,21 +1742,25 @@
 # @var: Fc = 0.34
 @noTabNext
 @format:idx,R,R,P,rate
-447,MgO,O2,MgO3, troe_falloff(( 10**(-28.05 + 1.423*log10(Tgas) - 0.683*(log10(Tgas))**2) ), ( 1.16d-10 * exp(-219.*invT) ), ( 0.34d0 ), ntot)
+450,MgO,O2,MgO3, troe_falloff(( 10**(-28.05 + 1.423*log10(Tgas) - 0.683*(log10(Tgas))**2) ), ( 1.16d-10 * exp(-219.*invT) ), ( 0.34d0 ), ntot)
 
-## Rollason & Plane 2001 (RP01) (doi:10.1039/b105673p)
-## 3 Body
-## original rate format, but don't use @var because these will be global variables
-## and not just for this rate
-## @var: logk0 = -33.70 + 5.827*log10(Tgas) - 1.494*(log10(Tgas))**2
-## @var: kinf = 6.79d-10 * exp(-310.*invT)
-## @var: beta = (1 + (logk0 + log10(ntot / kinf) )**2 )**(-1.)
-## @var: Fc = 0.37
-# @noTabNext
-# @format:idx,R,R,P,rate
-# 460,MgO,CO2,MgCO3, troe_falloff(( 10**(-33.70 + 5.827*log10(Tgas) - 1.494*(log10(Tgas))**2) ), ( 6.79d-10 * exp(-310.*invT) ), ( 0.37d0 ), ntot)
-# REMOVED because not reversed rate.
-# No thermo data in Burcat for gas phase...
+# Rollason & Plane 2001 (RP01) (doi:10.1039/b105673p)
+# 3 Body
+# original rate format, but don't use @var because these will be global variables
+# and not just for this rate
+# @var: logk0 = -33.70 + 5.827*log10(Tgas) - 1.494*(log10(Tgas))**2
+# @var: kinf = 6.79d-10 * exp(-310.*invT)
+# @var: beta = (1 + (logk0 + log10(ntot / kinf) )**2 )**(-1.)
+# @var: Fc = 0.37
+@noTabNext
+@format:idx,R,R,P,rate
+451,MgO,CO2,MgCO3, troe_falloff(( 10**(-33.70 + 5.827*log10(Tgas) - 1.494*(log10(Tgas))**2) ), ( 6.79d-10 * exp(-310.*invT) ), ( 0.37d0 ), ntot)
+
+#REVERSED
+@noTabNext
+@format:idx,R,P,P,rate
+452,MgCO3,MgO,CO2, troe_falloff(( 10**(-33.70 + 5.827*log10(Tgas) - 1.494*(log10(Tgas))**2) ), ( 6.79d-10 * exp(-310.*invT) ), ( 0.37d0 ), ntot) * revKc_with_GFE(Tgas, [idx_MgCO3], [idx_MgO,idx_CO2])
+
 
 # PW12 (rate in text)
 # 3 Body
@@ -1754,26 +1772,35 @@
 # @var: Fc = 0.30
 @noTabNext
 @format:idx,R,R,P,rate
-448,MgO2,O2,MgO4,troe_falloff( ( 6.4d-27 * (Tgas/300.)**(-3.3) ), ( 1.8d-10 * exp(-46.*invT) ), ( 0.30d0 ), ntot)
+453,MgO2,O2,MgO4,troe_falloff( ( 6.4d-27 * (Tgas/300.)**(-3.3) ), ( 1.8d-10 * exp(-46.*invT) ), ( 0.30d0 ), ntot)
 
 # PW12 (says "fast"), PFD15 (estimate?)
 @storeonce_start
 @format:idx,R,R,P,P,rate
-449,MgO4,O,MgO3,O2,8d-14
+454,MgO4,O,MgO3,O2,8d-14
 @storeonce_stop
 
 # PW12 (unclear...) but also used in PFD15 and L+15
 @format:idx,R,R,P,P,rate
-450,MgO2H2,H,MgOH,H2O,1d-11 * exp(-600*invT)
+455,MgO2H2,H,MgOH,H2O,1d-11 * exp(-600*invT)
+
+#REVERSED
+@format:idx,R,R,P,P,rate
+456,MgOH,H2O,MgO2H2,H,1d-11 * exp(-600*invT) * revKc_with_GFE(Tgas, [idx_MgOH,idx_H2O], [idx_MgO2H2,idx_H])
 
 # PW12 (No rate given), PFD15 (estimate?)
 @storeonce_start
 @format:idx,R,R,P,P,rate
-451,MgOH,H,Mg,H2O,2d-10
+457,MgOH,H,Mg,H2O,2d-10
+@storeonce_stop
 
+@format:idx,R,R,P,P,rate
+458,Mg,H2O,MgOH,H,2d-10 * revKc_with_GFE(Tgas, [idx_Mg,idx_H2O], [idx_MgOH,idx_H])
+
+@storeonce_start
 # PW12 (No rate given), PFD15 (estimate?)
 @format:idx,R,R,P,P,rate
-452,MgO3,H,MgOH,O2,2d-12
+459,MgO3,H,MgOH,O2,2d-12
 
 # Langowski+ 2015(L+15) (doi:10.5194/acp-15-273-2015)
 # @format:idx,R,R,P,rate
@@ -1782,45 +1809,45 @@
 #
 # Rutterford 1971, KIDA
 @format:idx,R,R,P,P,rate
-453,Mg,O2+,Mg+,O2,1.2d-9
+460,Mg,O2+,Mg+,O2,1.2d-9
 
 # Rutterford 1971, KIDA
 @format:idx,R,R,P,P,rate
-454,Mg,NO+,Mg+,NO,8.2d-10
+461,Mg,NO+,Mg+,NO,8.2d-10
 
 # Whalley+2011 (W+11) (doi:10.1039/c0cp02637a)
 @format:idx,R,R,P,P,rate
-455,Mg+,O3,MgO+,O2,1.17d-9
+462,Mg+,O3,MgO+,O2,1.17d-9
 
 # WHalley & Plane 2010 (WP10) (doi:10.1039/c003726e)
 @format:idx,R,R,P,P,rate
-456,MgO+,O,Mg+,O2,5.9d-10
+463,MgO+,O,Mg+,O2,5.9d-10
 @storeonce_stop
 
 # W+11
 # 3 body
 @noTabNext
 @format:idx,R,R,P,rate
-457,Mg+,N2,MgN2+,2.7d-31 * (Tgas/300.)**(-1.88) * ntot
+464,Mg+,N2,MgN2+,2.7d-31 * (Tgas/300.)**(-1.88) * ntot
 
 # W+11
 # 3 body
 @noTabNext
 @format:idx,R,R,P,rate
-458,Mg+,O2,MgO2+,4.1d-31 * (Tgas/300.)**(-1.65) * ntot
+465,Mg+,O2,MgO2+,4.1d-31 * (Tgas/300.)**(-1.65) * ntot
 
 # WP10
 @storeonce_start
 @format:idx,R,R,P,P,rate
-459,MgO2+,O,MgO+,O2,6.5d-10
+466,MgO2+,O,MgO+,O2,6.5d-10
 
 # W+11
 @format:idx,R,R,P,P,P,rate
-460,MgO+,O3,Mg+,O2,O2,8.5d-10 * 0.35
+467,MgO+,O3,Mg+,O2,O2,8.5d-10 * 0.35
 
 # W+11
 @format:idx,R,R,P,P,rate
-461,MgO+,O3,MgO2+,O2,8.5d-10 * 0.65
+468,MgO+,O3,MgO2+,O2,8.5d-10 * 0.65
 @storeonce_stop
 
 # Martinez-Nunez et al 2010 (MN+10) (doi:10.1021/jp102454j)
@@ -1833,83 +1860,87 @@
 # @var: Fc = 0.52
 @noTabNext
 @format:idx,R,R,P,rate
-462,Mg+,H2O,MgH2O+,troe_falloff((2.9d-29  ), ( 5.0d-11 * exp(829./(8.314)*invT) ), ( 0.52d0 ), ntot)
+469,Mg+,H2O,MgH2O+,troe_falloff((2.9d-29  ), ( 5.0d-11 * exp(829./(8.314)*invT) ), ( 0.52d0 ), ntot)
 
 # W+11
 # 3 Body
 @noTabNext
 @format:idx,R,R,P,rate
-463,Mg+,CO2,MgCO2+,7.3d-30 * (Tgas/300.)**(-1.59) * ntot
+470,Mg+,CO2,MgCO2+,7.3d-30 * (Tgas/300.)**(-1.59) * ntot
 
 #Verner 1996, auto in KROME
 @format:idx,R,R,P,P,P,rate
-464,Mg,E,Mg+,E,E,auto
+471,Mg,E,Mg+,E,E,auto
 
 # next reactions are not in PFD15
 # W+11
 @format:idx,R,R,P,P,rate
-465,Mg,NO2,MgO,NO,1.4d-11 * exp(-3.4*invT/R)
+472,Mg,NO2,MgO,NO,1.4d-11 * exp(-3.4*invT/R)
+
+#REVERSED
+@format:idx,R,R,P,P,rate
+473,MgO,NO,Mg,NO2,1.4d-11 * exp(-3.4*invT/R) * revKc_with_GFE(Tgas, [idx_MgO,idx_NO], [idx_Mg,idx_NO2])
 
 # W+11
 # 3 body
 @noTabNext
 @format:idx,R,R,P,rate
-466,Mg+,N2O,MgN2O+,5.8d-30 * (Tgas/300.)**(-1.94) * ntot
+474,Mg+,N2O,MgN2O+,5.8d-30 * (Tgas/300.)**(-1.94) * ntot
 
 # W+11
 @storeonce_start
 @format:idx,R,R,P,P,rate
-467,MgCO2+,H2O,MgH2O+,CO2,5.1d-11
+475,MgCO2+,H2O,MgH2O+,CO2,5.1d-11
 
 # W+11
 @format:idx,R,R,P,P,rate
-468,MgO2+,H2O,MgH2O+,O2,1.9d-11
+476,MgO2+,H2O,MgH2O+,O2,1.9d-11
 
 # W+11
 @format:idx,R,R,P,P,rate
-469,MgN2+,O2,MgO2+,N2,3.5d-12
+477,MgN2+,O2,MgO2+,N2,3.5d-12
 @storeonce_stop
 
 # W+11
 # 3 body
 @noTabNext
 @format:idx,R,R,P,rate
-470,MgO2+,O2,MgO4+,9d-30 * (Tgas/300.)**(-3.80) * ntot
+478,MgO2+,O2,MgO4+,9d-30 * (Tgas/300.)**(-3.80) * ntot
 
 # W+11
 # 3 body
 @noTabNext
 @format:idx,R,R,P,rate
-471,MgCO2+,CO2,MgC2O4+,2.3d-29 * (Tgas/300.)**(-5.08) * ntot
+479,MgCO2+,CO2,MgC2O4+,2.3d-29 * (Tgas/300.)**(-5.08) * ntot
 
 # W+11
 # 3 body
 @noTabNext
 @format:idx,R,R,P,rate
-472,MgH2O+,H2O,MgH4O2+,3.0d-28 * (Tgas/300.)**(-3.96) * ntot
+480,MgH2O+,H2O,MgH4O2+,3.0d-28 * (Tgas/300.)**(-3.96) * ntot
 
 # W+11
 # 3 body
 @noTabNext
 @format:idx,R,R,P,rate
-473,MgO2+,N2,MgO2N2+,4.7d-30 * (Tgas/300.)**(-3.75) * ntot
+481,MgO2+,N2,MgO2N2+,4.7d-30 * (Tgas/300.)**(-3.75) * ntot
 
 # W+11
 # 3 body
 @noTabNext
 @format:idx,R,R,P,rate
-474,MgO2+,CO2,MgCO4+,6.6d-29 * (Tgas/300.)**(-4.18) * ntot
+482,MgO2+,CO2,MgCO4+,6.6d-29 * (Tgas/300.)**(-4.18) * ntot
 
 # W+11
 # 3 body
 @noTabNext
 @format:idx,R,R,P,rate
-475,MgH2O+,O2,MgH2O3+,1.2d-27 * (Tgas/300.)**(-4.13) * ntot
+483,MgH2O+,O2,MgH2O3+,1.2d-27 * (Tgas/300.)**(-4.13) * ntot
 
 # WP10
 @storeonce_start
 @format:idx,R,R,P,P,rate
-476,MgCO2+,O2,MgO2+,CO2,2.2d-11
+484,MgCO2+,O2,MgO2+,CO2,2.2d-11
 @storeonce_stop
 
 # Dissociative recombination reactions
@@ -1918,71 +1949,69 @@
 # Florescu-Mitchell & Mitchell 2006 (FMM06) (doi:10.1016/J.PHYSREP.2006.04.002)
 # MgX+ + E -> Mg + X
 @format:idx,R,R,P,P,rate
-477,MgO+,E,Mg,O,3d-7 * (Tgas/200.)**(-0.5)
+485,MgO+,E,Mg,O,3d-7 * (Tgas/200.)**(-0.5)
 
 @format:idx,R,R,P,P,rate
-478,MgO2+,E,Mg,O2,3d-7 * (Tgas/200.)**(-0.5)
+486,MgO2+,E,Mg,O2,3d-7 * (Tgas/200.)**(-0.5)
 
 @format:idx,R,R,P,P,rate
-479,MgN2+,E,Mg,N2,3d-7 * (Tgas/200.)**(-0.5)
+487,MgN2+,E,Mg,N2,3d-7 * (Tgas/200.)**(-0.5)
 
 @format:idx,R,R,P,P,rate
-480,MgCO2+,E,Mg,CO2,3d-7 * (Tgas/200.)**(-0.5)
+488,MgCO2+,E,Mg,CO2,3d-7 * (Tgas/200.)**(-0.5)
 
 @format:idx,R,R,P,P,rate
-481,MgH2O+,E,Mg,H2O,3d-7 * (Tgas/200.)**(-0.5)
+489,MgH2O+,E,Mg,H2O,3d-7 * (Tgas/200.)**(-0.5)
 
 @format:idx,R,R,P,P,rate
-482,MgN2O+,E,Mg,N2O,3d-7 * (Tgas/200.)**(-0.5)
+490,MgN2O+,E,Mg,N2O,3d-7 * (Tgas/200.)**(-0.5)
 
 # dissociation based on ion cluster notation in W+11
 # MgY+(dot)X + E -> MgY + X
 @format:idx,R,R,P,P,rate
-483,MgO4+,E,MgO2,O2,3d-7 * (Tgas/200.)**(-0.5)
+491,MgO4+,E,MgO2,O2,3d-7 * (Tgas/200.)**(-0.5)
 
 @format:idx,R,R,P,P,P,rate
-484,MgC2O4+,E,Mg,CO2,CO2,3d-7 * (Tgas/200.)**(-0.5)
+492,MgC2O4+,E,Mg,CO2,CO2,3d-7 * (Tgas/200.)**(-0.5)
 
 @format:idx,R,R,P,P,P,rate
-485,MgH4O2+,E,Mg,H2O,H2O,3d-7 * (Tgas/200.)**(-0.5)
+493,MgH4O2+,E,Mg,H2O,H2O,3d-7 * (Tgas/200.)**(-0.5)
 
 @format:idx,R,R,P,P,rate
-486,MgO2N2+,E,MgO2,N2,3d-7 * (Tgas/200.)**(-0.5)
+494,MgO2N2+,E,MgO2,N2,3d-7 * (Tgas/200.)**(-0.5)
 
 @format:idx,R,R,P,P,rate
-487,MgCO4+,E,MgO2,CO2,3d-7 * (Tgas/200.)**(-0.5)
+495,MgCO4+,E,MgO2,CO2,3d-7 * (Tgas/200.)**(-0.5)
 
 @format:idx,R,R,P,P,rate
-488,MgH2O3+,E,MgO2,H2O,3d-7 * (Tgas/200.)**(-0.5)
+496,MgH2O3+,E,MgO2,H2O,3d-7 * (Tgas/200.)**(-0.5)
 
 # Missing recombination
 @format:idx,R,R,P,P,rate
-489,NO+,E,O,N,4.30d-7*(T32)**(-0.37)
+497,NO+,E,O,N,4.30d-7*(T32)**(-0.37)
 
 @format:idx,R,R,P,P,rate
-490,O2+,E,O,O,1.95d-7*(T32)**(-0.70)
-#
+498,O2+,E,O,O,1.95d-7*(T32)**(-0.70)
+
+# Atkinson+2004 (doi:10.5194/acp-4-1461-2004)
 @format:idx,R,R,P,P,rate
-491,O3,O,O2,O2,8d-12 * exp(-2060.*invT)
-# #
+499,O3,O,O2,O2,8d-12 * exp(-2060.*invT)
+
+# Atkinson+2004 (doi:10.5194/acp-4-1461-2004)
+@format:idx,R,R,R,P,P,rate
+500,O,O2,O2,O3,O2,6.0d-34*(Tgas/300.)**(-2.6)
+
+# DeMore+1997 (https://jpldataeval.jpl.nasa.gov/pdf/Atmos97_Anotated.pdf)
+@format:idx,R,R,P,P,rate
+501,H,O3,OH,O2,1.4d-10*exp(470.*invT)
+
 # # Add to avoid source terms
 # UMIST
 @format:idx,R,R,P,P,rate
-492,O+,N2,NO+,N,2.42d-12*(T32)**(-0.21)*exp(44.0*invT)
+502,O+,N2,NO+,N,2.42d-12*(T32)**(-0.21)*exp(44.0*invT)
 
 # Add to avoid source terms
-#Kasting&Donahue1980 (planetary atmosphere)
-@noTabNext
-@format:idx,R,R,P,rate
-493,O,O2,O3,1.058d-34*exp(510*invT) * ntot
-
 @storeonce_start
 @format:idx,R,R,P,P,rate
-494,H+,O2,O2+,H,2.00d-9
-
-# @format:idx,R,P,P,rate
-# 494,O3,O2,O,3.d-4
-
-@format:idx,R,R,P,P,rate
-495,H,O3,OH,O2,2.6d-11
+503,H+,O2,O2+,H,2.00d-9
 @storeonce_stop
