@@ -657,6 +657,66 @@ contains
     rate = v_thermal * cross_section * stick_coefficient
 
   end function cluster_growth_rate
+
+  function general_cluster_growth_rate(monomer_idx, cluster1_size, cluster2_size,&
+                                       temperature, stick) result(rate)
+    ! k_N = v_thermal * cross_section_N * stick_N
+    ! with N the cluster size of the reactant
+    use krome_constants
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer, parameter :: dp=kind(0.d0) ! double precision
+
+    integer, intent(in) :: monomer_idx
+    integer, intent(in) :: cluster1_size
+    integer, intent(in) :: cluster2_size
+    real(dp), intent(in) :: temperature
+    real(dp), intent(in), optional :: stick
+    real(dp) :: rate
+
+    real(dp) :: v_thermal
+    real(dp) :: cross_section
+    real(dp) :: stick_coefficient
+    real(dp) :: monomer_radius
+    real(dp) :: cluster1_radius
+    real(dp) :: cluster2_radius
+    real(dp) :: inverse_monomer_mass
+    real(dp) :: inverse_cluster1_mass
+    real(dp) :: inverse_cluster2_mass
+    real(dp) :: inverse_reduced_mass
+    real(dp) :: inverse_mass(nspec)
+
+    inverse_mass(:) = get_imass()
+
+#KROME_nucleation_radii
+
+    inverse_monomer_mass = inverse_mass(monomer_idx)
+    inverse_cluster1_mass = 1._dp/cluster1_size * inverse_monomer_mass
+    inverse_cluster2_mass = 1._dp/cluster2_size * inverse_monomer_mass
+    inverse_reduced_mass = inverse_cluster1_mass + inverse_cluster2_mass
+
+    v_thermal = sqrt(8._dp * boltzmann_erg * temperature &
+              * inverse_reduced_mass / pi )
+
+    ! Assuming cluster volume is proportional to monomer volume
+    ! V_N = N * V_1, and both are considered as a hypothetical sphere
+    cluster1_radius = monomer_radius * cluster1_size**(1._dp/3._dp)
+    cluster2_radius = monomer_radius * cluster2_size**(1._dp/3._dp)
+
+    ! Geometrical cross section
+    cross_section = pi * (cluster1_radius + cluster2_radius)**2._dp
+
+    ! Sticking coefficiet is set to one for simplicity
+    if(present(stick)) then
+      stick_coefficient = stick
+    else
+      stick_coefficient = 1._dp
+    end if
+
+    rate = v_thermal * cross_section * stick_coefficient
+
+end function general_cluster_growth_rate
 #ENDIFKROME
 
   !***********************************
