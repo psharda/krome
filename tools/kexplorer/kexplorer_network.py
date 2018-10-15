@@ -622,6 +622,8 @@ class network:
 					#get abundance and time data
 					x = self.elements[spec].timeData[blockIdx]
 					y = self.elements[spec].abundanceData[blockIdx]
+					if(y[0] == 0):
+						y[0] = self.minAbundance
 					plt.semilogy(x,y,s+m,color=c,markevery=5)
 
 					#plot fake points for legend of markers
