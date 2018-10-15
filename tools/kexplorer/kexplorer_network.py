@@ -519,9 +519,19 @@ class network:
 			# Try best/newest matplotlib option (OPTION 2).
 			# If not present, then do OPTION 1.
 			# print zMin, zMax
+			if z.min() < zMin and z.max() > zMax:
+				extend = 'both'
+			elif z.min() < zMin:
+				extend = 'min'
+			elif z.max() > zMax:
+				extend = 'max'
+			else:
+				extend = 'neither'
+
+
 			try:
 				# print 'zzzz'
-				plt.contourf(x, y, z, levels=levs, extend='min',
+				plt.contourf(x, y, z, levels=levs, extend=extend,
 							cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
 				# plt.show()
 			except(ValueError,), err:
@@ -546,7 +556,7 @@ class network:
 
 		#make plot labels
 		#BUG sometime there are no labels/ticks on the colorbar...
-		plt.colorbar(label='Number density', extend='min')
+		plt.colorbar(label='Number density')
 		plt.yscale('log')
 		if evolution:
 			plt.title('Abundance of %s time step %03i' %(atom,idxTime))
