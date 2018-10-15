@@ -20,6 +20,8 @@ class network:
 	xvarFormat = "%e" #format of independent variable
 	minAbundance = 1e-20 #minimum mass fraction to plot
 	maxAbundance = 1e10 #maximum mass fraction to plot
+	abundaceName = "" #name of abundance variable
+	abundaceUnits = "" #unit of abundance variable
 	reaFormat = "idx,R,R,R,P,P,P,P,Tmin,Tmax,rate" #default format
 	rateLength = 100 #maximum length of rate
 
@@ -571,7 +573,7 @@ class network:
 
 		#make plot labels
 		#BUG sometime there are no labels/ticks on the colorbar...
-		plt.colorbar(label='Number density')
+		plt.colorbar(label='{} ({})'.format(self.abundaceName, self.abundaceUnits))
 		plt.yscale('log')
 		if evolution:
 			plt.title('Abundance of %s time step %03i' %(atom,idxTime))
@@ -580,7 +582,7 @@ class network:
 		plt.xlabel('Temperature (K)')
 		plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
 		#dump png file
-		print "Dumping colormap of %s" %(atom)
+		print "Dumping colormap of {} at {}".format(atom, pngFolder)
 		if evolution:
 			plt.savefig(pngFolder + '/%s_%03i.png' %(atom,idxTime),
 						format='png', dpi=200)
