@@ -25,8 +25,10 @@ class network:
 
 	#**********************
 	#network contructor read kexplorer file
-	def __init__(self,fileName,fileNameEvolution=None,elemInterest=None):
+	def __init__(self, fileName, fileNameEvolution=None, elemInterest=None,
+				use_SI_units=False):
 
+		self.use_SI_units = use_SI_units
 		#make dict to store element objects
 		self.elements = dict()
 		#read data from file
@@ -81,6 +83,12 @@ class network:
 		try:
 			#parse data
 			(xvar, Tgas, flux, fluxNormMax, fluxNormTot) = [float(x) for x in arow[1:6]]
+			# NOTE convert cgs to SI units
+			if self.use_SI_units:
+				# g/cm^3 to kg/m^3
+				xvar *= 1e3
+				# s^-1 cm^-3 to s^-1 m^-3
+				flux *= 1e6
 		except:
 			print "ERROR: problem while parsing line"
 			print srow
@@ -109,11 +117,20 @@ class network:
 		for row in block:
 			arow = [x for x in row.split(" ") if(x!="")]
 			(time, Tgas, xvar) = [float(x) for x in arow[0:3]]
+			#NOTE: cgs to SI untis
+			if self.use_SI_units:
+				# g/cm^3 to kg/m^3
+				xvar *= 1e3
 			for el in elemAll:
 				elIdx = self.allSpecieslist.index(el)+3
 				abundance = float(arow[elIdx])
+				#NOTE: cgs to SI untis
+				if self.use_SI_units:
+					# cm^-3 to m^-3
+					abundance *= 1e6
 				self.elements[el].addData(time, Tgas, xvar, abundance, newBlock)
 			newBlock = False
+
 
 
 	#******************
@@ -379,11 +396,9 @@ class network:
 
 
 					#limits = [globalMinimum, globalMaxmimum]
-					spec_limits[species] = np.array([spec_globalMinimum, spec_globalMaxmimum])#*1e6
+					spec_limits[species] = np.array([spec_globalMinimum, spec_globalMaxmimum])
 
-		all_limits = np.array([all_globalMinimum, all_globalMaxmimum])#*1e6
-		print all_limits
-		print spec_limits
+		all_limits = np.array([all_globalMinimum, all_globalMaxmimum])
 
 		for species in speciesTodo:
 			for timeIndex in range(timeStart,timeStop):
