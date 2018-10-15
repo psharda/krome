@@ -1,9 +1,8 @@
 import kexplorer_reaction,kexplorer_element,kexplorer_utils, figureSettings
 import sys,subprocess,os,glob,json,datetime
 
-import itertools #added by Jels Boulangier 30/03/2017
+import itertools
 ########################################
-#added by Jels Boulangier 05/04/2017
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -19,7 +18,6 @@ class network:
 	xvarName = "" #name of independent variable
 	xvarUnits = "" #units of independent variable
 	xvarFormat = "%e" #format of independent variable
-	#added by Jels Boulangier 05/04/2017
 	minAbundance = 1e-20 #minimum mass fraction to plot
 	maxAbundance = 1e10 #maximum mass fraction to plot
 	reaFormat = "idx,R,R,R,P,P,P,P,Tmin,Tmax,rate" #default format
@@ -43,7 +41,6 @@ class network:
 
 		#uses evolution data only if file name is present
 		if fileNameEvolution:
-			#added by Jels Boulangier 05/04/2017
 			#read data from file
 			fg = open(fileNameEvolution,"rb")
 			#list of all elements
@@ -101,7 +98,6 @@ class network:
 
 	#**********************
 	#add element data per block in the input file
-	#added by Jels Boulangier 05/04/2017
 	def addElement(self,block,elemAll):
 		newBlock = True
 		#create element objects
@@ -123,7 +119,6 @@ class network:
 	#******************
 	#find all unique Tgas,xvar values
 	#useful for determining the (tgas,xvar)-grid
-	#added by Jels Boulangier 05/04/2017
 	def getRangeTgasXvar(self):
 		#find unique xvar/Tgas values (take first as random choice of element)
 		xvarUniqueSet = set([i[0] for i in self.elements[self.elements.keys()[0]].xvarData])
@@ -143,7 +138,7 @@ class network:
 		self.atomBase = atom
 
 		self.bestReactions = []
-		self.bestReactionsIdx = [] #added by Jels Boulangier 30/03/2017
+		self.bestReactionsIdx = []
 		#loop on reactions to find criteria
 		for (idx,reaction) in self.reactions.iteritems():
 			if(atom!=None):
@@ -154,7 +149,7 @@ class network:
 			#if percent flux greater than treshold then store reaction
 			if(max(reaction.fluxNormTotData)>threshold):
 				self.bestReactions.append(reaction)
-				self.bestReactionsIdx.append(idx) #added by Jels Boulangier 30/03/2017
+				self.bestReactionsIdx.append(idx)
 
 		#if no reactions found rise error
 		if(len(self.bestReactions)==0):
@@ -343,8 +338,8 @@ class network:
 
 	#******************
 	#make (T,xvar) color plot of ALL element abundances
-	#added by Jels Boulangier 11/04/2017
-	def abundanceColormapAll(self,elemInt=None,timeEvolution=False,pngFolder="pngs"):
+	def abundanceColormapAll(self, elemInt=None, timeEvolution=False,
+							same_colour_scale=False, pngFolder="pngs"):
 
 		if elemInt:
 			#do for elements of interest
@@ -360,21 +355,43 @@ class network:
 		else:
 			timeStart = -1
 			timeStop = 0
+
+		all_globalMinimum = 1e64
+		all_globalMaxmimum = 0
+		spec_limits = dict()
+
 		for species in speciesTodo:
 			for timeIndex in range(timeStart,timeStop):
 				if timeIndex==timeStart:
-					globalMinimum = 1e64
-					globalMaxmimum = 0
+					spec_globalMinimum = 1e64
+					spec_globalMaxmimum = 0
 					for i in self.elements[species].abundanceData:
 						for j in i:
-							if j < globalMinimum and j != 0:
-								globalMinimum = j
-							if j > globalMaxmimum:
-								globalMaxmimum = j
+							if j < spec_globalMinimum and j != 0:
+								spec_globalMinimum = j
+							if j > spec_globalMaxmimum:
+								spec_globalMaxmimum = j
 
-					limits = [globalMinimum, globalMaxmimum]
+							if j < all_globalMinimum and j != 0:
+								all_globalMinimum = j
+							if j > all_globalMaxmimum:
+								all_globalMaxmimum = j
 
-				self.abundanceColormap(species, timeIndex, limits, pngFolder)
+
+					#limits = [globalMinimum, globalMaxmimum]
+					spec_limits[species] = np.array([spec_globalMinimum, spec_globalMaxmimum])#*1e6
+
+		all_limits = np.array([all_globalMinimum, all_globalMaxmimum])#*1e6
+		print all_limits
+		print spec_limits
+
+		for species in speciesTodo:
+			for timeIndex in range(timeStart,timeStop):
+				if not same_colour_scale:
+					limits = spec_limits[species]
+				else:
+					limits = all_limits
+				self.abundanceColormap(species, timeIndex, limits, same_colour_scale, pngFolder)
 
 
 	#******************
@@ -402,8 +419,8 @@ class network:
 
 	#******************
 	#make (T,xvar) color plot of element abundances
-	#added by Jels Boulangier 05/04/2017
-	def abundanceColormap(self,atom,idxTime=-1,limits=None,pngFolder="pngs"):
+	def abundanceColormap(self,atom,idxTime=-1,limits=None,
+						same_colour_scale=False, pngFolder="pngs"):
 
 		print "Making abundance colormap of %s" %(atom)
 
@@ -425,7 +442,7 @@ class network:
 		x = np.reshape(x,(Nrow, Ncol))
 		y = np.reshape(y,(Nrow, Ncol))
 
-		if evolution:
+		if evolution or same_colour_scale:
 			zMin = max(limits[0],self.minAbundance)
 			zMax = min(limits[1],self.maxAbundance)
 
@@ -548,7 +565,6 @@ class network:
 
 	#******************
 	#get the block index of a (Tgas,xvar) combo
-	#added by Jels Boulangier 05/04/2017
 	def getIdxTgasXvar(self,xvar,tgas):
 
 		idxTgas = self.tgasUnique.index(tgas)
@@ -561,7 +577,6 @@ class network:
 
 	#******************
 	#make plot of element evolution in (T,xvar)-space
-	#added by Jels Boulangier 05/04/2017
 	def abundanceEvolution(self,species,tgasInt,xvarInt,pngFolder="pngs"):
 
 		markers = ['D','+','*','o','s','x','v','3','d','8']
