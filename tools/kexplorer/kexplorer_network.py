@@ -477,6 +477,15 @@ class network:
 		# to avoid NaNs
 		z[z < 1e-60] = 1e-60
 
+		if z.min() < zMin and z.max() > zMax:
+			extend = 'both'
+		elif z.min() < zMin:
+			extend = 'min'
+		elif z.max() > zMax:
+			extend = 'max'
+		else:
+			extend = 'neither'
+
 		#create image
 		if(zRange>10):
 			# logaritmic colorbar
@@ -529,38 +538,41 @@ class network:
 			# 			cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
 
 			## OPTION 2:
-			exp_min = np.floor(np.log10(zMin))
-			exp_max = np.ceil(np.log10(zMax)+1)
-			lev_exp = np.arange(exp_min, exp_max)
+			# Make contour levels with exponent steps of 'exp_step'
+			exp_step = 0.5
+
+			log_min = np.log10(zMin)
+			log_max = np.log10(zMax)
+			cmin = 0
+			cmax = 0
+			if log_min < 0 and log_min%exp_step !=0:
+				cmin = 1
+			if log_max > 0 and log_max%exp_step !=0:
+				cmax = 1
+			exp_min = (int(log_min/exp_step) - cmin)*exp_step
+			exp_max = (int(log_max/exp_step) + cmax)*exp_step
+			# lev_max = exp_max - 1*np.sign(log_max)*exp_step
+			lev_exp = np.arange(exp_min, exp_max+exp_step, exp_step)
 			levs = np.power(10, lev_exp)
 			# Try best/newest matplotlib option (OPTION 2).
 			# If not present, then do OPTION 1.
-			# print zMin, zMax
-			if z.min() < zMin and z.max() > zMax:
-				extend = 'both'
-			elif z.min() < zMin:
-				extend = 'min'
-			elif z.max() > zMax:
-				extend = 'max'
-			else:
-				extend = 'neither'
 
 
 			try:
-				# print 'zzzz'
 				plt.contourf(x, y, z, levels=levs, extend=extend,
 							cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
-				# plt.show()
+
+
 			except(ValueError,), err:
 				# replace this with the pcolormesh option if desired.
-				exp_min = np.floor(np.log10(zMin)-1)
-				exp_max = np.ceil(np.log10(zMax)+1)
-				lev_exp = np.arange(exp_min, exp_max)
+				exp_min = np.floor(np.log10(zMin)-exp_step)
+				exp_max = np.ceil(np.log10(zMax)+exp_step)
+				lev_exp = np.arange(exp_min, exp_max, exp_step)
 				levs = np.power(10, lev_exp)
 				#replace all values below lower limit, with lower limit.
 				z[z < levs[0] ] = levs[0]
 
-				plt.contourf(x, y, z, levels=levs,
+				plt.contourf(x, y, z, levels=levs, extend=extend,
 							cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
 
 		else:
