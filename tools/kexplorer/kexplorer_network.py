@@ -22,6 +22,7 @@ class network:
 	maxAbundance = 1e10 #maximum mass fraction to plot
 	abundaceName = "" #name of abundance variable
 	abundaceUnits = "" #unit of abundance variable
+	timeUnits = "s" #unit of time variable
 	reaFormat = "idx,R,R,R,P,P,P,P,Tmin,Tmax,rate" #default format
 	rateLength = 100 #maximum length of rate
 
@@ -697,14 +698,28 @@ class network:
 
 		#make plot labels
 		#BUG sometime there are no labels/ticks on the colorbar...
-		plt.colorbar(label='{} ({})'.format(self.abundaceName, self.abundaceUnits))
-		plt.yscale('log')
-		if evolution:
-			plt.title('Abundance of %s time step %03i' %(atom,idxTime))
+		if self.abundaceUnits:
+			plt.colorbar(label='{} ({})'.format(self.abundaceName, self.abundaceUnits)
+						).ax.minorticks_off()
 		else:
-			plt.title('Fractional abundance of %s' %(atom))
+			plt.colorbar(label='{}'.format(self.abundaceName)
+						).ax.minorticks_off()
+
+		# NOTE: User can locally change some options.
+		# Often used options are already set or commented out.
+		if not time_xvar:
+			plt.yscale('log')
+
+		# if evolution:
+			# plt.title('Abundance of %s time step %03i' %(atom,idxTime))
+		# else:
+		# 	plt.title('Fractional abundance of %s' %(atom))
+
 		plt.xlabel('Temperature (K)')
-		plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
+
+		# plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
+		plt.ylabel('Time ({})'.format(self.timeUnits))
+
 		#dump png file
 		print "Dumping colormap of {} at {}".format(atom, pngFolder)
 		if evolution:
@@ -792,8 +807,8 @@ class network:
 
 		#make plot labels
 		plt.title('Abundance evolution of %s' %(spec))
-		plt.xlabel('Time (s)')
-		plt.ylabel("Mass fraction")
+		plt.xlabel('Time ({})'.format(self.timeUnits))
+		plt.ylabel('{} ({})'.format(self.abundaceName, self.abundaceUnits))
 		plt.xlim(xmin=0,xmax=x[-1])
 		plt.ylim(ymin=self.minAbundance)
 		#dump png file
