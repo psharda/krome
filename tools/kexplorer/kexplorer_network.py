@@ -1,9 +1,8 @@
 import kexplorer_reaction,kexplorer_element,kexplorer_utils, figureSettings
 import sys,subprocess,os,glob,json,datetime
 
-import itertools #added by Jels Boulangier 30/03/2017
+import itertools
 ########################################
-#added by Jels Boulangier 05/04/2017
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -19,16 +18,20 @@ class network:
 	xvarName = "" #name of independent variable
 	xvarUnits = "" #units of independent variable
 	xvarFormat = "%e" #format of independent variable
-	#added by Jels Boulangier 05/04/2017
 	minAbundance = 1e-20 #minimum mass fraction to plot
 	maxAbundance = 1e10 #maximum mass fraction to plot
+	abundaceName = "" #name of abundance variable
+	abundaceUnits = "" #unit of abundance variable
+	timeUnits = "s" #unit of time variable
 	reaFormat = "idx,R,R,R,P,P,P,P,Tmin,Tmax,rate" #default format
 	rateLength = 100 #maximum length of rate
 
 	#**********************
 	#network contructor read kexplorer file
-	def __init__(self,fileName,fileNameEvolution=None,elemInterest=None):
+	def __init__(self, fileName, fileNameEvolution=None, elemInterest=None,
+				use_SI_units=False):
 
+		self.use_SI_units = use_SI_units
 		#make dict to store element objects
 		self.elements = dict()
 		#read data from file
@@ -43,7 +46,6 @@ class network:
 
 		#uses evolution data only if file name is present
 		if fileNameEvolution:
-			#added by Jels Boulangier 05/04/2017
 			#read data from file
 			fg = open(fileNameEvolution,"rb")
 			#list of all elements
@@ -84,6 +86,12 @@ class network:
 		try:
 			#parse data
 			(xvar, Tgas, flux, fluxNormMax, fluxNormTot) = [float(x) for x in arow[1:6]]
+			# NOTE convert cgs to SI units
+			if self.use_SI_units:
+				# g/cm^3 to kg/m^3
+				xvar *= 1e3
+				# s^-1 cm^-3 to s^-1 m^-3
+				flux *= 1e6
 		except:
 			print "ERROR: problem while parsing line"
 			print srow
@@ -101,7 +109,6 @@ class network:
 
 	#**********************
 	#add element data per block in the input file
-	#added by Jels Boulangier 05/04/2017
 	def addElement(self,block,elemAll):
 		newBlock = True
 		#create element objects
@@ -113,17 +120,25 @@ class network:
 		for row in block:
 			arow = [x for x in row.split(" ") if(x!="")]
 			(time, Tgas, xvar) = [float(x) for x in arow[0:3]]
+			#NOTE: cgs to SI untis
+			if self.use_SI_units:
+				# g/cm^3 to kg/m^3
+				xvar *= 1e3
 			for el in elemAll:
 				elIdx = self.allSpecieslist.index(el)+3
 				abundance = float(arow[elIdx])
+				#NOTE: cgs to SI untis
+				if self.use_SI_units:
+					# cm^-3 to m^-3
+					abundance *= 1e6
 				self.elements[el].addData(time, Tgas, xvar, abundance, newBlock)
 			newBlock = False
+
 
 
 	#******************
 	#find all unique Tgas,xvar values
 	#useful for determining the (tgas,xvar)-grid
-	#added by Jels Boulangier 05/04/2017
 	def getRangeTgasXvar(self):
 		#find unique xvar/Tgas values (take first as random choice of element)
 		xvarUniqueSet = set([i[0] for i in self.elements[self.elements.keys()[0]].xvarData])
@@ -136,6 +151,29 @@ class network:
 		self.tgasRange = len(self.tgasUnique)
 
 	#******************
+	# get index of xvar
+	def getIdxXvar(self, xvar):
+		return self.xvarUnique.index(xvar)
+
+
+	#******************
+	# get index of Tgas
+	def getIdxTgas(self, tgas):
+		return self.tgasUnique.index(tgas)
+
+
+	#******************
+	#get the block index of a (Tgas,xvar) combo
+	def getIdxTgasXvar(self,xvar,tgas):
+
+		idxTgas = self.getIdxTgas(tgas)
+		idxXvar = self.getIdxXvar(xvar)
+
+		# TgasRange amount of blocks per xvar value
+		idxBlock = idxXvar*self.tgasRange + idxTgas
+
+		return idxBlock
+	#******************
 	#search for most fluxy reactions
 	def findBest(self,threshold=.05,atom=None):
 
@@ -143,7 +181,7 @@ class network:
 		self.atomBase = atom
 
 		self.bestReactions = []
-		self.bestReactionsIdx = [] #added by Jels Boulangier 30/03/2017
+		self.bestReactionsIdx = []
 		#loop on reactions to find criteria
 		for (idx,reaction) in self.reactions.iteritems():
 			if(atom!=None):
@@ -154,7 +192,7 @@ class network:
 			#if percent flux greater than treshold then store reaction
 			if(max(reaction.fluxNormTotData)>threshold):
 				self.bestReactions.append(reaction)
-				self.bestReactionsIdx.append(idx) #added by Jels Boulangier 30/03/2017
+				self.bestReactionsIdx.append(idx)
 
 		#if no reactions found rise error
 		if(len(self.bestReactions)==0):
@@ -343,8 +381,11 @@ class network:
 
 	#******************
 	#make (T,xvar) color plot of ALL element abundances
-	#added by Jels Boulangier 11/04/2017
-	def abundanceColormapAll(self,elemInt=None,timeEvolution=False,pngFolder="pngs"):
+	def abundanceColormapAll(self, elemInt=None, norm_atom=None,
+							norm_time_step=None, timeEvolution=False,
+							time_xvar=False, xvar_point=None,
+							same_colour_scale=False,
+							force_log_scale=False, pngFolder="pngs"):
 
 		if elemInt:
 			#do for elements of interest
@@ -360,21 +401,56 @@ class network:
 		else:
 			timeStart = -1
 			timeStop = 0
+
+		if time_xvar:
+			idx_xvar = self.getIdxXvar(xvar_point)
+			Tgas_len = len(self.tgasUnique)
+			xvar_start = idx_xvar * Tgas_len
+			xvar_stop = xvar_start + Tgas_len
+			# abundaceData = self.elements[species].abundanceData[xvar_start:xvar_stop]
+
+		else:
+			xvar_start = None
+			xvar_stop = None
+			# abundaceData = self.elements[species].abundanceData
+
+		all_globalMinimum = 1e64
+		all_globalMaxmimum = 0
+		spec_limits = dict()
+
 		for species in speciesTodo:
 			for timeIndex in range(timeStart,timeStop):
 				if timeIndex==timeStart:
-					globalMinimum = 1e64
-					globalMaxmimum = 0
-					for i in self.elements[species].abundanceData:
+					spec_globalMinimum = 1e64
+					spec_globalMaxmimum = 0
+					for i in self.elements[species].abundanceData[xvar_start:xvar_stop]:
 						for j in i:
-							if j < globalMinimum and j != 0:
-								globalMinimum = j
-							if j > globalMaxmimum:
-								globalMaxmimum = j
+							if j < spec_globalMinimum and j != 0:
+								spec_globalMinimum = j
+							if j > spec_globalMaxmimum:
+								spec_globalMaxmimum = j
 
-					limits = [globalMinimum, globalMaxmimum]
+							if j < all_globalMinimum and j != 0:
+								all_globalMinimum = j
+							if j > all_globalMaxmimum:
+								all_globalMaxmimum = j
 
-				self.abundanceColormap(species, timeIndex, limits, pngFolder)
+					#limits = [globalMinimum, globalMaxmimum]
+					spec_limits[species] = np.array([spec_globalMinimum, spec_globalMaxmimum])
+
+		all_limits = np.array([all_globalMinimum, all_globalMaxmimum])
+
+		for species in speciesTodo:
+			for timeIndex in range(timeStart,timeStop):
+				if not same_colour_scale:
+					limits = spec_limits[species]
+				else:
+					limits = all_limits
+				self.abundanceColormap(species, timeIndex, norm_atom,
+										norm_time_step, limits,
+										time_xvar, xvar_point,
+										same_colour_scale,
+										force_log_scale, pngFolder)
 
 
 	#******************
@@ -402,8 +478,10 @@ class network:
 
 	#******************
 	#make (T,xvar) color plot of element abundances
-	#added by Jels Boulangier 05/04/2017
-	def abundanceColormap(self,atom,idxTime=-1,limits=None,pngFolder="pngs"):
+	def abundanceColormap(self, atom, idxTime=-1, norm_atom=None,
+						norm_time_step=None, limits=None, time_xvar=False,
+						xvar_point=None, same_colour_scale=False,
+						force_log_scale=False, pngFolder="pngs"):
 
 		print "Making abundance colormap of %s" %(atom)
 
@@ -412,20 +490,89 @@ class network:
 		else:
 			evolution = False
 
+		if not time_xvar:
+			#get variable data after last time step
+			x = [i[idxTime] for i in self.elements[atom].tgasData]
+			y = [i[idxTime] for i in self.elements[atom].xvarData]
+			z = [i[idxTime] for i in self.elements[atom].abundanceData]
 
-		#get variable data after last time step
-		x = [i[idxTime] for i in self.elements[atom].tgasData]
-		y = [i[idxTime] for i in self.elements[atom].xvarData]
-		z = [i[idxTime] for i in self.elements[atom].abundanceData]
+		else:
+			# reshape data structure to be useful for (time, T) color plot
+			# NOTE the structure from the input file is used there
+			# the blocks of csv data in the input file assume xvar to be
+			# to be constant the longest and T to vary fasterself.
+			# This corresponds to xvar being the outer for loop when running
+			# your KROME model.
+			# TODO A more flexible/better way of storing the input data should fix
+			# this harcoded structure.
+			# print("WARNING: Make sure that these plots make sense. You might "
+			# 	"have to switch x and y lists. See comment in source code.")
+
+			t = self.elements[atom].timeData[0]
+
+			x = [self.tgasUnique] *len(t)
+			y = [ [i]*len(self.tgasUnique) for i in t]
+
+			idx_xvar = self.getIdxXvar(xvar_point)
+			Tgas_len = len(self.tgasUnique)
+			xvar_start = idx_xvar * Tgas_len
+			xvar_stop = xvar_start + Tgas_len
+
+
+			z = [ [i[id] for i in self.elements[atom].abundanceData[xvar_start:xvar_stop]
+					] for id in range(len(t))
+				]
+
+		# normalise abundace w.r.t. some ref species at a certain time step.
+		# Default is same time step. Init (idx=0) is probably most useful.
+		if norm_atom:
+			norm_idx = idxTime
+			# add is not None to avoid False when norm_time_step is 0
+			if norm_time_step is not None:
+				norm_idx = norm_time_step
+
+			if not time_xvar:
+				zref = [i[norm_idx] for i in self.elements[norm_atom].abundanceData]
+				z = [ i/j for i,j in zip(z, zref)]
+
+			else:
+				zref =  self.elements[norm_atom].abundanceData[xvar_start][norm_idx]
+				z = [ [i/zref for i in j] for j in z]
+
+			# Print warnings
+			for i in range(len(z)):
+				if z[i] > 1:
+					print "WARNING: value is larger than normiliser value."
+					print "This should not happen..."
+					print "It occurs at: T = {} and {} = {}".format(x[i], self.xvarName, y[i])
+					print "where the ratio is {}\n".format(z[i])
+
+			# if max(z) > 1:
+			# 	print 'MAX', max(z), max(zref)
+			# 	print "It occurs at: T = {} and {} = {}".format(x[i], self.xvarName, y[i])
+
+
 
 		#create matrix for image plot
-		Ncol = len(set(x))
-		Nrow = len(set(y))
-		z = np.reshape(z,(Nrow, Ncol))
-		x = np.reshape(x,(Nrow, Ncol))
-		y = np.reshape(y,(Nrow, Ncol))
+		if not time_xvar:
+			Ncol = len(set(x))
+			Nrow = len(set(y))
+			# Nrow = len(y[0])
+			z = np.reshape(z,(Nrow, Ncol))
+			x = np.reshape(x,(Nrow, Ncol))
+			y = np.reshape(y,(Nrow, Ncol))
 
-		if evolution:
+		else:
+			z = np.asarray(z)
+			x = np.asarray(x)
+			y = np.asarray(y)
+
+
+		# Artificially lower the unrealistic normalised values
+		if norm_atom:
+			z[z > 1] = 1
+
+		if evolution or same_colour_scale:
 			zMin = max(limits[0],self.minAbundance)
 			zMax = min(limits[1],self.maxAbundance)
 
@@ -443,8 +590,17 @@ class network:
 		# to avoid NaNs
 		z[z < 1e-60] = 1e-60
 
+		if z.min() < zMin and z.max() > zMax:
+			extend = 'both'
+		elif z.min() < zMin:
+			extend = 'min'
+		elif z.max() > zMax:
+			extend = 'max'
+		else:
+			extend = 'neither'
+
 		#create image
-		if(zRange>10):
+		if(zRange>10 or force_log_scale):# and not force_lin_scale):
 			# logaritmic colorbar
 			# Two options are presented here, and the user can choose
 			# by commenting one or the other
@@ -495,28 +651,41 @@ class network:
 			# 			cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
 
 			## OPTION 2:
-			exp_min = np.floor(np.log10(zMin))
-			exp_max = np.ceil(np.log10(zMax)+1)
-			lev_exp = np.arange(exp_min, exp_max)
+			# Make contour levels with exponent steps of 'exp_step'
+			exp_step = 0.5
+
+			log_min = np.log10(zMin)
+			log_max = np.log10(zMax)
+			cmin = 0
+			cmax = 0
+			if log_min < 0 and log_min%exp_step !=0:
+				cmin = 1
+			if log_max > 0 and log_max%exp_step !=0:
+				cmax = 1
+			exp_min = (int(log_min/exp_step) - cmin)*exp_step
+			exp_max = (int(log_max/exp_step) + cmax)*exp_step
+			# lev_max = exp_max - 1*np.sign(log_max)*exp_step
+			lev_exp = np.arange(exp_min, exp_max+exp_step, exp_step)
 			levs = np.power(10, lev_exp)
 			# Try best/newest matplotlib option (OPTION 2).
 			# If not present, then do OPTION 1.
-			# print zMin, zMax
+
+
 			try:
-				# print 'zzzz'
-				plt.contourf(x, y, z, levels=levs, extend='min',
+				plt.contourf(x, y, z, levels=levs, extend=extend,
 							cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
-				# plt.show()
+
+
 			except(ValueError,), err:
 				# replace this with the pcolormesh option if desired.
-				exp_min = np.floor(np.log10(zMin)-1)
-				exp_max = np.ceil(np.log10(zMax)+1)
-				lev_exp = np.arange(exp_min, exp_max)
+				exp_min = np.floor(np.log10(zMin)-exp_step)
+				exp_max = np.ceil(np.log10(zMax)+exp_step)
+				lev_exp = np.arange(exp_min, exp_max, exp_step)
 				levs = np.power(10, lev_exp)
 				#replace all values below lower limit, with lower limit.
 				z[z < levs[0] ] = levs[0]
 
-				plt.contourf(x, y, z, levels=levs,
+				plt.contourf(x, y, z, levels=levs, extend=extend,
 							cmap='viridis', norm=colors.LogNorm(vmin=zMin, vmax=zMax))
 
 		else:
@@ -529,16 +698,30 @@ class network:
 
 		#make plot labels
 		#BUG sometime there are no labels/ticks on the colorbar...
-		plt.colorbar(label='Number density', extend='min')
-		plt.yscale('log')
-		if evolution:
-			plt.title('Abundance of %s time step %03i' %(atom,idxTime))
+		if self.abundaceUnits:
+			plt.colorbar(label='{} ({})'.format(self.abundaceName, self.abundaceUnits)
+						).ax.minorticks_off()
 		else:
-			plt.title('Fractional abundance of %s' %(atom))
+			plt.colorbar(label='{}'.format(self.abundaceName)
+						).ax.minorticks_off()
+
+		# NOTE: User can locally change some options.
+		# Often used options are already set or commented out.
+		if not time_xvar:
+			plt.yscale('log')
+
+		# if evolution:
+			# plt.title('Abundance of %s time step %03i' %(atom,idxTime))
+		# else:
+		# 	plt.title('Fractional abundance of %s' %(atom))
+
 		plt.xlabel('Temperature (K)')
-		plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
+
+		# plt.ylabel(r'%s (%s)' %(self.xvarName,self.xvarUnits))
+		plt.ylabel('Time ({})'.format(self.timeUnits))
+
 		#dump png file
-		print "Dumping colormap of %s" %(atom)
+		print "Dumping colormap of {} at {}".format(atom, pngFolder)
 		if evolution:
 			plt.savefig(pngFolder + '/%s_%03i.png' %(atom,idxTime),
 						format='png', dpi=200)
@@ -546,22 +729,10 @@ class network:
 			plt.savefig(pngFolder + '/%s' %(atom))
 		plt.close()
 
-	#******************
-	#get the block index of a (Tgas,xvar) combo
-	#added by Jels Boulangier 05/04/2017
-	def getIdxTgasXvar(self,xvar,tgas):
 
-		idxTgas = self.tgasUnique.index(tgas)
-		idxXvar = self.xvarUnique.index(xvar)
-
-		# TgasRange amount of blocks per xvar value
-		idxBlock = idxXvar*self.tgasRange + idxTgas
-
-		return idxBlock
 
 	#******************
 	#make plot of element evolution in (T,xvar)-space
-	#added by Jels Boulangier 05/04/2017
 	def abundanceEvolution(self,species,tgasInt,xvarInt,pngFolder="pngs"):
 
 		markers = ['D','+','*','o','s','x','v','3','d','8']
@@ -597,6 +768,8 @@ class network:
 					#get abundance and time data
 					x = self.elements[spec].timeData[blockIdx]
 					y = self.elements[spec].abundanceData[blockIdx]
+					if(y[0] == 0):
+						y[0] = self.minAbundance
 					plt.semilogy(x,y,s+m,color=c,markevery=5)
 
 					#plot fake points for legend of markers
@@ -634,8 +807,8 @@ class network:
 
 		#make plot labels
 		plt.title('Abundance evolution of %s' %(spec))
-		plt.xlabel('Time (s)')
-		plt.ylabel("Mass fraction")
+		plt.xlabel('Time ({})'.format(self.timeUnits))
+		plt.ylabel('{} ({})'.format(self.abundaceName, self.abundaceUnits))
 		plt.xlim(xmin=0,xmax=x[-1])
 		plt.ylim(ymin=self.minAbundance)
 		#dump png file
