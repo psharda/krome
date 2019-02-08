@@ -1,5 +1,6 @@
 import sys,species,utils,os,urllib
 import ratefunctions
+from copy import copy
 from math import log10,log,exp,sqrt,pi
 
 class reaction:
@@ -1451,7 +1452,7 @@ class reaction:
 
         symboltable = utils.getSymbolTable()
 
-        originalRate = rate
+        originalRate = copy(rate)
 
         #put all variables with corresponding values in rate
         if variableShortcuts:
@@ -1474,7 +1475,7 @@ class reaction:
         rate = re.sub("\\+ *\\-", "-", rate) # Replace + - by -
 
         # store for debugging
-        rateTexAfterShortcutsReplaced = rate
+        rateTexAfterShortcutsReplaced = copy(rate)
 
         #transform to LaTeX format
         #keep trying
@@ -1505,14 +1506,14 @@ class reaction:
                 return "=" + rate, message, 1
 
         # store for debugging
-        rateTextAfterSympy = rateTex
+        rateTextAfterSympy = copy(rateTex)
 
 
         if opts.latex_backend == "pytexit":
             rateTex = utils.replaceSymbols(rateTex)
 
         # store for debugging
-        rateTextAfterReplaceSymbols = rateTex
+        rateTextAfterReplaceSymbols = copy(rateTex)
 
         #fix mistakes by sympy
         #no 10^{} for short rates
@@ -1534,7 +1535,7 @@ class reaction:
             pass
 
         # store for debugging
-        rateTextAfterReplaceExpNot = rateTex
+        rateTextAfterReplaceExpNot = copy(rateTex)
 
 
         # old algorithm
@@ -1614,7 +1615,7 @@ class reaction:
                     rateTex = restStringOriginal + fracStringReplace
 
         # store for debugging
-        rateTextAfterLargeFractsToExp = rateTex
+        rateTextAfterLargeFractsToExp = copy(rateTex)
 
         # replaces fractions with numerator = 1 and denominators with power
         # their inversed denominator
@@ -1631,7 +1632,7 @@ class reaction:
         rateTex = re.sub(r'(\d+\.[0-9]{'+str(opts.truncate_numbers)+'})\d*', r'\1', rateTex)
 
         rateTex = re.sub("([ \)_]*)idx_{([A-Za-z0-9_]{1,})}", r"\1idx_\2", rateTex)
-        rateTexIdxReplaced = rateTex
+        rateTexIdxReplaced = copy(rateTex)
 
         # Rename number density, e.g. n(idx_H) -> n_idx_H
         # "(?<!\l)" is a negative lookback that ensures "\ln{...}" is not
@@ -1640,11 +1641,11 @@ class reaction:
         # Rename species id to name wrapped in \ch, e.g. idx_H2 -> \ch{H2}
         rateTex = re.sub("([ \)_]*)idx_([A-Za-z0-9_]{1,})( *)", r"\1\ch{\2}\3", rateTex)
 
-        rateTexBeforeReplacePm = rateTex
+        rateTexBeforeReplacePm = copy(rateTex)
         rateTex = re.sub("\\+ *\\-", "-", rateTex) # Replace + - by -
 
         # store rate before breaking
-        rateTextFull = rateTex
+        rateTextFull = copy(rateTex)
 
         #break long rates in multiple lines
         if len(rateTex) > opts.max_fraction_length:
