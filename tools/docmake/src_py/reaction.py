@@ -1440,6 +1440,14 @@ class reaction:
             import pytexit
         elif opts.latex_backend == "sympy":
             import sympy as sp
+            num = sp.__version__.count('.')-1
+            sp_version = float(sp.__version__.rsplit('.',num)[0])
+            if sp_version >= 1.3:
+                print("ERROR: The LaTeX conversion currently only works with and older"
+                      " version of SymPy (<1.3). Symbols no longer automatically"
+                      " convert to functions when called."
+                        )
+                sys.exit()
         else:
             print("WARNING: Option '{}' is not reconized as LaTeX convertor"
                   + "Adapt the '{}' file").format(opts.latex_backend, opts.__name__)
@@ -1775,6 +1783,15 @@ class reaction:
     #temperature rage to LateX format
     def tempRange2latex(self, idxMerged):
         import sympy as sp
+        num = sp.__version__.count('.')-1
+        sp_version = float(sp.__version__.rsplit('.',num)[0])
+        if sp_version >= 1.3:
+            print("ERROR: The LaTeX conversion currently only works with and older"
+                  " version of SymPy (<1.3). Symbols no longer automatically"
+                  " convert to functions when called."
+                    )
+            sys.exit()
+
         #change limits to uniform format
         low = utils.simplifyLimits(self.Tmin[idxMerged])
         high = utils.simplifyLimits(self.Tmax[idxMerged])

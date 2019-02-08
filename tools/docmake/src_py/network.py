@@ -116,10 +116,10 @@ class network:
 
         #prepare graphs
         self.makeGraph()
-        
+
         #prepare html
         self.makeHTML()
-        
+
         #plot all rates
         self.plotRates()
 
@@ -277,6 +277,16 @@ class network:
         from options import latexoptions as opt
         import pytexit
         import utils
+
+        num = sp.__version__.count('.')-1
+        sp_version = float(sp.__version__.rsplit('.',num)[0])
+        if sp_version >= 1.3:
+            print("ERROR: The LaTeX conversion currently only works with and older"
+                  " version of SymPy (<1.3). Symbols no longer automatically"
+                  " convert to functions when called."
+                    )
+            sys.exit()
+
         symboltable = utils.getSymbolTable()
         with open(filename, "w") as fileOutput:
             for expr, symbol in deferredShortcuts.iteritems():

@@ -1,4 +1,4 @@
-import os,datetime,math,re,regex
+import sys,os,datetime,math,re,regex
 
 #***********************
 def getHtmlProperty(item):
@@ -254,7 +254,7 @@ def replaceFracsWithInvDenominators(string, numerator):
             string = numerator + string
 
     return string
-    
+
 #********************
 #get content in parenteses
 def getParentheticContents(string, parenteses):
@@ -395,7 +395,7 @@ def replaceLongExponentByHat(rate,maxlen=100):
                         return acc + rate
                 spaces, rest = skip_spaces(fromPow)
                 exponent,rest = next_parenthesis(rest)
-                
+
                 rate = rest
                 if len(exponent) > maxlen:
                         acc += before[:-1] + spaces
@@ -437,6 +437,14 @@ def getSymbols():
 #get table of sympy symbols for latex table
 def getSymbolTable():
     import sympy as sp
+    num = sp.__version__.count('.')-1
+    sp_version = float(sp.__version__.rsplit('.',num)[0])
+    if sp_version >= 1.3:
+        print("ERROR: The LaTeX conversion currently only works with and older"
+              " version of SymPy (<1.3). Symbols no longer automatically"
+              " convert to functions when called."
+                )
+        sys.exit()
 
     symbols = getSymbols()
 
@@ -458,7 +466,7 @@ def replaceSymbols(rateTex):
             rateTex = replaceFortranVar(symtex, expr, rateTex)
         else:
             rateTex = rateTex.replace(symtex, expr)
-                  
+
     # it also leaves in factors of 1
     rateTex = re.sub(r"\\times *1\.0([^0-9\.]|$)", r"\1", rateTex)
 
