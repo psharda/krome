@@ -1730,7 +1730,7 @@ class reaction:
         rate = utils.replaceLongFracByDivide(rate, maxlen=opts.max_fraction_length)
         rate = utils.replaceLongExponentByHat(rate, maxlen=opts.max_exponent_length)
         rate = utils.replaceLeftRightbyBigLR(rate)
-        rate, numlines = utils.breakLatexEquation(rate)
+        rate, numlines = utils.breakLatexEquation(rate, maxlen=opts.max_fraction_length)
         rate = "\\begin{aligned}[t] = &" + rate + "\\end{aligned}"
         return rate, numlines
 

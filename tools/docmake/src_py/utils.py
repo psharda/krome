@@ -296,26 +296,57 @@ def replaceFortranVar(varname, replacement, string):
 
 #********************
 #adds line breaks to latex equation
-def breakLatexEquation(string):
+def breakLatexEquation(string, maxlen=100):
+    """Will continue to break a string as long as the length of one of the
+    substrings is longer than a maximum length. It will break according to the
+    order in breakChars, to avoid unnecessary line breaks. First: operators.
+    Second: commas (applicable when using user defined functions).
+    Last: +,- signs. """
+
     opened = '{'
     closed = '}'
-    depth = 0
-    breakChars = ['+', '-']
-    result = ""
-    previousWasOpenParan = False
+    # temporarily replace operator in order to break on it
+    temp_string = string.replace('\\operatorname{\\', '#{')
+    # order of most important break characters
+    breakChars = iter(['#', ',', '+', '-'])
     numlines = 1
-    for i, c in enumerate(string):
-        if c == opened:
-            depth += 1
-        elif c == closed:
-            depth -= 1
+    rateLength = len(temp_string)
+
+    if rateLength <= maxlen:
+        # Length might have decreased due to replacement of characters, exit if
+        # breaking is no longer needed
+        return string, numlines
+
+    while rateLength > maxlen:
+        # break everywhere on the current breaking character
+        # go to next character if any substring is still too long
+        # repeat.
+        previousWasOpenParan = False
+        depth = 0
+        breakChar = next(breakChars)
+        result = ""
+        for i, c in enumerate(temp_string):
+            if c == opened:
+                depth += 1
+            elif c == closed:
+                depth -= 1
             #break on breakChars unless inside block or after opening paranthesis
-        if c in breakChars and depth==0 and not previousWasOpenParan:
-            c = " \\\\ \n &" + c
-            numlines += 1
-        result += c
-        if not c in ["(", " "]: previousWasOpenParan = False
-        if c == "(": previousWasOpenParan = True
+            if c==breakChar and depth==0 and not previousWasOpenParan:
+                if c == '#':
+                    # add multiplication if break on operator (function)
+                    c = '\\cdot #'
+                c = " \\\\ \n &" + c
+                numlines += 1
+            result += c
+            if not c in ["(", " "]: previousWasOpenParan = False
+            if c == "(": previousWasOpenParan = True
+
+        temp_string = result[:]
+        # maximum length of all new substrings
+        rateLength = max([len(i) for i in result.split('\\\\')])
+
+    # Remove temporarily operator replacement
+    result = result.replace('#{', '\\operatorname{\\')
 
     return result, numlines
 
@@ -459,7 +490,6 @@ def getSymbolTable():
 # Replaces symbols with their LaTeX representation
 def replaceSymbols(rateTex):
     import pytexit
-    import re
 
     for sym, expr in getSymbols().iteritems():
         symtex = pytexit.for2tex(sym, print_latex=False, print_formula=False)[2:-2]
