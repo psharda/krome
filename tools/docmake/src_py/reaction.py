@@ -1714,8 +1714,10 @@ class reaction:
                         if len(groups) > 0:
                             Emin = groups.pop()
                         return (rate, [Emin.replace("d","e")], [Emax.replace("d","e")])
-        raise Exception("Auto rate not found in database for reaction " + self.getVerbatim())
 
+        # raise Exception("Auto rate not found in database for reaction " + self.getVerbatim())
+        print("Auto rate not found in database for reaction " + self.getVerbatim())
+        return 'auto', None, None
     #****************
     #break long rates and put in LateX table format
     def breakRateTex(self,rate):
