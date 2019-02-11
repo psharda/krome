@@ -29,6 +29,8 @@
         "user_Av" : "A_{\\mathrm{v}}",
         "user_G0" : "G_0",
         "user_crate" : "\\zeta_{\\mathrm{H}_{\\mathrm{I}}}",
+        "user_crflux": "\\zeta_{\\mathrm{H}_{\\mathrm{I}}}",
+        "Rgas_kJ": "R_{\\text{kJ}}",
         "ntot" : "n_{\\mathrm{tot}}",
         "Hnuclei" : "n_{\\mathrm{H}_{\\mathrm{tot}}}",
         "exp" : "exp",
