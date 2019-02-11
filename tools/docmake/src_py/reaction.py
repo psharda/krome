@@ -1482,9 +1482,11 @@ class reaction:
         rate = re.sub("\\*\\(1e0/([a-zA-Z][a-zA-Z0-9_]*)\\)", "/\\1", rate) # Replace *1/x by /x to avoid dangling *1 in fractions
         rate = re.sub("\\+ *\\-", "-", rate) # Replace + - by -
 
+        rate = re.sub("\[", "{", rate)
+        rate = re.sub("\]", "}", rate)
+
         # store for debugging
         rateTexAfterShortcutsReplaced = copy(rate)
-
         #transform to LaTeX format
         #keep trying
         while True:
