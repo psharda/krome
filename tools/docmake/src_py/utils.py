@@ -333,7 +333,9 @@ def raiseBracketsOnOperators(rate):
     # Solution by scary recursive regular expression
     # ?2 means 'recursively add paranthesized group #2 here'
     # See e.g. http://www.rexegg.com/regex-recursion.html
-    rate = regex.sub(r'(\operatorname\{[a-zA-Z]{1,}\})(\{(([^{}]|(?2))*)\})', r'\1\3', rate)
+    # Able to find existing mathfunctions '\operator{combinationOfLetters}'
+    # and user defined mathfunction '\operator{\myNewOperator}'
+    rate = regex.sub(r'(\operatorname\{\\?[a-zA-Z]{1,}\})(\{(([^{}]|(?2))*)\})', r'\1\3', rate)
     return rate
 
 def string_from(expr, string):
