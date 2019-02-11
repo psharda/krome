@@ -1421,7 +1421,7 @@ class reaction:
 
         #LaTeX temperature limits
         limitsTex = self.tempRange2latex(idxMerged)
-        limitsTex = "$" + limitsTex + "$"
+        limitsTex = "$" + limitsTex + " $"
 
         #k symbol
         if idxMerged==0:
