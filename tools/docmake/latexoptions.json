@@ -42,7 +42,10 @@
 	    "user_gamma_CO" : "\\mathrm{(see\\, sec.\\, \\ref{sec:external-isrf-as-diffuse-emission})}",
 	    "auto" : "\\mathrm{(see\\, ref.)}",
         "sigma_v96" : "\\int \\mathrm{d}E\\, J(E)\\, \\sigma_{\\mathrm{v96}}",
-        "energy_ev" : "E"
+        "energy_ev" : "E",
+        "general_cluster_growth_rate" : "\\operatorname{\\kClusterGrowth}",
+        "revKc_with_GFE" : "\\operatorname{\\EqRatio}",
+        "troe_falloff" : "\\operatorname{\\kTroe}"
     },
     "latex_backend" : "pytexit",
     "lines_per_page": 45,
