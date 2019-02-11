@@ -272,20 +272,21 @@ class network:
     #****************
     #dump a list of equations for deferred variables
     def dumpDeferredShortcuts(self, temperatureShortcuts, variableShortcuts, deferredShortcuts, filename="NetworkLatexSymbols.tex"):
-        import sympy as sp
         import re
         from options import latexoptions as opt
-        import pytexit
         import utils
-
-        num = sp.__version__.count('.')-1
-        sp_version = float(sp.__version__.rsplit('.',num)[0])
-        if sp_version >= 1.3:
-            print("ERROR: The LaTeX conversion currently only works with and older"
-                  " version of SymPy (<1.3). Symbols no longer automatically"
-                  " convert to functions when called."
-                    )
-            sys.exit()
+        if opt.latex_backend == "pytexit":
+            import pytexit
+        elif opt.latex_backend == "sympy":
+            import sympy as sp
+            num = sp.__version__.count('.')-1
+            sp_version = float(sp.__version__.rsplit('.',num)[0])
+            if sp_version >= 1.3:
+                print("ERROR: The LaTeX conversion currently only works with and older"
+                      " version of SymPy (<1.3). Symbols no longer automatically"
+                      " convert to functions when called."
+                        )
+                sys.exit()
 
         symboltable = utils.getSymbolTable()
         with open(filename, "w") as fileOutput:
