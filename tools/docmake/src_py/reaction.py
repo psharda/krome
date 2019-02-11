@@ -1610,9 +1610,10 @@ class reaction:
                 # rateTexSplit = re.split("\}\}",rateTex)
                 # print rateTexSplit
                 # beta = rateTexSplit[0][1:]+"}" #beta containing factor
-                if "exp" in restStringOriginal:
-                    alphaFactor, gammaFactor = restStringOriginal.split("\operatorname") #alpha and gamma factor
-                    rateTex = alphaFactor + fracStringReplace + "\operatorname" + gammaFactor
+
+                if restStringOriginal.count('exp') == 1:
+                    alphaFactor, gammaFactor = restStringOriginal.split("\operatorname{exp}") #alpha and gamma factor
+                    rateTex = alphaFactor + fracStringReplace + "\operatorname{exp}" + gammaFactor
                 elif " + " in restStringOriginal:
                     splitted = restStringOriginal.split(" + ")
                     rateTex = splitted[0] + fracStringReplace + " + " + splitted[1]
