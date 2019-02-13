@@ -326,6 +326,12 @@ def breakLatexEquation(string, maxlen=100):
         breakChar = next(breakChars)
         result = ""
         for i, c in enumerate(temp_string):
+            if i == 0:
+                #never break on first character
+                result += c
+                if not c in ["(", " "]: previousWasOpenParan = False
+                if c == "(": previousWasOpenParan = True
+                continue
             if c == opened:
                 depth += 1
             elif c == closed:
@@ -337,6 +343,7 @@ def breakLatexEquation(string, maxlen=100):
                     c = '\\cdot #'
                 c = " \\\\ \n &" + c
                 numlines += 1
+
             result += c
             if not c in ["(", " "]: previousWasOpenParan = False
             if c == "(": previousWasOpenParan = True
