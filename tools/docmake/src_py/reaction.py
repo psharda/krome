@@ -1473,7 +1473,7 @@ class reaction:
         #make sympy friendly
         rate = utils.replaceFortranVar("dexp", "exp", rate)
         rate = utils.replaceFortranVar("log", "ln", rate)
-        rate = utils.replaceFortranVar("ln10", "log", rate)
+        rate = utils.replaceFortranVar("log10", "log", rate)
         # Double prec exp notation to use e, e.g. 2d3 -> 2e3
         rate = re.sub("([0-9]*\.*[0-9]*)d([+-]*[0-9]{1,})", r"\1e\2",rate)
         # Remove double prec suffix, e.g. 1.0_8 -> 1.0
