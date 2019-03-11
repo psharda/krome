@@ -181,6 +181,8 @@ class network:
         cntTotalReactions = 1
         cntAllReactions = 0
         linesOnPage = 0
+        replace_references = {}
+        ref_cnt = 1
 
         if opts.sorted_by == 'alphabetic':
             def reaction_sort_function(x):
@@ -212,6 +214,22 @@ class network:
                                                        cnt,
                                                        cntTotalReactions,
                                                        cntAllReactions)
+
+                    # Make sure the references are in ascending order
+                    # This needs to be done if the reactions are not sorted
+                    # on index
+                    ref = latexColumns[-1]
+                    if ref == '\\dbDefault{}':
+                        pass
+                    else:
+                        try:
+                            new_ref = replace_references[ref]
+                        except KeyError:
+                            replace_references[ref] = str(ref_cnt)
+                            ref_cnt += 1
+                            new_ref = str(ref_cnt-1)
+                        latexColumns[-1] = new_ref
+
                     rateColumns.append(latexColumns)
                     messages.append(message)
                     linesInReaction += linesInRate
@@ -233,6 +251,8 @@ class network:
             self.dumpLatexEndTable(fileOutput, last=True)
 
         self.dumpDeferredShortcuts(shortcutsTemperature, shortcutsVariables, deferredShortcuts)
+        # update referenceId with new ascending reference indices
+        self.referenceId = {key:int(replace_references[str(val)]) for key, val in self.referenceId.items()}
         self.dumpLatexReferences()
 
     #****************
