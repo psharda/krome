@@ -1,0 +1,26 @@
+################
+
+reset
+set logscale
+set autoscale
+set format "%g"
+
+set ylabel "T / K"
+set xlabel "time / yr"
+set y2label "fraction"
+
+set key L rev bottom left
+set grid
+set y2tics
+set ytics nomirror
+
+nkrome = 2
+load 'species.gps'
+
+plot './data.out' w l t "Tgas" axes x1y1 lw 2, \
+	'' u 1:krome_idx_CO w l axes x1y2 t "CO", \
+	'' u 1:krome_idx_OH w l axes x1y2 t "OH", \
+	'' u 1:krome_idx_H2O w l axes x1y2 t "H2O", \
+	'' u 1:krome_idx_HCN w l axes x1y2 t "HCN" lc 0,\
+
+

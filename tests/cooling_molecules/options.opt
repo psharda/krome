@@ -1,0 +1,7 @@
+##############
+#options for test cooling_molecules
+-n networks/react_coolHCN
+-cooling=CO,OH,H2O,HCN
+-heating=CR
+-noSinkCheck
+
