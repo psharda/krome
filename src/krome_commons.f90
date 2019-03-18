@@ -206,6 +206,48 @@ module krome_commons
   real*8::coolCOdvn1,coolCOdvn2,coolCOdvn3
 #ENDIFKROME
 
+#IFKROME_useCoolingOH
+  !data for OH cooling
+  integer,parameter::coolOHn1=29
+  integer,parameter::coolOHn2=21
+  integer,parameter::coolOHn3=21
+  real*8::coolOHx1(coolOHn1),coolOHx2(coolOHn2),coolOHx3(coolOHn3)
+  real*8::coolOHixd1(coolOHn1-1),coolOHixd2(coolOHn2-1),coolOHixd3(coolOHn3-1)
+  real*8::coolOHy(coolOHn3,coolOHn2,coolOHn1)
+  real*8::coolOHx1min,coolOHx1max
+  real*8::coolOHx2min,coolOHx2max
+  real*8::coolOHx3min,coolOHx3max
+  real*8::coolOHdvn1,coolOHdvn2,coolOHdvn3
+#ENDIFKROME
+
+#IFKROME_useCoolingH2O
+  !data for H2O cooling
+  integer,parameter::coolH2On1=29
+  integer,parameter::coolH2On2=21
+  integer,parameter::coolH2On3=21
+  real*8::coolH2Ox1(coolH2On1),coolH2Ox2(coolH2On2),coolH2Ox3(coolH2On3)
+  real*8::coolH2Oixd1(coolH2On1-1),coolH2Oixd2(coolH2On2-1),coolH2Oixd3(coolH2On3-1)
+  real*8::coolH2Oy(coolH2On3,coolH2On2,coolH2On1)
+  real*8::coolH2Ox1min,coolH2Ox1max
+  real*8::coolH2Ox2min,coolH2Ox2max
+  real*8::coolH2Ox3min,coolH2Ox3max
+  real*8::coolH2Odvn1,coolH2Odvn2,coolH2Odvn3
+#ENDIFKROME
+
+#IFKROME_useCoolingHCN
+  !data for HCN cooling
+  integer,parameter::coolHCNn1=30
+  integer,parameter::coolHCNn2=21
+  integer,parameter::coolHCNn3=21
+  real*8::coolHCNx1(coolHCNn1),coolHCNx2(coolHCNn2),coolHCNx3(coolHCNn3)
+  real*8::coolHCNixd1(coolHCNn1-1),coolHCNixd2(coolHCNn2-1),coolHCNixd3(coolHCNn3-1)
+  real*8::coolHCNy(coolHCNn3,coolHCNn2,coolHCNn1)
+  real*8::coolHCNx1min,coolHCNx1max
+  real*8::coolHCNx2min,coolHCNx2max
+  real*8::coolHCNx3min,coolHCNx3max
+  real*8::coolHCNdvn1,coolHCNdvn2,coolHCNdvn3
+#ENDIFKROME
+
   !xsecs from file variables
 #KROME_xsecs_from_file
 
