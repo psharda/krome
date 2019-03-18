@@ -10,7 +10,7 @@ contains
 
 #KROME_header
 
-  !********************************
+  !*******************************
   !KROME main (interface to the solver library)
 #IFKROME_useBindC
 #IFKROME_useX
@@ -692,6 +692,21 @@ contains
 #IFKROME_useCoolingCO
     !initialize CO cooling
     call init_coolingCO()
+#ENDIFKROME
+
+#IFKROME_useCoolingOH
+    !initialize OH cooling
+    call init_coolingOH()
+#ENDIFKROME
+
+#IFKROME_useCoolingH2O
+    !initialize H2O cooling
+    call init_coolingH2O()
+#ENDIFKROME
+
+#IFKROME_useCoolingHCN
+    !initialize HCN cooling
+    call init_coolingHCN()
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIE
