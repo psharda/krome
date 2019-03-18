@@ -69,6 +69,18 @@
       cools(idx_cool_CO) = cooling_CO(n(:), Tgas) #KROME_floorCO
 #ENDIFKROME
 
+#IFKROME_useCoolingOH
+      cools(idx_cool_OH) = cooling_OH(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingH2O
+      cools(idx_cool_H2O) = cooling_H2O(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingHCN
+      cools(idx_cool_HCN) = cooling_HCN(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useCoolingAtomic
       cools(idx_cool_atomic) = cooling_Atomic(n(:), Tgas) #KROME_floorAtomic
 #ENDIFKROME
@@ -133,7 +145,7 @@
 
 #IFKROME_useCoolingCO
     !***************************
-    !CO cooling: courtesy of K.Omukai (Nov2014)
+    ! CO cooling: courtesy of K.Omukai (Nov2014)
     ! method: Neufeld+Kaufman 1993 (bit.ly/1vnjcXV, see eqn.5).
     ! see also Omukai+2010 (bit.ly/1HIaGcn)
     ! H and H2 collisions
@@ -245,11 +257,11 @@
     subroutine init_coolingCO()
       use krome_commons
       implicit none
-      integer::ios,iout(3),i
+      integer::ios,iout(3),i,unit
       real*8::rout(4)
 
       if (krome_mpi_rank<=1) print *,"load CO cooling..."
-      open(33,file="coolCO.dat",status="old",iostat=ios)
+      open(newunit=unit,file="coolCO.dat",status="old",iostat=ios)
       !check if file exists
       if(ios.ne.0) then
          print *,"ERROR: problems loading coolCO.dat!"
@@ -257,7 +269,7 @@
       end if
 
       do
-         read(33,*,iostat=ios) iout(:),rout(:) !read line
+         read(unit,*,iostat=ios) iout(:),rout(:) !read line
          if(ios<0) exit !eof
          if(ios/=0) cycle !skip blanks
          coolCOx1(iout(1)) = rout(1)
@@ -269,13 +281,13 @@
       !store inverse of the differences
       ! to speed up interpolation
       do i=1,coolCOn1-1
-         coolCOixd1(i) = 1d0/(coolCOx1(i+1)-coolCOx1(i))
+         coolCOixd1(i) = 1d0 / (coolCOx1(i+1)-coolCOx1(i))
       end do
       do i=1,coolCOn2-1
-         coolCOixd2(i) = 1d0/(coolCOx2(i+1)-coolCOx2(i))
+         coolCOixd2(i) = 1d0 / (coolCOx2(i+1)-coolCOx2(i))
       end do
       do i=1,coolCOn3-1
-         coolCOixd3(i) = 1d0/(coolCOx3(i+1)-coolCOx3(i))
+         coolCOixd3(i) = 1d0 / (coolCOx3(i+1)-coolCOx3(i))
       end do
 
       coolCOx1min = minval(coolCOx1)
@@ -285,13 +297,465 @@
       coolCOx3min = minval(coolCOx3)
       coolCOx3max = maxval(coolCOx3)
 
-      coolCOdvn1 = (coolCOn1-1)/(coolCOx1max-coolCOx1min)
-      coolCOdvn2 = (coolCOn2-1)/(coolCOx2max-coolCOx2min)
-      coolCOdvn3 = (coolCOn3-1)/(coolCOx3max-coolCOx3min)
+      coolCOdvn1 = (coolCOn1-1) / (coolCOx1max-coolCOx1min)
+      coolCOdvn2 = (coolCOn2-1) / (coolCOx2max-coolCOx2min)
+      coolCOdvn3 = (coolCOn3-1) / (coolCOx3max-coolCOx3min)
 
     end subroutine init_coolingCO
 #ENDIFKROME
 
+#IFKROME_usecoolingOH
+    !***************************
+    ! OH cooling: courtesy of K.Omukai (Mar2019)
+    ! method: Neufeld+Kaufman 1993 (bit.ly/1vnjcXV, see eqn.5).
+    ! see also Omukai+2010 (bit.ly/1HIaGcn)
+    ! H and H2 collisions
+    function cooling_OH(n,inTgas)
+      use krome_commons
+      use krome_subs
+      use krome_getphys
+      implicit none
+      integer,parameter::imax=coolOHn1
+      integer,parameter::jmax=coolOHn2
+      integer,parameter::kmax=coolOHn3
+      integer::i,j,k
+      real*8,parameter::eps=1d-5
+      real*8::cooling_OH,n(:),inTgas
+      real*8::v1,v2,v3,prev1,prev2,cH
+      real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
+      real*8::x1(imax),x2(jmax),x3(kmax)
+      real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
+      real*8::v1min,v1max,v2min,v2max,v3min,v3max
+
+      !local copy of limits
+      v1min = coolOHx1min
+      v1max = coolOHx1max
+      v2min = coolOHx2min
+      v2max = coolOHx2max
+      v3min = coolOHx3min
+      v3max = coolOHx3max
+
+      !local copy of variables arrays
+      x1(:) = coolOHx1(:)
+      x2(:) = coolOHx2(:)
+      x3(:) = coolOHx3(:)
+
+      ixd1(:) = coolOHixd1(:)
+      ixd2(:) = coolOHixd2(:)
+      ixd3(:) = coolOHixd3(:)
+
+      !local variables
+      v3 = num2col(n(idx_OH),n(:)) !OH column density
+      cH = n(idx_H) + n(idx_H2)
+
+      v2 = cH
+      v1 = inTgas !Tgas
+
+      !logs of variables
+      v1 = log10(v1)
+      v2 = log10(v2)
+      v3 = log10(v3)
+
+      !default value erg/s/cm3
+      cooling_OH = 0d0
+
+      !check limits
+      if(v1 >= v1max) v1 = v1max * (1d0 - eps)
+      if(v2 >= v2max) v2 = v2max * (1d0 - eps)
+      if(v3 >= v3max) v3 = v3max * (1d0 - eps)
+
+      if(v1 < v1min) return
+      if(v2 < v2min) return
+      if(v3 < v3min) return
+
+      !gets position of variable in the array
+      i = (v1 - v1min) * coolOHdvn1 + 1
+      j = (v2 - v2min) * coolOHdvn2 + 1
+      k = (v3 - v3min) * coolOHdvn3 + 1
+
+      !precompute shared variables
+      prev1 = (v1 - x1(i)) * ixd1(i)
+      prev2 = (v2 - x2(j)) * ixd2(j)
+
+      !linear interpolation on x1 for x2,x3
+      vv1 = prev1 * (coolOHy(k, j, i+1) - &
+           coolOHy(k,j,i)) + coolOHy(k,j,i)
+      !linear interpolation on x1 for x2+dx2,x3
+      vv2 = prev1 * (coolOHy(k, j+1, i+1) - &
+           coolOHy(k, j+1, i)) + coolOHy(k, j+1, i)
+      !linear interpolation on x2 for x3
+      vv12 = prev2 * (vv2 - vv1) + vv1
+
+      !linear interpolation on x1 for x2,x3+dx3
+      vv3 = prev1 * (coolOHy(k+1, j, i+1) - &
+           coolOHy(k+1, j, i)) + coolOHy(k+1, j, i)
+      !linear interpolation on x1 for x2+dx2,x3+dx3
+      vv4 = prev1 * (coolOHy(k+1, j+1, i+1) - &
+           coolOHy(k+1,j+1,i)) + coolOHy(k+1, j+1, i)
+      !linear interpolation on x2 for x3+dx3
+      vv34 = prev2 * (vv4 - vv3) + vv3
+
+      !linear interpolation on x3
+      xLd = (v3 - x3(k)) * ixd3(k) * (vv34 - &
+           vv12) + vv12
+
+      !OH cooling in erg/s/cm3
+      cooling_OH = 1d1**xLd * cH * n(idx_OH)
+
+    end function cooling_OH
+
+    ! ************************
+    subroutine init_coolingOH()
+      use krome_commons
+      implicit none
+      integer::ios,iout(3),i,unit
+      real*8::rout(4)
+
+      if (krome_mpi_rank<=1) print *,"load OH cooling..."
+      open(newunit=unit, file="coolOH.dat", status="old", iostat=ios)
+      ! check if file exists
+      if(ios.ne.0) then
+         print *, "ERROR: problems loading coolOH.dat!"
+         stop
+      end if
+
+      do
+         read(unit,*,iostat=ios) iout(:),rout(:) !read line
+         if(ios<0) exit !eof
+         if(ios/=0) cycle !skip blanks
+         coolOHx1(iout(1)) = rout(1)
+         coolOHx2(iout(2)) = rout(2)
+         coolOHx3(iout(3)) = rout(3)
+         coolOHy(iout(3), iout(2), iout(1)) = rout(4)
+      end do
+
+      !store inverse of the differences
+      ! to speed up interpolation
+      do i=1,coolOHn1-1
+         coolOHixd1(i) = 1d0 / (coolOHx1(i+1) - coolOHx1(i))
+      end do
+      do i=1,coolOHn2-1
+         coolOHixd2(i) = 1d0 / (coolOHx2(i+1) - coolOHx2(i))
+      end do
+      do i=1,coolOHn3-1
+         coolOHixd3(i) = 1d0 / (coolOHx3(i+1) - coolOHx3(i))
+      end do
+
+      coolOHx1min = minval(coolOHx1)
+      coolOHx1max = maxval(coolOHx1)
+      coolOHx2min = minval(coolOHx2)
+      coolOHx2max = maxval(coolOHx2)
+      coolOHx3min = minval(coolOHx3)
+      coolOHx3max = maxval(coolOHx3)
+
+      coolOHdvn1 = (coolOHn1 - 1) / (coolOHx1max - coolOHx1min)
+      coolOHdvn2 = (coolOHn2 - 1) / (coolOHx2max - coolOHx2min)
+      coolOHdvn3 = (coolOHn3 - 1) / (coolOHx3max - coolOHx3min)
+
+    end subroutine init_coolingOH
+#ENDIFKROME
+
+#IFKROME_usecoolingH2O
+    !***************************
+    ! H2O cooling: courtesy of K.Omukai (Mar2019)
+    ! method: Neufeld+Kaufman 1993 (bit.ly/1vnjcXV, see eqn.5).
+    ! see also Omukai+2010 (bit.ly/1HIaGcn)
+    ! H and H2 collisions
+    function cooling_H2O(n,inTgas)
+      use krome_commons
+      use krome_subs
+      use krome_getphys
+      implicit none
+      integer,parameter::imax=coolH2On1
+      integer,parameter::jmax=coolH2On2
+      integer,parameter::kmax=coolH2On3
+      integer::i,j,k
+      real*8,parameter::eps=1d-5
+      real*8::cooling_H2O,n(:),inTgas
+      real*8::v1,v2,v3,prev1,prev2,cH
+      real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
+      real*8::x1(imax),x2(jmax),x3(kmax)
+      real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
+      real*8::v1min,v1max,v2min,v2max,v3min,v3max
+
+      !local copy of limits
+      v1min = coolH2Ox1min
+      v1max = coolH2Ox1max
+      v2min = coolH2Ox2min
+      v2max = coolH2Ox2max
+      v3min = coolH2Ox3min
+      v3max = coolH2Ox3max
+
+      !local copy of variables arrays
+      x1(:) = coolH2Ox1(:)
+      x2(:) = coolH2Ox2(:)
+      x3(:) = coolH2Ox3(:)
+
+      ixd1(:) = coolH2Oixd1(:)
+      ixd2(:) = coolH2Oixd2(:)
+      ixd3(:) = coolH2Oixd3(:)
+
+      !local variables
+      v3 = num2col(n(idx_H2O),n(:)) !H2O column density
+      cH = n(idx_H) + n(idx_H2)
+
+      v2 = cH
+      v1 = inTgas !Tgas
+
+      !logs of variables
+      v1 = log10(v1)
+      v2 = log10(v2)
+      v3 = log10(v3)
+
+      !default value erg/s/cm3
+      cooling_H2O = 0d0
+
+      !check limits
+      if(v1 >= v1max) v1 = v1max * (1d0 - eps)
+      if(v2 >= v2max) v2 = v2max * (1d0 - eps)
+      if(v3 >= v3max) v3 = v3max * (1d0 - eps)
+
+      if(v1 < v1min) return
+      if(v2 < v2min) return
+      if(v3 < v3min) return
+
+      !gets position of variable in the array
+      i = (v1 - v1min) * coolH2Odvn1 + 1
+      j = (v2 - v2min) * coolH2Odvn2 + 1
+      k = (v3 - v3min) * coolH2Odvn3 + 1
+
+      !precompute shared variables
+      prev1 = (v1 - x1(i)) * ixd1(i)
+      prev2 = (v2 - x2(j)) * ixd2(j)
+
+      !linear interpolation on x1 for x2,x3
+      vv1 = prev1 * (coolH2Oy(k, j, i+1) - &
+           coolH2Oy(k,j,i)) + coolH2Oy(k,j,i)
+      !linear interpolation on x1 for x2+dx2,x3
+      vv2 = prev1 * (coolH2Oy(k, j+1, i+1) - &
+           coolH2Oy(k, j+1, i)) + coolH2Oy(k, j+1, i)
+      !linear interpolation on x2 for x3
+      vv12 = prev2 * (vv2 - vv1) + vv1
+
+      !linear interpolation on x1 for x2,x3+dx3
+      vv3 = prev1 * (coolH2Oy(k+1, j, i+1) - &
+           coolH2Oy(k+1, j, i)) + coolH2Oy(k+1, j, i)
+      !linear interpolation on x1 for x2+dx2,x3+dx3
+      vv4 = prev1 * (coolH2Oy(k+1, j+1, i+1) - &
+           coolH2Oy(k+1,j+1,i)) + coolH2Oy(k+1, j+1, i)
+      !linear interpolation on x2 for x3+dx3
+      vv34 = prev2 * (vv4 - vv3) + vv3
+
+      !linear interpolation on x3
+      xLd = (v3 - x3(k)) * ixd3(k) * (vv34 - &
+           vv12) + vv12
+
+      !H2O cooling in erg/s/cm3
+      cooling_H2O = 1d1**xLd * cH * n(idx_H2O)
+
+    end function cooling_H2O
+
+    ! ************************
+    subroutine init_coolingH2O()
+      use krome_commons
+      implicit none
+      integer::ios,iout(3),i,unit
+      real*8::rout(4)
+
+      if (krome_mpi_rank<=1) print *,"load H2O cooling..."
+      open(newunit=unit, file="coolH2O.dat", status="old", iostat=ios)
+      ! check if file exists
+      if(ios.ne.0) then
+         print *, "ERROR: problems loading coolH2O.dat!"
+         stop
+      end if
+
+      do
+         read(unit,*,iostat=ios) iout(:),rout(:) !read line
+         if(ios<0) exit !eof
+         if(ios/=0) cycle !skip blanks
+         coolH2Ox1(iout(1)) = rout(1)
+         coolH2Ox2(iout(2)) = rout(2)
+         coolH2Ox3(iout(3)) = rout(3)
+         coolH2Oy(iout(3), iout(2), iout(1)) = rout(4)
+      end do
+
+      !store inverse of the differences
+      ! to speed up interpolation
+      do i=1,coolH2On1-1
+         coolH2Oixd1(i) = 1d0 / (coolH2Ox1(i+1) - coolH2Ox1(i))
+      end do
+      do i=1,coolH2On2-1
+         coolH2Oixd2(i) = 1d0 / (coolH2Ox2(i+1) - coolH2Ox2(i))
+      end do
+      do i=1,coolH2On3-1
+         coolH2Oixd3(i) = 1d0 / (coolH2Ox3(i+1) - coolH2Ox3(i))
+      end do
+
+      coolH2Ox1min = minval(coolH2Ox1)
+      coolH2Ox1max = maxval(coolH2Ox1)
+      coolH2Ox2min = minval(coolH2Ox2)
+      coolH2Ox2max = maxval(coolH2Ox2)
+      coolH2Ox3min = minval(coolH2Ox3)
+      coolH2Ox3max = maxval(coolH2Ox3)
+
+      coolH2Odvn1 = (coolH2On1 - 1) / (coolH2Ox1max - coolH2Ox1min)
+      coolH2Odvn2 = (coolH2On2 - 1) / (coolH2Ox2max - coolH2Ox2min)
+      coolH2Odvn3 = (coolH2On3 - 1) / (coolH2Ox3max - coolH2Ox3min)
+
+    end subroutine init_coolingH2O
+#ENDIFKROME
+
+#IFKROME_usecoolingHCN
+    !***************************
+    ! HCN cooling: courtesy of K.Omukai (Mar2019)
+    ! method: Neufeld+Kaufman 1993 (bit.ly/1vnjcXV, see eqn.5).
+    ! see also Omukai+2010 (bit.ly/1HIaGcn)
+    ! H and H2 collisions
+    function cooling_HCN(n,inTgas)
+      use krome_commons
+      use krome_subs
+      use krome_getphys
+      implicit none
+      integer,parameter::imax=coolHCNn1
+      integer,parameter::jmax=coolHCNn2
+      integer,parameter::kmax=coolHCNn3
+      integer::i,j,k
+      real*8,parameter::eps=1d-5
+      real*8::cooling_HCN,n(:),inTgas
+      real*8::v1,v2,v3,prev1,prev2,cH
+      real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
+      real*8::x1(imax),x2(jmax),x3(kmax)
+      real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
+      real*8::v1min,v1max,v2min,v2max,v3min,v3max
+
+      !local copy of limits
+      v1min = coolHCNx1min
+      v1max = coolHCNx1max
+      v2min = coolHCNx2min
+      v2max = coolHCNx2max
+      v3min = coolHCNx3min
+      v3max = coolHCNx3max
+
+      !local copy of variables arrays
+      x1(:) = coolHCNx1(:)
+      x2(:) = coolHCNx2(:)
+      x3(:) = coolHCNx3(:)
+
+      ixd1(:) = coolHCNixd1(:)
+      ixd2(:) = coolHCNixd2(:)
+      ixd3(:) = coolHCNixd3(:)
+
+      !local variables
+      v3 = num2col(n(idx_HCN),n(:)) !HCN column density
+      cH = n(idx_H) + n(idx_H2)
+
+      v2 = cH
+      v1 = inTgas !Tgas
+
+      !logs of variables
+      v1 = log10(v1)
+      v2 = log10(v2)
+      v3 = log10(v3)
+
+      !default value erg/s/cm3
+      cooling_HCN = 0d0
+
+      !check limits
+      if(v1 >= v1max) v1 = v1max * (1d0 - eps)
+      if(v2 >= v2max) v2 = v2max * (1d0 - eps)
+      if(v3 >= v3max) v3 = v3max * (1d0 - eps)
+
+      if(v1 < v1min) return
+      if(v2 < v2min) return
+      if(v3 < v3min) return
+
+      !gets position of variable in the array
+      i = (v1 - v1min) * coolHCNdvn1 + 1
+      j = (v2 - v2min) * coolHCNdvn2 + 1
+      k = (v3 - v3min) * coolHCNdvn3 + 1
+
+      !precompute shared variables
+      prev1 = (v1 - x1(i)) * ixd1(i)
+      prev2 = (v2 - x2(j)) * ixd2(j)
+
+      !linear interpolation on x1 for x2,x3
+      vv1 = prev1 * (coolHCNy(k, j, i+1) - &
+           coolHCNy(k,j,i)) + coolHCNy(k,j,i)
+      !linear interpolation on x1 for x2+dx2,x3
+      vv2 = prev1 * (coolHCNy(k, j+1, i+1) - &
+           coolHCNy(k, j+1, i)) + coolHCNy(k, j+1, i)
+      !linear interpolation on x2 for x3
+      vv12 = prev2 * (vv2 - vv1) + vv1
+
+      !linear interpolation on x1 for x2,x3+dx3
+      vv3 = prev1 * (coolHCNy(k+1, j, i+1) - &
+           coolHCNy(k+1, j, i)) + coolHCNy(k+1, j, i)
+      !linear interpolation on x1 for x2+dx2,x3+dx3
+      vv4 = prev1 * (coolHCNy(k+1, j+1, i+1) - &
+           coolHCNy(k+1,j+1,i)) + coolHCNy(k+1, j+1, i)
+      !linear interpolation on x2 for x3+dx3
+      vv34 = prev2 * (vv4 - vv3) + vv3
+
+      !linear interpolation on x3
+      xLd = (v3 - x3(k)) * ixd3(k) * (vv34 - &
+           vv12) + vv12
+
+      !HCN cooling in erg/s/cm3
+      cooling_HCN = 1d1**xLd * cH * n(idx_HCN)
+
+    end function cooling_HCN
+
+    ! ************************
+    subroutine init_coolingHCN()
+      use krome_commons
+      implicit none
+      integer::ios,iout(3),i,unit
+      real*8::rout(4)
+
+      if (krome_mpi_rank<=1) print *,"load HCN cooling..."
+      open(newunit=unit, file="coolHCN.dat", status="old", iostat=ios)
+      ! check if file exists
+      if(ios.ne.0) then
+         print *, "ERROR: problems loading coolHCN.dat!"
+         stop
+      end if
+
+      do
+         read(unit,*,iostat=ios) iout(:),rout(:) !read line
+         if(ios<0) exit !eof
+         if(ios/=0) cycle !skip blanks
+         coolHCNx1(iout(1)) = rout(1)
+         coolHCNx2(iout(2)) = rout(2)
+         coolHCNx3(iout(3)) = rout(3)
+         coolHCNy(iout(3), iout(2), iout(1)) = rout(4)
+      end do
+
+      !store inverse of the differences
+      ! to speed up interpolation
+      do i=1,coolHCNn1-1
+         coolHCNixd1(i) = 1d0 / (coolHCNx1(i+1) - coolHCNx1(i))
+      end do
+      do i=1,coolHCNn2-1
+         coolHCNixd2(i) = 1d0 / (coolHCNx2(i+1) - coolHCNx2(i))
+      end do
+      do i=1,coolHCNn3-1
+         coolHCNixd3(i) = 1d0 / (coolHCNx3(i+1) - coolHCNx3(i))
+      end do
+
+      coolHCNx1min = minval(coolHCNx1)
+      coolHCNx1max = maxval(coolHCNx1)
+      coolHCNx2min = minval(coolHCNx2)
+      coolHCNx2max = maxval(coolHCNx2)
+      coolHCNx3min = minval(coolHCNx3)
+      coolHCNx3max = maxval(coolHCNx3)
+
+      coolHCNdvn1 = (coolHCNn1 - 1) / (coolHCNx1max - coolHCNx1min)
+      coolHCNdvn2 = (coolHCNn2 - 1) / (coolHCNx2max - coolHCNx2min)
+      coolHCNdvn3 = (coolHCNn3 - 1) / (coolHCNx3max - coolHCNx3min)
+
+    end subroutine init_coolingHCN
+#ENDIFKROME
 
 #IFKROME_useCoolingZCIENOUV
     !***************************
