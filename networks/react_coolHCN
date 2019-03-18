@@ -1,0 +1,23 @@
+#####################
+# NOTE: this network is designed to test the cooling from HCN, H2O, OH, and CO molecules
+@format:idx,R,R,P,P,rate
+1,CN,OH,O,HCN,1e-11*exp(-1e3/Tgas)
+2,HCO,O,CO,OH,5e-11
+3,OH,OH,H2O,O,1.65e-12*(Tgas/3e2)**1.14*exp(-50/Tgas)
+
+# H2 on grains with rate approximation, assuming Tdust=Tgas
+@format:idx,R,R,P,rate
+@var:fA = 1d0 / (1d0 + 1d4*exp(-6d2/Tgas))
+@var:Hnuclei = get_Hnuclei(n(:))
+@noTabNext
+5,H,H,H2,3e-18 * sqrt(Tgas) * fA / (1e0+0.04e0*sqrt(2e0*Tgas)+0.002e0*Tgas+8e-6*Tgas**2) / n(idx_H) * Hnuclei
+
+6,H+,E,H,3.5e-12*(Tgas/3e2)**(-0.7)
+
+@format:idx,R,P,P,rate
+@common: user_crate
+@CR_start
+7,H,H+,E,4.6e-1*user_crate
+8,H2,H,H,1e-1*user_crate
+@CR_stop
+
