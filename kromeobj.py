@@ -51,8 +51,9 @@ class krome():
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = False
 	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
-        useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
+	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
+	useCoolingHCN = useCoolingOH = useCoolingH2O = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = False
@@ -1133,17 +1134,17 @@ class krome():
 			print "Reading option -Tlimit (Low="+self.TlimitOpLow+", High="+self.TlimitOpHigh+")"
 
 		#determine cooling types
-		if(args.cooling):
+		if args.cooling:
 			myCools = args.cooling.split(",")
 			myCools = [x.strip() for x in myCools]
 			#list of all cooling (excluded from file)
 			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE",\
-				"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV","Z_EXTENDED","GH"]
+				"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV","Z_EXTENDED","GH","OH","H2O","HCN"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
 				partialFileCools = [] #for output purposes
-				if(not(file_exists(fname))):
+				if not file_exists(fname):
 					print "ERROR: file "+fname+" not found!"
 					sys.exit()
 				fh = open(fname,"rb")
@@ -1151,21 +1152,21 @@ class krome():
 				for row in fh:
 					srow = row.strip()
 					#skip cooments
-					if(srow==""): continue
-					if(srow[0]=="#"): continue
-					if(srow[:1]=="//"): continue
-					if(srow[:1]=="/*"): inComment = True
-					if("*/" in srow):
+					if srow == "": continue
+					if srow[0] == "#": continue
+					if srow[:1] == "//": continue
+					if srow[:1] == "/*": inComment = True
+					if "*/" in srow:
 						inComment = False
 						continue
 					srow = srow.split("#")[0]
-					if(inComment): continue
+					if inComment: continue
 					#look for the metal name
-					if("metal:" in srow):
+					if "metal:" in srow:
 						metal_name = srow.split(":")[1].strip()
 						mol = parser(metal_name,self.mass_dic,self.atoms,self.thermodata)
 						mname = mol.coolname
-						if(mname in allCools):
+						if mname in allCools:
 							print "ERROR: conflict name for "+mname+", which is already present!"
 							sys.exit()
 						partialFileCools.append({"flag":mname,"name":metal_name})
@@ -1173,17 +1174,17 @@ class krome():
 						allCools.append(mname) #append flag to the list of the coolants
 				#write found coolants
 				joinedCool = (", ".join([x["flag"] for x in partialFileCools]))
-				if(len(partialFileCools)>0):
+				if len(partialFileCools) > 0:
 					print "Cooling "+joinedCool+" available from "+fname
 					allCools.append("FILE")
 
-			if("?" in myCools):
-				print "Available coolings are:", (", ".join(allCools))
+			if "?" in myCools:
+				print "Available coolings are:", (", ".join(sorted(allCools)))
 				sys.exit()
 
 			#check coolant names
 			for coo in myCools:
-				if(not(coo in allCools)):
+				if coo not in allCools:
 					die("ERROR: Cooling \""+coo+"\" is unknown!\nAvailable coolings are: "+(", ".join(allCools)))
 
 			if("ATOMIC" in myCools): self.useCoolingAtomic = True
@@ -1200,7 +1201,10 @@ class krome():
 			if("DISS" in myCools): self.useCoolingDISS = True
 			if("CONT" in myCools): self.useCoolingCont = True
 			if("Z" in myCools): self.useCoolingZ = True
-			if("CO" in myCools): self.useCoolingCO = True
+			if "CO" in myCools: self.useCoolingCO = True
+			if "OH" in myCools: self.useCoolingOH = True
+			if "H2O" in myCools: self.useCoolingH2O = True
+			if "HCN" in myCools: self.useCoolingHCN = True
 			if("Z_CIE" in myCools): self.useCoolingZCIE = True
 			if("Z_CIENOUV" in myCools): self.useCoolingZCIENOUV = True
 			if("Z_EXTENDED" in myCools):
@@ -4800,7 +4804,10 @@ class krome():
 				and self.useSurface)): skip = True
 			if(srow == "#IFKROME_useOmukaiOpacity" and self.H2opacity!="OMUKAI"): skip = True
 			if(srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT)): skip = True
-			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
+			if srow == "#IFKROME_useCoolingCO" and not self.useCoolingCO: skip = True
+			if srow == "#IFKROME_useCoolingOH" and not self.useCoolingOH: skip = True
+			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
+			if srow == "#IFKROME_useCoolingHCN" and not self.useCoolingHCN: skip = True
 			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
 			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
@@ -6362,7 +6369,10 @@ class krome():
 			if(srow == "#IFKROME_useCoolingExpansion" and not(self.useCoolingExpansion)): skip = True
 			if(srow == "#IFKROME_useCoolingCIE" and not(self.useCoolingCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingFF" and not(self.useCoolingFF)): skip = True
-			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
+			if srow == "#IFKROME_useCoolingCO" and not self.useCoolingCO: skip = True
+			if srow == "#IFKROME_useCoolingOH" and not self.useCoolingOH: skip = True
+			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
+			if srow == "#IFKROME_useCoolingHCN" and not self.useCoolingHCN: skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIE" and (not(self.useCoolingZCIE) or self.useCoolingZExtended)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIE_function" and not(self.useCoolingZCIE)): skip = True
@@ -7772,7 +7782,10 @@ class krome():
 			if(srow == "#IFKROME_useEquilibrium" and not(self.useEquilibrium)): skip = True
 			if(srow == "#IFKROME_useStars" and not(self.useStars)): skip = True
 			if(srow == "#IFKROME_useCoolingZ" and not(self.useCoolingZ)): skip = True
-			if(srow == "#IFKROME_useCoolingCO" and not(self.useCoolingCO)): skip = True
+			if srow == "#IFKROME_useCoolingCO" and not self.useCoolingCO: skip = True
+			if srow == "#IFKROME_useCoolingOH" and not self.useCoolingOH: skip = True
+			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
+			if srow == "#IFKROME_useCoolingHCN" and not self.useCoolingHCN: skip = True
 			if(srow == "#IFKROME_useCoolingZCIE" and not(self.useCoolingZCIE)): skip = True
 			if(srow == "#IFKROME_useCoolingZCIENOUV" and not(self.useCoolingZCIENOUV)): skip = True
 			if(srow == "#IFKROME_useCoolingGH" and not(self.useCoolingGH)): skip = True
@@ -8006,16 +8019,31 @@ class krome():
 			shutil.copyfile("data/optSi.dat", buildFolder+"optSi.dat")
 
 		#copy cooling CO
-		if(self.useCoolingCO):
+		if self.useCoolingCO:
 			print "- copying coolCO.dat..."
-			shutil.copyfile("data/coolCO.dat", buildFolder+"coolCO.dat")
+			shutil.copyfile("data/coolCO.dat", buildFolder + "coolCO.dat")
 
-                #copy cooling Z_CIE
+		#copy cooling HCN
+		if self.useCoolingHCN:
+			print "- copying coolHCN.dat..."
+			shutil.copyfile("data/coolHCN.dat", buildFolder + "coolHCN.dat")
+
+		#copy cooling H2O
+		if self.useCoolingH2O:
+			print "- copying coolH2O.dat..."
+			shutil.copyfile("data/coolH2O.dat", buildFolder + "coolH2O.dat")
+
+		#copy cooling OH
+		if self.useCoolingOH:
+			print "- copying coolOH.dat..."
+			shutil.copyfile("data/coolOH.dat", buildFolder + "coolOH.dat")
+
+		#copy cooling Z_CIE
 		if(self.useCoolingZCIE):
 			print "- copying coolZ_CIE2012.dat..."
 			shutil.copyfile("data/coolZ_CIE2012.dat", buildFolder+"coolZ_CIE2012.dat")
 
-                #copy cooling Z_CIE NOUV
+		#copy cooling Z_CIE NOUV
 		if(self.useCoolingZCIENOUV):
 			print "- copying coolZ_CIE2012NOUV.dat..."
 			shutil.copyfile("data/coolZ_CIE2012NOUV.dat", buildFolder+"coolZ_CIE2012NOUV.dat")
@@ -8192,7 +8220,7 @@ class krome():
 		fh.close()
 		fw.close()
 
-        #########################################
+	#########################################
 	def ramses_patch2011(self):
 		pfold = "patches/ramses/"
 		ramsesFolder = self.buildFolder+"krome_ramses_patch/"
@@ -8377,7 +8405,7 @@ class krome():
 
 		#condinit
 		#prepares the initial conditions and copy fname
-                cheminit = "\n"
+		cheminit = "\n"
 		ichem = 0
 		fname = "condinit.f90"
 		#loop on species
