@@ -304,7 +304,7 @@
     end subroutine init_coolingCO
 #ENDIFKROME
 
-#IFKROME_usecoolingOH
+#IFKROME_useCoolingOH
     !***************************
     ! OH cooling: courtesy of K.Omukai (Mar2019)
     ! method: Neufeld+Kaufman 1993 (bit.ly/1vnjcXV, see eqn.5).
@@ -455,7 +455,7 @@
     end subroutine init_coolingOH
 #ENDIFKROME
 
-#IFKROME_usecoolingH2O
+#IFKROME_useCoolingH2O
     !***************************
     ! H2O cooling: courtesy of K.Omukai (Mar2019)
     ! method: Neufeld+Kaufman 1993 (bit.ly/1vnjcXV, see eqn.5).
@@ -606,7 +606,7 @@
     end subroutine init_coolingH2O
 #ENDIFKROME
 
-#IFKROME_usecoolingHCN
+#IFKROME_useCoolingHCN
     !***************************
     ! HCN cooling: courtesy of K.Omukai (Mar2019)
     ! method: Neufeld+Kaufman 1993 (bit.ly/1vnjcXV, see eqn.5).
