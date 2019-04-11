@@ -7,3 +7,4 @@ DEV
 -cooling=FeII
 -noSinkCheck
 -n tests/Cinterface/network.ntw
+-noVerbatimFile
