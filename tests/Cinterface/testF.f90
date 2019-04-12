@@ -2,7 +2,7 @@ program test
   use krome_main !use krome (mandatory)
   use krome_user !use utility (for krome_idx_* constants and others)
   implicit none
-  integer:: nstep
+  integer:: nstep, unit
   integer, parameter:: ioin = 10
   integer, parameter:: nsp=krome_nmols !number of species (common)
   real*8:: Tgas, dt, x(nsp), spy, t, ntot, eVperg, fe60_xi, x_Fe60
@@ -37,7 +37,7 @@ program test
 
   Tgas = 1.0d3 !gas temperature (K)
 
-  !open (66, file='idoff.f.dat', status='unknown', form='formatted')
+  open (newunit=unit, file='idoff.f.dat', status='unknown', form='formatted')
 
   t = 0.0d0
   dt = 1d-2 * spy ! yr -> s
@@ -51,11 +51,11 @@ program test
     if (mod(nstep,10) .eq. 0) then
       write (*,'(a,i5.1)') "nstep = ", nstep
     endif
-    write (77,'(60(1pe15.8))') t/spy, Tgas, x(:)/ntot
+    write (unit,'(60(1pe15.8))') t/spy, Tgas, x(:)/ntot
     call krome_popcool_dump(t/spy, 69)
     if (t > 1.0d8 * spy) exit
   enddo
-  !close(66)
+  close(unit)
 
   write (*,'(a,i5.1)') "Finished. Number of steps = ", nstep
 
@@ -84,7 +84,7 @@ program test
 
   Tgas = 1.0d3 !gas temperature (K)
 
-  !open (66, file='idon.f.dat', status='unknown', form='formatted')
+  open (newunit=unit, file='idon.f.dat', status='unknown', form='formatted')
 
   t = 0.0d0
   dt = 1d-2 * spy ! yr -> s
@@ -98,11 +98,11 @@ program test
     if (mod(nstep,10) .eq. 0) then
       write (*,'(a,i5.1)') "nstep = ", nstep
     endif
-    write (78,'(60(1pe15.8))') t/spy, Tgas, x(:)/ntot
+    write (unit,'(60(1pe15.8))') t/spy, Tgas, x(:)/ntot
     call krome_popcool_dump(t/spy, 70)
     if (t > 1.0d8 * spy) exit
   enddo
-  !close(66)
+  close(unit)
 
   write (*,'(a,i5.1)') "Finished. Number of steps = ", nstep
 
