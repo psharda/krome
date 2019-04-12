@@ -154,7 +154,7 @@ contains
     a = opratio/(opratio+1d0) !exponent zo
     b = 1d0-a !exponent zp
 
-    zfop = (zp**b * zo**a*exp(-2d0*ibTgas)) !final partition f
+    zfop = (zp**b * (zo*exp(2d0*ibTgas))**a) !final partition f
 
   end function zfop
 
