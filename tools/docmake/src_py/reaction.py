@@ -1,5 +1,6 @@
 import sys,species,utils,os,urllib
 import ratefunctions
+from copy import copy
 from math import log10,log,exp,sqrt,pi
 
 class reaction:
@@ -1420,7 +1421,7 @@ class reaction:
 
         #LaTeX temperature limits
         limitsTex = self.tempRange2latex(idxMerged)
-        limitsTex = "$" + limitsTex + "$"
+        limitsTex = "$" + limitsTex + " $"
 
         #k symbol
         if idxMerged==0:
@@ -1439,6 +1440,14 @@ class reaction:
             import pytexit
         elif opts.latex_backend == "sympy":
             import sympy as sp
+            num = sp.__version__.count('.')-1
+            sp_version = float(sp.__version__.rsplit('.',num)[0])
+            if sp_version >= 1.3:
+                print("ERROR: The LaTeX conversion currently only works with and older"
+                      " version of SymPy (<1.3). Symbols no longer automatically"
+                      " convert to functions when called."
+                        )
+                sys.exit()
         else:
             print("WARNING: Option '{}' is not reconized as LaTeX convertor"
                   + "Adapt the '{}' file").format(opts.latex_backend, opts.__name__)
@@ -1451,7 +1460,7 @@ class reaction:
 
         symboltable = utils.getSymbolTable()
 
-        originalRate = rate
+        originalRate = copy(rate)
 
         #put all variables with corresponding values in rate
         if variableShortcuts:
@@ -1464,7 +1473,7 @@ class reaction:
         #make sympy friendly
         rate = utils.replaceFortranVar("dexp", "exp", rate)
         rate = utils.replaceFortranVar("log", "ln", rate)
-        rate = utils.replaceFortranVar("ln10", "log", rate)
+        rate = utils.replaceFortranVar("log10", "log", rate)
         # Double prec exp notation to use e, e.g. 2d3 -> 2e3
         rate = re.sub("([0-9]*\.*[0-9]*)d([+-]*[0-9]{1,})", r"\1e\2",rate)
         # Remove double prec suffix, e.g. 1.0_8 -> 1.0
@@ -1473,9 +1482,11 @@ class reaction:
         rate = re.sub("\\*\\(1e0/([a-zA-Z][a-zA-Z0-9_]*)\\)", "/\\1", rate) # Replace *1/x by /x to avoid dangling *1 in fractions
         rate = re.sub("\\+ *\\-", "-", rate) # Replace + - by -
 
-        # store for debugging
-        rateTexAfterShortcutsReplaced = rate
+        rate = re.sub("\[", "{", rate)
+        rate = re.sub("\]", "}", rate)
 
+        # store for debugging
+        rateTexAfterShortcutsReplaced = copy(rate)
         #transform to LaTeX format
         #keep trying
         while True:
@@ -1505,14 +1516,14 @@ class reaction:
                 return "=" + rate, message, 1
 
         # store for debugging
-        rateTextAfterSympy = rateTex
+        rateTextAfterSympy = copy(rateTex)
 
 
         if opts.latex_backend == "pytexit":
             rateTex = utils.replaceSymbols(rateTex)
 
         # store for debugging
-        rateTextAfterReplaceSymbols = rateTex
+        rateTextAfterReplaceSymbols = copy(rateTex)
 
         #fix mistakes by sympy
         #no 10^{} for short rates
@@ -1534,7 +1545,7 @@ class reaction:
             pass
 
         # store for debugging
-        rateTextAfterReplaceExpNot = rateTex
+        rateTextAfterReplaceExpNot = copy(rateTex)
 
 
         # old algorithm
@@ -1601,9 +1612,10 @@ class reaction:
                 # rateTexSplit = re.split("\}\}",rateTex)
                 # print rateTexSplit
                 # beta = rateTexSplit[0][1:]+"}" #beta containing factor
-                if "exp" in restStringOriginal:
-                    alphaFactor, gammaFactor = restStringOriginal.split("\operatorname") #alpha and gamma factor
-                    rateTex = alphaFactor + fracStringReplace + "\operatorname" + gammaFactor
+
+                if restStringOriginal.count('exp') == 1:
+                    alphaFactor, gammaFactor = restStringOriginal.split("\operatorname{exp}") #alpha and gamma factor
+                    rateTex = alphaFactor + fracStringReplace + "\operatorname{exp}" + gammaFactor
                 elif " + " in restStringOriginal:
                     splitted = restStringOriginal.split(" + ")
                     rateTex = splitted[0] + fracStringReplace + " + " + splitted[1]
@@ -1614,7 +1626,7 @@ class reaction:
                     rateTex = restStringOriginal + fracStringReplace
 
         # store for debugging
-        rateTextAfterLargeFractsToExp = rateTex
+        rateTextAfterLargeFractsToExp = copy(rateTex)
 
         # replaces fractions with numerator = 1 and denominators with power
         # their inversed denominator
@@ -1631,7 +1643,7 @@ class reaction:
         rateTex = re.sub(r'(\d+\.[0-9]{'+str(opts.truncate_numbers)+'})\d*', r'\1', rateTex)
 
         rateTex = re.sub("([ \)_]*)idx_{([A-Za-z0-9_]{1,})}", r"\1idx_\2", rateTex)
-        rateTexIdxReplaced = rateTex
+        rateTexIdxReplaced = copy(rateTex)
 
         # Rename number density, e.g. n(idx_H) -> n_idx_H
         # "(?<!\l)" is a negative lookback that ensures "\ln{...}" is not
@@ -1640,11 +1652,11 @@ class reaction:
         # Rename species id to name wrapped in \ch, e.g. idx_H2 -> \ch{H2}
         rateTex = re.sub("([ \)_]*)idx_([A-Za-z0-9_]{1,})( *)", r"\1\ch{\2}\3", rateTex)
 
-        rateTexBeforeReplacePm = rateTex
+        rateTexBeforeReplacePm = copy(rateTex)
         rateTex = re.sub("\\+ *\\-", "-", rateTex) # Replace + - by -
 
         # store rate before breaking
-        rateTextFull = rateTex
+        rateTextFull = copy(rateTex)
 
         #break long rates in multiple lines
         if len(rateTex) > opts.max_fraction_length:
@@ -1705,8 +1717,10 @@ class reaction:
                         if len(groups) > 0:
                             Emin = groups.pop()
                         return (rate, [Emin.replace("d","e")], [Emax.replace("d","e")])
-        raise Exception("Auto rate not found in database for reaction " + self.getVerbatim())
 
+        # raise Exception("Auto rate not found in database for reaction " + self.getVerbatim())
+        print("Auto rate not found in database for reaction " + self.getVerbatim())
+        return 'auto', None, None
     #****************
     #break long rates and put in LateX table format
     def breakRateTex(self,rate):
@@ -1716,7 +1730,7 @@ class reaction:
         rate = utils.replaceLongFracByDivide(rate, maxlen=opts.max_fraction_length)
         rate = utils.replaceLongExponentByHat(rate, maxlen=opts.max_exponent_length)
         rate = utils.replaceLeftRightbyBigLR(rate)
-        rate, numlines = utils.breakLatexEquation(rate)
+        rate, numlines = utils.breakLatexEquation(rate, maxlen=opts.max_fraction_length)
         rate = "\\begin{aligned}[t] = &" + rate + "\\end{aligned}"
         return rate, numlines
 
@@ -1774,6 +1788,15 @@ class reaction:
     #temperature rage to LateX format
     def tempRange2latex(self, idxMerged):
         import sympy as sp
+        num = sp.__version__.count('.')-1
+        sp_version = float(sp.__version__.rsplit('.',num)[0])
+        if sp_version >= 1.3:
+            print("ERROR: The LaTeX conversion currently only works with and older"
+                  " version of SymPy (<1.3). Symbols no longer automatically"
+                  " convert to functions when called."
+                    )
+            sys.exit()
+
         #change limits to uniform format
         low = utils.simplifyLimits(self.Tmin[idxMerged])
         high = utils.simplifyLimits(self.Tmax[idxMerged])

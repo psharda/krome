@@ -116,10 +116,10 @@ class network:
 
         #prepare graphs
         self.makeGraph()
-        
+
         #prepare html
         self.makeHTML()
-        
+
         #plot all rates
         self.plotRates()
 
@@ -181,6 +181,8 @@ class network:
         cntTotalReactions = 1
         cntAllReactions = 0
         linesOnPage = 0
+        replace_references = {}
+        ref_cnt = 1
 
         if opts.sorted_by == 'alphabetic':
             def reaction_sort_function(x):
@@ -212,6 +214,22 @@ class network:
                                                        cnt,
                                                        cntTotalReactions,
                                                        cntAllReactions)
+
+                    # Make sure the references are in ascending order
+                    # This needs to be done if the reactions are not sorted
+                    # on index
+                    ref = latexColumns[-1]
+                    if ref == '\\dbDefault{}':
+                        pass
+                    else:
+                        try:
+                            new_ref = replace_references[ref]
+                        except KeyError:
+                            replace_references[ref] = str(ref_cnt)
+                            ref_cnt += 1
+                            new_ref = str(ref_cnt-1)
+                        latexColumns[-1] = new_ref
+
                     rateColumns.append(latexColumns)
                     messages.append(message)
                     linesInReaction += linesInRate
@@ -233,6 +251,8 @@ class network:
             self.dumpLatexEndTable(fileOutput, last=True)
 
         self.dumpDeferredShortcuts(shortcutsTemperature, shortcutsVariables, deferredShortcuts)
+        # update referenceId with new ascending reference indices
+        self.referenceId = {key:int(replace_references[str(val)]) for key, val in self.referenceId.items()}
         self.dumpLatexReferences()
 
     #****************
@@ -272,11 +292,22 @@ class network:
     #****************
     #dump a list of equations for deferred variables
     def dumpDeferredShortcuts(self, temperatureShortcuts, variableShortcuts, deferredShortcuts, filename="NetworkLatexSymbols.tex"):
-        import sympy as sp
         import re
         from options import latexoptions as opt
-        import pytexit
         import utils
+        if opt.latex_backend == "pytexit":
+            import pytexit
+        elif opt.latex_backend == "sympy":
+            import sympy as sp
+            num = sp.__version__.count('.')-1
+            sp_version = float(sp.__version__.rsplit('.',num)[0])
+            if sp_version >= 1.3:
+                print("ERROR: The LaTeX conversion currently only works with and older"
+                      " version of SymPy (<1.3). Symbols no longer automatically"
+                      " convert to functions when called."
+                        )
+                sys.exit()
+
         symboltable = utils.getSymbolTable()
         with open(filename, "w") as fileOutput:
             for expr, symbol in deferredShortcuts.iteritems():

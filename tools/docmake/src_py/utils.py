@@ -1,4 +1,4 @@
-import os,datetime,math,re,regex
+import sys,os,datetime,math,re,regex
 
 #***********************
 def getHtmlProperty(item):
@@ -254,7 +254,7 @@ def replaceFracsWithInvDenominators(string, numerator):
             string = numerator + string
 
     return string
-    
+
 #********************
 #get content in parenteses
 def getParentheticContents(string, parenteses):
@@ -296,26 +296,64 @@ def replaceFortranVar(varname, replacement, string):
 
 #********************
 #adds line breaks to latex equation
-def breakLatexEquation(string):
+def breakLatexEquation(string, maxlen=100):
+    """Will continue to break a string as long as the length of one of the
+    substrings is longer than a maximum length. It will break according to the
+    order in breakChars, to avoid unnecessary line breaks. First: operators.
+    Second: commas (applicable when using user defined functions).
+    Last: +,- signs. """
+
     opened = '{'
     closed = '}'
-    depth = 0
-    breakChars = ['+', '-']
-    result = ""
-    previousWasOpenParan = False
+    # temporarily replace operator in order to break on it
+    temp_string = string.replace('\\operatorname{\\', '#{')
+    # order of most important break characters
+    breakChars = iter(['#', ',', '+', '-'])
     numlines = 1
-    for i, c in enumerate(string):
-        if c == opened:
-            depth += 1
-        elif c == closed:
-            depth -= 1
+    rateLength = len(temp_string)
+
+    if rateLength <= maxlen:
+        # Length might have decreased due to replacement of characters, exit if
+        # breaking is no longer needed
+        return string, numlines
+
+    while rateLength > maxlen:
+        # break everywhere on the current breaking character
+        # go to next character if any substring is still too long
+        # repeat.
+        previousWasOpenParan = False
+        depth = 0
+        breakChar = next(breakChars)
+        result = ""
+        for i, c in enumerate(temp_string):
+            if i == 0:
+                #never break on first character
+                result += c
+                if not c in ["(", " "]: previousWasOpenParan = False
+                if c == "(": previousWasOpenParan = True
+                continue
+            if c == opened:
+                depth += 1
+            elif c == closed:
+                depth -= 1
             #break on breakChars unless inside block or after opening paranthesis
-        if c in breakChars and depth==0 and not previousWasOpenParan:
-            c = " \\\\ \n &" + c
-            numlines += 1
-        result += c
-        if not c in ["(", " "]: previousWasOpenParan = False
-        if c == "(": previousWasOpenParan = True
+            if c==breakChar and depth==0 and not previousWasOpenParan:
+                if c == '#':
+                    # add multiplication if break on operator (function)
+                    c = '\\cdot #'
+                c = " \\\\ \n &" + c
+                numlines += 1
+
+            result += c
+            if not c in ["(", " "]: previousWasOpenParan = False
+            if c == "(": previousWasOpenParan = True
+
+        temp_string = result[:]
+        # maximum length of all new substrings
+        rateLength = max([len(i) for i in result.split('\\\\')])
+
+    # Remove temporarily operator replacement
+    result = result.replace('#{', '\\operatorname{\\')
 
     return result, numlines
 
@@ -333,7 +371,9 @@ def raiseBracketsOnOperators(rate):
     # Solution by scary recursive regular expression
     # ?2 means 'recursively add paranthesized group #2 here'
     # See e.g. http://www.rexegg.com/regex-recursion.html
-    rate = regex.sub(r'(\operatorname\{[a-zA-Z]{1,}\})(\{(([^{}]|(?2))*)\})', r'\1\3', rate)
+    # Able to find existing mathfunctions '\operator{combinationOfLetters}'
+    # and user defined mathfunction '\operator{\myNewOperator}'
+    rate = regex.sub(r'(\operatorname\{\\?[a-zA-Z]{1,}\})(\{(([^{}]|(?2))*)\})', r'\1\3', rate)
     return rate
 
 def string_from(expr, string):
@@ -395,7 +435,7 @@ def replaceLongExponentByHat(rate,maxlen=100):
                         return acc + rate
                 spaces, rest = skip_spaces(fromPow)
                 exponent,rest = next_parenthesis(rest)
-                
+
                 rate = rest
                 if len(exponent) > maxlen:
                         acc += before[:-1] + spaces
@@ -437,6 +477,14 @@ def getSymbols():
 #get table of sympy symbols for latex table
 def getSymbolTable():
     import sympy as sp
+    num = sp.__version__.count('.')-1
+    sp_version = float(sp.__version__.rsplit('.',num)[0])
+    if sp_version >= 1.3:
+        print("ERROR: The LaTeX conversion currently only works with and older"
+              " version of SymPy (<1.3). Symbols no longer automatically"
+              " convert to functions when called."
+                )
+        sys.exit()
 
     symbols = getSymbols()
 
@@ -449,7 +497,6 @@ def getSymbolTable():
 # Replaces symbols with their LaTeX representation
 def replaceSymbols(rateTex):
     import pytexit
-    import re
 
     for sym, expr in getSymbols().iteritems():
         symtex = pytexit.for2tex(sym, print_latex=False, print_formula=False)[2:-2]
@@ -458,7 +505,7 @@ def replaceSymbols(rateTex):
             rateTex = replaceFortranVar(symtex, expr, rateTex)
         else:
             rateTex = rateTex.replace(symtex, expr)
-                  
+
     # it also leaves in factors of 1
     rateTex = re.sub(r"\\times *1\.0([^0-9\.]|$)", r"\1", rateTex)
 
