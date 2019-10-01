@@ -109,7 +109,7 @@ class species():
             self.loadXsecLeiden()
 
             #compute photo rates
-            # self.computePhRates()
+            self.computePhRates()
 
 
     #**********************
@@ -182,8 +182,7 @@ class species():
             "BB@2e4K":JBB}
 
         if (len(self.xsecs)!=0):
-            print "  Computing {0} photochemical rates...".format(self.name)
-
+            print "  Computing {0} photochemical rates and extinction coefficients...".format(self.name)
 
         #loop on databases
         for (db,data) in self.xsecs.iteritems():
@@ -230,8 +229,7 @@ class species():
         from math import pi,exp
         from photo import Jdraine, JBB,intJdraine,intJBB
 
-
-        #file with dust information, from Draine
+        # file with dust information, from Draine
         # https://www.astro.princeton.edu/~draine/dust/dustmix.html
         fname = "kext_albedo_WD_MW_3.1_60_D03.all"
 
@@ -548,6 +546,9 @@ class species():
             xsecPNG = "../pngs/xsec_"+self.nameFile+".png"
             fout.write("<img src=\""+xsecPNG+"\" width=\"500px\">\n")
 
+            fname2 = "xsecs/phrateint_"+str(self.name)+".txt"
+            fout2 = open(fname2,'w') # for integrated photodestruction rates
+
             rows = []
             for (db,data) in self.phrates.iteritems():
                 #loop on rates
@@ -555,13 +556,17 @@ class species():
                     for radName, kph in ydata.iteritems():
                         bexp_str = ""
                         #include b from a*exp(-b*Av), WITHOUT SCATTERING!
-                        if(radName in self.phrates_extinction[db][k]):
-                            bexp = self.phrates_extinction[db][k][radName]
-                            bexp_str = str(round(bexp,2))
+                        if self.phrates_extinction.has_key(db):
+                            if(radName in self.phrates_extinction[db][k]):
+                                bexp = self.phrates_extinction[db][k][radName]
+                                bexp_str = str(round(bexp,2))
                         tr = "<td>&nbsp;" + k + "<td>" + db + "<td>" + radName \
                             + "<td>" + utils.htmlExp(kph) + "<td>" \
                             + bexp_str + "\n"
                         rows.append([k+"_"+db+"_"+radName, tr])
+                        line = k + " " + db + " " + radName + " " + str(kph) + " " + bexp_str
+                        fout2.write(line+"\n")
+            fout2.close()
 
 
             #table with integrated photorates
