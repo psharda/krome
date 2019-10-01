@@ -901,8 +901,8 @@ class reaction:
                     self.warnings.append("no rate evaluation")
                     evaluation[variable] = None
 
-        #store as class attribute
-        self.evaluation.append(evaluation)
+            #store as class attribute
+            self.evaluation.append(evaluation)
 
     #**************************
     #do plot (PNG)
