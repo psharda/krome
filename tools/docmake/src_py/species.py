@@ -109,7 +109,7 @@ class species():
             self.loadXsecLeiden()
 
             #compute photo rates
-            # self.computePhRates()
+            self.computePhRates()
 
 
     #**********************
