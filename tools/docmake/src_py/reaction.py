@@ -911,10 +911,10 @@ class reaction:
         import numpy as np
         import matplotlib.colors as colors
         #try to load AGG for PNG rendering (slightly faster)
-        try:
-            matplotlib.use('AGG')
-        except:
-            pass
+        #try:
+        #    matplotlib.use('AGG')
+        #except:
+        #    pass
 
         import matplotlib.pyplot as plt
 

@@ -220,6 +220,7 @@ def getShortcutsLatex():
 #********************
 #check if variable is already a temperature shortcut
 def isTemperatureShortcut(var):
+    return False
     shortcuts = getShortcutsLatex()
     if var in [item[0] for item in shortcuts]:
         return True
