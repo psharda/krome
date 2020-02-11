@@ -124,7 +124,7 @@ class network:
         self.plotRates()
 
         #make latex table of network
-        self.network2latex()
+        #self.network2latex()
 
     #********************
     #prepare all the html pages
