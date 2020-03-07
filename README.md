@@ -54,7 +54,7 @@ Written and developed by Tommaso Grassi
 and Stefano Bovino
 ```
  stefanobovino@udec.cl            
- Departamento de Astronom’a, Universidad de Concepci—n, Chile
+ Departamento de Astronomï¿½a, Universidad de Concepcion, Chile
 ```
 
 Contributors: J.Boulangier, T.Frostholm, D.Galli, F.A.Gianturco, T.Haugboelle,
