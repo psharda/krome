@@ -47,15 +47,14 @@ Additional material can be found in the Computational Astrochemistry Schools web
 
 Written and developed by Tommaso Grassi
 ```
- tgrassi@nbi.dk
- Starplan, Copenhagen
- Niels Bohr Institute, Copenhagen
+ tgrassi@usm.lmu.de               
+ USM/LMU, Munich
 ```
 
 and Stefano Bovino
 ```
- stefano.bovino@uni-hamburg.de
- Hamburger Sternwarte, Hamburg
+ stefanobovino@udec.cl            
+ Departamento de Astronomía, Universidad de Concepción
 ```
 
 Contributors: J.Boulangier, T.Frostholm, D.Galli, F.A.Gianturco, T.Haugboelle,
