@@ -2737,6 +2737,8 @@ class krome():
 						reacts[i].Tmin = autorea["limits"].split(",")[0].strip()
 						reacts[i].Tmax = autorea["limits"].split(",")[1].strip()
 						reacts[i] = readTOpt(reacts[i])
+						reacts[i].hasTlimitMin = True
+						reacts[i].hasTlimitMax = True
 					else:
 						reacts[i].Tmin = "2.73d0"
 						reacts[i].Tmax = "1d8"
