@@ -1,4 +1,4 @@
-#KROME is a nice and friendly chemistry package for a wide range of
+# KROME is a nice and friendly chemistry package for a wide range of
 # astrophysical simulations. Given a chemical network (in CSV format)
 # it automatically generates all the routines needed to solve the kinetic
 # of the system, modelled as system of coupled Ordinary Differential
@@ -43,9 +43,10 @@
 # KROME PYTHON SCRIPT
 
 
-import sys,os
+import sys
+import os
 ##################################
-class molec():
+class molec:
 	name = "" #molecule name
 	charge = 0 #charge (0=neutral)
 	mass = 0e0 #mass in g
@@ -93,8 +94,10 @@ class molec():
 		self.poly2_nist = [0.e0]*7
 		self.Tpoly_nist = [0.e0]*3
 		self.atomcount = dict()
+
+
 ##################################
-class reaction():
+class reaction:
 	verbatim = "" #reaction written as string (e.g. A+B->C+D)
 	reactants = [] #list of reactants (molec objects)
 	products = [] #list of products (molec objects)
@@ -138,30 +141,30 @@ class reaction():
 		myr = []
 		myp = []
 		for r in self.reactants:
-			if(r.name!="dummy"):
+			if r.name != "dummy":
 				myr.append(r.name)
 		for p in self.products:
-			if(p.name!="dummy"):
+			if p.name != "dummy":
 				myp.append(p.name)
 		self.verbatim = " + ".join(myr)+" -> "+" + ".join(myp)
 
 	#method: build photochemical rate
 	def build_phrate(self, photoBlock=False):
-		if(not("krome_kph_auto" in self.krate) and not(photoBlock)): return
+		if "krome_kph_auto" not in self.krate and not photoBlock: return
 		myr = self.reactants
 		self.kphrate = self.krate.replace("krome_kph_auto=","")
-		if("@xsecFile=" in self.krate):
+		if "@xsecFile=" in self.krate:
 			sidx = str(self.idx)
 			args = "xsec"+sidx+"_val(:), xsec"+sidx+"_Emin,"
 			#args += "xsec"+sidx+"_n,"
 			args += "xsec"+sidx+"_idE, dshift("+self.reactants[0].fidx+")"
 			self.kphrate = "xsec_interp(energyL, energyR, "+args+")"
-                        #self.xsecFile = self.krate.replace("@xsecFile=","").strip()
-			if("SWRI" in self.krate.upper()):
+			#self.xsecFile = self.krate.replace("@xsecFile=","").strip()
+			if "SWRI" in self.krate.upper():
 				RR = self.reactants[0].name
 				PP = ("_".join([x.name for x in self.products]))
 				self.xsecFile = "swri_"+RR+"__"+PP+".dat"
-			if("LEIDEN" in self.krate.upper()):
+			if "LEIDEN" in self.krate.upper():
 				RR = self.reactants[0].name
 				PP = ("_".join([x.name for x in self.products]))
 				self.xsecFile = "leiden_"+RR+"__"+PP+".dat"
@@ -179,24 +182,24 @@ class reaction():
 		#	self.krate = "krome_kph_" + myr[0].phname.capitalize() + "R" + str(self.idx)
 
 	#method: build RHS
-	def build_RHS(self,useNuclearMult=False):
-		if(self.idx<=0):
-			print "************************************************************"
-			print "ERROR: reaction index (reaction.idx) must be greater than 0"
-			print "Probably you have to define idx"
-			print "************************************************************"
+	def build_RHS(self, useNuclearMult=False):
+		if self.idx<=0:
+			print("************************************************************")
+			print("ERROR: reaction index (reaction.idx) must be greater than 0")
+			print("Probably you have to define idx")
+			print("************************************************************")
 			sys.exit()
 
 		#keeps into account nuclear multeplicity (if option is enabled)
 		nuclearMult = "" #default nuclear multeplicity value
-		if(useNuclearMult):
+		if useNuclearMult:
 			uncurledR = [self.reactants[i].name for i in range(len(self.reactants)) if not(self.curlyR[i])]
-			if(len(uncurledR)==2):
-				if(uncurledR[0]==uncurledR[1]): nuclearMult = "0.5d0*"
-			if(len(uncurledR)==3):
-				if(uncurledR[0]==uncurledR[1] and uncurledR[1]==uncurledR[2]): nuclearMult = "0.16666666667d0*"
-				if(uncurledR[0]==uncurledR[1] and uncurledR[1]!=uncurledR[2]): nuclearMult = "0.5d0*"
-				if(uncurledR[1]==uncurledR[2] and uncurledR[0]!=uncurledR[1]): nuclearMult = "0.5d0*"
+			if len(uncurledR) == 2:
+				if uncurledR[0] == uncurledR[1]: nuclearMult = "0.5d0*"
+			if len(uncurledR) == 3:
+				if uncurledR[0] == uncurledR[1] and uncurledR[1] == uncurledR[2]: nuclearMult = "0.16666666667d0*"
+				if uncurledR[0] == uncurledR[1] and uncurledR[1] != uncurledR[2]: nuclearMult = "0.5d0*"
+				if uncurledR[1] == uncurledR[2] and uncurledR[0] != uncurledR[1]: nuclearMult = "0.5d0*"
 		self.nuclearMult = nuclearMult
 		self.RHS = nuclearMult+"k("+str(self.idx)+")"
 		self.RHSvar = "kflux"+str(self.idx)
@@ -206,20 +209,21 @@ class reaction():
 		#if(self.isAutoRev):
 		#	actualReactants = self.products
 		#	actualCurlyR = self.curlyP
-		if(useNuclearMult and self.isAutoRev): sys.exit("ERROR: nuclear multiplier on reverse reaction is not allowed!")
+		if useNuclearMult and self.isAutoRev:
+			sys.exit("ERROR: nuclear multiplier on reverse reaction is not allowed!")
 		i = 0
 		for r in actualReactants:
-			if(len(actualCurlyR)>0):
-				if(actualCurlyR[i]): continue #skip curly reactants
+			if len(actualCurlyR) > 0:
+				if actualCurlyR[i]: continue #skip curly reactants
 			i += 1
 			ns.append("n("+str(r.fidx)+")")
-			if(r.idx<=0):
-				print "************************************************************"
-				print "ERROR: species index (molec.idx) must be greater than 0"
-				print "Probably you have to define idx"
-				print "************************************************************"
+			if r.idx <= 0:
+				print("************************************************************")
+				print("ERROR: species index (molec.idx) must be greater than 0")
+				print("Probably you have to define idx")
+				print("************************************************************")
 				sys.exit()
-		if(len(ns)>0): self.RHS += "*" + ("*".join(ns))
+		if len(ns) > 0: self.RHS += "*" + ("*".join(ns))
 
 	#method:build pseudo hash (for unique reactions to avoid duplicates)
 	def build_pseudo_hash(self):
@@ -244,42 +248,42 @@ class reaction():
 		for p in self.products:
 			mass_products += p.mass
 			charge_products += p.charge
-		if(mass_reactants!=0 and (mode=="ALL" or "MASS" in mode)):
-			if(abs(1.e0-mass_products/mass_reactants)>1e-6):
-				print "************************************************"
-				print "WARNING: problem with mass conservation in reaction", self.idx
-				print "reaction:",self.verbatim
-				print "reactants:", [r.name for r in self.reactants], mass_reactants
-				print "products:", [p.name for p in self.products], mass_products
-				print "mass ratio (prods/reacts):",mass_products/mass_reactants, "(should be 1.0)"
-				print "You can remove this check with the -nomassCheck option"
-				print "************************************************"
+		if mass_reactants != 0 and (mode == "ALL" or "MASS" in mode):
+			if abs(1e0 - mass_products / mass_reactants) > 1e-6:
+				print("************************************************")
+				print("WARNING: problem with mass conservation in reaction", self.idx)
+				print("reaction:",self.verbatim)
+				print("reactants:", [r.name for r in self.reactants], mass_reactants)
+				print("products:", [p.name for p in self.products], mass_products)
+				print("mass ratio (prods/reacts):",mass_products/mass_reactants, "(should be 1.0)")
+				print("You can remove this check with the -nomassCheck option")
+				print("************************************************")
 				a = raw_input("Any key to continue q to quit... ")
-				if(a=="q"): print sys.exit()
-		if(abs(charge_products - charge_reactants)!=0 and (mode=="ALL" or "CHARGE" in mode)):
-			print "************************************************"
-			print "WARNING: problem with charge conservation in reaction", self.idx
-			print "reaction:",self.verbatim
-			print "reactants:", [r.name for r in self.reactants], charge_reactants
-			print "products:", [p.name for p in self.products], charge_products
-			print "You can remove this check with the -nochargeCheck option"
-			print "************************************************"
+				if a == "q": sys.exit()
+		if abs(charge_products - charge_reactants)!=0 and (mode=="ALL" or "CHARGE" in mode):
+			print("************************************************")
+			print("WARNING: problem with charge conservation in reaction", self.idx)
+			print("reaction:",self.verbatim)
+			print("reactants:", [r.name for r in self.reactants], charge_reactants)
+			print("products:", [p.name for p in self.products], charge_products)
+			print("You can remove this check with the -nochargeCheck option")
+			print("************************************************")
 			a = raw_input("Any key to continue q to quit... ")
-			if(a=="q"): print sys.exit()
+			if a == "q": sys.exit()
 
 	#calcluate enthalpy of formation
 	def enthalpy(self):
-		if("krome_kph" in self.krate): return
+		if "krome_kph" in self.krate: return
 
-		if(len(self.reactants)==0 and len(self.products)==0):
+		if len(self.reactants) == 0 and len(self.products) == 0:
 			self.dH = 0e0
 			return
-		if(len(self.reactants)==0 or len(self.products)==0):
-			print "ERROR: you have called enthalpy calculation"
-			print " with empty reactants and/or products!"
+		if len(self.reactants) == 0 or len(self.products) == 0:
+			print("ERROR: you have called enthalpy calculation")
+			print(" with empty reactants and/or products!")
 			sys.exit()
-		reag = self.reactants #copy reactants
-		prod = self.products #copy products
+		reag = self.reactants  # copy reactants
+		prod = self.products  # copy products
 		available = True #flag for species availablity in the enthalpy dictionary
 		rH = pH = 0.e0 #init reactants and prodcuts enthalpy eV
 		#loop on reactants
@@ -300,7 +304,8 @@ class reaction():
 			#	break
 			pH += xp.enthalpy
 		self.dH = None
-		if(available): self.dH = (rH-pH)*1.60217657e-12 #eV->erg (cooling<0)
+		if available:
+			self.dH = (rH-pH)*1.60217657e-12 #eV->erg (cooling<0)
 
 
 	#*********************
@@ -316,32 +321,32 @@ class reaction():
 		ridx = "(/"+(",".join([x.fidx for x in self.reactants]))+"/)"
 		ndif = len(self.reactants)-len(self.products)
 		kk = "("+self.krate+") * revKc(Tgas,"+ridx+","+pidx+")"
-		if(ndif!=0): kk +=" * (1.3806488d-22 * Tgas)**("+str(ndif)+")"
+		if ndif != 0: kk +=" * (1.3806488d-22 * Tgas)**("+str(ndif)+")"
 		return kk
 
 	#***********************
 	#get rate F90
-	def getRateF90(self,context,varname="k"):
+	def getRateF90(self, context, varname="k"):
 		sTlimit = ""
 		hasTlim = (self.hasTlimitMin or self.hasTlimitMax) #Tmin or Tmax are present
 		Tlimfound = False #flag to check if endif is needed after the reaction rate
-		if(self.kphrate==None and context.useTlimits and hasTlim):
+		if self.kphrate is None and context.useTlimits and hasTlim:
 			Tlimfound = True #need to close the if statement opened here
 			sTlimit = "if("
-			if(self.hasTlimitMin): sTlimit += "Tgas."+self.TminOp+"."+self.Tmin #Tmin is present
-			if(self.hasTlimitMin and self.hasTlimitMax): sTlimit += " .and. " #Tmin and Tmax are present
-			if(self.hasTlimitMax): sTlimit += "Tgas."+self.TmaxOp+"."+self.Tmax #Tmax is present
+			if self.hasTlimitMin: sTlimit += "Tgas."+self.TminOp+"."+self.Tmin #Tmin is present
+			if self.hasTlimitMin and self.hasTlimitMax: sTlimit += " .and. " #Tmin and Tmax are present
+			if self.hasTlimitMax: sTlimit += "Tgas."+self.TmaxOp+"."+self.Tmax #Tmax is present
 			sTlimit += ") then\n"
 		kstr = "!" + self.verbatim+"\n" #reaction header
 		kstr += "\t" + sTlimit + self.ifrate + " "+varname+"("+str(self.idx)+") = " + self.krate #limit+extraif+rate
-		if(Tlimfound): kstr += "\nend if" #close the if statement for temperature
+		if Tlimfound: kstr += "\nend if" #close the if statement for temperature
 		return truncF90(kstr, 60,"*") #truncates long reaction rates
 
 #############################################
 #find a species with the given name and return it as an object
-def searchSpeciesByName(speciesList,speciesName):
+def searchSpeciesByName(speciesList, speciesName):
 	for xsp in speciesList:
-		if(xsp.name==speciesName): return xsp
+		if xsp.name == speciesName: return xsp
 
 	sys.exit("ERROR: species "+speciesName+" not found by searchSpeciesByName!")
 
@@ -352,8 +357,8 @@ def LEIDEN2KROME(build_folder,reactant,products):
 	try:
 		from scipy import interpolate
 	except:
-		print "ERROR: scipy not installed!"
-		print " This module is necessary to use LEIDEN xsecs."
+		print("ERROR: scipy not installed!")
+		print(" This module is necessary to use LEIDEN xsecs.")
 		sys.exit()
 
 	prods = sorted([x.name for x in products])
@@ -361,33 +366,34 @@ def LEIDEN2KROME(build_folder,reactant,products):
 	fname1 = data_folder+reactant.name+"__"+("_".join(prods))+".dat"
 	fname2 = data_folder+reactant.name+"__"+("_".join(prods[::-1]))+".dat"
 
-	if(os.path.exists(fname1)):
+	if os.path.exists(fname1):
 		fname = fname1
-	elif(os.path.exists(fname2)):
+	elif os.path.exists(fname2):
 		fname = fname2
 	else:
-		print
-		print "ERROR: file "+fname1+" OR"
-		print " file "+fname2+" don't exist!"
-		print "Species "+reactant.name+" doesn't have a LEIDEN file."
-		print "Search on http://home.strw.leidenuniv.nl/~ewine/photo/index.php?file=pd.php"
-		print " and copy to "+data_folder
-		print "The file should be in the format R__P_P.dat, "
-		print " where R is the reactant name and P the products,"
-		print " e.g. "+fname1
+		print("")
+		print("ERROR: file "+fname1+" OR")
+		print(" file "+fname2+" don't exist!")
+		print("Species "+reactant.name+" doesn't have a LEIDEN file.")
+		print("Search on http://home.strw.leidenuniv.nl/~ewine/photo/index.php?file=pd.php")
+		print(" and copy to "+data_folder)
+		print("The file should be in the format R__P_P.dat, ")
+		print(" where R is the reactant name and P the products,")
+		print(" e.g. " + fname1)
 		sys.exit()
 
-	print "automatic reaction from LEIDEN database found: "+reactant.name+" -> "+(" + ".join(prods))
+	print("automatic reaction from LEIDEN database found: " + reactant.name
+		  + " -> "+(" + ".join(prods)))
 
 	#columns references: wavelength, absorption, dissociation, and ionization
 	header = ["wlen","abs","diss","ion"]
-	data = {k:[] for k in header}
+	data = {k: [] for k in header}
 	#read data from the file and store the data and the header
-	fleiden = open(fname,"rb")
+	fleiden = open(fname)
 	for row in fleiden:
 		srow = row.strip()
-		if(srow==""): continue
-		if(srow.startswith("#")): continue
+		if srow == "": continue
+		if srow.startswith("#"): continue
 		arow = [float(x) for x in srow.split(" ") if(x!="")]
 		#append data to array
 		for i in range(len(header)):
@@ -403,7 +409,7 @@ def LEIDEN2KROME(build_folder,reactant,products):
 
 	#determine if photoionization or not (check if electron in products)
 	process = "diss"
-	if("E" in prods): process = "ion"
+	if "E" in prods: process = "ion"
 	xsecList = data[process][::-1]
 
 	fout = open(build_folder+"leiden_"+reactant.name+"__"+("_".join(prods))+".org","w")
@@ -433,33 +439,33 @@ def LEIDEN2KROME(build_folder,reactant,products):
 
 ###############################
 #convert a SWRI datafile to KROME format in the build folder
-def SWRI2KROME(build_folder,reactant,products,Eth):
+def SWRI2KROME(build_folder,reactant,products, Eth):
 	import copy
 	try:
 		from scipy import interpolate
 	except:
-		print "ERROR: scipy not installed!"
-		print " This module is necessary to use SWRI xsecs."
+		print("ERROR: scipy not installed!")
+		print(" This module is necessary to use SWRI xsecs.")
 		sys.exit()
 
 	prods = [x.name for x in products]
 	data_folder = "data/database/swri_xsecs/"
 	fname = data_folder+reactant.name+".dat"
-	if(not(os.path.exists(fname))):
-		print
-		print "ERROR: file "+fname+" doesn't exist!"
-		print "Species "+reactant.name+" doesn't have a SWRI file."
-		print "Search on http://phidrates.space.swri.edu"
-		print " and copy to "+data_folder+"/"+reactant.name+".dat"
+	if not os.path.exists(fname):
+		print("")
+		print("ERROR: file "+fname+" doesn't exist!")
+		print("Species "+reactant.name+" doesn't have a SWRI file.")
+		print("Search on http://phidrates.space.swri.edu")
+		print(" and copy to "+data_folder+"/"+reactant.name+".dat")
 		sys.exit()
 	#read data from the file and store the data and the header
-	fswri = open(fname,"rb")
+	fswri = open(fname)
 	okrow = []
 	for row in fswri:
 		srow = row.strip()
-		if(srow==""): continue
+		if srow == "": continue
 		arow = [x.strip() for x in srow.split(" ") if x!=""]
-		if(arow[0]=="Lambda"):
+		if arow[0] == "Lambda":
 			lastLambda = arow[:]
 			okrow = []
 			continue
@@ -469,7 +475,7 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	#replace exited states to ground, e.g. C1D->C
 	lold = lastLambda[:]
 	for state in ["1D","1S","3P"]:
-		lastLambda = [x.replace(state,"") for x in lastLambda]
+		lastLambda = [x.replace(state, "") for x in lastLambda]
 
 	#check columns with same products (after state replacing)
 	match = [] #index matching
@@ -477,7 +483,7 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	for i in range(len(lastLambda)-1):
 		match.append([])
 		for j in range(i+1,len(lastLambda)):
-			if(lastLambda[i]==lastLambda[j] and not(j in founds)):
+			if lastLambda[i] == lastLambda[j] and j not in founds:
 				match[i].append(j)
 				founds.append(j)
 
@@ -485,34 +491,34 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	removecol = []
 	for j in range(len(match)):
 		columns = match[j]
-		if(len(columns)==0): continue #skip empty matches
+		if len(columns) == 0: continue #skip empty matches
 		for icol in columns:
 			removecol.append(icol)
 			for i in range(len(okrow)):
 				okrow[i][j] = float(okrow[i][j])+float(okrow[i][icol])
 
 	#write branches slash-separated and include electrons if needed
-	lastLambda = [sorted((x.replace("+","+/E/")).split("/")) for x in lastLambda]
+	lastLambda = [sorted((x.replace("+", "+/E/")).split("/")) for x in lastLambda]
 	#remove empty products if any
 	lastLambda = [[y for y in x if y!=""] for x in lastLambda]
 	lastLambda = [sorted([x.upper() if x=="e" else x for x in block]) for block in lastLambda]
 
 	#search the column that contains the given branch
 	psort = sorted(prods)
-	if(not(psort in lastLambda)):
-		print "ERROR: products "+(" ".join(psort))+" aren't in the SWRI file "\
-			+ data_folder+reactant.name + ".dat"
-		print "Available:",lastLambda[2:]
-		print "Looking for:",psort
+	if psort not in lastLambda:
+		print("ERROR: products "+(" ".join(psort))+" aren't in the SWRI file "
+			+ data_folder+reactant.name + ".dat")
+		print("Available:", lastLambda[2:])
+		print("Looking for:", psort)
 		sys.exit()
 	data_col = lastLambda.index(psort) #first column matching
-	if(data_col in removecol): sys.exit("ERROR: problem with SWRI column merging!")
+	if data_col in removecol: sys.exit("ERROR: problem with SWRI column merging!")
 
-	print "automatic reaction from SWRI database found: "+reactant.name+" -> "+(" + ".join(psort))
+	print("automatic reaction from SWRI database found: "+reactant.name+" -> "+(" + ".join(psort)))
 
 	#some constants to convert AA to eV
-	clight = 2.99792458e10 #cm/s
-	hplanck = 4.135667516e-15 #eV*s
+	clight = 2.99792458e10  # cm/s
+	hplanck = 4.135667516e-15  # eV*s
 
 	#prepare data for interpolation and dump original data for comparison
 	xdata = []
@@ -526,34 +532,34 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	isDirac = False #boolean to determine if it is reading a line or not
 	hasDirac = False #boolean to determine if lines are found or not
 	xDirac = [] #list of the lines found
-	dDirac = {"freqL":0e0, "freqR":0e0, "xsec":0e0} #template for line (boundaries + xsec)
+	dDirac = {"freqL": 0e0, "freqR": 0e0, "xsec": 0e0} #template for line (boundaries + xsec)
 	#row format is: [E(eV), [xsec(cm2) for each branch]]
 	for row in okrow[::-1]:
-		if(float(row[0])<=0e0): continue
+		if float(row[0]) <= 0e0: continue
 		xenergy = clight*hplanck/(float(row[0])*1e-8) #AA->eV
 		xsec = float(row[data_col]) #cross section cm2
 		#SWRI notation: when xsec is 1e-35 start to read a line
 		# with 1e-35 xsec 1e-35 to get the linewidth
-		if(xsec==1e-35):
+		if xsec == 1e-35:
 			hasDirac = True
-			isDirac = not(isDirac)
-			if(xsec_old==1e-35): isDirac = True #double 1e-35 to open lines block
+			isDirac = not isDirac
+			if xsec_old == 1e-35: isDirac = True #double 1e-35 to open lines block
 			#store the left and the right bound of the line
-			if(isDirac):
+			if isDirac:
 				dDirac["freqL"] = xenergy
 			else:
 				dDirac["freqR"] = xenergy
 				xDirac.append(copy.copy(dDirac))
 		#store the xsec value when line value (Dirac) is open
-		if(xsec!=1e-35 and isDirac):
+		if xsec != 1e-35 and isDirac:
 			dDirac["xsec"] = xsec
 		xdata.append(xenergy)
 		ydata.append(xsec)
-		if(xsec>1e-40 and xmin==None): xmin = xenergy
-		if(xsec>1e-40): xmax = xenergy
+		if xsec > 1e-40 and xmin is None: xmin = xenergy
+		if xsec > 1e-40: xmax = xenergy
 		#find threshold for photoionization
-		if(xsec==0e0 and xsec_old!=0e0):
-			if("E" in products): Eth = xenergy_old
+		if xsec == 0e0 and xsec_old != 0e0:
+			if "E" in products: Eth = xenergy_old
 		foutorg.write(str(xenergy)+" "+str(xsec)+"\n")
 		xsec_old = xsec
 		xenergy_old = xenergy
@@ -563,18 +569,18 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	# the boolean isDirac is true when reading line, hence
 	# if not closed (i.e. still False at EOF) rises an error.
 	# False because of double 1e-35 to close the line part
-	if(not(isDirac) and hasDirac):
-		print "ERROR: in SWRI read line with opened token"
-		print " but never closed!"
-		print " check:"+data_folder+reactant.name + ".dat"
+	if not isDirac and hasDirac:
+		print("ERROR: in SWRI read line with opened token")
+		print(" but never closed!")
+		print(" check:"+data_folder+reactant.name + ".dat")
 		sys.exit()
 	#create interpolated function from SWRI file
 	fdata = interpolate.interp1d(xdata, ydata,kind='linear')
 
-	if(xmax==None or xmin==None or xmax<=xmin):
-		print "ERROR: problem with loading cross section for"
-		print reactant.name+" -> "+(" + ".join(psort))
-		print "xmin:",xmin,"xmax:",xmax
+	if xmax is None or xmin is None or xmax <= xmin:
+		print("ERROR: problem with loading cross section for")
+		print(reactant.name+" -> "+(" + ".join(psort)))
+		print("xmin:", xmin, "xmax:", xmax)
 		sys.exit()
 
 	#write the file to the build folder
@@ -586,19 +592,19 @@ def SWRI2KROME(build_folder,reactant,products,Eth):
 	for i in range(imax):
 		xenergy = i*(emax-emin)/(imax-1)+emin
 		#if not line-based interpolates with numpy
-		if(len(xDirac)==0):
+		if len(xDirac) == 0:
 			foutx.write(str(xenergy)+" "+str(fdata(xenergy))+"\n")
 		else:
 			#if line-based lines are rectangles of average xsec
 			myxd = None
 			#loop on the lines found to determine the xsec @ xenergy
 			for xd in xDirac:
-				if(xenergy>=xd["freqL"] and xenergy<=xd["freqR"]):
+				if xenergy >= xd["freqL"] and xenergy <= xd["freqR"]:
 					myxd = xd #store the line at the corresponding xenergy
 					break
 			#xsec is zero outside the line boundaries
 			xsec = 0e0
-			if(myxd!=None): xsec = myxd["xsec"] #otherwise is the averaged xsec
+			if myxd is not None: xsec = myxd["xsec"] #otherwise is the averaged xsec
 			foutx.write(str(xenergy)+" "+str(xsec)+"\n")
 
 	foutx.close()
@@ -675,19 +681,19 @@ def listA(arg):
 	parts = []
 	part = ""
 	for a in list(arg):
-		if(a.islower()):
+		if a.islower():
 			part += a
 		else:
-			if(part!=""): parts.append(part)
+			if part != "": parts.append(part)
 			part = a
 	parts.append(part)
 	return parts
 
 ####################
 #fill with spaces the end of a string up to columns characters
-def fillSpaces(instring,columns):
+def fillSpaces(instring, columns):
 	astring = str(instring)
-	if(columns<len(astring)): return ("#"*columns)
+	if columns < len(astring): return "#"*columns
 	return astring+(" "*(columns-len(astring)))
 
 #####################
@@ -744,32 +750,32 @@ def compute_Hdata(arg):
 
 	#extend with uppercase species
 	exHData = dict()
-	for k,v in xHData.iteritems():
+	for k,v in xHData.items():
 		exHData[k.upper()] = v
 	xHData.update(exHData)
 
 	#if DH is present no need to compute it
-	if(arg in xHData): return xHData[arg]
+	if arg in xHData: return xHData[arg]
 
 	#find neutral
 	neutral = arg.replace("+","").replace("-","")
 
 	#check if neutral DH exists
-	if(not(neutral in xHData)):
+	if neutral not in xHData:
 		sys.exit("ERROR: cannot compute DH for "+arg+" since "+neutral+" is missing!")
 
 	#do calculation for cation
-	if("+" in arg):
+	if "+" in arg:
 		#check if neutral's IE exists
-		if(not("IE" in xHData[neutral])):
+		if "IE" not in xHData[neutral]:
 			sys.exit("ERROR: cannot compute DH for "+arg+" since IE "+neutral+" is missing!")
 		#DH(cation) = DH(neutral) + ionization energy - electron entalphy
 		return {"DH": xHData[neutral]["DH"] + xHData[neutral]["IE"]*eV2kJmol - xHData["E"]["DH"]}
 
 	#do calculation for anion
-	if("-" in arg):
+	if "-" in arg:
 		#check if neutral's EA exists
-		if(not("EA" in xHData[neutral])):
+		if "EA" not in xHData[neutral]:
 			sys.exit("ERROR: cannot compute DH for "+arg+" since EA "+neutral+" is missing!")
 		#DH(anion) = DH(neutral) - electron affinity + electron entalphy
 		return {"DH": xHData[neutral]["DH"] - xHData[neutral]["EA"]*eV2kJmol + xHData["E"]["DH"]}
@@ -779,7 +785,7 @@ def compute_Hdata(arg):
 
 
 ################################
-def compute_DHreact(listRR,listPP):
+def compute_DHreact(listRR, listPP):
 	DH = 0e0
 	return sum([compute_Hdata(x)["DH"] for x in listPP])\
 		- sum([compute_Hdata(x)["DH"] for x in listRR])
@@ -808,22 +814,22 @@ def generateCustom(readCustomFile):
 	custom["only"] = []
 
 	#list of tokens where an array is expected
-	arrayTokens = ["atoms","include","exclude","present","only"]
+	arrayTokens = ["atoms", "include", "exclude", "present", "only"]
 
 	#read custom file and store the info in a dict
-	fhcustom = open(readCustomFile,"rb")
+	fhcustom = open(readCustomFile)
 	for row in fhcustom:
 		srow = row.strip()
-		if(srow.strip()==""): continue
-		if(srow[0]=="#"): continue
+		if srow.strip() == "": continue
+		if srow[0] == "#": continue
 		isArray = False
 		#search for if this is an array token
 		for arr in arrayTokens:
-			if(arr in srow.split(":")):
+			if arr in srow.split(":"):
 				isArray = True
 				break
 		#read data according to array or value
-		if(isArray):
+		if isArray:
 			custom[srow.split(":")[0].strip()] = [x.strip() for x in srow.split(":")[1].split(",") if x.strip()!=""]
 		else:
 			custom[srow.split(":")[0].strip()] = srow.split(":")[1].strip()
@@ -867,156 +873,154 @@ def generateCustom(readCustomFile):
 	#prepare restricted set according to the options
 	for i in range(len(amols_org)):
 		#skip anions and cations if reqired
-		if(("+" in emols_org[i]) and custom["cations"]=="no"): continue
-		if(("-" in emols_org[i]) and custom["anions"]=="no"): continue
+		if ("+" in emols_org[i]) and custom["cations"] == "no": continue
+		if ("-" in emols_org[i]) and custom["anions"] == "no": continue
 		#skip species if required
-		if(amols_org[i] in custom["exclude"]): continue
+		if amols_org[i] in custom["exclude"]: continue
 		thisMol = emols_org[i].replace("+","").replace("-","")
-		if(thisMol==""): thisMol = "E" #fix electron for parsing
+		if thisMol == "": thisMol = "E" #fix electron for parsing
 		countAtoms = 0 #number of atoms found
 		#atoms are sorted for replacing
-		for at in sorted(custom["atoms"],key=lambda x:len(x))[::-1]:
+		for at in sorted(custom["atoms"], key=lambda x:len(x))[::-1]:
 			#replace until atom is found in the exploded species
-			while(at in thisMol):
+			while at in thisMol:
 				countAtoms += 1
 				thisMol = thisMol.replace(at,"",1)
 		#check max number of atoms per species
-		if(countAtoms>int(custom["maxatoms"])): continue
+		if countAtoms > int(custom["maxatoms"]): continue
 		#check residuals from replacing
 		if(is_number(thisMol) or thisMol==""):
 			amols.append(amols_org[i])
 			emols.append(emols_org[i])
 
-
 	#include additional molecules
 	for mol in custom["include"]:
-		if(mol==""): continue
-		if(mol in custom["exclude"]): sys.exit("ERROR: "+mol+" present in exclude AND in include on file "+readCustomFile)
-		if(not(mol in amols_org)):
-			print "ERROR: can't recognize this molecule: "+mol
-			print " you should add this to the automatic list or correct any typo."
+		if mol == "": continue
+		if mol in custom["exclude"]: sys.exit("ERROR: "+mol+" present in exclude AND in include on file "+readCustomFile)
+		if mol not in amols_org:
+			print("ERROR: can't recognize this molecule: "+mol)
+			print(" you should add this to the automatic list or correct any typo.")
 			sys.exit()
 		amols.append(mol)
 		emols.append(emols_org[amols_org.index(mol)])
 
 	#check for only species (only reactions with these species)
-	if(len(custom["only"])>0):
+	if len(custom["only"]) > 0:
 		amols = []
 		emols = []
 
 	for mol in custom["only"]:
-		if(mol==""): continue
-		if(not(mol in amols_org)):
-			print "ERROR: can't recognize this molecule: "+mol
-			print " you should add this to the automatic list or correct any typo."
+		if mol == "": continue
+		if mol not in amols_org:
+			print("ERROR: can't recognize this molecule: "+mol)
+			print(" you should add this to the automatic list or correct any typo.")
 			sys.exit()
 		amols.append(mol)
 		emols.append(emols_org[amols_org.index(mol)])
 
 	#check number of species found
-	if(len(amols)==0):
-		print "ERROR: no species available for custom reactions,"
-		print " check options in "+readCustomFile+" file."
+	if len(amols) == 0:
+		print("ERROR: no species available for custom reactions,")
+		print(" check options in "+readCustomFile+" file.")
 		sys.exit()
-	print "Search custom reactions using the following species"
-	for i in range(len(amols)/5+1):
+	print("Search custom reactions using the following species")
+	for i in range(len(amols)//5+1):
 		#this simply write 5 species per line
-		print " "+(" ".join(amols[i*5:min((i+1)*5,len(amols))]))
+		print(" "+(" ".join(amols[i*5:min((i+1)*5,len(amols))])))
 
 	#temporary file name
 	tmpNumber = "network" #str(int(rand()*1e8))
 	tmpFname = "cstm"+tmpNumber+".tmp"
 	tmpFnameAll = "cstm"+tmpNumber+"_all.tmp"
 
-	print "building automatic product/reactant combinations..."
+	print("building automatic product/reactant combinations...")
 	#build product/reactant combinations
 	combs = []
 	for mol1 in emols:
 		cc = "".join(sorted(listA(mol1))) #exploded 1body combination
 		combs.append([cc,[mol1]]) #single prod/react
 		for mol2 in emols:
-			if(int(custom["maxprod"])<2): continue
-			if(int(custom["maxrea"])<2): continue
+			if int(custom["maxprod"]) < 2: continue
+			if int(custom["maxrea"]) < 2: continue
 			cc = "".join(sorted(listA(mol1)+listA(mol2))) #exploded 2body combination
-			if("++" in cc): continue #exclude cation-cation reactions
-			if("--" in cc): continue #exclude anion-anion reactions
+			if "++" in cc: continue #exclude cation-cation reactions
+			if "--" in cc: continue #exclude anion-anion reactions
 			cc = cc.replace("+-","") #neutralize
 			combs.append([cc,sorted([mol1,mol2])]) #double prod/react
 			for mol3 in emols:
-				if(int(custom["maxprod"])<3): continue
-				if(int(custom["maxrea"])<3): continue
+				if int(custom["maxprod"]) < 3: continue
+				if int(custom["maxrea"]) < 3: continue
 				#exploded 3body combination
 				cc = "".join(sorted(listA(mol1)+listA(mol2)+listA(mol3)))
 				#cc = cc.replace("+-","")
-				if("+" in cc): continue #exclude cation 3body
-				if("-" in cc): continue #exclude anion 3body
+				if "+" in cc: continue #exclude cation 3body
+				if "-" in cc: continue #exclude anion 3body
 				combs.append([cc,sorted([mol1,mol2,mol3])]) #triple prod/react
 
 	#build reactions from product/reactant combinations
 	#combinations are [exploded,[species]]
-	print "building automatic reactions... (it may take a while)"
+	print("building automatic reactions... (it may take a while)")
 	time0 = time.time()
 	custRea = []
 	lenPresent = len(custom["present"])
 	#loop on reactants
 	countRR = 0
 	for RR in combs:
-		if((countRR % 5000)==1): print "time to go (s):",round((time.time()-time0)/countRR*(len(combs)-countRR),2)
+		if countRR % 5000 == 1:
+			print("time to go (s):",round((time.time()-time0)/countRR*(len(combs)-countRR),2))
 		countRR += 1
 		JRR = ("".join(sorted("".join(RR[1]))))
 		lenRR = len(RR[1])
 		#loop on products
 		for PP in combs:
 			#check if exploded are the same
-			if(RR[0]!=PP[0]): continue
+			if RR[0] != PP[0]: continue
 			#3body->3body ignored
-			if(lenRR==3 and len(PP[1])==3): continue
+			if lenRR == 3 and len(PP[1]) == 3: continue
 			#anion-cation->cation-anion ignored
 			JPP = ("".join(sorted("".join(PP[1]))))
-			if(("+-" in JRR) and ("+-" in JPP)): continue
+			if "+-" in JRR and "+-" in JPP: continue
 			#check if reactant/products are different (avoid A+B->A+B)
-			if(RR[1]==PP[1]): continue
+			if RR[1] == PP[1]: continue
 			#check "present" statement
-			if(lenPresent>0):
+			if lenPresent > 0:
 				allSpecies = RR[1]+PP[1] #all the species R+P
 				anyFound = False
 				#loop on species
 				for sp in allSpecies:
-					if(sp in custom["present"]):
+					if sp in custom["present"]:
 						anyFound = True
 						break
 				#if none of the "present" species are found skip reaction
-				if(not(anyFound)): continue
+				if not anyFound: continue
 
 			#prepare the reaction
 			cRea = sorted([RR,PP])
 			#if not already present add
-			if(not(cRea in custRea)): custRea.append(cRea)
+			if cRea not in custRea: custRea.append(cRea)
 
-	print "searching automatic reactions in the dbase..."
+	print("searching automatic reactions in the dbase...")
 	#search reactions in the database
 	autoreacts = [] #dbase array contains dictionary with reaction data
 	fdbase = "data/database/"
 	file_list = [f for f in listdir(fdbase) if isfile(join(fdbase,f))]
 	extraVars = dict() #dict of the extra varaibles, with key=filename
 	for fname in file_list:
-		if("~" in fname): continue #skip temp files
-		fhauto = open(fdbase+fname,"rb")
+		if "~" in fname: continue #skip temp files
+		fhauto = open(fdbase+fname)
 		for row in fhauto:
 			srow = row.strip()
-			if(srow.strip()==""): continue
-			if(srow=="#BREAK DATABASE"): break #skip non database files
-			if(srow[0]=="#"): continue
+			if srow.strip() == "": continue
+			if srow == "#BREAK DATABASE": break #skip non database files
+			if srow[0] == "#": continue
 			#skip phtorates if not needed
-			if("@photorates:yes" in srow.lower().replace(" ","")):
-				if(custom["photorates"]!="yes"): break
+			if "@photorates:yes" in srow.lower().replace(" ", ""):
+				if custom["photorates"] != "yes": break
 				continue
-			if("@var:" in srow): continue
-			if("@type:" in srow): autorea = dict() #begin reaction
+			if "@var:" in srow: continue
+			if "@type:" in srow: autorea = dict() #begin reaction
 			autorea[srow.split(":")[0].replace("@","").strip()] = srow.split(":")[1].strip()
-			if("@rate:" in srow): autoreacts.append(autorea) #end reaction
-
-
+			if "@rate:" in srow: autoreacts.append(autorea) #end reaction
 
 	DHlimit = 3e3 #enthalpy limit to accept a reaction, K
 	sDHlimit = str(round(DHlimit/1e1**int(log10(DHlimit)),2))+"d"+str(int(log10(DHlimit)))
@@ -1030,14 +1034,15 @@ def generateCustom(readCustomFile):
 		+ fillSpaces("ENTHALPY (K)",18) + fillSpaces("FOUND IN DBASE",16)\
 		+ fillSpaces("<"+str(sDHlimit)+"K",9) + "check\n")
 
-	print "automatic reactions found:",len(custRea)*2 #including reverse
-	print "writing automatic reactions to file... (it may also take a while)"
+	print("automatic reactions found:",len(custRea)*2)  # including reverse
+	print("writing automatic reactions to file... (it may also take a while)")
 	time0 = time.time()
 	kJmol2K = 120.274e0 #kJ/mol -> K
 	#search created reactions in the database
 	iCount = cCount = 0
 	for crea in custRea:
-		if((cCount % 500)==1): print "time to go (s):",round((time.time()-time0)/cCount*(len(custRea)-cCount),2)
+		if cCount % 500 ==1:
+			print("time to go (s):",round((time.time()-time0)/cCount*(len(custRea)-cCount),2))
 		cCount += 1
 		#prepare custom products/reactants
 		CC1 = crea[0][1]
@@ -1053,27 +1058,27 @@ def generateCustom(readCustomFile):
 			PP = sorted([x.strip() for x in autorea["prods"].split(",")])
 			RR = sorted([x.strip() for x in autorea["reacts"].split(",")])
 			#append new reactions found
-			if(RR==CC1 and PP==CC2 and not([CC1,CC2] in reaFound)):
+			if RR==CC1 and PP==CC2 and [CC1,CC2] not in reaFound:
 				reaFound.append([CC1,CC2])
 				inDatabaseFwd = True
-			if(RR==CC2 and PP==CC1 and not([CC2,CC1] in reaFound)):
+			if RR==CC2 and PP==CC1 and [CC2,CC1] not in reaFound:
 				reaFound.append([CC2,CC1])
 				inDatabaseRev = True
-			if(inDatabaseRev and inDatabaseFwd): break
+			if inDatabaseRev and inDatabaseFwd: break
 		JJ1 = ("".join(CC1))
 		JJ2 = ("".join(CC2))
 		#write all the reactions even if not in the database
 		RRall = (" + ".join(CC1))
 		PPall = (" + ".join(CC2))
 		rtype = ""
-		if(("+" in JJ1) and ("-" in JJ1) and (len(CC2)==3)): rtype = "+-3prods"
-		if(list(set(CC1).intersection(CC2))): rtype = "catal"
-		if(len(CC2)==1): rtype = "form"
+		if "+" in JJ1 and "-" in JJ1 and len(CC2) == 3: rtype = "+-3prods"
+		if list(set(CC1).intersection(CC2)): rtype = "catal"
+		if len(CC2) == 1: rtype = "form"
 		DH = (DHCC2-DHCC1) * kJmol2K #enthalpy products - reactants
 		fav = (" *" if (DH<DHlimit) else "")
 		check = (" #" if(DH<DHlimit and not(inDatabaseFwd)) else "")
-		if(len(CC1)<3 or rtype=="catal"):
-			if(inDatabaseFwd or (DH<DHlimit)):
+		if len(CC1) < 3 or rtype == "catal":
+			if inDatabaseFwd or DH < DHlimit:
 				fhTmpAll.write(fillSpaces(iCount+1,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
 					+ fillSpaces(DH,18) + fillSpaces(inDatabaseFwd,16)\
 					+ fillSpaces(fav,9) + fillSpaces(check,3) + rtype + "\n")
@@ -1082,14 +1087,14 @@ def generateCustom(readCustomFile):
 		RRall = (" + ".join(CC2))
 		PPall = (" + ".join(CC1))
 		rtype = ""
-		if(("+" in JJ2) and ("-" in JJ2) and (len(CC1)==3)): rtype = "+-3prods"
-		if(list(set(CC2).intersection(CC1))): rtype = "catal"
-		if(len(CC1)==1): rtype = "form"
+		if ("+" in JJ2) and ("-" in JJ2) and (len(CC1) == 3): rtype = "+-3prods"
+		if list(set(CC2).intersection(CC1)): rtype = "catal"
+		if len(CC1) == 1: rtype = "form"
 		DH = (DHCC1-DHCC2) * kJmol2K #enthalpy products - reactants
 		fav = (" *" if (DH<DHlimit) else "")
 		check = (" #" if(DH<DHlimit and not(inDatabaseRev)) else "")
-		if(len(CC2)<3 or rtype=="catal"):
-			if(inDatabaseRev or (DH<DHlimit)):
+		if len(CC2) < 3 or rtype == "catal":
+			if inDatabaseRev or (DH < DHlimit):
 				fhTmpAll.write(fillSpaces(iCount+2,5) + fillSpaces(RRall,20) + " -> " + fillSpaces(PPall,20)\
 					+ fillSpaces(DH,18) + fillSpaces(inDatabaseRev,16)\
 					+ fillSpaces(fav,9) + fillSpaces(check,3) + rtype + "\n")
@@ -1098,29 +1103,28 @@ def generateCustom(readCustomFile):
 	fhTmpAll.close()
 
 	#check number of reactions found
-	if(len(reaFound)==0):
-		print "ERROR: no custom reactions found in the database,"
-		print " check options in "+readCustomFile+" file."
+	if len(reaFound) == 0:
+		print("ERROR: no custom reactions found in the database,")
+		print(" check options in "+readCustomFile+" file.")
 		sys.exit()
 
-	print "Custom reactions found:",len(reaFound)
-
+	print("Custom reactions found:",len(reaFound))
 
 	#sort reactions according to their format
 	reaFound = sorted(reaFound, key=lambda x:10*len(x[0])+len(x[1]))
 	idx = 0
 	fmtHashOld = 0
-	fhTmp = open(tmpFname,"w")
-	print "writing custom reactions on file "+tmpFname
+	fhTmp = open(tmpFname, "w")
+	print("writing custom reactions on file "+tmpFname)
 	fhTmp.write("#this is an automatically-generated network with the options below\n")
-	for k,v in custom.iteritems():
-		if(not(isinstance(v, basestring))): v = (",".join(v))
+	for k,v in custom.items():
+		if not isinstance(v, basestring): v = (",".join(v))
 		fhTmp.write("#"+k+": "+v+"\n")
 	#write results into a network file
 	for rea in reaFound:
 		fmtHash = 10*len(rea[0])+len(rea[1]) #format hash
 		#new format hash requires new format token
-		if(fmtHashOld!=fmtHash): fhTmp.write("\n@format:idx,"+("R,"*len(rea[0]))+("P,"*len(rea[1]))+"rate\n")
+		if fmtHashOld != fmtHash: fhTmp.write("\n@format:idx,"+("R,"*len(rea[0]))+("P,"*len(rea[1]))+"rate\n")
 		fhTmp.write(str(idx+1)+","+(",".join(rea[0]+rea[1]))+",auto\n")
 		fmtHashOld = fmtHash
 		idx += 1
@@ -1134,11 +1138,11 @@ def generateCustom(readCustomFile):
 def readTOpt(rea):
 	ops = ["GT","LT","GE","LE",">","<"]
 	for op in ops:
-		if(op in rea.Tmin):
+		if op in rea.Tmin:
 			rea.Tmin = rea.Tmin.replace(op,"").replace("..","")
 			rea.TminOp = op.replace(">","GT").replace("<","LT")
-		if(op in rea.Tmax):
-			print rea.Tmax
+		if op in rea.Tmax:
+			print(rea.Tmax)
 			rea.Tmax = rea.Tmax.replace(op,"").replace("..","")
 			rea.TmaxOp = op.replace(">","GT").replace("<","LT")
 	return rea
@@ -1146,28 +1150,28 @@ def readTOpt(rea):
 #################################
 #create tabvar (probably not the best interface ever)
 def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpaths,anytabsizes,coevars):
-	if(mytabvar.split("_")[0].lower()!="user"):
-		print "ERROR: to avoid conflicts common variables with @tabvar should begin with user_"
-		print " you provided: "+mytabvar
-		print " it should be: user_"+mytabvar
+	if mytabvar.split("_")[0].lower() != "user":
+		print("ERROR: to avoid conflicts common variables with @tabvar should begin with user_")
+		print(" you provided: "+mytabvar)
+		print(" it should be: user_"+mytabvar)
 		sys.exit()
 	#check if file exists
-	if(not(file_exists(mytabpath))):
-		print "ERROR: file "+mytabpath+" not found!"
-		print " note that the path must be relative to the ./krome command"
+	if not file_exists(mytabpath):
+		print("ERROR: file "+mytabpath+" not found!")
+		print(" note that the path must be relative to the ./krome command")
 		sys.exit()
 
 	#read the size of the table from the first line file
 	fhtab = open(mytabpath,"rb")
 	for tabrow in fhtab:
 		stabrow = tabrow.strip()
-		if(stabrow==""): continue
-		if(stabrow[0]=="#"): continue
-		if("," in stabrow):
+		if stabrow == "": continue
+		if stabrow[0] == "#": continue
+		if "," in stabrow:
 			mytabsize = [xx.strip() for xx in stabrow.split(",")]
 		else:
-			print "ERROR: the file "+mytabpath+" must contain the size of the"
-			print " table in the first line (comma separated, e.g. 50,30)"
+			print("ERROR: the file "+mytabpath+" must contain the size of the")
+			print(" table in the first line (comma separated, e.g. 50,30)")
 			sys.exit()
 		break
 	fhtab.close()
@@ -1181,21 +1185,20 @@ def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpath
 	anytabpaths.append(mytabpath)
 	anytabsizes.append(mytabsize)
 
-
 	anytabx = mytabvar+"_anytabx(:)"
 	anytaby = mytabvar+"_anytaby(:)"
 	anytabz = mytabvar+"_anytabz(:,:)"
 	anytabxmul = mytabvar+"_anytabxmul"
 	anytabymul = mytabvar+"_anytabymul"
 	tabf =  "fit_anytab2D("+anytabx+", &\n"+anytaby+", &\n"+anytabz+", &\n"+anytabxmul+", &\n"+anytabymul+", &\n"+mytabxxyy+")"
-	if(not(mytabvar in coevars)):
+	if mytabvar not in coevars:
 		coevars[mytabvar] = [len(coevars),tabf]
 
-	print "Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]"
+	print("Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]")
 
 #############################
 def addVarCoe(mytabvar,tabf,coevars):
-	if(not(mytabvar in coevars)):
+	if mytabvar not in coevars:
 		coevars[mytabvar] = [len(coevars),tabf]
 
 ############################
@@ -1205,7 +1208,7 @@ def get_cooling_dict():
 	idxcoo = {"H2":1,"H2GP":2,"atomic":3, "CEN":3, "HD":4, "Z":5, "metal":5, "dH":6, "enthalpic":6, "dust":7,\
 		"compton":8,"CIE":9, "continuum":10, "cont":10,"exp":11,"expansion":11,"ff":12,"bss":12,"custom":13,\
 		"CO":14, "ZCIE":15, "ZCIENOUV":16, "ZExtend":17, "GH":18, "OH":19, "H2O":20, "HCN":21}
-	idxcoo = {k.lower():v for (k,v) in idxcoo.iteritems()}
+	idxcoo = {k.lower():v for (k,v) in idxcoo.items()}
 	return idxcoo
 
 #############################
@@ -1216,7 +1219,7 @@ def get_cooling_index_list():
 	#loop on the index to write variables as idx_cool_H2 = 1
 	idxscoo = []
 	maxv = 0 #maximum index found is the size of the cooling array
-	for (k,v) in idxcoo.iteritems():
+	for (k,v) in idxcoo.items():
 		idxscoo.append([v,"idx_cool_"+k+" = "+str(v)])
 		maxv = max(maxv,v)
 	idxscoo = sorted(idxscoo,key=lambda x:x[0])
@@ -1228,7 +1231,7 @@ def get_heating_dict():
 	#the number is the corresponding integer index for the given heating
 	idxhea = {"chem":1,"compress":2, "compr":2, "photo":3, "dH":4, "enthalpic":4, "photoAv":5, "Av":5,\
 		"CR":6, "dust":7, "xray":8, "visc":9,"viscous":9, "custom":10, "ZCIE":11}
-	idxhea = {k.lower():v for (k,v) in idxhea.iteritems()}
+	idxhea = {k.lower():v for (k,v) in idxhea.items()}
 	return idxhea
 
 #############################
@@ -1238,7 +1241,7 @@ def get_heating_index_list():
 	idxhea = get_heating_dict()
 	idxshea = []
 	maxv = 0
-	for (k,v) in idxhea.iteritems():
+	for (k,v) in idxhea.items():
 		idxshea.append([v, "idx_heat_"+k+" = "+str(v)])
 		maxv = max(maxv,v)
 	idxshea = sorted(idxshea,key=lambda x:x[0])
@@ -1248,7 +1251,7 @@ def get_heating_index_list():
 
 ####################################
 #solar metallicities
-def get_solar_abundances(fileName="data/asplund.dat",keyName="Solar"):
+def get_solar_abundances(fileName="data/asplund.dat", keyName="Solar"):
 	#solar abundances from Tab.1 in Asplund+2009
 	# following their definition
 	#  log10(epsilon) = log10(n/nH) + 12
@@ -1270,13 +1273,13 @@ def get_solar_abundances(fileName="data/asplund.dat",keyName="Solar"):
 
 	solar_abs = dict()
 
-	fhz = open(fileName,"rb")
+	fhz = open(fileName)
 	#loop on data file
 	for row in fhz:
 		srow = row.strip()
 		#skip comments
-		if(srow==""): continue
-		if(srow.startswith("#")): continue
+		if srow == "": continue
+		if srow.startswith("#"): continue
 		#fill trailing with large number of spaces to avoid format problems
 		srow = srow+(""*sum(fmtSpace))
 		#cursor position
@@ -1291,18 +1294,16 @@ def get_solar_abundances(fileName="data/asplund.dat",keyName="Solar"):
 			#increase cursor position
 			istep += nsp
 		#if data are not empty store abundance
-		if(data[keyName].strip()!=""):
+		if data[keyName].strip() != "":
 			solar_abs[data["Name"].strip()] = float(data[keyName])
 
-	if(keyName=="Solar"):
+	if keyName == "Solar":
 		solar_out = dict()
-		for k,v in solar_abs.iteritems():
+		for k,v in solar_abs.items():
 			solar_out[k] = str(v-12e0)
 		return solar_out
 	else:
 		return solar_abs
-
-
 
 ###############################
 #get abundances assuming specific depletion and dust/gas mass ratio
@@ -1323,11 +1324,11 @@ def getAbundancesWithDepletion(d2g = .01):
 	#get average atomic mass
 	Waspl = get_solar_abundances(keyName="A")
 	#compute Z in mass for each atom (not normalized)
-	Zmassn = {k:(Waspl[k]*1e1**float(v)) for (k,v) in Zaspl.iteritems()}
+	Zmassn = {k:(Waspl[k]*1e1**float(v)) for (k,v) in Zaspl.items()}
 	#total Z not normalized
 	Ztot = sum(Zmassn.values())
 	#normalize to have Z
-	Zmass = {k:v/Ztot for (k,v) in Zmassn.iteritems()}
+	Zmass = {k:v/Ztot for (k,v) in Zmassn.items()}
 
 	#create depletion factors dictionary (1=all in dust)
 	fdep = {k:0e0 for k in nodepList}
@@ -1337,10 +1338,10 @@ def getAbundancesWithDepletion(d2g = .01):
 	#compute X,Y,Z
 	X = Zmass["H"]
 	Y = Zmass["He"]
-	Z = sum([v for (k,v) in Zmass.iteritems() if(not(k in ["H","He"]))])
+	Z = sum([v for (k,v) in Zmass.items() if(not(k in ["H","He"]))])
 
 	#Z depleted (excluded unknown)
-	Zdep = sum([v*fdep[k] for (k,v) in Zmass.iteritems()])
+	Zdep = sum([v*fdep[k] for (k,v) in Zmass.items()])
 
 	#Z in dust
 	Zd = d2g/(d2g+1e0)
@@ -1354,32 +1355,32 @@ def getAbundancesWithDepletion(d2g = .01):
 	ff = Zx/Zmass[depFree]
 
 	#trigger error if required depletion > 1 or negative
-	if(ff>1e0 or ff<0e0):
-		print "X:",X,"Y:",Y, "Z:", Z
-		print "Zd:",Zd, "Zg:",Zg, "Zd/Z:",Zd/Z, "Zg/Z:",Zg/Z
-		print dep
-		print depFree+":",ff
+	if ff > 1e0 or ff < 0e0:
+		print("X:",X,"Y:",Y, "Z:", Z)
+		print("Zd:",Zd, "Zg:",Zg, "Zd/Z:",Zd/Z, "Zg/Z:",Zg/Z)
+		print(dep)
+		print(depFree+":", ff)
 		sys.exit("ERROR: problems with "+depFree+" depletion!")
 	fdep[depFree] = ff
 
 	nH = Zmass["H"]*(1.-fdep["H"])/Waspl["H"]
-	return {k:v*(1.-fdep[k])/Waspl[k]/nH for (k,v) in Zmass.iteritems()}
+	return {k:v*(1.-fdep[k])/Waspl[k]/nH for (k,v) in Zmass.items()}
 	#print {k:v/Waspl[k] for (k,v) in Zmassn.iteritems()}
 
 
 #*****************************
 def get_Ebind(fileName="data/Ebare_ice.dat",surface="bare"):
-	fh = open(fileName,"rb")
+	fh = open(fileName)
 
 	Ebind = dict()
 	for row in fh:
 		srow = row.strip()
-		if(srow.startswith("#")): continue
-		if(srow==""): continue
+		if srow.startswith("#"): continue
+		if srow == "": continue
 		(name, Ebare, Eice) = [x for x in srow.split(" ") if(x!="")]
-		if(surface=="bare"):
+		if surface == "bare":
 			Ebind[name] = float(Ebare)
-		elif(surface=="ice"):
+		elif surface == "ice":
 			Ebind[name] = float(Eice)
 		else:
 			sys.exit("ERROR: unknown surface type "+surface)
@@ -1408,10 +1409,10 @@ def get_ve_vib(arg):
 		"O2":1580.161,
 		"O2+":1905.892,
 		"OH":3737.761}
-	if(arg in ve):
+	if arg in ve:
 		return ve[arg]*1.42879e0 #cm-1 to K
 	else:
-		False
+		return None
 
 ###################################
 #rotational constant Be dictionary
@@ -1426,10 +1427,10 @@ def get_be_rot(arg):
 		"N2":1.9982,
 		"O2":1.4264,
 		"CO":2.78}
-	if(arg in ve):
+	if arg in ve:
 		return ve[arg]*1.42879e0 #cm-1 to K
 	else:
-		False
+		return None
 
 # Equivalent radius of a species in cm
 def get_radius(arg):
@@ -1459,10 +1460,10 @@ def int_to_roman(input):
 	#Convert an integer to Roman numerals.
 	#from http://code.activestate.com/recipes/81611-roman-numerals/
 	if type(input) != type(1):
-		print "ERROR: expected integer, got " + type(input)
+		print("ERROR: expected integer, got " + type(input))
 		sys.exit()
 	if not 0 < input < 4000:
-		print "ERROR: Argument must be between 1 and 3999"
+		print("ERROR: Argument must be between 1 and 3999")
 		sys.exit()
 	ints = (1000, 900,  500, 400, 100,  90, 50,  40, 10,  9,   5,  4,   1)
 	nums = ('M',  'CM', 'D', 'CD','C', 'XC','L','XL','X','IX','V','IV','I')
@@ -1493,7 +1494,7 @@ def restore_file(fname,fle):
 
 ##################################
 def get_terminal_size(fd=1):
-    """
+	"""
     Returns height and width of current terminal. First tries to get
     size via termios.TIOCGWINSZ, then from environment. Defaults to 25
     lines x 80 columns if both methods fail.
@@ -1501,20 +1502,20 @@ def get_terminal_size(fd=1):
     :param fd: file descriptor (default: 1=stdout)
 	from bit.ly/HteEcQ
     """
-    try:
-        import fcntl, termios, struct
-        hw = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
-    except:
-        try:
-            hw = (os.environ['LINES'], os.environ['COLUMNS'])
-        except:
-            hw = (25, 80)
+	try:
+		import fcntl, termios, struct
+		hw = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+	except:
+		try:
+			hw = (os.environ['LINES'], os.environ['COLUMNS'])
+		except:
+			hw = (25, 80)
 
-    return hw
+	return hw
 
 ##################################
 #return an example for test.f90
-def get_example(nsp,useX):
+def get_example(nsp, useX):
 	sfile = """
 		!###################################################
 		! WARNING:This is a test auto-generated by KROME, in order to
@@ -1550,7 +1551,7 @@ def get_example(nsp,useX):
 		end program test
 
 	"""
-	if(useX):
+	if useX:
 		sfile = sfile.replace("@rho@",",rho").replace("@nH@","1.d0").replace("@norm@","x(:) = x(:) / sum(x) !normalize")
 		sfile = sfile.replace("@rho_init@","rho = 1d-18 !gas density (g/cm3)").replace("@rhof@"," rho,")
 	else:
@@ -1558,9 +1559,9 @@ def get_example(nsp,useX):
 		sfile = sfile.replace("@rho_init@","").replace("@rhof@","")
 	sfile = sfile.replace("@nsp@",str(nsp))
 
-	if("@" in sfile):
-		print sfile
-		print "ERROR: missing replacement in get_example() function!"
+	if "@" in sfile:
+		print(sfile)
+		print("ERROR: missing replacement in get_example() function!")
 		sys.exit()
 	return sfile
 
@@ -1580,7 +1581,7 @@ def parsevar(arg):
 ##################################
 #extend the list slist with the temperature shortcuts
 # for the reaction rea
-def get_Tshortcut(rea,slist,cvars=[]):
+def get_Tshortcut(rea, slist, cvars=[]):
 	shcut = ["logT = log10(Tgas) !log10 of Tgas (#)",
 	"lnT = log(Tgas) !ln of Tgas (#)",
 	"Te = Tgas*8.617343d-5 !Tgas in eV (eV)",
@@ -1615,14 +1616,14 @@ def get_Tshortcut(rea,slist,cvars=[]):
 		ax = x.split("=") #split the shortcut
 		xvar = parsevar(krea) #parse the variable in the rate coefficient
 		krea = krea.replace(ax[0].strip(),"")
-		if((ax[0].strip().lower() in xvar) and not(x in slist)):
+		if ax[0].strip().lower() in xvar and x not in slist:
 			#search for dependencies between shortcuts
 			xtmp = x
 			for xx in shcut:
 				axx = xx.split("=") #split the shortcut
 				xxvar = parsevar(xtmp)  #parse the variables in the rate coefficient found
 				xtmp = xtmp.replace(axx[0].strip(),"")
-				if((axx[0].strip().lower() in xxvar) and not(xx in slist)):
+				if axx[0].strip().lower() in xxvar and xx not in slist:
 					slist.append(xx) #append the dependent shortcut
 			slist.append(x) #append the main shortcut
 
@@ -1637,30 +1638,30 @@ def get_Tshortcut(rea,slist,cvars=[]):
 		#loop on user-defined variables
 		for cv in cvars:
 			#when variable is found skip it
-			if(xkey.lower().strip()==cv.lower().strip()):
+			if xkey.lower().strip() == cv.lower().strip():
 				xFound = True
 				break
-		if(not(xFound)):
+		if not xFound:
 			slistu.append(x)
 
 	#keep only unique shortcuts (remove duplicates)
 	ulist = []
 	for x in slistu:
-		if(not(x in ulist)): ulist.append(x)
+		if x not in ulist: ulist.append(x)
 
 	return ulist
 
 ##################################
 #get list of available commands
 def get_usage():
-	print "use -h to see the help"
+	print("use -h to see the help")
 	sys.exit()
 
 ##################################
 #truncate F90 expression using sep as separator for blocks shorter than sublen
 def truncF90(mystr, sublen, sep):
 	#split (&\n) the string mystr in parts smaller than sublen using sep as separator
-	if(mystr.strip()==""): return mystr
+	if mystr.strip() == "": return mystr
 	mystr = mystr.replace("**","##")
 	mystr = mystr.replace("(/","###")
 	mystr = mystr.replace("/)","####")
@@ -1668,11 +1669,11 @@ def truncF90(mystr, sublen, sep):
 	s = z = ""
 	first = True
 	for x in astr:
-		if(len(z+x)>sublen and not(first)):
+		if len(z+x) > sublen and not first:
 			s += "&\n"
 			z = ""
 		zep = sep
-		if(first): zep = ""
+		if first: zep = ""
 		s += zep + x
 		z += zep + x
 		first = False
@@ -1682,7 +1683,7 @@ def truncF90(mystr, sublen, sep):
 ##################################
 #look for array definition in var token and prepare variable name according to array size
 def coeVarArray(varin):
-	if("[" in varin):
+	if "[" in varin:
 		varin = varin.replace(" ","") #replace spaces
 		var_array_size = varin.split("[")[1].split("]")[0] #grep inside brackets
 		varin = varin.replace("["+var_array_size+"]","") #replace brackets and content
@@ -1694,9 +1695,9 @@ def coeVarArray(varin):
 ################################
 def at_extract(arg):
 	aarg = arg.split(":")
-	if(len(aarg)<2):
-		print "ERROR: @label:value format not respected for"
-		print arg
+	if len(aarg) < 2:
+		print("ERROR: @label:value format not respected for")
+		print(arg)
 		sys.exit()
 	aarg[1] = (":".join(aarg[1:]))
 	aarg[0] = aarg[0].replace("@","")
@@ -1707,16 +1708,16 @@ def at_extract(arg):
 def format_double(snum):
 	snum = str(snum)
 	#format string number to F90 double
-	if("d" in snum): return snum
-	if("e" in snum): return snum.replace("e","d")
+	if "d" in snum: return snum
+	if "e" in snum: return snum.replace("e","d")
 	return snum+"d0"
 
 ##################################
 #format the subelement according to its size (Fe, N, ...)
 def format_subel(subel):
-	if(len(subel)==1):
+	if len(subel) == 1:
 		fsubel = subel.upper()
-		if(fsubel=="G"): fsubel = "g"
+		if fsubel == "G": fsubel = "g"
 	elif(len(subel)==2):
 		fsubel = subel[0].upper() + subel[1].lower()
 	else:
@@ -1738,7 +1739,7 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 
 	mymol = molec() #oggetto molec
 	namecp = name.upper()
-	if(namecp=="E-"): namecp = "E" #avoid double negative charge
+	if namecp == "E-": namecp = "E" #avoid double negative charge
 	ename = [] #exploded name
 	mass = 0. #init mass
 	is_atom = True #atom flag
@@ -1774,7 +1775,6 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 		"CL":17,
 		"AR":18,
 		"K":19,
-		"TI":22,
 		"CA":20,
 		"TI":22,
 		"CR":24,
@@ -1782,19 +1782,18 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 		"FE":26,
 		"NI":28}
 
-
 	#add isotopes Z numbers (same as non-isotopes)
 	zdic_copy = zdic.copy()
-	for k,v in zdic_copy.iteritems():
+	for k,v in zdic_copy.items():
 		for i in range(2,56):
 			zdic[str(i)+k] = v
 
 	#look for species on grain surface
-	if("_dust" in name.lower()):
+	if "_dust" in name.lower():
 		mymol.is_surface = True
 
 	#check for fake species
-	if("FK" in name):
+	if "FK" in name:
 		mymol.name = name #name
 		mymol.mass = 0e0 #mass (g)
 		mymol.ename = name #exploded name
@@ -1808,7 +1807,7 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 		return mymol
 
 	#chemisorbed species
-	if("_c_dust" in name.lower()):
+	if "_c_dust" in name.lower():
 		mymol.is_chemisorbed = True
 
 	clusterables = ["TIO2", "MGO", "SIO", "AL2O3"]
@@ -1817,59 +1816,59 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 		mymol.radius = get_radius(name)
 
 	#when belongs to dust+idx remove _dust in the name
-	if(dustIdx>0 and not(mymol.is_surface)):
-		print "ERROR: in parser, dustIdx>0 with a non-surface species"
-		print dustIdx,name
+	if dustIdx>0 and not mymol.is_surface:
+		print("ERROR: in parser, dustIdx>0 with a non-surface species")
+		print(dustIdx, name)
 		sys.exit()
 
 	zatom = 0 #atomic number init
 	#loop over charcters
 	for atm in atoms:
 		a = atm.upper() #capitalize name
-		if(not(a) in namecp): continue #skip
+		if a not in namecp: continue #skip
 		#loop to up to _30 subscript
 		for j in range(30):
-			if(a in namecp):
+			if a in namecp:
 				idx = namecp.find(a) #find position
 				subs = a
 				mult = "0" #multiplicator
 				for i in range(idx+len(a),len(namecp)):
-					if(not(is_number(namecp[i]))): break
+					if not is_number(namecp[i]): break
 					mult += namecp[i] #find multiplicator
 					subs += namecp[i]
 				imult = max(int(mult),1) #evaluate multiplicator (must be >0)
 				mass += mass_dic[a]*imult #compute mass
-				if(a in zdic): zatom += zdic[a]*imult #increase atomic number
-				if(format_subel(a) in mymol.atomcount):
+				if a in zdic: zatom += zdic[a]*imult #increase atomic number
+				if format_subel(a) in mymol.atomcount:
 					mymol.atomcount[format_subel(a)] += imult #increase atom count
 				else:
 					mymol.atomcount[format_subel(a)] = imult #init atom count
 				ename += [format_subel(a)]*imult #exploded name
 				namecp = namecp.replace(subs,"",1) #remove found in name
-				if(namecp==""): break #if nothing more to find break loop
-		if(a!="+" and a!="-"): founds += imult #count found atoms for is_atom
-	if(founds>1): is_atom = False #atoms have only one atom (viz.)
+				if namecp == "": break #if nothing more to find break loop
+		if a != "+" and a != "-": founds += imult #count found atoms for is_atom
+	if founds > 1: is_atom = False #atoms have only one atom (viz.)
 
 	mymol.atomcount2 = dict()
 	natoms = 0
-	for (k,v) in mymol.atomcount.iteritems():
-		if(v>0):
+	for  k, v in mymol.atomcount.items():
+		if v > 0:
 			mymol.atomcount2[k] = v
-			if(k!="+" and k!="-"): natoms += v
+			if k != "+" and k != "-": natoms += v
 
 	#print name,mymol.atomcount2
 
 	mymol.natoms = natoms #number of atoms (e.g. diatom=2)
 
 	#get vibrational constant in K
-	if(get_ve_vib(name)):
+	if get_ve_vib(name):
 		mymol.ve_vib = get_ve_vib(name)
 	#get rotational constant in K
-	if(get_be_rot(name)):
+	if get_be_rot(name):
 		mymol.be_rot = get_be_rot(name)
 
 	#when dust index changes the name
-	if(dustIdx>0): name = name+"_"+str(dustIdx)
+	if dustIdx > 0: name = name+"_"+str(dustIdx)
 
 	mymol.name = name #name
 	mymol.mass = mass #mass (g)
@@ -1882,43 +1881,42 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 	repName = []
 	#loop on name parts
 	for part in expName:
-		if(is_number(part)): part = "$_"+part+"$"
-		if(part=="+" or part=="-"): part = "$^"+part+"$"
+		if is_number(part): part = "$_"+part+"$"
+		if part == "+" or part == "-": part = "$^"+part+"$"
 		repName.append(part)
 	mymol.nameLatex = ("".join(repName))
 	#replace latex name if electron
-	if(name=="E"): mymol.nameLatex = "e$^-$"
+	if name == "E": mymol.nameLatex = "e$^-$"
 	#cooling name is only for atoms, e.g. CIV
 	mymol.coolname = name
-	if(is_atom):
+	if is_atom:
 		mymol.coolname = getRomanName(name)
 
 	mymol.is_atom = is_atom #atom flag
 	f90idx = "idx_"+name.replace("+","j").replace("-","k").replace("(","_").replace(")","").replace("[","").replace("]","_") #f90 index
-	if(f90idx.endswith("_")): f90idx = f90idx[:-1] #remove last underscore if any
+	if f90idx.endswith("_"): f90idx = f90idx[:-1] #remove last underscore if any
 	mymol.fidx = f90idx #index in f90 format
 
-	if("+" in name): mymol.charge = name.count("+") #get + charge
-	if("-" in name): mymol.charge = -name.count("-") #get - charge
+	if "+" in name: mymol.charge = name.count("+") #get + charge
+	if "-" in name: mymol.charge = -name.count("-") #get - charge
 
 	#number of neutrons (computed using total mass)
 	Nn = round((mymol.mass - (me*(mymol.zatom - mymol.charge) + mp*(mymol.zatom))) / mn,0)
 	mymol.neutrons = int(Nn)
 
-
 	#name for photoionization reactions (e.g. Sijjj = Sij3)
 	jj = kk = ""
-	if(mymol.charge==1): jj = "j"
-	if(mymol.charge>1): jj = "j"+str(mymol.charge)
-	if(mymol.charge==-1): kk = "k"
-	if(mymol.charge<-1): kk = "k"+str(mymol.charge)
+	if mymol.charge == 1: jj = "j"
+	if mymol.charge > 1: jj = "j"+str(mymol.charge)
+	if mymol.charge == -1: kk = "k"
+	if mymol.charge < -1: kk = "k"+str(mymol.charge)
 	mymol.phname = name.replace("+","").replace("-","") + jj + kk
 
 	#electron has negative charge
-	if(mymol.name=="E"): mymol.charge = -1
+	if mymol.name == "E": mymol.charge = -1
 
 	#thermal data
-	if(mymol.name in thermo_data):
+	if mymol.name in thermo_data:
 		if "NASA" in thermo_data[mymol.name]:
 			mymol.poly1_nasa = thermo_data[mymol.name]["NASA"][10:] #NASA polynomials lower T interval (min-med)
 			mymol.poly2_nasa = thermo_data[mymol.name]["NASA"][3:10] #NASA polynomials upper T interval (med-max)
@@ -1946,10 +1944,8 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 	# 	mymol.has_GFE_table = True
 	# 	mymol.hasJanafThermoTable = True
 
-
-
 	#compute enthaly @300K using NASA poly
-	if(mymol.Tpoly_nasa[1]<3e2):
+	if mymol.Tpoly_nasa[1] < 3e2:
 		p = mymol.poly1_nasa #copy polynomials in the lower range
 	else:
 		p = mymol.poly2_nasa #copy poly in the upper range
@@ -1958,15 +1954,15 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 	mymol.enthalpy = polyH*8.314472e-3*Tgas*0.01036410e0 #eV
 
 	#checks parsing results
-	if(len(namecp)>0):
-		print "************************************************"
-		print "ERROR: Parsing problem for", name
-		print "Unknown subelements in substring \"" + namecp +"\"."
-		print "Probably you have to add some subelements to the dictionary mass_dic."
-		if(len(atoms)<30):
-			print "Dictionary now contains the following subelements:"
-			print atoms
-		print "************************************************"
+	if len(namecp) > 0:
+		print("************************************************")
+		print("ERROR: Parsing problem for", name)
+		print("Unknown subelements in substring \"" + namecp +"\".")
+		print("Probably you have to add some subelements to the dictionary mass_dic.")
+		if len(atoms) < 30:
+			print("Dictionary now contains the following subelements:")
+			print(atoms)
+		print("************************************************")
 		sys.exit()
 	return mymol
 
@@ -1975,10 +1971,10 @@ def parser(name, mass_dic, atoms, thermo_data, dustIdx=0):
 # also for anion: C- to CmI
 def getRomanName(argmetal):
 	#cation
-	if("+" in argmetal):
+	if "+" in argmetal:
 		mname = argmetal.replace("+","") + int_to_roman(argmetal.count("+")+1)
 	#anion
-	elif("-" in argmetal):
+	elif "-" in argmetal:
 		mname = argmetal.replace("-","") + "m"+int_to_roman(argmetal.count("-")+1)
 	#neutral
 	else:
@@ -2055,12 +2051,12 @@ def GetHashofDirs():
 def clear_dir(folder):
 	import os
 	for the_file in os.listdir(folder):
-	    file_path = os.path.join(folder, the_file)
-	    try:
-		if os.path.isfile(file_path):
-		    os.unlink(file_path)
-	    except Exception, e:
-		print e
+		file_path = os.path.join(folder, the_file)
+		try:
+			if os.path.isfile(file_path):
+				os.unlink(file_path)
+		except Exception as e:
+			print(e)
 
 
 #################################
@@ -2111,7 +2107,7 @@ def get_licence_header(version, codename, short=False):
 	!! including the loss of data of any kind (including personal data)
 	!!*************************************************************\n"""
 
-	if(short): header = """!!*************************************************************
+	if short: header = """!!*************************************************************
 	!! This file has been generated with:
 	!! KROME #version# on #date#
 	!! Changeset #changeset#
@@ -2136,7 +2132,7 @@ def get_licence_header(version, codename, short=False):
 	for contr in contribs:
 		rowtmp += contr+", "
 		contributors += contr+", "
-		if(len(rowtmp)>60):
+		if len(rowtmp) > 60:
 			rowtmp = ""
 			contributors += "\n\t!! "
 	#remove the last space+comma
@@ -2147,17 +2143,17 @@ def get_licence_header(version, codename, short=False):
 	changeset = ("x"*7) #default unknown changeset
 	#if git master file exists grep the changeset
 	if(file_exists(masterfile)):
-		changeset = open(masterfile,"rb").read()
+		changeset = open(masterfile).read()
 
-	#replace comments pragmas
+	# replace comments pragmas
 	datenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-	header = header.replace("#date#",datenow).replace("#version#", version)
-	header = header.replace("#codename#",codename).replace("#changeset#", changeset[:7])
+	header = header.replace("#date#", datenow).replace("#version#", version)
+	header = header.replace("#codename#", codename).replace("#changeset#", changeset[:7])
 	header = header.replace("#contributors#", contributors)
-	return header.replace("\t","").replace("!!","   ! ")
+	return header.replace("\t", "").replace("!!", "   ! ")
 
 #################################
-#breaks a string (mystr), in piece
+# breaks a string (mystr), in piece
 # of length (sublen), using a
 # separator (sep)
 def trunc(mystr,sublen,sep):
@@ -2166,7 +2162,7 @@ def trunc(mystr,sublen,sep):
 	for x in astr:
 		z += x + sep
 		s += x + sep
-		if(len(z)>sublen):
+		if len(z) > sublen:
 			z=""
 			s+="\n"
 	return s
@@ -2208,7 +2204,7 @@ n(idx_CR) = 1.d0
 # of string aarg
 def lbeg(aarg,line):
 	for arg in aarg:
-		if(line[:len(arg)]==arg): return True
+		if line[:len(arg)] == arg: return True
 	return False
 
 ###########################
@@ -2217,7 +2213,7 @@ def lbeg(aarg,line):
 # of string aarg
 def lend(aarg,line):
 	for arg in aarg:
-		if(line[len(line)-len(arg):]==arg): return True
+		if line[len(line)-len(arg):] == arg: return True
 	return False
 
 ###############################
@@ -2227,7 +2223,7 @@ def cutlines(all_row):
 	maxlen = 80
 	arowl = []
 	for line in all_row:
-		if(len(line.split("!")[0])>maxlen):
+		if len(line.split("!")[0]) > maxlen:
 			erow = line.strip().split(",") #explode using commma
 			sall = "" #string
 			subrow1 = [] #first line
@@ -2236,15 +2232,15 @@ def cutlines(all_row):
 			for i in range(len(erow)):
 				sall += erow[i]+"," #concatenate string
 				#append to the first or the second line depending on the length
-				if(len(sall)>maxlen-4):
+				if len(sall)>maxlen-4:
 					subrow2.append(erow[i])
 				else:
 					subrow1.append(erow[i])
 
 			#join first and second line
-			if(subrow1.join().strip()!=""):
+			if subrow1.join().strip() != "":
 				arowl.append((",".join(subrow1)).strip()+", &\n")
-			if(subrow2.join().strip()!=""):
+			if subrow2.join().strip() != "":
 				arowl.append((",".join(subrow2))+"\n")
 		else:
 			arowl.append(line) #append lines of regular length
@@ -2256,10 +2252,10 @@ def cutlines(all_row):
 def indentF90(filename):
 	import os
 	#check if the file exists else return
-	if(not(os.path.isfile(filename))): return
+	if not os.path.isfile(filename): return
 
 	#open file for indent
-	fh = open(filename,"rb")
+	fh = open(filename)
 	arow = [] #array of the lines of the indented file
 	is_blank = is_amper = False #flags
 	nind = 0 #number indent level
@@ -2271,22 +2267,22 @@ def indentF90(filename):
 	module_head_found = False
 	for row in fh:
 		srow = row.strip() #trim the row
-		if(module_head in srow): module_head_found = True #do not duplicate module header
+		if module_head in srow: module_head_found = True #do not duplicate module header
 		#check module begin
-		if(lbeg(["module"], srow) and not(module_head_found)):
+		if lbeg(["module"], srow) and not module_head_found:
 			arow.append("\n") #blank line
 			arow.append(module_head+"\n") #comment
-		if(lbeg(tokenclose, srow)): nind -= 1 #check if the line ends with one of tokenclose
+		if lbeg(tokenclose, srow): nind -= 1 #check if the line ends with one of tokenclose
 		indent = (" "*(nind*nspace)) #compute number of spaces for indent
-		if(is_amper): indent = (" "*(2*nspace)) + indent #increas indent in case of previous &
-		if(srow.startswith("#")): indent = "" #no indent for pragmas
-		if(not(srow=="" and is_blank)): arow.append(indent+srow+"\n") #append indented line to array of rows
+		if is_amper: indent = (" "*(2*nspace)) + indent #increas indent in case of previous &
+		if srow.startswith("#"): indent = "" #no indent for pragmas
+		if not(srow=="" and is_blank): arow.append(indent+srow+"\n") #append indented line to array of rows
 		is_amper = False #is a line after ampersend flag
-		if(lend(["&"], srow)): is_amper = True #check if the line ends with &
+		if lend(["&"], srow): is_amper = True #check if the line ends with &
 		is_blank = (srow=="") #flag for blank line mode
-		if(lbeg(tokenopen, srow)): nind += 1 #check if the line ends with one of tokenclose
-		if(lbeg(["if"],srow) and "then" in srow): nind += 1 #check if line stats with if and has then
-		if(srow=="do"): nind += 1
+		if lbeg(tokenopen, srow): nind += 1 #check if the line ends with one of tokenclose
+		if lbeg(["if"],srow) and "then" in srow: nind += 1 #check if line stats with if and has then
+		if srow == "do": nind += 1
 	fh.close()
 
 	arowl = arow[:]
@@ -2302,7 +2298,7 @@ def indentF90(filename):
 # and exit
 def die(msg):
 	import sys
-	print msg
+	print(msg)
 	sys.exit()
 
 #################################
@@ -2387,7 +2383,7 @@ def get_quote(qall=False):
 	 "Numerical Recipes in C"]
 	]
 	qrange = 1
-	print
+	print("")
 	if(qall): qrange = len(quotes)
 	for i in range(qrange):
 		irand = int(random.random()*(len(quotes)))
@@ -2396,11 +2392,18 @@ def get_quote(qall=False):
 		myqt = trunc(str(irand+1)+". "+qtup[0],40," ").upper().strip()
 		amyqt = myqt.split("\n")
 		lqt = max([len(x) for x in amyqt])
-		print
-		if(i==0): print "*"*lqt
-		print myqt
-		if(qtup[1].strip()==""): qtup[1] = "Anonymous"
-		print "--- "+qtup[1]
-		if(i==qrange-1):
-			print "*"*lqt
-			print
+		print("")
+		if i == 0: print("*"*lqt)
+		print(myqt)
+		if qtup[1].strip() == "": qtup[1] = "Anonymous"
+		print("--- "+qtup[1])
+		if i == qrange - 1:
+			print("*"*lqt)
+			print("")
+
+
+def keyb_input(message):
+	try:
+		raw_input(message)
+	except:
+		input(message)
