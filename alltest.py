@@ -1,53 +1,65 @@
-#this script runs all tests and/or produces or checks md5
-#it is employed to run automatic tests
-#no need to run or modify by the user
+# this script runs all tests and/or produces or checks md5
+# it is employed to run automatic tests
+# no need to run or modify by the user
 from subprocess import call
 from subprocess import Popen, PIPE
-import os,sys,hashlib,glob,platform,shutil,time
-import ftplib,urllib2,sys,cookielib
+import os
+import hashlib
+import glob
+import shutil
+import time
+import ftplib
+import urllib2
+import sys
+import cookielib
 
 argv = sys.argv
 
 makeOption = "debug"
-
+first = ""
 gnuplotCommand = "gnuplot"
+python_bin = "python"
 
-if("-makeopt" in argv):
+if "-makeopt" in argv:
 	makeOption = argv[argv.index("-makeopt")+1]
-doFTP = not("-skipFTP" in argv)
+if "-first" in argv:
+	first = argv[argv.index("-first")+1]
+if "-python" in argv:
+	python_bin = argv[argv.index("-python")+1]
+doFTP = "-skipFTP" not in argv
 
 testpath = "tests/" #where the tests are located
 prj_name = "alltest" #where the tests
 
 #import the list of tests from testpath
-tests = sorted([x[0].replace(testpath,"") for x in os.walk(testpath) if x[0]!=testpath])
+tests = sorted([x[0].replace(testpath, "") for x in os.walk(testpath) if x[0] != testpath])
+print(tests)
 #tests = ["customCooling", "cloud", "auto", "hello"]
 
 #start from this test (empty string start from first test)
-first = ""
-if(first.strip()==""): first = tests[0]
-
+if first.strip() == "":
+	first = tests[0]
 
 mode = "check" #"hash":produce hashfile, "eyeball":hashfile+call gnuplot to plot ,"check": check hash
 
 ################
-
 #check if a new test is needed
-if(mode=="check"):
+if mode == "check":
 	#synchronize
 	call(["git", "pull", "origin"])
 
 	changesetFOLDER = "" #changeset of the current folder
-	proc = Popen(['git','show'],stdout=PIPE) #use git show to retrieve local info
+	proc = Popen(['git', 'show'], stdout=PIPE) #use git show to retrieve local info
 	#loop on the output
-	for line in iter(proc.stdout.readline,''):
+	for line in iter(proc.stdout.readline, ''):
 		lstrip = line.rstrip()
 		#grep the commit line
-		if("commit" in lstrip):
-			changesetFOLDER = lstrip.replace("commit","").strip()[:7]
+		if "commit" in lstrip:
+			changesetFOLDER = lstrip.replace("commit", "").strip()[:7]
 			break
 	#check if the changeset is retrieved
-	if(changesetFOLDER==""): sys.exit("ERROR: check mode enabled and git show command does not work properly")
+	if changesetFOLDER == "":
+		sys.exit("ERROR: check mode enabled and git show command does not work properly")
 
 	#retrieve the changeset on the SERVER
 	changesetSERVER = ""
@@ -57,27 +69,27 @@ if(mode=="check"):
 	request = urllib2.Request('http://kromepackage.org/test/outcheck.log')
 	content = opener.open(request)
 	for line in iter(content.readlines()):
-		if("changeset:" in line): changesetSERVER = line.replace("changeset:","").strip()
+		if "changeset:" in line:
+			changesetSERVER = line.replace("changeset:", "").strip()
 	#check if the server changeset is retrieved
-	if(changesetSERVER==""): sys.exit("ERROR: check mode enabled and url not retrieved")
+	if changesetSERVER == "": sys.exit("ERROR: check mode enabled and url not retrieved")
 
 	#check if the server and the folder have the same changeset. If so no need to check.
 	#if(changesetSERVER==changesetFOLDER):
 	#	sys.exit("SERVER and local FOLDER has the same changeset. No need to check.")
 
-
-
 #read hashtable if needed
-if(mode=="check"):
+if mode == "check":
 	hashtab = []
 	changeset = "unknown"
-	if(not(os.path.isfile("outtest.md5"))): sys.exit("ERROR: file outtest.md5 not present!")
-	fh = open("outtest.md5","rb")
+	if not os.path.isfile("outtest.md5"):
+		sys.exit("ERROR: file outtest.md5 not present!")
+	fh = open("outtest.md5")
 	for row in fh:
 		srow = row.strip()
 		#load reference changeset name
-		if("changeset:" in srow):
-			changesetREF = srow.replace("changeset:","")
+		if "changeset:" in srow:
+			changesetREF = srow.replace("changeset:", "")
 			continue
 		arow = srow.split(" ")
 		hashtab.append(arow)
@@ -97,7 +109,8 @@ if(mode=="check"):
 #a = raw_input("Any key to continue q to quit... ")
 #if(a=="q"): print sys.exit()
 
-if(not(os.path.exists("build_"+prj_name+"/"))): os.makedirs("build_"+prj_name+"/")
+if not os.path.exists("build_"+prj_name+"/"):
+	os.makedirs("build_"+prj_name+"/")
 
 os.chdir("build_"+prj_name+"/")
 #clear directory
@@ -109,15 +122,15 @@ os.chdir("..")
 masterfile = ".git/refs/heads/master" #name of the git master file
 changeset = "unknown"
 #if git master file exists grep the changeset
-if(os.path.isfile(masterfile)):
-	changeset = open(masterfile,"rb").read()
+if os.path.isfile(masterfile):
+	changeset = open(masterfile).read()
 	changeset = changeset[:7]
 
 #open output file for MD5 or results
-if(mode!="check"):
+if mode != "check":
 	fout = open("outtest.log","w")
 else:
-	fout = open("outcheck.log","w")
+	fout = open("outcheck.log", "w")
 	fout.write("changesetREF: "+changesetREF+"\n")
 
 #write the changeset to file
@@ -128,41 +141,51 @@ execution_times = dict()
 
 plotFolder = "alltests_plot/"
 #create plot directory if not present
-if(not(os.path.exists(plotFolder))): os.makedirs(plotFolder)
+if not os.path.exists(plotFolder):
+	os.makedirs(plotFolder)
 #clear plot directory
 for ff in glob.glob(plotFolder+"*"):
 	os.remove(ff)
 
 run = False #run flag
 for test in tests:
-	if(test==first): run = True #run the first test
-	if(not(run)): continue #skip if test is before first
-	print
-	print "#########################################################################################################"
-	print "                                          test: "+test
-	print "#########################################################################################################"
-	print
+	if test == first:
+		run = True #run the first test
+	if not run:
+		continue #skip if test is before first
+	print("")
+	print("#########################################################################################################")
+	print("                                          test: " + test)
+	print("#########################################################################################################")
+	print("")
 
 	#clear directory
 	for ff in glob.glob("build_"+prj_name+"/*"):
 		os.remove(ff)
 
 	#call krome
-	callarg = ["./krome", "-test="+test,"-skipDevTest", "-unsafe", "-sh","-project="+prj_name]
-	print callarg
+	callarg = [python_bin,
+			   "krome",
+			   "-test="+test,
+			   "-skipDevTest",
+			   "-unsafe",
+			   "-sh",
+			   "-project="+prj_name]
+	print(callarg)
 	call(callarg)
 
 	#skip development test
-	if(not(os.path.isfile("build_"+prj_name+"/Makefile"))): continue
+	if not os.path.isfile("build_"+prj_name+"/Makefile"):
+		continue
 
 	#move to build directory
 	os.chdir("build_"+prj_name+"/")
 
 	#make clean
-	call(["make","clean"])
+	call(["make", "clean"])
 
 	#compile full debug
-	call(["make",makeOption])
+	call(["make", makeOption])
 
 	#store starting time
 	time_start = time.time()
@@ -184,47 +207,49 @@ for test in tests:
 	#hash and store MD5 for fort files
 	for fort in glob.glob("fort.*"):
 		md5 = hashlib.md5(open(fort).read()).hexdigest()
-		hashall.append([test,fort,md5])
-		print test,fort,md5
-		if(mode!="check"): fout.write(test+" "+fort+" "+md5+"\n")
+		hashall.append([test, fort, md5])
+		print(test, fort, md5)
+		if mode != "check":
+			fout.write(test+" "+fort+" "+md5+"\n")
 
 	testOK = True
 	#control the hash found if needed
-	if(mode=="check"):
-		print "checking..."
+	if mode == "check":
+		print("checking...")
 		for hashblock in hashall:
-			if(hashblock not in hashtab):
-				print "ERROR with "+(", ".join(hashblock))
+			if hashblock not in hashtab:
+				print("ERROR with "+(", ".join(hashblock)))
 				testOK = False
 				for x in hashall:
-					print x
+					print(x)
 				#sys.exit()
-		print "Is test "+test+" OK?",testOK
+		print("Is test "+test+" OK?",testOK)
 		testResults[test] = testOK
 		fout.write(test+" "+str(testOK)+" "+str(execution_times[test])+" regular\n")
 
 
 	#call gnuplot if you want graphical result
-	if(mode=="eyeball"):
+	if mode == "eyeball":
 		call([gnuplotCommand])
 	else:
 		#load plot file to remove reset
-		fhp = open("plot.gps","rb")
+		fhp = open("plot.gps")
 		plotScript = [row for row in fhp]
 		fhp.close()
 
 		#open new plot file to write
-		fop = open("plot_all.gps","w")
+		fop = open("plot_all.gps", "w")
 		filePNG = "../"+plotFolder+"plot_"+test+".png"
 		filePNG_OK = "../"+plotFolder+"plot_"+test+"_OK.png"
-		print "plot saved to "+filePNG
+		print("plot saved to "+filePNG)
 		#add PNG terminal
 		fop.write("set terminal pngcairo size 800,600 enhanced\n")
 		fop.write("set output '"+filePNG+"'\n")
 		#loop on plot script lines
 		for row in plotScript:
 			#if reset found, skip line
-			if(row.strip()=="reset"): continue
+			if row.strip() == "reset":
+				continue
 			fop.write(row)
 		fop.close()
 		#prepare gnuplot command to load script
@@ -232,8 +257,8 @@ for test in tests:
 		call(plotCommand)
 
 		#if test is OK copy to _OK png file as reference
-		if(testOK):
-			print "TEST is OK -> copying to " + filePNG_OK
+		if testOK:
+			print("TEST is OK -> copying to " + filePNG_OK)
 			shutil.copyfile(filePNG, filePNG_OK)
 
 	#clear build directory
@@ -242,7 +267,7 @@ for test in tests:
 
 	#back to krome main directory
 	os.chdir("..")
-	print "DONE!"
+	print("DONE!")
 
 #add skipped tests as failed
 #if(mode=="check"):
@@ -250,35 +275,39 @@ for test in tests:
 #		fout.write(test+" "+str(False)+" "+str(time.time())+" skipped\n")
 fout.close()
 
+
 def table_row(arg_list, col_width=20):
 	row = [str(x)+(" "*(col_width-len(str(x)))) for x in arg_list]
 	return "".join(row)
 
-#print test results
-print "***************"
-print "Tests result:"
-print table_row(["name", "working?", "time(s)"])
-for (test,result) in testResults.iteritems():
-	warningString = "<<<<<<<<<<<<<<<"
-	if(result): warningString = ""
-	print table_row([test, result, execution_times[test], warningString])
-print "***************"
 
-#copy the results to kromepackage.org using FTP
+# print test results
+print("***************")
+print("Tests result:")
+print(table_row(["name", "working?", "time(s)"]))
+for test, result in testResults.items():
+	warningString = "<<<<<<<<<<<<<<<"
+	if result: warningString = ""
+	print(table_row([test, result, execution_times[test], warningString]))
+print("***************")
+
+# copy the results to kromepackage.org using FTP
 import traceback
-if(mode=="check" and doFTP):
+if mode == "check" and doFTP:
 	fileList = ["outcheck.log"] + glob.glob(plotFolder+"*png")
-	if(not(os.path.isfile("../ftplogin.dat"))): sys.exit("ERROR: ftplogin.dat not present. Can't connect.")
-	(usr,psw) = [x.strip() for x in open("../ftplogin.dat","rb").read().split()]
-	ftp = ftplib.FTP("kromepackage.org",usr, psw)
+	if not os.path.isfile("../ftplogin.dat"):
+		sys.exit("ERROR: ftplogin.dat not present. Can't connect.")
+	(usr, psw) = [x.strip() for x in open("../ftplogin.dat").read().split()]
+	ftp = ftplib.FTP("kromepackage.org", usr, psw)
 	ftp.cwd("/test")
 	for filename in fileList:
-		print "copying "+filename+" using FTP..."
-		if(not(os.path.isfile(filename))): sys.exit("ERROR: "+filename+" not present. Nothing to copy.")
+		print("copying "+filename+" using FTP...")
+		if not os.path.isfile(filename):
+			sys.exit("ERROR: "+filename+" not present. Nothing to copy.")
 		try:
-			ftp.storbinary("STOR "+filename.split("/")[-1], file(filename,"rb"))
+			ftp.storbinary("STOR "+filename.split("/")[-1], file(filename))
 		except:
 			traceback.print_exc()
 	ftp.quit()
-	print "DONE!"
+	print("DONE!")
 
