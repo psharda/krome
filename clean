@@ -1,77 +1,85 @@
 #!/usr/bin/python
-#!python
-import glob,os,sys
+# !python
+import glob, os, sys
+
 os.chdir(".")
 
-#get verbosity
+# get verbosity
 verbose = ("-v" in sys.argv)
 
 rmCount = 0
-#clean all files with given extention in the root folder
-for x in [".log","~",".pyc",".dot",".gps",".tmp"]:
-	for files in glob.glob("*"+x):
-		os.unlink(files)
-		if(verbose): print "removing ./"+files
-		rmCount += 1
-
+# clean all files with given extention in the root folder
+for x in [".log", "~", ".pyc", ".dot", ".gps", ".tmp"]:
+    for files in glob.glob("*" + x):
+        os.unlink(files)
+        if verbose:
+            print("removing ./" + files)
+        rmCount += 1
 
 removePatterns = ["tools/*.pyc",
-	"tools/docmake/*.pyc",
-	"tools/docmake/NetworkLatex_*.tex",
-	"tools/docmake/src_py/*.pyc",
-	"tools/docmake/pngs/*.png",
-	"tools/docmake/epss/*.eps",
-	"tools/docmake/evals/*.json",
-	"tools/docmake/evals/*.bak",
-	"tools/docmake/dots/*.dot",
-	"tools/docmake/htmls/*.html",
-	"tools/kexplorer/*.pyc",
-	"tools/kexplorer/*.dot",
-	]
+                  "tools/docmake/*.pyc",
+                  "tools/docmake/NetworkLatex_*.tex",
+                  "tools/docmake/src_py/*.pyc",
+                  "tools/docmake/pngs/*.png",
+                  "tools/docmake/epss/*.eps",
+                  "tools/docmake/evals/*.json",
+                  "tools/docmake/evals/*.bak",
+                  "tools/docmake/dots/*.dot",
+                  "tools/docmake/htmls/*.html",
+                  "tools/kexplorer/*.pyc",
+                  "tools/kexplorer/*.dot",
+                  ]
 
-#clean patterns
+# clean patterns
 for pattern in removePatterns:
-	for files in glob.glob(pattern):
-		os.unlink(files)
-		if(verbose): print "removing ./"+files
-		rmCount += 1
+    for files in glob.glob(pattern):
+        os.unlink(files)
+        if verbose:
+            print("removing ./" + files)
+        rmCount += 1
 
-#remove temp files (~) from subfolders
+# remove temp files (~) from subfolders
 for root, dirnames, filenames in os.walk('.'):
-	for fle in filenames:
-		if(fle[len(fle)-1]=="~"):
-			fname = root+"/"+fle 
-			os.unlink(fname)
-			if(verbose): print "removing ./"+fname
-			rmCount += 1
+    for fle in filenames:
+        if fle[len(fle) - 1] == "~":
+            fname = root + "/" + fle
+            os.unlink(fname)
+            if verbose:
+                print("removing ./" + fname)
+            rmCount += 1
 
-#clear build (files)
+# clear build (files)
 for root, dirs, files in os.walk("./build/"):
-	path = root
-	#add slash ad the end of path if needed
-	if(path[len(path)-1]!="/"): path += "/"
-	for x in files:
-		if(verbose): print "removing ./"+path+x
-		os.remove(path+x)
-		rmCount += 1
+    path = root
+    # add slash ad the end of path if needed
+    if path[len(path) - 1] != "/":
+        path += "/"
+    for x in files:
+        if verbose:
+            print("removing ./" + path + x)
+        os.remove(path + x)
+        rmCount += 1
 
-#clear build (dirs)
+# clear build (dirs)
 for root, dirs, files in os.walk("./build/"):
-	path = root
-	#add slash ad the end of path if needed
-	if(path[len(path)-1]!="/"): path += "/"
-	for x in dirs:
-		if(verbose): print "removing ./"+path+x
-		os.rmdir(path+x)
-		rmCount += 1
+    path = root
+    # add slash ad the end of path if needed
+    if path[len(path) - 1] != "/":
+        path += "/"
+    for x in dirs:
+        if verbose:
+            print("removing ./" + path + x)
+        os.rmdir(path + x)
+        rmCount += 1
 
-#add README file in build if not present
+# add README file in build if not present
 fname = "build/README"
-if(not(os.path.isfile(fname))):
-	if(verbose): print "adding README in ./build"
-	fout = open(fname,"w")
-	fout.write("this folder will contains the built files\n")
-	fout.close()
+if not os.path.isfile(fname):
+    if verbose:
+        print("adding README in ./build")
+    fout = open(fname, "w")
+    fout.write("this folder will contains the built files\n")
+    fout.close()
 
-print str(rmCount-1)+" elements cleaned"
-print "done!"
+print(str(rmCount - 1) + " elements cleaned")
+print("done!")
