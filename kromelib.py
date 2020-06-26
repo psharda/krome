@@ -268,8 +268,9 @@ class reaction:
 			print("products:", [p.name for p in self.products], charge_products)
 			print("You can remove this check with the -nochargeCheck option")
 			print("************************************************")
-			a = raw_input("Any key to continue q to quit... ")
-			if a == "q": sys.exit()
+			a = keyb_input("Any key to continue q to quit... ")
+			if a == "q":
+				sys.exit()
 
 	#calcluate enthalpy of formation
 	def enthalpy(self):
@@ -1162,7 +1163,7 @@ def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpath
 		sys.exit()
 
 	#read the size of the table from the first line file
-	fhtab = open(mytabpath,"rb")
+	fhtab = open(mytabpath)
 	for tabrow in fhtab:
 		stabrow = tabrow.strip()
 		if stabrow == "": continue
@@ -1190,11 +1191,12 @@ def create_tabvar(mytabvar,mytabpath,mytabxxyy,anytabvars,anytabfiles,anytabpath
 	anytabz = mytabvar+"_anytabz(:,:)"
 	anytabxmul = mytabvar+"_anytabxmul"
 	anytabymul = mytabvar+"_anytabymul"
-	tabf =  "fit_anytab2D("+anytabx+", &\n"+anytaby+", &\n"+anytabz+", &\n"+anytabxmul+", &\n"+anytabymul+", &\n"+mytabxxyy+")"
+	tabf = "fit_anytab2D(" + anytabx + ", &\n" + anytaby + ", &\n" + anytabz+", &\n" + anytabxmul\
+		   + ", &\n" + anytabymul + ", &\n" + mytabxxyy + ")"
 	if mytabvar not in coevars:
-		coevars[mytabvar] = [len(coevars),tabf]
+		coevars[mytabvar] = [len(coevars), tabf]
 
-	print("Found tabvar:",mytabvar,"("+mytabpath+")", "["+(",".join(mytabsize))+"]")
+	print("Found tabvar:", mytabvar, "("+mytabpath+")", "["+(",".join(mytabsize))+"]")
 
 #############################
 def addVarCoe(mytabvar,tabf,coevars):
@@ -1205,10 +1207,11 @@ def addVarCoe(mytabvar,tabf,coevars):
 def get_cooling_dict():
 	#the keys of this list must be lowercase.
 	#the number is the corresponding integer index for the given cooling
-	idxcoo = {"H2":1,"H2GP":2,"atomic":3, "CEN":3, "HD":4, "Z":5, "metal":5, "dH":6, "enthalpic":6, "dust":7,\
-		"compton":8,"CIE":9, "continuum":10, "cont":10,"exp":11,"expansion":11,"ff":12,"bss":12,"custom":13,\
-		"CO":14, "ZCIE":15, "ZCIENOUV":16, "ZExtend":17, "GH":18, "OH":19, "H2O":20, "HCN":21}
-	idxcoo = {k.lower():v for (k,v) in idxcoo.items()}
+	idxcoo = {"H2": 1, "H2GP": 2, "atomic": 3, "CEN": 3, "HD": 4, "Z": 5, "metal": 5, "dH": 6,
+			  "enthalpic": 6, "dust": 7, "compton":8, "CIE": 9, "continuum": 10, "cont": 10,
+			  "exp": 11, "expansion": 11, "ff": 12, "bss": 12, "custom": 13, "CO":14,
+			  "ZCIE": 15, "ZCIENOUV": 16, "ZExtend": 17, "GH": 18, "OH": 19, "H2O": 20, "HCN": 21}
+	idxcoo = {k.lower(): v for k, v in idxcoo.items()}
 	return idxcoo
 
 #############################
@@ -1219,19 +1222,20 @@ def get_cooling_index_list():
 	#loop on the index to write variables as idx_cool_H2 = 1
 	idxscoo = []
 	maxv = 0 #maximum index found is the size of the cooling array
-	for (k,v) in idxcoo.items():
-		idxscoo.append([v,"idx_cool_"+k+" = "+str(v)])
-		maxv = max(maxv,v)
-	idxscoo = sorted(idxscoo,key=lambda x:x[0])
-	idxscoo.append([99,"ncools = "+str(maxv)])
+	for k, v in idxcoo.items():
+		idxscoo.append([v, "idx_cool_"+k+" = "+str(v)])
+		maxv = max(maxv, v)
+	idxscoo = sorted(idxscoo, key=lambda x: x[0])
+	idxscoo.append([99, "ncools = "+str(maxv)])
 	return [x[1] for x in idxscoo]
 
 ############################
 def get_heating_dict():
 	#the number is the corresponding integer index for the given heating
-	idxhea = {"chem":1,"compress":2, "compr":2, "photo":3, "dH":4, "enthalpic":4, "photoAv":5, "Av":5,\
-		"CR":6, "dust":7, "xray":8, "visc":9,"viscous":9, "custom":10, "ZCIE":11}
-	idxhea = {k.lower():v for (k,v) in idxhea.items()}
+	idxhea = {"chem": 1, "compress": 2, "compr": 2, "photo": 3, "dH": 4, "enthalpic": 4,
+			  "photoAv": 5, "Av": 5, "CR": 6, "dust": 7, "xray": 8, "visc": 9,"viscous": 9,
+			  "custom": 10, "ZCIE": 11}
+	idxhea = {k.lower(): v for k, v in idxhea.items()}
 	return idxhea
 
 #############################
@@ -1241,11 +1245,11 @@ def get_heating_index_list():
 	idxhea = get_heating_dict()
 	idxshea = []
 	maxv = 0
-	for (k,v) in idxhea.items():
+	for k, v in idxhea.items():
 		idxshea.append([v, "idx_heat_"+k+" = "+str(v)])
-		maxv = max(maxv,v)
-	idxshea = sorted(idxshea,key=lambda x:x[0])
-	idxshea.append([99,"nheats = "+str(maxv)])
+		maxv = max(maxv, v)
+	idxshea = sorted(idxshea, key=lambda x: x[0])
+	idxshea.append([99, "nheats = "+str(maxv)])
 	return [x[1] for x in idxshea]
 
 
@@ -1268,8 +1272,8 @@ def get_solar_abundances(fileName="data/asplund.dat", keyName="Solar"):
 	# Err:   Error on epsilon value [F6.2]
 
 	#format spacing and names
-	fmtSpace = [3,8,3]+[6]*4
-	fmtName = ["Z","A","Name","Solar","ErrSolar","Meteor","MeteorErr"]
+	fmtSpace = [3, 8, 3] + [6]*4
+	fmtName = ["Z", "A", "Name", "Solar", "ErrSolar", "Meteor", "MeteorErr"]
 
 	solar_abs = dict()
 
@@ -1299,7 +1303,7 @@ def get_solar_abundances(fileName="data/asplund.dat", keyName="Solar"):
 
 	if keyName == "Solar":
 		solar_out = dict()
-		for k,v in solar_abs.items():
+		for k, v in solar_abs.items():
 			solar_out[k] = str(v-12e0)
 		return solar_out
 	else:

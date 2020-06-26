@@ -41,7 +41,6 @@
 # THIS IS THE MAIN OF KROME PYHTON
 
 import sys
-from kromelib import *
 from kromeobj import *
 
 argv = sys.argv

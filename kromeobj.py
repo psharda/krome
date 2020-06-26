@@ -184,7 +184,7 @@ class krome:
 		#sver = (".".join([str(x) for x in aver[:3]]))
 		hver = aver[0] * 1e4 + aver[1] * 1e2 + aver[2]
 		if hver < 2e4 + 7e2:
-			print("ERROR: your version of Python ("+sver+") is not supported by KROME!")
+			print("ERROR: your version of Python ("+ver+") is not supported by KROME!")
 			print(" KROME needs at least Python 2.7.x!")
 			sys.exit()
 
@@ -198,7 +198,7 @@ class krome:
 				print("WARNING: the file "+fle+" is missing!")
 				print("Do you want to proceed anyway?")
 				print("************************************************")
-				a = raw_input("Any key to ignore q to quit... ")
+				a = keyb_input("Any key to ignore q to quit... ")
 				if a == "q":
 					sys.exit()
 
@@ -568,7 +568,7 @@ class krome:
 			print(" test_list file in the main KROME directory.")
 			print(" Do you want to proceed?")
 			print("************************************************")
-			a = raw_input("Any key to ignore q to quit... ")
+			a = keyb_input("Any key to ignore q to quit... ")
 			if a == "q":
 				sys.exit()
 			print("")
@@ -2320,7 +2320,7 @@ class krome:
 			if len(arow) != format_items:
 				print("WARNING: wrong format for reaction "+str(rcount+1))
 				print(srow)
-				a = raw_input("Any key to continue q to quit... ")
+				a = keyb_input("Any key to continue q to quit... ")
 				if a == "q": sys.exit()
 				continue #check line format (N elements, 4=idx+Tmin+Tmax+rate)
 			found_one = True #flag to determine at least one reaction found
@@ -2552,7 +2552,7 @@ class krome:
 			print("WARNING: no krome_fshield(n(:),Tgas) variable found in rate coefficient")
 			print(" even if shielding option is enabled.")
 			print(" Please check your network file!")
-			a = raw_input("Any key to continue q to quit... ")
+			a = keyb_input("Any key to continue q to quit... ")
 			if a == "q": sys.exit()
 
 		if noTabNextBlock:
@@ -2950,8 +2950,8 @@ class krome:
 			if len(sinks) > 0:
 				print("WARNING: sinks found, check your network ("+(", ".join(sinks))+")!")
 				print(" Disable this control with -noSinkCheck")
-				a = raw_input("Any key to ignore q to quit... ")
-				if(a=="q"): sys.exit()
+				a = keyb_input("Any key to ignore q to quit... ")
+				if a == "q": sys.exit()
 
 			if len(sources) > 0:
 				print("ERROR: sources found, check your network ("+(", ".join(sources))+")!")
@@ -3050,7 +3050,7 @@ class krome:
 			print(" options, you need to initialize the machinery from")
 			print(" your main file! Read the manual for further details.")
 			print("************************************************")
-			a = raw_input("Any key to continue...")
+			a = keyb_input("Any key to continue...")
 
 	###############################################
 	def do_reverse(self):
@@ -9074,7 +9074,7 @@ class krome:
 			print("WARNING: "+str(len(reacts)) 
 				  + " reactions found! Using implicit RHS (option -iRHS)")
 			print("could be more efficient and also allows faster compilation.")
-			a = raw_input("Any key to continue q to quit... ")
+			a = keyb_input("Any key to continue q to quit... ")
 			if a == "q": sys.exit()
 
 		print("")
