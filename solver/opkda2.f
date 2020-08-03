@@ -57,6 +57,7 @@ C   900326  Removed duplicate information from DESCRIPTION section.
 C           (WRB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C***END PROLOGUE  DGEFA
+      IMPLICIT NONE
       INTEGER LDA,N,IPVT(*),INFO
       DOUBLE PRECISION A(LDA,*)
 C
@@ -184,6 +185,7 @@ C   900326  Removed duplicate information from DESCRIPTION section.
 C           (WRB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C***END PROLOGUE  DGESL
+      IMPLICIT NONE
       INTEGER LDA,N,IPVT(*),JOB
       DOUBLE PRECISION A(LDA,*),B(*)
 C
@@ -339,6 +341,7 @@ C   900326  Removed duplicate information from DESCRIPTION section.
 C           (WRB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C***END PROLOGUE  DGBFA
+      IMPLICIT NONE
       INTEGER LDA,N,ML,MU,IPVT(*),INFO
       DOUBLE PRECISION ABD(LDA,*)
 C
@@ -507,6 +510,7 @@ C   900326  Removed duplicate information from DESCRIPTION section.
 C           (WRB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C***END PROLOGUE  DGBSL
+      IMPLICIT NONE
       INTEGER LDA,N,ML,MU,IPVT(*),JOB
       DOUBLE PRECISION ABD(LDA,*),B(*)
 C
@@ -624,7 +628,10 @@ C   891214  Prologue converted to Version 4.0 format.  (BAB)
 C   920310  Corrected definition of LX in DESCRIPTION.  (WRB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C***END PROLOGUE  DAXPY
+      IMPLICIT NONE
+      INTEGER  N, INCX, INCY
       DOUBLE PRECISION DX(*), DY(*), DA
+      INTEGER  I, IX, IY, M, MP1, NS
 C***FIRST EXECUTABLE STATEMENT  DAXPY
       IF (N.LE.0 .OR. DA.EQ.0.0D0) RETURN
       IF (INCX .EQ. INCY) IF (INCX-1) 5,20,60
@@ -713,7 +720,10 @@ C   891214  Prologue converted to Version 4.0 format.  (BAB)
 C   920310  Corrected definition of LX in DESCRIPTION.  (WRB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C***END PROLOGUE  DCOPY
+      IMPLICIT NONE
+      INTEGER  N, INCX, INCY
       DOUBLE PRECISION DX(*), DY(*)
+      INTEGER I, IX, IY, M, MP1, NS
 C***FIRST EXECUTABLE STATEMENT  DCOPY
       IF (N .LE. 0) RETURN
       IF (INCX .EQ. INCY) IF (INCX-1) 5,20,60
@@ -805,7 +815,10 @@ C   891214  Prologue converted to Version 4.0 format.  (BAB)
 C   920310  Corrected definition of LX in DESCRIPTION.  (WRB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C***END PROLOGUE  DDOT
+      IMPLICIT NONE
+      INTEGER  N, INCX, INCY
       DOUBLE PRECISION DX(*), DY(*)
+      INTEGER  I, IX, IY, M, MP1, NS
 C***FIRST EXECUTABLE STATEMENT  DDOT
       DDOT = 0.0D0
       IF (N .LE. 0) RETURN
@@ -923,9 +936,12 @@ C   890831  REVISION DATE from Version 3.2
 C   891214  Prologue converted to Version 4.0 format.  (BAB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C***END PROLOGUE  DNRM2
+      IMPLICIT NONE
+      INTEGER  N, INCX
       INTEGER NEXT
       DOUBLE PRECISION DX(*), CUTLO, CUTHI, HITEST, SUM, XMAX, ZERO,
      +                 ONE
+      INTEGER  I, J, NN
       SAVE CUTLO, CUTHI, ZERO, ONE
       DATA ZERO, ONE /0.0D0, 1.0D0/
 C
@@ -1053,6 +1069,7 @@ C   900821  Modified to correct problem with a negative increment.
 C           (WRB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C***END PROLOGUE  DSCAL
+      IMPLICIT NONE
       DOUBLE PRECISION DA, DX(*)
       INTEGER I, INCX, IX, M, MP1, N
 C***FIRST EXECUTABLE STATEMENT  DSCAL
@@ -1132,6 +1149,7 @@ C   900821  Modified to correct problem with a negative increment.
 C           (WRB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C***END PROLOGUE  IDAMAX
+      IMPLICIT NONE
       DOUBLE PRECISION DX(*), DMAX, XMAG
       INTEGER I, INCX, IX, N
 C***FIRST EXECUTABLE STATEMENT  IDAMAX
@@ -1231,6 +1249,7 @@ C**End
 C
 C  Declare arguments.
 C
+      IMPLICIT NONE
       DOUBLE PRECISION R1, R2
       INTEGER NMES, NERR, LEVEL, NI, I1, I2, NR
       CHARACTER*(*) MSG
@@ -1293,6 +1312,7 @@ C Subroutines called by XSETF.. None
 C Function routine called by XSETF.. IXSAV
 C-----------------------------------------------------------------------
 C**End
+      IMPLICIT NONE
       INTEGER MFLAG, JUNK, IXSAV
 C
 C***FIRST EXECUTABLE STATEMENT  XSETF
@@ -1380,6 +1400,7 @@ C Subroutines called by IXSAV.. None
 C Function routine called by IXSAV.. IUMACH
 C-----------------------------------------------------------------------
 C**End
+      IMPLICIT NONE
       LOGICAL ISET
       INTEGER IPAR, IVALUE
 C-----------------------------------------------------------------------
@@ -1435,6 +1456,7 @@ C  The built-in value of 6 is standard on a wide range of Fortran
 C  systems.  This may be machine-dependent.
 C**End
 C***FIRST EXECUTABLE STATEMENT  IUMACH
+      IMPLICIT NONE
       IUMACH = 6
 C
       RETURN

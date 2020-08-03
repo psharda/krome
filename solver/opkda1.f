@@ -27,6 +27,7 @@ C   19930818  Added SLATEC-format prologue.  (FNF)
 C   20030707  Added DUMSUM to force normal storage of COMP.  (ACH)
 C***END PROLOGUE  DUMACH
 C
+      IMPLICIT NONE
       DOUBLE PRECISION U, COMP
 C***FIRST EXECUTABLE STATEMENT  DUMACH
       U = 1.0D0
@@ -39,6 +40,7 @@ C----------------------- End of Function DUMACH ------------------------
       END
       SUBROUTINE DUMSUM(A,B,C)
 C     Routine to force normal storing of A + B, for DUMACH.
+      IMPLICIT NONE
       DOUBLE PRECISION A, B, C
       C = A + B
       RETURN
@@ -86,6 +88,7 @@ C   890503  Minor cosmetic changes.  (FNF)
 C   930809  Renamed to allow single/double precision versions. (ACH)
 C***END PROLOGUE  DCFODE
 C**End
+      IMPLICIT NONE
       INTEGER METH
       INTEGER I, IB, NQ, NQM1, NQP1
       DOUBLE PRECISION ELCO, TESCO
@@ -213,6 +216,7 @@ C           enable interrupt/restart feature. (ACH)
 C   050427  Corrected roundoff decrement in TP. (ACH)
 C***END PROLOGUE  DINTDY
 C**End
+      IMPLICIT NONE
       INTEGER K, NYH, IFLAG
       DOUBLE PRECISION T, YH, DKY
       DIMENSION YH(NYH,*), DKY(*)
@@ -336,6 +340,7 @@ C   031105  Restored 'own' variables to Common block /DLS001/, to
 C           enable interrupt/restart feature. (ACH)
 C***END PROLOGUE  DPREPJ
 C**End
+      IMPLICIT NONE
       EXTERNAL F, JAC
       INTEGER NEQ, NYH, IWM
       DOUBLE PRECISION Y, YH, EWT, FTEM, SAVF, WM
@@ -520,6 +525,7 @@ C   031105  Restored 'own' variables to Common block /DLS001/, to
 C           enable interrupt/restart feature. (ACH)
 C***END PROLOGUE  DSOLSY
 C**End
+      IMPLICIT NONE
       INTEGER IWM
       DOUBLE PRECISION WM, X, TEM
       DIMENSION WM(*), IWM(*), X(*), TEM(*)
@@ -603,6 +609,7 @@ C           enable interrupt/restart feature. (ACH)
 C   031112  Added SAVE statement for data-loaded constants.
 C***END PROLOGUE  DSRCOM
 C**End
+      IMPLICIT NONE
       INTEGER ISAV, JOB
       INTEGER ILS
       INTEGER I, LENILS, LENRLS
@@ -725,6 +732,7 @@ C   031105  Restored 'own' variables to Common block /DLS001/, to
 C           enable interrupt/restart feature. (ACH)
 C***END PROLOGUE  DSTODE
 C**End
+      IMPLICIT NONE
       EXTERNAL F, JAC, PJAC, SLVS
       INTEGER NEQ, NYH, IWM
       DOUBLE PRECISION Y, YH, YH1, EWT, SAVF, ACOR, WM
@@ -1152,6 +1160,7 @@ C   890503  Minor cosmetic changes.  (FNF)
 C   930809  Renamed to allow single/double precision versions. (ACH)
 C***END PROLOGUE  DEWSET
 C**End
+      IMPLICIT NONE
       INTEGER N, ITOL
       INTEGER I
       DOUBLE PRECISION RTOL, ATOL, YCUR, EWT
@@ -1200,6 +1209,7 @@ C   890503  Minor cosmetic changes.  (FNF)
 C   930809  Renamed to allow single/double precision versions. (ACH)
 C***END PROLOGUE  DVNORM
 C**End
+      IMPLICIT NONE
       INTEGER N,   I
       DOUBLE PRECISION V, W,   SUM
       DIMENSION V(N), W(N)
@@ -1214,6 +1224,7 @@ C----------------------- END OF FUNCTION DVNORM ------------------------
       END
 *DECK DIPREP
       SUBROUTINE DIPREP (NEQ, Y, RWORK, IA, JA, IPFLAG, F, JAC)
+      IMPLICIT NONE
       EXTERNAL F, JAC
       INTEGER NEQ, IA, JA, IPFLAG
       DOUBLE PRECISION Y, RWORK
@@ -1286,6 +1297,7 @@ C----------------------- End of Subroutine DIPREP ----------------------
 *DECK DPREP
       SUBROUTINE DPREP (NEQ, Y, YH, SAVF, EWT, FTEM, IA, JA,
      1                     WK, IWK, IPPER, F, JAC)
+      IMPLICIT NONE
       EXTERNAL F,JAC
       INTEGER NEQ, IA, JA, IWK, IPPER
       DOUBLE PRECISION Y, YH, SAVF, EWT, FTEM, WK
@@ -1549,6 +1561,7 @@ C----------------------- End of Subroutine DPREP -----------------------
       END
 *DECK JGROUP
       SUBROUTINE JGROUP (N,IA,JA,MAXG,NGRP,IGP,JGP,INCL,JDONE,IER)
+      IMPLICIT NONE
       INTEGER N, IA, JA, MAXG, NGRP, IGP, JGP, INCL, JDONE, IER
       DIMENSION IA(*), JA(*), IGP(*), JGP(*), INCL(*), JDONE(*)
 C-----------------------------------------------------------------------
@@ -1613,6 +1626,7 @@ C----------------------- End of Subroutine JGROUP ----------------------
       END
 *DECK ADJLR
       SUBROUTINE ADJLR (N, ISP, LDIF)
+      IMPLICIT NONE
       INTEGER N, ISP, LDIF
       DIMENSION ISP(*)
 C-----------------------------------------------------------------------
@@ -1638,6 +1652,7 @@ C----------------------- End of Subroutine ADJLR -----------------------
       END
 *DECK CNTNZU
       SUBROUTINE CNTNZU (N, IA, JA, NZSUT)
+      IMPLICIT NONE
       INTEGER N, IA, JA, NZSUT
       DIMENSION IA(*), JA(*)
 C-----------------------------------------------------------------------
@@ -1672,6 +1687,7 @@ C----------------------- End of Subroutine CNTNZU ----------------------
       END
 *DECK DPRJS
       SUBROUTINE DPRJS (NEQ,Y,YH,NYH,EWT,FTEM,SAVF,WK,IWK,F,JAC)
+      IMPLICIT NONE
       EXTERNAL F,JAC
       INTEGER NEQ, NYH, IWK
       DOUBLE PRECISION Y, YH, EWT, FTEM, SAVF, WK
@@ -1877,6 +1893,7 @@ C----------------------- End of Subroutine DPRJS -----------------------
       END
 *DECK DSOLSS
       SUBROUTINE DSOLSS (WK, IWK, X, TEM)
+      IMPLICIT NONE
       INTEGER IWK
       DOUBLE PRECISION WK, X, TEM
       DIMENSION WK(*), IWK(*), X(*), TEM(*)
@@ -1969,6 +1986,7 @@ C        JOB  = 1 if Common is to be saved (written to RSAV/ISAV)
 C        JOB  = 2 if Common is to be restored (read from RSAV/ISAV)
 C        A call with JOB = 2 presumes a prior call with JOB = 1.
 C-----------------------------------------------------------------------
+      IMPLICIT NONE
       INTEGER ISAV, JOB
       INTEGER ILS, ILSS
       INTEGER I, LENILS, LENISS, LENRLS, LENRSS
@@ -2141,8 +2159,11 @@ c    declarations.
 c
 c-----------------------------------------------------------------------
 c
+      IMPLICIT NONE
+      INTEGER  n, nsp
       integer  ia(*), ja(*),  p(*), ip(*),  isp(*),  path,  flag,
      *   v, l, head,  tmp, q
+      INTEGER  max, next
 c...  real  a(*)
       double precision  a(*)
       logical  dflag
@@ -2270,8 +2291,11 @@ c             -       .lt. mark(vk)         -
 c
 c-----------------------------------------------------------------------
 c
+      IMPLICIT NONE
+      INTEGER  n, max
       integer  ia(*), ja(*),  v(*), l(*),  head(*), last(*), next(*),
      *   mark(*),  flag,  tag, dmin, vk,ek, tail
+      INTEGER  k
       equivalence  (vk,ek)
 c
 c----initialization
@@ -2329,8 +2353,11 @@ c
 c***********************************************************************
 c  mdi -- initialization
 c***********************************************************************
+      IMPLICIT NONE
+      INTEGER  n, max
       integer  ia(*), ja(*),  v(*), l(*),  head(*), last(*), next(*),
      *   mark(*), tag,  flag,  sfs, vi,dvi, vj
+      INTEGER  j, jmin, jmax, k, kmax, lvk, nextvi
 c
 c----initialize degrees, element lists, and degree lists
       do 1 vi=1,n
@@ -2398,6 +2425,7 @@ c ** error-  insufficient storage
 c***********************************************************************
 c  mdm -- form element from uneliminated neighbors of vk
 c***********************************************************************
+      IMPLICIT NONE
       integer  vk, tail,  v(*), l(*),   last(*), next(*),   mark(*),
      *   tag, s,ls,vs,es, b,lb,vb, blp,blpmax
       equivalence  (vs, es)
@@ -2453,8 +2481,11 @@ c
 c***********************************************************************
 c  mdp -- purge inactive elements and do mass elimination
 c***********************************************************************
+      IMPLICIT NONE
+      INTEGER  k
       integer  ek, tail,  v(*), l(*),  head(*), last(*), next(*),
      *   mark(*),  tag, free, li,vi,lvi,evi, s,ls,es, ilp,ilpmax
+      INTEGER  i
 c
 c----initialize tag
       tag = mark(ek)
@@ -2542,9 +2573,11 @@ c
 c***********************************************************************
 c  mdu -- update degrees of uneliminated vertices in ek
 c***********************************************************************
+      IMPLICIT NONE
       integer  ek, dmin,  v(*), l(*),  head(*), last(*), next(*),
      *   mark(*),  tag, vi,evi,dvi, s,vs,es, b,vb, ilp,ilpmax,
      *   blp,blpmax
+      INTEGER  i
       equivalence  (vs, es)
 c
 c----initialize tag
@@ -2654,7 +2687,10 @@ c            diagonal elements at the beginning of the row
 c
 c-----------------------------------------------------------------------
 c
+      IMPLICIT NONE
+      INTEGER  n
       integer  ip(*),  ia(*), ja(*),  q(*), r(*)
+      INTEGER  i, j, k, ilast, jak, jmin, jmax, jdummy
 c...  real  a(*),  ak
       double precision  a(*),  ak
       logical  dflag
@@ -2892,9 +2928,13 @@ c    in subroutine cdrv, as indicated below.
 c    (3) change e0 to d0 in the constants in statement number 10
 c    in subroutine nnfc and the line following that.
 c
+      IMPLICIT NONE
+      INTEGER  n, nsp
       integer  r(*), c(*), ic(*),  ia(*), ja(*),  isp(*), esp,  path,
      *   flag,  d, u, q, row, tmp, ar,  umax
 c     real  a(*), b(*), z(*), rsp(*)
+      INTEGER lmax, lratio, max, l, ju, jra, jrl, jru, jutmp, jumax,
+     *   jlmax, jl, j, i, ijl, iju, il, ira, irac, irl, iru, iu
       double precision  a(*), b(*), z(*), rsp(*)
 c
 c  set lratio equal to the ratio between the length of floating point
@@ -3193,7 +3233,10 @@ c fia   - ar    - at the kth step, ar contains the elements of the
 c       -           reordered row of a.
 c       -           size = n.
 c
+      IMPLICIT NONE
+      INTEGER  n
       integer  ic(*), ia(*), ja(*), jar(*), p(*), flag
+      INTEGER  i, j, k, jmin, jmax, newj
 c     real  a(*), ar(*)
       double precision  a(*), ar(*)
 c
@@ -3285,10 +3328,15 @@ c    jmin,jmax - are the indices in  a or u  of the first and last
 c                elements to be examined in a given row.
 c                for example,  jmin=ia(k), jmax=ia(k+1)-1.
 c
+      IMPLICIT NONE
+      INTEGER n, jlmax, jumax
       integer cend, qm, rend, rk, vj
       integer ia(*), ja(*), ira(*), jra(*), il(*), jl(*), ijl(*)
       integer iu(*), ju(*), iju(*), irl(*), jrl(*), iru(*), jru(*)
       integer r(*), ic(*), q(*), irac(*), flag
+      INTEGER  np1, jumin, juptr, k, luk, m, long, lastid, lasti, jtmp
+      INTEGER  j, jlmin, jlptr, jmin, jmax, jaiak, jairai
+      INTEGER  i, i1, iak, irai, irll, irul
 c
 c  ******  initialize pointers  ****************************************
       np1 = n + 1
@@ -3590,9 +3638,12 @@ c    jmin, jmax - indices of the first and last positions in a row to
 c      be examined.
 c    sum - used in calculating  tmp.
 c
+      IMPLICIT NONE
+      INTEGER  n, lmax
       integer rk,umax
       integer  r(*), c(*), ic(*), ia(*), ja(*), il(*), jl(*), ijl(*)
       integer  iu(*), ju(*), iju(*), irl(*), jrl(*), flag
+      INTEGER  i, j, k, i1, i2, mu, ijlb, jmin, jmax
 c     real  a(*), l(*), d(*), u(*), z(*), b(*), row(*)
 c     real tmp(*), lki, sum, dk
       double precision  a(*), l(*), d(*), u(*), z(*), b(*), row(*)
@@ -3729,7 +3780,10 @@ c  internal variables..
 c    jmin, jmax - indices of the first and last positions in a row of
 c      u or l  to be used.
 c
+      IMPLICIT NONE
+      INTEGER  n
       integer r(*), c(*), il(*), jl(*), ijl(*), iu(*), ju(*), iju(*)
+      INTEGER  i, j, k, jmin, jmax, ml, mu
 c     real l(*), d(*), u(*), b(*), z(*), tmp(*), tmpk, sum
       double precision  l(*), d(*), u(*), b(*), z(*), tmp(*), tmpk,sum
 c
@@ -3782,7 +3836,10 @@ c  internal variables..
 c    jmin, jmax - indices of the first and last positions in a row of
 c      u or l  to be used.
 c
+      IMPLICIT NONE
+      INTEGER  n
       integer r(*), c(*), il(*), jl(*), ijl(*), iu(*), ju(*), iju(*)
+      INTEGER  i, j, k, jmin, jmax, ml, mu
 c     real l(*), d(*), u(*), b(*), z(*), tmp(*), tmpk,sum
       double precision l(*), d(*), u(*), b(*), z(*), tmp(*), tmpk,sum
 c
@@ -3818,6 +3875,7 @@ c  ******  solve  lt x = y  by back substitution  **********************
 *DECK DSTODA
       SUBROUTINE DSTODA (NEQ, Y, YH, NYH, YH1, EWT, SAVF, ACOR,
      1   WM, IWM, F, JAC, PJAC, SLVS)
+      IMPLICIT NONE
       EXTERNAL F, JAC, PJAC, SLVS
       INTEGER NEQ, NYH, IWM
       DOUBLE PRECISION Y, YH, YH1, EWT, SAVF, ACOR, WM
@@ -4452,6 +4510,7 @@ C----------------------- End of Subroutine DSTODA ----------------------
 *DECK DPRJA
       SUBROUTINE DPRJA (NEQ, Y, YH, NYH, EWT, FTEM, SAVF, WM, IWM,
      1   F, JAC)
+      IMPLICIT NONE
       EXTERNAL F, JAC
       INTEGER NEQ, NYH, IWM
       DOUBLE PRECISION Y, YH, EWT, FTEM, SAVF, WM
@@ -4625,6 +4684,7 @@ C of the vector of length N contained in the array V, with weights
 C contained in the array w of length N:
 C   DMNORM = MAX(i=1,...,N) ABS(V(i))*W(i)
 C-----------------------------------------------------------------------
+      IMPLICIT NONE
       INTEGER N,   I
       DOUBLE PRECISION V, W,   VM
       DIMENSION V(N), W(N)
@@ -4643,6 +4703,7 @@ C stored in the array A, that is consistent with the weighted max-norm
 C on vectors, with weights stored in the array W:
 C   DFNORM = MAX(i=1,...,N) ( W(i) * Sum(j=1,...,N) ABS(a(i,j))/W(j) )
 C-----------------------------------------------------------------------
+      IMPLICIT NONE
       INTEGER N,   I, J
       DOUBLE PRECISION A,   W, AN, SUM
       DIMENSION A(N,N), W(N)
@@ -4668,6 +4729,7 @@ C NRA is the first dimension of the A array, NRA .ge. ML+MU+1.
 C In terms of the matrix elements a(i,j), the norm is given by:
 C   DBNORM = MAX(i=1,...,N) ( W(i) * Sum(j=1,...,N) ABS(a(i,j))/W(j) )
 C-----------------------------------------------------------------------
+      IMPLICIT NONE
       INTEGER N, NRA, ML, MU
       INTEGER I, I1, JLO, JHI, J
       DOUBLE PRECISION A, W
@@ -4701,6 +4763,7 @@ C        JOB  = 1 if Common is to be saved (written to RSAV/ISAV)
 C        JOB  = 2 if Common is to be restored (read from RSAV/ISAV)
 C        A call with JOB = 2 presumes a prior call with JOB = 1.
 C-----------------------------------------------------------------------
+      IMPLICIT NONE
       INTEGER ISAV, JOB
       INTEGER ILS, ILSA
       INTEGER I, LENRLS, LENILS, LENRLA, LENILA
@@ -4742,6 +4805,7 @@ C----------------------- End of Subroutine DSRCMA ----------------------
       END
 *DECK DRCHEK
       SUBROUTINE DRCHEK (JOB, G, NEQ, Y, YH,NYH, G0, G1, GX, JROOT, IRT)
+      IMPLICIT NONE
       EXTERNAL G
       INTEGER JOB, NEQ, NYH, JROOT, IRT
       DOUBLE PRECISION Y, YH, G0, G1, GX
@@ -4907,6 +4971,7 @@ C----------------------- End of Subroutine DRCHEK ----------------------
       END
 *DECK DROOTS
       SUBROUTINE DROOTS (NG, HMIN, JFLAG, X0, X1, G0, G1, GX, X, JROOT)
+      IMPLICIT NONE
       INTEGER NG, JFLAG, JROOT
       DOUBLE PRECISION HMIN, X0, X1, G0, G1, GX, X
       DIMENSION G0(NG), G1(NG), GX(NG), JROOT(NG)
@@ -5140,6 +5205,7 @@ C        JOB  = 1 if Common is to be saved (written to RSAV/ISAV)
 C        JOB  = 2 if Common is to be restored (read from RSAV/ISAV)
 C        A call with JOB = 2 presumes a prior call with JOB = 1.
 C-----------------------------------------------------------------------
+      IMPLICIT NONE
       INTEGER ISAV, JOB
       INTEGER ILS, ILSA, ILSR
       INTEGER I, IOFF, LENRLS, LENILS, LENRLA, LENILA, LENRLR, LENILR
@@ -5196,6 +5262,7 @@ C----------------------- End of Subroutine DSRCAR ----------------------
 *DECK DSTODPK
       SUBROUTINE DSTODPK (NEQ, Y, YH, NYH, YH1, EWT, SAVF, SAVX, ACOR,
      1   WM, IWM, F, JAC, PSOL)
+      IMPLICIT NONE
       EXTERNAL F, JAC, PSOL
       INTEGER NEQ, NYH, IWM
       DOUBLE PRECISION Y, YH, YH1, EWT, SAVF, SAVX, ACOR, WM
@@ -5703,6 +5770,7 @@ C----------------------- End of Subroutine DSTODPK ---------------------
       END
 *DECK DPKSET
       SUBROUTINE DPKSET (NEQ, Y, YSV, EWT, FTEM, SAVF, WM, IWM, F, JAC)
+      IMPLICIT NONE
       EXTERNAL F, JAC
       INTEGER NEQ, IWM
       DOUBLE PRECISION Y, YSV, EWT, FTEM, SAVF, WM
@@ -5765,6 +5833,7 @@ C----------------------- End of Subroutine DPKSET ----------------------
       END
 *DECK DSOLPK
       SUBROUTINE DSOLPK (NEQ, Y, SAVF, X, EWT, WM, IWM, F, PSOL)
+      IMPLICIT NONE
       EXTERNAL F, PSOL
       INTEGER NEQ, IWM
       DOUBLE PRECISION Y, SAVF, X, EWT, WM
@@ -5928,6 +5997,7 @@ C----------------------- End of Subroutine DSOLPK ----------------------
       SUBROUTINE DSPIOM (NEQ, TN, Y, SAVF, B, WGHT, N, MAXL, KMP, DELTA,
      1            HL0, JPRE, MNEWT, F, PSOL, NPSL, X, V, HES, IPVT,
      2            LIOM, WP, IWP, WK, IFLAG)
+      IMPLICIT NONE
       EXTERNAL F, PSOL
       INTEGER NEQ,N,MAXL,KMP,JPRE,MNEWT,NPSL,IPVT,LIOM,IWP,IFLAG
       DOUBLE PRECISION TN,Y,SAVF,B,WGHT,DELTA,HL0,X,V,HES,WP,WK
@@ -6143,6 +6213,7 @@ C----------------------- End of Subroutine DSPIOM ----------------------
 *DECK DATV
       SUBROUTINE DATV (NEQ, Y, SAVF, V, WGHT, FTEM, F, PSOL, Z, VTEM,
      1                WP, IWP, HL0, JPRE, IER, NPSL)
+      IMPLICIT NONE
       EXTERNAL F, PSOL
       INTEGER NEQ, IWP, JPRE, IER, NPSL
       DOUBLE PRECISION Y, SAVF, V, WGHT, FTEM, Z, VTEM, WP, HL0
@@ -6267,6 +6338,7 @@ C----------------------- End of Subroutine DATV ------------------------
       END
 *DECK DORTHOG
       SUBROUTINE DORTHOG (VNEW, V, HES, N, LL, LDHES, KMP, SNORMW)
+      IMPLICIT NONE
       INTEGER N, LL, LDHES, KMP
       DOUBLE PRECISION VNEW, V, HES, SNORMW
       DIMENSION VNEW(*), V(N,*), HES(LDHES,*)
@@ -6354,6 +6426,7 @@ C----------------------- End of Subroutine DORTHOG ---------------------
       SUBROUTINE DSPIGMR (NEQ, TN, Y, SAVF, B, WGHT, N, MAXL, MAXLP1,
      1  KMP, DELTA, HL0, JPRE, MNEWT, F, PSOL, NPSL, X, V, HES, Q,
      2  LGMR, WP, IWP, WK, DL, IFLAG)
+      IMPLICIT NONE
       EXTERNAL F, PSOL
       INTEGER NEQ,N,MAXL,MAXLP1,KMP,JPRE,MNEWT,NPSL,LGMR,IWP,IFLAG
       DOUBLE PRECISION TN,Y,SAVF,B,WGHT,DELTA,HL0,X,V,HES,Q,WP,WK,DL
@@ -6590,6 +6663,7 @@ C----------------------- End of Subroutine DSPIGMR ---------------------
 *DECK DPCG
       SUBROUTINE DPCG (NEQ, TN, Y, SAVF, R, WGHT, N, MAXL, DELTA, HL0,
      1 JPRE, MNEWT, F, PSOL, NPSL, X, P, W, Z, LPCG, WP, IWP, WK, IFLAG)
+      IMPLICIT NONE
       EXTERNAL F, PSOL
       INTEGER NEQ, N, MAXL, JPRE, MNEWT, NPSL, LPCG, IWP, IFLAG
       DOUBLE PRECISION TN,Y,SAVF,R,WGHT,DELTA,HL0,X,P,W,Z,WP,WK
@@ -6735,6 +6809,7 @@ C----------------------- End of Subroutine DPCG ------------------------
 *DECK DPCGS
       SUBROUTINE DPCGS (NEQ, TN, Y, SAVF, R, WGHT, N, MAXL, DELTA, HL0,
      1 JPRE, MNEWT, F, PSOL, NPSL, X, P, W, Z, LPCG, WP, IWP, WK, IFLAG)
+      IMPLICIT NONE
       EXTERNAL F, PSOL
       INTEGER NEQ, N, MAXL, JPRE, MNEWT, NPSL, LPCG, IWP, IFLAG
       DOUBLE PRECISION TN,Y,SAVF,R,WGHT,DELTA,HL0,X,P,W,Z,WP,WK
@@ -6884,6 +6959,7 @@ C----------------------- End of Subroutine DPCGS -----------------------
       END
 *DECK DATP
       SUBROUTINE DATP (NEQ, Y, SAVF, P, WGHT, HL0, WK, F, W)
+      IMPLICIT NONE
       EXTERNAL F
       INTEGER NEQ
       DOUBLE PRECISION Y, SAVF, P, WGHT, HL0, WK, W
@@ -6952,6 +7028,7 @@ C----------------------- End of Subroutine DATP ------------------------
 *DECK DUSOL
       SUBROUTINE DUSOL (NEQ, TN, Y, SAVF, B, WGHT, N, DELTA, HL0, MNEWT,
      1   PSOL, NPSL, X, WP, IWP, WK, IFLAG)
+      IMPLICIT NONE
       EXTERNAL PSOL
       INTEGER NEQ, N, MNEWT, NPSL, IWP, IFLAG
       DOUBLE PRECISION TN, Y, SAVF, B, WGHT, DELTA, HL0, X, WP, WK
@@ -7055,6 +7132,7 @@ C        JOB  = 1 if Common is to be saved (written to RSAV/ISAV)
 C        JOB  = 2 if Common is to be restored (read from RSAV/ISAV)
 C        A call with JOB = 2 presumes a prior call with JOB = 1.
 C-----------------------------------------------------------------------
+      IMPLICIT NONE
       INTEGER ISAV, JOB
       INTEGER ILS, ILSP
       INTEGER I, LENILP, LENRLP, LENILS, LENRLS
@@ -7087,6 +7165,7 @@ C----------------------- End of Subroutine DSRCPK ----------------------
       END
 *DECK DHEFA
       SUBROUTINE DHEFA (A, LDA, N, IPVT, INFO, JOB)
+      IMPLICIT NONE
       INTEGER LDA, N, IPVT(*), INFO, JOB
       DOUBLE PRECISION A(LDA,*)
 C-----------------------------------------------------------------------
@@ -7267,6 +7346,7 @@ C----------------------- End of Subroutine DHEFA -----------------------
       END
 *DECK DHESL
       SUBROUTINE DHESL (A, LDA, N, IPVT, B)
+      IMPLICIT NONE
       INTEGER LDA, N, IPVT(*)
       DOUBLE PRECISION A(LDA,*), B(*)
 C-----------------------------------------------------------------------
@@ -7335,6 +7415,7 @@ C----------------------- End of Subroutine DHESL -----------------------
       END
 *DECK DHEQR
       SUBROUTINE DHEQR (A, LDA, N, Q, INFO, IJOB)
+      IMPLICIT NONE
       INTEGER LDA, N, INFO, IJOB
       DOUBLE PRECISION A(LDA,*), Q(*)
 C-----------------------------------------------------------------------
@@ -7493,6 +7574,7 @@ C----------------------- End of Subroutine DHEQR -----------------------
       END
 *DECK DHELS
       SUBROUTINE DHELS (A, LDA, N, Q, B)
+      IMPLICIT NONE
       INTEGER LDA, N
       DOUBLE PRECISION A(LDA,*), B(*), Q(*)
 C-----------------------------------------------------------------------
@@ -7564,6 +7646,7 @@ C----------------------- End of Subroutine DHELS -----------------------
 *DECK DLHIN
       SUBROUTINE DLHIN (NEQ, N, T0, Y0, YDOT, F, TOUT, UROUND,
      1   EWT, ITOL, ATOL, Y, TEMP, H0, NITER, IER)
+      IMPLICIT NONE
       EXTERNAL F
       DOUBLE PRECISION T0, Y0, YDOT, TOUT, UROUND, EWT, ATOL, Y,
      1   TEMP, H0
@@ -7698,6 +7781,7 @@ C----------------------- End of Subroutine DLHIN -----------------------
 *DECK DSTOKA
       SUBROUTINE DSTOKA (NEQ, Y, YH, NYH, YH1, EWT, SAVF, SAVX, ACOR,
      1   WM, IWM, F, JAC, PSOL)
+      IMPLICIT NONE
       EXTERNAL F, JAC, PSOL
       INTEGER NEQ, NYH, IWM
       DOUBLE PRECISION Y, YH, YH1, EWT, SAVF, SAVX, ACOR, WM
@@ -8251,6 +8335,7 @@ C----------------------- End of Subroutine DSTOKA ----------------------
 *DECK DSETPK
       SUBROUTINE DSETPK (NEQ, Y, YSV, EWT, FTEM, SAVF, JOK, WM, IWM,
      1                  F, JAC)
+      IMPLICIT NONE
       EXTERNAL F, JAC
       INTEGER NEQ, JOK, IWM
       DOUBLE PRECISION Y, YSV, EWT, FTEM, SAVF, WM
@@ -8329,6 +8414,7 @@ C        JOB  = 1 if Common is to be saved (written to RSAV/ISAV)
 C        JOB  = 2 if Common is to be restored (read from RSAV/ISAV)
 C        A call with JOB = 2 presumes a prior call with JOB = 1.
 C-----------------------------------------------------------------------
+      IMPLICIT NONE
       INTEGER ISAV, JOB
       INTEGER ILS, ILS2, ILSR, ILSP
       INTEGER I, IOFF, LENILP, LENRLP, LENILS, LENRLS, LENILR, LENRLR
@@ -8385,6 +8471,7 @@ C----------------------- End of Subroutine DSRCKR ----------------------
 *DECK DAINVG
       SUBROUTINE DAINVG (RES, ADDA, NEQ, T, Y, YDOT, MITER,
      1                   ML, MU, PW, IPVT, IER )
+      IMPLICIT NONE
       EXTERNAL RES, ADDA
       INTEGER NEQ, MITER, ML, MU, IPVT, IER
       INTEGER I, LENPW, MLP1, NROWPW
@@ -8447,6 +8534,7 @@ C----------------------- End of Subroutine DAINVG ----------------------
 *DECK DSTODI
       SUBROUTINE DSTODI (NEQ, Y, YH, NYH, YH1, EWT, SAVF, SAVR,
      1   ACOR, WM, IWM, RES, ADDA, JAC, PJAC, SLVS )
+      IMPLICIT NONE
       EXTERNAL RES, ADDA, JAC, PJAC, SLVS
       INTEGER NEQ, NYH, IWM
       DOUBLE PRECISION Y, YH, YH1, EWT, SAVF, SAVR, ACOR, WM
@@ -8910,6 +8998,7 @@ C----------------------- End of Subroutine DSTODI ----------------------
 *DECK DPREPJI
       SUBROUTINE DPREPJI (NEQ, Y, YH, NYH, EWT, RTEM, SAVR, S, WM, IWM,
      1   RES, JAC, ADDA)
+      IMPLICIT NONE
       EXTERNAL RES, JAC, ADDA
       INTEGER NEQ, NYH, IWM
       DOUBLE PRECISION Y, YH, EWT, RTEM, SAVR, S, WM
@@ -9090,6 +9179,7 @@ C----------------------- End of Subroutine DPREPJI ---------------------
 *DECK DAIGBT
       SUBROUTINE DAIGBT (RES, ADDA, NEQ, T, Y, YDOT,
      1                   MB, NB, PW, IPVT, IER )
+      IMPLICIT NONE
       EXTERNAL RES, ADDA
       INTEGER NEQ, MB, NB, IPVT, IER
       INTEGER I, LENPW, LBLOX, LPB, LPC
@@ -9128,6 +9218,7 @@ C----------------------- End of Subroutine DAIGBT ----------------------
 *DECK DPJIBT
       SUBROUTINE DPJIBT (NEQ, Y, YH, NYH, EWT, RTEM, SAVR, S, WM, IWM,
      1   RES, JAC, ADDA)
+      IMPLICIT NONE
       EXTERNAL RES, JAC, ADDA
       INTEGER NEQ, NYH, IWM
       DOUBLE PRECISION Y, YH, EWT, RTEM, SAVR, S, WM
@@ -9291,6 +9382,7 @@ C----------------------- End of Subroutine DPJIBT ----------------------
       END
 *DECK DSLSBT
       SUBROUTINE DSLSBT (WM, IWM, X, TEM)
+      IMPLICIT NONE
       INTEGER IWM
       INTEGER LBLOX, LPB, LPC, MB, NB
       DOUBLE PRECISION WM, X, TEM
@@ -9320,6 +9412,7 @@ C----------------------- End of Subroutine DSLSBT ----------------------
       END
 *DECK DDECBT
       SUBROUTINE DDECBT (M, N, A, B, C, IP, IER)
+      IMPLICIT NONE
       INTEGER M, N, IP(M,N), IER
       DOUBLE PRECISION A(M,M,N), B(M,M,N), C(M,M,N)
 C-----------------------------------------------------------------------
@@ -9427,6 +9520,7 @@ C----------------------- End of Subroutine DDECBT ----------------------
       END
 *DECK DSOLBT
       SUBROUTINE DSOLBT (M, N, A, B, C, Y, IP)
+      IMPLICIT NONE
       INTEGER M, N, IP(M,N)
       DOUBLE PRECISION A(M,M,N), B(M,M,N), C(M,M,N), Y(M,N)
 C-----------------------------------------------------------------------
@@ -9487,6 +9581,7 @@ C----------------------- End of Subroutine DSOLBT ----------------------
 *DECK DIPREPI
       SUBROUTINE DIPREPI (NEQ, Y, S, RWORK, IA, JA, IC, JC, IPFLAG,
      1   RES, JAC, ADDA)
+      IMPLICIT NONE
       EXTERNAL RES, JAC, ADDA
       INTEGER NEQ, IA, JA, IC, JC, IPFLAG
       DOUBLE PRECISION Y, S, RWORK
@@ -9559,6 +9654,7 @@ C----------------------- End of Subroutine DIPREPI ---------------------
 *DECK DPREPI
       SUBROUTINE DPREPI (NEQ, Y, S, YH, SAVR, EWT, RTEM, IA, JA, IC, JC,
      1                   WK, IWK, IPPER, RES, JAC, ADDA)
+      IMPLICIT NONE
       EXTERNAL RES, JAC, ADDA
       INTEGER NEQ, IA, JA, IC, JC, IWK, IPPER
       DOUBLE PRECISION Y, S, YH, SAVR, EWT, RTEM, WK
@@ -9927,6 +10023,7 @@ C----------------------- End of Subroutine DPREPI ----------------------
       END
 *DECK DAINVGS
       SUBROUTINE DAINVGS (NEQ, T, Y, WK, IWK, TEM, YDOT, IER, RES, ADDA)
+      IMPLICIT NONE
       EXTERNAL RES, ADDA
       INTEGER NEQ, IWK, IER
       INTEGER IPLOST, IESP, ISTATC, IYS, IBA, IBIAN, IBJAN, IBJGP,
@@ -10019,6 +10116,7 @@ C----------------------- End of Subroutine DAINVGS ---------------------
 *DECK DPRJIS
       SUBROUTINE DPRJIS (NEQ, Y, YH, NYH, EWT, RTEM, SAVR, S, WK, IWK,
      1   RES, JAC, ADDA)
+      IMPLICIT NONE
       EXTERNAL RES, JAC, ADDA
       INTEGER NEQ, NYH, IWK
       DOUBLE PRECISION Y, YH, EWT, RTEM, SAVR, S, WK
