@@ -231,12 +231,17 @@ contains
        aup_arg,phi_arg) #KROME_bindC
     use krome_dust
     use krome_commons
-    #KROME_double_value , optional :: alow_arg,aup_arg,phi_arg
+    #KROME_double_value_optional :: alow_arg,aup_arg,phi_arg
     #KROME_double_value :: dust_gas_ratio
     #KROME_double :: x(nmols)
     real*8::alow,aup,phi
 
     !default values
+#IFKROME_useBindC
+    alow = alow_arg
+    aup  = aup_arg
+    phi  = phi_arg
+#ELSEKROME_useBindC
     alow = 5d-7 !lower size (cm)
     aup = 2.5d-5 !upper size (cm)
     phi = -3.5d0 !MNR distribution exponent (with its sign)
@@ -244,6 +249,7 @@ contains
     if(present(alow_arg)) alow = alow_arg
     if(present(aup_arg)) aup = aup_arg
     if(present(phi_arg)) phi = phi_arg
+#ENDIFKROME_useBindC
 
     call set_dust_distribution(x(:),dust_gas_ratio,alow,aup,phi)
 

@@ -91,7 +91,7 @@ class PyKROME(object):
 		fortran.krome_set_dust_size.restype = None
 		fortran.krome_set_dust_size.argtypes = [array_1d_double]
 		fortran.krome_set_tdust.restype = None
-		fortran.krome_set_tdust.argtypes = ctypes.c_double
+		fortran.krome_set_tdust.argtypes = [ctypes.c_double]
 		fortran.krome_set_tdust_array.restype = None
 		fortran.krome_set_tdust_array.argtypes = [array_1d_double]
 		fortran.krome_get_averaged_tdust.restype = ctypes.c_double
