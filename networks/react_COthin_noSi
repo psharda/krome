@@ -36,7 +36,7 @@
 
 #Yoshida 2006, ApJ-652
 @format:idx,R,R,P,P,rate
-8,He+,H,He,H+,1.2d-15*(T32)*.25
+8,He+,H,He,H+,1.25d-15*(T32)**.25
 
 # De Jong (1972)
 @format:idx,R,R,P,P,Tmin,Tmax,rate
