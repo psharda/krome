@@ -2850,10 +2850,10 @@ class krome:
 				#loop on the number of dust bins (all types)
 				for idust in range(self.dustArraySize*len(self.dustTypes)):
 					rea2 = copy.copy(rea) #make a copy of the reaction
-					dtype = self.dustTypes[idust/self.dustArraySize]
+					dtype = self.dustTypes[idust // self.dustArraySize]
 					jdust = idust-self.dustArraySize*int(idust/self.dustArraySize) + 1
-					rea2.krate = rea2.krate.replace("auto_jdust","idx_dust_"+dtype+"_"+str(jdust))
-					rea2.krate = rea2.krate.replace("auto_idx",str(jdust))
+					rea2.krate = rea2.krate.replace("auto_jdust", "idx_dust_"+dtype+"_"+str(jdust))
+					rea2.krate = rea2.krate.replace("auto_idx", str(jdust))
 
 					ureactants = rea2.reactants[:] #work on a copy of the reactants
 					#loop on reactants
@@ -4496,10 +4496,10 @@ class krome:
 
 		#PART2: use data to prepare cooling routine
 		#prepare the functions for the cooling looping on metals (which are the key of the cooling_data dictionary)
-		for cur_metal,cool_data in cooling_data.items():
+		for cur_metal, cool_data in cooling_data.items():
 			metal_name = cur_metal #alias for metal name
 			metal_name_f90 = cool_data["metal_name_f90"] #name in f90 style
-			level_list = cool_data["levels_data"].keys() #store the list of the levels as integer values (e.g. [0,1,3])
+			level_list = list(cool_data["levels_data"].keys()) #store the list of the levels as integer values (e.g. [0,1,3])
 			#make a local copy of the dictionaries (easy to handle)
 			levels_data = cooling_data[cur_metal]["levels_data"]
 			trans_data = cooling_data[cur_metal]["trans_data"]
@@ -4531,8 +4531,7 @@ class krome:
 					"down":r_data["up"]}
 
 			#merge excitation and de-excitation dictionary
-			rate_data = dict(rate_data.items() + rate_data_rev.items())
-
+			rate_data = {**rate_data, **rate_data_rev}
 
 			idx_linear_dep_level = 0 #ground level will be removed (for linear dependency)
 
@@ -6158,13 +6157,13 @@ class krome:
 		#tokenize to replace k(:) with coe_tab(:)
 		import tokenize
 		try:
-			import cStringIO
+			from cStringIO import StringIO
 		except:
-			from io import BytesIO as cStringIO
+			from io import StringIO
 		kModifierFull = "" #string that will contains all the lines of the rate modifier
 		for kmod in self.kModifier:
 			#string to tokenizable object
-			src = cStringIO.StringIO(kmod).readline
+			src = StringIO(kmod).readline
 			#tokenize
 			tokenized = tokenize.generate_tokens(src)
 			kmodTok = "" #string with the k->coe_tab replaced
@@ -6174,7 +6173,8 @@ class krome:
 				else:
 					kmodTok += tok[1]
 			#comments are not tokenized
-			if kmod[0] == "!": kmodTok = kmod
+			if kmod[0] == "!":
+				kmodTok = kmod
 			#append the correct string
 			kModifierFull += kmodTok+"\n"
 
