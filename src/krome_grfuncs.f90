@@ -92,10 +92,10 @@ contains
   end function dust_2body_rate
 
   !******************
-  function krate_2bodySi(n,idx1,idx2,Ea,Tdust) result(krate)
+  function krate_2bodySi(alpha,Ea,idx1,idx2,n,Tdust) result(krate)
     use krome_commons
     implicit none
-    real*8,intent(in)::n(nspec),Ea,Tdust
+    real*8,intent(in)::n(nspec),Ea,Tdust,alpha
     integer,intent(in)::idx1,idx2
     real*8::krate,amin,amax,pexp,d2g,rho0
 
@@ -106,20 +106,22 @@ contains
     rho0 = 3d0 !g/cm3
     d2g = 1d-2
 
-    krate = krate_2body(n(:),idx1,idx2,amin,amax,pexp,d2g,rho0,Ea,Tdust)
+    krate = krate_2body(n(:),idx1,idx2,alpha,amin,amax,pexp,d2g,rho0,Ea,Tdust)
 
   end function krate_2bodySi
 
   !********************
-  function krate_2body(n,idx1,idx2,amin,amax,pexp,d2g,rho0, &
+  !This routine has been modified to accomodate
+  !Semenov framework  for surface chemistry.
+  function krate_2body(n,idx1,idx2,alpha,amin,amax,pexp,d2g,rho0, &
        Ea,Tdust) result(krate)
     use krome_commons
     use krome_constants
     use krome_getphys
     implicit none
     integer,intent(in)::idx1,idx2
-    real*8,intent(in)::n(nspec),amin,amax,pexp,d2g,rho0,Ea,Tdust
-    real*8::rhog,p3,p4,ndns,krate,mred,fice,fbare,Preac
+    real*8,intent(in)::n(nspec),amin,amax,pexp,d2g,rho0,Ea,Tdust,alpha
+    real*8::rhog,p3,p4,ndns,krate,mred,fice,fbare,Preac,p
     real*8::iTd23,Ebare(nspec),Eice(nspec),mass(nspec)
     real*8,parameter::app2=(3d-8)**2 !cm^2 (Hocuk+2015)
     real*8,parameter::nu0=1d12 !1/s
@@ -135,9 +137,33 @@ contains
     p3 = pexp + 3d0
     p4 = pexp + 4d0
 
+#IFKROME_useSemenov
+    ndns = (4d0 * user_xdust * pi * user_gsize2)/app2
+    p = alpha*exp(-Ea/Tdust)  !IF SEMENOV
+    if(p .gt. 1d-20 .and. p.le.1d0) then
+      Preac=p
+    else
+      Preac=0d0
+    endif
+
+    iTd23 = 0.77d0/Tdust !Semenov
+    Ebare(:) = Ebinding(:) !IF Semenov
+#ELSEKROME
     !number of sites cm-3/mly
     ndns = rhog/(4d0/3d0*rho0*app2)*(amax**p3-amin**p3) &
          / (amax**p4-amin**p4) * p4 / p3
+
+    !reduced mass
+    mred = mass(idx1)*mass(idx2)/(mass(idx1)+mass(idx2))
+
+    !tunneling probability
+    Preac = exp(-2d0*ar/hbar*sqrt(2d0*mred*Ea*boltzmann_erg))
+    !exponent
+    iTd23 = 2d0/3d0/Tdust
+
+    !get Ebind, K
+    Ebare(:) = get_Ebind_bare()
+#ENDIFKROME
 
     !ice/bare fraction
     fbare = 1d0
@@ -146,23 +172,13 @@ contains
     fbare = 1d0 - fice
 #ENDIFKROME
 
-    !reduced mass
-    mred = mass(idx1)*mass(idx2)/(mass(idx1)+mass(idx2))
-
-    !tunneling probability
-    Preac = exp(-2d0*ar/hbar*sqrt(2d0*mred*Ea*boltzmann_erg))
-
-    !exponent
-    iTd23 = 2d0/3d0/Tdust
-
-    !get Ebind, K
-    Ebare(:) = get_Ebind_bare()
 #IFKROME_hasH2O
     Eice(:) = get_Ebind_ice()
 #ENDIFKROME
 
     !compute rate
     krate = fbare*(exp(-Ebare(idx1)*iTd23)+exp(-Ebare(idx2)*iTd23))
+
 #IFKROME_hasH2O
     krate = krate + fice*(exp(-Eice(idx1)*iTd23)+exp(-Eice(idx2)*iTd23))
 #ENDIFKROME
@@ -334,6 +350,34 @@ contains
     k = krate_stick(n(:),idx,Tdust,amin,amax,pexp,rho0,d2g)
 
   end function krate_stickSi
+
+#IFKROME_useSemenov
+  !***************************
+  !total evaporation rate:thermal + non-thermal, 1/s
+  !mainly used for Semenov2010 test
+  function krate_evaporation_total(idx) result(k)
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer,intent(in)::idx
+    real*8,parameter::crnot=1.3d-17
+    real*8::k,Ebind(nspec),nu0,invTdust
+    real*8::f70,knt,kt,kevap70(nspec)
+
+    nu0 = 1d12 !1/s
+    f70 = 3.16d-19*user_crflux/crnot
+    invTdust = 1d0/user_Tdust
+    Ebind(:) = Ebinding(:)
+
+    !knt = f70*exp(-Ebind(idx)/7d1)
+    kevap70(:) = get_kevap70()
+    knt = f70*kevap70(idx)
+
+    kt = nu0*exp(-Ebind(idx)*invTdust)
+    k = (kt + knt)
+
+  end function krate_evaporation_total
+#ENDIFKROME
 
   !***************************
   !evaporation rate, 1/s

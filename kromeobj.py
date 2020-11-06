@@ -69,7 +69,7 @@ class krome:
 	useDustGrowth = useDustSputter = useDustH2 = useDustT = useDustEvap = useDustH2const = False
 	doRamses = doRamsesTH = doFlash = doEnzo = doGizmo = interfaceC = interfacePy = mergeTlimits = False
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
-	useComputeElectrons = useChemisorption = usedTdust = useSurface = useHeatingVisc = False
+	useComputeElectrons = useChemisorption = useSemenov = usedTdust = useSurface = useHeatingVisc = False
 	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = useBroadening = False
 	useVerbatimFile = True
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
@@ -393,6 +393,7 @@ class krome:
 			from density by using the local approximation N = 1.8e21*(n/1000)**(2/3) 1/cm2.")
 		self.parser.add_argument("-usePlainIsotopes", action="store_true", help="use kA format for isotopes instead of [k]A format,\
 			where k is the isotopic number and A is the atom name, e.g. krome looks for 14C instead of [14]C in the reactions file.")
+		self.parser.add_argument("-useSemenov", action="store_true", help="use semenov framework for surface chemistry")
 		self.parser.add_argument("-useThermoToggle", action="store_true", help="include thermal calculation control. Use\
 			krome_thermo_on and krome_thermo_off to switch on/off the thermal processes (i.e. cooling and heating). Default is on.")
 		self.parser.add_argument("-useTabs", action="store_true", help="use tabulated rate coefficients (free parameter: temperature)")
@@ -718,6 +719,12 @@ class krome:
 				sys.exit("ERROR: method for -columnDensityMethod must be one of "
 						 +(",".join(allMethods)))
 			self.columnDensityMethod = args.columnDensityMethod
+
+		#use Semenov framework 
+		if args.useSemenov:
+			self.useSemenov = True
+			print("Reading option -useSemenov")
+
 
 		#use rate tables
 		if args.useTabs:
@@ -2811,7 +2818,13 @@ class krome:
 				self.coevars[nameVar] = [len(self.coevars),exprVar]
 
 		#load bare and ice binding energy from file into a dictionary (K)
-		fhbind = open("data/Ebare_ice.dat")
+		#if useSemenov load the Semenov binding energies file
+		if(self.useSemenov):
+			print("use Semenov binding energies")
+			fhbind = open("data/Ebare_ice_Semenov.dat")
+		else:
+			fhbind = open("data/Ebare_ice.dat")
+
 		Ebind = dict()
 		for row in fhbind:
 			srow = row.strip()
@@ -3930,7 +3943,13 @@ class krome:
 				dns[p.idx-1] += " +"+rhs
 
 		#load binding energies from file
-		fhbind = open("data/Ebare_ice.dat")
+		#load bare and ice binding energy from file into a dictionary (K)
+		#if useSemenov load the Semenov binding energies file
+		if(self.useSemenov):
+			fhbind = open("data/Ebare_ice_Semenov.dat")
+		else:
+			fhbind = open("data/Ebare_ice.dat")
+
 		Ebind = dict()
 		for row in fhbind:
 			srow = row.strip()
@@ -4851,6 +4870,7 @@ class krome:
 			srow = row.strip()
 
 			if srow == "#IFKROME_useChemisorption" and not self.useChemisorption: skip = True
+			if srow == "#IFKROME_useSemenov" and not self.useSemenov: skip = True
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
 			if srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT)
 				and self.useSurface): skip = True
@@ -5143,13 +5163,16 @@ class krome:
 		hasH2O = ("H2O_TOTAL" in [x.name.upper() for x in specs])
 
 		skip = False
-		#loop on src file and replace pragmas
+		#loop on src file and replace pragmas 
 		for row in fh:
 			srow = row.strip()
 			if srow == "#KROME_header":
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 
 			if srow == "#IFKROME_useChemisorption" and not self.useChemisorption: skip = True
+			if srow == "#IFKROME_useSemenov" and not self.useSemenov: skip = True
+			if srow == "#ELSEKROME" and not self.useSemenov: skip = False
+			if srow == "#ELSEKROME" and self.useSemenov: skip = True
 			if srow == "#IFKROME_hasH2O" and not hasH2O: skip = True
 			if srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D"): skip = True
 			if srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D"): skip = True
@@ -5360,20 +5383,34 @@ class krome:
 					fout.write(kstr+"\n")
 
 			elif srow == "#KROME_get_Ebind_bare":
-				Ebind = get_Ebind(surface="bare")
+			#if useSemenov load the Semenov binding energies file
+				if(self.useSemenov):
+					Ebind = get_Ebind(fileName="data/Ebare_ice_Semenov.dat",surface="bare")
+				else:
+					Ebind = get_Ebind(surface="bare")
 				for sp in specs:
 					if sp.name in Ebind:
 						fout.write("get_EbindBare("+sp.fidx+") = "+str(Ebind[sp.name])+"d0\n")
 
 			elif srow == "#KROME_get_Ebind_ice":
-				Ebind = get_Ebind(surface="ice")
+				if(self.useSemenov):
+					Ebind = get_Ebind(fileName="data/Ebare_ice_Semenov.dat",surface="ice")
+				else:
+					Ebind = get_Ebind(surface="ice")
+
+				#Ebind = get_Ebind(surface="ice")
 				for sp in specs:
 					if(sp.name in Ebind):
 						fout.write("get_EbindIce("+sp.fidx+") = "+str(Ebind[sp.name])+"d0\n")
 
 			elif srow == "#KROME_get_kevap70":
 				from math import exp
-				Ebind = get_Ebind(surface="bare")
+				if(self.useSemenov):
+					Ebind = get_Ebind(fileName="data/Ebare_ice_Semenov.dat",surface="bare")
+				else:
+					Ebind = get_Ebind(surface="bare")
+
+				#Ebind = get_Ebind(surface="bare")
 				nu0 = 1e12 #Debye frequency, 1/s
 				for sp in specs:
 					if sp.name in Ebind:
@@ -7852,7 +7889,7 @@ class krome:
 			if srow == "#ELSEKROME_useBindC" and (self.interfaceC or self.interfacePy): skipBindC = True
 			if srow == "#ENDIFKROME_useBindC": skipBindC = False
 			if srow == "#IFKROME_use_GFE_tables" and not self.use_GFE_tables: skip = True
-
+			if srow == "#IFKROME_useSemenov" and not self.useSemenov: skip = True
 			if srow == "#ENDIFKROME": skip = False
 
 			ierr = ""

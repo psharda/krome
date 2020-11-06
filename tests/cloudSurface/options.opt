@@ -1,0 +1,6 @@
+-n networks/react_Semenov
+-noSinkCheck 
+-noRecCheck
+-useSemenov
+-iRHS
+-RTOL=1e-6

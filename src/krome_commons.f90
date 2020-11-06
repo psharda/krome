@@ -91,6 +91,11 @@ module krome_commons
   !user-defined commons variables from the reaction file
 #KROME_user_commons
 
+#IFKROME_useSemenov
+  !define the common Ebinding 
+  real*8::Ebinding(nspec)
+#ENDIFKROME
+
   !commons for anytab
 #KROME_vars_anytab
 

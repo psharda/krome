@@ -604,6 +604,7 @@ contains
     use krome_cooling
     use krome_photo
     use krome_fit
+    use krome_getphys
 #IFKROME_useStars
     use krome_stars
 #ENDIFKROME
@@ -737,6 +738,10 @@ contains
     !get machine precision
     krome_epsilon = epsilon(0d0)
 
+#IFKROME_useSemenov
+    !get binding energies 
+    Ebinding(:) = get_EbindBare()
+#ENDIFKROME
     !load verbatim reactions
     call loadReactionsVerbatim()
 
