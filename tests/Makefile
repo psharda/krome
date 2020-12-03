@@ -36,6 +36,13 @@ switchc = $(switchOPT)
 nowarnIfort = -nowarn
 nowarnGNU = -w
 
+#if gfortran is version 10 add option to avoid argument mismatch
+GREP_GNUF10 = $(shell gfortran --version | grep " 10\..\.")
+ifneq ($(GREP_GNUF10),)
+	nowarnGNU += -fallow-argument-mismatch
+endif
+
+
 #objects
 objs = opkda2.o
 objs += opkda1.o
