@@ -4105,7 +4105,7 @@ class krome:
 		idn = 0
 		ldns = dns
 		for dn in ldns:
-			if idn > nmols:
+			if idn > nmols - 1:
 				dnw.append(dn)
 				continue
 			RHSs = []
