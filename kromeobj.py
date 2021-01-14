@@ -5802,7 +5802,8 @@ class krome:
 
 			if skip: continue #skip
 
-			atomSkipList = [x.upper() for x in ["_total"]]
+            # only proper atoms should be included
+			atomSkipList = [x.upper() for x in ["_total", "_dust", "E", "+", "-", "_ortho", "_para"]]
 
 			#replace the small value for rates according to the maximum number of products
 			if "#KROME_small" in srow:
@@ -5820,10 +5821,10 @@ class krome:
 			elif srow=="#KROME_conserve_matrix" and self.useConserveLin:
 				conserve_matrix = ""
 				#loop on the type of atoms (equation-wise)
-				for atomType,speciesList in acount.items():
+				for atomType, speciesList in acount.items():
 					if atomType.upper() in atomSkipList: continue
 					#loop on the type of atoms (coefficient-wise)
-					for atomType2,speciesList2 in acount.items():
+					for atomType2, speciesList2 in acount.items():
 						if atomType2.upper() in atomSkipList: continue
 						#loop on the species of a given atom type
 						for species in speciesList:
@@ -5845,7 +5846,7 @@ class krome:
 				fout.write(conserve_matrix+"\n")
 
 			elif srow == "#KROME_conserve_fscale" and self.useConserveLin:
-				specSkip = [x.lower() for x in ["E","+","-","CR","g","dummy","Tgas","_total"]]
+				specSkip = [x.lower() for x in (["CR", "g", "dummy", "Tgas"] + atomSkipList)]
 				conserve_fscale = ""
 				for species in self.specs:
 					if species.name.lower() in specSkip: continue
@@ -5862,7 +5863,7 @@ class krome:
 				fout.write(conserve_fscale+"\n")
 
 			elif srow=="#KROME_conserveLin_ref" and self.useConserveLin:
-				atomSkip = [x.lower() for x in ["+","-","E","_total"]]
+				atomSkip = [x.lower() for x in atomSkipList]
 				refMassAll = ""
 				for species in self.specs:
 					if species.name.lower() in atomSkip: continue
