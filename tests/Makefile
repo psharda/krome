@@ -136,6 +136,27 @@ cinterface_opt: nowarn = $(nowarnGNU)
 cinterface_opt: clib = -lm -lgfortran
 cinterface_opt: all
 
+#shared library with C interface (debug version)
+csharedlib: fc = gfortran
+csharedlib: switch = -ffree-line-length-none -fPIC
+csharedlib: nowarn = $(nowarnGNU)
+csharedlib: cc = gcc
+csharedlib: $(cobjs)
+csharedlib: switchc = -fPIC
+csharedlib: objs += $(cobjs)
+csharedlib: sharedlib
+
+#shared library with C interface (optimized version)
+csharedlib_opt: fc = gfortran
+csharedlib_opt: switch = -O3 -ffree-line-length-none -fPIC
+csharedlib_opt: nowarn = $(nowarnGNU)
+csharedlib_opt: cc = gcc
+csharedlib_opt: $(cobjs)
+csharedlib_opt: switchc = -O3 -fPIC
+csharedlib_opt: objs += $(cobjs)
+csharedlib_opt: sharedlib
+
+
 #clean target
 clean:
 	rm -f *.o *.mod *__genmod.f90 *~ $(exec)
