@@ -15,6 +15,13 @@ ifneq ($(GREP_MKL),)
 	lib = -mkl
 endif
 
+#figure out shared library extension: should be `.so` on Linux and `.dylib` on macOS
+ifeq ($(shell uname -s),Darwin)
+	dlext = dylib
+else
+	dlext = so
+endif
+
 #if dgesv is not present non need for LAPACK
 GREP = $(shell grep -i 'dgesv' krome_subs.f90)
 ifeq ($(GREP),)
@@ -101,7 +108,7 @@ gfortran_dbg: all
 
 #library accessible from python interface target
 sharedlib:	$(objs)
-	$(fc) $(objs) -o libkrome.so $(switch) -shared $(lib)
+	$(fc) $(objs) -o libkrome.$(dlext) $(switch) -shared $(lib)
 
 pyinterface: fc = gfortran
 pyinterface: switch = -ffree-line-length-none -fPIC
