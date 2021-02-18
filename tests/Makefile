@@ -156,6 +156,10 @@ csharedlib_opt: switchc = -O3 -fPIC
 csharedlib_opt: objs += $(cobjs)
 csharedlib_opt: sharedlib
 
+#testing the shared library C interface
+csharedlib_test: csharedlib
+	gcc test.c -o $(exec) ./libkrome.$(dlext)
+
 
 #clean target
 clean:
