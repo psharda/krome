@@ -71,6 +71,7 @@ class krome:
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = useSemenov = usedTdust = useSurface = useHeatingVisc = False
 	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = useBroadening = False
+	verbatimFilename = "reactions_verbatim.dat"
 	useVerbatimFile = True
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
 	humanFlux = True
@@ -301,6 +302,8 @@ class krome:
 			 recombine with electrons).")
 		self.parser.add_argument("-noSinkCheck", action="store_true", help="skip sink check (species that are only formed)")
 		self.parser.add_argument("-noTlimits", action="store_true", help="ignore rate coefficient temperature limits.")
+		self.parser.add_argument("-verbatimFilename", metavar='FILENAME', help="path to file with reaction names\
+			(ignored if -noVerbatimFile is set). Default is `reactions_verbatim.dat`")
 		self.parser.add_argument("-noVerbatimFile", action="store_true", help="do not read the file with reaction names")
 		self.parser.add_argument("-nuclearMult", action="store_true", help="keep into account reactants multeplicity, and modify\
 			fluxes according to this. Intended for nuclear networks.")
@@ -828,6 +831,14 @@ class krome:
 		if args.noTlimits:
 			self.useTlimits = False
 			print("Reading option -noTlimits")
+
+		#set the filename of the file with reaction names
+		if args.verbatimFilename:
+			self.verbatimFilename = args.verbatimFilename.strip()
+			if len(self.verbatimFilename) > 255:
+				print("ERROR: the path specified in -verbatimFilename must not exceed 255 characters.")
+				sys.exit()
+			print("Name of the file with reaction names: "+self.verbatimFilename)
 
 		#do not read the file with reaction names
 		if args.noVerbatimFile:
@@ -5993,6 +6004,8 @@ class krome:
 					spart = "call load_part(\"part"+spec_part+".dat\", zpart"+spec_part+", zpartMin"\
 						+spec_part+", zpartdT"+spec_part+")"
 					fout.write(spart+"\n")
+			elif srow == "#KROME_verbatim_filename":
+				fout.write("fname = \"" + self.verbatimFilename + "\"\n")
 			elif srow == "#KROME_no_verbatim_file" and not self.useVerbatimFile:
 				for x in reacts:
 					kstr = "\treactionNames("+str(x.idx)+") = \"" + x.verbatim +"\""
