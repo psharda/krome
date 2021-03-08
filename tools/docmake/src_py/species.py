@@ -129,7 +129,7 @@ class species():
             print("WARNING: " + fname + " is quite large (" + str(sizeMB) + " MB)")
             # ask if to load xsec, N is default
             while True:
-                reply = raw_input("Load Xsec file? (y/N) ").lower().strip()
+                reply = input("Load Xsec file? (y/N) ").lower().strip()
                 if reply == "y":
                     break
                 if reply == "n" or reply == "":

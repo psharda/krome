@@ -258,7 +258,7 @@ class reaction:
 				print("mass ratio (prods/reacts):",mass_products/mass_reactants, "(should be 1.0)")
 				print("You can remove this check with the -nomassCheck option")
 				print("************************************************")
-				a = raw_input("Any key to continue q to quit... ")
+				a = input("Any key to continue q to quit... ")
 				if a == "q": sys.exit()
 		if abs(charge_products - charge_reactants)!=0 and (mode=="ALL" or "CHARGE" in mode):
 			print("************************************************")
