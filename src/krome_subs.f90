@@ -53,10 +53,11 @@ contains
   subroutine loadReactionsVerbatim()
     use krome_commons
     implicit none
-    character*50::fname,line
+    character*255::fname,line
     integer::ios,i,nunit
 
-    fname = "reactions_verbatim.dat"
+    ! Verbatim reactions filename defaults to `reactions_verbatim.dat`
+#KROME_verbatim_filename
 
 #KROME_no_verbatim_file
 
