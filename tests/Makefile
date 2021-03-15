@@ -15,6 +15,13 @@ ifneq ($(GREP_MKL),)
 	lib = -mkl
 endif
 
+#figure out shared library extension: should be `.so` on Linux and `.dylib` on macOS
+ifeq ($(shell uname -s),Darwin)
+	dlext = dylib
+else
+	dlext = so
+endif
+
 #if dgesv is not present non need for LAPACK
 GREP = $(shell grep -i 'dgesv' krome_subs.f90)
 ifeq ($(GREP),)
@@ -101,7 +108,7 @@ gfortran_dbg: all
 
 #library accessible from python interface target
 sharedlib:	$(objs)
-	$(fc) $(objs) -o libkrome.so $(switch) -shared $(lib)
+	$(fc) $(objs) -o libkrome.$(dlext) $(switch) -shared $(lib)
 
 pyinterface: fc = gfortran
 pyinterface: switch = -ffree-line-length-none -fPIC
@@ -128,6 +135,31 @@ cinterface_opt: switchc = -O3
 cinterface_opt: nowarn = $(nowarnGNU)
 cinterface_opt: clib = -lm -lgfortran
 cinterface_opt: all
+
+#shared library with C interface (debug version)
+csharedlib: fc = gfortran
+csharedlib: switch = -ffree-line-length-none -fPIC
+csharedlib: nowarn = $(nowarnGNU)
+csharedlib: cc = gcc
+csharedlib: $(cobjs)
+csharedlib: switchc = -fPIC
+csharedlib: objs += $(cobjs)
+csharedlib: sharedlib
+
+#shared library with C interface (optimized version)
+csharedlib_opt: fc = gfortran
+csharedlib_opt: switch = -O3 -ffree-line-length-none -fPIC
+csharedlib_opt: nowarn = $(nowarnGNU)
+csharedlib_opt: cc = gcc
+csharedlib_opt: $(cobjs)
+csharedlib_opt: switchc = -O3 -fPIC
+csharedlib_opt: objs += $(cobjs)
+csharedlib_opt: sharedlib
+
+#testing the shared library C interface
+csharedlib_test: csharedlib
+	gcc test.c -o $(exec) ./libkrome.$(dlext)
+
 
 #clean target
 clean:
