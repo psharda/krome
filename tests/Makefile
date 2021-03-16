@@ -1,6 +1,12 @@
+#default compiler executables (can be overridden via environment variables)
+intel_fc ?= ifort
+intel_cc ?= icc
+gnu_fc ?= gfortran
+gnu_cc ?= gcc
+
 #default fortran compiler
-fc = ifort
-cc = icc
+fc = $(ifort_fc)
+cc = $(ifort_cc)
 clib = -nofor_main
 
 #executable name
@@ -44,7 +50,7 @@ nowarnIfort = -nowarn
 nowarnGNU = -w
 
 #if gfortran is version 10 add option to avoid argument mismatch
-GREP_GNUF10 = $(shell gfortran --version | grep " 10\..\.")
+GREP_GNUF10 = $(shell $(gnu_fc) --version | grep " 10\..\.")
 ifneq ($(GREP_GNUF10),)
 	nowarnGNU += -fallow-argument-mismatch
 endif
@@ -93,13 +99,13 @@ profile: nowarn = $(nowarnIfort)
 profile: all
 
 #gfortran target
-gfortran: fc = gfortran
+gfortran: fc = $(gnu_fc)
 gfortran: switch = -ffree-line-length-none
 gfortran: nowarn = $(nowarnGNU)
 gfortran: all
 
 #gfortran debug target
-gfortran_dbg: fc = gfortran
+gfortran_dbg: fc = $(gnu_fc)
 gfortran_dbg: switch = -fbacktrace -g
 gfortran_dbg: switch += -ffpe-trap=zero,overflow,invalid
 gfortran_dbg: switch += -fbounds-check -ffree-line-length-none
@@ -110,26 +116,26 @@ gfortran_dbg: all
 sharedlib:	$(objs)
 	$(fc) $(objs) -o libkrome.$(dlext) $(switch) -shared $(lib)
 
-pyinterface: fc = gfortran
+pyinterface: fc = $(gnu_fc)
 pyinterface: switch = -ffree-line-length-none -fPIC
 pyinterface: nowarn = $(nowarnGNU)
 pyinterface: sharedlib
 
-pyinterface_opt: fc = gfortran
+pyinterface_opt: fc = $(gnu_fc)
 pyinterface_opt: switch = -O3 -ffree-line-length-none -fPIC
 pyinterface_opt: nowarn = $(nowarnGNU)
 pyinterface_opt: sharedlib
 
 cinterface: $(cobjs)
 cinterface: objs += $(cobjs)
-cinterface: cc = gcc
+cinterface: cc = $(gnu_cc)
 cinterface: switchc =
 cinterface: clib = -lm -lgfortran
 cinterface: gfortran
 
 cinterface_opt: $(cobjs)
-cinterface_opt: fc = gfortran
-cinterface_opt: cc = gcc
+cinterface_opt: fc = $(gnu_fc)
+cinterface_opt: cc = $(gnu_cc)
 cinterface_opt: switch = -O3 -ffree-line-length-none
 cinterface_opt: switchc = -O3
 cinterface_opt: nowarn = $(nowarnGNU)
@@ -137,20 +143,20 @@ cinterface_opt: clib = -lm -lgfortran
 cinterface_opt: all
 
 #shared library with C interface (debug version)
-csharedlib: fc = gfortran
+csharedlib: fc = $(gnu_fc)
 csharedlib: switch = -ffree-line-length-none -fPIC
 csharedlib: nowarn = $(nowarnGNU)
-csharedlib: cc = gcc
+csharedlib: cc = $(gnu_cc)
 csharedlib: $(cobjs)
 csharedlib: switchc = -fPIC
 csharedlib: objs += $(cobjs)
 csharedlib: sharedlib
 
 #shared library with C interface (optimized version)
-csharedlib_opt: fc = gfortran
+csharedlib_opt: fc = $(gnu_fc)
 csharedlib_opt: switch = -O3 -ffree-line-length-none -fPIC
 csharedlib_opt: nowarn = $(nowarnGNU)
-csharedlib_opt: cc = gcc
+csharedlib_opt: cc = $(gnu_cc)
 csharedlib_opt: $(cobjs)
 csharedlib_opt: switchc = -O3 -fPIC
 csharedlib_opt: objs += $(cobjs)
@@ -158,7 +164,7 @@ csharedlib_opt: sharedlib
 
 #testing the shared library C interface
 csharedlib_test: csharedlib
-	gcc test.c -o $(exec) ./libkrome.$(dlext)
+	$(gnu_cc) test.c -o $(exec) ./libkrome.$(dlext)
 
 
 #clean target
