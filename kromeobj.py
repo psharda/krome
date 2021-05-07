@@ -2150,8 +2150,8 @@ class krome:
 				mytabpath = aatab[0].strip().replace("\"", "")
 				mytabxxyy = aatab[1]+","+aatab[2]
 				#updates anytab arrays
-				create_tabvar(mytabvar,mytabpath,mytabxxyy,self.anytabvars,self.anytabfiles,self.anytabpaths,\
-					self.anytabsizes,self.coevars, ivarcoe)
+				create_tabvar(mytabvar, mytabpath, mytabxxyy, self.anytabvars, self.anytabfiles, self.anytabpaths,
+					self.anytabsizes, self.coevars)
 				continue #this is not a reaction line
 
 			#search for format string
