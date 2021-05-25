@@ -25,11 +25,11 @@ if __name__ == "__main__":
     # set 60Fe abundance
     pyk.lib.krome_set_user_tauh(1.5e6 * spy)
     x_Fe60 = 0.0
-    print 'Fe-60 abundance =',x_Fe60
+    print('Fe-60 abundance =', x_Fe60)
     x[pyk.krome_idx_60FE] = x_Fe60 * x[pyk.krome_idx_FEj]
     # set rate for ionisation by isotope decay
     fe60_xi = 0.0
-    print 'Isotope decay off.'
+    print('Isotope decay off.')
     pyk.lib.krome_set_user_xi(fe60_xi)
     # set heating from isotope decay
     pyk.lib.krome_set_user_wergs(36.0 * pyk.krome_eV_to_erg)
@@ -45,7 +45,8 @@ if __name__ == "__main__":
     while t <= 1.0e8 * spy:
         dt = dt * 1.1
         t += dt
-        if np.mod(nstep,10) == 0: print "nstep = {0:4d}".format(nstep)
+        if np.mod(nstep,10) == 0:
+          print("nstep = {0:4d}".format(nstep))
 
         # call KROME
         pyk.lib.krome(x, ctypes.byref(Tgas), ctypes.byref(ctypes.c_double(dt)))
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     output = np.array(output)
     np.savetxt('idoff.py.dat',output,fmt='%15.8E',delimiter='')
 
-    print "Finished. Number of steps = {}".format(nstep)
+    print("Finished. Number of steps = {}".format(nstep))
 
     # ----==== Isotope decay on ====---- #
 
@@ -76,11 +77,11 @@ if __name__ == "__main__":
     # set 60Fe abundance
     pyk.lib.krome_set_user_tauh(1.5e6 * spy)
     x_Fe60 = 1.0e-6
-    print 'Fe-60 abundance =',x_Fe60
+    print('Fe-60 abundance =', x_Fe60)
     x[pyk.krome_idx_60FE] = x_Fe60 * x[pyk.krome_idx_FEj]
     # set rate for ionisation by isotope decay
     fe60_xi = 1.0e-10
-    print 'Isotope decay on.'
+    print('Isotope decay on.')
     pyk.lib.krome_set_user_xi(fe60_xi)
     # set heating from isotope decay
     pyk.lib.krome_set_user_wergs(36.0 * pyk.krome_eV_to_erg)
@@ -96,7 +97,8 @@ if __name__ == "__main__":
     while t <= 1.0e8 * spy:
         dt = dt * 1.1
         t += dt
-        if np.mod(nstep,10) == 0: print "nstep = {0:4d}".format(nstep)
+        if np.mod(nstep, 10) == 0:
+          print("nstep = {0:4d}".format(nstep))
 
         # call KROME
         pyk.lib.krome(x, ctypes.byref(Tgas), ctypes.byref(ctypes.c_double(dt)))
@@ -110,4 +112,4 @@ if __name__ == "__main__":
     output = np.array(output)
     np.savetxt('idon.py.dat',output,fmt='%15.8E',delimiter='')
 
-    print "Finished. Number of steps = {}".format(nstep)
+    print("Finished. Number of steps = {}".format(nstep))
