@@ -2609,13 +2609,14 @@ end subroutine krome_load_opacity_table
 
 
   !**************************
-  function krome_get_jacobian(j, x, tgas) #KROME_bindC
+  function krome_get_jacobian(j,x,Tgas)
     use krome_ode
     use krome_commons
-    #KROME_integer_value::j
+    implicit none
+    integer :: j
+    real*8,value :: Tgas
+    real*8 :: x(nmols),krome_get_jacobian(nspec)
     integer::ian, jan, i
-    #KROME_double_value::tgas
-    #KROME_double::x(nmols), krome_get_jacobian(nspec)
     real*8::tt, n(nspec)
     real*8::pdj(nspec)
 
