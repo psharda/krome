@@ -2607,4 +2607,29 @@ end subroutine krome_load_opacity_table
 #ENDIFKROME_useBindC
 #ENDIFKROME
 
+
+  !**************************
+  function krome_get_jacobian(j, x, tgas) #KROME_bindC
+    use krome_ode
+    use krome_commons
+    #KROME_integer_value::j
+    integer::ian, jan, i
+    #KROME_double_value::tgas
+    #KROME_double::x(nmols), krome_get_jacobian(nspec)
+    real*8::tt, n(nspec)
+    real*8::pdj(nspec)
+
+    n(:) = 0d0
+    n(1:nmols) = x(:)
+    n(idx_Tgas) = tgas
+
+    tt = 0d0
+    ian = 0
+    jan = 0
+
+    call jes(nspec, tt, n, j, ian, jan, pdj)
+    krome_get_jacobian(:) = pdj(:)
+
+  end function krome_get_jacobian
+
 end module krome_user
