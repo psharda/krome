@@ -2613,7 +2613,7 @@ end subroutine krome_load_opacity_table
     use krome_ode
     use krome_commons
     implicit none
-    integer :: j
+    integer, value :: j
     real*8,value :: Tgas
     real*8 :: x(nmols),krome_get_jacobian(nspec)
     integer::ian, jan, i

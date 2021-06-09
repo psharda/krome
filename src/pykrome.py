@@ -271,6 +271,6 @@ class PyKROME(object):
 		fortran.krome_dump_rates.argtypes = [ctypes.c_double, ctypes.c_double, ctypes.c_int, ctypes.c_int]
 		fortran.krome_get_info.restype = None
 		fortran.krome_get_info.argtypes = [array_1d_double, ctypes.c_double]
-		fortran.krome_get_jacobian.restype = array_1d_double
-		fortran.krome_get_jacobian.argtypes = [ctypes.c_int, array_1d_double, ctypes.c_double]
+		fortran.krome_get_jacobian.restype = None
+		fortran.krome_get_jacobian.argtypes = [ctypes.c_int, array_1d_double, ctypes.c_double, array_1d_double]
 
