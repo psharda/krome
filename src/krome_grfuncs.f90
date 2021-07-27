@@ -360,23 +360,49 @@ contains
     use krome_getphys
     implicit none
     integer,intent(in)::idx
-    real*8,parameter::crnot=1.3d-17
-    real*8::k,Ebind(nspec),nu0,invTdust
-    real*8::f70,knt,kt,kevap70(nspec)
+    real*8::k
 
-    nu0 = 1d12 !1/s
-    f70 = 3.16d-19*user_crflux/crnot
-    invTdust = 1d0/user_Tdust
-    Ebind(:) = Ebinding(:)
-
-    !knt = f70*exp(-Ebind(idx)/7d1)
-    kevap70(:) = get_kevap70()
-    knt = f70*kevap70(idx)
-
-    kt = nu0*exp(-Ebind(idx)*invTdust)
-    k = (kt + knt)
+    k =  krate_evap_semenov_thermal(idx) + krate_evap_semenov_nonthermal(idx)
 
   end function krate_evaporation_total
+
+  ! ******************************
+  function krate_evap_semenov_thermal(idx) result(kt)
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer,intent(in)::idx
+    real*8::k, Ebind(nspec), nu0, invTdust
+    real*8::kt
+
+    nu0 = 1d12 !1/s
+    invTdust = 1d0 / user_Tdust
+    Ebind(:) = Ebinding(:)
+
+    kt = nu0*exp(-Ebind(idx)*invTdust)
+
+  end function krate_evap_semenov_thermal
+
+  !***************************
+  !total evaporation rate:thermal + non-thermal, 1/s
+  !mainly used for Semenov2010 test
+  function krate_evap_semenov_nonthermal(idx) result(knt)
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer,intent(in)::idx
+    real*8,parameter::crnot=1.3d-17
+    real*8::nu0
+    real*8::f70, knt, kevap70(nspec)
+
+    nu0 = 1d12 !1/s
+    f70 = 3.16d-19*user_crflux / crnot
+
+    kevap70(:) = get_kevap70()
+    knt = f70 * kevap70(idx)
+
+  end function krate_evap_semenov_nonthermal
+
 #ENDIFKROME
 
   !***************************
