@@ -1,9 +1,12 @@
+#############
 #primordial chemistry including carbon and oxygen chemistry from Omukai et al. 2005
 
 #primordial rates from Omukai+2000
 
 @common:user_redshift
 @var:T=Tgas
+@var:invT=1d0/Tgas
+@var:invsqrT=1d0/sqrt(Tgas)
 
 1,H,E,,H+,E,E,,NONE,NONE,dexp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
 
