@@ -38,6 +38,7 @@ program test
      write(66,'(99E17.8)') t,x(:)
      if(t>1d6*spy) exit
   end do
+  close(66)
   print *,"Test OK!"
   
 end program test
