@@ -50,7 +50,7 @@ nowarnIfort = -nowarn
 nowarnGNU = -w
 
 #if gfortran is version 10 add option to avoid argument mismatch
-GREP_GNUF10 = $(shell $(gnu_fc) --version | grep " 10\..\.")
+GREP_GNUF10 = $(shell $(gnu_fc) --version | grep " 1.\..\.")
 ifneq ($(GREP_GNUF10),)
 	nowarnGNU += -fallow-argument-mismatch
 endif
