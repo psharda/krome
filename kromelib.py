@@ -413,6 +413,12 @@ def LEIDEN2KROME(build_folder,reactant,products):
 	if "E" in prods: process = "ion"
 	xsecList = data[process][::-1]
 
+	#create build folder if not exists
+	#(this block is also in prepareBuild and dumpNetwork methods
+        #from kromeobj.py
+	if not os.path.exists(build_folder):
+		os.mkdir(build_folder)
+		print("Created " + build_folder)
 	fout = open(build_folder+"leiden_"+reactant.name+"__"+("_".join(prods))+".org","w")
 	fout.write("#original xsecs (cm2) from Leiden database\n")
 	fout.write("#http://home.strw.leidenuniv.nl/~ewine/photo/\n")
@@ -459,6 +465,13 @@ def SWRI2KROME(build_folder,reactant,products, Eth):
 		print("Search on http://phidrates.space.swri.edu")
 		print(" and copy to "+data_folder+"/"+reactant.name+".dat")
 		sys.exit()
+        # 
+	#create build folder if not exists
+	#(this block is also in prepareBuild and dumpNetwork methods
+        #from kromeobj.py
+	if not os.path.exists(build_folder):
+		os.mkdir(build_folder)
+		print("Created " + build_folder)
 	#read data from the file and store the data and the header
 	fswri = open(fname)
 	okrow = []
