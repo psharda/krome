@@ -7011,10 +7011,9 @@ class krome:
 				if self.usedTdust: dustT = " n(" + limits_tdust + ")"
 				dustH2 += dustT+", n(idx_H), H2_eps_"+dType+", vgas)\n"
 				iType += 1
-
-				#H2 on dust from Jura constant value
-				if self.useDustH2const:
-					dustH2 +="nH2dust = nH2dust + H2_dustJura(n(:))"
+		elif self.useDustH2const:
+		        #H2 on dust from Jura constant value
+			dustH2 +="nH2dust = nH2dust + H2_dustJura(n(:))"
 
 		#H2 on dust from tables
 		if self.dustTabsH2:
