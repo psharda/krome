@@ -1,6 +1,6 @@
 #default compiler executables (can be overridden via environment variables)
-intel_fc ?= ifort
-intel_cc ?= icc
+ifort_fc ?= ifort
+ifort_cc ?= icc
 gnu_fc ?= gfortran
 gnu_cc ?= gcc
 
