@@ -1,0 +1,6 @@
+##########
+set xlabel "x / pc"
+set ylabel "Tgas / K"
+set grid
+plot 'fort.22' u 1:4 t "this test", 'sod_chem.dat' u ($2 /3.08567758128e18):6 w l t "Grassi+2014"
+

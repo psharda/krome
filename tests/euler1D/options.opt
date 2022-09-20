@@ -1,0 +1,6 @@
+##############
+#options for test Eulerian SOD shock 1D
+
+-n networks/react_primordial
+-useX
+-cooling=H2

@@ -1,0 +1,6 @@
+!******************************************************
+! This is a HLL+RK2 hydro solver for reproducing the
+! Sod shock test in Grassi+2014, sect.5.1, fig.21
+! Note: the solver here is more diffusive than the one
+! presented in the paper with FLASH/RAMSES
+!******************************************************
