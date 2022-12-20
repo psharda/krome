@@ -82,16 +82,19 @@ contains
     implicit none
     real*8,intent(inout)::rho(ncell), vx(ncell), tgas(ncell), xall(ncell, nscalar)
     real*8,intent(in)::tend
-    real*8::u(ncell, nvars), p(ncell), y0(ncell, nvars)
+    real*8::u(ncell, nvars), p(ncell), cs(ncell), y0(ncell, nvars)
     real*8::k2(ncell, nvars), dt, t
     real*8::u1(ncell, nvars), cmax, vmax, dtmax, tgas1, p1, x(nscalar)
     integer::i
-
     cmax = 1d-1  ! Courant factor
     dtmax = dx / 1d6  ! largest time-step allowed, s
 
     ! copy initial conditions for all cells from subroutine arguments
     p = rho * kboltzmann * tgas / mu / pmass  ! pressure, erg/cm3
+
+    ! speed of sound, cm/s
+    cs = sqrt(gamma * p / rho)
+
     u(:, idx_rho) = rho  ! density, g/cm3
     u(:, idx_rvx) = rho * vx  ! momentum, g/cm2/s
     u(:, idx_energy) = p / (gamma - 1d0) + rho * vx**2 / 2.  ! energy density, erg/cm3
@@ -101,7 +104,8 @@ contains
     t = 0d0
     do
       ! compute time-step
-      vmax = maxval(abs(y0(:, idx_rvx) / y0(:, idx_rho))) + 1d-40
+      vmax = maxval(abs(y0(:, idx_rvx) / y0(:, idx_rho))+cs) + 1d-40
+      vmax = max(vmax,maxval(abs(y0(:, idx_rvx) / y0(:, idx_rho))-cs) + 1d-40)
       dt = min(dx / vmax * cmax, dtmax)
       dt = min(dt, tend - t)
 
