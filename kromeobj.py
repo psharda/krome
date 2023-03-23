@@ -5321,20 +5321,20 @@ class krome:
 			elif srow == "#KROME_masses":
 				for x in specs:
 					massrow = "\tget_mass("+str(x.idx)+") = " + str(x.mass).replace("e","d") + "\t!" + x.name + "\n"
-					fout.write(massrow.replace("0.0","0.d0"))
+					fout.write(massrow.replace(" 0.0\t", " 0d0\t"))
 			elif srow == "#KROME_imasses":
 				for x in specs:
 					myimass = 0e0
 					if x.mass != 0e0: myimass = 1e0/x.mass
 					imassrow = "\tget_imass("+str(x.idx)+") = " + str(myimass).replace("e","d") + "\t!" + x.name + "\n"
-					fout.write(imassrow.replace("0.0","0.d0"))
+					fout.write(imassrow.replace(" 0.0\t", " 0d0\t"))
 			elif srow == "#KROME_imasses_sqrt":
 				from math import sqrt
 				for x in specs:
 					myimass = 0e0
 					if x.mass != 0e0: myimass = 1e0 / sqrt(x.mass)
-					imassrow = "\tget_imass_sqrt("+str(x.idx)+") = " + str(myimass).replace("e","d") + "\t!" + x.name + "\n"
-					fout.write(imassrow.replace("0.0","0.d0"))
+					imassrow = "\tget_imass_sqrt("+str(x.idx)+") = " + str(myimass).replace("e", "d") + "\t!" + x.name + "\n"
+					fout.write(imassrow.replace(" 0.0\t", " 0d0\t"))
 			elif srow == "#KROME_zatoms":
 				for x in specs:
 					zatomrow = "\tget_zatoms("+str(x.idx)+") = " + str(x.zatom) + "\t!" + x.name + "\n"
