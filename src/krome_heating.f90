@@ -78,16 +78,21 @@ contains
     heats(idx_heat_visc) = heat_Visc(n(:),Tgas)
 #ENDIFKROME
 
-#IFKROME_useHeatingZCIE
-    heats(idx_heat_ZCIE) = heat_ZCIE(n(:),Tgas)
-#ENDIFKROME
 
 #IFKROME_useHeatingXRay
     heats(idx_heat_xray) = f2 * heats(idx_heat_xray)
 #ENDIFKROME
 
+#IFKROME_useHeatingZExtended
+    !this parameter controls the smoothness of the
+    ! merge between the two cooling / heating functions
+    smooth = 1.d-3
+    !smoothing functions | f1+f2=1 | f1 is not needed
+    f2 = = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0 
+#ENDIFKROME
+
 #IFKROME_useHeatingZCIE
-    heats(idx_heat_ZCIE) = f2 * heats(idx_heat_ZCIE)
+    heats(idx_heat_ZCIE) = f2 * heat_ZCIE(n(:),Tgas)
 #ENDIFKROME
 
     heats(idx_heat_custom) = heat_custom(n(:),Tgas)
