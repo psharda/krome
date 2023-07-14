@@ -1251,7 +1251,7 @@ contains
     real*8::xlow,xup,eps,xmax,J0,J1,x0,x1,xm,Jm
     eps = 1d-6
 
-    !Rayleigh–Jeans approximation for the minimum energy
+    !Rayleigh-Jeans approximation for the minimum energy
     xlow = planck_eV*clight*sqrt(.5d0/Tbb/boltzmann_eV*eps)
 
     !find energy of the Wien maximum (eV)
