@@ -1251,7 +1251,7 @@ contains
     real*8::xlow,xup,eps,xmax,J0,J1,x0,x1,xm,Jm
     eps = 1d-6
 
-    !Rayleighâ€“Jeans approximation for the minimum energy
+    !Rayleigh–Jeans approximation for the minimum energy
     xlow = planck_eV*clight*sqrt(.5d0/Tbb/boltzmann_eV*eps)
 
     !find energy of the Wien maximum (eV)
@@ -1382,13 +1382,13 @@ contains
     !loop on bins
     do i=1,nPhotoBins
        !eV/cm2/sr
-       if(xR<=13.6d0.and.xL>=5d0) then
+       if(photoBinEright(i)<=13.6d0.and.photoBinEleft(i)>=5d0) then
           xL = photoBinEleft(i) !eV
           xR = photoBinEright(i) !eV
-       elseif(xL<5d0.and.xR>5d0) then
+       elseif(photoBinEleft(i)<5d0.and.photoBinEright(i)>5d0) then
           xL = 5d0 !eV
           xR = photoBinEright(i) !eV
-       elseif(xL<13d0.and.xR>13.6d0) then
+       elseif(photoBinEleft(i)<13d0.and.photoBinEright(i)>13.6d0) then
           xL = photoBinEleft(i) !eV
           xR = 13.6d0 !eV
        else
