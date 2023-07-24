@@ -1399,7 +1399,7 @@ contains
             * planck_eV
        f2 = (1.658d6*xR - 2.152d5*xR**2 + 6.919d3*xR**3) &
             * planck_eV
-       photoBinJ(i) = (f1+f2)*(xR-xL)/2d0
+       photoBinJ(i) = (f1+f2)/2d0 * (xR-xL)/(photoBinEright(i)-photoBinEleft(i)) * photoBinEmid(i)
 
     end do
 
