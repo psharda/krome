@@ -1859,8 +1859,8 @@ end subroutine krome_load_opacity_table
     use krome_constants
     use krome_gadiab
     implicit none
-#KROME_double :: x(nmols)
-#KROME_double_value :: Tgas,dt
+#KROME_double :: x(nmols), Tgas
+#KROME_double_value :: dt
     real*8::n(nspec),nH2dust,dTgas,k(nrea),krome_gamma
 
 #IFKROME_use_thermo
