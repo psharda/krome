@@ -221,7 +221,8 @@ class krome:
 			is normally kept by default) before creating new f90 files.")
 		self.parser.add_argument("-columnDensityMethod", metavar="method", help="use an alternative method to \
 			N=1.8e21*(n*1e-3)**(2./3.) for column density calculation (N) from number density (n). Option available JEANS,\
-			which employs Jeans length (l) as N=n*l.")
+			which employs Jeans length (l) as N=n*l, or JEANS40, which employs the Jeans length capped at 40K (Safranek-Shrader \
+                        et al. 2017).")
 		#self.parser.add_argument("-compressFluxes", action="store_true", help="in the ODE fluxes are stored in a single variable")
 		self.parser.add_argument("-computeElectrons", action="store_true", help="computes electrons by balancing charges instead of\
 			using the differential de/dt.")
@@ -717,7 +718,7 @@ class krome:
 
 		#method for column density calculation
 		if args.columnDensityMethod:
-			allMethods = ["JEANS"]
+			allMethods = ["JEANS","JEANS40"]
 			if args.columnDensityMethod not in allMethods:
 				sys.exit("ERROR: method for -columnDensityMethod must be one of "
 						 +(",".join(allMethods)))
@@ -5309,6 +5310,8 @@ class krome:
 					fout.write("col2num = 1d3 * (max(ncalc,1d-40)/1.87d21)**1.5\n")
 				elif self.columnDensityMethod == "JEANS":
 					fout.write("col2num = 2d0 * max(ncalc,1d-40) / get_jeans_length(n(:),Tgas)\n")
+				elif self.columnDensityMethod == "JEANS40":
+					fout.write("col2num = 2d0 * max(ncalc,1d-40) / get_jeans_length(n(:),min(Tgas,4d1))\n")
 				else:
 					sys.exit("ERROR: method "+self.columnDensityMethod+" unknown for col2num")
 			elif srow == "#KROME_num2col_method":
@@ -5316,6 +5319,8 @@ class krome:
 					fout.write("num2col = 1.87d21*(max(ncalc,1d-40)*1d-3)**(2./3.)\n")
 				elif self.columnDensityMethod == "JEANS":
 					fout.write("num2col = 0.5d0 * max(ncalc,1d-40) * get_jeans_length(n(:),Tgas)\n")
+				elif self.columnDensityMethod == "JEANS40":
+					fout.write("num2col = 0.5d0 * max(ncalc,1d-40) * get_jeans_length(n(:),min(Tgas,4d1))\n")
 				else:
 					sys.exit("ERROR: method "+self.columnDensityMethod+" unknown for num2col")
 			elif srow == "#KROME_masses":

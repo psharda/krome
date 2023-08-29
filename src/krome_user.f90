@@ -1614,6 +1614,45 @@ contains
     call krome_photoBin_scale_array(xscale(:))
   end subroutine krome_opacity_scale_size
 
+
+  !*******************************
+  !load a frequency-dependent opacity table stored in fname file,
+  ! column 1 is energy or wavelenght in un units of unitEnergy
+  ! (default eV), column 2 is opacity in cm2/g.
+  ! opacity is interpolated over the current photo-binning.
+#IFKROME_useBindC
+  subroutine krome_load_opacity_table() bind(C)
+    !C-Fortran interoperability has problems dealing with strings
+    !Assume the opacity file name is 'opacityDust.dat'
+#ELSEKROME_useBindC
+  subroutine krome_load_opacity_table(fname, unitEnergy)
+#ENDIFKROME_useBindC
+    use krome_commons
+    use krome_constants
+    use krome_photo
+    implicit none
+#IFKROME_useBindC
+    character(len=80)::fname
+#ELSEKROME_useBindC    
+    character(len=*)::fname
+    character(len=*),optional::unitEnergy
+#ENDIFKROME_useBindC
+    character*10::eunit
+    
+    !read energy unit optional argument
+    eunit = "eV" !default is eV
+#IFKROME_useBindC
+    fname = "opacityDust.dat"
+#ELSEKROME_useBindC    
+    if(present(unitEnergy)) then
+      eunit = trim(unitEnergy)
+    end if
+#ENDIFKROME_useBindC    
+
+    call load_opacity_table(fname, eunit)
+
+end subroutine krome_load_opacity_table
+
    !*******************************
   !load a frequency-dependent opacity table stored in fname file,
   ! column 1 is energy or wavelenght in un units of unitEnergy

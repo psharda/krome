@@ -97,6 +97,7 @@ extern double krome_get_photointensity(double energy);
 extern void krome_get_opacity(double *x, double Tgas, double* krome_get_opacity_var);
 extern void krome_get_opacity_size(double *x, double Tgas, double csize, double* krome_get_opacity_size_var);
 extern void krome_get_opacity_size_d2g(double *x, double Tgas, double csize, double d2g, double* krome_get_opacity_size_d2g_var);
+extern void krome_load_opacity_table();
 extern void krome_dump_jflux(int nfile);
 #ENDIFKROME
 extern void krome_get_coef(double Tgas, double* x, double* krome_get_coef_var);
