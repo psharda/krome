@@ -1653,35 +1653,6 @@ contains
 
 end subroutine krome_load_opacity_table
 
-   !*******************************
-  !load a frequency-dependent opacity table stored in fname file,
-  ! column 1 is energy or wavelenght in un units of unitEnergy
-  ! (default eV), column 2 is opacity in cm2/g.
-  ! opacity is interpolated over the current photo-binning.
-  subroutine krome_load_opacity_table(fname, unitEnergy)
-    use krome_commons
-    use krome_constants
-    use krome_photo
-    implicit none
-    integer,parameter::ntmp=int(1e5)
-    character(len=*)::fname
-    character(len=*),optional::unitEnergy
-    character*10::eunit
-    integer::ios,icount,iR,iL,i,j,fileUnit
-    real*8::wl,opac,fL,fR,kk,dE
-    real*8::wls(ntmp),opacs(ntmp)
-    real*8,allocatable::energy(:),kappa(:)
-
-    !read energy unit optional argument
-    eunit = "eV" !default is eV
-    if(present(unitEnergy)) then
-      eunit = trim(unitEnergy)
-    end if
-
-    call load_opacity_table(fname, eunit)
-
-end subroutine krome_load_opacity_table
-
   ! ******************************
   ! load absorption data data from file, cm2/g
   subroutine krome_load_average_kabs()
