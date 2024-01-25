@@ -1,0 +1,23 @@
+# Python
+*.pyc
+__pycache__/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pyzw
+
+# Fortran
+*.mod
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.lib
