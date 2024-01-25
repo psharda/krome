@@ -362,7 +362,7 @@ class species():
         plt.clf()
 
         # set aesthetics
-        plt.grid(b=True, color='0.65', linestyle='--')
+        plt.grid(color='0.65', linestyle='--')
         plt.xlabel("energy/eV")
         plt.ylabel("xsec/cm2")
         plt.title(self.name)

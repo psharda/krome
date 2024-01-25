@@ -1033,7 +1033,7 @@ class reaction:
 
                 # plot only if data are available
                 if hasPlot and not os.path.exists(pngFileName):
-                    plt.grid(b=True, color='0.65', linestyle='--')
+                    plt.grid(color='0.65', linestyle='--')
                     # plot limited range
                     plt.xlabel(variable)
                     plt.ylabel("rate")
