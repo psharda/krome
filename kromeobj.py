@@ -724,7 +724,7 @@ class krome:
 						 +(",".join(allMethods)))
 			self.columnDensityMethod = args.columnDensityMethod
 
-		#use Semenov framework 
+		#use Semenov framework
 		if args.useSemenov:
 			self.useSemenov = True
 			print("Reading option -useSemenov")
@@ -1763,6 +1763,7 @@ class krome:
 			'S':menp * 16,
 			'Cl': menp * 17 + mn,
 			'Ar':menp * 18 + 4 * mn,
+			'Ca': menp * 20,
 			'Ti':menp * 22 + 4 * mn,
 			'Fe':(me+mp) * 26 + mn * 29,
 			'GRAIN0': 100*6*menp,
@@ -5175,7 +5176,7 @@ class krome:
 		hasH2O = ("H2O_TOTAL" in [x.name.upper() for x in specs])
 
 		skip = False
-		#loop on src file and replace pragmas 
+		#loop on src file and replace pragmas
 		for row in fh:
 			srow = row.strip()
 			if srow == "#KROME_header":
@@ -6242,7 +6243,7 @@ class krome:
 				skip = True
 			if row.strip() == "#IFKROME_useCustomCoe" and not self.useCustomCoe: skip = True
 			if row.strip() == "#IFKROME_useTabs" and not self.useTabs: skip = True
-			if row.strip() == "#IFKROME_useStandardCoe" and (self.useCustomCoe or self.useTabs): 
+			if row.strip() == "#IFKROME_useStandardCoe" and (self.useCustomCoe or self.useTabs):
 				skip = True
 
 			if row.strip() == "#ENDIFKROME": skip = False
@@ -8270,7 +8271,7 @@ class krome:
 		fname = "tools/list_user_functions.py"
 		if os.path.exists(fname):
 			shutil.copyfile(fname, buildFolder+"list_user_functions.py")
-			
+
 
 	#######################################################
 	def indent(self):
@@ -9127,7 +9128,7 @@ class krome:
 		#check for large reaction set
 		if len(reacts) > 500 and not self.use_implicit_RHS:
 			print("")
-			print("WARNING: "+str(len(reacts)) 
+			print("WARNING: "+str(len(reacts))
 				  + " reactions found! Using implicit RHS (option -iRHS)")
 			print("could be more efficient and also allows faster compilation.")
 			a = keyb_input("Any key to continue q to quit... ")
@@ -9137,7 +9138,7 @@ class krome:
 		#IF NOT TEST
 		if not self.is_test:
 			#PATCHES DO NOT NEED MAKEFILE AND TEST.F90, and also if noExample is enabled
-			if not(self.doFlash or self.doRamses or self.doEnzo or self.doRamsesTH 
+			if not(self.doFlash or self.doRamses or self.doEnzo or self.doRamsesTH
 				   or self.noExample):
 				#TODO: add description in case of dust
 				print("Call KROME in your code as:")
@@ -9146,7 +9147,7 @@ class krome:
 				else:
 					print("    call krome(x(:), gas_temperature, time_step)")
 				print("where:")
-				print(" x(:) is a real*8 array of size "+str(nmols) 
+				print(" x(:) is a real*8 array of size "+str(nmols)
 					  + (" of the mass fractions" if useX else " of number densities [1/cm3]"))
 				if useX: print(" gas_density  is the gas density in [g/cm3]")
 				print(" gas_temperature is the gas temperature in [K]")
