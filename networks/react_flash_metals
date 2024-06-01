@@ -6,7 +6,7 @@
 #rates for CO network similar to Glover+2010 MNRAS from there and other authors
 @var:Hnuclei = get_Hnuclei(n(:))
 @var:ntot=sum(n(1:nmols))
-@common: user_crate,user_Av
+@common: user_crate,user_Av,user_Tdust
 
 @var: T32 = Tgas/3d2
 @var: Te = Tgas*8.617343d-5
@@ -560,7 +560,26 @@
 
 @noTab_stop
 
+#H2 ON GRAINS WITH RATE APPROXIMATION
+@format:idx,R,R,P,rate
+@var:fA = 1d0/(1d0+1d4*exp(-6d2/(user_Tdust+1d-40)))
+@noTabNext
+223,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0+0.04d0*sqrt(Tgas+user_Tdust)+0.002d0*Tgas+8d-6*Tgas**2)/n(idx_H)*Hnuclei
+
+#Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
+#Internally evaluated by KROME
+@noTab_start
+@format:idx,R,R,P,rate
+45,H+,E,H,H_recombination_on_dust(n,Tgas)
+46,He+,E,He,He_recombination_on_dust(n,Tgas)
+
+##FOLLOWING ONLY WHEN SWITCH ON METALS
+47,O+,E,O,O_recombination_on_dust(n,Tgas)
+49,C+,E,C,C_recombination_on_dust(n,Tgas)
+@noTab_stop
+
 #PHOTOREACTIONS THIN WITH Av
+#TODO: This needs a lot of modifying
 @format:idx,R,P,P,rate
 
 #integrated with J21*13.6/E flux, up to 200eV
