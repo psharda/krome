@@ -53,7 +53,7 @@ class krome:
 	solver_MF = 222
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
-	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = False
+	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = useCoolingNebular = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = False
 	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
@@ -235,7 +235,7 @@ class krome:
 			also tools/lamda2.py script for a LAMDA<->KROME converter. Default FILENAME is data/coolZ.dat, which contains\
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
-			COMPTON, EXPANSION, CIE, DISS, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -\
+			COMPTON, EXPANSION, CIE, DISS, NEBULAR, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -\
 			cooling=ATOMIC,CII,OI,FeI),Z_CIE,Z_CIENOUV,Z_EXTENDED.\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
@@ -804,7 +804,7 @@ class krome:
 		#apply an individual cooling floor (SB, mod TG)
 		if args.useIndividualFloor:
 			myFloor = [x.strip() for x in args.useIndividualFloor.split(",")]
-			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED","GH"]
+			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED","GH","NEBULAR"]
 			for floor in myFloor:
 				if floor not in allFloor:
 					die("ERROR: Floor \""+floor+"\" is unknown!\nAvailable floor are: "
@@ -1188,7 +1188,7 @@ class krome:
 			#list of all cooling (excluded from file)
 			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE",
 						"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV","Z_EXTENDED","GH","OH",
-						"H2O", "HCN"]
+						"H2O", "HCN", "NEBULAR"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
@@ -1238,6 +1238,7 @@ class krome:
 						+(", ".join(allCools)))
 
 			if "ATOMIC" in myCools: self.useCoolingAtomic = True
+			if "NEBULAR" in myCools: self.useCoolingNebular = True
 			if "H2" in myCools: self.useCoolingH2 = True
 			if "H2GP98" in myCools: self.useCoolingH2GP98 = True
 			if "HD" in myCools: self.useCoolingHD = True
@@ -6468,6 +6469,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingDustNoTdust" and (usingTd or not self.useCoolingDust): skip = True
 			if srow == "#IFKROME_useCoolingDustTabs" and not self.dustTabsCool: skip = True
 			if srow == "#IFKROME_useCoolingAtomic" and not self.useCoolingAtomic: skip = True
+			if srow == "#IFKROME_useCoolingNebular" and not self.useCoolingNebular: skip = True
 			if srow == "#IFKROME_useCoolingH2" and not self.useCoolingH2: skip = True
 			if srow == "#IFKROME_useCoolingH2GP" and not self.useCoolingH2GP98: skip = True
 			if srow == "#IFKROME_useCoolingHD" and not self.useCoolingHD: skip = True
