@@ -85,6 +85,11 @@
       cools(idx_cool_atomic) = cooling_Atomic(n(:), Tgas) #KROME_floorAtomic
 #ENDIFKROME
 
+#IFKROME_useCoolingNebular
+      cools(idx_cool_nebular) = cooling_Nebular(n(:), Tgas) #KROME_floorNebular
+#ENDIFKROME
+
+
 #IFKROME_useCoolingCompton
       cools(idx_cool_compton) = cooling_compton(n(:), Tgas)
 #ENDIFKROME
@@ -1633,6 +1638,26 @@
       cooling_atomic = max(cool, 0d0)  !erg/cm3/s
 
     end function cooling_Atomic
+#ENDIFKROME
+
+#IFKROME_useCoolingNebular
+    !Nebular COOLING  Kim ApJ, 2023
+    !UNITS = erg/s/cm3
+    !*******************************
+    function cooling_Nebular(n, Tgas)
+      use krome_commons
+      use krome_subs
+      real*8::Tgas,cooling_nebular,n(:)
+      real*8::temp,T5,cool
+
+
+      temp = max(Tgas,10d0) !K
+      T5 = temp/1d5 !K
+      cool = 0d0 !erg/cm3/s
+
+      cooling_nebular = max(cool, 0d0)  !erg/cm3/s
+
+    end function cooling_Nebular
 #ENDIFKROME
 
 #IFKROME_useCoolingFF
