@@ -72,7 +72,7 @@
 
 #Verner & Ferland 1996
 @format:idx,R,R,P,rate
-8,He++,E,He+,1.891d-10/(sqrt(Tgas/9.37)*(1.+sqrt(Tgas/9.37))**0.2476*(1.+sqrt(Tgas/2.774d6))**1.7524)
+15,He++,E,He+,1.891d-10/(sqrt(Tgas/9.37)*(1.+sqrt(Tgas/9.37))**0.2476*(1.+sqrt(Tgas/2.774d6))**1.7524)
 
 #De Jong (1972)
 @format:idx,R,R,P,rate
@@ -560,11 +560,13 @@
 
 @noTab_stop
 
+#Start: Shyam Menon added the following dust-mediated reactions from react_galaxy_ism and CO_thin_network
 #H2 ON GRAINS WITH RATE APPROXIMATION
+#TODO: Change numbers
 @format:idx,R,R,P,rate
 @var:fA = 1d0/(1d0+1d4*exp(-6d2/(user_Tdust+1d-40)))
 @noTabNext
-223,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0+0.04d0*sqrt(Tgas+user_Tdust)+0.002d0*Tgas+8d-6*Tgas**2)/n(idx_H)*Hnuclei
+224,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0+0.04d0*sqrt(Tgas+user_Tdust)+0.002d0*Tgas+8d-6*Tgas**2)/n(idx_H)*Hnuclei
 
 #Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
 #Internally evaluated by KROME
@@ -577,6 +579,7 @@
 47,O+,E,O,O_recombination_on_dust(n,Tgas)
 49,C+,E,C,C_recombination_on_dust(n,Tgas)
 @noTab_stop
+#Stop: Dust-mediated reactions added by Shyam
 
 #PHOTOREACTIONS THIN WITH Av
 #TODO: This needs a lot of modifying
@@ -677,3 +680,24 @@
 
 @noTab_stop
 
+#Photoreactions
+#TODO: Change line numbers
+#The first two reactions (H2 ionization+dissociation and H ionization) are taken from react_primordial_wD_UV
+#This was implemented by Piyush Sharda for Sharda & Menon 2024
+@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
+@common:user_ionH2
+@common:user_dissH2
+#H2 ionization and dissociation (Note H2 ionization is written as a quasi-dissociation equation)
+51,H2,,,H,H,,,NONE,NONE,user_ionH2 + user_dissH2
+#H ionization
+@common:user_ionH
+52,H,,,H+,E,,,NONE,NONE,user_ionH
+#C ionization by LW photons
+@common:user_ionC
+52,C,,,C+,E,,,NONE,NONE,user_ionC
+#O ionization by EUV photons
+@common:user_ionO
+52,O,,,O+,E,,,NONE,NONE,user_ionO
+#CO dissociation by FUV photons
+@common:user_dissCO
+53,CO,,,C,O,,,NONE,NONE,user_dissCO
