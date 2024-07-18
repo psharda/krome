@@ -13,6 +13,7 @@
 @var: lnTe = log(Te)
 @var: T = Tgas
 @var: invT32 = 1d0/T32
+@var:invTe=1d0/Te
 
 ############ START OF PRIMORDIAL CHEMISTRY ########################
 
@@ -49,7 +50,7 @@
 @var:kHdiss=3.52d-9*exp(-4.39d4*invT) + 1d-40
 @var:kLdiss=6.67d-12*sqrt(Tgas)*exp(-(1d0+63590.*invT)) + 1d-40
 @var:ncrdiss=1d1**(3. - 0.416*log10(Tgas/1d4) - 0.327*log10(Tgas/1d4)**2)
-#@noTabNext
+@noTabNext
 #O2005 use an older rate coefficient
 5,H2,H,H,H,H,1d1**(log10(kHdiss)-log10(kHdiss/kLdiss)/(1d0+ntot/ncrdiss))
 
