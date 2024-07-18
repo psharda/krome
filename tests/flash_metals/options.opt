@@ -1,10 +1,11 @@
 ##############
 #options for test collapse
 
--n networks/react_flash_metals
--cooling=H2,COMPTON,CONT,CHEM,CI,CII,OI,OH,Z_EXTENDED,CO,H2O,ATOMIC,HD,DUST
--heating=COMPRESS,CHEM,CR,PHOTODUST
+-n networks/react_flash_metals_tabTdust
+-cooling=H2,COMPTON,CONT,CHEM,CI,CII,OI,OH,Z_EXTENDED,ATOMIC,HD,DUST,CO,H2O
+-heating=COMPRESS,CHEM,CR,PHOTODUST,PHOTOAV
 -H2opacity=RIPAMONTI
 -gamma=FULL
--dust=10,C
--n networks/react_flash_metals
+-dust=1,C
+-dustOptions=H2
+-n networks/react_flash_metals_tabTdust
