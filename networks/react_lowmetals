@@ -1,0 +1,261 @@
+#######################
+#Reduced chemical network from Omukai+2005, Table 1
+#Prestellar collapse phase only, no photochemistry
+#Ctrf+F for 'O2005' to lookup older rate coefficients from Omukai+2005 that have since been updated
+#Authors: Piyush Sharda (2024)
+#######################
+@var:ntot=sum(n(1:nmols))
+@common: user_Z, user_Tdust
+
+@var: T32 = Tgas/3d2
+@var: Te = Tgas*8.617343d-5
+@var: invT = 1d0/Tgas
+@var: lnTe = log(Te)
+@var: T = Tgas
+@var: invT32 = 1d0/T32
+
+############ START OF PRIMORDIAL CHEMISTRY ########################
+
+#Abel et al. 1997, fit by data from Ferland et al. 1992
+@format:idx,R,R,P,Tmin,Tmax,rate
+#O2005 use the second one for all temperatures
+1,H+,E,H,2.73d0,.LE.5.5e3,3.92d-13*invTe**0.6353d0
+2,H+,E,H,>5.5e3,1e8,exp(-28.61303380689232d0-0.7241125657826851d0*lnTe-0.02026044731984691d0*lnTe**2-0.002380861877349834d0*lnTe**3-0.0003212605213188796d0*lnTe**4-0.00001421502914054107d0*lnTe**5+4.989108920299513d-6*lnTe**6+5.755614137575758d-7*lnTe**7-1.856767039775261d-8*lnTe**8-3.071135243196595d-9*lnTe**9)
+
+#De Jong (1972)
+@format:idx,R,R,P,rate
+3,H,E,H-,1.4d-18*Tgas**0.928*exp(-Tgas/16200.)
+
+# fit by Kreckel et al. 2010
+@format:idx,R,R,P,P,rate
+@var:a1=1.3500e-09
+@var:a2=9.8493e-02
+@var:a3=3.2852e-01
+@var:a4=5.5610e-01
+@var:a5=2.7710e-07
+@var:a6=2.1826e+00
+@var:a7=6.1910e-03
+@var:a8=1.0461e+00
+@var:a9=8.9712e-11
+@var:a10=3.0424e+00
+@var:a11=3.2576e-14
+@var:a12=3.7741e+00
+#O2005 use an older rate coefficient
+4,H-,H,H2,E,a1*(Tgas**a2+a3*Tgas**a4+a5*Tgas**a6)/(1.+a7*Tgas**a8+a9*Tgas**a10+a11*Tgas**a12)
+
+
+#Lepp+Shull 1983, updated with Glover+2010
+@format:idx,R,R,P,P,P,rate
+@var:kHdiss=3.52d-9*exp(-4.39d4*invT) + 1d-40
+@var:kLdiss=6.67d-12*sqrt(Tgas)*exp(-(1d0+63590.*invT)) + 1d-40
+@var:ncrdiss=1d1**(3. - 0.416*log10(Tgas/1d4) - 0.327*log10(Tgas/1d4)**2)
+#@noTabNext
+#O2005 use an older rate coefficient
+5,H2,H,H,H,H,1d1**(log10(kHdiss)-log10(kHdiss/kLdiss)/(1d0+ntot/ncrdiss))
+
+
+#Forrey 2013
+@format:idx,R,R,R,P,P,rate
+#O2005 use an older rate coefficient
+6,H,H,H,H2,H,6d-32*Tgas**(-.25) + 2d-31*Tgas**(-.5)
+
+#Glover&Abel 2008
+#rate coefficient is 1/8 of the rate coefficient of reaction 6 (same in O2005)
+7,H2,H,H,H2,H2,(6d-32*Tgas**(-0.25) + 2d-31*Tgas**(-.5)) / 8d0
+
+@format:idx,R,R,P,rate
+@var:fA = 1d0/(1d0 + exp(7.5d2*(1d0/75d0 - 1d0/user_Tdust)))
+@noTabNext
+8,H,H,H2,6d-17*sqrt(Tgas/3d2)*fA*user_Z/(1d0+0.04d0*sqrt(Tgas+user_Tdust)+0.002d0*Tgas+8d-6*Tgas**2)
+
+############ START OF Deuterium PRIMORDIAL CHEMISTRY ########################
+@format:idx,R,R,P,P,rate
+9,D,H+,D+,H,3.7d-10*(Tgas**0.28)*exp(-43d0/Tgas)
+10,D+,H,D,H+,3.7d-10*(Tgas**0.28)
+#reaction below in O2005 has a typo: products are H and HD, NOT D and HD
+11,D,H2,H,HD,9d-11*exp(-3876d0/Tgas)
+
+#Galli&Palla 2002 from Gerlich 1982 
+#O2005 use an older rate coefficient
+12,D+,H2,H+,HD,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
+
+#Galli & Palla 2002, from Shavitt 1959
+#O2005 use an older rate coefficient
+#Piyush Sharda removed the temperature >2d2 constraint here since the reaction rate below this Tgas is anyway negligible
+13,HD,H,H2,D,5.25d-11*exp(-4430.*invT+1.739d5*(invT)**2)
+
+
+#Galli & Palla 2002, from Garlich 1982 with modification by Gay et al. 2011
+#O2005 use an older rate coefficient
+14,HD,H+,H2,D+,1.0d-9 *exp(-4.57d2*invT)
+
+############ END OF Deuterium PRIMORDIAL CHEMISTRY ########################
+
+
+############ END OF PRIMORDIAL CHEMISTRY ########################
+@format:idx,R,R,P,P,rate
+#From Glover and Jappsen 2007
+#O2005 use an older rate coefficient
+15,O+,H,H+,O,4.99d-11*Tgas**0.405 + 7.54d-10*invT**(0.458)
+16,O,H+,O+,H,(1.08d-11*Tgas**0.517 + 4d-10*Tgas**(0.00669))*exp(-2.27d2*invT)
+
+#KIDA (same rate as O2005)
+17,O+,H2,H,OH+,1.69d-9
+
+#Glover+2010
+18,OH+,H2,H2O+,H,1.01d-9
+#O2005 use an older rate coefficient
+19,H2O+,H2,H3O+,H,6.4d-10
+#O2005 use an older rate coefficient
+20,H2O+,E,O,H2,3.9d-8*T32**(-.5)
+#O2005 use an older rate coefficient
+21,H2O+,E,OH,H,8.6d-8*T32**(-.5)
+
+@format:idx,R,R,P,P,P,rate
+#O2005 use an older rate coefficient
+22,H3O+,E,OH,H,H,2.58d-7*T32**(-.5)
+
+@format:idx,R,R,P,P,rate
+#O2005 use an older rate coefficient
+23,H3O+,E,H,H2O,1.08d-7*T32**(-.5)
+
+24,O,H,OH,,9.9d-19*T32**(-.38)
+
+#KIDA (lower recomanded value)
+#O2005 use an older rate coefficient
+25,O,H2,OH,H,1.46d-12*exp(-9650.*invT)
+
+#from Baluch+2005
+#O2005 use an older rate coefficient
+26,H2,OH,H2O,H,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
+
+27,OH,OH,H2O,O,1.65d-12*(T32)**1.14*exp(-5d1*invT)
+
+
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+#KIDA, constant below 10K
+#O2005 use an older rate coefficient
+28,OH,H+,OH+,H,NONE,1d1,3.745d-8
+29,OH,H+,OH+,H,1d1,NONE,2.5d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+#O2005 use an older rate coefficient
+30,H2O,H+,H,H2O+,NONE,1d1,4.202d-8
+31,H2O,H+,H,H2O+,1d1,NONE,2.85d-9*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
+
+#Glover+2010
+#O2005 use an older rate coefficient
+32,OH,H,O,H2,NONE,280.,6.99d-14*T32**2.8*exp(-1950d0*invT)
+33,OH,H,O,H2,280.,NONE,5.45d-17
+
+#Glover+2010
+#O2005 use an older rate coefficient
+34,H2O,H,H2,OH,NONE,NONE,1.59d-11*(T32)*1.2*exp(-9610.*invT)
+
+35,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
+
+#KIDA, recomended, below 150K constant
+#O2005 use an older rate coefficient
+36,O,OH,H,O2,150.,NONE,2.4d-11*exp(110d0*invT)
+37,O,OH,H,O2,NONE,150.,4.997d-11
+
+#Glover+2010
+#O2005 use an older rate coefficient
+38,O2,H,OH,O,NONE,NONE,2.61d-10*1.2*exp(-8156.*invT)
+
+39,O2,H+,O2+,H,NONE,NONE,2d-9
+40,O2+,E,O,O,NONE,NONE,1.95d-7*T32**(-.7)
+
+#O2005 use an older rate coefficient
+41,CH,O,CO,H,NONE,NONE,1.02d-10*exp(-914d0*invT)
+
+#KIDA, recommended, below 10K constant
+#O2005 use an older rate coefficient
+42,C,OH,H,CO,NONE,1d1,7.051e-11
+43,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(-.108d0*invT)
+
+#Glover+2010 (limit 1052. for continuity)
+#O2005 use an older rate coefficient
+44,O2,C,CO,O,NONE,1052d0,4.7d-11*T32**(-.34)
+45,O2,C,CO,O,1052d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
+
+#KIDA
+#O2005 use an older rate coefficient
+46,O2,C+,CO,O+,NONE,NONE,4.53d-10
+
+47,OH,CO,CO2,H,NONE,NONE,1d-13
+
+#Glover&Jappsen 2007
+@format:idx,R,R,P,Tmin,Tmax,rate
+#O2005 use an older rate coefficient
+#TODO: this is only in the gas. There is a separate reaction for recombination of C+ and e on dust which is not included here
+48,C+,E,C,NONE,.LE.7950d0,4.67d-12*(T32)**(-0.6)
+49,C+,E,C,>7950d0,.LE.21140d0,1.23d-17*(T32)**2.49*exp(21845.6d0*invT)
+50,C+,E,C,>21140d0,NONE,9.62d-8*(T32)**(-1.37)*exp(-115786.2d0*invT)
+
+#KIDA, below 10K constant
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+#O2005 use an older rate coefficient
+51,OH,C+,H,CO+,NONE,1d1,1.371d-08
+52,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+
+53,CO+,H,CO,H+,NONE,NONE,7.5d-10
+54,C,H,CH,,NONE,NONE,1d-17
+55,C,H2,CH,H,NONE,NONE,6.64d-10*exp(-11700d0*invT)
+
+#O2005 use an older rate coefficient
+56,CH,H,C,H2,NONE,NONE,1.31d-10*exp(-8d1*invT)
+
+#O2005 use an older rate coefficient
+57,CH,H2,CH2,H,NONE,NONE,5.46d-10*exp(-1943d0*invT)
+
+#KIDA
+#O2005 use an older rate coefficient
+57,CH2,H,CH,H2,NONE,NONE,2.2d-10
+
+58,CH2,H2,CH3,H,NONE,NONE,5.18d-11*(T32**0.17)*exp(-6400d0*invT)
+59,CH3,H,CH2,H2,NONE,NONE,1d-10*exp(-7600d0*invT)
+60,CH3,H2,CH4,H,NONE,NONE,6.86d-14*(T32**2.74)*exp(-4740d0*invT)
+61,CH4,H,CH3,H2,NONE,NONE,5.82d-13*(T32**3.00)*exp(-4045d0*invT)
+62,C,H2,CH2,,NONE,NONE,1d-17
+
+#-----------------------------------------------------------------------------------------------------------------
+#Reactions added below on top of above network to ensure CO2 is not just a sink
+#Reactions from Omukai 2000, ApJ
+@format:idx,R,R,P,P,rate
+63,H,CO2,OH,CO,2.54d-10*exp(-13300d0*invT)
+64,O,CO2,CO,O2,2.80d-11*exp(-26500d0*invT)
+65,H2,CO2,H2O,CO,2.94d-14*(T32**0.5d0)*exp(-7550d0*invT)
+66,CO,O2,CO2,O,4.20d-12*exp(-24000d0*invT)
+
+#Reactions added below on top of above network to ensure C+ is not just a source
+#Reactions from react_flash_metals network
+@var:u1 = 11.26d0*invTe
+@var:u3 = 13.6*invTe
+@format:idx,R,R,P,P,P,rate
+67,C,E,C+,E,E,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
+68,O,E,O+,E,E,3.59d-8*u3**0.34*exp(-u3)/(0.073d0+u3)
+@format:idx,R,R,P,P,rate
+69,C,H+,C+,H,3.9d-16*Tgas**(0.213)
+70,C+,H,C,H+,6.08d-14*(Tgas*1d-4)**(1.96)*exp(-1.7d5*invT)
+71,O2,C+,CO+,O,3.42d-10
+#Glover+2010, KIDA additional channel
+72,C,O2+,O,CO+,5.2d-11
+73,C,O2+,O2,C+,5.2d-11
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+74,C+,O,CO+,,NONE,3d2,2.5d-18
+75,C+,O,CO+,,3d2,NONE,3.14d-18*T32**(-.15)*exp(-68d0*invT)
+
+
+#Reactions added below on top of above network to ensure D+, O+, OH+ and CO+ recombine with electrons
+#Reactions from react_flash_metals network
+#Additional Deuterium rates from GP98, SLD98
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+76,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
+#Glover 2010
+77,OH+,E,O,H,NONE,NONE,6.3d-9*T32**(-.48)
+78,CO+,E,C,O,NONE,NONE,2.75d-7*T32**(-.55)
+#Glover and Jappsen 2007
+@format:idx,R,R,P,Tmin,Tmax,rate
+79,O+,E,O,NONE,.LE.4d2,1.30d-10*(Tgas)**(-0.64)
+80,O+,E,O,>4d2,NONE,1.41d-10*(Tgas)**(-0.66) + 7.4d-4*(Tgas)**(-1.5)*exp(-1.75d5*invT)*(1d0 + 0.062d0*exp(-1.45d5*invT))
+
+

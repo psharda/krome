@@ -1,0 +1,37 @@
+#################
+reset
+set multiplot layout 2,1 
+set logscale
+set autoscale
+set format y "%L"
+
+set bmargin 0
+set lmargin 6
+
+nkrome = 2
+load 'species.gps'
+
+unset key
+set xtics format " " 
+set ylabel "log(T/K)"
+set label "A"  at first  6, first  6e2
+set label "B"  at first  150, first  6e2
+set label "C"  at first  1e1**3.5, first  1e1**2.6
+set label "D"  at first  1e1**10, first  1e1**3.1
+set label "E"  at first  1e1**16, first  1e1**3.55
+set label "F"  at first  1e1**17.5, first  1e1**3.7
+plot './fort.22' w l
+
+set bmargin 3.5
+set lmargin 6.15
+set xlabel "log(n/cm-3)"
+set format x "%L"
+unset label
+set key at first 1e1**4, first 1e-1
+set yrange [1e-6:5]
+set ylabel "n/ntot"
+set label "H- path"  at first  1e2, first  1e1**(-4.5)
+set label "3B reactions"  at first  1e10, first  1e-3
+plot './fort.22' u 1:krome_idx_H2 w l t 'H2', '' u 1:krome_idx_H w l t 'H'
+
+unset multiplot

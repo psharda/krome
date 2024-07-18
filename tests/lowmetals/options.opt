@@ -1,0 +1,9 @@
+##############
+#options for test collapse
+
+-n networks/react_lowmetals
+-cooling=H2,CONT,CHEM,CI,CII,OI,OH,HD,CO,H2O
+-heating=COMPRESS,CHEM
+-H2opacity=RIPAMONTI
+-gamma=FULL
+-n networks/react_lowmetals
