@@ -88,7 +88,7 @@ contains
     ! merge between the two cooling / heating functions
     smooth = 1.d-3
     !smoothing functions | f1+f2=1 | f1 is not needed
-    f2 = = (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0 
+    f2 =  (tanh(smooth*(Tgas-1d4))+1.d0)*0.5d0 
 #ENDIFKROME
 
 #IFKROME_useHeatingZCIE
