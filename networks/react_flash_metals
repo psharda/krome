@@ -15,6 +15,9 @@
 @var: T = Tgas
 @var: invT32 = 1d0/T32
 
+#TODO: species CH3 and CH4 are not yet included, but they are included in reduced networks such as NL99, GOW, Omukai2005, so we should include them here
+
+
 ############ START OF PRIMORDIAL CHEMISTRY ########################
 
 #Janev 1987
@@ -693,7 +696,7 @@
 
 @noTab_start
 @var: user_H2self = fselfH2(1.87d21*(merge(n(idx_H2),n_global(idx_H2),n(idx_H2) > 0.0_8)*1d-3)**(2./3.), 1d5)
-226,H2,H,H,5.6d-11*exp(-3.74*user_Av)*user_H2self
+#duplicate, we use dissH2 below 226,H2,H,H,5.6d-11*exp(-3.74*user_Av)*user_H2self
 @var: HnOj = fHnOj(user_Av)
 246,H2O+,H2+,O,5.d-11*HnOj
 247,H2O+,H+,OH,5.d-11*HnOj
