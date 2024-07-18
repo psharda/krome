@@ -40,7 +40,7 @@ program test_krome
   x(KROME_idx_H2)        = 1d-6*ntot
   x(KROME_idx_E)         = 1d-4*ntot
   x(KROME_idx_Hj)        = 1d-4*ntot
-  x(KROME_idx_HE)        = 0.0775*ntot
+  !x(KROME_idx_HE)        = 0.0775*ntot
   x(KROME_idx_Cj)        = 0.927d-4*ntot
   x(KROME_idx_O)         = 3.568d-4*ntot
 
