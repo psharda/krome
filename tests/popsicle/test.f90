@@ -44,7 +44,7 @@ program test_krome
   x(KROME_idx_Cj)        = 0.927d-4*zs*ntot !C is fully ionized
   x(KROME_idx_O)         = 3.568d-4*zs*ntot !O is fully neutral
 
-  call krome_init_dust_distribution(x(:),(1d0/162d0)*1d1**zs) !scale the dust to gas ratio by the metallicity
+  call krome_init_dust_distribution(x(:),(1d0/162d0)*zs) !scale the dust to gas ratio by the metallicity
   print *,krome_get_dust_distribution()
   call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
 
