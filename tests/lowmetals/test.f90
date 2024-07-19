@@ -11,23 +11,22 @@ program test_krome
   use krome_main
   use krome_user
   use krome_user_commons
-  use krome_getphys
   implicit none
   integer,parameter::rstep = 500000
   integer::i,unit,ios
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt
-  real*8::ntot
+  real*8::ntot,Tdust(krome_ndust)
   real*8::Av, NHtot, totheat, totcool
 
   !INITIAL CONDITIONS
-  krome_redshift = 15d0    !redshift
+  krome_redshift = 0d0    !redshift
   ntot = 1d0               !total density, cm-3
   Tgas = 1d2               !temperature, K
 
-  call krome_set_user_Tdust(30d0)
-  call krome_set_user_Z(1d0)
+  call krome_set_zredshift(krome_redshift)
+  call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
 
   !initialize KROME (mandatory)
   call krome_init()
@@ -44,6 +43,10 @@ program test_krome
   x(KROME_idx_Cj)        = 0.927d-4*ntot
   x(KROME_idx_O)         = 3.568d-4*ntot
 
+  call krome_init_dust_distribution(x(:),1d-2*1d1**1d0*1d0)
+  print *,krome_get_dust_distribution()
+  call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
+
   !set initial density
   dd = ntot
 
@@ -51,10 +54,13 @@ program test_krome
   open(newunit=unit,file="explore.dat",status="replace")
 
   print *,"solving..."
-  print '(a5,5a11)',"step","n(cm-3)","Tgas(K)", "Av", "sum_heats", "sum_cools"
+  print '(a5,5a11)',"step","n(cm-3)","Tgas(K)", "Tdust(K)"
 
   !output header
-  write(22,*) "#ntot Tgas "//trim(krome_get_names_header())
+  write(22,*) "#ntot Tgas Tdust"//trim(krome_get_names_header())
+  !print initial output
+  Tdust = krome_get_Tdust()
+  write(22,'(99E17.8e3)') dd,Tgas,Tdust(:),x(:)/dd
 
   !loop on density steps
   do i = 1,rstep
@@ -72,21 +78,30 @@ program test_krome
      !rescale density
      x(:) = x(:)*dd/dd1
 
+     x(krome_idx_e) = krome_get_electrons(x(:))
+
      !set time-step
      dt = dtH
 
      !break when max density reached
      if(dd.gt.1d18) exit
 
+     call krome_scale_dust_distribution(dd/dd1)
+
+     !dust evaporation
+     if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)
+
+     Tdust = krome_get_Tdust()
+
      !solve the chemistry
      call krome(x(:),Tgas,dt)
 
      !print some output
-     write(22,'(99E17.8e3)') dd,Tgas,x(:)/dd
+     write(22,'(99E17.8e3)') dd,Tgas,Tdust(:),x(:)/dd
      if(mod(i,50)==0) then
-        totheat = krome_get_heating(x(:), Tgas)
-        totcool = krome_get_heating(x(:), Tgas)
-        print '(I5,3E11.3,2E13.6,1E11.3)',i,dd,Tgas,Av,totheat,totcool,(totheat-totcool)*(1.66667-1.)/1.380648e-16/dd
+        !totheat = krome_get_heating(x(:), Tgas)
+        !totcool = krome_get_heating(x(:), Tgas)
+        print '(I5,30E11.3)',i,dd,Tgas,Tdust(:)
         call krome_print_best_flux(x(:),Tgas,5)
         call krome_explore_flux(x(:),Tgas,unit,dd)
      end if
