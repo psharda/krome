@@ -1,24 +1,53 @@
-import kp
+"""
+Script to produce a plot of Tgas as a function of number density based on output from POPSICLE test
+Author: Piyush Sharda (Leiden) 2024: sharda@strw.leidenuniv.nl
+"""
 
-k = kp.kp()
+import numpy as np
+import matplotlib.pyplot as plt
 
-#load data
-k.loadDataFromFile("fort.22")
+defcolcycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-#set xlabel
-k.xlabel = r'density/cm$^{-3}$'
+def read_file_with_breaks(filename, skip_header=0):
+    with open(filename, 'r') as file:
+        lines = file.readlines()
 
-#plot type
-k.plog = "loglog"
+    data_sections = []
+    current_section = []
 
-#plot
-k.ylabel = "fraction"
-k.ymax = 3e0
-k.multiplotLayout("21",sharex=True)
-k.multiplotAdd(columns=["ntot","H","H2"])
+    lines = lines[skip_header:]
+    
+    for line in lines:
+        stripped_line = line.strip()
+        if stripped_line:  # Non-empty line
+            current_section.append(list(map(float, stripped_line.split())))
+        else:  # Empty line
+            if current_section:  # If there is data collected, save it to data_sections
+                data_sections.append(np.array(current_section))
+                current_section = []
 
-k.ymin = 1e2
-k.ylabel = "T/K"
-k.multiplotAdd(columns=["ntot","Tgas"])
-k.multiplotShow(outputFileName="plot.png")
+    # Add the last section if not empty
+    if current_section:
+        data_sections.append(np.array(current_section))
+
+    return data_sections
+
+
+#Read in the output file
+#Plot Tgas as a function of gas number density
+
+filename = 'fort.22'
+#Read in sections for different metallicity values
+data_sections = read_file_with_breaks(filename, skip_header=1)
+
+for i in range(0, len(data_sections)):
+    plt.plot(np.log10(data_sections[i].T[0]), data_sections[i].T[1], c=defcolcycle[i], ls='solid')
+
+plt.yscale('log')
+plt.minorticks_on()
+plt.ylim(1,4e3)
+plt.ylabel('Tgas (K)')
+plt.xlabel('log n (cm^-3)')
+plt.grid()
+plt.savefig('popsicle.png', bbox_inches='tight')
 
