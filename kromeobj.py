@@ -3062,11 +3062,11 @@ class krome:
 	def definePhysVariables(self):
 		#variables are list [name, default_value_string]
 		#note that phys_ will be prepended
-		self.physVariables = [["Tcmb", "2.73d0"],
-			["zredshift", "0d0"],
+		self.physVariables = [["Tcmb", "krome_get_Tcmb()"],
+			["zredshift", "krome_get_zredshift()"],
 			["orthoParaRatio", "3d0"],
-			["metallicity", "0d0"],
-                        ["Tfloor", "2.73d0"]]
+			["metallicity", "krome_get_metallicity()"],
+                        ["Tfloor", "phys_Tcmb"]]
 
 	#####################################################
 	def photo_warnings(self):
