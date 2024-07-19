@@ -17,13 +17,14 @@ program test_krome
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt
-  real*8::ntot,Tdust(krome_ndust)
+  real*8::ntot,Tdust(krome_ndust),zs
   real*8::Av, NHtot, totheat, totcool
 
   !INITIAL CONDITIONS
   krome_redshift = 0d0    !redshift
-  ntot = 1d0               !total density, cm-3
-  Tgas = 1d2               !temperature, K
+  ntot = 1d0              !total density, cm-3
+  Tgas = 1d2              !temperature, K
+  zs   = 1d0              !metallicity relative to solar
 
   call krome_set_zredshift(krome_redshift)
   call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
@@ -40,10 +41,10 @@ program test_krome
   x(KROME_idx_E)         = 1d-4*ntot
   x(KROME_idx_Hj)        = 1d-4*ntot
   x(KROME_idx_HE)        = 0.0775*ntot
-  x(KROME_idx_Cj)        = 0.927d-4*ntot
-  x(KROME_idx_O)         = 3.568d-4*ntot
+  x(KROME_idx_Cj)        = 0.927d-4*zs*ntot !C is fully ionized
+  x(KROME_idx_O)         = 3.568d-4*zs*ntot !O is fully neutral
 
-  call krome_init_dust_distribution(x(:),1d-2*1d1**1d0*1d0)
+  call krome_init_dust_distribution(x(:),(1d0/162d0)*1d1**zs) !scale the dust to gas ratio by the metallicity
   print *,krome_get_dust_distribution()
   call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
 
@@ -54,7 +55,7 @@ program test_krome
   open(newunit=unit,file="explore.dat",status="replace")
 
   print *,"solving..."
-  print '(a5,5a11)',"step","n(cm-3)","Tgas(K)", "Tdust(K)"
+  print '(a5,3a11)',"step","n(cm-3)","Tgas(K)", "Tdust(K)"
 
   !output header
   write(22,*) "#ntot Tgas Tdust"//trim(krome_get_names_header())
@@ -78,6 +79,7 @@ program test_krome
      !rescale density
      x(:) = x(:)*dd/dd1
 
+     !if you do not conserve electrons, the electron abundance will soon go to 0.00
      x(krome_idx_e) = krome_get_electrons(x(:))
 
      !set time-step
@@ -86,9 +88,10 @@ program test_krome
      !break when max density reached
      if(dd.gt.1d18) exit
 
+     !important to scale the dust density as the gas density increases
      call krome_scale_dust_distribution(dd/dd1)
 
-     !dust evaporation
+     !dust evaporation: dust is non existent at T > 1.5d3
      if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)
 
      Tdust = krome_get_Tdust()
