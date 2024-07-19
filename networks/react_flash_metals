@@ -15,6 +15,11 @@
 @var: T = Tgas
 @var: invT32 = 1d0/T32
 
+#TODO: species CH3 and CH4 are not yet included, but they are included in reduced networks such as NL99, GOW, Omukai2005, so we should include them here
+
+
+############ START OF PRIMORDIAL CHEMISTRY ########################
+
 #Janev 1987
 @format:idx,R,R,P,P,P,rate
 1,H,E,H+,E,E,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
@@ -103,6 +108,9 @@
 @format:idx,R,R,P,P,rate
 21,H2+,H,H2,H+,6d-10
 
+# Capitelli et al. 2007 ! NEW REACTION! 
+15,H2,E,H,H-,3.55e1*Tgas**(-2.28)*exp(-46707./Tgas)
+
 @noTab_start
 #fit by Savin et al. 2004, see also Grassi et al. 2011, lower limits is extended below 100K
 @format:idx,R,R,P,P,Tmin,Tmax,rate
@@ -146,10 +154,14 @@
 #Janev 1987
 25,H-,E,H,E,E,exp(-18.01849334273d0+2.360852208681d0*lnTe-0.2827443061704d0*lnTe**2+0.01623316639567d0*lnTe**3-0.03365012031362999d0*lnTe**4+0.01178329782711d0*lnTe**5-0.001656194699504d0*lnTe**6+0.0001068275202678d0*lnTe**7-2.631285809207d-6*lnTe**8)
 
-#Abel+1997, based on Janev 1987
+#Abel et al. 1997, based on Janev 1987
+#The temperature limit was originally 1.16d3 but it gave a discontinuity at this temp
+#So Piyush Sharda in 2022 changed the limit to 1.16e0, virtually removing reaction 19
+#from ever being used at z=30. This was necessary to successfully integrate krome's one zone model
+#at a very high rtol = 1e-10.
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
-26,H-,H,H,H,E,NONE,.LE.1.16e3,2.56d-9*Te**1.78186
-27,H-,H,H,H,E,>1.16e3,NONE,exp(-20.37260896533324d0+1.139449335841631d0*lnTe-0.1421013521554148d0*lnTe**2+0.00846445538663d0*lnTe**3-0.0014327641212992d0*lnTe**4+0.0002012250284791d0*lnTe**5+0.0000866396324309d0*lnTe**6-0.00002585009680264d0*lnTe**7+2.4555011970392d-6*lnTe**8-8.06838246118d-8*lnTe**9)
+26,H-,H,H,H,E,NONE,.LE.1.16e0,2.56d-9*Te**1.78186
+27,H-,H,H,H,E,>1.16e0,NONE,exp(-20.37260896533324d0+1.139449335841631d0*lnTe-0.1421013521554148d0*lnTe**2+0.00846445538663d0*lnTe**3-0.0014327641212992d0*lnTe**4+0.0002012250284791d0*lnTe**5+0.0000866396324309d0*lnTe**6-0.00002585009680264d0*lnTe**7+2.4555011970392d-6*lnTe**8-8.06838246118d-8*lnTe**9)
 
 #Stenrup+2009, extended to higher temperature (extrapolation from xsecs, but new calculations are required)
 @format:idx,R,R,P,P,rate
@@ -159,10 +171,11 @@
 @format:idx,R,R,P,P,rate
 29,H-,H+,H2+,E,1.d-8*Tgas**(-0.4)
 
-#Abel et al. 1997, fit by data from Schneider 1994
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-24,H2+,E,H,H,NONE,.LE.6.17e2,1.d-8
-25,H2+,E,H,H,>6.17e2,NONE,1.32d-6*Tgas**(-0.76)
+# fit by Coppola et al. (2011) !NEW!
+# Piyush Sharda replaced the old reactions (with a temperature break) present in the COthin_ice network from Abel et al. 1997, fit by data from Schneider 1994, with this one from Coppola et al. (2011) from primordial_wD network
+23,H2+,E,H,H,NONE,1e4,1.e6*(4.2278e-14-2.3088e-17*Tgas+7.3428e-21*Tgas**2-7.5474e-25*Tgas**3+3.3468e-29*Tgas**4-5.528e-34*Tgas**5)
+
 
 #Dalgarno+Lepp 1987
 @format:idx,R,R,P,P,rate
@@ -186,6 +199,70 @@
 
 #Glover&Abel 2008
 26,H2,H,H,H2,H2,(6d-32*Tgas**(-0.25) + 2d-31*Tgas**(-.5)) / 8d0
+
+#Omukai 2001
+@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
+@var:kl21 = 1.18d-10*exp(-6.95d4*invT)
+@var:kh21 = 8.125d-8*T**(-0.5d0)*exp(-5.2d4*invT)*(1.d0-exp(-6d3*invT))
+@var:ncr21 = 1d1**(4.845d0-1.3d0*log10(T*1d-4)+1.62d0*(log10(T*1d-4))**2)
+@var:a21=1.d0/(1.d0+(Hnuclei/ncr21))
+@noTabNext
+27,H2,H2,,H,H,H2,,NONE,NONE,kh21**(1.-a21)*kl21**a21
+
+############ START OF Deuterium PRIMORDIAL CHEMISTRY ########################
+
+@format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
+#DEUTERIUM CHEMISTRY
+#Galli&Palla 2002 from Gerlich 1982 
+31,H2,D+,,HD,H+,,,NONE,NONE,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
+
+#Galli & Palla 2002, from Garlich 1982 with modification by Gay et al. 2011
+32,HD,H+,,H2,D+,,,NONE,NONE,1.0d-9 *exp(-4.57d2*invT)
+
+#Glover et al. 2009, from data by Mielke et al. 2003
+33,H2,D,,HD,H,,,NONE,.LE.2.d3,10**(-56.4737+5.88886*log10(Tgas)+7.19692*(log10(Tgas))**2+2.25069*(log10(Tgas))**3-2.16903*(log10(Tgas))**4+0.317887*(log10(Tgas))**5)
+34,H2,D,,HD,H,,,.GT.2d3,NONE,3.17d-10*exp(-5207.*invT)
+
+#Galli & Palla 2002, from Shavitt 1959
+35,HD,H,,H2,D,,,>2e2,NONE,5.25d-11*exp(-4430.*invT+1.739d5*(invT)**2)
+
+36,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)
+
+#Galli & Palla 2002 from Wolf Savin 2001
+37,H+,D,,H,D+,,,.GE.5d1,NONE,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
+
+#Galli & Palla 2002 from Wolf Savin 2001
+38,H,D+,,H+,D,,,.GE.5d1,NONE,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
+
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+#ADDITIONAL DEUTERIUM RATES FROM GP98, SLD98
+39,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
+
+40,H,D,HD,,NONE,NONE,1.0d-25
+
+41,HD+,H,HD,H+,NONE,NONE,6.4d-10
+
+42,H+,D,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
+
+43,H,D+,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
+
+44,HD+,E,H,D,NONE,NONE,7.2d-8*invsqrT
+
+45,D,E,D-,,NONE,NONE,3d-16*(Tgas/300)**(0.95d0)*exp(-Tgas/9.320d3)
+
+46,D+,D-,D,D,NONE,NONE,5.7d-8*(Tgas/300)**(-0.5d0)
+
+47,D-,H+,D,H,NONE,NONE,4.6d-8*(Tgas/300)**(-0.5d0)
+
+48,H-,D,D-,H,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
+
+49,D-,H,H-,D,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
+
+50,D-,H,HD,E,NONE,NONE,1.5d-9*(Tgas/300)**(-0.1d0)
+############ END OF Deuterium PRIMORDIAL CHEMISTRY ########################
+
+
+############ END OF PRIMORDIAL CHEMISTRY ########################
 
 #METALS FROM Glover&Jappsen 2010 from
 @format:idx,R,R,P,Tmin,Tmax,rate
@@ -594,7 +671,7 @@
 225,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
 227,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
 228,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
-229,C,C+,E,3.1d-10*exp(-3.*user_Av)
+#duplicate: 229,C,C+,E,3.1d-10*exp(-3.*user_Av)
 230,C-,C,E,2.4d-7*exp(-.9*user_Av)
 231,CH,C,H,8.7d-10*exp(-1.2*user_Av)
 232,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)
@@ -613,13 +690,13 @@
 245,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)
 254,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)
 255,O2,O,O,7d-10*exp(-1.8*user_Av)
-256,CO,C,O,2.d-10*exp(-3.53*user_Av)
+#duplicate: 256,CO,C,O,2.d-10*exp(-3.53*user_Av)
 @storeOnce_stop
 
 
 @noTab_start
 @var: user_H2self = fselfH2(1.87d21*(merge(n(idx_H2),n_global(idx_H2),n(idx_H2) > 0.0_8)*1d-3)**(2./3.), 1d5)
-226,H2,H,H,5.6d-11*exp(-3.74*user_Av)*user_H2self
+#duplicate, we use dissH2 below 226,H2,H,H,5.6d-11*exp(-3.74*user_Av)*user_H2self
 @var: HnOj = fHnOj(user_Av)
 246,H2O+,H2+,O,5.d-11*HnOj
 247,H2O+,H+,OH,5.d-11*HnOj
