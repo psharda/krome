@@ -60,7 +60,7 @@ program test_krome
   !output header
   write(22, '(A)', ADVANCE='NO') "#ntot Tgas Tdust"
   write(22, '(A)') trim(krome_get_names_header())
-  !write(22,*) "#ntot Tgas Tdust"//trim(krome_get_names_header())
+
   !print initial output
   Tdust = krome_get_Tdust()
   write(22,'(99E17.8e3)') dd,Tgas,Tdust(:),x(:)/dd
