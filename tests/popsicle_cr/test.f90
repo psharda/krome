@@ -47,6 +47,7 @@ program test_krome
 
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
+    call krome_set_metallicity(zs(jz2))
 
     !initialize KROME (mandatory)
     call krome_init()
