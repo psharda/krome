@@ -131,8 +131,8 @@ program test_krome
   close(unit)
 
   !say goodbye
-  print *,"To plot type in gnuplot:"
-  print *,"gnuplot> load 'plot.gps'"
+  print *,"To plot in python:"
+  print *,"ipython> run plot.py"
   print *,"That's all! have a nice day!"
 
 end program test_krome
