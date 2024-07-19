@@ -12,16 +12,16 @@ program test_krome
   use krome_user
   use krome_user_commons
   implicit none
-  integer,parameter::nz=7
+  integer,parameter::nz=8
   integer,parameter::rstep = 500000
-  integer::i,unit,ios
+  integer::i,unit,ios,jscale,jz,jz2
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt
-  real*8::ntot,Tdust(krome_ndust),zs(nz),jscale
+  real*8::ntot,Tdust(krome_ndust),zs(nz)
   real*8::Av, NHtot, totheat, totcool
 
-  zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
+  zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
   !output header
   write(22, '(A)', ADVANCE='NO') "#ntot Tgas Tdust"
@@ -124,6 +124,7 @@ program test_krome
        end if
        !call krome_dump_cooling(x(:),Tgas)
     end do
+    write(22,*)
   end do
 
   !close explore data file
