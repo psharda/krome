@@ -4,7 +4,6 @@
 @var:T=Tgas
 
 @var:ntot=sum(n(1:nmols))
-@common: user_Z, user_Tdust
 
 #Janev 1987
 1,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
@@ -169,11 +168,7 @@
 
 ############ END OF PRIMORDIAL CHEMISTRY ########################
 
-#H2 formation on dust grains
-@format:idx,R,R,P,rate
-@var:fA = 1d0/(1d0 + exp(7.5d2*(1d0/75d0 - 1d0/user_Tdust)))
-@noTabNext
-8,H,H,H2,6d-17*sqrt(Tgas/3d2)*fA*user_Z/(1d0+0.04d0*sqrt(Tgas+user_Tdust)+0.002d0*Tgas+8d-6*Tgas**2)
+#H2 formation on dust grains included via the -dustOptions=H2 option
 
 
 @format:idx,R,R,P,P,rate
