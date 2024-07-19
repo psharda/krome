@@ -1,7 +1,7 @@
 ##############
 #options for test collapse
 
--n networks/tmptry
+-n networks/react_popsicle
 -cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,OH,H2O,ATOMIC,COMPTON,DUST
 -heating=COMPRESS,CHEM
 -H2opacity=RIPAMONTI
@@ -12,4 +12,4 @@
 -useIndividualFloor=Z
 -dust=1,C
 -dustOptions=dT,H2
--n networks/tmptry
+-n networks/react_popsicle
