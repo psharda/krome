@@ -120,7 +120,7 @@ contains
     n(1:nmols) = x(:)
 #ENDIFKROME
 
-    n(idx_Tgas) = Tgas !put temperature in the input array
+    n(idx_Tgas) = max(Tgas, phys_Tcmb) !put temperature in the input array
 
 #IFKROME_useDustSizeEvol
     n(nmols+1:nmols+ndust) = krome_dust_asize(:) !set dust sizes
@@ -274,7 +274,7 @@ contains
     krome_dust_T(:) = n(nmols+ndust+1:nmols+2*ndust)
 #ENDIFKROME
 
-    Tgas = n(idx_Tgas) !get new temperature
+    Tgas = max(n(idx_Tgas), phys_Tcmb) !get new temperature
 
   end subroutine krome
 
@@ -605,6 +605,7 @@ contains
     use krome_photo
     use krome_fit
     use krome_getphys
+    use krome_user
 #IFKROME_useStars
     use krome_stars
 #ENDIFKROME
@@ -614,7 +615,7 @@ contains
 
     !init metallicity default
     !assuming solar
-    total_Z = 1d0
+    total_Z = phys_metallicity
 
     !default D/D_sol = Z/Z_sol
     !assuming linear scaling
