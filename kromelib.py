@@ -1407,10 +1407,12 @@ def get_Ebind(fileName="data/Ebare_ice.dat",surface="bare"):
 ###################################
 #vibrational constant dictionary
 #IRIKURA J. Phys. Chem. Ref. Data, Vol. 36, No. 2, 2007
+#H2+ added by Piyush Sharda in 2024
 #energy in cm-1, returns K
 #returns False if arg not found in list
 def get_ve_vib(arg):
 	ve = {"H2":4401.213,
+                "H2+":2321.7,
 		"HD":3813.15,
 		"D2":3115.5,
 		"C2":1855.0663,
@@ -1425,7 +1427,8 @@ def get_ve_vib(arg):
 		"NO+":2376.72,
 		"O2":1580.161,
 		"O2+":1905.892,
-		"OH":3737.761}
+		"OH":3737.761,
+                "OH+":3113.37}
 	if arg in ve:
 		return ve[arg]*1.42879e0 #cm-1 to K
 	else:
@@ -1433,17 +1436,20 @@ def get_ve_vib(arg):
 
 ###################################
 #rotational constant Be dictionary
-#from NIST and Atkins Book
+#from NIST and Atkins & Paula Physical Chemistry Book table 13.2
+#updated by Piyush Sharda in 2024
 #constant in cm-1, returns K
 #returns False if arg not found in list
 def get_be_rot(arg):
-	ve = {"H2":60.853,
-		"H2+":42.9,
+	ve = {"H2":60.864,
+		"H2+":29.8,
 		"HD":45.644,
 		"D2":30.443,
-		"N2":1.9982,
-		"O2":1.4264,
-		"CO":2.78}
+		"N2":1.9987,
+		"O2":1.4457,
+		"CO":1.9313,
+                "CH":14/457,
+                "OH":18.910}
 	if arg in ve:
 		return ve[arg]*1.42879e0 #cm-1 to K
 	else:
