@@ -82,14 +82,6 @@ program test_krome
     Tdust = krome_get_Tdust()
     write(22,'(99E17.8e3)') dd,Tgas,Tdust(:),x(:)/dd
 
-    !print initial cooling rates
-    n(1:krome_nmols) = x(:)
-    n(KROME_idx_Tgas) = Tgas
-    n(krome_nmols+krome_ndust+1:krome_nmols+2*krome_ndust) = Tdust
-    cools(:) = get_cooling_array(n(:),Tgas)
-    write(31,'(99E14.5e3)') Tgas, sum(cools), cools(:)
-
-
     !loop on density steps
     do i = 1,rstep
 
@@ -123,7 +115,7 @@ program test_krome
 
        Tdust = krome_get_Tdust()
 
-       !dump cooling rates
+       !dump cooling rates for Tgas going into the calculation
        n(1:krome_nmols) = x(:)
        n(KROME_idx_Tgas) = Tgas
        n(krome_nmols+krome_ndust+1:krome_nmols+2*krome_ndust) = Tdust
