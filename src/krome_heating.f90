@@ -380,7 +380,7 @@ contains
     use krome_getphys
     implicit none
     integer::i
-    real*8::heat_netPhotoDustWD,n(:),Tgas,ntot,psi
+    real*8::heat_netPhotoDustWD,n(:),Tgas,ntot,psi,G0
     real*8::eps_PE,C0,C1,C2,C3,C4,C5,C6,heat_PE
     real*8::nenh,D0,D1,D2,D3,D4,cool_grrec
 
@@ -391,7 +391,9 @@ contains
     ntot = get_Hnuclei(n(:))
     nenh = n(idx_e) * n(idx_H)
     if(n(idx_e)>0d0) then
-       psi = GHabing * sqrt(Tgas) / n(idx_e)
+       !TODO: supply J_PE and J_LW to G0 
+       G0 = 1.69d0
+       psi = G0 * sqrt(Tgas) / n(idx_e)
     else
        psi = 0d0
     end if
@@ -409,7 +411,7 @@ contains
     C6 = 0.692
 
     eps_PE = (C0 + C1*Tgas**C4) / (1 + C2*(psi**C5)*(1 + C3*(psi**C6)))
-    heat_PE = 1d-26 * Ghabing * ntot * eps_PE * dust2gas_ratio !erg/cm3/s
+    heat_PE = 1d-26 * G0 * ntot * eps_PE * dust2gas_ratio !erg/cm3/s
 
 
     !grain assisted recombination cooling
