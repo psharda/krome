@@ -1641,21 +1641,38 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingNebular
-    !Nebular COOLING  Kim ApJ, 2023
+    !Nebular COOLING  Kim ApJ, 2023, 264, 10
+    !Equation 47 (note that LHS of equation 47 is in units of erg cm^3/s, not cm^3/s; there is a typo in the paper )
     !UNITS = erg/s/cm3
     !*******************************
     function cooling_Nebular(n, Tgas)
       use krome_commons
       use krome_subs
       real*8::Tgas,cooling_nebular,n(:)
-      real*8::temp,T5,cool
+      real*8::temp,cool,factor,T4,powd,ne2
+      real*8::lfneb,fneb,factor_num,factor_denom
 
+      temp = max(Tgas,phys_Tcmb) !K
+      T4 = temp/1d4
+      cooling_Nebular = 0d0
 
-      temp = max(Tgas,10d0) !K
-      T5 = temp/1d5 !K
-      cool = 0d0 !erg/cm3/s
+      if (n(idx_e) .lt. 0d0) return
+      if (n(idx_Hj) .lt. 0d0) return      
 
-      cooling_nebular = max(cool, 0d0)  !erg/cm3/s
+      lfneb = 6.92d-1 - 5.86d-1*(log(T4)) + 8.16d-1*(log(T4))**2 - &
+              5.05d-1*(log(T4))**3 + 1.18d-1*(log(T4))**4 + &
+              7.66d-3*(log(T4))**5 - 5.08d-3*(log(T4))**6
+      fneb = 1d1**lfneb
+
+      ne2 = n(idx_e)/1d2
+      powd = 0.38d0 - 0.12d0*log(T4)
+
+      factor_num = 3.68d-23 * exp(-3.86/T4) * fneb
+      factor_denom = sqrt(T4) * (1d0 + 0.12d0*ne2**powd)
+      factor = factor_num / factor_denom
+      cool = total_Z * n(idx_e) * n(idx_Hj) * factor
+
+      cooling_Nebular = max(cool, 0d0)  !erg/cm3/s
 
     end function cooling_Nebular
 #ENDIFKROME
