@@ -1331,7 +1331,7 @@ class krome:
 			if "PHOTOAV" in myHeat: self.useHeatingPhotoAv = True #H2 photodissociation and photo-pumping
 			if "PHOTODUST" in myHeat: self.useHeatingPhotoDust = True #photoelectric heating from dust
 			if "PHOTODUSTNET" in myHeat: self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
-                        if "PHOTODUSTNETWD" in myHeat: self.useHeatingPhotoDustNetWD = True #photoelectric heating from dust with recombination cooling from Weingartner and Draine 2001 ApJS
+			if "PHOTODUSTNETWD" in myHeat: self.useHeatingPhotoDustNetWD = True #photoelectric heating from dust with recombination cooling from Weingartner and Draine 2001 ApJS
 			if "XRAY" in myHeat: self.useHeatingXRay = True #heating from xray reactions rate
 			if "VISCOUS" in myHeat: self.useHeatingVisc = True #heating from viscosity
 			#if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2 in LW bands
@@ -1346,9 +1346,9 @@ class krome:
 				print("ERROR: PHOTODUST and PHOTODUSTNET options are mutually exclusive!")
 				sys.exit()
 
-                        if self.useHeatingPhotoDustNet and self.useHeatingPhotoDustNetWD:
-                                print("ERROR: PHOTODUSTNET and PHOTODUSTNETWD options are mutually exclusive!")
-                                sys.exit()
+			if self.useHeatingPhotoDustNet and self.useHeatingPhotoDustNetWD:
+				print("ERROR: PHOTODUSTNET and PHOTODUSTNETWD options are mutually exclusive!")
+				sys.exit()
 
 			if self.photoBins<=0 and self.useHeatingPhotoDustNet:
 				print("ERROR: PHOTODUSTNET option requires -photoBins=NBINS to set")
@@ -6813,7 +6813,7 @@ class krome:
 				if row.strip() == "#IFKROME_useHeatingPhotoAv" and not self.useHeatingPhotoAv: skip = True
 				if row.strip() == "#IFKROME_useHeatingPhotoDust" and not self.useHeatingPhotoDust: skip = True
 				if row.strip() == "#IFKROME_useHeatingPhotoDustNet" and not self.useHeatingPhotoDustNet: skip = True
-                                if row.strip() == "#IFKROME_useHeatingPhotoDustNetWD" and not self.useHeatingPhotoDustNetWD: skip = True
+				if row.strip() == "#IFKROME_useHeatingPhotoDustNetWD" and not self.useHeatingPhotoDustNetWD: skip = True
 				if row.strip() == "#IFKROME_useHeatingXRay" and not self.useHeatingXRay: skip = True
 				if row.strip() == "#IFKROME_useHeatingVisc" and not self.useHeatingVisc: skip = True
 				#if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
