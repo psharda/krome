@@ -1,7 +1,7 @@
 ##############
 #options for test collapse
 #Do not include OII cooling because Kim+2023 ApJS include it in NEBULAR
-
+#TODO: add H ionization H2 dissociation and UV pumping heat
 -n networks/react_popsicle_photo_cr
 -cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,OH,H2O,ATOMIC,COMPTON,DUST,FF,NEBULAR
 -heating=COMPRESS,CHEM,PHOTODUSTNETWD,CR
