@@ -5,6 +5,8 @@
 #No photo or cosmicray chemistry included yet
 #To test the network, look at krome/tests/popsicle
 
+@common: user_Av
+
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
 #UPDATED primordial rates, 2014
 @var:T=Tgas
@@ -350,14 +352,49 @@
 
 ########################################## START METAL DUST CHEMISTRY ###################################################################
 
+#Photoreactions; rate expressed as a function of Av
+#Note that the Av-dependent rates are calculated assuming a Draine ISRF. But I can't find in the original references how to include the ISRF in the rate
+#Some key reactions will be replaced later on when coupled with vettam
+
+@format:idx,R,P,P,rate
+#integrated with J21*13.6/E flux, up to 200eV
+118,H,H+,E,2.19e-12*exp(-1.14e4*user_Av) #TODO: to be removed when krome coupled with vettam
+
+#Glover et al. 2010
+119,H-,H,E,7.1d-7*exp(-.5*user_Av)
+120,H2+,H,H+,1.1d-9*exp(-1.9*user_Av) #TODO: to be removed when krome coupled with vettam
+121,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
+122,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
+123,C,C+,E,3.1d-10*exp(-3.*user_Av) #TODO: to be removed when krome coupled with vettam
+124,C-,C,E,2.4d-7*exp(-.9*user_Av)
+125,CH,C,H,8.7d-10*exp(-1.2*user_Av)
+126,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)
+127,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)
+128,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)
+129,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)
+130,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)
+131,CH3+,CH2+,H,1d-9*exp(-1.7*user_Av)
+132,CH3+,CH+,H2,1d-9*exp(-1.7*user_Av)
+133,C2,C,C,1.5d-10*exp(-2.1*user_Av)
+134,O-,O,E,2.4d-7*exp(-.5*user_Av)
+135,OH,O,H,3.7d-10*exp(-1.7*user_Av)
+136,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)
+137,OH+,O,H+,1d-12*exp(-1.8*user_Av)
+138,H2O,OH,H,6d-10*exp(-1.7*user_Av)
+139,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)
+140,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)
+141,O2,O,O,7d-10*exp(-1.8*user_Av)
+142,CO,C,O,2.d-10*exp(-3.53*user_Av) #TODO: to be removed when krome coupled with vettam
+
+
 #Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
 #Internally evaluated by KROME
 @noTab_start
 @format:idx,R,R,P,rate
-118,H+,E,H,H_recombination_on_dust(n,Tgas)
-119,He+,E,He,He_recombination_on_dust(n,Tgas)
-120,O+,E,O,O_recombination_on_dust(n,Tgas)
-121,C+,E,C,C_recombination_on_dust(n,Tgas)
+143,H+,E,H,H_recombination_on_dust(n,Tgas)
+144,He+,E,He,He_recombination_on_dust(n,Tgas)
+145,O+,E,O,O_recombination_on_dust(n,Tgas)
+146,C+,E,C,C_recombination_on_dust(n,Tgas)
 @noTab_stop
 
 
