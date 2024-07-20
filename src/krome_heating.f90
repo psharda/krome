@@ -70,6 +70,10 @@ contains
     heats(idx_heat_dust) = heat_netPhotoDust(n(:),Tgas)
 #ENDIFKROME
 
+#IFKROME_useHeatingPhotoDustNetWD
+    heats(idx_heat_dust) = heat_netPhotoDustWD(n(:),Tgas)
+#ENDIFKROME
+
 #IFKROME_useHeatingXRay
     heats(idx_heat_xray) = heat_XRay(n(:),Tgas,k(:))
 #ENDIFKROME
