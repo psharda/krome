@@ -28,7 +28,7 @@ program test_krome
   write(22, '(A)', ADVANCE='NO') "#ntot Tgas Tdust"
   write(22, '(A)') trim(krome_get_names_header())
 
-  write(31, '(A)', ADVANCE='NO') "#Tgas sum(cools)"
+  write(31, '(A)', ADVANCE='NO') "#ntot Tgas sum(cools)"
   write(31, '(A)') trim(krome_get_cooling_names_header())
 
   !loop over size(zs)*2 so that every second loop is skipped, so that an empty line is created in the output fort.22 file
@@ -120,7 +120,7 @@ program test_krome
        n(KROME_idx_Tgas) = Tgas
        n(krome_nmols+krome_ndust+1:krome_nmols+2*krome_ndust) = Tdust
        cools(:) = get_cooling_array(n(:),Tgas)
-       write(31,'(99E14.5e3)') Tgas, sum(cools), cools(:)
+       write(31,'(99E14.5e3)') dd, Tgas, sum(cools), cools(:)
 
        !solve the chemistry
        call krome(x(:),Tgas,dt)
