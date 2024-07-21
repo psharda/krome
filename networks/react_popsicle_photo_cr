@@ -356,90 +356,92 @@
 
 ########################################## END METAL CHEMISTRY ###################################################################
 
-########################################## START COSMIC RAY GAS CHEMISTRY ###################################################################
-
-#cosmic rays processes from OSU
-@CR_start
-@format:idx,R,P,P,rate
-@storeOnce_start
-122,H,H+,E,4.6d-1*user_crate
-123,He,He+,E,5.d-1*user_crate
-124,O,O+,E,2.8d0*user_crate
-125,CO,C,O,5d0*user_crate
-126,CO,CO+,E,3d0*user_crate
-127,H2,H,H,1d-1*user_crate
-128,H2,H+,H-,3d-4*user_crate
-129,H2,H2+,E,9.3d-1*user_crate
-130,C,C+,E,1.02d3*user_crate
-131,CH,C,H,7.3d2*user_crate
-132,O2,O,O,7.5d2*user_crate
-133,O2,O2+,E,1.17d2*user_crate
-134,OH,O,H,5.1d2*user_crate
-135,CH2,CH2+,E,5d2*user_crate
-136,H2O,OH,H,9.7d2*user_crate
-@format:idx,R,P,P,P,rate
-137,H2,H,H+,E,9.3d-1*user_crate
-@storeOnce_stop
-@CR_stop
-
-########################################## END COSMIC RAY GAS CHEMISTRY ###################################################################
-
 ########################################## START METAL DUST CHEMISTRY ###################################################################
 
 #Photoreactions; rate expressed as a function of Av
 #Note that the Av-dependent rates are calculated assuming a Draine ISRF. But I can't find in the original references how to include the ISRF in the rate
 #Some key reactions will be replaced later on when coupled with vettam
+#ENSURE H2 photodissociation is listed before H2 cosmic ray ionization, otherwise H2 dissociation heating and UV pumping will read in the wrong rate coefficient!!
 
 @format:idx,R,P,P,rate
 #integrated with J21*13.6/E flux, up to 200eV
 #TODO: reaction below to be removed when krome coupled with vettam
-138,H,H+,E,2.19d-12*exp(-1.14e4*user_Av)
+122,H,H+,E,2.19d-12*exp(-1.14e4*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
-@noTabNext
-139,H2,H,H,5.60d-11*exp(-3.74*user_Av)*krome_fshield(n,Tgas)
+#TODO: reaction below to be removed when krome coupled with vettam
+123,H2,H,H,5.60d-11*exp(-3.74*user_Av)*krome_fshield(n,Tgas)
 
 #Glover et al. 2010
-139,H-,H,E,7.1d-7*exp(-.5*user_Av)
+124,H-,H,E,7.1d-7*exp(-.5*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
-140,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
+125,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
 #TODO: next 2 reactions below commented out to not create sources. May add them back in the future
 #121,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
 #122,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
-141,C,C+,E,3.1d-10*exp(-3.*user_Av)
+126,C,C+,E,3.1d-10*exp(-3.*user_Av)
 #TODO: reaction below commented out to not create sources. May add it back in the future
 #122,C-,C,E,2.4d-7*exp(-.9*user_Av)
-142,CH,C,H,8.7d-10*exp(-1.2*user_Av)
-143,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)
-144,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)
-145,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)
-146,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)
-147,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)
+127,CH,C,H,8.7d-10*exp(-1.2*user_Av)
+128,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)
+129,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)
+130,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)
+131,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)
+132,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)
 #TODO: next 4 reactions below commented out to not create sources. May add them back in the future
 #131,CH3+,CH2+,H,1d-9*exp(-1.7*user_Av)
 #132,CH3+,CH+,H2,1d-9*exp(-1.7*user_Av)
 #133,C2,C,C,1.5d-10*exp(-2.1*user_Av)
 #134,O-,O,E,2.4d-7*exp(-.5*user_Av)
-148,OH,O,H,3.7d-10*exp(-1.7*user_Av)
-149,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)
-150,OH+,O,H+,1d-12*exp(-1.8*user_Av)
-151,H2O,OH,H,6d-10*exp(-1.7*user_Av)
-152,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)
-153,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)
-154,O2,O,O,7d-10*exp(-1.8*user_Av)
+133,OH,O,H,3.7d-10*exp(-1.7*user_Av)
+134,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)
+135,OH+,O,H+,1d-12*exp(-1.8*user_Av)
+136,H2O,OH,H,6d-10*exp(-1.7*user_Av)
+137,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)
+138,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)
+139,O2,O,O,7d-10*exp(-1.8*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
-155,CO,C,O,2.d-10*exp(-3.53*user_Av)
+140,CO,C,O,2.d-10*exp(-3.53*user_Av)
 
 
 #Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
 #Internally evaluated by KROME
 @noTab_start
 @format:idx,R,R,P,rate
-156,H+,E,H,H_recombination_on_dust(n,Tgas)
-157,He+,E,He,He_recombination_on_dust(n,Tgas)
-158,O+,E,O,O_recombination_on_dust(n,Tgas)
-159,C+,E,C,C_recombination_on_dust(n,Tgas)
+141,H+,E,H,H_recombination_on_dust(n,Tgas)
+142,He+,E,He,He_recombination_on_dust(n,Tgas)
+143,O+,E,O,O_recombination_on_dust(n,Tgas)
+144,C+,E,C,C_recombination_on_dust(n,Tgas)
 @noTab_stop
+
+
+########################################## START COSMIC RAY GAS CHEMISTRY ###################################################################
+
+#cosmic rays processes from OSU
+@CR_start
+@format:idx,R,P,P,rate
+@storeOnce_start
+145,H,H+,E,4.6d-1*user_crate
+146,He,He+,E,5.d-1*user_crate
+147,O,O+,E,2.8d0*user_crate
+148,CO,C,O,5d0*user_crate
+149,CO,CO+,E,3d0*user_crate
+150,H2,H,H,1d-1*user_crate
+151,H2,H+,H-,3d-4*user_crate
+152,H2,H2+,E,9.3d-1*user_crate
+153,C,C+,E,1.02d3*user_crate
+154,CH,C,H,7.3d2*user_crate
+155,O2,O,O,7.5d2*user_crate
+156,O2,O2+,E,1.17d2*user_crate
+157,OH,O,H,5.1d2*user_crate
+158,CH2,CH2+,E,5d2*user_crate
+159,H2O,OH,H,9.7d2*user_crate
+@format:idx,R,P,P,P,rate
+160,H2,H,H+,E,9.3d-1*user_crate
+@storeOnce_stop
+@CR_stop
+
+########################################## END COSMIC RAY GAS CHEMISTRY ###################################################################
 
 ########################################## START FREEZEOUT CHEMISTRY ###################################################################
 
