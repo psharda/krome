@@ -78,7 +78,7 @@ program test_krome
     NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
     NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
     Av = (NH + NHj + 2d0*NH2) / 1.87d21
-    call krome_set_user_Av(0d0)
+    call krome_set_user_Av(Av)
     print *, 'Initial Av: ', krome_get_user_Av()    
 
     !set initial density
@@ -88,7 +88,7 @@ program test_krome
     open(newunit=unit,file="explore.dat",status="replace")
 
     print *,"solving..."
-    print '(a5,3a11)',"step","n(cm-3)","Tgas(K)", "Tdust(K)"
+    print '(a5,4a11)',"step","n(cm-3)","Tgas(K)", "Tdust(K)", "Av"
 
 
     !print initial output
@@ -117,6 +117,13 @@ program test_krome
        !set time-step
        dt = dtH
 
+       !set Av, following equation 2 of Glover et al. 2010
+       NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+       NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+       NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+       Av = (NH + NHj + 2d0*NH2) / 1.87d21
+       call krome_set_user_Av(Av)
+
        !break when max density reached
        if(dd.gt.1d18) exit
 
@@ -143,7 +150,7 @@ program test_krome
        if(mod(i,50)==0) then
           !totheat = krome_get_heating(x(:), Tgas)
           !totcool = krome_get_heating(x(:), Tgas)
-          print '(I5,30E11.3)',i,dd,Tgas,Tdust(:)
+          print '(I5,30E11.3)',i,dd,Tgas,Tdust(:),krome_get_user_Av()
           call krome_print_best_flux(x(:),Tgas,5)
           call krome_explore_flux(x(:),Tgas,unit,dd)
        end if
