@@ -393,7 +393,10 @@
 @format:idx,R,P,P,rate
 #integrated with J21*13.6/E flux, up to 200eV
 #TODO: reaction below to be removed when krome coupled with vettam
-138,H,H+,E,2.19e-12*exp(-1.14e4*user_Av)
+138,H,H+,E,2.19d-12*exp(-1.14e4*user_Av)
+#TODO: reaction below to be removed when krome coupled with vettam
+@noTabNext
+139,H2,H,H,5.60d-11*exp(-3.74*user_Av)*krome_fshield(n,Tgas)
 
 #Glover et al. 2010
 139,H-,H,E,7.1d-7*exp(-.5*user_Av)
