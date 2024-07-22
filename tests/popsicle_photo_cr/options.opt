@@ -10,6 +10,7 @@
 -ATOL=1d-40
 -maxord=1
 -shielding=WG11
+-shielding_CO
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
 -dust=1,C
