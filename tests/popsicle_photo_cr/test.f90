@@ -73,11 +73,11 @@ program test_krome
     print *, 'Dust distribution: ', krome_get_dust_distribution()
     call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
 
-    !set initial Av, following equation 2 of Glover et al. 2010
+    !set initial Av, following equation 3 of Gong, Ostriker and Wolfire 2017
     NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
     NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
     NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
-    Av = (NH + NHj + 2d0*NH2) / 1.87d21
+    Av = (NH + NHj + 2d0*NH2) *zs(jz2) / 1.87d21
     call krome_set_user_Av(Av)
     print *, 'Initial Av: ', krome_get_user_Av()    
 
@@ -121,7 +121,7 @@ program test_krome
        NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
        NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
        NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
-       Av = (NH + NHj + 2d0*NH2) / 1.87d21
+       Av = (NH + NHj + 2d0*NH2) *zs(jz2)/ 1.87d21
        call krome_set_user_Av(Av)
 
        !break when max density reached
