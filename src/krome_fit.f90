@@ -365,6 +365,36 @@ contains
 
   end function fit_anytab1D_linlog
 
+  !*****************************
+  !2D interpolation at (x0,y0) for (x(:), y(:)) in z(:,:)
+  !Added by Piyush Sharda in 2024 for CO shielding
+  function interpolate2D(x, y, z, x0, y0)
+    real*8 :: x(:), y(:), z(size(x), size(y))
+    real*8 :: x0, y0
+    real*8 :: f
+    integer :: i, j
+    real*8 :: t, u
+
+    ! Find indices i and j such that x(i) <= x0 < x(i+1) and y(j) <= y0 < y(j+1)
+    i = 1
+    do while (i < size(x) - 1 .and. x0 > x(i + 1))
+      i = i + 1
+    end do
+
+    j = 1
+    do while (j < size(y) - 1 .and. y0 > y(j + 1))
+      j = j + 1
+    end do
+
+    ! Compute interpolation weights
+    t = (x0 - x(i)) / (x(i + 1) - x(i))
+    u = (y0 - y(j)) / (y(j + 1) - y(j))
+
+    ! Perform bilinear interpolation
+    interpolate2D = (1 - t) * (1 - u) * z(i, j) + t * (1 - u) * z(i + 1, j) + &
+        (1 - t) * u * z(i, j + 1) + t * u * z(i + 1, j + 1)
+        
+  end function interpolate2D
 
   !*****************************
   !spline interpolation at t using array  x,y (size n) as data
