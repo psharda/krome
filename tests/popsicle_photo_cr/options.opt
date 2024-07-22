@@ -11,6 +11,7 @@
 -maxord=1
 -shielding=WG11_withH
 -shielding_CO
+-shielding_C
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
 -dust=1,C
