@@ -403,15 +403,23 @@
 #TODO: reaction below to be removed when krome coupled with vettam
 140,CO,C,O,2.d-10*exp(-3.53*user_Av)*krome_fshield_CO(n, Tgas)
 
+#H2O+ photodissociation, following Glover et al. 2010 equation 4
+@noTab_start
+@var: HnOj = fHnOj(user_Av)
+141,H2O+,H2+,O,5.d-11*HnOj
+142,H2O+,H+,OH,5.d-11*HnOj
+143,H2O+,O+,H2,5.d-11*HnOj
+144,H2O+,OH+,H,1.5d-10*HnOj
+@noTab_end
+
 
 #Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
-#Internally evaluated by KROME
 @noTab_start
 @format:idx,R,R,P,rate
-141,H+,E,H,H_recombination_on_dust(n,Tgas)
-142,He+,E,He,He_recombination_on_dust(n,Tgas)
-143,O+,E,O,O_recombination_on_dust(n,Tgas)
-144,C+,E,C,C_recombination_on_dust(n,Tgas)
+145,H+,E,H,H_recombination_on_dust(n,Tgas)
+146,He+,E,He,He_recombination_on_dust(n,Tgas)
+147,O+,E,O,O_recombination_on_dust(n,Tgas)
+148,C+,E,C,C_recombination_on_dust(n,Tgas)
 @noTab_stop
 
 
@@ -421,23 +429,23 @@
 @CR_start
 @format:idx,R,P,P,rate
 @storeOnce_start
-145,H,H+,E,4.6d-1*user_crate
-146,He,He+,E,5.d-1*user_crate
-147,O,O+,E,2.8d0*user_crate
-148,CO,C,O,5d0*user_crate
-149,CO,CO+,E,3d0*user_crate
-150,H2,H,H,1d-1*user_crate
-151,H2,H+,H-,3d-4*user_crate
-152,H2,H2+,E,9.3d-1*user_crate
-153,C,C+,E,1.02d3*user_crate
-154,CH,C,H,7.3d2*user_crate
-155,O2,O,O,7.5d2*user_crate
-156,O2,O2+,E,1.17d2*user_crate
-157,OH,O,H,5.1d2*user_crate
-158,CH2,CH2+,E,5d2*user_crate
-159,H2O,OH,H,9.7d2*user_crate
+149,H,H+,E,4.6d-1*user_crate
+150,He,He+,E,5.d-1*user_crate
+151,O,O+,E,2.8d0*user_crate
+152,CO,C,O,5d0*user_crate
+153,CO,CO+,E,3d0*user_crate
+154,H2,H,H,1d-1*user_crate
+155,H2,H+,H-,3d-4*user_crate
+156,H2,H2+,E,9.3d-1*user_crate
+157,C,C+,E,1.02d3*user_crate
+158,CH,C,H,7.3d2*user_crate
+159,O2,O,O,7.5d2*user_crate
+160,O2,O2+,E,1.17d2*user_crate
+161,OH,O,H,5.1d2*user_crate
+162,CH2,CH2+,E,5d2*user_crate
+163,H2O,OH,H,9.7d2*user_crate
 @format:idx,R,P,P,P,rate
-160,H2,H,H+,E,9.3d-1*user_crate
+164,H2,H,H+,E,9.3d-1*user_crate
 @storeOnce_stop
 @CR_stop
 
