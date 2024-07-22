@@ -74,10 +74,15 @@ program test_krome
     call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
 
     !set initial Av, following equation 3 of Gong, Ostriker and Wolfire 2017
-    NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
-    NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
-    NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
-    Av = (NH + NHj + 2d0*NH2) *zs(jz2) / 1.87d21
+    if (zs(jz2) > 0d0) then
+      NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+      NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+      NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+      Av = (NH + NHj + 2d0*NH2) *zs(jz2) / 1.87d21
+    else
+      !Primordial case: set Av to +infinity so that exp(-Av) = exactly 0. This Av is only used in reaction rates of the form exp(-Av)
+      Av = huge(1.0)
+    endif
     call krome_set_user_Av(Av)
     print *, 'Initial Av: ', krome_get_user_Av()    
 
@@ -117,11 +122,15 @@ program test_krome
        !set time-step
        dt = dtH
 
-       !set Av, following equation 2 of Glover et al. 2010
-       NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
-       NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
-       NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
-       Av = (NH + NHj + 2d0*NH2) *zs(jz2)/ 1.87d21
+       if (zs(jz2) > 0d0) then
+         !set Av, following equation 2 of Glover et al. 2010
+         NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+         NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+         NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+         Av = (NH + NHj + 2d0*NH2) *zs(jz2)/ 1.87d21
+       else
+         Av = huge(1.0)
+       end if
        call krome_set_user_Av(Av)
 
        !break when max density reached
@@ -147,7 +156,7 @@ program test_krome
 
        !print some output
        write(22,'(99E17.8e3)') dd,Tgas,Tdust(:),x(:)/dd
-       if(mod(i,50)==0) then
+       if(mod(i,100)==0) then
           !totheat = krome_get_heating(x(:), Tgas)
           !totcool = krome_get_heating(x(:), Tgas)
           print '(I5,30E11.3)',i,dd,Tgas,Tdust(:),krome_get_user_Av()
