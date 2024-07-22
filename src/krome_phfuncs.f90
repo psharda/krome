@@ -295,8 +295,9 @@ contains
     use krome_commons
     use krome_constants
     use krome_getphys
+    use krome_fit
     real*8::n(nspec),Tgas,calc_COshieldVvDB09,N_H2,nH2
-    real*8::N_CO,ncO
+    real*8::N_CO,ncO,clipped_x,clipped_y
     real*8 :: x(8), y(6), z(8, 6)
 
     !check on H2 abundances to avoid weird numerical artifacts
@@ -305,8 +306,6 @@ contains
 
     N_H2  =  2d0 * num2col(nH2,n(:))
     N_CO = num2col(nCO,n(:))
-
-    real*8 :: x0, y0, result
 
     !Table 5, first section
     x = (/ 0d0, 13d0, 14d0, 15d0, 16d0, 17d0, 18d0, 19d0 /) !N_CO
