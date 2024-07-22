@@ -401,7 +401,7 @@
 138,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)
 139,O2,O,O,7d-10*exp(-1.8*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
-140,CO,C,O,2.d-10*exp(-3.53*user_Av)
+140,CO,C,O,2.d-10*exp(-3.53*user_Av)*krome_fshield_CO(n, Tgas)
 
 
 #Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 

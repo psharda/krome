@@ -148,6 +148,21 @@ contains
 
   end function krome_fshield
 
+  !***********************
+  !shielding function for CO selected with -shielding_CO option
+  function krome_fshield_CO(n,Tgas)
+    implicit none
+    real*8::krome_fshield_CO,n(:),Tgas
+
+    krome_fshield_CO = 1d0 !default shielding value
+
+#IFKROME_useShieldingCO
+    !compute shielding from Visser, van Dishoeck and Black 2009
+    krome_fshield_CO = calc_COshieldVvDB09(n(:), Tgas)
+#ENDIFKROME
+
+  end function krome_fshield_CO
+
   !**************************
   !shielding function for H2O+ and H3O+
   ! following Glover+2010 MNRAS sect 2.2 eqn.4
@@ -270,6 +285,31 @@ contains
          + (omegaH2/sqrt(1d0+xN_H2)) * exp(-8.5d-4*sqrt(1d0+xN_H2))
 
   end function calc_H2shieldR14
+#ENDIFKROME
+
+#IFKROME_useShieldingCO
+  !************************
+  !calculate the shielding factor for CO, following Visser, van Dishoeck and Black 2009
+  !Shielding by CO and H2. Does not include dust
+  function calc_COshieldVvDB09(n,Tgas)
+    use krome_commons
+    use krome_constants
+    use krome_getphys
+    real*8::n(nspec),Tgas,calc_COshieldVvDB09,N_H2,nH2
+    real*8::N_CO,ncO
+
+    !check on H2 abundances to avoid weird numerical artifacts
+    nH2 = max(1d-40, n(idx_H2))
+    nCO = max(1d-40, n(idx_CO))
+
+    N_H2  =  2d0 * num2col(nH2,n(:))
+    N_CO = num2col(nCO,n(:))
+
+    calc_COshieldVvDB09 = 0.965d0/(1.d0+xN_H2/b5)**1.1d0 &
+         + (0.035d0/(1.d0+xN_H2)**0.5d0) &
+         * exp(-8.5d-4*(1.d0+xN_H2)**0.5d0)
+
+  end function calc_COshieldVvDB09
 #ENDIFKROME
 
 end module krome_phfuncs
