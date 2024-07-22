@@ -169,6 +169,21 @@ contains
 
   end function krome_fshield_CO
 
+  !***********************
+  !cross shielding function for C selected with -shielding_C option
+  function krome_fshield_C(n,Tgas)
+    implicit none
+    real*8::krome_fshield_C,n(:),Tgas
+
+    krome_fshield_C = 1d0 !default shielding value
+
+#IFKROME_useShieldingC
+    !compute cross shielding from Tielens and Hollenbach 1985
+    krome_fshield_C = calc_CshieldTH85(n(:), Tgas)
+#ENDIFKROME
+
+  end function krome_fshield_C
+
   !**************************
   !shielding function for H2O+ and H3O+
   ! following Glover+2010 MNRAS sect 2.2 eqn.4
@@ -371,6 +386,30 @@ contains
     calc_COshieldVvDB09 = 1d1**interpolate2D(x, y, log10(z), clipped_x, clipped_y)
 
   end function calc_COshieldVvDB09
+#ENDIFKROME
+
+#IFKROME_useShieldingC
+  !************************
+  !calculate the cross self-shielding factor, following Tielens and Hollenbach 1985
+  !following Gong, Ostriker and Wolfire 2017 equation 9
+  function calc_CshieldTH85(n,Tgas)
+    use krome_commons
+    real*8::n(nspec),Tgas,calc_CshieldTH85,N_H2,nH2
+    real*8::nC,N_C,tau,fH2
+
+    !check on H2 abundances to avoid
+    ! weird numerical artifacts
+    nH2 = max(1d-40, n(idx_H2))
+    nC = max(1d-40, n(idx_C))
+
+    N_H2  =  2d0 * num2col(nH2,n(:)) *2.8d-22
+    N_C  =  num2col(nC,n(:))
+
+    tau = 1.6d-17 * N_C
+    fH2 = exp(-N_H2) / (1d0 + N_H2)
+    calc_CshieldTH85 = exp(-tau) * fH2
+
+  end function calc_CshieldTH85
 #ENDIFKROME
 
 end module krome_phfuncs

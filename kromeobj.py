@@ -54,7 +54,7 @@ class krome:
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = useCoolingNebular = False
-	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useShieldingCO = useShieldingWG11_withH = False
+	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useShieldingC = useShieldingCO = useShieldingWG11_withH = False
 	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
@@ -344,6 +344,7 @@ class krome:
 		self.parser.add_argument("-shielding", metavar="TYPE", help="use H2 self-shielding, TYPE can be DB96 for Draine+Bertoldi 1996,\
     		WG11 for the more accurate Wolcott+Greene 2011, WG11_withH to include cross shielding by H, R14 for the Tgas-dependent by Richings+2014")
 		self.parser.add_argument("-shielding_CO", action="store_true", help="use CO self-shielding from Visser, van Dishoeck and Black 2009")
+		self.parser.add_argument("-shielding_C", action="store_true", help="use C cross-shielding by H2 from Tielens and Hollenbach 1985")
 		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux \
 			(when calculated from photobins).")
 		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
@@ -898,7 +899,12 @@ class krome:
 		#determine if we use CO shielding for CO dissociation
 		if args.shielding_CO:
 			self.useShieldingCO = True
-			print("Activating CO shielding from Visser, van Dishoeck and Black 2009")
+			print("Reading option -shielding_CO (activating CO shielding from Visser, van Dishoeck and Black 2009)")
+
+		#determine if we use C cross shielding by H2 for C dissociation
+		if args.shielding_C:
+			self.useShieldingC = True
+			print("Reading option -shielding_C (activating C cross-shielding from Tielens and Hollenbach 1985)")
 
 		#use dust shielding for Habing flux
 		if args.shieldHabingDust:
@@ -1915,6 +1921,7 @@ class krome:
 
 		fsh_found = False #search for fsh variable for shielding if needed
 		fsh_CO_found = False #search for fsh variable for shieldingCO if needed
+		fsh_C_found = False #search for fsh variable for shieldingC if needed
 		#start reading file stored in the loop above
 		isComment = False #flag for comment block
 		noTabNext = False #flag for use tabs for the next reaction
@@ -2461,6 +2468,8 @@ class krome:
 				fsh_found = True
 			if "krome_fshield_CO" in myrea.krate.lower():
 				fsh_CO_found = True
+			if "krome_fshield_C" in myrea.krate.lower():
+				fsh_C_found = True
 			if qeffFound:
 				myrea.qeff = arow[iqeff]
 
@@ -2594,6 +2603,14 @@ class krome:
 			print("")
 			print("WARNING: no krome_fshield_CO(n(:),Tgas) variable found in rate coefficient")
 			print(" even though shieldingCO option is enabled.")
+			print(" Please check your network file!")
+			a = keyb_input("Any key to continue q to quit... ")
+			if a == "q": sys.exit()
+
+		if self.useShieldingC and not fsh_C_found:
+			print("")
+			print("WARNING: no krome_fshield_C(n(:),Tgas) variable found in rate coefficient")
+			print(" even though shieldingC option is enabled.")
 			print(" Please check your network file!")
 			a = keyb_input("Any key to continue q to quit... ")
 			if a == "q": sys.exit()
@@ -5680,6 +5697,7 @@ class krome:
 			if srow == "#IFKROME_useShieldingDB96" and not self.useShieldingDB96: skip = True
 			if srow == "#IFKROME_useShieldingR14" and not self.useShieldingR14: skip = True
 			if srow == "#IFKROME_useShieldingCO" and not self.useShieldingCO: skip = True
+			if srow == "#IFKROME_useShieldingC" and not self.useShieldingC: skip = True
 			if srow == "#IFKROME_usePhotoBins" and not (self.photoBins>0): skip = True
 
 			if srow == "#IFKROME_hasHI" and not has_HI: skip = True

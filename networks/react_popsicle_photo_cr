@@ -372,6 +372,8 @@
 123,H2,H,H,5.60d-11*exp(-3.74*user_Av)*krome_fshield(n,Tgas)
 
 #Glover et al. 2010
+#TODO: GOW 2017 scale the reaction coefficients by \chi_FUV: FUV radiation field strength between 6-13.6 eV (see their Table 2). 
+#^This is similar to what we have TODO for photodustnetWD
 124,H-,H,E,7.1d-7*exp(-.5*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
 125,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
@@ -379,7 +381,7 @@
 #121,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
 #122,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
-126,C,C+,E,3.1d-10*exp(-3.*user_Av)
+126,C,C+,E,3.1d-10*exp(-3.*user_Av)*krome_fshield_C(n, Tgas)
 #TODO: reaction below commented out to not create sources. May add it back in the future
 #122,C-,C,E,2.4d-7*exp(-.9*user_Av)
 127,CH,C,H,8.7d-10*exp(-1.2*user_Av)
