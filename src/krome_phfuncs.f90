@@ -297,6 +297,7 @@ contains
     use krome_getphys
     real*8::n(nspec),Tgas,calc_COshieldVvDB09,N_H2,nH2
     real*8::N_CO,ncO
+    real*8 :: x(8), y(6), z(8, 6)
 
     !check on H2 abundances to avoid weird numerical artifacts
     nH2 = max(1d-40, n(idx_H2))
@@ -305,9 +306,25 @@ contains
     N_H2  =  2d0 * num2col(nH2,n(:))
     N_CO = num2col(nCO,n(:))
 
-    calc_COshieldVvDB09 = 0.965d0/(1.d0+xN_H2/b5)**1.1d0 &
-         + (0.035d0/(1.d0+xN_H2)**0.5d0) &
-         * exp(-8.5d-4*(1.d0+xN_H2)**0.5d0)
+    real*8 :: x0, y0, result
+
+    !Table 5, first section
+    x = (/ 0d0, 13d0, 14d0, 15d0, 16d0, 17d0, 18d0, 19d0 /) !N_CO
+    y = (/ 0d0, 19d0, 20d0, 21d0, 22d0, 23d0 /) !N_H2
+    z(:, 1) = (/ 1d0, 8.080d-1, 5.250d-1, 2.434d-1, 5.467d-2, 1.362d-2, 3.378d-3, 5.240d-5 /)
+    z(:, 2) = (/ 8.176d-1, 6.347d-1, 3.891d-1, 1.787d-1, 4.297d-2, 1.152d-2, 2.922d-3, 4.662d-4 /)
+    z(:, 3) = (/ 7.223d-1, 5.624d-1, 3.434d-1, 1.540d-1, 3.515d-2, 9.231d-3, 2.388d-3, 3.899d-4 /)
+    z(:, 4) = (/ 3.260d-1, 2.810d-1, 1.953d-1, 8.726d-2, 1.907d-2, 4.768d-3, 1.150d-3, 1.941d-4 /)
+    z(:, 5) = (/ 1.108d-2, 1.081d-2, 9.033d-3, 4.441d-3, 1.102d-3, 2.644d-4, 7.329d-5, 1.437d-5 /)
+    z(:, 6) = (/ 3.938d-7, 3.938d-7, 3.936d-7, 3.923d-7, 3.901d-7, 3.893d-7, 3.890d-7, 3.875d-7 /)
+
+
+    !Clip logNCO and logNH2 to the ranges in the data
+    clipped_x = max(x(1), min(log10(N_CO), x(8)))
+    clipped_y = max(y(1), min(log10(N_H2), y(6)))
+
+    !Interpolate on log10 (z)
+    calc_COshieldVvDB09 = 1d1**interpolate2D(x, y, log10(z), clipped_x, clipped_y)
 
   end function calc_COshieldVvDB09
 #ENDIFKROME
