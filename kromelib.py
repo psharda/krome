@@ -1220,9 +1220,9 @@ def addVarCoe(mytabvar,tabf,coevars):
 def get_cooling_dict():
 	#the keys of this list must be lowercase.
 	#the number is the corresponding integer index for the given cooling
-	idxcoo = {"H2": 1, "H2GP": 2, "atomic": 3, "CEN": 3, "HD": 4, "Z": 5, "metal": 5, "dH": 6,
+	idxcoo = {"H2": 1, "H2GP": 2, "CEN": 3, "atomic": 3, "HD": 4, "metal": 5, "Z": 5, "dH": 6,
 			  "enthalpic": 6, "dust": 7, "compton":8, "CIE": 9, "continuum": 10, "cont": 10,
-			  "exp": 11, "expansion": 11, "ff": 12, "bss": 12, "custom": 13, "CO":14,
+			  "exp": 11, "expansion": 11, "bss": 12, "ff": 12, "custom": 13, "CO":14,
 			  "ZCIE": 15, "ZCIENOUV": 16, "ZExtend": 17, "GH": 18, "OH": 19, "H2O": 20, "HCN": 21, "NEBULAR": 22}
 	idxcoo = {k.lower(): v for k, v in idxcoo.items()}
 	return idxcoo
