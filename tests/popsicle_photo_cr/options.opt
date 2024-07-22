@@ -9,7 +9,7 @@
 -gamma=EXACT
 -ATOL=1d-40
 -maxord=1
--shielding=WG11
+-shielding=WG11_withH
 -shielding_CO
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z

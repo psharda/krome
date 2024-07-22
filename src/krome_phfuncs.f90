@@ -141,6 +141,12 @@ contains
     krome_fshield =  calc_H2shieldWG11(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useShieldingWG11_withH
+    !compute shielding from Wolcott+Greene 2011, including
+    !cross shielding by H
+    krome_fshield =  calc_H2shieldWG11_withH(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useShieldingR14
     !compute shielding from Richings+ 2014
     krome_fshield =  calc_H2shieldR14(n(:), Tgas)
@@ -217,6 +223,8 @@ contains
 #IFKROME_useShieldingWG11
   !************************
   !calculate the self-shielding factor, following Wolcott&Greene 2011
+  !optional argument 'shieldH' added by Piyush Sharda in 2024
+  !to calculate cross shielding by H
   !NOTE: this function is suited for collapse. Use with caution!
   function calc_H2shieldWG11(n,Tgas)
     use krome_commons
@@ -241,6 +249,43 @@ contains
          * exp(-8.5d-4*(1.d0+xN_H2)**0.5d0)
 
   end function calc_H2shieldWG11
+#ENDIFKROME
+
+#IFKROME_useShieldingWG11_withH
+  !************************
+  !calculate the self-shielding factor, following Wolcott&Greene 2011
+  !optional argument 'shieldH' added by Piyush Sharda in 2024
+  !to calculate cross shielding by H
+  !NOTE: this function is suited for collapse. Use with caution!
+  function calc_H2shieldWG11_withH(n,Tgas)
+    use krome_commons
+    use krome_constants
+    use krome_getphys
+    real*8::n(nspec),Tgas,calc_H2shieldWG11_withH,N_H2,nH2
+    real*8::xN_H2,b5,H_mass,nHI,xN_HI,bb
+
+    !check on H2 abundances to avoid weird numerical artifacts
+    nH2 = max(1d-40, n(idx_H2))
+
+    N_H2  =  2d0 * num2col(nH2,n(:))
+
+!    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
+    xN_H2 = N_H2*2d-15 !normalized column density (#), 2d-15=1/5d14
+    H_mass = p_mass+e_mass !H mass in g
+
+    !doppler broadening parameter b divided by 1d5 cm/s (#)
+    b5 = ((boltzmann_erg*Tgas/H_mass)**0.5d0)*1.d-5
+    calc_H2shieldWG11_withH = 0.965d0/(1.d0+xN_H2/b5)**1.1d0 &
+         + (0.035d0/(1.d0+xN_H2)**0.5d0) &
+         * exp(-8.5d-4*(1.d0+xN_H2)**0.5d0)
+
+    nHI = max(1d-40, n(idx_H))
+    N_HI = num2col(nHI,n(:))
+    xN_HI = N_HI / 2.85d23
+    bb = (1d0 / (1d0 + xN_HI)**1.6) * exp(-0.15d0*xN_HI) !equation 15 of WG11
+    calc_H2shieldWG11_withH = bb*calc_H2shieldWG11_withH
+
+  end function calc_H2shieldWG11_withH
 #ENDIFKROME
 
 #IFKROME_useShieldingR14

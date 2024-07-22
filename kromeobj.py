@@ -54,7 +54,7 @@ class krome:
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = useCoolingNebular = False
-	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useShieldingCO = False
+	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useShieldingCO = useShieldingWG11_withH = False
 	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
 	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
@@ -342,7 +342,7 @@ class krome:
 		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files. Now this is the default, \
 			here for retrocompatibility, see option -lh.")
 		self.parser.add_argument("-shielding", metavar="TYPE", help="use H2 self-shielding, TYPE can be DB96 for Draine+Bertoldi 1996,\
-    		WG11 for the more accurate Wolcott+Greene 2011, R14 for the Tgas-dependent by Richings+2014")
+    		WG11 for the more accurate Wolcott+Greene 2011, WG11_withH to include cross shielding by H, R14 for the Tgas-dependent by Richings+2014")
 		self.parser.add_argument("-shielding_CO", action="store_true", help="use CO self-shielding from Visser, van Dishoeck and Black 2009")
 		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux \
 			(when calculated from photobins).")
@@ -881,7 +881,7 @@ class krome:
 		if args.shielding:
 			myShielding = [x.strip() for x in args.shielding.split(",")]
 			#list of the shielding approximations
-			allShielding = ["DB96","WG11","R14"]
+			allShielding = ["DB96","WG11","WG11_withH","R14"]
 			for shi in myShielding:
 				if shi not in allShielding:
 					die("ERROR: Shielding \""+shi+"\" is unknown!\nAvailable shielding are: "
@@ -890,6 +890,7 @@ class krome:
 				die("ERROR: "+(", ".join(allShielding))+" are mutually exclusive!")
 			self.useShieldingDB96 = ("DB96" in myShielding)
 			self.useShieldingWG11 = ("WG11" in myShielding)
+			self.useShieldingWG11_withH = ("WG11_withH" in myShielding)
 			self.useShieldingR14  = ("R14" in myShielding)
 			self.useShielding = True
 			print("Reading option -shielding (TYPE="+(",".join(myShielding))+")")
@@ -2581,7 +2582,7 @@ class krome:
 
 		#after loop on file post-process special reactions
 		#shielding reactions requires fsh variable
-		if self.useShieldingDB96 or self.useShieldingWG11 or self.useShieldingR14 and not fsh_found:
+		if self.useShieldingDB96 or self.useShieldingWG11 or self.useShieldingWG11_withH or self.useShieldingR14 and not fsh_found:
 			print("")
 			print("WARNING: no krome_fshield(n(:),Tgas) variable found in rate coefficient")
 			print(" even though shielding option is enabled.")
@@ -5675,6 +5676,7 @@ class krome:
 			#skip when find IF pragmas
 
 			if srow == "#IFKROME_useShieldingWG11" and not self.useShieldingWG11: skip = True
+			if srow == "#IFKROME_useShieldingWG11_withH" and not self.useShieldingWG11_withH: skip = True
 			if srow == "#IFKROME_useShieldingDB96" and not self.useShieldingDB96: skip = True
 			if srow == "#IFKROME_useShieldingR14" and not self.useShieldingR14: skip = True
 			if srow == "#IFKROME_useShieldingCO" and not self.useShieldingCO: skip = True
