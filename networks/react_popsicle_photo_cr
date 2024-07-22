@@ -361,6 +361,7 @@
 #Photoreactions; rate expressed as a function of Av
 #Note that the Av-dependent rates are calculated assuming a Draine ISRF. But I can't find in the original references how to include the ISRF in the rate
 #Some key reactions will be replaced later on when coupled with vettam
+#ENSURE H photoionization is listed before H cosmic ray ionization, otherwise H ionization heating will read in the wrong rate coefficient!!
 #ENSURE H2 photodissociation is listed before H2 cosmic ray ionization, otherwise H2 dissociation heating and UV pumping will read in the wrong rate coefficient!!
 
 @format:idx,R,P,P,rate
