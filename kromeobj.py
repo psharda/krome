@@ -1306,6 +1306,14 @@ class krome:
 				die("ERROR: CIE and CONT cooling are mutually exclusive!")
 			if "CIE" in myCools and "GH" in myCools:
 				die("ERROR: CIE and GH cooling are mutually exclusive!")
+			if "Z_CIEGF" in myCools and "GH" in myCools:
+				die("ERROR: Z_CIEGF and GH cooling are mutually exclusive!")
+			if "Z_CIEGF" in myCools and "Z_EXTENDED" in myCools:
+				die("ERROR: Z_CIEGF and Z_EXTENDED cooling are mutually exclusive!")
+			if "Z_CIEGF" in myCools and "Z_CIE" in myCools:
+				die("ERROR: Z_CIEGF and Z_CIE cooling are mutually exclusive!")
+			if "Z_CIEGF" in myCools and "Z_CIENOUV" in myCools:
+				die("ERROR: Z_CIEGF and Z_CIENOUV cooling are mutually exclusive!")
 
 			self.use_thermo = True
 
