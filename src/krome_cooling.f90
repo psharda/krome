@@ -25,10 +25,19 @@
       implicit none
       real*8::n(:), Tgas
       real*8::get_cooling_array(ncools),cools(ncools)
-      real*8::f1,f2,smooth
+      real*8::f1,f2,smooth,Tt1,Tt2
 
       f1 = 1d0
       f2 = 1d0
+
+#IFKROME_useCoolingZCIEGF
+      !f2 becomes S in equation 40 of Kim+2023 ApJS, 264, 10
+      Tt1 = 2d4
+      Tt2 = 3.5d4
+      f2 = 1d0/(1d0 + exp(-a*(Tgas - 0.5d0*(Tt1 + Tt2))/ (Tt2 - Tt1)))
+      !f1 becomes (1-S) in equation 40 of Kim+2023 ApJS, 264, 10
+      f1 = 1d0 - f2
+#ENDIFKROME
 
       !returns cooling in erg/cm3/s
       cools(:) = 0d0
@@ -50,15 +59,15 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingDust
-      cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
+      cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingDustNoTdust
-      cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
+      cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingDustTabs
-      cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
+      cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingExpansion
@@ -66,19 +75,19 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingCO
-      cools(idx_cool_CO) = cooling_CO(n(:), Tgas) #KROME_floorCO
+      cools(idx_cool_CO) = f1 * cooling_CO(n(:), Tgas) #KROME_floorCO
 #ENDIFKROME
 
 #IFKROME_useCoolingOH
-      cools(idx_cool_OH) = cooling_OH(n(:), Tgas)
+      cools(idx_cool_OH) = f1 * cooling_OH(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingH2O
-      cools(idx_cool_H2O) = cooling_H2O(n(:), Tgas)
+      cools(idx_cool_H2O) = f1 * cooling_H2O(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingHCN
-      cools(idx_cool_HCN) = cooling_HCN(n(:), Tgas)
+      cools(idx_cool_HCN) = f1 * cooling_HCN(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingAtomic
@@ -86,7 +95,7 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingNebular
-      cools(idx_cool_nebular) = cooling_Nebular(n(:), Tgas) #KROME_floorNebular
+      cools(idx_cool_nebular) = f1 * cooling_Nebular(n(:), Tgas) #KROME_floorNebular
 #ENDIFKROME
 
 
@@ -116,7 +125,7 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
-      cools(idx_cool_Z) = f2 * ( cooling_Z(n(:), Tgas) #KROME_floorZ )
+      cools(idx_cool_Z) = f1 * ( cooling_Z(n(:), Tgas) #KROME_floorZ )
 #ENDIFKROME
 
 #IFKROME_useCoolingCIE
