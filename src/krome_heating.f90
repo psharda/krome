@@ -491,7 +491,7 @@ contains
     use krome_getphys
     implicit none
     real*8::heat_photoAv,n(:),Tgas,k(:)
-    real*8::ncrn,ncrd1,ncrd2,yH,yH2,ncr,h2heatfac,dd,Rdiss
+    real*8::ncrn,ncrd1,ncrd2,yH,yH2,ncr,h2heatfac,dd,Rdiss,Rion
 
     dd = get_Hnuclei(n(:))
     ncrn  = 1.0d6*(Tgas**(-0.5d0))
@@ -504,6 +504,7 @@ contains
     ncr = ncrn/(ncrd1*yH+ncrd2*yH2)      !1/cm3
     h2heatfac = 1.0d0/(1.0d0+ncr/dd)     !dimensionless
 
+    Rion = #KROME_RionH
     Rdiss = #KROME_RdissH2
 
     !photodissociation H2 heating
@@ -511,6 +512,9 @@ contains
 
     !UV photo-pumping H2
     heat_photoAv = heat_photoAv + 2.7d-11*Rdiss*h2heatfac*n(idx_H2)
+
+    !photoionization H heating
+    heat_photoAv = heat_photoAv + Rion*n(idx_H)*5.447399970800022d-12 ! in erg/cm3/s
 
   end function heat_photoAv
 #ENDIFKROME

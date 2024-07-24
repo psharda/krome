@@ -6997,6 +6997,24 @@ class krome:
 					else:
 						row = row.replace("#KROME_photoDustZ","1d1**get_metallicity"+zz+"(n(:))")
 
+				#replace correct H photoionization rates
+				if "#KROME_RionH" in row:
+					rdhFound = False
+					for rea in self.reacts:
+						R = sorted([x.name for x in rea.reactants])
+						P = sorted([x.name for x in rea.products])
+						if R == ["H"] and P == ["E","H+"]:
+							rateionH = "k("+str(rea.idx)+")"
+							rdhFound = True
+							break
+					#check if rate photoionization rate is present in the network
+					if not rdhFound:
+						print("ERROR: if you use PHOTOAV heating you should have")
+						print(" H photoionization rate in your chemical network!")
+						sys.exit()
+
+					row = row.replace("#KROME_RionH", rateionH) #replace pragma with H photoionization rate
+
 				#replace correct H2 photodissociation rates
 				if "#KROME_RdissH2" in row:
 					rdh2Found = False
