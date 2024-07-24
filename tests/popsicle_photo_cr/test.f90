@@ -25,7 +25,7 @@ program test_krome
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
   !Cosmic ray ionization rate
-  crate = 3d-16 !MW value from Indriolo and McCall 2012
+  crate = 3d-17 !MW value from Indriolo and McCall 2012
   call krome_set_user_crate(crate)
 
   !output header
