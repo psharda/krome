@@ -280,7 +280,7 @@ class krome:
 		self.parser.add_argument("-gizmo", action="store_true", help="create patches for Gizmo")
 		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be RIPAMONTI or OMUKAI")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM\
-			, DH, CR, PHOTOAV,VISCOUS. If you want a complete list of the available heating options type -heating=?")
+			, DH, CR, PHOTOAV,VISCOUS,PHOTODUSTNET,PHOTODUSTNETWD,PHOTODUSTWD. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-interfaceC", action="store_true", help="create a C wrapper")
 		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper \
