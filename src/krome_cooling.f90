@@ -777,7 +777,7 @@
       use krome_getphys
       implicit none
       real*8::cooling_Z_CIEGF,n(:),inTgas
-      real*8::cH,Tgas,xLd,logcH
+      real*8::cH,Tgas,xLd,logcH,interp(:)
 
       cooling_Z_CIEGF = 0d0
       cH = get_Hnuclei(n(:))
@@ -787,13 +787,43 @@
       if(cH.lt.1d-20)return
 
       Tgas = log10(inTgas)
-      logcH = log10(cH)
 
-      xLd = 0d0
+      interp = log10(coolZCIEGFx2(:) + total_Z*coolZCIEGFx3(:))
 
-      cooling_Z_CIEGF = 10**xLd * cH * cH * total_Z
+      xLd = interpolate1D(log10(coolZCIEGFx1(:)), interp(:), Tgas) !erg cm^3/s
+
+      cooling_Z_CIEGF = 10**xLd * cH * cH !erg/cm^3/s
 
     end function cooling_Z_CIEGF
+
+    !************************
+    subroutine init_coolingZCIEGF()
+      use krome_commons
+      implicit none
+      integer::ios,iout(3),i
+      real*8::rout(5)
+
+      if(krome_mpi_rank<=1) print *,"load Z_CIE_GF2012 cooling..."
+      open(933,file="coolZ_CIE_GF12.dat",status="old",iostat=ios)
+      !check if file exists
+      if(ios.ne.0) then
+         print *,"ERROR: problems loading coolZ_CIE_GF12.dat!"
+         stop
+      end if
+
+      do
+         read(33,*,iostat=ios) iout(:),rout(:) !read line
+         if(ios<0) exit !eof
+         if(ios/=0) cycle !skip blanks
+         coolZCIEGFx1(iout(1)) = rout(1)
+         coolZCIEGFx2(iout(2)) = rout(2)
+         coolZCIEGFx3(iout(3)) = rout(3)
+      end do
+
+      coolZCIEGFx1min = minval(coolZCIEGFx1)
+      coolZCIEGFx1max = maxval(coolZCIEGFx1)
+
+    end subroutine init_coolingZCIEGF
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIENOUV

@@ -716,6 +716,11 @@ contains
     call init_coolingZCIE()
 #ENDIFKROME
 
+#IFKROME_useCoolingZCIEGF
+    !initialize metal CIE cooling from Gnat and Ferland 2012
+    call init_coolingZCIEGF()
+#ENDIFKROME
+
 #IFKROME_useCoolingZCIENOUV
   !initialize metal CIE cooling no UV case
   call init_anytab2D("coolZ_CIE2012NOUV.dat",CoolZNOUV_x(:), &
