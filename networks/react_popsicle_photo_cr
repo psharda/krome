@@ -420,10 +420,10 @@
 #Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
 @noTab_start
 @format:idx,R,R,P,rate
-145,H+,E,H,H_recombination_on_dust(n,Tgas)
-146,He+,E,He,He_recombination_on_dust(n,Tgas)
-147,O+,E,O,O_recombination_on_dust(n,Tgas)
-148,C+,E,C,C_recombination_on_dust(n,Tgas)
+145,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal
+146,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal
+147,O+,E,O,O_recombination_on_dust(n,Tgas)*user_is_metal
+148,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal
 @noTab_stop
 
 
@@ -460,10 +460,10 @@
 @noTab_start
 #DUST FREEZE-OUT/EVAPORATION
 @var:tabTdust = get_table_Tdust(n(:))
-@ice:CO,freezeout,krate_stickSi(n(:),idx_CO,tabTdust)
-@ice:CO,evaporation,krate_evaporation(n(:),idx_CO,tabTdust)
-@ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,tabTdust)
-@ice:H2O,evaporation,krate_evaporation(n(:),idx_H2O,tabTdust)
+@ice:CO,freezeout,krate_stickSi(n(:),idx_CO,tabTdust)*user_is_metal
+@ice:CO,evaporation,krate_evaporation(n(:),idx_CO,tabTdust)*user_is_metal
+@ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,tabTdust)*user_is_metal
+@ice:H2O,evaporation,krate_evaporation(n(:),idx_H2O,tabTdust)*user_is_metal
 @noTab_stop
 
 ########################################## END FREEZEOUT CHEMISTRY ###################################################################
