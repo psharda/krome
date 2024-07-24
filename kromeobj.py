@@ -1378,6 +1378,14 @@ class krome:
 				print("ERROR: PHOTODUSTWD and PHOTODUSTNETWD options are mutually exclusive!")
 				sys.exit()
 
+			if self.useHeatingPhotoDustWD and not self.useCoolingDustGRREC:
+				print("ERROR: If you include PHOTODUSTWD heating, you must include the associated DUSTGRREC cooling!")
+				sys.exit()
+
+			if not self.useHeatingPhotoDustWD and self.useCoolingDustGRREC:
+				print("ERROR: If you include DUSTGRREC cooling, you must include the associated PHOTODUSTWD heating!")
+				sys.exit()
+
 			if self.photoBins<=0 and self.useHeatingPhotoDustNet:
 				print("ERROR: PHOTODUSTNET option requires -photoBins=NBINS to set")
 				print(" the number of photobins!")
