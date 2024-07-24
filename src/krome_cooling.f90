@@ -31,10 +31,11 @@
       f2 = 1d0
 
 #IFKROME_useCoolingZCIEGF
+      !Z_CIEGF cooling activated, so
       !f2 becomes S in equation 40 of Kim+2023 ApJS, 264, 10
       Tt1 = 2d4
       Tt2 = 3.5d4
-      f2 = 1d0/(1d0 + exp(-a*(Tgas - 0.5d0*(Tt1 + Tt2))/ (Tt2 - Tt1)))
+      f2 = 1d0/(1d0 + exp(-1d1*(Tgas - 0.5d0*(Tt1 + Tt2))/ (Tt2 - Tt1)))
       !f1 becomes (1-S) in equation 40 of Kim+2023 ApJS, 264, 10
       f1 = 1d0 - f2
 #ENDIFKROME
