@@ -4569,6 +4569,9 @@ class krome:
 		#PART2: use data to prepare cooling routine
 		#prepare the functions for the cooling looping on metals (which are the key of the cooling_data dictionary)
 		for cur_metal, cool_data in cooling_data.items():
+			if self.useCoolingNebular and cur_metal == 'OII':
+				print('')
+				raise ValueError('Cannot switch on NEBULAR and OII cooling together! This is because the current implementation of NEBULAR cooling already includes contribution from OII cooling.')
 			metal_name = cur_metal #alias for metal name
 			metal_name_f90 = cool_data["metal_name_f90"] #name in f90 style
 			level_list = list(cool_data["levels_data"].keys()) #store the list of the levels as integer values (e.g. [0,1,3])
