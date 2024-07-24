@@ -1998,7 +1998,7 @@
       k(:) = coolingZ_rate_tabs(Tgas)
 
       cool = 0d0
-
+#KROME_coolingZ_call_functions
 
       cooling_Z = cool * boltzmann_erg
 
