@@ -767,63 +767,93 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIEGF
-    !***************************
-    ! Metal line cooling CIE
-    ! tables from Gnat and Ferland 2012
-    function cooling_Z_CIEGF(n,inTgas)
-      use krome_commons
-      use krome_subs
-      use krome_fit
-      use krome_getphys
-      implicit none
-      real*8::cooling_Z_CIEGF,n(:),inTgas
-      real*8::cH,Tgas,xLd,logcH,interp(:)
+  !***************************
+  ! Metal line cooling CIE
+  ! tables from Gnat and Ferland 2012
+  function cooling_Z_CIEGF(n,inTgas)
+    use krome_commons
+    use krome_subs
+    use krome_fit
+    use krome_getphys
+    implicit none
+    integer,parameter::imax=coolZCIEGFn
+    real*8::cooling_Z_CIEGF,n(:),inTgas
+    real*8::cH,logTgas,xLd,v1min,v1max
+    real*8::x1(imax),x2(imax),x3(imax),interp(imax)
+    real*8,parameter::eps=1d-5
 
-      cooling_Z_CIEGF = 0d0
-      cH = get_Hnuclei(n(:))
+    cooling_Z_CIEGF = 0d0
+    cH = get_Hnuclei(n(:))
 
-      !check if the abundance is close to zero to
-      !avoid weird log evaluation
-      if(cH.lt.1d-20)return
+    !check if the abundance is close to zero to
+    !avoid weird log evaluation
+    if(cH.lt.1d-20)return
 
-      Tgas = log10(inTgas)
+    !local copy of limits
+    v1min = coolZCIEGFx1min
+    v1max = coolZCIEGFx1max
 
-      interp = log10(coolZCIEGFx2(:) + total_Z*coolZCIEGFx3(:))
+    if(inTgas>=v1max) inTgas = v1max*(1d0-eps)
+    if(inTgas<v1min) return
 
-      xLd = interpolate1D(log10(coolZCIEGFx1(:)), interp(:), Tgas) !erg cm^3/s
+    !local copy of variables arrays
+    x1(:) = coolZCIEGFx1(:)
+    x2(:) = coolZCIEGFx2(:)
+    x3(:) = coolZCIEGFx3(:)
 
-      cooling_Z_CIEGF = 10**xLd * cH * cH !erg/cm^3/s
+    logTgas = log10(inTgas)
 
-    end function cooling_Z_CIEGF
+    interp(:) = log10(x2(:) + total_Z*x3(:))
 
-    !************************
-    subroutine init_coolingZCIEGF()
-      use krome_commons
-      implicit none
-      integer::ios,iout(3),i
-      real*8::rout(5)
+    xLd = interpolate1D(log10(x1(:)), interp(:), logTgas) !erg cm^3/s
 
-      if(krome_mpi_rank<=1) print *,"load Z_CIE_GF2012 cooling..."
-      open(933,file="coolZ_CIE_GF12.dat",status="old",iostat=ios)
-      !check if file exists
-      if(ios.ne.0) then
-         print *,"ERROR: problems loading coolZ_CIE_GF12.dat!"
-         stop
-      end if
+    cooling_Z_CIEGF = 10**xLd * cH * cH !erg/cm^3/s
 
-      do
-         read(33,*,iostat=ios) iout(:),rout(:) !read line
-         if(ios<0) exit !eof
-         if(ios/=0) cycle !skip blanks
-         coolZCIEGFx1(iout(1)) = rout(1)
-         coolZCIEGFx2(iout(2)) = rout(2)
-         coolZCIEGFx3(iout(3)) = rout(3)
-      end do
+  end function cooling_Z_CIEGF
 
-      coolZCIEGFx1min = minval(coolZCIEGFx1)
-      coolZCIEGFx1max = maxval(coolZCIEGFx1)
+  !************************
+  subroutine init_coolingZCIEGF()
+    use krome_commons
+    implicit none
+    integer::ios,i,unit
+    real(8) :: temp, cool_He, cool_ZCIE
+    character(len=256) :: line
 
-    end subroutine init_coolingZCIEGF
+    if(krome_mpi_rank<=1) print *,"load Z_CIE_GF2012 cooling..."
+    open(newunit=unit,file="coolZ_CIE_GF12.dat",status="old",iostat=ios)
+    !check if file exists
+    if(ios.ne.0) then
+      print *,"ERROR: problems loading coolZ_CIE_GF12.dat!"
+      stop
+    end if
+
+    do
+      read(unit, '(A)', iostat=ios) line
+      if (ios /= 0) exit
+      if (line(1:1) /= '#') exit
+    end do
+
+    ! Backtrack one line because the exit condition of the above loop is a non-header line
+    backspace(unit)
+
+    i = 0
+    do
+      read(unit, *, iostat=ios) temp, cool_He, cool_ZCIE
+      if(ios<0) exit !eof
+      if(ios/=0) cycle !skip blanks
+
+      i = i + 1
+      coolZCIEGFx1(i) = temp
+      coolZCIEGFx2(i) = cool_He
+      coolZCIEGFx3(i) = cool_ZCIE
+    end do
+
+    coolZCIEGFx1min = minval(coolZCIEGFx1)
+    coolZCIEGFx1max = maxval(coolZCIEGFx1)
+
+    close(unit)
+
+  end subroutine init_coolingZCIEGF
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIENOUV
