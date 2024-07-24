@@ -71,6 +71,10 @@
       cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingDustGRREC
+      cools(idx_cool_dustgrrec) = f1 * cool_DustGRREC(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useCoolingExpansion
       cools(idx_cool_exp) = cooling_expansion(n(:), Tgas)
 #ENDIFKROME
@@ -1303,6 +1307,50 @@
       cooling_dust = get_mu(n) * coolFit * ntot * ntot
 
     end function cooling_dust
+#ENDIFKROME
+
+#IFKROME_useCoolingDustGRREC
+  !***************************
+  function cool_DustGRREC(n,Tgas)
+    !dust assisted recombination cooling and a generic radiation flux
+    !eq. 45 in Weingartner and Draine 2001 ApJS
+    !dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    use krome_getphys
+    implicit none
+    integer::i
+    real*8::cool_DustGRREC,n(:),Tgas,ntot,psi,G0
+    real*8::nenh,D0,D1,D2,D3,D4
+
+    cool_DustGRREC = 0d0
+
+    if (Tgas .LT. 1d3 .or. Tgas .GT. 1d4) return
+
+    ntot = get_Hnuclei(n(:))
+    nenh = n(idx_e) * n(idx_H)
+    if(n(idx_e)>0d0) then
+       !TODO: supply J_PE and J_LW to G0 
+       G0 = 1.69d0
+       psi = G0 * sqrt(Tgas) / n(idx_e)
+    else
+       psi = 0d0
+    end if
+
+    if (psi .LT. 1d2 .or. psi .GT. 1d6) return
+
+    !grain assisted recombination cooling
+    !coefficients below for R_v=3.1, b_c=4.0 and ISRF from Table 3 of Weingartner and Draine 2001 ApJS.
+    D0 = 0.4535
+    D1 = 2.234
+    D2 = -6.266
+    D3 = 1.442
+    D4 = 0.05089
+
+    cool_DustGRREC = 1d-28 * nenh * Tgas**(D0 + D1/psi) * exp(D2 + D3*psi -D4*psi**2) * dust2gas_ratio !erg/cm3/s
+
+  end function cool_DustGRREC
 #ENDIFKROME
 
 #IFKROME_useCoolingDustNoTdust
