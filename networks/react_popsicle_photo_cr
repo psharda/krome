@@ -5,7 +5,7 @@
 #No photo or cosmicray chemistry included yet
 #To test the network, look at krome/tests/popsicle
 
-@common: user_Av, user_crate
+@common: user_Av, user_crate, user_is_metal
 
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
 #UPDATED primordial rates, 2014
@@ -363,6 +363,7 @@
 #Some key reactions will be replaced later on when coupled with vettam
 #ENSURE H photoionization is listed before H cosmic ray ionization, otherwise H ionization heating will read in the wrong rate coefficient!!
 #ENSURE H2 photodissociation is listed before H2 cosmic ray ionization, otherwise H2 dissociation heating and UV pumping will read in the wrong rate coefficient!!
+#user-defined factor 'user_is_metal' is 0 for metal photo reactions if metallicity is 0, and 1 otherwise
 
 @format:idx,R,P,P,rate
 #integrated with J21*13.6/E flux, up to 200eV
@@ -382,37 +383,37 @@
 #121,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
 #122,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
-126,C,C+,E,3.1d-10*exp(-3.*user_Av)*krome_fshield_C(n, Tgas)
+126,C,C+,E,3.1d-10*exp(-3.*user_Av)*krome_fshield_C(n, Tgas)*user_is_metal
 #TODO: reaction below commented out to not create sources. May add it back in the future
-#122,C-,C,E,2.4d-7*exp(-.9*user_Av)
-127,CH,C,H,8.7d-10*exp(-1.2*user_Av)
-128,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)
-129,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)
-130,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)
-131,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)
-132,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)
+#122,C-,C,E,2.4d-7*exp(-.9*user_Av)*user_is_metal
+127,CH,C,H,8.7d-10*exp(-1.2*user_Av)*user_is_metal
+128,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)*user_is_metal
+129,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)*user_is_metal
+130,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)*user_is_metal
+131,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)*user_is_metal
+132,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)*user_is_metal
 #TODO: next 4 reactions below commented out to not create sources. May add them back in the future
-#131,CH3+,CH2+,H,1d-9*exp(-1.7*user_Av)
-#132,CH3+,CH+,H2,1d-9*exp(-1.7*user_Av)
-#133,C2,C,C,1.5d-10*exp(-2.1*user_Av)
-#134,O-,O,E,2.4d-7*exp(-.5*user_Av)
-133,OH,O,H,3.7d-10*exp(-1.7*user_Av)
-134,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)
-135,OH+,O,H+,1d-12*exp(-1.8*user_Av)
-136,H2O,OH,H,6d-10*exp(-1.7*user_Av)
-137,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)
-138,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)
-139,O2,O,O,7d-10*exp(-1.8*user_Av)
+#131,CH3+,CH2+,H,1d-9*exp(-1.7*user_Av)*user_is_metal
+#132,CH3+,CH+,H2,1d-9*exp(-1.7*user_Av)*user_is_metal
+#133,C2,C,C,1.5d-10*exp(-2.1*user_Av)*user_is_metal
+#134,O-,O,E,2.4d-7*exp(-.5*user_Av)*user_is_metal
+133,OH,O,H,3.7d-10*exp(-1.7*user_Av)*user_is_metal
+134,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)*user_is_metal
+135,OH+,O,H+,1d-12*exp(-1.8*user_Av)*user_is_metal
+136,H2O,OH,H,6d-10*exp(-1.7*user_Av)*user_is_metal
+137,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)*user_is_metal
+138,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)*user_is_metal
+139,O2,O,O,7d-10*exp(-1.8*user_Av)*user_is_metal
 #TODO: reaction below to be removed when krome coupled with vettam
-140,CO,C,O,2.d-10*exp(-3.53*user_Av)*krome_fshield_CO(n, Tgas)
+140,CO,C,O,2.d-10*exp(-3.53*user_Av)*krome_fshield_CO(n, Tgas)*user_is_metal
 
 #H2O+ photodissociation, following Glover et al. 2010 equation 4
 @noTab_start
 @var: HnOj = fHnOj(user_Av)
-141,H2O+,H2+,O,5.d-11*HnOj
-142,H2O+,H+,OH,5.d-11*HnOj
-143,H2O+,O+,H2,5.d-11*HnOj
-144,H2O+,OH+,H,1.5d-10*HnOj
+141,H2O+,H2+,O,5.d-11*HnOj*user_is_metal
+142,H2O+,H+,OH,5.d-11*HnOj*user_is_metal
+143,H2O+,O+,H2,5.d-11*HnOj*user_is_metal
+144,H2O+,OH+,H,1.5d-10*HnOj*user_is_metal
 @noTab_end
 
 
@@ -434,19 +435,19 @@
 @storeOnce_start
 149,H,H+,E,4.6d-1*user_crate
 150,He,He+,E,5.d-1*user_crate
-151,O,O+,E,2.8d0*user_crate
-152,CO,C,O,5d0*user_crate
-153,CO,CO+,E,3d0*user_crate
+151,O,O+,E,2.8d0*user_crate*user_is_metal
+152,CO,C,O,5d0*user_crate*user_is_metal
+153,CO,CO+,E,3d0*user_crate*user_is_metal
 154,H2,H,H,1d-1*user_crate
 155,H2,H+,H-,3d-4*user_crate
 156,H2,H2+,E,9.3d-1*user_crate
-157,C,C+,E,1.02d3*user_crate
-158,CH,C,H,7.3d2*user_crate
-159,O2,O,O,7.5d2*user_crate
-160,O2,O2+,E,1.17d2*user_crate
-161,OH,O,H,5.1d2*user_crate
-162,CH2,CH2+,E,5d2*user_crate
-163,H2O,OH,H,9.7d2*user_crate
+157,C,C+,E,1.02d3*user_crate*user_is_metal
+158,CH,C,H,7.3d2*user_crate*user_is_metal
+159,O2,O,O,7.5d2*user_crate*user_is_metal
+160,O2,O2+,E,1.17d2*user_crate*user_is_metal
+161,OH,O,H,5.1d2*user_crate*user_is_metal
+162,CH2,CH2+,E,5d2*user_crate*user_is_metal
+163,H2O,OH,H,9.7d2*user_crate*user_is_metal
 @format:idx,R,P,P,P,rate
 164,H2,H,H+,E,9.3d-1*user_crate
 @storeOnce_stop
