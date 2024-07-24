@@ -131,6 +131,10 @@
       cools(idx_cool_ZCIENOUV) = f2 * ( cooling_Z_CIENOUV(n(:), Tgas) #KROME_floorZ_CIENOUV )
 #ENDIFKROME
 
+#IFKROME_useCoolingZCIEGF
+      cools(idx_cool_ZCIEGF) = f2 * ( cooling_Z_CIEGF(n(:), Tgas) #KROME_floorZ_CIEGF )
+#ENDIFKROME
+
 #IFKROME_useCoolingZExtended
       !floor is inside the function
       cools(idx_cool_ZExtend) = f2 * cooling_ZExtended(n(:), Tgas)
@@ -760,6 +764,36 @@
       coolHCNdvn3 = (coolHCNn3 - 1) / (coolHCNx3max - coolHCNx3min)
 
     end subroutine init_coolingHCN
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIEGF
+    !***************************
+    ! Metal line cooling CIE
+    ! tables from Gnat and Ferland 2012
+    function cooling_Z_CIEGF(n,inTgas)
+      use krome_commons
+      use krome_subs
+      use krome_fit
+      use krome_getphys
+      implicit none
+      real*8::cooling_Z_CIEGF,n(:),inTgas
+      real*8::cH,Tgas,xLd,logcH
+
+      cooling_Z_CIEGF = 0d0
+      cH = get_Hnuclei(n(:))
+
+      !check if the abundance is close to zero to
+      !avoid weird log evaluation
+      if(cH.lt.1d-20)return
+
+      Tgas = log10(inTgas)
+      logcH = log10(cH)
+
+      xLd = 0d0
+
+      cooling_Z_CIEGF = 10**xLd * cH * cH * total_Z
+
+    end function cooling_Z_CIEGF
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIENOUV
@@ -1904,7 +1938,7 @@
       k(:) = coolingZ_rate_tabs(Tgas)
 
       cool = 0d0
-#KROME_coolingZ_call_functions
+
 
       cooling_Z = cool * boltzmann_erg
 

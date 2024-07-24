@@ -56,7 +56,7 @@ class krome:
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = useCoolingNebular = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useShieldingC = useShieldingCO = useShieldingWG11_withH = False
 	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
-	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
+	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingZCIEGF = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
 	useCoolingHCN = useCoolingOH = useCoolingH2O = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
@@ -236,7 +236,7 @@ class krome:
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
 			COMPTON, EXPANSION, CIE, DISS, NEBULAR, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -\
-			cooling=ATOMIC,CII,OI,FeI),Z_CIE,Z_CIENOUV,Z_EXTENDED.\
+			cooling=ATOMIC,CII,OI,FeI),Z_CIE,Z_CIENOUV,Z_CIEGF,Z_EXTENDED.\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
 		self.parser.add_argument("-coolLevels", metavar='MAXLEV', help="use only the levels up to MAXLEV (included), e.g. -coolLevels=3\
@@ -806,7 +806,7 @@ class krome:
 		#apply an individual cooling floor (SB, mod TG)
 		if args.useIndividualFloor:
 			myFloor = [x.strip() for x in args.useIndividualFloor.split(",")]
-			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED","GH","NEBULAR"]
+			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED","GH","NEBULAR","Z_CIEGF"]
 			for floor in myFloor:
 				if floor not in allFloor:
 					die("ERROR: Floor \""+floor+"\" is unknown!\nAvailable floor are: "
@@ -1201,7 +1201,7 @@ class krome:
 			#list of all cooling (excluded from file)
 			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE",
 						"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV","Z_EXTENDED","GH","OH",
-						"H2O", "HCN", "NEBULAR"]
+						"H2O", "HCN", "NEBULAR","Z_CIEGF"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
@@ -1252,6 +1252,7 @@ class krome:
 
 			if "ATOMIC" in myCools: self.useCoolingAtomic = True
 			if "NEBULAR" in myCools: self.useCoolingNebular = True
+			if "Z_CIEGF" in myCools: self.useCoolingZCIEGF = True
 			if "H2" in myCools: self.useCoolingH2 = True
 			if "H2GP98" in myCools: self.useCoolingH2GP98 = True
 			if "HD" in myCools: self.useCoolingHD = True
@@ -4937,6 +4938,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
 			if srow == "#IFKROME_useCoolingHCN" and not self.useCoolingHCN: skip = True
 			if srow == "#IFKROME_useCoolingZCIE" and not self.useCoolingZCIE: skip = True
+			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingZCIENOUV" and not self.useCoolingZCIENOUV: skip = True
 			if srow == "#IFKROME_useCoolingGH" and not self.useCoolingGH: skip = True
 			if srow == "#IFKROME_hasStoreOnceRates" and not self.hasStoreOnceRates: skip = True
@@ -6515,6 +6517,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingDustTabs" and not self.dustTabsCool: skip = True
 			if srow == "#IFKROME_useCoolingAtomic" and not self.useCoolingAtomic: skip = True
 			if srow == "#IFKROME_useCoolingNebular" and not self.useCoolingNebular: skip = True
+			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingH2" and not self.useCoolingH2: skip = True
 			if srow == "#IFKROME_useCoolingH2GP" and not self.useCoolingH2GP98: skip = True
 			if srow == "#IFKROME_useCoolingHD" and not self.useCoolingHD: skip = True
@@ -7943,6 +7946,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
 			if srow == "#IFKROME_useCoolingHCN" and not self.useCoolingHCN: skip = True
 			if srow == "#IFKROME_useCoolingZCIE" and not self.useCoolingZCIE: skip = True
+			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingZCIENOUV" and not self.useCoolingZCIENOUV: skip = True
 			if srow == "#IFKROME_useCoolingGH" and not self.useCoolingGH: skip = True
 			if srow == "#IFKROME_ierr" and not self.useIERR: skip = True
@@ -8198,6 +8202,11 @@ class krome:
 		if self.useCoolingZCIE:
 			print("- copying coolZ_CIE2012.dat...")
 			shutil.copyfile("data/coolZ_CIE2012.dat", buildFolder+"coolZ_CIE2012.dat")
+
+		#copy cooling Z_CIEGF
+		if self.useCoolingZCIEGF:
+			print("- copying coolZ_CIE_GF12.dat...")
+			shutil.copyfile("data/coolZ_CIE_GF12.dat", buildFolder+"coolZ_CIE_GF12.dat")
 
 		#copy cooling Z_CIE NOUV
 		if self.useCoolingZCIENOUV:
