@@ -8,7 +8,7 @@
 @var:T=Tgas
 @var:ntot=sum(n(1:nmols))
 
-@common: user_crate
+@common: user_crate, user_is_metal
 
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
 #UPDATED primordial rates, 2014
@@ -353,24 +353,26 @@
 ########################################## START COSMIC RAY GAS CHEMISTRY ###################################################################
 
 #cosmic rays processes from OSU
+#user-defined factor 'user_is_metal' is 0 for metal photo reactions if metallicity is 0, and 1 otherwise
+
 @CR_start
 @format:idx,R,P,P,rate
 @storeOnce_start
 118,H,H+,E,4.6d-1*user_crate
 119,He,He+,E,5.d-1*user_crate
-120,O,O+,E,2.8d0*user_crate
-121,CO,C,O,5d0*user_crate
-122,CO,CO+,E,3d0*user_crate
+120,O,O+,E,2.8d0*user_crate*user_is_metal
+121,CO,C,O,5d0*user_crate*user_is_metal
+122,CO,CO+,E,3d0*user_crate*user_is_metal
 123,H2,H,H,1d-1*user_crate
 124,H2,H+,H-,3d-4*user_crate
 125,H2,H2+,E,9.3d-1*user_crate
-126,C,C+,E,1.02d3*user_crate
-127,CH,C,H,7.3d2*user_crate
-128,O2,O,O,7.5d2*user_crate
-129,O2,O2+,E,1.17d2*user_crate
-130,OH,O,H,5.1d2*user_crate
+126,C,C+,E,1.02d3*user_crate*user_is_metal
+127,CH,C,H,7.3d2*user_crate*user_is_metal
+128,O2,O,O,7.5d2*user_crate*user_is_metal
+129,O2,O2+,E,1.17d2*user_crate*user_is_metal
+130,OH,O,H,5.1d2*user_crate*user_is_metal
 #TODO: add CH2+ reactions in order to activate this reaction:131,CH2,CH2+,E,5d2*user_crate
-131,H2O,OH,H,9.7d2*user_crate
+131,H2O,OH,H,9.7d2*user_crate*user_is_metal
 @format:idx,R,P,P,P,rate
 132,H2,H,H+,E,9.3d-1*user_crate
 @storeOnce_stop

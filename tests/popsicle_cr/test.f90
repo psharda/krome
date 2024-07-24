@@ -25,7 +25,7 @@ program test_krome
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
   !Cosmic ray ionization rate
-  crate = 3d-17
+  crate = 3d-16
   call krome_set_user_crate(crate)
 
   !output header
@@ -71,6 +71,14 @@ program test_krome
     call krome_init_dust_distribution(x(:),(1d0/162d0)*zs(jz2)) !scale the dust to gas ratio by the metallicity
     print *,krome_get_dust_distribution()
     call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
+
+    if (zs(jz2) > 0d0) then
+      !turn on photo/cr reactions that include metals
+      call krome_set_user_is_metal(1d0)
+    else
+      !turn off photo/cr reactions that include metals
+      call krome_set_user_is_metal(0d0)
+    endif
 
     !set initial density
     dd = ntot
