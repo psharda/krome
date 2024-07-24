@@ -62,7 +62,7 @@ class krome:
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = False
-	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = useHeatingPhotoDustNetWD = False
+	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = useHeatingPhotoDustWD = useHeatingPhotoDustNetWD = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
 	usePhotoOpacity = useXRay = hasSurfaceReactions = shieldHabingDust = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = shortHead = True
@@ -1339,7 +1339,7 @@ class krome:
 			myHeat = [x.strip() for x in myHeat]
 			self.allHeatings = myHeat
 			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST",
-						"PHOTODUSTNET","XRAY","VISCOUS","PHOTODUSTNETWD"]
+						"PHOTODUSTNET","XRAY","VISCOUS","PHOTODUSTNETWD","PHOTODUSTWD"]
 			for hea in myHeat:
 				if hea not in allHeats:
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "
@@ -1354,6 +1354,7 @@ class krome:
 			if "PHOTODUST" in myHeat: self.useHeatingPhotoDust = True #photoelectric heating from dust
 			if "PHOTODUSTNET" in myHeat: self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
 			if "PHOTODUSTNETWD" in myHeat: self.useHeatingPhotoDustNetWD = True #photoelectric heating from dust with recombination cooling from Weingartner and Draine 2001 ApJS
+			if "PHOTODUSTWD" in myHeat: self.useHeatingPhotoDustWD = True #photoelectric heating from dust withOUT recombination cooling from Weingartner and Draine 2001 ApJS
 			if "XRAY" in myHeat: self.useHeatingXRay = True #heating from xray reactions rate
 			if "VISCOUS" in myHeat: self.useHeatingVisc = True #heating from viscosity
 			#if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2 in LW bands
@@ -1370,6 +1371,10 @@ class krome:
 
 			if self.useHeatingPhotoDustNet and self.useHeatingPhotoDustNetWD:
 				print("ERROR: PHOTODUSTNET and PHOTODUSTNETWD options are mutually exclusive!")
+				sys.exit()
+
+			if self.useHeatingPhotoDustWD and self.useHeatingPhotoDustNetWD:
+				print("ERROR: PHOTODUSTWD and PHOTODUSTNETWD options are mutually exclusive!")
 				sys.exit()
 
 			if self.photoBins<=0 and self.useHeatingPhotoDustNet:
@@ -6865,6 +6870,7 @@ class krome:
 				if row.strip() == "#IFKROME_useHeatingPhotoDust" and not self.useHeatingPhotoDust: skip = True
 				if row.strip() == "#IFKROME_useHeatingPhotoDustNet" and not self.useHeatingPhotoDustNet: skip = True
 				if row.strip() == "#IFKROME_useHeatingPhotoDustNetWD" and not self.useHeatingPhotoDustNetWD: skip = True
+				if row.strip() == "#IFKROME_useHeatingPhotoDustWD" and not self.useHeatingPhotoDustWD: skip = True
 				if row.strip() == "#IFKROME_useHeatingXRay" and not self.useHeatingXRay: skip = True
 				if row.strip() == "#IFKROME_useHeatingVisc" and not self.useHeatingVisc: skip = True
 				#if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True

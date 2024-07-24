@@ -70,6 +70,10 @@ contains
     heats(idx_heat_dust) = heat_netPhotoDust(n(:),Tgas)
 #ENDIFKROME
 
+#IFKROME_useHeatingPhotoDustWD
+    heats(idx_heat_dust) = heat_PhotoDustWD(n(:),Tgas)
+#ENDIFKROME
+
 #IFKROME_useHeatingPhotoDustNetWD
     heats(idx_heat_dust) = heat_netPhotoDustWD(n(:),Tgas)
 #ENDIFKROME
@@ -365,6 +369,54 @@ contains
     heat_netPhotoDust = (1.3d-24*eps*GHabing*ntot-recomb_cool)*dust2gas_ratio
 
   end function heat_netPhotoDust
+#ENDIFKROME
+
+#IFKROME_useHeatingPhotoDustWD
+  !***************************
+  function heat_PhotoDustWD(n,Tgas)
+    !photoelectric effect from dust in erg/s/cm3
+    !eq. 44 in Weingartner and Draine 2001 ApJS
+    ! dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    use krome_getphys
+    implicit none
+    integer::i
+    real*8::heat_PhotoDustWD,n(:),Tgas,ntot,psi,G0
+    real*8::eps_PE,C0,C1,C2,C3,C4,C5,C6
+    real*8::nenh,D0,D1,D2,D3,D4,cool_grrec
+
+    heat_PhotoDustWD = 0d0
+
+    if (Tgas .LT. 1d3 .or. Tgas .GT. 1d4) return
+
+    ntot = get_Hnuclei(n(:))
+    nenh = n(idx_e) * n(idx_H)
+    if(n(idx_e)>0d0) then
+       !TODO: supply J_PE and J_LW to G0 
+       G0 = 1.69d0
+       psi = G0 * sqrt(Tgas) / n(idx_e)
+    else
+       psi = 0d0
+    end if
+
+    if (psi .LT. 1d2 .or. psi .GT. 1d6) return
+
+    !grain photoelectric heating
+    !coefficients below for R_v=3.1, b_c=4.0 and ISRF from Table 2 of Weingartner and Draine 2001 ApJS.
+    C0 = 5.22
+    C1 = 2.25
+    C2 = 0.04996
+    C3 = 0.00430
+    C4 = 0.147
+    C5 = 0.431
+    C6 = 0.692
+
+    eps_PE = (C0 + C1*Tgas**C4) / (1 + C2*(psi**C5)*(1 + C3*(psi**C6)))
+    heat_PhotoDustWD = 1d-26 * G0 * ntot * eps_PE * dust2gas_ratio !erg/cm3/s
+
+  end function heat_PhotoDustWD
 #ENDIFKROME
 
 #IFKROME_useHeatingPhotoDustNetWD
