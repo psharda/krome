@@ -4,7 +4,7 @@
 #TODO: add H ionization H2 dissociation and UV pumping heat
 -n networks/react_popsicle_photo_cr
 -cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,OH,H2O,ATOMIC,COMPTON,DUST,FF,NEBULAR,Z_CIEGF
--heating=COMPRESS,CHEM,PHOTODUSTNETWD,CR,PHOTOAV
+-heating=COMPRESS,CHEM,PHOTODUSTWD,CR,PHOTOAV
 -H2opacity=OMUKAI
 -gamma=EXACT
 -ATOL=1d-40
