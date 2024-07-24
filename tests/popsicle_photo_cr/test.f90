@@ -74,17 +74,20 @@ program test_krome
     call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
 
     !set initial Av, following equation 3 of Gong, Ostriker and Wolfire 2017
-    if (zs(jz2) > 0d0) then
-      NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
-      NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
-      NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
-      Av = (NH + NHj + 2d0*NH2) *zs(jz2) / 1.87d21
-    else
-      !Primordial case: set Av to +infinity so that exp(-Av) = exactly 0. This Av is only used in reaction rates of the form exp(-Av)
-      Av = huge(1.0)
-    endif
+    NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+    NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+    NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+    Av = (NH + NHj + 2d0*NH2) *zs(jz2) / 1.87d21
     call krome_set_user_Av(Av)
-    print *, 'Initial Av: ', krome_get_user_Av()    
+    print *, 'Initial Av: ', krome_get_user_Av()
+
+    if (zs(jz2) > 0d0) then
+      !turn on photo/cr reactions that include metals
+      call krome_set_user_is_metal(1d0)
+    else
+      !turn off photo/cr reactions that include metals
+      call krome_set_user_is_metal(0d0)
+    endif
 
     !set initial density
     dd = ntot
@@ -122,15 +125,10 @@ program test_krome
        !set time-step
        dt = dtH
 
-       if (zs(jz2) > 0d0) then
-         !set Av, following equation 2 of Glover et al. 2010
-         NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
-         NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
-         NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
-         Av = (NH + NHj + 2d0*NH2) *zs(jz2)/ 1.87d21
-       else
-         Av = huge(1.0)
-       end if
+       NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+       NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+       NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+       Av = (NH + NHj + 2d0*NH2) *zs(jz2)/ 1.87d21
        call krome_set_user_Av(Av)
 
        !break when max density reached
