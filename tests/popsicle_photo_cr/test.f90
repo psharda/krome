@@ -36,8 +36,8 @@ program test_krome
   write(31, '(A)', ADVANCE='NO') "#ntot Tgas sum(cools)"
   write(31, '(A)') trim(krome_get_cooling_names_header())
 
-  write(32, '(A)', ADVANCE='NO') "#ntot Tgas sum(heats)"
-  write(32, '(A)') trim(krome_get_heating_names_header())
+  write(911, '(A)', ADVANCE='NO') "#ntot Tgas sum(heats)"
+  write(911, '(A)') trim(krome_get_heating_names_header())
 
   !loop over size(zs)*2 so that every second loop is skipped, so that an empty line is created in the output fort.22 file
   !this line break in the output file can then be used to read in output for each zs separately
@@ -154,7 +154,7 @@ program test_krome
        write(31,'(99E14.5e3)') dd, Tgas, sum(cools), cools(:)
        kk(:) = krome_get_coef(Tgas,x(:))
        heats(:) = get_heating_array(n(:),Tgas,kk(:),0d0) !TODO: pass nH2dust instead of 0d0 as the third argument
-       write(32,'(99E14.5e3)') dd, Tgas, sum(heats), heats(:)
+       write(911,'(99E14.5e3)') dd, Tgas, sum(heats), heats(:)
 
        !solve the chemistry
        call krome(x(:),Tgas,dt)
@@ -171,7 +171,7 @@ program test_krome
     end do
     write(22,*)
     write(31,*)
-    write(32,*)
+    write(911,*)
   end do
 
   !close explore data file
