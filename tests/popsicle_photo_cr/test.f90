@@ -12,6 +12,7 @@ program test_krome
   use krome_user
   use krome_user_commons
   use krome_cooling
+  use krome_heating
   implicit none
   integer,parameter::nz=8
   integer,parameter::rstep = 500000
@@ -19,8 +20,8 @@ program test_krome
   real*8::dtH,deldd
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
-  real*8::ntot,Tdust(krome_ndust),zs(nz)
-  real*8::Av, NH, NHj, NH2, crate
+  real*8::ntot,Tdust(krome_ndust),zs(nz),kk(krome_nrea)
+  real*8::Av, NH, NHj, NH2, crate, heats(krome_nheats)
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
@@ -34,6 +35,9 @@ program test_krome
 
   write(31, '(A)', ADVANCE='NO') "#ntot Tgas sum(cools)"
   write(31, '(A)') trim(krome_get_cooling_names_header())
+
+  write(911, '(A)', ADVANCE='NO') "#ntot Tgas sum(heats)"
+  write(911, '(A)') trim(krome_get_heating_names_header())
 
   !loop over size(zs)*2 so that every second loop is skipped, so that an empty line is created in the output fort.22 file
   !this line break in the output file can then be used to read in output for each zs separately
@@ -148,6 +152,9 @@ program test_krome
        n(krome_nmols+krome_ndust+1:krome_nmols+2*krome_ndust) = Tdust
        cools(:) = get_cooling_array(n(:),Tgas)
        write(31,'(99E14.5e3)') dd, Tgas, sum(cools), cools(:)
+       kk(:) = krome_get_coef(Tgas,x(:))
+       heats(:) = get_heating_array(n(:),Tgas,kk(:),0d0) !TODO: pass nH2dust instead of 0d0 as the third argument
+       write(911,'(99E14.5e3)') dd, Tgas, sum(heats), heats(:)
 
        !solve the chemistry
        call krome(x(:),Tgas,dt)
@@ -164,6 +171,7 @@ program test_krome
     end do
     write(22,*)
     write(31,*)
+    write(911,*)
   end do
 
   !close explore data file

@@ -389,7 +389,7 @@ contains
 
     heat_PhotoDustWD = 0d0
 
-    if (Tgas .LT. 1d3 .or. Tgas .GT. 1d4) return
+    if (Tgas .LT. 1d1 .or. Tgas .GT. 1d4) return
 
     ntot = get_Hnuclei(n(:))
     nenh = n(idx_e) * n(idx_H)
@@ -438,7 +438,7 @@ contains
 
     heat_netPhotoDustWD = 0d0
 
-    if (Tgas .LT. 1d3 .or. Tgas .GT. 1d4) return
+    if (Tgas .LT. 1d1 .or. Tgas .GT. 1d4) return
 
     ntot = get_Hnuclei(n(:))
     nenh = n(idx_e) * n(idx_H)
@@ -474,7 +474,12 @@ contains
     D3 = 1.442
     D4 = 0.05089
 
-    cool_grrec = 1d-28 * nenh * Tgas**(D0 + D1/psi) * exp(D2 + D3*psi -D4*psi**2) * dust2gas_ratio !erg/cm3/s
+    !Unlike photoelectric heating, grrec cooling is only valid for 1e3 <= T <= 1e4
+    if (Tgas .LT. 1d3) then
+      cool_grrec = 0d0
+    else
+      cool_grrec = 1d-28 * nenh * Tgas**(D0 + D1/psi) * exp(D2 + D3*psi -D4*psi**2) * dust2gas_ratio !erg/cm3/s
+    end if
 
     heat_netPhotoDustWD = heat_PE - cool_grrec
 
