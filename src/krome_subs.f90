@@ -95,7 +95,8 @@ contains
 
     H_recombination_on_dust = 0d0
 
-    if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
+    !if(n(idx_E)<1d-20.or.GHabing<=0.d0) return !original
+    if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
     G0 = 1.69d0
@@ -117,7 +118,8 @@ contains
     real*8::He_recombination_on_dust
 
     He_recombination_on_dust = 0d0
-    if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
+    !if(n(idx_E)<1d-20.or.GHabing<=0.d0) return !original
+    if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
     G0 = 1.69d0
@@ -139,7 +141,8 @@ contains
     real*8::C_recombination_on_dust
 
     C_recombination_on_dust = 0d0
-    if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
+    !if(n(idx_E)<1d-20.or.GHabing<=0.d0) return !original
+    if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
     G0 = 1.69d0
@@ -161,7 +164,8 @@ contains
     real*8::Si_recombination_on_dust
 
     Si_recombination_on_dust = 0d0
-    if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
+    !if(n(idx_E)<1d-20.or.GHabing<=0.d0) return !original
+    if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
     G0 = 1.69d0
