@@ -354,6 +354,30 @@
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
 121,CH2+,E,C,H,H,NONE,NONE,4.03d-7*T32**(-.6)
 
+
+#Reactions added below on top of above network to ensure H3+ is not just a sink
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+#Glover+2010
+100,H2+,H2,H3+,H,NONE,NONE,2.24d-9*T32**.042*exp(-Tgas/46600.)
+101,H3+,H,H2+,H2,NONE,NONE,7.7d-9*exp(-17560d0*invT)
+102,C,H2+,CH+,H,NONE,NONE,2.4d-9
+#O'Connor+2014 (http://arxiv.org/abs/1408.4696), original range 10-1e4 K, here extended
+103,C,H3+,CH+,H2,NONE,NONE,(1.0218d-9 + 7.2733d-11*sqrt(Tgas) + 5.9203d-14*Tgas)/(Tgas**0.1667 + 4.4914d-2*sqrt(Tgas) - 5.9203d-14*Tgas + 2.6397d-6*Tgas**1.5)
+#additional channel from O'Connor+2014 (http://arxiv.org/abs/1408.4696), original range 10-1e4 K, here extended
+103,C,H3+,CH2+,H,NONE,NONE,(8.5145d-10)/(Tgas**(.1667) + 9.5666d-4*sqrt(Tgas) - 4.404d-5*Tgas + 2.3496d-6 * Tgas**1.5)
+#KIDA and additional channel both recomended
+118,O,H3+,H2,OH+,NONE,NONE,7.98d-10*T32**(-.156)*exp(-1.41d0*invT)
+119,O,H3+,H,H2O+,NONE,NONE,3.42d-10*T32**(-.156)*exp(-1.41d0*invT)
+#KIDA, below 10K constant
+120,OH,H3+,H2,H2O+,NONE,1d1,2.277d-8
+121,OH,H3+,H2,H2O+,1d1,NONE,1.52d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+176,H3+,E,H2,H,NONE,NONE,2.34d-8*T32**(-.52)
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+177,H3+,E,H,H,H,NONE,NONE,4.36d-8*T32**(-.52)
+
+
+
 ########################################## END METAL CHEMISTRY ###################################################################
 
 ########################################## START METAL DUST CHEMISTRY ###################################################################
@@ -379,9 +403,8 @@
 124,H-,H,E,7.1d-7*exp(-.5*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
 125,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
-#TODO: next 2 reactions below commented out to not create sources. May add them back in the future
-#121,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
-#122,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
+121,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
+122,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
 126,C,C+,E,3.1d-10*exp(-3.*user_Av)*krome_fshield_C(n, Tgas)*user_is_metal
 #TODO: reaction below commented out to not create sources. May add it back in the future
