@@ -811,13 +811,18 @@
     if(inTgas<v1min) return
 
     !local copy of variables arrays
-    x1(:) = coolZCIEGFx1(:)
-    x2(:) = coolZCIEGFx2(:)
-    x3(:) = coolZCIEGFx3(:)
+    x1(:) = coolZCIEGFx1(:) !Tgas
+    x2(:) = coolZCIEGFx2(:) !He CIE cooling rate
+    x3(:) = coolZCIEGFx3(:) !Metals CIE cooling rate
 
     logTgas = log10(inTgas)
 
     interp(:) = log10(x2(:) + total_Z*x3(:))
+
+#IFKROME_hasHe
+    !He is included in the reaction network, so we already do He CIE self-consistently
+    interp(:) = log10(total_Z*x3(:)) 
+#ENDIFKROME
 
     xLd = interpolate1D(log10(x1(:)), interp(:), logTgas) !erg cm^3/s
 
