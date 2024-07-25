@@ -90,14 +90,16 @@ contains
   function H_recombination_on_dust(n,Tgas)
     use krome_commons
     implicit none
-    real*8::n(nspec),Tgas,psi
+    real*8::n(nspec),Tgas,psi,G0
     real*8::H_recombination_on_dust
 
     H_recombination_on_dust = 0d0
 
     if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
 
-    psi = GHabing*sqrt(Tgas)/n(idx_E)
+    !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
+    G0 = 1.69d0
+    psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return
 
@@ -111,13 +113,15 @@ contains
   function He_recombination_on_dust(n,Tgas)
     use krome_commons
     implicit none
-    real*8::n(nspec),Tgas,psi
+    real*8::n(nspec),Tgas,psi,G0
     real*8::He_recombination_on_dust
 
     He_recombination_on_dust = 0d0
     if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
 
-    psi = GHabing*sqrt(Tgas)/n(idx_E)
+    !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
+    G0 = 1.69d0
+    psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return
 
@@ -131,13 +135,15 @@ contains
   function C_recombination_on_dust(n,Tgas)
     use krome_commons
     implicit none
-    real*8::n(nspec),Tgas,psi
+    real*8::n(nspec),Tgas,psi,G0
     real*8::C_recombination_on_dust
 
     C_recombination_on_dust = 0d0
     if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
 
-    psi = GHabing*sqrt(Tgas)/n(idx_E)
+    !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
+    G0 = 1.69d0
+    psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return
 
@@ -151,13 +157,15 @@ contains
   function Si_recombination_on_dust(n,Tgas)
     use krome_commons
     implicit none
-    real*8::n(nspec),Tgas,psi
+    real*8::n(nspec),Tgas,psi,G0
     real*8::Si_recombination_on_dust
 
     Si_recombination_on_dust = 0d0
     if(n(idx_E)<1d-20.or.GHabing<=0.d0) return
 
-    psi = GHabing*sqrt(Tgas)/n(idx_E)
+    !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
+    G0 = 1.69d0
+    psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return
 

@@ -141,12 +141,48 @@ contains
     krome_fshield =  calc_H2shieldWG11(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useShieldingWG11_withH
+    !compute shielding from Wolcott+Greene 2011, including
+    !cross shielding by H
+    krome_fshield =  calc_H2shieldWG11_withH(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useShieldingR14
     !compute shielding from Richings+ 2014
     krome_fshield =  calc_H2shieldR14(n(:), Tgas)
 #ENDIFKROME
 
   end function krome_fshield
+
+  !***********************
+  !shielding function for CO selected with -shielding_CO option
+  function krome_fshield_CO(n,Tgas)
+    implicit none
+    real*8::krome_fshield_CO,n(:),Tgas
+
+    krome_fshield_CO = 1d0 !default shielding value
+
+#IFKROME_useShieldingCO
+    !compute shielding from Visser, van Dishoeck and Black 2009
+    krome_fshield_CO = calc_COshieldVvDB09(n(:), Tgas)
+#ENDIFKROME
+
+  end function krome_fshield_CO
+
+  !***********************
+  !cross shielding function for C selected with -shielding_C option
+  function krome_fshield_C(n,Tgas)
+    implicit none
+    real*8::krome_fshield_C,n(:),Tgas
+
+    krome_fshield_C = 1d0 !default shielding value
+
+#IFKROME_useShieldingC
+    !compute cross shielding from Tielens and Hollenbach 1985
+    krome_fshield_C = calc_CshieldTH85(n(:), Tgas)
+#ENDIFKROME
+
+  end function krome_fshield_C
 
   !**************************
   !shielding function for H2O+ and H3O+
@@ -185,6 +221,7 @@ contains
   !NOTE: this function is suited for collapse. Use with caution!
   function calc_H2shieldDB96(n,Tgas)
     use krome_commons
+    use krome_getphys
     real*8::n(nspec),Tgas,calc_H2shieldDB96,N_H2, nH2
 
     !check on H2 abundances to avoid
@@ -202,6 +239,8 @@ contains
 #IFKROME_useShieldingWG11
   !************************
   !calculate the self-shielding factor, following Wolcott&Greene 2011
+  !optional argument 'shieldH' added by Piyush Sharda in 2024
+  !to calculate cross shielding by H
   !NOTE: this function is suited for collapse. Use with caution!
   function calc_H2shieldWG11(n,Tgas)
     use krome_commons
@@ -226,6 +265,43 @@ contains
          * exp(-8.5d-4*(1.d0+xN_H2)**0.5d0)
 
   end function calc_H2shieldWG11
+#ENDIFKROME
+
+#IFKROME_useShieldingWG11_withH
+  !************************
+  !calculate the self-shielding factor, following Wolcott&Greene 2011
+  !optional argument 'shieldH' added by Piyush Sharda in 2024
+  !to calculate cross shielding by H
+  !NOTE: this function is suited for collapse. Use with caution!
+  function calc_H2shieldWG11_withH(n,Tgas)
+    use krome_commons
+    use krome_constants
+    use krome_getphys
+    real*8::n(nspec),Tgas,calc_H2shieldWG11_withH,N_H2,nH2
+    real*8::xN_H2,b5,H_mass,nHI,xN_HI,bb
+
+    !check on H2 abundances to avoid weird numerical artifacts
+    nH2 = max(1d-40, n(idx_H2))
+
+    N_H2  =  2d0 * num2col(nH2,n(:))
+
+!    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
+    xN_H2 = N_H2*2d-15 !normalized column density (#), 2d-15=1/5d14
+    H_mass = p_mass+e_mass !H mass in g
+
+    !doppler broadening parameter b divided by 1d5 cm/s (#)
+    b5 = ((boltzmann_erg*Tgas/H_mass)**0.5d0)*1.d-5
+    calc_H2shieldWG11_withH = 0.965d0/(1.d0+xN_H2/b5)**1.1d0 &
+         + (0.035d0/(1.d0+xN_H2)**0.5d0) &
+         * exp(-8.5d-4*(1.d0+xN_H2)**0.5d0)
+
+    nHI = max(1d-40, n(idx_H))
+    N_HI = num2col(nHI,n(:))
+    xN_HI = N_HI / 2.85d23
+    bb = (1d0 / (1d0 + xN_HI)**1.6) * exp(-0.15d0*xN_HI) !equation 15 of WG11
+    calc_H2shieldWG11_withH = bb*calc_H2shieldWG11_withH
+
+  end function calc_H2shieldWG11_withH
 #ENDIFKROME
 
 #IFKROME_useShieldingR14
@@ -270,6 +346,72 @@ contains
          + (omegaH2/sqrt(1d0+xN_H2)) * exp(-8.5d-4*sqrt(1d0+xN_H2))
 
   end function calc_H2shieldR14
+#ENDIFKROME
+
+#IFKROME_useShieldingCO
+  !************************
+  !calculate the shielding factor for CO, following Visser, van Dishoeck and Black 2009
+  !Shielding by CO and H2. Does not include dust
+  function calc_COshieldVvDB09(n,Tgas)
+    use krome_commons
+    use krome_constants
+    use krome_getphys
+    use krome_fit
+    real*8::n(nspec),Tgas,calc_COshieldVvDB09,N_H2,nH2
+    real*8::N_CO,ncO,clipped_x,clipped_y
+    real*8 :: x(8), y(6), z(8, 6)
+
+    !check on H2 abundances to avoid weird numerical artifacts
+    nH2 = max(1d-40, n(idx_H2))
+    nCO = max(1d-40, n(idx_CO))
+
+    N_H2  =  2d0 * num2col(nH2,n(:))
+    N_CO = num2col(nCO,n(:))
+
+    !Table 5, first section
+    x = (/ 0d0, 13d0, 14d0, 15d0, 16d0, 17d0, 18d0, 19d0 /) !N_CO
+    y = (/ 0d0, 19d0, 20d0, 21d0, 22d0, 23d0 /) !N_H2
+    z(:, 1) = (/ 1d0, 8.080d-1, 5.250d-1, 2.434d-1, 5.467d-2, 1.362d-2, 3.378d-3, 5.240d-5 /)
+    z(:, 2) = (/ 8.176d-1, 6.347d-1, 3.891d-1, 1.787d-1, 4.297d-2, 1.152d-2, 2.922d-3, 4.662d-4 /)
+    z(:, 3) = (/ 7.223d-1, 5.624d-1, 3.434d-1, 1.540d-1, 3.515d-2, 9.231d-3, 2.388d-3, 3.899d-4 /)
+    z(:, 4) = (/ 3.260d-1, 2.810d-1, 1.953d-1, 8.726d-2, 1.907d-2, 4.768d-3, 1.150d-3, 1.941d-4 /)
+    z(:, 5) = (/ 1.108d-2, 1.081d-2, 9.033d-3, 4.441d-3, 1.102d-3, 2.644d-4, 7.329d-5, 1.437d-5 /)
+    z(:, 6) = (/ 3.938d-7, 3.938d-7, 3.936d-7, 3.923d-7, 3.901d-7, 3.893d-7, 3.890d-7, 3.875d-7 /)
+
+
+    !Clip logNCO and logNH2 to the ranges in the data
+    clipped_x = max(x(1), min(log10(N_CO), x(8)))
+    clipped_y = max(y(1), min(log10(N_H2), y(6)))
+
+    !Interpolate on log10 (z)
+    calc_COshieldVvDB09 = 1d1**interpolate2D(x, y, log10(z), clipped_x, clipped_y)
+
+  end function calc_COshieldVvDB09
+#ENDIFKROME
+
+#IFKROME_useShieldingC
+  !************************
+  !calculate the cross self-shielding factor, following Tielens and Hollenbach 1985
+  !following Gong, Ostriker and Wolfire 2017 equation 9
+  function calc_CshieldTH85(n,Tgas)
+    use krome_commons
+    use krome_getphys
+    real*8::n(nspec),Tgas,calc_CshieldTH85,N_H2,nH2
+    real*8::nC,N_C,tau,fH2
+
+    !check on H2 abundances to avoid
+    ! weird numerical artifacts
+    nH2 = max(1d-40, n(idx_H2))
+    nC = max(1d-40, n(idx_C))
+
+    N_H2  =  2d0 * num2col(nH2,n(:)) *2.8d-22
+    N_C  =  num2col(nC,n(:))
+
+    tau = 1.6d-17 * N_C
+    fH2 = exp(-N_H2) / (1d0 + N_H2)
+    calc_CshieldTH85 = exp(-tau) * fH2
+
+  end function calc_CshieldTH85
 #ENDIFKROME
 
 end module krome_phfuncs

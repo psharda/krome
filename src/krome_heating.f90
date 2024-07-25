@@ -70,6 +70,14 @@ contains
     heats(idx_heat_dust) = heat_netPhotoDust(n(:),Tgas)
 #ENDIFKROME
 
+#IFKROME_useHeatingPhotoDustWD
+    heats(idx_heat_dust) = heat_PhotoDustWD(n(:),Tgas)
+#ENDIFKROME
+
+#IFKROME_useHeatingPhotoDustNetWD
+    heats(idx_heat_dust) = heat_netPhotoDustWD(n(:),Tgas)
+#ENDIFKROME
+
 #IFKROME_useHeatingXRay
     heats(idx_heat_xray) = heat_XRay(n(:),Tgas,k(:))
 #ENDIFKROME
@@ -363,6 +371,116 @@ contains
   end function heat_netPhotoDust
 #ENDIFKROME
 
+#IFKROME_useHeatingPhotoDustWD
+  !***************************
+  function heat_PhotoDustWD(n,Tgas)
+    !photoelectric effect from dust in erg/s/cm3
+    !eq. 44 in Weingartner and Draine 2001 ApJS
+    ! dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    use krome_getphys
+    implicit none
+    integer::i
+    real*8::heat_PhotoDustWD,n(:),Tgas,ntot,psi,G0
+    real*8::eps_PE,C0,C1,C2,C3,C4,C5,C6
+    real*8::nenh,D0,D1,D2,D3,D4,cool_grrec
+
+    heat_PhotoDustWD = 0d0
+
+    if (Tgas .LT. 1d3 .or. Tgas .GT. 1d4) return
+
+    ntot = get_Hnuclei(n(:))
+    nenh = n(idx_e) * n(idx_H)
+    if(n(idx_e)>0d0) then
+       !TODO: supply J_PE and J_LW to G0 
+       G0 = 1.69d0
+       psi = G0 * sqrt(Tgas) / n(idx_e)
+    else
+       psi = 0d0
+    end if
+
+    if (psi .LT. 1d2 .or. psi .GT. 1d6) return
+
+    !grain photoelectric heating
+    !coefficients below for R_v=3.1, b_c=4.0 and ISRF from Table 2 of Weingartner and Draine 2001 ApJS.
+    C0 = 5.22
+    C1 = 2.25
+    C2 = 0.04996
+    C3 = 0.00430
+    C4 = 0.147
+    C5 = 0.431
+    C6 = 0.692
+
+    eps_PE = (C0 + C1*Tgas**C4) / (1 + C2*(psi**C5)*(1 + C3*(psi**C6)))
+    heat_PhotoDustWD = 1d-26 * G0 * ntot * eps_PE * dust2gas_ratio !erg/cm3/s
+
+  end function heat_PhotoDustWD
+#ENDIFKROME
+
+#IFKROME_useHeatingPhotoDustNetWD
+  !***************************
+  function heat_netPhotoDustWD(n,Tgas)
+    !photoelectric effect from dust in erg/s/cm3
+    !including the recombination cooling and a generic radiation flux
+    !eq. 44 and 45 in Weingartner and Draine 2001 ApJS
+    ! dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    use krome_getphys
+    implicit none
+    integer::i
+    real*8::heat_netPhotoDustWD,n(:),Tgas,ntot,psi,G0
+    real*8::eps_PE,C0,C1,C2,C3,C4,C5,C6,heat_PE
+    real*8::nenh,D0,D1,D2,D3,D4,cool_grrec
+
+    heat_netPhotoDustWD = 0d0
+
+    if (Tgas .LT. 1d3 .or. Tgas .GT. 1d4) return
+
+    ntot = get_Hnuclei(n(:))
+    nenh = n(idx_e) * n(idx_H)
+    if(n(idx_e)>0d0) then
+       !TODO: supply J_PE and J_LW to G0 
+       G0 = 1.69d0
+       psi = G0 * sqrt(Tgas) / n(idx_e)
+    else
+       psi = 0d0
+    end if
+
+    if (psi .LT. 1d2 .or. psi .GT. 1d6) return
+
+    !grain photoelectric heating
+    !coefficients below for R_v=3.1, b_c=4.0 and ISRF from Table 2 of Weingartner and Draine 2001 ApJS.
+    C0 = 5.22
+    C1 = 2.25
+    C2 = 0.04996
+    C3 = 0.00430
+    C4 = 0.147
+    C5 = 0.431
+    C6 = 0.692
+
+    eps_PE = (C0 + C1*Tgas**C4) / (1 + C2*(psi**C5)*(1 + C3*(psi**C6)))
+    heat_PE = 1d-26 * G0 * ntot * eps_PE * dust2gas_ratio !erg/cm3/s
+
+
+    !grain assisted recombination cooling
+    !coefficients below for R_v=3.1, b_c=4.0 and ISRF from Table 3 of Weingartner and Draine 2001 ApJS.
+    D0 = 0.4535
+    D1 = 2.234
+    D2 = -6.266
+    D3 = 1.442
+    D4 = 0.05089
+
+    cool_grrec = 1d-28 * nenh * Tgas**(D0 + D1/psi) * exp(D2 + D3*psi -D4*psi**2) * dust2gas_ratio !erg/cm3/s
+
+    heat_netPhotoDustWD = heat_PE - cool_grrec
+
+  end function heat_netPhotoDustWD
+#ENDIFKROME
+
 #IFKROME_useHeatingPhotoAv
   !******************************
   function heat_photoAv(n,Tgas,k)
@@ -373,7 +491,7 @@ contains
     use krome_getphys
     implicit none
     real*8::heat_photoAv,n(:),Tgas,k(:)
-    real*8::ncrn,ncrd1,ncrd2,yH,yH2,ncr,h2heatfac,dd,Rdiss
+    real*8::ncrn,ncrd1,ncrd2,yH,yH2,ncr,h2heatfac,dd,Rdiss,Rion
 
     dd = get_Hnuclei(n(:))
     ncrn  = 1.0d6*(Tgas**(-0.5d0))
@@ -386,6 +504,7 @@ contains
     ncr = ncrn/(ncrd1*yH+ncrd2*yH2)      !1/cm3
     h2heatfac = 1.0d0/(1.0d0+ncr/dd)     !dimensionless
 
+    Rion = #KROME_RionH
     Rdiss = #KROME_RdissH2
 
     !photodissociation H2 heating
@@ -393,6 +512,9 @@ contains
 
     !UV photo-pumping H2
     heat_photoAv = heat_photoAv + 2.7d-11*Rdiss*h2heatfac*n(idx_H2)
+
+    !photoionization H heating
+    heat_photoAv = heat_photoAv + Rion*n(idx_H)*5.447399970800022d-12 ! in erg/cm3/s
 
   end function heat_photoAv
 #ENDIFKROME

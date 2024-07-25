@@ -11,13 +11,14 @@ program test_krome
   use krome_main
   use krome_user
   use krome_user_commons
+  use krome_cooling
   implicit none
   integer,parameter::nz=8
   integer,parameter::rstep = 500000
   integer::i,unit,ios,jscale,jz,jz2
   real*8::dtH,deldd
   real*8::tff,dd,dd1
-  real*8::x(krome_nmols),Tgas,dt
+  real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust(krome_ndust),zs(nz)
   real*8::Av, NHtot, totheat, totcool, crate
 
@@ -30,6 +31,9 @@ program test_krome
   !output header
   write(22, '(A)', ADVANCE='NO') "#ntot Tgas Tdust"
   write(22, '(A)') trim(krome_get_names_header())
+
+  write(31, '(A)', ADVANCE='NO') "#ntot Tgas sum(cools)"
+  write(31, '(A)') trim(krome_get_cooling_names_header())
 
   !loop over size(zs)*2 so that every second loop is skipped, so that an empty line is created in the output fort.22 file
   !this line break in the output file can then be used to read in output for each zs separately
@@ -47,6 +51,7 @@ program test_krome
 
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
+    call krome_set_metallicity(zs(jz2))
 
     !initialize KROME (mandatory)
     call krome_init()
@@ -66,6 +71,14 @@ program test_krome
     call krome_init_dust_distribution(x(:),(1d0/162d0)*zs(jz2)) !scale the dust to gas ratio by the metallicity
     print *,krome_get_dust_distribution()
     call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
+
+    if (zs(jz2) > 0d0) then
+      !turn on photo/cr reactions that include metals
+      call krome_set_user_is_metal(1d0)
+    else
+      !turn off photo/cr reactions that include metals
+      call krome_set_user_is_metal(0d0)
+    endif
 
     !set initial density
     dd = ntot
@@ -114,6 +127,13 @@ program test_krome
 
        Tdust = krome_get_Tdust()
 
+       !dump cooling rates for Tgas going into the calculation
+       n(1:krome_nmols) = x(:)
+       n(KROME_idx_Tgas) = Tgas
+       n(krome_nmols+krome_ndust+1:krome_nmols+2*krome_ndust) = Tdust
+       cools(:) = get_cooling_array(n(:),Tgas)
+       write(31,'(99E14.5e3)') dd, Tgas, sum(cools), cools(:)
+
        !solve the chemistry
        call krome(x(:),Tgas,dt)
 
@@ -126,9 +146,9 @@ program test_krome
           call krome_print_best_flux(x(:),Tgas,5)
           call krome_explore_flux(x(:),Tgas,unit,dd)
        end if
-       !call krome_dump_cooling(x(:),Tgas)
     end do
     write(22,*)
+    write(31,*)
   end do
 
   !close explore data file

@@ -20,7 +20,7 @@ program test_krome
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust(krome_ndust),zs(nz)
-  real*8::Av, NHtot, totheat, totcool
+  real*8::Av, NH, NHj, NH2
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
@@ -39,6 +39,7 @@ program test_krome
      jscale = mod(jz,2)
      if(jscale==0) cycle
   
+    print *, 'Metallicity: ', zs(jz2), ' of Solar'
 
     !INITIAL CONDITIONS
     krome_redshift = 0d0    !redshift
@@ -65,8 +66,16 @@ program test_krome
     x(KROME_idx_O)         = 3.568d-4*zs(jz2)*ntot !O is fully neutral
 
     call krome_init_dust_distribution(x(:),(1d0/162d0)*zs(jz2)) !scale the dust to gas ratio by the metallicity
-    print *,krome_get_dust_distribution()
+    print *, 'Dust distribution: ', krome_get_dust_distribution()
     call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
+
+    !set initial Av, following equation 2 of Glover et al. 2010
+    NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+    NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+    NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+    Av = (NH + NHj + 2d0*NH2) / 1.87d21
+    call krome_set_user_Av(0d0)
+    print *, 'Initial Av: ', krome_get_user_Av()    
 
     !set initial density
     dd = ntot

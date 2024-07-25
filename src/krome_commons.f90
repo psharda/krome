@@ -131,6 +131,12 @@ module krome_commons
   real*8::CoolZNOUV_z(CoolZNOUVn,CoolZNOUVm),CoolZNOUV_xmul,CoolZNOUV_ymul
 #ENDIFKROME
 
+#IFKROME_useCoolingZCIEGF
+  integer,parameter::coolZCIEGFn=189
+  real*8::coolZCIEGFx1(coolZCIEGFn),coolZCIEGFx2(coolZCIEGFn),coolZCIEGFx3(coolZCIEGFn)
+  real*8::coolZCIEGFx1min,coolZCIEGFx1max
+#ENDIFKROME
+
 #IFKROME_useCoolingZCIE
 !data for metal cooling from table in the presence of UV
   integer,parameter::coolZCIEn1=81

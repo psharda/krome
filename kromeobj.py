@@ -53,16 +53,16 @@ class krome:
 	solver_MF = 222
 	force_rwork = useHeating = doReport = checkConserv = useFileIdx = buildCompact = useEquilibrium = False
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
-	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = useCoolingNebular = False
-	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = False
+	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = useCoolingNebular = useCoolingDustGRREC = False
+	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useShieldingC = useShieldingCO = useShieldingWG11_withH = False
 	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
-	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingGH = False
+	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingZCIEGF = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
 	useCoolingHCN = useCoolingOH = useCoolingH2O = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = False
-	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = False
+	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = useHeatingPhotoDustWD = useHeatingPhotoDustNetWD = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
 	usePhotoOpacity = useXRay = hasSurfaceReactions = shieldHabingDust = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = shortHead = True
@@ -236,7 +236,7 @@ class krome:
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
 			COMPTON, EXPANSION, CIE, DISS, NEBULAR, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -\
-			cooling=ATOMIC,CII,OI,FeI),Z_CIE,Z_CIENOUV,Z_EXTENDED.\
+			cooling=ATOMIC,CII,OI,FeI),Z_CIE,Z_CIENOUV,Z_CIEGF,Z_EXTENDED,DUSTGRREC.\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
 		self.parser.add_argument("-coolLevels", metavar='MAXLEV', help="use only the levels up to MAXLEV (included), e.g. -coolLevels=3\
@@ -280,7 +280,7 @@ class krome:
 		self.parser.add_argument("-gizmo", action="store_true", help="create patches for Gizmo")
 		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be RIPAMONTI or OMUKAI")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM\
-			, DH, CR, PHOTOAV,VISCOUS. If you want a complete list of the available heating options type -heating=?")
+			, DH, CR, PHOTOAV,VISCOUS,PHOTODUSTNET,PHOTODUSTNETWD,PHOTODUSTWD. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-interfaceC", action="store_true", help="create a C wrapper")
 		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper \
@@ -342,7 +342,9 @@ class krome:
 		self.parser.add_argument("-sh", action="store_true", help="write a shorter header in the f90 files. Now this is the default, \
 			here for retrocompatibility, see option -lh.")
 		self.parser.add_argument("-shielding", metavar="TYPE", help="use H2 self-shielding, TYPE can be DB96 for Draine+Bertoldi 1996,\
-    		WG11 for the more accurate Wolcott+Greene 2011, R14 for the Tgas-dependent by Richings+2014")
+    		WG11 for the more accurate Wolcott+Greene 2011, WG11_withH to include cross shielding by H, R14 for the Tgas-dependent by Richings+2014")
+		self.parser.add_argument("-shielding_CO", action="store_true", help="use CO self-shielding from Visser, van Dishoeck and Black 2009")
+		self.parser.add_argument("-shielding_C", action="store_true", help="use C cross-shielding by H2 from Tielens and Hollenbach 1985")
 		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux \
 			(when calculated from photobins).")
 		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
@@ -804,7 +806,7 @@ class krome:
 		#apply an individual cooling floor (SB, mod TG)
 		if args.useIndividualFloor:
 			myFloor = [x.strip() for x in args.useIndividualFloor.split(",")]
-			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED","GH","NEBULAR"]
+			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED","GH","NEBULAR","Z_CIEGF","DUSTGRREC"]
 			for floor in myFloor:
 				if floor not in allFloor:
 					die("ERROR: Floor \""+floor+"\" is unknown!\nAvailable floor are: "
@@ -880,7 +882,7 @@ class krome:
 		if args.shielding:
 			myShielding = [x.strip() for x in args.shielding.split(",")]
 			#list of the shielding approximations
-			allShielding = ["DB96","WG11","R14"]
+			allShielding = ["DB96","WG11","WG11_withH","R14"]
 			for shi in myShielding:
 				if shi not in allShielding:
 					die("ERROR: Shielding \""+shi+"\" is unknown!\nAvailable shielding are: "
@@ -889,9 +891,20 @@ class krome:
 				die("ERROR: "+(", ".join(allShielding))+" are mutually exclusive!")
 			self.useShieldingDB96 = ("DB96" in myShielding)
 			self.useShieldingWG11 = ("WG11" in myShielding)
+			self.useShieldingWG11_withH = ("WG11_withH" in myShielding)
 			self.useShieldingR14  = ("R14" in myShielding)
 			self.useShielding = True
 			print("Reading option -shielding (TYPE="+(",".join(myShielding))+")")
+
+		#determine if we use CO shielding for CO dissociation
+		if args.shielding_CO:
+			self.useShieldingCO = True
+			print("Reading option -shielding_CO (activating CO shielding from Visser, van Dishoeck and Black 2009)")
+
+		#determine if we use C cross shielding by H2 for C dissociation
+		if args.shielding_C:
+			self.useShieldingC = True
+			print("Reading option -shielding_C (activating C cross-shielding from Tielens and Hollenbach 1985)")
 
 		#use dust shielding for Habing flux
 		if args.shieldHabingDust:
@@ -1188,7 +1201,7 @@ class krome:
 			#list of all cooling (excluded from file)
 			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE",
 						"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV","Z_EXTENDED","GH","OH",
-						"H2O", "HCN", "NEBULAR"]
+						"H2O", "HCN", "NEBULAR","Z_CIEGF","DUSTGRREC"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
@@ -1238,7 +1251,9 @@ class krome:
 						+(", ".join(allCools)))
 
 			if "ATOMIC" in myCools: self.useCoolingAtomic = True
+			if "DUSTGRREC" in myCools: self.useCoolingDustGRREC = True
 			if "NEBULAR" in myCools: self.useCoolingNebular = True
+			if "Z_CIEGF" in myCools: self.useCoolingZCIEGF = True
 			if "H2" in myCools: self.useCoolingH2 = True
 			if "H2GP98" in myCools: self.useCoolingH2GP98 = True
 			if "HD" in myCools: self.useCoolingHD = True
@@ -1292,6 +1307,14 @@ class krome:
 				die("ERROR: CIE and CONT cooling are mutually exclusive!")
 			if "CIE" in myCools and "GH" in myCools:
 				die("ERROR: CIE and GH cooling are mutually exclusive!")
+			if "Z_CIEGF" in myCools and "GH" in myCools:
+				die("ERROR: Z_CIEGF and GH cooling are mutually exclusive!")
+			if "Z_CIEGF" in myCools and "Z_EXTENDED" in myCools:
+				die("ERROR: Z_CIEGF and Z_EXTENDED cooling are mutually exclusive!")
+			if "Z_CIEGF" in myCools and "Z_CIE" in myCools:
+				die("ERROR: Z_CIEGF and Z_CIE cooling are mutually exclusive!")
+			if "Z_CIEGF" in myCools and "Z_CIENOUV" in myCools:
+				die("ERROR: Z_CIEGF and Z_CIENOUV cooling are mutually exclusive!")
 
 			self.use_thermo = True
 
@@ -1317,7 +1340,7 @@ class krome:
 			myHeat = [x.strip() for x in myHeat]
 			self.allHeatings = myHeat
 			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST",
-						"PHOTODUSTNET","XRAY","VISCOUS"]
+						"PHOTODUSTNET","XRAY","VISCOUS","PHOTODUSTNETWD","PHOTODUSTWD"]
 			for hea in myHeat:
 				if hea not in allHeats:
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "
@@ -1331,6 +1354,8 @@ class krome:
 			if "PHOTOAV" in myHeat: self.useHeatingPhotoAv = True #H2 photodissociation and photo-pumping
 			if "PHOTODUST" in myHeat: self.useHeatingPhotoDust = True #photoelectric heating from dust
 			if "PHOTODUSTNET" in myHeat: self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
+			if "PHOTODUSTNETWD" in myHeat: self.useHeatingPhotoDustNetWD = True #photoelectric heating from dust with recombination cooling from Weingartner and Draine 2001 ApJS
+			if "PHOTODUSTWD" in myHeat: self.useHeatingPhotoDustWD = True #photoelectric heating from dust withOUT recombination cooling from Weingartner and Draine 2001 ApJS
 			if "XRAY" in myHeat: self.useHeatingXRay = True #heating from xray reactions rate
 			if "VISCOUS" in myHeat: self.useHeatingVisc = True #heating from viscosity
 			#if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2 in LW bands
@@ -1343,6 +1368,22 @@ class krome:
 
 			if self.useHeatingPhotoDust and self.useHeatingPhotoDustNet:
 				print("ERROR: PHOTODUST and PHOTODUSTNET options are mutually exclusive!")
+				sys.exit()
+
+			if self.useHeatingPhotoDustNet and self.useHeatingPhotoDustNetWD:
+				print("ERROR: PHOTODUSTNET and PHOTODUSTNETWD options are mutually exclusive!")
+				sys.exit()
+
+			if self.useHeatingPhotoDustWD and self.useHeatingPhotoDustNetWD:
+				print("ERROR: PHOTODUSTWD and PHOTODUSTNETWD options are mutually exclusive!")
+				sys.exit()
+
+			if self.useHeatingPhotoDustWD and not self.useCoolingDustGRREC:
+				print("ERROR: If you include PHOTODUSTWD heating, you must include the associated DUSTGRREC cooling!")
+				sys.exit()
+
+			if not self.useHeatingPhotoDustWD and self.useCoolingDustGRREC:
+				print("ERROR: If you include DUSTGRREC cooling, you must include the associated PHOTODUSTWD heating!")
 				sys.exit()
 
 			if self.photoBins<=0 and self.useHeatingPhotoDustNet:
@@ -1902,6 +1943,8 @@ class krome:
 			print("Found "+str(line_count)+" lines! It takes a while...")
 
 		fsh_found = False #search for fsh variable for shielding if needed
+		fsh_CO_found = False #search for fsh variable for shieldingCO if needed
+		fsh_C_found = False #search for fsh variable for shieldingC if needed
 		#start reading file stored in the loop above
 		isComment = False #flag for comment block
 		noTabNext = False #flag for use tabs for the next reaction
@@ -2446,7 +2489,10 @@ class krome:
 				myrea.krate = area[1] #get reaction rate written in F90 style
 			if "krome_fshield" in myrea.krate.lower():
 				fsh_found = True
-
+			if "krome_fshield_CO" in myrea.krate.lower():
+				fsh_CO_found = True
+			if "krome_fshield_C" in myrea.krate.lower():
+				fsh_C_found = True
 			if qeffFound:
 				myrea.qeff = arow[iqeff]
 
@@ -2568,10 +2614,26 @@ class krome:
 
 		#after loop on file post-process special reactions
 		#shielding reactions requires fsh variable
-		if self.useShieldingDB96 or self.useShieldingWG11 or self.useShieldingR14 and not fsh_found:
+		if self.useShieldingDB96 or self.useShieldingWG11 or self.useShieldingWG11_withH or self.useShieldingR14 and not fsh_found:
 			print("")
 			print("WARNING: no krome_fshield(n(:),Tgas) variable found in rate coefficient")
-			print(" even if shielding option is enabled.")
+			print(" even though shielding option is enabled.")
+			print(" Please check your network file!")
+			a = keyb_input("Any key to continue q to quit... ")
+			if a == "q": sys.exit()
+
+		if self.useShieldingCO and not fsh_CO_found:
+			print("")
+			print("WARNING: no krome_fshield_CO(n(:),Tgas) variable found in rate coefficient")
+			print(" even though shieldingCO option is enabled.")
+			print(" Please check your network file!")
+			a = keyb_input("Any key to continue q to quit... ")
+			if a == "q": sys.exit()
+
+		if self.useShieldingC and not fsh_C_found:
+			print("")
+			print("WARNING: no krome_fshield_C(n(:),Tgas) variable found in rate coefficient")
+			print(" even though shieldingC option is enabled.")
 			print(" Please check your network file!")
 			a = keyb_input("Any key to continue q to quit... ")
 			if a == "q": sys.exit()
@@ -3062,11 +3124,11 @@ class krome:
 	def definePhysVariables(self):
 		#variables are list [name, default_value_string]
 		#note that phys_ will be prepended
-		self.physVariables = [["Tcmb", "2.73d0"],
-			["zredshift", "0d0"],
+		self.physVariables = [["Tcmb", "krome_get_Tcmb()"],
+			["zredshift", "krome_get_zredshift()"],
 			["orthoParaRatio", "3d0"],
-			["metallicity", "0d0"],
-                        ["Tfloor", "2.73d0"]]
+			["metallicity", "krome_get_metallicity()"],
+                        ["Tfloor", "phys_Tcmb"]]
 
 	#####################################################
 	def photo_warnings(self):
@@ -4530,6 +4592,9 @@ class krome:
 		#PART2: use data to prepare cooling routine
 		#prepare the functions for the cooling looping on metals (which are the key of the cooling_data dictionary)
 		for cur_metal, cool_data in cooling_data.items():
+			if self.useCoolingNebular and cur_metal == 'OII':
+				print('')
+				raise ValueError('Cannot switch on NEBULAR and OII cooling together! This is because the current implementation of NEBULAR cooling already includes contribution from OII cooling.')
 			metal_name = cur_metal #alias for metal name
 			metal_name_f90 = cool_data["metal_name_f90"] #name in f90 style
 			level_list = list(cool_data["levels_data"].keys()) #store the list of the levels as integer values (e.g. [0,1,3])
@@ -4895,6 +4960,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
 			if srow == "#IFKROME_useCoolingHCN" and not self.useCoolingHCN: skip = True
 			if srow == "#IFKROME_useCoolingZCIE" and not self.useCoolingZCIE: skip = True
+			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingZCIENOUV" and not self.useCoolingZCIENOUV: skip = True
 			if srow == "#IFKROME_useCoolingGH" and not self.useCoolingGH: skip = True
 			if srow == "#IFKROME_hasStoreOnceRates" and not self.hasStoreOnceRates: skip = True
@@ -5654,8 +5720,11 @@ class krome:
 			#skip when find IF pragmas
 
 			if srow == "#IFKROME_useShieldingWG11" and not self.useShieldingWG11: skip = True
+			if srow == "#IFKROME_useShieldingWG11_withH" and not self.useShieldingWG11_withH: skip = True
 			if srow == "#IFKROME_useShieldingDB96" and not self.useShieldingDB96: skip = True
 			if srow == "#IFKROME_useShieldingR14" and not self.useShieldingR14: skip = True
+			if srow == "#IFKROME_useShieldingCO" and not self.useShieldingCO: skip = True
+			if srow == "#IFKROME_useShieldingC" and not self.useShieldingC: skip = True
 			if srow == "#IFKROME_usePhotoBins" and not (self.photoBins>0): skip = True
 
 			if srow == "#IFKROME_hasHI" and not has_HI: skip = True
@@ -6469,7 +6538,9 @@ class krome:
 			if srow == "#IFKROME_useCoolingDustNoTdust" and (usingTd or not self.useCoolingDust): skip = True
 			if srow == "#IFKROME_useCoolingDustTabs" and not self.dustTabsCool: skip = True
 			if srow == "#IFKROME_useCoolingAtomic" and not self.useCoolingAtomic: skip = True
+			if srow == "#IFKROME_useCoolingDustGRREC" and not self.useCoolingDustGRREC: skip = True
 			if srow == "#IFKROME_useCoolingNebular" and not self.useCoolingNebular: skip = True
+			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingH2" and not self.useCoolingH2: skip = True
 			if srow == "#IFKROME_useCoolingH2GP" and not self.useCoolingH2GP98: skip = True
 			if srow == "#IFKROME_useCoolingHD" and not self.useCoolingHD: skip = True
@@ -6808,6 +6879,8 @@ class krome:
 				if row.strip() == "#IFKROME_useHeatingPhotoAv" and not self.useHeatingPhotoAv: skip = True
 				if row.strip() == "#IFKROME_useHeatingPhotoDust" and not self.useHeatingPhotoDust: skip = True
 				if row.strip() == "#IFKROME_useHeatingPhotoDustNet" and not self.useHeatingPhotoDustNet: skip = True
+				if row.strip() == "#IFKROME_useHeatingPhotoDustNetWD" and not self.useHeatingPhotoDustNetWD: skip = True
+				if row.strip() == "#IFKROME_useHeatingPhotoDustWD" and not self.useHeatingPhotoDustWD: skip = True
 				if row.strip() == "#IFKROME_useHeatingXRay" and not self.useHeatingXRay: skip = True
 				if row.strip() == "#IFKROME_useHeatingVisc" and not self.useHeatingVisc: skip = True
 				#if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
@@ -6924,7 +6997,25 @@ class krome:
 					else:
 						row = row.replace("#KROME_photoDustZ","1d1**get_metallicity"+zz+"(n(:))")
 
-				#replace correct dissociation rates
+				#replace correct H photoionization rates
+				if "#KROME_RionH" in row:
+					rdhFound = False
+					for rea in self.reacts:
+						R = sorted([x.name for x in rea.reactants])
+						P = sorted([x.name for x in rea.products])
+						if R == ["H"] and P == ["E","H+"]:
+							rateionH = "k("+str(rea.idx)+")"
+							rdhFound = True
+							break
+					#check if rate photoionization rate is present in the network
+					if not rdhFound:
+						print("ERROR: if you use PHOTOAV heating you should have")
+						print(" H photoionization rate in your chemical network!")
+						sys.exit()
+
+					row = row.replace("#KROME_RionH", rateionH) #replace pragma with H photoionization rate
+
+				#replace correct H2 photodissociation rates
 				if "#KROME_RdissH2" in row:
 					rdh2Found = False
 					for rea in self.reacts:
@@ -7897,6 +7988,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
 			if srow == "#IFKROME_useCoolingHCN" and not self.useCoolingHCN: skip = True
 			if srow == "#IFKROME_useCoolingZCIE" and not self.useCoolingZCIE: skip = True
+			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingZCIENOUV" and not self.useCoolingZCIENOUV: skip = True
 			if srow == "#IFKROME_useCoolingGH" and not self.useCoolingGH: skip = True
 			if srow == "#IFKROME_ierr" and not self.useIERR: skip = True
@@ -8152,6 +8244,11 @@ class krome:
 		if self.useCoolingZCIE:
 			print("- copying coolZ_CIE2012.dat...")
 			shutil.copyfile("data/coolZ_CIE2012.dat", buildFolder+"coolZ_CIE2012.dat")
+
+		#copy cooling Z_CIEGF
+		if self.useCoolingZCIEGF:
+			print("- copying coolZ_CIE_GF12.dat...")
+			shutil.copyfile("data/coolZ_CIE_GF12.dat", buildFolder+"coolZ_CIE_GF12.dat")
 
 		#copy cooling Z_CIE NOUV
 		if self.useCoolingZCIENOUV:

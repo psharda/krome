@@ -20,9 +20,13 @@ program test_krome
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust(krome_ndust),zs(nz)
-  real*8::Av, NHtot, totheat, totcool
+  real*8::Av, NH, NHj, NH2, crate
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
+
+  !Cosmic ray ionization rate
+  crate = 3d-17 !MW value from Indriolo and McCall 2012
+  call krome_set_user_crate(crate)
 
   !output header
   write(22, '(A)', ADVANCE='NO') "#ntot Tgas Tdust"
@@ -39,6 +43,7 @@ program test_krome
      jscale = mod(jz,2)
      if(jscale==0) cycle
   
+    print *, 'Metallicity: ', zs(jz2), ' of Solar'
 
     !INITIAL CONDITIONS
     krome_redshift = 0d0    !redshift
@@ -65,8 +70,24 @@ program test_krome
     x(KROME_idx_O)         = 3.568d-4*zs(jz2)*ntot !O is fully neutral
 
     call krome_init_dust_distribution(x(:),(1d0/162d0)*zs(jz2)) !scale the dust to gas ratio by the metallicity
-    print *,krome_get_dust_distribution()
+    print *, 'Dust distribution: ', krome_get_dust_distribution()
     call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
+
+    !set initial Av, following equation 3 of Gong, Ostriker and Wolfire 2017
+    NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+    NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+    NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+    Av = (NH + NHj + 2d0*NH2) *zs(jz2) / 1.87d21
+    call krome_set_user_Av(Av)
+    print *, 'Initial Av: ', krome_get_user_Av()
+
+    if (zs(jz2) > 0d0) then
+      !turn on photo/cr reactions that include metals
+      call krome_set_user_is_metal(1d0)
+    else
+      !turn off photo/cr reactions that include metals
+      call krome_set_user_is_metal(0d0)
+    endif
 
     !set initial density
     dd = ntot
@@ -75,7 +96,7 @@ program test_krome
     open(newunit=unit,file="explore.dat",status="replace")
 
     print *,"solving..."
-    print '(a5,3a11)',"step","n(cm-3)","Tgas(K)", "Tdust(K)"
+    print '(a5,4a11)',"step","n(cm-3)","Tgas(K)", "Tdust(K)", "Av"
 
 
     !print initial output
@@ -104,6 +125,12 @@ program test_krome
        !set time-step
        dt = dtH
 
+       NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+       NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+       NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+       Av = (NH + NHj + 2d0*NH2) *zs(jz2)/ 1.87d21
+       call krome_set_user_Av(Av)
+
        !break when max density reached
        if(dd.gt.1d18) exit
 
@@ -127,10 +154,10 @@ program test_krome
 
        !print some output
        write(22,'(99E17.8e3)') dd,Tgas,Tdust(:),x(:)/dd
-       if(mod(i,50)==0) then
+       if(mod(i,100)==0) then
           !totheat = krome_get_heating(x(:), Tgas)
           !totcool = krome_get_heating(x(:), Tgas)
-          print '(I5,30E11.3)',i,dd,Tgas,Tdust(:)
+          print '(I5,30E11.3)',i,dd,Tgas,Tdust(:),krome_get_user_Av()
           call krome_print_best_flux(x(:),Tgas,5)
           call krome_explore_flux(x(:),Tgas,unit,dd)
        end if

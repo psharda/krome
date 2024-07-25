@@ -25,10 +25,20 @@
       implicit none
       real*8::n(:), Tgas
       real*8::get_cooling_array(ncools),cools(ncools)
-      real*8::f1,f2,smooth
+      real*8::f1,f2,smooth,Tt1,Tt2
 
       f1 = 1d0
       f2 = 1d0
+
+#IFKROME_useCoolingZCIEGF
+      !Z_CIEGF cooling activated, so
+      !f2 becomes S in equation 40 of Kim+2023 ApJS, 264, 10
+      Tt1 = 2d4
+      Tt2 = 3.5d4
+      f2 = 1d0/(1d0 + exp(-1d1*(Tgas - 0.5d0*(Tt1 + Tt2))/ (Tt2 - Tt1)))
+      !f1 becomes (1-S) in equation 40 of Kim+2023 ApJS, 264, 10
+      f1 = 1d0 - f2
+#ENDIFKROME
 
       !returns cooling in erg/cm3/s
       cools(:) = 0d0
@@ -50,15 +60,19 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingDust
-      cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
+      cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingDustNoTdust
-      cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
+      cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingDustTabs
-      cools(idx_cool_dust) = cooling_dust(n(:), Tgas)
+      cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
+#ENDIFKROME
+
+#IFKROME_useCoolingDustGRREC
+      cools(idx_cool_dustgrrec) = f1 * cool_DustGRREC(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingExpansion
@@ -66,19 +80,19 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingCO
-      cools(idx_cool_CO) = cooling_CO(n(:), Tgas) #KROME_floorCO
+      cools(idx_cool_CO) = f1 * cooling_CO(n(:), Tgas) #KROME_floorCO
 #ENDIFKROME
 
 #IFKROME_useCoolingOH
-      cools(idx_cool_OH) = cooling_OH(n(:), Tgas)
+      cools(idx_cool_OH) = f1 * cooling_OH(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingH2O
-      cools(idx_cool_H2O) = cooling_H2O(n(:), Tgas)
+      cools(idx_cool_H2O) = f1 * cooling_H2O(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingHCN
-      cools(idx_cool_HCN) = cooling_HCN(n(:), Tgas)
+      cools(idx_cool_HCN) = f1 * cooling_HCN(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingAtomic
@@ -86,7 +100,7 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingNebular
-      cools(idx_cool_nebular) = cooling_Nebular(n(:), Tgas) #KROME_floorNebular
+      cools(idx_cool_nebular) = f1 * cooling_Nebular(n(:), Tgas) #KROME_floorNebular
 #ENDIFKROME
 
 
@@ -116,7 +130,7 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
-      cools(idx_cool_Z) = f2 * ( cooling_Z(n(:), Tgas) #KROME_floorZ )
+      cools(idx_cool_Z) = f1 * ( cooling_Z(n(:), Tgas) #KROME_floorZ )
 #ENDIFKROME
 
 #IFKROME_useCoolingCIE
@@ -129,6 +143,10 @@
 
 #IFKROME_useCoolingZCIENOUV
       cools(idx_cool_ZCIENOUV) = f2 * ( cooling_Z_CIENOUV(n(:), Tgas) #KROME_floorZ_CIENOUV )
+#ENDIFKROME
+
+#IFKROME_useCoolingZCIEGF
+      cools(idx_cool_ZCIEGF) = f2 * ( cooling_Z_CIEGF(n(:), Tgas) #KROME_floorZ_CIEGF )
 #ENDIFKROME
 
 #IFKROME_useCoolingZExtended
@@ -762,6 +780,96 @@
     end subroutine init_coolingHCN
 #ENDIFKROME
 
+#IFKROME_useCoolingZCIEGF
+  !***************************
+  ! Metal line cooling CIE
+  ! tables from Gnat and Ferland 2012
+  function cooling_Z_CIEGF(n,inTgas)
+    use krome_commons
+    use krome_subs
+    use krome_fit
+    use krome_getphys
+    implicit none
+    integer,parameter::imax=coolZCIEGFn
+    real*8::cooling_Z_CIEGF,n(:),inTgas
+    real*8::cH,logTgas,xLd,v1min,v1max
+    real*8::x1(imax),x2(imax),x3(imax),interp(imax)
+    real*8,parameter::eps=1d-5
+
+    cooling_Z_CIEGF = 0d0
+    cH = get_Hnuclei(n(:))
+
+    !check if the abundance is close to zero to
+    !avoid weird log evaluation
+    if(cH.lt.1d-20)return
+
+    !local copy of limits
+    v1min = coolZCIEGFx1min
+    v1max = coolZCIEGFx1max
+
+    if(inTgas>=v1max) inTgas = v1max*(1d0-eps)
+    if(inTgas<v1min) return
+
+    !local copy of variables arrays
+    x1(:) = coolZCIEGFx1(:)
+    x2(:) = coolZCIEGFx2(:)
+    x3(:) = coolZCIEGFx3(:)
+
+    logTgas = log10(inTgas)
+
+    interp(:) = log10(x2(:) + total_Z*x3(:))
+
+    xLd = interpolate1D(log10(x1(:)), interp(:), logTgas) !erg cm^3/s
+
+    cooling_Z_CIEGF = 10**xLd * cH * cH !erg/cm^3/s
+
+  end function cooling_Z_CIEGF
+
+  !************************
+  subroutine init_coolingZCIEGF()
+    use krome_commons
+    implicit none
+    integer::ios,i,unit
+    real(8) :: temp, cool_He, cool_ZCIE
+    character(len=256) :: line
+
+    if(krome_mpi_rank<=1) print *,"load Z_CIE_GF2012 cooling..."
+    open(newunit=unit,file="coolZ_CIE_GF12.dat",status="old",iostat=ios)
+    !check if file exists
+    if(ios.ne.0) then
+      print *,"ERROR: problems loading coolZ_CIE_GF12.dat!"
+      stop
+    end if
+
+    do
+      read(unit, '(A)', iostat=ios) line
+      if (ios /= 0) exit
+      if (line(1:1) /= '#') exit
+    end do
+
+    ! Backtrack one line because the exit condition of the above loop is a non-header line
+    backspace(unit)
+
+    i = 0
+    do
+      read(unit, *, iostat=ios) temp, cool_He, cool_ZCIE
+      if(ios<0) exit !eof
+      if(ios/=0) cycle !skip blanks
+
+      i = i + 1
+      coolZCIEGFx1(i) = temp
+      coolZCIEGFx2(i) = cool_He
+      coolZCIEGFx3(i) = cool_ZCIE
+    end do
+
+    coolZCIEGFx1min = minval(coolZCIEGFx1)
+    coolZCIEGFx1max = maxval(coolZCIEGFx1)
+
+    close(unit)
+
+  end subroutine init_coolingZCIEGF
+#ENDIFKROME
+
 #IFKROME_useCoolingZCIENOUV
     !***************************
     !Metal line cooling CIE
@@ -1199,6 +1307,50 @@
       cooling_dust = get_mu(n) * coolFit * ntot * ntot
 
     end function cooling_dust
+#ENDIFKROME
+
+#IFKROME_useCoolingDustGRREC
+  !***************************
+  function cool_DustGRREC(n,Tgas)
+    !dust assisted recombination cooling and a generic radiation flux
+    !eq. 45 in Weingartner and Draine 2001 ApJS
+    !dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    use krome_getphys
+    implicit none
+    integer::i
+    real*8::cool_DustGRREC,n(:),Tgas,ntot,psi,G0
+    real*8::nenh,D0,D1,D2,D3,D4
+
+    cool_DustGRREC = 0d0
+
+    if (Tgas .LT. 1d3 .or. Tgas .GT. 1d4) return
+
+    ntot = get_Hnuclei(n(:))
+    nenh = n(idx_e) * n(idx_H)
+    if(n(idx_e)>0d0) then
+       !TODO: supply J_PE and J_LW to G0 
+       G0 = 1.69d0
+       psi = G0 * sqrt(Tgas) / n(idx_e)
+    else
+       psi = 0d0
+    end if
+
+    if (psi .LT. 1d2 .or. psi .GT. 1d6) return
+
+    !grain assisted recombination cooling
+    !coefficients below for R_v=3.1, b_c=4.0 and ISRF from Table 3 of Weingartner and Draine 2001 ApJS.
+    D0 = 0.4535
+    D1 = 2.234
+    D2 = -6.266
+    D3 = 1.442
+    D4 = 0.05089
+
+    cool_DustGRREC = 1d-28 * nenh * Tgas**(D0 + D1/psi) * exp(D2 + D3*psi -D4*psi**2) * dust2gas_ratio !erg/cm3/s
+
+  end function cool_DustGRREC
 #ENDIFKROME
 
 #IFKROME_useCoolingDustNoTdust
@@ -1641,21 +1793,38 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingNebular
-    !Nebular COOLING  Kim ApJ, 2023
+    !Nebular COOLING  Kim ApJ, 2023, 264, 10
+    !Equation 47 (note that LHS of equation 47 is in units of erg cm^3/s, not cm^3/s; there is a typo in the paper )
     !UNITS = erg/s/cm3
     !*******************************
     function cooling_Nebular(n, Tgas)
       use krome_commons
       use krome_subs
       real*8::Tgas,cooling_nebular,n(:)
-      real*8::temp,T5,cool
+      real*8::temp,cool,factor,T4,powd,ne2
+      real*8::lfneb,fneb,factor_num,factor_denom
 
+      temp = max(Tgas,phys_Tcmb) !K
+      T4 = temp/1d4
+      cooling_Nebular = 0d0
 
-      temp = max(Tgas,10d0) !K
-      T5 = temp/1d5 !K
-      cool = 0d0 !erg/cm3/s
+      if (n(idx_e) .lt. 0d0) return
+      if (n(idx_Hj) .lt. 0d0) return      
 
-      cooling_nebular = max(cool, 0d0)  !erg/cm3/s
+      lfneb = 6.92d-1 - 5.86d-1*(log(T4)) + 8.16d-1*(log(T4))**2 - &
+              5.05d-1*(log(T4))**3 + 1.18d-1*(log(T4))**4 + &
+              7.66d-3*(log(T4))**5 - 5.08d-3*(log(T4))**6
+      fneb = 1d1**lfneb
+
+      ne2 = n(idx_e)/1d2
+      powd = 0.38d0 - 0.12d0*log(T4)
+
+      factor_num = 3.68d-23 * exp(-3.86/T4) * fneb
+      factor_denom = sqrt(T4) * (1d0 + 0.12d0*ne2**powd)
+      factor = factor_num / factor_denom
+      cool = total_Z * n(idx_e) * n(idx_Hj) * factor
+
+      cooling_Nebular = max(cool, 0d0)  !erg/cm3/s
 
     end function cooling_Nebular
 #ENDIFKROME
