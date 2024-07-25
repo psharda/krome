@@ -358,23 +358,23 @@
 #Reactions added below on top of above network to ensure H3+ is not just a sink
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #Glover+2010
-100,H2+,H2,H3+,H,NONE,NONE,2.24d-9*T32**.042*exp(-Tgas/46600.)
-101,H3+,H,H2+,H2,NONE,NONE,7.7d-9*exp(-17560d0*invT)
-102,C,H2+,CH+,H,NONE,NONE,2.4d-9
+122,H2+,H2,H3+,H,NONE,NONE,2.24d-9*T32**.042*exp(-Tgas/46600.)
+123,H3+,H,H2+,H2,NONE,NONE,7.7d-9*exp(-17560d0*invT)
+124,C,H2+,CH+,H,NONE,NONE,2.4d-9
 #O'Connor+2014 (http://arxiv.org/abs/1408.4696), original range 10-1e4 K, here extended
-103,C,H3+,CH+,H2,NONE,NONE,(1.0218d-9 + 7.2733d-11*sqrt(Tgas) + 5.9203d-14*Tgas)/(Tgas**0.1667 + 4.4914d-2*sqrt(Tgas) - 5.9203d-14*Tgas + 2.6397d-6*Tgas**1.5)
+125,C,H3+,CH+,H2,NONE,NONE,(1.0218d-9 + 7.2733d-11*sqrt(Tgas) + 5.9203d-14*Tgas)/(Tgas**0.1667 + 4.4914d-2*sqrt(Tgas) - 5.9203d-14*Tgas + 2.6397d-6*Tgas**1.5)
 #additional channel from O'Connor+2014 (http://arxiv.org/abs/1408.4696), original range 10-1e4 K, here extended
-103,C,H3+,CH2+,H,NONE,NONE,(8.5145d-10)/(Tgas**(.1667) + 9.5666d-4*sqrt(Tgas) - 4.404d-5*Tgas + 2.3496d-6 * Tgas**1.5)
+126,C,H3+,CH2+,H,NONE,NONE,(8.5145d-10)/(Tgas**(.1667) + 9.5666d-4*sqrt(Tgas) - 4.404d-5*Tgas + 2.3496d-6 * Tgas**1.5)
 #KIDA and additional channel both recomended
-118,O,H3+,H2,OH+,NONE,NONE,7.98d-10*T32**(-.156)*exp(-1.41d0*invT)
-119,O,H3+,H,H2O+,NONE,NONE,3.42d-10*T32**(-.156)*exp(-1.41d0*invT)
+127,O,H3+,H2,OH+,NONE,NONE,7.98d-10*T32**(-.156)*exp(-1.41d0*invT)
+128,O,H3+,H,H2O+,NONE,NONE,3.42d-10*T32**(-.156)*exp(-1.41d0*invT)
 #KIDA, below 10K constant
-120,OH,H3+,H2,H2O+,NONE,1d1,2.277d-8
-121,OH,H3+,H2,H2O+,1d1,NONE,1.52d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+129,OH,H3+,H2,H2O+,NONE,1d1,2.277d-8
+130,OH,H3+,H2,H2O+,1d1,NONE,1.52d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-176,H3+,E,H2,H,NONE,NONE,2.34d-8*T32**(-.52)
+131,H3+,E,H2,H,NONE,NONE,2.34d-8*T32**(-.52)
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
-177,H3+,E,H,H,H,NONE,NONE,4.36d-8*T32**(-.52)
+132,H3+,E,H,H,H,NONE,NONE,4.36d-8*T32**(-.52)
 
 
 
@@ -392,61 +392,61 @@
 @format:idx,R,P,P,rate
 #integrated with J21*13.6/E flux, up to 200eV
 #TODO: reaction below to be removed when krome coupled with vettam
-122,H,H+,E,2.19d-12*exp(-1.14e4*user_Av)
+133,H,H+,E,2.19d-12*exp(-1.14e4*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
 #TODO: reaction below to be removed when krome coupled with vettam
-123,H2,H,H,5.60d-11*exp(-3.74*user_Av)*krome_fshield(n,Tgas)
+134,H2,H,H,5.60d-11*exp(-3.74*user_Av)*krome_fshield(n,Tgas)
 
 #Glover et al. 2010
 #TODO: GOW 2017 scale the reaction coefficients by \chi_FUV: FUV radiation field strength between 6-13.6 eV (see their Table 2). 
 #^This is similar to what we have TODO for photodustnetWD
-124,H-,H,E,7.1d-7*exp(-.5*user_Av)
+135,H-,H,E,7.1d-7*exp(-.5*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
-125,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
-121,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
-122,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
+136,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
+137,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
+138,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
-126,C,C+,E,3.1d-10*exp(-3.*user_Av)*krome_fshield_C(n, Tgas)*user_is_metal
+139,C,C+,E,3.1d-10*exp(-3.*user_Av)*krome_fshield_C(n, Tgas)*user_is_metal
 #TODO: reaction below commented out to not create sources. May add it back in the future
 #122,C-,C,E,2.4d-7*exp(-.9*user_Av)*user_is_metal
-127,CH,C,H,8.7d-10*exp(-1.2*user_Av)*user_is_metal
-128,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)*user_is_metal
-129,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)*user_is_metal
-130,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)*user_is_metal
-131,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)*user_is_metal
-132,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)*user_is_metal
+140,CH,C,H,8.7d-10*exp(-1.2*user_Av)*user_is_metal
+141,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)*user_is_metal
+142,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)*user_is_metal
+143,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)*user_is_metal
+144,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)*user_is_metal
+145,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)*user_is_metal
 #TODO: next 4 reactions below commented out to not create sources. May add them back in the future
 #131,CH3+,CH2+,H,1d-9*exp(-1.7*user_Av)*user_is_metal
 #132,CH3+,CH+,H2,1d-9*exp(-1.7*user_Av)*user_is_metal
 #133,C2,C,C,1.5d-10*exp(-2.1*user_Av)*user_is_metal
 #134,O-,O,E,2.4d-7*exp(-.5*user_Av)*user_is_metal
-133,OH,O,H,3.7d-10*exp(-1.7*user_Av)*user_is_metal
-134,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)*user_is_metal
-135,OH+,O,H+,1d-12*exp(-1.8*user_Av)*user_is_metal
-136,H2O,OH,H,6d-10*exp(-1.7*user_Av)*user_is_metal
-137,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)*user_is_metal
-138,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)*user_is_metal
-139,O2,O,O,7d-10*exp(-1.8*user_Av)*user_is_metal
+146,OH,O,H,3.7d-10*exp(-1.7*user_Av)*user_is_metal
+147,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)*user_is_metal
+148,OH+,O,H+,1d-12*exp(-1.8*user_Av)*user_is_metal
+149,H2O,OH,H,6d-10*exp(-1.7*user_Av)*user_is_metal
+150,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)*user_is_metal
+151,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)*user_is_metal
+152,O2,O,O,7d-10*exp(-1.8*user_Av)*user_is_metal
 #TODO: reaction below to be removed when krome coupled with vettam
-140,CO,C,O,2.d-10*exp(-3.53*user_Av)*krome_fshield_CO(n, Tgas)*user_is_metal
+153,CO,C,O,2.d-10*exp(-3.53*user_Av)*krome_fshield_CO(n, Tgas)*user_is_metal
 
 #H2O+ photodissociation, following Glover et al. 2010 equation 4
 @noTab_start
 @var: HnOj = fHnOj(user_Av)
-141,H2O+,H2+,O,5.d-11*HnOj*user_is_metal
-142,H2O+,H+,OH,5.d-11*HnOj*user_is_metal
-143,H2O+,O+,H2,5.d-11*HnOj*user_is_metal
-144,H2O+,OH+,H,1.5d-10*HnOj*user_is_metal
+154,H2O+,H2+,O,5.d-11*HnOj*user_is_metal
+155,H2O+,H+,OH,5.d-11*HnOj*user_is_metal
+156,H2O+,O+,H2,5.d-11*HnOj*user_is_metal
+157,H2O+,OH+,H,1.5d-10*HnOj*user_is_metal
 @noTab_end
 
 
 #Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
 @noTab_start
 @format:idx,R,R,P,rate
-145,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal
-146,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal
-147,O+,E,O,O_recombination_on_dust(n,Tgas)*user_is_metal
-148,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal
+158,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal
+159,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal
+160,O+,E,O,O_recombination_on_dust(n,Tgas)*user_is_metal
+161,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal
 @noTab_stop
 
 
@@ -456,23 +456,23 @@
 @CR_start
 @format:idx,R,P,P,rate
 @storeOnce_start
-149,H,H+,E,4.6d-1*user_crate
-150,He,He+,E,5.d-1*user_crate
-151,O,O+,E,2.8d0*user_crate*user_is_metal
-152,CO,C,O,5d0*user_crate*user_is_metal
-153,CO,CO+,E,3d0*user_crate*user_is_metal
-154,H2,H,H,1d-1*user_crate
-155,H2,H+,H-,3d-4*user_crate
-156,H2,H2+,E,9.3d-1*user_crate
-157,C,C+,E,1.02d3*user_crate*user_is_metal
-158,CH,C,H,7.3d2*user_crate*user_is_metal
-159,O2,O,O,7.5d2*user_crate*user_is_metal
-160,O2,O2+,E,1.17d2*user_crate*user_is_metal
-161,OH,O,H,5.1d2*user_crate*user_is_metal
-162,CH2,CH2+,E,5d2*user_crate*user_is_metal
-163,H2O,OH,H,9.7d2*user_crate*user_is_metal
+162,H,H+,E,4.6d-1*user_crate
+163,He,He+,E,5.d-1*user_crate
+164,O,O+,E,2.8d0*user_crate*user_is_metal
+165,CO,C,O,5d0*user_crate*user_is_metal
+166,CO,CO+,E,3d0*user_crate*user_is_metal
+167,H2,H,H,1d-1*user_crate
+168,H2,H+,H-,3d-4*user_crate
+169,H2,H2+,E,9.3d-1*user_crate
+170,C,C+,E,1.02d3*user_crate*user_is_metal
+171,CH,C,H,7.3d2*user_crate*user_is_metal
+172,O2,O,O,7.5d2*user_crate*user_is_metal
+173,O2,O2+,E,1.17d2*user_crate*user_is_metal
+174,OH,O,H,5.1d2*user_crate*user_is_metal
+175,CH2,CH2+,E,5d2*user_crate*user_is_metal
+176,H2O,OH,H,9.7d2*user_crate*user_is_metal
 @format:idx,R,P,P,P,rate
-164,H2,H,H+,E,9.3d-1*user_crate
+177,H2,H,H+,E,9.3d-1*user_crate
 @storeOnce_stop
 @CR_stop
 
