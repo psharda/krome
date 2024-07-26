@@ -1385,9 +1385,8 @@
 
       cooling_DustDGEE = 0d0
       do i=1,ndust
-         cooling_DustDGEE = cooling_DustDGEE &
-              + pre * xdust(i) * krome_dust_asize2(i) &
-              * (Tgas-krome_dust_T(i))
+         cooling_DustDGEE = 3.2d-34 * sqrt(Tgas) * &
+              (Tgas-krome_dust_T(i)) * ntot * ntot * dust2gas_ratio
       end do
 
     end function cooling_DustDGEE
