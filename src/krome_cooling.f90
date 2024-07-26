@@ -1391,6 +1391,14 @@
     !*******************************
     function cooling_dust(n,Tgas)
       !cooling from dust in erg/cm3/s
+      !compute the cooling (avoid the difference Tgas-Tdust)
+      !This is because at high densities, Tgas exactly equals Tdust in reality
+      !But numericaly, they are not exactly equal.
+      !So if you use gas-dust interaction cooling instead, it will significantly overestimaate the cooling
+      !because of finite difference issues when you do Tgas-Tdust
+      !This is why we use dust thermal radiation cooling below, because
+      !this is equivalent to dust-gas energy exchange and will give the correct
+      !cooling at both low and high densities
       use krome_constants
       use krome_commons
       use krome_subs
