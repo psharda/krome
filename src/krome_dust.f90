@@ -922,7 +922,7 @@ contains
     !
     if (first_call) then
        !$omp critical
-       if (first_call) call c(integrand)
+       if (first_call) call load_int_JQabs_tab(integrand)
        first_call = .true.
        !$omp end critical
     end if
