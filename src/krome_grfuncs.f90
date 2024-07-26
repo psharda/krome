@@ -104,7 +104,7 @@ contains
     amax = 2.5d-5 !cm
     pexp = -3.5
     rho0 = 3d0 !g/cm3
-    d2g = 1d-2
+    d2g = (1d0/162d0)*dust2gas_ratio
 
     krate = krate_2body(n(:),idx1,idx2,alpha,amin,amax,pexp,d2g,rho0,Ea,Tdust)
 
@@ -345,7 +345,7 @@ contains
     amax = 2.5d-5 !cm
     pexp = -3.5
     rho0 = 3d0 !g/cm3
-    d2g = 1d-2
+    d2g = (1d0/162d0)*dust2gas_ratio
 
     k = krate_stick(n(:),idx,Tdust,amin,amax,pexp,rho0,d2g)
 
