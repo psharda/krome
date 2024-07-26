@@ -12,6 +12,7 @@ program test_krome
   use krome_user
   use krome_user_commons
   use krome_cooling
+  use krome_heating
   implicit none
   integer,parameter::nz=8
   integer,parameter::rstep = 500000
