@@ -1427,9 +1427,11 @@
          !compute external radiation term
          intJflux = get_int_JQabs(i)
 #ENDIFKROME_usePhotoDust
-         intCMB = get_dust_intBB(i,phys_Tcmb)
-         cooling_dust = cooling_dust + (get_dust_intBB(i,n(nmols+ndust+i)) &
-              - intCMB - intJflux) * be * xdust(i) * krome_dust_asize2(i)
+         if (n(nmols+ndust+i) .le. 1d4) then
+           intCMB = get_dust_intBB(i,phys_Tcmb)
+           cooling_dust = cooling_dust + (get_dust_intBB(i,n(nmols+ndust+i)) &
+                - intCMB - intJflux) * be * xdust(i) * krome_dust_asize2(i)
+         endif
       end do
       cooling_dust = 4d0*pi*cooling_dust !erg/s/cm3
       return
