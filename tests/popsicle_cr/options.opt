@@ -2,8 +2,8 @@
 #options for test collapse
 
 -n networks/react_popsicle_cr
--cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,OH,H2O,ATOMIC,COMPTON,DUST,FF,OII,Z_CIEGF,DUSTGRREC
--heating=COMPRESS,CHEM,CR,PHOTODUSTWD
+-cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,OH,H2O,ATOMIC,COMPTON,FF,OII,Z_CIEGF,DUST
+-heating=COMPRESS,CHEM,CR
 -H2opacity=OMUKAI
 -gamma=EXACT
 -ATOL=1d-40

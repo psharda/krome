@@ -71,6 +71,10 @@
       cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingDustDGEE
+      cools(idx_cool_dust) = f1 * cooling_DustDGEE(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useCoolingDustGRREC
       cools(idx_cool_dustgrrec) = f1 * cool_DustGRREC(n(:), Tgas)
 #ENDIFKROME
@@ -1357,6 +1361,37 @@
 
   end function cool_DustGRREC
 #ENDIFKROME
+
+#IFKROME_useCoolingDustDGEE
+    !This is already present in krome
+    !but is not activated unless useCoolingDustNoTdust = True
+    !so create a new cooling that does the same
+    !*******************************
+    function cooling_DustDGEE(n,Tgas)
+      !cooling from dust-gas energy exchange in erg/cm3/s
+      use krome_constants
+      use krome_commons
+      use krome_dust
+      use krome_getphys
+      implicit none
+      real*8::cooling_DustDGEE,n(:),Tgas
+      real*8::pre,ntot,vgas,fact
+      integer::i
+      fact = 0.5d0
+      Tgas = n(idx_Tgas)
+      vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
+      ntot = sum(n(1:nmols))
+      pre = 2d0*fact*vgas*boltzmann_erg*ntot
+
+      cooling_DustDGEE = 0d0
+      do i=1,ndust
+         cooling_DustDGEE = 3.2d-34 * sqrt(Tgas) * &
+              (Tgas-krome_dust_T(i)) * ntot * ntot * dust2gas_ratio
+      end do
+
+    end function cooling_DustDGEE
+#ENDIFKROME
+
 
 #IFKROME_useCoolingDustNoTdust
     !*******************************
