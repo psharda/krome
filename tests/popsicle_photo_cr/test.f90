@@ -145,7 +145,10 @@ program test_krome
        call krome_scale_dust_distribution(dd/dd1)
 
        !dust evaporation: dust is non existent at T > 1.5d3
-       if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)
+       !Do it only at high densities because the collapse test expects a more or less monotonic
+       !increase in Tgas, but in the presence of photochemistry Tgas can be very high initially
+       !which will otherwise lead to dust evaporation and no dust for the rest of the simulation
+       if(Tgas>1.5d3 .and. dd>1d15) call krome_scale_dust_distribution(0d0)
 
        Tdust = krome_get_Tdust()
 
