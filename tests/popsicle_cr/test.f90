@@ -27,6 +27,7 @@ program test_krome
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
+  !set to True to switch on cosmic ray attenuation
   crate_attenuation = .False.
 
   !output header
@@ -79,7 +80,7 @@ program test_krome
 
     !Cosmic ray ionization rate
     if (crate_attenuation) then
-      !Aattenuate following Appendix F of Padovani et al. 2018
+      !Attenuate following Appendix F of Padovani et al. 2018
       NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
       NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
       NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
