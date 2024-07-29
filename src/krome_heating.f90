@@ -494,6 +494,7 @@ contains
     use krome_user_commons
     use krome_subs
     use krome_getphys
+    use krome_constants
     implicit none
     real*8::heat_photoAv,n(:),Tgas,k(:)
     real*8::ncrn,ncrd1,ncrd2,yH,yH2,ncr,h2heatfac,dd,Rdiss,Rion
@@ -513,13 +514,13 @@ contains
     Rdiss = #KROME_RdissH2
 
     !photodissociation H2 heating
-    heat_photoAv = 6.4d-13*Rdiss*n(idx_H2)
+    heat_photoAv = 4d-1*eV_to_erg*Rdiss*n(idx_H2)
 
     !UV photo-pumping H2
-    heat_photoAv = heat_photoAv + 2.7d-11*Rdiss*h2heatfac*n(idx_H2)
+    heat_photoAv = heat_photoAv + 2d0*8*eV_to_erg*Rdiss*h2heatfac*n(idx_H2)
 
     !photoionization H heating
-    heat_photoAv = heat_photoAv + Rion*n(idx_H)*5.447399970800022d-12 ! in erg/cm3/s
+    heat_photoAv = heat_photoAv + Rion*n(idx_H)*3.4d0*eV_to_erg ! in erg/cm3/s
 
   end function heat_photoAv
 #ENDIFKROME
@@ -529,12 +530,12 @@ contains
   function heat_CR(n,Tgas,k)
     !heating from cosmic rays erg/s/cm3
     use krome_commons
+    use krome_constants
     implicit none
     real*8::heat_CR,n(:),Tgas,Hfact,k(:)
-    real*8::logH2,QH2,QH,QHe,ev2erg
+    real*8::logH2,QH2,QH,QHe
 
-    ev2erg = 1.60217662d-12
-    Hfact = 2d1*ev2erg !erg
+    Hfact = 2d1*eV_to_erg !erg
 
     !precompute log10(H2)
     logH2 = log10(max(n(idx_H2),1d-40))
@@ -543,7 +544,7 @@ contains
     heat_CR = 0d0
 
     !heating per H ionization (eV)
-    QH = 4.3d0 * ev2erg
+    QH = 4.3d0 * eV_to_erg
 
     !heating per He ionization, same as H following Glassgold+2012
     QHe = QH
