@@ -22,7 +22,7 @@ program test_krome
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust(krome_ndust),zs(nz),kk(krome_nrea)
-  real*8::Av, NHtot, totheat, totcool, crate, heats(krome_nheats)
+  real*8::Av,heats(krome_nheats),crate
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
