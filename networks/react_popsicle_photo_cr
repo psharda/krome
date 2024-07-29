@@ -5,7 +5,7 @@
 #No photo or cosmicray chemistry included yet
 #To test the network, look at krome/tests/popsicle
 
-@common: user_Av, user_crate, user_is_metal
+@common: user_Av, user_crate, user_is_metal, user_ionH
 
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
 #UPDATED primordial rates, 2014
@@ -392,7 +392,7 @@
 @format:idx,R,P,P,rate
 #integrated with J21*13.6/E flux, up to 200eV
 #TODO: reaction below to be removed when krome coupled with vettam
-133,H,H+,E,2.19d-12*exp(-1.14e4*user_Av)
+133,H,H+,E,user_ionH
 #TODO: reaction below to be removed when krome coupled with vettam
 #TODO: reaction below to be removed when krome coupled with vettam
 134,H2,H,H,5.60d-11*exp(-3.74*user_Av)*krome_fshield(n,Tgas)

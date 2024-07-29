@@ -24,6 +24,7 @@ program test_krome
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust(krome_ndust),zs(nz),kk(krome_nrea)
   real*8::Av,NH,NHj,NH2,heats(krome_nheats),crate
+  real*8::ionH
   logical::crate_attenuation
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
@@ -99,6 +100,10 @@ program test_krome
     print *, 'Initial crate: ', crate
     call krome_set_user_crate(crate)
 
+    !set H ionization reaction rate coeff
+    ionH = 2.19d-12*exp(-1.14e4*Av)
+    call krome_set_user_ionH(ionH)
+
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
       call krome_set_user_is_metal(1d0)
@@ -154,7 +159,11 @@ program test_krome
        if (crate_attenuation) then
          crate = 10**calculate_F(NH + NHj + 2d0*NH2)
          call krome_set_user_crate(crate)
-      endif
+       endif
+
+       !set H ionization reaction rate coeff
+       ionH = 2.19d-12*exp(-1.14e4*Av)
+       call krome_set_user_ionH(ionH)
 
        !break when max density reached
        if(dd.gt.1d18) exit
