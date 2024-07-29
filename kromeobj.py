@@ -6957,7 +6957,7 @@ class krome:
 					QH2function += QH2fit+"\n"
 					QH2function += "end if\n\n"
 					QH2function += "!convert eV to erg\n"
-					QH2function += "QH2 = QH2 * ev2erg\n"
+					QH2function += "QH2 = QH2 * eV_to_erg\n"
 
 					#prepare heating
 					CRheat = QH2function + "\n\n"
