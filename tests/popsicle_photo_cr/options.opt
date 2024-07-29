@@ -13,6 +13,6 @@
 -shielding_C
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
--dust=1,C
+-dust=10,C
 -dustOptions=dT,H2
 -n networks/react_popsicle_photo_cr
