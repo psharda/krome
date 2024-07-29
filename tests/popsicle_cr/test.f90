@@ -27,7 +27,7 @@ program test_krome
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
-  crate_attenuation = .True.
+  crate_attenuation = .False.
 
   !output header
   write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust"
@@ -87,6 +87,7 @@ program test_krome
       print *, 'Using cosmic ray attenutation'
     else
       crate = 3d-17
+      print *, 'Using constant cosmic ray ionization rate'
     endif
     print *, 'Initial crate: ', crate
     call krome_set_user_crate(crate)
