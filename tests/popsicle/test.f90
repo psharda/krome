@@ -1,10 +1,18 @@
 !################################################################
 !This is a simple one-zone collapse test following
-! the chemical and thermal evolution of a primordial cloud.
+!the chemical and thermal evolution of a gas cloud.
+!Based on the collapse test in the KROME repository,
+!extended to all metallicities.
+!Designed for POPSICLE simulations (Sharda & Menon 2024, Menon & Sharda 2024)
 !The dynamics is described by the Larson-Penston-type
-! similar solution and includes cooling and heating processes.
-!For additional details look also to Omukai 2000 and
-! the KROME paper.
+!similar solution and includes cooling and heating processes.
+!For additional details, see Omukai 2000, +2005,
+!Glover et al. 2010, Kim et al. 2023 ApJS, and
+!the KROME paper (Grassi et al. 2014).
+!Author: Piyush Sharda (Leiden, 2024)
+!Email: sharda@strw.leidenuniv.nl
+!################################################################
+
 !################################################################
 program test_krome
 
