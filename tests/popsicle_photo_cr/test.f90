@@ -15,6 +15,7 @@ program test_krome
   use krome_cooling
   use krome_heating
   use krome_getphys
+  use krome_phfuncs
   implicit none
   integer,parameter::nz=8
   integer,parameter::rstep = 500000
@@ -24,7 +25,7 @@ program test_krome
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust(krome_ndust),zs(nz),kk(krome_nrea)
   real*8::Av,NH,NHj,NH2,heats(krome_nheats),crate
-  real*8::ionH
+  real*8::ionH,dissH2
   logical::crate_attenuation
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
@@ -103,6 +104,13 @@ program test_krome
     !set H ionization reaction rate coeff
     ionH = 2.19d-12*exp(-1.14e4*Av)
     call krome_set_user_ionH(ionH)
+    !set H2 dissociation reaction rate coeff
+    n(1:krome_nmols) = x(:)
+    n(KROME_idx_Tgas) = Tgas
+    Tdust = krome_get_Tdust()
+    n(krome_nmols+krome_ndust+1:krome_nmols+2*krome_ndust) = Tdust
+    dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)
+    call krome_set_user_dissH2(dissH2)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
@@ -164,6 +172,9 @@ program test_krome
        !set H ionization reaction rate coeff
        ionH = 2.19d-12*exp(-1.14e4*Av)
        call krome_set_user_ionH(ionH)
+       !set H2 dissociation reaction rate coeff
+       dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)
+       call krome_set_user_dissH2(dissH2)
 
        !break when max density reached
        if(dd.gt.1d18) exit
