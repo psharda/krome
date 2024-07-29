@@ -22,13 +22,12 @@ program test_krome
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust(krome_ndust),zs(nz),kk(krome_nrea)
-  real*8::Av,heats(krome_nheats),crate
+  real*8::NH,NHj,NH2,heats(krome_nheats),crate
+  logical::crate_attenuation
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
-  !Cosmic ray ionization rate
-  crate = 3d-17
-  call krome_set_user_crate(crate)
+  crate_attenuation = .True.
 
   !output header
   write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust"
@@ -78,6 +77,20 @@ program test_krome
     print *, 'Dust distribution: ', krome_get_dust_distribution()
     call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
 
+    !Cosmic ray ionization rate
+    if (crate_attenuation) then
+      !Aattenuate following Appendix F of Padovani et al. 2018
+      NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+      NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+      NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+      crate = 10**calculate_F(NH + NHj + 2d0*NH2)
+      print *, 'Using cosmic ray attenutation'
+    else
+      crate = 3d-17
+    endif
+    print *, 'Initial crate: ', crate
+    call krome_set_user_crate(crate)
+
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
       call krome_set_user_is_metal(1d0)
@@ -123,6 +136,14 @@ program test_krome
 
        !set time-step
        dt = dtH
+
+       if (crate_attenuation) then
+         NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+         NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+         NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+         crate = 10**calculate_F(NH + NHj + 2d0*NH2)
+         call krome_set_user_crate(crate)
+      endif
 
        !break when max density reached
        if(dd.gt.1d18) exit
@@ -171,5 +192,34 @@ program test_krome
   print *,"To plot in python:"
   print *,"ipython> run plot.py"
   print *,"That's all! have a nice day!"
+
+contains
+
+  !CR attenutation following Table F1 of Padovani et al. 2018, A&A 614, A111
+  real(8) function calculate_F(b)
+    implicit none
+    real(8), intent(in) :: b
+    real(8) :: log_b
+    integer :: k
+
+    ! Coefficients c_k
+    real(8), dimension(0:9) :: coefficients
+    data coefficients / &
+         1.001098610761d7, -4.231294690194d6, 7.921914432011d5, -8.623677095423d4, &
+         6.015889127529d3, -2.789238383353d2, 8.595814402406d0, -1.698029737474d-1, &
+         1.951179287567d-3, -9.937499546711d-6 /
+
+    ! Calculate log10(b)
+    log_b = log10(b)
+
+    ! Initialize F to zero
+    calculate_F = 0.0d0
+
+    ! Calculate F using the polynomial equation
+    do k = 0, 9
+      calculate_F = calculate_F + coefficients(k) * (log_b ** k)
+    end do
+
+  end function calculate_F
 
 end program test_krome
