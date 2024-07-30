@@ -8967,7 +8967,7 @@ class krome:
 			all_parts.append([name, x.zatom, x.mass, x.neutrons, x.zatom-x.charge,gamma])
 		all_parts = sorted(all_parts,key=lambda x:x[1]) #sort by atomic number
 		for parts in all_parts:
-			spec_data += ("".join([str(y)+(20-len(str(y)))*" " for y in parts]))	+ "\n"
+			spec_data += ("".join([str(y)+(30-len(str(y)))*" " for y in parts]))	+ "\n"
 		self.replacein(patchFolder+pFolder+fname,flashFolder+pFolder+fname,["#KROME_spec_data"],[spec_data])
 
 		#************####Collapse example###**************
