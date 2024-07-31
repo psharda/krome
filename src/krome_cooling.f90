@@ -71,10 +71,6 @@
       cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
-#IFKROME_useCoolingDustDGEE
-      cools(idx_cool_dust) = f1 * cooling_DustDGEE(n(:), Tgas)
-#ENDIFKROME
-
 #IFKROME_useCoolingDustGRREC
       cools(idx_cool_dustgrrec) = f1 * cool_DustGRREC(n(:), Tgas)
 #ENDIFKROME
@@ -1362,37 +1358,6 @@
   end function cool_DustGRREC
 #ENDIFKROME
 
-#IFKROME_useCoolingDustDGEE
-    !This is already present in krome
-    !but is not activated unless useCoolingDustNoTdust = True
-    !so create a new cooling that does the same
-    !*******************************
-    function cooling_DustDGEE(n,Tgas)
-      !cooling from dust-gas energy exchange in erg/cm3/s
-      use krome_constants
-      use krome_commons
-      use krome_dust
-      use krome_getphys
-      implicit none
-      real*8::cooling_DustDGEE,n(:),Tgas
-      real*8::pre,ntot,vgas,fact
-      integer::i
-      fact = 0.5d0
-      Tgas = n(idx_Tgas)
-      vgas = sqrt(kvgas_erg*Tgas) !thermal speed of the gas
-      ntot = sum(n(1:nmols))
-      pre = 2d0*fact*vgas*boltzmann_erg*ntot
-
-      cooling_DustDGEE = 0d0
-      do i=1,ndust
-         cooling_DustDGEE = 3.2d-34 * sqrt(Tgas) * &
-              (Tgas-krome_dust_T(i)) * ntot * ntot * dust2gas_ratio
-      end do
-
-    end function cooling_DustDGEE
-#ENDIFKROME
-
-
 #IFKROME_useCoolingDustNoTdust
     !*******************************
     function cooling_dust(n,Tgas)
@@ -1426,6 +1391,14 @@
     !*******************************
     function cooling_dust(n,Tgas)
       !cooling from dust in erg/cm3/s
+      !compute the cooling (avoid the difference Tgas-Tdust)
+      !This is because at high densities, Tgas exactly equals Tdust in reality
+      !But numericaly, they are not exactly equal.
+      !So if you use gas-dust interaction cooling instead, it will significantly overestimaate the cooling
+      !because of finite difference issues when you do Tgas-Tdust
+      !This is why we use dust thermal radiation cooling below, because
+      !this is equivalent to dust-gas energy exchange and will give the correct
+      !cooling at both low and high densities
       use krome_constants
       use krome_commons
       use krome_subs
@@ -1454,9 +1427,11 @@
          !compute external radiation term
          intJflux = get_int_JQabs(i)
 #ENDIFKROME_usePhotoDust
-         intCMB = get_dust_intBB(i,phys_Tcmb)
-         cooling_dust = cooling_dust + (get_dust_intBB(i,n(nmols+ndust+i)) &
-              - intCMB - intJflux) * be * xdust(i) * krome_dust_asize2(i)
+         if (n(nmols+ndust+i) .le. 1d4) then
+           intCMB = get_dust_intBB(i,phys_Tcmb)
+           cooling_dust = cooling_dust + (get_dust_intBB(i,n(nmols+ndust+i)) &
+                - intCMB - intJflux) * be * xdust(i) * krome_dust_asize2(i)
+         endif
       end do
       cooling_dust = 4d0*pi*cooling_dust !erg/s/cm3
       return

@@ -1,10 +1,18 @@
 !################################################################
 !This is a simple one-zone collapse test following
-! the chemical and thermal evolution of a primordial cloud.
+!the chemical and thermal evolution of a gas cloud.
+!Based on the collapse test in the KROME repository,
+!extended to all metallicities.
+!Designed for POPSICLE simulations (Sharda & Menon 2024, Menon & Sharda 2024)
 !The dynamics is described by the Larson-Penston-type
-! similar solution and includes cooling and heating processes.
-!For additional details look also to Omukai 2000 and
-! the KROME paper.
+!similar solution and includes cooling and heating processes.
+!For additional details, see Omukai 2000, +2005,
+!Glover et al. 2010, Kim et al. 2023 ApJS, and
+!the KROME paper (Grassi et al. 2014).
+!Author: Piyush Sharda (Leiden, 2024)
+!Email: sharda@strw.leidenuniv.nl
+!################################################################
+
 !################################################################
 program test_krome
 
@@ -12,20 +20,22 @@ program test_krome
   use krome_user
   use krome_user_commons
   use krome_cooling
+  use krome_heating
+  use krome_getphys
   implicit none
   integer,parameter::nz=8
   integer,parameter::rstep = 500000
   integer::i,unit,ios,jscale,jz,jz2
-  real*8::dtH,deldd
+  real*8::dtH,deldd,rhogas,m(krome_nspec)
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust(krome_ndust),zs(nz),kk(krome_nrea)
-  real*8::Av, NHtot, totheat, totcool, heats(krome_nheats)
+  real*8::Av,heats(krome_nheats)
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
   !output header
-  write(22, '(A)', ADVANCE='NO') "#ntot Tgas Tdust"
+  write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust"
   write(22, '(A)') trim(krome_get_names_header())
 
   write(31, '(A)', ADVANCE='NO') "#ntot Tgas sum(cools)"
@@ -84,7 +94,9 @@ program test_krome
 
     !print initial output
     Tdust = krome_get_Tdust()
-    write(22,'(99E17.8e3)') dd,Tgas,Tdust(:),x(:)/dd
+    m = get_mass()
+    rhogas = sum(x(:)*m(1:krome_nmols))
+    write(22,'(99E17.8e3)') dd,rhogas,Tgas,Tdust(:),x(:)/dd
 
     !loop on density steps
     do i = 1,rstep
@@ -133,7 +145,8 @@ program test_krome
        call krome(x(:),Tgas,dt)
 
        !print some output
-       write(22,'(99E17.8e3)') dd,Tgas,Tdust(:),x(:)/dd
+       rhogas = sum(x(:)*m(1:krome_nmols))
+       write(22,'(99E17.8e3)') dd,rhogas,Tgas,Tdust(:),x(:)/dd
        if(mod(i,100)==0) then
           !totheat = krome_get_heating(x(:), Tgas)
           !totcool = krome_get_heating(x(:), Tgas)

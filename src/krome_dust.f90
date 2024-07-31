@@ -591,6 +591,13 @@ contains
 #ENDIFKROME_usedTdust
 
        !compute the cooling (avoid the difference Tgas-Tdust)
+       !This is because at high densities, Tgas exactly equals Tdust in reality
+       !But numericaly, they are not exactly equal.
+       !So if you use gas-dust interaction cooling instead, it will significantly overestimaate the cooling
+       !because of finite difference issues when you do Tgas-Tdust
+       !This is why we use dust thermal radiation cooling below, because
+       !this is equivalent to dust-gas energy exchange and will give the correct
+       !cooling at both low and high densities
        dustCooling = dustCooling + (get_dust_intBB(i,krome_dust_T(i)) &
             - intCMB - intJflux) * be * xdust(i) * krome_dust_asize2(i)
     end do

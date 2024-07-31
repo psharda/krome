@@ -1,10 +1,11 @@
 !################################################################
-!This is a simple one-zone collapse test following
-! the chemical and thermal evolution of a primordial cloud.
-!The dynamics is described by the Larson-Penston-type
-! similar solution and includes cooling and heating processes.
-!For additional details look also to Omukai 2000 and
-! the KROME paper.
+!Same as the popsicle test but with cosmic ray chemistry
+!at different metallicities.
+!For additional details, see Omukai 2000, +2005,
+!Glover et al. 2010, Kim et al. 2023 ApJS, and
+!the KROME paper (Grassi et al. 2014).
+!Author: Piyush Sharda (Leiden, 2024)
+!Email: sharda@strw.leidenuniv.nl
 !################################################################
 program test_krome
 
@@ -13,24 +14,25 @@ program test_krome
   use krome_user_commons
   use krome_cooling
   use krome_heating
+  use krome_getphys
   implicit none
   integer,parameter::nz=8
   integer,parameter::rstep = 500000
   integer::i,unit,ios,jscale,jz,jz2
-  real*8::dtH,deldd
+  real*8::dtH,deldd,rhogas,m(krome_nspec)
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust(krome_ndust),zs(nz),kk(krome_nrea)
-  real*8::Av, NHtot, totheat, totcool, crate, heats(krome_nheats)
+  real*8::NH,NHj,NH2,heats(krome_nheats),crate
+  logical::crate_attenuation
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
-  !Cosmic ray ionization rate
-  crate = 3d-17
-  call krome_set_user_crate(crate)
+  !set to True to switch on cosmic ray attenuation
+  crate_attenuation = .False.
 
   !output header
-  write(22, '(A)', ADVANCE='NO') "#ntot Tgas Tdust"
+  write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust"
   write(22, '(A)') trim(krome_get_names_header())
 
   write(31, '(A)', ADVANCE='NO') "#ntot Tgas sum(cools)"
@@ -77,6 +79,21 @@ program test_krome
     print *, 'Dust distribution: ', krome_get_dust_distribution()
     call krome_set_Tdust((krome_redshift+1d0)*2.73d0)
 
+    !Cosmic ray ionization rate
+    if (crate_attenuation) then
+      !Attenuate following Appendix F of Padovani et al. 2018
+      NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+      NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+      NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+      crate = 10**calculate_F(NH + NHj + 2d0*NH2)
+      print *, 'Using cosmic ray attenutation'
+    else
+      crate = 3d-17
+      print *, 'Using constant cosmic ray ionization rate'
+    endif
+    print *, 'Initial crate: ', crate
+    call krome_set_user_crate(crate)
+
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
       call krome_set_user_is_metal(1d0)
@@ -97,7 +114,9 @@ program test_krome
 
     !print initial output
     Tdust = krome_get_Tdust()
-    write(22,'(99E17.8e3)') dd,Tgas,Tdust(:),x(:)/dd
+    m = get_mass()
+    rhogas = sum(x(:)*m(1:krome_nmols))
+    write(22,'(99E17.8e3)') dd,rhogas,Tgas,Tdust(:),x(:)/dd
 
     !loop on density steps
     do i = 1,rstep
@@ -120,6 +139,14 @@ program test_krome
 
        !set time-step
        dt = dtH
+
+       if (crate_attenuation) then
+         NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
+         NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
+         NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
+         crate = 10**calculate_F(NH + NHj + 2d0*NH2)
+         call krome_set_user_crate(crate)
+      endif
 
        !break when max density reached
        if(dd.gt.1d18) exit
@@ -146,7 +173,8 @@ program test_krome
        call krome(x(:),Tgas,dt)
 
        !print some output
-       write(22,'(99E17.8e3)') dd,Tgas,Tdust(:),x(:)/dd
+       rhogas = sum(x(:)*m(1:krome_nmols))
+       write(22,'(99E17.8e3)') dd,rhogas,Tgas,Tdust(:),x(:)/dd
        if(mod(i,100)==0) then
           !totheat = krome_get_heating(x(:), Tgas)
           !totcool = krome_get_heating(x(:), Tgas)
@@ -167,5 +195,34 @@ program test_krome
   print *,"To plot in python:"
   print *,"ipython> run plot.py"
   print *,"That's all! have a nice day!"
+
+contains
+
+  !CR attenutation following Table F1 of Padovani et al. 2018, A&A 614, A111
+  real(8) function calculate_F(b)
+    implicit none
+    real(8), intent(in) :: b
+    real(8) :: log_b
+    integer :: k
+
+    ! Coefficients c_k
+    real(8), dimension(0:9) :: coefficients
+    data coefficients / &
+         1.001098610761d7, -4.231294690194d6, 7.921914432011d5, -8.623677095423d4, &
+         6.015889127529d3, -2.789238383353d2, 8.595814402406d0, -1.698029737474d-1, &
+         1.951179287567d-3, -9.937499546711d-6 /
+
+    ! Calculate log10(b)
+    log_b = log10(b)
+
+    ! Initialize F to zero
+    calculate_F = 0.0d0
+
+    ! Calculate F using the polynomial equation
+    do k = 0, 9
+      calculate_F = calculate_F + coefficients(k) * (log_b ** k)
+    end do
+
+  end function calculate_F
 
 end program test_krome
