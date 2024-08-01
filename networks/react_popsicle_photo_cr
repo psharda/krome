@@ -5,7 +5,7 @@
 #No photo or cosmicray chemistry included yet
 #To test the network, look at krome/tests/popsicle
 
-@common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2
+@common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2, user_ionC, user_dissCO
 
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
 #UPDATED primordial rates, 2014
@@ -406,7 +406,7 @@
 137,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
 138,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
 #TODO: reaction below to be removed when krome coupled with vettam
-139,C,C+,E,3.1d-10*exp(-3.*user_Av)*krome_fshield_C(n, Tgas)*user_is_metal
+139,C,C+,E,user_ionC
 #TODO: reaction below commented out to not create sources. May add it back in the future
 #122,C-,C,E,2.4d-7*exp(-.9*user_Av)*user_is_metal
 140,CH,C,H,8.7d-10*exp(-1.2*user_Av)*user_is_metal
@@ -428,7 +428,7 @@
 151,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)*user_is_metal
 152,O2,O,O,7d-10*exp(-1.8*user_Av)*user_is_metal
 #TODO: reaction below to be removed when krome coupled with vettam
-153,CO,C,O,2.d-10*exp(-3.53*user_Av)*krome_fshield_CO(n, Tgas)*user_is_metal
+153,CO,C,O,user_dissCO
 
 #H2O+ photodissociation, following Glover et al. 2010 equation 4
 @noTab_start
