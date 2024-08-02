@@ -726,9 +726,8 @@ contains
     call init_anytab2D("Semenov_PlanckOpacity.dat",CoolSemenov_x(:), &
         CoolSemenov_y(:), CoolSemenov_z(:,:), CoolSemenov_xmul, &
         CoolSemenov_ymul)
-    call test_anytab2D("Semenov_PlanckOpacity.dat",CoolSemenov_x(:), &
-        CoolSemenov_y(:), CoolSemenov_z(:,:), CoolSemenov_xmul, &
-        CoolSemenov_ymul)
+    call test_interpolate2D("Semenov_PlanckOpacity.dat",CoolSemenov_x(:), &
+        CoolSemenov_y(:), CoolSemenov_z(:,:))
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIENOUV
