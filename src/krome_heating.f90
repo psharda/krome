@@ -617,10 +617,10 @@ contains
     use krome_getphys
     implicit none
     real*8::heatingChem, n(:), Tgas,k(:),nH2dust
-    real*8::h2heatfac,HChem,yH,yH2
+    real*8::h2heatfac,HChem,yH,yH2,RformH2,ntot
     real*8::ncr,ncrn,ncrd1,ncrd2,dd,n2H,small,nmax
     dd = get_Hnuclei(n(:))
-
+    ntot = sum(n(1:nmols))
     !replace small according to the desired enviroment
     ! and remove nmax if needed
     nmax = maxval(n(1:nmols))
@@ -644,6 +644,11 @@ contains
 #KROME_HChem_terms
 
 #KROME_HChem_dust
+
+#IFKROME_useCoolingDustSemenov
+    RformH2 = #KROME_RformH2
+    HChem = HChem + (4.2d0*h2heatfac + 0.2d0)*RformH2*dd*(ntot*dust2gas_ratio) !eV/cm3/s
+#ENDIFKROME
 
     heatingChem = HChem * eV_to_erg  !erg/cm3/s
 

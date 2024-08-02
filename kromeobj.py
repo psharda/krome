@@ -7019,7 +7019,7 @@ class krome:
 
 					row = row.replace("#KROME_RionH", rateionH) #replace pragma with H photoionization rate
 
-				#replace correct H2 photodissociation rates
+				#replace correct H2 photodissociation rate
 				if "#KROME_RdissH2" in row:
 					rdh2Found = False
 					for rea in self.reacts:
@@ -7029,13 +7029,31 @@ class krome:
 							rateDissH2 = "k("+str(rea.idx)+")"
 							rdh2Found = True
 							break
-					#check if rate photodissiocation rate is present in the network
+					#check if photodissiocation rate is present in the network
 					if not rdh2Found:
 						print("ERROR: if you use PHOTOAV heating you should have")
 						print(" H2 photodissiocation rate in your chemical network!")
 						sys.exit()
 
 					row = row.replace("#KROME_RdissH2", rateDissH2) #replace pragma with H2 photodissociation rate
+
+				#replace correct H2 formation on dust rate
+				if "#KROME_RformH2" in row:
+					rfh2Found = False
+					for rea in self.reacts:
+						R = sorted([x.name for x in rea.reactants])
+						P = sorted([x.name for x in rea.products])
+						if R == ["H","H"] and P == ["H2"]:
+							rateFormH2 = "k("+str(rea.idx)+")"
+							rfh2Found = True
+							break
+					#check if h2 formation on dust rate is present in the network
+					if not rfh2Found:
+						print("ERROR: if you use metals and dust you should have")
+						print(" H2 formation on dust rate in your chemical network!")
+						sys.exit()
+
+					row = row.replace("#KROME_RformH2", rateFormH2) #replace pragma with H2 photodissociation rate
 
 				#add attenuation from G0 and Av for photoelectric effect
 				if row.strip() == "#KROME_GhabG0":
