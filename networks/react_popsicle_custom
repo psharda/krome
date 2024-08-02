@@ -348,9 +348,9 @@
 
 #H2 formation on dust grains:
 @format:idx,R,R,P,rate
-@var:fA = 1d0/(1d0+1d4*exp(-6d2/(user_Tdust+1d-40)))
+@var:fA = 1d0/(1d0+1d4*exp(-6d2/(custom_Tdust(n(:),Tgas)+1d-40)))
 @noTabNext
-118,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0+0.04d0*sqrt(Tgas+user_Tdust)+0.002d0*Tgas+8d-6*Tgas**2)
+118,H,H,H2,3d-18*sqrt(Tgas)*fA/(1d0+0.04d0*sqrt(Tgas+custom_Tdust(n(:),Tgas))+0.002d0*Tgas+8d-6*Tgas**2)
 
 
 ########################################## START FREEZEOUT CHEMISTRY ###################################################################
