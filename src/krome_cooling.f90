@@ -1331,11 +1331,10 @@
     use krome_fit
     implicit none
     integer::i
-    real*8::cool_DustSemenov,n(:),Tgas,m(nspec),rhogas
-    real*8::clipped_x,clipped_y,kappaP,tau_d,tau_g,tau
+    real*8::cool_DustSemenov,n(:),Tgas,m(nspec),ntot,rhogas
+    real*8::clipped_x,clipped_y,kappaP,tau_d,tau_g,tau,ljeans
     real*8::besc,alpha_gd,aR,dustToGasRatioSolar,intJRad
     real*8::A,B,C,iter,Tdold,fx,fdash_x,Tdnew,abs_t,rel_t,Tdoldsave
-    real*8::Tdnew
 
     cool_DustSemenov = 0d0
 
@@ -1348,14 +1347,14 @@
     clipped_y = max(CoolSemenov_y(1), min(rhogas, CoolSemenov_y(10)))
 
     !Find the Planck mean opacity
-    kappaP = fit_anytab2D(CoolSemenov_x(:), CoolSemenov_y(:), CoolSemenov_z(:,:), &
-                          CoolSemenov_xmul, CoolSemenov_ymul, clipped_x, clipped_y)
+    kappaP = interpolate2D(CoolSemenov_x(:), CoolSemenov_y(:), CoolSemenov_z(:,:), &
+                           clipped_x, clipped_y)
 
     !Get the jeans length
     ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
     tau_d = rhogas * kappaP
     tau_g = 0d0
-    tau = (tau_d + tau_g) * lj
+    tau = (tau_d + tau_g) * ljeans
 
     if(tau<1d0) then
       besc = 1d0
