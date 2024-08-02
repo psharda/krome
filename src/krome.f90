@@ -721,12 +721,22 @@ contains
     call init_coolingZCIEGF()
 #ENDIFKROME
 
+#IFKROME_useCoolingDustSemenov
+    !initialize dust Semenov opacities from Semenov+2003
+    call init_anytab2D("Semenov_PlanckOpacity.dat",CoolSemenov_x(:), &
+        CoolSemenov_y(:), CoolSemenov_z(:,:), CoolSemenov_xmul, &
+        CoolSemenov_ymul)
+    call test_anytab2D("Semenov_PlanckOpacity.dat",CoolSemenov_x(:), &
+        CoolSemenov_y(:), CoolSemenov_z(:,:), CoolSemenov_xmul, &
+        CoolSemenov_ymul)
+#ENDIFKROME
+
 #IFKROME_useCoolingZCIENOUV
   !initialize metal CIE cooling no UV case
-  call init_anytab2D("coolZ_CIE2012NOUV.dat",CoolZNOUV_x(:), &
+    call init_anytab2D("coolZ_CIE2012NOUV.dat",CoolZNOUV_x(:), &
         CoolZNOUV_y(:), CoolZNOUV_z(:,:), CoolZNOUV_xmul, &
         CoolZNOUV_ymul)
-  call test_anytab2D("coolZ_CIE2012NOUV.dat",CoolZNOUV_x(:), &
+    call test_anytab2D("coolZ_CIE2012NOUV.dat",CoolZNOUV_x(:), &
         CoolZNOUV_y(:), CoolZNOUV_z(:,:), CoolZNOUV_xmul, &
         CoolZNOUV_ymul)
 #ENDIFKROME

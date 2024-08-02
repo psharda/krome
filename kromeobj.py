@@ -55,7 +55,7 @@ class krome:
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = useCoolingNebular = useCoolingDustGRREC = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useShieldingC = useShieldingCO = useShieldingWG11_withH = False
-	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
+	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = useCoolingDustSemenov = False
 	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingZCIEGF = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
 	useCoolingHCN = useCoolingOH = useCoolingH2O = False
@@ -236,7 +236,7 @@ class krome:
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
 			COMPTON, EXPANSION, CIE, DISS, NEBULAR, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -\
-			cooling=ATOMIC,CII,OI,FeI),Z_CIE,Z_CIENOUV,Z_CIEGF,Z_EXTENDED,DUSTGRREC.\
+			cooling=ATOMIC,CII,OI,FeI),Z_CIE,Z_CIENOUV,Z_CIEGF,Z_EXTENDED,DUSTGRREC,DUSTSEMENOV.\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
 		self.parser.add_argument("-coolLevels", metavar='MAXLEV', help="use only the levels up to MAXLEV (included), e.g. -coolLevels=3\
@@ -806,7 +806,7 @@ class krome:
 		#apply an individual cooling floor (SB, mod TG)
 		if args.useIndividualFloor:
 			myFloor = [x.strip() for x in args.useIndividualFloor.split(",")]
-			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED","GH","NEBULAR","Z_CIEGF","DUSTGRREC"]
+			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED","GH","NEBULAR","Z_CIEGF","DUSTGRREC","DUSTSEMENOV"]
 			for floor in myFloor:
 				if floor not in allFloor:
 					die("ERROR: Floor \""+floor+"\" is unknown!\nAvailable floor are: "
@@ -1201,7 +1201,7 @@ class krome:
 			#list of all cooling (excluded from file)
 			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE",
 						"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV","Z_EXTENDED","GH","OH",
-						"H2O", "HCN", "NEBULAR","Z_CIEGF","DUSTGRREC"]
+						"H2O", "HCN", "NEBULAR","Z_CIEGF","DUSTGRREC","DUSTSEMENOV"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
@@ -1252,6 +1252,7 @@ class krome:
 
 			if "ATOMIC" in myCools: self.useCoolingAtomic = True
 			if "DUSTGRREC" in myCools: self.useCoolingDustGRREC = True
+			if "DUSTSEMENOV" in myCools: self.useCoolingDustSemenov = True
 			if "NEBULAR" in myCools: self.useCoolingNebular = True
 			if "Z_CIEGF" in myCools: self.useCoolingZCIEGF = True
 			if "H2" in myCools: self.useCoolingH2 = True
@@ -1303,6 +1304,8 @@ class krome:
 				if "dust=" in aa: self.hasDust = True
 			if self.useCoolingDust and not self.hasDust:
 				die("ERROR: to include dust cooling you need dust (use -dust=[see help]).")
+			if self.useCoolingDust and self.useCoolingDustSemenov:
+				die("ERROR: DUST and DUSTSEMENOV cooling are mutually exclusive!")
 			if "CIE" in myCools and "CONT" in myCools:
 				die("ERROR: CIE and CONT cooling are mutually exclusive!")
 			if "CIE" in myCools and "GH" in myCools:
@@ -6539,6 +6542,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingDustTabs" and not self.dustTabsCool: skip = True
 			if srow == "#IFKROME_useCoolingAtomic" and not self.useCoolingAtomic: skip = True
 			if srow == "#IFKROME_useCoolingDustGRREC" and not self.useCoolingDustGRREC: skip = True
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_useCoolingNebular" and not self.useCoolingNebular: skip = True
 			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingH2" and not self.useCoolingH2: skip = True
@@ -8219,6 +8223,11 @@ class krome:
 			print("- copying optical data for dust...")
 			shutil.copyfile("data/optC.dat", buildFolder+"optC.dat")
 			shutil.copyfile("data/optSi.dat", buildFolder+"optSi.dat")
+
+		#copy Semenov opacities
+		if self.useCoolingDustSemenov:
+			print("- copying Semenov_PlanckOpacity.dat...")
+			shutil.copyfile("data/Semenov_PlanckOpacity.dat", buildFolder + "Semenov_PlanckOpacity.dat")
 
 		#copy cooling CO
 		if self.useCoolingCO:

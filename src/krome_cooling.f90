@@ -71,6 +71,10 @@
       cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingDustSemenov
+      cools(idx_cool_dust) = f1 * cool_DustSemenov(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useCoolingDustGRREC
       cools(idx_cool_dustgrrec) = f1 * cool_DustGRREC(n(:), Tgas)
 #ENDIFKROME
@@ -1312,6 +1316,111 @@
       cooling_dust = get_mu(n) * coolFit * ntot * ntot
 
     end function cooling_dust
+#ENDIFKROME
+
+#IFKROME_useCoolingDustSemenov
+  !***************************
+  function cool_DustSemenov(n,Tgas)
+    !custom dust cooling based on
+    !Semenov+2003 Planck dust opacities
+    !dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    use krome_getphys
+    use krome_fit
+    implicit none
+    integer::i
+    real*8::cool_DustSemenov,n(:),Tgas,m(nspec),rhogas
+    real*8::clipped_x,clipped_y,kappaP,tau_d,tau_g,tau
+    real*8::besc,alpha_gd,aR,dustToGasRatioSolar,intJRad
+    real*8::A,B,C,iter,Tdold,fx,fdash_x,Tdnew,abs_t,rel_t,Tdoldsave
+    real*8::Tdnew
+
+    cool_DustSemenov = 0d0
+
+    ntot = sum(n(1:nmols)) !total number density
+    m(:) = get_mass() !masses of the species
+    rhogas = sum(n(1:nmols)*m(1:nmols))
+
+    !Clip Tgas and rhogas to the ranges in the data
+    clipped_x = max(CoolSemenov_x(1), min(Tgas, CoolSemenov_x(1000)))
+    clipped_y = max(CoolSemenov_y(1), min(rhogas, CoolSemenov_y(10)))
+
+    !Find the Planck mean opacity
+    kappaP = fit_anytab2D(CoolSemenov_x(:), CoolSemenov_y(:), CoolSemenov_z(:,:), &
+                          CoolSemenov_xmul, CoolSemenov_ymul, clipped_x, clipped_y)
+
+    !Get the jeans length
+    ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
+    tau_d = rhogas * kappaP
+    tau_g = 0d0
+    tau = (tau_d + tau_g) * lj
+
+    if(tau<1d0) then
+      besc = 1d0
+    else
+      besc = tau**(-2)
+    endif
+
+    alpha_gd = 3.2d-34 !pre-factor for the dust-gas cooling (Goldsmith 2001) in erg cm3 s-1
+    aR = 4*stefboltz_erg/clight !radiation constant
+    !(TODO: This would also change with VETTAM)
+
+
+    dustToGasRatioSolar = (1d0/162d0) !Piyush doesnt understand this line?
+    !Rescale with escape factor to account for trapping of IR (TODO: Remove this when coupling to VETTAM)
+    kappaP = kappaP * besc
+
+    !heating rate per unit volume from external radiation
+    intJRad = 0d0 !(TODO: This would change with VETTAM)
+
+    !The equation for dust temperature is of form AT_d^4 + BT_d + C
+    A = rhogas * kappaP * dustToGasRatioSolar * aR * clight
+    B = ntot**2 * alpha_gd * dustToGasRatioSolar * sqrt(Tgas)
+    C = -1d0 * (intJRad + rhogas*kappaP*dustToGasRatioSolar*aR*clight*phys_Tcmb**4 + ntot**2 * alpha_gd * dustToGasRatioSolar * Tgas**(1.5d0))
+
+    iter = 0
+    Tdold = Tgas !krome_dust_T !Piyush doesnt understand this line?
+    do 
+      fx = A*Tdold**4 + B*Tdold + C
+      fdash_x = 4d0*A*Tdold**3 + B
+
+      Tdnew = Tdold - fx/fdash_x
+      !relative difference
+      rel_t = abs((Tdnew-Tdold)/Tdold)
+      !Absolute difference
+      abs_t = abs(Tdnew-Tdold)
+      Tdoldsave = Tdold
+      Tdold = Tdnew
+      iter = iter + 1
+
+      !Check for convergence
+      if(abs_t<1d-8) exit !Absolute tolerance condition
+
+      if(rel_t<1d-5) exit !Relative tolerance condition
+
+      if(iter>1.e3) then 
+        print *, 'Maximum iterations reached in dust temperature NR-solver'
+        print *, 'Relative change, Told, Tnew', rel_t, Tdoldsave, Tdnew
+        stop !Maximum iterations
+      end if
+
+    end do
+
+    !Now we have the new dust temperature: Tdnew
+
+    !compute the cooling in erg cm^-3 s^-1 (avoid the difference Tgas-Tdust)
+    !This is because at high densities, Tgas exactly equals Tdust in reality
+    !But numericaly, they are not exactly equal.
+    !So if you use gas-dust interaction cooling instead, it will significantly overestimaate the cooling
+    !because of finite difference issues when you do Tgas-Tdust
+    !This is why we use dust thermal radiation cooling below, because
+    !this is equivalent to dust-gas energy exchange and will give the correct
+    !cooling at both low and high densities
+    cool_DustSemenov = cool_DustSemenov + A*Tdnew**4 - intJRad - rhogas*kappaP*dustToGasRatioSolar*aR*clight*phys_Tcmb**4
+
+  end function cool_DustSemenov
 #ENDIFKROME
 
 #IFKROME_useCoolingDustGRREC

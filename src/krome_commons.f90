@@ -137,6 +137,12 @@ module krome_commons
   real*8::coolZCIEGFx1min,coolZCIEGFx1max
 #ENDIFKROME
 
+#IFKROME_useCoolingDustSemenov
+  integer,parameter::coolSemenovn=10000
+  real*8::coolSemenovx1(coolSemenovn),coolSemenovx2(coolSemenovn),coolSemenovx3(coolSemenovn)
+  real*8::coolSemenovx1min,coolSemenovx1max
+#ENDIFKROME
+
 #IFKROME_useCoolingZCIE
 !data for metal cooling from table in the presence of UV
   integer,parameter::coolZCIEn1=81
