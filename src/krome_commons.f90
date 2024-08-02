@@ -138,9 +138,8 @@ module krome_commons
 #ENDIFKROME
 
 #IFKROME_useCoolingDustSemenov
-  integer,parameter::coolSemenovn=10000
-  real*8::coolSemenovx1(coolSemenovn),coolSemenovx2(coolSemenovn),coolSemenovx3(coolSemenovn)
-  real*8::coolSemenovx1min,coolSemenovx1max
+  real*8::CoolSemenov_x(10),CoolSemenov_y(1000)
+  real*8::CoolSemenov_z(10,1000),CoolSemenov_xmul,CoolSemenov_ymul
 #ENDIFKROME
 
 #IFKROME_useCoolingZCIE
