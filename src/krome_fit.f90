@@ -232,6 +232,35 @@ contains
 
   end subroutine test_anytab2D
 
+  !******************************
+  !test 2d interpolation and save to file
+  subroutine test_interpolate2D(fname,x,y,z)
+    implicit none
+    integer::i,j,unit1,unit2
+    real*8,intent(in)::x(:),y(:),z(:,:)
+    real*8::xx,yy,zz
+    character(len=*),intent(in)::fname
+
+    open(newunit=unit1,file=fname//".fit",status="replace")
+    open(newunit=unit2,file=fname//".org",status="replace")
+    do i=1,size(x)
+       do j=1,size(y)
+          xx = x(i)
+          yy = y(j)
+          zz = interpolate2D(x(:),y(:),z(:,:),xx,yy)
+          write(unit1,*) xx,yy,zz
+          write(unit2,*) x(i),y(j),z(i,j)
+       end do
+       write(unit1,*)
+       write(unit2,*)
+    end do
+    close(unit1)
+    close(unit2)
+    print *,"original file wrote in ",fname//".org"
+    print *,"fit test file wrote in ",fname//".fit"
+
+  end subroutine test_interpolate2D
+
   !*****************************
   function fit_anytab3D(x,y,z,f,xmul,ymul,zmul,xx,yy,zz)
     implicit none
@@ -393,6 +422,7 @@ contains
   !2D interpolation at (x0,y0) for (x(:), y(:)) in z(:,:)
   !Added by Piyush Sharda in 2024 for CO shielding
   function interpolate2D(x, y, z, x0, y0)
+    real*8 :: interpolate2D
     real*8 :: x(:), y(:), z(size(x), size(y))
     real*8 :: x0, y0
     real*8 :: f
