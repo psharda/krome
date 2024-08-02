@@ -25,7 +25,7 @@ program test_krome
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust(krome_ndust),zs(nz),kk(krome_nrea)
   real*8::Av,NH,NHj,NH2,heats(krome_nheats),crate
-  real*8::ionH,dissH2
+  real*8::ionH,dissH2,ionC,dissCO
   logical::crate_attenuation
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
@@ -61,6 +61,14 @@ program test_krome
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
+
+    if (zs(jz2) > 0d0) then
+      !turn on photo/cr reactions that include metals
+      call krome_set_user_is_metal(1d0)
+    else
+      !turn off photo/cr reactions that include metals
+      call krome_set_user_is_metal(0d0)
+    endif
 
     !initialize KROME (mandatory)
     call krome_init()
@@ -111,14 +119,10 @@ program test_krome
     n(krome_nmols+krome_ndust+1:krome_nmols+2*krome_ndust) = Tdust
     dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)
     call krome_set_user_dissH2(dissH2)
-
-    if (zs(jz2) > 0d0) then
-      !turn on photo/cr reactions that include metals
-      call krome_set_user_is_metal(1d0)
-    else
-      !turn off photo/cr reactions that include metals
-      call krome_set_user_is_metal(0d0)
-    endif
+    ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()
+    dissCO = 2.d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()
+    call krome_set_user_ionC(ionC)
+    call krome_set_user_dissCO(dissCO)
 
     !set initial density
     dd = ntot
@@ -175,6 +179,10 @@ program test_krome
        !set H2 dissociation reaction rate coeff
        dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)
        call krome_set_user_dissH2(dissH2)
+       ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()
+       dissCO = 2.d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()
+       call krome_set_user_ionC(ionC)
+       call krome_set_user_dissCO(dissCO)
 
        !break when max density reached
        if(dd.gt.1d18) exit
