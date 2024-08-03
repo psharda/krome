@@ -4953,6 +4953,7 @@ class krome:
 
 			if srow == "#IFKROME_useChemisorption" and not self.useChemisorption: skip = True
 			if srow == "#IFKROME_useSemenov" and not self.useSemenov: skip = True
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
 			if srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT)
 				and self.useSurface): skip = True
@@ -6393,7 +6394,7 @@ class krome:
 			if useDustT or usedTdust: dustOptInt += "call dust_init_intBB()"
 		if not useDustEvol: dustPartnerIdx = ""
 
-		skip = skipPhotoDust = skipChemisorption = skipdTdust = skipDustEvol = False
+		skip = skipPhotoDust = skipChemisorption = skipdTdust = skipDustEvol = skipDustSemenov = False
 		for row in fh:
 			srow = row.strip()
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
@@ -6413,6 +6414,9 @@ class krome:
 
 			if srow == "#IFKROME_usedTdust" and not self.usedTdust: skipdTdust = True
 			if srow == "#ENDIFKROME_usedTdust": skipdTdust = False
+
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skipDustSemenov = True
+			if srow == "#ENDIFKROME_useCoolingDustSemenov": skipDustSemenov = False
 
 			if skipChemisorption: continue
 			if skipdTdust: continue
@@ -6887,6 +6891,7 @@ class krome:
 				if row.strip() == "#IFKROME_useHeatingPhotoDustWD" and not self.useHeatingPhotoDustWD: skip = True
 				if row.strip() == "#IFKROME_useHeatingXRay" and not self.useHeatingXRay: skip = True
 				if row.strip() == "#IFKROME_useHeatingVisc" and not self.useHeatingVisc: skip = True
+				if row.strip() == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 				#if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
 				if row.strip() == "#IFKROME_useHeatingZCIE" and not self.useCoolingZCIE: skip = True
 				if row.strip() == "#IFKROME_useHeatingZExtended" and not self.useCoolingZExtended: skip = True
@@ -7516,6 +7521,7 @@ class krome:
 			if srow == "#IFKROME_use_thermo" and not self.use_thermo: skip = True
 			if srow == "#IFKROME_use_coolingZ" and not self.useCoolingZ: skip = True
 			if srow == "#IFKROME_use_coolingGH" and not self.useCoolingGH: skip = True
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_useXrays" and not self.useXRay: skip = True
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
 			if srow == "#IFKROME_has_electrons" and not hasElectrons: skip = True
@@ -8012,6 +8018,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingZCIE" and not self.useCoolingZCIE: skip = True
 			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingZCIENOUV" and not self.useCoolingZCIENOUV: skip = True
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_useCoolingGH" and not self.useCoolingGH: skip = True
 			if srow == "#IFKROME_ierr" and not self.useIERR: skip = True
 			if srow == "#IFKROME_noierr" and self.useIERR: skip = True
