@@ -320,18 +320,6 @@ contains
   end subroutine krome_set_Tdust
 
   !************************
-  !this function sets the default temperature (arg)
-  !for custom Tdust Semenov, K
-  subroutine krome_set_Semenov_Tdust(arg)
-    use krome_commons
-    implicit none
-    #KROME_double_value :: arg
-
-    krome_Semenov_Tdust = arg
-
-  end subroutine krome_set_Semenov_Tdust
-
-  !************************
   !this function sets the temperature
   ! for all the dust bins but using an array
   ! of size krome_ndust, K
@@ -378,18 +366,6 @@ contains
     krome_get_Tdust(:) = krome_dust_T(:)
 
   end function krome_get_Tdust
-
-  !***********************
-  !returns the custom Semenov
-  !dust temperature, K
-  function krome_get_Semenov_Tdust()
-    use krome_commons
-    implicit none
-    real*8 :: krome_get_Semenov_Tdust
-
-    krome_get_Semenov_Tdust = krome_Semenov_Tdust
-
-  end function krome_get_Semenov_Tdust
 
   !***************************
   !this subroutine sets as a scalar (xarg) all the
@@ -453,6 +429,32 @@ contains
     krome_get_surface = sum(x(idx_base:idx_base+ndust-1))
 
   end function krome_get_surface
+#ENDIFKROME
+
+#IFKROME_useCoolingDustSemenov
+  !************************
+  !this function sets the default temperature (arg)
+  !for custom Tdust Semenov, K
+  subroutine krome_set_Semenov_Tdust(arg)
+    use krome_commons
+    implicit none
+    #KROME_double_value :: arg
+
+    krome_Semenov_Tdust = arg
+
+  end subroutine krome_set_Semenov_Tdust
+
+  !***********************
+  !returns the custom Semenov
+  !dust temperature, K
+  function krome_get_Semenov_Tdust()
+    use krome_commons
+    implicit none
+    real*8 :: krome_get_Semenov_Tdust
+
+    krome_get_Semenov_Tdust = krome_Semenov_Tdust
+
+  end function krome_get_Semenov_Tdust
 #ENDIFKROME
 
   !*****************************
