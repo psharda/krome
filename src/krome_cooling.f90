@@ -1376,7 +1376,7 @@
     !The equation for dust temperature is of form AT_d^4 + BT_d + C
     A = rhogas * kappaP * dust2gas_ratio * aR * clight
 
-    Tdust = compute_Semenov_Tdust(n,Tgas)
+    Tdust = krome_Semenov_Tdust
 
     !compute the cooling in erg cm^-3 s^-1 (avoid the difference Tgas-Tdust)
     !This is because at high densities, Tgas exactly equals Tdust in reality

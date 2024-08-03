@@ -96,7 +96,7 @@ contains
     integer::i
     real*8::custom_Tdust,n(:),Tgas
 
-    custom_Tdust = compute_Semenov_Tdust(n,Tgas)
+    custom_Tdust = krome_Semenov_Tdust
   end function custom_Tdust
 
 #IFKROME_has_electrons
