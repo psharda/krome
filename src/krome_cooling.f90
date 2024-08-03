@@ -1345,8 +1345,8 @@
     rhogas = sum(n(1:nmols)*m(1:nmols))
 
     !Clip Tgas and rhogas to the ranges in the data
-    clipped_x = max(CoolSemenov_x(1), min(Tgas, CoolSemenov_x(1000)))
-    clipped_y = max(CoolSemenov_y(1), min(rhogas, CoolSemenov_y(10)))
+    clipped_x = max(CoolSemenov_x(1), min(rhogas, CoolSemenov_x(10)))
+    clipped_y = max(CoolSemenov_y(1), min(Tgas, CoolSemenov_y(1000)))
 
     !Find the Planck mean opacity
     kappaP = interpolate2D(CoolSemenov_x(:), CoolSemenov_y(:), CoolSemenov_z(:,:), &
