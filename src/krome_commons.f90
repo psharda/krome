@@ -39,6 +39,10 @@ module krome_commons
   integer::arr_u(nrea)
   real*8::arr_flux(nrea)
 
+#IFKROME_useCoolingDustSemenov
+    real*8::krome_Semenov_Tdust
+#ENDIFKROME
+
 #IFKROME_useDust
   !commons for dust
   real*8::krome_dust_partner_ratio(ndust),krome_dust_partner_ratio_inv(ndust)
