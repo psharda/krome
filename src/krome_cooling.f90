@@ -1329,7 +1329,7 @@
     use krome_constants
     use krome_getphys
     use krome_fit
-    use krome_grfuncs
+    use krome_dust
     implicit none
     integer::i
     real*8::cool_DustSemenov,n(:),Tgas,m(nspec),ntot,rhogas
@@ -1376,7 +1376,7 @@
     !The equation for dust temperature is of form AT_d^4 + BT_d + C
     A = rhogas * kappaP * dust2gas_ratio * aR * clight
 
-    Tdust = get_custom_Tdust(n,Tgas)
+    Tdust = compute_Semenov_Tdust(n,Tgas)
 
     !compute the cooling in erg cm^-3 s^-1 (avoid the difference Tgas-Tdust)
     !This is because at high densities, Tgas exactly equals Tdust in reality

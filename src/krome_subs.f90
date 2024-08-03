@@ -91,14 +91,13 @@ contains
     use krome_constants
     use krome_getphys
     use krome_fit
-    use krome_grfuncs
+    use krome_dust
     implicit none
     integer::i
     real*8::custom_Tdust,n(:),Tgas
 
-    custom_Tdust = get_custom_Tdust(n,Tgas)
+    custom_Tdust = compute_Semenov_Tdust(n,Tgas)
   end function custom_Tdust
-
 
 #IFKROME_has_electrons
   !*******************
