@@ -1333,7 +1333,7 @@
     integer::i
     real*8::cool_DustSemenov,n(:),Tgas,m(nspec),ntot,rhogas
     real*8::clipped_x,clipped_y,kappaP,tau_d,tau_g,tau,ljeans
-    real*8::besc,alpha_gd,aR,dustToGasRatioSolar,intJRad
+    real*8::besc,alpha_gd,aR,intJRad
     real*8::A,B,C,iter,Tdold,fx,fdash_x,Tdnew,abs_t,rel_t,Tdoldsave
 
     cool_DustSemenov = 0d0
@@ -1366,8 +1366,6 @@
     aR = 4*stefboltz_erg/clight !radiation constant
     !(TODO: This would also change with VETTAM)
 
-
-    dustToGasRatioSolar = (1d0/162d0) !Piyush doesnt understand this line?
     !Rescale with escape factor to account for trapping of IR (TODO: Remove this when coupling to VETTAM)
     kappaP = kappaP * besc
 
@@ -1375,9 +1373,9 @@
     intJRad = 0d0 !(TODO: This would change with VETTAM)
 
     !The equation for dust temperature is of form AT_d^4 + BT_d + C
-    A = rhogas * kappaP * dustToGasRatioSolar * aR * clight
-    B = ntot**2 * alpha_gd * dustToGasRatioSolar * sqrt(Tgas)
-    C = -1d0 * (intJRad + rhogas*kappaP*dustToGasRatioSolar*aR*clight*phys_Tcmb**4 + ntot**2 * alpha_gd * dustToGasRatioSolar * Tgas**(1.5d0))
+    A = rhogas * kappaP * dust2gas_ratio * aR * clight
+    B = ntot**2 * alpha_gd * dust2gas_ratio * sqrt(Tgas)
+    C = -1d0 * (intJRad + rhogas*kappaP*dust2gas_ratio*aR*clight*phys_Tcmb**4 + ntot**2 * alpha_gd * dust2gas_ratio * Tgas**(1.5d0))
 
     iter = 0
     Tdold = Tgas !krome_dust_T !Piyush doesnt understand this line?
@@ -1417,7 +1415,7 @@
     !This is why we use dust thermal radiation cooling below, because
     !this is equivalent to dust-gas energy exchange and will give the correct
     !cooling at both low and high densities
-    cool_DustSemenov = cool_DustSemenov + A*Tdnew**4 - intJRad - rhogas*kappaP*dustToGasRatioSolar*aR*clight*phys_Tcmb**4
+    cool_DustSemenov = cool_DustSemenov + A*Tdnew**4 - intJRad - rhogas*kappaP*dust2gas_ratio*aR*clight*phys_Tcmb**4
 
   end function cool_DustSemenov
 #ENDIFKROME
