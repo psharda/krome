@@ -1117,7 +1117,7 @@ contains
   rhogas = sum(n(1:nmols)*m(1:nmols))
 
   !Clip Tgas and rhogas to the ranges in the data
-  clipped_x = max(CoolSemenov_x(1), min(rhogas, CoolSemenov_x(10)))
+  clipped_x = max(CoolSemenov_x(1), min(log10(rhogas), CoolSemenov_x(10)))
   clipped_y = max(CoolSemenov_y(1), min(Tgas, CoolSemenov_y(1000)))
 
   !Find the Planck mean opacity
