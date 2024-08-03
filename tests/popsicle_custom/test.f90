@@ -80,14 +80,6 @@ program test_krome
 
     call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
 
-    if (zs(jz2) > 0d0) then
-      !turn on photo/cr reactions that include metals
-      call krome_set_user_is_metal(1d0)
-    else
-      !turn off photo/cr reactions that include metals
-      call krome_set_user_is_metal(0d0)
-    endif
-
     !set initial density
     dd = ntot
 
