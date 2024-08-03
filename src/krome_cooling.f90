@@ -1329,12 +1329,13 @@
     use krome_constants
     use krome_getphys
     use krome_fit
+    use krome_grfuncs
     implicit none
     integer::i
     real*8::cool_DustSemenov,n(:),Tgas,m(nspec),ntot,rhogas
     real*8::clipped_x,clipped_y,kappaP,tau_d,tau_g,tau,ljeans
     real*8::besc,alpha_gd,aR,intJRad
-    real*8::A,B,C,iter,Tdold,fx,fdash_x,Tdnew,abs_t,rel_t,Tdoldsave
+    real*8::A,Tdust
 
     cool_DustSemenov = 0d0
 
@@ -1374,38 +1375,8 @@
 
     !The equation for dust temperature is of form AT_d^4 + BT_d + C
     A = rhogas * kappaP * dust2gas_ratio * aR * clight
-    B = ntot**2 * alpha_gd * dust2gas_ratio * sqrt(Tgas)
-    C = -1d0 * (intJRad + rhogas*kappaP*dust2gas_ratio*aR*clight*phys_Tcmb**4 + ntot**2 * alpha_gd * dust2gas_ratio * Tgas**(1.5d0))
 
-    iter = 0
-    Tdold = Tgas !krome_dust_T !Piyush doesnt understand this line?
-    do 
-      fx = A*Tdold**4 + B*Tdold + C
-      fdash_x = 4d0*A*Tdold**3 + B
-
-      Tdnew = Tdold - fx/fdash_x
-      !relative difference
-      rel_t = abs((Tdnew-Tdold)/Tdold)
-      !Absolute difference
-      abs_t = abs(Tdnew-Tdold)
-      Tdoldsave = Tdold
-      Tdold = Tdnew
-      iter = iter + 1
-
-      !Check for convergence
-      if(abs_t<1d-8) exit !Absolute tolerance condition
-
-      if(rel_t<1d-5) exit !Relative tolerance condition
-
-      if(iter>1.e3) then 
-        print *, 'Maximum iterations reached in dust temperature NR-solver'
-        print *, 'Relative change, Told, Tnew', rel_t, Tdoldsave, Tdnew
-        stop !Maximum iterations
-      end if
-
-    end do
-
-    !Now we have the new dust temperature: Tdnew
+    Tdust = get_custom_Tdust(n,Tgas)
 
     !compute the cooling in erg cm^-3 s^-1 (avoid the difference Tgas-Tdust)
     !This is because at high densities, Tgas exactly equals Tdust in reality
@@ -1415,7 +1386,7 @@
     !This is why we use dust thermal radiation cooling below, because
     !this is equivalent to dust-gas energy exchange and will give the correct
     !cooling at both low and high densities
-    cool_DustSemenov = cool_DustSemenov + A*Tdnew**4 - intJRad - rhogas*kappaP*dust2gas_ratio*aR*clight*phys_Tcmb**4
+    cool_DustSemenov = cool_DustSemenov + A*Tdust**4 - intJRad - rhogas*kappaP*dust2gas_ratio*aR*clight*phys_Tcmb**4
 
   end function cool_DustSemenov
 #ENDIFKROME
