@@ -1110,6 +1110,8 @@ contains
   real*8::besc,alpha_gd,aR,intJRad
   real*8::A,B,C,iter,Tdold,fx,fdash_x,Tdnew,abs_t,rel_t,Tdoldsave
 
+  if(dust2gas_ratio .eq. 0) return
+
   ntot = sum(n(1:nmols)) !total number density
   m(:) = get_mass() !masses of the species
   rhogas = sum(n(1:nmols)*m(1:nmols))
