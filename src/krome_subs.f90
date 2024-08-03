@@ -88,10 +88,7 @@ contains
     !Semenov+2003 Planck dust opacities
     !dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
     use krome_commons
-    use krome_constants
     use krome_getphys
-    use krome_fit
-    use krome_dust
     implicit none
     integer::i
     real*8::custom_Tdust,n(:),Tgas
