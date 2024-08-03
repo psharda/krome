@@ -1,6 +1,6 @@
 # #Semenov dust opacities from Semenov+2003
 # #Provided by Shyam Menon (2024)
-# #Rhogas (g/cm^3) Tgas (K) PlanckOPacity (cm^2/g)
+# #log10(Rhogas) (g/cm^3) Tgas (K) PlanckOPacity (cm^2/g)
 10,1001
 -1.8000E+01	1.0000E+01	1.0158E-01
 -1.8000E+01	1.0069E+01	1.0306E-01
