@@ -88,7 +88,6 @@ contains
     !Semenov+2003 Planck dust opacities
     !dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
     use krome_commons
-    use krome_subs
     use krome_constants
     use krome_getphys
     use krome_fit
@@ -98,8 +97,6 @@ contains
     real*8::clipped_x,clipped_y,kappaP,tau_d,tau_g,tau,ljeans
     real*8::besc,alpha_gd,aR,dustToGasRatioSolar,intJRad
     real*8::A,B,C,iter,Tdold,fx,fdash_x,Tdnew,abs_t,rel_t,Tdoldsave
-
-    cool_DustSemenov = 0d0
 
     ntot = sum(n(1:nmols)) !total number density
     m(:) = get_mass() !masses of the species
