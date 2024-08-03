@@ -29,10 +29,11 @@ program test_krome
   real*8::dtH,deldd,rhogas,m(krome_nspec)
   real*8::tff,dd,dd1
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
-  real*8::ntot,Tdust(krome_ndust),zs(nz),kk(krome_nrea)
+  real*8::ntot,Tdust,zs(nz),kk(krome_nrea)
   real*8::Av,heats(krome_nheats)
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
+  !zs = (/1d0/)
 
   !output header
   write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust"
@@ -91,9 +92,10 @@ program test_krome
 
 
     !print initial output
+    Tdust = krome_get_Semenov_Tdust()
     m = get_mass()
     rhogas = sum(x(:)*m(1:krome_nmols))
-    write(22,'(99E17.8e3)') dd,rhogas,Tgas,x(:)/dd
+    write(22,'(99E17.8e3)') dd,rhogas,Tgas,Tdust,x(:)/dd
 
     !loop on density steps
     do i = 1,rstep
@@ -123,6 +125,8 @@ program test_krome
        !dust evaporation: dust is non existent at T > 1.5d3
        !if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)
 
+       Tdust = krome_get_Semenov_Tdust()
+
        !dump cooling rates for Tgas going into the calculation
        n(1:krome_nmols) = x(:)
        n(KROME_idx_Tgas) = Tgas
@@ -137,11 +141,11 @@ program test_krome
 
        !print some output
        rhogas = sum(x(:)*m(1:krome_nmols))
-       write(22,'(99E17.8e3)') dd,rhogas,Tgas,x(:)/dd
+       write(22,'(99E17.8e3)') dd,rhogas,Tgas,Tdust,x(:)/dd
        if(mod(i,100)==0) then
           !totheat = krome_get_heating(x(:), Tgas)
           !totcool = krome_get_heating(x(:), Tgas)
-          print '(I5,30E11.3)',i,dd,Tgas
+          print '(I5,30E11.3)',i,dd,Tgas,Tdust
           call krome_print_best_flux(x(:),Tgas,5)
           call krome_explore_flux(x(:),Tgas,unit,dd)
        end if
