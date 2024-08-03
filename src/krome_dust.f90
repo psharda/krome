@@ -1094,7 +1094,7 @@ contains
 
 #IFKROME_useCoolingDustSemenov
   !*****************************
-  function compute_Semenov_Tdust(n,Tgas)
+  subroutine compute_Semenov_Tdust(n,Tgas)
   !custom dust temperature based on
   !Semenov+2003 Planck dust opacities
   !dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
@@ -1105,7 +1105,7 @@ contains
   use krome_fit
   implicit none
   integer::i
-  real*8::compute_Semenov_Tdust,n(:),Tgas,m(nspec),ntot,rhogas
+  real*8::n(:),Tgas,m(nspec),ntot,rhogas
   real*8::clipped_x,clipped_y,kappaP,tau_d,tau_g,tau,ljeans
   real*8::besc,alpha_gd,aR,intJRad
   real*8::A,B,C,iter,Tdold,fx,fdash_x,Tdnew,abs_t,rel_t,Tdoldsave
@@ -1178,7 +1178,7 @@ contains
   end do
 
   krome_Semenov_Tdust = Tdnew
-end function compute_Semenov_Tdust
+  end subroutine compute_Semenov_Tdust
 #ENDIFKROME
 
 end module krome_dust
