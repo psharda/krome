@@ -1338,6 +1338,7 @@
     real*8::A,Tdust
 
     cool_DustSemenov = 0d0
+    if(dust2gas_ratio .eq. 0) return
 
     ntot = sum(n(1:nmols)) !total number density
     m(:) = get_mass() !masses of the species

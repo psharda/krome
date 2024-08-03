@@ -8,7 +8,7 @@
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
 #UPDATED primordial rates, 2014
 @var:T=Tgas
-
+@common: user_is_metal
 @var:ntot=sum(n(1:nmols))
 
 #Janev 1987
@@ -350,7 +350,7 @@
 @format:idx,R,R,P,rate
 @var:fA = 1d0/(1d0 + 1d4*exp(-6d2/(custom_Tdust(n,Tgas)+1d-40)))
 @noTabNext
-118,H,H,H2,3d-18*sqrt(Tgas)*fA / (1d0 + 0.04d0*(Tgas+custom_Tdust(n,Tgas))**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)
+118,H,H,H2,3d-18*sqrt(Tgas)*fA*user_is_metal / (1d0 + 0.04d0*(Tgas+custom_Tdust(n,Tgas))**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)
 
 
 ########################################## START FREEZEOUT CHEMISTRY ###################################################################
