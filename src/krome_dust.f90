@@ -1179,6 +1179,6 @@ contains
 
   krome_Semenov_Tdust = Tdnew
   end subroutine compute_Semenov_Tdust
-#ENDIFKROME
+#ENDIFKROME_useCoolingDustSemenov
 
 end module krome_dust

@@ -5884,6 +5884,7 @@ class krome:
 			#skip when find IF pragmas
 			if srow == "#IFKROME_useXrays" and not self.useXRay: skip = True
 			if srow == "#IFKROME_useH2dust_constant" and not self.useDustH2const: skip = True
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_has_electrons" and not has_electrons: skip = True
 			if srow == "#IFKROME_useLAPACK" and not self.needLAPACK: skip = True #skip calls to LAPACK
 			if srow == "#IFKROME_hasStoreOnceRates" and not self.hasStoreOnceRates: skip = True
@@ -6422,6 +6423,7 @@ class krome:
 			if skipdTdust: continue
 			if skipPhotoDust: continue
 			if skipDustEvol: continue
+			if skipDustSemenov: continue
 			if skip: continue
 
 			row = row.replace("#KROME_dust_grain_density", dustGrainDensity)

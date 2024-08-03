@@ -82,6 +82,7 @@ contains
 
   end subroutine loadReactionsVerbatim
 
+#IFKROME_useCoolingDustSemenov
   !***************************
   function custom_Tdust(n,Tgas)
     !custom Tdust computation based on
@@ -95,6 +96,7 @@ contains
 
     custom_Tdust = krome_Semenov_Tdust
   end function custom_Tdust
+#ENDIFKROME
 
 #IFKROME_has_electrons
   !*******************
