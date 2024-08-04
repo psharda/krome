@@ -6852,7 +6852,7 @@ class krome:
 						HChem += headchem + tklim + "HChem = HChem + k("+str(rea.idx)+") * ("+kref[i] + "*"+rmult+")\n"
 						if self.useTlimits and hasTlim: HChem += "end if\n\n"
 						break
-			if self.useDustH2 or self.dustTabsH2 or self.useDustH2const:
+			if self.useDustH2 or self.dustTabsH2 or self.useDustH2const or self.useCoolingDustSemenov:
 				HChemDust += "HChem = HChem + nH2dust * (4.2d0*h2heatfac + 0.2d0)\n"
 			if self.indexSolomon > 0:
 				HChem += "HChem = HChem + k("+str(self.indexSolomon)+") * (18.7d0*h2heatfac + 0.4d0)*n(idx_H2)\n"
@@ -7143,6 +7143,8 @@ class krome:
 		elif self.useDustH2const:
 		        #H2 on dust from Jura constant value
 			dustH2 +="nH2dust = nH2dust + H2_dustJura(n(:))"
+		elif self.useCoolingDustSemenov:
+				dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*ntot*dust2gas_ratio*(1d0/162d0) / (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
 
 		#H2 on dust from tables
 		if self.dustTabsH2:
