@@ -7126,7 +7126,7 @@ class krome:
 		        #H2 on dust from Jura constant value
 			dustH2 +="nH2dust = nH2dust + H2_dustJura(n(:))"
 		elif self.useCoolingDustSemenov:
-				dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*ntot*dust2gas_ratio*(1d0/162d0) / (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
+				dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*nH*dust2gas_ratio / (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
 
 		#H2 on dust from tables
 		if self.dustTabsH2:
