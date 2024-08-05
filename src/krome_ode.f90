@@ -31,7 +31,7 @@ contains
 #KROME_coevars
 
     n(:) = nin(:)
-
+    ntot = sum(n(1:nmols))
     nH2dust = 0.d0
     n(idx_CR) = 1.d0
     n(idx_g)  = 1.d0

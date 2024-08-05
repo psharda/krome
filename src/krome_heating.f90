@@ -645,11 +645,6 @@ contains
 
 #KROME_HChem_dust
 
-#IFKROME_useCoolingDustSemenov
-    RformH2 = #KROME_RformH2
-    HChem = HChem + (4.2d0*h2heatfac + 0.2d0)*RformH2*dd*(ntot*dust2gas_ratio) !eV/cm3/s
-#ENDIFKROME
-
     heatingChem = HChem * eV_to_erg  !erg/cm3/s
 
   end function heatingChem
