@@ -7044,24 +7044,6 @@ class krome:
 
 					row = row.replace("#KROME_RdissH2", rateDissH2) #replace pragma with H2 photodissociation rate
 
-				#replace correct H2 formation on dust rate
-				if "#KROME_RformH2" in row:
-					rfh2Found = False
-					for rea in self.reacts:
-						R = sorted([x.name for x in rea.reactants])
-						P = sorted([x.name for x in rea.products])
-						if R == ["H","H"] and P == ["H2"]:
-							rateFormH2 = "k("+str(rea.idx)+")"
-							rfh2Found = True
-							break
-					#check if h2 formation on dust rate is present in the network
-					if not rfh2Found:
-						print("ERROR: if you use metals and dust you should have")
-						print(" H2 formation on dust rate in your chemical network!")
-						sys.exit()
-
-					row = row.replace("#KROME_RformH2", rateFormH2) #replace pragma with H2 photodissociation rate
-
 				#add attenuation from G0 and Av for photoelectric effect
 				if row.strip() == "#KROME_GhabG0":
 					row = "Ghab  = "+self.photoDustVarG0+"\n"
@@ -7207,7 +7189,7 @@ class krome:
 				else:
 
 					#add dust ODE and partner specie RHS terms
-					if self.useDust or self.dustTabsH2:
+					if self.useDust or self.dustTabsH2 or self.useCoolingDustSemenov:
 						ndust = self.dustArraySize*self.dustTypesSize #number of dust ODEs
 						#nmols = len(specs)-4-ndust #number of mols ODEs
 
@@ -7270,7 +7252,7 @@ class krome:
 							for dType in dustTypes:
 								if dType == specs[idnw].name and useDustEvol:
 									x += " - dSumDust"+dType
-							if self.useDustH2 or self.dustTabsH2:
+							if self.useDustH2 or self.dustTabsH2 or self.useCoolingDustSemenov:
 								if "H"==specs[idnw].name: x += " - 2d0*nH2dust"
 								if "H2"==specs[idnw].name: x += " + nH2dust"
 							fout.write("\t" + x + "\n")
