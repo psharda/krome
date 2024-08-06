@@ -1107,7 +1107,7 @@ contains
   integer::i
   real*8::n(:),Tgas,m(nspec),ntot,rhogas
   real*8::clipped_x,clipped_y,kappaP,tau_d,tau_g,tau,ljeans
-  real*8::besc,alpha_gd,aR,intJRad
+  real*8::besc,alpha_gd,aR,intJRad,nH
   real*8::A,B,C,iter,Tdold,fx,fdash_x,Tdnew,abs_t,rel_t,Tdoldsave
 
   if(dust2gas_ratio .eq. 0) return
@@ -1115,6 +1115,7 @@ contains
   ntot = sum(n(1:nmols)) !total number density
   m(:) = get_mass() !masses of the species
   rhogas = sum(n(1:nmols)*m(1:nmols))
+  nH = get_Hnuclei(n(:))
 
   !Clip Tgas and rhogas to the ranges in the data
   clipped_x = max(CoolSemenov_x(1), min(log10(rhogas), CoolSemenov_x(10)))
@@ -1148,11 +1149,11 @@ contains
 
   !The equation for dust temperature is of form AT_d^4 + BT_d + C
   A = rhogas * kappaP * dust2gas_ratio * aR * clight
-  B = ntot**2 * alpha_gd * dust2gas_ratio * sqrt(Tgas)
-  C = -1d0 * (intJRad + rhogas*kappaP*dust2gas_ratio*aR*clight*phys_Tcmb**4 + ntot**2 * alpha_gd * dust2gas_ratio * Tgas**(1.5d0))
+  B = nH**2 * alpha_gd * dust2gas_ratio * sqrt(Tgas)
+  C = -1d0 * (intJRad + A*phys_Tcmb**4 + nH**2 * alpha_gd * dust2gas_ratio * Tgas**(1.5d0))
 
   iter = 0
-  Tdold = krome_Semenov_Tdust !krome_dust_T !Piyush doesnt understand this line?
+  Tdold = krome_Semenov_Tdust !feed in last Tdust
   do 
     fx = A*Tdold**4 + B*Tdold + C
     fdash_x = 4d0*A*Tdold**3 + B
@@ -1180,6 +1181,8 @@ contains
   end do
 
   krome_Semenov_Tdust = Tdnew
+  dustSemenov_cooling = A*Tdnew**4 - intJRad - rhogas*kappaP*dust2gas_ratio*aR*clight*phys_Tcmb**4
+
   end subroutine compute_Semenov_Tdust
 #ENDIFKROME_useCoolingDustSemenov
 

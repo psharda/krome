@@ -1340,54 +1340,7 @@
     cool_DustSemenov = 0d0
     if(dust2gas_ratio .eq. 0) return
 
-    ntot = sum(n(1:nmols)) !total number density
-    m(:) = get_mass() !masses of the species
-    rhogas = sum(n(1:nmols)*m(1:nmols))
-
-    !Clip Tgas and rhogas to the ranges in the data
-    clipped_x = max(CoolSemenov_x(1), min(log10(rhogas), CoolSemenov_x(10)))
-    clipped_y = max(CoolSemenov_y(1), min(Tgas, CoolSemenov_y(1000)))
-
-    !Find the Planck mean opacity
-    kappaP = interpolate2D(CoolSemenov_x(:), CoolSemenov_y(:), CoolSemenov_z(:,:), &
-                           clipped_x, clipped_y)
-
-    !Get the jeans length
-    ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
-    tau_d = rhogas * kappaP
-    tau_g = 0d0
-    tau = (tau_d + tau_g) * ljeans
-
-    if(tau<1d0) then
-      besc = 1d0
-    else
-      besc = tau**(-2)
-    endif
-
-    alpha_gd = 3.2d-34 !pre-factor for the dust-gas cooling (Goldsmith 2001) in erg cm3 s-1
-    aR = 4*stefboltz_erg/clight !radiation constant
-    !(TODO: This would also change with VETTAM)
-
-    !Rescale with escape factor to account for trapping of IR (TODO: Remove this when coupling to VETTAM)
-    kappaP = kappaP * besc
-
-    !heating rate per unit volume from external radiation
-    intJRad = 0d0 !(TODO: This would change with VETTAM)
-
-    !The equation for dust temperature is of form AT_d^4 + BT_d + C
-    A = rhogas * kappaP * dust2gas_ratio * aR * clight
-
-    Tdust = krome_Semenov_Tdust
-
-    !compute the cooling in erg cm^-3 s^-1 (avoid the difference Tgas-Tdust)
-    !This is because at high densities, Tgas exactly equals Tdust in reality
-    !But numericaly, they are not exactly equal.
-    !So if you use gas-dust interaction cooling instead, it will significantly overestimaate the cooling
-    !because of finite difference issues when you do Tgas-Tdust
-    !This is why we use dust thermal radiation cooling below, because
-    !this is equivalent to dust-gas energy exchange and will give the correct
-    !cooling at both low and high densities
-    cool_DustSemenov = cool_DustSemenov + A*Tdust**4 - intJRad - rhogas*kappaP*dust2gas_ratio*aR*clight*phys_Tcmb**4
+    cool_DustSemenov = dustSemenov_cooling
 
   end function cool_DustSemenov
 #ENDIFKROME

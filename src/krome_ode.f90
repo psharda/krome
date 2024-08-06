@@ -18,6 +18,9 @@ contains
 #IFKROME_useDust
     use krome_dust
 #ENDIFKROME
+#IFKROME_useCoolingDustSemenov
+    use krome_dust
+#ENDIFKROME
     implicit none
     integer::neq,idust
     real*8::tt,dn(neq),n(neq),k(nrea),krome_gamma
@@ -65,6 +68,10 @@ contains
 
     #KROME_calc_Tdust
 
+#ENDIFKROME
+
+#IFKROME_useCoolingDustSemenov
+    call compute_Semenov_Tdust(n(:),Tgas)
 #ENDIFKROME
 
 #KROME_dust_H2

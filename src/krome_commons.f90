@@ -40,7 +40,7 @@ module krome_commons
   real*8::arr_flux(nrea)
 
 #IFKROME_useCoolingDustSemenov
-    real*8::krome_Semenov_Tdust
+    real*8::krome_Semenov_Tdust,dustSemenov_cooling
 #ENDIFKROME
 
 #IFKROME_useDust

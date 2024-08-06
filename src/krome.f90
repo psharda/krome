@@ -132,10 +132,6 @@ contains
     krome_dust_T(:) = n(nmols+ndust+1:nmols+2*ndust)
 #ENDIFKROME
 
-#IFKROME_useCoolingDustSemenov
-    call compute_Semenov_Tdust(n(:),Tgas)
-#ENDIFKROME
-
 #IFKROME_usePreDustExp
     !pre-calculates exponent
     invTdust(:) = 1d0/(krome_dust_T(:)+1d-40)
