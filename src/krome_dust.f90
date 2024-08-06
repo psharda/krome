@@ -1181,7 +1181,7 @@ contains
   end do
 
   krome_Semenov_Tdust = Tdnew
-  dustSemenov_cooling = A*Tdnew**4 - intJRad - rhogas*kappaP*dust2gas_ratio*aR*clight*phys_Tcmb**4
+  dustSemenov_cooling = A*Tdnew**4 - intJRad - A*phys_Tcmb**4
 
   end subroutine compute_Semenov_Tdust
 #ENDIFKROME_useCoolingDustSemenov
