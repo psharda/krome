@@ -1127,7 +1127,7 @@ contains
 
   !Get the jeans length
   ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
-  tau_d = rhogas * kappaP
+  tau_d = rhogas * kappaP * dust2gas_ratio
   tau_g = 0d0
   tau = (tau_d + tau_g) * ljeans
 
@@ -1148,9 +1148,9 @@ contains
   intJRad = 0d0 !(TODO: This would change with VETTAM)
 
   !The equation for dust temperature is of form AT_d^4 + BT_d + C
-  A = rhogas * kappaP * dust2gas_ratio * aR * clight
-  B = nH**2 * alpha_gd * dust2gas_ratio * sqrt(Tgas)
-  C = -1d0 * (intJRad + A*phys_Tcmb**4 + nH**2 * alpha_gd * dust2gas_ratio * Tgas**(1.5d0))
+  A = rhogas * kappaP * dust2gas_ratio * aR * clight !n*\Psi_{IR} in equation 46 of Kim+2023 ApJS
+  B = nH**2 * alpha_gd * dust2gas_ratio * sqrt(Tgas) !Second part of n**2*\Lambda_{gd} in equation 45 of Kim+2023 ApJS
+  C = -1d0 * (intJRad + A*phys_Tcmb**4 + nH**2 * alpha_gd * dust2gas_ratio * Tgas**(1.5d0)) !n*(\Gamma_{d,UV} + \Gamma_{d,other}) + n**2*First part of \Lambda_{gd} in equation 45/46 of Kim+2023 ApJS
 
   iter = 0
   Tdold = krome_Semenov_Tdust !feed in last Tdust
@@ -1181,6 +1181,7 @@ contains
   end do
 
   krome_Semenov_Tdust = Tdnew
+  !Cooling is n**2*\Lambda_{gd} = n*\Psi_{IR} - n*(\Gamma_{d,UV} + \Gamma_{d,other}) (see equation 46 of Kim+2023 ApJS)
   dustSemenov_cooling = A*Tdnew**4 - intJRad - A*phys_Tcmb**4
 
   end subroutine compute_Semenov_Tdust
