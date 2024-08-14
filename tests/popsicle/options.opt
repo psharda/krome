@@ -11,5 +11,5 @@
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
 -dust=10,C
--dustOptions=dT,H2
+-dustOptions=T,H2
 -n networks/react_popsicle
