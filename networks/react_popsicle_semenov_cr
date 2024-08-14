@@ -393,6 +393,7 @@
 @ice:CO,evaporation,krate_evaporation(n(:),idx_CO,tabTdust)
 @ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,tabTdust)
 @ice:H2O,evaporation,krate_evaporation(n(:),idx_H2O,tabTdust)
+@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0, user_Av, user_crate, 1d-3)
 @noTab_stop
 
 ########################################## END FREEZEOUT CHEMISTRY ###################################################################
