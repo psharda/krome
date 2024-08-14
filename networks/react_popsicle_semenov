@@ -2,8 +2,9 @@
 #Authors: Piyush Sharda (Leiden) and Shyam H. Menon (CCA), 2024
 #the following is the primordial network including deuterium species from react_primordial_wD
 #with metal reactions from Omukai 2000, Omukai+2005, Glover and Jappsen 2007, Glover+2010
-#No photo or cosmicray chemistry included yet
-#To test the network, look at krome/tests/popsicle
+#No photo or cosmicray chemistry included
+#Uses Semenov+2003 opacities and does not use KROME's inbuilt dust functionality (except for freezeout reactions)
+#To test the network, look at krome/tests/popsicle_semenov
 
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
 #UPDATED primordial rates, 2014
