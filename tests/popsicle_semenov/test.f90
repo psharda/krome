@@ -3,6 +3,7 @@
 !the chemical and thermal evolution of a gas cloud.
 !Based on the collapse test in the KROME repository,
 !extended to all metallicities.
+!Uses Semenov+2003 opacities
 !Designed for POPSICLE simulations (Sharda & Menon 2024, Menon & Sharda 2024)
 !The dynamics is described by the Larson-Penston-type
 !similar solution and includes cooling and heating processes.

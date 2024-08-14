@@ -14,10 +14,13 @@
 !
 !This is for prestellar collapse only, does not include photo or 
 !cosmicray chemistry
+!
+!This test uses Semenov+2003 opacities, and does not use KROME's inbuilt dust
+!functionality to do dust (except for freezeout reactions)
 !***************************************************************
 !
 !Simply make the test from the KROME home directory via
-!>>./krome -t popsicle
+!>>./krome -t popsicle_semenov
 !>>cd build
 !>>make
 !>>./test
