@@ -25,7 +25,7 @@ program test_krome
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea)
   real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
-  real*8::ionH,dissH2,ionC,dissCO
+  real*8::ionH,dissH2,ionC,dissCO,chiFUV
   logical::crate_attenuation
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
@@ -33,6 +33,10 @@ program test_krome
 
   !set to True to switch on cosmic ray attenuation
   crate_attenuation = .False.
+
+  !set chiFUV for photoreactions
+  chiFUV = 1d0
+  call krome_set_user_chiFUV(chiFUV)
 
   !output header
   write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust"
@@ -109,15 +113,15 @@ program test_krome
     call krome_set_user_crate(crate)
 
     !set H ionization reaction rate coeff
-    ionH = 2.19d-12*exp(-1.14e4*Av)
+    ionH = 2.19d-12*exp(-1.14e4*Av)*chiFUV
     call krome_set_user_ionH(ionH)
     !set H2 dissociation reaction rate coeff
     n(1:krome_nmols) = x(:)
     n(KROME_idx_Tgas) = Tgas
-    dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)
+    dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)*chiFUV
     call krome_set_user_dissH2(dissH2)
-    ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()
-    dissCO = 2.d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()
+    ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()*chiFUV
+    dissCO = 2.d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()*chiFUV
     call krome_set_user_ionC(ionC)
     call krome_set_user_dissCO(dissCO)
 
@@ -171,13 +175,13 @@ program test_krome
        endif
 
        !set H ionization reaction rate coeff
-       ionH = 2.19d-12*exp(-1.14e4*Av)
+       ionH = 2.19d-12*exp(-1.14e4*Av)*chiFUV
        call krome_set_user_ionH(ionH)
        !set H2 dissociation reaction rate coeff
-       dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)
+       dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)*chiFUV
        call krome_set_user_dissH2(dissH2)
-       ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()
-       dissCO = 2.d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()
+       ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()*chiFUV
+       dissCO = 2.d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()*chiFUV
        call krome_set_user_ionC(ionC)
        call krome_set_user_dissCO(dissCO)
 
