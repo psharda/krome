@@ -1,4 +1,4 @@
-# This is the [KROME](https://bitbucket.org/tgrassi/krome/overview) repository
+# This is a customized version of the [KROME](https://bitbucket.org/tgrassi/krome/overview) repository
 
 KROME is a nice and friendly package to model chemistry and microphysics 
  for a wide range of astrophysical simulations. 
@@ -10,6 +10,8 @@ KROME is a nice and friendly package to model chemistry and microphysics
  package, GNU-licensed, and any improvements provided by 
  the users is well accepted. See disclaimer below and GNU License 
  in gpl-3.0.txt.
+
+This customized version is created and maintained by the POPSICLE collaboration.
 
 --
 ## Get KROME
@@ -45,7 +47,19 @@ Additional material can be found in the Computational Astrochemistry Schools web
 ---
 ## Authors
 
-Written and developed by Tommaso Grassi
+Customized version created by Piyush Sharda
+```
+ sharda@strw.leidenuniv.nl
+ Leiden University, Netherlands
+```
+
+and Shyam H. Menon
+```
+ shyam.menon@rutgers.edu
+ Rutgers University / CCA, USA
+```
+
+Originally written and developed by Tommaso Grassi
 ```
  tgrassi@usm.lmu.de               
  USM/LMU, Munich
