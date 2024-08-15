@@ -55,7 +55,7 @@ class krome:
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = useCoolingNebular = useCoolingDustGRREC = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useShieldingC = useShieldingCO = useShieldingWG11_withH = False
-	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = False
+	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = useCoolingDustSemenov = False
 	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingZCIEGF = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
 	useCoolingHCN = useCoolingOH = useCoolingH2O = False
@@ -236,7 +236,7 @@ class krome:
 			fine-strucutre atomic metal cooling for C,O,Si,Fe, and their first ions. It can also be a list of files comma-separated.")
 		self.parser.add_argument("-cooling", metavar='TERMS', help="cooling options, TERMS can be ATOMIC, H2, HD, Z, DH, DUST, H2GP98,\
 			COMPTON, EXPANSION, CIE, DISS, NEBULAR, CI, CII, SiI, SiII, OI, OII, FeI, FeII, CHEM, CO (e.g. -\
-			cooling=ATOMIC,CII,OI,FeI),Z_CIE,Z_CIENOUV,Z_CIEGF,Z_EXTENDED,DUSTGRREC.\
+			cooling=ATOMIC,CII,OI,FeI),Z_CIE,Z_CIENOUV,Z_CIEGF,Z_EXTENDED,DUSTGRREC,DUSTSEMENOV.\
 			Note that further cooling options can be added when reading cooling function from file. If you want a complete list of\
 			the available cooling options type -cooling=?")
 		self.parser.add_argument("-coolLevels", metavar='MAXLEV', help="use only the levels up to MAXLEV (included), e.g. -coolLevels=3\
@@ -806,7 +806,7 @@ class krome:
 		#apply an individual cooling floor (SB, mod TG)
 		if args.useIndividualFloor:
 			myFloor = [x.strip() for x in args.useIndividualFloor.split(",")]
-			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED","GH","NEBULAR","Z_CIEGF","DUSTGRREC"]
+			allFloor = ["H2","Z_CIE","Z","ATOMIC","HD","CHEM","CO","Z_CIENOUV","Z_EXTENDED","GH","NEBULAR","Z_CIEGF","DUSTGRREC","DUSTSEMENOV"]
 			for floor in myFloor:
 				if floor not in allFloor:
 					die("ERROR: Floor \""+floor+"\" is unknown!\nAvailable floor are: "
@@ -1201,7 +1201,7 @@ class krome:
 			#list of all cooling (excluded from file)
 			allCools = ["ATOMIC","H2","HD","DH","DUST","FF","H2GP98","COMPTON","EXPANSION","CIE",
 						"CONT","CHEM","DISS","Z","CO","Z_CIE","Z_CIENOUV","Z_EXTENDED","GH","OH",
-						"H2O", "HCN", "NEBULAR","Z_CIEGF","DUSTGRREC"]
+						"H2O", "HCN", "NEBULAR","Z_CIEGF","DUSTGRREC","DUSTSEMENOV"]
 			fileCools = [] #list of the cooling read from file
 			#load additional coolings from file
 			for fname in self.coolFile:
@@ -1252,6 +1252,7 @@ class krome:
 
 			if "ATOMIC" in myCools: self.useCoolingAtomic = True
 			if "DUSTGRREC" in myCools: self.useCoolingDustGRREC = True
+			if "DUSTSEMENOV" in myCools: self.useCoolingDustSemenov = True
 			if "NEBULAR" in myCools: self.useCoolingNebular = True
 			if "Z_CIEGF" in myCools: self.useCoolingZCIEGF = True
 			if "H2" in myCools: self.useCoolingH2 = True
@@ -1303,6 +1304,8 @@ class krome:
 				if "dust=" in aa: self.hasDust = True
 			if self.useCoolingDust and not self.hasDust:
 				die("ERROR: to include dust cooling you need dust (use -dust=[see help]).")
+			if self.useCoolingDust and self.useCoolingDustSemenov:
+				die("ERROR: DUST and DUSTSEMENOV cooling are mutually exclusive!")
 			if "CIE" in myCools and "CONT" in myCools:
 				die("ERROR: CIE and CONT cooling are mutually exclusive!")
 			if "CIE" in myCools and "GH" in myCools:
@@ -4950,6 +4953,7 @@ class krome:
 
 			if srow == "#IFKROME_useChemisorption" and not self.useChemisorption: skip = True
 			if srow == "#IFKROME_useSemenov" and not self.useSemenov: skip = True
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
 			if srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT)
 				and self.useSurface): skip = True
@@ -5880,6 +5884,7 @@ class krome:
 			#skip when find IF pragmas
 			if srow == "#IFKROME_useXrays" and not self.useXRay: skip = True
 			if srow == "#IFKROME_useH2dust_constant" and not self.useDustH2const: skip = True
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_has_electrons" and not has_electrons: skip = True
 			if srow == "#IFKROME_useLAPACK" and not self.needLAPACK: skip = True #skip calls to LAPACK
 			if srow == "#IFKROME_hasStoreOnceRates" and not self.hasStoreOnceRates: skip = True
@@ -6390,7 +6395,7 @@ class krome:
 			if useDustT or usedTdust: dustOptInt += "call dust_init_intBB()"
 		if not useDustEvol: dustPartnerIdx = ""
 
-		skip = skipPhotoDust = skipChemisorption = skipdTdust = skipDustEvol = False
+		skip = skipPhotoDust = skipChemisorption = skipdTdust = skipDustEvol = skipDustSemenov = False
 		for row in fh:
 			srow = row.strip()
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
@@ -6411,10 +6416,14 @@ class krome:
 			if srow == "#IFKROME_usedTdust" and not self.usedTdust: skipdTdust = True
 			if srow == "#ENDIFKROME_usedTdust": skipdTdust = False
 
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skipDustSemenov = True
+			if srow == "#ENDIFKROME_useCoolingDustSemenov": skipDustSemenov = False
+
 			if skipChemisorption: continue
 			if skipdTdust: continue
 			if skipPhotoDust: continue
 			if skipDustEvol: continue
+			if skipDustSemenov: continue
 			if skip: continue
 
 			row = row.replace("#KROME_dust_grain_density", dustGrainDensity)
@@ -6539,6 +6548,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingDustTabs" and not self.dustTabsCool: skip = True
 			if srow == "#IFKROME_useCoolingAtomic" and not self.useCoolingAtomic: skip = True
 			if srow == "#IFKROME_useCoolingDustGRREC" and not self.useCoolingDustGRREC: skip = True
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_useCoolingNebular" and not self.useCoolingNebular: skip = True
 			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingH2" and not self.useCoolingH2: skip = True
@@ -6842,7 +6852,7 @@ class krome:
 						HChem += headchem + tklim + "HChem = HChem + k("+str(rea.idx)+") * ("+kref[i] + "*"+rmult+")\n"
 						if self.useTlimits and hasTlim: HChem += "end if\n\n"
 						break
-			if self.useDustH2 or self.dustTabsH2 or self.useDustH2const:
+			if self.useDustH2 or self.dustTabsH2 or self.useDustH2const or self.useCoolingDustSemenov:
 				HChemDust += "HChem = HChem + nH2dust * (4.2d0*h2heatfac + 0.2d0)\n"
 			if self.indexSolomon > 0:
 				HChem += "HChem = HChem + k("+str(self.indexSolomon)+") * (18.7d0*h2heatfac + 0.4d0)*n(idx_H2)\n"
@@ -6883,6 +6893,7 @@ class krome:
 				if row.strip() == "#IFKROME_useHeatingPhotoDustWD" and not self.useHeatingPhotoDustWD: skip = True
 				if row.strip() == "#IFKROME_useHeatingXRay" and not self.useHeatingXRay: skip = True
 				if row.strip() == "#IFKROME_useHeatingVisc" and not self.useHeatingVisc: skip = True
+				if row.strip() == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 				#if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
 				if row.strip() == "#IFKROME_useHeatingZCIE" and not self.useCoolingZCIE: skip = True
 				if row.strip() == "#IFKROME_useHeatingZExtended" and not self.useCoolingZExtended: skip = True
@@ -7015,7 +7026,7 @@ class krome:
 
 					row = row.replace("#KROME_RionH", rateionH) #replace pragma with H photoionization rate
 
-				#replace correct H2 photodissociation rates
+				#replace correct H2 photodissociation rate
 				if "#KROME_RdissH2" in row:
 					rdh2Found = False
 					for rea in self.reacts:
@@ -7025,7 +7036,7 @@ class krome:
 							rateDissH2 = "k("+str(rea.idx)+")"
 							rdh2Found = True
 							break
-					#check if rate photodissiocation rate is present in the network
+					#check if photodissiocation rate is present in the network
 					if not rdh2Found:
 						print("ERROR: if you use PHOTOAV heating you should have")
 						print(" H2 photodissiocation rate in your chemical network!")
@@ -7114,6 +7125,8 @@ class krome:
 		elif self.useDustH2const:
 		        #H2 on dust from Jura constant value
 			dustH2 +="nH2dust = nH2dust + H2_dustJura(n(:))"
+		elif self.useCoolingDustSemenov:
+				dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*nH*dust2gas_ratio / (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
 
 		#H2 on dust from tables
 		if self.dustTabsH2:
@@ -7176,7 +7189,7 @@ class krome:
 				else:
 
 					#add dust ODE and partner specie RHS terms
-					if self.useDust or self.dustTabsH2:
+					if self.useDust or self.dustTabsH2 or self.useCoolingDustSemenov:
 						ndust = self.dustArraySize*self.dustTypesSize #number of dust ODEs
 						#nmols = len(specs)-4-ndust #number of mols ODEs
 
@@ -7239,7 +7252,7 @@ class krome:
 							for dType in dustTypes:
 								if dType == specs[idnw].name and useDustEvol:
 									x += " - dSumDust"+dType
-							if self.useDustH2 or self.dustTabsH2:
+							if self.useDustH2 or self.dustTabsH2 or self.useCoolingDustSemenov:
 								if "H"==specs[idnw].name: x += " - 2d0*nH2dust"
 								if "H2"==specs[idnw].name: x += " + nH2dust"
 							fout.write("\t" + x + "\n")
@@ -7494,6 +7507,7 @@ class krome:
 			if srow == "#IFKROME_use_thermo" and not self.use_thermo: skip = True
 			if srow == "#IFKROME_use_coolingZ" and not self.useCoolingZ: skip = True
 			if srow == "#IFKROME_use_coolingGH" and not self.useCoolingGH: skip = True
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_useXrays" and not self.useXRay: skip = True
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
 			if srow == "#IFKROME_has_electrons" and not hasElectrons: skip = True
@@ -7990,6 +8004,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingZCIE" and not self.useCoolingZCIE: skip = True
 			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingZCIENOUV" and not self.useCoolingZCIENOUV: skip = True
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_useCoolingGH" and not self.useCoolingGH: skip = True
 			if srow == "#IFKROME_ierr" and not self.useIERR: skip = True
 			if srow == "#IFKROME_noierr" and self.useIERR: skip = True
@@ -8219,6 +8234,11 @@ class krome:
 			print("- copying optical data for dust...")
 			shutil.copyfile("data/optC.dat", buildFolder+"optC.dat")
 			shutil.copyfile("data/optSi.dat", buildFolder+"optSi.dat")
+
+		#copy Semenov opacities
+		if self.useCoolingDustSemenov:
+			print("- copying Semenov_PlanckOpacity.dat...")
+			shutil.copyfile("data/Semenov_PlanckOpacity.dat", buildFolder + "Semenov_PlanckOpacity.dat")
 
 		#copy cooling CO
 		if self.useCoolingCO:

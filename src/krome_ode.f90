@@ -18,10 +18,13 @@ contains
 #IFKROME_useDust
     use krome_dust
 #ENDIFKROME
+#IFKROME_useCoolingDustSemenov
+    use krome_dust
+#ENDIFKROME
     implicit none
     integer::neq,idust
     real*8::tt,dn(neq),n(neq),k(nrea),krome_gamma
-    real*8::gamma,Tgas,vgas,ntot,nH2dust,nd,nin(neq)
+    real*8::gamma,Tgas,vgas,ntot,nH2dust,nd,nin(neq),nH
 #KROME_iceODEVariables
 #KROME_dustSumVariables
 #KROME_implicit_variables
@@ -31,7 +34,8 @@ contains
 #KROME_coevars
 
     n(:) = nin(:)
-
+    ntot = sum(n(1:nmols))
+    nH = get_Hnuclei(n(:))
     nH2dust = 0.d0
     n(idx_CR) = 1.d0
     n(idx_g)  = 1.d0
@@ -64,6 +68,10 @@ contains
 
     #KROME_calc_Tdust
 
+#ENDIFKROME
+
+#IFKROME_useCoolingDustSemenov
+    call compute_Semenov_Tdust(n(:),Tgas)
 #ENDIFKROME
 
 #KROME_dust_H2

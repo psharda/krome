@@ -82,6 +82,31 @@ contains
 
   end subroutine loadReactionsVerbatim
 
+#IFKROME_useCoolingDustSemenov
+  !***************************
+  function custom_h2fdg(n,Tgas)
+    !custom Tdust computation based on
+    !Semenov+2003 Planck dust opacities
+    !dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
+    use krome_commons
+    use krome_getphys
+    implicit none
+    integer::i
+    real*8::Echem,Ephys,Es,TH,fac,eps_C
+    real*8::hm79fac,custom_h2fdg,n(:),Tgas
+
+    Echem = 7000d0
+    Ephys = 800d0 
+    Es = 200d0
+    TH = 4d0*exp(-(Ephys-Es)/(Ephys+Tgas))/(1d0 + sqrt((Echem-Es)/(Ephys-Es)))**2
+    fac = 1d0 + 0.25d0*exp(-Es/krome_Semenov_Tdust)*(1d0 + sqrt((Echem-Es)/(Ephys-Es)))**2
+    eps_C = (1 - TH)/fac
+
+    hm79fac = (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)
+    custom_h2fdg = 7.25d-15*sqrt(Tgas/1d2)*1.75d0*eps_C*dust2gas_ratio/hm79fac
+  end function custom_h2fdg
+#ENDIFKROME
+
 #IFKROME_has_electrons
   !*******************
   !The following functions compute the recombination rate

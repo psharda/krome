@@ -71,6 +71,10 @@
       cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useCoolingDustSemenov
+      cools(idx_cool_dust) = f1 * cool_DustSemenov(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useCoolingDustGRREC
       cools(idx_cool_dustgrrec) = f1 * cool_DustGRREC(n(:), Tgas)
 #ENDIFKROME
@@ -1312,6 +1316,33 @@
       cooling_dust = get_mu(n) * coolFit * ntot * ntot
 
     end function cooling_dust
+#ENDIFKROME
+
+#IFKROME_useCoolingDustSemenov
+  !***************************
+  function cool_DustSemenov(n,Tgas)
+    !custom dust cooling based on
+    !Semenov+2003 Planck dust opacities
+    !dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    use krome_getphys
+    use krome_fit
+    use krome_dust
+    implicit none
+    integer::i
+    real*8::cool_DustSemenov,n(:),Tgas,m(nspec),ntot,rhogas
+    real*8::clipped_x,clipped_y,kappaP,tau_d,tau_g,tau,ljeans
+    real*8::besc,alpha_gd,aR,intJRad
+    real*8::A,Tdust
+
+    cool_DustSemenov = 0d0
+    if(dust2gas_ratio .eq. 0) return
+
+    cool_DustSemenov = dustSemenov_cooling
+
+  end function cool_DustSemenov
 #ENDIFKROME
 
 #IFKROME_useCoolingDustGRREC

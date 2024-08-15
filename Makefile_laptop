@@ -1,0 +1,122 @@
+# default compiler executables (can be overridden via environment variables)
+gnu_fc ?= gfortran
+gnu_cc ?= gcc
+
+# default Fortran compiler
+fc = $(gnu_fc)
+cc = $(gnu_cc)
+clib = -lgfortran
+
+# executable name
+exec = test
+
+# default libraries
+lib = -llapack
+
+# figure out shared library extension: should be `.so` on Linux and `.dylib` on macOS
+ifeq ($(shell uname -s),Darwin)
+	dlext = dylib
+else
+	dlext = so
+endif
+
+# flags
+switchOPT = -O3
+switchDBG = -O0 -g -Wall -Wextra -fcheck=all -fbacktrace
+switchPRO = $(switchOPT) -pg
+switchOMP = $(switchOPT) -fopenmp
+
+# default switch
+switch = $(switchOPT)
+switchc = $(switchOPT)
+
+# no warning switch (for DLSODES)
+nowarnGNU = -w -fallow-argument-mismatch -fno-range-check
+
+# objects
+objs = opkda2.o
+objs += opkda1.o
+objs += opkdmain.o
+objs += krome_commons.o
+objs += krome_constants.o
+objs += krome_user_commons.o
+objs += krome_fit.o
+objs += krome_getphys.o
+objs += krome_gadiab.o
+objs += krome_grfuncs.o
+objs += krome_phfuncs.o
+objs += krome_subs.o
+objs += krome_stars.o
+objs += krome_dust.o
+objs += krome_photo.o
+objs += krome_tabs.o
+objs += krome_coolingGH.o
+objs += krome_cooling.o
+objs += krome_heating.o
+objs += krome_ode.o
+objs += krome_user.o
+objs += krome_reduction.o
+objs += krome.o
+
+cobjs = krome_header.o
+
+# default target
+all: $(objs) test.o
+	$(fc) $(objs) test.o -o $(exec) $(switch) $(lib)
+
+# gfortran debug target
+gfortran_dbg: switch = $(switchDBG)
+gfortran_dbg: all
+
+# library accessible from python interface target
+sharedlib: $(objs)
+	$(fc) $(objs) -o libkrome.$(dlext) $(switch) -shared $(lib)
+
+pyinterface: switch = -ffree-line-length-none -fPIC
+pyinterface: sharedlib
+
+pyinterface_opt: switch = -O3 -ffree-line-length-none -fPIC
+pyinterface_opt: sharedlib
+
+cinterface: $(cobjs)
+cinterface: objs += $(cobjs)
+cinterface: cc = $(gnu_cc)
+cinterface: switchc =
+cinterface: clib = -lm -lgfortran
+cinterface: all
+
+cinterface_opt: $(cobjs)
+cinterface_opt: switch = -O3 -ffree-line-length-none
+cinterface_opt: switchc = -O3
+cinterface_opt: all
+
+# shared library with C interface (debug version)
+csharedlib: switch = -ffree-line-length-none -fPIC
+csharedlib: $(cobjs)
+csharedlib: switchc = -fPIC
+csharedlib: objs += $(cobjs)
+csharedlib: sharedlib
+
+# shared library with C interface (optimized version)
+csharedlib_opt: switch = -O3 -ffree-line-length-none -fPIC
+csharedlib_opt: $(cobjs)
+csharedlib_opt: switchc = -O3 -fPIC
+csharedlib_opt: objs += $(cobjs)
+csharedlib_opt: sharedlib
+
+# clean target
+clean:
+	rm -f *.o *.mod *__genmod.f90 *~ $(exec)
+
+# rule for f90
+%.o: %.f90
+	$(fc) $(switch) -c $^ -o $@
+
+# rule for f
+%.o: %.f
+	$(fc) $(switch) $(nowarnGNU) -c $^ -o $@
+
+# rule for c
+%.o: %.c
+	$(cc) $(switchc) $(nowarnGNU) -c $^ -o $@
+

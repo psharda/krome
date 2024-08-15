@@ -1,8 +1,8 @@
 ##############
 #options for test collapse
 
--n networks/react_popsicle
--cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,OH,H2O,ATOMIC,COMPTON,DUST,OII,FF,Z_CIEGF
+-n networks/react_popsicle_semenov
+-cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,OH,H2O,ATOMIC,COMPTON,DUSTSEMENOV,OII,FF,Z_CIEGF
 -heating=COMPRESS,CHEM
 -H2opacity=OMUKAI
 -gamma=EXACT
@@ -10,6 +10,4 @@
 -maxord=1
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
--dust=10,C
--dustOptions=T,H2
--n networks/react_popsicle
+-n networks/react_popsicle_semenov

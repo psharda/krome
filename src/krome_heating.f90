@@ -617,10 +617,10 @@ contains
     use krome_getphys
     implicit none
     real*8::heatingChem, n(:), Tgas,k(:),nH2dust
-    real*8::h2heatfac,HChem,yH,yH2
+    real*8::h2heatfac,HChem,yH,yH2,RformH2,ntot
     real*8::ncr,ncrn,ncrd1,ncrd2,dd,n2H,small,nmax
     dd = get_Hnuclei(n(:))
-
+    ntot = sum(n(1:nmols))
     !replace small according to the desired enviroment
     ! and remove nmax if needed
     nmax = maxval(n(1:nmols))

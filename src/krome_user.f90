@@ -431,6 +431,32 @@ contains
   end function krome_get_surface
 #ENDIFKROME
 
+#IFKROME_useCoolingDustSemenov
+  !************************
+  !this function sets the default temperature (arg)
+  !for custom Tdust Semenov, K
+  subroutine krome_set_Semenov_Tdust(arg)
+    use krome_commons
+    implicit none
+    #KROME_double_value :: arg
+
+    krome_Semenov_Tdust = arg
+
+  end subroutine krome_set_Semenov_Tdust
+
+  !***********************
+  !returns the custom Semenov
+  !dust temperature, K
+  function krome_get_Semenov_Tdust()
+    use krome_commons
+    implicit none
+    real*8 :: krome_get_Semenov_Tdust
+
+    krome_get_Semenov_Tdust = krome_Semenov_Tdust
+
+  end function krome_get_Semenov_Tdust
+#ENDIFKROME
+
   !*****************************
   !dump the data for restart (UNDER DEVELOPEMENT!)
   !arguments: the species array and the gas temperature
