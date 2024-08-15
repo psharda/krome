@@ -121,6 +121,8 @@ module krome_commons
   !total metallicity relative to solar Z/Z_solar
   real*8::total_Z
   real*8::dust2gas_ratio
+  !FUV radiation field (\chi in Table 2 of GOW)
+  real*8::chiFUV
 
 #IFKROME_useMayerOpacity
   !commons for Mayer opacity table

@@ -36,7 +36,6 @@ program test_krome
 
   !set chiFUV for photoreactions
   chiFUV = 1d0
-  call krome_set_user_chiFUV(chiFUV)
 
   !output header
   write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust"
@@ -66,6 +65,7 @@ program test_krome
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
+    call krome_set_chiFUV(chiFUV)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
