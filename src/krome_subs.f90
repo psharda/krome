@@ -114,9 +114,6 @@ contains
   ! dust2gas_ratio, D/D_sol, default is assumed equal to Z/Z_sol
   function H_recombination_on_dust(n,Tgas)
     use krome_commons
-#IFKROME_useCoolingDustSemenov
-    use krome_user
-#ENDIFKROME
     implicit none
     real*8::n(nspec),Tgas,psi,G0
     real*8::H_recombination_on_dust
@@ -127,7 +124,7 @@ contains
     if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
-    G0 = 1.69d0 * krome_get_user_chiFUV()
+    G0 = 1.69d0 * chiFUV
     psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return
@@ -141,9 +138,6 @@ contains
   !******************
   function He_recombination_on_dust(n,Tgas)
     use krome_commons
-#IFKROME_useCoolingDustSemenov
-    use krome_user
-#ENDIFKROME
     implicit none
     real*8::n(nspec),Tgas,psi,G0
     real*8::He_recombination_on_dust
@@ -153,7 +147,7 @@ contains
     if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
-    G0 = 1.69d0 * krome_get_user_chiFUV()
+    G0 = 1.69d0 * chiFUV
     psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return
@@ -167,9 +161,6 @@ contains
   !*******************
   function C_recombination_on_dust(n,Tgas)
     use krome_commons
-#IFKROME_useCoolingDustSemenov
-    use krome_user
-#ENDIFKROME
     implicit none
     real*8::n(nspec),Tgas,psi,G0
     real*8::C_recombination_on_dust
@@ -179,7 +170,7 @@ contains
     if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
-    G0 = 1.69d0 * krome_get_user_chiFUV()
+    G0 = 1.69d0 * chiFUV
     psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return
@@ -193,9 +184,6 @@ contains
   !******************
   function Si_recombination_on_dust(n,Tgas)
     use krome_commons
-#IFKROME_useCoolingDustSemenov
-    use krome_user
-#ENDIFKROME
     implicit none
     real*8::n(nspec),Tgas,psi,G0
     real*8::Si_recombination_on_dust
@@ -205,7 +193,7 @@ contains
     if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
-    G0 = 1.69d0 * krome_get_user_chiFUV()
+    G0 = 1.69d0 * chiFUV
     psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return

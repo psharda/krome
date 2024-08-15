@@ -1355,7 +1355,6 @@
     use krome_subs
     use krome_constants
     use krome_getphys
-    use krome_user
     implicit none
     integer::i
     real*8::cool_DustGRREC,n(:),Tgas,ntot,psi,G0
@@ -1369,7 +1368,7 @@
     nenh = n(idx_e) * n(idx_H)
     if(n(idx_e)>0d0) then
        !TODO: supply J_PE and J_LW to G0 
-       G0 = 1.69d0 * krome_get_user_chiFUV()
+       G0 = 1.69d0 * chiFUV
        psi = G0 * sqrt(Tgas) / n(idx_e)
     else
        psi = 0d0
