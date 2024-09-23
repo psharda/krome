@@ -4941,7 +4941,8 @@ class krome:
 		skipAtoms = ["+","-"]
 		atoms = []
 		for x in specs:
-			atoms += x.atomcount.keys()
+			if x.name != "E":
+				atoms += x.atomcount.keys()
 		atoms = list(set(atoms))
 		#skip atoms in skipAtoms list and every atom starting with underscore
 		atoms = [x for x in atoms if(not(x in skipAtoms) and not(x.startswith("_")))]
