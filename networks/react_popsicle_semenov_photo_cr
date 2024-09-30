@@ -7,13 +7,16 @@
 #Uses Semenov+2003 opacities and does not use KROME's inbuilt dust functionality (except for freezeout reactions)
 #To test the network, look at krome/tests/popsicle_semenov_cr
 
-########################################## START PRIMORDIAL CHEMISTRY ###################################################################
-#UPDATED primordial rates, 2014
 @var:T=Tgas
 
 @var:ntot=sum(n(1:nmols))
 
+#user_is_metal is a boolean flag to turn photochemistry of metals off in primordial conditions.
 @common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2, user_ionC, user_dissCO
+
+
+########################################## START PRIMORDIAL CHEMISTRY ###################################################################
+#UPDATED primordial rates, 2014
 
 #Janev 1987
 1,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
@@ -400,43 +403,43 @@
 #Glover et al. 2010
 #TODO: GOW 2017 scale the reaction coefficients by \chi_FUV: FUV radiation field strength between 6-13.6 eV (see their Table 2). 
 #^This is similar to what we have TODO for photodustnetWD
-135,H-,H,E,7.1d-7*exp(-.5*user_Av)
+135,H-,H,E,7.1d-7*exp(-.5*user_Av)*chiFUV
 #TODO: reaction below to be removed when krome coupled with vettam
-136,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)
-137,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)
-138,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)
+136,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)*chiFUV
+137,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)*chiFUV
+138,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)*chiFUV
 #TODO: reaction below to be removed when krome coupled with vettam
 139,C,C+,E,user_ionC
 #TODO: reaction below commented out to not create sources. May add it back in the future
-#122,C-,C,E,2.4d-7*exp(-.9*user_Av)*user_is_metal
-140,CH,C,H,8.7d-10*exp(-1.2*user_Av)*user_is_metal
-141,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)*user_is_metal
-142,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)*user_is_metal
-143,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)*user_is_metal
-144,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)*user_is_metal
-145,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)*user_is_metal
+#122,C-,C,E,2.4d-7*exp(-.9*user_Av)*user_is_metal*chiFUV
+140,CH,C,H,8.7d-10*exp(-1.2*user_Av)*user_is_metal*chiFUV
+141,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)*user_is_metal*chiFUV
+142,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)*user_is_metal*chiFUV
+143,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
+144,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)*user_is_metal*chiFUV
+145,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
 #TODO: next 4 reactions below commented out to not create sources. May add them back in the future
-#131,CH3+,CH2+,H,1d-9*exp(-1.7*user_Av)*user_is_metal
-#132,CH3+,CH+,H2,1d-9*exp(-1.7*user_Av)*user_is_metal
-#133,C2,C,C,1.5d-10*exp(-2.1*user_Av)*user_is_metal
-#134,O-,O,E,2.4d-7*exp(-.5*user_Av)*user_is_metal
-146,OH,O,H,3.7d-10*exp(-1.7*user_Av)*user_is_metal
-147,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)*user_is_metal
-148,OH+,O,H+,1d-12*exp(-1.8*user_Av)*user_is_metal
-149,H2O,OH,H,6d-10*exp(-1.7*user_Av)*user_is_metal
-150,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)*user_is_metal
-151,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)*user_is_metal
-152,O2,O,O,7d-10*exp(-1.8*user_Av)*user_is_metal
+#131,CH3+,CH2+,H,1d-9*exp(-1.7*user_Av)*user_is_metal*chiFUV
+#132,CH3+,CH+,H2,1d-9*exp(-1.7*user_Av)*user_is_metal*chiFUV
+#133,C2,C,C,1.5d-10*exp(-2.1*user_Av)*user_is_metal*chiFUV
+#134,O-,O,E,2.4d-7*exp(-.5*user_Av)*user_is_metal*chiFUV
+146,OH,O,H,3.7d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
+147,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)*user_is_metal*chiFUV
+148,OH+,O,H+,1d-12*exp(-1.8*user_Av)*user_is_metal*chiFUV
+149,H2O,OH,H,6d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
+150,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)*user_is_metal*chiFUV
+151,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)*user_is_metal*chiFUV
+152,O2,O,O,7d-10*exp(-1.8*user_Av)*user_is_metal*chiFUV
 #TODO: reaction below to be removed when krome coupled with vettam
 153,CO,C,O,user_dissCO
 
 #H2O+ photodissociation, following Glover et al. 2010 equation 4
 @noTab_start
 @var: HnOj = fHnOj(user_Av)
-154,H2O+,H2+,O,5.d-11*HnOj*user_is_metal
-155,H2O+,H+,OH,5.d-11*HnOj*user_is_metal
-156,H2O+,O+,H2,5.d-11*HnOj*user_is_metal
-157,H2O+,OH+,H,1.5d-10*HnOj*user_is_metal
+154,H2O+,H2+,O,5.d-11*HnOj*user_is_metal*chiFUV
+155,H2O+,H+,OH,5.d-11*HnOj*user_is_metal*chiFUV
+156,H2O+,O+,H2,5.d-11*HnOj*user_is_metal*chiFUV
+157,H2O+,OH+,H,1.5d-10*HnOj*user_is_metal*chiFUV
 @noTab_end
 
 

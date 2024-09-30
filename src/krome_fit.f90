@@ -227,8 +227,8 @@ contains
     end do
     close(unit1)
     close(unit2)
-    print *,"original file wrote in ",fname//".org"
-    print *,"fit test file wrote in ",fname//".fit"
+    print *,"original file written in ",fname//".org"
+    print *,"fit test file written in ",fname//".fit"
 
   end subroutine test_anytab2D
 
@@ -256,8 +256,8 @@ contains
     end do
     close(unit1)
     close(unit2)
-    print *,"original file wrote in ",fname//".org"
-    print *,"fit test file wrote in ",fname//".fit"
+    print *,"original file written in ",fname//".org"
+    print *,"fit test file written in ",fname//".fit"
 
   end subroutine test_interpolate2D
 

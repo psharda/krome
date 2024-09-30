@@ -124,7 +124,7 @@ contains
     if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
-    G0 = 1.69d0
+    G0 = 1.69d0 * chiFUV
     psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return
@@ -147,7 +147,7 @@ contains
     if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
-    G0 = 1.69d0
+    G0 = 1.69d0 * chiFUV
     psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return
@@ -170,7 +170,7 @@ contains
     if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
-    G0 = 1.69d0
+    G0 = 1.69d0 * chiFUV
     psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return
@@ -193,7 +193,7 @@ contains
     if(n(idx_E)<1d-20) return
 
     !psi = GHabing*sqrt(Tgas)/n(idx_E) !original
-    G0 = 1.69d0
+    G0 = 1.69d0 * chiFUV
     psi = G0*sqrt(Tgas)/n(idx_E) !TODO: hardcoded
 
     if(psi<=0) return

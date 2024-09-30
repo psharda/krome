@@ -395,7 +395,7 @@ contains
     nenh = n(idx_e) * n(idx_H)
     if(n(idx_e)>0d0) then
        !TODO: supply J_PE and J_LW to G0 
-       G0 = 1.69d0
+       G0 = 1.69d0 * chiFUV
        psi = G0 * sqrt(Tgas) / n(idx_e)
     else
        psi = 0d0
@@ -444,7 +444,7 @@ contains
     nenh = n(idx_e) * n(idx_H)
     if(n(idx_e)>0d0) then
        !TODO: supply J_PE and J_LW to G0 
-       G0 = 1.69d0
+       G0 = 1.69d0 * chiFUV
        psi = G0 * sqrt(Tgas) / n(idx_e)
     else
        psi = 0d0

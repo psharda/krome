@@ -4941,7 +4941,8 @@ class krome:
 		skipAtoms = ["+","-"]
 		atoms = []
 		for x in specs:
-			atoms += x.atomcount.keys()
+			if x.name != "E":
+				atoms += x.atomcount.keys()
 		atoms = list(set(atoms))
 		#skip atoms in skipAtoms list and every atom starting with underscore
 		atoms = [x for x in atoms if(not(x in skipAtoms) and not(x.startswith("_")))]
@@ -5930,11 +5931,14 @@ class krome:
 								myFidxx = myFidxm = species.fidx
 								if myFidxx.lower().endswith("_total"):
 									myFidxm = ("_".join(myFidxx.split("_")[:-1]))
-									myFidxx = myFidxm+"_ice"
+									conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + "+str(pp) \
+										+" (x("+myFidxx + ") - x("+myFidxm + ")) * m(idx_"+atomType+") * m(idx_"+atomType2 \
+										+") / m("+myFidxm+")**2\n"
+								else:
+									conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + "+str(pp) \
+										+" x("+myFidxx + ") * m(idx_"+atomType+") * m(idx_"+atomType2 \
+										+") / m("+myFidxm+")**2\n"
 								#mfact = pp*self.mass_dic[atomType2.upper()] / species.mass
-								conserve_matrix +=  mtxVarA + " = " + mtxVarA + " + "+str(pp) \
-									+" x("+myFidxx + ") * m(idx_"+atomType+") * m(idx_"+atomType2 \
-									+") / m("+myFidxm+")**2\n"
 				fout.write(conserve_matrix+"\n")
 
 			elif srow == "#KROME_conserve_fscale" and self.useConserveLin:
@@ -5949,8 +5953,15 @@ class krome:
 					myFidxx = myFidxm = species.fidx
 					if myFidxx.lower().endswith("_total"):
 						myFidxm = ("_".join(myFidxx.split("_")[:-1]))
-						myFidxx = myFidxm+"_ice"
-					rescale = "x("+myFidxx+") = x("+myFidxx+") * ("+fact+")/m("+myFidxm+")"
+						#myFidxx = myFidxm+"_ice"
+						#instead of writing the equation for ice: x_ice = x_ice * FAC,
+						#we need total: (x_total - x) = (x_total - x) * FAC, which gives
+						#x_total = x_total*FAC + x(1-FAC)
+						#this change was done by Piyush Sharda in 2024 for CMA in Popsicle simulations
+						rescale = "x("+myFidxx+") = x("+myFidxx+") * ("+fact+")/m("+myFidxm+") + x("+myFidxm+") * (1d0 - ("+fact+")/m("+myFidxm+")) "
+					else:
+						rescale = "x("+myFidxx+") = x("+myFidxx+") * ("+fact+")/m("+myFidxm+")"
+
 					conserve_fscale += rescale.replace(" 1d0*"," ").replace("(1d0*","(")+"\n"
 				fout.write(conserve_fscale+"\n")
 
@@ -5966,10 +5977,13 @@ class krome:
 							myFidxx = myFidxm = species.fidx
 							if myFidxx.lower().endswith("_total"):
 								myFidxm = ("_".join(myFidxx.split("_")[:-1]))
-								myFidxx = myFidxm+"_ice"
-							refMass = varRef + " = "+ varRef + " + " + str(atomCount) \
-								+"d0*m(idx_"+atomType+")*x("+myFidxx+")/m("+myFidxm+")\n"
-							refMassAll += refMass.replace(" 1d0*"," ")
+								refMass = varRef + " = "+ varRef + " + " + str(atomCount) \
+									+"d0*m(idx_"+atomType+")*(x("+myFidxx+")-x("+myFidxm+"))/m("+myFidxm+")\n"
+								refMassAll += refMass.replace(" 1d0*"," ")
+							else:
+								refMass = varRef + " = "+ varRef + " + " + str(atomCount) \
+									+"d0*m(idx_"+atomType+")*x("+myFidxx+")/m("+myFidxm+")\n"
+								refMassAll += refMass.replace(" 1d0*"," ")
 				fout.write(refMassAll+"\n")
 
 			elif "#KROME_conserveLin_electrons" in srow:
