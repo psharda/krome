@@ -278,6 +278,140 @@ contains
 
   end subroutine krome
 
+  subroutine krome_equilibrium_xT(x,Tgas,dt #KROME_dust_arguments #KROME_fexCustom)
+    !here, we keep the total density fixed and evolve abundances and temperature
+    use krome_commons
+    use krome_subs
+    use krome_ode
+    use krome_reduction
+    use krome_dust
+    use krome_getphys
+    use krome_tabs
+    implicit none
+    real*8 :: Tgas,dt,sum_n
+    real*8 :: x(nmols)
+    real*8 :: rhogas
+
+    real*8::mass(nspec),n(nspec),tloc,xin
+    real*8::rrmax,totmass,n_old(nspec),ni(nspec),invTdust(ndust)
+    integer::icount,i,icount_max
+    integer:: ierr
+
+    !DLSODES variables
+    integer,parameter::meth=2 !1=adam, 2=BDF
+    integer::neq(1),itol,itask,istate,iopt,lrw,liw,mf
+    integer::iwork(519)
+    real*8::atol(nspec),rtol(nspec)
+    real*8::rwork(4423)
+    logical::got_error,equil
+
+    !****************************
+    !init DLSODES (see DLSODES manual)
+    call XSETF(0)!toggle solver verbosity
+    got_error = .false.
+    neq = nspec !number of eqns
+    liw = size(iwork)
+    lrw = size(rwork)
+    iwork(:) = 0
+    rwork(:) = 0d0
+    itol = 4 !both tolerances are scalar
+    rtol(:) = 1.000000d-04 !relative tolerance
+    atol(:) = 1d-40 !absolute tolerance
+    icount_max = 100 !maximum number of iterations
+
+    itask = 1
+    iopt = 0
+
+    iopt = 1 !activate optional inputs
+    IWORK(5) = 1 !maximum integration order
+
+    !MF=
+    !  = 222 internal-generated JAC and sparsity
+    !  = 121 user-provided JAC and internal generated sparsity
+    !  =  22 internal-generated JAC but sparsity user-provided
+    !  =  21 user-provided JAC and sparsity
+    MF = 222
+    !end init DLSODES
+    !****************************
+
+    ierr = 0 !error flag, zero==OK!
+    n(:) = 0d0 !initialize densities
+
+    n(1:nmols) = x(:)
+
+    n(idx_Tgas) = max(Tgas, phys_Tcmb) !put temperature in the input array
+
+    icount = 0 !count solver iterations
+    istate = 1 !init solver state
+    tloc = 0.d0 !set starting time
+
+    !store initial values
+    ni(:) = n(:)
+    n_global(:) = n(:)
+
+    call makeStoreOnceRates(n(:))
+
+    n_old(:) = -1d99
+    krome_call_to_fex = 0
+    do
+      icount = icount + 1
+      !solve ODE
+      CALL DLSODES(fex, NEQ(:), n(:), tloc, dt, &
+          ITOL, RTOL, ATOL, ITASK, ISTATE, IOPT, RWORK, LRW, IWORK, &
+          LIW, JES, MF)
+
+      krome_call_to_fex = krome_call_to_fex + IWORK(12)
+      !check DLSODES exit status
+      if(istate==2) then
+        exit !sucsessful integration
+      elseif(istate==-1) then
+        istate = 1 !exceeded internal max iterations
+      elseif(istate==-5 .or. istate==-4) then
+        istate = 3 !wrong sparsity recompute
+      elseif(istate==-3) then
+        n(:) = ni(:)
+        istate = 1
+      else
+        got_error = .true.
+      end if
+
+      if(got_error.or.icount>icount_max) then
+        if (krome_mpi_rank>0) then
+          print *,krome_mpi_rank,"ERROR: wrong solver exit status!"
+          print *,krome_mpi_rank,"istate:",istate
+          print *,krome_mpi_rank,"iter count:",icount
+          print *,krome_mpi_rank,"max iter count:",icount_max
+          print *,krome_mpi_rank,"SEE KROME_ERROR_REPORT file"
+        else
+          print *,"ERROR: wrong solver exit status!"
+          print *,"istate:",istate
+          print *,"iter count:",icount
+          print *,"max iter count:",icount_max
+          print *,"SEE KROME_ERROR_REPORT file"
+        end if
+        call krome_dump(n(:), rwork(:), iwork(:), ni(:))
+        stop
+      end if
+
+    end do
+
+    !avoid negative species and conserve total density
+    !this is the only difference between krome and krome_equilibrium_xT
+    do i=1,nspec
+      n(i) = max(n(i),0d0)
+    end do
+    sum_n = sum(n(1:nmols))
+    do i=1,nspec
+      n(i) = n(i) * sum(ni(1:nmols)) / sum_n
+    end do
+
+    !returns to user array
+    x(:) = n(1:nmols)
+
+    Tgas = max(n(idx_Tgas), phys_Tcmb) !get new temperature
+
+  end subroutine krome_equilibrium_xT
+
   !*********************************
   !integrates to equilibrium using constant temperature
 #IFKROME_useX
