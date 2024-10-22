@@ -18,7 +18,7 @@ program test_krome_eqbm
   use krome_phfuncs
   use krome_constants
   implicit none
-  integer,parameter::nz=1
+  integer,parameter::nz=2
   integer,parameter::rstep = 500000
   integer::i,ii,ios,jscale,jz,jz2, dens_bins
   real*8::rhogas,m(krome_nspec)
@@ -30,7 +30,7 @@ program test_krome_eqbm
   logical::crate_attenuation, stop_next, converged
 
   !zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
-  zs = (/1d0/)
+  zs = (/1d-5, 1d0/)
 
   !set to True to switch on cosmic ray attenuation
   crate_attenuation = .False.
@@ -40,11 +40,11 @@ program test_krome_eqbm
 
 
   ! Switches to decide when equilibrium has been reached
-  ertol = 1d-8  ! relative min change in a species
-  max_time=seconds_per_year*5d8 ! max time we will be integrating for
+  ertol = 1d-2  ! relative min change in a species
+  max_time=seconds_per_year*5d10 ! max time we will be integrating for
 
   !output header
-  write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust"
+  write(22, '(A)', ADVANCE='NO') "#ntot Tgas"
   write(22, '(A)') trim(krome_get_names_header())
 
   write(31, '(A)', ADVANCE='NO') "#ntot Tgas sum(cools)"
@@ -90,7 +90,7 @@ program test_krome_eqbm
       crate = 10**calculate_F(NH + NHj + 2d0*NH2)
       print *, 'Using cosmic ray attenutation'
     else
-      crate = 2d-16
+      crate = 1d-16
       print *, 'Using constant cosmic ray ionization rate'
     endif
     print *, 'Initial crate: ', crate
@@ -138,7 +138,7 @@ program test_krome_eqbm
       call krome_set_user_ionC(ionC)
       call krome_set_user_dissCO(dissCO)
 
-      dt = seconds_per_year * 1d2
+      dt = seconds_per_year * 1d6
       t_tot = dt
       converged = .false.
 
@@ -178,10 +178,10 @@ program test_krome_eqbm
 
         Tdust = krome_get_Semenov_Tdust()
 
+        ni(krome_idx_Tgas) = Tgas
         !solve the chemistry
-        print *, 'krome before: ', sum(x(:)), Tgas
         call krome_equilibrium_xT(x(:),Tgas,dt)
-        print *, 'krome after: ', sum(x(:)), Tgas
+        print *, 'krome after: ', sum(x(:)), Tgas, abs(ni(krome_idx_Tgas) - Tgas) / ni(krome_idx_Tgas)
 
         !avoid negative species
         do ii=1,krome_nmols
@@ -191,9 +191,11 @@ program test_krome_eqbm
 
         kkk(1:krome_nmols) = krome_conserve(n(1:krome_nmols),ni(1:krome_nmols))
         n(:) = kkk(:)
+        n(krome_idx_Tgas) = Tgas
 
         ! check if we have converged by comparing the error in any species with an relative abundance above eatol
-        converged = abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .lt. ertol &
+        ! print *, 'haha: ', n(krome_idx_Tgas), ni(krome_idx_Tgas), abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas)
+        converged = abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .le. ertol &
                      .or. t_tot .gt. max_time
 
         ! Increase integration time by a reasonable factor
@@ -209,7 +211,7 @@ program test_krome_eqbm
       !returns to user array
       x(:) = n(1:krome_nmols)
 
-      if(t_tot > max_time .or. abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) > 0.1) then
+      if(t_tot > max_time .or. abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .gt. ertol) then
         print *, 'krome_equilibrium: Did not converge in ', max_time / seconds_per_year, ' years.'
         print *, 'Tgas :', n(krome_idx_Tgas)
       end if
@@ -221,7 +223,7 @@ program test_krome_eqbm
       if (stop_next) exit
 
       !increase density by 2x for the next bin
-      ntot = ntot * 2
+      ntot = ntot * 1.1
       !break when max density reached
       if (ntot .gt. 1d6) then
         ntot = 1d6
