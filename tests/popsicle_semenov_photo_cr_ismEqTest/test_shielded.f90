@@ -279,8 +279,8 @@ program test_krome_eqbm
       !increase density by 2x for the next bin
       ntot = ntot * 1.1
       !break when max density reached
-      if (ntot .gt. 3.e4) then
-        ntot = 3.e4
+      if (ntot .gt. 1.e6) then
+        ntot = 1.e6
         stop_next = .true.
       endif
     end do
