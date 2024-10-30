@@ -1362,19 +1362,18 @@
 
     cool_DustGRREC = 0d0
 
-    if (Tgas .LT. 1d3 .or. Tgas .GT. 1d4) return
-
     ntot = get_Hnuclei(n(:))
     nenh = n(idx_e) * n(idx_H)
-    if(n(idx_e)>0d0) then
-       !TODO: supply J_PE and J_LW to G0 
+    if(n(idx_e)>0d0) then 
        G0 = 1.69d0 * chiFUV
-       psi = G0 * sqrt(Tgas) / n(idx_e)
+       psi = log(G0 * sqrt(Tgas) / n(idx_e))
     else
        psi = 0d0
     end if
 
-    if (psi .LT. 1d2 .or. psi .GT. 1d6) return
+    !Note that Weingartner and Draine 2001 ApJS advise against using this functional form outside limits specified below; we ignore this advice
+    !if (Tgas .LT. 1d3 .or. Tgas .GT. 1d4) return
+    !if (psi .LT. 1d2 .or. psi .GT. 1d6) return
 
     !grain assisted recombination cooling
     !coefficients below for R_v=3.1, b_c=4.0 and ISRF from Table 3 of Weingartner and Draine 2001 ApJS.
