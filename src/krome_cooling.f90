@@ -1366,7 +1366,8 @@
     nenh = n(idx_e) * n(idx_H)
     if(n(idx_e)>0d0) then 
        G0 = 1.69d0 * chiFUV
-       psi = log(G0 * sqrt(Tgas) / n(idx_e))
+       !Add 50 to G\sqrt{T}/n_e to prevent too small psi, as is done for PE heating; see Kim+23
+       psi = log(G0 * sqrt(Tgas) / n(idx_e) + 50.0)
     else
        psi = 0d0
     end if
