@@ -38,8 +38,6 @@ program test_krome_eqbm
   crate_0 = 2d-16 * chi0
 
 
-  ! Switches to decide when equilibrium has been reached
-  ertol = 1d-8  ! relative min change in a species
   max_time=seconds_per_year*1.e9 ! max time we will be integrating for = 1000 Myrs (1Gyr)
 
   !loop over size(zs)*2 so that every second loop is skipped, so that an empty line is created in the output fort.22 file
@@ -105,6 +103,9 @@ program test_krome_eqbm
     !switch to tell when to stop the calculation
     stop_next = .false.
 
+    ! Switches to decide when equilibrium has been reached
+    ertol = 1d-8  ! relative min change in a species
+
     do dens_bins = 1, 10000
 
       !species default, cm-3
@@ -167,6 +168,9 @@ program test_krome_eqbm
       dt = seconds_per_year * 1d4 !0.1 Myr initial time step
       t_tot = dt
       converged = .false.
+
+      !Higher densities, lower tolerance for convergence
+      if(ntot .gt. 1.e2) ertol = 1d-6
 
       !loop on density steps
       do i=1, rstep
@@ -248,7 +252,10 @@ program test_krome_eqbm
           t_tot = t_tot + dt
           ni = n
         else
-          print *, "CONVERGED; ntot, Tgas, t_tot, dt, t_cool", sum(x(:)), Tgas, t_tot/(seconds_per_year*1.e6), dt/(seconds_per_year*1.e6), t_cool/(seconds_per_year*1.e6)
+          write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') &
+                    "CONVERGED; ntot = ", sum(x(:)), " Tgas = ", Tgas, " t_tot/Myr = ", &
+                    t_tot/(seconds_per_year*1.e6), " dt = ", dt/(seconds_per_year*1.e6), &
+                    " t_cool = ", t_cool/(seconds_per_year*1.e6)
           exit
         endif
       end do
@@ -269,7 +276,6 @@ program test_krome_eqbm
         print *, 'krome_equilibrium: Did not converge in ', max_time / seconds_per_year, ' years. Reldiff: ', abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas)
         print *, 'Tgas :', n(krome_idx_Tgas)
       end if
-      print *, ' '
 
       rhogas = sum(x(:)*m(1:krome_nmols))
       write(22,'(99E17.8e3)') sum(x(:)),Tgas,x(:)
