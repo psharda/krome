@@ -107,6 +107,9 @@ program test_krome_eqbm
     !switch to tell when to stop the calculation
     stop_next = .false.
 
+    !Reset ertol for each metallicity (since it is changed at high density below)
+    ertol = 1d-8
+
     do dens_bins = 1, 10000
 
       !species default, cm-3
@@ -148,6 +151,9 @@ program test_krome_eqbm
       dt = seconds_per_year * 1d4
       t_tot = dt
       converged = .false.
+
+      !Higher densities, lower tolerance for convergence
+      if(ntot .gt. 1.e5) ertol = 1d-6
 
       !loop on density steps
       do i=1, rstep
@@ -237,8 +243,8 @@ program test_krome_eqbm
       !increase density by 2x for the next bin
       ntot = ntot * 1.1
       !break when max density reached
-      if (ntot .gt. 3.e4) then
-        ntot = 3.e4
+      if (ntot .gt. 1.e6) then
+        ntot = 1.e6
         stop_next = .true.
       endif
     end do
