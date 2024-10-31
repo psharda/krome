@@ -129,7 +129,6 @@ program test_krome_eqbm
       !No shielding; Av=0.0
       Av = 0.0
       call krome_set_user_Av(Av)
-      print *, 'numdens: ', sum(x(:))
 
       !set H2 dissociation reaction rate coeff
       n(1:krome_nmols) = x(:)
@@ -212,7 +211,10 @@ program test_krome_eqbm
           t_tot = t_tot + dt
           ni = n
         else
-          print *, "CONVERGED; ntot, Tgas, t_tot, dt, t_cool", sum(x(:)), Tgas, t_tot/(seconds_per_year*1.e6), dt/(seconds_per_year*1.e6), t_cool/(seconds_per_year*1.e6)
+          write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') & 
+                    "CONVERGED; ntot = ", sum(x(:)), " Tgas = ", Tgas, " t_tot/Myr = ", &
+                    t_tot/(seconds_per_year*1.e6), " dt = ", dt/(seconds_per_year*1.e6), &
+                    " t_cool = ", t_cool/(seconds_per_year*1.e6)
           exit
         endif
       end do
@@ -233,7 +235,6 @@ program test_krome_eqbm
         print *, 'krome_equilibrium: Did not converge in ', max_time / seconds_per_year, ' years.'
         print *, 'Tgas :', n(krome_idx_Tgas)
       end if
-      print *, ' '
 
       rhogas = sum(x(:)*m(1:krome_nmols))
       write(22,'(99E17.8e3)') sum(x(:)),Tgas,x(:)
