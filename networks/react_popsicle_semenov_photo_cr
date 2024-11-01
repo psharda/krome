@@ -84,7 +84,8 @@
 
 #Martin et al 1996
 @noTabNext
-17,H2,H,,H,H,H,,NONE,NONE,dissH2_Martin96(n,Tgas)
+#Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
+17,H2,H,,H,H,H,,NONE,.LE.1783168.7473536893,dissH2_Martin96(n,Tgas)
 
 #Janev 1987
 18,H-,E,,H,E,E,,NONE,NONE,exp(-18.01849334273d0+2.360852208681d0*lnTe-0.2827443061704d0*lnTe**2+0.01623316639567d0*lnTe**3-0.03365012031362999d0*lnTe**4+0.01178329782711d0*lnTe**5-0.001656194699504d0*lnTe**6+0.0001068275202678d0*lnTe**7-2.631285809207d-6*lnTe**8)
@@ -126,13 +127,15 @@
 28,He+,H,He,H+,NONE,NONE,1.20d-15*(Tgas/3d2)**0.25d0
 
 29,He,H+,He+,H,NONE,.LE.1d4,1.26d-9*Tgas**(-0.75d0)*exp(-1.275d5*invT)
-30,He,H+,He+,H,>1d4,NONE,4.d-37*Tgas**(4.74d0)
+#Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
+30,He,H+,He+,H,>1d4,.LE.47740866.4968,4.d-37*Tgas**(4.74d0)
 
 ########################################## START DEUTERIUM CHEMISTRY ###################################################################
 
 @format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
 #Galli&Palla 2002 from Gerlich 1982 
-31,H2,D+,,HD,H+,,,NONE,NONE,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
+#Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield a negative rate at very high Tgas
+31,H2,D+,,HD,H+,,,NONE,.LE.4305266.3906,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
 
 #Galli & Palla 2002, from Garlich 1982 with modification by Gay et al. 2011
 32,HD,H+,,H2,D+,,,NONE,NONE,1.0d-9 *exp(-4.57d2*invT)
@@ -147,7 +150,8 @@
 36,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)
 
 #Galli & Palla 2002 from Wolf Savin 2001
-37,H+,D,,H,D+,,,.GE.5d1,NONE,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
+#Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield a negative rate at very high Tgas
+37,H+,D,,H,D+,,,.GE.5d1,.LE.1952235.6281,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
 
 #Galli & Palla 2002 from Wolf Savin 2001
 38,H,D+,,H+,D,,,.GE.5d1,NONE,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
@@ -305,8 +309,10 @@
 
 95,CH2,H2,CH3,H,NONE,NONE,5.18d-11*(T32**0.17)*exp(-6400d0*invT)
 96,CH3,H,CH2,H2,NONE,NONE,1d-10*exp(-7600d0*invT)
-97,CH3,H2,CH4,H,NONE,NONE,6.86d-14*(T32**2.74)*exp(-4740d0*invT)
-98,CH4,H,CH3,H2,NONE,NONE,5.82d-13*(T32**3.00)*exp(-4045d0*invT)
+#Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
+97,CH3,H2,CH4,H,NONE,.LE.19117091.8228,6.86d-14*(T32**2.74)*exp(-4740d0*invT)
+#Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
+98,CH4,H,CH3,H2,NONE,.LE.3594538.7216,5.82d-13*(T32**3.00)*exp(-4045d0*invT)
 99,C,H2,CH2,,NONE,NONE,1d-17
 
 #-----------------------------------------------------------------------------------------------------------------
