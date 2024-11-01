@@ -26,7 +26,6 @@ program test_cooling
     real*8::ionH,dissH2,ionC,dissCO,chiFUV,t_cool,logTgas, f1, f2, Tt1,Tt2
     logical::stop_next, converged
     character(len=20) :: filename, zint_str
-    real, parameter :: kB = 1.3807e-16
 
     zs = (/1d0/)
 

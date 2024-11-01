@@ -26,7 +26,6 @@ program test_krome_eqbm
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,t_cool
   logical::stop_next, converged
   character(len=20) :: filename, zint_str
-  real, parameter :: kB = 1.3807e-16
   
 
   zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
@@ -203,7 +202,7 @@ program test_krome_eqbm
                      .or. t_tot .gt. max_time
 
         !Compute cooling time; t_cool = P/Lambda = nk_BT/Lambda; where Lambda is in erg cm^-3 s^-1
-        t_cool = (sum(x(:)) * kB * Tgas)/(cooling(n(:),Tgas))
+        t_cool = (sum(x(:)) * boltzmann_erg * Tgas)/(cooling(n(:),Tgas))
 
         if(.not. converged) then
           !Restrict timestep to 10% of cooling time for stability, and enforce at most factor 3 change in dt
