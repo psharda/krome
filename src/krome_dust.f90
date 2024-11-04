@@ -1111,6 +1111,7 @@ contains
   real*8::A,B,C,iter,Tdold,fx,fdash_x,Tdnew,abs_t,rel_t,Tdoldsave
 
   if(dust2gas_ratio .eq. 0) return
+  if(Tgas .gt. 1d4) return !Semenov opacities are only tabulated to Tgas = 1d4 K
 
   ntot = sum(n(1:nmols)) !total number density
   m(:) = get_mass() !masses of the species

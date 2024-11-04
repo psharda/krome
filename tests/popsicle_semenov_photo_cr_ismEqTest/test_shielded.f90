@@ -26,7 +26,7 @@ program test_krome_eqbm
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0
   logical::stop_next, converged
   character(len=20) :: filename, zint_str
-  real, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21, kB = 1.3807e-16
+  real, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21
   real :: Lshield, Nshield, t_cool
 
   !zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
@@ -38,8 +38,6 @@ program test_krome_eqbm
   crate_0 = 2d-16 * chi0
 
 
-  ! Switches to decide when equilibrium has been reached
-  ertol = 1d-8  ! relative min change in a species
   max_time=seconds_per_year*1.e9 ! max time we will be integrating for = 1000 Myrs (1Gyr)
 
   !loop over size(zs)*2 so that every second loop is skipped, so that an empty line is created in the output fort.22 file
@@ -105,6 +103,9 @@ program test_krome_eqbm
     !switch to tell when to stop the calculation
     stop_next = .false.
 
+    ! Switches to decide when equilibrium has been reached
+    ertol = 1d-8  ! relative min change in a species
+
     do dens_bins = 1, 10000
 
       !species default, cm-3
@@ -167,6 +168,9 @@ program test_krome_eqbm
       dt = seconds_per_year * 1d4 !0.1 Myr initial time step
       t_tot = dt
       converged = .false.
+
+      !Higher densities, lower tolerance for convergence
+      if(ntot .gt. 1.e2) ertol = 1d-6
 
       !loop on density steps
       do i=1, rstep
@@ -239,7 +243,7 @@ program test_krome_eqbm
                      .or. t_tot .gt. max_time
 
         !Compute cooling time; t_cool = nk_BT/Lambda; where Lambda is in erg cm^-3 s^-1
-        t_cool = (sum(x(:)) * kB * Tgas)/(cooling(n(:),Tgas))
+        t_cool = (sum(x(:)) * boltzmann_erg * Tgas)/(cooling(n(:),Tgas))
 
         ! Increase integration time by a reasonable factor
         if(.not. converged) then
@@ -248,7 +252,10 @@ program test_krome_eqbm
           t_tot = t_tot + dt
           ni = n
         else
-          print *, "CONVERGED; ntot, Tgas, t_tot, dt, t_cool", sum(x(:)), Tgas, t_tot/(seconds_per_year*1.e6), dt/(seconds_per_year*1.e6), t_cool/(seconds_per_year*1.e6)
+          write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') &
+                    "CONVERGED; ntot = ", sum(x(:)), " Tgas = ", Tgas, " t_tot/Myr = ", &
+                    t_tot/(seconds_per_year*1.e6), " dt = ", dt/(seconds_per_year*1.e6), &
+                    " t_cool = ", t_cool/(seconds_per_year*1.e6)
           exit
         endif
       end do
@@ -269,7 +276,6 @@ program test_krome_eqbm
         print *, 'krome_equilibrium: Did not converge in ', max_time / seconds_per_year, ' years. Reldiff: ', abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas)
         print *, 'Tgas :', n(krome_idx_Tgas)
       end if
-      print *, ' '
 
       rhogas = sum(x(:)*m(1:krome_nmols))
       write(22,'(99E17.8e3)') sum(x(:)),Tgas,x(:)
