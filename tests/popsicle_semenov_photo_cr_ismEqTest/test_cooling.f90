@@ -17,7 +17,7 @@ program test_cooling
     implicit none
     integer,parameter::nz=1
     integer,parameter::rstep = 500000
-    integer::i,ii,ios,jscale,jz,jz2, dens_bins, zint
+    integer::i,ii,ios,jscale,jz2, dens_bins, zint
     real*8::rhogas,m(krome_nspec)
     real*8::tff,ertol,eatol,max_time,t_tot
     real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
@@ -28,13 +28,14 @@ program test_cooling
     character(len=20) :: filename, zint_str
 
     zs = (/1d0/)
+    jz2 = 1 !Only the first element
 
     !INITIAL CONDITIONS
     krome_redshift = 0d0    !redshift
 
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
-    call krome_set_metallicity(zs(1))
+    call krome_set_metallicity(zs(jz2))
     call krome_set_user_is_metal(1d0)
 
     !initialize KROME (mandatory)
