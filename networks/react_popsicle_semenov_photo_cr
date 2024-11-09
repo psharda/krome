@@ -469,14 +469,17 @@
 @CR_start
 @format:idx,R,P,P,rate
 @storeOnce_start
-162,H,H+,E,4.6d-1*user_crate
+#zeta_cr,h = 1.5 times the primary cosmic ray ionization rate; it is ~ 1.15 for molecule-rich regions and ~ 1.5 for atomic regions, but ignore this
+162,H,H+,E,1.5*user_crate
 163,He,He+,E,5.d-1*user_crate
 164,O,O+,E,2.8d0*user_crate*user_is_metal
 165,CO,C,O,5d0*user_crate*user_is_metal
 166,CO,CO+,E,3d0*user_crate*user_is_metal
-167,H2,H,H,1d-1*user_crate
-168,H2,H+,H-,3d-4*user_crate
-169,H2,H2+,E,9.3d-1*user_crate
+#Below rate obtained from Glover et al. 2010, Table B3
+167,H2,H,H,2.2d-1*user_crate
+168,H2,H+,H-,6.5d-4*user_crate
+#CR ionization rate of this reaction taken from Table 1 of Micic et al. 2012
+169,H2,H2+,E,2.22*user_crate
 170,C,C+,E,1.02d3*user_crate*user_is_metal
 171,CH,C,H,7.3d2*user_crate*user_is_metal
 172,O2,O,O,7.5d2*user_crate*user_is_metal
@@ -485,7 +488,8 @@
 175,CH2,CH2+,E,5d2*user_crate
 176,H2O,OH,H,9.7d2*user_crate*user_is_metal
 @format:idx,R,P,P,P,rate
-177,H2,H,H+,E,9.3d-1*user_crate
+#CR ionization rate of this reaction taken from Table 1 of Micic et al. 2012
+177,H2,H,H+,E,3.7d-2*user_crate
 @storeOnce_stop
 @CR_stop
 

@@ -533,7 +533,7 @@ contains
     use krome_constants
     implicit none
     real*8::heat_CR,n(:),Tgas,Hfact,k(:)
-    real*8::logH2,QH2,QH,QHe
+    real*8::logH2,QH2,QH,QHe,xe
 
     Hfact = 2d1*eV_to_erg !erg
 
@@ -543,8 +543,9 @@ contains
     !init heating
     heat_CR = 0d0
 
-    !heating per H ionization (eV)
-    QH = 4.3d0 * eV_to_erg
+    !heating per H ionization (eV); see Equation. 39 of Bialy & Sternberg 2019 (this is identical to the relation in Kim+23)
+    xe = n(idx_e)/sum(n(1:nmols))
+    QH = 6.43 * (1+4.06*(x_e/(x_e+0.07))**0.5) * eV_to_erg
 
     !heating per He ionization, same as H following Glassgold+2012
     QHe = QH
