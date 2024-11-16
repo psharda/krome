@@ -545,7 +545,7 @@ contains
 
     !heating per H ionization (eV); see Equation. 39 of Bialy & Sternberg 2019 (this is identical to the relation in Kim+23)
     xe = n(idx_e)/sum(n(1:nmols))
-    QH = 6.43 * (1+4.06*(x_e/(x_e+0.07))**0.5) * eV_to_erg
+    QH = 6.43 * (1+4.06*(xe/(xe+0.07))**0.5) * eV_to_erg
 
     !heating per He ionization, same as H following Glassgold+2012
     QHe = QH
