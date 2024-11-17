@@ -80,7 +80,7 @@ program test_krome_eqbm
 
     !INITIAL CONDITIONS
     krome_redshift = 0d0    !redshift
-    Tgas = 3d2              !temperature, K
+    Tgas = 3d2             !temperature, K
     ntot = 1d-2
 
     call krome_set_zredshift(krome_redshift)
@@ -120,7 +120,7 @@ program test_krome_eqbm
       x(KROME_idx_Cj)        = 0.927d-4*zs(jz2)*ntot !C is fully ionized
       x(KROME_idx_O)         = 3.568d-4*zs(jz2)*ntot !O is fully neutral
 
-      call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
+      call krome_set_Semenov_Tdust(6d0) !Dust at 6K
 
       !set H2 dissociation reaction rate coeff
       n(1:krome_nmols) = x(:)
@@ -170,7 +170,7 @@ program test_krome_eqbm
       converged = .false.
 
       !Higher densities, lower tolerance for convergence
-      if(ntot .gt. 1.e2) ertol = 1d-6
+      if(ntot .gt. 1.e2) ertol = 1d-8
 
       !loop on density steps
       do i=1, rstep
@@ -283,7 +283,7 @@ program test_krome_eqbm
       if (stop_next) exit
 
       !increase density by 2x for the next bin
-      ntot = ntot * 1.1
+      ntot = ntot * 1.2
       !break when max density reached
       if (ntot .gt. 1.e6) then
         ntot = 1.e6
