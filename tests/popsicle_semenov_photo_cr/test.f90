@@ -121,7 +121,7 @@ program test_krome
     dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)*chiFUV
     call krome_set_user_dissH2(dissH2)
     ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()*chiFUV
-    dissCO = 2.d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()*chiFUV
+    dissCO = 2.592d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()*chiFUV
     call krome_set_user_ionC(ionC)
     call krome_set_user_dissCO(dissCO)
 
@@ -181,7 +181,7 @@ program test_krome
        dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)*chiFUV
        call krome_set_user_dissH2(dissH2)
        ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()*chiFUV
-       dissCO = 2.d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()*chiFUV
+       dissCO = 2.592d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()*chiFUV
        call krome_set_user_ionC(ionC)
        call krome_set_user_dissCO(dissCO)
 

@@ -141,7 +141,7 @@ program test_krome_eqbm
       dissH2 = 5.60d-11*chiFUV
       call krome_set_user_dissH2(dissH2)
       ionC = 3.1d-10*krome_get_user_is_metal()*chiFUV
-      dissCO = 2.d-10*krome_get_user_is_metal()*chiFUV
+      dissCO = 2.592d-10*krome_get_user_is_metal()*chiFUV
       call krome_set_user_ionC(ionC)
       call krome_set_user_dissCO(dissCO)
 
@@ -176,7 +176,7 @@ program test_krome_eqbm
         dissH2 = 5.60d-11*chiFUV
         call krome_set_user_dissH2(dissH2)
         ionC = 3.1d-10*krome_get_user_is_metal()*chiFUV
-        dissCO = 2.d-10*krome_get_user_is_metal()*chiFUV
+        dissCO = 2.592d-10*krome_get_user_is_metal()*chiFUV
         call krome_set_user_ionC(ionC)
         call krome_set_user_dissCO(dissCO)
 
