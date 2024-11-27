@@ -544,7 +544,7 @@ contains
     heat_CR = 0d0
 
     !heating per H ionization (eV); see Equation. 39 of Bialy & Sternberg 2019 (this is identical to the relation in Kim+23)
-    xe = n(idx_e)/sum(n(1:nmols))
+    xe = min(max(n(idx_e)/sum(n(1:nmols)), 1d-40), 1d0)
     QH = 6.43 * (1+4.06*(xe/(xe+0.07))**0.5) * eV_to_erg
 
     !heating per He ionization, same as H following Glassgold+2012
