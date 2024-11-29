@@ -156,8 +156,8 @@
 38,H+,D,,H,D+,,,NONE,.LE.2d5,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
 39,H+,D,,H,D+,,,.GT.2d5,NONE,3.44d-10*Tgas**(0.350d0)
 
-#Galli & Palla 2002 from Wolf Savin 2001
-40,H,D+,,H+,D,,,.GE.5d1,NONE,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
+#Galli & Palla 2002 from Wolf Savin 2002
+40,H,D+,,H+,D,,,NONE,.LE.2d5,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #ADDITIONAL DEUTERIUM RATES FROM GP98, SLD98
