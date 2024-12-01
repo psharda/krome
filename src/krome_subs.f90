@@ -318,7 +318,7 @@ contains
     x(idx_E) = m(idx_E)*(#KROME_conserveLin_electrons)
     !check if charge conservation goes wrong
     if(x(idx_E)<0d0) then
-       print *,"ERROR in conserveLin, electrons < 0"
+       print *,"ERROR in conserveLin, electrons < 0: ", x(:)
        stop
     end if
 #ENDIFKROME

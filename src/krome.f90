@@ -349,7 +349,9 @@ contains
     ni(:) = n(:)
     n_global(:) = n(:)
 
+#IFKROME_hasStoreOnceRates
     call makeStoreOnceRates(n(:))
+#ENDIFKROME
 
     n_old(:) = -1d99
     krome_call_to_fex = 0
