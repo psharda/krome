@@ -103,7 +103,8 @@
 22,H-,H+,,H2+,E,,,NONE,NONE,1.d-8*Tgas**(-0.4d0)
 
 # fit by Coppola et al. (2011) !NEW!
-23,H2+,E,,H,H,,,NONE,.LE.1e4,1.d6*(4.2278d-14-2.3088d-17*Tgas+7.3428d-21*Tgas**2-7.5474d-25*Tgas**3+3.3468d-29*Tgas**4-5.528d-34*Tgas**5)
+# Upper limit increased from 1d4 K to the point where this reaction rate tends to 0 by Piyush Sharda, to remove discontinuity at 1d4 K that would otherwise cause integration failures
+23,H2+,E,,H,H,,,NONE,.LE.23642.692081,1.d6*(4.2278d-14-2.3088d-17*Tgas+7.3428d-21*Tgas**2-7.5474d-25*Tgas**3+3.3468d-29*Tgas**4-5.528d-34*Tgas**5)
 
 #Dalgarno & Lepp 1987
 24,H2+,H-,,H,H2,,,NONE,NONE,5.d-7*sqrt(1.d2*invT)
