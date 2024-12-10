@@ -14,8 +14,8 @@ colors = ['#440154','#3B528B','#21918C','#5DC863','#FDE725','#FEE08B','#FC8D59']
 
 for i,Z in enumerate(Zvals):
     data = np.loadtxt('AB_Z'+str(Z)).T
-    axs[0].plot(data[0],data[1],label=labels[i],lw=3.0,alpha=0.6,color=colors[i])
-    axs[1].plot(data[0],data[0]*data[1],lw=3.0,alpha=0.6,color=colors[i])
+    axs[0].plot(data[0],data[2],label=labels[i],lw=3.0,alpha=0.6,color=colors[i])
+    axs[1].plot(data[0],data[0]*data[2],lw=3.0,alpha=0.6,color=colors[i])
 
 axs[0].set_xscale('log')
 axs[0].set_yscale('log')
