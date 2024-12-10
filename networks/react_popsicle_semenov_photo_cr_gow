@@ -1,0 +1,210 @@
+#Reduced chemical network for POPSICLE simulations
+#Author: Piyush Sharda (Leiden), 2024
+#the following is the networkfrom GOW (Gong, Ostriker, Wolfire 2017)
+#with CO ice and He++ added
+#and also ensuring H2+ and O+ recombine with electrons
+#Includes photo chemistry and cosmic ray chemistry
+#Uses Semenov+2003 opacities and does not use KROME's inbuilt dust functionality (except for freezeout reactions)
+#To test the network, look at krome/tests/popsicle_semenov_gow
+#Reaction numbers match that given in Table A1 of GOW
+#NOTE!!! Only use this network for metallicities >= 1% Solar
+
+@var:T=Tgas
+
+@var:ntot=sum(n(1:nmols))
+
+#user_is_metal is a boolean flag to turn photochemistry of metals off in primordial conditions.
+@common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2, user_ionC, user_dissCO
+
+
+########################################## START PRIMORDIAL CHEMISTRY ###################################################################
+#UPDATED primordial rates, 2014
+
+#Janev 1987
+24,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
+
+#Abel et al. 1997, fit by data from Ferland et al. 1992
+21,H+,E,,H,g,,,NONE,.LE.5.5e3,3.92d-13*invTe**0.6353d0
+21,H+,E,,H,g,,,>5.5e3,NONE,exp(-28.61303380689232d0-0.7241125657826851d0*lnTe-0.02026044731984691d0*lnTe**2-0.002380861877349834d0*lnTe**3-0.0003212605213188796d0*lnTe**4-0.00001421502914054107d0*lnTe**5+4.989108920299513d-6*lnTe**6+5.755614137575758d-7*lnTe**7-1.856767039775261d-8*lnTe**8-3.071135243196595d-9*lnTe**9)
+
+#Radiative+dielectronic from Cen 1992, Aldrovandi & Pequignot 1973
+14,HE+,E,,HE,g,,,NONE,.LE.9.28e3,3.92d-13*invTe**0.6353d0
+14,HE+,E,,HE,g,,,>9.28e3,NONE,1.54d-9*(1.d0+0.3d0/exp(8.099328789667d0*invTe))/(exp(40.49664394833662d0*invTe)*Te**1.5d0)+3.92d-13/Te**0.6353d0
+
+#Karpas 1979
+20,H2+,H,,H2,H+,,,NONE,NONE,6.4d-10
+
+#Martin et al 1996
+@noTabNext
+#Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
+22,H2,H,,H,H,H,,NONE,.LE.1783168.7473536893,dissH2_Martin96(n,Tgas)
+
+#Omukai 2001
+@var:invT = 1d0/Tgas
+@var:Hnuclei = get_Hnuclei(n(:))
+@var:kl21 = 1.18d-10*exp(-6.95d4*invT)
+@var:kh21 = 8.125d-8*T**(-0.5d0)*exp(-5.2d4*invT)*(1.d0-exp(-6d3*invT))
+@var:ncr21 = 1d1**(4.845d0-1.3d0*log10(T*1d-4)+1.62d0*(log10(T*1d-4))**2)
+@var:a21=1.d0/(1.d0+(Hnuclei/ncr21))
+@noTabNext
+23,H2,H2,,H,H,H2,,NONE,NONE,kh21**(1.-a21)*kl21**a21
+
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+#GOW no. 7
+7,He+,H2,H+,He,H,NONE,NONE,1.26d-13*exp(-22.5d0*invT)
+
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+#GOW no. 25
+25,He+,H2,H2+,He,NONE,NONE,7.20d-15
+15,H3+,E,H2,H,NONE,NONE,4.54d-7*(Tgas**(-0.52d0))
+19,H2+,H2,H3+,H,NONE,NONE,2.84d-9*(Tgas**0.042d0)*exp(-Tgas/46600d0)
+
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+16,H3+,E,H,H,H,NONE,NONE,8.46d-7*(Tgas**(-0.52d0))
+
+########################################## END PRIMORDIAL CHEMISTRY ###################################################################
+
+
+########################################## START GAS METAL CHEMISTRY ###################################################################
+
+@format:idx,R,R,P,P,rate
+#From Glover and Jappsen 2007
+#O2005 use an older rate coefficient
+31,O+,H,H+,O,4.99d-11*Tgas**0.405 + 7.54d-10*invT**(0.458)
+30,O,H+,O+,H,(1.08d-11*Tgas**0.517 + 4d-10*Tgas**(0.00669))*exp(-2.27d2*invT)
+
+@format:idx,R,R,R,P,P,P,rate
+10,C+,H2,E,C,H,H,0.99d-13*(Tgas**(-1.3d0))*exp(-23d0*invT)
+9,C+,H2,,CH,H,,2.31d-13*(Tgas**(-1.3d0))*exp(-23d0*invT)
+8,He+,CO,,C+,O,He,1.6d-9
+18,HCO+,E,,CO,H,,1.06d-5*(Tgas**(-0.64d0))
+6,H3+,CO,,HCO+,H2,,1.7d-9
+29,He+,OH,,O+,He,H,1.35d-9*(0.62d0 + 45.41*(Tgas**(-0.5d0)))
+27,OH,O,,O,O,H,3.5d-11
+
+#Glover&Jappsen 2007
+@format:idx,R,R,P,Tmin,Tmax,rate
+#O2005 use an older rate coefficient
+#TODO: this is only in the gas. There is a separate reaction for recombination of C+ and e on dust which is not included here
+17,C+,E,C,NONE,.LE.7950d0,4.67d-12*(T32)**(-0.6)
+17,C+,E,C,>7950d0,.LE.21140d0,1.23d-17*(T32)**2.49*exp(21845.6d0*invT)
+17,C+,E,C,>21140d0,NONE,9.62d-8*(T32)**(-1.37)*exp(-115786.2d0*invT)
+
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+26,CH,H,C,H2,NONE,NONE,2.81d-11*(Tgas**0.26d0)
+
+#KIDA, below 10K constant
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+#O2005 use an older rate coefficient. Piyush Sharda slightly updated the coefficient to ensure continuity
+11,OH,C+,HCO+,,NONE,1d1,1.3707124444663514d-8
+11,OH,C+,HCO+,,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+
+#O2005 use an older rate coefficient
+12,CH,O,CO,H,NONE,NONE,1.02d-10*exp(-914d0*invT)
+
+#KIDA, recommended, below 10K constant
+#O2005 use an older rate coefficient. Piyush Sharda slightly updated the coefficient to ensure continuity
+13,C,OH,H,CO,NONE,1d1,7.050765049525827d-11
+13,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(-.108d0*invT)
+
+1,H3+,C,CH,H2,NONE,NONE,1.04d-9*((3d2/Tgas)**0.00231d0) + (Tgas**(-1.5d0))*(3.4d-8*exp(-7.62*invT) + 6.97d-9*exp(-1.38*invT) + 1.31d-7*exp(26.6*invT) + 1.51d-4*exp(-8.11d3*invT))
+
+@var:aa1=6.0d-10
+@var:aa2=5.3d-6*(Tgas**(-0.5d0))
+2,H3+,O,OH,H2,NONE,NONE,1.99d-9*(Tgas**(-0.19d0))*(aa1*n(idx_H2) / (aa1*n(idx_H2) + aa2*n(idx_E)))
+4,O+,H2,H,OH,1.6d-9*(aa1*n(idx_H2) / (aa1*n(idx_H2) + aa2*n(idx_E)))
+
+@format:idx,R,R,R,P,P,P,Tmin,Tmax,rate
+3,H3+,O,E,H2,O,H,NONE,NONE,1.99d-9*(Tgas**(-0.19d0))*(1d0 - (aa1*n(idx_H2) / (aa1*n(idx_H2) + aa2*n(idx_E))))
+5,O+,H2,E,O,H,H,NONE,NONE,1.6d-9*(1d0 - (aa1*n(idx_H2) / (aa1*n(idx_H2) + aa2*n(idx_E))))
+
+
+# fit by Coppola et al. (2011) !NEW!
+# Upper limit increased from 1d4 K to the point where this reaction rate tends to 0 by Piyush Sharda, to remove discontinuity at 1d4 K that would otherwise cause integration failures
+23,H2+,E,,H,H,,NONE,.LE.23642.692081,1.d6*(4.2278d-14-2.3088d-17*Tgas+7.3428d-21*Tgas**2-7.5474d-25*Tgas**3+3.3468d-29*Tgas**4-5.528d-34*Tgas**5)
+
+#Janev 1987
+4,HE,E,,HE+,E,E,NONE,NONE,exp(-44.09864886d0+23.91596563d0*lnTe-10.7532302d0*(lnTe**2)+3.05803875d0*(lnTe**3)-0.56851189d0*(lnTe**4)+6.79539123d-2*(lnTe**5)-5.00905610d-3*(lnTe**6)+2.06723616d-4*(lnTe**7)-3.64916141d-6*(lnTe**8))
+
+#Aladdin database 1989 (see Abel et al. 1997)
+7,HE+,E,,HE++,E,E,NONE,NONE,exp(-68.71040990212001d0+43.93347632635d0*lnTe-18.48066993568d0*lnTe**2+4.701626486759002d0*lnTe**3-0.7692466334492d0*lnTe**4+0.08113042097303d0*lnTe**5-0.005324020628287001d0*lnTe**6+0.0001975705312221d0*lnTe**7-3.165581065665d-6*lnTe**8)
+
+# Verner & Ferland 1996 !NEW!
+8,HE++,E,,HE+,,,NONE,NONE,1.891d-10/(sqrt(Tgas/9.37)*(1.+sqrt(Tgas/9.37))**0.2476*(1.+sqrt(Tgas/2.774d6))**1.7524)
+
+# Ensure O+ combines with E
+#Glover and Jappsen 2007
+@format:idx,R,R,P,Tmin,Tmax,rate
+118,O+,E,O,NONE,.LE.4d2,1.30d-10*(Tgas)**(-0.64)
+119,O+,E,O,>4d2,NONE,1.41d-10*(Tgas)**(-0.66) + 7.4d-4*(Tgas)**(-1.5)*exp(-1.75d5*invT)*(1d0 + 0.062d0*exp(-1.45d5*invT))
+
+
+########################################## END GAS METAL CHEMISTRY ###################################################################
+
+#H2 formation on dust grains included directly in krome_ode.f90, akin to what KROME does with -dustOptions=H2
+
+########################################## START PHOTO CHEMISTRY ###################################################################
+
+#Photoreactions; rate expressed as a function of Av
+#Note that the Av-dependent rates are calculated assuming a Draine ISRF. But I can't find in the original references how to include the ISRF in the rate
+#Some key reactions will be replaced later on when coupled with vettam
+#ENSURE H photoionization is listed before H cosmic ray ionization, otherwise H ionization heating will read in the wrong rate coefficient!!
+#ENSURE H2 photodissociation is listed before H2 cosmic ray ionization, otherwise H2 dissociation heating and UV pumping will read in the wrong rate coefficient!!
+#user-defined factor 'user_is_metal' is 0 for metal photo reactions if metallicity is 0, and 1 otherwise
+
+@format:idx,R,P,P,rate
+#integrated with J21*13.6/E flux, up to 200eV
+135,H,H+,E,user_ionH
+136,H2,H,H,user_dissH2
+141,C,C+,E,user_ionC
+142,CH,C,H,8.7d-10*exp(-1.2*user_Av)*user_is_metal*chiFUV
+148,OH,O,H,3.7d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
+155,CO,C,O,user_dissCO
+
+#Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
+@noTab_start
+@format:idx,R,R,P,rate
+160,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal
+161,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal
+162,O+,E,O,O_recombination_on_dust(n,Tgas)*user_is_metal
+163,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal
+@noTab_stop
+
+########################################## END PHOTO CHEMISTRY ###################################################################
+
+
+########################################## START COSMIC RAY GAS CHEMISTRY ###################################################################
+
+#cosmic rays processes from OSU
+#user-defined factor 'user_is_metal' is 0 for metal photo reactions if metallicity is 0, and 1 otherwise
+
+@CR_start
+@format:idx,R,P,P,rate
+@storeOnce_start
+#zeta_cr,h = 1.5 times the primary cosmic ray ionization rate; it is ~ 1.15 for molecule-rich regions and ~ 1.5 for atomic regions, but ignore this
+164,H,H+,E,1.5*user_crate
+165,He,He+,E,5.d-1*user_crate
+166,O,O+,E,2.8d0*user_crate*user_is_metal
+167,CO,C,O,5d0*user_crate*user_is_metal
+169,H2,H,H,2.2d-1*user_crate
+171,H2,H2+,E,2.22*user_crate
+172,C,C+,E,1.02d3*user_crate*user_is_metal
+@storeOnce_stop
+@CR_stop
+
+
+########################################## END COSMIC RAY GAS CHEMISTRY ###################################################################
+
+########################################## START FREEZEOUT CHEMISTRY ###################################################################
+
+@noTab_start
+#DUST FREEZE-OUT/EVAPORATION
+#TODO: note that there is an inconsistency in the dust size and distribution used in freezeout reactions, as compared to that used by Semenov opacities
+@var:tabTdust = get_table_Tdust(n(:))
+@ice:CO,freezeout,krate_stickSi(n(:),idx_CO,tabTdust)
+@ice:CO,evaporation,krate_evaporation(n(:),idx_CO,tabTdust)
+#NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux
+@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0, user_Av, user_crate, 1d-3)
+@noTab_stop
+
+########################################## END FREEZEOUT CHEMISTRY ###################################################################
