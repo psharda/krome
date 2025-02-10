@@ -7169,6 +7169,7 @@ class krome:
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
 			if srow == "#IFKROME_usedTdust" and not self.usedTdust: skip = True
 			if srow == "#IFKROME_shieldHabingDust" and not self.shieldHabingDust: skip = True
+			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 
 			if srow == "#ENDIFKROME": skip = False
 
