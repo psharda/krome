@@ -826,7 +826,7 @@
 #IFKROME_hasHe
     !He is included in the reaction network, so we already do He CIE self-consistently
     interp(:) = log10(total_Z*x3(:)) 
-#ENDIFKROME
+#ENDIFKROME_hasHe
 
     xLd = interpolate1D(log10(x1(:)), interp(:), logTgas) !erg cm^3/s
 

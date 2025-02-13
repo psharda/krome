@@ -136,8 +136,8 @@
 33,H2,D,,HD,H,,,NONE,.LE.1.167479642374226d3,10**(-56.4737+5.88886*log10(Tgas)+7.19692*(log10(Tgas))**2+2.25069*(log10(Tgas))**3-2.16903*(log10(Tgas))**4+0.317887*(log10(Tgas))**5)
 34,H2,D,,HD,H,,,.GT.1.167479642374226d3,NONE,3.17d-10*exp(-5207.*invT)
 
-#Galli & Palla 2002, from Shavitt 1959
-35,HD,H,,H2,D,,,>2e2,NONE,5.25d-11*exp(-4430.*invT+1.739d5*(invT)**2)
+#Galli & Palla 2002, from Shavitt 1959; updated by Piyush Sharda in 2025 to ensure continuity
+35,HD,H,,H2,D,,,NONE,NONE,5.25d-11*exp(-4430.*invT)
 
 36,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)
 
