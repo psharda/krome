@@ -811,7 +811,6 @@
     v1min = coolZCIEGFx1min
     v1max = coolZCIEGFx1max
 
-    if(inTgas>=v1max) inTgas = v1max*(1d0-eps)
     if(inTgas<v1min) return
 
     !local copy of variables arrays
@@ -819,7 +818,8 @@
     x2(:) = coolZCIEGFx2(:) !He CIE cooling rate
     x3(:) = coolZCIEGFx3(:) !Metals CIE cooling rate
 
-    logTgas = log10(inTgas)
+    logTgas = log10(min(inTgas, v1max*(1d0-eps)))
+
 
     interp(:) = log10(x2(:) + total_Z*x3(:))
 
