@@ -136,6 +136,8 @@
 105,C,E,,C+,E,E,NONE,NONE,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
 #reaction 28 from Hunter+2023, added to ensure appropriate loss route exists for CH at high Tgas; taken from UMIST24 database
 110,CH,He+,,C+,He,H,NONE,NONE,1.1d-9*(Tgas/300)**(-0.5d0)
+#reaction 31 from Hunter+2023, added because it becomes important over reaction 31 of Hunter+2023 at Tgas > 5e2; rate from UMIST12
+132,OH,H,,O,H2,,NONE,NONE,6.99d-14*(Tgas/300)**(2.80d0)*exp(-1950d0/Tgas)
 
 # fit by Coppola et al. (2011) !NEW!
 # Upper limit increased from 1d4 K to the point where this reaction rate tends to 0 by Piyush Sharda, to remove discontinuity at 1d4 K that would otherwise cause integration failures
