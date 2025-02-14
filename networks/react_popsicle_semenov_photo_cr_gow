@@ -83,7 +83,9 @@
 9,C+,H2,,CH,H,,2.31d-13*(Tgas**(-1.3d0))*exp(-23d0*invT)
 #rate modified to include temperature dependence as in Hunter+2023, from Petuchowski+1989, equation 11.
 8,He+,CO,,C+,O,He,1.4d-9*(Tgas/300d0)**-0.5d0
-18,HCO+,E,,CO,H,,1.06d-5*(Tgas**(-0.64d0))
+18,HCO+,E,,CO,H,,1.06d-5*(Tgas**(-0.64d0))*9.2d-1
+#added as recommended by Hunter+2023, branching ratio of reaction 18 and 222 is 0.92:0.08; taken from Geppert et al. 2005 table 3: https://iopscience.iop.org/article/10.1088/1742-6596/4/1/004/pdf
+222,HCO+,E,,OH,C,,1.06d-5*(Tgas**(-0.64d0))*8d-2
 6,H3+,CO,,HCO+,H2,,1.7d-9
 29,He+,OH,,O+,He,H,1.35d-9*(0.62d0 + 45.41*(Tgas**(-0.5d0)))
 27,OH,O,,O,O,H,3.5d-11
