@@ -57,10 +57,15 @@
 #GOW no. 25
 25,He+,H2,H2+,He,NONE,NONE,7.20d-15
 15,H3+,E,H2,H,NONE,NONE,4.54d-7*(Tgas**(-0.52d0))
-19,H2+,H2,H3+,H,NONE,NONE,2.84d-9*(Tgas**0.042d0)*exp(-Tgas/46600d0)
+#for the reaction below, rate in GOW has a typo; original reference is Stancil, Lepp & Dalgarno 1998, table 1, reaction 44
+19,H2+,H2,H3+,H,NONE,NONE,2.24d-9*(Tgas**0.042d0)*exp(-Tgas/46600d0)
 
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
 16,H3+,E,H,H,H,NONE,NONE,8.46d-7*(Tgas**(-0.52d0))
+
+#reaction 5 in Table A1 of Hunter+2023 not included in GOW. Hunter+ use rate from Trevisan & Tennyson 2002 but we use the one in popsicle which is fit by Mitchell & Deveau 1983 of data by Corrigan 1965 !NEW!
+16,H2,E,H,H,E,NONE,NONE,4.38d-10*exp(-102000./Tgas)*Tgas**(0.35)
+
 
 ########################################## END PRIMORDIAL CHEMISTRY ###################################################################
 
