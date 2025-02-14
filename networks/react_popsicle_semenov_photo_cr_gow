@@ -121,6 +121,8 @@
 #O2005 use an older rate coefficient. Piyush Sharda slightly updated the coefficient to ensure continuity
 13,C,OH,H,CO,NONE,1d1,7.050765049525827d-11
 13,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(-.108d0*invT)
+#added as recommended by Hunter+2023 for high Tgas; taken from UMIST24
+13,CO,H,C,OH,NONE,NONE,1.1d-10*(T32)**(0.5d0)*exp(-77700d0*invT)
 
 1,H3+,C,CH,H2,NONE,NONE,1.04d-9*((3d2/Tgas)**0.00231d0) + (Tgas**(-1.5d0))*(3.4d-8*exp(-7.62*invT) + 6.97d-9*exp(-1.38*invT) + 1.31d-7*exp(26.6*invT) + 1.51d-4*exp(-8.11d3*invT))
 
