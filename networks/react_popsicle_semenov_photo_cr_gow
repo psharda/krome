@@ -131,6 +131,9 @@
 @format:idx,R,R,R,P,P,P,Tmin,Tmax,rate
 3,H3+,O,E,H2,O,H,NONE,NONE,1.99d-9*(Tgas**(-0.19d0))*(1d0 - (aa1*n(idx_H2) / (aa1*n(idx_H2) + aa2*n(idx_E))))
 5,O+,H2,E,O,H,H,NONE,NONE,1.6d-9*(1d0 - (aa1*n(idx_H2) / (aa1*n(idx_H2) + aa2*n(idx_E))))
+#reaction below from Voronov 1997: https://www.sciencedirect.com/science/article/pii/S0092640X97907324?via%3Dihub
+@var:u1 = 11.26d0*invTe
+105,C,E,,C+,E,E,NONE,NONE,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
 
 
 # fit by Coppola et al. (2011) !NEW!
