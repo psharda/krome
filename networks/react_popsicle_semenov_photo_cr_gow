@@ -163,6 +163,13 @@
 118,O+,E,O,NONE,.LE.4d2,1.30d-10*(Tgas)**(-0.64)
 119,O+,E,O,>4d2,NONE,1.41d-10*(Tgas)**(-0.66) + 7.4d-4*(Tgas)**(-1.5)*exp(-1.75d5*invT)*(1d0 + 0.062d0*exp(-1.45d5*invT))
 
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+#following Hunter+2023, these reactions added from Nahar 2000 who include both radiative and dielectronic recombination. fit by Piyush Sharda to their data
+@var:nahar=log10(Tgas)
+141,Si+,E,Si,,,1d1,1d8,-1.20200230e-5*nahar**10 + 8.54562990e-4*nahar**9 - 2.32251549e-2*nahar**8 + 3.34675301e-1*nahar**7 - 2.88575477*nahar**6 +1.56620751e1*nahar**5 - 5.42764137e1*nahar**4 + 1.18602509e2*nahar**3 - 1.56384523e2*nahar**2 + 1.11836287e2*nahar**1 - 4.32223214e1
+#reaction below from Voronov 1997: https://www.sciencedirect.com/science/article/pii/S0092640X97907324?via%3Dihub
+@var:uSi = 8.2d0*invTe
+142,Si,E,Si+,E,E,NONE,NONE,1.88d-7*uSi**0.25*exp(-uSi)/(0.376d0+uSi)
 
 ########################################## END GAS METAL CHEMISTRY ###################################################################
 
