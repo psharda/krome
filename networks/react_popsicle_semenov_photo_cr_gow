@@ -7,6 +7,7 @@
 #Uses Semenov+2003 opacities and does not use KROME's inbuilt dust functionality (except for freezeout reactions)
 #To test the network, look at krome/tests/popsicle_semenov_gow
 #Reaction numbers match that given in Table A1 of GOW
+#Note that CH represents light hydrocarbons such as CH,CH2,CH3, etc. Do NOT consider CH as just CH. This is also why one reaction in particular: C+H2--> CH has an imbalance.
 #NOTE!!! Only use this network for metallicities >= 1% Solar
 
 @var:T=Tgas
@@ -36,8 +37,8 @@
 
 #Martin et al 1996
 @noTabNext
-#Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
-22,H2,H,,H,H,H,,NONE,.LE.1783168.7473536893,dissH2_Martin96(n,Tgas)
+#reaction rate updated in 2025 to ensure stability at high Tgas; see the actual function for details
+22,H2,H,,H,H,H,,NONE,.LE.1d8,dissH2_Glover07(n,Tgas)
 
 #Omukai 2001
 @var:invT = 1d0/Tgas
@@ -127,6 +128,10 @@
 13,CO,H,C,OH,NONE,NONE,1.1d-10*(T32)**(0.5d0)*exp(-77700d0*invT)
 
 1,H3+,C,CH,H2,NONE,NONE,1.04d-9*((3d2/Tgas)**0.00231d0) + (Tgas**(-1.5d0))*(3.4d-8*exp(-7.62*invT) + 6.97d-9*exp(-1.38*invT) + 1.31d-7*exp(26.6*invT) + 1.51d-4*exp(-8.11d3*invT))
+#Recommended by Hunter+2023, from Prasad & Huntress 1980
+#TODO: insert the actual reaction rate here. Note that this reaction is imbalanced in Hunter, but we balance it here. There is no C+H2 radiative association reaction in Prasad&Huntress 1980
+333,C+,H2,CH,,NONE,NONE,6d-16
+
 
 @var:aa1=6.0d-10
 @var:aa2=5.3d-6*(Tgas**(-0.5d0))
