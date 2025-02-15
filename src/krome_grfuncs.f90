@@ -414,13 +414,13 @@ contains
     implicit none
     integer,intent(in)::idx
     real*8,intent(in)::n(nspec),Tdust
-    real*8::k,Ebind(nspec),nu0,mass
+    real*8::k,Ebind(nspec),nu0,mass(nspec),ns
 
     Ebind(:) = get_EbindBare()
-    mass = get_mass(idx)
+    mass(:) = get_mass()
 
     ns = 1.5e15 !surface density of sites in cm^-2, from Reboussin et al. 2014, MNRAS 440, 3357
-    nu0 =  sqrt(2*ns*boltzmann_erg*Ebind(idx)/(pi*pi*mass)) !1/s; equation 8 of Reboussin et al. 2014, MNRAS 440, 3357
+    nu0 =  sqrt(2*ns*boltzmann_erg*Ebind(idx)/(pi*pi*mass(idx))) !1/s; equation 8 of Reboussin et al. 2014, MNRAS 440, 3357
     k = nu0 * exp(-Ebind(idx)/Tdust)
 
   end function krate_evaporation
