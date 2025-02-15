@@ -669,6 +669,7 @@ contains
     xH2 = n(idx_H2) / n_H  !Number fraction of H2
 
     !Critical densities from Lepp & Shull (1983) and Shapiro & Kang (1987)
+    !n_cr_H decreased by an order of magnitude as suggested by Martin et al. 1996
     n_cr_H = 1d1 ** (3d0 - 0.416d0 * logT4 - 0.327d0 * logT4**2d0)
     n_cr_H2 = 1d1 ** (4.845d0 - 1.3d0 * logT4 + 1.62d0 * logT4**2d0)
 

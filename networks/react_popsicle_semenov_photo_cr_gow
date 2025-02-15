@@ -38,9 +38,12 @@
 #Martin et al 1996
 @noTabNext
 #reaction rate updated in 2025 to ensure stability at high Tgas; see the actual function for details
+#Under LTE, the self-consistent way would be to include the corresponding 3 body formation reaction 
+#rate as K*dissH2_Glover07, where K is the equilibrium constant, given as K = 1.05e-22*(Tgas**-0.515)*exp(52d3/Tgas),
+#adopted from Floer and Harris 2007. However, Glover & Savin 2009 find that this does not make a significant difference
 22,H2,H,,H,H,H,,NONE,.LE.1d8,dissH2_Glover07(n,Tgas)
 
-#Omukai 2001
+#Omukai 2001, taken from Shapiro and Kang 1987
 @var:invT = 1d0/Tgas
 @var:Hnuclei = get_Hnuclei(n(:))
 @var:kl21 = 1.18d-10*exp(-6.95d4*invT)
