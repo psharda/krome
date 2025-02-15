@@ -79,10 +79,9 @@
 # fit by Mitchell & Deveau 1983 of data by Corrigan 1965 !NEW!
 16,H2,E,,H,H,E,,NONE,NONE,4.38d-10*exp(-102000./Tgas)*Tgas**(0.35)
 
-#Martin et al 1996
 @noTabNext
-#Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
-17,H2,H,,H,H,H,,NONE,.LE.1783168.7473536893,dissH2_Martin96(n,Tgas)
+#reaction rate updated in 2025 to ensure stability at high Tgas; see the actual function for details
+17,H2,H,,H,H,H,,NONE,.LE.1d8,dissH2_Glover07(n,Tgas)
 
 #Janev 1987
 18,H-,E,,H,E,E,,NONE,NONE,exp(-18.01849334273d0+2.360852208681d0*lnTe-0.2827443061704d0*lnTe**2+0.01623316639567d0*lnTe**3-0.03365012031362999d0*lnTe**4+0.01178329782711d0*lnTe**5-0.001656194699504d0*lnTe**6+0.0001068275202678d0*lnTe**7-2.631285809207d-6*lnTe**8)
@@ -106,10 +105,10 @@
 #Dalgarno & Lepp 1987
 24,H2+,H-,,H,H2,,,NONE,NONE,5.d-7*sqrt(1.d2*invT)
 
-#Forrey 2013 !NEW! 
+#Three body reaction with H from Forrey 2013 !NEW! #uncertainty as high as 2 orders of magnitude between various papers (see discussion in Glover & Savin 2009, sections 3.1.7 and 5.6) but Forrey 2013 is the most accurate
 25,H,H,H,H2,H,,,NONE,NONE,6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0)
 
-#Glover&Abel 2008 
+#Three body reaction with H2 from Glover&Abel 2008 #uncertainty as high as 2 orders of magnitude between various papers, see discussion in Glover & Savin 2009, sections 3.1.7 and 5.6
 26,H2,H,H,H2,H2,,,NONE,NONE,(6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0))/8.d0
 
 #Omukai 2001
@@ -332,6 +331,7 @@
 @var:u1 = 11.26d0*invTe
 @var:u3 = 13.6*invTe
 @format:idx,R,R,P,P,P,rate
+#next two reactions below from Voronov 1997: https://www.sciencedirect.com/science/article/pii/S0092640X97907324?via%3Dihub
 105,C,E,C+,E,E,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
 106,O,E,O+,E,E,3.59d-8*u3**0.34*exp(-u3)/(0.073d0+u3)
 @format:idx,R,R,P,P,rate
