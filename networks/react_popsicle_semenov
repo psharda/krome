@@ -278,13 +278,20 @@
 
 84,OH,CO,CO2,H,NONE,NONE,1d-13
 
-#Glover&Jappsen 2007
 @format:idx,R,R,P,Tmin,Tmax,rate
-#O2005 use an older rate coefficient
-#TODO: this is only in the gas. There is a separate reaction for recombination of C+ and e on dust which is not included here
-85,C+,E,C,NONE,.LE.7950d0,4.67d-12*(T32)**(-0.6)
-86,C+,E,C,>7950d0,.LE.21140d0,1.23d-17*(T32)**2.49*exp(21845.6d0*invT)
-87,C+,E,C,>21140d0,NONE,9.62d-8*(T32)**(-1.37)*exp(-115786.2d0*invT)
+#Original rates from Badnell+2003,2006. GOW only include the first three terms for the dielectronic recombination (DR), but we include all the five terms like Hunter+2023
+#DR rates are available at https://amdpp.phys.strath.ac.uk/tamoc/DR/clist_K
+@var:alpha17=sqrt(Tgas/6.67d-3)
+@var:beta17=sqrt(Tgas/1.943d6)
+@var:gamma17=0.7849d0 + 0.1597*exp(-49550d0/Tgas)
+@var:krr = 2.995d-9 / (alpha17*((1d0+alpha17)**(1d0-gamma17))*(1d0+beta17)**(1d0+gamma17))
+@var:kdr1 = 6.346d-9*exp(-12.17d0/Tgas)
+@var:kdr2 = 9.793d-9*exp(-73.80d0/Tgas)
+@var:kdr3 = 1.634d-6*exp(-15230d0/Tgas)
+@var:kdr4 = 8.369d-4*exp(-1.207d5/Tgas)
+@var:kdr5 = 3.355d-4*exp(-2.144d5/Tgas)
+@var:kdr = (Tgas**(-1.5d0))*(kdr1+kdr2+kdr3+kdr4+kdr5)
+85,C+,E,C,NONE,NONE,krr+kdr
 
 #KIDA, below 10K constant
 @format:idx,R,R,P,P,Tmin,Tmax,rate

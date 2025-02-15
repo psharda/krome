@@ -94,9 +94,7 @@
 29,He+,OH,,O+,He,H,1.35d-9*(0.62d0 + 45.41*(Tgas**(-0.5d0)))
 27,OH,O,,O,O,H,3.5d-11
 
-#Glover&Jappsen 2007
 @format:idx,R,R,P,Tmin,Tmax,rate
-#O2005 use an older rate coefficient
 #Original rates from Badnell+2003,2006. GOW only include the first three terms for the dielectronic recombination (DR), but we include all the five terms like Hunter+2023
 #DR rates are available at https://amdpp.phys.strath.ac.uk/tamoc/DR/clist_K
 @var:alpha17=sqrt(Tgas/6.67d-3)
