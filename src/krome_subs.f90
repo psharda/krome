@@ -637,6 +637,89 @@ contains
 
   end function dissH2_Martin96
 
+  !***************************
+  !Collisional dissociation rate H2+H->H+H+H
+  !Combination of MacLow & Shull 1986 for low densities
+  !and Martin et al. 1996 for high densities
+  !with a ramp between the two based on the critical density calculation
+  !presented in Glover & MacLow 2007. However Glover & MacLow 2007, use a 
+  !combination of rates from of Lepp & Shull 1983 and MacLow & Shull 1986
+  !but this combination gives a constant rate at very high Tgas > 1e6 K which
+  !is incorrect. Our combination ensures the rate decreases at such high Tgas
+  !Critical density calculation was updated by Glover & Savin 2009 to also 
+  !inclde He, which is a TODO for the future if needed
+  !If you use this rate, it must be included in the reaction file as
+  !H2,H,,H,H,H,,NONE,.LE.1d8,dissH2_Glover07(n,Tgas)
+  function dissH2_Glover07(n,Tgas)
+    use krome_commons
+    use krome_getphys
+    integer::i
+    real*8::n(nspec),Tgas,dissH2_Glover07,n_H,xH,xH2
+    real*8::n_cr_H,n_cr_H2,ncr,k22_h,k22_l,logkH
+    real*8::k_CIDm(21,2)
+    real*8::logk_h1a,logk_h2a,logk_h1b,logk_h2b
+    real*8::logT,logT2,logT3,logT4,invT,logTv(4),T4
+
+    n_H  = get_Hnuclei(n(:))
+    T4 = Tgas / 1d4
+    logT4 = log10(T4)
+
+    !Critical density calculation
+    xH = n(idx_H) / n_H  !Number fraction of H
+    xH2 = n(idx_H2) / n_H  !Number fraction of H2
+
+    !Critical densities from Lepp & Shull (1983) and Shapiro & Kang (1987)
+    n_cr_H = 1d1 ** (3d0 - 0.416d0 * logT4 - 0.327d0 * logT4**2d0)
+    n_cr_H2 = 1d1 ** (4.845d0 - 1.3d0 * logT4 + 1.62d0 * logT4**2d0)
+
+    !Combined critical density (Equation 27 of Glover & Jappsen 2007)
+    !TODO: include He here as done by Glover & Savin 2009
+    ncr = 1d0 / ((xH / n_cr_H) + (xH2 / n_cr_H2))
+
+    !k_CID = collision-induced dissociation + dissociative tunneling
+    !Collisional dissociation of H2
+    k_CIDm(:,1) = (/-178.4239d0, -68.42243d0, 43.20243d0, -4.633167d0, &
+         69.70086d0, 40870.38d0, -23705.70d0, 128.8953d0, -53.91334d0, &
+         5.315517d0, -19.73427d0, 16780.95d0, -25786.11d0, 14.82123d0, &
+         -4.890915d0, 0.4749030d0, -133.8283d0, -1.164408d0, 0.8227443d0,&
+         0.5864073d0, -2.056313d0/)
+    !Dissociative tunneling of H2
+    k_CIDm(:,2) = (/-142.7664d0, 42.70741d0, -2.027365d0, -0.2582097d0, &
+         21.36094d0, 27535.31d0, -21467.79d0, 60.34928d0, -27.43096d0, &
+         2.676150d0, -11.28215d0, 14254.55d0, -23125.20d0, 9.305564d0, &
+         -2.464009d0, 0.1985955d0, 743.0600d0, -1.174242d0, 0.7502286d0, &
+         0.2358848d0, 2.937507d0/)
+
+    logT = log10(Tgas)
+    invT = 1.0d0/Tgas
+    logT2 = logT*logT
+    logT3 = logT2*logT
+    logTv = (/1.d0, logT, logT2, logT3/)
+
+    !Low density limit from MacLow and Shull 1986
+    k22_l = 6.67d-12 * sqrt(Tgas) * exp(- (1d0 + 63590d0 / Tgas))
+
+    !High density limit from Martin et al. 1996
+    i = 1
+    logk_h1a = k_CIDm(1,i)*logTv(1) + k_CIDm(2,i)*logTv(2) + &
+          k_CIDm(3,i)*logTv(3) + k_CIDm(4,i)*logTv(4) + &
+          k_CIDm(5,i)*log10(1.d0+k_CIDm(6,i)*invT)
+    logk_h2a = k_CIDm(7,i)*invT
+
+    i = 2
+    logk_h1b = k_CIDm(1,i)*logTv(1) + k_CIDm(2,i)*logTv(2) + &
+          k_CIDm(3,i)*logTv(3) + k_CIDm(4,i)*logTv(4) + &
+          k_CIDm(5,i)*log10(1.d0+k_CIDm(6,i)*invT)
+    logk_h2b = k_CIDm(7,i)*invT
+    k22_h = (1d1**(logk_h1a+logk_h2a) + 1d1**(logk_h1b+logk_h2b))
+
+    ! Interpolation between low- and high-density limits
+    logkH = (n_H / ncr) / (1d0 + (n_H / ncr)) * log10(k22_h) + (1d0 / (1d0 + (n_H / ncr))) * log10(k22_l)
+
+    dissH2_Glover07 = 1d1**logkH
+
+  end function dissH2_Glover07
+
 #IFKROME_use_cluster_growth
   !**********************
   ! Cluster growth rate based on kinetic nucleation theory (KNT)
