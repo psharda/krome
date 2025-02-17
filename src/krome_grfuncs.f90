@@ -303,6 +303,7 @@ contains
   ! pexp: power-law exponent, usually -3.5
   ! rho0: bulk material density, g/cm3, e.g. 3 g/cm3 for silicates
   ! d2g: dust to gass mass ratio, usually 0.01
+  ! See Grassi et al. 2017 and Nozawa et al. 2006 for details
   function krate_stick(n,idx,Tdust,amin,amax,pexp,rho0,d2g) result(k)
     use krome_constants
     use krome_commons
