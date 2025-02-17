@@ -649,7 +649,7 @@ contains
   !Critical density calculation was updated by Glover & Savin 2009 to also 
   !inclde He, which is a TODO for the future if needed
   !If you use this rate, it must be included in the reaction file as
-  !H2,H,,H,H,H,,NONE,.LE.1d8,dissH2_Glover07(n,Tgas)
+  !H2,H,,H,H,H,,NONE,NONE,dissH2_Glover07(n,Tgas)
   function dissH2_Glover07(n,Tgas)
     use krome_commons
     use krome_getphys
