@@ -303,6 +303,7 @@ contains
   ! pexp: power-law exponent, usually -3.5
   ! rho0: bulk material density, g/cm3, e.g. 3 g/cm3 for silicates
   ! d2g: dust to gass mass ratio, usually 0.01
+  ! See Grassi et al. 2017 and Nozawa et al. 2006 for details
   function krate_stick(n,idx,Tdust,amin,amax,pexp,rho0,d2g) result(k)
     use krome_constants
     use krome_commons
@@ -409,15 +410,18 @@ contains
   !evaporation rate, 1/s
   function krate_evaporation(n,idx,Tdust) result(k)
     use krome_commons
+    use krome_constants
     use krome_getphys
     implicit none
     integer,intent(in)::idx
     real*8,intent(in)::n(nspec),Tdust
-    real*8::k,Ebind(nspec),nu0
+    real*8::k,Ebind(nspec),nu0,mass(nspec),ns
 
-    nu0 = 1d12 !1/s
     Ebind(:) = get_EbindBare()
+    mass(:) = get_mass()
 
+    ns = 1.5e15 !surface density of sites in cm^-2, from Reboussin et al. 2014, MNRAS 440, 3357
+    nu0 =  sqrt(2*ns*boltzmann_erg*Ebind(idx)/(pi*pi*mass(idx))) !1/s; equation 8 of Reboussin et al. 2014, MNRAS 440, 3357
     k = nu0 * exp(-Ebind(idx)/Tdust)
 
   end function krate_evaporation
