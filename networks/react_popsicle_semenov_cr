@@ -114,15 +114,10 @@
 #Three body reaction with H2 from Glover&Abel 2008 #uncertainty as high as 2 orders of magnitude between various papers, see discussion in Glover & Savin 2009, sections 3.1.7 and 5.6
 26,H2,H,H,H2,H2,,,NONE,NONE,(6.d-32*Tgas**(-0.25d0)+2.d-31*Tgas**(-0.5d0))/8.d0
 
-#Omukai 2001
-@var:invT = 1d0/Tgas
-@var:Hnuclei = get_Hnuclei(n(:))
-@var:kl21 = 1.18d-10*exp(-6.95d4*invT)
-@var:kh21 = 8.125d-8*T**(-0.5d0)*exp(-5.2d4*invT)*(1.d0-exp(-6d3*invT))
-@var:ncr21 = 1d1**(4.845d0-1.3d0*log10(T*1d-4)+1.62d0*(log10(T*1d-4))**2)
-@var:a21=1.d0/(1.d0+(Hnuclei/ncr21))
 @noTabNext
-27,H2,H2,,H,H,H2,,NONE,NONE,kh21**(1.-a21)*kl21**a21
+#reaction rate updated in 2025 to ensure stability at high Tgas; see the actual function for details
+27,H2,H2,,H,H,H2,,NONE,NONE,dissH2H2_Hunter23(n,Tgas)
+
 
 #NEW REACTION FROM YOSHIDA 2006, FOR HELIUM CHARGE TRANSFER
 @format:idx,R,R,P,P,Tmin,Tmax,rate
