@@ -10,4 +10,3 @@
 -maxord=1
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
--n networks/react_popsicle_semenov_cr
