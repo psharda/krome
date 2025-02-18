@@ -57,7 +57,7 @@ program test_cooling
     x(:) = 1d-40 !Default
 
     !set individual species
-    x(KROME_idx_H)         = ntot
+    x(KROME_idx_H)         = ntot - 2*1d-6*ntot - 1d-4*ntot
     x(KROME_idx_H2)        = 1d-6*ntot
     x(KROME_idx_E)         = 1d-4*ntot
     x(KROME_idx_Hj)        = 1d-4*ntot
