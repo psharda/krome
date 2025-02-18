@@ -22,7 +22,7 @@ Reduced chemical network for POPSICLE simulations
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
 #UPDATED primordial rates, 2014
 
-#Janev 1987
+#reaction 24 in table A1 in GOW
 24,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
 
 #reaction 21 in table A1 in GOW; Abel et al. 1997, fit by data from Ferland et al. 1992
@@ -54,7 +54,7 @@ Reduced chemical network for POPSICLE simulations
 7,He+,H2,H+,He,H,NONE,NONE,1.26d-13*exp(-22.5d0*invT)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-#GOW no. 25
+#reaction 25 in table A1 in GOW
 25,He+,H2,H2+,He,NONE,NONE,7.20d-15
 #reaction 15 in table A1 in GOW
 15,H3+,E,H2,H,NONE,NONE,4.54d-7*(Tgas**(-0.52d0))
@@ -75,10 +75,10 @@ Reduced chemical network for POPSICLE simulations
 ########################################## START GAS METAL CHEMISTRY ###################################################################
 
 @format:idx,R,R,P,P,rate
-#From Glover and Jappsen 2007
-#O2005 use an older rate coefficient
-31,O+,H,H+,O,4.99d-11*Tgas**0.405 + 7.54d-10*invT**(0.458)
-30,O,H+,O+,H,(1.08d-11*Tgas**0.517 + 4d-10*Tgas**(0.00669))*exp(-2.27d2*invT)
+#reaction 31 in table A1 in GOW
+31,O+,H,H+,O,4.99d-11*Tgas**(0.405d0) + 7.5d-10*Tgas**(-0.458d0)
+#reaction 30 in table A1 in GOW
+30,H+,O,O+,H,(1.1d-11*Tgas**(0.517d0) + 4d-10*Tgas**(0.00669d0))*exp(-2.27d2*invT)
 
 @format:idx,R,R,R,P,P,P,rate
 #reaction 10 in table A1 in GOW
@@ -93,7 +93,9 @@ Reduced chemical network for POPSICLE simulations
 222,HCO+,E,,OH,C,,1.06d-5*(Tgas**(-0.64d0))*8d-2
 #reaction 6 in table A1 in GOW
 6,H3+,CO,,HCO+,H2,,1.7d-9
+#reaction 29 in table A1 in GOW
 29,He+,OH,,O+,He,H,1.35d-9*(0.62d0 + 45.41*(Tgas**(-0.5d0)))
+#reaction 27 in table A1 in GOW
 27,OH,O,,O,O,H,3.5d-11
 
 @format:idx,R,R,P,Tmin,Tmax,rate
@@ -113,7 +115,8 @@ Reduced chemical network for POPSICLE simulations
 17,C+,E,C,NONE,NONE,krr+kdr
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-26,CH,H,C,H2,NONE,NONE,2.81d-11*(Tgas**0.26d0)
+#reaction 26 in table A1 in GOW
+26,CH,H,H2,C,NONE,NONE,2.81d-11*(Tgas**(0.26d0))
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #reaction 11 in table A1 in GOW
@@ -177,7 +180,7 @@ Reduced chemical network for POPSICLE simulations
 119,O+,E,O,>4d2,NONE,1.41d-10*(Tgas)**(-0.66) + 7.4d-4*(Tgas)**(-1.5)*exp(-1.75d5*invT)*(1d0 + 0.062d0*exp(-1.45d5*invT))
 
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
-#following Hunter+2023, these reactions added from Nahar 2000 who include both radiative and dielectronic recombination. fit by Piyush Sharda to their data
+#reaction 28 in table A1 in GOW; following Hunter+2023, these reactions added from Nahar 2000 who include both radiative and dielectronic recombination. fit by Piyush Sharda to their data
 @var:nahar=log10(Tgas)
 141,Si+,E,Si,,,1d1,1d8,1d1**(-1.20200230e-5*nahar**10 + 8.54562990e-4*nahar**9 - 2.32251549e-2*nahar**8 + 3.34675301e-1*nahar**7 - 2.88575477*nahar**6 +1.56620751e1*nahar**5 - 5.42764137e1*nahar**4 + 1.18602509e2*nahar**3 - 1.56384523e2*nahar**2 + 1.11836287e2*nahar**1 - 4.32223214e1)
 #reaction below from Voronov 1997: https://www.sciencedirect.com/science/article/pii/S0092640X97907324?via%3Dihub
