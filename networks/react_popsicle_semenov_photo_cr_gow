@@ -1,17 +1,18 @@
-#Reduced chemical network for POPSICLE simulations
+#############################################################################################
+Reduced chemical network for POPSICLE simulations
 #Author: Piyush Sharda (Leiden), 2024
-#the following is the networkfrom GOW (Gong, Ostriker, Wolfire 2017)
+#the following is the network from GOW (Gong, Ostriker, Wolfire 2017)
 #with CO ice and He++ added
-#and also ensuring H2+ and O+ recombine with electrons
+#also ensuring H2+ and O+ recombine with electrons
+#plus few additional reactions from Hunter et al. 2023 which are needed for high Tgas
 #Includes photo chemistry and cosmic ray chemistry
 #Uses Semenov+2003 opacities and does not use KROME's inbuilt dust functionality (except for freezeout reactions)
-#To test the network, look at krome/tests/popsicle_semenov_gow
-#Reaction numbers match that given in Table A1 of GOW
+#To test the network, look at krome/tests/popsicle_semenov_photo_cr_gow or krome/tests/popsicle_semenov_photo_cr_gow_ismEqTest
 #Note that CH represents light hydrocarbons such as CH,CH2,CH3, etc. Do NOT consider CH as just CH. This is also why one reaction in particular: C+H2--> CH has an imbalance.
 #NOTE!!! Only use this network for metallicities >= 1% Solar
+#############################################################################################
 
 @var:T=Tgas
-
 @var:ntot=sum(n(1:nmols))
 
 #user_is_metal is a boolean flag to turn photochemistry of metals off in primordial conditions.
@@ -121,7 +122,8 @@
 #added as recommended by Hunter+2023 for high Tgas; taken from UMIST24
 13,CO,H,C,OH,NONE,NONE,1.1d-10*(T32)**(0.5d0)*exp(-77700d0*invT)
 
-1,H3+,C,CH,H2,NONE,NONE,1.04d-9*((3d2/Tgas)**0.00231d0) + (Tgas**(-1.5d0))*(3.4d-8*exp(-7.62*invT) + 6.97d-9*exp(-1.38*invT) + 1.31d-7*exp(26.6*invT) + 1.51d-4*exp(-8.11d3*invT))
+#reaction 1 in table A1 in GOW
+1,H3+,C,CH,H2,NONE,NONE,1.04d-9*((3d2/Tgas)**0.00231d0) + (Tgas**(1.5d0))*(3.4d-8*exp(-7.62*invT) + 6.97d-9*exp(-1.38*invT) + 1.31d-7*exp(-26.6*invT) + 1.51d-4*exp(-8.11d3*invT))
 #Recommended by Hunter+2023, from Prasad & Huntress 1980
 #TODO: insert the actual reaction rate here. Note that this reaction is imbalanced in Hunter, but we balance it here. There is no C+H2 radiative association reaction in Prasad&Huntress 1980
 333,C,H2,CH,,NONE,NONE,1d-17
