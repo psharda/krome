@@ -131,12 +131,19 @@ Reduced chemical network for POPSICLE simulations
 
 @var:aa1=6.0d-10
 @var:aa2=5.3d-6*(Tgas**(-0.5d0))
-2,H3+,O,OH,H2,NONE,NONE,1.99d-9*(Tgas**(-0.19d0))*(aa1*n(idx_H2) / (aa1*n(idx_H2) + aa2*n(idx_E)))
-4,O+,H2,H,OH,NONE,NONE,1.6d-9*(aa1*n(idx_H2) / (aa1*n(idx_H2) + aa2*n(idx_E)))
+@var:aah2 = n(idx_H2)/ntot
+@var:aae = n(idx_E)/ntot
+@var:GOWr = (aa1*aah2 / (aa1*aah2 + aa2*aae))
+#reaction 2 in table A1 in GOW
+2,H3+,O,OH,H2,NONE,NONE,1.99d-9*(Tgas**(-0.19d0))*GOWr
+#reaction 4 in table A1 in GOW
+4,O+,H2,H,OH,NONE,NONE,1.6d-9*GOWr
 
 @format:idx,R,R,R,P,P,P,Tmin,Tmax,rate
-3,H3+,O,E,H2,O,H,NONE,NONE,1.99d-9*(Tgas**(-0.19d0))*(1d0 - (aa1*n(idx_H2) / (aa1*n(idx_H2) + aa2*n(idx_E))))
-5,O+,H2,E,O,H,H,NONE,NONE,1.6d-9*(1d0 - (aa1*n(idx_H2) / (aa1*n(idx_H2) + aa2*n(idx_E))))
+#reaction 3 in table A1 in GOW
+3,H3+,O,E,H2,O,H,NONE,NONE,1.99d-9*(Tgas**(-0.19d0))*(1d0 - GOWr)
+#reaction 5 in table A1 in GOW
+5,O+,H2,E,O,H,H,NONE,NONE,1.6d-9*(1d0 - GOWr)
 #reaction below from Voronov 1997: https://www.sciencedirect.com/science/article/pii/S0092640X97907324?via%3Dihub
 @var:u1 = 11.26d0*invTe
 105,C,E,,C+,E,E,NONE,NONE,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
