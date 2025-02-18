@@ -71,6 +71,7 @@ class krome:
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = useSemenov = usedTdust = useSurface = useHeatingVisc = False
 	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = useBroadening = False
+	applyElementConservation_popsicle_semenov = applyElementConservation_popsicle_semenov_photo_full = False
 	verbatimFilename = "reactions_verbatim.dat"
 	useVerbatimFile = True
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
@@ -347,6 +348,8 @@ class krome:
 		self.parser.add_argument("-shielding_C", action="store_true", help="use C cross-shielding by H2 from Tielens and Hollenbach 1985")
 		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux \
 			(when calculated from photobins).")
+		self.parser.add_argument("-applyElementConservation_popsicle_semenov", action="store_true", help="apply element conservation for the popsicle semenov network by replacing ODEs of neutral species")
+		self.parser.add_argument("-applyElementConservation_popsicle_semenov_photo_full", action="store_true", help="apply element conservation for the popsicle semenov photo+cr network by replacing ODEs of neutral species")
 		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
 		self.parser.add_argument("-skipJacobian", action="store_true", help="do not write Jacobian in krome_ode.f90 file. Useful\
@@ -1158,6 +1161,20 @@ class krome:
 		if args.unsafe:
 			self.safe = False
 			print("Reading option -unsafe")
+
+		#whether to apply element conservation for the popsicle semenov photo+cr network
+		if args.applyElementConservation_popsicle_semenov_photo_full:
+			print("Reading option -applyElementConservation_popsicle_semenov_photo_full")
+			if self.filename != "networks/react_popsicle_semenov_photo_cr":
+				die("ERROR: option -applyElementConservation_popsicle_semenov_photo_full can only be used for the react_popsicle_semenov_photo_cr network!")
+			self.applyElementConservation_popsicle_semenov_photo_full = True
+
+		#whether to apply element conservation for the popsicle semenov network
+		if args.applyElementConservation_popsicle_semenov:
+			print("Reading option -applyElementConservation_popsicle_semenov")
+			if self.filename != "networks/react_popsicle_semenov" or self.filename != "networks/react_popsicle_semenov_cr":
+				die("ERROR: option -applyElementConservation_popsicle_semenov can only be used for the react_popsicle_semenov and react_popsicle_semenov_cr networks!")
+			self.applyElementConservation_popsicle_semenov = True
 
 		#enable stellar physics
 		if args.stars:
@@ -7170,6 +7187,8 @@ class krome:
 			if srow == "#IFKROME_usedTdust" and not self.usedTdust: skip = True
 			if srow == "#IFKROME_shieldHabingDust" and not self.shieldHabingDust: skip = True
 			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
+			if srow == "#IFKROME_applyElementConservation_popsicle_semenov" and not self.applyElementConservation_popsicle_semenov: skip = True
+			if srow == "#IFKROME_applyElementConservation_popsicle_semenov_photo_full" and not self.applyElementConservation_popsicle_semenov_photo_full: skip = True
 
 			if srow == "#ENDIFKROME": skip = False
 
