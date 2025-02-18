@@ -23,7 +23,7 @@
 #UPDATED primordial rates, 2014
 @format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
 #reaction 24 in table A1 in GOW
-1,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
+24,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
 
 #reaction 21 in table A1 in GOW; Abel et al. 1997, fit by data from Ferland et al. 1992
 21,H+,E,,H,g,,,NONE,.LE.5.5e3,3.92d-13*invTe**0.6353d0
@@ -132,10 +132,8 @@
 
 #reaction 1 in table A1 in GOW
 1,H3+,C,CH,H2,NONE,NONE,1.04d-9*((3d2/Tgas)**0.00231d0) + (Tgas**(1.5d0))*(3.4d-8*exp(-7.62*invT) + 6.97d-9*exp(-1.38*invT) + 1.31d-7*exp(-26.6*invT) + 1.51d-4*exp(-8.11d3*invT))
-#Recommended by Hunter+2023, from Prasad & Huntress 1980
-#TODO: insert the actual reaction rate here. Note that this reaction is imbalanced in Hunter, but we balance it here. There is no C+H2 radiative association reaction in Prasad&Huntress 1980
+#Recommended by Hunter+2023, from Prasad & Huntress 1980 (note PH80 do not actually have this reaction, Simon assumes the rate of PH80's reaction 1181 (C+H->CH+proton) is the same as this one)
 333,C,H2,CH,,NONE,NONE,1d-17
-
 
 @var:aa1=6.0d-10
 @var:aa2=5.3d-6*(Tgas**(-0.5d0))
@@ -160,24 +158,14 @@
 #reaction 31 from Hunter+2023, added because it becomes important over reaction 31 of Hunter+2023 at Tgas > 5e2; rate from UMIST12
 132,OH,H,,O,H2,,NONE,NONE,6.99d-14*((Tgas/300)**(2.80d0))*exp(-1950d0/Tgas)
 
-# fit by Coppola et al. (2011) !NEW!
-# Upper limit increased from 1d4 K to the point where this reaction rate tends to 0 by Piyush Sharda, to remove discontinuity at 1d4 K that would otherwise cause integration failures
-23,H2+,E,,H,H,,NONE,.LE.23642.692081,1.d6*(4.2278d-14-2.3088d-17*Tgas+7.3428d-21*Tgas**2-7.5474d-25*Tgas**3+3.3468d-29*Tgas**4-5.528d-34*Tgas**5)
-
-#Janev 1987
+#reaction not in GOW, added from Hunter et al. 2023
 4,HE,E,,HE+,E,E,NONE,NONE,exp(-44.09864886d0+23.91596563d0*lnTe-10.7532302d0*(lnTe**2)+3.05803875d0*(lnTe**3)-0.56851189d0*(lnTe**4)+6.79539123d-2*(lnTe**5)-5.00905610d-3*(lnTe**6)+2.06723616d-4*(lnTe**7)-3.64916141d-6*(lnTe**8))
 
-#Aladdin database 1989 (see Abel et al. 1997)
+#reaction not in GOW or Hunter, we use it to do non-eqbm He++; Aladdin database 1989 (see Abel et al. 1997)
 7,HE+,E,,HE++,E,E,NONE,NONE,exp(-68.71040990212001d0+43.93347632635d0*lnTe-18.48066993568d0*lnTe**2+4.701626486759002d0*lnTe**3-0.7692466334492d0*lnTe**4+0.08113042097303d0*lnTe**5-0.005324020628287001d0*lnTe**6+0.0001975705312221d0*lnTe**7-3.165581065665d-6*lnTe**8)
 
-# Verner & Ferland 1996 !NEW!
+#reaction not in GOW or Hunter, we use it to do non-eqbm He++; Verner & Ferland 1996 !NEW!
 8,HE++,E,,HE+,,,NONE,NONE,1.891d-10/(sqrt(Tgas/9.37)*(1.+sqrt(Tgas/9.37))**0.2476*(1.+sqrt(Tgas/2.774d6))**1.7524)
-
-# Ensure O+ combines with E
-#Glover and Jappsen 2007
-@format:idx,R,R,P,Tmin,Tmax,rate
-118,O+,E,O,NONE,.LE.4d2,1.30d-10*(Tgas)**(-0.64)
-119,O+,E,O,>4d2,NONE,1.41d-10*(Tgas)**(-0.66) + 7.4d-4*(Tgas)**(-1.5)*exp(-1.75d5*invT)*(1d0 + 0.062d0*exp(-1.45d5*invT))
 
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
 #reaction 28 in table A1 in GOW; following Hunter+2023, these reactions added from Nahar 2000 who include both radiative and dielectronic recombination. fit by Piyush Sharda to their data
