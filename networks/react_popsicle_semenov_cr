@@ -379,7 +379,8 @@
 #@storeOnce_start: we don't use this option anymore in case crate changes due to attenuation
 #user_crate = primary+secondary cosmic ray ionization rate of H2 (reactions 122+136). CR reactions that are induced by photon released due to CR excitement of H2 molecules ('CRPHOT' in UMIST language) are scaled with xH2 as defined below. Direct CR reactions ('CRP' in UMIST language) do not have this scaling.
 #Most rate coefficients below come from Padovani et al. (2024); see Menon & Sharda 2025 for details.
-@var:xH2 = n(idx_H2)/(2d0*n(idx_H2) + n(idx_H))
+@var:Hnuclei=get_Hnuclei(n(:))
+@var:xH2 = n(idx_H2)/Hnuclei
 120,H,H+,E,NONE,41d3,(5d-1 + 4.078d0*xH2)*user_crate
 121,H-,H,E,NONE,41d3,924d0*xH2*user_crate
 122,H2,H2+,E,NONE,41d3,0.976d0*user_crate
