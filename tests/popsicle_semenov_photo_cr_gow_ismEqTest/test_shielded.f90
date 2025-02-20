@@ -119,6 +119,7 @@ program test_krome_eqbm
       x(KROME_idx_HE)        = 0.0775*ntot
       x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
       x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
+      x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
 
       call krome_set_Semenov_Tdust(6d0) !Dust at 6K
 
