@@ -372,10 +372,13 @@
 #DUST FREEZE-OUT/EVAPORATION
 #TODO: note that there is an inconsistency in the dust size and distribution used in freezeout reactions, as compared to that used by Semenov opacities
 @var:tabTdust = get_table_Tdust(n(:))
+#freezeout rate coefficient is in s^-1
 @ice:CO,freezeout,krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)
-@ice:CO,evaporation,krate_evaporation(n(:),idx_CO,krome_Semenov_Tdust)
+#evaporation rate coefficient is in cm^-3 s^-1
+#total evaporation cannot be greater than freeze out in the first place
+@ice:CO,evaporation,min(krate_evaporation(n(:),idx_CO,krome_Semenov_Tdust), krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)*n(idx_CO_total))
 @ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)
-@ice:H2O,evaporation,krate_evaporation(n(:),idx_H2O,krome_Semenov_Tdust)
+@ice:H2O,evaporation,min(krate_evaporation(n(:),idx_H2O,krome_Semenov_Tdust), krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)*n(idx_H2O_total))
 @noTab_stop
 
 ########################################## END FREEZEOUT CHEMISTRY ###################################################################
