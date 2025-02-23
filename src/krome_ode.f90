@@ -34,6 +34,24 @@ contains
 #KROME_coevars
 
     n(:) = nin(:)
+
+#IFKROME_popsicle_ice
+    !avoid negative species
+    do i=1,nspec
+      n(i) = max(n(i),0d0)
+    end do
+    n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
+    n(idx_H2O) = min(n(idx_H2O), n(idx_H2O_total))
+#ENDIFKROME
+
+#IFKROME_popsicle_ice_gow
+    !avoid negative species
+    do i=1,nspec
+      n(i) = max(n(i),0d0)
+    end do
+    n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
+#ENDIFKROME
+
     ntot = sum(n(1:nmols))
     nH = get_Hnuclei(n(:))
     nH2dust = 0.d0
