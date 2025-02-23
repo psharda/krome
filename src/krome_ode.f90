@@ -36,20 +36,24 @@ contains
     n(:) = nin(:)
 
 #IFKROME_popsicle_ice
-    !avoid negative species
-    do i=1,nspec
-      n(i) = max(n(i),0d0)
-    end do
-    n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
-    n(idx_H2O) = min(n(idx_H2O), n(idx_H2O_total))
+    if (phys_metallicity .gt. 0d0) then
+      !avoid negative species
+      do i=1,nspec
+        n(i) = max(n(i),0d0)
+      end do
+      n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
+      n(idx_H2O) = min(n(idx_H2O), n(idx_H2O_total))
+    endif
 #ENDIFKROME
 
 #IFKROME_popsicle_ice_gow
-    !avoid negative species
-    do i=1,nspec
-      n(i) = max(n(i),0d0)
-    end do
-    n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
+    if (phys_metallicity .gt. 0d0) then
+      !avoid negative species
+      do i=1,nspec
+        n(i) = max(n(i),0d0)
+      end do
+      n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
+    endif
 #ENDIFKROME
 
     ntot = sum(n(1:nmols))
