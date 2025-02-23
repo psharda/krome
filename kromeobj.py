@@ -1197,7 +1197,7 @@ class krome:
 			self.useStars = True
 			print("Reading option -stars")
 
-		#do not write test.f90 and defdefile
+		#do not write test.f90 and Makefile
 		if args.noExample:
 			self.noExample = True
 			print("Reading option -noExample")
