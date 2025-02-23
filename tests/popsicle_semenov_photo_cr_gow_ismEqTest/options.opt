@@ -13,4 +13,5 @@
 -shielding_C
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
--n networks/react_popsicle_semenov_photo_cr_gow
+-popsicle_ice_gow
+-noRecCheck
