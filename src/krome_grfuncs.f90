@@ -415,17 +415,27 @@ contains
     implicit none
     integer,intent(in)::idx
     real*8,intent(in)::n(nspec),Tdust
-    real*8::k,Ebind(nspec),nu0,mass(nspec),ns
+    real*8::k,Ebind(nspec),nu0,mass(nspec),ns,nfrac
+    real*8::GRAIN_SURFACEAREA_PER_H, extra_factor
 
     Ebind(:) = get_EbindBare()
     mass(:) = get_mass()
 
     ns = 1.5e15 !surface density of sites in cm^-2, from Reboussin et al. 2014, MNRAS 440, 3357
     nu0 =  sqrt(2*ns*boltzmann_erg*Ebind(idx)/(pi*pi*mass(idx))) !1/s; equation 8 of Reboussin et al. 2014, MNRAS 440, 3357
-    k = nu0 * exp(-Ebind(idx)/Tdust)
+    nfrac = 1d0 !fraction of species adsorbed (equation 8 of Cuppen, Walsh et al. 2017). since we do not have all possible ices, we cannot estimate this fraction, so in essence we are using the maximum possible desorption rate here; in reality, nfrac < 1
+
+    !if the network is two phase only (gas and grain), then an extra factor needs to be
+    !multiplied to take into account the fact that desorption is not a continuous process
+    !and not all adsorbed species is on the mantle (some could be in the bulk)
+    !we do it following UCLCHEM (Holdship et al. 2017), who follow Cuppen, Walsh et al. 2017 section 4
+    !actual values taken from UCLCHEM source code file surfacereactions.f90
+    GRAIN_SURFACEAREA_PER_H = 4d0*0.5*(7.908d-22+8.473d-22)*dust2gas_ratio*nfrac !Grain area per h nuclei, values taken from Cazaux & Tielens 2004 via UCL-PDR to match H2 formation rate. 
+    extra_factor = 2d0 * ns * GRAIN_SURFACEAREA_PER_H
+    k = nu0 * exp(-Ebind(idx)/Tdust) * extra_factor
 
   end function krate_evaporation
-
+  
   !***************************
   !non-thermal evaporation rate (1/s) following Hollenbach 2009,
   ! http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:0809.1642
