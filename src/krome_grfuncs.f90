@@ -407,7 +407,7 @@ contains
 #ENDIFKROME
 
   !***************************
-  !evaporation rate, 1/s
+  !evaporation rate, cm^-3 s^-1
   function krate_evaporation(n,idx,Tdust) result(k)
     use krome_commons
     use krome_constants
@@ -432,7 +432,7 @@ contains
     !actual values taken from UCLCHEM source code file surfacereactions.f90
     GRAIN_SURFACEAREA_PER_H = 4d0*0.5*(7.908d-22+8.473d-22)*dust2gas_ratio*nfrac !Grain area per h nuclei, values taken from Cazaux & Tielens 2004 via UCL-PDR to match H2 formation rate. 
     extra_factor = 2d0 * ns * GRAIN_SURFACEAREA_PER_H
-    k = nu0 * exp(-Ebind(idx)/Tdust) * extra_factor
+    k = nu0 * exp(-Ebind(idx)/Tdust) * extra_factor !in cm^-3 s^-1 (see equation 8 of Cuppen, Walsh et al. 2017)
 
   end function krate_evaporation
   
