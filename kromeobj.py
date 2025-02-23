@@ -71,7 +71,7 @@ class krome:
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = useSemenov = usedTdust = useSurface = useHeatingVisc = False
 	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = useBroadening = False
-	applyElementConservation_popsicle_semenov = applyElementConservation_popsicle_semenov_photo_full = False
+	applyElementConservation_popsicle_semenov = applyElementConservation_popsicle_semenov_photo_full = popsicle_ice = popsicle_ice_gow = False
 	verbatimFilename = "reactions_verbatim.dat"
 	useVerbatimFile = True
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
@@ -348,6 +348,8 @@ class krome:
 		self.parser.add_argument("-shielding_C", action="store_true", help="use C cross-shielding by H2 from Tielens and Hollenbach 1985")
 		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux \
 			(when calculated from photobins).")
+		self.parser.add_argument("-popsicle_ice", action="store_true", help="if the network is using evaporation rate coefficients in cm^-3 s^-1 (used for the popsicle simulations); see evaporation in krome_grfuncs.f90")
+		self.parser.add_argument("-popsicle_ice_gow", action="store_true", help="if the GOW network is using evaporation rate coefficients in cm^-3 s^-1 (used for the popsicle simulations); see evaporation in krome_grfuncs.f90")
 		self.parser.add_argument("-applyElementConservation_popsicle_semenov", action="store_true", help="apply element conservation for the popsicle semenov network by replacing ODEs of neutral species")
 		self.parser.add_argument("-applyElementConservation_popsicle_semenov_photo_full", action="store_true", help="apply element conservation for the popsicle semenov photo+cr network by replacing ODEs of neutral species")
 		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
@@ -1176,12 +1178,26 @@ class krome:
 				die("ERROR: option -applyElementConservation_popsicle_semenov can only be used for the react_popsicle_semenov and react_popsicle_semenov_cr networks!")
 			self.applyElementConservation_popsicle_semenov = True
 
+		#whether network is using evaporation rates in cm^-3 s^-1
+		if args.popsicle_ice:
+			print("Reading option -popsicle_ice: so ice evaporation rate coefficients are assumed to be in cm^-3 s^-1")
+			if self.popsicle_ice_gow:
+				die("ERROR: option -popsicle_ice and -popsicle_ice_gow are mutually exclusive!")
+			self.popsicle_ice = True
+
+		#whether GOW network is using evaporation rates in cm^-3 s^-1
+		if args.popsicle_ice_gow:
+			print("Reading option -popsicle_ice_gow: so ice evaporation rate coefficients in GOW are assumed to be in cm^-3 s^-1")
+			if self.popsicle_ice:
+				die("ERROR: option -popsicle_ice and -popsicle_ice_gow are mutually exclusive!")
+			self.popsicle_ice_gow = True
+
 		#enable stellar physics
 		if args.stars:
 			self.useStars = True
 			print("Reading option -stars")
 
-		#do not write test.f90 and Makefile
+		#do not write test.f90 and defdefile
 		if args.noExample:
 			self.noExample = True
 			print("Reading option -noExample")
@@ -4076,10 +4092,21 @@ class krome:
 					#get freeze and evaporation rates index
 					idxFreeze = str(iceData["reactionFreezeout"].idx)
 					idxEvaporation = str(iceData["reactionEvaporation"].idx)
-					dns[species.idx-1] = "\n!"+iceName+"_GAS\n" \
-						+ "dn("+species.fidx+") = dnChem_"+iceName \
-						+ " -n("+species.fidx+")*(k("+idxFreeze+")+k("+idxEvaporation+"))" \
-						+ " +k("+idxEvaporation+")*n("+species.fidx+"_total)"
+					if not self.popsicle_ice:
+						#original KROME syntax:
+						dns[species.idx-1] = "\n!"+iceName+"_GAS\n" \
+							+ "dn("+species.fidx+") = dnChem_"+iceName \
+							+ " -n("+species.fidx+")*(k("+idxFreeze+")+k("+idxEvaporation+"))" \
+							+ " +k("+idxEvaporation+")*n("+species.fidx+"_total)"
+					else:
+						#modified by Piyush Sharda for Popsicle simulations
+						#the rate coefficient for evaporation is already multiplied by number density
+						#and is in the units of cm^-3 s^-1 as needed by the ODE:
+						dns[species.idx-1] = "\n!"+iceName+"_GAS\n" \
+							+ "dn("+species.fidx+") = dnChem_"+iceName \
+							+ " -n("+species.fidx+")*k("+idxFreeze+")" \
+							+ " +k("+idxEvaporation+")"
+
 					#if iceName has surface reactions changes GAS ODE accordingly
 					for react in thisReacts:
 						#build reactants multiplication
@@ -8028,6 +8055,8 @@ class krome:
 			if srow == "#IFKROME_check_mass_conservation" and not self.checkConserv: skip = True
 			if srow == "#IFKROME_useDustSizeEvol" and not self.useDustSputter and not self.useDustGrowth\
 				and not self.useDustEvap: skip = True
+			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip = True
+			if srow == "#IFKROME_popsicle_ice_gow" and not self.popsicle_ice_gow: skip = True
 			if srow == "#IFKROME_useEquilibrium" and not self.useEquilibrium: skip = True
 			if srow == "#IFKROME_useStars" and not self.useStars: skip = True
 			if srow == "#IFKROME_useCoolingZ" and not self.useCoolingZ: skip = True

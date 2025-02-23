@@ -250,6 +250,16 @@ contains
        n(i) = max(n(i),0d0)
     end do
 
+#IFKROME_popsicle_ice
+    n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
+    n(idx_H2O) = min(n(idx_H2O), n(idx_H2O_total))
+#ENDIFKROME
+
+#IFKROME_popsicle_ice_gow
+    n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
+#ENDIFKROME
+
+
 #IFKROME_conserve
     n(:) = conserve(n(:),ni(:))
 #ENDIFKROME
