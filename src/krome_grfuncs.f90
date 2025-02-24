@@ -437,13 +437,18 @@ contains
   end function krate_evaporation
   
   !***************************
-  !non-thermal evaporation rate (1/s) following Hollenbach 2009,
-  ! http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:0809.1642
+  !non-thermal evaporation rate (cm^-3 s^-1) following Hollenbach 2009,
+  !http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:0809.1642
+  !The rate is a combination of cosmic rays + UV desorption
+  !For the cosmic rays part, we follow Reboussin et al. 2014
+  !but we do it for a two phase model following UCLCHEM
+  !For the UV part,
   !Gnot is the habing flux (1.78 is Draine)
   !Av is the visual extinction
   !crflux the ionization flux of cosmic rays, 1/s
   !yield is the efficiency of the photons to desorb the given molecule
-  function krate_nonthermal_evaporation(idx, Gnot, Av, crflux, yield) result(k)
+  !***************************
+  function krate_nonthermal_evaporation(idx, n, Gnot, Av, crflux, yield) result(k)
     use krome_commons
     use krome_getphys
     implicit none
@@ -451,14 +456,20 @@ contains
     real*8,parameter::crnot=1.3d-17
     real*8,parameter::Fnot=1d8 !desorbing photons flux, 1/s
     real*8,parameter::ap2=(3d-8)**2 !sites separation squared, cm2
-    real*8,intent(in)::Gnot, Av, crflux, yield
-    real*8::k,f70,kevap70(nspec)
+    real*8,intent(in)::Gnot, Av, crflux, yield, n(nspec)
+    real*8::k,f70,kevap70
 
-    f70 = 3.16d-19*crflux/crnot
-    kevap70(:) = get_kevap70()
-
-    k = Gnot*Fnot*ap2*yield*exp(-1.8*Av)
-    k = k + f70*kevap70(idx)
+    if (idx .eq. idx_CO) then
+      !UV:
+      k = Gnot*Fnot*ap2*yield*exp(-1.8*Av)*n(idx_CO_total) !equation 7 of Hollenbach et al. 2009, scale with n(idx_total) to get this rate also in cm^-3 s^-1
+      !cosmic rays:
+      f70 = 3.16d-19*crflux/crnot !equation 10 of Reboussin et al. 2014
+      kevap70 = krate_evaporation(n,idx,7d1) !get the desoprtion rate in cm^-3 s^-1
+      k = k + f70*kevap70*max(0d0, n(idx_CO_total)-n(idx_CO))/n(idx_CO_total) !add the cosmic rays part
+    else
+      k = 0d0
+      print *, 'WARNING! Only CO no thermal desorption is currently implemented'
+    endif
 
   end function krate_nonthermal_evaporation
 
