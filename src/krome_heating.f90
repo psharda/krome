@@ -42,6 +42,10 @@ contains
     heats(idx_heat_chem) = heatingChem(n(:), Tgas, k(:), nH2dust)
 #ENDIFKROME
 
+#IFKROME_useHeatingAccretion
+    heats(idx_heat_accretion) = heatingAccretion(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useHeatingCompress
     heats(idx_heat_compress) = heat_compress(n(:), Tgas)
 #ENDIFKROME
@@ -327,6 +331,27 @@ contains
            mayer_ymul,logrhogas,logTgas))
 
     end function Planckopacity_mayer
+
+    !*****************************
+    ! Heating due to accretion luminosity
+    ! Units erg/cm3/s
+    ! Equation 4 of Wollenberg et al. 2020
+    function heatingAccretion(n, Tgas)
+      use krome_commons
+      use krome_fit
+      use krome_subs
+      use krome_getphys
+      implicit none
+      real*8::heatingAccretion,Tgas,n(:)
+      real*8::opac_mayer,m(nspec),rhogas
+
+      heatingAccretion = 0d0
+      m(:) = get_mass()
+      rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
+
+      opac_mayer = Planckopacity_mayer(Tgas, n)
+      heatingAccretion = rhogas * opac_mayer * user_Lacc_Flux !erg/cm3/s
+    end function heatingAccretion
 #ENDIFKROME
 
 #IFKROME_useHeatingPhotoDust

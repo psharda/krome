@@ -9,7 +9,7 @@
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
 #UPDATED primordial rates, 2014
 @var:T=Tgas
-
+@common: user_Lacc_Flux
 @var:ntot=sum(n(1:nmols))
 
 #Janev 1987
