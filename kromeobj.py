@@ -5003,7 +5003,7 @@ class krome:
 			if srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT)
 				and self.useSurface): skip = True
 			if srow == "#IFKROME_useOmukaiOpacity" and self.H2opacity != "OMUKAI": skip = True
-			if srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT): skip = True
+			if srow == "#IFKROME_popsicle_ice" and not(self.usedTdust or self.useDustT or self.popsicle_ice): skip = True
 			if srow == "#IFKROME_useCoolingCO" and not self.useCoolingCO: skip = True
 			if srow == "#IFKROME_useCoolingOH" and not self.useCoolingOH: skip = True
 			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
@@ -8075,7 +8075,7 @@ class krome:
 			if srow == "#IFKROME_noierr" and self.useIERR: skip = True
 			if srow == "#IFKROME_useH2esc_omukai" and self.H2opacity != "OMUKAI": skip = True
 			if srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT) and self.useSurface): skip = True
-			if srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT): skip = True
+			if srow == "#IFKROME_popsicle_ice" and not(self.usedTdust or self.useDustT or self.popsicle_ice): skip = True
 			if srow == "#IFKROME_useDustTabs" and not self.useDustTabs: skip = True
 			if srow == "#IFKROME_reducer" and not self.reducer: skip = True
 			if srow == "#IFKROME_useBindC" and not(self.interfaceC or self.interfacePy): skipBindC = True
@@ -8363,7 +8363,7 @@ class krome:
 			shutil.copyfile("data/escape_H2.dat", buildFolder+"escape_H2.dat")
 
 		#copy Mayer opacity file
-		if self.usedTdust or self.useDustT :
+		if self.usedTdust or self.useDustT or self.popsicle_ice:
 			shutil.copyfile("data/mayer_E2.dat", buildFolder+"mayer_E2.dat")
 
 		#copy HM2012 flux file
