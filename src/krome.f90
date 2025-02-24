@@ -251,6 +251,7 @@ contains
     end do
 
 #IFKROME_popsicle_ice
+    !This is needed at very high densities when desorption becomes important
     if (phys_metallicity .gt. 0d0) then
       n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
       n(idx_H2O) = min(n(idx_H2O), n(idx_H2O_total))
@@ -258,6 +259,7 @@ contains
 #ENDIFKROME
 
 #IFKROME_popsicle_ice_gow
+    !This is needed at very high densities when desorption becomes important
     if (phys_metallicity .gt. 0d0) then
       n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
     endif
