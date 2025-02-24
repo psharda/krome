@@ -68,7 +68,7 @@ program test_krome
     !initialize KROME (mandatory)
     call krome_init()
 
-    !input some non-zero value here to test for accretion luminosity heating
+    !input some non-zero value here to test for accretion luminosity heating (only PopIII)
     call krome_set_user_Lacc_Flux(0d0)
 
     !species default, cm-3

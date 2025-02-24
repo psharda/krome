@@ -336,6 +336,7 @@ contains
     ! Heating due to accretion luminosity
     ! Units erg/cm3/s
     ! Equation 4 of Wollenberg et al. 2020
+    ! Only for primordial gas
     function heatingAccretion(n, Tgas)
       use krome_commons
       use krome_fit
@@ -346,6 +347,7 @@ contains
       real*8::opac_mayer,m(nspec),rhogas
 
       heatingAccretion = 0d0
+      if (phys_metallicity .gt. 0d0) return
       m(:) = get_mass()
       rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
 
