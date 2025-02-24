@@ -35,16 +35,6 @@ contains
 
     n(:) = nin(:)
 
-#IFKROME_popsicle_ice_gow
-    if (phys_metallicity .gt. 0d0) then
-      !avoid negative species
-      do i=1,nspec
-        n(i) = max(n(i),0d0)
-      end do
-      n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
-    endif
-#ENDIFKROME
-
     ntot = sum(n(1:nmols))
     nH = get_Hnuclei(n(:))
     nH2dust = 0.d0
