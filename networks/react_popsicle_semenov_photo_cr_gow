@@ -251,7 +251,7 @@
 @ice:CO,freezeout,krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)
 #evaporation rate coefficient is in cm^-3 s^-1
 #total evaporation cannot be greater than freeze out in the first place
-@ice:CO,evaporation,min(krate_evaporation(n(:),idx_CO,krome_Semenov_Tdust), krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)*n(idx_CO_total))
+@ice:CO,evaporation,max(min(krate_evaporation(n(:),idx_CO,krome_Semenov_Tdust), krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)*n(idx_CO)), small)
 ####NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux (disabled in 2025, TODO look into desorption again in the future)
 ####@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0, user_Av, user_crate, 1d-3)
 @noTab_stop

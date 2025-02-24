@@ -413,9 +413,9 @@
 @ice:CO,freezeout,krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)
 #evaporation rate coefficient is in cm^-3 s^-1
 #total evaporation cannot be greater than freeze out in the first place
-@ice:CO,evaporation,min(krate_evaporation(n(:),idx_CO,krome_Semenov_Tdust), krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)*n(idx_CO_total))
+@ice:CO,evaporation,max(min(krate_evaporation(n(:),idx_CO,krome_Semenov_Tdust), krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)*n(idx_CO)), small)
 @ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)
-@ice:H2O,evaporation,min(krate_evaporation(n(:),idx_H2O,krome_Semenov_Tdust), krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)*n(idx_H2O_total))
+@ice:H2O,evaporation,max(min(krate_evaporation(n(:),idx_H2O,krome_Semenov_Tdust), krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)*n(idx_H2O)), small)
 @noTab_stop
 
 ########################################## END FREEZEOUT CHEMISTRY ###################################################################
