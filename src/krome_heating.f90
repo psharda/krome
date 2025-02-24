@@ -300,7 +300,7 @@ contains
   end function heat_XRay
 #ENDIFKROME
 
-#IFKROME_popsicle_ice
+#IFKROME_useHeatingAccretion
     !*****************************
     ! Planck mean continuum opacity for primordial gas.
     ! Table E2 of Mayer and Duschl 2005

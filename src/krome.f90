@@ -834,7 +834,7 @@ contains
          ymulH2esc)
 #ENDIFKROME
 
-#IFKROME_popsicle_ice
+#IFKROME_useHeatingAccretion
     call init_anytab2D("mayer_E2.dat",mayer_x(:), &
          mayer_y(:), mayer_z(:,:), mayer_xmul, &
          mayer_ymul)

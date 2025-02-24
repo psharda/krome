@@ -124,7 +124,7 @@ module krome_commons
   !FUV radiation field (\chi in Table 2 of GOW)
   real*8::chiFUV
 
-#IFKROME_popsicle_ice
+#IFKROME_useHeatingAccretion
   !commons for Mayer opacity table
   integer,parameter::mayern=15,mayerm=23
   real*8::mayer_x(mayern),mayer_y(mayerm)
