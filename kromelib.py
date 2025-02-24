@@ -1248,7 +1248,7 @@ def get_heating_dict():
 	#the number is the corresponding integer index for the given heating
 	idxhea = {"chem": 1, "compress": 2, "compr": 2, "photo": 3, "dH": 4, "enthalpic": 4,
 			  "photoAv": 5, "Av": 5, "CR": 6, "dust": 7, "xray": 8, "visc": 9,"viscous": 9,
-			  "custom": 10, "ZCIE": 11}
+			  "custom": 10, "ZCIE": 11, "accretion":12}
 	idxhea = {k.lower(): v for k, v in idxhea.items()}
 	return idxhea
 
