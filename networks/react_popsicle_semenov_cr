@@ -118,7 +118,6 @@
 #reaction rate updated in 2025 to ensure stability at high Tgas; see the actual function for details
 27,H2,H2,,H,H,H2,,NONE,NONE,dissH2H2_Hunter23(n,Tgas)
 
-
 #NEW REACTION FROM YOSHIDA 2006, FOR HELIUM CHARGE TRANSFER
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 28,He+,H,He,H+,NONE,NONE,1.20d-15*(Tgas/3d2)**0.25d0
@@ -153,7 +152,7 @@
 37,H+,D,,H,D+,,,NONE,.LE.2d5,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
 38,H+,D,,H,D+,,,.GT.2d5,NONE,3.44d-10*Tgas**(0.350d0)
 
-#Galli & Palla 2002 from Wolf Savin 2001
+#Galli & Palla 2002 from Wolf Savin 2002
 39,H,D+,,H+,D,,,NONE,.LE.2d5,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
