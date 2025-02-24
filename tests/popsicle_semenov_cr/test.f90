@@ -149,7 +149,7 @@ program test_krome
       endif
 
        !break when max density reached
-       if(dd.gt.1d18) exit
+       if(dd.gt.1d17) exit
 
        !dust evaporation: dust is non existent at T > 1.5d3
        !if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)
