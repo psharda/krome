@@ -300,6 +300,31 @@ contains
   end function heat_XRay
 #ENDIFKROME
 
+#IFKROME_popsicle_ice
+    !*****************************
+    ! Planck mean continuum opacity for primordial gas.
+    ! Table E2 of Mayer and Duschl 2005
+    function Planckopacity_mayer(Tgas, n)
+      use krome_commons
+      use krome_fit
+      use krome_subs
+      use krome_getphys
+      implicit none
+      real*8::Planckopacity_mayer,Tgas,rhogas,n(:)
+      real*8::logrhogas,logTgas,m(nspec)
+
+      m(:) = get_mass()
+      rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
+      logrhogas = log10(rhogas)
+      logTgas = log10(Tgas)
+
+      Planckopacity_mayer = 1d1**(fit_anytab2D(mayer_x(:), &
+           mayer_y(:), mayer_z(:,:), mayer_xmul, &
+           mayer_ymul,logrhogas,logTgas))
+
+    end function Planckopacity_mayer
+#ENDIFKROME
+
 #IFKROME_useHeatingPhotoDust
   !***************************
   function heat_photoDust(n,Tgas)

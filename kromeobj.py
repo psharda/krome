@@ -6952,6 +6952,7 @@ class krome:
 				if row.strip() == "#IFKROME_useHeatingXRay" and not self.useHeatingXRay: skip = True
 				if row.strip() == "#IFKROME_useHeatingVisc" and not self.useHeatingVisc: skip = True
 				if row.strip() == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
+				if row.strip() == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip = True
 				#if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
 				if row.strip() == "#IFKROME_useHeatingZCIE" and not self.useCoolingZCIE: skip = True
 				if row.strip() == "#IFKROME_useHeatingZExtended" and not self.useCoolingZExtended: skip = True
