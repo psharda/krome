@@ -316,7 +316,11 @@ contains
       m(:) = get_mass()
       rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
       logrhogas = log10(rhogas)
-      logTgas = log10(Tgas)
+      !following Wollenberg et al. 2020, MNRAS 494, 1871
+      !we use a ceiling of 6d3 K to ensure opacities do not get
+      !unrealistically large for larger Tgas (see their equation 9)
+      !(their equation 9 has a typo: max should be min)
+      logTgas = log10(min(Tgas, 6d3))
 
       Planckopacity_mayer = 1d1**(fit_anytab2D(mayer_x(:), &
            mayer_y(:), mayer_z(:,:), mayer_xmul, &
