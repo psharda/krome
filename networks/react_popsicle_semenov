@@ -294,39 +294,39 @@
 #KIDA, below 10K constant
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #O2005 use an older rate coefficient. Piyush Sharda slightly updated the coefficient to ensure continuity
-88,OH,C+,H,CO+,NONE,1d1,1.3707124444663514d-8
-89,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+86,OH,C+,H,CO+,NONE,1d1,1.3707124444663514d-8
+87,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
-90,CO+,H,CO,H+,NONE,NONE,7.5d-10
-91,C,H,CH,,NONE,NONE,1d-17
-92,C,H2,CH,H,NONE,NONE,6.64d-10*exp(-11700d0*invT)
-
-#O2005 use an older rate coefficient
-93,CH,H,C,H2,NONE,NONE,1.31d-10*exp(-8d1*invT)
+88,CO+,H,CO,H+,NONE,NONE,7.5d-10
+89,C,H,CH,,NONE,NONE,1d-17
+90,C,H2,CH,H,NONE,NONE,6.64d-10*exp(-11700d0*invT)
 
 #O2005 use an older rate coefficient
-94,CH,H2,CH2,H,NONE,NONE,5.46d-10*exp(-1943d0*invT)
+91,CH,H,C,H2,NONE,NONE,1.31d-10*exp(-8d1*invT)
+
+#O2005 use an older rate coefficient
+92,CH,H2,CH2,H,NONE,NONE,5.46d-10*exp(-1943d0*invT)
 
 #KIDA
 #O2005 use an older rate coefficient
-95,CH2,H,CH,H2,NONE,NONE,2.2d-10
+93,CH2,H,CH,H2,NONE,NONE,2.2d-10
 
-96,CH2,H2,CH3,H,NONE,NONE,5.18d-11*(T32**0.17)*exp(-6400d0*invT)
-97,CH3,H,CH2,H2,NONE,NONE,1d-10*exp(-7600d0*invT)
+94,CH2,H2,CH3,H,NONE,NONE,5.18d-11*(T32**0.17)*exp(-6400d0*invT)
+95,CH3,H,CH2,H2,NONE,NONE,1d-10*exp(-7600d0*invT)
 #Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
-98,CH3,H2,CH4,H,NONE,.LE.19117091.8228,6.86d-14*(T32**2.74)*exp(-4740d0*invT)
+96,CH3,H2,CH4,H,NONE,.LE.19117091.8228,6.86d-14*(T32**2.74)*exp(-4740d0*invT)
 #Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
-99,CH4,H,CH3,H2,NONE,.LE.3594538.7216,5.82d-13*(T32**3.00)*exp(-4045d0*invT)
-100,C,H2,CH2,,NONE,NONE,1d-17
+97,CH4,H,CH3,H2,NONE,.LE.3594538.7216,5.82d-13*(T32**3.00)*exp(-4045d0*invT)
+98,C,H2,CH2,,NONE,NONE,1d-17
 
 #-----------------------------------------------------------------------------------------------------------------
 #Reactions added below on top of above network to ensure CO2 is not just a sink
 #Reactions from Omukai 2000, ApJ
 @format:idx,R,R,P,P,rate
-101,H,CO2,OH,CO,2.54d-10*exp(-13300d0*invT)
-102,O,CO2,CO,O2,2.80d-11*exp(-26500d0*invT)
-103,H2,CO2,H2O,CO,2.94d-14*(T32**0.5d0)*exp(-7550d0*invT)
-104,CO,O2,CO2,O,4.20d-12*exp(-24000d0*invT)
+99,H,CO2,OH,CO,2.54d-10*exp(-13300d0*invT)
+100,O,CO2,CO,O2,2.80d-11*exp(-26500d0*invT)
+101,H2,CO2,H2O,CO,2.94d-14*(T32**0.5d0)*exp(-7550d0*invT)
+102,CO,O2,CO2,O,4.20d-12*exp(-24000d0*invT)
 
 #Reactions added below on top of above network to ensure C+ is not just a source
 #Reactions from react_flash_metals network
@@ -334,32 +334,32 @@
 @var:u3 = 13.6*invTe
 @format:idx,R,R,P,P,P,rate
 #next two reactions below from Voronov 1997: https://www.sciencedirect.com/science/article/pii/S0092640X97907324?via%3Dihub
-105,C,E,C+,E,E,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
-106,O,E,O+,E,E,3.59d-8*u3**0.34*exp(-u3)/(0.073d0+u3)
+103,C,E,C+,E,E,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
+104,O,E,O+,E,E,3.59d-8*u3**0.34*exp(-u3)/(0.073d0+u3)
 @format:idx,R,R,P,P,rate
-107,C,H+,C+,H,3.9d-16*Tgas**(0.213)
-108,C+,H,C,H+,6.08d-14*(Tgas*1d-4)**(1.96)*exp(-1.7d5*invT)
-109,O2,C+,CO+,O,3.42d-10
+105,C,H+,C+,H,3.9d-16*Tgas**(0.213)
+106,C+,H,C,H+,6.08d-14*(Tgas*1d-4)**(1.96)*exp(-1.7d5*invT)
+107,O2,C+,CO+,O,3.42d-10
 #Glover+2010, KIDA additional channel
-110,C,O2+,O,CO+,5.2d-11
-111,C,O2+,O2,C+,5.2d-11
+108,C,O2+,O,CO+,5.2d-11
+109,C,O2+,O2,C+,5.2d-11
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-112,C+,O,CO+,,NONE,3d2,2.5d-18
-113,C+,O,CO+,,3d2,NONE,3.14d-18*T32**(-.15)*exp(-68d0*invT)
+110,C+,O,CO+,,NONE,3d2,2.5d-18
+111,C+,O,CO+,,3d2,NONE,3.14d-18*T32**(-.15)*exp(-68d0*invT)
 
 
 #Reactions added below on top of above network to ensure D+, O+, CH+, CH2+, OH+ and CO+ recombine with electrons
 #Reactions from react_flash_metals network
 #Additional Deuterium rates from GP98, SLD98
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-114,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
+112,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
 #Glover 2010
-115,OH+,E,O,H,NONE,NONE,6.3d-9*T32**(-.48)
-116,CO+,E,C,O,NONE,NONE,2.75d-7*T32**(-.55)
+113,OH+,E,O,H,NONE,NONE,6.3d-9*T32**(-.48)
+114,CO+,E,C,O,NONE,NONE,2.75d-7*T32**(-.55)
 #Glover and Jappsen 2007
 @format:idx,R,R,P,Tmin,Tmax,rate
-117,O+,E,O,NONE,.LE.4d2,1.30d-10*(Tgas)**(-0.64)
-118,O+,E,O,>4d2,NONE,1.41d-10*(Tgas)**(-0.66) + 7.4d-4*(Tgas)**(-1.5)*exp(-1.75d5*invT)*(1d0 + 0.062d0*exp(-1.45d5*invT))
+115,O+,E,O,NONE,.LE.4d2,1.30d-10*(Tgas)**(-0.64)
+116,O+,E,O,>4d2,NONE,1.41d-10*(Tgas)**(-0.66) + 7.4d-4*(Tgas)**(-1.5)*exp(-1.75d5*invT)*(1d0 + 0.062d0*exp(-1.45d5*invT))
 
 
 ########################################## END GAS METAL CHEMISTRY ###################################################################
