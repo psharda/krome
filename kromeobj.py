@@ -8365,7 +8365,7 @@ class krome:
 			shutil.copyfile("data/escape_H2.dat", buildFolder+"escape_H2.dat")
 
 		#copy Mayer opacity file
-		if self.usedTdust or self.useDustT or self.popsicle_ice:
+		if self.usedTdust or self.useDustT or self.useHeatingAccretion:
 			shutil.copyfile("data/mayer_E2.dat", buildFolder+"mayer_E2.dat")
 
 		#copy HM2012 flux file
