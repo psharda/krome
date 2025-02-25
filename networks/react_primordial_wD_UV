@@ -167,8 +167,7 @@
 50,D-,H,HD,E,NONE,NONE,1.5d-9*(Tgas/300d0)**(-0.1d0)
 
 @format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
-@common:user_ionH2
-@common:user_dissH2
+@common:user_ionH2, user_dissH2, user_Lacc_Flux
 #Piyush Sharda modified the original rate equation (from the file react_primordial_UV)
 #to only specify user_iondissJH2 (ionization+dissociation rate for H2) because we will calculate it ourselves based on VETTAM
 #Both H2 ionization (due to photons with energies > 15.2 eV in EUV) and dissociation (due to LW photons
