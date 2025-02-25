@@ -3,10 +3,11 @@
 
 -n networks/react_popsicle_semenov_cr
 -cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,OH,H2O,ATOMIC,COMPTON,DUSTSEMENOV,OII,FF,Z_CIEGF
--heating=COMPRESS,CHEM,CR
+-heating=COMPRESS,CHEM,CR,ACCRETION
 -H2opacity=OMUKAI
 -gamma=EXACT
 -ATOL=1d-40
 -maxord=1
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
+-popsicle_ice

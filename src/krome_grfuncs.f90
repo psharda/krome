@@ -407,7 +407,7 @@ contains
 #ENDIFKROME
 
   !***************************
-  !evaporation rate, 1/s
+  !evaporation rate, cm^-3 s^-1
   function krate_evaporation(n,idx,Tdust) result(k)
     use krome_commons
     use krome_constants
@@ -415,25 +415,40 @@ contains
     implicit none
     integer,intent(in)::idx
     real*8,intent(in)::n(nspec),Tdust
-    real*8::k,Ebind(nspec),nu0,mass(nspec),ns
+    real*8::k,Ebind(nspec),nu0,mass(nspec),ns,nfrac
+    real*8::GRAIN_SURFACEAREA_PER_H, extra_factor
 
     Ebind(:) = get_EbindBare()
     mass(:) = get_mass()
 
     ns = 1.5e15 !surface density of sites in cm^-2, from Reboussin et al. 2014, MNRAS 440, 3357
     nu0 =  sqrt(2*ns*boltzmann_erg*Ebind(idx)/(pi*pi*mass(idx))) !1/s; equation 8 of Reboussin et al. 2014, MNRAS 440, 3357
-    k = nu0 * exp(-Ebind(idx)/Tdust)
+    nfrac = 1d0 !fraction of species adsorbed (equation 8 of Cuppen, Walsh et al. 2017). since we do not have all possible ices, we cannot estimate this fraction, so in essence we are using the maximum possible desorption rate here; in reality, nfrac < 1
+
+    !if the network is two phase only (gas and grain), then an extra factor needs to be
+    !multiplied to take into account the fact that desorption is not a continuous process
+    !and not all adsorbed species is on the mantle (some could be in the bulk)
+    !we do it following UCLCHEM (Holdship et al. 2017), who follow Cuppen, Walsh et al. 2017 section 4
+    !actual values taken from UCLCHEM source code file surfacereactions.f90
+    GRAIN_SURFACEAREA_PER_H = 4d0*0.5*(7.908d-22+8.473d-22)*dust2gas_ratio*nfrac !Grain area per h nuclei, values taken from Cazaux & Tielens 2004 via UCL-PDR to match H2 formation rate. 
+    extra_factor = 2d0 * ns * GRAIN_SURFACEAREA_PER_H
+    k = nu0 * exp(-Ebind(idx)/Tdust) * extra_factor !in cm^-3 s^-1 (see equation 8 of Cuppen, Walsh et al. 2017)
 
   end function krate_evaporation
-
+  
   !***************************
-  !non-thermal evaporation rate (1/s) following Hollenbach 2009,
-  ! http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:0809.1642
+  !non-thermal evaporation rate (cm^-3 s^-1) following Hollenbach 2009,
+  !http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:0809.1642
+  !The rate is a combination of cosmic rays + UV desorption
+  !For the cosmic rays part, we follow Reboussin et al. 2014
+  !but we do it for a two phase model following UCLCHEM
+  !For the UV part,
   !Gnot is the habing flux (1.78 is Draine)
   !Av is the visual extinction
   !crflux the ionization flux of cosmic rays, 1/s
   !yield is the efficiency of the photons to desorb the given molecule
-  function krate_nonthermal_evaporation(idx, Gnot, Av, crflux, yield) result(k)
+  !***************************
+  function krate_nonthermal_evaporation(idx, n, Gnot, Av, crflux, yield) result(k)
     use krome_commons
     use krome_getphys
     implicit none
@@ -441,14 +456,20 @@ contains
     real*8,parameter::crnot=1.3d-17
     real*8,parameter::Fnot=1d8 !desorbing photons flux, 1/s
     real*8,parameter::ap2=(3d-8)**2 !sites separation squared, cm2
-    real*8,intent(in)::Gnot, Av, crflux, yield
-    real*8::k,f70,kevap70(nspec)
+    real*8,intent(in)::Gnot, Av, crflux, yield, n(nspec)
+    real*8::k,f70,kevap70
 
-    f70 = 3.16d-19*crflux/crnot
-    kevap70(:) = get_kevap70()
-
-    k = Gnot*Fnot*ap2*yield*exp(-1.8*Av)
-    k = k + f70*kevap70(idx)
+    if (idx .eq. idx_CO) then
+      !UV:
+      k = Gnot*Fnot*ap2*yield*exp(-1.8*Av)*n(idx_CO_total) !equation 7 of Hollenbach et al. 2009, scale with n(idx_total) to get this rate also in cm^-3 s^-1
+      !cosmic rays:
+      f70 = 3.16d-19*crflux/crnot !equation 10 of Reboussin et al. 2014
+      kevap70 = krate_evaporation(n,idx,7d1) !get the desoprtion rate in cm^-3 s^-1
+      k = k + f70*kevap70*max(0d0, n(idx_CO_total)-n(idx_CO))/n(idx_CO_total) !add the cosmic rays part
+    else
+      k = 0d0
+      print *, 'WARNING! Only CO no thermal desorption is currently implemented'
+    endif
 
   end function krate_nonthermal_evaporation
 

@@ -61,7 +61,7 @@ class krome:
 	useCoolingHCN = useCoolingOH = useCoolingH2O = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
-	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = False
+	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useHeatingAccretion = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = useHeatingPhotoDustWD = useHeatingPhotoDustNetWD = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
 	usePhotoOpacity = useXRay = hasSurfaceReactions = shieldHabingDust = False
@@ -71,6 +71,7 @@ class krome:
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = useSemenov = usedTdust = useSurface = useHeatingVisc = False
 	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = useBroadening = False
+	applyElementConservation_popsicle_semenov = applyElementConservation_popsicle_semenov_photo_full = popsicle_ice = popsicle_ice_gow = False
 	verbatimFilename = "reactions_verbatim.dat"
 	useVerbatimFile = True
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
@@ -280,7 +281,7 @@ class krome:
 		self.parser.add_argument("-gizmo", action="store_true", help="create patches for Gizmo")
 		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be RIPAMONTI or OMUKAI")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM\
-			, DH, CR, PHOTOAV,VISCOUS,PHOTODUSTNET,PHOTODUSTNETWD,PHOTODUSTWD. If you want a complete list of the available heating options type -heating=?")
+			, DH, CR, PHOTOAV,VISCOUS,PHOTODUSTNET,PHOTODUSTNETWD,PHOTODUSTWD,ACCRETION. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-interfaceC", action="store_true", help="create a C wrapper")
 		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper \
@@ -347,6 +348,10 @@ class krome:
 		self.parser.add_argument("-shielding_C", action="store_true", help="use C cross-shielding by H2 from Tielens and Hollenbach 1985")
 		self.parser.add_argument("-shieldHabingDust", action="store_true", help="dust shielding for Habing flux \
 			(when calculated from photobins).")
+		self.parser.add_argument("-popsicle_ice", action="store_true", help="if the network is using evaporation rate coefficients in cm^-3 s^-1 (used for the popsicle simulations); see evaporation in krome_grfuncs.f90")
+		self.parser.add_argument("-popsicle_ice_gow", action="store_true", help="if the GOW network is using evaporation rate coefficients in cm^-3 s^-1 (used for the popsicle simulations); see evaporation in krome_grfuncs.f90")
+		self.parser.add_argument("-applyElementConservation_popsicle_semenov", action="store_true", help="apply element conservation for the popsicle semenov network by replacing ODEs of neutral species")
+		self.parser.add_argument("-applyElementConservation_popsicle_semenov_photo_full", action="store_true", help="apply element conservation for the popsicle semenov photo+cr network by replacing ODEs of neutral species")
 		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
 		self.parser.add_argument("-skipJacobian", action="store_true", help="do not write Jacobian in krome_ode.f90 file. Useful\
@@ -1159,6 +1164,34 @@ class krome:
 			self.safe = False
 			print("Reading option -unsafe")
 
+		#whether to apply element conservation for the popsicle semenov photo+cr network
+		if args.applyElementConservation_popsicle_semenov_photo_full:
+			print("Reading option -applyElementConservation_popsicle_semenov_photo_full")
+			if self.filename != "networks/react_popsicle_semenov_photo_cr":
+				die("ERROR: option -applyElementConservation_popsicle_semenov_photo_full can only be used for the react_popsicle_semenov_photo_cr network!")
+			self.applyElementConservation_popsicle_semenov_photo_full = True
+
+		#whether to apply element conservation for the popsicle semenov network
+		if args.applyElementConservation_popsicle_semenov:
+			print("Reading option -applyElementConservation_popsicle_semenov")
+			if self.filename != "networks/react_popsicle_semenov" or self.filename != "networks/react_popsicle_semenov_cr":
+				die("ERROR: option -applyElementConservation_popsicle_semenov can only be used for the react_popsicle_semenov and react_popsicle_semenov_cr networks!")
+			self.applyElementConservation_popsicle_semenov = True
+
+		#whether network is using evaporation rates in cm^-3 s^-1
+		if args.popsicle_ice:
+			print("Reading option -popsicle_ice: so ice evaporation rate coefficients are assumed to be in cm^-3 s^-1")
+			if self.popsicle_ice_gow:
+				die("ERROR: option -popsicle_ice and -popsicle_ice_gow are mutually exclusive!")
+			self.popsicle_ice = True
+
+		#whether GOW network is using evaporation rates in cm^-3 s^-1
+		if args.popsicle_ice_gow:
+			print("Reading option -popsicle_ice_gow: so ice evaporation rate coefficients in GOW are assumed to be in cm^-3 s^-1")
+			if self.popsicle_ice:
+				die("ERROR: option -popsicle_ice and -popsicle_ice_gow are mutually exclusive!")
+			self.popsicle_ice_gow = True
+
 		#enable stellar physics
 		if args.stars:
 			self.useStars = True
@@ -1342,7 +1375,7 @@ class krome:
 			myHeat = args.heating.upper().split(",")
 			myHeat = [x.strip() for x in myHeat]
 			self.allHeatings = myHeat
-			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST",
+			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","ACCRETION",
 						"PHOTODUSTNET","XRAY","VISCOUS","PHOTODUSTNETWD","PHOTODUSTWD"]
 			for hea in myHeat:
 				if hea not in allHeats:
@@ -1359,6 +1392,7 @@ class krome:
 			if "PHOTODUSTNET" in myHeat: self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
 			if "PHOTODUSTNETWD" in myHeat: self.useHeatingPhotoDustNetWD = True #photoelectric heating from dust with recombination cooling from Weingartner and Draine 2001 ApJS
 			if "PHOTODUSTWD" in myHeat: self.useHeatingPhotoDustWD = True #photoelectric heating from dust withOUT recombination cooling from Weingartner and Draine 2001 ApJS
+			if "ACCRETION" in myHeat: self.useHeatingAccretion = True #heating from accretion luminosity
 			if "XRAY" in myHeat: self.useHeatingXRay = True #heating from xray reactions rate
 			if "VISCOUS" in myHeat: self.useHeatingVisc = True #heating from viscosity
 			#if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2 in LW bands
@@ -4059,10 +4093,21 @@ class krome:
 					#get freeze and evaporation rates index
 					idxFreeze = str(iceData["reactionFreezeout"].idx)
 					idxEvaporation = str(iceData["reactionEvaporation"].idx)
-					dns[species.idx-1] = "\n!"+iceName+"_GAS\n" \
-						+ "dn("+species.fidx+") = dnChem_"+iceName \
-						+ " -n("+species.fidx+")*(k("+idxFreeze+")+k("+idxEvaporation+"))" \
-						+ " +k("+idxEvaporation+")*n("+species.fidx+"_total)"
+					if not self.popsicle_ice:
+						#original KROME syntax:
+						dns[species.idx-1] = "\n!"+iceName+"_GAS\n" \
+							+ "dn("+species.fidx+") = dnChem_"+iceName \
+							+ " -n("+species.fidx+")*(k("+idxFreeze+")+k("+idxEvaporation+"))" \
+							+ " +k("+idxEvaporation+")*n("+species.fidx+"_total)"
+					else:
+						#modified by Piyush Sharda for Popsicle simulations
+						#the rate coefficient for evaporation is already multiplied by number density
+						#and is in the units of cm^-3 s^-1 as needed by the ODE:
+						dns[species.idx-1] = "\n!"+iceName+"_GAS\n" \
+							+ "dn("+species.fidx+") = dnChem_"+iceName \
+							+ " -n("+species.fidx+")*k("+idxFreeze+")" \
+							+ " +k("+idxEvaporation+")"
+
 					#if iceName has surface reactions changes GAS ODE accordingly
 					for react in thisReacts:
 						#build reactants multiplication
@@ -4959,7 +5004,7 @@ class krome:
 			if srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT)
 				and self.useSurface): skip = True
 			if srow == "#IFKROME_useOmukaiOpacity" and self.H2opacity != "OMUKAI": skip = True
-			if srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT): skip = True
+			if srow == "#IFKROME_useHeatingAccretion" and not(self.usedTdust or self.useDustT or self.useHeatingAccretion): skip = True
 			if srow == "#IFKROME_useCoolingCO" and not self.useCoolingCO: skip = True
 			if srow == "#IFKROME_useCoolingOH" and not self.useCoolingOH: skip = True
 			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
@@ -6908,6 +6953,7 @@ class krome:
 				if row.strip() == "#IFKROME_useHeatingXRay" and not self.useHeatingXRay: skip = True
 				if row.strip() == "#IFKROME_useHeatingVisc" and not self.useHeatingVisc: skip = True
 				if row.strip() == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
+				if row.strip() == "#IFKROME_useHeatingAccretion" and not self.useHeatingAccretion: skip = True
 				#if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
 				if row.strip() == "#IFKROME_useHeatingZCIE" and not self.useCoolingZCIE: skip = True
 				if row.strip() == "#IFKROME_useHeatingZExtended" and not self.useCoolingZExtended: skip = True
@@ -7167,9 +7213,13 @@ class krome:
 			if srow == "#IFKROME_use_thermo_toggle" and not self.useThermoToggle: skip = True
 			if srow == "#IFKROME_report" and not self.doReport: skip = True
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
+			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip = True
+			if srow == "#IFKROME_popsicle_ice_gow" and not self.popsicle_ice_gow: skip = True
 			if srow == "#IFKROME_usedTdust" and not self.usedTdust: skip = True
 			if srow == "#IFKROME_shieldHabingDust" and not self.shieldHabingDust: skip = True
 			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
+			if srow == "#IFKROME_applyElementConservation_popsicle_semenov" and not self.applyElementConservation_popsicle_semenov: skip = True
+			if srow == "#IFKROME_applyElementConservation_popsicle_semenov_photo_full" and not self.applyElementConservation_popsicle_semenov_photo_full: skip = True
 
 			if srow == "#ENDIFKROME": skip = False
 
@@ -8009,6 +8059,8 @@ class krome:
 			if srow == "#IFKROME_check_mass_conservation" and not self.checkConserv: skip = True
 			if srow == "#IFKROME_useDustSizeEvol" and not self.useDustSputter and not self.useDustGrowth\
 				and not self.useDustEvap: skip = True
+			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip = True
+			if srow == "#IFKROME_popsicle_ice_gow" and not self.popsicle_ice_gow: skip = True
 			if srow == "#IFKROME_useEquilibrium" and not self.useEquilibrium: skip = True
 			if srow == "#IFKROME_useStars" and not self.useStars: skip = True
 			if srow == "#IFKROME_useCoolingZ" and not self.useCoolingZ: skip = True
@@ -8025,7 +8077,7 @@ class krome:
 			if srow == "#IFKROME_noierr" and self.useIERR: skip = True
 			if srow == "#IFKROME_useH2esc_omukai" and self.H2opacity != "OMUKAI": skip = True
 			if srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT) and self.useSurface): skip = True
-			if srow == "#IFKROME_useMayerOpacity" and not(self.usedTdust or self.useDustT): skip = True
+			if srow == "#IFKROME_useHeatingAccretion" and not(self.usedTdust or self.useDustT or self.useHeatingAccretion): skip = True
 			if srow == "#IFKROME_useDustTabs" and not self.useDustTabs: skip = True
 			if srow == "#IFKROME_reducer" and not self.reducer: skip = True
 			if srow == "#IFKROME_useBindC" and not(self.interfaceC or self.interfacePy): skipBindC = True
@@ -8313,7 +8365,7 @@ class krome:
 			shutil.copyfile("data/escape_H2.dat", buildFolder+"escape_H2.dat")
 
 		#copy Mayer opacity file
-		if self.usedTdust or self.useDustT :
+		if self.usedTdust or self.useDustT or self.useHeatingAccretion:
 			shutil.copyfile("data/mayer_E2.dat", buildFolder+"mayer_E2.dat")
 
 		#copy HM2012 flux file

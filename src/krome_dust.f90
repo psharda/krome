@@ -1104,11 +1104,12 @@ contains
   use krome_getphys
   use krome_fit
   implicit none
-  integer::i
+  integer::i,ii
   real*8::n(:),Tgas,m(nspec),ntot,rhogas
   real*8::clipped_x,clipped_y,kappaP,tau_d,tau_g,tau,ljeans
   real*8::besc,alpha_gd,aR,intJRad,nH
   real*8::A,B,C,iter,Tdold,fx,fdash_x,Tdnew,abs_t,rel_t,Tdoldsave
+  character*16 :: names(nspec)
 
   if(dust2gas_ratio .eq. 0) return
   if(Tgas .gt. 1d4) return !Semenov opacities are only tabulated to Tgas = 1d4 K
@@ -1176,6 +1177,10 @@ contains
     if(iter>1.e3) then 
       print *, 'Maximum iterations reached in dust temperature NR-solver'
       print *, 'Relative change, Told, Tnew', rel_t, Tdoldsave, Tdnew
+      names(:) = get_names()
+      do ii = 1, nmols
+        print *, 'Abundance of ', names(ii), ' = ', n(ii)
+      enddo
       stop !Maximum iterations
     end if
 

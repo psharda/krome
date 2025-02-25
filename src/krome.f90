@@ -250,6 +250,22 @@ contains
        n(i) = max(n(i),0d0)
     end do
 
+#IFKROME_popsicle_ice
+    !This is needed at very high densities when desorption becomes important
+    if (phys_metallicity .gt. 0d0) then
+      n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
+      n(idx_H2O) = min(n(idx_H2O), n(idx_H2O_total))
+    endif
+#ENDIFKROME
+
+#IFKROME_popsicle_ice_gow
+    !This is needed at very high densities when desorption becomes important
+    if (phys_metallicity .gt. 0d0) then
+      n(idx_CO) = min(n(idx_CO), n(idx_CO_total))
+    endif
+#ENDIFKROME
+
+
 #IFKROME_conserve
     n(:) = conserve(n(:),ni(:))
 #ENDIFKROME
@@ -818,13 +834,13 @@ contains
          ymulH2esc)
 #ENDIFKROME
 
-#IFKROME_useMayerOpacity
-    !call init_anytab2D("mayer_E2.dat",mayer_x(:), &
-    !     mayer_y(:), mayer_z(:,:), mayer_xmul, &
-    !     mayer_ymul)
-    !call test_anytab2D("mayer_E2.dat",mayer_x(:), &
-    !     mayer_y(:), mayer_z(:,:), mayer_xmul, &
-    !     mayer_ymul)
+#IFKROME_useHeatingAccretion
+    call init_anytab2D("mayer_E2.dat",mayer_x(:), &
+         mayer_y(:), mayer_z(:,:), mayer_xmul, &
+         mayer_ymul)
+    call test_anytab2D("mayer_E2.dat",mayer_x(:), &
+         mayer_y(:), mayer_z(:,:), mayer_xmul, &
+         mayer_ymul)
 #ENDIFKROME
 
 #IFKROME_useCoolingCO

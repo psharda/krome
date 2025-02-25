@@ -13,3 +13,5 @@
 -shielding_C
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
+-popsicle_ice_gow
+-noRecCheck

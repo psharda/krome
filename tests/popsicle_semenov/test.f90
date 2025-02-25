@@ -68,6 +68,9 @@ program test_krome
     !initialize KROME (mandatory)
     call krome_init()
 
+    !input some non-zero value here to test for accretion luminosity heating (only PopIII)
+    call krome_set_user_Lacc_Flux(0d0)
+
     !species default, cm-3
     x(:) = 1d-40
 
@@ -122,7 +125,7 @@ program test_krome
        dt = dtH
 
        !break when max density reached
-       if(dd.gt.1d18) exit
+       if(dd.gt.1d17) exit
 
        !dust evaporation: dust is non existent at T > 1.5d3
        !if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)

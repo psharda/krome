@@ -42,6 +42,10 @@ contains
     heats(idx_heat_chem) = heatingChem(n(:), Tgas, k(:), nH2dust)
 #ENDIFKROME
 
+#IFKROME_useHeatingAccretion
+    heats(idx_heat_accretion) = heatingAccretion(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useHeatingCompress
     heats(idx_heat_compress) = heat_compress(n(:), Tgas)
 #ENDIFKROME
@@ -298,6 +302,63 @@ contains
     heat_Xray = eV_to_erg * heat_Xray
 
   end function heat_XRay
+#ENDIFKROME
+
+#IFKROME_useHeatingAccretion
+    !*****************************
+    ! Planck mean continuum opacity for primordial gas.
+    ! Table E2 of Mayer and Duschl 2005
+    function Planckopacity_mayer(Tgas, n)
+      use krome_commons
+      use krome_fit
+      use krome_subs
+      use krome_getphys
+      implicit none
+      real*8::Planckopacity_mayer,Tgas,rhogas,n(:)
+      real*8::logrhogas,logTgas,m(nspec)
+
+      m(:) = get_mass()
+      rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
+      logrhogas = log10(rhogas)
+      !following Wollenberg et al. 2020, MNRAS 494, 1871
+      !we use a ceiling of 6d3 K to ensure opacities do not get
+      !unrealistically large for larger Tgas (see their equation 9)
+      !(their equation 9 has a typo: max should be min)
+      logTgas = log10(min(Tgas, 6d3))
+
+      Planckopacity_mayer = 1d1**(fit_anytab2D(mayer_x(:), &
+           mayer_y(:), mayer_z(:,:), mayer_xmul, &
+           mayer_ymul,logrhogas,logTgas))
+
+    end function Planckopacity_mayer
+
+    !*****************************
+    ! Heating due to accretion luminosity
+    ! Units erg/cm3/s
+    ! Equation 4 of Wollenberg et al. 2020
+    ! Only for primordial gas
+    function heatingAccretion(n, Tgas)
+      use krome_commons
+      use krome_user_commons, ONLY : krome_get_user_Lacc_Flux
+      use krome_fit
+      use krome_subs
+      use krome_getphys
+      implicit none
+      real*8::heatingAccretion,Tgas,n(:)
+      real*8::opac_mayer,m(nspec),rhogas,Lacc_Flux
+
+      heatingAccretion = 0d0
+      if (phys_metallicity .gt. 0d0) return
+      m(:) = get_mass()
+      rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
+
+      opac_mayer = Planckopacity_mayer(Tgas, n) !in cm^2/g
+      !user_Lacc_Flux = \eta*Lacc/(4\pi R^2) (see equation 20 of Hosokawa et al. 2016)
+      !Lacc = GMMdot/R (in erg/s)
+      !Mathew & Federrath 2020 use the same expression for Solar metallicity, with \eta = 0.25
+      Lacc_Flux = krome_get_user_Lacc_Flux()
+      heatingAccretion = rhogas * opac_mayer * Lacc_Flux
+    end function heatingAccretion
 #ENDIFKROME
 
 #IFKROME_useHeatingPhotoDust

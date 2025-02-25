@@ -94,6 +94,51 @@ contains
     end if
 #ENDIFKROME
 
+
+#IFKROME_applyElementConservation_popsicle_semenov
+    !No Photo
+    !species: E, H-, D-, H, He, H2, HD, D, O, OH, H2O, O2, CH, CO, C, CO2, CH2, CH3, CH4, H+, He+, H2+, D+, HD+, O+, OH+, H2O+, H3O+, O2+, C+, CO+, He++
+
+    !H conservation
+    dn(idx_H) = -1d0 * (dn(idx_Hk) + 2*dn(idx_H2) + dn(idx_HD) + dn(idx_OH) + 2*dn(idx_H2O_total) + dn(idx_CH) + 2*dn(idx_CH2) + 3*dn(idx_CH3) + 4*dn(idx_CH4) + &
+                        dn(idx_Hj) + 2*dn(idx_H2j) + dn(idx_HDj) + dn(idx_OHj) + 2*dn(idx_H2Oj) + 3*dn(idx_H3Oj))
+
+    !He conservation
+    dn(idx_He) = -1d0 * (dn(idx_HEj) + dn(idx_Hejj))
+
+    !C conservation
+    dn(idx_C) = -1d0 * (dn(idx_CH) + dn(idx_CO_total) + dn(idx_CO2) + dn(idx_CH2) + dn(idx_CH3) + dn(idx_CH4) + dn(idx_Cj) + dn(idx_COj))
+
+    !O conservation
+    dn(idx_O) = -1d0 * (dn(idx_OH) + dn(idx_H2O_total) + 2*dn(idx_O2) + dn(idx_CO_total) + 2*dn(idx_CO2) + dn(idx_Oj) + dn(idx_OHj) + dn(idx_H2Oj) + dn(idx_H3Oj) + &
+                        2*dn(idx_O2j) + dn(idx_COj))
+
+    !D conservation
+    dn(idx_D) = -1d0 * (dn(idx_Dk) + dn(idx_Dj) + dn(idx_HD) + dn(idx_HDj))
+#ENDIFKROME
+
+#IFKROME_applyElementConservation_popsicle_semenov_photo_full
+    !With Photo (Full Network)
+    !species: E, H-, D-, H, He, H2, HD, D, O, OH, H2O, O2, CH, CO, C, CO2, CH2, CH3, CH4, H+, He+, H2+, D+, HD+, O+, OH+, H2O+, H3O+, O2+, C+, CO+, He++, CH+, CH2+, H3+
+
+    !H conservation
+    dn(idx_H) = -1d0 * (dn(idx_Hk) + 2*dn(idx_H2) + dn(idx_HD) + dn(idx_OH) + 2*dn(idx_H2O_total) + dn(idx_CH) + 2*dn(idx_CH2) + 3*dn(idx_CH3) + 4*dn(idx_CH4) + &
+                        dn(idx_Hj) + 2*dn(idx_H2j) + dn(idx_HDj) + dn(idx_OHj) + 2*dn(idx_H2Oj) + 3*dn(idx_H3Oj) + 3*dn(idx_H3j) + dn(idx_CHj) + 2*dn(idx_CH2j))
+
+    !He conservation
+    dn(idx_He) = -1d0 * (dn(idx_HEj) + dn(idx_Hejj))
+
+    !C conservation
+    dn(idx_C) = -1d0 * (dn(idx_CH) + dn(idx_CO_total) + dn(idx_CO2) + dn(idx_CH2) + dn(idx_CH3) + dn(idx_CH4) + dn(idx_Cj) + dn(idx_COj) + dn(idx_CHj) + dn(idx_CH2j))
+
+    !O conservation
+    dn(idx_O) = -1d0 * (dn(idx_OH) + dn(idx_H2O_total) + 2*dn(idx_O2) + dn(idx_CO_total) + 2*dn(idx_CO2) + dn(idx_Oj) + dn(idx_OHj) + dn(idx_H2Oj) + dn(idx_H3Oj) + &
+                        2*dn(idx_O2j) + dn(idx_COj))
+
+    !D conservation
+    dn(idx_D) = -1d0 * (dn(idx_Dk) + dn(idx_Dj) + dn(idx_HD) + dn(idx_HDj))
+#ENDIFKROME
+
 #IFKROME_usedTdust
     dn(nmols+ndust+1:nmols+2*ndust) = get_dTdust(n(:),dn(idx_Tgas),vgas,ntot)
 #ENDIFKROME
