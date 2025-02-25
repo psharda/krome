@@ -339,12 +339,13 @@ contains
     ! Only for primordial gas
     function heatingAccretion(n, Tgas)
       use krome_commons
+      use krome_user_commons, ONLY : krome_get_user_Lacc_Flux
       use krome_fit
       use krome_subs
       use krome_getphys
       implicit none
       real*8::heatingAccretion,Tgas,n(:)
-      real*8::opac_mayer,m(nspec),rhogas
+      real*8::opac_mayer,m(nspec),rhogas,Lacc_Flux
 
       heatingAccretion = 0d0
       if (phys_metallicity .gt. 0d0) return
@@ -355,7 +356,8 @@ contains
       !user_Lacc_Flux = \eta*Lacc/(4\pi R^2) (see equation 20 of Hosokawa et al. 2016)
       !Lacc = GMMdot/R (in erg/s)
       !Mathew & Federrath 2020 use the same expression for Solar metallicity, with \eta = 0.25
-      heatingAccretion = rhogas * opac_mayer * user_Lacc_Flux
+      Lacc_Flux = krome_get_user_Lacc_Flux()
+      heatingAccretion = rhogas * opac_mayer * Lacc_Flux
     end function heatingAccretion
 #ENDIFKROME
 
