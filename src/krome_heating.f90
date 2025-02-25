@@ -351,8 +351,11 @@ contains
       m(:) = get_mass()
       rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
 
-      opac_mayer = Planckopacity_mayer(Tgas, n)
-      heatingAccretion = rhogas * opac_mayer * user_Lacc_Flux !erg/cm3/s
+      opac_mayer = Planckopacity_mayer(Tgas, n) !in cm^2/g
+      !user_Lacc_Flux = \eta*Lacc/(4\pi R^2) (see equation 20 of Hosokawa et al. 2016)
+      !Lacc = GMMdot/R (in erg/s)
+      !Mathew & Federrath 2020 use the same expression for Solar metallicity, with \eta = 0.25
+      heatingAccretion = rhogas * opac_mayer * user_Lacc_Flux
     end function heatingAccretion
 #ENDIFKROME
 
