@@ -2360,6 +2360,18 @@ end subroutine krome_load_opacity_table
   end subroutine
 
   !*************************
+
+  !*************************
+  !set radiative dust heating rate in units of erg cm^-3 s^-1 
+  subroutine krome_set_dustheatRad(xarg) #KROME_bindC
+     use krome_commons
+#KROME_double_value :: xarg
+
+   dustheatRad = xarg
+
+  end subroutine
+
+  !*************************
   !set the clumping factor
   subroutine krome_set_clump(xarg) #KROME_bindC
     use krome_commons
