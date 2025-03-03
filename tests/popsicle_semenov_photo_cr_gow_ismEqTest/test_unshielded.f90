@@ -23,9 +23,10 @@ program test_krome_eqbm
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
   real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
-  real*8::ionH,dissH2,ionC,dissCO,chiFUV,t_cool
+  real*8::ionH,dissH2,ionC,dissCO,chiFUV,t_cool,dustHeatingRate
   logical::stop_next, converged
   character(len=20) :: filename, zint_str
+  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
   
 
   zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
@@ -125,6 +126,9 @@ program test_krome_eqbm
       x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
 
       call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
+      !Absorption rate of UV photons by dust
+      dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
+      call krome_set_dustheatRad(dustHeatingRate)
 
       !No shielding; Av=0.0
       Av = 0.0
@@ -181,6 +185,9 @@ program test_krome_eqbm
         call krome_set_user_ionC(ionC)
         call krome_set_user_dissCO(dissCO)
 
+        !Absorption rate of UV photons by dust
+        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
+        call krome_set_dustheatRad(dustHeatingRate)
         Tdust = krome_get_Semenov_Tdust()
 
         ni(krome_idx_Tgas) = Tgas

@@ -23,11 +23,12 @@ program test_krome_eqbm
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
   real*8::Av,heats(krome_nheats),crate,crate_0,NH,NHj,NH2
-  real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0
+  real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
   logical::stop_next, converged
   character(len=20) :: filename, zint_str
   real, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21
   real :: Lshield, Nshield, t_cool
+  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
 
   !zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
   zs = (/1d0/)
@@ -220,6 +221,9 @@ program test_krome_eqbm
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !Shielding done
+        !Absorption rate of UV photons by dust
+        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
+        call krome_set_dustheatRad(dustHeatingRate)
         Tdust = krome_get_Semenov_Tdust()
 
         ni(krome_idx_Tgas) = Tgas
