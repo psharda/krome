@@ -1113,7 +1113,7 @@ contains
   character*16 :: names(nspec)
 
   if(dust2gas_ratio .eq. 0) return
-  if(Tgas .gt. 1d4) return !Semenov opacities are only tabulated to Tgas = 1d4 K
+  if(krome_Semenov_Tdust .gt. 1d4) return !Semenov opacities are only tabulated to Tgas = 1d4 K
 
   ntot = sum(n(1:nmols)) !total number density
   m(:) = get_mass() !masses of the species
