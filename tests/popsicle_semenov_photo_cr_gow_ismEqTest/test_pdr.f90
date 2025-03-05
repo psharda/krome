@@ -22,11 +22,12 @@ program test_krome_eqbm
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec),ColumnTot,ColumnTotMax,ColumnTotMin,ColumnLast,dColumn,ColumnFactor
   real*8::Av,heats(krome_nheats),crate,crate_0,NH_cum,NH2_cum,NC_cum, NCO_cum
-  real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0
+  real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
   logical::stop_next, converged
   character(len=20) :: filename, zint_str
   real*8, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21, bfive=1d0
   real*8 :: Lshield, Nshield, t_cool, ntot_val, ntotchange_cum
+  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
 
   !zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
   zs = (/1d0/)
@@ -116,7 +117,7 @@ program test_krome_eqbm
       x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
       x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
 
-      call krome_set_Semenov_Tdust(6d0) !Dust at 6K
+      call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
 
       !set H2 dissociation reaction rate coeff
       n(1:krome_nmols) = x(:)
@@ -219,6 +220,9 @@ program test_krome_eqbm
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !Shielding done
+        !Absorption rate of UV photons by dust
+        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
+        call krome_set_dustheatRad(dustHeatingRate)
         Tdust = krome_get_Semenov_Tdust()
 
         ni(krome_idx_Tgas) = Tgas

@@ -24,8 +24,9 @@ program test_krome
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea)
   real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
-  real*8::ionH,dissH2,ionC,dissCO,chiFUV
+  real*8::ionH,dissH2,ionC,dissCO,chiFUV,dustHeatingRate
   logical::crate_attenuation
+  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
 
   zs = (/1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
@@ -135,6 +136,8 @@ program test_krome
 
 
     !print initial output
+    dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
+    call krome_set_dustheatRad(dustHeatingRate)
     Tdust = krome_get_Semenov_Tdust()
     m = get_mass()
     rhogas = sum(x(:)*m(1:krome_nmols))
@@ -190,6 +193,8 @@ program test_krome
        !dust evaporation: dust is non existent at T > 1.5d3
        !if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)
 
+       dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
+       call krome_set_dustheatRad(dustHeatingRate)
        Tdust = krome_get_Semenov_Tdust()
 
        !dump cooling rates for Tgas going into the calculation

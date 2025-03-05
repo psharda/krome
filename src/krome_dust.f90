@@ -1103,6 +1103,7 @@ contains
   use krome_constants
   use krome_getphys
   use krome_fit
+  use ieee_arithmetic, ONLY: ieee_is_nan, ieee_is_finite
   implicit none
   integer::i,ii
   real*8::n(:),Tgas,m(nspec),ntot,rhogas
@@ -1112,7 +1113,7 @@ contains
   character*16 :: names(nspec)
 
   if(dust2gas_ratio .eq. 0) return
-  if(Tgas .gt. 1d4) return !Semenov opacities are only tabulated to Tgas = 1d4 K
+  if(krome_Semenov_Tdust .gt. 1d4) return !Semenov opacities are only tabulated to Tgas = 1d4 K
 
   ntot = sum(n(1:nmols)) !total number density
   m(:) = get_mass() !masses of the species
@@ -1121,7 +1122,7 @@ contains
 
   !Clip Tgas and rhogas to the ranges in the data
   clipped_x = max(CoolSemenov_x(1), min(log10(rhogas), CoolSemenov_x(10)))
-  clipped_y = max(CoolSemenov_y(1), min(Tgas, CoolSemenov_y(1000)))
+  clipped_y = max(CoolSemenov_y(1), min(krome_Semenov_Tdust, CoolSemenov_y(1000)))
 
   !Find the Planck mean opacity
   kappaP = interpolate2D(CoolSemenov_x(:), CoolSemenov_y(:), CoolSemenov_z(:,:), &
@@ -1147,7 +1148,7 @@ contains
   kappaP = kappaP * besc
 
   !heating rate per unit volume from external radiation
-  intJRad = 0d0 !(TODO: This would change with VETTAM)
+  intJRad = dustheatRad !set by user
 
   !The equation for dust temperature is of form AT_d^4 + BT_d + C
   A = rhogas * kappaP * dust2gas_ratio * aR * clight !n*\Psi_{IR} in equation 46 of Kim+2023 ApJS
@@ -1173,6 +1174,13 @@ contains
     if(abs_t<1d-8) exit !Absolute tolerance condition
 
     if(rel_t<1d-5) exit !Relative tolerance condition
+
+    !Safety check
+    if(ieee_is_nan(Tdnew) .or. .not. ieee_is_finite(Tdnew)) then
+      print *, "NR solver obtained Tdust that is infinite or NAN"
+      print *, Tdnew
+      stop
+    endif
 
     if(iter>1.e3) then 
       print *, 'Maximum iterations reached in dust temperature NR-solver'
