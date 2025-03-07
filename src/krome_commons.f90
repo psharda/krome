@@ -123,7 +123,7 @@ module krome_commons
   real*8::dust2gas_ratio
   !FUV radiation field (\chi in Table 2 of GOW)
   real*8::chiFUV
-  !Radiative Dust heating rate (from LyC, FUV and any other bands) in units of erg cm^-3 s^-1
+  !Radiative Dust heating rate (from LyC, FUV and any other bands) in units of erg s^-1
   real*8::dustheatRad
 
 #IFKROME_useHeatingAccretion

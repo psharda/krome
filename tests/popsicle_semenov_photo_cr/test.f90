@@ -198,7 +198,8 @@ program test_krome
        !dust evaporation: dust is non existent at T > 1.5d3
        !if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)
 
-       dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
+       !Absorption rate of UV photons by dust (erg s^-1)
+       dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
        call krome_set_dustheatRad(dustHeatingRate)
        Tdust = krome_get_Semenov_Tdust()
 

@@ -126,8 +126,8 @@ program test_krome_eqbm
       x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
 
       call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
-      !Absorption rate of UV photons by dust
-      dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
+      !Absorption rate of UV photons by dust (erg s^-1)
+      dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
       call krome_set_dustheatRad(dustHeatingRate)
 
       !No shielding; Av=0.0
