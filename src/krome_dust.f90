@@ -1113,7 +1113,7 @@ contains
   character*16 :: names(nspec)
 
   if(dust2gas_ratio .eq. 0) return
-  if(krome_Semenov_Tdust .gt. 1d4) return !Semenov opacities are only tabulated to Tgas = 1d4 K
+  if(krome_Semenov_Tdust .gt. 1d4) return !Semenov opacities are only tabulated to Tdust = 1d4 K
 
   ntot = sum(n(1:nmols)) !total number density
   m(:) = get_mass() !masses of the species
@@ -1142,13 +1142,12 @@ contains
 
   alpha_gd = 3.2d-34 !pre-factor for the dust-gas cooling (Goldsmith 2001) in erg cm3 s-1
   aR = 4*stefboltz_erg/clight !radiation constant
-  !(TODO: This would also change with VETTAM)
 
-  !Rescale with escape factor to account for trapping of IR (TODO: Remove this when coupling to VETTAM)
+  !Rescale with escape factor to account for trapping of IR
   kappaP = kappaP * besc
 
   !heating rate per unit volume from external radiation
-  intJRad = dustheatRad !set by user
+  intJRad = dustheatRad*nH !dustheatRad set by user (in units of erg s^-1)
 
   !The equation for dust temperature is of form AT_d^4 + BT_d + C
   A = rhogas * kappaP * dust2gas_ratio * aR * clight !n*\Psi_{IR} in equation 46 of Kim+2023 ApJS
