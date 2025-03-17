@@ -435,7 +435,8 @@ contains
     k = nu0 * exp(-Ebind(idx)/Tdust) * extra_factor !in cm^-3 s^-1 (see equation 8 of Cuppen, Walsh et al. 2017)
 
   end function krate_evaporation
-  
+
+#IFKROME_popsicle_ice  
   !***************************
   !non-thermal evaporation rate (cm^-3 s^-1) following Hollenbach 2009,
   !http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:0809.1642
@@ -472,6 +473,7 @@ contains
     endif
 
   end function krate_nonthermal_evaporation
+#ENDIFKROME_popsicle_ice
 
   !***************************
   function dust_ice_fraction_array(invphi,nH2O)

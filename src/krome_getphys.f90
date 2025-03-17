@@ -17,7 +17,7 @@ contains
     ntot = sum(n(1:nmols))
 #IFKROME_popsicle_ice
     ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
-#ENDIFKROME
+#ENDIFKROME_popsicle_ice
     get_mu = max(sum(n(1:nmols)*m(1:nmols)),1d-40) &
          / max(ntot,1d-40) * ip_mass
 
@@ -35,7 +35,7 @@ contains
     ntot = sum(n(1:nmols))
 #IFKROME_popsicle_ice
     ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
-#ENDIFKROME
+#ENDIFKROME_popsicle_ice
     get_mu_rho = rhogas / max(ntot,1d-40) * ip_mass
 
   end function get_mu_rho

@@ -687,7 +687,7 @@ contains
     ntot = sum(n(1:nmols))
 #IFKROME_popsicle_ice
     ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
-#ENDIFKROME
+#ENDIFKROME_popsicle_ice
     !replace small according to the desired enviroment
     ! and remove nmax if needed
     nmax = maxval(n(1:nmols))
@@ -732,7 +732,7 @@ contains
     ntot = sum(n(1:nmols))
 #IFKROME_popsicle_ice
     ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
-#ENDIFKROME
+#ENDIFKROME_popsicle_ice
     dd = ntot !total number density
 
     !COMPRESSIONAL HEATING

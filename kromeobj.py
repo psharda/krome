@@ -5293,6 +5293,7 @@ class krome:
 		hasH2O = ("H2O_TOTAL" in [x.name.upper() for x in specs])
 
 		skip = False
+		skip_popsicle_ice = False
 		#loop on src file and replace pragmas
 		for row in fh:
 			srow = row.strip()
@@ -5306,10 +5307,12 @@ class krome:
 			if srow == "#IFKROME_hasH2O" and not hasH2O: skip = True
 			if srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D"): skip = True
 			if srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D"): skip = True
+			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip_popsicle_ice = True
 
 			if srow == "#ENDIFKROME": skip = False
+			if srow == "#ENDIFKROME_popsicle_ice": skip_popsicle_ice = False
 
-			if skip: continue #skip
+			if skip or skip_popsicle_ice: continue #skip
 
 			if srow == "#KROME_Ebareice23":
 				fout.write(self.get_Ebareice(2e0/3e0, self.specs, "get_Ebareice23_exp_array"))
@@ -5405,13 +5408,18 @@ class krome:
 #			if(srow == "#KROME_header"):
 #				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 
+
+		skip_popsicle_ice = False
 		#loop on src file and replace pragmas
 		for row in fh:
 			srow = row.strip()
 			if srow == "#KROME_header":
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 
-			elif srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip = True
+			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip_popsicle_ice = True
+			if srow == "#ENDIFKROME_popsicle_ice": skip_popsicle_ice = False
+			if skip_popsicle_ice: continue #skip
+
 
 			elif srow == "#KROME_sum_H_nuclei":
 				hsum = []
