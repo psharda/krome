@@ -5411,6 +5411,8 @@ class krome:
 			if srow == "#KROME_header":
 				fout.write(get_licence_header(self.version, self.codename,self.shortHead))
 
+			elif srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip = True
+
 			elif srow == "#KROME_sum_H_nuclei":
 				hsum = []
 				iceNames = [x.name.lower().replace("_total","") for x in specs if(x.name.lower().endswith("_total"))]
@@ -6640,6 +6642,7 @@ class krome:
 			if srow == "#IFKROME_hasElectrons" and "E" not in speciesNames: skip_speciesH2 = True
 			if srow == "#IFKROME_dust_table_2D" and not(self.dustTableDimension=="2D"): skip_tab_2D = True
 			if srow == "#IFKROME_dust_table_3D" and not(self.dustTableDimension=="3D"): skip_tab_3D = True
+			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip = True
 
 			if srow == "#ENDIFKROME_usedTdust": skip_dTdust = False
 			if srow == "#ENDIFKROME_use_NLEQ": skip_nleq = False
@@ -6935,6 +6938,7 @@ class krome:
 
 		#replace pragma with strings built above
 		skip = False
+		skip_popsicle_ice = False
 		for row in fh:
 			srow = row.strip()
 			if row.strip() == "#KROME_header":
@@ -6958,12 +6962,14 @@ class krome:
 				if row.strip() == "#IFKROME_useHeatingZCIE" and not self.useCoolingZCIE: skip = True
 				if row.strip() == "#IFKROME_useHeatingZExtended" and not self.useCoolingZExtended: skip = True
 				if row.strip() == "#IFKROME_useHeatingGH" and not self.useCoolingGH: skip = True
+				if row.strip() == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip_popsicle_ice = True
 				skipBool = not self.useHeatingChem and not self.useCoolingChem and not self.useCoolingDISS
 				if row.strip() == "#IFKROME_useHeatingChem" and skipBool: skip = True
 
+				if row.strip() == "#ENDIFKROME_popsicle_ice": skip_popsicle_ice = False
 				if row.strip() == "#ENDIFKROME": skip = False
 
-				if skip: continue
+				if skip or skip_popsicle_ice: continue
 
 				if "#KROME_custom_heating_expr" in row.strip():
 					heatAll = ""
@@ -8086,6 +8092,7 @@ class krome:
 			if srow == "#ENDIFKROME_useBindC": skipBindC = False
 			if srow == "#IFKROME_use_GFE_tables" and not self.use_GFE_tables: skip = True
 			if srow == "#IFKROME_useSemenov" and not self.useSemenov: skip = True
+			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip = True
 			if srow == "#ENDIFKROME": skip = False
 
 			ierr = ""
