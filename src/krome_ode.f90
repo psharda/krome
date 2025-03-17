@@ -35,6 +35,9 @@ contains
 
     n(:) = nin(:)
     ntot = sum(n(1:nmols))
+#IFKROME_popsicle_ice
+    ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
+#ENDIFKROME
     nH = get_Hnuclei(n(:))
     nH2dust = 0.d0
     n(idx_CR) = 1.d0
@@ -70,10 +73,6 @@ contains
 
 #ENDIFKROME
 
-#IFKROME_useCoolingDustSemenov
-    call compute_Semenov_Tdust(n(:),Tgas)
-#ENDIFKROME
-
 #KROME_dust_H2
 
 #KROME_ODE
@@ -87,7 +86,7 @@ contains
 
        dn(idx_Tgas) = (heating(n(:), Tgas, k(:), nH2dust) &
             - cooling(n(:), Tgas) #KROME_coolingQuench #KROME_coolfloor) &
-            * (krome_gamma - 1.d0) / boltzmann_erg / sum(n(1:nmols))
+            * (krome_gamma - 1.d0) / boltzmann_erg / ntot
 #ENDIFKROME
 
 #IFKROME_use_thermo_toggle
