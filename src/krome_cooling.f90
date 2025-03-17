@@ -189,7 +189,7 @@
       real*8::cooling_CO,n(:),inTgas
       real*8::v1,v2,v3,prev1,prev2,cH
       real*8::vv1,vv2,vv3,vv4,vv12,vv34,xLd
-      real*8::x1(imax),x2(jmax),x3(kmax)
+      real*8::x1(imax),x2(jmax),x3(kmax),ntot
       real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
       real*8::v1min,v1max,v2min,v2max,v3min,v3max
 
@@ -218,9 +218,13 @@
         ! Set red flag if not due to small excursion in n_H2
         ! Only relevant for low temperatures, bc otherwise H is ionised
         ! And CO cooling only relevant at high densities
+        ntot = sum(n(1:nmols))
+#IFKROME_popsicle_ice
+        ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
+#ENDIFKROME
         if (abs(n(idx_H2)) / (abs(n(idx_H)) + 1d-40) > 1d-6 .and. &
                                                inTgas < 5d4 .and. &
-            abs(n(idx_H)) > abs(n(idx_Hj)) .and. sum(n(1:nmols)) > 100.) &
+            abs(n(idx_H)) > abs(n(idx_Hj)) .and. ntot > 100.) &
                  red_flag = ibset(red_flag,5)
       endif
 
@@ -1188,7 +1192,7 @@
       use krome_commons
       use krome_constants
       real*8::cooling_CIE,n(:),Tgas,inTgas
-      real*8::x,x2,x3,x4,x5
+      real*8::x,x2,x3,x4,x5,ntot
       real*8::a0,a1,a2,a3,a4,a5
       real*8::b0,b1,b2,b3,b4,b5
       real*8::cool,tauCIE,logcool
@@ -1238,8 +1242,9 @@
       tauCIE = (n(idx_H2) * 1.4285714d-16)**2.8 !note: 1/7d15 = 1.4285714d-16
       cool = p_mass * 1d1**logcool !erg*cm3/s
 
+      ntot = sum(n(1:nmols))
       cooling_CIE = cool * min(1.d0, (1.d0-exp(-tauCIE))/tauCIE) &
-           * n(idx_H2) * sum(n(1:nmols)) !erg/cm3/s
+           * n(idx_H2) * ntot !erg/cm3/s
 
     end function cooling_CIE
 #ENDIFKROME
@@ -1528,6 +1533,9 @@
       real*8::H2opacity_omukai,Tgas,ntot,lTgas,lntot,n(:)
 
       ntot = sum(n(1:nmols))
+#IFKROME_popsicle_ice
+      ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
+#ENDIFKROME
       lTgas = log10(Tgas)
       lntot = log10(num2col(ntot,n(:)))
 

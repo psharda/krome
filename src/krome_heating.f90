@@ -339,7 +339,6 @@ contains
     ! Only for primordial gas
     function heatingAccretion(n, Tgas)
       use krome_commons
-      use krome_user_commons, ONLY : krome_get_user_Lacc_Flux
       use krome_fit
       use krome_subs
       use krome_getphys
@@ -356,8 +355,7 @@ contains
       !user_Lacc_Flux = \eta*Lacc/(4\pi R^2) (see equation 20 of Hosokawa et al. 2016)
       !Lacc = GMMdot/R (in erg/s)
       !Mathew & Federrath 2020 use the same expression for Solar metallicity, with \eta = 0.25
-      Lacc_Flux = krome_get_user_Lacc_Flux()
-      heatingAccretion = rhogas * opac_mayer * Lacc_Flux
+      heatingAccretion = rhogas * opac_mayer * user_Lacc_Flux
     end function heatingAccretion
 #ENDIFKROME
 
@@ -594,9 +592,13 @@ contains
     use krome_constants
     implicit none
     real*8::heat_CR,n(:),Tgas,Hfact,k(:)
-    real*8::logH2,QH2,QH,QHe,xe
+    real*8::logH2,QH2,QH,QHe,xe,ntot
 
     Hfact = 2d1*eV_to_erg !erg
+    ntot = sum(n(1:nmols))
+#IFKROME_popsicle_ice
+    ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
+#ENDIFKROME_popsicle_ice
 
     !precompute log10(H2)
     logH2 = log10(max(n(idx_H2),1d-40))
@@ -605,7 +607,7 @@ contains
     heat_CR = 0d0
 
     !heating per H ionization (eV); see Equation. 39 of Bialy & Sternberg 2019 (this is identical to the relation in Kim+23)
-    xe = min(max(n(idx_e)/sum(n(1:nmols)), 1d-40), 1d0)
+    xe = min(max(n(idx_e)/ntot, 1d-40), 1d0)
     QH = 6.43 * (1+4.06*(xe/(xe+0.07))**0.5) * eV_to_erg
 
     !heating per He ionization, same as H following Glassgold+2012
@@ -683,6 +685,9 @@ contains
     real*8::ncr,ncrn,ncrd1,ncrd2,dd,n2H,small,nmax
     dd = get_Hnuclei(n(:))
     ntot = sum(n(1:nmols))
+#IFKROME_popsicle_ice
+    ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
+#ENDIFKROME
     !replace small according to the desired enviroment
     ! and remove nmax if needed
     nmax = maxval(n(1:nmols))
@@ -722,9 +727,13 @@ contains
     use krome_commons
     use krome_constants
     use krome_subs
-    real*8::heat_compress,n(:), dd, Tgas
+    real*8::heat_compress,n(:), dd, Tgas, ntot
 
-    dd = sum(n(1:nmols)) !total number density
+    ntot = sum(n(1:nmols))
+#IFKROME_popsicle_ice
+    ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
+#ENDIFKROME
+    dd = ntot !total number density
 
     !COMPRESSIONAL HEATING
     heat_compress = dd * boltzmann_erg * Tgas / user_tff !erg/s/cm3
