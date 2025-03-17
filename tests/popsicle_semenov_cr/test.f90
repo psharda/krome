@@ -15,6 +15,7 @@ program test_krome
   use krome_cooling
   use krome_heating
   use krome_getphys
+  use krome_dust, ONLY : compute_Semenov_Tdust
   implicit none
   integer,parameter::nz=8
   integer,parameter::rstep = 500000
@@ -157,6 +158,7 @@ program test_krome
        !dust evaporation: dust is non existent at T > 1.5d3
        !if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)
 
+       call compute_Semenov_Tdust(x(:), Tgas)
        Tdust = krome_get_Semenov_Tdust()
 
        !dump cooling rates for Tgas going into the calculation

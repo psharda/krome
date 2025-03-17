@@ -14,6 +14,7 @@ program test_cooling
     use krome_getphys
     use krome_phfuncs
     use krome_constants
+    use krome_dust, ONLY : compute_Semenov_Tdust
     implicit none
     integer,parameter::nz=1
     integer,parameter::rstep = 500000
@@ -93,6 +94,8 @@ program test_cooling
       ni(:) = n(:)
 
       x(krome_idx_e) = krome_get_electrons(x(:))
+
+      call compute_Semenov_Tdust(x(:), Tgas)
 
       !Solve abundances to equilibrium
       call krome_equilibrium(x(:),Tgas,1)

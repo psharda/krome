@@ -15,6 +15,8 @@ program test_krome
   use krome_heating
   use krome_getphys
   use krome_phfuncs
+  use krome_dust, ONLY : compute_Semenov_Tdust
+  use krome_constants
   implicit none
   integer,parameter::nz=3
   integer,parameter::rstep = 500000
@@ -196,6 +198,7 @@ program test_krome
        !Absorption rate of UV photons by dust (erg s^-1)
        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
        call krome_set_dustheatRad(dustHeatingRate)
+       call compute_Semenov_Tdust(x(:), Tgas)
        Tdust = krome_get_Semenov_Tdust()
 
        !dump cooling rates for Tgas going into the calculation
