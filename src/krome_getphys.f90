@@ -10,12 +10,16 @@ contains
     use krome_commons
     use krome_constants
     implicit none
-    real*8::n(:),get_mu,m(nspec)
+    real*8::n(:),get_mu,m(nspec),ntot
     m(:) = get_mass()
 
     !ip_mass is 1/proton_mass_in_g
+    ntot = sum(n(1:nmols))
+#IFKROME_popsicle_ice
+    ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
+#ENDIFKROME_popsicle_ice
     get_mu = max(sum(n(1:nmols)*m(1:nmols)),1d-40) &
-         / max(sum(n(1:nmols)),1d-40) * ip_mass
+         / max(ntot,1d-40) * ip_mass
 
   end function get_mu
 
@@ -25,10 +29,14 @@ contains
     use krome_commons
     use krome_constants
     implicit none
-    real*8::get_mu_rho,rhogas,n(:)
+    real*8::get_mu_rho,rhogas,n(:),ntot
 
     !ip_mass is 1/proton_mass_in_g
-    get_mu_rho = rhogas / max(sum(n(1:nmols)),1d-40) * ip_mass
+    ntot = sum(n(1:nmols))
+#IFKROME_popsicle_ice
+    ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
+#ENDIFKROME_popsicle_ice
+    get_mu_rho = rhogas / max(ntot,1d-40) * ip_mass
 
   end function get_mu_rho
 

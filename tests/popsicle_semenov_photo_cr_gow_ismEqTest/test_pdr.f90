@@ -13,6 +13,7 @@ program test_krome_eqbm
   use krome_getphys
   use krome_phfuncs
   use krome_constants
+  use krome_dust, ONLY : compute_Semenov_Tdust
   implicit none
   integer,parameter::nz=1
   integer,parameter::rstep = 500000
@@ -25,7 +26,7 @@ program test_krome_eqbm
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
   logical::stop_next, converged
   character(len=20) :: filename, zint_str
-  real*8, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21, bfive=1d0
+  real*8, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21, bfive=3d0 !we set bfive=3d0 for this test to compare with GOW 2017 (see text below equation 7)
   real*8 :: Lshield, Nshield, t_cool, ntot_val, ntotchange_cum
   real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
 
@@ -140,8 +141,8 @@ program test_krome_eqbm
       !Dissociation rates
       dissH2 = 5.60d-11*chiLW*get_fshield_H2(NH2_cum,bfive)  !H2 dissociation rate accounting for self-shielding
       call krome_set_user_dissH2(dissH2)
-      ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(NH2_cum,NC_cum,bfive)
-      dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(NH2_cum,NCO_cum,bfive)
+      ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(NH2_cum,NC_cum)
+      dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(NH2_cum,NCO_cum)
       call krome_set_user_ionC(ionC)
       call krome_set_user_dissCO(dissCO)
 
@@ -202,8 +203,8 @@ program test_krome_eqbm
         !Dissociation rates
         dissH2 = 5.60d-11*chiLW*get_fshield_H2(NH2_cum,bfive)  !H2 dissociation rate accounting for self-shielding
         call krome_set_user_dissH2(dissH2)
-        ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(NH2_cum,NC_cum,bfive)
-        dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(NH2_cum,NCO_cum,bfive)
+        ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(NH2_cum,NC_cum)
+        dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(NH2_cum,NCO_cum)
         call krome_set_user_ionC(ionC)
         call krome_set_user_dissCO(dissCO)
 
@@ -223,6 +224,7 @@ program test_krome_eqbm
         !Absorption rate of UV photons by dust (erg s^-1)
         dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
         call krome_set_dustheatRad(dustHeatingRate)
+        call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()
 
         ni(krome_idx_Tgas) = Tgas
@@ -312,10 +314,9 @@ contains
   !===============================================================================
   !
   function get_fshield_H2(NH2,bfive)
-
-  !
-  ! Returns the H2 self-shielding function
-  ! Eq 12 of Wolcott-Green, Haiman and Bryan 2011: note this is slightly different from DB function
+    !
+    ! Returns the H2 self-shielding function
+    ! Eq 12 of Wolcott-Green, Haiman and Bryan 2011: note this is slightly different from DB function
     implicit none
     real*8, intent(in) :: NH2, bfive
     real*8 :: get_fshield_H2
@@ -325,24 +326,24 @@ contains
     return
   end function get_fshield_H2
 
-  function get_fshield_H(NH,bfive)
-  !
-  ! Returns the self-shielding due to Lyman-alpha lines on the LW band
-  ! Eq 15 of Wolcott-Green, Haiman and Bryan 2011
+  function get_fshield_H(NH)
+    !
+    ! Returns the self-shielding due to Lyman-alpha lines on the LW band
+    ! Eq 15 of Wolcott-Green, Haiman and Bryan 2011
     implicit none
-    real*8, intent(in) :: NH, bfive
+    real*8, intent(in) :: NH
     real*8 :: get_fshield_H
 
     get_fshield_H = max( 1/(1+(NH/(2.85e23)))**1.6 * exp(-0.15 * (NH/(2.85e23))), 1e-15 )
     return
   end function get_fshield_H
 
-  function get_fshield_C(NH2,NC,bfive)
-  !
-  ! Returns the shielding factor for C using the treatment of Tielens & Hollenbach (1985)
-  ! Eq 9 in Gong, Ostriker & Wolfire 2017
+  function get_fshield_C(NH2,NC)
+    !
+    ! Returns the shielding factor for C using the treatment of Tielens & Hollenbach (1985)
+    ! Eq 9 in Gong, Ostriker & Wolfire 2017
     implicit none
-    real*8, intent(in) :: NH2, NC, bfive
+    real*8, intent(in) :: NH2, NC
     real*8 :: get_fshield_C
 
     get_fshield_C = exp(-NC * 1.6e-17) * exp(-NH2 * 2.8e-22)/(1 + (2.8e-22 * NH2))
@@ -382,18 +383,16 @@ contains
 
   end function interpolate2DCO
 
-  function get_fshield_CO(NH2,NCO,bfive)
-  !
-  ! Returns the shielding factor for CO using tabulated data from Visser et al. 2009, compiled by Gong et al. 2017
-  ! Tabulated data procured from: https://github.com/munan/pdr/blob/master/shielding.cpp
+  function get_fshield_CO(NH2,NCO)
+    ! Returns the shielding factor for CO using tabulated data from Visser et al. 2009, compiled by Gong et al. 2017
     implicit none
-    real*8, intent(in) :: NH2, NCO, bfive
+    real*8, intent(in) :: NH2, NCO
     real*8 :: get_fshield_CO
     real*8 :: x(8), y(6), z(8, 6), clipped_x,clipped_y
 
     x = (/ 0d0, 13d0, 14d0, 15d0, 16d0, 17d0, 18d0, 19d0 /) !N_CO
     y = (/ 0d0, 19d0, 20d0, 21d0, 22d0, 23d0 /) !N_H2
-    z(:, 1) = (/ 1d0, 8.080d-1, 5.250d-1, 2.434d-1, 5.467d-2, 1.362d-2, 3.378d-3, 5.240d-5 /)
+    z(:, 1) = (/ 1d0, 8.080d-1, 5.250d-1, 2.434d-1, 5.467d-2, 1.362d-2, 3.378d-3, 5.240d-4 /)
     z(:, 2) = (/ 8.176d-1, 6.347d-1, 3.891d-1, 1.787d-1, 4.297d-2, 1.152d-2, 2.922d-3, 4.662d-4 /)
     z(:, 3) = (/ 7.223d-1, 5.624d-1, 3.434d-1, 1.540d-1, 3.515d-2, 9.231d-3, 2.388d-3, 3.899d-4 /)
     z(:, 4) = (/ 3.260d-1, 2.810d-1, 1.953d-1, 8.726d-2, 1.907d-2, 4.768d-3, 1.150d-3, 1.941d-4 /)

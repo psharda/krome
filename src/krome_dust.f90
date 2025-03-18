@@ -1115,7 +1115,6 @@ contains
   if(dust2gas_ratio .eq. 0) return
   if(krome_Semenov_Tdust .gt. 1d4) return !Semenov opacities are only tabulated to Tdust = 1d4 K
 
-  ntot = sum(n(1:nmols)) !total number density
   m(:) = get_mass() !masses of the species
   rhogas = sum(n(1:nmols)*m(1:nmols))
   nH = get_Hnuclei(n(:))
