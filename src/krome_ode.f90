@@ -37,7 +37,7 @@ contains
     ntot = sum(n(1:nmols))
 #IFKROME_popsicle_ice
     ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
-#ENDIFKROME
+#ENDIFKROME_popsicle_ice
     nH = get_Hnuclei(n(:))
     nH2dust = 0.d0
     n(idx_CR) = 1.d0
