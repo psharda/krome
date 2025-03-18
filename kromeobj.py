@@ -7221,13 +7221,14 @@ class krome:
 
 		#replace pragma with built strings
 		skip = False
+		skip_popsicle_ice = False
 		for row in fh:
 			srow = row.strip()
 			if srow == "#IFKROME_use_thermo" and (not self.use_thermo or not self.useODEthermo): skip = True
 			if srow == "#IFKROME_use_thermo_toggle" and not self.useThermoToggle: skip = True
 			if srow == "#IFKROME_report" and not self.doReport: skip = True
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
-			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip = True
+			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip_popsicle_ice = True
 			if srow == "#IFKROME_popsicle_ice_gow" and not self.popsicle_ice_gow: skip = True
 			if srow == "#IFKROME_usedTdust" and not self.usedTdust: skip = True
 			if srow == "#IFKROME_shieldHabingDust" and not self.shieldHabingDust: skip = True
@@ -7236,8 +7237,9 @@ class krome:
 			if srow == "#IFKROME_applyElementConservation_popsicle_semenov_photo_full" and not self.applyElementConservation_popsicle_semenov_photo_full: skip = True
 
 			if srow == "#ENDIFKROME": skip = False
+			if srow == "#ENDIFKROME_popsicle_ice": skip_popsicle_ice = False
 
-			if skip: continue
+			if skip or skip_popsicle_ice: continue
 
 			coolPragmaFound = False
 			#include cooling cmb floor if necessary
