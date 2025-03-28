@@ -2106,7 +2106,11 @@ def get_licence_header(version, codename, short=False):
 	!! more details in http://kromepackage.org/
 	!! also see https://bitbucket.org/krome/krome_stable
 	!!
-	!! Written and developed by Tommaso Grassi
+	!! This version created for the POPSICLE simulations by
+	!! Piyush Sharda (sharda@strw.leidenuniv.nl, Leiden University)
+	!! and Shyam H. Menon (smenon@flatironinstitute.org, CCA/Rutgers)
+	!!
+	!! KROME originally Written and developed by Tommaso Grassi
 	!!  tgrassi@nbi.dk,
 	!!  Starplan Center, Copenhagen.
 	!!  Niels Bohr Institute, Copenhagen.
