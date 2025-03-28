@@ -204,16 +204,19 @@
 51,Si,Si+,E,4.5d-9*exp(-2.61*user_Av)*user_is_metal*chiFUV
 
 #Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
+#Total recombination rates use the H nuclei density, and not electron density (see tablenotes of Table A1 of GOW)
+#For example, the differential for C+ (in cm^-3 s^-1) = recombination_on_dust*n(idx_Cj)*nH
+@var:Hnuclei=get_Hnuclei(n(:))
 @noTab_start
 @format:idx,R,R,P,rate
 #reaction 2 in table A2 of GOW
-51,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal
+51,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
 #reaction 4 in table A2 of GOW
-52,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal
+52,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
 #reaction 3 in table A2 of GOW
-53,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal
+53,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
 #reaction 5 in table A2 of GOW
-54,Si+,E,Si,Si_recombination_on_dust(n,Tgas)*user_is_metal
+54,Si+,E,Si,Si_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
 @noTab_stop
 
 ########################################## END PHOTO CHEMISTRY ###################################################################
@@ -236,9 +239,9 @@
 55,H,H+,E,NONE,41d3,(2.3*xH2 + 1.5d0*xH)*user_crate
 56,H2,H2+,E,NONE,41d3,2.0*(2.3*xH2 + 1.5d0*xH)*user_crate
 58,He,He+,E,NONE,41d3,1.1*user_crate
-59,CO,C,O,NONE,41d3,90*h2frac*user_crate*user_is_metal
+59,CO,C,O,NONE,41d3,92*h2frac*user_crate*user_is_metal
 59,Si,Si+,E,NONE,41d3,8400*h2frac*user_crate*user_is_metal
-60,C,C+,E,NONE,41d3,(3.85 + 560*h2frac)*user_crate*user_is_metal
+60,C,C+,E,NONE,41d3,(3.85 + 520*h2frac)*user_crate*user_is_metal
 #@storeOnce_stop
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 61,CO,H,HCO+,E,NONE,NONE,6.52*user_crate*user_is_metal

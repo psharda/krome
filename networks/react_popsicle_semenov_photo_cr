@@ -486,12 +486,15 @@
 
 
 #Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
+#Total recombination rates use the H nuclei density, and not electron density (see tablenotes of Table A1 of GOW)
+#For example, the differential for C+ (in cm^-3 s^-1) = recombination_on_dust*n(idx_Cj)*nH
+@var:Hnuclei=get_Hnuclei(n(:))
 @noTab_start
 @format:idx,R,R,P,rate
-160,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal
-161,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal
-162,O+,E,O,O_recombination_on_dust(n,Tgas)*user_is_metal
-163,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal
+160,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
+161,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
+162,O+,E,O,O_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
+163,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
 @noTab_stop
 
 ########################################## END PHOTO CHEMISTRY ###################################################################
@@ -507,7 +510,6 @@
 #@storeOnce_start: we don't use this option anymore in case crate changes due to attenuation
 #user_crate = primary+secondary cosmic ray ionization rate of H2 (reactions 122+136). CR reactions that are induced by photon released due to CR excitement of H2 molecules ('CRPHOT' in UMIST language) are scaled with xH2 as defined below. Direct CR reactions ('CRP' in UMIST language) do not have this scaling.
 #Most rate coefficients below come from Padovani et al. (2024); see Menon & Sharda 2025 for details.
-@var:Hnuclei=get_Hnuclei(n(:))
 @var:xH2 = n(idx_H2)/Hnuclei
 164,H,H+,E,NONE,41d3,(5d-1 + 4.078d0*xH2)*user_crate
 165,H-,H,E,NONE,41d3,924d0*xH2*user_crate
