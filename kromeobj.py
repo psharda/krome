@@ -58,7 +58,7 @@ class krome:
 	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = useCoolingDustSemenov = False
 	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingZCIEGF = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
-	useCoolingHCN = useCoolingOH = useCoolingH2O = False
+	useCoolingHCN = useCoolingOH = useCoolingH2O = useGOW = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useHeatingAccretion = False
@@ -250,6 +250,7 @@ class krome:
 		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
 		self.parser.add_argument("-customRTOL", help="file with the list of the individual RTOLs in the form SPECIES RTOL in each line,\
 			e.g. H3+ 1d-4, see also -RTOL", metavar="filename")
+		self.parser.add_argument("-gow", action="store_true", help="Whether the GOW (Gong, Ostriker, Wolfire 2017) ISM chemical network is being used")
 		self.parser.add_argument("-dry", action="store_true", help="dry pre-compilation: does not write anything in the build direactory")
 		self.parser.add_argument("-dust", help="include dust ODE using N bins for each TYPE, e.g. -dust 10,C,Si set 10 dust carbon\
 			bins and 10 dust silicon dust bins. Note: requires a call to the krome_init_dust subroutine.\
@@ -1613,6 +1614,13 @@ class krome:
 				die("ERROR: if you use -ramsesOffset you must also add -ramses option!")
 			self.ramses_offset = args.ramsesOffset
 			print("Reading option -ramsesOffset (offset="+str(args.ramsesOffset)+")")
+
+		#check if GOW network is being used
+		if args.gow:
+			if not self.useCoolingDustSemenov:
+				die("ERROR: you cannot use the GOW network without activating the Dust Semenov cooling!")
+			self.useGOW = True
+			print("Reading option -gow: identified GOW network")
 
 		#ATOL
 		if args.ATOL:
@@ -7200,8 +7208,10 @@ class krome:
 		        #H2 on dust from Jura constant value
 			dustH2 +="nH2dust = nH2dust + H2_dustJura(n(:))"
 		elif self.useCoolingDustSemenov:
-				dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*nH*dust2gas_ratio / (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
-
+				if self.useGOW:
+					dustH2 += "nH2dust = nH2dust + 3d-17*n(idx_H)*nH*dust2gas_ratio"
+				else:
+					dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*nH*dust2gas_ratio / (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"					
 		#H2 on dust from tables
 		if self.dustTabsH2:
 			dustH2 = "ntot = sum(n(1:nmols))\n"

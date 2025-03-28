@@ -14,4 +14,5 @@
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
 -noRecCheck
+-gow
 #-popsicle_ice_gow
