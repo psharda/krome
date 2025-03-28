@@ -289,7 +289,7 @@ program test_krome_eqbm
       !Add to cumulative columns of H, H2, C, CO
       NH_cum = NH_cum + (n(KROME_idx_H)/sum(n(1:krome_nmols))) * dColumn
       NH2_cum = NH2_cum + (n(KROME_idx_H2)/sum(n(1:krome_nmols))) * dColumn
-      NC_cum = NC_cum + (n(KROME_idx_Cj)/sum(n(1:krome_nmols))) * dColumn
+      NC_cum = NC_cum + (n(KROME_idx_C)/sum(n(1:krome_nmols))) * dColumn
       NCO_cum = NCO_cum + (n(KROME_idx_CO)/sum(n(1:krome_nmols))) * dColumn
       !break when max density reached
       if (ColumnTot .gt. ColumnTotMax) then
