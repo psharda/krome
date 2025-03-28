@@ -71,7 +71,7 @@ class krome:
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = useSemenov = usedTdust = useSurface = useHeatingVisc = False
 	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = useBroadening = False
-	applyElementConservation_popsicle_semenov = applyElementConservation_popsicle_semenov_photo_full = popsicle_ice = popsicle_ice_gow = False
+	applyElementConservation_popsicle_semenov = applyElementConservation_popsicle_semenov_photo_full = applyElementConservation_popsicle_semenov_photo_gow = popsicle_ice = popsicle_ice_gow = False
 	verbatimFilename = "reactions_verbatim.dat"
 	useVerbatimFile = True
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
@@ -353,6 +353,7 @@ class krome:
 		self.parser.add_argument("-popsicle_ice_gow", action="store_true", help="if the GOW network is using evaporation rate coefficients in cm^-3 s^-1 (used for the popsicle simulations); see evaporation in krome_grfuncs.f90")
 		self.parser.add_argument("-applyElementConservation_popsicle_semenov", action="store_true", help="apply element conservation for the popsicle semenov network by replacing ODEs of neutral species")
 		self.parser.add_argument("-applyElementConservation_popsicle_semenov_photo_full", action="store_true", help="apply element conservation for the popsicle semenov photo+cr network by replacing ODEs of neutral species")
+		self.parser.add_argument("-applyElementConservation_popsicle_semenov_photo_gow", action="store_true", help="apply element conservation for the popsicle semenov photo+cr GOW network by replacing ODEs of neutral species and electrons")
 		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
 		self.parser.add_argument("-skipJacobian", action="store_true", help="do not write Jacobian in krome_ode.f90 file. Useful\
@@ -1171,6 +1172,13 @@ class krome:
 			if self.filename != "networks/react_popsicle_semenov_photo_cr":
 				die("ERROR: option -applyElementConservation_popsicle_semenov_photo_full can only be used for the react_popsicle_semenov_photo_cr network!")
 			self.applyElementConservation_popsicle_semenov_photo_full = True
+
+		#whether to apply element conservation for the popsicle semenov photo+cr GOW network
+		if args.applyElementConservation_popsicle_semenov_photo_gow:
+			print("Reading option -applyElementConservation_popsicle_semenov_photo_gow")
+			if self.filename != "networks/react_popsicle_semenov_photo_cr_gow":
+				die("ERROR: option -applyElementConservation_popsicle_semenov_photo_gow can only be used for the react_popsicle_semenov_photo_cr_gow network!")
+			self.applyElementConservation_popsicle_semenov_photo_gow = True
 
 		#whether to apply element conservation for the popsicle semenov network
 		if args.applyElementConservation_popsicle_semenov:
@@ -7245,6 +7253,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_applyElementConservation_popsicle_semenov" and not self.applyElementConservation_popsicle_semenov: skip = True
 			if srow == "#IFKROME_applyElementConservation_popsicle_semenov_photo_full" and not self.applyElementConservation_popsicle_semenov_photo_full: skip = True
+			if srow == "#IFKROME_applyElementConservation_popsicle_semenov_photo_gow" and not self.applyElementConservation_popsicle_semenov_photo_gow: skip = True
 
 			if srow == "#ENDIFKROME": skip = False
 			if srow == "#ENDIFKROME_popsicle_ice": skip_popsicle_ice = False
