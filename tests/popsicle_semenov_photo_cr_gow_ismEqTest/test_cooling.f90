@@ -38,6 +38,7 @@ program test_cooling
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
     call krome_set_user_is_metal(1d0)
+    call krome_set_user_pdr_factor(1d0)
 
     !initialize KROME (mandatory)
     call krome_init()

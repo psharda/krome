@@ -16,7 +16,8 @@
 @var:ntot=sum(n(1:nmols))
 
 #user_is_metal is a boolean flag to turn photochemistry of metals off in primordial conditions.
-@common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2, user_ionC, user_dissCO
+#user_pdr_factor used to scale down the grain recombination rates by some factor (as done in GOW Appendix C.4) to match the output from other PDR codes
+@common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2, user_ionC, user_dissCO, user_pdr_factor
 
 
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
@@ -210,13 +211,13 @@
 @noTab_start
 @format:idx,R,R,P,rate
 #reaction 2 in table A2 of GOW
-51,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
+51,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 #reaction 4 in table A2 of GOW
-52,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
+52,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 #reaction 3 in table A2 of GOW
-53,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
+53,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 #reaction 5 in table A2 of GOW
-54,Si+,E,Si,Si_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
+54,Si+,E,Si,Si_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 @noTab_stop
 
 ########################################## END PHOTO CHEMISTRY ###################################################################
