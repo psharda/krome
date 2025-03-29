@@ -123,6 +123,11 @@ program test_krome_eqbm
       x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
 
       call krome_set_Semenov_Tdust(1d1)
+      Tdust = krome_get_Semenov_Tdust()
+      if (Tdust .ne. 1d1) then
+        print *, 'ERROR: if you change the fix Tdust to something else, you need to also make the same change in krome_dust.f90!!'
+        stop
+      endif
 
       !set H2 dissociation reaction rate coeff
       n(1:krome_nmols) = x(:)
@@ -225,9 +230,7 @@ program test_krome_eqbm
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !Shielding done
-        !Absorption rate of UV photons by dust (erg s^-1)
-        !dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
-        !call krome_set_dustheatRad(dustHeatingRate)
+        !For the PDR test, Tdust is fixed to 10 K
         call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()
 

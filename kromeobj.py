@@ -55,7 +55,7 @@ class krome:
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = useCoolingNebular = useCoolingDustGRREC = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useShieldingC = useShieldingCO = useShieldingWG11_withH = False
-	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = useCoolingDustSemenov = False
+	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = useCoolingDustSemenov = useCoolingDustSemenov_fixedTdust = False
 	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingZCIEGF = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
 	useCoolingHCN = useCoolingOH = useCoolingH2O = useGOW = False
@@ -338,6 +338,7 @@ class krome:
 			'report.gps'. Warning: it slows the whole system!")
 		self.parser.add_argument("-reverse", action="store_true", help="create reverse reaction from the current network\
 			using NASA polynomials.")
+		self.parser.add_argument("-fixTdust", action="store_true", help="fix the dust temperature (used in the PDR tests for POPSICLE simulations)")
 		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g.\
 			-RTOL 1e-5 Default is RTOL=1d-4, see also -ATOL and -customRTOL")
 		self.parser.add_argument("-photoBins", metavar="NBINS", help="define the number of frequency bins for the impinging radiation.")
@@ -1629,6 +1630,12 @@ class krome:
 				die("ERROR: you cannot use the GOW network without activating the Dust Semenov cooling!")
 			self.useGOW = True
 			print("Reading option -gow: identified GOW network")
+
+		if args.fixTdust:
+			if not self.useCoolingDustSemenov:
+				die("ERROR: you cannot fix Tdust without activating the Dust Semenov cooling!")
+			self.useCoolingDustSemenov_fixedTdust = True
+			print("Reading option -fixTdust: dust temperature will be fixed")
 
 		#ATOL
 		if args.ATOL:
@@ -6480,7 +6487,7 @@ class krome:
 			if useDustT or usedTdust: dustOptInt += "call dust_init_intBB()"
 		if not useDustEvol: dustPartnerIdx = ""
 
-		skip = skipPhotoDust = skipChemisorption = skipdTdust = skipDustEvol = skipDustSemenov = False
+		skip = skipPhotoDust = skipChemisorption = skipdTdust = skipDustEvol = skipDustSemenov = skipDustSemenov_fixedTdust = False
 		for row in fh:
 			srow = row.strip()
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
@@ -6504,11 +6511,15 @@ class krome:
 			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skipDustSemenov = True
 			if srow == "#ENDIFKROME_useCoolingDustSemenov": skipDustSemenov = False
 
+			if srow == "#IFKROME_useCoolingDustSemenov_fixedTdust" and not self.useCoolingDustSemenov_fixedTdust: skipDustSemenov_fixedTdust = True
+			if srow == "#ENDIFKROME_useCoolingDustSemenov_fixedTdust": skipDustSemenov_fixedTdust = False
+
 			if skipChemisorption: continue
 			if skipdTdust: continue
 			if skipPhotoDust: continue
 			if skipDustEvol: continue
 			if skipDustSemenov: continue
+			if skipDustSemenov_fixedTdust: continue
 			if skip: continue
 
 			row = row.replace("#KROME_dust_grain_density", dustGrainDensity)
