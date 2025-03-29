@@ -359,41 +359,9 @@ contains
     return
   end function get_fshield_C
 
-  !*****************************
-    !2D interpolation at (x0,y0) for (x(:), y(:)) in z(:,:)
-    !Added by Piyush Sharda in 2024 for CO shielding
-  function interpolate2DCO(x, y, z, x0, y0)
-    implicit none
-    real*8 :: interpolate2DCO
-    real*8 :: x(:), y(:), z(size(x), size(y))
-    real*8 :: x0, y0
-    real*8 :: f
-    integer :: i, j
-    real*8 :: t, u
-
-    ! Find indices i and j such that x(i) <= x0 < x(i+1) and y(j) <= y0 < y(j+1)
-    i = 1
-    do while (i < size(x) - 1 .and. x0 > x(i + 1))
-      i = i + 1
-    end do
-
-    j = 1
-    do while (j < size(y) - 1 .and. y0 > y(j + 1))
-      j = j + 1
-    end do
-
-    ! Compute interpolation weights
-    t = (x0 - x(i)) / (x(i + 1) - x(i))
-    u = (y0 - y(j)) / (y(j + 1) - y(j))
-
-    ! Perform bilinear interpolation
-    interpolate2DCO = (1 - t) * (1 - u) * z(i, j) + t * (1 - u) * z(i + 1, j) + &
-        (1 - t) * u * z(i, j + 1) + t * u * z(i + 1, j + 1)
-
-  end function interpolate2DCO
-
   function get_fshield_CO(NH2,NCO)
     ! Returns the shielding factor for CO using tabulated data from Visser et al. 2009, compiled by Gong et al. 2017
+    use krome_fit
     implicit none
     real*8, intent(in) :: NH2, NCO
     real*8 :: get_fshield_CO
@@ -411,7 +379,7 @@ contains
     !Clip logNCO and logNH2 to the ranges in the data
     clipped_x = max(x(1), min(log10(NCO), x(8)))
     clipped_y = max(y(1), min(log10(NH2), y(6)))
-    get_fshield_CO = 1d1**interpolate2DCO(x, y, log10(z), clipped_x, clipped_y)
+    get_fshield_CO = 1d1**interpolate2D(x, y, log10(z), clipped_x, clipped_y)
     return
   end function get_fshield_CO
 
