@@ -19,7 +19,7 @@ program test_krome_eqbm
   integer,parameter::rstep = 500000
   integer::i,j,ii,ios,jscale,jz,jz2, column_bins, zint, NoColumnBins
   real*8::rhogas,m(krome_nspec)
-  real*8::tff,ertol,eatol,max_time,t_tot
+  real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec),ColumnTot,ColumnTotMax,ColumnTotMin,ColumnLast,dColumn,ColumnFactor
   real*8::Av,heats(krome_nheats),crate,crate_0,NH_cum,NH2_cum,NC_cum, NCO_cum
@@ -36,7 +36,7 @@ program test_krome_eqbm
   !set the scaled FUV intensity
   chi0 = 1d0
   !Set the cosmic ray rate, proportional to the FUV intensity; default for ISRF 2x10^-16 s^-1
-  crate_0 = 1.e-16 !Note: this is the primary+secondary CR ionization of H2 ~ 0.5 times the primary H rate
+  crate_0 = 2d-16 !Note: this is the primary ionization of H as in GOW
 
 
   max_time=seconds_per_year*1.e9 ! max time we will be integrating for = 1000 Myrs (1Gyr)
@@ -103,7 +103,8 @@ program test_krome_eqbm
 
     ! Switches to decide when equilibrium has been reached
     ertol = 1d-4  ! relative min change in a species
-
+    eatol = 1d-9
+    
     ColumnTot = ColumnTotMin
 
     do column_bins = 1, 10000
@@ -116,12 +117,12 @@ program test_krome_eqbm
       x(KROME_idx_H2)        = 1d-6*ntot
       x(KROME_idx_E)         = 1d-4*ntot
       x(KROME_idx_Hj)        = 1d-4*ntot
-      x(KROME_idx_HE)        = 0.0775*ntot
+      x(KROME_idx_HE)        = 0.1*ntot
       x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
       x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
       x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
 
-      call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
+      call krome_set_Semenov_Tdust(1d1)
 
       !set H2 dissociation reaction rate coeff
       n(1:krome_nmols) = x(:)
@@ -225,8 +226,8 @@ program test_krome_eqbm
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !Shielding done
         !Absorption rate of UV photons by dust (erg s^-1)
-        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
-        call krome_set_dustheatRad(dustHeatingRate)
+        !dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
+        !call krome_set_dustheatRad(dustHeatingRate)
         call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()
 
@@ -239,6 +240,7 @@ program test_krome_eqbm
         do ii=1,krome_nmols
           n(ii) = max(x(ii),0d0)
         end do
+        Hnuclei = get_Hnuclei(n(:))
         n(krome_idx_Tgas) = Tgas
 
         ! check if we have converged by comparing the error in any species with an relative abundance above eatol
@@ -275,7 +277,7 @@ program test_krome_eqbm
 
       m = get_mass()
       rhogas = sum(n(1:krome_nmols)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') sum(n(1:krome_nmols)),rhogas,Tgas,Tdust,ColumnTot,n(1:krome_nmols)/sum(n(1:krome_nmols))
+      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,ColumnTot,n(1:krome_nmols)/Hnuclei
       flush(22)
 
       if (stop_next) exit
@@ -324,7 +326,7 @@ contains
     real*8, intent(in) :: NH2, bfive
     real*8 :: get_fshield_H2
 
-    get_fshield_H2 = 0.965/(1+(NH2/(5.e14*bfive)))**1.1 + &
+    get_fshield_H2 = 0.965/(1+(NH2/(5.e14*bfive)))**2d0 + &
                     0.035/((1. + (NH2/5.e14))**0.5) * exp(-8.5 * 1.e-4 * (1. + (NH2/5.e14))**0.5)
     return
   end function get_fshield_H2
