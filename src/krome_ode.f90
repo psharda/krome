@@ -147,10 +147,6 @@ contains
     !Si conservation
     dn(idx_SI) = -1d0 * dn(idx_SIj)
 
-    !Charge conservation
-    dn(idx_E) = dn(idx_Hj) + dn(idx_HEj) + dn(idx_H2j) + dn(idx_H3j) + &
-                dn(idx_Oj) + dn(idx_Cj) + dn(idx_HCOj) + dn(idx_SIj) + &
-                2d0*n(idx_HEjj)
 #ENDIFKROME
 
 
