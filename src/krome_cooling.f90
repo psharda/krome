@@ -192,7 +192,7 @@
       real*8::x1(imax),x2(jmax),x3(kmax),ntot
       real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
       real*8::v1min,v1max,v2min,v2max,v3min,v3max
-      real*8::vee,sigmaH2
+      real*8::vee,sigmaH2,nh,nh2,nelec,nco
 
       !local copy of limits
       v1min = coolCOx1min
@@ -207,12 +207,17 @@
       x2(:) = coolCOx2(:)
       x3(:) = coolCOx3(:)
 
+      nh = max(n(idx_H), 1d-40)
+      nh2 = max(n(idx_H2), 1d-40)
+      nelec = max(n(idx_E), 1d-40)
+      nco = max(n(idx_CO), 1d-40)
+
       ixd1(:) = coolCOixd1(:)
       ixd2(:) = coolCOixd2(:)
       ixd3(:) = coolCOixd3(:)
 
       !local variables
-      v3 = num2col(n(idx_CO),n(:)) !CO column density
+      v3 = num2col(nco,n(:)) !CO column density
       !cH = n(idx_H) + n(idx_H2) (OLD!)
       !instead of using cH here, we follow Glover et al. (2010)
       !and Gong et al. (2017, appendix) to also take into account CO
@@ -221,21 +226,18 @@
       !cooling_CO = 1d1**xLd * cH * n(idx_CO)  - OLD
       sigmaH2 = 3.3d-16*(inTgas/1d3)**(-0.25d0)
       vee = 1.03d4*sqrt(inTgas)
-      cH = n(idx_H2) + sqrt(2d0)*(2.3d-15/sigmaH2)*n(idx_H) + (1.3d-8/(sigmaH2*vee))*n(idx_E)
-      if (n(idx_H) < 0. .or. n(idx_H2) < 0.) then
-        cH = n_global(idx_H) + n_global(idx_H2)
+      cH = nh2 + sqrt(2d0)*(2.3d-15/sigmaH2)*nh + (1.3d-8/(sigmaH2*vee))*nelec
+      !if (n(idx_H) < 0. .or. n(idx_H2) < 0.) then
+        !cH = n_global(idx_H) + n_global(idx_H2)
         ! Set red flag if not due to small excursion in n_H2
         ! Only relevant for low temperatures, bc otherwise H is ionised
         ! And CO cooling only relevant at high densities
-        ntot = sum(n(1:nmols))
-#IFKROME_popsicle_ice
-        ntot = sum(n(1:nmols)) - n(idx_CO_total) - n(idx_H2O_total)
-#ENDIFKROME
-        if (abs(n(idx_H2)) / (abs(n(idx_H)) + 1d-40) > 1d-6 .and. &
-                                               inTgas < 5d4 .and. &
-            abs(n(idx_H)) > abs(n(idx_Hj)) .and. ntot > 100.) &
-                 red_flag = ibset(red_flag,5)
-      endif
+        !ntot = sum(n(1:nmols))
+        !if (abs(n(idx_H2)) / (abs(n(idx_H)) + 1d-40) > 1d-6 .and. &
+        !                                       inTgas < 5d4 .and. &
+        !    abs(n(idx_H)) > abs(n(idx_Hj)) .and. ntot > 100.) &
+        !         red_flag = ibset(red_flag,5)
+      !endif
 
       v2 = cH
       v1 = inTgas !Tgas
@@ -366,6 +368,7 @@
       real*8::x1(imax),x2(jmax),x3(kmax)
       real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
       real*8::v1min,v1max,v2min,v2max,v3min,v3max
+      real*8::nh,nh2,noh
 
       !local copy of limits
       v1min = coolOHx1min
@@ -384,9 +387,14 @@
       ixd2(:) = coolOHixd2(:)
       ixd3(:) = coolOHixd3(:)
 
+      nh = max(n(idx_H), 1d-40)
+      nh2 = max(n(idx_H2), 1d-40)
+      noh = max(n(idx_OH), 1d-40)
+
+
       !local variables
-      v3 = num2col(n(idx_OH),n(:)) !OH column density
-      cH = n(idx_H) + n(idx_H2)
+      v3 = num2col(noh,n(:)) !OH column density
+      cH = nh + nh2
 
       v2 = cH
       v1 = inTgas !Tgas
@@ -440,7 +448,7 @@
            vv12) + vv12
 
       !OH cooling in erg/s/cm3
-      cooling_OH = 1d1**xLd * cH * n(idx_OH)
+      cooling_OH = 1d1**xLd * cH * noh
 
     end function cooling_OH
 
@@ -517,6 +525,7 @@
       real*8::x1(imax),x2(jmax),x3(kmax)
       real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
       real*8::v1min,v1max,v2min,v2max,v3min,v3max
+      real*8::nh,nh2,nh2o
 
       !local copy of limits
       v1min = coolH2Ox1min
@@ -535,9 +544,14 @@
       ixd2(:) = coolH2Oixd2(:)
       ixd3(:) = coolH2Oixd3(:)
 
+      nh = max(n(idx_H), 1d-40)
+      nh2 = max(n(idx_H2), 1d-40)
+      nh2o = max(n(idx_H2O), 1d-40)
+
+
       !local variables
-      v3 = num2col(n(idx_H2O),n(:)) !H2O column density
-      cH = n(idx_H) + n(idx_H2)
+      v3 = num2col(nh2o,n(:)) !H2O column density
+      cH = nh + nh2
 
       v2 = cH
       v1 = inTgas !Tgas
@@ -591,7 +605,7 @@
            vv12) + vv12
 
       !H2O cooling in erg/s/cm3
-      cooling_H2O = 1d1**xLd * cH * n(idx_H2O)
+      cooling_H2O = 1d1**xLd * cH * nh2o
 
     end function cooling_H2O
 
@@ -1372,19 +1386,17 @@
     implicit none
     integer::i
     real*8::cool_DustGRREC,n(:),Tgas,ntot,psi,G0
-    real*8::nenh,D0,D1,D2,D3,D4
+    real*8::nenh,D0,D1,D2,D3,D4,nelec,nhyd
 
     cool_DustGRREC = 0d0
 
     ntot = get_Hnuclei(n(:))
-    nenh = n(idx_e) * n(idx_H)
-    if(n(idx_e)>0d0) then 
-       G0 = 1.69d0 * chiFUV
-       !Add 50 to G\sqrt{T}/n_e to prevent too small psi, as is done for PE heating; see Kim+23
-       psi = log(G0 * sqrt(Tgas) / n(idx_e) + 50.0)
-    else
-       psi = 0d0
-    end if
+    nelec = max(n(idx_e), 1d-40)
+    nhyd = max(n(idx_H), 1d-40)
+    nenh = nelec * nhyd
+    G0 = 1.69d0 * chiFUV
+    !Add 50 to G\sqrt{T}/n_e to prevent too small psi, as is done for PE heating; see Kim+23
+    psi = log(G0 * sqrt(Tgas) / nelec + 50.0)
 
     !Note that Weingartner and Draine 2001 ApJS advise against using this functional form outside limits specified below; we ignore this advice
     !if (Tgas .LT. 1d3 .or. Tgas .GT. 1d4) return
