@@ -73,6 +73,10 @@ contains
 
 #ENDIFKROME
 
+#IFKROME_useCoolingDustSemenov
+    call compute_Semenov_Tdust(n(:),Tgas)
+#ENDIFKROME
+
 #KROME_dust_H2
 
 #KROME_ODE
