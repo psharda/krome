@@ -666,8 +666,8 @@ contains
     logT4 = log10(T4)
 
     !Critical density calculation
-    xH = n(idx_H) / n_H  !Number fraction of H
-    xH2 = n(idx_H2) / n_H  !Number fraction of H2
+    xH = max(n(idx_H) / n_H, 1d-40)  !Number fraction of H
+    xH2 = max(n(idx_H2) / n_H, 1d-40)  !Number fraction of H2
 
     !Critical densities from Lepp & Shull (1983) and Shapiro & Kang (1987)
     !n_cr_H decreased by an order of magnitude as suggested by Martin et al. 1996
@@ -752,8 +752,8 @@ contains
     logT4 = log10(T4)
 
     !Critical density calculation
-    xH = n(idx_H) / n_H  !Number fraction of H
-    xH2 = n(idx_H2) / n_H  !Number fraction of H2
+    xH = max(n(idx_H) / n_H, 1d-40)  !Number fraction of H
+    xH2 = max(n(idx_H2) / n_H, 1d-40)  !Number fraction of H2
 
     !Critical densities from Lepp & Shull (1983) and Shapiro & Kang (1987)
     !n_cr_H decreased by an order of magnitude as suggested by Martin et al. 1996
