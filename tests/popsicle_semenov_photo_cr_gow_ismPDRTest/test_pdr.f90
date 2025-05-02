@@ -23,7 +23,7 @@ program test_krome_eqbm
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec),ColumnTot,ColumnTotMax,ColumnTotMin,ColumnLast,dColumn,ColumnFactor
   real*8::Av,heats(krome_nheats),crate,crate_0,NH_cum,NH2_cum,NC_cum, NCO_cum
-  real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
+  real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0
   logical::stop_next, converged
   character(len=20) :: filename, zint_str
   real*8, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21, bfive=3d0 !we set bfive=3d0 for this test to compare with GOW 2017 (see text below equation 7)
