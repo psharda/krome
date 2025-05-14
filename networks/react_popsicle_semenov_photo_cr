@@ -491,10 +491,10 @@
 @var:Hnuclei=get_Hnuclei(n(:))
 @noTab_start
 @format:idx,R,R,P,rate
-160,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
-161,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
-162,O+,E,O,O_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
-163,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
+160,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
+161,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
+162,O+,E,O,O_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
+163,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 @noTab_stop
 
 ########################################## END PHOTO CHEMISTRY ###################################################################
