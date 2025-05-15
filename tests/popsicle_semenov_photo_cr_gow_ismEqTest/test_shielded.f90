@@ -97,6 +97,9 @@ program test_krome_eqbm
       call krome_set_user_is_metal(0d0)
     endif
 
+    !scale grain recombination reactions as in GOW
+    call krome_set_user_pdr_factor(1d0)
+
     !initialize KROME (mandatory)
     call krome_init()
 

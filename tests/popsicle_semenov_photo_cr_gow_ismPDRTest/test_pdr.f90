@@ -19,11 +19,11 @@ program test_krome_eqbm
   integer,parameter::rstep = 500000
   integer::i,j,ii,ios,jscale,jz,jz2, column_bins, zint, NoColumnBins
   real*8::rhogas,m(krome_nspec)
-  real*8::tff,ertol,eatol,max_time,t_tot
+  real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec),ColumnTot,ColumnTotMax,ColumnTotMin,ColumnLast,dColumn,ColumnFactor
   real*8::Av,heats(krome_nheats),crate,crate_0,NH_cum,NH2_cum,NC_cum, NCO_cum
-  real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
+  real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0
   logical::stop_next, converged
   character(len=20) :: filename, zint_str
   real*8, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21, bfive=3d0 !we set bfive=3d0 for this test to compare with GOW 2017 (see text below equation 7)
@@ -36,7 +36,7 @@ program test_krome_eqbm
   !set the scaled FUV intensity
   chi0 = 1d0
   !Set the cosmic ray rate, proportional to the FUV intensity; default for ISRF 2x10^-16 s^-1
-  crate_0 = 1.e-16 !Note: this is the primary+secondary CR ionization of H2 ~ 0.5 times the primary H rate
+  crate_0 = 2d-16 !Note: this is the primary ionization of H as in GOW
 
 
   max_time=seconds_per_year*1.e9 ! max time we will be integrating for = 1000 Myrs (1Gyr)
@@ -90,6 +90,9 @@ program test_krome_eqbm
       call krome_set_user_is_metal(0d0)
     endif
 
+    !scale grain recombination reactions by 0.6 as in GOW 
+    call krome_set_user_pdr_factor(0.6d0)
+
     !initialize KROME (mandatory)
     call krome_init()
 
@@ -100,7 +103,8 @@ program test_krome_eqbm
 
     ! Switches to decide when equilibrium has been reached
     ertol = 1d-4  ! relative min change in a species
-
+    eatol = 1d-9
+    
     ColumnTot = ColumnTotMin
 
     do column_bins = 1, 10000
@@ -109,16 +113,22 @@ program test_krome_eqbm
       x(:) = 1d-40
 
       !set individual species
-      x(KROME_idx_H)         = ntot - 2*1d-6*ntot - 1d-4*ntot
-      x(KROME_idx_H2)        = 1d-6*ntot
-      x(KROME_idx_E)         = 1d-4*ntot
+      x(KROME_idx_H)         = ntot* (1d0 - (1d-3 + 1.6d-4 + 3.2d-4 + 1.7d-6 + 2.681411d-07 + 0.1d0 + 1d-4))
+      x(KROME_idx_H2)        = 1d-3*ntot
+      x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 1.7d-6*zs(jz2)*ntot + 2.681411e-07*ntot
       x(KROME_idx_Hj)        = 1d-4*ntot
-      x(KROME_idx_HE)        = 0.0775*ntot
+      x(KROME_idx_HE)        = 0.1*ntot
       x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
       x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
       x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
+      x(KROME_idx_H3j)       = 2.681411e-07*ntot
 
-      call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
+      call krome_set_Semenov_Tdust(1d1)
+      Tdust = krome_get_Semenov_Tdust()
+      if (Tdust .ne. 1d1) then
+        print *, 'ERROR: if you change the fix Tdust to something else, you need to also make the same change in krome_dust.f90!!'
+        stop
+      endif
 
       !set H2 dissociation reaction rate coeff
       n(1:krome_nmols) = x(:)
@@ -221,9 +231,7 @@ program test_krome_eqbm
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !Shielding done
-        !Absorption rate of UV photons by dust (erg s^-1)
-        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
-        call krome_set_dustheatRad(dustHeatingRate)
+        !For the PDR test, Tdust is fixed to 10 K
         call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()
 
@@ -236,6 +244,7 @@ program test_krome_eqbm
         do ii=1,krome_nmols
           n(ii) = max(x(ii),0d0)
         end do
+        Hnuclei = get_Hnuclei(n(:))
         n(krome_idx_Tgas) = Tgas
 
         ! check if we have converged by comparing the error in any species with an relative abundance above eatol
@@ -272,7 +281,7 @@ program test_krome_eqbm
 
       m = get_mass()
       rhogas = sum(n(1:krome_nmols)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') sum(n(1:krome_nmols)),rhogas,Tgas,Tdust,ColumnTot,n(1:krome_nmols)/sum(n(1:krome_nmols))
+      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,ColumnTot,n(1:krome_nmols)/Hnuclei
       flush(22)
 
       if (stop_next) exit
@@ -286,7 +295,7 @@ program test_krome_eqbm
       !Add to cumulative columns of H, H2, C, CO
       NH_cum = NH_cum + (n(KROME_idx_H)/sum(n(1:krome_nmols))) * dColumn
       NH2_cum = NH2_cum + (n(KROME_idx_H2)/sum(n(1:krome_nmols))) * dColumn
-      NC_cum = NC_cum + (n(KROME_idx_Cj)/sum(n(1:krome_nmols))) * dColumn
+      NC_cum = NC_cum + (n(KROME_idx_C)/sum(n(1:krome_nmols))) * dColumn
       NCO_cum = NCO_cum + (n(KROME_idx_CO)/sum(n(1:krome_nmols))) * dColumn
       !break when max density reached
       if (ColumnTot .gt. ColumnTotMax) then
@@ -321,7 +330,7 @@ contains
     real*8, intent(in) :: NH2, bfive
     real*8 :: get_fshield_H2
 
-    get_fshield_H2 = 0.965/(1+(NH2/(5.e14*bfive)))**1.1 + &
+    get_fshield_H2 = 0.965/(1+(NH2/(5.e14*bfive)))**2d0 + &
                     0.035/((1. + (NH2/5.e14))**0.5) * exp(-8.5 * 1.e-4 * (1. + (NH2/5.e14))**0.5)
     return
   end function get_fshield_H2
@@ -350,41 +359,9 @@ contains
     return
   end function get_fshield_C
 
-  !*****************************
-    !2D interpolation at (x0,y0) for (x(:), y(:)) in z(:,:)
-    !Added by Piyush Sharda in 2024 for CO shielding
-  function interpolate2DCO(x, y, z, x0, y0)
-    implicit none
-    real*8 :: interpolate2DCO
-    real*8 :: x(:), y(:), z(size(x), size(y))
-    real*8 :: x0, y0
-    real*8 :: f
-    integer :: i, j
-    real*8 :: t, u
-
-    ! Find indices i and j such that x(i) <= x0 < x(i+1) and y(j) <= y0 < y(j+1)
-    i = 1
-    do while (i < size(x) - 1 .and. x0 > x(i + 1))
-      i = i + 1
-    end do
-
-    j = 1
-    do while (j < size(y) - 1 .and. y0 > y(j + 1))
-      j = j + 1
-    end do
-
-    ! Compute interpolation weights
-    t = (x0 - x(i)) / (x(i + 1) - x(i))
-    u = (y0 - y(j)) / (y(j + 1) - y(j))
-
-    ! Perform bilinear interpolation
-    interpolate2DCO = (1 - t) * (1 - u) * z(i, j) + t * (1 - u) * z(i + 1, j) + &
-        (1 - t) * u * z(i, j + 1) + t * u * z(i + 1, j + 1)
-
-  end function interpolate2DCO
-
   function get_fshield_CO(NH2,NCO)
     ! Returns the shielding factor for CO using tabulated data from Visser et al. 2009, compiled by Gong et al. 2017
+    use krome_fit
     implicit none
     real*8, intent(in) :: NH2, NCO
     real*8 :: get_fshield_CO
@@ -402,7 +379,7 @@ contains
     !Clip logNCO and logNH2 to the ranges in the data
     clipped_x = max(x(1), min(log10(NCO), x(8)))
     clipped_y = max(y(1), min(log10(NH2), y(6)))
-    get_fshield_CO = 1d1**interpolate2DCO(x, y, log10(z), clipped_x, clipped_y)
+    get_fshield_CO = 1d1**interpolate2D(x, y, log10(z), clipped_x, clipped_y)
     return
   end function get_fshield_CO
 

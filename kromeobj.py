@@ -55,10 +55,10 @@ class krome:
 	use_implicit_RHS = use_photons = useTabs = useDvodeF90 = useTopology = useFlux = skipDup = False
 	useCoolingAtomic = useCoolingH2 = useCoolingH2GP98 = useCoolingHD = useCoolingZ = useCoolingNebular = useCoolingDustGRREC = False
 	useCoolingCompton = useCoolingExpansion = useShieldingDB96 = useShieldingWG11 = useShieldingR14 = useShieldingC = useShieldingCO = useShieldingWG11_withH = False
-	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = useCoolingDustSemenov = False
+	useCoolingCIE = useCoolingDISS = useCoolingFF = use_cooling = useCoolingDust = useCoolingCont = useCoolingDustSemenov = useCoolingDustSemenov_fixedTdust = False
 	useCoolingZCIE = useCoolingZCIENOUV = useCoolingZExtended  = useCoolingZCIEGF = useCoolingGH = False
 	useCoolingCO = useCustom = useDustTabs = dustTabsCool = dustTabsH2 = dustTabsAvVariable = False
-	useCoolingHCN = useCoolingOH = useCoolingH2O = False
+	useCoolingHCN = useCoolingOH = useCoolingH2O = useGOW = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useHeatingAccretion = False
@@ -71,7 +71,7 @@ class krome:
 	isdry = useIERR = checkReverse = usePhotoInduced = checkThermochem = needLAPACK = useCoolFloor = False
 	useComputeElectrons = useChemisorption = useSemenov = usedTdust = useSurface = useHeatingVisc = False
 	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = useBroadening = False
-	applyElementConservation_popsicle_semenov = applyElementConservation_popsicle_semenov_photo_full = popsicle_ice = popsicle_ice_gow = False
+	applyElementConservation_popsicle_semenov = applyElementConservation_popsicle_semenov_photo_full = applyElementConservation_popsicle_semenov_photo_gow = popsicle_ice = popsicle_ice_gow = False
 	verbatimFilename = "reactions_verbatim.dat"
 	useVerbatimFile = True
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
@@ -250,6 +250,7 @@ class krome:
 		self.parser.add_argument("-customODE", help="file with the list of custom ODEs", metavar="FILENAME")
 		self.parser.add_argument("-customRTOL", help="file with the list of the individual RTOLs in the form SPECIES RTOL in each line,\
 			e.g. H3+ 1d-4, see also -RTOL", metavar="filename")
+		self.parser.add_argument("-gow", action="store_true", help="Whether the GOW (Gong, Ostriker, Wolfire 2017) ISM chemical network is being used")
 		self.parser.add_argument("-dry", action="store_true", help="dry pre-compilation: does not write anything in the build direactory")
 		self.parser.add_argument("-dust", help="include dust ODE using N bins for each TYPE, e.g. -dust 10,C,Si set 10 dust carbon\
 			bins and 10 dust silicon dust bins. Note: requires a call to the krome_init_dust subroutine.\
@@ -337,6 +338,7 @@ class krome:
 			'report.gps'. Warning: it slows the whole system!")
 		self.parser.add_argument("-reverse", action="store_true", help="create reverse reaction from the current network\
 			using NASA polynomials.")
+		self.parser.add_argument("-fixTdust", action="store_true", help="fix the dust temperature (used in the PDR tests for POPSICLE simulations)")
 		self.parser.add_argument("-RTOL", help="set solver relative tolerance to the float double value RTOL, e.g.\
 			-RTOL 1e-5 Default is RTOL=1d-4, see also -ATOL and -customRTOL")
 		self.parser.add_argument("-photoBins", metavar="NBINS", help="define the number of frequency bins for the impinging radiation.")
@@ -352,6 +354,7 @@ class krome:
 		self.parser.add_argument("-popsicle_ice_gow", action="store_true", help="if the GOW network is using evaporation rate coefficients in cm^-3 s^-1 (used for the popsicle simulations); see evaporation in krome_grfuncs.f90")
 		self.parser.add_argument("-applyElementConservation_popsicle_semenov", action="store_true", help="apply element conservation for the popsicle semenov network by replacing ODEs of neutral species")
 		self.parser.add_argument("-applyElementConservation_popsicle_semenov_photo_full", action="store_true", help="apply element conservation for the popsicle semenov photo+cr network by replacing ODEs of neutral species")
+		self.parser.add_argument("-applyElementConservation_popsicle_semenov_photo_gow", action="store_true", help="apply element conservation for the popsicle semenov photo+cr GOW network by replacing ODEs of neutral species and electrons")
 		self.parser.add_argument("-skipDevTest", action="store_true", help="exit if test under development found.")
 		self.parser.add_argument("-skipDup", action="store_true", help="skip duplicate reactions")
 		self.parser.add_argument("-skipJacobian", action="store_true", help="do not write Jacobian in krome_ode.f90 file. Useful\
@@ -1171,6 +1174,13 @@ class krome:
 				die("ERROR: option -applyElementConservation_popsicle_semenov_photo_full can only be used for the react_popsicle_semenov_photo_cr network!")
 			self.applyElementConservation_popsicle_semenov_photo_full = True
 
+		#whether to apply element conservation for the popsicle semenov photo+cr GOW network
+		if args.applyElementConservation_popsicle_semenov_photo_gow:
+			print("Reading option -applyElementConservation_popsicle_semenov_photo_gow")
+			if self.filename != "networks/react_popsicle_semenov_photo_cr_gow":
+				die("ERROR: option -applyElementConservation_popsicle_semenov_photo_gow can only be used for the react_popsicle_semenov_photo_cr_gow network!")
+			self.applyElementConservation_popsicle_semenov_photo_gow = True
+
 		#whether to apply element conservation for the popsicle semenov network
 		if args.applyElementConservation_popsicle_semenov:
 			print("Reading option -applyElementConservation_popsicle_semenov")
@@ -1613,6 +1623,19 @@ class krome:
 				die("ERROR: if you use -ramsesOffset you must also add -ramses option!")
 			self.ramses_offset = args.ramsesOffset
 			print("Reading option -ramsesOffset (offset="+str(args.ramsesOffset)+")")
+
+		#check if GOW network is being used
+		if args.gow:
+			if not self.useCoolingDustSemenov:
+				die("ERROR: you cannot use the GOW network without activating the Dust Semenov cooling!")
+			self.useGOW = True
+			print("Reading option -gow: identified GOW network")
+
+		if args.fixTdust:
+			if not self.useCoolingDustSemenov:
+				die("ERROR: you cannot fix Tdust without activating the Dust Semenov cooling!")
+			self.useCoolingDustSemenov_fixedTdust = True
+			print("Reading option -fixTdust: dust temperature will be fixed")
 
 		#ATOL
 		if args.ATOL:
@@ -6464,7 +6487,7 @@ class krome:
 			if useDustT or usedTdust: dustOptInt += "call dust_init_intBB()"
 		if not useDustEvol: dustPartnerIdx = ""
 
-		skip = skipPhotoDust = skipChemisorption = skipdTdust = skipDustEvol = skipDustSemenov = False
+		skip = skipPhotoDust = skipChemisorption = skipdTdust = skipDustEvol = skipDustSemenov = skipDustSemenov_fixedTdust = False
 		for row in fh:
 			srow = row.strip()
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
@@ -6488,11 +6511,15 @@ class krome:
 			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skipDustSemenov = True
 			if srow == "#ENDIFKROME_useCoolingDustSemenov": skipDustSemenov = False
 
+			if srow == "#IFKROME_useCoolingDustSemenov_fixedTdust" and not self.useCoolingDustSemenov_fixedTdust: skipDustSemenov_fixedTdust = True
+			if srow == "#ENDIFKROME_useCoolingDustSemenov_fixedTdust": skipDustSemenov_fixedTdust = False
+
 			if skipChemisorption: continue
 			if skipdTdust: continue
 			if skipPhotoDust: continue
 			if skipDustEvol: continue
 			if skipDustSemenov: continue
+			if skipDustSemenov_fixedTdust: continue
 			if skip: continue
 
 			row = row.replace("#KROME_dust_grain_density", dustGrainDensity)
@@ -7200,8 +7227,10 @@ class krome:
 		        #H2 on dust from Jura constant value
 			dustH2 +="nH2dust = nH2dust + H2_dustJura(n(:))"
 		elif self.useCoolingDustSemenov:
-				dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*nH*dust2gas_ratio / (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
-
+				if self.useGOW:
+					dustH2 += "nH2dust = nH2dust + 3d-17*n(idx_H)*nH*dust2gas_ratio"
+				else:
+					dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*nH*dust2gas_ratio / (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"					
 		#H2 on dust from tables
 		if self.dustTabsH2:
 			dustH2 = "ntot = sum(n(1:nmols))\n"
@@ -7235,6 +7264,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 			if srow == "#IFKROME_applyElementConservation_popsicle_semenov" and not self.applyElementConservation_popsicle_semenov: skip = True
 			if srow == "#IFKROME_applyElementConservation_popsicle_semenov_photo_full" and not self.applyElementConservation_popsicle_semenov_photo_full: skip = True
+			if srow == "#IFKROME_applyElementConservation_popsicle_semenov_photo_gow" and not self.applyElementConservation_popsicle_semenov_photo_gow: skip = True
 
 			if srow == "#ENDIFKROME": skip = False
 			if srow == "#ENDIFKROME_popsicle_ice": skip_popsicle_ice = False

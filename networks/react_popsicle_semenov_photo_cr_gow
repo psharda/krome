@@ -16,7 +16,8 @@
 @var:ntot=sum(n(1:nmols))
 
 #user_is_metal is a boolean flag to turn photochemistry of metals off in primordial conditions.
-@common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2, user_ionC, user_dissCO
+#user_pdr_factor used to scale down the grain recombination rates by some factor (as done in GOW Appendix C.4) to match the output from other PDR codes
+@common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2, user_ionC, user_dissCO, user_pdr_factor
 
 
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
@@ -201,18 +202,22 @@
 49,CO,C,O,user_dissCO
 #reaction 17 in table A2 of GOW
 50,OH,O,H,3.8d-10*exp(-2.66*user_Av)*user_is_metal*chiFUV
+51,Si,Si+,E,4.5d-9*exp(-2.61*user_Av)*user_is_metal*chiFUV
 
 #Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
+#Total recombination rates use the H nuclei density, and not electron density (see tablenotes of Table A1 of GOW)
+#For example, the differential for C+ (in cm^-3 s^-1) = recombination_on_dust*n(idx_Cj)*nH
+@var:Hnuclei=get_Hnuclei(n(:))
 @noTab_start
 @format:idx,R,R,P,rate
 #reaction 2 in table A2 of GOW
-51,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal
+51,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 #reaction 4 in table A2 of GOW
-52,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal
+52,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 #reaction 3 in table A2 of GOW
-53,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal
+53,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 #reaction 5 in table A2 of GOW
-54,Si+,E,Si,Si_recombination_on_dust(n,Tgas)*user_is_metal
+54,Si+,E,Si,Si_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 @noTab_stop
 
 ########################################## END PHOTO CHEMISTRY ###################################################################
@@ -226,34 +231,22 @@
 @CR_start
 @format:idx,R,P,P,Tmin,Tmax,rate
 #@storeOnce_start: we don't use this option anymore in case crate changes due to attenuation
-#user_crate = primary+secondary cosmic ray ionization rate of H2 (reactions 122+136). CR reactions that are induced by photon released due to CR excitement of H2 molecules ('CRPHOT' in UMIST language) are scaled with xH2 as defined below. Direct CR reactions ('CRP' in UMIST language) do not have this scaling.
-#Most rate coefficients below come from Padovani et al. (2024); see Menon & Sharda 2025 for details.
-@var:Hnuclei=get_Hnuclei(n(:))
-@var:xH2 = n(idx_H2)/Hnuclei
-55,H,H+,E,NONE,41d3,(5d-1 + 4.078d0*xH2)*user_crate
-56,H2,H2+,E,NONE,41d3,0.976d0*user_crate
-57,H2,H,H,NONE,41d3,7d-1*user_crate
-58,He,He+,E,NONE,41d3,0.55*user_crate
-59,CO,C,O,NONE,41d3,119*xH2*user_crate*user_is_metal
-60,C,C+,E,NONE,41d3,(1.92 + 233*xH2)*user_crate*user_is_metal
-61,O,O+,E,NONE,41d3,(2.84 + 1.30*xH2)*user_crate*user_is_metal
+#user_crate = primary cosmic ray ionization rate of H, as done by GOW. CR reactions that are induced by photon released due to CR excitement of H2 molecules ('CRPHOT' in UMIST language) are scaled with xH2 as defined below. Direct CR reactions ('CRP' in UMIST language) do not have this scaling.
+#NOTE: the base CRIR is different for GOW networks as compared to other networks, where the base CRIR is primary+secondary ionization of H2.
+#All rate coefficients from GOW
+@var:h2frac=2*n(idx_H2)/(2*n(idx_H2) + n(idx_H))
+@var:xH2 = n(idx_H2)/ntot
+@var:xH = n(idx_H)/ntot
+55,H,H+,E,NONE,41d3,(2.3*xH2 + 1.5d0*xH)*user_crate
+56,H2,H2+,E,NONE,41d3,2.0*(2.3*xH2 + 1.5d0*xH)*user_crate
+58,He,He+,E,NONE,41d3,1.1*user_crate
+59,CO,C,O,NONE,41d3,92*h2frac*user_crate*user_is_metal
+59,Si,Si+,E,NONE,41d3,8400*h2frac*user_crate*user_is_metal
+60,C,C+,E,NONE,41d3,(3.85 + 520*h2frac)*user_crate*user_is_metal
 #@storeOnce_stop
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+61,CO,H,HCO+,E,NONE,NONE,6.52*user_crate*user_is_metal
 @CR_stop
 
 
 ########################################## END COSMIC RAY GAS CHEMISTRY ###################################################################
-
-########################################## START FREEZEOUT CHEMISTRY ###################################################################
-
-@noTab_start
-#DUST FREEZE-OUT/EVAPORATION
-#freezeout rate coefficient is in s^-1
-@ice:CO,freezeout,krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)
-#evaporation rate coefficient is in cm^-3 s^-1
-#total evaporation cannot be greater than freeze out in the first place
-@ice:CO,evaporation,max(min(krate_evaporation(n(:),idx_CO,krome_Semenov_Tdust), krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)*n(idx_CO)), small)
-####NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux (disabled in 2025, TODO look into desorption again in the future)
-####@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0, user_Av, user_crate, 1d-3)
-@noTab_stop
-
-########################################## END FREEZEOUT CHEMISTRY ###################################################################

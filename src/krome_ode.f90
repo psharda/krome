@@ -73,24 +73,16 @@ contains
 
 #ENDIFKROME
 
+#IFKROME_useCoolingDustSemenov
+    call compute_Semenov_Tdust(n(:),Tgas)
+#ENDIFKROME
+
 #KROME_dust_H2
 
 #KROME_ODE
 
 #IFKROME_use_thermo_toggle
     if(krome_thermo_toggle>0) then
-#ENDIFKROME
-
-#IFKROME_use_thermo
-       krome_gamma = gamma_index(n(:))
-
-       dn(idx_Tgas) = (heating(n(:), Tgas, k(:), nH2dust) &
-            - cooling(n(:), Tgas) #KROME_coolingQuench #KROME_coolfloor) &
-            * (krome_gamma - 1.d0) / boltzmann_erg / ntot
-#ENDIFKROME
-
-#IFKROME_use_thermo_toggle
-    end if
 #ENDIFKROME
 
 
@@ -137,6 +129,43 @@ contains
     !D conservation
     dn(idx_D) = -1d0 * (dn(idx_Dk) + dn(idx_Dj) + dn(idx_HD) + dn(idx_HDj))
 #ENDIFKROME
+
+
+#IFKROME_applyElementConservation_popsicle_semenov_photo_gow
+    !species: E, H, H2, OH, CH, H+, H2+, H3+, HCO+, He, He+, He++, C, CH, CO, C+, O, O+, Si, Si+
+
+    !H conservation
+    dn(idx_H) = -1d0 * (2*dn(idx_H2) + dn(idx_OH) + dn(idx_CH) + &
+                        dn(idx_Hj) + 2*dn(idx_H2j) + 3*dn(idx_H3j) + dn(idx_HCOj))
+
+    !He conservation
+    dn(idx_He) = -1d0 * (dn(idx_HEj) + dn(idx_Hejj))
+
+    !C conservation
+    dn(idx_C) = -1d0 * (dn(idx_CH) + dn(idx_CO) + dn(idx_Cj) + dn(idx_HCOj))
+
+    !O conservation
+    dn(idx_O) = -1d0 * (dn(idx_OH) + dn(idx_CO) + dn(idx_Oj) + &
+                        dn(idx_HCOj))
+
+    !Si conservation
+    dn(idx_SI) = -1d0 * dn(idx_SIj)
+
+#ENDIFKROME
+
+
+#IFKROME_use_thermo
+       krome_gamma = gamma_index(n(:))
+
+       dn(idx_Tgas) = (heating(n(:), Tgas, k(:), nH2dust) &
+            - cooling(n(:), Tgas) #KROME_coolingQuench #KROME_coolfloor) &
+            * (krome_gamma - 1.d0) / boltzmann_erg / ntot
+#ENDIFKROME
+
+#IFKROME_use_thermo_toggle
+    end if
+#ENDIFKROME
+
 
 #IFKROME_usedTdust
     dn(nmols+ndust+1:nmols+2*ndust) = get_dTdust(n(:),dn(idx_Tgas),vgas,ntot)

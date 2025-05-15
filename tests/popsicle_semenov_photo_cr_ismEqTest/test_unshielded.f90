@@ -88,6 +88,8 @@ program test_krome_eqbm
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
     call krome_set_chiFUV(chiFUV)
+    !scale grain recombination reactions if needed
+    call krome_set_user_pdr_factor(1d0)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals

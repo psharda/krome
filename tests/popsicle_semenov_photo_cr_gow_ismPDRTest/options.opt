@@ -1,9 +1,9 @@
 ##############
-#options for test collapse
+#options for one-zone ISM equilibrium tests
 
 -n networks/react_popsicle_semenov_photo_cr_gow
 -cooling=H2,CONT,CHEM,CI,CII,OI,CO,OH,ATOMIC,COMPTON,DUSTSEMENOV,FF,NEBULAR,Z_CIEGF,DUSTGRREC
--heating=COMPRESS,CHEM,PHOTODUSTWD,CR,PHOTOAV
+-heating=CHEM,PHOTODUSTWD,CR,PHOTOAV
 -H2opacity=OMUKAI
 -gamma=EXACT
 -ATOL=1d-40
@@ -13,7 +13,8 @@
 -shielding_C
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
--popsicle_ice_gow
 -noRecCheck
 -gow
 -applyElementConservation_popsicle_semenov_photo_gow
+-fixTdust
+#-popsicle_ice_gow

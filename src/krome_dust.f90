@@ -1196,6 +1196,14 @@ contains
   !Cooling is n**2*\Lambda_{gd} = n*\Psi_{IR} - n*(\Gamma_{d,UV} + \Gamma_{d,other}) (see equation 46 of Kim+2023 ApJS)
   dustSemenov_cooling = A*Tdnew**4 - intJRad - A*phys_Tcmb**4
 
+
+#IFKROME_useCoolingDustSemenov_fixedTdust
+  !GOW and Krumholz+2014 use Td-Tg, which cools the gas if Td < Tg. But since we include it as a cooling term,
+  !we need to use Tg-Td, such that the cooling rate is +ve when Td < Tg
+  krome_Semenov_Tdust = 1d1
+  dustSemenov_cooling = nH**2 * alpha_gd * dust2gas_ratio * sqrt(Tgas) * (Tgas - krome_Semenov_Tdust)
+#ENDIFKROME_useCoolingDustSemenov_fixedTdust
+
   end subroutine compute_Semenov_Tdust
 #ENDIFKROME_useCoolingDustSemenov
 

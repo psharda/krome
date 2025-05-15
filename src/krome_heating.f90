@@ -442,21 +442,19 @@ contains
     use krome_getphys
     implicit none
     integer::i
-    real*8::heat_PhotoDustWD,n(:),Tgas,ntot,psi,G0
-    real*8::eps_PE,C0,C1,C2,C3,C4,C5,C6
+    real*8::heat_PhotoDustWD,n(:),Tgas,nH,psi,G0
+    real*8::eps_PE,C0,C1,C2,C3,C4,C5,C6,nelec,nhyd
     real*8::nenh,D0,D1,D2,D3,D4,cool_grrec
 
     heat_PhotoDustWD = 0d0
 
-    ntot = get_Hnuclei(n(:))
-    nenh = n(idx_e) * n(idx_H)
-    if(n(idx_e)>0d0) then 
-       G0 = 1.69d0 * chiFUV
-       !Add 50 to Psi to ensure it doesn't become too small; see Kim+23 and Gong, Ostriker & Wolfire 2017
-       psi = G0 * sqrt(Tgas) / n(idx_e) + 50.0
-    else
-       psi = 0d0
-    end if
+    nH = get_Hnuclei(n(:))
+    nelec = max(n(idx_e), 1d-40)
+    nhyd = max(n(idx_H), 1d-40)
+    nenh = nelec * nhyd
+    G0 = 1.69d0 * chiFUV
+    !Add 50 to Psi to ensure it doesn't become too small; see Kim+23 and Gong, Ostriker & Wolfire 2017
+    psi = G0 * sqrt(Tgas) / nelec + 50.0
 
     !Note that Weingartner and Draine 2001 ApJS advise against using this functional form outside limits specified below; we ignore this advice
     !if (Tgas .LT. 1d1 .or. Tgas .GT. 1d4) return
@@ -473,7 +471,7 @@ contains
     C6 = 0.692
 
     eps_PE = (C0 + C1*Tgas**C4) / (1 + C2*(psi**C5)*(1 + C3*(psi**C6)))
-    heat_PhotoDustWD = 1d-26 * G0 * ntot * eps_PE * dust2gas_ratio !erg/cm3/s
+    heat_PhotoDustWD = 1d-26 * G0 * nH * eps_PE * dust2gas_ratio !erg/cm3/s
 
   end function heat_PhotoDustWD
 #ENDIFKROME
@@ -491,23 +489,21 @@ contains
     use krome_getphys
     implicit none
     integer::i
-    real*8::heat_netPhotoDustWD,n(:),Tgas,ntot,psi,G0
+    real*8::heat_netPhotoDustWD,n(:),Tgas,nH,psi,G0
     real*8::eps_PE,C0,C1,C2,C3,C4,C5,C6,heat_PE
-    real*8::nenh,D0,D1,D2,D3,D4,cool_grrec
+    real*8::nenh,D0,D1,D2,D3,D4,cool_grrec,nelec,nhyd
 
     heat_netPhotoDustWD = 0d0
 
     if (Tgas .LT. 1d1 .or. Tgas .GT. 1d4) return
 
-    ntot = get_Hnuclei(n(:))
-    nenh = n(idx_e) * n(idx_H)
-    if(n(idx_e)>0d0) then
-       !TODO: supply J_PE and J_LW to G0 
-       G0 = 1.69d0 * chiFUV
-       psi = G0 * sqrt(Tgas) / n(idx_e)
-    else
-       psi = 0d0
-    end if
+    nH = get_Hnuclei(n(:))
+    nelec = max(n(idx_e), 1d-40)
+    nhyd = max(n(idx_H), 1d-40)
+    nenh = nelec * nhyd
+    !TODO: supply J_PE and J_LW to G0 
+    G0 = 1.69d0 * chiFUV
+    psi = G0 * sqrt(Tgas) / nelec
 
     if (psi .LT. 1d2 .or. psi .GT. 1d6) return
 
@@ -522,7 +518,7 @@ contains
     C6 = 0.692
 
     eps_PE = (C0 + C1*Tgas**C4) / (1 + C2*(psi**C5)*(1 + C3*(psi**C6)))
-    heat_PE = 1d-26 * G0 * ntot * eps_PE * dust2gas_ratio !erg/cm3/s
+    heat_PE = 1d-26 * G0 * nH * eps_PE * dust2gas_ratio !erg/cm3/s
 
 
     !grain assisted recombination cooling
