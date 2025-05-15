@@ -51,6 +51,11 @@ contains
     n(idx_Tgas) = min(n(idx_tgas),1d9)
     Tgas = n(idx_Tgas) !get temperature
 
+#IFKROME_tigressNCR
+    !If Eq C chemistry used, update final abundances for these to the equilibrium one
+    call steadystate_tigressNCR(n(:), Tgas)
+#ENDIFKROME_tigressNCR
+
 #IFKROME_shieldHabingDust
     call calcHabingThick(n(:),Tgas)
 #ENDIFKROME
@@ -184,6 +189,78 @@ contains
        last_coe(:) = k(:)
 
   end subroutine fex
+
+#IFKROME_tigressNCR
+  !Return the steady state abundances of C, C+, O, O+, CO given CR/photo rates and non-eq H abundances
+  !Refer to Kim et al. 2023, ApJS, 264, 1 for more details
+  subroutine steadystate_tigressNCR(n,Tgas)
+    use krome_commons
+    use krome_constants
+    use krome_subs
+    use krome_cooling
+    use krome_heating
+    use krome_tabs
+    use krome_photo
+    use krome_gadiab
+    use krome_getphys
+    use krome_phfuncs
+    real*8::n(:), Tgas
+    real*8::ne,xCtot,xOtot, pion_C, crion_C, alpha17, beta17, gamma17, krr, kdr1, kdr2, kdr3, kdr4, kdr5, &
+            kdr, nCplus, kCplusH2, nOplus, nCO, nCO_crit, nH, ntot
+    real, parameter :: dissCO_draine = 2.592d-10 !Base CO dissociation rate for Draine ISRF field
+
+    ntot = sum(n(1:nmols))
+    nH = get_Hnuclei(n(:))
+
+    !Set steady state C/C+/O/O+ abundances
+    xCtot = 1.6d-4 * phys_metallicity !Total C nuclei abundance w.r.t H nuclei (NOTE: Hardcoded for now)
+    xOtot = 3.2d-4 * phys_metallicity !Total O nuclei abundance w.r.t H nuclei (NOTE: Hardcoded for now)
+    !Definitions for the radiative+dielectronic recombinations of C+
+    alpha17=sqrt(Tgas/6.67d-3)
+    beta17=sqrt(Tgas/1.943d6)
+    gamma17=0.7849d0 + 0.1597*exp(-49550d0/Tgas)
+    !Radiative recombination rate of C+
+    krr = 2.995d-9 / (alpha17*((1d0+alpha17)**(1d0-gamma17))*(1d0+beta17)**(1d0+gamma17))
+    kdr1 = 6.346d-9*exp(-12.17d0/Tgas)
+    kdr2 = 9.793d-9*exp(-73.80d0/Tgas)
+    kdr3 = 1.634d-6*exp(-15230d0/Tgas)
+    kdr4 = 8.369d-4*exp(-1.207d5/Tgas)
+    kdr5 = 3.355d-4*exp(-2.144d5/Tgas)
+    !Dielectronic recombination rate of C+
+    kdr = (Tgas**(-1.5d0))*(kdr1+kdr2+kdr3+kdr4+kdr5)
+    ne = n(idx_E)
+    !Photoionization rate of C (Eq. 23; Kim+ 2023)
+    pion_C = user_ionC + 520*2*(n(idx_H2)/nH)*user_crate !Photoionization + CR ionization from Heays et al. 2017
+    !Cosmic-ray ionization rate of C
+    crion_C = 3.85 * user_crate !cosmic-ray ionization rate of C
+    !Reaction rate of the charge transfer reaction C+ + H2-> CH2+ (reaction 9 in GOW)
+    kCplusH2 = 2.31d-13*(Tgas)**(-1.3)*exp(-23/Tgas)
+
+    !Equation 24 in Kim+2023
+    nCplus = xCtot * nH * (pion_C + crion_C)/(pion_C + crion_C+ntot*C_recombination_on_dust(n,Tgas) &
+        + (krr+kdr)*ne + kCplusH2*n(idx_H2))
+
+    !O/O+ steady state solution is simply equal to the H/H+ ratio due to efficient charge transfer
+    nOplus = xOtot * nH * n(idx_Hj)/nH
+
+    !Critical density above which xCO/xC,tot > 0.5 ; Equation 26 in Kim+2023
+    nCO_crit = (4d3 * dust2gas_ratio * (user_crate/1d-16)**(-2d0)) ** ((user_chiCO)**(1d0/3d0)) * &
+                (5d1 * (user_crate/1d-16))/(dust2gas_ratio**(1.4d0))
+    !Equation 25 in Kim+2023
+    nCO = xCtot * nH * 2d0 * (n(idx_H2)/nH) * (1d0 - max(nCplus/(xCtot*nH),nOplus/(xOtot*nH)))/(1d0 + (nCO_crit/ntot)**2d0)
+
+    n(idx_Cj) = max(nCplus,0d0)
+    n(idx_CO) = max(nCO,0d0)
+    !Obtain nC from closure (only C, C+ and CO are considered)
+    n(idx_C) = max(xCtot * nH - nCplus - nCO,0d0)
+
+    nOplus = max(nOplus,0d0)
+    !Obtain nO from closure (only O and O+ are considered)
+    n(idx_O) = max(xOtot * nH - nOplus -nCO,0d0)
+    
+    return
+  end subroutine steadystate_tigressNCR
+#ENDIFKROME_tigressNCR
 
   !***************************
   subroutine jes(neq, tt, n, j, ian, jan, pdj)

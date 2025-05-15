@@ -1,0 +1,59 @@
+####################################################################################################
+#TIGRESS-NCR Chemical network described in Kim et al. 2023, ApJS, 264, 1
+#This network does non-equilibrium hydrogen chemistry, and steady state C/C+ and O/O+ chemistry with 
+#a fitting function for the CO abundance -- all using the non-equilibrium H abundances.
+#Only the H reactions described here; the steady state C/O abundances are set within krome_ode, when 
+#the -tigressNCR option is used when compiling KROME. NOTE: If this option isn't provided, the metal 
+#abundances don't change.
+#Author: Shyam Menon (CCA/Rutgers) and Piyush Sharda (Leiden), 2025
+#NOTE!!! Only use this network for metallicities >= 1% Solar
+#To test the network, look at krome/tests/tigressncr_ismeqTest
+######################################################################################################
+
+@var:T=Tgas
+@var:ntot=sum(n(1:nmols))
+
+#user_is_metal is a boolean flag to turn photochemistry of metals off in primordial conditions.
+@common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2, user_ionC, user_chiCO
+
+#Janev 1987
+1,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
+
+#Abel et al. 1997, fit by data from Ferland et al. 1992
+2,H+,E,,H,g,,,NONE,.LE.5.5e3,3.92d-13*invTe**0.6353d0
+3,H+,E,,H,g,,,>5.5e3,NONE,exp(-28.61303380689232d0-0.7241125657826851d0*lnTe-0.02026044731984691d0*lnTe**2-0.002380861877349834d0*lnTe**3-0.0003212605213188796d0*lnTe**4-0.00001421502914054107d0*lnTe**5+4.989108920299513d-6*lnTe**6+5.755614137575758d-7*lnTe**7-1.856767039775261d-8*lnTe**8-3.071135243196595d-9*lnTe**9)
+
+@noTabNext
+#reaction rate updated in 2025 to ensure stability at high Tgas; see the actual function for details
+#Under LTE, the self-consistent way would be to include the corresponding 3 body formation reaction 
+#rate as K*dissH2H_Hunter23, where K is the equilibrium constant, given as K = 1.05e-22*(Tgas**-0.515)*exp(52d3/Tgas),
+#adopted from Floer and Harris 2007. However, Glover & Savin 2009 find that this does not make a significant difference
+4,H2,H,,H,H,H,,NONE,NONE,dissH2H_Hunter23(n,Tgas)
+
+@noTabNext
+#reaction rate updated in 2025 to ensure stability at high Tgas; see the actual function for details
+5,H2,H2,,H,H,H2,,NONE,NONE,dissH2H2_Hunter23(n,Tgas)
+
+#Photoreactions
+@format:idx,R,P,P,rate
+6,H,H+,E,user_ionH
+7,H2,H,H,user_dissH2
+
+#Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015
+#Total recombination rates use the H nuclei density, and not electron density (see tablenotes of Table A1 of GOW)
+@var:Hnuclei=get_Hnuclei(n(:))
+@noTab_start
+@format:idx,R,R,P,rate
+8,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*Hnuclei/n(idx_E)
+@noTab_stop
+
+#CR reactions
+@CR_start
+@format:idx,R,P,P,Tmin,Tmax,rate
+#user_crate = primary+secondary cosmic ray ionization rate of H2 (reactions 122+136). CR reactions that are induced by photon released due to CR excitement of H2 molecules ('CRPHOT' in UMIST language) are scaled with xH2 as defined below. Direct CR reactions ('CRP' in UMIST language) do not have this scaling.
+#Most rate coefficients below come from Padovani et al. (2024); see Menon & Sharda 2025 for details.
+@var:xH2 = n(idx_H2)/Hnuclei
+9,H,H+,E,NONE,41d3,(5d-1 + 4.078d0*xH2)*user_crate
+10,H2,H,H,NONE,41d3,7d-1*user_crate
+@CR_stop
+
