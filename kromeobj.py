@@ -72,6 +72,7 @@ class krome:
 	useComputeElectrons = useChemisorption = useSemenov = usedTdust = useSurface = useHeatingVisc = False
 	useHeatingPumpH2 = reducer = useFexCustom = hasStoreOnceRates = useBroadening = False
 	applyElementConservation_popsicle_semenov = applyElementConservation_popsicle_semenov_photo_full = applyElementConservation_popsicle_semenov_photo_gow = popsicle_ice = popsicle_ice_gow = False
+	tigressNCR = False
 	verbatimFilename = "reactions_verbatim.dat"
 	useVerbatimFile = True
 	xsecKernelFunction = "" #kernel function for interpolating xsecs
@@ -352,6 +353,7 @@ class krome:
 			(when calculated from photobins).")
 		self.parser.add_argument("-popsicle_ice", action="store_true", help="if the network is using evaporation rate coefficients in cm^-3 s^-1 (used for the popsicle simulations); see evaporation in krome_grfuncs.f90")
 		self.parser.add_argument("-popsicle_ice_gow", action="store_true", help="if the GOW network is using evaporation rate coefficients in cm^-3 s^-1 (used for the popsicle simulations); see evaporation in krome_grfuncs.f90")
+		self.parser.add_argument("-tigressNCR", action="store_true", help="flag to use the TIGRESS-NCR hybrid approach for chemistry with non-eq H chemistry and eq C chemistry")
 		self.parser.add_argument("-applyElementConservation_popsicle_semenov", action="store_true", help="apply element conservation for the popsicle semenov network by replacing ODEs of neutral species")
 		self.parser.add_argument("-applyElementConservation_popsicle_semenov_photo_full", action="store_true", help="apply element conservation for the popsicle semenov photo+cr network by replacing ODEs of neutral species")
 		self.parser.add_argument("-applyElementConservation_popsicle_semenov_photo_gow", action="store_true", help="apply element conservation for the popsicle semenov photo+cr GOW network by replacing ODEs of neutral species and electrons")
@@ -1202,6 +1204,10 @@ class krome:
 				die("ERROR: option -popsicle_ice and -popsicle_ice_gow are mutually exclusive!")
 			self.popsicle_ice_gow = True
 
+		if args.tigressNCR:
+			print("Reading option -tigressNCR: non-equilibrium H chemistry and equilibrium C chemistry")
+			self.tigressNCR = True
+
 		#enable stellar physics
 		if args.stars:
 			self.useStars = True
@@ -1336,6 +1342,10 @@ class krome:
 					if "-" in met["name"]:
 						neutral_name = met["name"].replace("-", "")
 						if neutral_name not in self.Zcools: self.Zcools.append(netural_name)
+			
+			#Add CO as a species if its cooling is included
+			if self.useCoolingCO is True:
+				self.Zcools.append("CO")
 
 			self.allCoolings = myCools
 			if len(self.Zcools)>0:
@@ -7251,6 +7261,7 @@ class krome:
 		#replace pragma with built strings
 		skip = False
 		skip_popsicle_ice = False
+		skip_tigressNCR = False
 		for row in fh:
 			srow = row.strip()
 			if srow == "#IFKROME_use_thermo" and (not self.use_thermo or not self.useODEthermo): skip = True
@@ -7259,6 +7270,7 @@ class krome:
 			if srow == "#IFKROME_useDust" and not self.useDust: skip = True
 			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip_popsicle_ice = True
 			if srow == "#IFKROME_popsicle_ice_gow" and not self.popsicle_ice_gow: skip = True
+			if srow == "#IFKROME_tigressNCR" and not self.tigressNCR: skip_tigressNCR = True
 			if srow == "#IFKROME_usedTdust" and not self.usedTdust: skip = True
 			if srow == "#IFKROME_shieldHabingDust" and not self.shieldHabingDust: skip = True
 			if srow == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
@@ -7268,8 +7280,9 @@ class krome:
 
 			if srow == "#ENDIFKROME": skip = False
 			if srow == "#ENDIFKROME_popsicle_ice": skip_popsicle_ice = False
+			if srow == "#ENDIFKROME_tigressNCR": skip_tigressNCR = False
 
-			if skip or skip_popsicle_ice: continue
+			if skip or skip_popsicle_ice or skip_tigressNCR: continue
 
 			coolPragmaFound = False
 			#include cooling cmb floor if necessary
@@ -8086,6 +8099,7 @@ class krome:
 		#non-negative index means H2 photodissociation reaction is set
 		useH2Photodissociation = (self.indexH2photodissociation>-1)
 		skip = skipBindC = False
+		skip_tigressNCR = False
 		for row in fh:
 			srow = row.strip()
 			if srow == "#IFKROME_useX" and not self.useX: skip = True
@@ -8107,6 +8121,7 @@ class krome:
 				and not self.useDustEvap: skip = True
 			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip = True
 			if srow == "#IFKROME_popsicle_ice_gow" and not self.popsicle_ice_gow: skip = True
+			if srow == "#IFKROME_tigressNCR" and not self.tigressNCR: skip_tigressNCR = True
 			if srow == "#IFKROME_useEquilibrium" and not self.useEquilibrium: skip = True
 			if srow == "#IFKROME_useStars" and not self.useStars: skip = True
 			if srow == "#IFKROME_useCoolingZ" and not self.useCoolingZ: skip = True
@@ -8134,6 +8149,7 @@ class krome:
 			if srow == "#IFKROME_useSemenov" and not self.useSemenov: skip = True
 			if srow == "#IFKROME_popsicle_ice" and not self.popsicle_ice: skip = True
 			if srow == "#ENDIFKROME": skip = False
+			if srow == "#ENDIFKROME_tigressNCR": skip_tigressNCR = False
 
 			ierr = ""
 			if self.useIERR: ierr = ",ierr"
@@ -8169,6 +8185,7 @@ class krome:
 
 			if skip: continue
 			if skipBindC: continue
+			if skip_tigressNCR: continue
 			reducerVarsList = [[x+"_Min",x+"_Max"] for x in self.reducerVars]
 
 			if srow == "#KROME_header":

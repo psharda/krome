@@ -245,6 +245,11 @@ contains
     end if
 #ENDIFKROME
 
+#IFKROME_tigressNCR
+    !If Eq C chemistry used, update final abundances for these to the equilibrium one
+    call steadystate_tigressNCR(n(:), Tgas)
+#ENDIFKROME_tigressNCR
+
     !avoid negative species
     do i=1,nspec
        n(i) = max(n(i),0d0)
@@ -412,6 +417,11 @@ contains
       end if
 
     end do
+
+#IFKROME_tigressNCR
+    !If Eq C chemistry used, update final abundances for these to the equilibrium one
+    call steadystate_tigressNCR(n(:), Tgas)
+#ENDIFKROME_tigressNCR
 
     !avoid negative species and conserve total density
     !this is the only difference between krome and krome_equilibrium_xT

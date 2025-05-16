@@ -1,0 +1,2 @@
+This is a one-zone evolving gas at a given density to thermo-chemical equilibrium. This results in the multiphase ISM structure.
+There are two versions: i) unshielded, and ii) shielded. The tests are identical to the Sec 7.1 of Kim+23. Default version (test.f90) is unshielded.
