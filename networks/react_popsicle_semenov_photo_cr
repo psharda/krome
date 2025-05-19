@@ -280,7 +280,9 @@
 #O2005 use an older rate coefficient
 83,O2,C+,CO,O+,NONE,NONE,4.53d-10
 
-84,OH,CO,CO2,H,NONE,NONE,1d-13
+#Using new UMIST24 rate that scales exponentially with Tgas; the older, constant rate would overproduce CO2 in PDR tests
+#New rate from Frost et al. 1993
+84,OH,CO,CO2,H,NONE,NONE,2.81d-13*exp(-176d0*invT)
 
 @format:idx,R,R,P,Tmin,Tmax,rate
 #Original rates from Badnell+2003,2006. GOW only include the first three terms for the dielectronic recombination (DR), but we include all the five terms like Hunter+2023
