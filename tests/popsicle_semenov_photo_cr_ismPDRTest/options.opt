@@ -1,12 +1,13 @@
 ##############
 #options for one-zone ISM equilibrium tests
 
--n networks/react_popsicle_semenov_photo_cr
+-n networks/react_popsicle_semenov_photo_cr_pdr
 -cooling=H2,CONT,CHEM,CI,CII,OI,CO,OH,ATOMIC,COMPTON,DUSTSEMENOV,FF,NEBULAR,Z_CIEGF,DUSTGRREC
 -heating=CHEM,PHOTODUSTWD,CR,PHOTOAV
 -H2opacity=OMUKAI
 -gamma=EXACT
--ATOL=1d-40
+-ATOL=1d-20
+-RTOL=1d-6
 -maxord=1
 -shielding=WG11_withH
 -shielding_CO
@@ -15,4 +16,4 @@
 -useIndividualFloor=Z
 -noRecCheck
 -fixTdust
--popsicle_ice
+#-applyElementConservation_popsicle_semenov_photo_full
