@@ -1,11 +1,6 @@
-#Chemical network for POPSICLE simulations
-#Authors: Piyush Sharda (Leiden) and Shyam H. Menon (CCA), 2024
-#the following is the primordial network including deuterium species from react_primordial_wD
-#with metal reactions from Omukai 2000, Omukai+2005, Glover and Jappsen 2007, Glover+2010
-#Includes cosmic ray chemistry
-#No photo chemistry included
-#Uses Semenov+2003 opacities and does not use KROME's inbuilt dust functionality (except for freezeout reactions)
-#To test the network, look at krome/tests/popsicle_semenov_cr
+#Same as the popsicle_semenov_photo_cr network
+#but without ice chemistry, for testing PDR models
+#Authors: Piyush Sharda (Leiden) and Shyam H. Menon (CCA)
 
 @var:T=Tgas
 
@@ -536,20 +531,3 @@
 
 
 ########################################## END COSMIC RAY GAS CHEMISTRY ###################################################################
-
-########################################## START FREEZEOUT CHEMISTRY ###################################################################
-
-@noTab_start
-#DUST FREEZE-OUT/EVAPORATION
-#freezeout rate coefficient is in s^-1
-@ice:CO,freezeout,krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)
-#evaporation rate coefficient is in cm^-3 s^-1
-#total evaporation cannot be greater than freeze out in the first place
-@ice:CO,evaporation,max(min(krate_evaporation(n(:),idx_CO,krome_Semenov_Tdust), krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)*n(idx_CO)), small)
-@ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)
-@ice:H2O,evaporation,max(min(krate_evaporation(n(:),idx_H2O,krome_Semenov_Tdust), krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)*n(idx_H2O)), small)
-####NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux (disabled in 2025, TODO look into desorption again in the future)
-####@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0, user_Av, user_crate, 1d-3)
-@noTab_stop
-
-########################################## END FREEZEOUT CHEMISTRY ###################################################################
