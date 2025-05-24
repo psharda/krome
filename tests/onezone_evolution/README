@@ -1,0 +1,21 @@
+!***************************************************************
+!Chemical network and cooling/heating for POPSICLE simulations
+!Author: Piyush Sharda (Leiden) 2024
+!Contact: sharda@strw.leidenuniv.nl
+!
+!This is a simple one-zone temporal evolution of abundances and temperature over 100 free-fall times for the given density
+!***************************************************************
+!
+!Simply make the test from the KROME home directory via
+!>>./krome -test onezone_evolution
+!>>cd build
+!>>make
+!>>./test
+!
+!The test will output a file called fort.22
+!which can be read in your favorite programming language
+!to plot stuff
+!
+!To activate the equilibrium test where density is kept fixed
+!and abundances and temperature are evolved to equilibrium
+!use the test_eqbm.f90 file. Rename it test.f90 and run the test as above
