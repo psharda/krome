@@ -81,6 +81,7 @@ program test_krome_eqbm
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
+    call krome_set_dust_to_gas(zs(jz2))
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
