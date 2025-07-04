@@ -779,9 +779,8 @@ contains
     !assuming solar
     total_Z = phys_metallicity
 
-    !default D/D_sol = Z/Z_sol
-    !assuming linear scaling
-    dust2gas_ratio = total_Z
+    !dust2gas_ratio set in the problem file now
+    !dust2gas_ratio = total_Z
 
     !default broadening turubulence velocity
     broadeningVturb2 = 0d0

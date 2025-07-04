@@ -87,6 +87,7 @@ program test_krome_eqbm
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
+    call krome_set_dust_to_gas(zs(jz2))
     call krome_set_chiFUV(chiFUV)
     !scale grain recombination reactions if needed
     call krome_set_user_pdr_factor(1d0)

@@ -65,6 +65,7 @@ program test_krome
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
+    call krome_set_dust_to_gas(zs(jz2))
     !input some non-zero value here to test for accretion luminosity heating (only PopIII)
     call krome_set_user_Lacc_Flux(0d0)
 
