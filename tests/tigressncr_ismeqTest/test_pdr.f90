@@ -36,7 +36,7 @@ program test_krome_eqbm
   !set the scaled FUV intensity
   chi0 = 1d0
   !Set the cosmic ray rate, proportional to the FUV intensity; default for ISRF 2x10^-16 s^-1
-  crate_0 = 1.e-16 !Note: this is the primary+secondary CR ionization of H2 ~ 0.5 times the primary H rate
+  crate_0 = 2d-16 !Note: this is the primary+secondary CR ionization of H2 ~ 0.5 times the primary H rate
 
 
   max_time=seconds_per_year*1.e9 ! max time we will be integrating for = 1000 Myrs (1Gyr)
@@ -91,6 +91,9 @@ program test_krome_eqbm
       call krome_set_user_is_metal(0d0)
     endif
 
+    !scale grain recombination reactions by 0.6 as in GOW 
+    !call krome_set_user_pdr_factor(1.0)
+
     !initialize KROME (mandatory)
     call krome_init()
 
@@ -101,6 +104,7 @@ program test_krome_eqbm
 
     ! Switches to decide when equilibrium has been reached
     ertol = 1d-4  ! relative min change in a species
+    eatol = 1d-9
 
     ColumnTot = ColumnTotMin
 
@@ -112,13 +116,13 @@ program test_krome_eqbm
       !set individual species
       x(KROME_idx_H)         = ntot - 2*1d-6*ntot - 1d-4*ntot
       x(KROME_idx_H2)        = 1d-6*ntot
-      x(KROME_idx_E)         = 1d-4*ntot
+      x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot
       x(KROME_idx_Hj)        = 1d-4*ntot
       !x(KROME_idx_HE)        = 0.0775*ntot
       x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
       x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
 
-      call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
+      call krome_set_Semenov_Tdust(1d1)
 
       !set H2 dissociation reaction rate coeff
       n(1:krome_nmols) = x(:)
@@ -288,7 +292,7 @@ program test_krome_eqbm
       !Add to cumulative columns of H, H2, C, CO
       NH_cum = NH_cum + (n(KROME_idx_H)/sum(n(1:krome_nmols))) * dColumn
       NH2_cum = NH2_cum + (n(KROME_idx_H2)/sum(n(1:krome_nmols))) * dColumn
-      NC_cum = NC_cum + (n(KROME_idx_Cj)/sum(n(1:krome_nmols))) * dColumn
+      NC_cum = NC_cum + (n(KROME_idx_C)/sum(n(1:krome_nmols))) * dColumn
       NCO_cum = NCO_cum + (n(KROME_idx_CO)/sum(n(1:krome_nmols))) * dColumn
       !break when max density reached
       if (ColumnTot .gt. ColumnTotMax) then
