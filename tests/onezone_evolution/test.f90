@@ -92,6 +92,7 @@ program test_krome
     x(KROME_idx_HE)        = 0.0775*ntot
     x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
     x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
+    x(KROME_idx_D)         = 3d-5*ntot
 
     call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
 
