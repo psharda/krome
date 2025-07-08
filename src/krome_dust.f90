@@ -1130,7 +1130,7 @@ contains
   !Get the jeans length
   ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
   tau_d = rhogas * kappaP * dust2gas_ratio
-  tau_g = 0d0
+  tau_g = 0d0 !TODO: insert a reasonable value here
   tau = (tau_d + tau_g) * ljeans
 
   if(tau<1d0) then
@@ -1177,6 +1177,10 @@ contains
     if(ieee_is_nan(Tdnew) .or. .not. ieee_is_finite(Tdnew)) then
       print *, "NR solver obtained Tdust that is infinite or NAN"
       print *, Tdnew
+      names(:) = get_names()
+      do ii = 1, nmols
+        print *, 'Abundance of ', names(ii), ' = ', n(ii)
+      enddo
       stop
     endif
 

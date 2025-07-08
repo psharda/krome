@@ -104,6 +104,9 @@ contains
     amax = 2.5d-5 !cm
     pexp = -3.5
     rho0 = 3d0 !g/cm3
+    !assuming solar value is 1/162, following Zubko+2004
+    !solar value < 1/100 is required to simultaneously fit dust extinction,
+    !infrared diffuse emission and element abundance constraints (Draine & Li 2007)
     d2g = (1d0/162d0)*dust2gas_ratio
 
     krate = krate_2body(n(:),idx1,idx2,alpha,amin,amax,pexp,d2g,rho0,Ea,Tdust)
@@ -346,6 +349,9 @@ contains
     amax = 2.5d-5 !cm
     pexp = -3.5
     rho0 = 3d0 !g/cm3
+    !assuming solar value is 1/162, following Zubko+2004
+    !solar value < 1/100 is required to simultaneously fit dust extinction,
+    !infrared diffuse emission and element abundance constraints (Draine & Li 2007)
     d2g = (1d0/162d0)*dust2gas_ratio
 
     k = krate_stick(n(:),idx,Tdust,amin,amax,pexp,rho0,d2g)
