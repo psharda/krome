@@ -429,9 +429,7 @@ contains
       n(i) = max(n(i),0d0)
     end do
     sum_n = sum(n(1:nmols))
-    do i=1,nspec
-      n(i) = n(i) * sum(ni(1:nmols)) / sum_n
-    end do
+    n(1:nmols) = n(1:nmols) * sum(ni(1:nmols)) / sum_n
 
     !returns to user array
     x(:) = n(1:nmols)
