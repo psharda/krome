@@ -228,7 +228,7 @@ contains
     ! weird numerical artifacts
     nH2 = max(1d-40, n(idx_H2))
 
-!    N_H2 = nH2*get_jeans_length(n(:),Tgas)*0.5d0  !column density (cm-2)
+    !N_H2 = nH2*get_jeans_length(n(:),Tgas)*0.5d0  !column density (cm-2)
     N_H2  =  2d0 * num2col(nH2,n(:))
 
     calc_H2shieldDB96 = min(1.d0, (N_H2*1.d-14)**(-0.75d0))
@@ -254,7 +254,7 @@ contains
 
     N_H2  =  2d0 * num2col(nH2,n(:))
 
-!    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
+    !N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
     xN_H2 = N_H2*2d-15 !normalized column density (#), 2d-15=1/5d14
     H_mass = p_mass+e_mass !H mass in g
 
@@ -285,7 +285,7 @@ contains
 
     N_H2  =  2d0 * num2col(nH2,n(:))
 
-!    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
+    !N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
     xN_H2 = N_H2*2d-15 !normalized column density (#), 2d-15=1/5d14
     H_mass = p_mass+e_mass !H mass in g
 
@@ -319,7 +319,7 @@ contains
 
     N_H2  =  2d0 * num2col(nH2,n(:))
 
-!    N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
+    !N_H2 = nH2*get_jeans_length(n(:) ,Tgas)*0.5d0  !column density (cm-2)
     H_mass = p_mass+e_mass !H mass in g
     bturb = 7.1d0*km_to_cm !turbulent Doppler broadening parameter in cm/s
     btherm2 = boltzmann_erg*Tgas/H_mass !thermal Doppler broadening parameter cm/s
@@ -400,7 +400,7 @@ contains
     real*8::nC,N_C,tau,fH2
 
     !check on H2 abundances to avoid
-    ! weird numerical artifacts
+    !weird numerical artifacts
     nH2 = max(1d-40, n(idx_H2))
     nC = max(1d-40, n(idx_C))
 
