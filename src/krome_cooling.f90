@@ -193,6 +193,15 @@
       real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
       real*8::v1min,v1max,v2min,v2max,v3min,v3max
       real*8::vee,sigmaH2,nh,nh2,nelec,nco
+      !variables for redshift scaling
+      integer,parameter::imax_z=coolCOn1_z
+      integer,parameter::jmax_z=coolCOn2_z
+      integer,parameter::kmax_z=coolCOn3_z
+      real*8::v1_z,v2_z,v3_z
+      real*8::x1_z(imax_z),x2_z(jmax_z),x3_z(kmax_z)
+      real*8::ixd1_z(imax_z-1),ixd2_z(jmax_z-1),ixd3_z(kmax_z-1)
+      real*8::v1min_z,v1max_z,v2min_z,v2max_z,v3min_z,v3max_z
+      real*8::scale
 
       !local copy of limits
       v1min = coolCOx1min
@@ -289,9 +298,86 @@
       !linear interpolation on x3
       xLd = (v3-x3(k))*ixd3(k)*(vv34 - &
            vv12) + vv12
+      
+      cooling_CO = 1d1**xLd * cH * nco
 
-      !CO cooling in erg/s/cm3
-      cooling_CO = 1d1**xLd * cH * n(idx_CO)
+      if (phys_zredshift .gt. 0d0) then
+        !local copy of limits
+        v1min_z = coolCOx1min_z
+        v1max_z = coolCOx1max_z
+        v2min_z = coolCOx2min_z
+        v2max_z = coolCOx2max_z
+        v3min_z = coolCOx3min_z
+        v3max_z = coolCOx3max_z
+
+        !local copy of variables arrays
+        x1_z(:) = coolCOx1_z(:)
+        x2_z(:) = coolCOx2_z(:)
+        x3_z(:) = coolCOx3_z(:)
+
+        ixd1_z(:) = coolCOixd1_z(:)
+        ixd2_z(:) = coolCOixd2_z(:)
+        ixd3_z(:) = coolCOixd3_z(:)
+
+        !variables
+        v1_z = inTgas
+        v2_z = cH
+        v3_z = phys_zredshift
+
+        !logs of variables
+        v1_z = log10(v1_z)
+        v2_z = log10(v2_z)
+
+        !check limits
+        if(v1_z>=v1max_z) v1_z = v1max_z*(1d0-eps)
+        if(v2_z>=v2max_z) v2_z = v2max_z*(1d0-eps)
+        if(v3_z>=v3max_z) v3_z = v3max_z*(1d0-eps)
+
+        if(v1_z<v1min_z) return
+        if(v2_z<v2min_z) return
+        if(v3_z<v3min_z) return
+
+        !gets position of variable in the array
+        i = (v1_z-v1min_z)*coolCOdvn1_z+1
+        j = (v2_z-v2min_z)*coolCOdvn2_z+1
+        k = (v3_z-v3min_z)*coolCOdvn3_z+1
+
+        !precompute shared variables
+        prev1 = (v1_z-x1_z(i))*ixd1_z(i)
+        prev2 = (v2_z-x2_z(j))*ixd2_z(j)
+
+        !linear interpolation on x1 for x2,x3
+        vv1 = prev1 * (coolCOy_z(k,j,i+1) - &
+             coolCOy_z(k,j,i)) + coolCOy_z(k,j,i)
+        !linear interpolation on x1 for x2+dx2,x3
+        vv2 = prev1 * (coolCOy_z(k,j+1,i+1) - &
+             coolCOy_z(k,j+1,i)) + coolCOy_z(k,j+1,i)
+        !linear interpolation on x2 for x3
+        vv12 = prev2 * (vv2 - vv1) + vv1
+
+        !linear interpolation on x1 for x2,x3+dx3
+        vv3 = prev1 * (coolCOy_z(k+1,j,i+1) - &
+             coolCOy_z(k+1,j,i)) + coolCOy_z(k+1,j,i)
+        !linear interpolation on x1 for x2+dx2,x3+dx3
+        vv4 = prev1 * (coolCOy_z(k+1,j+1,i+1) - &
+             coolCOy_z(k+1,j+1,i)) + coolCOy_z(k+1,j+1,i)
+        !linear interpolation on x2 for x3+dx3
+        vv34 = prev2 * (vv4 - vv3) + vv3
+
+        !linear interpolation on x3
+        scale = (v3_z-x3_z(k))*ixd3_z(k)*(vv34 - &
+             vv12) + vv12
+
+        !die if scale factor <0 or >1
+        if (scale .lt. 0d0 .or. scale .gt. 1d0) then
+            print *, 'ERROR! CO cooling redshift scaling factor out of bounds.'
+            print *, 'Tgas, nH, z, scale_factor: ', 10**v1_z, 10**v2_z, v3_z, scale
+            stop
+        endif
+
+        !CO cooling in erg/s/cm3 (all redshifts)
+        cooling_CO = 1d1**xLd * cH * nco * scale
+      endif
 
     end function cooling_CO
 
@@ -343,6 +429,48 @@
       coolCOdvn2 = (coolCOn2-1) / (coolCOx2max-coolCOx2min)
       coolCOdvn3 = (coolCOn3-1) / (coolCOx3max-coolCOx3min)
 
+      !Load the file containing redshift scaling factors
+      if (krome_mpi_rank<=1) print *,"load CO cooling redshift scaling factors..."
+      open(newunit=unit,file="coolCO_scalefactor_redshift_nlte.dat",status="old",iostat=ios)
+      !check if file exists
+      if(ios.ne.0) then
+         print *,"ERROR: problems loading coolCO_scalefactor_redshift_nlte.dat!"
+         stop
+      end if
+
+      do
+         read(unit,*,iostat=ios) iout(:),rout(:) !read line
+         if(ios<0) exit !eof
+         if(ios/=0) cycle !skip blanks
+         coolCOx1_z(iout(1)) = rout(1)
+         coolCOx2_z(iout(2)) = rout(2)
+         coolCOx3_z(iout(3)) = rout(3)
+         coolCOy_z(iout(3),iout(2),iout(1)) = rout(4)
+      end do
+
+      !store inverse of the differences
+      ! to speed up interpolation
+      do i=1,coolCOn1_z-1
+         coolCOixd1_z(i) = 1d0 / (coolCOx1_z(i+1)-coolCOx1_z(i))
+      end do
+      do i=1,coolCOn2_z-1
+         coolCOixd2_z(i) = 1d0 / (coolCOx2_z(i+1)-coolCOx2_z(i))
+      end do
+      do i=1,coolCOn3_z-1
+         coolCOixd3_z(i) = 1d0 / (coolCOx3_z(i+1)-coolCOx3_z(i))
+      end do
+
+      coolCOx1min_z = minval(coolCOx1_z)
+      coolCOx1max_z = maxval(coolCOx1_z)
+      coolCOx2min_z = minval(coolCOx2_z)
+      coolCOx2max_z = maxval(coolCOx2_z)
+      coolCOx3min_z = minval(coolCOx3_z)
+      coolCOx3max_z = maxval(coolCOx3_z)
+
+      coolCOdvn1_z = (coolCOn1_z-1) / (coolCOx1max_z-coolCOx1min_z)
+      coolCOdvn2_z = (coolCOn2_z-1) / (coolCOx2max_z-coolCOx2min_z)
+      coolCOdvn3_z = (coolCOn3_z-1) / (coolCOx3max_z-coolCOx3min_z)
+
     end subroutine init_coolingCO
 #ENDIFKROME
 
@@ -369,6 +497,15 @@
       real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
       real*8::v1min,v1max,v2min,v2max,v3min,v3max
       real*8::nh,nh2,noh
+      !variables for redshift scaling
+      integer,parameter::imax_z=coolOHn1_z
+      integer,parameter::jmax_z=coolOHn2_z
+      integer,parameter::kmax_z=coolOHn3_z
+      real*8::v1_z,v2_z,v3_z
+      real*8::x1_z(imax_z),x2_z(jmax_z),x3_z(kmax_z)
+      real*8::ixd1_z(imax_z-1),ixd2_z(jmax_z-1),ixd3_z(kmax_z-1)
+      real*8::v1min_z,v1max_z,v2min_z,v2max_z,v3min_z,v3max_z
+      real*8::scale
 
       !local copy of limits
       v1min = coolOHx1min
@@ -450,6 +587,84 @@
       !OH cooling in erg/s/cm3
       cooling_OH = 1d1**xLd * cH * noh
 
+      if (phys_zredshift .gt. 0d0) then
+        !local copy of limits
+        v1min_z = coolOHx1min_z
+        v1max_z = coolOHx1max_z
+        v2min_z = coolOHx2min_z
+        v2max_z = coolOHx2max_z
+        v3min_z = coolOHx3min_z
+        v3max_z = coolOHx3max_z
+
+        !local copy of variables arrays
+        x1_z(:) = coolOHx1_z(:)
+        x2_z(:) = coolOHx2_z(:)
+        x3_z(:) = coolOHx3_z(:)
+
+        ixd1_z(:) = coolOHixd1_z(:)
+        ixd2_z(:) = coolOHixd2_z(:)
+        ixd3_z(:) = coolOHixd3_z(:)
+
+        !variables
+        v1_z = inTgas
+        v2_z = cH
+        v3_z = phys_zredshift
+
+        !logs of variables
+        v1_z = log10(v1_z)
+        v2_z = log10(v2_z)
+
+        !check limits
+        if(v1_z>=v1max_z) v1_z = v1max_z*(1d0-eps)
+        if(v2_z>=v2max_z) v2_z = v2max_z*(1d0-eps)
+        if(v3_z>=v3max_z) v3_z = v3max_z*(1d0-eps)
+
+        if(v1_z<v1min_z) return
+        if(v2_z<v2min_z) return
+        if(v3_z<v3min_z) return
+
+        !gets position of variable in the array
+        i = (v1_z-v1min_z)*coolOHdvn1_z+1
+        j = (v2_z-v2min_z)*coolOHdvn2_z+1
+        k = (v3_z-v3min_z)*coolOHdvn3_z+1
+
+        !precompute shared variables
+        prev1 = (v1_z-x1_z(i))*ixd1_z(i)
+        prev2 = (v2_z-x2_z(j))*ixd2_z(j)
+
+        !linear interpolation on x1 for x2,x3
+        vv1 = prev1 * (coolOHy_z(k,j,i+1) - &
+             coolOHy_z(k,j,i)) + coolOHy_z(k,j,i)
+        !linear interpolation on x1 for x2+dx2,x3
+        vv2 = prev1 * (coolOHy_z(k,j+1,i+1) - &
+             coolOHy_z(k,j+1,i)) + coolOHy_z(k,j+1,i)
+        !linear interpolation on x2 for x3
+        vv12 = prev2 * (vv2 - vv1) + vv1
+
+        !linear interpolation on x1 for x2,x3+dx3
+        vv3 = prev1 * (coolOHy_z(k+1,j,i+1) - &
+             coolOHy_z(k+1,j,i)) + coolOHy_z(k+1,j,i)
+        !linear interpolation on x1 for x2+dx2,x3+dx3
+        vv4 = prev1 * (coolOHy_z(k+1,j+1,i+1) - &
+             coolOHy_z(k+1,j+1,i)) + coolOHy_z(k+1,j+1,i)
+        !linear interpolation on x2 for x3+dx3
+        vv34 = prev2 * (vv4 - vv3) + vv3
+
+        !linear interpolation on x3
+        scale = (v3_z-x3_z(k))*ixd3_z(k)*(vv34 - &
+             vv12) + vv12
+
+        !die if scale factor <0 or >1
+        if (scale .lt. 0d0 .or. scale .gt. 1d0) then
+            print *, 'ERROR! OH cooling redshift scaling factor out of bounds.'
+            print *, 'Tgas, nH, z, scale_factor: ', 10**v1_z, 10**v2_z, v3_z, scale
+            stop
+        endif
+
+        !OH cooling in erg/s/cm3 (all redshifts)
+        cooling_OH = 1d1**xLd * cH * noh * scale
+      endif
+
     end function cooling_OH
 
     ! ************************
@@ -500,6 +715,48 @@
       coolOHdvn2 = (coolOHn2 - 1) / (coolOHx2max - coolOHx2min)
       coolOHdvn3 = (coolOHn3 - 1) / (coolOHx3max - coolOHx3min)
 
+      !Load the file containing redshift scaling factors
+      if (krome_mpi_rank<=1) print *,"load OH cooling redshift scaling factors..."
+      open(newunit=unit,file="coolOH_scalefactor_redshift_lte.dat",status="old",iostat=ios)
+      !check if file exists
+      if(ios.ne.0) then
+         print *,"ERROR: problems loading coolOH_scalefactor_redshift_lte.dat!"
+         stop
+      end if
+
+      do
+         read(unit,*,iostat=ios) iout(:),rout(:) !read line
+         if(ios<0) exit !eof
+         if(ios/=0) cycle !skip blanks
+         coolOHx1_z(iout(1)) = rout(1)
+         coolOHx2_z(iout(2)) = rout(2)
+         coolOHx3_z(iout(3)) = rout(3)
+         coolOHy_z(iout(3),iout(2),iout(1)) = rout(4)
+      end do
+
+      !store inverse of the differences
+      ! to speed up interpolation
+      do i=1,coolOHn1_z-1
+         coolOHixd1_z(i) = 1d0 / (coolOHx1_z(i+1)-coolOHx1_z(i))
+      end do
+      do i=1,coolOHn2_z-1
+         coolOHixd2_z(i) = 1d0 / (coolOHx2_z(i+1)-coolOHx2_z(i))
+      end do
+      do i=1,coolOHn3_z-1
+         coolOHixd3_z(i) = 1d0 / (coolOHx3_z(i+1)-coolOHx3_z(i))
+      end do
+
+      coolOHx1min_z = minval(coolOHx1_z)
+      coolOHx1max_z = maxval(coolOHx1_z)
+      coolOHx2min_z = minval(coolOHx2_z)
+      coolOHx2max_z = maxval(coolOHx2_z)
+      coolOHx3min_z = minval(coolOHx3_z)
+      coolOHx3max_z = maxval(coolOHx3_z)
+
+      coolOHdvn1_z = (coolOHn1_z-1) / (coolOHx1max_z-coolOHx1min_z)
+      coolOHdvn2_z = (coolOHn2_z-1) / (coolOHx2max_z-coolOHx2min_z)
+      coolOHdvn3_z = (coolOHn3_z-1) / (coolOHx3max_z-coolOHx3min_z)
+
     end subroutine init_coolingOH
 #ENDIFKROME
 
@@ -526,6 +783,15 @@
       real*8::ixd1(imax-1),ixd2(jmax-1),ixd3(kmax-1)
       real*8::v1min,v1max,v2min,v2max,v3min,v3max
       real*8::nh,nh2,nh2o
+      !variables for redshift scaling
+      integer,parameter::imax_z=coolOH2On1_z
+      integer,parameter::jmax_z=coolOH2On2_z
+      integer,parameter::kmax_z=coolOH2On3_z
+      real*8::v1_z,v2_z,v3_z
+      real*8::x1_z(imax_z),x2_z(jmax_z),x3_z(kmax_z)
+      real*8::ixd1_z(imax_z-1),ixd2_z(jmax_z-1),ixd3_z(kmax_z-1)
+      real*8::v1min_z,v1max_z,v2min_z,v2max_z,v3min_z,v3max_z
+      real*8::scale
 
       !local copy of limits
       v1min = coolH2Ox1min
@@ -607,6 +873,86 @@
       !H2O cooling in erg/s/cm3
       cooling_H2O = 1d1**xLd * cH * nh2o
 
+      if (phys_zredshift .gt. 0d0) then
+        !for H2O, we only treat ortho-H2O at the moment.
+        !The scaling factor should not be too different between ortho and para H2O
+        !local copy of limits
+        v1min_z = coolOH2Ox1min_z
+        v1max_z = coolOH2Ox1max_z
+        v2min_z = coolOH2Ox2min_z
+        v2max_z = coolOH2Ox2max_z
+        v3min_z = coolOH2Ox3min_z
+        v3max_z = coolOH2Ox3max_z
+
+        !local copy of variables arrays
+        x1_z(:) = coolOH2Ox1_z(:)
+        x2_z(:) = coolOH2Ox2_z(:)
+        x3_z(:) = coolOH2Ox3_z(:)
+
+        ixd1_z(:) = coolOH2Oixd1_z(:)
+        ixd2_z(:) = coolOH2Oixd2_z(:)
+        ixd3_z(:) = coolOH2Oixd3_z(:)
+
+        !variables
+        v1_z = inTgas
+        v2_z = cH
+        v3_z = phys_zredshift
+
+        !logs of variables
+        v1_z = log10(v1_z)
+        v2_z = log10(v2_z)
+
+        !check limits
+        if(v1_z>=v1max_z) v1_z = v1max_z*(1d0-eps)
+        if(v2_z>=v2max_z) v2_z = v2max_z*(1d0-eps)
+        if(v3_z>=v3max_z) v3_z = v3max_z*(1d0-eps)
+
+        if(v1_z<v1min_z) return
+        if(v2_z<v2min_z) return
+        if(v3_z<v3min_z) return
+
+        !gets position of variable in the array
+        i = (v1_z-v1min_z)*coolOH2Odvn1_z+1
+        j = (v2_z-v2min_z)*coolOH2Odvn2_z+1
+        k = (v3_z-v3min_z)*coolOH2Odvn3_z+1
+
+        !precompute shared variables
+        prev1 = (v1_z-x1_z(i))*ixd1_z(i)
+        prev2 = (v2_z-x2_z(j))*ixd2_z(j)
+
+        !linear interpolation on x1 for x2,x3
+        vv1 = prev1 * (coolOH2Oy_z(k,j,i+1) - &
+             coolOH2Oy_z(k,j,i)) + coolOH2Oy_z(k,j,i)
+        !linear interpolation on x1 for x2+dx2,x3
+        vv2 = prev1 * (coolOH2Oy_z(k,j+1,i+1) - &
+             coolOH2Oy_z(k,j+1,i)) + coolOH2Oy_z(k,j+1,i)
+        !linear interpolation on x2 for x3
+        vv12 = prev2 * (vv2 - vv1) + vv1
+
+        !linear interpolation on x1 for x2,x3+dx3
+        vv3 = prev1 * (coolOH2Oy_z(k+1,j,i+1) - &
+             coolOH2Oy_z(k+1,j,i)) + coolOH2Oy_z(k+1,j,i)
+        !linear interpolation on x1 for x2+dx2,x3+dx3
+        vv4 = prev1 * (coolOH2Oy_z(k+1,j+1,i+1) - &
+             coolOH2Oy_z(k+1,j+1,i)) + coolOH2Oy_z(k+1,j+1,i)
+        !linear interpolation on x2 for x3+dx3
+        vv34 = prev2 * (vv4 - vv3) + vv3
+
+        !linear interpolation on x3
+        scale = (v3_z-x3_z(k))*ixd3_z(k)*(vv34 - &
+             vv12) + vv12
+
+        !die if scale factor <0 or >1
+        if (scale .lt. 0d0 .or. scale .gt. 1d0) then
+            print *, 'ERROR! OH2O cooling redshift scaling factor out of bounds.'
+            print *, 'Tgas, nH, z, scale_factor: ', 10**v1_z, 10**v2_z, v3_z, scale
+            stop
+        endif
+
+        !OH2O cooling in erg/s/cm3 (all redshifts)
+        cooling_H2O = 1d1**xLd * cH * nh2o * scale
+      endif
+
     end function cooling_H2O
 
     ! ************************
@@ -656,6 +1002,48 @@
       coolH2Odvn1 = (coolH2On1 - 1) / (coolH2Ox1max - coolH2Ox1min)
       coolH2Odvn2 = (coolH2On2 - 1) / (coolH2Ox2max - coolH2Ox2min)
       coolH2Odvn3 = (coolH2On3 - 1) / (coolH2Ox3max - coolH2Ox3min)
+
+      !Load the file containing redshift scaling factors
+      if (krome_mpi_rank<=1) print *,"load OH2O cooling redshift scaling factors..."
+      open(newunit=unit,file="coolOH2O_scalefactor_redshift_lte.dat",status="old",iostat=ios)
+      !check if file exists
+      if(ios.ne.0) then
+         print *,"ERROR: problems loading coolOH2O_scalefactor_redshift_lte.dat!"
+         stop
+      end if
+
+      do
+         read(unit,*,iostat=ios) iout(:),rout(:) !read line
+         if(ios<0) exit !eof
+         if(ios/=0) cycle !skip blanks
+         coolOH2Ox1_z(iout(1)) = rout(1)
+         coolOH2Ox2_z(iout(2)) = rout(2)
+         coolOH2Ox3_z(iout(3)) = rout(3)
+         coolOH2Oy_z(iout(3),iout(2),iout(1)) = rout(4)
+      end do
+
+      !store inverse of the differences
+      ! to speed up interpolation
+      do i=1,coolOH2On1_z-1
+         coolOH2Oixd1_z(i) = 1d0 / (coolOH2Ox1_z(i+1)-coolOH2Ox1_z(i))
+      end do
+      do i=1,coolOH2On2_z-1
+         coolOH2Oixd2_z(i) = 1d0 / (coolOH2Ox2_z(i+1)-coolOH2Ox2_z(i))
+      end do
+      do i=1,coolOH2On3_z-1
+         coolOH2Oixd3_z(i) = 1d0 / (coolOH2Ox3_z(i+1)-coolOH2Ox3_z(i))
+      end do
+
+      coolOH2Ox1min_z = minval(coolOH2Ox1_z)
+      coolOH2Ox1max_z = maxval(coolOH2Ox1_z)
+      coolOH2Ox2min_z = minval(coolOH2Ox2_z)
+      coolOH2Ox2max_z = maxval(coolOH2Ox2_z)
+      coolOH2Ox3min_z = minval(coolOH2Ox3_z)
+      coolOH2Ox3max_z = maxval(coolOH2Ox3_z)
+
+      coolOH2Odvn1_z = (coolOH2On1_z-1) / (coolOH2Ox1max_z-coolOH2Ox1min_z)
+      coolOH2Odvn2_z = (coolOH2On2_z-1) / (coolOH2Ox2max_z-coolOH2Ox2min_z)
+      coolOH2Odvn3_z = (coolOH2On3_z-1) / (coolOH2Ox3max_z-coolOH2Ox3min_z)
 
     end subroutine init_coolingH2O
 #ENDIFKROME

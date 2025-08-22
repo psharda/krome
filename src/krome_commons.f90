@@ -228,6 +228,17 @@ module krome_commons
   real*8::coolCOx2min,coolCOx2max
   real*8::coolCOx3min,coolCOx3max
   real*8::coolCOdvn1,coolCOdvn2,coolCOdvn3
+  !data for CO cooling redshift scaling factor
+  integer,parameter::coolCOn1_z=30
+  integer,parameter::coolCOn2_z=30
+  integer,parameter::coolCOn3_z=30
+  real*8::coolCOx1_z(coolCOn1_z),coolCOx2_z(coolCOn2_z),coolCOx3_z(coolCOn3_z)
+  real*8::coolCOixd1_z(coolCOn1_z-1),coolCOixd2_z(coolCOn2_z-1),coolCOixd3_z(coolCOn3_z-1)
+  real*8::coolCOy_z(coolCOn1_z,coolCOn2_z,coolCOn3_z)
+  real*8::coolCOx1min_z,coolCOx1max_z
+  real*8::coolCOx2min_z,coolCOx2max_z
+  real*8::coolCOx3min_z,coolCOx3max_z
+  real*8::coolCOdvn1_z,coolCOdvn2_z,coolCOdvn3_z
 #ENDIFKROME
 
 #IFKROME_useCoolingOH
@@ -242,6 +253,17 @@ module krome_commons
   real*8::coolOHx2min,coolOHx2max
   real*8::coolOHx3min,coolOHx3max
   real*8::coolOHdvn1,coolOHdvn2,coolOHdvn3
+  !data for OH cooling redshift scaling factor
+  integer,parameter::coolOHn1_z=30
+  integer,parameter::coolOHn2_z=30
+  integer,parameter::coolOHn3_z=30
+  real*8::coolOHx1_z(coolOHn1_z),coolOHx2_z(coolOHn2_z),coolOHx3_z(coolOHn3_z)
+  real*8::coolOHixd1_z(coolOHn1_z-1),coolOHixd2_z(coolOHn2_z-1),coolOHixd3_z(coolOHn3_z-1)
+  real*8::coolOHy_z(coolOHn1_z,coolOHn2_z,coolOHn3_z)
+  real*8::coolOHx1min_z,coolOHx1max_z
+  real*8::coolOHx2min_z,coolOHx2max_z
+  real*8::coolOHx3min_z,coolOHx3max_z
+  real*8::coolOHdvn1_z,coolOHdvn2_z,coolOHdvn3_z
 #ENDIFKROME
 
 #IFKROME_useCoolingH2O
@@ -256,6 +278,17 @@ module krome_commons
   real*8::coolH2Ox2min,coolH2Ox2max
   real*8::coolH2Ox3min,coolH2Ox3max
   real*8::coolH2Odvn1,coolH2Odvn2,coolH2Odvn3
+  !data for OH2O cooling redshift scaling factor
+  integer,parameter::coolOH2On1_z=30
+  integer,parameter::coolOH2On2_z=30
+  integer,parameter::coolOH2On3_z=30
+  real*8::coolOH2Ox1_z(coolOH2On1_z),coolOH2Ox2_z(coolOH2On2_z),coolOH2Ox3_z(coolOH2On3_z)
+  real*8::coolOH2Oixd1_z(coolOH2On1_z-1),coolOH2Oixd2_z(coolOH2On2_z-1),coolOH2Oixd3_z(coolOH2On3_z-1)
+  real*8::coolOH2Oy_z(coolOH2On1_z,coolOH2On2_z,coolOH2On3_z)
+  real*8::coolOH2Ox1min_z,coolOH2Ox1max_z
+  real*8::coolOH2Ox2min_z,coolOH2Ox2max_z
+  real*8::coolOH2Ox3min_z,coolOH2Ox3max_z
+  real*8::coolOH2Odvn1_z,coolOH2Odvn2_z,coolOH2Odvn3_z
 #ENDIFKROME
 
 #IFKROME_useCoolingHCN
