@@ -263,12 +263,12 @@
 77,O2+,E,O,O,NONE,NONE,1.95d-7*T32**(-.7)
 
 #O2005 use an older rate coefficient
-78,CH,O,CO,H,NONE,NONE,1.02d-10*exp(-914d0*invT)
+78,CH,O,CO,H,NONE,NONE,6.02d-11*(T32**0.1d0)*exp(4.50d0*invT)
 
 #KIDA, recommended, below 10K constant
 #O2005 use an older rate coefficient. Piyush Sharda slightly updated the coefficient to ensure continuity
 79,C,OH,H,CO,NONE,1d1,7.050765049525827d-11
-80,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(-.108d0*invT)
+80,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(.108d0*invT)
 
 
 #Glover+2010 (limit 1052. for continuity)
@@ -539,17 +539,17 @@
 
 ########################################## START FREEZEOUT CHEMISTRY ###################################################################
 
-@noTab_start
+#@noTab_start
 #DUST FREEZE-OUT/EVAPORATION
 #freezeout rate coefficient is in s^-1
-@ice:CO,freezeout,krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)
+#@ice:CO,freezeout,krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)
 #evaporation rate coefficient is in cm^-3 s^-1
 #total evaporation cannot be greater than freeze out in the first place
-@ice:CO,evaporation,max(min(krate_evaporation(n(:),idx_CO,krome_Semenov_Tdust), krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)*n(idx_CO)), small)
-@ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)
-@ice:H2O,evaporation,max(min(krate_evaporation(n(:),idx_H2O,krome_Semenov_Tdust), krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)*n(idx_H2O)), small)
+#@ice:CO,evaporation,max(min(krate_evaporation(n(:),idx_CO,krome_Semenov_Tdust), krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)*n(idx_CO)), small)
+#@ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)
+#@ice:H2O,evaporation,max(min(krate_evaporation(n(:),idx_H2O,krome_Semenov_Tdust), krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)*n(idx_H2O)), small)
 ####NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux (disabled in 2025, TODO look into desorption again in the future)
 ####@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0, user_Av, user_crate, 1d-3)
-@noTab_stop
+#@noTab_stop
 
 ########################################## END FREEZEOUT CHEMISTRY ###################################################################
