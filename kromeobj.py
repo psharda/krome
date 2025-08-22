@@ -4885,7 +4885,6 @@ class krome:
 			#write down the CMB photon occupation numbers for each transition
 			full_function += "!CMB photon occupation numbers\n"
 			for kp,tp_data in trans_data.items():
-				print('hahahahahha: ', kp, tp_data)
 				deltaEp = tp_data["denergy_K"]
 				deltaEp_fmt = ("%e" % deltaEp).replace("e","d") #f90ish format for deltaE
 				tup = tp_data["up"]
