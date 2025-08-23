@@ -368,8 +368,8 @@
         scale = (v3_z-x3_z(k))*ixd3_z(k)*(vv34 - &
              vv12) + vv12
 
-        !die if scale factor <0 or >1
-        if (scale .lt. 0d0 .or. scale .gt. 1d0) then
+        !die if scale factor <0 or >2
+        if (scale .lt. 0d0 .or. scale .gt. 2d0) then
             print *, 'ERROR! CO cooling redshift scaling factor out of bounds.'
             print *, 'Tgas, nH, z, scale_factor: ', 10**v1_z, 10**v2_z, v3_z, scale
             stop
