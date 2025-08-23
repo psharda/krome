@@ -60,8 +60,8 @@
 11,H,H+,,H2+,,,,NONE,.LT.30.0d0,2.10e-20*(Tgas/30.)**(-0.15)
 12,H,H+,,H2+,,,,.GE.30.0d0,NONE,10**(-18.20-3.194*log10(Tgas)+1.786*(log10(Tgas))**2-0.2072*(log10(Tgas))**3)
 
-#Karpas 1979
-13,H2+,H,,H2,H+,,,NONE,NONE,6.0d-10
+#Karpas 1979 (coefficient slightly updated from Wakelam et al. 2010)
+13,H2+,H,,H2,H+,,,NONE,NONE,6.4d-10
 
 # fit by Savin et al. 2004, see also Glover et al. 2010  !NEW!
 @var:asav = 2.1237150d4
@@ -128,6 +128,12 @@
 29,He,H+,He+,H,NONE,.LE.1d4,1.26d-9*Tgas**(-0.75d0)*exp(-1.275d5*invT)
 #Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
 30,He,H+,He+,H,>1d4,.LE.47740866.4968,4.d-37*Tgas**(4.74d0)
+
+#Reaction 25 in table A1 of GOW, added to ensure He+ loss route exists in shielded regions
+31,He+,H2,H2+,He,NONE,NONE,7.2d-15
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+#Reaction 7 in table A1 of GOW (UMIST 2025 rate is a constant so we use the GOW one)
+32,He+,H2,H+,He,H,NONE,NONE,1.26d-13*exp(-22.5d0*invT)
 
 ########################################## START DEUTERIUM CHEMISTRY ###################################################################
 
@@ -197,19 +203,22 @@
 52,O+,H,H+,O,4.99d-11*Tgas**(0.405d0) + 7.5d-10*Tgas**(-0.458d0)
 53,H+,O,O+,H,(1.1d-11*Tgas**(0.517d0) + 4d-10*Tgas**(0.00669d0))*exp(-2.27d2*invT)
 
-#KIDA (same rate as O2005)
-54,O+,H2,H,OH+,1.69d-9
+#KIDA (rate from UMIST 2025)
+54,O+,H2,H,OH+,1.35d-9
 
-#Glover+2010
-55,OH+,H2,H2O+,H,1.01d-9
+
+#Glover+2010 (rate from Tran+2018 used in UMIST 2025)
+55,OH+,H2,H2O+,H,1.27d-9*(T32**(0.18d0))
 #O2005 use an older rate coefficient
 56,H2O+,H2,H3O+,H,6.4d-10
 #O2005 use an older rate coefficient
 57,H2O+,E,O,H2,3.9d-8*T32**(-.5)
 #O2005 use an older rate coefficient
 58,H2O+,E,OH,H,8.6d-8*T32**(-.5)
-
 @format:idx,R,R,P,P,P,rate
+#Third destruction channel of H2O+ recombination via E produces H and O (rate from UMIST 2025)
+59,H2O+,E,H,H,O,3.05d-7*T32**(-.5)
+
 #O2005 use an older rate coefficient
 59,H3O+,E,OH,H,H,2.58d-7*T32**(-.5)
 
@@ -250,10 +259,8 @@
 
 72,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
 
-#KIDA, recomended, below 150K constant
-#O2005 use an older rate coefficient
-73,O,OH,H,O2,150.,NONE,2.4d-11*exp(110d0*invT)
-74,O,OH,H,O2,NONE,150.,4.997d-11
+#O2005 (but rate updated from Wakelam+2012 as in UMIST 2025)
+74,O,OH,H,O2,NONE,NONE,3.69d-11*(T32**(-0.27d0))*exp(-12.90d0*invT)
 
 #Glover+2010
 #O2005 use an older rate coefficient
@@ -262,9 +269,14 @@
 76,O2,H+,O2+,H,NONE,NONE,2d-9
 77,O2+,E,O,O,NONE,NONE,1.95d-7*T32**(-.7)
 
-#O2005 use an older rate coefficient
+#O2005 (but rate from UMIST 2025)
 78,CH,O,CO,H,NONE,NONE,6.02d-11*(T32**0.1d0)*exp(4.50d0*invT)
+#CO formation via CH2 in a similar way (UMIST 2025)
+79,CH2,O,CO,H2,290d0,NONE,2.04d-10*exp(-270d0*invT)
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+79,CH2,O,CO,H,H,290d0,NONE,3.40d-10*exp(-270d0*invT)
 
+@format:idx,R,R,P,P,Tmin,Tmax,rate
 #KIDA, recommended, below 10K constant
 #O2005 use an older rate coefficient. Piyush Sharda slightly updated the coefficient to ensure continuity
 79,C,OH,H,CO,NONE,1d1,7.050765049525827d-11
@@ -332,6 +344,14 @@
 99,He+,CO,C+,O,He,1.4d-9*T32**(-0.5d0)
 #reaction 28 from Hunter+2023, added to ensure appropriate loss route exists for CH at high Tgas; taken from UMIST24 database
 100,CH,He+,C+,He,H,1.1d-9*(Tgas/300)**(-0.5d0)
+#reaction 29 of table A1 of GOW (UMIST rate is factor of few lower, so we use GOW's rate)
+101,He+,OH,O+,He,H,1.35d-9*(0.62 + 45.41*Tgas**(-0.5d0))
+
+#H2 reactions with C+ from table A1 of GOW (reactions 9 and 10)
+101,C+,H2,CH2+,,,2.31d-13*(Tgas**(-1.3d0))*exp(-23d0*invT)
+@format:idx,R,R,R,P,P,P,rate
+#pseudo-reaction that takes C+ recombination via multiple pathways into account
+101,C+,H2,E,C,H,H,0.99d-13*(Tgas**(-1.3d0))*exp(-23d0*invT)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #added as recommended by Hunter+2023 for high Tgas; taken from UMIST24
@@ -340,16 +360,16 @@
 #--------------------------------
 #HCO+ reactions
 #TODO: they do not seem to be warranted (GOW include them), so have switched them off
-#@format:idx,R,R,R,P,P,P,rate
+@format:idx,R,R,R,P,P,P,rate
 #reaction 18 in table A1 in GOW; branching ratio of reaction 18 and 222 is 0.92:0.08; taken from Geppert et al. 2005 table 3: https://iopscience.iop.org/article/
-#20,HCO+,E,,CO,H,,1.06d-5*(Tgas**(-0.64d0))*9.2d-1
+20,HCO+,E,,CO,H,,1.06d-5*(Tgas**(-0.64d0))*9.2d-1
 #added as recommended by Hunter+2023, branching ratio of reaction 18 and 222 is 0.92:0.08; taken from Geppert et al. 2005 table 3: https://iopscience.iop.org/article/10.1088/1742-6596/4/1/004/pdf
-#21,HCO+,E,,OH,C,,1.06d-5*(Tgas**(-0.64d0))*8d-2
-#reaction 6 in table A1 in GOW
-#22,H3+,CO,,HCO+,H2,,1.7d-9
-#@format:idx,R,R,P,P,Tmin,Tmax,rate
-#reaction 11 in table A1 in GOW
-#27,C+,OH,HCO+,,NONE,NONE,9.15d-10*(0.62d0 + 45.41d0*Tgas**(-0.5d0))
+21,HCO+,E,,OH,C,,1.06d-5*(Tgas**(-0.64d0))*8d-2
+#reaction 6 in table A1 in GOW (rate from UMIST 2025)
+22,H3+,CO,,HCO+,H2,,1.36d-9*(T32**-(0.14d0))*exp(3.4d0*invT)
+@format:idx,R,R,P,P,Tmin,Tmax,rate
+#following reaction + reactions of C+ with OH represent reaction 11 of table A1 of GOW (rate from UMIST 2025)
+27,H2,CO+,HCO+,H,NONE,NONE,7.5d-10
 
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -408,10 +428,12 @@
 124,H2+,H2,H3+,H,NONE,NONE,2.24d-9*T32**.042*exp(-Tgas/46600.)
 125,H3+,H,H2+,H2,NONE,NONE,7.7d-9*exp(-17560d0*invT)
 126,C,H2+,CH+,H,NONE,NONE,2.4d-9
-#O'Connor+2014 (http://arxiv.org/abs/1408.4696), original range 10-1e4 K, here extended
-127,C,H3+,CH+,H2,NONE,NONE,(1.0218d-9 + 7.2733d-11*sqrt(Tgas) + 5.9203d-14*Tgas)/(Tgas**0.1667 + 4.4914d-2*sqrt(Tgas) - 5.9203d-14*Tgas + 2.6397d-6*Tgas**1.5)
-#additional channel from O'Connor+2014 (http://arxiv.org/abs/1408.4696), original range 10-1e4 K, here extended
-128,C,H3+,CH2+,H,NONE,NONE,(8.5145d-10)/(Tgas**(.1667) + 9.5666d-4*sqrt(Tgas) - 4.404d-5*Tgas + 2.3496d-6 * Tgas**1.5)
+#Vissapragada+2016, used in GOW table A1 reaction 1
+127,C,H3+,CH+,H2,NONE,NONE,6.93d-10*(T32**(8.34d-2)) + (Tgas**(-1.5d0))*((-7.24d-9)*exp(-8.01d0/Tgas) + (-9.07d-10)*exp(-1.92d0/Tgas) + (7.48d-8)*exp(-4.19d1/Tgas) + (9.93d-5)*exp(-8.08d3/Tgas))
+128,C,H3+,CH2+,H,NONE,NONE,3.35d-10*(T32**(-1.89d-1)) + (Tgas**(-1.5d0))*((2.73d-8)*exp(-6.49d0/Tgas) + (5.58d-9)*exp(-1.30d0/Tgas) + (7.46d-8)*exp(-1.90d1/Tgas) + (-1.92d-4)*exp(-1.62d4/Tgas))
+
+
+
 #KIDA and additional channel both recomended
 129,O,H3+,H2,OH+,NONE,NONE,7.98d-10*T32**(-.156)*exp(-1.41d0*invT)
 130,O,H3+,H,H2O+,NONE,NONE,3.42d-10*T32**(-.156)*exp(-1.41d0*invT)
