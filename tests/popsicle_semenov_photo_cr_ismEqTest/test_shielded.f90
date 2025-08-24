@@ -85,6 +85,8 @@ program test_krome_eqbm
     Tgas = 3d2             !temperature, K
     ntot = 1d-2
 
+    print *, 'Redshift: ', krome_redshift
+
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
