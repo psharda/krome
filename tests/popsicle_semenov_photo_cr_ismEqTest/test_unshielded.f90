@@ -232,8 +232,6 @@ program test_krome_eqbm
       end do
 
       !dump cooling rates for Tgas going into the calculation
-      !n(1:krome_nmols) = x(:)
-      !n(KROME_idx_Tgas) = Tgas
       cools(:) = get_cooling_array(n(:),Tgas)
       write(31,'(99E14.5e3)') ntot, Tgas, sum(cools), cools(:)
       kk(:) = krome_get_coef(Tgas,x(:))

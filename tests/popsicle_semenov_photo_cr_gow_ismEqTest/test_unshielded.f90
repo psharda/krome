@@ -19,7 +19,7 @@ program test_krome_eqbm
   integer,parameter::nz=7
   integer,parameter::rstep = 500000
   integer::i,ii,ios,jscale,jz,jz2, dens_bins, zint
-  real*8::rhogas,m(krome_nspec)
+  real*8::rhogas,m(krome_nspec),sum_x,sum_xi
   real*8::tff,ertol,eatol,max_time,t_tot
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
@@ -89,6 +89,8 @@ program test_krome_eqbm
     call krome_set_metallicity(zs(jz2))
     call krome_set_dust_to_gas(zs(jz2))
     call krome_set_chiFUV(chiFUV)
+    !scale grain recombination reactions as in GOW
+    call krome_set_user_pdr_factor(1d0)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
@@ -97,9 +99,6 @@ program test_krome_eqbm
       !turn off photo/cr reactions that include metals
       call krome_set_user_is_metal(0d0)
     endif
-
-    !scale grain recombination reactions as in GOW
-    call krome_set_user_pdr_factor(1d0)
 
     !initialize KROME (mandatory)
     call krome_init()
@@ -173,7 +172,10 @@ program test_krome_eqbm
         endif
 
         !if you do not conserve electrons, the electron abundance will soon go to 0.00
+        sum_xi = sum(x(1:krome_nmols))
         x(krome_idx_e) = krome_get_electrons(x(:))
+        sum_x = sum(x(1:krome_nmols))
+        x(1:krome_nmols) = x(1:krome_nmols) * sum_xi / sum_x
 
         Av = 0.0
         call krome_set_user_Av(Av)
@@ -207,9 +209,9 @@ program test_krome_eqbm
         end do
         n(krome_idx_Tgas) = Tgas
 
-        kkk(1:krome_nmols) = krome_conserve(n(1:krome_nmols),ni(1:krome_nmols))
-        n(:) = kkk(:)
-        n(krome_idx_Tgas) = Tgas
+        !kkk(1:krome_nmols) = krome_conserve(n(1:krome_nmols),ni(1:krome_nmols))
+        !n(:) = kkk(:)
+        !n(krome_idx_Tgas) = Tgas
         
         !Convergence test on temperature; also explored with including relative change in abundances, but did not make difference
         converged = abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .le. ertol &
@@ -233,8 +235,6 @@ program test_krome_eqbm
       end do
 
       !dump cooling rates for Tgas going into the calculation
-      n(1:krome_nmols) = x(:)
-      n(KROME_idx_Tgas) = Tgas
       cools(:) = get_cooling_array(n(:),Tgas)
       write(31,'(99E14.5e3)') ntot, Tgas, sum(cools), cools(:)
       kk(:) = krome_get_coef(Tgas,x(:))
@@ -255,16 +255,14 @@ program test_krome_eqbm
 
       if (stop_next) exit
 
-      !increase density by 2x for the next bin
-      ntot = ntot * 1.1
+      !increase density by 1.25x for the next bin
+      ntot = ntot * 1.25
       !break when max density reached
       if (ntot .gt. 1.e6) then
         ntot = 1.e6
         stop_next = .true.
       endif
     end do
-
-    !write(22, *)
 
     !Close files
     close(22)
