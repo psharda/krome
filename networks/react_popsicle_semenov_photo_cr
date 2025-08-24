@@ -405,7 +405,6 @@
 #Reactions from react_flash_metals network
 #Additional Deuterium rates from GP98, SLD98
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-125,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
 #Glover 2010
 126,OH+,E,O,H,NONE,NONE,6.3d-9*T32**(-.48)
 127,CO+,E,C,O,NONE,NONE,2.75d-7*T32**(-.55)
