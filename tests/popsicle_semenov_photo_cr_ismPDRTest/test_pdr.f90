@@ -240,10 +240,8 @@ program test_krome_eqbm
           n(ii) = max(x(ii),0d0)
         end do
         Hnuclei = get_Hnuclei(n(:))
-        !print *, 'before: ', Hnuclei
         n(1:krome_nmols) = n(1:krome_nmols) * Hnuclei_i/Hnuclei
         Hnuclei = get_Hnuclei(n(:))
-        !print *, 'after: ', Hnuclei
         n(krome_idx_Tgas) = Tgas
 
         ! check if we have converged by comparing the error in any species with an relative abundance above eatol
