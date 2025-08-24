@@ -140,55 +140,55 @@
 @format:idx,R,R,R,P,P,P,P,Tmin,Tmax,rate
 #Galli&Palla 2002 from Gerlich 1982 
 #Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield a negative rate at very high Tgas
-31,H2,D+,,HD,H+,,,NONE,.LE.4305266.3906,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
+33,H2,D+,,HD,H+,,,NONE,.LE.4305266.3906,1.d-9*(0.417+0.846*log10(Tgas)-0.137*(log10(Tgas))**2)
 
 #Galli & Palla 2002, from Garlich 1982 with modification by Gay et al. 2011
-32,HD,H+,,H2,D+,,,NONE,NONE,1.0d-9 *exp(-4.57d2*invT)
+34,HD,H+,,H2,D+,,,NONE,NONE,1.0d-9 *exp(-4.57d2*invT)
 
 #Glover et al. 2009, from data by Mielke et al. 2003; updated by Piyush Sharda in 2020 to ensure continuity in reaction coefficients (without which FLASH simulation could crash)
-33,H2,D,,HD,H,,,NONE,.LE.1.167479642374226d3,10**(-56.4737+5.88886*log10(Tgas)+7.19692*(log10(Tgas))**2+2.25069*(log10(Tgas))**3-2.16903*(log10(Tgas))**4+0.317887*(log10(Tgas))**5)
-34,H2,D,,HD,H,,,.GT.1.167479642374226d3,NONE,3.17d-10*exp(-5207.*invT)
+35,H2,D,,HD,H,,,NONE,.LE.1.167479642374226d3,10**(-56.4737+5.88886*log10(Tgas)+7.19692*(log10(Tgas))**2+2.25069*(log10(Tgas))**3-2.16903*(log10(Tgas))**4+0.317887*(log10(Tgas))**5)
+36,H2,D,,HD,H,,,.GT.1.167479642374226d3,NONE,3.17d-10*exp(-5207.*invT)
 
 #Glover & Jappsen 2007
 #Modified by Piyush Sharda to extend to all Tgas, and make the next reaction zero
 #since the rate coefficient at Tgas > 2d2 here is the same as the reaction below
 #and this modificiation ensures no discontinuities are present
-35,HD,H,,H2,D,,,NONE,NONE,5.25d-11*exp(-4430.*invT)
+37,HD,H,,H2,D,,,NONE,NONE,5.25d-11*exp(-4430.*invT)
 
-36,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)
+38,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)
 
 #Rate from Glover and Jappsen 2007 (update from GP2002 and Wolf Savin 2001 for Tgas > 2d5)
-37,H+,D,,H,D+,,,NONE,.LE.2d5,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
-38,H+,D,,H,D+,,,.GT.2d5,NONE,3.44d-10*Tgas**(0.350d0)
+39,H+,D,,H,D+,,,NONE,.LE.2d5,2.00d-10*Tgas**(0.402d0)*exp(-37.1d0*invT)-3.31d-17*Tgas**(1.48d0)
+40,H+,D,,H,D+,,,.GT.2d5,NONE,3.44d-10*Tgas**(0.350d0)
 
 #Galli & Palla 2002 from Wolf Savin 2002
-39,H,D+,,H+,D,,,NONE,.LE.2d5,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
+41,H,D+,,H+,D,,,NONE,.LE.2d5,2.06d-10*Tgas**(0.396)*exp(-33.d0*invT)+2.03d-9*Tgas**(-0.332)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #ADDITIONAL DEUTERIUM RATES FROM GP98, SLD98
-40,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
+42,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
 
-41,H,D,HD,,NONE,NONE,1.0d-25
+43,H,D,HD,,NONE,NONE,1.0d-25
 
-42,HD+,H,HD,H+,NONE,NONE,6.4d-10
+44,HD+,H,HD,H+,NONE,NONE,6.4d-10
 
-43,H+,D,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
+45,H+,D,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
 
-44,H,D+,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
+46,H,D+,HD+,,NONE,NONE,10.d0**(-19.38-1.523*log10(Tgas)+1.118*(log10(Tgas))**2.d0-0.1269*(log10(Tgas))**3.d0)
 
-45,HD+,E,H,D,NONE,NONE,7.2d-8*invsqrT
+47,HD+,E,H,D,NONE,NONE,7.2d-8*invsqrT
 
-46,D,E,D-,,NONE,NONE,3d-16*(Tgas/300)**(0.95d0)*exp(-Tgas/9.320d3)
+48,D,E,D-,,NONE,NONE,3d-16*(Tgas/300)**(0.95d0)*exp(-Tgas/9.320d3)
 
-47,D+,D-,D,D,NONE,NONE,5.7d-8*(Tgas/300)**(-0.5d0)
+49,D+,D-,D,D,NONE,NONE,5.7d-8*(Tgas/300)**(-0.5d0)
 
-48,D-,H+,D,H,NONE,NONE,4.6d-8*(Tgas/300)**(-0.5d0)
+50,D-,H+,D,H,NONE,NONE,4.6d-8*(Tgas/300)**(-0.5d0)
 
-49,H-,D,D-,H,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
+51,H-,D,D-,H,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
 
-50,D-,H,H-,D,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
+52,D-,H,H-,D,NONE,NONE,6.4d-9*(Tgas/300)**(0.41d0)
 
-51,D-,H,HD,E,NONE,NONE,1.5d-9*(Tgas/300)**(-0.1d0)
+53,D-,H,HD,E,NONE,NONE,1.5d-9*(Tgas/300)**(-0.1d0)
 
 ########################################## END DEUTERIUM CHEMISTRY ###################################################################
 
@@ -200,101 +200,101 @@
 @format:idx,R,R,P,P,rate
 #From Glover and Jappsen 2007
 #O2005 use an older rate coefficient
-52,O+,H,H+,O,4.99d-11*Tgas**(0.405d0) + 7.5d-10*Tgas**(-0.458d0)
-53,H+,O,O+,H,(1.1d-11*Tgas**(0.517d0) + 4d-10*Tgas**(0.00669d0))*exp(-2.27d2*invT)
+54,O+,H,H+,O,4.99d-11*Tgas**(0.405d0) + 7.5d-10*Tgas**(-0.458d0)
+55,H+,O,O+,H,(1.1d-11*Tgas**(0.517d0) + 4d-10*Tgas**(0.00669d0))*exp(-2.27d2*invT)
 
 #KIDA (rate from UMIST 2025)
-54,O+,H2,H,OH+,1.35d-9
+56,O+,H2,H,OH+,1.35d-9
 
 
 #Glover+2010 (rate from Tran+2018 used in UMIST 2025)
-55,OH+,H2,H2O+,H,1.27d-9*(T32**(0.18d0))
+57,OH+,H2,H2O+,H,1.27d-9*(T32**(0.18d0))
 #O2005 use an older rate coefficient
-56,H2O+,H2,H3O+,H,6.4d-10
+58,H2O+,H2,H3O+,H,6.4d-10
 #O2005 use an older rate coefficient
-57,H2O+,E,O,H2,3.9d-8*T32**(-.5)
+59,H2O+,E,O,H2,3.9d-8*T32**(-.5)
 #O2005 use an older rate coefficient
-58,H2O+,E,OH,H,8.6d-8*T32**(-.5)
+60,H2O+,E,OH,H,8.6d-8*T32**(-.5)
 @format:idx,R,R,P,P,P,rate
 #Third destruction channel of H2O+ recombination via E produces H and O (rate from UMIST 2025)
-59,H2O+,E,H,H,O,3.05d-7*T32**(-.5)
+61,H2O+,E,H,H,O,3.05d-7*T32**(-.5)
 
 #O2005 use an older rate coefficient
-59,H3O+,E,OH,H,H,2.58d-7*T32**(-.5)
+62,H3O+,E,OH,H,H,2.58d-7*T32**(-.5)
 
 @format:idx,R,R,P,P,rate
 #O2005 use an older rate coefficient
-60,H3O+,E,H,H2O,1.08d-7*T32**(-.5)
+63,H3O+,E,H,H2O,1.08d-7*T32**(-.5)
 
-61,O,H,OH,,9.9d-19*T32**(-.38)
+64,O,H,OH,,9.9d-19*T32**(-.38)
 
 #KIDA (lower recomanded value)
 #O2005 use an older rate coefficient
-62,O,H2,OH,H,1.46d-12*exp(-9650.*invT)
+65,O,H2,OH,H,1.46d-12*exp(-9650.*invT)
 
 #from Baluch+2005
 #O2005 use an older rate coefficient
-63,H2,OH,H2O,H,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
+66,H2,OH,H2O,H,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
 
-64,OH,OH,H2O,O,1.65d-12*(T32)**1.14*exp(-5d1*invT)
+67,OH,OH,H2O,O,1.65d-12*(T32)**1.14*exp(-5d1*invT)
 
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #KIDA, constant below 10K
 #O2005 use an older rate coefficient. Piyush Sharda slightly updated the coefficient to ensure continuity
-65,OH,H+,OH+,H,NONE,1d1,3.745115968487299d-8
-66,OH,H+,OH+,H,1d1,NONE,2.5d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+68,OH,H+,OH+,H,NONE,1d1,3.745115968487299d-8
+69,OH,H+,OH+,H,1d1,NONE,2.5d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 #O2005 use an older rate coefficient. Piyush Sharda slightly updated the coefficient to ensure continuity
-67,H2O,H+,H,H2O+,NONE,1d1,4.202460222554285d-8
-68,H2O,H+,H,H2O+,1d1,NONE,2.85d-9*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
+70,H2O,H+,H,H2O+,NONE,1d1,4.202460222554285d-8
+71,H2O,H+,H,H2O+,1d1,NONE,2.85d-9*(0.62d0 + 2.578947d0*(3d2*invT)**.5)
 
 #Glover+2010
 #O2005 use an older rate coefficient
 #reaction 31 from Hunter+2023, added because it becomes important over reaction 31 of Hunter+2023 at Tgas > 5e2; rate from UMIST12
-69,OH,H,O,H2,NONE,NONE,6.99d-14*((Tgas/300)**(2.80d0))*exp(-1950d0/Tgas)
+72,OH,H,O,H2,NONE,NONE,6.99d-14*((Tgas/300)**(2.80d0))*exp(-1950d0/Tgas)
 
 #Glover+2010
 #O2005 use an older rate coefficient
-71,H2O,H,H2,OH,NONE,NONE,1.59d-11*(T32)*1.2*exp(-9610.*invT)
+73,H2O,H,H2,OH,NONE,NONE,1.59d-11*(T32)*1.2*exp(-9610.*invT)
 
-72,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
+74,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
 
 #O2005 (but rate updated from Wakelam+2012 as in UMIST 2025)
-74,O,OH,H,O2,NONE,NONE,3.69d-11*(T32**(-0.27d0))*exp(-12.90d0*invT)
+75,O,OH,H,O2,NONE,NONE,3.69d-11*(T32**(-0.27d0))*exp(-12.90d0*invT)
 
 #Glover+2010
 #O2005 use an older rate coefficient
-75,O2,H,OH,O,NONE,NONE,2.61d-10*1.2*exp(-8156.*invT)
+76,O2,H,OH,O,NONE,NONE,2.61d-10*1.2*exp(-8156.*invT)
 
-76,O2,H+,O2+,H,NONE,NONE,2d-9
-77,O2+,E,O,O,NONE,NONE,1.95d-7*T32**(-.7)
+77,O2,H+,O2+,H,NONE,NONE,2d-9
+78,O2+,E,O,O,NONE,NONE,1.95d-7*T32**(-.7)
 
 #O2005 (but rate from UMIST 2025)
-78,CH,O,CO,H,NONE,NONE,6.02d-11*(T32**0.1d0)*exp(4.50d0*invT)
+79,CH,O,CO,H,NONE,NONE,6.02d-11*(T32**0.1d0)*exp(4.50d0*invT)
 #CO formation via CH2 in a similar way (UMIST 2025)
-79,CH2,O,CO,H2,290d0,NONE,2.04d-10*exp(-270d0*invT)
+80,CH2,O,CO,H2,290d0,NONE,2.04d-10*exp(-270d0*invT)
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
-79,CH2,O,CO,H,H,290d0,NONE,3.40d-10*exp(-270d0*invT)
+81,CH2,O,CO,H,H,290d0,NONE,3.40d-10*exp(-270d0*invT)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #KIDA, recommended, below 10K constant
 #O2005 use an older rate coefficient. Piyush Sharda slightly updated the coefficient to ensure continuity
-79,C,OH,H,CO,NONE,1d1,7.050765049525827d-11
-80,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(.108d0*invT)
+82,C,OH,H,CO,NONE,1d1,7.050765049525827d-11
+83,C,OH,H,CO,1d1,NONE,2.25d-11*(T32)**(-.339)*exp(.108d0*invT)
 
 
 #Glover+2010 (limit 1052. for continuity)
 #O2005 use an older rate coefficient
-81,O2,C,CO,O,NONE,1052d0,4.7d-11*T32**(-.34)
-82,O2,C,CO,O,1052d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
+84,O2,C,CO,O,NONE,1052d0,4.7d-11*T32**(-.34)
+85,O2,C,CO,O,1052d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
 
 #KIDA
 #O2005 use an older rate coefficient
-83,O2,C+,CO,O+,NONE,NONE,4.53d-10
+86,O2,C+,CO,O+,NONE,NONE,4.53d-10
 
 #Using new UMIST24 rate that scales exponentially with Tgas; the older, constant rate would overproduce CO2 in PDR tests
 #New rate from Frost et al. 1993
-84,OH,CO,CO2,H,NONE,NONE,2.81d-13*exp(-176d0*invT)
+87,OH,CO,CO2,H,NONE,NONE,2.81d-13*exp(-176d0*invT)
 
 @format:idx,R,R,P,Tmin,Tmax,rate
 #Original rates from Badnell+2003,2006. GOW only include the first three terms for the dielectronic recombination (DR), but we include all the five terms like Hunter+2023
@@ -309,77 +309,77 @@
 @var:kdr4 = 8.369d-4*exp(-1.207d5/Tgas)
 @var:kdr5 = 3.355d-4*exp(-2.144d5/Tgas)
 @var:kdr = (Tgas**(-1.5d0))*(kdr1+kdr2+kdr3+kdr4+kdr5)
-85,C+,E,C,NONE,NONE,krr+kdr
+88,C+,E,C,NONE,NONE,krr+kdr
 
 #KIDA, below 10K constant
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #O2005 use an older rate coefficient. Piyush Sharda slightly updated the coefficient to ensure continuity
-86,OH,C+,H,CO+,NONE,1d1,1.3707124444663514d-8
-87,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+89,OH,C+,H,CO+,NONE,1d1,1.3707124444663514d-8
+90,OH,C+,H,CO+,1d1,NONE,9.15d-10*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 
-88,CO+,H,CO,H+,NONE,NONE,7.5d-10
-89,C,H,CH,,NONE,NONE,1d-17
-90,C,H2,CH,H,NONE,NONE,6.64d-10*exp(-11700d0*invT)
-
-#O2005 use an older rate coefficient
-91,CH,H,C,H2,NONE,NONE,1.31d-10*exp(-8d1*invT)
+91,CO+,H,CO,H+,NONE,NONE,7.5d-10
+92,C,H,CH,,NONE,NONE,1d-17
+93,C,H2,CH,H,NONE,NONE,6.64d-10*exp(-11700d0*invT)
 
 #O2005 use an older rate coefficient
-92,CH,H2,CH2,H,NONE,NONE,5.46d-10*exp(-1943d0*invT)
+94,CH,H,C,H2,NONE,NONE,1.31d-10*exp(-8d1*invT)
+
+#O2005 use an older rate coefficient
+95,CH,H2,CH2,H,NONE,NONE,5.46d-10*exp(-1943d0*invT)
 
 #KIDA
 #O2005 use an older rate coefficient
-93,CH2,H,CH,H2,NONE,NONE,2.2d-10
+96,CH2,H,CH,H2,NONE,NONE,2.2d-10
 
-94,CH2,H2,CH3,H,NONE,NONE,5.18d-11*(T32**0.17)*exp(-6400d0*invT)
-95,CH3,H,CH2,H2,NONE,NONE,1d-10*exp(-7600d0*invT)
+97,CH2,H2,CH3,H,NONE,NONE,5.18d-11*(T32**0.17)*exp(-6400d0*invT)
+98,CH3,H,CH2,H2,NONE,NONE,1d-10*exp(-7600d0*invT)
 #Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
-96,CH3,H2,CH4,H,NONE,.LE.19117091.8228,6.86d-14*(T32**2.74)*exp(-4740d0*invT)
+99,CH3,H2,CH4,H,NONE,.LE.19117091.8228,6.86d-14*(T32**2.74)*exp(-4740d0*invT)
 #Upper limit introduced by Piyush Sharda in 2024 to ensure this reaction does not yield unphysically high rate at very high Tgas
-97,CH4,H,CH3,H2,NONE,.LE.3594538.7216,5.82d-13*(T32**3.00)*exp(-4045d0*invT)
-98,C,H2,CH2,,NONE,NONE,1d-17
+100,CH4,H,CH3,H2,NONE,.LE.3594538.7216,5.82d-13*(T32**3.00)*exp(-4045d0*invT)
+101,C,H2,CH2,,NONE,NONE,1d-17
 
 @format:idx,R,R,P,P,P,rate
 #reaction 8 in table A1 in GOW; rate modified to include temperature dependence as in Hunter+2023, from Petuchowski+1989, equation 11.
-99,He+,CO,C+,O,He,1.4d-9*T32**(-0.5d0)
+102,He+,CO,C+,O,He,1.4d-9*T32**(-0.5d0)
 #reaction 28 from Hunter+2023, added to ensure appropriate loss route exists for CH at high Tgas; taken from UMIST24 database
-100,CH,He+,C+,He,H,1.1d-9*(Tgas/300)**(-0.5d0)
+103,CH,He+,C+,He,H,1.1d-9*(Tgas/300)**(-0.5d0)
 #reaction 29 of table A1 of GOW (UMIST rate is factor of few lower, so we use GOW's rate)
-101,He+,OH,O+,He,H,1.35d-9*(0.62 + 45.41*Tgas**(-0.5d0))
+104,He+,OH,O+,He,H,1.35d-9*(0.62 + 45.41*Tgas**(-0.5d0))
 
 #H2 reactions with C+ from table A1 of GOW (reactions 9 and 10)
-101,C+,H2,CH2+,,,2.31d-13*(Tgas**(-1.3d0))*exp(-23d0*invT)
+105,C+,H2,CH2+,,,2.31d-13*(Tgas**(-1.3d0))*exp(-23d0*invT)
 @format:idx,R,R,R,P,P,P,rate
-#pseudo-reaction that takes C+ recombination via multiple pathways into account
-101,C+,H2,E,C,H,H,0.99d-13*(Tgas**(-1.3d0))*exp(-23d0*invT)
+#pseudo-reaction representing a two-body reaction followed by C+ recombination
+106,C+,H2,E,C,H,H,0.99d-13*(Tgas**(-1.3d0))*exp(-23d0*invT)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #added as recommended by Hunter+2023 for high Tgas; taken from UMIST24
-101,CO,H,C,OH,NONE,NONE,1.1d-10*(T32)**(0.5d0)*exp(-77700d0*invT)
+107,CO,H,C,OH,NONE,NONE,1.1d-10*(T32)**(0.5d0)*exp(-77700d0*invT)
 
 #--------------------------------
 #HCO+ reactions
 #TODO: they do not seem to be warranted (GOW include them), so have switched them off
 @format:idx,R,R,R,P,P,P,rate
 #reaction 18 in table A1 in GOW; branching ratio of reaction 18 and 222 is 0.92:0.08; taken from Geppert et al. 2005 table 3: https://iopscience.iop.org/article/
-20,HCO+,E,,CO,H,,1.06d-5*(Tgas**(-0.64d0))*9.2d-1
+108,HCO+,E,,CO,H,,1.06d-5*(Tgas**(-0.64d0))*9.2d-1
 #added as recommended by Hunter+2023, branching ratio of reaction 18 and 222 is 0.92:0.08; taken from Geppert et al. 2005 table 3: https://iopscience.iop.org/article/10.1088/1742-6596/4/1/004/pdf
-21,HCO+,E,,OH,C,,1.06d-5*(Tgas**(-0.64d0))*8d-2
+109,HCO+,E,,OH,C,,1.06d-5*(Tgas**(-0.64d0))*8d-2
 #reaction 6 in table A1 in GOW (rate from UMIST 2025)
-22,H3+,CO,,HCO+,H2,,1.36d-9*(T32**-(0.14d0))*exp(3.4d0*invT)
+110,H3+,CO,,HCO+,H2,,1.36d-9*(T32**-(0.14d0))*exp(3.4d0*invT)
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #following reaction + reactions of C+ with OH represent reaction 11 of table A1 of GOW (rate from UMIST 2025)
-27,H2,CO+,HCO+,H,NONE,NONE,7.5d-10
+111,H2,CO+,HCO+,H,NONE,NONE,7.5d-10
 
 
 #-----------------------------------------------------------------------------------------------------------------
 #Reactions added below on top of above network to ensure CO2 is not just a sink
 #Reactions from Omukai 2000, ApJ
 @format:idx,R,R,P,P,rate
-102,H,CO2,OH,CO,2.54d-10*exp(-13300d0*invT)
-103,O,CO2,CO,O2,2.80d-11*exp(-26500d0*invT)
-104,H2,CO2,H2O,CO,2.94d-14*(T32**0.5d0)*exp(-7550d0*invT)
-105,CO,O2,CO2,O,4.20d-12*exp(-24000d0*invT)
+112,H,CO2,OH,CO,2.54d-10*exp(-13300d0*invT)
+113,O,CO2,CO,O2,2.80d-11*exp(-26500d0*invT)
+114,H2,CO2,H2O,CO,2.94d-14*(T32**0.5d0)*exp(-7550d0*invT)
+115,CO,O2,CO2,O,4.20d-12*exp(-24000d0*invT)
 
 #Reactions added below on top of above network to ensure C+ is not just a source
 #Reactions from react_flash_metals network
@@ -387,63 +387,63 @@
 @var:u3 = 13.6*invTe
 @format:idx,R,R,P,P,P,rate
 #next two reactions below from Voronov 1997: https://www.sciencedirect.com/science/article/pii/S0092640X97907324?via%3Dihub
-106,C,E,C+,E,E,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
-107,O,E,O+,E,E,3.59d-8*u3**0.34*exp(-u3)/(0.073d0+u3)
+116,C,E,C+,E,E,6.85d-8*u1**0.25*exp(-u1)/(0.193d0+u1)
+117,O,E,O+,E,E,3.59d-8*u3**0.34*exp(-u3)/(0.073d0+u3)
 @format:idx,R,R,P,P,rate
-108,C,H+,C+,H,3.9d-16*Tgas**(0.213)
-109,C+,H,C,H+,6.08d-14*(Tgas*1d-4)**(1.96)*exp(-1.7d5*invT)
-110,O2,C+,CO+,O,3.42d-10
+118,C,H+,C+,H,3.9d-16*Tgas**(0.213)
+119,C+,H,C,H+,6.08d-14*(Tgas*1d-4)**(1.96)*exp(-1.7d5*invT)
+120,O2,C+,CO+,O,3.42d-10
 #Glover+2010, KIDA additional channel
-111,C,O2+,O,CO+,5.2d-11
-112,C,O2+,O2,C+,5.2d-11
+121,C,O2+,O,CO+,5.2d-11
+122,C,O2+,O2,C+,5.2d-11
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-113,C+,O,CO+,,NONE,3d2,2.5d-18
-114,C+,O,CO+,,3d2,NONE,3.14d-18*T32**(-.15)*exp(-68d0*invT)
+123,C+,O,CO+,,NONE,3d2,2.5d-18
+124,C+,O,CO+,,3d2,NONE,3.14d-18*T32**(-.15)*exp(-68d0*invT)
 
 
 #Reactions added below on top of above network to ensure D+, O+, CH+, CH2+, OH+ and CO+ recombine with electrons
 #Reactions from react_flash_metals network
 #Additional Deuterium rates from GP98, SLD98
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-115,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
+125,D+,E,D,,NONE,NONE,3.6d-12*(Tgas/300)**(-0.75d0)
 #Glover 2010
-116,OH+,E,O,H,NONE,NONE,6.3d-9*T32**(-.48)
-117,CO+,E,C,O,NONE,NONE,2.75d-7*T32**(-.55)
+126,OH+,E,O,H,NONE,NONE,6.3d-9*T32**(-.48)
+127,CO+,E,C,O,NONE,NONE,2.75d-7*T32**(-.55)
 #Glover and Jappsen 2007
 @format:idx,R,R,P,Tmin,Tmax,rate
-118,O+,E,O,NONE,.LE.4d2,1.30d-10*(Tgas)**(-0.64)
-119,O+,E,O,>4d2,NONE,1.41d-10*(Tgas)**(-0.66) + 7.4d-4*(Tgas)**(-1.5)*exp(-1.75d5*invT)*(1d0 + 0.062d0*exp(-1.45d5*invT))
+128,O+,E,O,NONE,.LE.4d2,1.30d-10*(Tgas)**(-0.64)
+129,O+,E,O,>4d2,NONE,1.41d-10*(Tgas)**(-0.66) + 7.4d-4*(Tgas)**(-1.5)*exp(-1.75d5*invT)*(1d0 + 0.062d0*exp(-1.45d5*invT))
 #Glover et al. 2010
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-120,CH+,E,C,H,NONE,NONE,7d-8*T32**(-.5)
-121,CH2+,E,CH,H,NONE,NONE,1.6d-7*T32**(-.6)
-122,CH2+,E,C,H2,NONE,NONE,7.68d-8*T32**(-.6)
+130,CH+,E,C,H,NONE,NONE,7d-8*T32**(-.5)
+131,CH2+,E,CH,H,NONE,NONE,1.6d-7*T32**(-.6)
+132,CH2+,E,C,H2,NONE,NONE,7.68d-8*T32**(-.6)
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
-123,CH2+,E,C,H,H,NONE,NONE,4.03d-7*T32**(-.6)
+133,CH2+,E,C,H,H,NONE,NONE,4.03d-7*T32**(-.6)
 
 
 #Reactions added below on top of above network to ensure H3+ is not just a sink
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #Glover+2010
-124,H2+,H2,H3+,H,NONE,NONE,2.24d-9*T32**.042*exp(-Tgas/46600.)
-125,H3+,H,H2+,H2,NONE,NONE,7.7d-9*exp(-17560d0*invT)
-126,C,H2+,CH+,H,NONE,NONE,2.4d-9
+134,H2+,H2,H3+,H,NONE,NONE,2.24d-9*T32**.042*exp(-Tgas/46600.)
+135,H3+,H,H2+,H2,NONE,NONE,7.7d-9*exp(-17560d0*invT)
+136,C,H2+,CH+,H,NONE,NONE,2.4d-9
 #Vissapragada+2016, used in GOW table A1 reaction 1
-127,C,H3+,CH+,H2,NONE,NONE,6.93d-10*(T32**(8.34d-2)) + (Tgas**(-1.5d0))*((-7.24d-9)*exp(-8.01d0/Tgas) + (-9.07d-10)*exp(-1.92d0/Tgas) + (7.48d-8)*exp(-4.19d1/Tgas) + (9.93d-5)*exp(-8.08d3/Tgas))
-128,C,H3+,CH2+,H,NONE,NONE,3.35d-10*(T32**(-1.89d-1)) + (Tgas**(-1.5d0))*((2.73d-8)*exp(-6.49d0/Tgas) + (5.58d-9)*exp(-1.30d0/Tgas) + (7.46d-8)*exp(-1.90d1/Tgas) + (-1.92d-4)*exp(-1.62d4/Tgas))
+137,C,H3+,CH+,H2,NONE,NONE,6.93d-10*(T32**(8.34d-2)) + (Tgas**(-1.5d0))*((-7.24d-9)*exp(-8.01d0/Tgas) + (-9.07d-10)*exp(-1.92d0/Tgas) + (7.48d-8)*exp(-4.19d1/Tgas) + (9.93d-5)*exp(-8.08d3/Tgas))
+138,C,H3+,CH2+,H,NONE,NONE,3.35d-10*(T32**(-1.89d-1)) + (Tgas**(-1.5d0))*((2.73d-8)*exp(-6.49d0/Tgas) + (5.58d-9)*exp(-1.30d0/Tgas) + (7.46d-8)*exp(-1.90d1/Tgas) + (-1.92d-4)*exp(-1.62d4/Tgas))
 
 
 
 #KIDA and additional channel both recomended
-129,O,H3+,H2,OH+,NONE,NONE,7.98d-10*T32**(-.156)*exp(-1.41d0*invT)
-130,O,H3+,H,H2O+,NONE,NONE,3.42d-10*T32**(-.156)*exp(-1.41d0*invT)
+139,O,H3+,H2,OH+,NONE,NONE,7.98d-10*T32**(-.156)*exp(-1.41d0*invT)
+140,O,H3+,H,H2O+,NONE,NONE,3.42d-10*T32**(-.156)*exp(-1.41d0*invT)
 #KIDA, below 10K constant. Piyush Sharda slightly updated the coefficient to ensure continuity
-131,OH,H3+,H2,H2O+,NONE,1d1,2.2770305088402777d-8
-132,OH,H3+,H2,H2O+,1d1,NONE,1.52d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
+141,OH,H3+,H2,H2O+,NONE,1d1,2.2770305088402777d-8
+142,OH,H3+,H2,H2O+,1d1,NONE,1.52d-9*(0.62d0 + 2.62185d0*(3d2*invT)**.5)
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-133,H3+,E,H2,H,NONE,NONE,2.34d-8*T32**(-.52)
+143,H3+,E,H2,H,NONE,NONE,2.34d-8*T32**(-.52)
 @format:idx,R,R,P,P,P,Tmin,Tmax,rate
-134,H3+,E,H,H,H,NONE,NONE,4.36d-8*T32**(-.52)
+144,H3+,E,H,H,H,NONE,NONE,4.36d-8*T32**(-.52)
 
 ########################################## END GAS METAL CHEMISTRY ###################################################################
 
@@ -461,51 +461,51 @@
 @format:idx,R,P,P,rate
 #integrated with J21*13.6/E flux, up to 200eV
 #TODO: reaction below to be removed when krome coupled with vettam
-135,H,H+,E,user_ionH
+145,H,H+,E,user_ionH
 #TODO: reaction below to be removed when krome coupled with vettam
 #TODO: reaction below to be removed when krome coupled with vettam
-136,H2,H,H,user_dissH2
+146,H2,H,H,user_dissH2
 
 #Glover et al. 2010
 #TODO: GOW 2017 scale the reaction coefficients by \chi_FUV: FUV radiation field strength between 6-13.6 eV (see their Table 2). 
 #^This is similar to what we have TODO for photodustnetWD
-137,H-,H,E,7.1d-7*exp(-.5*user_Av)*chiFUV
+147,H-,H,E,7.1d-7*exp(-.5*user_Av)*chiFUV
 #TODO: reaction below to be removed when krome coupled with vettam
-138,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)*chiFUV
-139,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)*chiFUV
-140,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)*chiFUV
+148,H2+,H,H+,1.1d-9*exp(-1.9*user_Av)*chiFUV
+149,H3+,H2,H+,4.9d-13*exp(-1.8*user_Av)*chiFUV
+150,H3+,H2+,H,4.9d-13*exp(-2.3*user_Av)*chiFUV
 #TODO: reaction below to be removed when krome coupled with vettam
-141,C,C+,E,user_ionC
+151,C,C+,E,user_ionC
 #TODO: reaction below commented out to not create sources. May add it back in the future
 #122,C-,C,E,2.4d-7*exp(-.9*user_Av)*user_is_metal*chiFUV
-142,CH,C,H,8.7d-10*exp(-1.2*user_Av)*user_is_metal*chiFUV
-143,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)*user_is_metal*chiFUV
-144,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)*user_is_metal*chiFUV
-145,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
-146,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)*user_is_metal*chiFUV
-147,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
+152,CH,C,H,8.7d-10*exp(-1.2*user_Av)*user_is_metal*chiFUV
+153,CH,CH+,E,7.7d-10*exp(-2.8*user_Av)*user_is_metal*chiFUV
+154,CH+,C,H+,2.6d-10*exp(-2.5*user_Av)*user_is_metal*chiFUV
+155,CH2,CH,H,7.1d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
+156,CH2,CH2+,E,5.9d-10*exp(-2.3*user_Av)*user_is_metal*chiFUV
+157,CH2+,CH+,H,4.6d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
 #TODO: next 4 reactions below commented out to not create sources. May add them back in the future
 #131,CH3+,CH2+,H,1d-9*exp(-1.7*user_Av)*user_is_metal*chiFUV
 #132,CH3+,CH+,H2,1d-9*exp(-1.7*user_Av)*user_is_metal*chiFUV
 #133,C2,C,C,1.5d-10*exp(-2.1*user_Av)*user_is_metal*chiFUV
 #134,O-,O,E,2.4d-7*exp(-.5*user_Av)*user_is_metal*chiFUV
-148,OH,O,H,3.7d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
-149,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)*user_is_metal*chiFUV
-150,OH+,O,H+,1d-12*exp(-1.8*user_Av)*user_is_metal*chiFUV
-151,H2O,OH,H,6d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
-152,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)*user_is_metal*chiFUV
-153,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)*user_is_metal*chiFUV
-154,O2,O,O,7d-10*exp(-1.8*user_Av)*user_is_metal*chiFUV
+158,OH,O,H,3.7d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
+159,OH,OH+,E,1.6d-12*exp(-3.1*user_Av)*user_is_metal*chiFUV
+160,OH+,O,H+,1d-12*exp(-1.8*user_Av)*user_is_metal*chiFUV
+161,H2O,OH,H,6d-10*exp(-1.7*user_Av)*user_is_metal*chiFUV
+162,H2O,H2O+,E,3.2d-11*exp(-3.9*user_Av)*user_is_metal*chiFUV
+163,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)*user_is_metal*chiFUV
+164,O2,O,O,7d-10*exp(-1.8*user_Av)*user_is_metal*chiFUV
 #TODO: reaction below to be removed when krome coupled with vettam
-155,CO,C,O,user_dissCO
+165,CO,C,O,user_dissCO
 
 #H2O+ photodissociation, following Glover et al. 2010 equation 4
 @noTab_start
 @var: HnOj = fHnOj(user_Av)
-156,H2O+,H2+,O,5.d-11*HnOj*user_is_metal*chiFUV
-157,H2O+,H+,OH,5.d-11*HnOj*user_is_metal*chiFUV
-158,H2O+,O+,H2,5.d-11*HnOj*user_is_metal*chiFUV
-159,H2O+,OH+,H,1.5d-10*HnOj*user_is_metal*chiFUV
+166,H2O+,H2+,O,5.d-11*HnOj*user_is_metal*chiFUV
+167,H2O+,H+,OH,5.d-11*HnOj*user_is_metal*chiFUV
+168,H2O+,O+,H2,5.d-11*HnOj*user_is_metal*chiFUV
+169,H2O+,OH+,H,1.5d-10*HnOj*user_is_metal*chiFUV
 @noTab_end
 
 
@@ -515,10 +515,10 @@
 @var:Hnuclei=get_Hnuclei(n(:))
 @noTab_start
 @format:idx,R,R,P,rate
-160,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
-161,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
-162,O+,E,O,O_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
-163,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
+170,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
+171,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
+172,O+,E,O,O_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
+173,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 @noTab_stop
 
 ########################################## END PHOTO CHEMISTRY ###################################################################
@@ -534,25 +534,25 @@
 #user_crate = primary+secondary cosmic ray ionization rate of H2 (reactions 122+136). CR reactions that are induced by photon released due to CR excitement of H2 molecules ('CRPHOT' in UMIST language) are scaled with xH2 as defined below. Direct CR reactions ('CRP' in UMIST language) do not have this scaling.
 #Most rate coefficients below come from Padovani et al. (2024); see Menon & Sharda 2025 for details.
 @var:xH2 = n(idx_H2)/Hnuclei
-164,H,H+,E,NONE,NONE,(5d-1 + 3.731d0*xH2)*user_crate
-165,H-,H,E,NONE,NONE,924d0*xH2*user_crate
-166,H2,H2+,E,NONE,NONE,0.976d0*user_crate
-167,H2,H,H,NONE,NONE,7d-1*user_crate
-168,H2,H+,H-,NONE,NONE,3.17d-4*user_crate
-169,He,He+,E,NONE,NONE,0.55*user_crate
-170,CO,C,O,NONE,NONE,78.175d0*xH2*user_crate*user_is_metal
-171,CO,CO+,E,NONE,NONE,11.3125d0*user_crate*user_is_metal
-172,C,C+,E,NONE,NONE,(1.92 + 236.9*xH2)*user_crate*user_is_metal
-173,O,O+,E,NONE,NONE,(2.84 + 2.4355*xH2)*user_crate*user_is_metal
-174,CH,C,H,NONE,NONE,450d0*xH2*user_crate*user_is_metal
-175,O2,O,O,NONE,NONE,310d0*xH2*user_crate*user_is_metal
-176,O2,O2+,E,NONE,NONE,28d0*xH2*user_crate*user_is_metal
-177,OH,O,H,NONE,NONE,267d0*xH2*user_crate*user_is_metal
-178,CH2,CH,H,NONE,NONE,139d0*xH2*user_crate*user_is_metal
-179,H2O,OH,H,NONE,NONE,468d0*xH2*user_crate*user_is_metal
-180,H2O,H2O+,E,NONE,NONE,21.5d0*xH2*user_crate*user_is_metal
+174,H,H+,E,NONE,NONE,(5d-1 + 3.731d0*xH2)*user_crate
+175,H-,H,E,NONE,NONE,924d0*xH2*user_crate
+176,H2,H2+,E,NONE,NONE,0.976d0*user_crate
+177,H2,H,H,NONE,NONE,7d-1*user_crate
+178,H2,H+,H-,NONE,NONE,3.17d-4*user_crate
+179,He,He+,E,NONE,NONE,0.55*user_crate
+180,CO,C,O,NONE,NONE,78.175d0*xH2*user_crate*user_is_metal
+181,CO,CO+,E,NONE,NONE,11.3125d0*user_crate*user_is_metal
+182,C,C+,E,NONE,NONE,(1.92 + 236.9*xH2)*user_crate*user_is_metal
+183,O,O+,E,NONE,NONE,(2.84 + 2.4355*xH2)*user_crate*user_is_metal
+184,CH,C,H,NONE,NONE,450d0*xH2*user_crate*user_is_metal
+185,O2,O,O,NONE,NONE,310d0*xH2*user_crate*user_is_metal
+186,O2,O2+,E,NONE,NONE,28d0*xH2*user_crate*user_is_metal
+187,OH,O,H,NONE,NONE,267d0*xH2*user_crate*user_is_metal
+188,CH2,CH,H,NONE,NONE,139d0*xH2*user_crate*user_is_metal
+189,H2O,OH,H,NONE,NONE,468d0*xH2*user_crate*user_is_metal
+190,H2O,H2O+,E,NONE,NONE,21.5d0*xH2*user_crate*user_is_metal
 @format:idx,R,P,P,P,Tmin,Tmax,rate
-181,H2,H,H+,E,NONE,NONE,0.023d0*user_crate
+191,H2,H,H+,E,NONE,NONE,0.023d0*user_crate
 #@storeOnce_stop
 @CR_stop
 
