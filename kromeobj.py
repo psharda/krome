@@ -4889,7 +4889,7 @@ class krome:
 				deltaEp_fmt = ("%e" % deltaEp).replace("e","d") #f90ish format for deltaE
 				tup = tp_data["up"]
 				tdown = tp_data["down"]
-				full_function += "nph"+str(tup)+str(tdown)+"= 1d0/(exp("+str(deltaEp_fmt)+"/phys_Tcmb) - 1d0)\n"
+				full_function += "nph"+str(tup)+str(tdown)+" = 1d0/(exp("+str(deltaEp_fmt)+"/phys_Tcmb) - 1d0)\n"
 
 			full_function += "\n"
 			full_function += "A(:,:) = 0d0\n\n" #init A matrix to zero
