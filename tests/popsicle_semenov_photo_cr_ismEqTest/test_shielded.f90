@@ -166,8 +166,6 @@ program test_krome_eqbm
       endif
       call krome_set_user_crate(crate)
 
-      !print *, 'numdens, Av, chiLW, chiPE, chiFUV, crate : ', ntot, Av, chiLW, chiPE, chiFUV, Nshield, crate
-
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Shielding done
 
@@ -238,7 +236,6 @@ program test_krome_eqbm
 
         !solve the chemistry
         call krome_equilibrium_xT(x(:),Tgas,dt)
-        !print *, 'krome after: ', sum(x(:)), Tgas, abs(ni(krome_idx_Tgas) - Tgas) / ni(krome_idx_Tgas)
 
         !avoid negative species
         do ii=1,krome_nmols
@@ -274,8 +271,6 @@ program test_krome_eqbm
       end do
 
       !dump cooling rates for Tgas going into the calculation
-      !n(1:krome_nmols) = x(:)
-      !n(KROME_idx_Tgas) = Tgas
       cools(:) = get_cooling_array(n(:),Tgas)
       write(31,'(99E14.5e3)') ntot, Tgas, sum(cools), cools(:)
       kk(:) = krome_get_coef(Tgas,x(:))
@@ -305,8 +300,6 @@ program test_krome_eqbm
         stop_next = .true.
       endif
     end do
-
-    !write(22, *)
 
     !Close files
     close(22)
