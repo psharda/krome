@@ -296,7 +296,7 @@ program test_krome_eqbm
 
       m = get_mass()
       rhogas = sum(x(:)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei
+      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei,t_tot
 
       if (stop_next) exit
 
