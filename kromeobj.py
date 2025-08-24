@@ -4891,6 +4891,7 @@ class krome:
 				tdown = tp_data["down"]
 				full_function += "nph"+str(tup)+str(tdown)+"= 1d0/(exp("+str(deltaEp_fmt)+"/phys_Tcmb) - 1d0)\n"
 
+			full_function += "\n"
 			full_function += "A(:,:) = 0d0\n\n" #init A matrix to zero
 
 			#write the initialization of first column of the A matrix
