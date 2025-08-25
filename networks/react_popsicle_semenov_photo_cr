@@ -285,6 +285,7 @@
 
 #Glover+2010 (limit 1052. for continuity)
 #O2005 use an older rate coefficient
+#Might consider updating to UMIST 2025 rate which does not have sharp kinks
 84,O2,C,CO,O,NONE,1052d0,4.7d-11*T32**(-.34)
 85,O2,C,CO,O,1052d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
 
@@ -380,6 +381,11 @@
 113,O,CO2,CO,O2,2.80d-11*exp(-26500d0*invT)
 114,H2,CO2,H2O,CO,2.94d-14*(T32**0.5d0)*exp(-7550d0*invT)
 115,CO,O2,CO2,O,4.20d-12*exp(-24000d0*invT)
+
+#might need these reactions in the future
+#@format:idx,R,R,P,P,Tmin,Tmax,rate
+#116,CH,O2,CO2,H,NONE,3d2,1.14d-11*(T32**(-0.48d0))
+#117,CH,O2,CO2,H,3d2,NONE,1.14d-11
 
 #Reactions added below on top of above network to ensure C+ is not just a source
 #Reactions from react_flash_metals network
