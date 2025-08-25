@@ -86,6 +86,7 @@ program test_krome_eqbm
     ntot = 1d-2
 
     print *, 'Redshift: ', krome_redshift
+    print *, 'ISRF : ', chi0, ' of Solar'
 
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
