@@ -62,7 +62,8 @@ program test_krome_eqbm
     !Open file
     open(unit=22,file=filename,status='replace',action='write')
     write(22, '(A)', ADVANCE='NO') "#ntot rho Tgas Tdust"
-    write(22, '(A)') trim(krome_get_names_header())
+    write(22, '(A)', ADVANCE='NO') trim(krome_get_names_header())
+    write(22, '(A)') " t_tot"
 
     filename = trim('COOL_Z') // trim(zint_str)
     filename = trim(filename)
