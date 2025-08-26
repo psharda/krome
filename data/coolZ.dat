@@ -12,13 +12,13 @@
 metal:C
 #level n: energy (K), degeneracy g
 level 0: 0.e0, 1
-level 1: 24.e0, 3
-level 2: 63.e0, 5
+level 1: 23.62e0, 3
+level 2: 62.462e0, 5
 
 #Aij (1/s)
-1 -> 0, 7.9d-8
-2 -> 1, 2.7d-7
-2 -> 0, 2.1d-14
+1 -> 0, 7.88d-8
+2 -> 1, 2.65d-7
+2 -> 0, 1.81d-14
 
 #collider, level_up, level_down, rate
 H, 1, 0, 1.6d-10*(T2)**(.14)
@@ -111,13 +111,13 @@ endmetal
 metal:O
 #level n: energy (K), degeneracy g
 level 0: 0.e0, 5
-level 1: 230.e0, 3
-level 2: 330e0, 1
+level 1: 227.712e0, 3
+level 2: 326.579e0, 1
 
 #Aij
-1 -> 0, 8.9d-5
-2 -> 0, 1.3d-10
-2 -> 1, 1.8d-5
+1 -> 0, 8.91d-5
+2 -> 0, 1.34d-10
+2 -> 1, 1.75d-5
 
 H, 1, 0, 9.2D-11*(T2)**(.67)
 H, 2, 0, 4.3D-11*(T2)**(.80)
@@ -144,10 +144,10 @@ endmetal
 metal:C+
 #level n: energy (K), degeneracy g
 level 0: 0.e0, 2
-level 1: 91.2e0, 4
+level 1: 91.21e0, 4
 
 #Aij
-1 -> 0, 2.4d-6
+1 -> 0, 2.3d-6
 
 e, 1, 0, 2.8D-7*(Tgas/1d2)**(-.5)
 

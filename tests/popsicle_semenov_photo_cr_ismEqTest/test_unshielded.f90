@@ -19,8 +19,8 @@ program test_krome_eqbm
   integer,parameter::nz=7
   integer,parameter::rstep = 500000
   integer::i,ii,ios,jscale,jz,jz2, dens_bins, zint
-  real*8::rhogas,m(krome_nspec)
-  real*8::tff,ertol,eatol,max_time,t_tot
+  real*8::rhogas,m(krome_nspec),sum_x,sum_xi
+  real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei,Hnuclei_i
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
   real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
@@ -61,7 +61,8 @@ program test_krome_eqbm
     !Open file
     open(unit=22,file=filename,status='replace',action='write')
     write(22, '(A)', ADVANCE='NO') "#ntot rho Tgas Tdust"
-    write(22, '(A)') trim(krome_get_names_header())
+    write(22, '(A)', ADVANCE='NO') trim(krome_get_names_header())
+    write(22, '(A)') " t_tot"
 
     filename = trim('COOL_Z') // trim(zint_str)
     filename = trim(filename)
@@ -83,6 +84,8 @@ program test_krome_eqbm
     krome_redshift = 0d0    !redshift
     Tgas = 3d2              !temperature, K
     ntot = 1d-2
+
+    print *, 'Redshift: ', krome_redshift
 
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
@@ -120,16 +123,20 @@ program test_krome_eqbm
       x(:) = 1d-40
 
       !set individual species
-      x(KROME_idx_H)         = ntot - 2*1d-6*ntot - 1d-4*ntot
-      x(KROME_idx_H2)        = 1d-6*ntot
-      x(KROME_idx_E)         = 1d-4*ntot
+      x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 3*2.681411d-07 + 1d-4))
+      x(KROME_idx_H2)        = 2*1d-3*ntot
+      x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 3*2.681411e-07*ntot
       x(KROME_idx_Hj)        = 1d-4*ntot
-      x(KROME_idx_HE)        = 0.0775*ntot
+      x(KROME_idx_HE)        = 0.1*ntot
       x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
       x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
       x(KROME_idx_D)         = 3d-5*ntot
+      x(KROME_idx_H3j)       = 3*2.681411e-07*ntot
 
       call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
+
+      !initial Hnuclei
+      Hnuclei_i = get_Hnuclei(x(:))
 
       !No shielding; Av=0.0
       Av = 0.0
@@ -169,7 +176,10 @@ program test_krome_eqbm
         endif
 
         !if you do not conserve electrons, the electron abundance will soon go to 0.00
+        sum_xi = sum(x(1:krome_nmols))
         x(krome_idx_e) = krome_get_electrons(x(:))
+        sum_x = sum(x(1:krome_nmols))
+        x(1:krome_nmols) = x(1:krome_nmols) * sum_xi / sum_x
 
         Av = 0.0
         call krome_set_user_Av(Av)
@@ -201,11 +211,14 @@ program test_krome_eqbm
         do ii=1,krome_nmols
           n(ii) = max(x(ii),0d0)
         end do
+        Hnuclei = get_Hnuclei(n(:))
+        n(1:krome_nmols) = n(1:krome_nmols) * Hnuclei_i/Hnuclei
+        Hnuclei = get_Hnuclei(n(:))
         n(krome_idx_Tgas) = Tgas
 
-        kkk(1:krome_nmols) = krome_conserve(n(1:krome_nmols),ni(1:krome_nmols))
-        n(:) = kkk(:)
-        n(krome_idx_Tgas) = Tgas
+        !kkk(1:krome_nmols) = krome_conserve(n(1:krome_nmols),ni(1:krome_nmols))
+        !n(:) = kkk(:)
+        !n(krome_idx_Tgas) = Tgas
         
         !Convergence test on temperature; also explored with including relative change in abundances, but did not make difference
         converged = abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .le. ertol &
@@ -229,13 +242,11 @@ program test_krome_eqbm
       end do
 
       !dump cooling rates for Tgas going into the calculation
-      n(1:krome_nmols) = x(:)
-      n(KROME_idx_Tgas) = Tgas
       cools(:) = get_cooling_array(n(:),Tgas)
-      write(31,'(99E14.5e3)') ntot, Tgas, sum(cools), cools(:)
+      write(31,'(99E14.5e3)') Hnuclei, Tgas, sum(cools), cools(:)
       kk(:) = krome_get_coef(Tgas,x(:))
       heats(:) = get_heating_array(n(:),Tgas,kk(:),0d0) !TODO: pass nH2dust instead of 0d0 as the third argument
-      write(911,'(99E14.5e3)') ntot, Tgas, sum(heats), heats(:)
+      write(911,'(99E14.5e3)') Hnuclei, Tgas, sum(heats), heats(:)
 
       !returns to user array
       x(:) = n(1:krome_nmols)
@@ -247,20 +258,18 @@ program test_krome_eqbm
 
       m = get_mass()
       rhogas = sum(x(:)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') sum(x(:)),rhogas,Tgas,Tdust,x(:)/sum(x(:))
+      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei,t_tot
 
       if (stop_next) exit
 
-      !increase density by 2x for the next bin
-      ntot = ntot * 1.1
+      !increase density by 1.25x for the next bin
+      ntot = ntot * 1.25
       !break when max density reached
       if (ntot .gt. 1.e6) then
         ntot = 1.e6
         stop_next = .true.
       endif
     end do
-
-    !write(22, *)
 
     !Close files
     close(22)

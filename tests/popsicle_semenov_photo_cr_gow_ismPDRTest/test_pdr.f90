@@ -18,8 +18,8 @@ program test_krome_eqbm
   integer,parameter::nz=1
   integer,parameter::rstep = 500000
   integer::i,j,ii,ios,jscale,jz,jz2, column_bins, zint, NoColumnBins
-  real*8::rhogas,m(krome_nspec)
-  real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei
+  real*8::rhogas,m(krome_nspec),sum_x,sum_xi
+  real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei,Hnuclei_i
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec),ColumnTot,ColumnTotMax,ColumnTotMin,ColumnLast,dColumn,ColumnFactor
   real*8::Av,heats(krome_nheats),crate,crate_0,NH_cum,NH2_cum,NC_cum, NCO_cum
@@ -27,7 +27,7 @@ program test_krome_eqbm
   logical::stop_next, converged
   character(len=20) :: filename, zint_str
   real*8, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21, bfive=3d0 !we set bfive=3d0 for this test to compare with GOW 2017 (see text below equation 7)
-  real*8 :: Lshield, Nshield, t_cool, ntot_val, ntotchange_cum
+  real*8 :: Lshield, Nshield, t_cool
   real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
 
   !zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
@@ -114,15 +114,15 @@ program test_krome_eqbm
       x(:) = 1d-40
 
       !set individual species
-      x(KROME_idx_H)         = ntot* (1d0 - (1d-3 + 1.6d-4 + 3.2d-4 + 1.7d-6 + 2.681411d-07 + 0.1d0 + 1d-4))
-      x(KROME_idx_H2)        = 1d-3*ntot
-      x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 1.7d-6*zs(jz2)*ntot + 2.681411e-07*ntot
+      x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 3*2.681411d-07 + 1d-4))
+      x(KROME_idx_H2)        = 2*1d-3*ntot
+      x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 3*2.681411e-07*ntot + 1.7d-6*zs(jz2)*ntot
       x(KROME_idx_Hj)        = 1d-4*ntot
       x(KROME_idx_HE)        = 0.1*ntot
       x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
       x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
+      x(KROME_idx_H3j)       = 3*2.681411e-07*ntot
       x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
-      x(KROME_idx_H3j)       = 2.681411e-07*ntot
 
       call krome_set_Semenov_Tdust(1d1)
       Tdust = krome_get_Semenov_Tdust()
@@ -130,6 +130,9 @@ program test_krome_eqbm
         print *, 'ERROR: if you change the fix Tdust to something else, you need to also make the same change in krome_dust.f90!!'
         stop
       endif
+
+      !initial Hnuclei
+      Hnuclei_i = get_Hnuclei(x(:))
 
       !set H2 dissociation reaction rate coeff
       n(1:krome_nmols) = x(:)
@@ -168,16 +171,12 @@ program test_krome_eqbm
       endif
       call krome_set_user_crate(crate)
 
-      !print *, 'numdens, Av, chiLW, chiPE, chiFUV, crate : ', ntot, Av, chiLW, chiPE, chiFUV, Nshield, crate
-
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Shielding done
 
       dt = seconds_per_year * 1d4 !0.1 Myr initial time step
       t_tot = dt
       converged = .false.
-
-      ntotchange_cum = 0d0
 
       !loop on density steps
       do i=1, rstep
@@ -188,15 +187,11 @@ program test_krome_eqbm
           user_tff = tff         !store user tff. NEED THIS LINE FOR SOME WEIRD REASON
         endif
 
-        !print *, "Total number density in new loop: ", sum(x(:))
-
         !if you do not conserve electrons, the electron abundance will soon go to 0.00
-        ntot_val = sum(x(:))
+        sum_xi = sum(x(1:krome_nmols))
         x(krome_idx_e) = krome_get_electrons(x(:))
-        !Now do a renormalization of the number densities since the above changes number densities
-        do j=1,krome_nspec
-          x(j) = x(j) * ntot_val / sum(x(:))
-        end do
+        sum_x = sum(x(1:krome_nmols))
+        x(1:krome_nmols) = x(1:krome_nmols) * sum_xi / sum_x
 
         !Set shielded quantities and rates
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -245,6 +240,8 @@ program test_krome_eqbm
         do ii=1,krome_nmols
           n(ii) = max(x(ii),0d0)
         end do
+        Hnuclei = get_Hnuclei(n(:))
+        n(1:krome_nmols) = n(1:krome_nmols) * Hnuclei_i/Hnuclei
         Hnuclei = get_Hnuclei(n(:))
         n(krome_idx_Tgas) = Tgas
 
@@ -305,17 +302,11 @@ program test_krome_eqbm
       endif
     end do
 
-    !write(22, *)
-
     !Close files
     close(22)
   end do
 
-  !call cool_DustGRREC(5d0,1.e3)
-
   !say goodbye
-  print *,"To plot in python:"
-  print *,"ipython> run plot.py"
   print *,"That's all! have a nice day!"
 
 contains

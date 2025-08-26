@@ -2,7 +2,7 @@
 #options for test collapse
 
 -n networks/react_popsicle_semenov_photo_cr
--cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,OH,H2O,ATOMIC,COMPTON,DUSTSEMENOV,FF,NEBULAR,Z_CIEGF,DUSTGRREC
+-cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,ATOMIC,COMPTON,DUSTSEMENOV,FF,NEBULAR,Z_CIEGF,DUSTGRREC
 -heating=COMPRESS,CHEM,PHOTODUSTWD,CR,PHOTOAV,ACCRETION
 -H2opacity=OMUKAI
 -gamma=EXACT
@@ -13,5 +13,4 @@
 -shielding_CO
 -shielding_C
 -columnDensityMethod=JEANS
--useIndividualFloor=Z
 -popsicle_ice

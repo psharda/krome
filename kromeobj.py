@@ -4743,10 +4743,17 @@ class krome:
 										self.convertMetal2F90(rate_data[r_key]["collider"])
 									Amatrix[klev][ilev] += matrix_rate
 									collider_list.append(rate_data[r_key]["collider"])
+							#subtract CMB terms
+							if jlev >= ilev:
+								itrans_name = str(jlev)+"->"+str(ilev)
+								Aij_fmt = ("%e" % trans_data[itrans_name]["Aij"]).replace("e","d")
+								gj = levels_data[jlev]["g"]
+								gi = levels_data[ilev]["g"]
+								Amatrix[klev][ilev] += " &\n- "+Aij_fmt+"*("+str(gj)+"/"+str(gi)+")*nph"+str(jlev)+str(ilev)
 							#search transitions k->j (Aij)
 							if trans_name in trans_data:
 								Aij_fmt = ("%e" % trans_data[trans_name]["Aij"]).replace("e","d")
-								matrix_rate = " &\n- " + Aij_fmt
+								matrix_rate = " &\n- " + Aij_fmt + "*(1d0+nph"+str(klev)+str(jlev)+")"
 								Amatrix[klev][ilev] += matrix_rate
 								#if photoinduced needed compute it
 								if self.usePhotoInduced and trans_data[trans_name]["Bij"] > 0e0:
@@ -4768,11 +4775,18 @@ class krome:
 										self.convertMetal2F90(rate_data[r_key]["collider"])
 									Amatrix[klev][ilev] += matrix_rate
 									collider_list.append(rate_data[r_key]["collider"])
+							#add CMB terms
+							if jlev >= ilev:
+								itrans_name = str(jlev)+"->"+str(ilev)
+								Aij_fmt = ("%e" % trans_data[itrans_name]["Aij"]).replace("e","d")
+								gj = levels_data[jlev]["g"]
+								gi = levels_data[ilev]["g"]
+								Amatrix[jlev][ilev] += " &\n+ "+Aij_fmt+"*("+str(gj)+"/"+str(gi)+")*nph"+str(jlev)+str(ilev)
 							#add transition, i.e. Aij
 							#search transitions i->k
 							if trans_name in trans_data:
 								Aij_fmt = ("%e" % trans_data[trans_name]["Aij"]).replace("e","d")
-								matrix_rate = " &\n+ "+Aij_fmt
+								matrix_rate = " &\n+ "+Aij_fmt + "*(1d0+nph"+str(ilev)+str(jlev)+")"
 								Amatrix[klev][ilev] += matrix_rate
 								#if photoinduced needed compute it
 								if self.usePhotoInduced and trans_data[trans_name]["Bij"] > 0e0:
@@ -4789,12 +4803,16 @@ class krome:
 				deltaE = t_data["denergy_K"]
 				deltaE_fmt = ("%e" % deltaE).replace("e","d") #f90ish format for deltaE
 				photoIB = ""
+				gj = levels_data[t_data["up"]]["g"]
+				gi = levels_data[t_data["down"]]["g"]
 				if self.usePhotoInduced and t_data["Bij"] > 0e0:
 					Bij_fmt = ("%e" % t_data["Bij"]).replace("e","d")
 					de_eVs = ("%e" % t_data["denergy_eV"]).replace("e","d")
 					photoIB = " &\n + "+Bij_fmt+" * get_photoIntensity("+de_eVs+")"
 				#append cooling to final sum over transitions list
-				full_B_vector_cool.append("B("+str(t_data["up"]+1)+") * ("+Aij_fmt + photoIB +") * "+deltaE_fmt)
+				full_B_vector_cool.append("(B("+str(t_data["up"]+1)+")*(1d0+nph"+str(t_data["up"])+str(t_data["down"])+\
+					") - ("+str(gj)+"/"+str(gi)+")*nph"+str(t_data["up"])+str(t_data["down"])+\
+					"*B("+str(t_data["down"]+1)+")) * ("+Aij_fmt + photoIB +") * "+deltaE_fmt)
 
 				#add induced heating if needed
 				if self.usePhotoInduced and t_data["Bij"] > 0e0:
@@ -4843,6 +4861,13 @@ class krome:
 			#declaration of alias variable for colliders
 			for x in collider_list:
 				full_function += "real*8::coll_"+x+"\n"
+			#declare variables for the CMB photon occupation numbers for each transition
+			if nlev == 3:
+				full_function += "real*8::nph"+str(nlev-2)+str(nlev-3)+"," #1->0
+				full_function += "nph"+str(nlev-1)+str(nlev-3)+"," #2->0
+				full_function += "nph"+str(nlev-1)+str(nlev-2)+"\n\n" #2->1
+			elif nlev == 2:
+				full_function += "real*8::nph"+str(nlev-1)+str(nlev-2)+"\n\n" #1->0
 
 			full_function += "\n!colliders should be >0\n"
 
@@ -4853,13 +4878,25 @@ class krome:
 				if x == "H2pa": xn = "n(idx_H2) / (phys_orthoParaRatio+1d0)"
 				full_function += "coll_"+x+" = max("+xn+", 0d0)\n" #collider must be positive
 
-			full_function += "\n!deafault cooling value\n"
+			full_function += "\n!default cooling value\n"
 			full_function += function_name +" = 0d0\n\n" #default
 			full_function += "if(n(idx_"+metal_name_f90+")<1d-15) return\n\n" #if low coolant abundance skip all
+
+			#write down the CMB photon occupation numbers for each transition
+			full_function += "!CMB photon occupation numbers\n"
+			for kp,tp_data in trans_data.items():
+				deltaEp = tp_data["denergy_K"]
+				deltaEp_fmt = ("%e" % deltaEp).replace("e","d") #f90ish format for deltaE
+				tup = tp_data["up"]
+				tdown = tp_data["down"]
+				full_function += "nph"+str(tup)+str(tdown)+" = 1d0/(exp("+str(deltaEp_fmt)+"/phys_Tcmb) - 1d0)\n"
+
+			full_function += "\n"
 			full_function += "A(:,:) = 0d0\n\n" #init A matrix to zero
 
 			#write the initialization of first column of the A matrix
 			# (will be used by the f90 to reduce the size of the problem)
+
 			for j in range(nlev):
 				if Amatrix[j][0] != "0d0":
 					matrix_element = Amatrix[j][0].replace("0d0 &\n","")
@@ -8375,6 +8412,8 @@ class krome:
 		if self.useCoolingCO:
 			print("- copying coolCO.dat...")
 			shutil.copyfile("data/coolCO.dat", buildFolder + "coolCO.dat")
+			print("- copying coolCO_scalefactor_redshift_nlte.dat...")
+			shutil.copyfile("data/coolCO_scalefactor_redshift_nlte.dat", buildFolder + "coolCO_scalefactor_redshift_nlte.dat")
 
 		#copy cooling HCN
 		if self.useCoolingHCN:
@@ -8385,11 +8424,15 @@ class krome:
 		if self.useCoolingH2O:
 			print("- copying coolH2O.dat...")
 			shutil.copyfile("data/coolH2O.dat", buildFolder + "coolH2O.dat")
+			print("- copying coolOH2O_scalefactor_redshift_lte.dat...")
+			shutil.copyfile("data/coolOH2O_scalefactor_redshift_lte.dat", buildFolder + "coolOH2O_scalefactor_redshift_lte.dat")
 
 		#copy cooling OH
 		if self.useCoolingOH:
 			print("- copying coolOH.dat...")
 			shutil.copyfile("data/coolOH.dat", buildFolder + "coolOH.dat")
+			print("- copying coolOH_scalefactor_redshift_lte.dat...")
+			shutil.copyfile("data/coolOH_scalefactor_redshift_lte.dat", buildFolder + "coolOH_scalefactor_redshift_lte.dat")
 
 		#copy cooling Z_CIE
 		if self.useCoolingZCIE:
