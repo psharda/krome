@@ -57,7 +57,7 @@ program test_krome_eqbm_time
     else
       write(zint_str, '(I2)') zint
     endif
-    filename = trim('AB_Z') // trim(zint_str)
+    filename = trim('AB_time_Z') // trim(zint_str)
     filename = trim(filename)
     !Open file
     open(unit=22,file=filename,status='replace',action='write')
@@ -65,14 +65,14 @@ program test_krome_eqbm_time
     write(22, '(A)', ADVANCE='NO') trim(krome_get_names_header())
     write(22, '(A)') " t_tot"
 
-    filename = trim('COOL_Z') // trim(zint_str)
+    filename = trim('COOL_time_Z') // trim(zint_str)
     filename = trim(filename)
     !Open file
     open(unit=31,file=filename,status='replace',action='write')
     write(31, '(A)', ADVANCE='NO') "#ntot Tgas sum(cools)"
     write(31, '(A)') trim(krome_get_cooling_names_header())
 
-    filename = trim('HEAT_Z') // trim(zint_str)
+    filename = trim('HEAT_time_Z') // trim(zint_str)
     filename = trim(filename)
     !Open file
     open(unit=911,file=filename,status='replace',action='write')
