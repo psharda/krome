@@ -13,6 +13,7 @@ clib = -nofor_main
 exec_shielded = test_shielded
 exec_unshielded = test_unshielded
 exec_cooling = test_cooling
+exec_time = test_shielded_time_evolution
 
 #default libraries
 lib = -llapack
@@ -86,7 +87,7 @@ objs += krome.o
 cobjs = krome_header.o
 
 # Default target to create all test executables
-all: $(exec_cooling) $(exec_unshielded) $(exec_shielded)
+all: $(exec_cooling) $(exec_unshielded) $(exec_shielded) $(exec_time)
 
 # Target for the main executable `test_cooling`
 $(exec_cooling): $(objs) test_cooling.o
@@ -99,6 +100,10 @@ $(exec_unshielded): $(objs) test_unshielded.o
 # Target for the second executable `test_shielded`
 $(exec_shielded): $(objs) test_shielded.o
 	$(fc) $(objs) test_shielded.o -o $(exec_shielded) $(switch) $(lib)
+
+# Target for the second executable `test_shielded_time_evolution`
+$(exec_time): $(objs) test_shielded_time_evolution.o
+	$(fc) $(objs) test_shielded_time_evolution.o -o $(exec_time) $(switch) $(lib)
 
 #ifort full debug target
 debug: switch = $(switchDBG)
@@ -182,7 +187,7 @@ csharedlib_test: csharedlib
 
 #clean target
 clean:
-	rm -f *.o *.mod *__genmod.f90 *~ $(exec_cooling) $(exec_unshielded) $(exec_shielded)
+	rm -f *.o *.mod *__genmod.f90 *~ $(exec_cooling) $(exec_unshielded) $(exec_shielded) $(exec_time)
 
 #rule for f90
 %.o:%.f90
