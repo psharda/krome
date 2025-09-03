@@ -1,0 +1,16 @@
+##############
+#options for one-zone ISM equilibrium tests with dense gas tracers
+
+-n networks/react_popsicle_semenov_photo_cr_denseGas
+-cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,ATOMIC,COMPTON,DUSTSEMENOV,FF,NEBULAR,Z_CIEGF,DUSTGRREC
+-heating=CHEM,PHOTODUSTWD,CR,PHOTOAV
+-H2opacity=OMUKAI
+-gamma=EXACT
+-ATOL=1d-40
+-RTOL=1d-6
+-maxord=1
+-shielding=WG11_withH
+-shielding_CO
+-shielding_C
+-columnDensityMethod=JEANS
+#-popsicle_ice
