@@ -241,6 +241,7 @@
 66,H2,OH,H2O,H,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
 
 67,OH,OH,H2O,O,1.65d-12*(T32)**1.14*exp(-5d1*invT)
+#reaction below important to ensure H2O destruction at high densities
 67,H2O,O,OH,OH,1.85d-11*(T32)**0.95*exp(-8571*invT)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
