@@ -210,7 +210,8 @@
 #Glover+2010 (rate from Tran+2018 used in UMIST 2025)
 57,OH+,H2,H2O+,H,1.27d-9*(T32**(0.18d0))
 #O2005 use an older rate coefficient
-58,H2O+,H2,H3O+,H,6.4d-10
+58,H2O+,H2,H3O+,H,9.7d-10
+58,H3+,H2O,H3O+,H2,5.9d-9*(T32**(-0.5))
 #O2005 use an older rate coefficient
 59,H2O+,E,O,H2,3.9d-8*T32**(-.5)
 #O2005 use an older rate coefficient
@@ -220,11 +221,14 @@
 61,H2O+,E,H,H,O,3.05d-7*T32**(-.5)
 
 #O2005 use an older rate coefficient
-62,H3O+,E,OH,H,H,2.58d-7*T32**(-.5)
+62,H3O+,E,OH,H,H,3.05d-7*T32**(-.5)
+#TODO: reaction below should be included by it creates a little kink in ism shielded tests at Z=1d0, at nH=1d1, so have commented it off for now.
+#62,H3O+,E,O,H2,H,5.60d-9*T32**(-.5)
 
 @format:idx,R,R,P,P,rate
 #O2005 use an older rate coefficient
-63,H3O+,E,H,H2O,1.08d-7*T32**(-.5)
+63,H3O+,E,H,H2O,7.09d-8*T32**(-.5)
+63,H3O+,E,OH,H2,5.37d-8*T32**(-.5)
 
 64,O,H,OH,,9.9d-19*T32**(-.38)
 
@@ -237,7 +241,7 @@
 66,H2,OH,H2O,H,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
 
 67,OH,OH,H2O,O,1.65d-12*(T32)**1.14*exp(-5d1*invT)
-
+67,H2O,O,OH,OH,1.85d-11*(T32)**0.95*exp(-8571*invT)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #KIDA, constant below 10K
@@ -256,8 +260,13 @@
 #Glover+2010
 #O2005 use an older rate coefficient
 73,H2O,H,H2,OH,NONE,NONE,1.59d-11*(T32)*1.2*exp(-9610.*invT)
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+73,H2O,H,OH,H,H,NONE,NONE,5.80d-9*exp(-52900*invT)
+73,H2O,H2,OH,H2,H,NONE,NONE,5.80d-9*exp(-52900*invT)
 
+@format:idx,R,R,P,P,Tmin,Tmax,rate
 74,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
+74,H2,O2,OH,OH,NONE,NONE,2.82d-11*exp(-24200*invT)
 
 #O2005 (but rate updated from Wakelam+2012 as in UMIST 2025)
 75,O,OH,H,O2,NONE,NONE,3.69d-11*(T32**(-0.27d0))*exp(-12.90d0*invT)
@@ -285,7 +294,7 @@
 
 #Glover+2010 (limit 1052. for continuity)
 #O2005 use an older rate coefficient
-#Might consider updating to UMIST 2025 rate which does not have sharp kinks
+#Updating to UMIST 2025 rate which does not have sharp kinks leads to crashes in the shielded test
 84,O2,C,CO,O,NONE,1052d0,4.7d-11*T32**(-.34)
 85,O2,C,CO,O,1052d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
 
@@ -502,6 +511,7 @@
 163,O2,O2+,E,5.6d-11*exp(-3.7*user_Av)*user_is_metal*chiFUV
 164,O2,O,O,7d-10*exp(-1.8*user_Av)*user_is_metal*chiFUV
 164,CO2,CO,O,9.2d-10*exp(-3.4*user_Av)*user_is_metal*chiFUV
+165,HCO+,CO+,H,5.39d-12*exp(-3.67*user_Av)*user_is_metal*chiFUV
 #TODO: reaction below to be removed when krome coupled with vettam
 165,CO,C,O,user_dissCO
 
