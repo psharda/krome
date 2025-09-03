@@ -273,7 +273,7 @@ program test_krome_eqbm
           ni = n
         else
           write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') &
-                    "CONVERGED; ntot = ", sum(x(:)), " Tgas = ", Tgas, " t_tot/Myr = ", &
+                    "CONVERGED; nH = ", Hnuclei, " Tgas = ", Tgas, " t_tot/Myr = ", &
                     t_tot/(seconds_per_year*1.e6), " dt = ", dt/(seconds_per_year*1.e6), &
                     " t_cool = ", t_cool/(seconds_per_year*1.e6)
           exit
