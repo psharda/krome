@@ -222,6 +222,8 @@
 
 #O2005 use an older rate coefficient
 62,H3O+,E,OH,H,H,3.05d-7*T32**(-.5)
+#TODO: reaction below should be included by it creates a little kink in ism shielded tests at Z=1d0, at nH=1d1, so have commented it off for now.
+#62,H3O+,E,O,H2,H,5.60d-9*T32**(-.5)
 
 @format:idx,R,R,P,P,rate
 #O2005 use an older rate coefficient
@@ -239,7 +241,8 @@
 66,H2,OH,H2O,H,3.6d-16*T**(1.52)*exp(-1.74d3*invT)
 
 67,OH,OH,H2O,O,1.65d-12*(T32)**1.14*exp(-5d1*invT)
-
+#reaction below important to ensure H2O destruction at high densities
+67,H2O,O,OH,OH,1.85d-11*(T32)**0.95*exp(-8571*invT)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #KIDA, constant below 10K
@@ -258,8 +261,13 @@
 #Glover+2010
 #O2005 use an older rate coefficient
 73,H2O,H,H2,OH,NONE,NONE,1.59d-11*(T32)*1.2*exp(-9610.*invT)
+@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+73,H2O,H,OH,H,H,NONE,NONE,5.80d-9*exp(-52900*invT)
+73,H2O,H2,OH,H2,H,NONE,NONE,5.80d-9*exp(-52900*invT)
 
+@format:idx,R,R,P,P,Tmin,Tmax,rate
 74,O,O,O2,,NONE,NONE,4.9d-20*T32**(1.58)
+74,H2,O2,OH,OH,NONE,NONE,2.82d-11*exp(-24200*invT)
 
 #O2005 (but rate updated from Wakelam+2012 as in UMIST 2025)
 75,O,OH,H,O2,NONE,NONE,3.69d-11*(T32**(-0.27d0))*exp(-12.90d0*invT)
@@ -287,7 +295,7 @@
 
 #Glover+2010 (limit 1052. for continuity)
 #O2005 use an older rate coefficient
-#Might consider updating to UMIST 2025 rate which does not have sharp kinks
+#Updating to UMIST 2025 rate which does not have sharp kinks leads to crashes in the shielded test
 84,O2,C,CO,O,NONE,1052d0,4.7d-11*T32**(-.34)
 85,O2,C,CO,O,1052d0,NONE,2.48d-12*T32**1.54*exp(613d0*invT)
 
@@ -521,6 +529,7 @@
 144,OH,N,NO,H,NONE,NONE,6.05d-11*(T32**(-0.23))*exp(-14.90*invT)
 144,NH,O,NO,H,NONE,3d2,6.6d-11
 144,NH,O,NO,H,3d2,NONE,1.8d-10*exp(-3d2*invT)
+144,H,NO,OH,N,NONE,NONE,3.60d-10*exp(-24910*invT)
 144,C,NO,CN,O,NONE,NONE,6d-11*(T32**(-0.16))
 144,C,NO,CO,N,NONE,NONE,9d-11*(T32**(-0.16))
 #Reaction below from Loison et al. 2014, could be important at low Tgas
