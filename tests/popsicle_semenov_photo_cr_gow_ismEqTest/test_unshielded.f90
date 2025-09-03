@@ -25,9 +25,9 @@ program test_krome_eqbm
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
   real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,t_cool,dustHeatingRate
-  logical::stop_next, converged
-  character(len=20) :: filename, zint_str
-  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
+  logical::stop_next, converged, first_call
+  character(len=100) :: filename, zint_str
+  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21, increment = 1.25
   
 
   zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
@@ -113,21 +113,26 @@ program test_krome_eqbm
 
     !Reset ertol for each metallicity (since it is changed at high density below)
     ertol = 1d-8
+    first_call = .true.
 
     do dens_bins = 1, 10000
 
-      !species default, cm-3
-      x(:) = 1d-40
-
-      !set individual species
-      x(KROME_idx_H)         = ntot - 2*1d-6*ntot - 1d-4*ntot
-      x(KROME_idx_H2)        = 1d-6*ntot
-      x(KROME_idx_E)         = 1d-4*ntot
-      x(KROME_idx_Hj)        = 1d-4*ntot
-      x(KROME_idx_HE)        = 0.0775*ntot
-      x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
-      x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
-      x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
+      if (first_call) then
+        !species default, cm-3
+        x(:) = 1d-40
+        !set individual species
+        x(KROME_idx_H)         = ntot - 2*1d-6*ntot - 1d-4*ntot
+        x(KROME_idx_H2)        = 1d-6*ntot
+        x(KROME_idx_E)         = 1d-4*ntot
+        x(KROME_idx_Hj)        = 1d-4*ntot
+        x(KROME_idx_HE)        = 0.0775*ntot
+        x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
+        x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
+        x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
+        first_call             = .false.
+      else
+        x(:) = x(:) * increment
+      endif
 
       call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
       !Absorption rate of UV photons by dust (erg s^-1)
@@ -255,8 +260,8 @@ program test_krome_eqbm
 
       if (stop_next) exit
 
-      !increase density by 1.25x for the next bin
-      ntot = ntot * 1.25
+      !increase density by 'increment' for the next bin
+      ntot = ntot * increment
       !break when max density reached
       if (ntot .gt. 1.e6) then
         ntot = 1.e6

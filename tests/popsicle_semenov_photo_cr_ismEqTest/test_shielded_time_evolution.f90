@@ -26,10 +26,11 @@ program test_krome_eqbm_time
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
   real*8::Av,heats(krome_nheats),crate,crate_0,NH,NHj,NH2
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
-  character(len=20) :: filename, zint_str
+  logical::first_call
+  character(len=100) :: filename, zint_str
   real, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21
   real :: Lshield, Nshield, t_cool
-  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
+  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21, increment = 1d1
 
   !zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
   zs = (/1d0/)
@@ -95,6 +96,8 @@ program test_krome_eqbm_time
     call krome_set_dust_to_gas(zs(jz2))
     !scale grain recombination reactions if needed
     call krome_set_user_pdr_factor(1d0)
+    !input gas turbulent velocity dispersion to include turbulent/mechanical heating
+    call krome_set_user_sigmavel(0d0)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
@@ -108,22 +111,27 @@ program test_krome_eqbm_time
     call krome_init()
 
     print *, 'Initial crate: ', crate_0
+    first_call = .true.
 
     do dens_bins = 1, 10000
 
-      !species default, cm-3
-      x(:) = 1d-40
-
-      !set individual species
-      x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 3*2.681411d-07 + 1d-4))
-      x(KROME_idx_H2)        = 2*1d-3*ntot
-      x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 3*2.681411e-07*ntot
-      x(KROME_idx_Hj)        = 1d-4*ntot
-      x(KROME_idx_HE)        = 0.1*ntot
-      x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
-      x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
-      x(KROME_idx_D)         = 3d-5*ntot
-      x(KROME_idx_H3j)       = 3*2.681411e-07*ntot
+      if (first_call) then
+        !species default, cm-3
+        x(:) = 1d-40
+        !set individual species
+        x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 3*2.681411d-07 + 1d-4))
+        x(KROME_idx_H2)        = 2*1d-3*ntot
+        x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 3*2.681411e-07*ntot
+        x(KROME_idx_Hj)        = 1d-4*ntot
+        x(KROME_idx_HE)        = 0.1*ntot
+        x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
+        x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
+        x(KROME_idx_D)         = 3d-5*ntot
+        x(KROME_idx_H3j)       = 3*2.681411e-07*ntot
+        first_call             = .false.
+      else
+        x(:) = x(:) * increment
+      endif
 
       call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0) !Dust at 6K
 
@@ -277,8 +285,8 @@ program test_krome_eqbm_time
       write (*, '(A, E12.4, A)') &
                     "Density nH = ", Hnuclei, " done."
 
-      !increase density by 10x for the next bin
-      ntot = ntot * 1d1
+      !increase density by 'increment' for the next bin
+      ntot = ntot * increment
       !break when max density reached
       if (ntot .gt. 1.e6) exit
     end do
