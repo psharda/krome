@@ -46,6 +46,10 @@ contains
     heats(idx_heat_accretion) = heatingAccretion(n(:), Tgas)
 #ENDIFKROME
 
+#IFKROME_useHeatingTurbulence
+    heats(idx_heat_turbulence) = heatingTurbulence(n(:), Tgas)
+#ENDIFKROME
+
 #IFKROME_useHeatingCompress
     heats(idx_heat_compress) = heat_compress(n(:), Tgas)
 #ENDIFKROME
@@ -357,6 +361,29 @@ contains
       !Mathew & Federrath 2020 use the same expression for Solar metallicity, with \eta = 0.25
       heatingAccretion = rhogas * opac_mayer * user_Lacc_Flux
     end function heatingAccretion
+#ENDIFKROME
+
+#IFKROME_useHeatingTurbulence
+    !*****************************
+    ! Heating due to turbulent motions
+    ! Also called mechanical heating
+    ! Units erg/cm3/s
+    ! Equation 7 of Bemis et al. 2024
+    function heatingTurbulence(n, Tgas)
+      use krome_commons
+      use krome_subs
+      use krome_getphys
+      implicit none
+      real*8::heatingTurbulence,Tgas,n(:)
+      real*8::ntot,R
+
+      heatingTurbulence = 0d0
+      if (user_sigmavel .eq. 0d0) return
+      ntot = get_Hnuclei(n(:))
+      !using Larson's size mass relation from section 3.2.2 of Hennebelle & Grudic 2024 ARA&A review
+      R = 3.08d18 * (user_sigmavel/1d5)**2 !in cm
+      heatingTurbulence = 3.3d-27 * ntot * (user_sigmavel**3) / R !erg/cm3/s
+    end function heatingTurbulence
 #ENDIFKROME
 
 #IFKROME_useHeatingPhotoDust
