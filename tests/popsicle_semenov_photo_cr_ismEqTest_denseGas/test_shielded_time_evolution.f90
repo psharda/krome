@@ -124,7 +124,7 @@ program test_krome_eqbm_time
         !set individual species
         x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 3*2.681411d-07 + 1d-4))
         x(KROME_idx_H2)        = 2*1d-3*ntot
-        x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 3*2.681411e-07*ntot
+        x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 2.681411e-07*ntot
         x(KROME_idx_Hj)        = 1d-4*ntot
         x(KROME_idx_HE)        = 0.1*ntot
         x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
