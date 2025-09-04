@@ -547,6 +547,25 @@
 145,H3O+,HCN,HCNH+,H2O,NONE,NONE,3.8d-9*(T32**(-0.5))
 145,H3O+,HNC,HCNH+,H2O,NONE,NONE,4.0d-9*(T32**(-0.5))
 
+#N2H+ reactions
+#N2H+ destruction via CO goes down when CO depletes on grains (e.g., Priestley+2023). So unless CO freezeout is included, modeling N2H+ may not yield correct results. Hence we switch off modeling N2H+ for now.
+#@format:idx,R,R,P,P,Tmin,Tmax,rate
+#destruction
+#145,N2H+,E,N2,H,NONE,240,3.06d-7*(T32**(-0.06))
+#145,N2H+,E,N2,H,240,NONE,2.61d-7*(T32**(-0.81))
+#145,N2H+,E,N,NH,NONE,240,2.03d-8*(T32**(-0.06))
+#145,N2H+,E,N,NH,240,NONE,2d-7*(T32**(-0.81))
+#145,N2H+,HCN,HCNH+,N2,NONE,NONE,3.2d-9*(T32**(-0.5))
+#145,N2H+,HNC,HCNH+,N2,NONE,NONE,3.2d-9*(T32**(-0.5))
+#145,N2H+,H2O,H3O+,N2,NONE,NONE,2.6d-9*(T32**(-0.5))
+#145,N2H+,C,N2,CH+,NONE,NONE,1.1d-9
+#145,N2H+,CO,HCO+,N2,NONE,NONE,8.8d-10
+#145,N2H+,OH,N2,H2O+,NONE,NONE,6.2d-10*(T32**(-0.5))
+#formation
+#145,H3+,N2,N2H+,H2,NONE,NONE,1.8d-9
+#145,H2+,N2,N2H+,H,NONE,NONE,2d-9
+
+
 #we have not included H3+ + CN since it produces HCN+ which will very quickly recombine with E to form CN and H
 #Loison+2014 find that H + CCN is an important reaction for HCN formation at late times, but there is no good viable pathway present for CCN formation in the first place (as per the UMIST database, and for species already included in this network). So we skip this formation pathway for now.
 #main destruction pathways for N2 in dense gas is via He+ and H3+, but we haven't yet included them since the fluxes of these reactions does not seem to be too significant for typical dense ISMs (nH <= 1e6 cm^-3). These reactions produce N+ and N2H+ so adding them would mean adding more species and many more reactions.
