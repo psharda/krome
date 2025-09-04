@@ -117,9 +117,6 @@ program test_krome_eqbm_time
 
     do dens_bins = 1, 10000
 
-      !species default, cm-3
-      x(:) = 1d-40
-
       if (first_call) then
         !species default, cm-3
         x(:) = 1d-40
