@@ -31,6 +31,8 @@ program test_krome_eqbm_time
   real, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21
   real :: Lshield, Nshield, t_cool
   real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21, increment = 1d1
+  integer :: start, finish, rate
+  call system_clock(start, rate)
 
   !zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
   zs = (/1d0/)
@@ -305,6 +307,8 @@ program test_krome_eqbm_time
   print *,"To plot in python:"
   print *,"ipython> run plot.py"
   print *,"That's all! have a nice day!"
+  call system_clock(finish)
+  print *, "Elapsed wall time (seconds): ", real(finish-start)/real(rate)
 
 contains
 

@@ -20,7 +20,7 @@ program test_krome_eqbm
   integer,parameter::rstep = 500000
   integer::i,ii,ios,jscale,jz,jz2, dens_bins, zint
   real*8::rhogas,m(krome_nspec),sum_x,sum_xi
-  real*8::tff,ertol,eatol,max_time,t_tot
+  real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei,Hnuclei_i
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
   real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
@@ -28,8 +28,9 @@ program test_krome_eqbm
   logical::stop_next, converged, first_call
   character(len=100) :: filename, zint_str
   real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21, increment = 1.25
+  integer :: start, finish, rate
+  call system_clock(start, rate)
   
-
   zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
   !zs = (/1d0/)
 
@@ -121,13 +122,15 @@ program test_krome_eqbm
         !species default, cm-3
         x(:) = 1d-40
         !set individual species
-        x(KROME_idx_H)         = ntot - 2*1d-6*ntot - 1d-4*ntot
-        x(KROME_idx_H2)        = 1d-6*ntot
-        x(KROME_idx_E)         = 1d-4*ntot
+        x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 3*2.681411d-07 + 1d-4))
+        x(KROME_idx_H2)        = 2*1d-3*ntot
+        x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 2.681411e-07*ntot + 1.7d-6*zs(jz2)*ntot
         x(KROME_idx_Hj)        = 1d-4*ntot
-        x(KROME_idx_HE)        = 0.0775*ntot
+        x(KROME_idx_HE)        = 0.1*ntot
         x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
         x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
+        x(KROME_idx_D)         = 3d-5*ntot
+        x(KROME_idx_H3j)       = 3*2.681411e-07*ntot
         x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
         first_call             = .false.
       else
@@ -135,6 +138,10 @@ program test_krome_eqbm
       endif
 
       call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
+
+      !initial Hnuclei
+      Hnuclei_i = get_Hnuclei(x(:))
+
       !Absorption rate of UV photons by dust (erg s^-1)
       dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
       call krome_set_dustheatRad(dustHeatingRate)
@@ -212,6 +219,9 @@ program test_krome_eqbm
         do ii=1,krome_nmols
           n(ii) = max(x(ii),0d0)
         end do
+        Hnuclei = get_Hnuclei(n(:))
+        n(1:krome_nmols) = n(1:krome_nmols) * Hnuclei_i/Hnuclei
+        Hnuclei = get_Hnuclei(n(:))
         n(krome_idx_Tgas) = Tgas
 
         !kkk(1:krome_nmols) = krome_conserve(n(1:krome_nmols),ni(1:krome_nmols))
@@ -232,7 +242,7 @@ program test_krome_eqbm
           ni = n
         else
           write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') & 
-                    "CONVERGED; ntot = ", sum(x(:)), " Tgas = ", Tgas, " t_tot/Myr = ", &
+                    "CONVERGED; nH = ", Hnuclei, " Tgas = ", Tgas, " t_tot/Myr = ", &
                     t_tot/(seconds_per_year*1.e6), " dt = ", dt/(seconds_per_year*1.e6), &
                     " t_cool = ", t_cool/(seconds_per_year*1.e6)
           exit
@@ -241,10 +251,10 @@ program test_krome_eqbm
 
       !dump cooling rates for Tgas going into the calculation
       cools(:) = get_cooling_array(n(:),Tgas)
-      write(31,'(99E14.5e3)') ntot, Tgas, sum(cools), cools(:)
+      write(31,'(99E14.5e3)') Hnuclei, Tgas, sum(cools), cools(:)
       kk(:) = krome_get_coef(Tgas,x(:))
       heats(:) = get_heating_array(n(:),Tgas,kk(:),0d0) !TODO: pass nH2dust instead of 0d0 as the third argument
-      write(911,'(99E14.5e3)') ntot, Tgas, sum(heats), heats(:)
+      write(911,'(99E14.5e3)') Hnuclei, Tgas, sum(heats), heats(:)
 
       !returns to user array
       x(:) = n(1:krome_nmols)
@@ -256,7 +266,7 @@ program test_krome_eqbm
 
       m = get_mass()
       rhogas = sum(x(:)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') sum(x(:)),rhogas,Tgas,Tdust,x(:)/sum(x(:))
+      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei
 
       if (stop_next) exit
 
@@ -279,6 +289,8 @@ program test_krome_eqbm
   print *,"To plot in python:"
   print *,"ipython> run plot.py"
   print *,"That's all! have a nice day!"
+  call system_clock(finish)
+  print *, "Elapsed wall time (seconds): ", real(finish-start)/real(rate)
 
 end program test_krome_eqbm
 
