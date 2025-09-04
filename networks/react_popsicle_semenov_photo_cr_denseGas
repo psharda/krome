@@ -520,9 +520,10 @@
 144,H2,NH,,NH2,H,,NONE,NONE,3.5d-11*exp(-7758d0*invT)
 144,H,NH,,N,H2,,NONE,NONE,1.63d-11*(T32**(0.5))*exp(-2400*invT)
 @format:idx,R,R,P,Tmin,Tmax,rate
-144,C,N,CN,NONE,2d2,9.61d-19*(T32**(-0.03))*exp(1.38*invT)
-144,C,N,CN,2d2,2d3,8.35d-19*(T32**(0.07))*exp(31.48*invT)
-144,C,N,CN,2d3,NONE,1.16d-18*(T32**(-0.04))*exp(-185.54*invT)
+#for the three C+N reactions below, Piyush Sharda changed the original UMIST breakpoints at 2d2 and 2d3 to different values so as to make the rate continuous and not have discrete jumps in temperature
+144,C,N,CN,NONE,137.9060502831,9.61d-19*(T32**(-0.03))*exp(1.38*invT)
+144,C,N,CN,137.9060502831,1305.4219934494956,8.35d-19*(T32**(0.07))*exp(31.48*invT)
+144,C,N,CN,1305.4219934494956,NONE,1.16d-18*(T32**(-0.04))*exp(-185.54*invT)
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 144,CN,O,CO,N,NONE,294,2.54d-11
 144,CN,O,CO,N,294,NONE,5d-11*exp(-200*invT)
@@ -553,6 +554,7 @@
 #destruction
 #145,N2H+,E,N2,H,NONE,240,3.06d-7*(T32**(-0.06))
 #145,N2H+,E,N2,H,240,NONE,2.61d-7*(T32**(-0.81))
+#the two reactions below are have a discrete jump at the break temperature
 #145,N2H+,E,N,NH,NONE,240,2.03d-8*(T32**(-0.06))
 #145,N2H+,E,N,NH,240,NONE,2d-7*(T32**(-0.81))
 #145,N2H+,HCN,HCNH+,N2,NONE,NONE,3.2d-9*(T32**(-0.5))
