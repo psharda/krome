@@ -130,7 +130,6 @@ program test_krome_eqbm
         x(KROME_idx_HE)        = 0.1*ntot
         x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
         x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
-        x(KROME_idx_D)         = 3d-5*ntot
         x(KROME_idx_H3j)       = 3*2.681411e-07*ntot
         x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
         first_call             = .false.
