@@ -23,7 +23,7 @@ program test_krome_eqbm
   real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei,Hnuclei_i
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
-  real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
+  real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2,d2g
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,t_cool,dustHeatingRate
   logical::stop_next, converged, first_call
   character(len=100) :: filename, zint_str
@@ -91,7 +91,8 @@ program test_krome_eqbm
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
-    call krome_set_dust_to_gas(zs(jz2))
+    d2g = zs(jz2)
+    call krome_set_dust_to_gas(d2g)
     call krome_set_chiFUV(chiFUV)
     !scale grain recombination reactions if needed
     call krome_set_user_pdr_factor(1d0)
@@ -205,7 +206,7 @@ program test_krome_eqbm
         call krome_set_user_dissCO(dissCO)
 
         !Absorption rate of UV photons by dust (erg s^-1)
-        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
+        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g
         call krome_set_dustheatRad(dustHeatingRate)
         call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()

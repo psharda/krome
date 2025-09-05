@@ -19,7 +19,7 @@ program test_krome_eqbm
   integer,parameter::rstep = 500000
   integer::i,j,ii,ios,jscale,jz,jz2, column_bins, zint, NoColumnBins
   real*8::rhogas,m(krome_nspec),sum_x,sum_xi
-  real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei,Hnuclei_i
+  real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei,Hnuclei_i,d2g
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec),ColumnTot,ColumnTotMax,ColumnTotMin,ColumnLast,dColumn,ColumnFactor
   real*8::Av,heats(krome_nheats),crate,crate_0,NH_cum,NH2_cum,NC_cum, NCO_cum
@@ -81,7 +81,8 @@ program test_krome_eqbm
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
-    call krome_set_dust_to_gas(zs(jz2))
+    d2g = zs(jz2)
+    call krome_set_dust_to_gas(d2g)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
@@ -141,7 +142,7 @@ program test_krome_eqbm
       !Set shielded quantities and rates
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       Nshield = NH_cum + 2*NH2_cum
-      Av = Nshield * zs(jz2) / 1.87d21
+      Av = Nshield * d2g / 1.87d21
       call krome_set_user_Av(Av)
 
       !set H ionization reaction rate coeff
@@ -149,8 +150,8 @@ program test_krome_eqbm
       call krome_set_user_ionH(ionH)
 
       !LW and PE rates
-      chiLW = chi0 * exp(-sigmaD_LW * zs(jz2) * Nshield) !Dust extinction, where D linearly scales with Z
-      chiPE = chi0 * exp(-sigmaD_PE * zs(jz2) * Nshield) !Dust extinction, where D linearly scales with Z
+      chiLW = chi0 * exp(-sigmaD_LW * d2g * Nshield) !Dust extinction, where D linearly scales with Z
+      chiPE = chi0 * exp(-sigmaD_PE * d2g * Nshield) !Dust extinction, where D linearly scales with Z
       !Dissociation rates
       dissH2 = 5.60d-11*chiLW*get_fshield_H2(NH2_cum,bfive)  !H2 dissociation rate accounting for self-shielding
       call krome_set_user_dissH2(dissH2)
@@ -195,7 +196,7 @@ program test_krome_eqbm
         !Set shielded quantities and rates
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         Nshield = NH_cum + 2*NH2_cum
-        Av = Nshield * zs(jz2) / 1.87d21
+        Av = Nshield * d2g / 1.87d21
         call krome_set_user_Av(Av)
 
         !set H ionization reaction rate coeff
@@ -203,8 +204,8 @@ program test_krome_eqbm
         call krome_set_user_ionH(ionH)
 
         !LW and PE rates
-        chiLW = chi0 * exp(-sigmaD_LW * zs(jz2) * Nshield) !Dust extinction, where D linearly scales with Z
-        chiPE = chi0 * exp(-sigmaD_PE * zs(jz2) * Nshield) !Dust extinction, where D linearly scales with Z
+        chiLW = chi0 * exp(-sigmaD_LW * d2g * Nshield) !Dust extinction, where D linearly scales with Z
+        chiPE = chi0 * exp(-sigmaD_PE * d2g * Nshield) !Dust extinction, where D linearly scales with Z
         !Dissociation rates
         dissH2 = 5.60d-11*chiLW*get_fshield_H2(NH2_cum,bfive)  !H2 dissociation rate accounting for self-shielding
         call krome_set_user_dissH2(dissH2)

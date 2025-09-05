@@ -24,7 +24,7 @@ program test_krome_eqbm_time
   real*8::tff,max_time,t_tot,Hnuclei,Hnuclei_i
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
-  real*8::Av,heats(krome_nheats),crate,crate_0,NH,NHj,NH2
+  real*8::Av,heats(krome_nheats),crate,crate_0,NH,NHj,NH2,d2g
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
   logical::first_call
   character(len=100) :: filename, zint_str
@@ -90,7 +90,8 @@ program test_krome_eqbm_time
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
-    call krome_set_dust_to_gas(zs(jz2))
+    d2g = zs(jz2)
+    call krome_set_dust_to_gas(d2g)
     !scale grain recombination reactions if needed
     call krome_set_user_pdr_factor(1d0)
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
@@ -105,6 +106,7 @@ program test_krome_eqbm_time
     endif
 
     print *, 'Metallicity: ', zs(jz2), ' of Solar'
+    print *, 'Dust2Gas Ratio: ', d2g, ' of Solar'
     print *, 'Redshift: ', krome_redshift
     print *, 'ISRF : ', chi0, ' of Solar'
     print *, 'Initial crate: ', crate_0
@@ -148,7 +150,7 @@ program test_krome_eqbm_time
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       Lshield = Lshield_0 * (sum(x(:))/n_0)**(-a)
       Nshield = Lshield * sum(x(:))
-      Av = Nshield * zs(jz2) / 1.87d21
+      Av = Nshield * d2g / 1.87d21
       call krome_set_user_Av(Av)
 
       !set H ionization reaction rate coeff
@@ -156,8 +158,8 @@ program test_krome_eqbm_time
       call krome_set_user_ionH(ionH)
 
       !LW and PE rates
-      chiLW = chi0 * exp(-sigmaD_LW * zs(jz2) * Nshield) !Dust extinction, where D linearly scales with Z
-      chiPE = chi0 * exp(-sigmaD_PE * zs(jz2) * Nshield) !Dust extinction, where D linearly scales with Z
+      chiLW = chi0 * exp(-sigmaD_LW * d2g * Nshield) !Dust extinction, where D linearly scales with Z
+      chiPE = chi0 * exp(-sigmaD_PE * d2g * Nshield) !Dust extinction, where D linearly scales with Z
       !Dissociation rates
       dissH2 = 5.60d-11*chiLW*krome_fshield(n,Tgas)
       call krome_set_user_dissH2(dissH2)
@@ -202,7 +204,7 @@ program test_krome_eqbm_time
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         Lshield = Lshield_0 * (sum(x(:))/n_0)**(-a)
         Nshield = Lshield * sum(x(:))
-        Av = Nshield * zs(jz2) / 1.87d21
+        Av = Nshield * d2g / 1.87d21
         call krome_set_user_Av(Av)
 
         !set H ionization reaction rate coeff
@@ -210,8 +212,8 @@ program test_krome_eqbm_time
         call krome_set_user_ionH(ionH)
 
         !LW and PE rates
-        chiLW = chi0 * exp(-sigmaD_LW * zs(jz2) * Nshield) !Dust extinction, where D linearly scales with Z
-        chiPE = chi0 * exp(-sigmaD_PE * zs(jz2) * Nshield) !Dust extinction, where D linearly scales with Z
+        chiLW = chi0 * exp(-sigmaD_LW * d2g * Nshield) !Dust extinction, where D linearly scales with Z
+        chiPE = chi0 * exp(-sigmaD_PE * d2g * Nshield) !Dust extinction, where D linearly scales with Z
         !Dissociation rates
         dissH2 = 5.60d-11*chiLW*krome_fshield(n,Tgas)
         call krome_set_user_dissH2(dissH2)
@@ -234,7 +236,7 @@ program test_krome_eqbm_time
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !Shielding done
         !Absorption rate of UV photons by dust (erg s^-1)
-        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
+        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g
         call krome_set_dustheatRad(dustHeatingRate)
         call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()
