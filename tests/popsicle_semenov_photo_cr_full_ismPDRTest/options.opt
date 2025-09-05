@@ -1,7 +1,7 @@
 ##############
 #options for one-zone ISM equilibrium tests
 
--n networks/react_popsicle_semenov_photo_cr
+-n networks/react_popsicle_semenov_photo_cr_full
 -cooling=H2,CONT,CHEM,CI,CII,OI,CO,ATOMIC,COMPTON,DUSTSEMENOV,FF,NEBULAR,Z_CIEGF,DUSTGRREC
 -heating=CHEM,PHOTODUSTWD,CR,PHOTOAV
 -H2opacity=OMUKAI
