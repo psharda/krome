@@ -65,7 +65,7 @@ program test_krome_eqbm
     open(unit=22,file=filename,status='replace',action='write')
     write(22, '(A)', ADVANCE='NO') "#ntot rho Tgas Tdust"
     write(22, '(A)', ADVANCE='NO') trim(krome_get_names_header())
-    write(22, '(A)') " t_tot"
+    write(22, '(A)') " t_tot t_cool"
 
     filename = trim('COOL_Z') // trim(zint_str)
     filename = trim(filename)
@@ -306,7 +306,7 @@ program test_krome_eqbm
 
       m = get_mass()
       rhogas = sum(x(:)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei
+      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei,t_tot,t_cool
 
       if (stop_next) exit
 
