@@ -82,15 +82,10 @@ program test_krome_eqbm_time
     write(911, '(A)', ADVANCE='NO') "#ntot Tgas sum(heats)"
     write(911, '(A)') trim(krome_get_heating_names_header())
     
-    print *, 'Metallicity: ', zs(jz2), ' of Solar'
-
     !INITIAL CONDITIONS
     krome_redshift = 0d0    !redshift
     Tgas = 3d2             !temperature, K
     ntot = 1d-2
-
-    print *, 'Redshift: ', krome_redshift
-    print *, 'ISRF : ', chi0, ' of Solar'
 
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
@@ -98,6 +93,8 @@ program test_krome_eqbm_time
     call krome_set_dust_to_gas(zs(jz2))
     !scale grain recombination reactions if needed
     call krome_set_user_pdr_factor(1d0)
+    !input gas turbulent velocity dispersion to include turbulent/mechanical heating
+    call krome_set_user_sigmavel(0d0)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
@@ -107,10 +104,14 @@ program test_krome_eqbm_time
       call krome_set_user_is_metal(0d0)
     endif
 
+    print *, 'Metallicity: ', zs(jz2), ' of Solar'
+    print *, 'Redshift: ', krome_redshift
+    print *, 'ISRF : ', chi0, ' of Solar'
+    print *, 'Initial crate: ', crate_0
+
     !initialize KROME (mandatory)
     call krome_init()
 
-    print *, 'Initial crate: ', crate_0
     first_call = .true.
 
     do dens_bins = 1, 10000

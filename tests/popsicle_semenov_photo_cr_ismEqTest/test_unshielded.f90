@@ -95,6 +95,8 @@ program test_krome_eqbm
     call krome_set_chiFUV(chiFUV)
     !scale grain recombination reactions if needed
     call krome_set_user_pdr_factor(1d0)
+    !input gas turbulent velocity dispersion to include turbulent/mechanical heating
+    call krome_set_user_sigmavel(0d0)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals

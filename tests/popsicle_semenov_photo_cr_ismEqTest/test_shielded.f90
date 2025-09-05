@@ -86,10 +86,6 @@ program test_krome_eqbm
     Tgas = 3d2             !temperature, K
     ntot = 1d-2
 
-    print *, 'Metallicity: ', zs(jz2), ' of Solar'
-    print *, 'Redshift: ', krome_redshift
-    print *, 'ISRF : ', chi0, ' of Solar'
-
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
@@ -107,10 +103,13 @@ program test_krome_eqbm
       call krome_set_user_is_metal(0d0)
     endif
 
+    print *, 'Metallicity: ', zs(jz2), ' of Solar'
+    print *, 'Redshift: ', krome_redshift
+    print *, 'ISRF : ', chi0, ' of Solar'
+    print *, 'Initial crate: ', crate_0
+
     !initialize KROME (mandatory)
     call krome_init()
-
-    print *, 'Initial crate: ', crate_0
 
     !switch to tell when to stop the calculation
     stop_next = .false.
