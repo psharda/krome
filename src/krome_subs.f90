@@ -1234,13 +1234,14 @@ end function general_cluster_growth_rate
     use krome_commons
     use krome_getphys
     implicit none
-    real*8::n(nspec),Tgas,flux(nrea),maxflux
+    real*8::n(nspec),Tgas,flux(nrea),maxflux,rates(nrea)
     integer::nbest,idx(nrea),i,nbestin,idx_found
     character*50::name(nrea)
     logical::found
 
     nbest = min(nbestin,nrea) !cannot exceed the number of reactions
     maxflux = 0d0
+    rates(:) = coe(n(:)) !get rates
     flux(:) = get_flux(n(:),Tgas) !get fluxes
     name(:) = get_rnames() !get reaction names
     do i=1,nrea
@@ -1256,7 +1257,7 @@ end function general_cluster_growth_rate
     !print to screen
     print *,"***************"
     do i=1,nbest
-       print '(I8,a1,a50,2E17.8)',idx(i)," ",name(idx(i)),flux(idx(i)),&
+       print '(I8,a1,a50,2E17.8)',idx(i)," ",name(idx(i)),rates(idx(i)),flux(idx(i)),&
             flux(idx(i))/maxflux
     end do
 

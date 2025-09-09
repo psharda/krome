@@ -62,7 +62,8 @@ program test_krome_eqbm
     !Open file
     open(unit=22,file=filename,status='replace',action='write')
     write(22, '(A)', ADVANCE='NO') "#ntot rho Tgas Tdust"
-    write(22, '(A)') trim(krome_get_names_header())
+    write(22, '(A)', ADVANCE='NO') trim(krome_get_names_header())
+    write(22, '(A)') " t_tot"
 
     filename = trim('COOL_Z') // trim(zint_str)
     filename = trim(filename)
@@ -85,13 +86,15 @@ program test_krome_eqbm
     Tgas = 3d2              !temperature, K
     ntot = 1d-2
 
+    print *, 'Redshift: ', krome_redshift
+
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
     d2g = zs(jz2)
     call krome_set_dust_to_gas(d2g)
     call krome_set_chiFUV(chiFUV)
-    !scale grain recombination reactions as in GOW
+    !scale grain recombination reactions if needed
     call krome_set_user_pdr_factor(1d0)
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
     call krome_set_user_sigmavel(0d0)
@@ -127,13 +130,13 @@ program test_krome_eqbm
         !set individual species
         x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 3*2.681411d-07 + 1d-4))
         x(KROME_idx_H2)        = 2*1d-3*ntot
-        x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 2.681411e-07*ntot + 1.7d-6*zs(jz2)*ntot
+        x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 2.681411e-07*ntot
         x(KROME_idx_Hj)        = 1d-4*ntot
         x(KROME_idx_HE)        = 0.1*ntot
         x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
         x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
+        x(KROME_idx_D)         = 3d-5*ntot
         x(KROME_idx_H3j)       = 3*2.681411e-07*ntot
-        x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
         first_call             = .false.
       else
         x(:) = x(:) * increment
@@ -143,10 +146,6 @@ program test_krome_eqbm
 
       !initial Hnuclei
       Hnuclei_i = get_Hnuclei(x(:))
-
-      !Absorption rate of UV photons by dust (erg s^-1)
-      dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g
-      call krome_set_dustheatRad(dustHeatingRate)
 
       !No shielding; Av=0.0
       Av = 0.0
@@ -206,8 +205,8 @@ program test_krome_eqbm
         call krome_set_user_ionC(ionC)
         call krome_set_user_dissCO(dissCO)
 
-        !Absorption rate of UV photons by dust
-        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*d2g
+        !Absorption rate of UV photons by dust (erg s^-1)
+        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g
         call krome_set_dustheatRad(dustHeatingRate)
         call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()
@@ -268,7 +267,7 @@ program test_krome_eqbm
 
       m = get_mass()
       rhogas = sum(x(:)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei
+      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei,t_tot
 
       if (stop_next) exit
 

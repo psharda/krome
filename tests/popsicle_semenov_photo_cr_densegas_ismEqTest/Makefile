@@ -11,8 +11,6 @@ clib = -nofor_main
 
 #executable names
 exec_shielded = test_shielded
-exec_unshielded = test_unshielded
-exec_cooling = test_cooling
 exec_time = test_shielded_time_evolution
 
 #default libraries
@@ -87,15 +85,7 @@ objs += krome.o
 cobjs = krome_header.o
 
 # Default target to create all test executables
-all: $(exec_cooling) $(exec_unshielded) $(exec_shielded) $(exec_time)
-
-# Target for the main executable `test_cooling`
-$(exec_cooling): $(objs) test_cooling.o
-	$(fc) $(objs) test_cooling.o -o $(exec_cooling) $(switch) $(lib)
-
-# Target for the second executable `test_unshielded`
-$(exec_unshielded): $(objs) test_unshielded.o
-	$(fc) $(objs) test_unshielded.o -o $(exec_unshielded) $(switch) $(lib)
+all: $(exec_shielded) $(exec_time)
 
 # Target for the second executable `test_shielded`
 $(exec_shielded): $(objs) test_shielded.o
@@ -180,14 +170,10 @@ csharedlib_opt: switchc = -O3 -fPIC
 csharedlib_opt: objs += $(cobjs)
 csharedlib_opt: sharedlib
 
-#testing the shared library C interface
-csharedlib_test: csharedlib
-	$(gnu_cc) test.c -o $(exec_cooling) ./libkrome.$(dlext)
-
 
 #clean target
 clean:
-	rm -f *.o *.mod *__genmod.f90 *~ $(exec_cooling) $(exec_unshielded) $(exec_shielded) $(exec_time)
+	rm -f *.o *.mod *__genmod.f90 *~ $(exec_shielded) $(exec_time)
 
 #rule for f90
 %.o:%.f90

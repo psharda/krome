@@ -1,10 +1,11 @@
 !################################################################
 !Same as the one-zone ISM equilibrium test, but with a prescribed shielding column density
+!but here we store the time evolution of the temperature and abundances
 !For additional details, see Sec. 7.2.2 of Kim+23,
-!Author: Shyam Menon (CCA/Rutgers, 2024)
-!Email: smenon@flatironinstitute.org
+!Author: Shyam Menon (CCA/Rutgers, 2024) & Piyush Sharda (Leiden, 2025)
+!Email: smenon@flatironinstitute.org, sharda@strw.leidenuniv.nl
 !################################################################
-program test_krome_eqbm
+program test_krome_eqbm_time
 
   use krome_main
   use krome_user
@@ -20,16 +21,16 @@ program test_krome_eqbm
   integer,parameter::rstep = 500000
   integer::i,ii,ios,jscale,jz,jz2, dens_bins, zint
   real*8::rhogas,m(krome_nspec),sum_x,sum_xi
-  real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei,Hnuclei_i
+  real*8::tff,max_time,t_tot,Hnuclei,Hnuclei_i
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
   real*8::Av,heats(krome_nheats),crate,crate_0,NH,NHj,NH2,d2g
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
-  logical::stop_next, converged, first_call
+  logical::first_call
   character(len=100) :: filename, zint_str
   real, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21
   real :: Lshield, Nshield, t_cool
-  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21, increment = 1.25
+  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21, increment = 1d1
   integer :: start, finish, rate
   call system_clock(start, rate)
 
@@ -59,7 +60,7 @@ program test_krome_eqbm
     else
       write(zint_str, '(I2)') zint
     endif
-    filename = trim('AB_Z') // trim(zint_str)
+    filename = trim('AB_time_Z') // trim(zint_str)
     filename = trim(filename)
     !Open file
     open(unit=22,file=filename,status='replace',action='write')
@@ -67,14 +68,14 @@ program test_krome_eqbm
     write(22, '(A)', ADVANCE='NO') trim(krome_get_names_header())
     write(22, '(A)') " t_tot t_cool"
 
-    filename = trim('COOL_Z') // trim(zint_str)
+    filename = trim('COOL_time_Z') // trim(zint_str)
     filename = trim(filename)
     !Open file
     open(unit=31,file=filename,status='replace',action='write')
     write(31, '(A)', ADVANCE='NO') "#ntot Tgas sum(cools)"
     write(31, '(A)') trim(krome_get_cooling_names_header())
 
-    filename = trim('HEAT_Z') // trim(zint_str)
+    filename = trim('HEAT_time_Z') // trim(zint_str)
     filename = trim(filename)
     !Open file
     open(unit=911,file=filename,status='replace',action='write')
@@ -91,7 +92,7 @@ program test_krome_eqbm
     call krome_set_metallicity(zs(jz2))
     d2g = zs(jz2)
     call krome_set_dust_to_gas(d2g)
-    !scale grain recombination reactions as in GOW
+    !scale grain recombination reactions if needed
     call krome_set_user_pdr_factor(1d0)
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
     call krome_set_user_sigmavel(0d0)
@@ -113,11 +114,6 @@ program test_krome_eqbm
     !initialize KROME (mandatory)
     call krome_init()
 
-    !switch to tell when to stop the calculation
-    stop_next = .false.
-
-    ! Switches to decide when equilibrium has been reached
-    ertol = 1d-8  ! relative min change in a species
     first_call = .true.
 
     do dens_bins = 1, 10000
@@ -128,19 +124,19 @@ program test_krome_eqbm
         !set individual species
         x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 3*2.681411d-07 + 1d-4))
         x(KROME_idx_H2)        = 2*1d-3*ntot
-        x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 2.681411e-07*ntot + 1.7d-6*zs(jz2)*ntot
+        x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 2.681411e-07*ntot
         x(KROME_idx_Hj)        = 1d-4*ntot
         x(KROME_idx_HE)        = 0.1*ntot
         x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
         x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
+        x(KROME_idx_D)         = 3d-5*ntot
         x(KROME_idx_H3j)       = 3*2.681411e-07*ntot
-        x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
         first_call             = .false.
       else
         x(:) = x(:) * increment
       endif
 
-      call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
+      call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0) !Dust at 6K
 
       !initial Hnuclei
       Hnuclei_i = get_Hnuclei(x(:))
@@ -186,12 +182,8 @@ program test_krome_eqbm
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !Shielding done
 
-      dt = seconds_per_year * 1d4 !0.1 Myr initial time step
+      dt = seconds_per_year * 0.2d4 !0.1 Myr initial time step
       t_tot = dt
-      converged = .false.
-
-      !Higher densities, lower tolerance for convergence
-      if(ntot .gt. 1.e2) ertol = 1d-8
 
       !loop on density steps
       do i=1, rstep
@@ -263,62 +255,43 @@ program test_krome_eqbm
         Hnuclei = get_Hnuclei(n(:))
         n(krome_idx_Tgas) = Tgas
 
-        !kkk(1:krome_nmols) = krome_conserve(n(1:krome_nmols),ni(1:krome_nmols))
-        !n(:) = kkk(:)
-        !n(krome_idx_Tgas) = Tgas
-
-        ! check if we have converged by comparing the error in any species with an relative abundance above eatol
-        ! print *, 'haha: ', n(krome_idx_Tgas), ni(krome_idx_Tgas), abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas)
-        converged = abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .le. ertol &
-                     .or. t_tot .gt. max_time
-
         !Compute cooling time; t_cool = nk_BT/Lambda; where Lambda is in erg cm^-3 s^-1
         t_cool = (sum(x(:)) * boltzmann_erg * Tgas)/(cooling(n(:),Tgas))
 
         ! Increase integration time by a reasonable factor
-        if(.not. converged) then
-          !dt = dt * 3.
-          dt = MIN(t_cool,dt*3.0)
-          t_tot = t_tot + dt
-          ni = n
-        else
-          write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') &
-                    "CONVERGED; nH = ", Hnuclei, " Tgas = ", Tgas, " t_tot/Myr = ", &
-                    t_tot/(seconds_per_year*1.e6), " dt = ", dt/(seconds_per_year*1.e6), &
-                    " t_cool = ", t_cool/(seconds_per_year*1.e6)
-          exit
-        endif
+        !dt = MIN(t_cool,dt*3.0)
+        dt = dt*2.0
+        t_tot = t_tot + dt
+        ni = n
+
+        !dump cooling rates for Tgas going into the calculation
+        cools(:) = get_cooling_array(n(:),Tgas)
+        write(31,'(99E14.5e3)') Hnuclei, Tgas, sum(cools), cools(:)
+        kk(:) = krome_get_coef(Tgas,x(:))
+        heats(:) = get_heating_array(n(:),Tgas,kk(:),0d0) !TODO: pass nH2dust instead of 0d0 as the third argument
+        write(911,'(99E14.5e3)') Hnuclei, Tgas, sum(heats), heats(:)
+        m = get_mass()
+        rhogas = sum(x(:)*m(1:krome_nmols))
+        write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei,t_tot,t_cool
+        !returns to user array
+        x(:) = n(1:krome_nmols)
+
+        if (t_tot .gt. max_time) exit
+
       end do
 
-      !dump cooling rates for Tgas going into the calculation
-      cools(:) = get_cooling_array(n(:),Tgas)
-      write(31,'(99E14.5e3)') Hnuclei, Tgas, sum(cools), cools(:)
-      kk(:) = krome_get_coef(Tgas,x(:))
-      heats(:) = get_heating_array(n(:),Tgas,kk(:),0d0) !TODO: pass nH2dust instead of 0d0 as the third argument
-      write(911,'(99E14.5e3)') Hnuclei, Tgas, sum(heats), heats(:)
-      call krome_popcool_dump(Tgas, 37)
+      !line break after each density is done
+      write(22,*)
+      write(31,*)
+      write(911,*)
 
-      !returns to user array
-      x(:) = n(1:krome_nmols)
-
-      if(t_tot > max_time .or. abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .gt. ertol) then
-        print *, 'krome_equilibrium: Did not converge in ', max_time / seconds_per_year, ' years. Reldiff: ', abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas)
-        print *, 'Tgas :', n(krome_idx_Tgas)
-      end if
-
-      m = get_mass()
-      rhogas = sum(x(:)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei,t_tot,t_cool
-
-      if (stop_next) exit
+      write (*, '(A, E12.4, A)') &
+                    "Density nH = ", Hnuclei, " done."
 
       !increase density by 'increment' for the next bin
       ntot = ntot * increment
       !break when max density reached
-      if (ntot .gt. 1.e6) then
-        ntot = 1.e6
-        stop_next = .true.
-      endif
+      if (ntot .gt. 1.e6) exit
     end do
 
     !Close files
@@ -326,8 +299,6 @@ program test_krome_eqbm
     close(31)
     close(911)
   end do
-
-  !call cool_DustGRREC(5d0,1.e3)
 
   !say goodbye
   print *,"To plot in python:"
@@ -365,5 +336,5 @@ contains
 
   end function calculate_F
 
-end program test_krome_eqbm
+end program test_krome_eqbm_time
 

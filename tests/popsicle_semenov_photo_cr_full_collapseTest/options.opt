@@ -1,0 +1,16 @@
+##############
+#options for test collapse
+
+-n networks/react_popsicle_semenov_photo_cr_full
+-cooling=H2,CONT,CHEM,CI,CII,OI,HD,CO,ATOMIC,COMPTON,DUSTSEMENOV,FF,NEBULAR,Z_CIEGF,DUSTGRREC,OH,H2O
+-heating=COMPRESS,CHEM,PHOTODUSTWD,CR,PHOTOAV,ACCRETION,TURBULENCE
+-H2opacity=OMUKAI
+-gamma=EXACT
+-ATOL=1d-40
+-RTOL=1d-6
+-maxord=1
+-shielding=WG11_withH
+-shielding_CO
+-shielding_C
+-columnDensityMethod=JEANS
+-popsicle_ice

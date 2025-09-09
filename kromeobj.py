@@ -61,7 +61,7 @@ class krome:
 	useCoolingHCN = useCoolingOH = useCoolingH2O = useGOW = False
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
-	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useHeatingAccretion = False
+	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useHeatingAccretion = useHeatingTurbulence = False
 	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = useHeatingPhotoDustWD = useHeatingPhotoDustNetWD = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
 	usePhotoOpacity = useXRay = hasSurfaceReactions = shieldHabingDust = False
@@ -283,7 +283,7 @@ class krome:
 		self.parser.add_argument("-gizmo", action="store_true", help="create patches for Gizmo")
 		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be RIPAMONTI or OMUKAI")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM\
-			, DH, CR, PHOTOAV,VISCOUS,PHOTODUSTNET,PHOTODUSTNETWD,PHOTODUSTWD,ACCRETION. If you want a complete list of the available heating options type -heating=?")
+			, DH, CR, PHOTOAV,VISCOUS,PHOTODUSTNET,PHOTODUSTNETWD,PHOTODUSTWD,ACCRETION,TURBULENCE. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-interfaceC", action="store_true", help="create a C wrapper")
 		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper \
@@ -1396,7 +1396,7 @@ class krome:
 			myHeat = [x.strip() for x in myHeat]
 			self.allHeatings = myHeat
 			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","ACCRETION",
-						"PHOTODUSTNET","XRAY","VISCOUS","PHOTODUSTNETWD","PHOTODUSTWD"]
+						"PHOTODUSTNET","XRAY","VISCOUS","PHOTODUSTNETWD","PHOTODUSTWD","TURBULENCE"]
 			for hea in myHeat:
 				if hea not in allHeats:
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "
@@ -1413,6 +1413,7 @@ class krome:
 			if "PHOTODUSTNETWD" in myHeat: self.useHeatingPhotoDustNetWD = True #photoelectric heating from dust with recombination cooling from Weingartner and Draine 2001 ApJS
 			if "PHOTODUSTWD" in myHeat: self.useHeatingPhotoDustWD = True #photoelectric heating from dust withOUT recombination cooling from Weingartner and Draine 2001 ApJS
 			if "ACCRETION" in myHeat: self.useHeatingAccretion = True #heating from accretion luminosity
+			if "TURBULENCE" in myHeat: self.useHeatingTurbulence = True #heating from turbulence (mechanical heating)
 			if "XRAY" in myHeat: self.useHeatingXRay = True #heating from xray reactions rate
 			if "VISCOUS" in myHeat: self.useHeatingVisc = True #heating from viscosity
 			#if("H2PUMPING" in myHeat): self.useHeatingPumpH2 = True #heating from photodissociation of H2 in LW bands
@@ -5075,6 +5076,7 @@ class krome:
 				and self.useSurface): skip = True
 			if srow == "#IFKROME_useOmukaiOpacity" and self.H2opacity != "OMUKAI": skip = True
 			if srow == "#IFKROME_useHeatingAccretion" and not(self.usedTdust or self.useDustT or self.useHeatingAccretion): skip = True
+			if srow == "#IFKROME_useHeatingTurbulence" and not self.useHeatingTurbulence: skip = True
 			if srow == "#IFKROME_useCoolingCO" and not self.useCoolingCO: skip = True
 			if srow == "#IFKROME_useCoolingOH" and not self.useCoolingOH: skip = True
 			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
@@ -7040,6 +7042,7 @@ class krome:
 				if row.strip() == "#IFKROME_useHeatingVisc" and not self.useHeatingVisc: skip = True
 				if row.strip() == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
 				if row.strip() == "#IFKROME_useHeatingAccretion" and not self.useHeatingAccretion: skip = True
+				if row.strip() == "#IFKROME_useHeatingTurbulence" and not self.useHeatingTurbulence: skip = True
 				#if(row.strip() == "#IFKROME_useHeatingPumpH2" and not(self.useHeatingPumpH2)): skip = True
 				if row.strip() == "#IFKROME_useHeatingZCIE" and not self.useCoolingZCIE: skip = True
 				if row.strip() == "#IFKROME_useHeatingZExtended" and not self.useCoolingZExtended: skip = True
@@ -8176,6 +8179,7 @@ class krome:
 			if srow == "#IFKROME_useH2esc_omukai" and self.H2opacity != "OMUKAI": skip = True
 			if srow == "#IFKROME_usePreDustExp" and not((self.usedTdust or self.useDustT) and self.useSurface): skip = True
 			if srow == "#IFKROME_useHeatingAccretion" and not(self.usedTdust or self.useDustT or self.useHeatingAccretion): skip = True
+			if srow == "#IFKROME_useHeatingTurbulence" and not self.useHeatingTurbulence: skip = True
 			if srow == "#IFKROME_useDustTabs" and not self.useDustTabs: skip = True
 			if srow == "#IFKROME_reducer" and not self.reducer: skip = True
 			if srow == "#IFKROME_useBindC" and not(self.interfaceC or self.interfacePy): skipBindC = True
