@@ -1,0 +1,4 @@
+This test computes the 1D PDR structure for the parameters corresponding to the benchmark tests presented in Rollig et al. 2007.
+The default test is the V1 test in Rollig et al. 2007. You can modify the ntot and chi to do a different one.
+The setup_Rollig_test.py will automatically change the H2 formation rate on grains to one identical to the test. This is done automatically when running make. 
+Result files for the PDR codes in the project are available here: https://lecture.ph1.uni-koeln.de/pdr-comparison/results_data_post.htm
