@@ -1257,7 +1257,7 @@ end function general_cluster_growth_rate
     !print to screen
     print *,"***************"
     do i=1,nbest
-       print '(I8,a1,a50,2E17.8)',idx(i)," ",name(idx(i)),rates(idx(i)),flux(idx(i)),&
+       print '(I8,a1,a50,3E17.8)',idx(i)," ",name(idx(i)),rates(idx(i)),flux(idx(i)),&
             flux(idx(i))/maxflux
     end do
 
