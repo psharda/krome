@@ -141,7 +141,7 @@ program test_krome_eqbm
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       Nshield = NH_cum + 2*NH2_cum
       !Using the Av definition provided in Rollig et al. 2007
-      Av = Nshield * zs(jz2)* 6.289d-22
+      Av = Nshield * d2g * 6.289d-22
       call krome_set_user_Av(Av)
 
       !set H ionization reaction rate coeff
@@ -193,7 +193,7 @@ program test_krome_eqbm
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         Nshield = NH_cum + 2*NH2_cum
         !Using the Av definition provided in Rollig et al. 2007
-        Av = Nshield * zs(jz2)* 6.289d-22
+        Av = Nshield * d2g * 6.289d-22
         call krome_set_user_Av(Av)
 
         !set H ionization reaction rate coeff
