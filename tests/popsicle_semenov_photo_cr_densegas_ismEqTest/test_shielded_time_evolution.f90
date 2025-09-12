@@ -149,8 +149,8 @@ program test_krome_eqbm_time
 
       !Set shielded quantities and rates
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      Lshield = Lshield_0 * (sum(x(:))/n_0)**(-a)
-      Nshield = Lshield * sum(x(:))
+      Lshield = Lshield_0 * (Hnuclei_i/n_0)**(-a)
+      Nshield = Lshield * Hnuclei_i
       Av = Nshield * d2g / 1.87d21
       call krome_set_user_Av(Av)
 
@@ -203,8 +203,9 @@ program test_krome_eqbm_time
 
         !Set shielded quantities and rates
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        Lshield = Lshield_0 * (sum(x(:))/n_0)**(-a)
-        Nshield = Lshield * sum(x(:))
+        Hnuclei = get_Hnuclei(n(:))
+        Lshield = Lshield_0 * (Hnuclei/n_0)**(-a)
+        Nshield = Lshield * Hnuclei
         Av = Nshield * d2g / 1.87d21
         call krome_set_user_Av(Av)
 
@@ -257,7 +258,7 @@ program test_krome_eqbm_time
         n(krome_idx_Tgas) = Tgas
 
         !Compute cooling time; t_cool = nk_BT/Lambda; where Lambda is in erg cm^-3 s^-1
-        t_cool = (sum(x(:)) * boltzmann_erg * Tgas)/(cooling(n(:),Tgas))
+        t_cool = (Hnuclei * boltzmann_erg * Tgas)/(cooling(n(:),Tgas))
 
         ! Increase integration time by a reasonable factor
         !dt = MIN(t_cool,dt*3.0)
