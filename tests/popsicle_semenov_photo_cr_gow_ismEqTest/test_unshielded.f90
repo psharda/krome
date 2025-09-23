@@ -235,7 +235,7 @@ program test_krome_eqbm
                      .or. t_tot .gt. max_time
 
         !Compute cooling time; t_cool = P/Lambda = nk_BT/Lambda; where Lambda is in erg cm^-3 s^-1
-        t_cool = (sum(x(:)) * boltzmann_erg * Tgas)/(cooling(n(:),Tgas))
+        t_cool = (Hnuclei * boltzmann_erg * Tgas)/(cooling(n(:),Tgas))
 
         if(.not. converged) then
           !Restrict timestep to 10% of cooling time for stability, and enforce at most factor 3 change in dt
