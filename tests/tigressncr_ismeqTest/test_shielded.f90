@@ -37,7 +37,7 @@ program test_krome_eqbm
   !set the scaled FUV intensity
   chi0 = 1d0
   !Set the cosmic ray rate, proportional to the FUV intensity; default for ISRF 2x10^-16 s^-1
-  crate_0 = 1d-16
+  crate_0 = 2d-16
 
 
   max_time=seconds_per_year*1.e9 ! max time we will be integrating for = 1000 Myrs (1Gyr)
