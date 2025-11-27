@@ -208,6 +208,7 @@ contains
     real*8::ne,xCtot,xOtot, pion_C, crion_C, alpha17, beta17, gamma17, krr, kdr1, kdr2, kdr3, kdr4, kdr5, &
             kdr, nCplus, kCplusH2, nOplus, nCO, nCO_crit, nH, ntot
     real, parameter :: dissCO_draine = 2.592d-10 !Base CO dissociation rate for Draine ISRF field
+    real, parameter :: abundances_floor = 1d-20
 
     ntot = sum(n(1:nmols))
     nH = get_Hnuclei(n(:))
@@ -249,15 +250,15 @@ contains
     !Equation 25 in Kim+2023
     nCO = xCtot * nH * 2d0 * (n(idx_H2)/nH) * (1d0 - max(nCplus/(xCtot*nH),nOplus/(xOtot*nH)))/(1d0 + (nCO_crit/ntot)**2d0)
 
-    n(idx_Cj) = max(nCplus,0d0)
-    n(idx_CO) = max(nCO,0d0)
+    n(idx_Cj) = max(nCplus,abundances_floor)
+    n(idx_CO) = max(nCO,abundances_floor)
     !Obtain nC from closure (only C, C+ and CO are considered)
-    n(idx_C) = max(xCtot * nH - nCplus - nCO,0d0)
+    n(idx_C) = max(xCtot * nH - nCplus - nCO,abundances_floor)
 
-    nOplus = max(nOplus,0d0)
+    nOplus = max(nOplus,abundances_floor)
     !Obtain nO from closure (only O and O+ are considered)
-    n(idx_O) = max(xOtot * nH - nOplus -nCO,0d0)
-    
+    n(idx_O) = max(xOtot * nH - nOplus -nCO,abundances_floor)
+
     return
   end subroutine steadystate_tigressNCR
 #ENDIFKROME_tigressNCR
