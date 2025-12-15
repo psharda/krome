@@ -238,7 +238,7 @@ contains
     kCplusH2 = 2.31d-13*(Tgas)**(-1.3)*exp(-23/Tgas)
 
     !Equation 24 in Kim+2023
-    nCplus = xCtot * nH * (pion_C + crion_C)/(pion_C + crion_C+ntot*C_recombination_on_dust(n,Tgas) &
+    nCplus = xCtot * nH * (pion_C + crion_C)/(pion_C + crion_C+ntot*C_recombination_on_dust(n,Tgas)*user_pdr_factor &
         + (krr+kdr)*ne + kCplusH2*n(idx_H2))
 
     !O/O+ steady state solution is simply equal to the H/H+ ratio due to efficient charge transfer
