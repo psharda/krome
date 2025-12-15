@@ -240,9 +240,9 @@
 55,H,H+,E,NONE,41d3,(2.3*xH2 + 1.5d0*xH)*user_crate
 56,H2,H2+,E,NONE,41d3,2.0*(2.3*xH2 + 1.5d0*xH)*user_crate
 58,He,He+,E,NONE,41d3,1.1*user_crate
-59,CO,C,O,NONE,41d3,92*h2frac*user_crate*user_is_metal
+59,CO,C,O,NONE,41d3,90*h2frac*user_crate*user_is_metal
 59,Si,Si+,E,NONE,41d3,8400*h2frac*user_crate*user_is_metal
-60,C,C+,E,NONE,41d3,(3.85 + 520*h2frac)*user_crate*user_is_metal
+60,C,C+,E,NONE,41d3,(3.85 + 560*h2frac)*user_crate*user_is_metal
 #@storeOnce_stop
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 61,CO,H,HCO+,E,NONE,NONE,6.52*user_crate*user_is_metal
