@@ -27,7 +27,7 @@ program test_krome
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea)
   real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
-  real*8::ionH,dissH2,ionC,dissCO,chiFUV,dustHeatingRate
+  real*8::ionH,dissH2,ionC,dissCO,chiFUV,chi0,dustHeatingRate,d2g
   logical::crate_attenuation
   real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
 
@@ -38,7 +38,7 @@ program test_krome
   crate_attenuation = .False.
 
   !set chiFUV for photoreactions
-  chiFUV = 1d0
+  chi0 = 1d0
 
   !output header
   write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust"
@@ -64,12 +64,12 @@ program test_krome
     krome_redshift = 0d0    !redshift
     ntot = 0.1d0              !total density, cm-3
     Tgas = 3d2              !temperature, K
+    d2g = zs(jz2)           !dust-to-gas ratio
 
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
-    call krome_set_dust_to_gas(zs(jz2))
-    call krome_set_chiFUV(chiFUV)
+    call krome_set_dust_to_gas(d2g)
     !scale grain recombination reactions if needed
     call krome_set_user_pdr_factor(1d0)
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
@@ -104,39 +104,6 @@ program test_krome
 
     call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
 
-    !set initial Av, following equation 3 of Gong, Ostriker and Wolfire 2017
-    NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
-    NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
-    NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
-    Av = (NH + NHj + 2d0*NH2) *zs(jz2) / 1.87d21
-    call krome_set_user_Av(Av)
-    print *, 'Initial Av: ', krome_get_user_Av()
-
-    !Cosmic ray ionization rate
-    if (crate_attenuation) then
-      !Attenuate following Appendix F of Padovani et al. 2018
-      crate = 10**calculate_F(NH + NHj + 2d0*NH2)
-      print *, 'Using cosmic ray attenutation'
-    else
-      crate = 3d-17
-      print *, 'Using constant cosmic ray ionization rate'
-    endif
-    print *, 'Initial crate: ', crate
-    call krome_set_user_crate(crate)
-
-    !set H ionization reaction rate coeff
-    ionH = 2.19d-12*exp(-1.14e4*Av)*chiFUV
-    call krome_set_user_ionH(ionH)
-    !set H2 dissociation reaction rate coeff
-    n(1:krome_nmols) = x(:)
-    n(KROME_idx_Tgas) = Tgas
-    dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)*chiFUV
-    call krome_set_user_dissH2(dissH2)
-    ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()*chiFUV
-    dissCO = 2.592d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()*chiFUV
-    call krome_set_user_ionC(ionC)
-    call krome_set_user_dissCO(dissCO)
-
     !set initial density
     dd = ntot
 
@@ -148,8 +115,8 @@ program test_krome
 
 
     !print initial output
-    dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
-    call krome_set_dustheatRad(dustHeatingRate)
+    !dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
+    !call krome_set_dustheatRad(dustHeatingRate)
     Tdust = krome_get_Semenov_Tdust()
     m = get_mass()
     rhogas = sum(x(:)*m(1:krome_nmols))
@@ -177,6 +144,7 @@ program test_krome
        !set time-step
        dt = dtH
 
+       !set Av using Jeans length (krome_num2col uses Jeans length as a the shielding length)
        NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
        NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
        NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
@@ -188,14 +156,17 @@ program test_krome
          call krome_set_user_crate(crate)
        endif
 
+       chiFUV = chi0 * exp(-(NH+ NHj+2d0*NH2)* dustUV_crossSection * d2g)
+       call krome_set_chiFUV(chiFUV)
+
        !set H ionization reaction rate coeff
-       ionH = 2.19d-12*exp(-1.14e4*Av)*chiFUV
+       ionH = 2.19d-12*exp(-1.14e4*Av)*chi0
        call krome_set_user_ionH(ionH)
        !set H2 dissociation reaction rate coeff
-       dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)*chiFUV
+       dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)*chi0
        call krome_set_user_dissH2(dissH2)
-       ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()*chiFUV
-       dissCO = 2.592d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()*chiFUV
+       ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()*chi0
+       dissCO = 2.592d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()*chi0
        call krome_set_user_ionC(ionC)
        call krome_set_user_dissCO(dissCO)
 
