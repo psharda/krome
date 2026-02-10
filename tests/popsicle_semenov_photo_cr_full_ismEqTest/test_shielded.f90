@@ -28,7 +28,7 @@ program test_krome_eqbm
   logical::stop_next, converged, first_call
   character(len=100) :: filename, zint_str
   real, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21
-  real :: Lshield, Nshield, t_cool
+  real*8 :: Lshield, Nshield, t_cool
   real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21, increment=1.25
   integer :: start, finish, rate
   call system_clock(start, rate)
@@ -149,43 +149,6 @@ program test_krome_eqbm
       n(1:krome_nmols) = x(:)
       n(KROME_idx_Tgas) = Tgas
       ni(:) = n(:)
-
-      !Set shielded quantities and rates
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      Lshield = Lshield_0 * (Hnuclei_i/n_0)**(-a)
-      Nshield = Lshield * Hnuclei_i
-      Av = Nshield * d2g / 1.87d21
-      call krome_set_user_Av(Av)
-
-      !set H ionization reaction rate coeff
-      ionH = 0.0 !No H ionization
-      call krome_set_user_ionH(ionH)
-
-      !LW and PE rates
-      chiLW = chi0 * exp(-sigmaD_LW * d2g * Nshield) !Dust extinction, where D linearly scales with Z
-      chiPE = chi0 * exp(-sigmaD_PE * d2g * Nshield) !Dust extinction, where D linearly scales with Z
-      !Dissociation rates
-      dissH2 = 5.60d-11*chiLW*krome_fshield(n,Tgas)
-      call krome_set_user_dissH2(dissH2)
-      ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*krome_fshield_C(n,Tgas)
-      dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*krome_fshield_CO(n,Tgas)
-      call krome_set_user_ionC(ionC)
-      call krome_set_user_dissCO(dissCO)
-
-      !FUV rate for photoelectric heating (FUV = LW + PE; both of these are attenuated separately as above)
-      chiFUV = (chiPE * 1.8e-4 + chiLW * 3.e-5)/(2.1e-4) !Scale and sum attenuated ISRF LW/PE intensities to the mean FUV intensity
-      call krome_set_chiFUV(chiFUV)
-      !Shield the CR rate by Eq. 55 of Kim+23
-      if(Nshield < 9.35e20) then
-        crate = crate_0
-      else
-        crate = crate_0 * (Nshield/9.35e20)**(-1)
-      endif
-      call krome_set_user_crate(crate)
-
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !Shielding done
-
       dt = seconds_per_year * 1d4 !0.1 Myr initial time step
       t_tot = dt
       converged = .false.
@@ -212,6 +175,7 @@ program test_krome_eqbm
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         Hnuclei = get_Hnuclei(n(:))
         Lshield = Lshield_0 * (Hnuclei/n_0)**(-a)
+        !Lshield = get_jeans_length(n(:), Tgas)
         Nshield = Lshield * Hnuclei
         Av = Nshield * d2g / 1.87d21
         call krome_set_user_Av(Av)
