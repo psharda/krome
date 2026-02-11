@@ -260,9 +260,9 @@
       cooling_CO = 0d0
 
       !check limits
-      if(v1>=v1max) v1 = v1max*(1d0-eps)
-      if(v2>=v2max) v2 = v2max*(1d0-eps)
-      if(v3>=v3max) v3 = v3max*(1d0-eps)
+      if(v1>=v1max) return
+      if(v2>=v2max) return
+      if(v3>=v3max) return
 
       if(v1<v1min) return
       if(v2<v2min) return
@@ -545,9 +545,9 @@
       cooling_OH = 0d0
 
       !check limits
-      if(v1 >= v1max) v1 = v1max * (1d0 - eps)
-      if(v2 >= v2max) v2 = v2max * (1d0 - eps)
-      if(v3 >= v3max) v3 = v3max * (1d0 - eps)
+      if(v1 >= v1max) return
+      if(v2 >= v2max) return
+      if(v3 >= v3max) return
 
       if(v1 < v1min) return
       if(v2 < v2min) return
@@ -615,9 +615,9 @@
         v2_z = log10(v2_z)
 
         !check limits
-        if(v1_z>=v1max_z) v1_z = v1max_z*(1d0-eps)
-        if(v2_z>=v2max_z) v2_z = v2max_z*(1d0-eps)
-        if(v3_z>=v3max_z) v3_z = v3max_z*(1d0-eps)
+        if(v1_z>=v1max_z) return
+        if(v2_z>=v2max_z) return
+        if(v3_z>=v3max_z) return
 
         if(v1_z<v1min_z) return
         if(v2_z<v2min_z) return
@@ -831,9 +831,9 @@
       cooling_H2O = 0d0
 
       !check limits
-      if(v1 >= v1max) v1 = v1max * (1d0 - eps)
-      if(v2 >= v2max) v2 = v2max * (1d0 - eps)
-      if(v3 >= v3max) v3 = v3max * (1d0 - eps)
+      if(v1 >= v1max) return
+      if(v2 >= v2max) return
+      if(v3 >= v3max) return
 
       if(v1 < v1min) return
       if(v2 < v2min) return
@@ -903,9 +903,9 @@
         v2_z = log10(v2_z)
 
         !check limits
-        if(v1_z>=v1max_z) v1_z = v1max_z*(1d0-eps)
-        if(v2_z>=v2max_z) v2_z = v2max_z*(1d0-eps)
-        if(v3_z>=v3max_z) v3_z = v3max_z*(1d0-eps)
+        if(v1_z>=v1max_z) return
+        if(v2_z>=v2max_z) return
+        if(v3_z>=v3max_z) return
 
         if(v1_z<v1min_z) return
         if(v2_z<v2min_z) return
