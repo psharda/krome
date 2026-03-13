@@ -1172,7 +1172,7 @@ class krome:
 		#whether to apply element conservation for the popsicle semenov photo+cr network
 		if args.applyElementConservation_popsicle_semenov_photo_full:
 			print("Reading option -applyElementConservation_popsicle_semenov_photo_full")
-			if self.filename != "networks/react_popsicle_semenov_photo_cr":
+			if self.filename != "networks/react_popsicle_semenov_photo_cr_full":
 				die("ERROR: option -applyElementConservation_popsicle_semenov_photo_full can only be used for the react_popsicle_semenov_photo_cr network!")
 			self.applyElementConservation_popsicle_semenov_photo_full = True
 

@@ -1,15 +1,12 @@
 """
-Script to produce a plot of Tgas as a function of number density based on output from POPSICLE test
-Author: Piyush Sharda (Leiden) 2024: sharda@strw.leidenuniv.nl
+Script to produce the evolution of a one-zone model
+Author: Shyam Menon (2025); CCA, Flatiron Institute
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 import cmasher as cm
-from fileZSplit import split_by_metallicity
-
-Zvals = [-2,-1,0]
-Zlabels = [r'$10^{-2} Z_{\odot}$',r'$10^{-1} Z_{\odot}$',r'$Z_{\odot}$']
+from EqTime import get_teq_onezone
 
 Year = 3.15576e7 #seconds in a year
 
@@ -60,54 +57,85 @@ def get_Hnuclei(file):
         elif(headers[i] == "H3+"):
             nHnuclei += f[i] * 3.0
 
-    ntot = f[1] #Get total number density since tabulated value scaled by this
+    #ntot = f[1] #Get total number density since tabulated value scaled by this
 
     return nHnuclei
 
-#First split the output files into separate files based on metallicity
-split_by_metallicity("fort.22", "OneZoneAB")
-split_by_metallicity("fort.31", "OneZoneCools")
-split_by_metallicity("fort.911", "OneZoneHeats")
+def get_Catoms(file):
+    ab = open(file,'r')
+    f = np.loadtxt(file).T
+    header = ab.readline()
+    headers = header.split("#")[1].split("\n")[0].split(" ")
+    nCtot = 0.0
+    cols = int(np.shape(f)[0])
+    for i in range(2,cols):
+        if(headers[i] == "C"):
+            nCtot += f[i]
+        elif(headers[i] == "CH"):
+            nCtot += f[i]
+        elif(headers[i] == "CH2"):
+            nCtot += f[i]
+        elif(headers[i] == "CH3"):
+            nCtot += f[i]
+        elif(headers[i] == "CH4"):
+            nCtot += f[i]
+        elif(headers[i] == "CO"):
+            nCtot += f[i]
+        elif(headers[i] == "CO2"):
+            nCtot += f[i]
+        elif(headers[i] == "C+"):
+            nCtot += f[i]
+        elif(headers[i] == "CO+"):
+            nCtot += f[i]
+        elif(headers[i] == "CH+"):
+            nCtot += f[i]
+        elif(headers[i] == "CH2+"):
+            nCtot += f[i]
+
+    #ntot = f[0] #Get total number density since tabulated value scaled by this
+
+    return nCtot
 
 fig, axs = plt.subplots(nrows=3,figsize=(5.4, 14.4), tight_layout=True,sharex=True)
 output_prefix = "OneZoneAB"
 
-for i, Zval in enumerate(Zvals):
-    filename = "{}_Z{}.dat".format(output_prefix, Zval)
-    f = np.loadtxt(filename).T
-    ab = open(filename,'r')
-    nHnuclei = get_Hnuclei(filename)
-    header = ab.readline()
-    headers = header.split("#")[1].split("\n")[0].split(" ")
-    filters = ["H","H+","H2"]
-    linestyles = ["--",":","-"]
-    
-    cols = int(np.shape(f)[0])
-    index = 0
-    axs[0].plot(f[0]/(1.e6*Year), f[3], label=Zlabels[i], color=cm.lavender(i/len(Zvals)), linewidth=3.0,alpha=0.6)
-    for j in range(2,cols):
-        if(headers[j] in filters):
-            index = np.where(np.array(filters) == headers[j])[0][0]
-            if(i==0):
-                axs[1].plot(f[0]/(1.e6*Year),f[j]/nHnuclei,label=str(headers[j]),color=cm.lavender(i/len(Zvals)), 
-                ls=linestyles[index],linewidth=3.0,alpha=0.6)
-            else:
-                axs[1].plot(f[0]/(1.e6*Year),f[j]/nHnuclei,color=cm.lavender(i/len(Zvals)), 
-                ls=linestyles[index],linewidth=3.0,alpha=0.6)
-            index += 1
+colors_mpl = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
-    index = 0
-    filters = ["C+","C","CO"]
-    for j in range(2,cols):
-        if(headers[j] in filters):
-            index = np.where(np.array(filters) == headers[j])[0][0]
-            if(i==0):
-                axs[2].plot(f[0]/(1.e6*Year),f[j]/nHnuclei/(1.6e-4*10**(Zval)),label=str(headers[j]),color=cm.lavender(i/len(Zvals)), 
-                ls=linestyles[index],linewidth=3.0,alpha=0.6)
-            else:
-                axs[2].plot(f[0]/(1.e6*Year),f[j]/nHnuclei/(1.6e-4*10**(Zval)),color=cm.lavender(i/len(Zvals)), 
-                ls=linestyles[index],linewidth=3.0,alpha=0.6)
-            index += 1
+filename = "fort.22"
+f = np.loadtxt(filename).T
+ab = open(filename,'r')
+nHnuclei = get_Hnuclei(filename)
+header = ab.readline()
+headers = header.split("#")[1].split("\n")[0].split(" ")
+filters = ["H","H+","H2"]
+linestyles = ["--",":","-"]
+    
+cols = int(np.shape(f)[0])
+index = 0
+axs[0].plot(f[0]/(1.e6*Year), f[3], linewidth=3.0,alpha=0.6)
+for j in range(2,cols):
+    if(headers[j] in filters):
+        index = np.where(np.array(filters) == headers[j])[0][0]
+        axs[1].plot(f[0]/(1.e6*Year),f[j]/nHnuclei,label=str(headers[j]), 
+            ls=linestyles[index],color=colors_mpl[index],linewidth=3.0,alpha=0.6)
+        index += 1
+
+index = 0
+filters = ["C+","C","CO"]
+nCtot = get_Catoms(filename)
+print(nCtot/nHnuclei)
+for j in range(2,cols):
+    if(headers[j] in filters):
+        index = np.where(np.array(filters) == headers[j])[0][0]
+        axs[2].plot(f[0]/(1.e6*Year),f[j]/nCtot,label=str(headers[j]), 
+            ls=linestyles[index],linewidth=3.0,alpha=0.6,color=colors_mpl[index])
+        
+#Eq timescales
+teq_Temp, teq_H2, teq_C, teq_Cplus, teq_CO = get_teq_onezone(filename,verbose=True)
+axs[0].axvline(teq_Temp/(1.e6*Year), color=colors_mpl[0], ls='--', lw=1.5, alpha=0.6)
+axs[1].axvline(teq_H2/(1.e6*Year), color=colors_mpl[2], ls='--', lw=1.5, alpha=0.6)
+axs[2].axvline(teq_Cplus/(1.e6*Year), color=colors_mpl[0], ls='--', lw=1.5, alpha=0.6)
+axs[2].axvline(teq_CO/(1.e6*Year), color=colors_mpl[2], ls='--', lw=1.5, alpha=0.6)
 
 axs[2].set_xlabel(r'$t \, (\rm Myr)$', fontsize=20)
 axs[0].set_ylabel(r'$T_{\rm gas} \ (\rm K)$', fontsize=20)

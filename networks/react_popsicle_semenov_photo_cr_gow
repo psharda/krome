@@ -1,9 +1,7 @@
 #############################################################################################
 #Reduced chemical network for POPSICLE simulations
-#Author: Piyush Sharda (Leiden), 2024
-#the following is the network from GOW (Gong, Ostriker, Wolfire 2017)
-#with CO ice and He++ added
-#also ensuring H2+ and O+ recombine with electrons
+#Author: Piyush Sharda (Leiden) and Shyam Menon (CCA), 2024
+#the following is the network from GOW (Gong, Ostriker, Wolfire 2017) with He++ added
 #plus few additional reactions from Hunter et al. 2023 which are needed for high Tgas
 #Includes photo chemistry and cosmic ray chemistry
 #Uses Semenov+2003 opacities and does not use KROME's inbuilt dust functionality (except for freezeout reactions)
@@ -211,13 +209,13 @@
 @noTab_start
 @format:idx,R,R,P,rate
 #reaction 2 in table A2 of GOW
-51,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
+52,H+,E,H,H_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 #reaction 4 in table A2 of GOW
-52,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
+53,He+,E,He,He_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 #reaction 3 in table A2 of GOW
-53,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
+54,C+,E,C,C_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 #reaction 5 in table A2 of GOW
-54,Si+,E,Si,Si_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
+55,Si+,E,Si,Si_recombination_on_dust(n,Tgas)*user_is_metal*user_pdr_factor*Hnuclei/n(idx_E)
 @noTab_stop
 
 ########################################## END PHOTO CHEMISTRY ###################################################################
@@ -237,15 +235,15 @@
 @var:h2frac=2*n(idx_H2)/(2*n(idx_H2) + n(idx_H))
 @var:xH2 = n(idx_H2)/ntot
 @var:xH = n(idx_H)/ntot
-55,H,H+,E,NONE,41d3,(2.3*xH2 + 1.5d0*xH)*user_crate
-56,H2,H2+,E,NONE,41d3,2.0*(2.3*xH2 + 1.5d0*xH)*user_crate
+56,H,H+,E,NONE,41d3,(2.3*xH2 + 1.5d0*xH)*user_crate
+57,H2,H2+,E,NONE,41d3,2.0*(2.3*xH2 + 1.5d0*xH)*user_crate
 58,He,He+,E,NONE,41d3,1.1*user_crate
-59,CO,C,O,NONE,41d3,92*h2frac*user_crate*user_is_metal
-59,Si,Si+,E,NONE,41d3,8400*h2frac*user_crate*user_is_metal
-60,C,C+,E,NONE,41d3,(3.85 + 520*h2frac)*user_crate*user_is_metal
+59,CO,C,O,NONE,41d3,90*h2frac*user_crate*user_is_metal
+60,Si,Si+,E,NONE,41d3,8400*h2frac*user_crate*user_is_metal
+61,C,C+,E,NONE,41d3,(3.85 + 560*h2frac)*user_crate*user_is_metal
 #@storeOnce_stop
 @format:idx,R,R,P,P,Tmin,Tmax,rate
-61,CO,H,HCO+,E,NONE,NONE,6.52*user_crate*user_is_metal
+62,CO,H,HCO+,E,NONE,NONE,6.52*user_crate*user_is_metal
 @CR_stop
 
 

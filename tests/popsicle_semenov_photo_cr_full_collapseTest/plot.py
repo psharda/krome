@@ -5,49 +5,62 @@ Author: Piyush Sharda (Leiden) 2024: sharda@strw.leidenuniv.nl
 
 import numpy as np
 import matplotlib.pyplot as plt
+import cmasher as cm
 
-defcolcycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+## Script to split the output files of the code into separate files based on metallicity
+def split_by_metallicity(input_file, output_prefix,Zvals = [-2,-1,0]):
+    with open(input_file, 'r') as f:
+        lines = f.readlines()
+    print(Zvals)
 
-def read_file_with_breaks(filename, skip_header=0):
-    with open(filename, 'r') as file:
-        lines = file.readlines()
+    header = lines[0]  # <-- This is the added line to capture the header
+    blocks = []
+    current_block = []
 
-    data_sections = []
-    current_section = []
-
-    lines = lines[skip_header:]
-    
     for line in lines:
-        stripped_line = line.strip()
-        if stripped_line:  # Non-empty line
-            current_section.append(list(map(float, stripped_line.split())))
-        else:  # Empty line
-            if current_section:  # If there is data collected, save it to data_sections
-                data_sections.append(np.array(current_section))
-                current_section = []
+        if line.strip() == "":
+            if current_block:
+                blocks.append(current_block)
+                current_block = []
+        else:
+            current_block.append(line)
+    
+    # Add the final block if file doesn't end with a blank line
+    if current_block:
+        blocks.append(current_block)
 
-    # Add the last section if not empty
-    if current_section:
-        data_sections.append(np.array(current_section))
+    for i, block in enumerate(blocks):
+        output_file = "{}_Z{}.dat".format(output_prefix, Zvals[i])
+        with open(output_file, 'w') as f_out:
+            f_out.writelines([header] + block)  # <-- This line ensures header is included
+        print(f"Written {output_file} with {len(block)} lines")
 
-    return data_sections
 
+Zvals = [-100,-6,-5,-4,-3,-2,-1,0]
+Zlabels = [r'$-\infty$',r'$10^{-6} Z_{\odot}$',
+           r'$10^{-5} Z_{\odot}$',r'$10^{-4} Z_{\odot}$',
+           r'$10^{-3} Z_{\odot}$',r'$10^{-2} Z_{\odot}$',
+           r'$10^{-1} Z_{\odot}$',r'$Z_{\odot}$']
 
-#Read in the output file
-#Plot Tgas as a function of gas number density
+# Example usage
+split_by_metallicity("fort.22", "CollapseAB", Zvals=Zvals)
+split_by_metallicity("fort.31", "CollapseCools", Zvals=Zvals)
+split_by_metallicity("fort.911", "CollapseHeats", Zvals=Zvals)
 
-filename = 'fort.22'
-#Read in sections for different metallicity values
-data_sections = read_file_with_breaks(filename, skip_header=1)
+#Now Plot
+fig, axs = plt.subplots(ncols=1)
+output_prefix = "CollapseAB"
 
-for i in range(0, len(data_sections)):
-    plt.plot(np.log10(data_sections[i].T[0]), data_sections[i].T[1], c=defcolcycle[i], ls='solid')
+for i, Zval in enumerate(Zvals):
+    filename = "{}_Z{}.dat".format(output_prefix, Zval)
+    f = np.loadtxt(filename).T
+    axs.plot(f[0], f[2], label=Zlabels[i], color=cm.lavender(i/len(Zvals)), linewidth=3.0,alpha=0.6)
 
-plt.yscale('log')
-plt.minorticks_on()
-plt.ylim(1,4e3)
-plt.ylabel('Tgas (K)')
-plt.xlabel('log n (cm^-3)')
-plt.grid()
-plt.savefig('popsicle.png', bbox_inches='tight')
+axs.set_xlabel(r'$n_{\rm H} \, (\rm cm^{-3})$', fontsize=20)
+axs.set_ylabel(r'$T_{\rm gas} \ (\rm K)$', fontsize=20)
+axs.set_yscale('log')
+axs.set_xscale('log')
+
+axs.legend(ncol=3)
+fig.savefig("CollapseTgas_Metallicities", bbox_inches='tight')
 

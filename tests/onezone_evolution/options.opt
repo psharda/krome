@@ -2,15 +2,15 @@
 #options for test collapse
 
 #For GOW network
--n networks/react_popsicle_semenov_photo_cr_gow
--gow
+#-n networks/react_popsicle_semenov_photo_cr_gow
+#-gow
 
 #For TIGRESS-NCR network
 #-n networks/react_tigressNCR
 #-tigressNCR
 
 #For Full network
-#-n networks/react_popsicle_semenov_photo_cr
+-n networks/react_popsicle_semenov_photo_cr_full
 #-popsicle_ice
 
 -cooling=H2,CONT,CHEM,CI,CII,OI,CO,ATOMIC,COMPTON,DUSTSEMENOV,FF,NEBULAR,Z_CIEGF,DUSTGRREC
