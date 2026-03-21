@@ -83,7 +83,7 @@ contains
     itol = 4 !both tolerances are scalar
     rtol(:) = #KROME_RTOL !relative tolerance
     atol(:) = #KROME_ATOL !absolute tolerance
-    icount_max = 100 !maximum number of iterations
+    icount_max = 1000 !maximum number of iterations
 
 #KROME_custom_RTOL
 
