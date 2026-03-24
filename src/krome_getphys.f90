@@ -224,9 +224,6 @@ contains
     real*8::m(nspec),get_jeans_length
     m(:) = get_mass()
     rhogas = max(sum(n(1:nmols)*m(1:nmols)),1d-40)
-#IFKROME_popsicle_ice
-    rhogas = max(sum(n(1:nmols)*m(1:nmols)) - n(idx_CO_total)*m(idx_CO_total) - n(idx_H2O_total)*m(idx_H2O_total), 1d-40)
-#ENDIFKROME_popsicle_ice
     mu = get_mu_rho(n(:),rhogas)
     get_jeans_length = sqrt(pi*boltzmann_erg*Tgas/rhogas&
          /p_mass/gravity/mu)

@@ -1536,9 +1536,6 @@
 
       m(:) = get_mass()
       rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
-#IFKROME_popsicle_ice
-      rhogas = sum(n(1:nmols)*m(1:nmols)) - n(idx_CO_total)*m(idx_CO_total) - n(idx_H2O_total)*m(idx_H2O_total)
-#ENDIFKROME
 
       kpla = 0.d0
       !opacity is zero under 1e-12 g/cm3
@@ -1583,9 +1580,6 @@
 
       m(:) = get_mass()
       rhogas = sum(n(1:nmols)*m(1:nmols)) !g/cm3
-#IFKROME_popsicle_ice
-      rhogas = sum(n(1:nmols)*m(1:nmols)) - n(idx_CO_total)*m(idx_CO_total) - n(idx_H2O_total)*m(idx_H2O_total)
-#ENDIFKROME
       kgas = kpla(n(:),Tgas) !planck opacity cm2/g (Omukai+2000)
       lj = get_jeans_length(n(:), Tgas) !cm
       tau = lj * kgas * rhogas + 1d-40 !opacity
