@@ -1782,7 +1782,7 @@
     nelec = max(n(idx_e), 1d-40)
     nhyd = max(n(idx_H), 1d-40)
     nenh = nelec * nhyd
-    G0 = 1.69d0 * chiFUV
+    G0 = 1.69d0 * user_chiFUV
     !Add 50 to G\sqrt{T}/n_e to prevent too small psi, as is done for PE heating; see Kim+23
     psi = log(G0 * sqrt(Tgas) / nelec + 50.0)
 

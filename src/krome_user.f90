@@ -2348,20 +2348,6 @@ end subroutine krome_load_opacity_table
   end subroutine
 
   !*************************
-  !set FUV radiation field in 6 - 13.6 eV relative to the 
-  !standard radiation field (user_chiFUV = 1 at J_FUV 2.7e-3 erg cm^-2 s^-1) in Draine (1978). 
-  !This field has a strength of G0 = 1.7 in Habing (1968) units.
-  subroutine krome_set_chiFUV(xarg) #KROME_bindC
-     use krome_commons
-#KROME_double_value :: xarg
-
-   chiFUV = xarg
-
-  end subroutine
-
-  !*************************
-
-  !*************************
   !set radiative dust heating rate in units of erg s^-1 
   subroutine krome_set_dustheatRad(xarg) #KROME_bindC
      use krome_commons

@@ -479,7 +479,7 @@ contains
     nelec = max(n(idx_e), 1d-40)
     nhyd = max(n(idx_H), 1d-40)
     nenh = nelec * nhyd
-    G0 = 1.69d0 * chiFUV
+    G0 = 1.69d0 * user_chiFUV
     !Add 50 to Psi to ensure it doesn't become too small; see Kim+23 and Gong, Ostriker & Wolfire 2017
     psi = G0 * sqrt(Tgas) / nelec + 50.0
 
@@ -529,7 +529,7 @@ contains
     nhyd = max(n(idx_H), 1d-40)
     nenh = nelec * nhyd
     !TODO: supply J_PE and J_LW to G0 
-    G0 = 1.69d0 * chiFUV
+    G0 = 1.69d0 * user_chiFUV
     psi = G0 * sqrt(Tgas) / nelec
 
     if (psi .LT. 1d2 .or. psi .GT. 1d6) return
