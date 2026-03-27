@@ -418,6 +418,8 @@ contains
 
     end do
 
+#KROME_compute_electrons
+
 #IFKROME_tigressNCR
     !If Eq C chemistry used, update final abundances for these to the equilibrium one
     call steadystate_tigressNCR(n(:), Tgas)

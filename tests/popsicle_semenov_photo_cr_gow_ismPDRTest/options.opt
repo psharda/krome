@@ -6,8 +6,8 @@
 -heating=CHEM,PHOTODUSTWD,CR,PHOTOAV
 -H2opacity=OMUKAI
 -gamma=EXACT
--ATOL=1d-20
--RTOL=1d-6
+-ATOL=1d-15
+-RTOL=1d-2
 -maxord=1
 -shielding=WG11_withH
 -shielding_CO
@@ -16,6 +16,7 @@
 -useIndividualFloor=Z
 -noRecCheck
 -gow
+-fixTdust
+-computeElectrons
 #-applyElementConservation_popsicle_semenov_photo_gow
-#-fixTdust
 #-popsicle_ice_gow

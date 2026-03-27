@@ -10,7 +10,8 @@ cc = $(ifort_cc)
 clib = -nofor_main
 
 #executable names
-exec_pdr     = test_pdr
+exec_pdr = test_pdr
+exec_pdr_isothermal = test_pdr_isothermal
 
 #default libraries
 lib = -llapack
@@ -84,11 +85,15 @@ objs += krome.o
 cobjs = krome_header.o
 
 # Default target to create all test executables
-all: $(exec_cooling) $(exec_unshielded) $(exec_shielded) $(exec_pdr)
+all: $(exec_pdr) $(exec_pdr_isothermal)
 
-# Target for the second executable `test_pdr`
+# Target for the main executable `test_cooling`
 $(exec_pdr): $(objs) test_pdr.o
 	$(fc) $(objs) test_pdr.o -o $(exec_pdr) $(switch) $(lib)
+
+# Target for the second executable `test_unshielded`
+$(exec_pdr_isothermal): $(objs) test_pdr_isothermal.o
+	$(fc) $(objs) test_pdr_isothermal.o -o $(exec_pdr_isothermal) $(switch) $(lib)
 
 #ifort full debug target
 debug: switch = $(switchDBG)
@@ -165,10 +170,9 @@ csharedlib_opt: switchc = -O3 -fPIC
 csharedlib_opt: objs += $(cobjs)
 csharedlib_opt: sharedlib
 
-
 #clean target
 clean:
-	rm -f *.o *.mod *__genmod.f90 *~ $(exec_pdr)
+	rm -f *.o *.mod *__genmod.f90 *~ $(exec_pdr) $(exec_pdr_isothermal)
 
 #rule for f90
 %.o:%.f90
