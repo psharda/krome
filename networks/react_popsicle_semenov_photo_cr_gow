@@ -15,7 +15,7 @@
 
 #user_is_metal is a boolean flag to turn photochemistry of metals off in primordial conditions.
 #user_pdr_factor used to scale down the grain recombination rates by some factor (as done in GOW Appendix C.4) to match the output from other PDR codes
-@common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2, user_ionC, user_dissCO, user_pdr_factor
+@common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2, user_ionC, user_dissCO, user_pdr_factor, user_sigmavel, user_chi0, user_chiFUV
 
 
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
@@ -195,12 +195,12 @@
 #reaction 14 in table A2 of GOW
 47,C,C+,E,user_ionC
 #reaction 15 in table A2 of GOW
-48,CH,C,H,9.1d-10*exp(-2.12*user_Av)*user_is_metal*chiFUV
+48,CH,C,H,9.1d-10*exp(-2.12*user_Av)*user_is_metal*user_chi0
 #reaction 16 in table A2 of GOW
 49,CO,C,O,user_dissCO
 #reaction 17 in table A2 of GOW
-50,OH,O,H,3.8d-10*exp(-2.66*user_Av)*user_is_metal*chiFUV
-51,Si,Si+,E,4.5d-9*exp(-2.61*user_Av)*user_is_metal*chiFUV
+50,OH,O,H,3.8d-10*exp(-2.66*user_Av)*user_is_metal*user_chi0
+51,Si,Si+,E,4.5d-9*exp(-2.61*user_Av)*user_is_metal*user_chi0
 
 #Recombination on dust, Weingartner&Draine 2001, see also Glover&Jappsen 2007, and Richings et al. 2015 
 #Total recombination rates use the H nuclei density, and not electron density (see tablenotes of Table A1 of GOW)
