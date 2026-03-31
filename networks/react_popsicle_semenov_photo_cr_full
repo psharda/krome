@@ -13,11 +13,9 @@
 @var:ntot=sum(n(1:nmols))
 
 #user_is_metal is a boolean flag to turn photochemistry of metals off in primordial conditions.
-@common: user_Av, user_crate, user_is_metal, user_ionH, user_dissH2, user_ionC, user_dissCO, user_Lacc_Flux, user_pdr_factor, user_sigmavel, user_chiFUV, user_chi0
-
+@common: user_Av, user_crate, user_is_metal, user_Lacc_Flux, user_ionH, user_dissH2, user_ionC, user_dissCO, user_pdr_factor, user_sigmavel, user_chiFUV, user_chi0
 
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
-#UPDATED primordial rates, 2014
 
 #Janev 1987
 1,H,E,,H+,E,E,,NONE,NONE,exp(-32.71396786d0+13.5365560d0*lnTe-5.73932875d0*(lnTe**2)+1.56315498d0*(lnTe**3)-0.28770560d0*(lnTe**4)+3.48255977d-2*(lnTe**5)-2.63197617d-3*(lnTe**6)+1.11954395d-4*(lnTe**7)-2.03914985d-6*(lnTe**8))
