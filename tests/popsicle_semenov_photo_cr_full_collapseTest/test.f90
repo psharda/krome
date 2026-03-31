@@ -74,7 +74,8 @@ program test_krome
     call krome_set_user_pdr_factor(1d0)
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
     call krome_set_user_sigmavel(0d0)
-
+    call krome_set_user_chi0(chi0)
+ 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
       call krome_set_user_is_metal(1d0)
@@ -157,7 +158,7 @@ program test_krome
        endif
 
        chiFUV = chi0 * exp(-(NH+ NHj+2d0*NH2)* dustUV_crossSection * d2g)
-       call krome_set_chiFUV(chiFUV)
+       call krome_set_user_chiFUV(chiFUV)
 
        !set H ionization reaction rate coeff
        ionH = 2.19d-12*exp(-1.14e4*Av)*chi0

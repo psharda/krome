@@ -96,6 +96,7 @@ program test_krome_eqbm_time
     call krome_set_user_pdr_factor(1d0)
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
     call krome_set_user_sigmavel(0d0)
+    call krome_set_user_chi0(1d0)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
@@ -170,7 +171,7 @@ program test_krome_eqbm_time
 
       !FUV rate for photoelectric heating (FUV = LW + PE; both of these are attenuated separately as above)
       chiFUV = (chiPE * 1.8e-4 + chiLW * 3.e-5)/(2.1e-4) !Scale and sum attenuated ISRF LW/PE intensities to the mean FUV intensity
-      call krome_set_chiFUV(chiFUV)
+      call krome_set_user_chiFUV(chiFUV)
       !Shield the CR rate by Eq. 55 of Kim+23
       if(Nshield < 9.35e20) then
         crate = crate_0
@@ -225,7 +226,7 @@ program test_krome_eqbm_time
 
         !FUV rate for photoelectric heating (FUV = LW + PE; both of these are attenuated separately as above)
         chiFUV = (chiPE * 1.8e-4 + chiLW * 3.e-5)/2.1e-4 !Scale and sum attenuated ISRF LW/PE intensities to the mean FUV intensity
-        call krome_set_chiFUV(chiFUV)
+        call krome_set_user_chiFUV(chiFUV)
         !Shield the CR rate by Eq. 55 of Kim+23
         if(Nshield < 9.35e20) then
           crate = crate_0

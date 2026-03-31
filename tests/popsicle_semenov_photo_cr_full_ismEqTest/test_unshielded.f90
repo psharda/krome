@@ -93,11 +93,12 @@ program test_krome_eqbm
     call krome_set_metallicity(zs(jz2))
     d2g = zs(jz2)
     call krome_set_dust_to_gas(d2g)
-    call krome_set_chiFUV(chiFUV)
+    call krome_set_user_chiFUV(chiFUV)
     !scale grain recombination reactions if needed
     call krome_set_user_pdr_factor(1d0)
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
     call krome_set_user_sigmavel(0d0)
+    call krome_set_user_chi0(1d0)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals

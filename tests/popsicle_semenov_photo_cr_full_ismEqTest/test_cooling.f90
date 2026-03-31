@@ -50,8 +50,8 @@ program test_cooling
     crate = 2d-16 * chiFUV
     print *, 'Initial crate: ', crate
     call krome_set_user_crate(crate)
-    call krome_set_chiFUV(chiFUV)
-
+    call krome_set_user_chiFUV(chiFUV)
+    call krome_set_user_chi0(1d0)
     
     !Density is fixed
     ntot = 1.0
