@@ -584,13 +584,14 @@
 #@noTab_start
 #DUST FREEZE-OUT/EVAPORATION
 #freezeout rate coefficient is in s^-1
-#@ice:CO,freezeout,krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)
+@ice:CO,freezeout,krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)
 #evaporation rate coefficient is in cm^-3 s^-1
 #total evaporation cannot be greater than freeze out in the first place
-#@ice:CO,evaporation,max(min(krate_evaporation(n(:),idx_CO,krome_Semenov_Tdust), krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)*n(idx_CO)), small)
-#@ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)
-#@ice:H2O,evaporation,max(min(krate_evaporation(n(:),idx_H2O,krome_Semenov_Tdust), krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)*n(idx_H2O)), small)
-####NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux (disabled in 2025, TODO look into desorption again in the future)
+#it is tricky to get desorption right in a two-phase model, and two-phase models end up severely overestimating desorption rates (see the discussion in Cuppen, Walsh et al. 2017 as well as UCLCHEM docs). This is because we do not treat grain structure (surface vs bulk) and do not track other possible ices that can form and limit the no. of sites available for desorption for the molecules we are interested in - CO and H2O. To limit the rate of desoprtion we keep the ice temperature equal to the CMB.
+@ice:CO,evaporation,max(min(krate_evaporation(n(:),idx_CO,2.73d0*(1d0+phys_Tcmb)), krate_stickSi(n(:),idx_CO,krome_Semenov_Tdust)*n(idx_CO)), small)
+@ice:H2O,freezeout,krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)
+@ice:H2O,evaporation,max(min(krate_evaporation(n(:),idx_H2O,2.73d0*(1d0+phys_Tcmb)), krate_stickSi(n(:),idx_H2O,krome_Semenov_Tdust)*n(idx_H2O)), small)
+####NON-THERMAL EVAPORATION, Yield=1e-3, Gnot=1.78 is Draine Flux (disabled in 2026, TODO look into non-thermal desorption again in the future)
 ####@ice:CO,evaporation,krate_nonthermal_evaporation(idx_CO,1.78d0, user_Av, user_crate, 1d-3)
 #@noTab_stop
 

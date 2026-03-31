@@ -13,4 +13,5 @@
 -shielding_CO
 -shielding_C
 -columnDensityMethod=JEANS
-#-popsicle_ice
+-computeElectrons
+-popsicle_ice
