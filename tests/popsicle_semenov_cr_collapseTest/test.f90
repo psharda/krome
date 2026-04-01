@@ -62,6 +62,7 @@ program test_krome
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
     call krome_set_dust_to_gas(zs(jz2))
+    call krome_set_user_chiFUV(0d0)
 
     !initialize KROME (mandatory)
     call krome_init()
