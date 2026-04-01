@@ -26,6 +26,8 @@ program test_krome
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea)
   real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
   logical::crate_attenuation
+  integer :: start, finish, rate
+  call system_clock(start, rate)
 
   zs = (/0d0, 1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
   !zs = (/1d0/)
@@ -198,6 +200,8 @@ program test_krome
   print *,"To plot in python:"
   print *,"ipython> run plot.py"
   print *,"That's all! have a nice day!"
+  call system_clock(finish)
+  print *, "Elapsed wall time (seconds): ", real(finish-start)/real(rate)
 
 contains
 

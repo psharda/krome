@@ -29,6 +29,8 @@ program test_krome
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,dustHeatingRate
   logical::crate_attenuation
   real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
+  integer :: start, finish, rate
+  call system_clock(start, rate)
 
   zs = (/1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
@@ -237,6 +239,8 @@ program test_krome
   print *,"To plot in python:"
   print *,"ipython> run plot.py"
   print *,"That's all! have a nice day!"
+  call system_clock(finish)
+  print *, "Elapsed wall time (seconds): ", real(finish-start)/real(rate)
 
 contains
 
