@@ -14,5 +14,6 @@
 -shielding_C
 -columnDensityMethod=JEANS
 -noRecCheck
+-computeElectrons
 #-fixTdust
 #-applyElementConservation_popsicle_semenov_photo_full

@@ -12,3 +12,4 @@
 -columnDensityMethod=JEANS
 -useIndividualFloor=Z
 -popsicle_ice
+-computeElectrons
