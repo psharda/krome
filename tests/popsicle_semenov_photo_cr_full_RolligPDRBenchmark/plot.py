@@ -54,15 +54,10 @@ for row, col, species_list, _, ylabel in panels:
                 alpha=0.7, label=species)
     ax.set_ylabel(ylabel)
 
-# Transition vertical lines on C+ and C panels
-for species, (row, col) in [("C+", (0, 1)), ("C", (0, 2))]:
-    idx = col_index(species)
-    trans_Av = Av[np.abs(np.diff(f[idx])).argmax()]
-    axs[row, col].axvline(trans_Av, color="C0", lw=0.8, ls="--", alpha=0.6)
-
 # Rollig benchmark (black lines)
-rollig_dir = "/Users/smenon/Desktop/Work/PhotoMetalImplement/Tests/Full_PDR/RolligPDR/"
-for rollig_file in sorted(glob.glob(rollig_dir + "*_F1.dat")):
+#rollig_dir = "/Users/smenon/Desktop/Work/PhotoMetalImplement/Tests/Full_PDR/RolligPDR/"
+rollig_dir = "../tests/popsicle_semenov_photo_cr_full_RolligPDRBenchmark/RolligPDROutputs/"
+for rollig_file in sorted(glob.glob(rollig_dir + "*_V1.dat")):
     try:
         d = np.loadtxt(rollig_file, skiprows=1).T
     except Exception as e:
