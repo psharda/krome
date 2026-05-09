@@ -2,8 +2,8 @@
 #options for one-zone PDR tests
 
 -n networks/react_popsicle_semenov_photo_cr_full
--cooling=H2,CONT,CHEM,CI,CII,OI,CO,ATOMIC,COMPTON,DUSTSEMENOV,FF,NEBULAR,Z_CIEGF,DUSTGRREC
--heating=CHEM,PHOTODUSTWD,CR,PHOTOAV
+-cooling=H2,CONT,CHEM,CI,CII,OI,CO,ATOMIC,COMPTON,DUSTSEMENOV,FF,NEBULAR,Z_CIEGF,DUSTGRREC,H2O,OH,HD
+-heating=CHEM,PHOTODUSTWD,CR,PHOTOAV,TURBULENCE
 -H2opacity=OMUKAI
 -gamma=EXACT
 -ATOL=1d-20
@@ -13,7 +13,6 @@
 -shielding_CO
 -shielding_C
 -columnDensityMethod=JEANS
--noRecCheck
+-computeElectrons
 #Keep line below uncommented for the F tests; for the V tests Tdust is variable
 #-fixTdust
-#-applyElementConservation_popsicle_semenov_photo_full
