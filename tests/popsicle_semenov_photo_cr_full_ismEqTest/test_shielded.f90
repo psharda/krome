@@ -1,8 +1,6 @@
 !################################################################
 !Same as the one-zone ISM equilibrium test, but with a prescribed shielding column density
 !For additional details, see Sec. 7.2.2 of Kim+23,
-!Author: Shyam Menon (CCA/Rutgers, 2024)
-!Email: smenon@flatironinstitute.org
 !################################################################
 program test_krome_eqbm
 
@@ -18,31 +16,34 @@ program test_krome_eqbm
   implicit none
   integer,parameter::nz=1
   integer,parameter::rstep = 500000
-  integer::i,ii,ios,jscale,jz,jz2, dens_bins, zint
+  integer::i,ii,ios,jscale,jz,jz2, dens_bins, zint, n_iter
   real*8::rhogas,m(krome_nspec),sum_x,sum_xi
   real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei,Hnuclei_i
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
-  real*8::Av,heats(krome_nheats),crate,crate_0,NH,NHj,NH2,d2g
+  real*8::Av,heats(krome_nheats),crate,crate_0,NH,NHj,NH2,NCO,NC,d2g
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
   logical::stop_next, converged, first_call
   character(len=100) :: filename, zint_str
-  real, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21
+  real*8, parameter :: Lshield_0 = 1.5428d19, a = 0.7, n_0 = 1d2, sigmaD_LW = 1.5d-21, sigmaD_PE = 0.86d-21, bfive = 1d0
   real*8 :: Lshield, Nshield, t_cool
-  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21, increment=1.25
+  real*8, parameter :: J_FUV_ISRF = 2.1d-4, dustUV_crossSection = 1d-21, increment=1.25
   integer :: start, finish, rate
   call system_clock(start, rate)
 
   !zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
   zs = (/1d0/)
 
-  !set the scaled FUV intensity
+  !set chi0 for photoreactions (ISRF in units of the Draine field)
   chi0 = 1d0
   !Set the cosmic ray rate, proportional to the FUV intensity; default for ISRF 2x10^-16 s^-1
   crate_0 = 2d-16 * chi0
 
+  eatol = 1d-20
+  ertol = 1d-6
 
-  max_time=seconds_per_year*1.e9 ! max time we will be integrating for = 1000 Myrs (1Gyr)
+
+  max_time=seconds_per_year*1d9 ! max time we will be integrating for = 1000 Myrs (1Gyr)
 
   !loop over size(zs)*2 so that every second loop is skipped, so that an empty line is created in the output fort.22 file
   !this line break in the output file can then be used to read in output for each zs separately
@@ -65,7 +66,7 @@ program test_krome_eqbm
     open(unit=22,file=filename,status='replace',action='write')
     write(22, '(A)', ADVANCE='NO') "#ntot rho Tgas Tdust"
     write(22, '(A)', ADVANCE='NO') trim(krome_get_names_header())
-    write(22, '(A)') " t_tot t_cool"
+    write(22, '(A)') " t_tot t_cool n_iter"
 
     filename = trim('COOL_Z') // trim(zint_str)
     filename = trim(filename)
@@ -85,13 +86,14 @@ program test_krome_eqbm
     krome_redshift = 0d0    !redshift
     Tgas = 3d2             !temperature, K
     ntot = 1d-2
+    ! Assume linear scaling between dust-to-gas and gas-phase metallicity
+    d2g = zs(jz2)           !dust-to-gas ratio
 
     call krome_set_zredshift(krome_redshift)
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
-    d2g = zs(jz2)
     call krome_set_dust_to_gas(d2g)
-    !scale grain recombination reactions if needed
+    !scale grain recombination reactions if needed (e.g., to compare with GOW PDR tests)
     call krome_set_user_pdr_factor(1d0)
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
     call krome_set_user_sigmavel(0d0)
@@ -117,8 +119,6 @@ program test_krome_eqbm
     !switch to tell when to stop the calculation
     stop_next = .false.
 
-    ! Switches to decide when equilibrium has been reached
-    ertol = 1d-8  ! relative min change in a species
     first_call = .true.
 
     do dens_bins = 1, 10000
@@ -146,7 +146,6 @@ program test_krome_eqbm
       !initial Hnuclei
       Hnuclei_i = get_Hnuclei(x(:))
 
-      !set H2 dissociation reaction rate coeff
       n(1:krome_nmols) = x(:)
       n(KROME_idx_Tgas) = Tgas
       ni(:) = n(:)
@@ -154,16 +153,13 @@ program test_krome_eqbm
       t_tot = dt
       converged = .false.
 
-      !Higher densities, lower tolerance for convergence
-      if(ntot .gt. 1.e2) ertol = 1d-8
-
       !loop on density steps
-      do i=1, rstep
+      do n_iter=1, rstep
 
-        if (i .eq. 1) then
+        if (n_iter .eq. 1) then
           !free-fall time, s
           tff = krome_get_free_fall_time(x(:))
-          user_tff = tff         !store user tff. NEED THIS LINE FOR SOME WEIRD REASON
+          user_tff = tff         !store user tff (needed by KROME)
         endif
 
         !if you do not conserve electrons, the electron abundance will soon go to 0.00
@@ -179,6 +175,9 @@ program test_krome_eqbm
         !Lshield = get_jeans_length(n(:), Tgas)
         Nshield = Lshield * Hnuclei
         Av = Nshield * d2g / 1.87d21
+        NH2 = Nshield * x(KROME_idx_H2)/Hnuclei
+        NCO = Nshield * x(KROME_idx_CO)/Hnuclei
+        NC = Nshield * x(KROME_idx_C)/Hnuclei
         call krome_set_user_Av(Av)
 
         !set H ionization reaction rate coeff
@@ -186,18 +185,18 @@ program test_krome_eqbm
         call krome_set_user_ionH(ionH)
 
         !LW and PE rates
-        chiLW = chi0 * exp(-sigmaD_LW * d2g * Nshield) !Dust extinction, where D linearly scales with Z
-        chiPE = chi0 * exp(-sigmaD_PE * d2g * Nshield) !Dust extinction, where D linearly scales with Z
+        chiLW = chi0 * exp(-sigmaD_LW * 1.87d21 * Av) !Dust extinction (default = -2.805Av)
+        chiPE = chi0 * exp(-sigmaD_PE * 1.87d21 * Av) !Dust extinction (default = -1.608Av)
         !Dissociation rates
-        dissH2 = 5.60d-11*chiLW*get_fshield_H2(Nshield * x(KROME_idx_H2)/Hnuclei, 1d0)
+        dissH2 = 5.60d-11*chiLW*get_fshield_H2(NH2,bfive)
         call krome_set_user_dissH2(dissH2)
-        ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(Nshield * x(KROME_idx_H2),Nshield * x(KROME_idx_Cj)/Hnuclei, 1d0)
-        dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(Nshield * x(KROME_idx_H2),Nshield * x(KROME_idx_CO)/Hnuclei, 1d0)
+        ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(NH2,NC)
+        dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(NH2,NCO)
         call krome_set_user_ionC(ionC)
         call krome_set_user_dissCO(dissCO)
 
         !FUV rate for photoelectric heating (FUV = LW + PE; both of these are attenuated separately as above)
-        chiFUV = (chiPE * 1.8e-4 + chiLW * 3.e-5)/2.1e-4 !Scale and sum attenuated ISRF LW/PE intensities to the mean FUV intensity
+        chiFUV = (chiPE * 1.8e-4 + chiLW * 3.e-5)/J_FUV_ISRF !Scale and sum attenuated ISRF LW/PE intensities to the mean FUV intensity
         call krome_set_user_chiFUV(chiFUV)
         !Shield the CR rate by Eq. 55 of Kim+23
         if(Nshield < 9.35e20) then
@@ -207,36 +206,28 @@ program test_krome_eqbm
         endif
         call krome_set_user_crate(crate)
 
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        !Shielding done
         !Absorption rate of UV photons by dust (erg s^-1)
         dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g
         call krome_set_dustheatRad(dustHeatingRate)
         call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()
 
-        ni(krome_idx_Tgas) = Tgas
-
         !solve the chemistry
         call krome_equilibrium_xT(x(:),Tgas,dt)
 
-        !avoid negative species
-        do ii=1,krome_nmols
-          n(ii) = max(x(ii),0d0)
-        end do
+        ! Update n to latest solution
+        n(1:krome_nmols) = x(1:krome_nmols)
+        n(krome_idx_Tgas) = Tgas
+        !Rescale to conserve Hnuclei
         Hnuclei = get_Hnuclei(n(:))
         n(1:krome_nmols) = n(1:krome_nmols) * Hnuclei_i/Hnuclei
         Hnuclei = get_Hnuclei(n(:))
-        n(krome_idx_Tgas) = Tgas
-
-        !kkk(1:krome_nmols) = krome_conserve(n(1:krome_nmols),ni(1:krome_nmols))
-        !n(:) = kkk(:)
-        !n(krome_idx_Tgas) = Tgas
+        !Rescale x to account for change above
+        x(:) = n(1:krome_nmols)
 
         ! check if we have converged by comparing the error in any species with an relative abundance above eatol
-        ! print *, 'haha: ', n(krome_idx_Tgas), ni(krome_idx_Tgas), abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas)
-        converged = abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .le. ertol &
-                     .or. t_tot .gt. max_time
+        converged = (maxval(abs(n(1:krome_nmols) - ni(1:krome_nmols)) / max(n(1:krome_nmols),eatol*sum(n(1:krome_nmols)))) .lt. ertol &
+            .and. abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .le. ertol) .or. (t_tot .gt. max_time)
 
         !Compute cooling time; t_cool = nk_BT/Lambda; where Lambda is in erg cm^-3 s^-1
         t_cool = (Hnuclei * boltzmann_erg * Tgas)/(cooling(n(:),Tgas))
@@ -258,30 +249,27 @@ program test_krome_eqbm
       !dump cooling rates for Tgas going into the calculation
       cools(:) = get_cooling_array(n(:),Tgas)
       write(31,'(99E14.5e3)') Hnuclei, Tgas, sum(cools), cools(:)
-      kk(:) = krome_get_coef(Tgas,x(:))
+      kk(:) = krome_get_coef(Tgas,n(1:krome_nmols))
       heats(:) = get_heating_array(n(:),Tgas,kk(:),0d0) !TODO: pass nH2dust instead of 0d0 as the third argument
       write(911,'(99E14.5e3)') Hnuclei, Tgas, sum(heats), heats(:)
       call krome_popcool_dump(Tgas, 37)
-      
-      !returns to user array
-      x(:) = n(1:krome_nmols)
 
-      if(t_tot > max_time .or. abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .gt. ertol) then
-        print *, 'krome_equilibrium: Did not converge in ', max_time / seconds_per_year, ' years. Reldiff: ', abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas)
+      if(t_tot > max_time) then
+        print *, 'krome_equilibrium: Did not converge in ', max_time / seconds_per_year, ' years.'
         print *, 'Tgas :', n(krome_idx_Tgas)
       end if
 
       m = get_mass()
-      rhogas = sum(x(:)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei,t_tot,t_cool
+      rhogas = sum(n(1:krome_nmols)*m(1:krome_nmols))
+      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,n(1:krome_nmols)/Hnuclei,t_tot,t_cool,real(n_iter)
 
       if (stop_next) exit
 
       !increase density by 'increment' for the next bin
       ntot = ntot * increment
       !break when max density reached
-      if (ntot .gt. 1.e6) then
-        ntot = 1.e6
+      if (ntot .gt. 1d6) then
+        ntot = 1d6
         stop_next = .true.
       endif
     end do
@@ -344,24 +332,24 @@ contains
     return
   end function get_fshield_H2
 
-  function get_fshield_H(NH,bfive)
+  function get_fshield_H(NH)
   !
   ! Returns the self-shielding due to Lyman-alpha lines on the LW band
   ! Eq 15 of Wolcott-Green, Haiman and Bryan 2011
     implicit none
-    real*8, intent(in) :: NH, bfive
+    real*8, intent(in) :: NH
     real*8 :: get_fshield_H
 
     get_fshield_H = max( 1/(1+(NH/(2.85e23)))**1.6 * exp(-0.15 * (NH/(2.85e23))), 1e-15 )
     return
   end function get_fshield_H
 
-  function get_fshield_C(NH2,NC,bfive)
+  function get_fshield_C(NH2,NC)
   !
   ! Returns the shielding factor for C using the treatment of Tielens & Hollenbach (1985)
   ! Eq 9 in Gong, Ostriker & Wolfire 2017
     implicit none
-    real*8, intent(in) :: NH2, NC, bfive
+    real*8, intent(in) :: NH2, NC
     real*8 :: get_fshield_C
 
     get_fshield_C = exp(-NC * 1.6e-17) * exp(-NH2 * 2.8e-22)/(1 + (2.8e-22 * NH2))
@@ -401,12 +389,12 @@ contains
 
   end function interpolate2DCO
 
-  function get_fshield_CO(NH2,NCO,bfive)
+  function get_fshield_CO(NH2,NCO)
   !
   ! Returns the shielding factor for CO using tabulated data from Visser et al. 2009, compiled by Gong et al. 2017
   ! Tabulated data procured from: https://github.com/munan/pdr/blob/master/shielding.cpp
     implicit none
-    real*8, intent(in) :: NH2, NCO, bfive
+    real*8, intent(in) :: NH2, NCO
     real*8 :: get_fshield_CO
     real*8 :: x(8), y(6), z(8, 6), clipped_x,clipped_y
 
