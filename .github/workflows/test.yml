@@ -40,7 +40,11 @@ jobs:
       - name: Write job summary
         if: always()
         run: |
-          STATUS=${{ steps.run_test.outcome == 'success' && '✅ Passed' || '❌ Failed' }}
+          if [ "${{ steps.run_test.outcome }}" == "success" ]; then
+            STATUS="✅ Passed"
+          else
+            STATUS="❌ Failed"
+          fi
           echo "## full_ismEq" >> $GITHUB_STEP_SUMMARY
           echo "**Status:** $STATUS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -85,7 +89,11 @@ jobs:
       - name: Write job summary
         if: always()
         run: |
-          STATUS=${{ steps.run_test.outcome == 'success' && '✅ Passed' || '❌ Failed' }}
+          if [ "${{ steps.run_test.outcome }}" == "success" ]; then
+            STATUS="✅ Passed"
+          else
+            STATUS="❌ Failed"
+          fi
           echo "## full_collapse" >> $GITHUB_STEP_SUMMARY
           echo "**Status:** $STATUS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -130,7 +138,11 @@ jobs:
       - name: Write job summary
         if: always()
         run: |
-          STATUS=${{ steps.run_test.outcome == 'success' && '✅ Passed' || '❌ Failed' }}
+          if [ "${{ steps.run_test.outcome }}" == "success" ]; then
+            STATUS="✅ Passed"
+          else
+            STATUS="❌ Failed"
+          fi
           echo "## full_RolligPDR" >> $GITHUB_STEP_SUMMARY
           echo "**Status:** $STATUS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
