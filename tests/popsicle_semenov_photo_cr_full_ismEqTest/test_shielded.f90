@@ -14,7 +14,7 @@ program test_krome_eqbm
   use krome_constants
   use krome_dust, ONLY : compute_Semenov_Tdust
   implicit none
-  integer,parameter::nz=1
+  integer,parameter::nz=7
   integer,parameter::rstep = 500000
   integer::i,ii,ios,jscale,jz,jz2, dens_bins, zint, n_iter
   real*8::rhogas,m(krome_nspec),sum_x,sum_xi
@@ -27,12 +27,11 @@ program test_krome_eqbm
   character(len=100) :: filename, zint_str
   real*8, parameter :: Lshield_0 = 1.5428d19, a = 0.7, n_0 = 1d2, sigmaD_LW = 1.5d-21, sigmaD_PE = 0.86d-21, bfive = 1d0
   real*8 :: Lshield, Nshield, t_cool
-  real*8, parameter :: J_FUV_ISRF = 2.1d-4, dustUV_crossSection = 1d-21, increment=1.25
+  real*8, parameter :: J_FUV_ISRF = 2.1d-4, dustUV_crossSection = 1d-21, increment=1.75
   integer :: start, finish, rate
   call system_clock(start, rate)
 
-  !zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
-  zs = (/1d0/)
+  zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
 
   !set chi0 for photoreactions (ISRF in units of the Draine field)
   chi0 = 1d0
@@ -40,7 +39,7 @@ program test_krome_eqbm
   crate_0 = 2d-16 * chi0
 
   eatol = 1d-20
-  ertol = 1d-6
+  ertol = 1d-4
 
 
   max_time=seconds_per_year*1d9 ! max time we will be integrating for = 1000 Myrs (1Gyr)
