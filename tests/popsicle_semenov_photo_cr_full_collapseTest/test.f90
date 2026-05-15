@@ -183,6 +183,7 @@ program test_krome
        call krome_set_user_dissCO(dissCO)
 
        chiFUV = chi0 * exp(-Nshield* dustUV_crossSection * d2g)
+       chiFUV = (chiPE * 1.8e-4 + chiLW * 3.e-5)/J_FUV_ISRF
        call krome_set_user_chiFUV(chiFUV)
 
        !break when max density reached
