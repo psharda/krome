@@ -1113,7 +1113,6 @@ contains
   character*16 :: names(nspec)
 
   if(dust2gas_ratio .eq. 0) return
-  if(krome_Semenov_Tdust .gt. 1d4) return !Semenov opacities are only tabulated to Tdust = 1d4 K
 
   m(:) = get_mass() !masses of the species
   rhogas = max(sum(n(1:nmols)*m(1:nmols)), 1d-40)
@@ -1199,6 +1198,9 @@ contains
   krome_Semenov_Tdust = Tdnew
   !Cooling is n**2*\Lambda_{gd} = n*\Psi_{IR} - n*(\Gamma_{d,UV} + \Gamma_{d,other}) (see equation 46 of Kim+2023 ApJS)
   dustSemenov_cooling = A*Tdnew**4 - intJRad - A*phys_Tcmb**4
+  if(krome_Semenov_Tdust .gt. 1d4) then
+    dustSemenov_cooling = 0d0 !if dust is hotter than 1d4 K, switch off cooling due to dust sublimation
+  endif
 
 
 #IFKROME_useCoolingDustSemenov_fixedTdust
