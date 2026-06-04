@@ -175,7 +175,7 @@ program test_krome
        chiLW = chi0 * exp(-sigmaD_LW * 1.87d21 * Av) !Dust extinction (default = -2.805Av)
        chiPE = chi0 * exp(-sigmaD_PE * 1.87d21 * Av) !Dust extinction (default = -1.608Av)
        !Dissociation rates
-       dissH2 = 5.60d-11*chiLW*get_fshield_H2(NH2, 1d0)
+       dissH2 = 5.60d-11*chiLW*get_fshield_H2(NH2, 1d0)*get_fshield_H(NH)
        call krome_set_user_dissH2(dissH2)
        ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(NH2,NC)
        dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(NH2,NCO)
