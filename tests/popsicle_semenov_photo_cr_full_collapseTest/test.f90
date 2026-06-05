@@ -45,7 +45,7 @@ program test_krome
   crate_attenuation = .False.
 
   !output header
-  write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust"
+  write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust Nshield"
   write(22, '(A)') trim(krome_get_names_header())
 
   write(31, '(A)', ADVANCE='NO') "#ntot Tgas sum(cools)"
@@ -80,6 +80,7 @@ program test_krome
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
     call krome_set_user_sigmavel(0d0)
     call krome_set_user_chi0(chi0)
+    call krome_set_orthoParaRatio(3d0)
  
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
@@ -125,7 +126,7 @@ program test_krome
     Tdust = krome_get_Semenov_Tdust()
     m = get_mass()
     rhogas = sum(x(:)*m(1:krome_nmols))
-    write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei
+    write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,Nshield,x(:)/Hnuclei
 
     !loop on density steps
     do i = 1,rstep
@@ -212,7 +213,7 @@ program test_krome
 
        !print some output
        rhogas = sum(x(:)*m(1:krome_nmols))
-       write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,n(1:krome_nmols)/Hnuclei
+       write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,Nshield,n(1:krome_nmols)/Hnuclei
        if(mod(i,100)==0) then
           !totheat = krome_get_heating(x(:), Tgas)
           !totcool = krome_get_heating(x(:), Tgas)

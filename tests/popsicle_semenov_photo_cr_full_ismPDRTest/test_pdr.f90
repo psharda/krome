@@ -83,6 +83,7 @@ program test_krome_eqbm
     call krome_set_metallicity(zs(jz2))
     d2g = zs(jz2)
     call krome_set_dust_to_gas(d2g)
+    call krome_set_orthoParaRatio(3d0)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals

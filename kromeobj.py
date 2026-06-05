@@ -4850,12 +4850,15 @@ class krome:
 			full_function += "function "+function_name+"(n,inTgas,k)\n"
 			full_function += "use krome_commons\n"
 			full_function += "use krome_photo\n"
+			full_function += "use krome_fit\n"
+			full_function += "use krome_getphys\n"
 			full_function += "use krome_subs\n"
 			full_function += "implicit none\n"
 
-			#declaration of varaibles
+			#declaration of variables
 			full_function += "integer::i, hasnegative, nmax\n"
 			full_function += "real*8::"+function_name+",n(:),inTgas,k(:)\n"
+			full_function += "real*8::corr_opthick, clipped_x, clipped_y, Tgas, colden\n"
 			full_function += "real*8::A("+str(nlev)+","+str(nlev)+"),Ain("+str(nlev)+","+str(nlev)+")\n"
 			full_function += "real*8::B("+str(nlev)+"),tmp("+str(nlev)+")\n"
 
@@ -4883,8 +4886,64 @@ class krome:
 			full_function += function_name +" = 0d0\n\n" #default
 			full_function += "if(n(idx_"+metal_name_f90+")<1d-15) return\n\n" #if low coolant abundance skip all
 
+			#write down code to get the correction factors for optically thick conditions
+			#we dont have a dependence on gas density since we use LTE to generate the correction factors
+			full_function += "\n Tgas = max(inTgas, phys_Tcmb)\n"
+			full_function += "colden = num2col(n(idx_"+metal_name_f90+"),n(:))"
+			full_function += "\n !Clip Tgas and nH to the ranges in the data\n"
+			full_function += "clipped_x = max(Cool_optcorr_"+metal_name_f90+"_x(1), min(log10(Tgas), Cool_optcorr_"+metal_name_f90+"_x(32)))\n"
+			full_function += "clipped_y = max(Cool_optcorr_"+metal_name_f90+"_y(1), min(log10(colden), Cool_optcorr_"+metal_name_f90+"_y(32)))\n"
+			full_function += "\n!Find the interpolated optically thick correction factor\n"
+			full_function += "corr_opthick = interpolate2D(Cool_optcorr_"+metal_name_f90+"_x(:), Cool_optcorr_"+metal_name_f90+"_y(:), Cool_optcorr_"+metal_name_f90+"_z(:,:), &\n"
+			full_function += "    clipped_x, clipped_y)\n"
+
+			'''
+			#below useful if we want to extend to 3D interpolation where correction factors also depend on gas density
+			full_function += "v1min = cool"+metal_name_f90+"x1min\n"
+			full_function += "v1max = cool"+metal_name_f90+"x1max\n"
+			full_function += "v2min = cool"+metal_name_f90+"x2min\n"
+			full_function += "v2max = cool"+metal_name_f90+"x2max\n"
+			full_function += "v3min = cool"+metal_name_f90+"x3min\n"
+			full_function += "v3max = cool"+metal_name_f90+"x3max\n"
+			full_function += "\n !local copy of variables arrays\n"
+			full_function += "x1(:) = cool"+metal_name_f90+"x1(:)\n"
+			full_function += "x2(:) = cool"+metal_name_f90+"x2(:)\n"
+			full_function += "x3(:) = cool"+metal_name_f90+"x3(:)\n"
+			full_function += "\nixd1(:) = cool"+metal_name_f90+"ixd1(:)\n"
+			full_function += "ixd2(:) = cool"+metal_name_f90+"ixd2(:)\n"
+			full_function += "ixd3(:) = cool"+metal_name_f90+"ixd3(:)\n"
+			full_function += "\n!variables\n"
+			full_function += "v1 = log10(Tgas)\n"
+			full_function += "v2 = log10(nH)\n"
+			full_function += "v3 = log10(colden)\n"
+			full_function += "\n! check limits\n"
+			full_function += "if(v1>=v1max) return\n"
+			full_function += "if(v2>=v2max) return\n"
+			full_function += "if(v3>=v3max) return\n"
+			full_function += "if(v1<v1min) return\n"
+			full_function += "if(v2<v2min) return\n"
+			full_function += "if(v3<v3min) return\n"
+			full_function += "\n !gets position of variable in the array\n"
+			full_function += "i = (v1-v1min)*cool"+metal_name_f90+"dvn1+1\n"
+			full_function += "j = (v2-v2min)*cool"+metal_name_f90+"dvn2+1\n"
+			full_function += "k = (v3-v3min)*cool"+metal_name_f90+"dvn3+1\n"
+			full_function += "prev1 = (v1-x1(i))*ixd1(i)\n"
+			full_function += "prev2 = (v2-x2(j))*ixd2(j)\n"
+			full_function += "vv1 = prev1 * (cool"+metal_name_f90+"y(k,j,i+1) - &\n"
+			full_function += "    cool"+metal_name_f90+"y(k,j,i)) + cool"+metal_name_f90+"y(k,j,i)\n"
+			full_function += "vv2 = prev1 * (cool"+metal_name_f90+"y(k,j+1,i+1) - &\n"
+			full_function += "    cool"+metal_name_f90+"y(k,j+1,i)) + cool"+metal_name_f90+"y(k,j+1,i)\n"
+			full_function += "vv12 = prev2 * (vv2 - vv1) + vv1\n"
+			full_function += "vv3 = prev1 * (cool"+metal_name_f90+"y(k+1,j,i+1) - &\n"
+			full_function += "    cool"+metal_name_f90+"y(k+1,j,i)) + cool"+metal_name_f90+"y(k+1,j,i)\n"
+			full_function += "vv4 = prev1 * (cool"+metal_name_f90+"y(k+1,j+1,i+1) - &\n"
+			full_function += "cool"+metal_name_f90+"y(k+1,j+1,i)) + cool"+metal_name_f90+"y(k+1,j+1,i)\n"
+			full_function += "vv34 = prev2 * (vv4 - vv3) + vv3\n"
+			full_function += "corr_opthick = (v3-x3(k))*ixd3(k)*(vv34 - vv12) + vv12\n"
+			'''
+
 			#write down the CMB photon occupation numbers for each transition
-			full_function += "!CMB photon occupation numbers\n"
+			full_function += "\n!CMB photon occupation numbers\n"
 			for kp,tp_data in trans_data.items():
 				deltaEp = tp_data["denergy_K"]
 				deltaEp_fmt = ("%e" % deltaEp).replace("e","d") #f90ish format for deltaE
@@ -4995,7 +5054,7 @@ class krome:
 			full_function += "end if\n\n"
 
 			#when the population for each level is known compute the cooling (see above)
-			full_function += function_name + " = " +full_B_vector+"\n\n"
+			full_function += function_name + " = (" +full_B_vector+")*corr_opthick\n\n"
 			full_function += "end function "+function_name+"\n\n"
 
 			#append the function to the list of the functions
@@ -5081,6 +5140,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingOH" and not self.useCoolingOH: skip = True
 			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
 			if srow == "#IFKROME_useCoolingHCN" and not self.useCoolingHCN: skip = True
+			if srow == "#IFKROME_useCoolingZ" and not self.useCoolingZ: skip = True
 			if srow == "#IFKROME_useCoolingZCIE" and not self.useCoolingZCIE: skip = True
 			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingZCIENOUV" and not self.useCoolingZCIENOUV: skip = True
@@ -8418,6 +8478,13 @@ class krome:
 			shutil.copyfile("data/coolCO.dat", buildFolder + "coolCO.dat")
 			print("- copying coolCO_scalefactor_redshift_nlte.dat...")
 			shutil.copyfile("data/coolCO_scalefactor_redshift_nlte.dat", buildFolder + "coolCO_scalefactor_redshift_nlte.dat")
+
+		#copy cooling C, C+, O
+		if self.useCoolingZ:
+			print("- copying optically thick correction files for C, C+, O")
+			shutil.copyfile("data/coolC_scalefactor_opticallythick.dat", buildFolder + "coolC_scalefactor_opticallythick.dat")
+			shutil.copyfile("data/coolC+_scalefactor_opticallythick.dat", buildFolder + "coolC+_scalefactor_opticallythick.dat")
+			shutil.copyfile("data/coolO_scalefactor_opticallythick.dat", buildFolder + "coolO_scalefactor_opticallythick.dat")
 
 		#copy cooling HCN
 		if self.useCoolingHCN:
