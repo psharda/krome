@@ -807,6 +807,22 @@ contains
 #IFKROME_useCoolingZ
     !initialize cooling tabel for metals
     call coolingZ_init_tabs()
+    !initialize optically thick correction factors for C+, O and C cooling
+    call init_anytab2D("coolO_scalefactor_opticallythick.dat",Cool_optcorr_O_x(:), &
+        Cool_optcorr_O_y(:), Cool_optcorr_O_z(:,:), Cool_optcorr_O_xmul, &
+        Cool_optcorr_O_ymul)
+    call test_interpolate2D("coolO_scalefactor_opticallythick.dat",Cool_optcorr_O_x(:), &
+        Cool_optcorr_O_y(:), Cool_optcorr_O_z(:,:))
+    call init_anytab2D("coolC_scalefactor_opticallythick.dat",Cool_optcorr_C_x(:), &
+        Cool_optcorr_C_y(:), Cool_optcorr_C_z(:,:), Cool_optcorr_C_xmul, &
+        Cool_optcorr_C_ymul)
+    call test_interpolate2D("coolC_scalefactor_opticallythick.dat",Cool_optcorr_C_x(:), &
+        Cool_optcorr_C_y(:), Cool_optcorr_C_z(:,:))
+    call init_anytab2D("coolC+_scalefactor_opticallythick.dat",Cool_optcorr_Cj_x(:), &
+        Cool_optcorr_Cj_y(:), Cool_optcorr_Cj_z(:,:), Cool_optcorr_Cj_xmul, &
+        Cool_optcorr_Cj_ymul)
+    call test_interpolate2D("coolC+_scalefactor_opticallythick.dat",Cool_optcorr_Cj_x(:), &
+        Cool_optcorr_Cj_y(:), Cool_optcorr_Cj_z(:,:))
 #ENDIFKROME
 
 #KROME_init_anytab
