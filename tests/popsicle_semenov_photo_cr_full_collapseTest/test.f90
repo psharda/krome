@@ -80,6 +80,7 @@ program test_krome
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
     call krome_set_user_sigmavel(0d0)
     call krome_set_user_chi0(chi0)
+    call krome_set_orthoParaRatio(3d0)
  
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
