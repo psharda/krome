@@ -63,7 +63,7 @@ program test_krome_eqbm
     filename = trim(filename)
     !Open file
     open(unit=22,file=filename,status='replace',action='write')
-    write(22, '(A)', ADVANCE='NO') "#ntot rho Tgas Tdust"
+    write(22, '(A)', ADVANCE='NO') "#ntot rho Tgas Tdust Nshield"
     write(22, '(A)', ADVANCE='NO') trim(krome_get_names_header())
     write(22, '(A)') " t_tot t_cool n_iter"
 
@@ -238,8 +238,8 @@ program test_krome_eqbm
           t_tot = t_tot + dt
           ni = n
         else
-          write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') &
-                    "CONVERGED; nH = ", Hnuclei, " Tgas = ", Tgas, " t_tot/Myr = ", &
+          write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') &
+                    "CONVERGED; nH = ", Hnuclei, " Tgas = ", Tgas, " Pgas = ", Hnuclei*Tgas, " Av = ", Av, " t_tot/Myr = ", &
                     t_tot/(seconds_per_year*1.e6), " dt = ", dt/(seconds_per_year*1.e6), &
                     " t_cool = ", t_cool/(seconds_per_year*1.e6)
           exit
@@ -261,7 +261,7 @@ program test_krome_eqbm
 
       m = get_mass()
       rhogas = sum(n(1:krome_nmols)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,n(1:krome_nmols)/Hnuclei,t_tot,t_cool,real(n_iter)
+      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,Nshield,n(1:krome_nmols)/Hnuclei,t_tot,t_cool,real(n_iter)
 
       if (stop_next) exit
 
