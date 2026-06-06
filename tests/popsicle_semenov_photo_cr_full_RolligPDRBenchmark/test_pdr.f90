@@ -27,7 +27,7 @@ program test_krome_eqbm
   logical::stop_next, converged
   character(len=20) :: filename, zint_str
   real*8, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21, bfive=1d0 !we set bfive=3d0 for this test to compare with GOW 2017 (see text below equation 7)
-  real*8 :: Lshield, Nshield, t_cool
+  real*8 :: Lshield, Nshield, t_cool, dustHeatingRate
   real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
   integer :: start, finish, rate
 
@@ -231,7 +231,7 @@ program test_krome_eqbm
         call krome_set_user_dissCO(dissCO)
 
         !FUV rate for photoelectric heating (FUV = LW + PE; both of these are attenuated separately as above)
-        chiFUV = (chiPE * 1.8e-4 + chiLW * 3.e-5)/2.1e-4 !Scale and sum attenuated ISRF LW/PE intensities to the mean FUV intensity
+        chiFUV = chi0 * exp(-3.02 * Av) !Scale and sum attenuated ISRF LW/PE intensities to the mean FUV intensity
         call krome_set_user_chiFUV(chiFUV)
         !No CR shielding in Rollig et al. 2007
         crate = crate_0
@@ -239,7 +239,7 @@ program test_krome_eqbm
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !Shielding done
-        !For the PDR test, Tdust is fixed to 10 K
+        dustHeatingRate = chiFUV*J_FUV_ISRF*4*PI*dustUV_crossSection*d2g
         call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()
 
