@@ -16,3 +16,4 @@
 -computeElectrons
 #Keep line below uncommented for the F tests; for the V tests Tdust is variable
 #-fixTdust
+#-skipODEthermo
