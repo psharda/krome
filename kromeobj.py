@@ -62,7 +62,8 @@ class krome:
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useHeatingAccretion = useHeatingTurbulence = False
-	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = useHeatingPhotoDustWD = useHeatingPhotoDustNetWD = False
+	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = False
+	useHeatingPhotoDustNet = useHeatingPhotoDustWD = useHeatingPhotoDustNetWD = useHeatingPhotoDustBT = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
 	usePhotoOpacity = useXRay = hasSurfaceReactions = shieldHabingDust = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = shortHead = True
@@ -283,7 +284,7 @@ class krome:
 		self.parser.add_argument("-gizmo", action="store_true", help="create patches for Gizmo")
 		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be RIPAMONTI or OMUKAI")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM\
-			, DH, CR, PHOTOAV,VISCOUS,PHOTODUSTNET,PHOTODUSTNETWD,PHOTODUSTWD,ACCRETION,TURBULENCE. If you want a complete list of the available heating options type -heating=?")
+			, DH, CR, PHOTOAV,VISCOUS,PHOTODUSTNET,PHOTODUSTNETWD,PHOTODUSTWD,PHOTODUSTBT,ACCRETION,TURBULENCE. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-interfaceC", action="store_true", help="create a C wrapper")
 		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper \
@@ -1396,7 +1397,7 @@ class krome:
 			myHeat = [x.strip() for x in myHeat]
 			self.allHeatings = myHeat
 			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","ACCRETION",
-						"PHOTODUSTNET","XRAY","VISCOUS","PHOTODUSTNETWD","PHOTODUSTWD","TURBULENCE"]
+						"PHOTODUSTNET","XRAY","VISCOUS","PHOTODUSTNETWD","PHOTODUSTWD","PHOTODUSTBT","TURBULENCE"]
 			for hea in myHeat:
 				if hea not in allHeats:
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "
@@ -1412,6 +1413,7 @@ class krome:
 			if "PHOTODUSTNET" in myHeat: self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
 			if "PHOTODUSTNETWD" in myHeat: self.useHeatingPhotoDustNetWD = True #photoelectric heating from dust with recombination cooling from Weingartner and Draine 2001 ApJS
 			if "PHOTODUSTWD" in myHeat: self.useHeatingPhotoDustWD = True #photoelectric heating from dust withOUT recombination cooling from Weingartner and Draine 2001 ApJS
+			if "PHOTODUSTBT" in myHeat: self.useHeatingPhotoDustBT = True #photoelectric heating from dust withOUT recombination cooling from Bakes and Tielens 1994 ApJ
 			if "ACCRETION" in myHeat: self.useHeatingAccretion = True #heating from accretion luminosity
 			if "TURBULENCE" in myHeat: self.useHeatingTurbulence = True #heating from turbulence (mechanical heating)
 			if "XRAY" in myHeat: self.useHeatingXRay = True #heating from xray reactions rate
@@ -1436,12 +1438,20 @@ class krome:
 				print("ERROR: PHOTODUSTWD and PHOTODUSTNETWD options are mutually exclusive!")
 				sys.exit()
 
+			if self.useHeatingPhotoDustWD and self.useHeatingPhotoDustBT:
+				print("ERROR: PHOTODUSTWD and PHOTODUSTBT options are mutually exclusive!")
+				sys.exit()
+
 			if self.useHeatingPhotoDustWD and not self.useCoolingDustGRREC:
 				print("ERROR: If you include PHOTODUSTWD heating, you must include the associated DUSTGRREC cooling!")
 				sys.exit()
 
-			if not self.useHeatingPhotoDustWD and self.useCoolingDustGRREC:
-				print("ERROR: If you include DUSTGRREC cooling, you must include the associated PHOTODUSTWD heating!")
+			if self.useHeatingPhotoDustBT and not self.useCoolingDustGRREC:
+				print("ERROR: If you include PHOTODUSTBT heating, you must include the associated DUSTGRREC cooling!")
+				sys.exit()
+
+			if not (self.useHeatingPhotoDustWD or self.useHeatingPhotoDustBT) and self.useCoolingDustGRREC:
+				print("ERROR: If you include DUSTGRREC cooling, you must include the associated PHOTODUSTWD or PHOTODUSTBT heating!")
 				sys.exit()
 
 			if self.photoBins<=0 and self.useHeatingPhotoDustNet:
@@ -7098,6 +7108,7 @@ class krome:
 				if row.strip() == "#IFKROME_useHeatingPhotoDustNet" and not self.useHeatingPhotoDustNet: skip = True
 				if row.strip() == "#IFKROME_useHeatingPhotoDustNetWD" and not self.useHeatingPhotoDustNetWD: skip = True
 				if row.strip() == "#IFKROME_useHeatingPhotoDustWD" and not self.useHeatingPhotoDustWD: skip = True
+				if row.strip() == "#IFKROME_useHeatingPhotoDustBT" and not self.useHeatingPhotoDustBT: skip = True
 				if row.strip() == "#IFKROME_useHeatingXRay" and not self.useHeatingXRay: skip = True
 				if row.strip() == "#IFKROME_useHeatingVisc" and not self.useHeatingVisc: skip = True
 				if row.strip() == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
