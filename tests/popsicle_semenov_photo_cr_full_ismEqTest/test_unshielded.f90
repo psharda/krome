@@ -211,12 +211,13 @@ program test_krome_eqbm
         dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g
         call krome_set_dustheatRad(dustHeatingRate)
         call compute_Semenov_Tdust(x(:), Tgas)
-        Tdust = krome_get_Semenov_Tdust()
 
         ni(krome_idx_Tgas) = Tgas
 
         !solve the chemistry and temperature evolution
         call krome_equilibrium_xT(x(:),Tgas,dt)
+
+        Tdust = krome_get_Semenov_Tdust()
 
         !avoid negative species
         do ii=1,krome_nmols
