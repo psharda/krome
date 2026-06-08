@@ -37,7 +37,7 @@ program test_krome_eqbm
   zs = (/1d0/)
 
   !set the scaled FUV intensity
-  chi0 = 1d5
+  chi0 = 1d1
   !Set the cosmic ray rate, proportional to the FUV intensity; default for ISRF 2x10^-16 s^-1
   crate_0 = 5d-17 !Note: this is the primary ionization of H as in GOW
 
@@ -85,7 +85,7 @@ program test_krome_eqbm
     !INITIAL CONDITIONS
     krome_redshift = 0d0    !redshift
     Tgas = 50             !temperature, K
-    ntot = 10**(5.5d0)    ! Fixed density of 100cm^-3
+    ntot = 10**(3d0)    ! Fixed density of 100cm^-3
     ColumnTotMin = 1d17   ! Minimum column density    
     ColumnTotMax = 1d22   ! Maximum column density
     NoColumnBins = 100   ! Number of column bins in log space
