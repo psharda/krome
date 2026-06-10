@@ -21,8 +21,8 @@ program test_krome_eqbm
   real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei,Hnuclei_i
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
-  real*8::Av,heats(krome_nheats),crate,crate_0,NH,NHj,NH2,NCO,NC,d2g
-  real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
+  real*8::Av,heats(krome_nheats),crate,crate_0,NH,NHj,NH2,NHD,NCO,NC,d2g
+  real*8::ionH,dissH2,dissHD,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
   logical::stop_next, converged, first_call
   character(len=100) :: filename, zint_str
   real*8, parameter :: Lshield_0 = 1.5428d19, a = 0.7, n_0 = 1d2, sigmaD_LW = 1.5d-21, sigmaD_PE = 0.86d-21, bfive = 1d0
@@ -32,6 +32,7 @@ program test_krome_eqbm
   call system_clock(start, rate)
 
   zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
+  !zs = (/1d0/)
 
   !set chi0 for photoreactions (ISRF in units of the Draine field)
   chi0 = 1d0
@@ -176,6 +177,7 @@ program test_krome_eqbm
         Nshield = Lshield * Hnuclei
         Av = Nshield * d2g / 1.87d21
         NH2 = Nshield * x(KROME_idx_H2)/Hnuclei
+        NHD = Nshield * x(KROME_idx_HD)/Hnuclei
         NCO = Nshield * x(KROME_idx_CO)/Hnuclei
         NC = Nshield * x(KROME_idx_C)/Hnuclei
         call krome_set_user_Av(Av)
@@ -188,8 +190,10 @@ program test_krome_eqbm
         chiLW = chi0 * exp(-sigmaD_LW * 1.87d21 * Av) !Dust extinction (default = -2.805Av)
         chiPE = chi0 * exp(-sigmaD_PE * 1.87d21 * Av) !Dust extinction (default = -1.608Av)
         !Dissociation rates
-        dissH2 = 5.60d-11*chiLW*get_fshield_H2(NH2,bfive)
+        dissH2 = 5.60d-11*chiLW*get_fshield_H2(NH2, 1d0)*get_fshield_H(NH,1.49d-1,1.62d0,2.85d23)
         call krome_set_user_dissH2(dissH2)
+        dissHD = 5.60d-11*chiLW*get_fshield_H2(NHD, 1d0)*get_fshield_H(NH,1.49d-1,1.62d0,2.85d23)*get_fshield_H(NH2,5.20d-3,2.38d-1,2.34d19)
+        call krome_set_user_dissHD(dissHD)
         ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(NH2,NC)
         dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(NH2,NCO)
         call krome_set_user_ionC(ionC)
@@ -333,15 +337,16 @@ contains
     return
   end function get_fshield_H2
 
-  function get_fshield_H(NH)
+  function get_fshield_H(NH,alpha,delta,xi)
   !
   ! Returns the self-shielding due to Lyman-alpha lines on the LW band
-  ! Eq 15 of Wolcott-Green, Haiman and Bryan 2011
+  ! Eq 12 of Wolcott-Green and Haiman 2011
     implicit none
-    real*8, intent(in) :: NH
+    real*8, intent(in) :: NH, alpha, delta, xi
     real*8 :: get_fshield_H
 
-    get_fshield_H = max( 1/(1+(NH/(2.85e23)))**1.6 * exp(-0.15 * (NH/(2.85e23))), 1e-15 )
+    !get_fshield_H = max( 1/(1+(NH/(2.85e23)))**1.6 * exp(-0.15 * (NH/(2.85e23))), 1e-15 )
+    get_fshield_H = max( 1/(1+(NH/(xi)))**delta * exp(-alpha * (NH/(xi))), 1e-15 )
     return
   end function get_fshield_H
 
