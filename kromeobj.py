@@ -7354,6 +7354,8 @@ class krome:
 				else:
 					dustH2 += "!H2 formation on dust: reaction 165 in Table B1 of Glover+2010, originally from Hollenbach & McKee 1979\n"
 					dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*nH*dust2gas_ratio / &\n (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
+					dustH2 += "\n!HD formation on dust, same form as above, since differences are tiny (see equations 13 and 14 of Cazaux & Spaans 2009)\n"
+					dustH2 += "nHDdust = nHDdust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_D)*nH*dust2gas_ratio / &\n (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
 		#H2 on dust from tables
 		if self.dustTabsH2:
 			dustH2 = "ntot = sum(n(1:nmols))\n"
@@ -7490,8 +7492,10 @@ class krome:
 								if dType == specs[idnw].name and useDustEvol:
 									x += " - dSumDust"+dType
 							if self.useDustH2 or self.dustTabsH2 or self.useCoolingDustSemenov:
-								if "H"==specs[idnw].name: x += " - 2d0*nH2dust"
+								if "H"==specs[idnw].name: x += " - 2d0*nH2dust - nHDdust"
 								if "H2"==specs[idnw].name: x += " + nH2dust"
+								if "D"==specs[idnw].name: x += " - nHDdust"
+								if "HD"==specs[idnw].name: x += " + nHDdust"
 							fout.write("\t" + x + "\n")
 							idnw += 1
 
@@ -7513,8 +7517,10 @@ class krome:
 						for x in dnw:
 							#add H2 formation on dust
 							if self.useDustH2const:
-								if "H"==specs[idnw].name: x += " - 2d0*nH2dust"
+								if "H"==specs[idnw].name: x += " - 2d0*nH2dust - nHDdust"
 								if "H2"==specs[idnw].name: x += " + nH2dust"
+								if "D"==specs[idnw].name: x += " - nHDdust"
+								if "HD"==specs[idnw].name: x += " + nHDdust"
 							idnw +=1
 
 							#add custom ODE if needed
