@@ -13,7 +13,7 @@
 @var:ntot=sum(n(1:nmols))
 
 #user_is_metal is a boolean flag to turn photochemistry of metals off in primordial conditions.
-@common: user_Av, user_crate, user_is_metal, user_Lacc_Flux, user_ionH, user_dissH2, user_ionC, user_dissCO, user_pdr_factor, user_sigmavel, user_chiFUV, user_chi0
+@common: user_Av, user_crate, user_is_metal, user_Lacc_Flux, user_ionH, user_dissH2, user_dissHD, user_ionC, user_dissCO, user_pdr_factor, user_sigmavel, user_chiFUV, user_chi0
 
 ########################################## START PRIMORDIAL CHEMISTRY ###################################################################
 
@@ -145,14 +145,12 @@
 34,HD,H+,,H2,D+,,,NONE,NONE,1.0d-9 *exp(-4.57d2*invT)
 
 #Glover et al. 2009, from data by Mielke et al. 2003; updated by Piyush Sharda in 2020 to ensure continuity in reaction coefficients (without which FLASH simulation could crash)
-35,H2,D,,HD,H,,,NONE,.LE.1.167479642374226d3,10**(-56.4737+5.88886*log10(Tgas)+7.19692*(log10(Tgas))**2+2.25069*(log10(Tgas))**3-2.16903*(log10(Tgas))**4+0.317887*(log10(Tgas))**5)
-36,H2,D,,HD,H,,,.GT.1.167479642374226d3,NONE,3.17d-10*exp(-5207.*invT)
-
-#Glover & Jappsen 2007
-#Modified by Piyush Sharda to extend to all Tgas, and make the next reaction zero
-#since the rate coefficient at Tgas > 2d2 here is the same as the reaction below
-#and this modificiation ensures no discontinuities are present
-37,HD,H,,H2,D,,,NONE,NONE,5.25d-11*exp(-4430.*invT)
+#35,H2,D,,HD,H,,,NONE,.LE.1.167479642374226d3,10**(-56.4737+5.88886*log10(Tgas)+7.19692*(log10(Tgas))**2+2.25069*(log10(Tgas))**3-2.16903*(log10(Tgas))**4+0.317887*(log10(Tgas))**5)
+#36,H2,D,,HD,H,,,.GT.1.167479642374226d3,NONE,3.17d-10*exp(-5207.*invT)
+#New rate, mentioned in Gay et al. 2011 (also used in UMIST)
+36,H2,D,,HD,H,,,NONE,NONE,7.5d-11*exp(-3820d0*invT)
+#New rate, mentioned in Gay et al. 2011 (also used in UMIST)
+37,HD,H,,H2,D,,,NONE,NONE,7.5d-11*exp(-4240d0*invT)
 
 38,D,H-,,HD,E,,,NONE,NONE,1.5d-9*(T32)**(-0.1d0)
 
@@ -495,6 +493,7 @@
 #TODO: reaction below to be removed when krome coupled with vettam
 #TODO: reaction below to be removed when krome coupled with vettam
 152,H2,H,H,user_dissH2
+152,HD,H,D,user_dissHD
 
 #Glover et al. 2010
 #TODO: GOW 2017 scale the reaction coefficients by \chi_FUV: FUV radiation field strength between 6-13.6 eV (see their Table 2). 
@@ -567,10 +566,13 @@
 #Most rate coefficients below come from Padovani et al. (2024; using o:p 3:1 from https://github.com/marcopadovani/UVfluorescence/blob/main/phdiss_RV3.1.csv); see Menon & Sharda 2025 for details.
 @var:xH2 = n(idx_H2)/Hnuclei
 182,H,H+,E,NONE,NONE,(5d-1 + 3.731d0*xH2)*user_crate
+182,D,D+,E,NONE,NONE,(5d-1 + 3.731d0*xH2)*user_crate
 183,H-,H,E,NONE,NONE,924d0*xH2*user_crate
 184,H2,H2+,E,NONE,NONE,0.976d0*user_crate
 185,H2,H,H,NONE,NONE,7d-1*user_crate
 186,H2,H+,H-,NONE,NONE,3.17d-4*user_crate
+#HD cosmic ray destruction added from Walmsley+2004, mentioned in Table 2 of Cazaux & Spaans 2009 (keeping the coefficient the same as that for H2-> H+H)
+185,HD,H,D,NONE,NONE,7d-1*user_crate
 187,He,He+,E,NONE,NONE,0.55*user_crate
 188,CO,C,O,NONE,NONE,78.175d0*xH2*user_crate*user_is_metal
 189,CO,CO+,E,NONE,NONE,11.3125d0*user_crate*user_is_metal
