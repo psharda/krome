@@ -7349,8 +7349,10 @@ class krome:
 			dustH2 +="nH2dust = nH2dust + H2_dustJura(n(:))"
 		elif self.useCoolingDustSemenov:
 				if self.useGOW:
+					dustH2 += "!H2 formation on dust: reaction 1 in Table 2 of GOW\n"
 					dustH2 += "nH2dust = nH2dust + 3d-17*n(idx_H)*nH*dust2gas_ratio"
 				else:
+					dustH2 += "!H2 formation on dust: reaction 165 in Table B1 of Glover+2010, originally from Hollenbach & McKee 1979\n"
 					dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*nH*dust2gas_ratio / &\n (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
 		#H2 on dust from tables
 		if self.dustTabsH2:
