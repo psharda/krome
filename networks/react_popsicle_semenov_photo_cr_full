@@ -357,11 +357,11 @@
 110,He+,OH,O+,He,H,1.35d-9*(0.62 + 45.41*Tgas**(-0.5d0))
 
 #H2 reactions with C+ from table A1 of GOW (reactions 9 and 10)
-#Note that GOW's leading coefficient is off by 3 oreders of magnitude. Table 6 of Wakelam (2010) and UMIST both use 2.31d-16 whereas GOW incorrectly quotes them as using 2.31d-13
-111,C+,H2,CH2+,,,2.31d-16*(Tgas**(-1.3d0))*exp(-23d0*invT)
+#Table 6 of Wakelam (2010)
+111,C+,H2,CH2+,,,2.31d-16*(T32**(-1.3d0))*exp(-23d0*invT)
 @format:idx,R,R,R,P,P,P,rate
 #pseudo-reaction representing a two-body reaction followed by C+ recombination
-112,C+,H2,E,C,H,H,0.99d-16*(Tgas**(-1.3d0))*exp(-23d0*invT)
+112,C+,H2,E,C,H,H,0.99d-16*(T32**(-1.3d0))*exp(-23d0*invT)
 
 @format:idx,R,R,P,P,Tmin,Tmax,rate
 #added as recommended by Hunter+2023 for high Tgas; taken from UMIST24
