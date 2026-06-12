@@ -22,7 +22,7 @@ program test_krome_eqbm
   real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei,Hnuclei_i,d2g
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec),ColumnTot,ColumnTotMax,ColumnTotMin,ColumnLast,dColumn,ColumnFactor
-  real*8::Av,heats(krome_nheats),crate,crate_0,NH_cum,NH2_cum,NC_cum, NCO_cum
+  real*8::Av,heats(krome_nheats),crate,crate_0,NH_cum,NH2_cum,NC_cum,NCO_cum
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0
   logical::stop_next, converged, first_call
   character(len=20) :: filename, zint_str
@@ -66,7 +66,8 @@ program test_krome_eqbm
     !Open file
     open(unit=22,file=filename,status='replace',action='write')
     write(22, '(A)', ADVANCE='NO') "#ntot rho Tgas Tdust ColumnTot"
-    write(22, '(A)') trim(krome_get_names_header())
+    write(22, '(A)', ADVANCE='NO') trim(krome_get_names_header())
+    write(22, '(A)') " t_tot t_cool n_iter"
 
     filename = trim('COOL_Z') // trim(zint_str)
     filename = trim(filename)
@@ -79,8 +80,6 @@ program test_krome_eqbm
     open(unit=911,file=filename,status='replace',action='write')
     write(911, '(A)', ADVANCE='NO') "#ColumnTot Tgas sum(heats)"
     write(911, '(A)') trim(krome_get_heating_names_header())
-
-    print *, 'Metallicity: ', zs(jz2), ' of Solar'
 
     !INITIAL CONDITIONS
     krome_redshift = 0d0    !redshift
@@ -141,12 +140,17 @@ program test_krome_eqbm
         !set individual species
         x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 3*2.681411d-07 + 1d-4))
         x(KROME_idx_H2)        = 2*1d-3*ntot
-        x(KROME_idx_E)         = 1.d-4*zs(jz2)*ntot + 1d-4*ntot + 3*2.681411e-07*ntot !C+, H+ and H3+ contribute electrons
+        x(KROME_idx_E)         = 1d-4*zs(jz2)*ntot + 1d-4*ntot + 2.681411e-07*ntot !C+, H+ and H3+ contribute electrons
         x(KROME_idx_Hj)        = 1d-4*ntot
         x(KROME_idx_HE)        = 0.1*ntot
-        x(KROME_idx_Cj)        = 1.0d-4*zs(jz2)*ntot !C is fully ionized
-        x(KROME_idx_O)         = 3.d-4*zs(jz2)*ntot !O is fully neutral
+        x(KROME_idx_Cj)        = 1d-4*zs(jz2)*ntot !C is fully ionized
+        x(KROME_idx_O)         = 3d-4*zs(jz2)*ntot !O is fully neutral
         x(KROME_idx_H3j)       = 3*2.681411e-07*ntot
+        x(KROME_idx_D)         = 0d0
+        x(KROME_idx_Dj)        = 0d0
+        x(KROME_idx_Dk)        = 0d0
+        x(KROME_idx_HD)        = 0d0
+        x(KROME_idx_HDj)       = 0d0
         first_call             = .false.
       endif
 
@@ -232,12 +236,12 @@ program test_krome_eqbm
 
         ! Increase integration time by a reasonable factor
         if(.not. converged) then
-          dt = MIN(t_cool,dt*3.0)
+          dt = MIN(t_cool*1d-1,dt*3.0)
           t_tot = t_tot + dt
           ni = n
         else
-          write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') &
-                    "CONVERGED; Column = ", ColumnTot, " Tgas = ", Tgas, " t_tot/Myr = ", &
+          write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') &
+                    "CONVERGED; Column = ", ColumnTot, " Tgas = ", Tgas, " Av = ", Av, " t_tot/Myr = ", &
                     t_tot/(seconds_per_year*1.e6), " dt = ", dt/(seconds_per_year*1.e6), &
                     " t_cool = ", t_cool/(seconds_per_year*1.e6)
           exit
@@ -259,7 +263,7 @@ program test_krome_eqbm
 
       m = get_mass()
       rhogas = sum(n(1:krome_nmols)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,NHNuclei,n(1:krome_nmols)/Hnuclei
+      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,NHNuclei,n(1:krome_nmols)/Hnuclei,t_tot,t_cool,real(i)
       flush(22)
 
       if (stop_next) exit
