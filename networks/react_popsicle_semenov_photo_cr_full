@@ -221,17 +221,29 @@
 63,H3O+,E,OH,H,H,3.05d-7*T32**(-.5)
 #TODO: reaction below should be included but it creates a little kink in ism shielded tests at Z=1d0, at nH=1d1, so have commented it off for now.
 62,H3O+,E,O,H2,H,5.60d-9*T32**(-.5)
+#reactions below may be uncommented in the future if needed
+#@format:idx,R,R,P,P,P,Tmin,Tmax,rate
+#66,H2,OH,O,H2,H,1696d0,NONE,6d-9*exp(-50900d0*invT)
+#66,H,OH,O,H,H,1696d0,NONE,6d-9*exp(-50900d0*invT)
+#66,H-,H3O+,OH,H2,H,NONE,NONE,2.3d-7*T32**(-0.5)
 
 @format:idx,R,R,P,P,rate
 #O2005 use an older rate coefficient
 64,H3O+,E,H,H2O,7.09d-8*T32**(-.5)
 65,H3O+,E,OH,H2,5.37d-8*T32**(-.5)
+#reactions below may be uncommented in the future if needed
+#66,H2O+,H2O,H3O+,OH,2.10d-9*T32**(-.5)
+#66,H2O,OH+,H2O+,OH,1.59d-9*T32**(-.5)
+#66,C,H2O+,OH,CH+,1.1d-9
+#66,CO,H2O+,HCO+,OH,5.5d-10
+#66,H-,O,OH,E,1d-9
 
 66,O,H,OH,,9.9d-19*T32**(-.38)
 
-#KIDA (lower recomanded value)
-#O2005 use an older rate coefficient
-67,O,H2,OH,H,1.46d-12*exp(-9650.*invT)
+#KIDA (lower recommended value)
+#67,O,H2,OH,H,1.46d-12*exp(-9650.*invT)
+#use UMIST 25 rate (from Natarajan and Roth 1987), also used by Rollig+2007; ensures sufficient OH abundance in the Rollig V4 test
+67,O,H2,OH,H,3.14d-13*(T32**2.7d0)*exp(-3150d0*invT)
 
 #from Baluch+2005
 #O2005 use an older rate coefficient
