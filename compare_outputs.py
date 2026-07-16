@@ -94,11 +94,8 @@ def _max_rel_dev(new: np.ndarray, ref: np.ndarray) -> np.ndarray:
     """
     Per-column maximum relative deviation, ignoring rows where both values
     are negligible (|new| + |ref| < NEGLIGIBLE) and NaN/Inf entries.
+    Caller is responsible for ensuring new and ref have matching shapes.
     """
-    ncols = ref.shape[-1] if ref.ndim > 1 else 1
-    if new.shape != ref.shape:
-        return np.full(ncols, np.nan)
-
     rel = np.abs(new - ref) / (np.abs(ref) + 1e-300)
 
     # Mask negligible and non-finite entries
@@ -144,7 +141,8 @@ def _compare_file(new_path: Path, ref_path: Path, skip_cols: list[str] | None = 
         lines.append(f"> ⚪ No reference file found at `{rel_ref}` — skipping.")
         return "\n".join(lines)
 
-    col_names = _col_names(new_path) or _col_names(ref_path)
+    new_cols = _col_names(new_path)
+    ref_cols = _col_names(ref_path)
     new = _load(new_path)
     ref = _load(ref_path)
 
@@ -155,25 +153,29 @@ def _compare_file(new_path: Path, ref_path: Path, skip_cols: list[str] | None = 
         lines.append(f"> ⚠️ Could not load `{rel_ref}`.")
         return "\n".join(lines)
 
-    devs = _max_rel_dev(new, ref)
-    ncols = len(devs)
+    # Match columns by name; compare only the intersection.
+    ref_col_set = {name: i for i, name in enumerate(ref_cols)}
+    new_col_set = set(new_cols)
+    common   = [c for c in new_cols if c in ref_col_set]
+    added    = [c for c in new_cols if c not in ref_col_set]
+    removed  = [c for c in ref_cols if c not in new_col_set]
 
-    # Pad / trim column names to match data width
-    if len(col_names) < ncols:
-        col_names += [f"col{i}" for i in range(len(col_names), ncols)]
-    col_names = col_names[:ncols]
+    if added:
+        lines.append(f"> ℹ️ New species (no reference): {', '.join(f'`{c}`' for c in added)}")
+    if removed:
+        lines.append(f"> ℹ️ Removed species (not in new output): {', '.join(f'`{c}`' for c in removed)}")
 
-    if new.shape != ref.shape:
-        lines.append(
-            f"> ⚠️ Shape mismatch: new={new.shape} vs ref={ref.shape}. "
-            "Per-column results shown where shapes align."
-        )
+    new_idx = [new_cols.index(c) for c in common]
+    ref_idx = [ref_col_set[c]    for c in common]
+    new_matched = new[:, new_idx]
+    ref_matched = ref[:, ref_idx]
+    devs = _max_rel_dev(new_matched, ref_matched)
 
     skip = set(skip_cols or [])
     lines.append("")
     lines.append("| Column | Max rel. deviation | Status |")
     lines.append("|--------|--------------------|--------|")
-    for name, dev in zip(col_names, devs):
+    for name, dev in zip(common, devs):
         if name not in skip:
             lines.append(f"| `{name}` | {_fmt_dev(dev)} | {_emoji(dev)} |")
 
