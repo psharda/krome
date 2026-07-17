@@ -16,7 +16,7 @@ program test_krome_eqbm
   use krome_constants
   use krome_dust, ONLY : compute_Semenov_Tdust
   implicit none
-  integer,parameter::nz=1
+  integer,parameter::nz=3
   integer,parameter::rstep = 500000
   integer::i,ii,ios,jscale,jz,jz2, dens_bins, zint
   real*8::rhogas,m(krome_nspec),sum_x,sum_xi
@@ -27,14 +27,13 @@ program test_krome_eqbm
   real*8::ionH,dissH2,ionC,dissCO,chiFUV,chiLW,chiPE,chi0,dustHeatingRate
   logical::stop_next, converged, first_call
   character(len=100) :: filename, zint_str
-  real, parameter :: Lshield_0 = 1.5428402399039558e+19, a = 0.7, n_0 = 100.0, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21
-  real :: Lshield, Nshield, t_cool
+  real*8, parameter :: Lshield_0 = 1.5428402399039558d19, a = 0.7d0, n_0 = 1d2, sigmaD_LW = 1.5d-21, sigmaD_PE = 0.86d-21
+  real*8 :: Lshield, Nshield, t_cool
   real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21, increment = 1.25
   integer :: start, finish, rate
   call system_clock(start, rate)
 
-  !zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
-  zs = (/1d0/)
+  zs = (/1d-2, 1d-1, 1d0/) !list of metallicities relative to solar (GOW network valid for Z >= 1e-2 Zsun)
 
   !set the scaled FUV intensity
   chi0 = 1d0
@@ -118,6 +117,7 @@ program test_krome_eqbm
 
     ! Switches to decide when equilibrium has been reached
     ertol = 1d-8  ! relative min change in a species
+    eatol = 1d-20
     first_call = .true.
 
     do dens_bins = 1, 10000
@@ -149,42 +149,6 @@ program test_krome_eqbm
       n(1:krome_nmols) = x(:)
       n(KROME_idx_Tgas) = Tgas
       ni(:) = n(:)
-
-      !Set shielded quantities and rates
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      Lshield = Lshield_0 * (Hnuclei_i/n_0)**(-a)
-      Nshield = Lshield * Hnuclei
-      Av = Nshield * d2g / 1.87d21
-      call krome_set_user_Av(Av)
-
-      !set H ionization reaction rate coeff
-      ionH = 0.0 !No H ionization
-      call krome_set_user_ionH(ionH)
-
-      !LW and PE rates
-      chiLW = chi0 * exp(-sigmaD_LW * d2g * Nshield) !Dust extinction, where D linearly scales with Z
-      chiPE = chi0 * exp(-sigmaD_PE * d2g * Nshield) !Dust extinction, where D linearly scales with Z
-      !Dissociation rates
-      dissH2 = 5.60d-11*chiLW*get_fshield_H2(Nshield * x(KROME_idx_H2)/Hnuclei, 1d0)
-      call krome_set_user_dissH2(dissH2)
-      ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(Nshield * x(KROME_idx_H2),Nshield * x(KROME_idx_Cj)/Hnuclei, 1d0)
-      dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(Nshield * x(KROME_idx_H2),Nshield * x(KROME_idx_CO)/Hnuclei, 1d0)
-      call krome_set_user_ionC(ionC)
-      call krome_set_user_dissCO(dissCO)
-
-      !FUV rate for photoelectric heating (FUV = LW + PE; both of these are attenuated separately as above)
-      chiFUV = (chiPE * 1.8e-4 + chiLW * 3.e-5)/(2.1e-4) !Scale and sum attenuated ISRF LW/PE intensities to the mean FUV intensity
-      call krome_set_chiFUV(chiFUV)
-      !Shield the CR rate by Eq. 55 of Kim+23
-      if(Nshield < 9.35e20) then
-        crate = crate_0
-      else
-        crate = crate_0 * (Nshield/9.35e20)**(-1)
-      endif
-      call krome_set_user_crate(crate)
-
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !Shielding done
 
       dt = seconds_per_year * 1d4 !0.1 Myr initial time step
       t_tot = dt
@@ -226,14 +190,14 @@ program test_krome_eqbm
         !Dissociation rates
         dissH2 = 5.60d-11*chiLW*get_fshield_H2(Nshield * x(KROME_idx_H2)/Hnuclei, 1d0)
         call krome_set_user_dissH2(dissH2)
-        ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(Nshield * x(KROME_idx_H2),Nshield * x(KROME_idx_Cj)/Hnuclei, 1d0)
-        dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(Nshield * x(KROME_idx_H2),Nshield * x(KROME_idx_CO)/Hnuclei, 1d0)
+        ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(Nshield * x(KROME_idx_H2)/Hnuclei,Nshield * x(KROME_idx_C)/Hnuclei, 1d0)
+        dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(Nshield * x(KROME_idx_H2)/Hnuclei,Nshield * x(KROME_idx_CO)/Hnuclei, 1d0)
         call krome_set_user_ionC(ionC)
         call krome_set_user_dissCO(dissCO)
 
         !FUV rate for photoelectric heating (FUV = LW + PE; both of these are attenuated separately as above)
         chiFUV = (chiPE * 1.8e-4 + chiLW * 3.e-5)/2.1e-4 !Scale and sum attenuated ISRF LW/PE intensities to the mean FUV intensity
-        call krome_set_chiFUV(chiFUV)
+        call krome_set_user_chiFUV(chiFUV)
         !Shield the CR rate by Eq. 55 of Kim+23
         if(Nshield < 9.35e20) then
           crate = crate_0
@@ -269,9 +233,8 @@ program test_krome_eqbm
         !n(krome_idx_Tgas) = Tgas
 
         ! check if we have converged by comparing the error in any species with an relative abundance above eatol
-        ! print *, 'haha: ', n(krome_idx_Tgas), ni(krome_idx_Tgas), abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas)
-        converged = abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .le. ertol &
-                     .or. t_tot .gt. max_time
+        converged = (maxval(abs(n(1:krome_nmols) - ni(1:krome_nmols)) / max(n(1:krome_nmols),eatol*sum(n(1:krome_nmols)))) .lt. ertol &
+            .and. abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .le. ertol) .or. (t_tot .gt. max_time)
 
         !Compute cooling time; t_cool = nk_BT/Lambda; where Lambda is in erg cm^-3 s^-1
         t_cool = (Hnuclei * boltzmann_erg * Tgas)/(cooling(n(:),Tgas))
