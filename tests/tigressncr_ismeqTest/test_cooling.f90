@@ -39,6 +39,7 @@ program test_cooling
     call krome_set_metallicity(zs(jz2))
     call krome_set_dust_to_gas(zs(jz2))
     call krome_set_user_is_metal(1d0)
+    call krome_set_orthoParaRatio(3d0)
 
     !initialize KROME (mandatory)
     call krome_init()
@@ -48,7 +49,7 @@ program test_cooling
     crate = 2d-16 * chiFUV
     print *, 'Initial crate: ', crate
     call krome_set_user_crate(crate)
-    call krome_set_chiFUV(chiFUV)
+    call krome_set_user_chiFUV(chiFUV)
 
     
     !Density is fixed

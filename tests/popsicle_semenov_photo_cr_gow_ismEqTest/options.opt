@@ -15,5 +15,6 @@
 -useIndividualFloor=Z
 -noRecCheck
 -gow
--applyElementConservation_popsicle_semenov_photo_gow
+#-applyElementConservation_popsicle_semenov_photo_gow
+-computeElectrons
 #-popsicle_ice_gow

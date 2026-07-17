@@ -1,5 +1,5 @@
 !################################################################
-!Same as the popsicle_semenov_photo_cr test but with 
+!Same as the popsicle_semenov_photo_cr test but with
 !GOW network at metallicities >= 0.01*Solar.
 !For additional details, see Gong et al. 2017, Hunter et al. 2023
 !Kim et al. 2023 ApJS, and the KROME paper (Grassi et al. 2014).
@@ -22,13 +22,14 @@ program test_krome
   integer,parameter::rstep = 500000
   integer::i,unit,ios,jscale,jz,jz2
   real*8::dtH,deldd,rhogas,m(krome_nspec)
-  real*8::tff,dd,dd1
+  real*8::tff,dd,dd1,sum_xi,sum_x
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea)
-  real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
-  real*8::ionH,dissH2,ionC,dissCO,chiFUV,dustHeatingRate
+  real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2,NC,NCO
+  real*8::ionH,dissH2,ionC,dissCO,chiFUV,chi0,dustHeatingRate
+  real*8::chiLW,chiPE,Nshield
   logical::crate_attenuation
-  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
+  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21, sigmaD_LW = 1.5e-21, sigmaD_PE = 0.86e-21
   integer :: start, finish, rate
   call system_clock(start, rate)
 
@@ -37,11 +38,11 @@ program test_krome
   !set to True to switch on cosmic ray attenuation
   crate_attenuation = .False.
 
-  !set chiFUV for photoreactions
-  chiFUV = 1d0
+  !set chi0 for photoreactions (ISRF in units of the Draine field)
+  chi0 = 1d0
 
   !output header
-  write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust"
+  write(22, '(A)', ADVANCE='NO') "#ntot rhotot Tgas Tdust Nshield"
   write(22, '(A)') trim(krome_get_names_header())
 
   write(31, '(A)', ADVANCE='NO') "#ntot Tgas sum(cools)"
@@ -69,7 +70,12 @@ program test_krome
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
     call krome_set_dust_to_gas(zs(jz2))
-    call krome_set_chiFUV(chiFUV)
+    !scale grain recombination reactions if needed (e.g., to compare with GOW PDR tests)
+    call krome_set_user_pdr_factor(1d0)
+    !input gas turbulent velocity dispersion to include turbulent/mechanical heating
+    call krome_set_user_sigmavel(0d0)
+    call krome_set_user_chi0(chi0)
+    call krome_set_orthoParaRatio(3d0)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
@@ -85,30 +91,36 @@ program test_krome
     !species default, cm-3
     x(:) = 1d-40
 
-    !set individual species
-    x(KROME_idx_H)         = ntot
-    x(KROME_idx_H2)        = 1d-6*ntot
-    x(KROME_idx_E)         = 1d-4*ntot
+    !set individual species initial conditions
+    x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 1d-4))
+    x(KROME_idx_H2)        = 2*1d-3*ntot
+    x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot
     x(KROME_idx_Hj)        = 1d-4*ntot
-    x(KROME_idx_HE)        = 0.0775*ntot
-    x(KROME_idx_Cj)        = 0.927d-4*zs(jz2)*ntot !C is fully ionized
-    x(KROME_idx_O)         = 3.568d-4*zs(jz2)*ntot !O is fully neutral
+    x(KROME_idx_HE)        = 0.1*ntot
+    x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
+    x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
     x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
 
     call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
 
-    !set initial Av, following equation 3 of Gong, Ostriker and Wolfire 2017
+    !set initial density
+    dd = ntot
+
+    !set initial Av
     NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
     NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
     NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
-    Av = (NH + NHj + 2d0*NH2) *zs(jz2) / 1.87d21
+    NC  = krome_num2col(x(KROME_idx_C), x(:), Tgas)
+    NCO = krome_num2col(x(KROME_idx_CO), x(:), Tgas)
+    Nshield = NH + NHj + 2d0*NH2
+    Av = Nshield * zs(jz2) / 1.87d21
     call krome_set_user_Av(Av)
     print *, 'Initial Av: ', krome_get_user_Av()
 
     !Cosmic ray ionization rate
     if (crate_attenuation) then
       !Attenuate following Appendix F of Padovani et al. 2018
-      crate = 10**calculate_F(NH + NHj + 2d0*NH2)
+      crate = 10**calculate_F(Nshield)
       print *, 'Using cosmic ray attenutation'
     else
       crate = 3d-17
@@ -117,21 +129,24 @@ program test_krome
     print *, 'Initial crate: ', crate
     call krome_set_user_crate(crate)
 
+    !LW and PE rates
+    chiLW = chi0 * exp(-sigmaD_LW * 1.87d21 * Av) !Dust extinction (default = -2.805Av)
+    chiPE = chi0 * exp(-sigmaD_PE * 1.87d21 * Av) !Dust extinction (default = -1.608Av)
     !set H ionization reaction rate coeff
-    ionH = 2.19d-12*exp(-1.14e4*Av)*chiFUV
+    ionH = 2.19d-12*exp(-1.14e4*Av)*chi0
     call krome_set_user_ionH(ionH)
     !set H2 dissociation reaction rate coeff
     n(1:krome_nmols) = x(:)
     n(KROME_idx_Tgas) = Tgas
-    dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)*chiFUV
+    dissH2 = 5.60d-11*chiLW*get_fshield_H2(NH2, 1d0)*get_fshield_H(NH,1.49d-1,1.62d0,2.85d23)
     call krome_set_user_dissH2(dissH2)
-    ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()*chiFUV
-    dissCO = 2.592d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()*chiFUV
+    ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(NH2,NC)
+    dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(NH2,NCO)
     call krome_set_user_ionC(ionC)
     call krome_set_user_dissCO(dissCO)
 
-    !set initial density
-    dd = ntot
+    chiFUV = (chiPE * 1.8e-4 + chiLW * 3.e-5)/J_FUV_ISRF
+    call krome_set_user_chiFUV(chiFUV)
 
     !open file to write explore data
     open(newunit=unit,file="explore.dat",status="replace")
@@ -141,12 +156,10 @@ program test_krome
 
 
     !print initial output
-    dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
-    call krome_set_dustheatRad(dustHeatingRate)
     Tdust = krome_get_Semenov_Tdust()
     m = get_mass()
     rhogas = sum(x(:)*m(1:krome_nmols))
-    write(22,'(99E17.8e3)') dd,rhogas,Tgas,Tdust,x(:)/dd
+    write(22,'(99E17.8e3)') dd,rhogas,Tgas,Tdust,Nshield,x(:)/dd
 
     !loop on density steps
     do i = 1,rstep
@@ -165,32 +178,45 @@ program test_krome
        x(:) = x(:)*dd/dd1
 
        !if you do not conserve electrons, the electron abundance will soon go to 0.00
+       sum_xi = sum(x(1:krome_nmols))
        x(krome_idx_e) = krome_get_electrons(x(:))
+       sum_x = sum(x(1:krome_nmols))
+       x(1:krome_nmols) = x(1:krome_nmols) * sum_xi / sum_x
 
        !set time-step
        dt = dtH
 
+       !set Av using Jeans length (krome_num2col uses Jeans length as the shielding length)
        NH  = krome_num2col(x(KROME_idx_H), x(:), Tgas)
        NHj = krome_num2col(x(KROME_idx_Hj), x(:), Tgas)
        NH2 = krome_num2col(x(KROME_idx_H2), x(:), Tgas)
-       Av = (NH + NHj + 2d0*NH2) *zs(jz2)/ 1.87d21
+       NC  = krome_num2col(x(KROME_idx_C), x(:), Tgas)
+       NCO = krome_num2col(x(KROME_idx_CO), x(:), Tgas)
+       Nshield = NH + NHj + 2d0*NH2
+       Av = Nshield * zs(jz2) / 1.87d21
        call krome_set_user_Av(Av)
 
        if (crate_attenuation) then
-         crate = 10**calculate_F(NH + NHj + 2d0*NH2)
-         call krome_set_user_crate(crate)
+         crate = 10**calculate_F(Nshield)
        endif
+       call krome_set_user_crate(crate)
 
        !set H ionization reaction rate coeff
-       ionH = 2.19d-12*exp(-1.14e4*Av)*chiFUV
+       ionH = 2.19d-12*exp(-1.14e4*Av)*chi0
        call krome_set_user_ionH(ionH)
-       !set H2 dissociation reaction rate coeff
-       dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)*chiFUV
+       !LW and PE rates
+       chiLW = chi0 * exp(-sigmaD_LW * 1.87d21 * Av) !Dust extinction (default = -2.805Av)
+       chiPE = chi0 * exp(-sigmaD_PE * 1.87d21 * Av) !Dust extinction (default = -1.608Av)
+       !Dissociation rates
+       dissH2 = 5.60d-11*chiLW*get_fshield_H2(NH2, 1d0)*get_fshield_H(NH,1.49d-1,1.62d0,2.85d23)
        call krome_set_user_dissH2(dissH2)
-       ionC = 3.1d-10*exp(-3.*Av)*krome_fshield_C(n,Tgas)*krome_get_user_is_metal()*chiFUV
-       dissCO = 2.592d-10*exp(-3.53*Av)*krome_fshield_CO(n,Tgas)*krome_get_user_is_metal()*chiFUV
+       ionC = 3.1d-10*krome_get_user_is_metal()*chiLW*get_fshield_C(NH2,NC)
+       dissCO = 2.592d-10*krome_get_user_is_metal()*chiLW*get_fshield_CO(NH2,NCO)
        call krome_set_user_ionC(ionC)
        call krome_set_user_dissCO(dissCO)
+
+       chiFUV = (chiPE * 1.8e-4 + chiLW * 3.e-5)/J_FUV_ISRF
+       call krome_set_user_chiFUV(chiFUV)
 
        !break when max density reached
        if(dd.gt.1d17) exit
@@ -218,7 +244,7 @@ program test_krome
 
        !print some output
        rhogas = sum(x(:)*m(1:krome_nmols))
-       write(22,'(99E17.8e3)') dd,rhogas,Tgas,Tdust,x(:)/dd
+       write(22,'(99E17.8e3)') dd,rhogas,Tgas,Tdust,Nshield,x(:)/dd
        if(mod(i,100)==0) then
           !totheat = krome_get_heating(x(:), Tgas)
           !totcool = krome_get_heating(x(:), Tgas)
@@ -270,5 +296,104 @@ contains
     end do
 
   end function calculate_F
+
+  !
+  !===============================================================================
+  !
+  function get_fshield_H2(NH2,bfive)
+
+  !
+  ! Returns the H2 self-shielding function
+  ! Eq 12 of Wolcott-Green, Haiman and Bryan 2011: note this is slightly different from DB function
+    implicit none
+    real*8, intent(in) :: NH2, bfive
+    real*8 :: get_fshield_H2
+
+    get_fshield_H2 = 0.965/(1+(NH2/(5.e14*bfive)))**1.1 + &
+                    0.035/((1. + (NH2/5.e14))**0.5) * exp(-8.5 * 1.e-4 * (1. + (NH2/5.e14))**0.5)
+    return
+  end function get_fshield_H2
+
+  function get_fshield_H(NH,alpha,delta,xi)
+  !
+  ! Returns the self-shielding due to Lyman-alpha lines on the LW band
+  ! Eq 12 of Wolcott-Green and Haiman 2011
+    implicit none
+    real*8, intent(in) :: NH, alpha, delta, xi
+    real*8 :: get_fshield_H
+
+    get_fshield_H = max( 1/(1+(NH/(xi)))**delta * exp(-alpha * (NH/(xi))), 1e-15 )
+    return
+  end function get_fshield_H
+
+  function get_fshield_C(NH2,NC)
+  !
+  ! Returns the shielding factor for C using the treatment of Tielens & Hollenbach (1985)
+  ! Eq 9 in Gong, Ostriker & Wolfire 2017
+    implicit none
+    real*8, intent(in) :: NH2, NC
+    real*8 :: get_fshield_C
+
+    get_fshield_C = exp(-NC * 1.6e-17) * exp(-NH2 * 2.8e-22)/(1 + (2.8e-22 * NH2))
+    return
+  end function get_fshield_C
+
+  !*****************************
+    !2D interpolation at (x0,y0) for (x(:), y(:)) in z(:,:)
+    !Added by Piyush Sharda in 2024 for CO shielding
+  function interpolate2DCO(x, y, z, x0, y0)
+    implicit none
+    real*8 :: interpolate2DCO
+    real*8 :: x(:), y(:), z(size(x), size(y))
+    real*8 :: x0, y0
+    real*8 :: f
+    integer :: i, j
+    real*8 :: t, u
+
+    ! Find indices i and j such that x(i) <= x0 < x(i+1) and y(j) <= y0 < y(j+1)
+    i = 1
+    do while (i < size(x) - 1 .and. x0 > x(i + 1))
+      i = i + 1
+    end do
+
+    j = 1
+    do while (j < size(y) - 1 .and. y0 > y(j + 1))
+      j = j + 1
+    end do
+
+    ! Compute interpolation weights
+    t = (x0 - x(i)) / (x(i + 1) - x(i))
+    u = (y0 - y(j)) / (y(j + 1) - y(j))
+
+    ! Perform bilinear interpolation
+    interpolate2DCO = (1 - t) * (1 - u) * z(i, j) + t * (1 - u) * z(i + 1, j) + &
+        (1 - t) * u * z(i, j + 1) + t * u * z(i + 1, j + 1)
+
+  end function interpolate2DCO
+
+  function get_fshield_CO(NH2,NCO)
+  !
+  ! Returns the shielding factor for CO using tabulated data from Visser et al. 2009, compiled by Gong et al. 2017
+  ! Tabulated data procured from: https://github.com/munan/pdr/blob/master/shielding.cpp
+    implicit none
+    real*8, intent(in) :: NH2, NCO
+    real*8 :: get_fshield_CO
+    real*8 :: x(8), y(6), z(8, 6), clipped_x,clipped_y
+
+    x = (/ 0d0, 13d0, 14d0, 15d0, 16d0, 17d0, 18d0, 19d0 /) !N_CO
+    y = (/ 0d0, 19d0, 20d0, 21d0, 22d0, 23d0 /) !N_H2
+    z(:, 1) = (/ 1d0, 8.080d-1, 5.250d-1, 2.434d-1, 5.467d-2, 1.362d-2, 3.378d-3, 5.240d-4 /)
+    z(:, 2) = (/ 8.176d-1, 6.347d-1, 3.891d-1, 1.787d-1, 4.297d-2, 1.152d-2, 2.922d-3, 4.662d-4 /)
+    z(:, 3) = (/ 7.223d-1, 5.624d-1, 3.434d-1, 1.540d-1, 3.515d-2, 9.231d-3, 2.388d-3, 3.899d-4 /)
+    z(:, 4) = (/ 3.260d-1, 2.810d-1, 1.953d-1, 8.726d-2, 1.907d-2, 4.768d-3, 1.150d-3, 1.941d-4 /)
+    z(:, 5) = (/ 1.108d-2, 1.081d-2, 9.033d-3, 4.441d-3, 1.102d-3, 2.644d-4, 7.329d-5, 1.437d-5 /)
+    z(:, 6) = (/ 3.938d-7, 3.938d-7, 3.936d-7, 3.923d-7, 3.901d-7, 3.893d-7, 3.890d-7, 3.875d-7 /)
+
+    !Clip logNCO and logNH2 to the ranges in the data
+    clipped_x = max(x(1), min(log10(NCO), x(8)))
+    clipped_y = max(y(1), min(log10(NH2), y(6)))
+    get_fshield_CO = 1d1**interpolate2DCO(x, y, log10(z), clipped_x, clipped_y)
+    return
+  end function get_fshield_CO
 
 end program test_krome
