@@ -17,6 +17,24 @@ Update krome_ode.f90 so that:
    with:
        "nHDdust = 0d0"
 
+3. The total C/O nuclei abundance used by TIGRESS-NCR's steady-state closure
+   (steadystate_tigressNCR) is set to the Rollig et al. (2007) benchmark's own
+   convention (xC,tot=1d-4, xO,tot=3d-4) instead of the solar value
+   (xC,tot=1.6d-4, xO,tot=3.2d-4) hardcoded generally in krome_ode.f90. This
+   patch is intentionally local to this test -- the general krome_ode.f90
+   behaviour (solar-scaled by metallicity) is left untouched for every other
+   use of the -tigressNCR network.
+
+   Replace any line containing:
+       "xCtot = 1.6d-4 * phys_metallicity"
+   with:
+       "xCtot = 1d-4 * phys_metallicity !Rollig et al. 2007 benchmark convention (patched by setup_Rollig_test.py)"
+
+   Replace any line containing:
+       "xOtot = 3.2d-4 * phys_metallicity"
+   with:
+       "xOtot = 3d-4 * phys_metallicity !Rollig et al. 2007 benchmark convention (patched by setup_Rollig_test.py)"
+
 Usage:
 
 - No args: patches ./krome_ode.f90 in-place (default for Makefile)
@@ -35,6 +53,12 @@ REPLACEMENTS = {
 
     "nHDdust = nHDdust + ":
         "nHDdust = 0d0",
+
+    "xCtot = 1.6d-4 * phys_metallicity":
+        "xCtot = 1d-4 * phys_metallicity !Rollig et al. 2007 benchmark convention (patched by setup_Rollig_test.py)",
+
+    "xOtot = 3.2d-4 * phys_metallicity":
+        "xOtot = 3d-4 * phys_metallicity !Rollig et al. 2007 benchmark convention (patched by setup_Rollig_test.py)",
 }
 
 

@@ -139,14 +139,17 @@ program test_krome_eqbm
       if (first_call) then
         !species default, cm-3
         x(:) = 1d-40
-        !set individual species (C+, O, CO are reset every step by TIGRESS-NCR's steady-state
-        !closure -- these starting values only matter for the very first Hnuclei/electron count)
+        !set individual species (C+, O, CO are redistributed every step by TIGRESS-NCR's
+        !steady-state closure among {C,C+,CO} and {O,O+,CO}, but their sum here fixes the
+        !total C/O nuclei abundance for the whole run -- see steadystate_tigressNCR in
+        !krome_ode.f90). Total C/O set to the Rollig et al. 2007 benchmark's own convention
+        !(xC,tot=1d-4, xO,tot=3d-4), matching the full/GOW Rollig tests, not solar.
         x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 1d-4))
         x(KROME_idx_H2)        = 2*1d-3*ntot
-        x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot !C+ and H+ contribute electrons
+        x(KROME_idx_E)         = 1d-4*zs(jz2)*ntot + 1d-4*ntot !C+ and H+ contribute electrons
         x(KROME_idx_Hj)        = 1d-4*ntot
-        x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
-        x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
+        x(KROME_idx_Cj)        = 1d-4*zs(jz2)*ntot !C is fully ionized (Rollig et al. 2007 benchmark convention)
+        x(KROME_idx_O)         = 3d-4*zs(jz2)*ntot !O is fully neutral (Rollig et al. 2007 benchmark convention)
         first_call             = .false.
       endif
 
