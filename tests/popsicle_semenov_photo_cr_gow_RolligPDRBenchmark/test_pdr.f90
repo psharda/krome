@@ -147,7 +147,7 @@ program test_krome_eqbm
         x(KROME_idx_Cj)        = 1d-4*zs(jz2)*ntot !C is fully ionized
         x(KROME_idx_O)         = 3d-4*zs(jz2)*ntot !O is fully neutral
         x(KROME_idx_H3j)       = 3*2.681411e-07*ntot
-        x(KROME_idx_SIj)       = 1.7d-6*zs(jz2)*ntot !Si is fully ionized
+        x(KROME_idx_SIj)       = 0d0 !Si abundance set to zero: the Rollig et al. 2007 benchmark does not include Si in its elemental abundances
         first_call             = .false.
       endif
 
