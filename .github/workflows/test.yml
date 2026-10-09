@@ -1,0 +1,165 @@
+name: KROME Test Suite
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  full_ismEq:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gfortran make
+          pip install numpy matplotlib
+
+      - name: Run test
+        id: run_test
+        run: |
+          START=$(date +%s)
+          python3 run_tests.py --tests full_ismEq --no-collect
+          END=$(date +%s)
+          echo "total_time=$((END-START))" >> $GITHUB_OUTPUT
+
+      - name: Collect outputs
+        if: always()
+        run: python3 run_tests.py --tests full_ismEq --skip-generate --skip-compile --skip-run --skip-plot
+
+      - name: Upload outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outputs-full_ismEq
+          path: testoutputs/
+          if-no-files-found: warn
+
+      - name: Regression comparison
+        if: always()
+        run: python3 compare_outputs.py --test full_ismEq
+
+      - name: Write job summary
+        if: always()
+        run: |
+          if [ "${{ steps.run_test.outcome }}" == "success" ]; then
+            STATUS="✅ Passed"
+          else
+            STATUS="❌ Failed"
+          fi
+          echo "## full_ismEq" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** $STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Phase | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Executables | \`test_cooling\`, \`test_shielded\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Outputs | \`AB_Z*\`, \`ISMEq_Z.pdf\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total time | ${{ steps.run_test.outputs.total_time }}s |" >> $GITHUB_STEP_SUMMARY
+
+  full_collapse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gfortran make
+          pip install numpy matplotlib cmasher
+
+      - name: Run test
+        id: run_test
+        run: |
+          START=$(date +%s)
+          python3 run_tests.py --tests full_collapse --no-collect
+          END=$(date +%s)
+          echo "total_time=$((END-START))" >> $GITHUB_OUTPUT
+
+      - name: Collect outputs
+        if: always()
+        run: python3 run_tests.py --tests full_collapse --skip-generate --skip-compile --skip-run --skip-plot
+
+      - name: Upload outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outputs-full_collapse
+          path: testoutputs/
+          if-no-files-found: warn
+
+      - name: Regression comparison
+        if: always()
+        run: python3 compare_outputs.py --test full_collapse
+
+      - name: Write job summary
+        if: always()
+        run: |
+          if [ "${{ steps.run_test.outcome }}" == "success" ]; then
+            STATUS="✅ Passed"
+          else
+            STATUS="❌ Failed"
+          fi
+          echo "## full_collapse" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** $STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Phase | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Executables | \`test\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Outputs | \`fort.22\`, \`fort.31\`, \`fort.911\`, \`CollapseTgas_Metallicities*\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total time | ${{ steps.run_test.outputs.total_time }}s |" >> $GITHUB_STEP_SUMMARY
+
+  full_RolligPDR:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gfortran make
+          pip install numpy matplotlib
+
+      - name: Run test
+        id: run_test
+        run: |
+          START=$(date +%s)
+          python3 run_tests.py --tests full_RolligPDR --no-collect
+          END=$(date +%s)
+          echo "total_time=$((END-START))" >> $GITHUB_OUTPUT
+
+      - name: Collect outputs
+        if: always()
+        run: python3 run_tests.py --tests full_RolligPDR --skip-generate --skip-compile --skip-run --skip-plot
+
+      - name: Upload outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outputs-full_RolligPDR
+          path: testoutputs/
+          if-no-files-found: warn
+
+      - name: Regression comparison
+        if: always()
+        run: python3 compare_outputs.py --test full_RolligPDR
+
+      - name: Write job summary
+        if: always()
+        run: |
+          if [ "${{ steps.run_test.outcome }}" == "success" ]; then
+            STATUS="✅ Passed"
+          else
+            STATUS="❌ Failed"
+          fi
+          echo "## full_RolligPDR" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** $STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Phase | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Executables | \`test_pdr\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Outputs | \`PDR_Z0\`, \`RolligPDR.pdf\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total time | ${{ steps.run_test.outputs.total_time }}s |" >> $GITHUB_STEP_SUMMARY

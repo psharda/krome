@@ -41,6 +41,7 @@ program test_cooling
     call krome_set_user_is_metal(1d0)
     !scale grain recombination reactions if needed
     call krome_set_user_pdr_factor(1d0)
+    call krome_set_orthoParaRatio(3d0)
 
     !initialize KROME (mandatory)
     call krome_init()

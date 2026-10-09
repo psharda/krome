@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import PhysicalConstantsCGS as const
-import pandas as pd
 
 #Plot the ISM Curve at different metallicities
 

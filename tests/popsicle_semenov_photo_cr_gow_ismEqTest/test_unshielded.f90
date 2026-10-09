@@ -16,7 +16,7 @@ program test_krome_eqbm
   use krome_constants
   use krome_dust, ONLY : compute_Semenov_Tdust
   implicit none
-  integer,parameter::nz=7
+  integer,parameter::nz=3
   integer,parameter::rstep = 500000
   integer::i,ii,ios,jscale,jz,jz2, dens_bins, zint
   real*8::rhogas,m(krome_nspec),sum_x,sum_xi
@@ -31,8 +31,7 @@ program test_krome_eqbm
   integer :: start, finish, rate
   call system_clock(start, rate)
   
-  zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
-  !zs = (/1d0/)
+  zs = (/1d-2, 1d-1, 1d0/) !list of metallicities relative to solar (GOW network valid for Z >= 1e-2 Zsun)
 
   !set chiFUV for photoreactions
   chiFUV = 1d0
@@ -90,11 +89,12 @@ program test_krome_eqbm
     call krome_set_metallicity(zs(jz2))
     d2g = zs(jz2)
     call krome_set_dust_to_gas(d2g)
-    call krome_set_chiFUV(chiFUV)
+    call krome_set_user_chiFUV(chiFUV)
     !scale grain recombination reactions as in GOW
     call krome_set_user_pdr_factor(1d0)
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
     call krome_set_user_sigmavel(0d0)
+    call krome_set_user_chi0(1d0)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
@@ -143,10 +143,6 @@ program test_krome_eqbm
 
       !initial Hnuclei
       Hnuclei_i = get_Hnuclei(x(:))
-
-      !Absorption rate of UV photons by dust (erg s^-1)
-      dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g
-      call krome_set_dustheatRad(dustHeatingRate)
 
       !No shielding; Av=0.0
       Av = 0.0
@@ -206,8 +202,8 @@ program test_krome_eqbm
         call krome_set_user_ionC(ionC)
         call krome_set_user_dissCO(dissCO)
 
-        !Absorption rate of UV photons by dust
-        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*d2g
+        !Absorption rate of UV photons by dust (erg s^-1)
+        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g
         call krome_set_dustheatRad(dustHeatingRate)
         call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()

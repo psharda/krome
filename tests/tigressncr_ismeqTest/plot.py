@@ -7,10 +7,10 @@ import pandas as pd
 
 fig, axs = plt.subplots(nrows=2,sharex=True,figsize=(5.4,9.6),tight_layout=True)
 
-Zvals = [-6,-5,-4,-3,-2,-1,0]
-labels = [r"$10^{-6} \, Z_{\odot}$",r"$10^{-5} \, Z_{\odot}$", r"$10^{-4} \, Z_{\odot}$",r"$10^{-3} \, Z_{\odot}$",r"$10^{-2} \, Z_{\odot}$",r"$10^{-1} \, Z_{\odot}$",r"$ Z_{\odot}$"]
+Zvals = [-2,-1,0]
+labels = [r"$10^{-2} \, Z_{\odot}$",r"$10^{-1} \, Z_{\odot}$",r"$ Z_{\odot}$"]
 #colors from viridis colorbar
-colors = ['#440154','#3B528B','#21918C','#5DC863','#FDE725','#FEE08B','#FC8D59']
+colors = ['#FDE725','#FEE08B','#FC8D59']
 
 for i,Z in enumerate(Zvals):
     data = np.loadtxt('AB_Z'+str(Z)).T

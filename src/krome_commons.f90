@@ -144,6 +144,15 @@ module krome_commons
   real*8::coolZCIEGFx1min,coolZCIEGFx1max
 #ENDIFKROME
 
+#IFKROME_useCoolingZ
+  real*8::Cool_optcorr_O_x(32),Cool_optcorr_O_y(32)
+  real*8::Cool_optcorr_O_z(32,32),Cool_optcorr_O_xmul,Cool_optcorr_O_ymul
+  real*8::Cool_optcorr_C_x(32),Cool_optcorr_C_y(32)
+  real*8::Cool_optcorr_C_z(32,32),Cool_optcorr_C_xmul,Cool_optcorr_C_ymul
+  real*8::Cool_optcorr_Cj_x(32),Cool_optcorr_Cj_y(32)
+  real*8::Cool_optcorr_Cj_z(32,32),Cool_optcorr_Cj_xmul,Cool_optcorr_Cj_ymul
+#ENDIFKROME
+
 #IFKROME_useCoolingDustSemenov
   real*8::CoolSemenov_x(10),CoolSemenov_y(1000)
   real*8::CoolSemenov_z(10,1000),CoolSemenov_xmul,CoolSemenov_ymul

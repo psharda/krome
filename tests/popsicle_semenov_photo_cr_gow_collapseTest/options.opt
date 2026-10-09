@@ -7,13 +7,14 @@
 -H2opacity=OMUKAI
 -gamma=EXACT
 -ATOL=1d-40
+-RTOL=1d-6
 -maxord=1
 -shielding=WG11_withH
 -shielding_CO
 -shielding_C
 -columnDensityMethod=JEANS
+-computeElectrons
 -useIndividualFloor=Z
--popsicle_ice_gow
 -noRecCheck
 -gow
 -applyElementConservation_popsicle_semenov_photo_gow
