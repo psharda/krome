@@ -7328,6 +7328,9 @@ class krome:
 				electronIdx = x.idx #store electron index
 				break
 
+		#check if D is present (needed for HD formation on dust)
+		hasD = ("D" in [x.name for x in specs])
+
 		#string for the function computing dust H2 formation
 		dustH2 = "\n"
 		if self.useDustH2:
@@ -7354,8 +7357,9 @@ class krome:
 				else:
 					dustH2 += "!H2 formation on dust: reaction 165 in Table B1 of Glover+2010, originally from Hollenbach & McKee 1979\n"
 					dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*nH*dust2gas_ratio / &\n (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
-					dustH2 += "\n!HD formation on dust, same form as above, since differences are tiny (see equations 13 and 14 of Cazaux & Spaans 2009)\n"
-					dustH2 += "nHDdust = nHDdust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_D)*nH*dust2gas_ratio / &\n (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
+					if hasD:
+						dustH2 += "\n!HD formation on dust, same form as above, since differences are tiny (see equations 13 and 14 of Cazaux & Spaans 2009)\n"
+						dustH2 += "nHDdust = nHDdust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_D)*nH*dust2gas_ratio / &\n (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
 		#H2 on dust from tables
 		if self.dustTabsH2:
 			dustH2 = "ntot = sum(n(1:nmols))\n"
