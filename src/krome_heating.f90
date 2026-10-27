@@ -82,6 +82,10 @@ contains
     heats(idx_heat_dust) = heat_PhotoDustWD(n(:),Tgas)
 #ENDIFKROME
 
+#IFKROME_useHeatingPhotoDustBT
+    heats(idx_heat_dust) = heat_PhotoDustBT(n(:),Tgas)
+#ENDIFKROME
+
 #IFKROME_useHeatingPhotoDustNetWD
     heats(idx_heat_dust) = heat_netPhotoDustWD(n(:),Tgas)
 #ENDIFKROME
@@ -470,15 +474,12 @@ contains
     implicit none
     integer::i
     real*8::heat_PhotoDustWD,n(:),Tgas,nH,psi,G0
-    real*8::eps_PE,C0,C1,C2,C3,C4,C5,C6,nelec,nhyd
-    real*8::nenh,D0,D1,D2,D3,D4,cool_grrec
+    real*8::eps_PE,C0,C1,C2,C3,C4,C5,C6,nelec
 
     heat_PhotoDustWD = 0d0
 
     nH = get_Hnuclei(n(:))
     nelec = max(n(idx_e), 1d-40)
-    nhyd = max(n(idx_H), 1d-40)
-    nenh = nelec * nhyd
     G0 = 1.69d0 * user_chiFUV
     !Add 50 to Psi to ensure it doesn't become too small; see Kim+23 and Gong, Ostriker & Wolfire 2017
     psi = G0 * sqrt(Tgas) / nelec + 50.0
@@ -566,6 +567,35 @@ contains
     heat_netPhotoDustWD = heat_PE - cool_grrec
 
   end function heat_netPhotoDustWD
+#ENDIFKROME
+
+#IFKROME_useHeatingPhotoDustBT
+  !***************************
+  function heat_PhotoDustBT(n,Tgas)
+    !photoelectric effect from dust in erg/s/cm3
+    !eq. 42 in Bakes and Tielens 1994 ApJ
+    ! dust2gas_ratio is D/D_sol, default assumes D/D_sol = Z/Z_sol
+    use krome_commons
+    use krome_subs
+    use krome_constants
+    use krome_getphys
+    implicit none
+    integer::i
+    real*8::heat_PhotoDustBT,n(:),Tgas,nH,psi,G0
+    real*8::eps_PE,nelec
+
+    heat_PhotoDustBT = 0d0
+
+    nH = get_Hnuclei(n(:))
+    nelec = max(n(idx_e), 1d-40)
+    G0 = 1.69d0 * user_chiFUV
+    !Add 50 to Psi to ensure it doesn't become too small; see Kim+23 and Gong, Ostriker & Wolfire 2017
+    psi = G0 * sqrt(Tgas) / nelec + 50.0
+
+    eps_PE = 4.87e-2 / (1 + 4e-3*psi**0.73) + 3.65e-2*(Tgas/1e4)**0.7/(1 + 2e-4*psi)
+    heat_PhotoDustBT = 1e-24 * G0 * nH * eps_PE * dust2gas_ratio !erg/cm3/s
+
+  end function heat_PhotoDustBT
 #ENDIFKROME
 
 #IFKROME_useHeatingPhotoAv

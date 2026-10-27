@@ -62,7 +62,8 @@ class krome:
 	useReverse = useCustomCoe = useODEConstant = cleanBuild = usePlainIsotopes = useDust = usePhotoDust_3D = False
 	use_thermo = useStars = useNuclearMult = useCoolingdH = useHeatingdH = useCoolingChem = False
 	usePhIoniz = useHeatingCompress = useHeatingPhoto = useHeatingChem = useDecoupled = useHeatingAccretion = useHeatingTurbulence = False
-	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = useHeatingPhotoDustNet = useHeatingPhotoDustWD = useHeatingPhotoDustNetWD = False
+	useHeatingCR = useHeatingPhotoAv = useHeatingPhotoDust = useHeatingXRay = useThermoToggle = False
+	useHeatingPhotoDustNet = useHeatingPhotoDustWD = useHeatingPhotoDustNetWD = useHeatingPhotoDustBT = False
 	useX = pedanticMakefile = useFakeOpacity = useConserve = useConserveE = useConserveLin = noExample = useNLEQ = False
 	usePhotoOpacity = useXRay = hasSurfaceReactions = shieldHabingDust = False
 	has_plot = doIndent = useTlimits = useODEthermo = safe = doJacobian = sinkCheck = recCheck = shortHead = True
@@ -283,7 +284,7 @@ class krome:
 		self.parser.add_argument("-gizmo", action="store_true", help="create patches for Gizmo")
 		self.parser.add_argument("-H2opacity", metavar="TYPE",help="use H2 opacity for H2 cooling, TYPE can be RIPAMONTI or OMUKAI")
 		self.parser.add_argument("-heating", metavar='TERMS', help="heating options, TERMS can be COMPRESS, PHOTO, CHEM\
-			, DH, CR, PHOTOAV,VISCOUS,PHOTODUSTNET,PHOTODUSTNETWD,PHOTODUSTWD,ACCRETION,TURBULENCE. If you want a complete list of the available heating options type -heating=?")
+			, DH, CR, PHOTOAV,VISCOUS,PHOTODUSTNET,PHOTODUSTNETWD,PHOTODUSTWD,PHOTODUSTBT,ACCRETION,TURBULENCE. If you want a complete list of the available heating options type -heating=?")
 		self.parser.add_argument("-ierr", action="store_true", help="same as -useIERR")
 		self.parser.add_argument("-interfaceC", action="store_true", help="create a C wrapper")
 		self.parser.add_argument("-interfacePy", action="store_true", help="create a Python wrapper (and a C wrapper \
@@ -1396,7 +1397,7 @@ class krome:
 			myHeat = [x.strip() for x in myHeat]
 			self.allHeatings = myHeat
 			allHeats = ["COMPRESS","PHOTO","CHEM","DH","CR","PHOTOAV","PHOTODUST","ACCRETION",
-						"PHOTODUSTNET","XRAY","VISCOUS","PHOTODUSTNETWD","PHOTODUSTWD","TURBULENCE"]
+						"PHOTODUSTNET","XRAY","VISCOUS","PHOTODUSTNETWD","PHOTODUSTWD","PHOTODUSTBT","TURBULENCE"]
 			for hea in myHeat:
 				if hea not in allHeats:
 					die("ERROR: Heating \""+hea+"\" is unknown!\nAvailable heatings are: "
@@ -1412,6 +1413,7 @@ class krome:
 			if "PHOTODUSTNET" in myHeat: self.useHeatingPhotoDustNet = True #photoelectric heating from dust with recombination cooling
 			if "PHOTODUSTNETWD" in myHeat: self.useHeatingPhotoDustNetWD = True #photoelectric heating from dust with recombination cooling from Weingartner and Draine 2001 ApJS
 			if "PHOTODUSTWD" in myHeat: self.useHeatingPhotoDustWD = True #photoelectric heating from dust withOUT recombination cooling from Weingartner and Draine 2001 ApJS
+			if "PHOTODUSTBT" in myHeat: self.useHeatingPhotoDustBT = True #photoelectric heating from dust withOUT recombination cooling from Bakes and Tielens 1994 ApJ
 			if "ACCRETION" in myHeat: self.useHeatingAccretion = True #heating from accretion luminosity
 			if "TURBULENCE" in myHeat: self.useHeatingTurbulence = True #heating from turbulence (mechanical heating)
 			if "XRAY" in myHeat: self.useHeatingXRay = True #heating from xray reactions rate
@@ -1436,12 +1438,20 @@ class krome:
 				print("ERROR: PHOTODUSTWD and PHOTODUSTNETWD options are mutually exclusive!")
 				sys.exit()
 
+			if self.useHeatingPhotoDustWD and self.useHeatingPhotoDustBT:
+				print("ERROR: PHOTODUSTWD and PHOTODUSTBT options are mutually exclusive!")
+				sys.exit()
+
 			if self.useHeatingPhotoDustWD and not self.useCoolingDustGRREC:
 				print("ERROR: If you include PHOTODUSTWD heating, you must include the associated DUSTGRREC cooling!")
 				sys.exit()
 
-			if not self.useHeatingPhotoDustWD and self.useCoolingDustGRREC:
-				print("ERROR: If you include DUSTGRREC cooling, you must include the associated PHOTODUSTWD heating!")
+			if self.useHeatingPhotoDustBT and not self.useCoolingDustGRREC:
+				print("ERROR: If you include PHOTODUSTBT heating, you must include the associated DUSTGRREC cooling!")
+				sys.exit()
+
+			if not (self.useHeatingPhotoDustWD or self.useHeatingPhotoDustBT) and self.useCoolingDustGRREC:
+				print("ERROR: If you include DUSTGRREC cooling, you must include the associated PHOTODUSTWD or PHOTODUSTBT heating!")
 				sys.exit()
 
 			if self.photoBins<=0 and self.useHeatingPhotoDustNet:
@@ -4850,12 +4860,15 @@ class krome:
 			full_function += "function "+function_name+"(n,inTgas,k)\n"
 			full_function += "use krome_commons\n"
 			full_function += "use krome_photo\n"
+			full_function += "use krome_fit\n"
+			full_function += "use krome_getphys\n"
 			full_function += "use krome_subs\n"
 			full_function += "implicit none\n"
 
-			#declaration of varaibles
+			#declaration of variables
 			full_function += "integer::i, hasnegative, nmax\n"
 			full_function += "real*8::"+function_name+",n(:),inTgas,k(:)\n"
+			full_function += "real*8::corr_opthick, clipped_x, clipped_y, Tgas, colden\n"
 			full_function += "real*8::A("+str(nlev)+","+str(nlev)+"),Ain("+str(nlev)+","+str(nlev)+")\n"
 			full_function += "real*8::B("+str(nlev)+"),tmp("+str(nlev)+")\n"
 
@@ -4883,8 +4896,64 @@ class krome:
 			full_function += function_name +" = 0d0\n\n" #default
 			full_function += "if(n(idx_"+metal_name_f90+")<1d-15) return\n\n" #if low coolant abundance skip all
 
+			#write down code to get the correction factors for optically thick conditions
+			#we dont have a dependence on gas density since we use LTE to generate the correction factors
+			full_function += "\n Tgas = max(inTgas, phys_Tcmb)\n"
+			full_function += "colden = num2col(n(idx_"+metal_name_f90+"),n(:))"
+			full_function += "\n !Clip Tgas and nH to the ranges in the data\n"
+			full_function += "clipped_x = max(Cool_optcorr_"+metal_name_f90+"_x(1), min(log10(Tgas), Cool_optcorr_"+metal_name_f90+"_x(32)))\n"
+			full_function += "clipped_y = max(Cool_optcorr_"+metal_name_f90+"_y(1), min(log10(colden), Cool_optcorr_"+metal_name_f90+"_y(32)))\n"
+			full_function += "\n!Find the interpolated optically thick correction factor\n"
+			full_function += "corr_opthick = interpolate2D(Cool_optcorr_"+metal_name_f90+"_x(:), Cool_optcorr_"+metal_name_f90+"_y(:), Cool_optcorr_"+metal_name_f90+"_z(:,:), &\n"
+			full_function += "    clipped_x, clipped_y)\n"
+
+			'''
+			#below useful if we want to extend to 3D interpolation where correction factors also depend on gas density
+			full_function += "v1min = cool"+metal_name_f90+"x1min\n"
+			full_function += "v1max = cool"+metal_name_f90+"x1max\n"
+			full_function += "v2min = cool"+metal_name_f90+"x2min\n"
+			full_function += "v2max = cool"+metal_name_f90+"x2max\n"
+			full_function += "v3min = cool"+metal_name_f90+"x3min\n"
+			full_function += "v3max = cool"+metal_name_f90+"x3max\n"
+			full_function += "\n !local copy of variables arrays\n"
+			full_function += "x1(:) = cool"+metal_name_f90+"x1(:)\n"
+			full_function += "x2(:) = cool"+metal_name_f90+"x2(:)\n"
+			full_function += "x3(:) = cool"+metal_name_f90+"x3(:)\n"
+			full_function += "\nixd1(:) = cool"+metal_name_f90+"ixd1(:)\n"
+			full_function += "ixd2(:) = cool"+metal_name_f90+"ixd2(:)\n"
+			full_function += "ixd3(:) = cool"+metal_name_f90+"ixd3(:)\n"
+			full_function += "\n!variables\n"
+			full_function += "v1 = log10(Tgas)\n"
+			full_function += "v2 = log10(nH)\n"
+			full_function += "v3 = log10(colden)\n"
+			full_function += "\n! check limits\n"
+			full_function += "if(v1>=v1max) return\n"
+			full_function += "if(v2>=v2max) return\n"
+			full_function += "if(v3>=v3max) return\n"
+			full_function += "if(v1<v1min) return\n"
+			full_function += "if(v2<v2min) return\n"
+			full_function += "if(v3<v3min) return\n"
+			full_function += "\n !gets position of variable in the array\n"
+			full_function += "i = (v1-v1min)*cool"+metal_name_f90+"dvn1+1\n"
+			full_function += "j = (v2-v2min)*cool"+metal_name_f90+"dvn2+1\n"
+			full_function += "k = (v3-v3min)*cool"+metal_name_f90+"dvn3+1\n"
+			full_function += "prev1 = (v1-x1(i))*ixd1(i)\n"
+			full_function += "prev2 = (v2-x2(j))*ixd2(j)\n"
+			full_function += "vv1 = prev1 * (cool"+metal_name_f90+"y(k,j,i+1) - &\n"
+			full_function += "    cool"+metal_name_f90+"y(k,j,i)) + cool"+metal_name_f90+"y(k,j,i)\n"
+			full_function += "vv2 = prev1 * (cool"+metal_name_f90+"y(k,j+1,i+1) - &\n"
+			full_function += "    cool"+metal_name_f90+"y(k,j+1,i)) + cool"+metal_name_f90+"y(k,j+1,i)\n"
+			full_function += "vv12 = prev2 * (vv2 - vv1) + vv1\n"
+			full_function += "vv3 = prev1 * (cool"+metal_name_f90+"y(k+1,j,i+1) - &\n"
+			full_function += "    cool"+metal_name_f90+"y(k+1,j,i)) + cool"+metal_name_f90+"y(k+1,j,i)\n"
+			full_function += "vv4 = prev1 * (cool"+metal_name_f90+"y(k+1,j+1,i+1) - &\n"
+			full_function += "cool"+metal_name_f90+"y(k+1,j+1,i)) + cool"+metal_name_f90+"y(k+1,j+1,i)\n"
+			full_function += "vv34 = prev2 * (vv4 - vv3) + vv3\n"
+			full_function += "corr_opthick = (v3-x3(k))*ixd3(k)*(vv34 - vv12) + vv12\n"
+			'''
+
 			#write down the CMB photon occupation numbers for each transition
-			full_function += "!CMB photon occupation numbers\n"
+			full_function += "\n!CMB photon occupation numbers\n"
 			for kp,tp_data in trans_data.items():
 				deltaEp = tp_data["denergy_K"]
 				deltaEp_fmt = ("%e" % deltaEp).replace("e","d") #f90ish format for deltaE
@@ -4995,7 +5064,7 @@ class krome:
 			full_function += "end if\n\n"
 
 			#when the population for each level is known compute the cooling (see above)
-			full_function += function_name + " = " +full_B_vector+"\n\n"
+			full_function += function_name + " = (" +full_B_vector+")*corr_opthick\n\n"
 			full_function += "end function "+function_name+"\n\n"
 
 			#append the function to the list of the functions
@@ -5081,6 +5150,7 @@ class krome:
 			if srow == "#IFKROME_useCoolingOH" and not self.useCoolingOH: skip = True
 			if srow == "#IFKROME_useCoolingH2O" and not self.useCoolingH2O: skip = True
 			if srow == "#IFKROME_useCoolingHCN" and not self.useCoolingHCN: skip = True
+			if srow == "#IFKROME_useCoolingZ" and not self.useCoolingZ: skip = True
 			if srow == "#IFKROME_useCoolingZCIE" and not self.useCoolingZCIE: skip = True
 			if srow == "#IFKROME_useCoolingZCIEGF" and not self.useCoolingZCIEGF: skip = True
 			if srow == "#IFKROME_useCoolingZCIENOUV" and not self.useCoolingZCIENOUV: skip = True
@@ -7038,6 +7108,7 @@ class krome:
 				if row.strip() == "#IFKROME_useHeatingPhotoDustNet" and not self.useHeatingPhotoDustNet: skip = True
 				if row.strip() == "#IFKROME_useHeatingPhotoDustNetWD" and not self.useHeatingPhotoDustNetWD: skip = True
 				if row.strip() == "#IFKROME_useHeatingPhotoDustWD" and not self.useHeatingPhotoDustWD: skip = True
+				if row.strip() == "#IFKROME_useHeatingPhotoDustBT" and not self.useHeatingPhotoDustBT: skip = True
 				if row.strip() == "#IFKROME_useHeatingXRay" and not self.useHeatingXRay: skip = True
 				if row.strip() == "#IFKROME_useHeatingVisc" and not self.useHeatingVisc: skip = True
 				if row.strip() == "#IFKROME_useCoolingDustSemenov" and not self.useCoolingDustSemenov: skip = True
@@ -7257,6 +7328,9 @@ class krome:
 				electronIdx = x.idx #store electron index
 				break
 
+		#check if D is present (needed for HD formation on dust)
+		hasD = ("D" in [x.name for x in specs])
+
 		#string for the function computing dust H2 formation
 		dustH2 = "\n"
 		if self.useDustH2:
@@ -7278,9 +7352,14 @@ class krome:
 			dustH2 +="nH2dust = nH2dust + H2_dustJura(n(:))"
 		elif self.useCoolingDustSemenov:
 				if self.useGOW:
+					dustH2 += "!H2 formation on dust: reaction 1 in Table 2 of GOW\n"
 					dustH2 += "nH2dust = nH2dust + 3d-17*n(idx_H)*nH*dust2gas_ratio"
 				else:
+					dustH2 += "!H2 formation on dust: reaction 165 in Table B1 of Glover+2010, originally from Hollenbach & McKee 1979\n"
 					dustH2 += "nH2dust = nH2dust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_H)*nH*dust2gas_ratio / &\n (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
+					if hasD:
+						dustH2 += "\n!HD formation on dust, same form as above, since differences are tiny (see equations 13 and 14 of Cazaux & Spaans 2009)\n"
+						dustH2 += "nHDdust = nHDdust + 3d-18*sqrt(Tgas)*(1d0/(1d0 + 1d4*exp(-6d2/(krome_Semenov_Tdust+1d-40))))*n(idx_D)*nH*dust2gas_ratio / &\n (1d0 + 0.04d0*(Tgas+krome_Semenov_Tdust)**0.5d0 + 0.002d0*Tgas + 8d-6*Tgas**2)"
 		#H2 on dust from tables
 		if self.dustTabsH2:
 			dustH2 = "ntot = sum(n(1:nmols))\n"
@@ -7417,8 +7496,10 @@ class krome:
 								if dType == specs[idnw].name and useDustEvol:
 									x += " - dSumDust"+dType
 							if self.useDustH2 or self.dustTabsH2 or self.useCoolingDustSemenov:
-								if "H"==specs[idnw].name: x += " - 2d0*nH2dust"
+								if "H"==specs[idnw].name: x += " - 2d0*nH2dust - nHDdust"
 								if "H2"==specs[idnw].name: x += " + nH2dust"
+								if "D"==specs[idnw].name: x += " - nHDdust"
+								if "HD"==specs[idnw].name: x += " + nHDdust"
 							fout.write("\t" + x + "\n")
 							idnw += 1
 
@@ -7440,8 +7521,10 @@ class krome:
 						for x in dnw:
 							#add H2 formation on dust
 							if self.useDustH2const:
-								if "H"==specs[idnw].name: x += " - 2d0*nH2dust"
+								if "H"==specs[idnw].name: x += " - 2d0*nH2dust - nHDdust"
 								if "H2"==specs[idnw].name: x += " + nH2dust"
+								if "D"==specs[idnw].name: x += " - nHDdust"
+								if "HD"==specs[idnw].name: x += " + nHDdust"
 							idnw +=1
 
 							#add custom ODE if needed
@@ -8418,6 +8501,13 @@ class krome:
 			shutil.copyfile("data/coolCO.dat", buildFolder + "coolCO.dat")
 			print("- copying coolCO_scalefactor_redshift_nlte.dat...")
 			shutil.copyfile("data/coolCO_scalefactor_redshift_nlte.dat", buildFolder + "coolCO_scalefactor_redshift_nlte.dat")
+
+		#copy cooling C, C+, O
+		if self.useCoolingZ:
+			print("- copying optically thick correction files for C, C+, O")
+			shutil.copyfile("data/coolC_scalefactor_opticallythick.dat", buildFolder + "coolC_scalefactor_opticallythick.dat")
+			shutil.copyfile("data/coolC+_scalefactor_opticallythick.dat", buildFolder + "coolC+_scalefactor_opticallythick.dat")
+			shutil.copyfile("data/coolO_scalefactor_opticallythick.dat", buildFolder + "coolO_scalefactor_opticallythick.dat")
 
 		#copy cooling HCN
 		if self.useCoolingHCN:

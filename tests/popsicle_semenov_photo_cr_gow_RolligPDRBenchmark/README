@@ -1,0 +1,5 @@
+This test computes the 1D PDR structure for the parameters corresponding to the benchmark tests presented in Rollig et al. 2007, using the GOW network (Gong, Ostriker & Wolfire 2017; Hunter et al. 2023).
+The default test (test_pdr.f90 as checked in) is the V1 test in Rollig et al. 2007. You can modify chi0 and ntot to do a different one, or use run_Rollig_suite.py to run all four (V1-V4) automatically.
+The setup_Rollig_test.py will automatically change the H2 formation rate on grains to one identical to the test. This is done automatically when running make.
+Result files for the PDR codes in the project are available here: https://lecture.ph1.uni-koeln.de/pdr-comparison/results_data_post.htm (a copy is kept in ../tests/popsicle_semenov_photo_cr_full_RolligPDRBenchmark/RolligPDROutputs/, shared with the full-network benchmark since it is the same published reference data).
+Si+ is initialized to zero abundance in test_pdr.f90: the Rollig et al. 2007 benchmark does not include Si in its elemental abundances, and GOW's Si+ was found to dominate its free-electron budget (up to ~100% at high Av), which is not representative of the benchmark's intended composition.

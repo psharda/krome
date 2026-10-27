@@ -24,7 +24,7 @@ contains
     implicit none
     integer::neq,idust
     real*8::tt,dn(neq),n(neq),k(nrea),krome_gamma
-    real*8::gamma,Tgas,vgas,ntot,nH2dust,nd,nin(neq),nH
+    real*8::gamma,Tgas,vgas,ntot,nH2dust,nHDdust,nd,nin(neq),nH
 #KROME_iceODEVariables
 #KROME_dustSumVariables
 #KROME_implicit_variables
@@ -40,6 +40,7 @@ contains
 #ENDIFKROME_popsicle_ice
     nH = get_Hnuclei(n(:))
     nH2dust = 0.d0
+    nHDdust = 0.d0
     n(idx_CR) = 1.d0
     n(idx_g)  = 1.d0
     n(idx_dummy) = 1.d0
@@ -50,6 +51,11 @@ contains
     n(idx_Tgas) = max(n(idx_tgas),phys_Tcmb)
     n(idx_Tgas) = min(n(idx_tgas),1d9)
     Tgas = n(idx_Tgas) !get temperature
+
+    !avoid negative species
+    do i=1,nspec
+      n(i) = max(n(i),1d-70)
+    end do
 
 #IFKROME_tigressNCR
     !If Eq C chemistry used, update final abundances for these to the equilibrium one

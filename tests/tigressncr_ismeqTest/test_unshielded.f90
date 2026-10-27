@@ -16,22 +16,22 @@ program test_krome_eqbm
   use krome_constants
   use krome_dust, ONLY : compute_Semenov_Tdust
   implicit none
-  integer,parameter::nz=7
+  integer,parameter::nz=3
   integer,parameter::rstep = 500000
   integer::i,ii,ios,jscale,jz,jz2, dens_bins, zint
-  real*8::rhogas,m(krome_nspec)
-  real*8::tff,ertol,eatol,max_time,t_tot
+  real*8::rhogas,m(krome_nspec),sum_x,sum_xi
+  real*8::tff,ertol,eatol,max_time,t_tot,Hnuclei,Hnuclei_i
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),ni(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea),kkk(krome_nspec)
   real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
   real*8::ionH,dissH2,ionC,chiCO,chiFUV,t_cool,dustHeatingRate
-  logical::stop_next, converged
+  logical::stop_next, converged, first_call
   character(len=20) :: filename, zint_str
-  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
-  
+  real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21, increment = 1.25
+  integer :: start, finish, rate
+  call system_clock(start, rate)
 
-  zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/) !list of metallicities relative to solar
-  !zs = (/1d0/)
+  zs = (/1d-2, 1d-1, 1d0/) !list of metallicities relative to solar (TIGRESS-NCR network valid for Z >= 1e-2 Zsun)
 
   !set chiFUV for photoreactions
   chiFUV = 1d0
@@ -76,7 +76,7 @@ program test_krome_eqbm
     open(unit=911,file=filename,status='replace',action='write')
     write(911, '(A)', ADVANCE='NO') "#ntot Tgas sum(heats)"
     write(911, '(A)') trim(krome_get_heating_names_header())
-    
+
     print *, 'Metallicity: ', zs(jz2), ' of Solar'
 
     !INITIAL CONDITIONS
@@ -88,7 +88,7 @@ program test_krome_eqbm
     call krome_set_Tcmb(2.73d0*(krome_redshift+1d0))
     call krome_set_metallicity(zs(jz2))
     call krome_set_dust_to_gas(zs(jz2))
-    call krome_set_chiFUV(chiFUV)
+    call krome_set_user_chiFUV(chiFUV)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
@@ -111,25 +111,31 @@ program test_krome_eqbm
 
     !Reset ertol for each metallicity (since it is changed at high density below)
     ertol = 1d-8
+    first_call = .true.
 
     do dens_bins = 1, 10000
 
-      !species default, cm-3
-      x(:) = 1d-40
+      if (first_call) then
+        !species default, cm-3
+        x(:) = 1d-40
 
-      !set individual species
-      x(KROME_idx_H)         = ntot - 2*1d-6*ntot - 1d-4*ntot
-      x(KROME_idx_H2)        = 1d-6*ntot
-      x(KROME_idx_E)         = 1d-4*ntot
-      x(KROME_idx_Hj)        = 1d-4*ntot
-      !x(KROME_idx_HE)        = 0.0775*ntot
-      x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
-      x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
+        !set individual species
+        x(KROME_idx_H)         = ntot - 2*1d-6*ntot - 1d-4*ntot
+        x(KROME_idx_H2)        = 1d-6*ntot
+        x(KROME_idx_E)         = 1d-4*ntot
+        x(KROME_idx_Hj)        = 1d-4*ntot
+        !x(KROME_idx_HE)        = 0.0775*ntot
+        x(KROME_idx_Cj)        = 1.6d-4*zs(jz2)*ntot !C is fully ionized
+        x(KROME_idx_O)         = 3.2d-4*zs(jz2)*ntot !O is fully neutral
+        first_call             = .false.
+      else
+        x(:) = x(:) * increment
+      endif
 
       call krome_set_Semenov_Tdust((krome_redshift+1d0)*2.73d0)
-      !Absorption rate of UV photons by dust (erg s^-1)
-      dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
-      call krome_set_dustheatRad(dustHeatingRate)
+
+      !initial Hnuclei
+      Hnuclei_i = get_Hnuclei(x(:))
 
       !No shielding; Av=0.0
       Av = 0.0
@@ -169,7 +175,10 @@ program test_krome_eqbm
         endif
 
         !if you do not conserve electrons, the electron abundance will soon go to 0.00
+        sum_xi = sum(x(1:krome_nmols))
         x(krome_idx_e) = krome_get_electrons(x(:))
+        sum_x = sum(x(1:krome_nmols))
+        x(1:krome_nmols) = x(1:krome_nmols) * sum_xi / sum_x
 
         Av = 0.0
         call krome_set_user_Av(Av)
@@ -178,7 +187,6 @@ program test_krome_eqbm
         ionH = 0.0
         call krome_set_user_ionH(ionH)
         !set H2 dissociation reaction rate coeff
-        !dissH2 = 5.60d-11*exp(-3.74*Av)*krome_fshield(n,Tgas)*chiFUV
         dissH2 = 5.60d-11*chiFUV
         call krome_set_user_dissH2(dissH2)
         ionC = 3.1d-10*krome_get_user_is_metal()*chiFUV
@@ -186,8 +194,8 @@ program test_krome_eqbm
         call krome_set_user_ionC(ionC)
         call krome_set_user_chiCO(chiCO)
 
-        !Absorption rate of UV photons by dust
-        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
+        !Absorption rate of UV photons by dust (erg s^-1)
+        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
         call krome_set_dustheatRad(dustHeatingRate)
         call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()
@@ -201,18 +209,21 @@ program test_krome_eqbm
         do ii=1,krome_nmols
           n(ii) = max(x(ii),0d0)
         end do
+        Hnuclei = get_Hnuclei(n(:))
+        n(1:krome_nmols) = n(1:krome_nmols) * Hnuclei_i/Hnuclei
+        Hnuclei = get_Hnuclei(n(:))
         n(krome_idx_Tgas) = Tgas
 
-        kkk(1:krome_nmols) = krome_conserve(n(1:krome_nmols),ni(1:krome_nmols))
-        n(:) = kkk(:)
-        n(krome_idx_Tgas) = Tgas
-        
+        !kkk(1:krome_nmols) = krome_conserve(n(1:krome_nmols),ni(1:krome_nmols))
+        !n(:) = kkk(:)
+        !n(krome_idx_Tgas) = Tgas
+
         !Convergence test on temperature; also explored with including relative change in abundances, but did not make difference
         converged = abs(n(krome_idx_Tgas) - ni(krome_idx_Tgas)) / ni(krome_idx_Tgas) .le. ertol &
                      .or. t_tot .gt. max_time
 
         !Compute cooling time; t_cool = P/Lambda = nk_BT/Lambda; where Lambda is in erg cm^-3 s^-1
-        t_cool = (sum(x(:)) * boltzmann_erg * Tgas)/(cooling(n(:),Tgas))
+        t_cool = (Hnuclei * boltzmann_erg * Tgas)/(cooling(n(:),Tgas))
 
         if(.not. converged) then
           !Restrict timestep to 10% of cooling time for stability, and enforce at most factor 3 change in dt
@@ -220,8 +231,8 @@ program test_krome_eqbm
           t_tot = t_tot + dt
           ni = n
         else
-          write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') & 
-                    "CONVERGED; ntot = ", sum(x(:)), " Tgas = ", Tgas, " t_tot/Myr = ", &
+          write (*, '(A, E12.4, A, E12.4, A, E12.4, A, E12.4, A, E12.4)') &
+                    "CONVERGED; nH = ", Hnuclei, " Tgas = ", Tgas, " t_tot/Myr = ", &
                     t_tot/(seconds_per_year*1.e6), " dt = ", dt/(seconds_per_year*1.e6), &
                     " t_cool = ", t_cool/(seconds_per_year*1.e6)
           exit
@@ -229,13 +240,11 @@ program test_krome_eqbm
       end do
 
       !dump cooling rates for Tgas going into the calculation
-      n(1:krome_nmols) = x(:)
-      n(KROME_idx_Tgas) = Tgas
       cools(:) = get_cooling_array(n(:),Tgas)
-      write(31,'(99E14.5e3)') ntot, Tgas, sum(cools), cools(:)
+      write(31,'(99E14.5e3)') Hnuclei, Tgas, sum(cools), cools(:)
       kk(:) = krome_get_coef(Tgas,x(:))
       heats(:) = get_heating_array(n(:),Tgas,kk(:),0d0) !TODO: pass nH2dust instead of 0d0 as the third argument
-      write(911,'(99E14.5e3)') ntot, Tgas, sum(heats), heats(:)
+      write(911,'(99E14.5e3)') Hnuclei, Tgas, sum(heats), heats(:)
 
       !returns to user array
       x(:) = n(1:krome_nmols)
@@ -247,20 +256,18 @@ program test_krome_eqbm
 
       m = get_mass()
       rhogas = sum(x(:)*m(1:krome_nmols))
-      write(22,'(99E17.8e3)') sum(x(:)),rhogas,Tgas,Tdust,x(:)/sum(x(:))
+      write(22,'(99E17.8e3)') Hnuclei,rhogas,Tgas,Tdust,x(:)/Hnuclei
 
       if (stop_next) exit
 
-      !increase density by 2x for the next bin
-      ntot = ntot * 1.1
+      !increase density by 'increment' for the next bin
+      ntot = ntot * increment
       !break when max density reached
       if (ntot .gt. 1.e6) then
         ntot = 1.e6
         stop_next = .true.
       endif
     end do
-
-    !write(22, *)
 
     !Close files
     close(22)
@@ -272,6 +279,7 @@ program test_krome_eqbm
   print *,"To plot in python:"
   print *,"ipython> run plot.py"
   print *,"That's all! have a nice day!"
+  call system_clock(finish)
+  print *, "Elapsed wall time (seconds): ", real(finish-start)/real(rate)
 
 end program test_krome_eqbm
-

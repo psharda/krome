@@ -97,6 +97,7 @@ program test_krome_eqbm_time
     !input gas turbulent velocity dispersion to include turbulent/mechanical heating
     call krome_set_user_sigmavel(0d0)
     call krome_set_user_chi0(1d0)
+    call krome_set_orthoParaRatio(3d0)
 
     if (zs(jz2) > 0d0) then
       !turn on photo/cr reactions that include metals
@@ -241,12 +242,13 @@ program test_krome_eqbm_time
         dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g
         call krome_set_dustheatRad(dustHeatingRate)
         call compute_Semenov_Tdust(x(:), Tgas)
-        Tdust = krome_get_Semenov_Tdust()
 
         ni(krome_idx_Tgas) = Tgas
 
         !solve the chemistry
         call krome_equilibrium_xT(x(:),Tgas,dt)
+
+        Tdust = krome_get_Semenov_Tdust()
 
         !avoid negative species
         do ii=1,krome_nmols
