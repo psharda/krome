@@ -1105,11 +1105,11 @@ contains
   use krome_fit
   use ieee_arithmetic, ONLY: ieee_is_nan, ieee_is_finite
   implicit none
-  integer::i,ii
-  real*8::n(:),Tgas,m(nspec),ntot,rhogas
-  real*8::clipped_x,clipped_y,kappaP,tau_d,tau_g,tau,ljeans
-  real*8::besc,alpha_gd,aR,intJRad,nH
-  real*8::A,B,C,iter,Tdold,fx,fdash_x,Tdnew,abs_t,rel_t,Tdoldsave
+  integer::ii,k,it,side,ix
+  real*8::n(:),Tgas,m(nspec),rhogas
+  real*8::clipped_x,ljeans,alpha_gd,aR,intJRad,nH,B,Dheat,tx
+  real*8::Tdnew,Tlo,Tc,fc0,Tu,fu,Tdn,fdn,Tn,fn,ta,tb,fta,ftb,tcur,fcur,tprev,Alast,rstep
+  logical::upok,dnok,found
   character*16 :: names(nspec)
 
   if(dust2gas_ratio .eq. 0) return
@@ -1118,86 +1118,113 @@ contains
   rhogas = max(sum(n(1:nmols)*m(1:nmols)), 1d-40)
   nH = get_Hnuclei(n(:))
 
-  !Clip Tgas and rhogas to the ranges in the data
+  !Clip rhogas to the range in the data (Tdust is clipped inside fdust)
   clipped_x = max(CoolSemenov_x(1), min(log10(rhogas), CoolSemenov_x(10)))
-  clipped_y = max(CoolSemenov_y(1), min(krome_Semenov_Tdust, CoolSemenov_y(1000)))
-
-  !Find the Planck mean opacity
-  kappaP = interpolate2D(CoolSemenov_x(:), CoolSemenov_y(:), CoolSemenov_z(:,:), &
-                         clipped_x, clipped_y)
 
   !Get the jeans length
   ljeans = get_jeans_length_rho(n(:),Tgas,rhogas)
-  tau_d = rhogas * kappaP * dust2gas_ratio
-  tau_g = 0d0 !TODO: insert a reasonable value here
-  tau = (tau_d + tau_g) * ljeans
-
-  if(tau<1d0) then
-    besc = 1d0
-  else
-    besc = tau**(-2)
-  endif
 
   alpha_gd = 3.2d-34 !pre-factor for the dust-gas cooling (Goldsmith 2001) in erg cm3 s-1
   aR = 4*stefboltz_erg/clight !radiation constant
 
-  !Rescale with escape factor to account for trapping of IR
-  kappaP = kappaP * besc
-
   !heating rate per unit volume from external radiation
   intJRad = dustheatRad*nH !dustheatRad set by user (in units of erg s^-1)
 
-  !The equation for dust temperature is of form AT_d^4 + BT_d + C
-  A = rhogas * kappaP * dust2gas_ratio * aR * clight !n*\Psi_{IR} in equation 46 of Kim+2023 ApJS
-  B = nH**2 * alpha_gd * dust2gas_ratio * sqrt(Tgas) !Second part of n**2*\Lambda_{gd} in equation 45 of Kim+2023 ApJS
-  C = -1d0 * (intJRad + A*phys_Tcmb**4 + nH**2 * alpha_gd * dust2gas_ratio * Tgas**(1.5d0)) !n*(\Gamma_{d,UV} + \Gamma_{d,other}) + n**2*First part of \Lambda_{gd} in equation 45/46 of Kim+2023 ApJS
+  !Dust temperature from the energy balance (equations 45/46 of Kim+2023 ApJS)
+  !  A(Td)*(Td^4 - Tcmb^4) + B*Td - Dheat = 0
+  !with A(Td) = rhogas*kappaP(Td)*besc(Td)*dust2gas_ratio*aR*clight (n*\Psi_{IR}), B*Td and Dheat the
+  !two parts of the gas-dust term n**2*\Lambda_{gd}, and Dheat also containing n*\Gamma_{d,UV}.
+  !kappaP and the IR escape factor are evaluated at each trial Td, so the result depends only on the
+  !current state (n, Tgas). (Evaluating kappaP at the previous call's Tdust made the ODE right-hand side
+  !depend on the solver's own trial history; near dust sublimation, where kappaP drops steeply with Td,
+  !this made DLSODES fail, and Newton with a consistent kappaP oscillates between roots.)
+  !The root nearest Tgas is bracketed by stepping outward from Tgas in 0.0625 dex steps (down and up
+  !alternately) and refined with the Illinois method, which stays bracketed and always converges.
+  B = nH**2 * alpha_gd * dust2gas_ratio * sqrt(Tgas)
+  Dheat = intJRad + nH**2 * alpha_gd * dust2gas_ratio * Tgas**(1.5d0)
 
-  iter = 0
-  Tdold = krome_Semenov_Tdust !feed in last Tdust
-  do 
-    fx = A*Tdold**4 + B*Tdold + C
-    fdash_x = 4d0*A*Tdold**3 + B
-
-    Tdnew = Tdold - fx/fdash_x
-    !relative difference
-    rel_t = abs((Tdnew-Tdold)/Tdold)
-    !Absolute difference
-    abs_t = abs(Tdnew-Tdold)
-    Tdoldsave = Tdold
-    Tdold = Tdnew
-    iter = iter + 1
-
-    !Check for convergence
-    if(abs_t<1d-8) exit !Absolute tolerance condition
-
-    if(rel_t<1d-5) exit !Relative tolerance condition
-
-    !Safety check
-    if(ieee_is_nan(Tdnew) .or. .not. ieee_is_finite(Tdnew)) then
-      print *, "NR solver obtained Tdust that is infinite or NAN"
-      print *, Tdnew
-      names(:) = get_names()
-      do ii = 1, nmols
-        print *, 'Abundance of ', names(ii), ' = ', n(ii)
-      enddo
-      stop
-    endif
-
-    if(iter>1.e3) then 
-      print *, 'Maximum iterations reached in dust temperature NR-solver'
-      print *, 'Relative change, Told, Tnew', rel_t, Tdoldsave, Tdnew
-      names(:) = get_names()
-      do ii = 1, nmols
-        print *, 'Abundance of ', names(ii), ' = ', n(ii)
-      enddo
-      stop !Maximum iterations
-    end if
-
+  !density index/weight of the opacity table, fixed for this call (same convention as interpolate2D)
+  ix = 1
+  do while (ix < size(CoolSemenov_x) - 1 .and. clipped_x > CoolSemenov_x(ix + 1))
+    ix = ix + 1
   end do
+  tx = (clipped_x - CoolSemenov_x(ix)) / (CoolSemenov_x(ix + 1) - CoolSemenov_x(ix))
+
+  Tlo = phys_Tcmb
+  rstep = 1d1**0.0625d0
+  Tc = max(Tgas, Tlo)
+  fc0 = fdust(Tc)
+  found = .false.
+  if (fc0 == 0d0) then
+    Tdnew = Tc
+  else
+    Tu = Tc; fu = fc0; Tdn = Tc; fdn = fc0
+    upok = .true.; dnok = (Tc > Tlo)
+    do k = 1, 1000
+      if (dnok) then
+        Tn = max(Tdn/rstep, Tlo); fn = fdust(Tn)
+        if ((fn < 0d0 .and. fdn >= 0d0) .or. (fn > 0d0 .and. fdn <= 0d0)) then
+          ta = Tn; fta = fn; tb = Tdn; ftb = fdn; found = .true.; exit
+        end if
+        Tdn = Tn; fdn = fn
+        if (Tn <= Tlo) dnok = .false.
+      end if
+      if (upok) then
+        Tn = Tu*rstep; fn = fdust(Tn)
+        if ((fn < 0d0 .and. fu >= 0d0) .or. (fn > 0d0 .and. fu <= 0d0)) then
+          ta = Tu; fta = fu; tb = Tn; ftb = fn; found = .true.; exit
+        end if
+        Tu = Tn; fu = fn
+        if (Tn > 1d7) upok = .false.
+      end if
+      if (.not. (upok .or. dnok)) exit
+    end do
+    if (.not. found) then
+      Tdnew = Tlo !no root: the balance cannot be met above the CMB floor
+    else if (fta == 0d0) then
+      Tdnew = ta
+    else if (ftb == 0d0) then
+      Tdnew = tb
+    else
+      !Illinois (modified regula falsi) on the bracket [ta,tb]
+      side = 0
+      tcur = ta
+      do it = 1, 200
+        tprev = tcur
+        tcur = (ta*ftb - tb*fta)/(ftb - fta)
+        fcur = fdust(tcur)
+        if (fcur == 0d0) exit
+        if ((fcur < 0d0) .eqv. (ftb < 0d0)) then
+          tb = tcur; ftb = fcur
+          if (side == -1) fta = 0.5d0*fta
+          side = -1
+        else
+          ta = tcur; fta = fcur
+          if (side == 1) ftb = 0.5d0*ftb
+          side = 1
+        end if
+        if (abs(tcur - tprev) < 1d-9*tcur .or. abs(tb - ta) < 1d-9*min(ta,tb)) exit
+      end do
+      Tdnew = tcur
+    end if
+  end if
+
+  !Safety check
+  if(ieee_is_nan(Tdnew) .or. .not. ieee_is_finite(Tdnew)) then
+    print *, "Dust temperature solver obtained Tdust that is infinite or NAN"
+    print *, Tdnew
+    names(:) = get_names()
+    do ii = 1, nmols
+      print *, 'Abundance of ', names(ii), ' = ', n(ii)
+    enddo
+    stop
+  endif
+
+  fn = fdust(Tdnew) !sets Alast = A(Tdnew) for the cooling below
 
   krome_Semenov_Tdust = Tdnew
   !Cooling is n**2*\Lambda_{gd} = n*\Psi_{IR} - n*(\Gamma_{d,UV} + \Gamma_{d,other}) (see equation 46 of Kim+2023 ApJS)
-  dustSemenov_cooling = A*Tdnew**4 - intJRad - A*phys_Tcmb**4
+  dustSemenov_cooling = Alast*Tdnew**4 - intJRad - Alast*phys_Tcmb**4
   if(krome_Semenov_Tdust .gt. 1d4) then
     dustSemenov_cooling = 0d0 !if dust is hotter than 1d4 K, switch off cooling due to dust sublimation
   endif
@@ -1209,6 +1236,39 @@ contains
   krome_Semenov_Tdust = 1d1
   dustSemenov_cooling = nH**2 * alpha_gd * dust2gas_ratio * sqrt(Tgas) * (Tgas - krome_Semenov_Tdust)
 #ENDIFKROME_useCoolingDustSemenov_fixedTdust
+
+  contains
+
+    !dust energy balance residual; kappaP and the IR escape factor evaluated at Td
+    !(sets Alast = A(Td)). Temperature index by binary search, interpolation identical
+    !to interpolate2D (which walks the 1000-point Tdust axis linearly).
+    real*8 function fdust(Td)
+      real*8, intent(in) :: Td
+      real*8 :: cy, kap, tauL, be, u
+      integer :: lo, hi, mid, ny, jy
+      ny = size(CoolSemenov_y)
+      cy = max(CoolSemenov_y(1), min(Td, CoolSemenov_y(ny)))
+      !jy = smallest j such that cy <= y(j+1), clamped to [1, ny-1] (as in interpolate2D)
+      lo = 2; hi = ny
+      do while (lo < hi)
+        mid = (lo + hi)/2
+        if (CoolSemenov_y(mid) >= cy) then
+          hi = mid
+        else
+          lo = mid + 1
+        end if
+      end do
+      jy = min(max(lo - 1, 1), ny - 1)
+      u = (cy - CoolSemenov_y(jy)) / (CoolSemenov_y(jy + 1) - CoolSemenov_y(jy))
+      kap = (1 - tx) * (1 - u) * CoolSemenov_z(ix, jy) + tx * (1 - u) * CoolSemenov_z(ix + 1, jy) + &
+          (1 - tx) * u * CoolSemenov_z(ix, jy + 1) + tx * u * CoolSemenov_z(ix + 1, jy + 1)
+      !IR trapping: escape factor from the Jeans-length optical depth (tau_g = 0)
+      tauL = rhogas * kap * dust2gas_ratio * ljeans
+      be = 1d0
+      if (tauL >= 1d0) be = tauL**(-2)
+      Alast = rhogas * kap * be * dust2gas_ratio * aR * clight
+      fdust = Alast*(Td**4 - phys_Tcmb**4) + B*Td - Dheat
+    end function fdust
 
   end subroutine compute_Semenov_Tdust
 #ENDIFKROME_useCoolingDustSemenov
