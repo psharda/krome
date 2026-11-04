@@ -11,7 +11,7 @@ KROME is a nice and friendly package to model chemistry and microphysics
  the users is well accepted. See disclaimer below and GNU License 
  in gpl-3.0.txt.
 
-This customized version is created and maintained by the POPSICLE collaboration.
+This customized version is created and maintained by the POPSICLE collaboration. The latest version is always available in the development branch.
 
 --
 ## Get KROME
