@@ -92,8 +92,8 @@ program test_krome
     x(:) = 1d-40
 
     !set individual species initial conditions
-    x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 1d-4))
-    x(KROME_idx_H2)        = 2*1d-3*ntot
+    x(KROME_idx_H)         = ntot* (1d0 - (2*1d-6 + 1d-4))
+    x(KROME_idx_H2)        = 1d-6*ntot
     x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot
     x(KROME_idx_Hj)        = 1d-4*ntot
     x(KROME_idx_HE)        = 0.1*ntot
