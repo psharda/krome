@@ -142,6 +142,7 @@ module krome_commons
   integer,parameter::coolZCIEGFn=189
   real*8::coolZCIEGFx1(coolZCIEGFn),coolZCIEGFx2(coolZCIEGFn),coolZCIEGFx3(coolZCIEGFn)
   real*8::coolZCIEGFx1min,coolZCIEGFx1max
+  real*8::coolZCIEGF_logT(coolZCIEGFn),coolZCIEGF_logZ(coolZCIEGFn) !log10 of T and metal CIE rate, set at init
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
