@@ -27,6 +27,8 @@ program test_cooling
     real*8::ionH,dissH2,ionC,dissCO,chiFUV,t_cool,logTgas, f1, f2, Tt1,Tt2
     logical::stop_next, converged
     character(len=40) :: filename, zint_str
+    integer :: start, finish, rate
+    call system_clock(start, rate)
 
     !metallicities (Z/Z_sun) to loop over; one output file per metallicity
     zs = (/1d-6, 1d-5, 1d-4, 1d-3, 1d-2, 1d-1, 1d0/)
@@ -151,5 +153,7 @@ program test_cooling
     end do !metallicity loop
 
     print *, "Done"
+    call system_clock(finish)
+    print *, "Elapsed wall time (seconds): ", real(finish-start)/real(rate)
 
 end program test_cooling
