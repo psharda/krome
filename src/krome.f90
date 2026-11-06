@@ -343,8 +343,7 @@ contains
     itask = 1
     iopt = 0
 
-    iopt = 1 !activate optional inputs
-    IWORK(5) = 1 !maximum integration order
+#KROME_maxord
 
     !MF=
     !  = 222 internal-generated JAC and sparsity
