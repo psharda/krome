@@ -1128,7 +1128,7 @@ contains
   aR = 4*stefboltz_erg/clight !radiation constant
 
   !heating rate per unit volume from external radiation
-  intJRad = dustheatRad*nH !dustheatRad set by user (in units of erg s^-1)
+  intJRad = dustheatRad !dustheatRad set by user in units of erg cm^-3 s^-1
 
   !Dust temperature from the energy balance (equations 45/46 of Kim+2023 ApJS)
   !  A(Td)*(Td^4 - Tcmb^4) + B*Td - Dheat = 0
