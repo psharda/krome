@@ -100,8 +100,8 @@ program test_krome
     x(:) = 1d-40
 
     !set individual species initial conditions
-    x(KROME_idx_H)         = ntot* (1d0 - (2*1d-3 + 3*2.681411d-07 + 1d-4))
-    x(KROME_idx_H2)        = 2*1d-3*ntot
+    x(KROME_idx_H)         = ntot*(1d0 - (2*1d-6 + 3*2.681411d-07 + 1d-4))
+    x(KROME_idx_H2)        = 1d-6*ntot
     x(KROME_idx_E)         = 1.6d-4*zs(jz2)*ntot + 1d-4*ntot + 2.681411e-07*ntot
     x(KROME_idx_Hj)        = 1d-4*ntot
     x(KROME_idx_HE)        = 0.1*ntot
@@ -192,8 +192,8 @@ program test_krome
        !break when max density reached
        if(Hnuclei.gt.1d17) exit
 
-       !Absorption rate of UV photons by dust (erg s^-1)
-       dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
+       !Absorption rate of UV photons by dust per unit volume (erg cm^-3 s^-1)
+       dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)*Hnuclei
        call krome_set_dustheatRad(dustHeatingRate)
        call compute_Semenov_Tdust(x(:), Tgas)
        Tdust = krome_get_Semenov_Tdust()

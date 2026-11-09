@@ -42,6 +42,8 @@
 
       !returns cooling in erg/cm3/s
       cools(:) = 0d0
+      !terms weighted by f1 are skipped when f1 is exactly 0 (T >~ 1e5 K):
+      !they would be multiplied by zero anyway, and cools(:) is already zeroed
 
 #IFKROME_useCoolingH2
       cools(idx_cool_H2) = cooling_H2(n(:), Tgas) #KROME_floorH2
@@ -60,23 +62,23 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingDust
-      cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
+      if (f1 > 0d0) cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingDustNoTdust
-      cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
+      if (f1 > 0d0) cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingDustTabs
-      cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
+      if (f1 > 0d0) cools(idx_cool_dust) = f1 * cooling_dust(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingDustSemenov
-      cools(idx_cool_dust) = f1 * cool_DustSemenov(n(:), Tgas)
+      if (f1 > 0d0) cools(idx_cool_dust) = f1 * cool_DustSemenov(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingDustGRREC
-      cools(idx_cool_dustgrrec) = f1 * cool_DustGRREC(n(:), Tgas)
+      if (f1 > 0d0) cools(idx_cool_dustgrrec) = f1 * cool_DustGRREC(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingExpansion
@@ -84,19 +86,19 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingCO
-      cools(idx_cool_CO) = f1 * cooling_CO(n(:), Tgas) #KROME_floorCO
+      if (f1 > 0d0) cools(idx_cool_CO) = f1 * cooling_CO(n(:), Tgas) #KROME_floorCO
 #ENDIFKROME
 
 #IFKROME_useCoolingOH
-      cools(idx_cool_OH) = f1 * cooling_OH(n(:), Tgas)
+      if (f1 > 0d0) cools(idx_cool_OH) = f1 * cooling_OH(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingH2O
-      cools(idx_cool_H2O) = f1 * cooling_H2O(n(:), Tgas)
+      if (f1 > 0d0) cools(idx_cool_H2O) = f1 * cooling_H2O(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingHCN
-      cools(idx_cool_HCN) = f1 * cooling_HCN(n(:), Tgas)
+      if (f1 > 0d0) cools(idx_cool_HCN) = f1 * cooling_HCN(n(:), Tgas)
 #ENDIFKROME
 
 #IFKROME_useCoolingAtomic
@@ -104,7 +106,7 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingNebular
-      cools(idx_cool_nebular) = f1 * cooling_Nebular(n(:), Tgas) #KROME_floorNebular
+      if (f1 > 0d0) cools(idx_cool_nebular) = f1 * cooling_Nebular(n(:), Tgas) #KROME_floorNebular
 #ENDIFKROME
 
 
@@ -134,7 +136,7 @@
 #ENDIFKROME
 
 #IFKROME_useCoolingZ
-      cools(idx_cool_Z) = f1 * ( cooling_Z(n(:), Tgas) #KROME_floorZ )
+      if (f1 > 0d0) cools(idx_cool_Z) = f1 * ( cooling_Z(n(:), Tgas) #KROME_floorZ )
 #ENDIFKROME
 
 #IFKROME_useCoolingCIE
@@ -1212,7 +1214,8 @@
     integer,parameter::imax=coolZCIEGFn
     real*8::cooling_Z_CIEGF,n(:),inTgas
     real*8::cH,logTgas,xLd,v1min,v1max
-    real*8::x1(imax),x2(imax),x3(imax),interp(imax)
+    real*8::t
+    integer::lo,hi,mid
     real*8,parameter::eps=1d-5
 
     cooling_Z_CIEGF = 0d0
@@ -1228,22 +1231,31 @@
 
     if(inTgas<v1min) return
 
-    !local copy of variables arrays
-    x1(:) = coolZCIEGFx1(:) !Tgas
-    x2(:) = coolZCIEGFx2(:) !He CIE cooling rate
-    x3(:) = coolZCIEGFx3(:) !Metals CIE cooling rate
-
     logTgas = log10(min(inTgas, v1max*(1d0-eps)))
 
-
-    interp(:) = log10(x2(:) + total_Z*x3(:))
+    !Binary search on the precomputed log10(T) axis for the bracket lo such that
+    !logT(lo) < logTgas <= logT(lo+1), clamped to [1,imax-1] (same as interpolate1D)
+    lo = 1
+    hi = imax - 1
+    do while (lo < hi)
+      mid = (lo + hi + 1)/2
+      if (logTgas > coolZCIEGF_logT(mid)) then
+        lo = mid
+      else
+        hi = mid - 1
+      end if
+    end do
+    t = (logTgas - coolZCIEGF_logT(lo)) / (coolZCIEGF_logT(lo+1) - coolZCIEGF_logT(lo))
 
 #IFKROME_hasHe
-    !He is included in the reaction network, so we already do He CIE self-consistently
-    interp(:) = log10(total_Z*x3(:)) 
+    !He is included in the reaction network, so we already do He CIE self-consistently;
+    xLd = log10(total_Z) + (1d0 - t)*coolZCIEGF_logZ(lo) + t*coolZCIEGF_logZ(lo+1) !erg cm^3/s
 #ENDIFKROME_hasHe
-
-    xLd = interpolate1D(log10(x1(:)), interp(:), logTgas) !erg cm^3/s
+#IFKROME_noHe
+    !He is not in the reaction network, so include He CIE cooling from the table
+    xLd = (1d0 - t)*log10(coolZCIEGFx2(lo) + total_Z*coolZCIEGFx3(lo)) &
+        + t*log10(coolZCIEGFx2(lo+1) + total_Z*coolZCIEGFx3(lo+1)) !erg cm^3/s
+#ENDIFKROME_noHe
 
     cooling_Z_CIEGF = 10**xLd * cH * cH !erg/cm^3/s
 
@@ -1288,6 +1300,9 @@
 
     coolZCIEGFx1min = minval(coolZCIEGFx1)
     coolZCIEGFx1max = maxval(coolZCIEGFx1)
+    !precompute log10 tables used by cooling_Z_CIEGF (avoids ~570 log10 per call)
+    coolZCIEGF_logT(:) = log10(coolZCIEGFx1(:))
+    coolZCIEGF_logZ(:) = log10(coolZCIEGFx3(:))
 
     close(unit)
 

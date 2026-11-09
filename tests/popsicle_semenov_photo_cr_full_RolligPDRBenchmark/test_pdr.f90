@@ -208,8 +208,8 @@ program test_krome_eqbm
         chiFUV = chi0 * exp(-3.02 * Av) !Scale and sum attenuated ISRF LW/PE intensities to the mean FUV intensity
         call krome_set_user_chiFUV(chiFUV)
 
-        !Absorption rate of UV photons by dust (erg s^-1)
-        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g
+        !Absorption rate of UV photons by dust per unit volume (erg cm^-3 s^-1)
+        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g*Hnuclei_i
         call krome_set_dustheatRad(dustHeatingRate)
         call compute_Semenov_Tdust(x(:), Tgas)
         Tdust = krome_get_Semenov_Tdust()
