@@ -192,8 +192,8 @@ program test_krome
        !break when max density reached
        if(Hnuclei.gt.1d17) exit
 
-       !Absorption rate of UV photons by dust (erg s^-1)
-       dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
+       !Absorption rate of UV photons by dust per unit volume (erg cm^-3 s^-1)
+       dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)*Hnuclei
        call krome_set_dustheatRad(dustHeatingRate)
        call compute_Semenov_Tdust(x(:), Tgas)
        Tdust = krome_get_Semenov_Tdust()

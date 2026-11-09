@@ -207,8 +207,8 @@ program test_krome_eqbm
         call krome_set_user_ionC(ionC)
         call krome_set_user_dissCO(dissCO)
 
-        !Absorption rate of UV photons by dust (erg s^-1)
-        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g
+        !Absorption rate of UV photons by dust per unit volume (erg cm^-3 s^-1)
+        dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*d2g*Hnuclei_i
         call krome_set_dustheatRad(dustHeatingRate)
         call compute_Semenov_Tdust(x(:), Tgas)
 

@@ -27,7 +27,7 @@ program test_krome
   real*8::x(krome_nmols),Tgas,dt,n(krome_nspec),cools(krome_ncools)
   real*8::ntot,Tdust,zs(nz),kk(krome_nrea)
   real*8::Av,heats(krome_nheats),crate,NH,NHj,NH2
-  real*8::ionH,dissH2,ionC,dissCO,chiFUV,dustHeatingRate
+  real*8::ionH,dissH2,ionC,dissCO,chiFUV,dustHeatingRate,Hnuclei
   logical::crate_attenuation
   real*8, parameter :: J_FUV_ISRF = 2.1e-4, dustUV_crossSection = 1.e-21
   integer :: start, finish, rate
@@ -150,7 +150,8 @@ program test_krome
 
 
     !print initial output
-    dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*ntot*dustUV_crossSection*zs(jz2)
+    Hnuclei = get_Hnuclei(x(:))
+    dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)*Hnuclei
     call krome_set_dustheatRad(dustHeatingRate)
     Tdust = krome_get_Semenov_Tdust()
     m = get_mass()
@@ -207,8 +208,10 @@ program test_krome
        !dust evaporation: dust is non existent at T > 1.5d3
        !if(Tgas>1.5d3) call krome_scale_dust_distribution(0d0)
 
-       !Absorption rate of UV photons by dust (erg s^-1)
-       dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)
+       !H nuclei number density (cm^-3)
+       Hnuclei = get_Hnuclei(x(:))
+       !Absorption rate of UV photons by dust per unit volume (erg cm^-3 s^-1)
+       dustHeatingRate = chiFUV*J_FUV_ISRF*4*pi*dustUV_crossSection*zs(jz2)*Hnuclei
        call krome_set_dustheatRad(dustHeatingRate)
        call compute_Semenov_Tdust(x(:), Tgas)
        Tdust = krome_get_Semenov_Tdust()
