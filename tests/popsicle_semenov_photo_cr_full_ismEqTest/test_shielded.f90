@@ -176,6 +176,7 @@ program test_krome_eqbm
         !Lshield = get_jeans_length(n(:), Tgas)
         Nshield = Lshield * Hnuclei
         Av = Nshield * d2g / 1.87d21
+        NH = Nshield * x(KROME_idx_H)/Hnuclei
         NH2 = Nshield * x(KROME_idx_H2)/Hnuclei
         NHD = Nshield * x(KROME_idx_HD)/Hnuclei
         NCO = Nshield * x(KROME_idx_CO)/Hnuclei
